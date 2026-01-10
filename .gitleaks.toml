@@ -1,0 +1,90 @@
+# Gitleaks Configuration for Residency Scheduler
+# See: https://github.com/gitleaks/gitleaks#configuration
+#
+# This config excludes paths and patterns that produce false positives:
+# - Test files with mock credentials
+# - Documentation with example tokens
+# - Build artifacts
+# - Enum constants that look like passwords
+
+title = "Residency Scheduler Gitleaks Config"
+
+[allowlist]
+description = "Allowlist for known false positives"
+
+# Path patterns to ignore (regex format)
+paths = [
+    # Test files with mock credentials
+    '''backend/tests/.*''',
+    '''frontend/__tests__/.*''',
+    '''frontend/src/__tests__/.*''',
+    '''frontend/src/.*\.test\.(ts|tsx)$''',
+    '''mcp-server/tests/.*''',
+    '''agent-adk/tests/.*''',
+    '''load-tests/.*''',
+
+    # Documentation with example tokens/passwords
+    '''docs/.*''',
+    '''\.claude/.*''',
+
+    # Build artifacts (contain generated keys)
+    '''frontend/\.next/.*''',
+    '''node_modules/.*''',
+    '''__pycache__/.*''',
+    '''\.venv/.*''',
+    '''venv/.*''',
+    '''dist/.*''',
+    '''build/.*''',
+
+    # Seed scripts (dev-only passwords)
+    '''backend/scripts/seed.*\.py''',
+
+    # Monitoring config examples
+    '''monitoring/.*''',
+
+    # Backup files
+    '''backups/.*''',
+
+    # Log files and history
+    '''\.antigravity/.*''',
+    '''.*\.log$''',
+
+    # Local environment (should be gitignored anyway)
+    '''\.env$''',
+    '''\.env\..*''',
+]
+
+# Regex patterns to ignore in content (for files not excluded by path)
+regexes = [
+    # Placeholder/example passwords in variable assignments
+    '''password\s*=\s*["'](test_|correct_|wrong_|same_|secure_|default_|your_|my|admin123)''',
+
+    # JWT example placeholders (truncated tokens ending in ...)
+    '''eyJ[a-zA-Z0-9_-]*\.\.\.["']?''',
+
+    # Enum string values for password-related events (not actual passwords)
+    '''PASSWORD_(CHANGED|RESET|CHANGE)\s*=\s*["'][A-Za-z_]+["']''',
+
+    # Database/Redis password enum types (class attributes, not values)
+    '''(DATABASE|REDIS)_PASSWORD\s*=\s*["'][a-z_]+["']''',
+
+    # Idempotency keys (not secrets)
+    '''[Ii]dempotency[-_][Kk]ey.*[:=]\s*["'][a-zA-Z0-9_-]+["']''',
+
+    # Experiment keys (feature flags, not secrets)
+    '''experiment[_-]?key.*["']schedule_optimizer''',
+
+    # HSM key IDs (identifiers, not the actual keys)
+    '''hsm[-_]key[-_]id.*["']hsm-key-[0-9]+["']''',
+]
+
+# Stop words - strings that if found mean it's likely a false positive
+stopwords = [
+    "example",
+    "placeholder",
+    "test",
+    "mock",
+    "fake",
+    "dummy",
+    "sample",
+]

@@ -1,97 +1,15 @@
 # Gitleaks Ignore File
 # See: https://github.com/gitleaks/gitleaks#gitleaksignore
 #
-# Updated: 2026-01-10 (Session 089)
-# Issue: 126 false positives blocking commits
-# These are example/test credentials, not real secrets
-
-# ==============================================================
-# Test files with mock credentials
-# ==============================================================
-backend/tests/**
-backend/tests/*
-frontend/__tests__/**
-frontend/__tests__/*
-frontend/src/__tests__/**
-frontend/src/__tests__/*
-mcp-server/tests/**
-agent-adk/tests/**
-load-tests/**
-load-tests/*
-
-# ==============================================================
-# Documentation with example tokens/passwords
-# ==============================================================
-docs/**
-docs/*
-.claude/**
-.claude/*
-
-# ==============================================================
-# Logs and history (contain example commands with test tokens)
-# ==============================================================
-.antigravity/**
-.antigravity/logs/**
-*.log
-
-# ==============================================================
-# Build artifacts
-# ==============================================================
-frontend/.next/**
-frontend/.next/*
-node_modules/**
-__pycache__/**
-*.pyc
-.venv/**
-venv/**
-
-# ==============================================================
-# Seed scripts with development-only passwords
-# ==============================================================
-backend/scripts/seed*.py
-
-# ==============================================================
-# Monitoring config examples
-# ==============================================================
-monitoring/**
-monitoring/*
-
-# ==============================================================
-# Next.js generated files (contain encryption keys)
-# ==============================================================
-*.json
-!package.json
-!package-lock.json
-!tsconfig.json
-!composer.json
-
-# ==============================================================
-# Specific fingerprints for known false positives
-# Format: fingerprint:rule:line
-# ==============================================================
-# Example passwords in anti-patterns doc
-.claude/PromptFrameworks/ANTI_PATTERNS.md:hashicorp-tf-password:293
-
-# Example API key in security auditor agent spec
-.claude/Agents/SECURITY_AUDITOR.md:generic-api-key:529
-
-# Example passwords in security audit doc
-.claude/dontreadme/reconnaissance/OVERNIGHT_BURN/SESSION_4_SECURITY/security-encryption-audit.md:hashicorp-tf-password:289
-.claude/dontreadme/reconnaissance/OVERNIGHT_BURN/SESSION_4_SECURITY/security-encryption-audit.md:hashicorp-tf-password:292
-.claude/dontreadme/reconnaissance/OVERNIGHT_BURN/SESSION_4_SECURITY/security-encryption-audit.md:hashicorp-tf-password:988
-
-# Example passwords in API docs
-.claude/dontreadme/reconnaissance/OVERNIGHT_BURN/SESSION_6_API_DOCS/api-docs-admin.md:hashicorp-tf-password:71
-.claude/dontreadme/reconnaissance/OVERNIGHT_BURN/SESSION_6_API_DOCS/api-docs-admin.md:generic-api-key:76
-.claude/dontreadme/reconnaissance/OVERNIGHT_BURN/SESSION_6_API_DOCS/api-docs-authentication.md:generic-api-key:98
-
-# Test JWTs in integration tests
-frontend/src/__tests__/integration/auth-flow.test.tsx:jwt:832
-
-# Test credentials in load tests
-load-tests/scenarios/concurrent-users.js:generic-api-key:77
-load-tests/scenarios/concurrent-users.js:generic-api-key:78
-load-tests/scenarios/auth-security.js:jwt:200
-
-# Grafana config example
-monitoring/grafana/provisioning/datasources/prometheus.yml:hashicorp-tf-password:59
+# This file contains FINGERPRINTS of specific findings to ignore.
+# For path-based exclusions, see .gitleaks.toml
+#
+# Format: Each line is a fingerprint (from gitleaks output)
+# Example: backend/app/api/routes/auth.py:generic-api-key:229
+#
+# To get fingerprints, run:
+#   gitleaks detect --no-git --verbose --config .gitleaks.toml
+# Then copy the "Fingerprint:" value for any remaining false positives.
+#
+# Note: Most false positives are now handled by path/regex rules in
+# .gitleaks.toml. Only add fingerprints here for edge cases.

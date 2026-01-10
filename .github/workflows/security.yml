@@ -1,10 +1,15 @@
 # Security Scanning Workflow
 # Runs security analysis on code and dependencies
 # Includes SAST, dependency scanning, and container scanning
+#
+# STREAMLINED 2026-01-10: Most scans are now weekly-only to reduce PR noise.
+# Only Gitleaks (secret scanning) runs per-PR. See docs/CI_STREAMLINING_GUIDE.md
 
 name: Security Scanning
 
 on:
+  # NOTE: PR trigger removed for most jobs (2026-01-10)
+  # Only secret-scan job runs on PRs now
   pull_request:
     branches: [main, master, develop]
   push:
@@ -25,7 +30,9 @@ permissions:
 
 jobs:
   # CodeQL Analysis (SAST)
+  # Weekly only - too slow for every PR
   codeql-analysis:
+    if: github.event_name != 'pull_request'  # Weekly/push only
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -56,7 +63,9 @@ jobs:
           category: "/language:${{ matrix.language }}"
 
   # Python dependency vulnerability scanning
+  # Weekly only - CVEs in deps don't appear per-PR
   python-dependency-scan:
+    if: github.event_name != 'pull_request'  # Weekly/push only
     runs-on: ubuntu-latest
 
     steps:
@@ -104,7 +113,9 @@ jobs:
           retention-days: 30
 
   # Node.js dependency vulnerability scanning
+  # Weekly only - CVEs in deps don't appear per-PR
   npm-audit:
+    if: github.event_name != 'pull_request'  # Weekly/push only
     runs-on: ubuntu-latest
 
     steps:
@@ -139,7 +150,9 @@ jobs:
           retention-days: 30
 
   # Bandit - Python security linter
+  # Weekly only - informational, rarely actionable per-PR
   bandit-scan:
+    if: github.event_name != 'pull_request'  # Weekly/push only
     runs-on: ubuntu-latest
 
     steps:
@@ -176,7 +189,9 @@ jobs:
           retention-days: 30
 
   # Trivy vulnerability scanner for containers and filesystem
+  # Weekly only - slow filesystem scan, low value per-PR
   trivy-scan:
+    if: github.event_name != 'pull_request'  # Weekly/push only
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -259,7 +274,9 @@ jobs:
           retention-days: 30
 
   # Semgrep SAST
+  # Weekly only - overlaps with CodeQL
   semgrep:
+    if: github.event_name != 'pull_request'  # Weekly/push only
     runs-on: ubuntu-latest
     permissions:
       contents: read

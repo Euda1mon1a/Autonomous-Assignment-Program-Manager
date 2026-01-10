@@ -1,8 +1,11 @@
 # Enhanced CI Workflow with Matrix Testing
 # This is an alternative to ci.yml with matrix builds for multiple Python/Node versions
 # Runs tests, type checking, and linting in parallel for fast feedback
+#
+# DISABLED 2026-01-10: Redundant with ci.yml. See docs/CI_STREAMLINING_GUIDE.md
+# To re-enable: Remove `if: false` from jobs below
 
-name: CI - Enhanced
+name: CI - Enhanced (DISABLED)
 
 on:
   pull_request:
@@ -25,6 +28,7 @@ env:
 jobs:
   # Detect which parts of the codebase changed
   changes:
+    if: false  # DISABLED - redundant with ci.yml
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
@@ -50,6 +54,7 @@ jobs:
 
   # Fast quality checks - fail fast on obvious issues
   quick-checks:
+    if: false  # DISABLED - redundant with ci.yml
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
