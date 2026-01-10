@@ -2,7 +2,7 @@
 
 **Purpose:** Document recurring patterns identified across development sessions to accelerate future implementations and avoid reinventing solutions.
 
-**Last Updated:** 2026-01-03 (Session 47 - Unified Backup)
+**Last Updated:** 2026-01-10 (Session 089 - Overnight Synthesis)
 
 ---
 
@@ -88,6 +88,39 @@ async def db_session():
 ```
 
 **Gotcha:** Use `pytest-asyncio` decorator, not plain `pytest.fixture`
+
+### Pytest Exit Code Preservation in Bash
+
+**Pattern:** When capturing pytest output in bash scripts with `set -e`, disable errexit temporarily to preserve the actual exit code.
+
+**Anti-Pattern (Loses exit code):**
+```bash
+set -euo pipefail
+
+# WRONG: || true makes $? always 0
+PYTEST_OUTPUT=$(pytest tests/ 2>&1 || true)
+PYTEST_EXIT=$?  # Always 0, even if tests failed!
+```
+
+**Correct Pattern:**
+```bash
+set -euo pipefail
+
+# Disable set -e to capture actual exit code
+set +e
+PYTEST_OUTPUT=$(pytest tests/ 2>&1)
+PYTEST_EXIT=$?
+set -e
+
+# Now PYTEST_EXIT has the real exit code
+if [ $PYTEST_EXIT -ne 0 ]; then
+    echo "Tests failed with exit code $PYTEST_EXIT"
+fi
+```
+
+**Why:** `set -e` causes immediate script termination on non-zero exit. Using `|| true` prevents termination but also masks the exit code.
+
+**Session:** 089 (resolved merge conflict in validate-performance-regression.sh)
 
 ### Coverage-Driven Test Writing
 
@@ -206,6 +239,37 @@ raise HTTPException(400, "Invalid person identifier")
 ---
 
 ## Database Patterns
+
+### PostgreSQL Table Names in Dynamic SQL (CRITICAL)
+
+**Pattern:** When passing table names to backend APIs that use dynamic SQL, always use snake_case.
+
+**Why:** PostgreSQL table names are snake_case. The axios interceptor converts camelCase→snake_case for request *body properties*, but string *values* pass through unchanged.
+
+**Example Bug (Session 089):**
+```typescript
+// ❌ WRONG - Table name is a value, not converted
+await createSnapshot.mutateAsync({
+  table: 'rotationTemplates',  // Backend executes: SELECT * FROM rotationTemplates
+                                // Postgres error: relation "rotationTemplates" does not exist
+});
+
+// ✓ CORRECT - Use actual PostgreSQL table name
+await createSnapshot.mutateAsync({
+  table: 'rotation_templates',  // Backend executes: SELECT * FROM rotation_templates
+                                 // Works!
+});
+```
+
+**Backend Pattern:**
+```python
+# backend/app/api/routes/backup.py
+text(f"SELECT COUNT(*) FROM {request.table}")  # Raw table name in SQL
+```
+
+**Gotcha:** This is different from the camelCase rule for TypeScript *interfaces*. Interface properties use camelCase (axios converts), but string values are passed as-is.
+
+**Session:** 089 (Codex P2 fix)
 
 ### Alembic Migration Workflow
 
@@ -473,6 +537,43 @@ solver.parameters.max_time_in_seconds = 300
 
 **Monitoring:** Use `solver-control` skill for kill-switch
 
+### Container Staleness (Docker Volume Masking)
+
+**Issue:** File exists on host but "not found" inside container.
+
+**Root Cause:** Docker image was built with old code. Volume mounts overlay the image filesystem, but if the image's `/app` directory structure differs from host, unexpected behavior occurs.
+
+**Symptoms:**
+- `FileNotFoundError` for a file that clearly exists on host
+- Code changes not taking effect despite `--reload`
+- Tests passing locally but failing in container
+
+**Diagnosis:**
+```bash
+# Check if container has latest code
+./scripts/diagnose-container-staleness.sh residency-scheduler-backend app/main.py
+
+# Quick check
+docker exec scheduler-local-backend ls -la /app/path/to/file
+```
+
+**Resolution:**
+```bash
+# Rebuild the container
+./scripts/rebuild-containers.sh [service]
+
+# Or full rebuild
+docker-compose down && docker-compose build --no-cache && docker-compose up -d
+```
+
+**Standing Order:** If ANY tool inside a container reports "file not found" but the file exists on host:
+1. STOP chain diagnostics immediately
+2. Check container filesystem directly
+3. If missing: rebuild container
+4. This is container staleness, NOT a code bug
+
+**RAG Query:** `rag_search('docker volume mount masking')`
+
 ---
 
 ## Infrastructure Patterns
@@ -548,7 +649,7 @@ This document evolves as new patterns emerge. When you identify a new recurring 
 
 ---
 
-**Contributors:** Sessions 1-37 collective learnings
+**Contributors:** Sessions 1-89 collective learnings
 
 **See Also:**
 - `.claude/dontreadme/synthesis/DECISIONS.md` - Architectural decisions

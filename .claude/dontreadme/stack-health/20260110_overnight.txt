@@ -1,0 +1,16 @@
+
+=========================================
+  Stack Health Check
+=========================================
+
+[0;32m[✓][0m API: PASS (connected)
+[0;32m[✓][0m Frontend: PASS (HTTP 200)
+[0;32m[✓][0m Database: PASS (PostgreSQL)
+[0;32m[✓][0m Redis: PASS (auth enabled)
+[0;32m[✓][0m Containers: PASS (7 running)
+[0;32m[✓][0m Migrations: PASS (20260109_faculty_weekly (head))
+
+=========================================
+  Overall Status: [0;32mGREEN[0m
+=========================================
+
