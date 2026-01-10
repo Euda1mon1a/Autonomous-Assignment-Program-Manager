@@ -84,7 +84,7 @@ export function useSnapshots(table?: string, enabled = false) {
  *
  * // Before bulk delete
  * await createSnapshot.mutateAsync({
- *   table: 'rotationTemplates',
+ *   table: 'rotation_templates',
  *   reason: 'Before bulk delete of 5 templates'
  * });
  * ```
@@ -148,7 +148,7 @@ export function useRestoreSnapshot() {
  *
  * const handleBulkDelete = async (ids: string[]) => {
  *   await execute(
- *     { table: 'rotationTemplates', reason: `Delete ${ids.length} templates` },
+ *     { table: 'rotation_templates', reason: `Delete ${ids.length} templates` },
  *     async () => {
  *       await bulkDelete.mutateAsync(ids);
  *     }

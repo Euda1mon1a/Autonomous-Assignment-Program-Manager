@@ -339,7 +339,7 @@ export default function AdminTemplatesPage() {
     try {
       // Create backup snapshot before bulk delete
       await createSnapshot.mutateAsync({
-        table: 'rotationTemplates',
+        table: 'rotation_templates',
         reason: `Bulk delete of ${selectedIds.length} template(s)`,
       });
       toast.info('Backup created');
