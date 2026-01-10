@@ -357,6 +357,21 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 21: API Contract Validation (Session 084 - ARCHITECT Domain)
+  # ============================================================================
+
+  # Backend/frontend type sync validation
+  - repo: local
+    hooks:
+      - id: api-contract
+        name: API Contract Validation
+        entry: scripts/validate-api-contract.sh
+        language: script
+        pass_filenames: false
+        files: ^(backend/app/schemas/|frontend/src/types/).*\.(py|ts)$
+        stages: [pre-commit]
+
+  # ============================================================================
   # Configuration
   # ============================================================================
 
