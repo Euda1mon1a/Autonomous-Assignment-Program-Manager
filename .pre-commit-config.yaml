@@ -387,6 +387,21 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 23: Dependency Version Guard (Session 085 - ARCHITECT Domain)
+  # ============================================================================
+
+  # Dependency version protection - blocks critical dep changes without override
+  - repo: local
+    hooks:
+      - id: dependency-versions
+        name: Dependency Version Guard
+        entry: scripts/validate-dependency-versions.sh
+        language: script
+        pass_filenames: false
+        files: ^(frontend/package\.json|frontend/package-lock\.json|backend/requirements\.txt)$
+        stages: [pre-commit]
+
+  # ============================================================================
   # Configuration
   # ============================================================================
 
