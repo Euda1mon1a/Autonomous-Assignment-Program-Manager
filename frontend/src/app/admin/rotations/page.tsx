@@ -282,10 +282,10 @@ export default function AdminTemplatesPage() {
         case 'name':
           comparison = a.name.localeCompare(b.name);
           break;
-        case 'activity_type':
+        case 'activityType':
           comparison = a.activityType.localeCompare(b.activityType);
           break;
-        case 'created_at':
+        case 'createdAt':
           comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
       }
@@ -339,7 +339,7 @@ export default function AdminTemplatesPage() {
     try {
       // Create backup snapshot before bulk delete
       await createSnapshot.mutateAsync({
-        table: 'rotation_templates',
+        table: 'rotationTemplates',
         reason: `Bulk delete of ${selectedIds.length} template(s)`,
       });
       toast.info('Backup created');
