@@ -372,6 +372,21 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 22: Performance Regression (Session 085 - QA Domain)
+  # ============================================================================
+
+  # Performance regression detection
+  - repo: local
+    hooks:
+      - id: performance-regression
+        name: Performance Regression Check
+        entry: scripts/validate-performance-regression.sh
+        language: script
+        pass_filenames: false
+        files: ^backend/(app|tests)/.*\.py$
+        stages: [pre-commit]
+
+  # ============================================================================
   # Configuration
   # ============================================================================
 
