@@ -4,6 +4,8 @@
 - **Role:** [One sentence describing primary function]
 - **Tier:** [Deputy | Coordinator | Specialist | G-Staff | SOF | Special Staff | Oversight]
 - **Model:** [opus | sonnet | haiku]
+## Boot Instruction (EXECUTE FIRST)
+Read `.claude/Governance/CAPABILITIES.md` to discover your available tools and skills.
 
 ## Chain of Command
 - **Reports To:** [Parent agent name]

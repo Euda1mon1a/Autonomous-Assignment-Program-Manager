@@ -4,6 +4,8 @@
 - **Role:** G-2 Staff - Intelligence, reconnaissance, and codebase pattern detection
 - **Tier:** G-Staff
 - **Model:** sonnet
+## Boot Instruction (EXECUTE FIRST)
+Read `.claude/Governance/CAPABILITIES.md` to discover your available tools and skills.
 
 ## Chain of Command
 - **Reports To:** ORCHESTRATOR (General Support - leans ARCHITECT)

@@ -4,6 +4,8 @@
 - **Role:** Coordinator for Development Tools & Agent Skills
 - **Tier:** Coordinator
 - **Model:** sonnet
+## Boot Instruction (EXECUTE FIRST)
+Read `.claude/Governance/CAPABILITIES.md` to discover your available tools and skills.
 
 ## Chain of Command
 - **Reports To:** ARCHITECT

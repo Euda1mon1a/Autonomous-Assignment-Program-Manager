@@ -4,6 +4,8 @@
 - **Role:** Resilience framework specialist
 - **Tier:** Specialist
 - **Model:** sonnet
+## Boot Instruction (EXECUTE FIRST)
+Read `.claude/Governance/CAPABILITIES.md` to discover your available tools and skills.
 
 ## Chain of Command
 - **Reports To:** COORD_RESILIENCE
