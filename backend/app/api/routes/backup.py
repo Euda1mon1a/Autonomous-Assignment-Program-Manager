@@ -27,7 +27,11 @@ router = APIRouter()
 
 
 # Allowed tables for snapshot (whitelist for security)
+# Accepts both snake_case (backend convention) and camelCase (frontend convention)
+# to handle axios interceptor only converting keys, not string values.
+# See: Session 086 - "impedance mismatch" research
 ALLOWED_SNAPSHOT_TABLES = {
+    # snake_case (backend/DB convention)
     "rotation_templates",
     "weekly_patterns",
     "rotation_halfday_requirements",
@@ -35,6 +39,12 @@ ALLOWED_SNAPSHOT_TABLES = {
     "people",
     "absences",
     "assignments",
+    # camelCase (frontend convention)
+    "rotationTemplates",
+    "weeklyPatterns",
+    "rotationHalfdayRequirements",
+    "rotationPreferences",
+    # Note: "people", "absences", "assignments" are same in both conventions
 }
 
 # Snapshot storage directory
@@ -179,14 +189,20 @@ async def create_snapshot(
             env = {"PGPASSWORD": db_pass}
             cmd = [
                 "pg_dump",
-                "-h", db_host,
-                "-p", db_port,
-                "-U", db_user,
-                "-d", db_name,
-                "-t", request.table,
+                "-h",
+                db_host,
+                "-p",
+                db_port,
+                "-U",
+                db_user,
+                "-d",
+                db_name,
+                "-t",
+                request.table,
                 "--data-only",
                 "--inserts",
-                "-f", str(file_path),
+                "-f",
+                str(file_path),
             ]
 
             result = subprocess.run(
@@ -406,11 +422,16 @@ async def restore_snapshot(
             env = {"PGPASSWORD": db_pass}
             cmd = [
                 "psql",
-                "-h", db_host,
-                "-p", db_port,
-                "-U", db_user,
-                "-d", db_name,
-                "-f", str(file_path),
+                "-h",
+                db_host,
+                "-p",
+                db_port,
+                "-U",
+                db_user,
+                "-d",
+                db_name,
+                "-f",
+                str(file_path),
             ]
 
             result = subprocess.run(
