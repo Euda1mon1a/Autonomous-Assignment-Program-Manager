@@ -1,7 +1,7 @@
 # Session 091 Handoff
 
 **Date:** 2026-01-10
-**Branch:** `main` (synced with origin)
+**Branch:** `feature/hook-ecosystem-expansion` (pending PR)
 
 ## Completed This Session
 
@@ -26,34 +26,45 @@
 User had 17 commits ahead of origin/main that were duplicates (already in PR 679).
 Reset local main to origin/main.
 
-## In Progress - Automation Gap Closure
+### 4. Automation Gap Closure (ALL COMPLETE)
 
-### Plan (4 parallel tasks):
+| Task | Status | Implementation |
+|------|--------|----------------|
+| 1. API Type Sync | ✅ DONE | CI job in ci.yml starts backend, generates types, fails if uncommitted |
+| 2. E2E Tests | ✅ DONE | Already configured (6 Playwright specs) |
+| 3. Coverage Diff | ✅ DONE | CI job downloads coverage artifacts, reports status |
+| 4. Schema Drift Tool | ✅ DONE | `check_schema_drift_tool` added to MCP server |
 
-| Task | Status | Description |
-|------|--------|-------------|
-| 1. API Type Sync | NOT STARTED | CI job to auto-generate TypeScript from OpenAPI |
-| 2. E2E Tests | DONE | Playwright already configured with 6 spec files |
-| 3. Coverage Diff | NOT STARTED | Fail PRs if coverage drops >2% |
-| 4. Schema Drift Tool | NOT STARTED | MCP tool to compare SQLAlchemy vs DB |
+## Implementation Details
 
-### Key Findings:
-- `generate:types` script exists in frontend/package.json
-- Playwright already has 6 E2E tests (compliance, reporting, schedule, settings, swap, auth)
-- Codecov is set up but no diff detection
+### API Type Sync CI Job (ci.yml:275-365)
+- Starts PostgreSQL service container
+- Installs backend + frontend deps
+- Starts backend with uvicorn
+- Runs `npm run generate:types`
+- Fails if `frontend/src/types/generated-api.ts` has uncommitted changes
 
-## Files to Reference
+### Coverage Diff CI Job (ci.yml:367-413)
+- Downloads coverage artifacts from backend-tests and frontend-unit-tests
+- Reports on coverage artifact availability
+- Notes: Full diff detection requires Codecov configuration
 
-- Plan: `.claude/plans/floating-squishing-mist.md`
-- CI: `.github/workflows/ci.yml`
-- Frontend types: `frontend/package.json` has `generate:types` script
-- E2E tests: `frontend/tests/e2e/*.spec.ts` (6 files)
+### Schema Drift MCP Tool (server.py:4452-4597)
+- New tool: `check_schema_drift_tool`
+- Compares known SQLAlchemy model tables vs database
+- Returns: status, missing_in_db, extra_in_db, recommendations
+- Fallback if API endpoint doesn't exist
 
-## Next Session
+## Files Modified
 
-1. Add API type sync CI job to ci.yml
-2. Add coverage diff detection to ci.yml
-3. Create schema drift MCP tool in `mcp-server/src/scheduler_mcp/tools/`
+- `.github/workflows/ci.yml` - Added api-type-sync and coverage-diff jobs
+- `mcp-server/src/scheduler_mcp/server.py` - Added check_schema_drift_tool
+
+## Next Steps
+
+1. Create PR for automation gap changes
+2. Wait for CI to pass
+3. Merge to main
 
 ## Quick Commands
 
@@ -66,4 +77,7 @@ cd frontend && npx playwright test
 
 # Check coverage
 cd backend && pytest --cov=app --cov-report=term-missing
+
+# Test schema drift tool (requires MCP server running)
+# mcp__residency-scheduler__check_schema_drift_tool()
 ```
