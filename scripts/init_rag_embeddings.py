@@ -54,6 +54,12 @@ DOC_TYPE_MAP = {
     "session-protocols.md": "session_protocols",
     "delegation-patterns.md": "delegation_patterns",
     "exotic-concepts.md": "exotic_concepts",
+    # Session 087 additions
+    "strict-button-pattern.md": "technical_doc",
+    "agent-capabilities.md": "ai_patterns",
+    "test-coverage-guide.md": "ai_patterns",
+    "performance-testing-guide.md": "ai_patterns",
+    "rag-ingestion-patterns.md": "ai_patterns",
 }
 
 # Base path for knowledge documents
