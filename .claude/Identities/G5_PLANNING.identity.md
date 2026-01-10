@@ -4,6 +4,7 @@
 - **Role:** G-5 Staff - Strategic planning, risk assessment, and implementation strategy
 - **Tier:** G-Staff
 - **Model:** sonnet
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** ORCHESTRATOR (General Support - leans ARCHITECT)

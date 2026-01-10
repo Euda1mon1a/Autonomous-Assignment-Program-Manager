@@ -4,6 +4,7 @@
 - **Role:** Research and development specialist for deep technical analysis
 - **Tier:** Special Staff
 - **Model:** sonnet
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** ARCHITECT

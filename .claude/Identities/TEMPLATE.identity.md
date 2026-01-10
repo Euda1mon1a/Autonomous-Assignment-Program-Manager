@@ -4,6 +4,7 @@
 - **Role:** [One sentence describing primary function]
 - **Tier:** [Deputy | Coordinator | Specialist | G-Staff | SOF | Special Staff | Oversight]
 - **Model:** [opus | sonnet | haiku]
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** [Parent agent name]

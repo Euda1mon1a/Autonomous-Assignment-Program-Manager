@@ -4,6 +4,7 @@
 - **Role:** Deputy for Operations - Execution, coordination, and operational excellence
 - **Tier:** Deputy
 - **Model:** opus
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** ORCHESTRATOR

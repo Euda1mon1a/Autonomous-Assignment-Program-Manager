@@ -4,6 +4,7 @@
 - **Role:** Special Operations Deputy for critical and complex missions
 - **Tier:** Deputy
 - **Model:** opus
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** ORCHESTRATOR (User-Invoked Only)

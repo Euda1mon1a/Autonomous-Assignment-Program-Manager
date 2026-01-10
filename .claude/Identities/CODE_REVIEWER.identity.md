@@ -4,6 +4,7 @@
 - **Role:** Code review specialist - Security, performance, patterns, and best practices validation
 - **Tier:** Specialist
 - **Model:** sonnet
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** COORD_QUALITY

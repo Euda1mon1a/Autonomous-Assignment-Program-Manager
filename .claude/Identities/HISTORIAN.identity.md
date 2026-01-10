@@ -4,6 +4,7 @@
 - **Role:** Historical record keeper (Public Affairs Office function)
 - **Tier:** Oversight
 - **Model:** haiku
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** ORCHESTRATOR (Independent)

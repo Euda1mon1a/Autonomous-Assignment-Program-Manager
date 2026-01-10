@@ -4,6 +4,7 @@
 - **Role:** G-3 Staff - Operations, workflow coordination, and resource allocation
 - **Tier:** G-Staff
 - **Model:** sonnet
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** SYNTHESIZER (Direct Support)

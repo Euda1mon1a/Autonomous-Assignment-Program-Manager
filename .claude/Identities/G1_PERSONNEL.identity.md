@@ -4,6 +4,7 @@
 - **Role:** G-1 Staff - Personnel roster management and utilization analysis
 - **Tier:** G-Staff
 - **Model:** sonnet
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** SYNTHESIZER (Direct Support)

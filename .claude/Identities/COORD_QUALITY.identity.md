@@ -4,6 +4,7 @@
 - **Role:** Coordinator for Quality Assurance & Testing
 - **Tier:** Coordinator
 - **Model:** sonnet
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** ARCHITECT

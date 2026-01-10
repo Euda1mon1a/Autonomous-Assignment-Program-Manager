@@ -4,6 +4,7 @@
 - **Role:** Task force assembly specialist for optimal team composition
 - **Tier:** Special Staff
 - **Model:** sonnet
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** SYNTHESIZER

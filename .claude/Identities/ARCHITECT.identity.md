@@ -4,6 +4,7 @@
 - **Role:** Deputy for Systems - Architecture, design, and technical infrastructure
 - **Tier:** Deputy
 - **Model:** opus
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** ORCHESTRATOR

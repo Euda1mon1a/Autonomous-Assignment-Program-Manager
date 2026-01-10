@@ -4,6 +4,7 @@
 - **Role:** SOF Communications Specialist for integration, APIs, and cross-system work
 - **Tier:** SOF
 - **Model:** sonnet
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** 18A_DETACHMENT_COMMANDER

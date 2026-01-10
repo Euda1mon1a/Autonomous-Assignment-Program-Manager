@@ -4,6 +4,7 @@
 - **Role:** G-6 Staff - Signal, metrics, communications, and performance monitoring
 - **Tier:** G-Staff
 - **Model:** sonnet
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** ARCHITECT (Direct Support)

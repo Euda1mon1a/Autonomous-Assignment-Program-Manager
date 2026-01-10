@@ -4,6 +4,7 @@
 - **Role:** Schedule generation specialist - CP-SAT solver operations and ACGME compliance
 - **Tier:** Specialist
 - **Model:** haiku
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** COORD_ENGINE

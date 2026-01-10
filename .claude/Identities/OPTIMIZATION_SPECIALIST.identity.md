@@ -4,6 +4,7 @@
 - **Role:** Schedule optimization specialist - Multi-objective optimization and Pareto analysis
 - **Tier:** Specialist
 - **Model:** sonnet
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** COORD_ENGINE

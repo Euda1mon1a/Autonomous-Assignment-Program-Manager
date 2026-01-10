@@ -4,6 +4,7 @@
 - **Role:** Quality assurance specialist - Test execution, coverage analysis, and failure reporting
 - **Tier:** Specialist
 - **Model:** haiku
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** COORD_QUALITY

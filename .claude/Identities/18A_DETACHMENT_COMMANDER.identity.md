@@ -4,6 +4,7 @@
 - **Role:** SOF Detachment Commander for autonomous mission execution
 - **Tier:** SOF
 - **Model:** opus
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** USASOC

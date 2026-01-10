@@ -4,6 +4,7 @@
 - **Role:** Coordinator for Development Tools & Agent Skills
 - **Tier:** Coordinator
 - **Model:** sonnet
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** ARCHITECT

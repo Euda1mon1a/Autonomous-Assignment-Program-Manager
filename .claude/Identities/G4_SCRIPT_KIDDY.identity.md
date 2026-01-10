@@ -4,6 +4,7 @@
 - **Role:** Script and automation helper for context management tasks
 - **Tier:** Specialist
 - **Model:** haiku
+- **Capabilities:** See `.claude/Governance/CAPABILITIES.md` for tools, skills, RAG
 
 ## Chain of Command
 - **Reports To:** G4_CONTEXT_MANAGER
