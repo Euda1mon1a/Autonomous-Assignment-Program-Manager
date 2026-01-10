@@ -40,11 +40,13 @@ import { ArchivedTemplatesDrawer } from '@/components/admin/ArchivedTemplatesDra
 import { WeeklyRequirementsEditor } from '@/components/admin/WeeklyRequirementsEditor';
 import { HalfDayRequirementsEditor } from '@/components/HalfDayRequirementsEditor';
 import { BulkWeeklyPatternModal } from '@/components/admin/BulkWeeklyPatternModal';
+import { BulkCreateModal } from '@/components/admin/BulkCreateModal';
 import {
   useAdminTemplates,
   useDeleteTemplate,
   useBulkDeleteTemplates,
   useBulkUpdateTemplates,
+  useBulkCreateTemplates,
   useTemplatePreferences,
   useReplaceTemplatePreferences,
   useBulkRestoreTemplates,
@@ -107,6 +109,7 @@ export default function AdminTemplatesPage() {
   const [pendingAction, setPendingAction] = useState<BulkActionType | null>(null);
   const [showArchivedDrawer, setShowArchivedDrawer] = useState(false);
   const [showBulkPatternModal, setShowBulkPatternModal] = useState(false);
+  const [showBulkCreateModal, setShowBulkCreateModal] = useState(false);
 
   // Debounce search input for better performance
   const debouncedSearch = useDebounce(filters.search, 300);
@@ -174,6 +177,7 @@ export default function AdminTemplatesPage() {
   const deleteTemplate = useDeleteTemplate();
   const bulkDelete = useBulkDeleteTemplates();
   const bulkUpdate = useBulkUpdateTemplates();
+  const bulkCreate = useBulkCreateTemplates();
   const updatePattern = useUpdateWeeklyPattern();
   const updateHalfday = useUpdateHalfDayRequirements();
   const replacePreferences = useReplaceTemplatePreferences();
@@ -278,10 +282,10 @@ export default function AdminTemplatesPage() {
         case 'name':
           comparison = a.name.localeCompare(b.name);
           break;
-        case 'activity_type':
+        case 'activityType':
           comparison = a.activityType.localeCompare(b.activityType);
           break;
-        case 'created_at':
+        case 'createdAt':
           comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
       }
@@ -335,7 +339,7 @@ export default function AdminTemplatesPage() {
     try {
       // Create backup snapshot before bulk delete
       await createSnapshot.mutateAsync({
-        table: 'rotation_templates',
+        table: 'rotationTemplates',
         reason: `Bulk delete of ${selectedIds.length} template(s)`,
       });
       toast.info('Backup created');
@@ -352,7 +356,7 @@ export default function AdminTemplatesPage() {
 
   const handleBulkUpdateActivityType = useCallback(
     async (activityType: ActivityType) => {
-      setPendingAction('update_activity_type');
+      setPendingAction('update_activityType');
       try {
         await bulkUpdate.mutateAsync({
           templateIds: selectedIds,
@@ -375,7 +379,7 @@ export default function AdminTemplatesPage() {
       try {
         await bulkUpdate.mutateAsync({
           templateIds: selectedIds,
-          updates: { supervision_required: required },
+          updates: { supervisionRequired: required },
         });
         toast.success(`${selectedIds.length} template(s) updated`);
         setSelectedIds([]);
@@ -390,11 +394,11 @@ export default function AdminTemplatesPage() {
 
   const handleBulkUpdateMaxResidents = useCallback(
     async (maxResidents: number) => {
-      setPendingAction('update_max_residents');
+      setPendingAction('update_maxResidents');
       try {
         await bulkUpdate.mutateAsync({
           templateIds: selectedIds,
-          updates: { max_residents: maxResidents },
+          updates: { maxResidents: maxResidents },
         });
         toast.success(`${selectedIds.length} template(s) updated`);
         setSelectedIds([]);
@@ -656,6 +660,7 @@ export default function AdminTemplatesPage() {
                 View Archived
               </button>
               <button
+                onClick={() => setShowBulkCreateModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-lg font-medium transition-all"
               >
                 <Plus className="w-4 h-4" />
@@ -1034,6 +1039,17 @@ export default function AdminTemplatesPage() {
         selectedTemplates={templates.filter((t) => selectedIds.includes(t.id))}
         onClose={handleBulkPatternModalClose}
         onComplete={handleBulkPatternComplete}
+      />
+
+      {/* Bulk Create Modal */}
+      <BulkCreateModal
+        isOpen={showBulkCreateModal}
+        onClose={() => setShowBulkCreateModal(false)}
+        onSubmit={async (templates) => {
+          await bulkCreate.mutateAsync(templates);
+          setShowBulkCreateModal(false);
+        }}
+        isSubmitting={bulkCreate.isPending}
       />
     </div>
   );

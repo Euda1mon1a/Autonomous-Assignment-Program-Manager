@@ -6,7 +6,10 @@ import { ButtonSpinner } from '../LoadingStates';
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline' | 'success';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+/**
+ * Base props shared by all button types
+ */
+interface ButtonBaseProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick' | 'type'> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   isLoading?: boolean;
@@ -15,6 +18,34 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
 }
+
+/**
+ * Interactive button - requires onClick handler
+ * Use for buttons that trigger actions (open modal, navigate, etc.)
+ */
+interface ActionButtonProps extends ButtonBaseProps {
+  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  type?: 'button' | 'reset'; // Not 'submit' - use SubmitButtonProps for that
+}
+
+/**
+ * Form submit button - uses form's onSubmit, no onClick needed
+ * Use inside <form> elements that have an onSubmit handler
+ */
+interface SubmitButtonProps extends ButtonBaseProps {
+  type: 'submit';
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void; // Optional for submit
+}
+
+/**
+ * Button requires either:
+ * - onClick handler (for interactive buttons), OR
+ * - type="submit" (for form submission)
+ *
+ * This prevents unclickable buttons that frustrate users.
+ * See: Session 086 - "New Template" button bug
+ */
+export type ButtonProps = ActionButtonProps | SubmitButtonProps;
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm focus:ring-blue-500',
@@ -62,6 +93,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       disabled,
       children,
       className = '',
+      type,
+      onClick,
       ...props
     },
     ref
@@ -73,6 +106,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
+        type={type || 'button'}
+        onClick={onClick}
         disabled={disabled || isLoading}
         aria-busy={isLoading || undefined}
         aria-disabled={disabled || isLoading || undefined}
@@ -108,18 +143,24 @@ export interface IconButtonProps extends Omit<ButtonProps, 'leftIcon' | 'rightIc
 }
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ children, icon, size = 'md', className = '', ...props }, ref) => {
+  ({ children, icon, size = 'md', className = '', onClick, type, ...props }, ref) => {
     const iconSizes = {
       sm: 'p-1.5',
       md: 'p-2',
       lg: 'p-3',
     };
 
+    // IconButton requires onClick OR type="submit" just like Button
+    const buttonProps = type === 'submit'
+      ? { type: 'submit' as const, onClick }
+      : { onClick: onClick!, type };
+
     return (
       <Button
         ref={ref}
         size={size}
         className={`${iconSizes[size]} ${className}`}
+        {...buttonProps}
         {...props}
       >
         {icon || children}
