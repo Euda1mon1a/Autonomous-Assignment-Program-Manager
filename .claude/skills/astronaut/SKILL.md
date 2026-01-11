@@ -187,10 +187,57 @@ Log all operations in structured format:
 
 ## Mission Templates
 
+### General Templates
 - **Briefing format:** `.claude/Missions/TEMPLATE.md`
 - **Debrief format:** `.claude/Missions/DEBRIEF_TEMPLATE.md`
 - **Active mission:** `.claude/Missions/CURRENT.md`
 - **Completion signal:** `.claude/Missions/MISSION_COMPLETE`
+
+### Hybrid QA Workflow Templates
+
+Use these mission-specific templates based on the QA lifecycle phase:
+
+| Phase | Template | Use When |
+|-------|----------|----------|
+| Development | `MISSION_EXPLORATION.md` | New feature, no tests exist |
+| Bug Triage | `MISSION_BUG_INVESTIGATION.md` | Bug reported, need diagnosis |
+| Post-Fix | `MISSION_VALIDATION.md` | Hotfix merged, quick verification |
+| Periodic | `MISSION_AUDIT.md` | Weekly/pre-release full sweep |
+
+**Workflow Reference:** `.claude/workflows/hybrid-frontend-qa.md`
+
+---
+
+## Hybrid QA Integration
+
+ASTRONAUT operates as the **exploratory** component of the hybrid QA workflow:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│   DEVELOPMENT          STABILIZATION           MAINTENANCE     │
+│   ────────────         ─────────────           ───────────     │
+│   ASTRONAUT ◄──        Playwright              Both            │
+│   explores             locks it down           monitors        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### ASTRONAUT Responsibilities
+
+| Scenario | ASTRONAUT Role |
+|----------|----------------|
+| New feature | Explore, find issues, document happy path |
+| Bug reported | Investigate, reproduce, diagnose |
+| Hotfix merged | Quick validation, confirm fix |
+| Pre-release | Full GUI audit sweep |
+
+### Handoff to Playwright
+
+After ASTRONAUT validates a feature:
+1. Document the happy path in debrief
+2. Include suggested Playwright test cases
+3. Note: "STABILIZATION READY: Feature validated, recommend Playwright encoding"
+
+ORCHESTRATOR or COORD_FRONTEND will then create deterministic Playwright tests.
 
 ---
 
