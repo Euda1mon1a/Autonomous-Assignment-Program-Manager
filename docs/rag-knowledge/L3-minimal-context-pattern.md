@@ -173,6 +173,49 @@ Spawn SCHEDULER with:
 
 ---
 
+## Supporting Infrastructure
+
+The L3 pattern works because of the **4-layer MCP enforcement mechanism** (commit f63e7049):
+
+### Layer A: Documentation
+- **`CLAUDE.md`** (lines 264-293) - MCP Tool Requirements section
+- Defines MUST-USE tools for schedule work, domain questions, resilience changes
+
+### Layer B: Skills with MCP Requirements
+- **`.claude/skills/SCHEDULING/SKILL.md`** (lines 36-54) - Required tools for schedule generation
+- **`.claude/skills/acgme-compliance/SKILL.md`** (lines 36-64) - Compliance validation workflow
+- **`.claude/skills/swap-management/SKILL.md`** (lines 36-64) - Swap analysis requirements
+- **`.claude/skills/startup/SKILL.md`** (lines 133-144) - Resilience check on session start
+
+### Layer C: Hooks
+- **`.claude/settings.json`** (lines 52-117) - Hook definitions
+  - `enableAllProjectMcpServers: true` (line 136) - Activates all MCP tools
+- **`.claude/hooks/pre-schedule-warning.sh`** - Warning before schedule edits
+
+### Layer D: MCP Server Prompt Injection
+- **`mcp-server/src/scheduler_mcp/server.py`** (lines 441-506)
+  - `@mcp.prompt() tool_usage_requirements()` - Injects requirements into ALL LLM connections
+  - 5 mandatory tool categories automatically available to subagents
+
+### Key Configuration
+```json
+// .claude/settings.json
+{
+  "enableAllProjectMcpServers": true,  // Line 136 - critical for subagent access
+  "hooks": [
+    { "matcher": "Edit", "hooks": [{"command": ".claude/hooks/pre-schedule-warning.sh"}] }
+  ]
+}
+```
+
+### Related Documentation
+- **`.claude/Governance/HIERARCHY.md`** - L3 Standing Order (lines 135-146)
+- **`.claude/skills/CORE/delegation-patterns.md`** - L3 section (lines 21-58)
+- **`.claude/skills/context-aware-delegation/SKILL.md`** - Context levels table (lines 57-99)
+- **`docs/rag-knowledge/delegation-patterns.md`** - RAG-indexed L3 summary
+
+---
+
 *Document prepared for RAG ingestion*
 *Category: `delegation_patterns`*
 *Last validated: 2026-01-10*
