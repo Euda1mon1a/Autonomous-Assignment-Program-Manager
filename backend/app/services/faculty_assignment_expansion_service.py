@@ -12,6 +12,7 @@ Key differences from resident expansion:
 - Empty slots get GME (admin time) placeholder, not rotation activity
 - Weekends always get W-AM/W-PM (faculty don't work weekends)
 - Holidays always get HOL-AM/HOL-PM (faculty don't work holidays)
+- Non-operational days (DONSA, EO closure) get HOL-AM/HOL-PM
 - Absences get LV-AM/LV-PM
 
 PERSEC-compliant logging (no PII).
@@ -46,7 +47,7 @@ class FacultyAssignmentExpansionService:
        - If existing assignment → skip
        - If blocking absence → LV-AM/LV-PM
        - If weekend → W-AM/W-PM
-       - If holiday → HOL-AM/HOL-PM
+       - If holiday or non-operational → HOL-AM/HOL-PM
        - Else → GME-AM/GME-PM (admin placeholder)
     4. Return list of new Assignment objects (not committed)
     """
@@ -297,12 +298,16 @@ class FacultyAssignmentExpansionService:
         # Check if holiday (faculty don't work holidays)
         is_holiday = getattr(block, "is_holiday", False) is True
 
+        # Check if non-operational day (DONSA, EO closure - faculty don't work)
+        is_non_operational = getattr(block, "is_non_operational", False) is True
+
         # Determine which template to use (priority order)
         if is_absent or slot_absent:
             template_abbrev = f"LV-{time_of_day}"
         elif is_weekend:
             template_abbrev = f"W-{time_of_day}"
-        elif is_holiday:
+        elif is_holiday or is_non_operational:
+            # Use HOL template for both holidays and non-operational days
             template_abbrev = f"HOL-{time_of_day}"
         else:
             template_abbrev = f"GME-{time_of_day}"

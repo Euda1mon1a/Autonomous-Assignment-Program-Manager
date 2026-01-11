@@ -2,7 +2,7 @@
 
 ## Summary
 
-Expanding holiday support to full MEDCOM day-type system (PR #690 → PR #691).
+Expanding holiday support to full MEDCOM day-type system.
 
 ---
 
@@ -13,36 +13,45 @@ Expanding holiday support to full MEDCOM day-type system (PR #690 → PR #691).
 - **PR #689** - Faculty 56-slot expansion ✓
 - **PR #690** - Basic holiday support (HOL-AM/HOL-PM) ✓
 
+### Phase 1 Complete ✓
+- Codex P2 fix: Observed dates (July 4 Sat → July 3 Fri)
+- Added Juneteenth (11 federal holidays now)
+- Created `backend/app/models/day_type.py` with enums
+- 16 holiday tests passing
+- Committed: `095d9d45`
+
 ---
 
-## Current Work: MEDCOM Day-Type System
+## Current Work: Phase 2-5
 
-### Branch: `feature/holiday-support` (continuing)
+### Branch: `feature/holiday-support`
 
-### Codex P2 Fix
-- Fixed holidays need OPM observed dates
-- July 4, 2026 (Saturday) → observe Friday July 3
-- Missing: Juneteenth (June 19)
+### Files Created (Phase 1)
+- `backend/app/models/day_type.py` - DayType, OperationalIntent enums
 
-### New Requirements
-| Day Type | Meaning | Default Intent |
-|----------|---------|---------------|
-| FEDERAL_HOLIDAY | OPM holiday | REDUCED_CAPACITY |
-| TRAINING_HOLIDAY | DONSA | NON_OPERATIONAL |
-| MINIMAL_MANNING | Reduced staffing | REDUCED_CAPACITY |
-| EO_CLOSURE | Presidential order | NON_OPERATIONAL |
+### Files Modified (Phase 1)
+- `backend/app/utils/holidays.py` - observed dates, Juneteenth, Holiday.actual_date
+- `backend/tests/utils/test_holidays.py` - 4 new tests (16 total)
 
-### Operational Intent
-- NON_OPERATIONAL: 0.0 capacity
-- REDUCED_CAPACITY: 0.25 capacity
-- NORMAL: 1.0 capacity
-
-### Implementation Status
-1. 🔲 Phase 1: Fix holidays.py (observed dates + Juneteenth) - IN PROGRESS
-2. 🔲 Phase 2: Create DayType/OperationalIntent enums
-3. 🔲 Phase 3: Database migration
-4. 🔲 Phase 4: Update Block model
+### Remaining Phases
+1. ✅ Phase 1: holidays.py + enums - DONE
+2. 🔲 Phase 2: Database migration (day_type, operational_intent columns)
+3. 🔲 Phase 3: Update Block model
+4. 🔲 Phase 4: Update generation scripts
 5. 🔲 Phase 5: Update expansion services
+
+### Key Enums
+```python
+class DayType(str, Enum):
+    NORMAL, FEDERAL_HOLIDAY, TRAINING_HOLIDAY,
+    MINIMAL_MANNING, EO_CLOSURE, INAUGURATION_DAY
+
+class OperationalIntent(str, Enum):
+    NORMAL (1.0), REDUCED_CAPACITY (0.25), NON_OPERATIONAL (0.0)
+```
+
+### Plan File
+Full plan at: `.claude/plans/virtual-snacking-summit.md`
 
 ---
 
@@ -70,10 +79,37 @@ Expanding holiday support to full MEDCOM day-type system (PR #690 → PR #691).
 
 ---
 
+## Completed This Session
+
+### Phases 2-5 Implementation
+- **Phase 2**: Created migration `20260111_day_type_cols.py`
+  - PostgreSQL enums for DayType and OperationalIntent
+  - 3 new columns: day_type, operational_intent, actual_date
+  - Backfill existing holidays to FEDERAL_HOLIDAY/REDUCED_CAPACITY
+
+- **Phase 3**: Updated Block model
+  - Added 3 columns matching migration
+  - Added `is_non_operational` property
+  - Added `is_reduced_capacity` property
+
+- **Phase 4**: Updated generate_blocks.py
+  - Sets day_type=FEDERAL_HOLIDAY, operational_intent=REDUCED_CAPACITY for holidays
+  - Sets actual_date for observed holidays (when observed != actual)
+
+- **Phase 5**: Updated expansion services
+  - Resident service: Added skip_non_operational check
+  - Faculty service: Added is_non_operational check
+  - Both use HOL templates as fallback for non-operational days
+
+### Verification
+- Ruff linter: All checks passed
+- Holiday tests: 16/16 passed
+- Block model imports: OK
+- Expansion services import: OK
+- generate_blocks.py syntax: OK
+
 ## Next Steps
 
-1. Lint and test resident expansion service
-2. Update faculty expansion service
-3. Create backfill script
-4. Commit all changes
-5. Create PR #690
+1. Commit all Phase 2-5 changes
+2. Create PR with full MEDCOM day-type system
+3. Future: Add NOP-AM/NOP-PM templates for DONSA/EO days

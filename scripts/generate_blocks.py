@@ -26,7 +26,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
 
 from app.db.session import SessionLocal
 from app.models.block import Block
-from app.utils.holidays import is_federal_holiday
+from app.models.day_type import DayType, OperationalIntent
+from app.utils.holidays import get_federal_holidays, is_federal_holiday
 
 
 def get_first_thursday(reference_date: date) -> date:
@@ -103,11 +104,23 @@ def generate_blocks(
     created = 0
     skipped = 0
 
+    # Build holiday lookup dict with actual_date info
+    # Key: observed date, Value: (name, actual_date or None)
+    holiday_lookup: dict[date, tuple[str, date | None]] = {}
+    for year in {start_date.year, end_date.year}:
+        for holiday in get_federal_holidays(year):
+            holiday_lookup[holiday.date] = (holiday.name, holiday.actual_date)
+
     try:
         current = start_date
         while current <= end_date:
             is_weekend = current.weekday() >= 5  # Saturday = 5, Sunday = 6
             is_holiday, holiday_name = is_federal_holiday(current)
+
+            # Get actual_date for observed holidays
+            actual_date = None
+            if is_holiday and current in holiday_lookup:
+                _, actual_date = holiday_lookup[current]
 
             for tod in ["AM", "PM"]:
                 # Check if block already exists
@@ -124,6 +137,14 @@ def generate_blocks(
                     continue
 
                 if not dry_run:
+                    # Set day_type and operational_intent for holidays
+                    day_type = DayType.FEDERAL_HOLIDAY if is_holiday else DayType.NORMAL
+                    operational_intent = (
+                        OperationalIntent.REDUCED_CAPACITY
+                        if is_holiday
+                        else OperationalIntent.NORMAL
+                    )
+
                     block = Block(
                         date=current,
                         time_of_day=tod,
@@ -131,6 +152,9 @@ def generate_blocks(
                         is_weekend=is_weekend,
                         is_holiday=is_holiday,
                         holiday_name=holiday_name,
+                        day_type=day_type,
+                        operational_intent=operational_intent,
+                        actual_date=actual_date,
                     )
                     db.add(block)
 
@@ -138,7 +162,12 @@ def generate_blocks(
                 if verbose:
                     weekend_tag = " (weekend)" if is_weekend else ""
                     holiday_tag = f" ({holiday_name})" if is_holiday else ""
-                    print(f"  CREATE: {current} {tod}{weekend_tag}{holiday_tag}")
+                    observed_tag = (
+                        f" [observed, actual={actual_date}]" if actual_date else ""
+                    )
+                    print(
+                        f"  CREATE: {current} {tod}{weekend_tag}{holiday_tag}{observed_tag}"
+                    )
 
             current += timedelta(days=1)
 
