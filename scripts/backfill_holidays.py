@@ -3,6 +3,7 @@
 Backfill holiday flags on existing Block records.
 
 Updates blocks that were created before holiday detection was added.
+Sets day_type, operational_intent, and actual_date for observed holidays.
 Idempotent: safe to run multiple times.
 
 Usage:
@@ -18,6 +19,7 @@ Usage:
 
 import argparse
 import sys
+from datetime import date
 from pathlib import Path
 
 # Add backend to Python path
@@ -27,12 +29,20 @@ from sqlalchemy import or_
 
 from app.db.session import SessionLocal
 from app.models.block import Block
-from app.utils.holidays import is_federal_holiday
+from app.models.day_type import DayType, OperationalIntent
+from app.utils.holidays import get_federal_holidays, is_federal_holiday
 
 
 def backfill_holidays(dry_run: bool = False, verbose: bool = False) -> tuple[int, int]:
     """
-    Update existing blocks with holiday flags.
+    Update existing blocks with holiday flags and day_type fields.
+
+    Sets:
+    - is_holiday = True
+    - holiday_name = <holiday name>
+    - day_type = FEDERAL_HOLIDAY
+    - operational_intent = REDUCED_CAPACITY
+    - actual_date = <actual calendar date if observed != actual>
 
     Args:
         dry_run: If True, don't commit changes
@@ -57,16 +67,36 @@ def backfill_holidays(dry_run: bool = False, verbose: bool = False) -> tuple[int
         total = len(blocks)
         print(f"Checking {total} blocks for holiday status...")
 
+        # Build holiday lookup dict with actual_date info
+        # Key: observed date, Value: (name, actual_date or None)
+        holiday_lookup: dict[date, tuple[str, date | None]] = {}
+        if blocks:
+            years = {b.date.year for b in blocks}
+            for year in years:
+                for holiday in get_federal_holidays(year):
+                    holiday_lookup[holiday.date] = (holiday.name, holiday.actual_date)
+
         for block in blocks:
             is_hol, name = is_federal_holiday(block.date)
 
             if is_hol:
+                # Get actual_date for observed holidays
+                actual_date = None
+                if block.date in holiday_lookup:
+                    _, actual_date = holiday_lookup[block.date]
+
                 if verbose:
-                    print(f"  UPDATE: {block.date} {block.time_of_day} → {name}")
+                    observed_tag = (
+                        f" [observed, actual={actual_date}]" if actual_date else ""
+                    )
+                    print(f"  UPDATE: {block.date} {block.time_of_day} → {name}{observed_tag}")
 
                 if not dry_run:
                     block.is_holiday = True
                     block.holiday_name = name
+                    block.day_type = DayType.FEDERAL_HOLIDAY
+                    block.operational_intent = OperationalIntent.REDUCED_CAPACITY
+                    block.actual_date = actual_date
 
                 updated += 1
 
