@@ -33,6 +33,36 @@ Expert procedures for managing schedule swaps while maintaining compliance and f
 - Validating proposed swaps
 - Handling emergency coverage
 
+## Required MCP Tools (MUST USE)
+
+**Before processing ANY swap, you MUST run:**
+
+```python
+# Step 1: Find compatible partners
+mcp__residency-scheduler__analyze_swap_candidates_tool(
+    requester_person_id="[person_id]",
+    assignment_id="[assignment_id]",
+    max_candidates=10
+)
+
+# Step 2: Validate the proposed swap won't cause violations
+mcp__residency-scheduler__validate_schedule_tool(
+    start_date="[swap_date]",
+    end_date="[swap_date]"
+)
+```
+
+**After swap execution:**
+```python
+# Verify no violations were introduced
+mcp__residency-scheduler__validate_schedule_tool(...)
+
+# Check resilience wasn't degraded
+mcp__residency-scheduler__get_defense_level_tool(coverage_rate=0.95)
+```
+
+These tools are NOT optional. Never execute a swap without validation.
+
 ## Swap Types
 
 ### 1. One-to-One Swap
