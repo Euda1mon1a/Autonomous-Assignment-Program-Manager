@@ -4488,7 +4488,7 @@ async def check_schema_drift_tool() -> dict[str, Any]:
         # Try to get schema info from API
         # If API has /schema/drift endpoint, use it
         try:
-            response = await api_client._request("GET", "/api/v1/schema/drift")
+            response = await api_client._request_with_retry("GET", "/api/v1/schema/drift")
             return response
         except Exception:
             pass  # API endpoint doesn't exist, use fallback
@@ -4525,7 +4525,7 @@ async def check_schema_drift_tool() -> dict[str, Any]:
         try:
             # Use the API client to run a simple query
             # This endpoint may not exist, so we catch errors
-            response = await api_client._request("GET", "/api/v1/health/db")
+            response = await api_client._request_with_retry("GET", "/api/v1/health/db")
             if "tables" in response:
                 db_tables = response["tables"]
         except Exception:
