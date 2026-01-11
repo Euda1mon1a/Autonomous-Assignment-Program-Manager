@@ -377,10 +377,9 @@ class ConstraintManager:
         # Weekend work constraint (enabled by default - uses template.includes_weekend_work)
         manager.add(WeekendWorkConstraint())
 
-        # Protected slot constraint - needs weekly_patterns data
+        # Protected slot constraint - uses weekly_patterns with is_protected=true
         manager.add(ProtectedSlotConstraint())
-        # Disabled: needs weekly_patterns data from rotation templates
-        manager.disable("ProtectedSlot")
+        # ENABLED: Hybrid model - protected slots are locked (LEC, ADV)
 
         # Half-day requirement constraint - needs halfday_requirements data
         manager.add(HalfDayRequirementConstraint(weight=50.0))
@@ -389,8 +388,7 @@ class ConstraintManager:
 
         # Activity requirement constraint - uses RotationActivityRequirement
         manager.add(ActivityRequirementConstraint(weight=50.0))
-        # Disabled: needs activity_requirements from rotation config
-        manager.disable("ActivityRequirement")
+        # ENABLED: Hybrid model - solver satisfies activity requirements
 
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))
@@ -502,10 +500,9 @@ class ConstraintManager:
         # Weekend work constraint (enabled by default)
         manager.add(WeekendWorkConstraint())
 
-        # Protected slot constraint - needs weekly_patterns data
+        # Protected slot constraint - uses weekly_patterns with is_protected=true
         manager.add(ProtectedSlotConstraint())
-        # Disabled: needs weekly_patterns data from rotation templates
-        manager.disable("ProtectedSlot")
+        # ENABLED: Hybrid model - protected slots are locked (LEC, ADV)
 
         # Half-day requirement constraint - needs halfday_requirements data
         manager.add(HalfDayRequirementConstraint(weight=50.0))
@@ -514,8 +511,7 @@ class ConstraintManager:
 
         # Activity requirement constraint - uses RotationActivityRequirement
         manager.add(ActivityRequirementConstraint(weight=50.0))
-        # Disabled: needs activity_requirements from rotation config
-        manager.disable("ActivityRequirement")
+        # ENABLED: Hybrid model - solver satisfies activity requirements
 
         # Soft constraints (optimization)
         manager.add(CoverageConstraint(weight=1000.0))
