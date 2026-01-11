@@ -18,6 +18,46 @@ This document establishes patterns for:
 
 ---
 
+## I-A. L3 MINIMAL CONTEXT PATTERN (VALIDATED 2026-01-10)
+
+**Finding:** Subagents can autonomously invoke MCP tools with minimal context.
+
+### Context Levels
+
+| Level | What's Included | MCP Tool Usage | When to Use |
+|-------|-----------------|----------------|-------------|
+| L1 | Identity + explicit tools | Yes (instructed) | New agents, uncertain tasks |
+| L2 | Identity + mission intent | Yes (inferred) | Known domain, needs authority |
+| **L3** | Mission + parameters only | **Yes (autonomous)** | **Clear mission, tools available** |
+| L4 | Just the question | No (fails) | Never use |
+
+### L3 Template
+
+```markdown
+## MISSION
+[Clear objective in 1-2 sentences]
+[Domain context: "You are assessing a medical residency schedule"]
+
+[Parameters]
+- Dates: 2026-01-06 to 2026-01-31
+- Target: Block 10
+- Constraints: ACGME compliance
+
+## OUTPUT
+[Expected JSON/markdown structure]
+```
+
+### Evidence
+
+L3 probe with only mission + parameters autonomously invoked:
+- `validate_schedule_tool`
+- `detect_conflicts_tool`
+- `get_defense_level_tool`
+
+**Key Insight:** Auftragstaktik works at L3. Provide mission intent + parameters. Let agents discover and use appropriate tools.
+
+---
+
 ## II. DELEGATION DECISION FRAMEWORK
 
 ### A. When to Spawn Subagents

@@ -54,6 +54,51 @@ description: Understand agent context isolation and write effective prompts for 
 
 ---
 
+## L3 Minimal Context Pattern (VALIDATED 2026-01-10)
+
+**Key Discovery:** Subagents can autonomously invoke MCP tools with just mission intent + parameters.
+
+### Context Levels Comparison
+
+| Level | Identity | Mission | Explicit Tools | Parameters | Result |
+|-------|----------|---------|----------------|------------|--------|
+| L1 | Yes | Yes | Yes | Yes | MCP used (expected) |
+| L2 | Yes | Yes | No | Yes | MCP used + RAG |
+| **L3** | No | Yes | No | Yes | **MCP used (3 tools!)** |
+| L4 | No | Minimal | No | No | Failed (file search) |
+
+### L3 Prompt Template
+
+```markdown
+## MISSION
+[Clear objective: "Assess Block 10 schedule compliance"]
+[Domain context if needed: "medical residency schedule"]
+
+[Key parameters]
+- Dates: 2026-01-06 to 2026-01-31
+- Requirements: ACGME compliance check
+
+## OUTPUT
+[Expected structure - JSON/markdown]
+```
+
+### When to Use L3
+
+| Scenario | Use L3? |
+|----------|---------|
+| Clear mission, known domain | Yes |
+| MCP tools available for task | Yes |
+| Agent has standing orders | Yes |
+| Uncertain requirements | No (use L2) |
+| Novel task, no tools | No (use L1) |
+
+### Anti-Pattern: Over-Contextualizing
+
+**Wrong:** 2000 tokens of identity card + explicit tool instructions for clear tasks
+**Right:** 100 tokens of mission intent + parameters (L3)
+
+---
+
 ## Key Insight: Mid-Task Updates Don't Affect Running Agents
 
 **Updating an agent's specification file while it's running has ZERO effect on the running instance.**
