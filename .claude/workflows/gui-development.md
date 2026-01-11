@@ -71,8 +71,53 @@ For GUI testing:
 - **Activities:** 730 half-day slots
 - **Academic Year:** 2025-07-01 to 2026-06-30
 
+## Hybrid QA Workflow Integration
+
+This workflow is part of the broader **Hybrid Frontend QA** strategy:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│   DEVELOPMENT          STABILIZATION           MAINTENANCE     │
+│   ────────────         ─────────────           ───────────     │
+│   ASTRONAUT            Playwright              Both            │
+│   explores             locks it down           monitors        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Lifecycle Phase Identification
+
+| You're In This Phase | If... | Tool |
+|---------------------|-------|------|
+| **Development** | Building new feature, no tests exist | ASTRONAUT |
+| **Stabilization** | Feature works, need regression protection | Playwright |
+| **Bug Investigation** | Issue reported, need diagnosis | ASTRONAUT |
+| **Post-Fix** | Hotfix merged, quick check | ASTRONAUT |
+| **CI Gate** | Every commit | Playwright (automatic) |
+
+### Decision Tree
+
+```
+New GUI Work Arrives
+    |
+    ├─ Is it exploratory? ──YES──> ASTRONAUT first, Playwright later
+    |
+    ├─ Is it a known regression? ──YES──> Fix + update Playwright test
+    |
+    ├─ Is it a bug report? ──YES──> ASTRONAUT investigation
+    |
+    └─ Is it style/polish? ──YES──> Antigravity + Claude review
+```
+
+**Full Workflow Reference:** `.claude/workflows/hybrid-frontend-qa.md`
+
+---
+
 ## Related Resources
 
+- **Hybrid QA Workflow:** `.claude/workflows/hybrid-frontend-qa.md`
+- **ASTRONAUT Skill:** `.claude/skills/astronaut/SKILL.md`
+- **Playwright Skill:** `.claude/skills/playwright-workflow/SKILL.md`
+- **Mission Templates:** `.claude/Missions/MISSION_*.md`
 - Pentest prompt: `.claude/prompts/gemini-flash-gui-pentest.md`
 - Frontend code: `frontend/src/`
 - API endpoints: `backend/app/api/routes/`
