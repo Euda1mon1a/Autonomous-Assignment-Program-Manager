@@ -38,8 +38,8 @@ from uuid import UUID
 logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import joinedload, Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import get_settings
 from app.core.security import get_current_user, get_current_active_user

@@ -4666,6 +4666,180 @@ async def check_schema_drift_tool() -> dict[str, Any]:
         }
 
 
+# Block Quality Report Tool
+@mcp.tool()
+async def generate_block_quality_report_tool(
+    block_number: int,
+    academic_year: int = 2025,
+    output_format: str = "summary",
+) -> dict[str, Any]:
+    """
+    Generate comprehensive quality report for a schedule block.
+
+    Produces a detailed quality analysis including:
+    - Section A: Preloaded data (block assignments, absences, call coverage)
+    - Section B: Solved data (engine-generated assignments by rotation)
+    - Section C: Combined gap analysis
+    - Section D: Post-constraint verification (NF 1-in-7, post-call PCAT/DO)
+    - Section E: Accountability (56 half-day accounting)
+
+    Args:
+        block_number: Block number (1-13)
+        academic_year: Academic year (default: 2025)
+        output_format: Output format:
+            - "summary": Executive summary only (fast)
+            - "full": Complete report data
+            - "markdown": Full report as markdown string
+
+    Returns:
+        Dict with report data including executive summary, totals,
+        and status checks. Format depends on output_format parameter.
+
+    Example:
+        # Quick summary check
+        result = await generate_block_quality_report_tool(
+            block_number=10,
+            output_format="summary"
+        )
+        print(f"Total: {result['total_assignments']}")
+        print(f"Status: {result['status']}")
+
+        # Full report for analysis
+        result = await generate_block_quality_report_tool(
+            block_number=10,
+            output_format="full"
+        )
+    """
+    try:
+        api_client = await get_api_client()
+
+        # Call the backend API endpoint for the report
+        # First try the dedicated endpoint
+        try:
+            response = await api_client._request_with_retry(
+                "GET",
+                "/api/v1/reports/block-quality",
+                params={
+                    "block_number": block_number,
+                    "academic_year": academic_year,
+                    "format": output_format,
+                },
+            )
+            return response
+        except Exception:
+            pass  # Endpoint doesn't exist, use fallback
+
+        # Fallback: Generate report using direct database queries
+        # This requires the BlockQualityReportService to be available
+        # For now, return a placeholder that indicates the tool exists
+        # but needs the backend service to be running
+
+        return {
+            "status": "service_unavailable",
+            "block_number": block_number,
+            "academic_year": academic_year,
+            "message": (
+                "Block quality report API endpoint not available. "
+                "Use the CLI script instead: "
+                f"docker exec scheduler-local-backend python /app/scripts/generate_block_quality_report.py --block {block_number}"
+            ),
+            "fallback_command": (
+                f"docker exec scheduler-local-backend python "
+                f"/app/scripts/generate_block_quality_report.py --block {block_number}"
+            ),
+        }
+
+    except Exception as e:
+        logger.error(f"Block quality report generation failed: {e}")
+        return {
+            "status": "error",
+            "block_number": block_number,
+            "error": str(e),
+            "message": "Failed to generate block quality report",
+        }
+
+
+@mcp.tool()
+async def generate_multi_block_quality_report_tool(
+    block_numbers: str,
+    academic_year: int = 2025,
+    include_summary: bool = True,
+) -> dict[str, Any]:
+    """
+    Generate quality reports for multiple blocks with optional cross-block summary.
+
+    Args:
+        block_numbers: Block specification as comma-separated or range.
+            Examples: "10,11,12" or "10-13"
+        academic_year: Academic year (default: 2025)
+        include_summary: Include cross-block summary report
+
+    Returns:
+        Dict with individual block summaries and optional combined summary.
+
+    Example:
+        result = await generate_multi_block_quality_report_tool(
+            block_numbers="10-13",
+            include_summary=True
+        )
+        print(f"Total across all blocks: {result['total_assignments']}")
+        for block in result['blocks']:
+            print(f"Block {block['block_number']}: {block['status']}")
+    """
+    try:
+        # Parse block numbers
+        blocks = []
+        for part in block_numbers.split(","):
+            part = part.strip()
+            if "-" in part:
+                start, end = part.split("-")
+                blocks.extend(range(int(start), int(end) + 1))
+            else:
+                blocks.append(int(part))
+        blocks = sorted(set(blocks))
+
+        api_client = await get_api_client()
+
+        # Try the API endpoint first
+        try:
+            response = await api_client._request_with_retry(
+                "GET",
+                "/api/v1/reports/block-quality/multi",
+                params={
+                    "blocks": ",".join(str(b) for b in blocks),
+                    "academic_year": academic_year,
+                    "include_summary": include_summary,
+                },
+            )
+            return response
+        except Exception:
+            pass  # Fallback
+
+        return {
+            "status": "service_unavailable",
+            "blocks": blocks,
+            "academic_year": academic_year,
+            "message": (
+                "Multi-block report API endpoint not available. "
+                "Use the CLI script instead."
+            ),
+            "fallback_command": (
+                f"docker exec scheduler-local-backend python "
+                f"/app/scripts/generate_block_quality_report.py "
+                f"--blocks {block_numbers} {'--summary' if include_summary else ''}"
+            ),
+        }
+
+    except Exception as e:
+        logger.error(f"Multi-block quality report generation failed: {e}")
+        return {
+            "status": "error",
+            "block_numbers": block_numbers,
+            "error": str(e),
+            "message": "Failed to generate multi-block quality report",
+        }
+
+
 # Server lifecycle functions (called by lifespan context manager)
 
 

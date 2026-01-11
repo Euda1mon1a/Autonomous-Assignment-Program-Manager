@@ -351,10 +351,9 @@ class ConstraintManager:
         # Disabled: requires explicit opt-in for overnight call workflow
         manager.disable("OvernightCallGeneration")
 
-        # Post-call auto-assignment - opt-in via factory method
+        # Post-call auto-assignment - ENABLED by default
+        # Auto-generates PCAT (AM) and DO (PM) after overnight call
         manager.add(PostCallAutoAssignmentConstraint())
-        # Disabled: requires post-call scheduling enabled
-        manager.disable("PostCallAutoAssignment")
 
         # Sports Medicine coordination - requires SM program configuration
         manager.add(SMResidentFacultyAlignmentConstraint())
@@ -477,10 +476,9 @@ class ConstraintManager:
         # Disabled: requires explicit opt-in for overnight call workflow
         manager.disable("OvernightCallGeneration")
 
-        # Post-call auto-assignment - opt-in via factory method
+        # Post-call auto-assignment - ENABLED by default
+        # Auto-generates PCAT (AM) and DO (PM) after overnight call
         manager.add(PostCallAutoAssignmentConstraint())
-        # Disabled: requires post-call scheduling enabled
-        manager.disable("PostCallAutoAssignment")
 
         # Sports Medicine coordination - requires SM program configuration
         manager.add(SMResidentFacultyAlignmentConstraint())

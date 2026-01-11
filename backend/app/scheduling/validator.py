@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
+from app.models.rotation_template import RotationTemplate
 from app.schemas.schedule import ValidationResult, Violation
 
 
@@ -283,11 +284,14 @@ class ACGMEValidator:
         self, assignments: list[Assignment]
     ) -> list[Violation]:
         """
-        Check faculty:resident supervision ratios.
+        Check faculty:resident supervision ratios for OUTPATIENT rotations only.
 
-        Ratios:
-        - PGY-1: 1 faculty : 2 residents (clinic)
-        - PGY-2/3: 1 faculty : 4 residents (clinic)
+        Ratios (for clinic/outpatient only):
+        - PGY-1: 1 faculty : 2 residents
+        - PGY-2/3: 1 faculty : 4 residents
+
+        Inpatient residents (FMIT, Night Float, etc.) have separate supervision
+        via FMIT faculty and are NOT included in clinic supervision ratios.
         """
         violations = []
 
@@ -298,7 +302,7 @@ class ACGMEValidator:
 
         # Check each block
         for block_id, block_assignments in assignments_by_block.items():
-            residents = []
+            supervised_residents = []
             faculty = []
 
             for assignment in block_assignments:
@@ -307,18 +311,29 @@ class ACGMEValidator:
                     .filter(Person.id == assignment.person_id)
                     .first()
                 )
-                if person:
-                    if person.type == "resident":
-                        residents.append(person)
-                    elif person.type == "faculty":
-                        faculty.append(person)
+                if not person:
+                    continue
 
-            if not residents:
+                if person.type == "faculty":
+                    faculty.append(person)
+                elif person.type == "resident":
+                    # Only count residents on rotations that require FMC supervision
+                    # Uses supervision_required field on rotation_template
+                    rotation = (
+                        self.db.query(RotationTemplate)
+                        .filter(RotationTemplate.id == assignment.rotation_template_id)
+                        .first()
+                    )
+                    if rotation and rotation.supervision_required:
+                        supervised_residents.append(person)
+
+            # No supervised residents in this block = no supervision needed
+            if not supervised_residents:
                 continue
 
-            # Calculate required faculty
-            pgy1_count = sum(1 for r in residents if r.pgy_level == 1)
-            other_count = len(residents) - pgy1_count
+            # Calculate required faculty for supervised residents
+            pgy1_count = sum(1 for r in supervised_residents if r.pgy_level == 1)
+            other_count = len(supervised_residents) - pgy1_count
 
             # 1:2 for PGY-1, 1:4 for others
             required = (pgy1_count + 1) // 2 + (other_count + 3) // 4
@@ -331,9 +346,9 @@ class ACGMEValidator:
                         type="SUPERVISION_RATIO_VIOLATION",
                         severity="CRITICAL",
                         block_id=block_id,
-                        message=f"Block {block.display_name if block else block_id}: {len(faculty)} faculty for {len(residents)} residents (need {required})",
+                        message=f"Block {block.display_name if block else block_id}: {len(faculty)} faculty for {len(supervised_residents)} supervised residents (need {required})",
                         details={
-                            "residents": len(residents),
+                            "residents": len(supervised_residents),
                             "pgy1_count": pgy1_count,
                             "faculty": len(faculty),
                             "required_faculty": required,

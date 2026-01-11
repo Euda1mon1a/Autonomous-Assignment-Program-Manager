@@ -407,4 +407,42 @@ Build infrastructure for complete next academic year schedule development.
 
 ---
 
+## Known Issues (2026-01-11)
+
+### CRITICAL: Sparse Schedule Generation
+**Status:** Under Investigation
+
+All solvers (greedy, hybrid, cp_sat) produce identical sparse result: ~80 assignments instead of expected 900+.
+
+| Finding | Detail |
+|---------|--------|
+| Symptom | 2-4 assignments per person for 28-day block |
+| Coverage metric | Shows 1.0 (100%) but schedule is empty |
+| Solver time | All finish in seconds (time NOT the issue) |
+
+**Hypotheses:**
+1. Engine only schedules from `block_assignments` table (master rotation), not daily slots
+2. Absences/FMIT data not loaded before solving (no explicit log confirmation)
+3. Objective function satisfies constraints but doesn't maximize coverage
+
+**To Investigate:**
+- [ ] Confirm absences loaded in availability matrix before solve
+- [ ] Confirm FMIT data loaded before solve
+- [ ] Check if engine uses `block_assignments` as input
+- [ ] Review engine objective function definition
+
+### BUG: CP-SAT ortools Type Error
+**Status:** Deferred
+
+```
+__rsub__(): incompatible function arguments
+ortools.sat.python.cp_model_helper.IntAffine
+```
+
+CP-SAT solver crashes with type error when building constraints. Greedy/hybrid work but produce same sparse result.
+
+**Files:** `backend/app/scheduling/constraints.py` (constraint building logic)
+
+---
+
 *This roadmap will be updated as milestones are completed.*
