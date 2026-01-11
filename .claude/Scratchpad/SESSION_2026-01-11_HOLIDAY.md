@@ -1,35 +1,48 @@
-# Session 2026-01-11: Holiday Support Implementation
+# Session 2026-01-11: MEDCOM Day-Type System
 
 ## Summary
 
-Implementing holiday support for the 56-assignment rule (PR #690 in progress).
+Expanding holiday support to full MEDCOM day-type system (PR #690 → PR #691).
 
 ---
 
 ## Completed
 
-### PR #688 - Resident 56-slot (MERGED ✓)
-### PR #689 - Faculty 56-slot (MERGED ✓)
+### PRs Merged
+- **PR #688** - Resident 56-slot expansion ✓
+- **PR #689** - Faculty 56-slot expansion ✓
+- **PR #690** - Basic holiday support (HOL-AM/HOL-PM) ✓
 
 ---
 
-## Current Work: Holiday Support
+## Current Work: MEDCOM Day-Type System
 
-### Branch: `feature/holiday-support`
+### Branch: `feature/holiday-support` (continuing)
 
-### Files Created
-- `backend/app/utils/holidays.py` - Holiday calendar utility (10 federal holidays)
-- `backend/tests/utils/test_holidays.py` - 12 tests passing
+### Codex P2 Fix
+- Fixed holidays need OPM observed dates
+- July 4, 2026 (Saturday) → observe Friday July 3
+- Missing: Juneteenth (June 19)
 
-### Files Modified
-- `scripts/generate_blocks.py` - Added holiday detection when creating blocks
-- `backend/app/services/block_assignment_expansion_service.py` - Added holiday support (IN PROGRESS)
+### New Requirements
+| Day Type | Meaning | Default Intent |
+|----------|---------|---------------|
+| FEDERAL_HOLIDAY | OPM holiday | REDUCED_CAPACITY |
+| TRAINING_HOLIDAY | DONSA | NON_OPERATIONAL |
+| MINIMAL_MANNING | Reduced staffing | REDUCED_CAPACITY |
+| EO_CLOSURE | Presidential order | NON_OPERATIONAL |
 
-### Completed
-1. ✅ **Update faculty expansion service** - Added HOL-AM/HOL-PM support
-2. ✅ **Add tests** - Added `test_creates_holiday_assignment` (9 tests total)
-3. ✅ **Create backfill script** - `scripts/backfill_holidays.py`
-4. 🔲 **Commit and push** - In progress
+### Operational Intent
+- NON_OPERATIONAL: 0.0 capacity
+- REDUCED_CAPACITY: 0.25 capacity
+- NORMAL: 1.0 capacity
+
+### Implementation Status
+1. 🔲 Phase 1: Fix holidays.py (observed dates + Juneteenth) - IN PROGRESS
+2. 🔲 Phase 2: Create DayType/OperationalIntent enums
+3. 🔲 Phase 3: Database migration
+4. 🔲 Phase 4: Update Block model
+5. 🔲 Phase 5: Update expansion services
 
 ---
 

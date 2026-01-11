@@ -15,10 +15,10 @@ from app.utils.holidays import (
 class TestGetFederalHolidays:
     """Test get_federal_holidays function."""
 
-    def test_returns_10_holidays(self):
-        """Should return exactly 10 federal holidays."""
+    def test_returns_11_holidays(self):
+        """Should return exactly 11 federal holidays (includes Juneteenth)."""
         holidays = get_federal_holidays(2025)
-        assert len(holidays) == 10
+        assert len(holidays) == 11
 
     def test_holidays_are_sorted_by_date(self):
         """Holidays should be returned in chronological order."""
@@ -65,6 +65,46 @@ class TestGetFederalHolidays:
         assert holiday_dict["Labor Day"] == date(2026, 9, 7)  # 1st Mon Sep
         assert holiday_dict["Columbus Day"] == date(2026, 10, 12)  # 2nd Mon Oct
         assert holiday_dict["Thanksgiving Day"] == date(2026, 11, 26)  # 4th Thu Nov
+
+    def test_juneteenth_exists(self):
+        """Juneteenth (June 19) should be included."""
+        holidays = get_federal_holidays(2025)
+        holiday_names = [h.name for h in holidays]
+        assert "Juneteenth National Independence Day" in holiday_names
+
+        # Check date
+        holiday_dict = {h.name: h.date for h in holidays}
+        assert holiday_dict["Juneteenth National Independence Day"] == date(2025, 6, 19)
+
+    def test_observed_date_saturday_to_friday(self):
+        """July 4, 2026 falls on Saturday, should be observed Friday July 3."""
+        holidays = get_federal_holidays(2026)
+        independence_day = next(h for h in holidays if h.name == "Independence Day")
+
+        # Observed date should be Friday July 3
+        assert independence_day.date == date(2026, 7, 3)
+        # Actual date should be Saturday July 4
+        assert independence_day.actual_date == date(2026, 7, 4)
+
+    def test_observed_date_sunday_to_monday(self):
+        """July 4, 2021 fell on Sunday, should be observed Monday July 5."""
+        holidays = get_federal_holidays(2021)
+        independence_day = next(h for h in holidays if h.name == "Independence Day")
+
+        # Observed date should be Monday July 5
+        assert independence_day.date == date(2021, 7, 5)
+        # Actual date should be Sunday July 4
+        assert independence_day.actual_date == date(2021, 7, 4)
+
+    def test_observed_date_weekday_unchanged(self):
+        """July 4, 2025 falls on Friday, should be observed same day."""
+        holidays = get_federal_holidays(2025)
+        independence_day = next(h for h in holidays if h.name == "Independence Day")
+
+        # Observed date should be same as actual (Friday)
+        assert independence_day.date == date(2025, 7, 4)
+        # actual_date should be None when same as observed
+        assert independence_day.actual_date is None
 
 
 class TestIsFederalHoliday:

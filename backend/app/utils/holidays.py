@@ -4,20 +4,27 @@ Federal Holiday Calendar Utility.
 Provides federal holiday detection for military medical residency scheduling.
 Based on OPM (Office of Personnel Management) federal holiday calendar.
 
-10 Federal Holidays:
-- 4 Fixed: New Year's Day, Independence Day, Veterans Day, Christmas
+11 Federal Holidays:
+- 5 Fixed: New Year's Day, Juneteenth, Independence Day, Veterans Day, Christmas
 - 6 Floating: MLK Day, Presidents Day, Memorial Day, Labor Day, Columbus Day, Thanksgiving
+
+OPM Observed Date Rules:
+- If a fixed holiday falls on Saturday, it is observed on Friday
+- If a fixed holiday falls on Sunday, it is observed on Monday
+
+Reference: https://www.opm.gov/policy-data-oversight/pay-leave/federal-holidays/
 """
 
-from datetime import date
+from datetime import date, timedelta
 from typing import NamedTuple
 
 
 class Holiday(NamedTuple):
-    """Represents a federal holiday."""
+    """Represents a federal holiday with observed and actual dates."""
 
-    date: date
+    date: date  # Observed date (when work schedules honor it)
     name: str
+    actual_date: date | None = None  # Actual calendar date (if different from observed)
 
 
 def _nth_weekday_of_month(year: int, month: int, weekday: int, n: int) -> date:
@@ -59,32 +66,68 @@ def _last_weekday_of_month(year: int, month: int, weekday: int) -> date:
     else:
         next_month = date(year, month + 1, 1)
     # Go back to last day of target month
-    last_day = next_month.replace(day=1) - __import__("datetime").timedelta(days=1)
+    last_day = next_month - timedelta(days=1)
     # Find last occurrence of the weekday
     days_back = (last_day.weekday() - weekday) % 7
-    return last_day.replace(day=last_day.day - days_back)
+    return last_day - timedelta(days=days_back)
+
+
+def _get_observed_date(holiday_date: date) -> date:
+    """
+    Return OPM observed date for federal holidays.
+
+    Per OPM rules:
+    - If holiday falls on Saturday → observed on Friday (day before)
+    - If holiday falls on Sunday → observed on Monday (day after)
+    - Otherwise → observed on actual date
+
+    Args:
+        holiday_date: The actual calendar date of the holiday
+
+    Returns:
+        The observed date (may be same as holiday_date)
+    """
+    weekday = holiday_date.weekday()
+    if weekday == 5:  # Saturday
+        return holiday_date - timedelta(days=1)  # Friday
+    elif weekday == 6:  # Sunday
+        return holiday_date + timedelta(days=1)  # Monday
+    return holiday_date
+
+
+def _make_fixed_holiday(actual_date: date, name: str) -> Holiday:
+    """Create a Holiday with observed date for fixed holidays."""
+    observed = _get_observed_date(actual_date)
+    if observed != actual_date:
+        return Holiday(date=observed, name=name, actual_date=actual_date)
+    return Holiday(date=actual_date, name=name)
 
 
 def get_federal_holidays(year: int) -> list[Holiday]:
     """
-    Get all 10 federal holidays for a calendar year.
+    Get all 11 federal holidays for a calendar year.
 
     Based on OPM federal holiday schedule:
     https://www.opm.gov/policy-data-oversight/pay-leave/federal-holidays/
+
+    Fixed holidays use observed dates per OPM rules:
+    - Saturday holidays → observed Friday
+    - Sunday holidays → observed Monday
 
     Args:
         year: Calendar year (e.g., 2025)
 
     Returns:
-        List of Holiday named tuples sorted by date
+        List of Holiday named tuples sorted by observed date
     """
     holidays = [
-        # Fixed holidays
-        Holiday(date(year, 1, 1), "New Year's Day"),
-        Holiday(date(year, 7, 4), "Independence Day"),
-        Holiday(date(year, 11, 11), "Veterans Day"),
-        Holiday(date(year, 12, 25), "Christmas Day"),
-        # Floating holidays
+        # Fixed holidays (use observed dates)
+        _make_fixed_holiday(date(year, 1, 1), "New Year's Day"),
+        _make_fixed_holiday(date(year, 6, 19), "Juneteenth National Independence Day"),
+        _make_fixed_holiday(date(year, 7, 4), "Independence Day"),
+        _make_fixed_holiday(date(year, 11, 11), "Veterans Day"),
+        _make_fixed_holiday(date(year, 12, 25), "Christmas Day"),
+        # Floating holidays (always fall on weekdays, no observed shift needed)
         Holiday(
             _nth_weekday_of_month(year, 1, 0, 3), "Martin Luther King Jr. Day"
         ),  # 3rd Monday Jan
