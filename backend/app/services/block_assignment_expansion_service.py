@@ -170,7 +170,28 @@ class BlockAssignmentExpansionService:
         created_by: str,
         apply_one_in_seven: bool,
     ) -> list[Assignment]:
-        """Expand a single BlockAssignment into daily Assignments."""
+        """Expand a single BlockAssignment into daily Assignments.
+
+        ACGME 1-in-7 RULE IMPLEMENTATION - DO NOT MODIFY WITHOUT PHYSICIAN APPROVAL
+        ============================================================================
+
+        This method implements the "PAUSE" interpretation for absences:
+        - Scheduled day off (weekend, forced 1-in-7): RESETS consecutive_days to 0
+        - Absence (leave, TDY, etc.): HOLDS consecutive_days (no change)
+
+        WHY PAUSE (not RESET on absence):
+        1. Leave is SEPARATE from ACGME-required rest days
+        2. Schedule must be compliant INDEPENDENT of leave status
+        3. Absence ≠ "day off" for 1-in-7 purposes
+        4. Prevents gaming: can't work 6→leave→work 6→leave→work 6...
+        5. Ensures 1-in-7 distribution throughout block (not crammed at end)
+
+        APPROVED BY: Dr. Montgomery (2026-01-11)
+        MEDCOM ADVISORY: Confirms PAUSE is correct ACGME interpretation
+        CODEX P2 REJECTED: "Reset on absence" suggestion is INCORRECT
+
+        See: .claude/plans/virtual-snacking-summit.md for full rationale
+        """
         assignments: list[Assignment] = []
         rotation = block_assignment.rotation_template
 
@@ -213,11 +234,22 @@ class BlockAssignmentExpansionService:
                 force_day_off = True
                 last_day_off = current_date
 
+            # ╔══════════════════════════════════════════════════════════════════╗
+            # ║  ACGME 1-in-7 RULE - PAUSE BEHAVIOR (DO NOT MODIFY)              ║
+            # ║                                                                  ║
+            # ║  Absence: Counter HOLDS (doesn't reset) - this is INTENTIONAL    ║
+            # ║  Scheduled off: Counter RESETS to 0                              ║
+            # ║                                                                  ║
+            # ║  Rationale: Leave ≠ day off. Schedule must provide 1-in-7       ║
+            # ║  independent of leave. Approved by physician 2026-01-11.         ║
+            # ║                                                                  ║
+            # ║  CODEX P2 REJECTED: "Reset on absence" is WRONG.                 ║
+            # ╚══════════════════════════════════════════════════════════════════╝
             if is_absent or skip_weekend or force_day_off:
-                # Day off - reset consecutive counter
-                if not is_absent:  # Only reset if it's a scheduled day off, not absence
+                if not is_absent:  # PAUSE: Only reset for SCHEDULED day off
                     consecutive_days = 0
                     last_day_off = current_date
+                # Absence: counter HOLDS (no reset) - correct ACGME interpretation
                 current_date += timedelta(days=1)
                 day_index += 1
                 continue
