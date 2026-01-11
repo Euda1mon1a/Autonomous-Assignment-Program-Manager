@@ -33,6 +33,36 @@ Expert knowledge of ACGME (Accreditation Council for Graduate Medical Education)
 - Before finalizing any schedule changes
 - When coverage gaps are detected
 
+## Required MCP Tools (MUST USE)
+
+**For ANY compliance validation, you MUST run:**
+
+```python
+# Step 1: Validate against ACGME rules
+mcp__residency-scheduler__validate_schedule_tool(
+    start_date="[start]",
+    end_date="[end]",
+    check_work_hours=True,
+    check_supervision=True,
+    check_rest_periods=True,
+    check_consecutive_duty=True
+)
+
+# Step 2: Military compliance check (DRRS ratings)
+mcp__residency-scheduler__check_mtf_compliance_tool(
+    check_circuit_breaker=True,
+    generate_sitrep=True
+)
+
+# Step 3: Query knowledge base for policy details
+mcp__residency-scheduler__rag_search(
+    query="ACGME [specific rule]",
+    doc_type="acgme_rules"
+)
+```
+
+These tools provide authoritative compliance data. Never rely on memory alone.
+
 ## Core ACGME Rules
 
 ### 1. 80-Hour Rule (Duty Hours)

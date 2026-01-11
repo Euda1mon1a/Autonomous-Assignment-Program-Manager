@@ -437,6 +437,75 @@ mcp = FastMCP(
     ),
 )
 
+
+# =============================================================================
+# MCP Prompts - Tool Usage Requirements
+# =============================================================================
+# These prompts are injected into any LLM that connects to this MCP server,
+# ensuring consistent tool usage regardless of the client (Claude, GPT, etc.)
+
+
+@mcp.prompt()
+async def tool_usage_requirements() -> str:
+    """
+    Required tool usage patterns for medical residency scheduling.
+
+    This prompt injects tool usage requirements into the LLM context,
+    ensuring all AI assistants follow proper workflows when working
+    with the scheduling system.
+    """
+    return """
+REQUIRED MCP TOOL USAGE FOR RESIDENCY SCHEDULING:
+
+1. SCHEDULE VALIDATION (Before any schedule modification):
+   - MUST run: validate_schedule_tool
+   - Catches ACGME violations, coverage gaps, and supervision issues before implementation
+   - Never edit schedule code without validating first
+
+2. DOMAIN KNOWLEDGE (Before answering domain questions):
+   - MUST query: rag_search
+   - Contains ACGME rules, scheduling policies, swap procedures, and institutional knowledge
+   - 67+ documents indexed with semantic search
+
+3. RESILIENCE CHECK (Before capacity or staffing changes):
+   - MUST check: get_defense_level_tool
+   - Shows current utilization (80% threshold), N-1/N-2 vulnerability status
+   - Prevents decisions that degrade system resilience
+
+4. COMPLIANCE REPORTING (After schedule generation):
+   - SHOULD run: check_mtf_compliance_tool
+   - Generates military-style readiness report (DRRS ratings)
+   - Includes circuit breaker status and SITREP summary
+
+5. SWAP ANALYSIS (Before processing swap requests):
+   - MUST run: analyze_swap_candidates_tool
+   - Finds compatible swap partners with safety checks
+   - Validates ACGME compliance for proposed swaps
+
+TOOL QUICK REFERENCE:
+| Scenario                  | Tool                        |
+|---------------------------|-----------------------------|
+| ACGME compliance question | rag_search                  |
+| Schedule validation       | validate_schedule_tool      |
+| Resilience status         | get_defense_level_tool      |
+| System health             | check_circuit_breakers_tool |
+| Swap compatibility        | analyze_swap_candidates_tool|
+| Fatigue assessment        | run_frms_assessment_tool    |
+| Conflict detection        | detect_conflicts_tool       |
+
+ARMORY (Advanced Analysis):
+For deep scientific analysis, activate specialized tool domains:
+- biology: Burnout Rt, epidemiology, creep fatigue
+- resilience_advanced: Hub centrality, blast radius, cognitive load
+- physics: Phase transitions, entropy, time crystals
+- operations_research: Shapley values, equity metrics, Erlang coverage
+
+Set ARMORY_DOMAINS environment variable or use /armory skill.
+
+These tools exist to prevent errors and ensure ACGME compliance. Use them.
+"""
+
+
 # =============================================================================
 # Armory Conditional Loading
 # =============================================================================

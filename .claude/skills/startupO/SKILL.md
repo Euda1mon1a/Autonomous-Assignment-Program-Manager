@@ -252,7 +252,24 @@ If ANY tool inside a container reports "file not found" but the file exists on h
 - After creating new migration files → rebuild before testing
 - Use `./scripts/diagnose-container-staleness.sh` when in doubt
 
-### 6. Acknowledge ORCHESTRATOR Mode
+### 6. Resilience Status Check (REQUIRED)
+
+**If MCP is available, ALWAYS check system resilience:**
+
+```python
+# Get current defense level
+mcp__residency-scheduler__get_defense_level_tool(coverage_rate=0.95)
+```
+
+**Interpret results:**
+- **GREEN (Level 1-2):** Normal operations, proceed with work
+- **YELLOW (Level 3):** Increased monitoring, be cautious with changes
+- **ORANGE (Level 4):** Elevated risk, avoid schedule modifications
+- **RED (Level 5):** Critical issues, escalate to human
+
+Include defense level in ORCHESTRATOR Mode output. If ORANGE or RED, flag as blocker before delegating schedule-related tasks.
+
+### 7. Acknowledge ORCHESTRATOR Mode
 
 Output this confirmation:
 

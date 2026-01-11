@@ -261,6 +261,36 @@ Examples of things to report:
 **Agents:** See `.claude/Agents/` for full roster. Spawn based on domain expertise, not availability.
 **Codebase:** `backend/app/` (FastAPI), `frontend/src/` (Next.js), `.claude/` (PAI governance).
 
+### MCP Tool Requirements (MUST USE)
+
+The MCP tools exist to prevent errors and ensure compliance. **Use them.**
+
+**Before Schedule Work:**
+MUST run: `mcp__residency-scheduler__validate_schedule_tool`
+- Catches ACGME violations before implementation
+- Validates constraints, coverage gaps, supervision ratios
+
+**Before Domain Questions:**
+MUST query: `mcp__residency-scheduler__rag_search`
+- Contains policies, ACGME rules, scheduling patterns
+- 67+ documents indexed with semantic search
+
+**Before Resilience Changes:**
+MUST check: `mcp__residency-scheduler__get_defense_level_tool`
+- Shows current utilization and N-1/N-2 status
+- Prevents capacity decisions that degrade resilience
+
+**Tool Quick Reference:**
+
+| Scenario | MCP Tool | Why |
+|----------|----------|-----|
+| ACGME questions | `rag_search` | Knows the rules |
+| Schedule validation | `validate_schedule_tool` | Catches violations |
+| Resilience status | `get_defense_level_tool` | Shows system health |
+| System health | `check_circuit_breakers_tool` | Service status |
+| Compliance report | `check_mtf_compliance_tool` | Military compliance |
+| Swap analysis | `analyze_swap_candidates_tool` | Safe swap matching |
+
 ### Core Policy
 
 - Full autonomy for local work

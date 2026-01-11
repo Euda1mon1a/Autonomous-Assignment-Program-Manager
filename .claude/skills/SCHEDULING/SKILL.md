@@ -33,6 +33,25 @@ Use this skill when:
 - ACGME validation only (use `acgme-compliance` skill)
 - Emergency coverage gaps (use incident response procedures)
 
+## Required MCP Tools (MUST USE)
+
+**Before ANY schedule operation, you MUST run these tools:**
+
+```
+1. validate_schedule_tool - Check existing schedule for violations
+2. get_defense_level_tool - Assess current resilience state
+3. rag_search("scheduling context [topic]") - Query knowledge base
+```
+
+**After schedule generation:**
+```
+1. validate_schedule_tool - Verify new schedule is compliant
+2. check_mtf_compliance_tool - Military readiness report
+3. run_contingency_analysis_resilience_tool - N-1/N-2 analysis
+```
+
+These tools are NOT optional. They prevent ACGME violations and operational failures.
+
 ## Five Phases of Schedule Generation
 
 All schedule generation follows this structured workflow:

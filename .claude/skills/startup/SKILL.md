@@ -130,6 +130,23 @@ Then verify RAG is accessible by calling `mcp__residency-scheduler__rag_health`.
    Fix: ./scripts/start-local.sh (starts all services including MCP)
 ```
 
+### 6. Check Resilience Status (REQUIRED)
+
+**If MCP is available, ALWAYS check system resilience:**
+
+```python
+# Get current defense level
+mcp__residency-scheduler__get_defense_level_tool(coverage_rate=0.95)
+```
+
+**Interpret results:**
+- **GREEN (Level 1-2):** Normal operations, proceed with work
+- **YELLOW (Level 3):** Increased monitoring, be cautious with changes
+- **ORANGE (Level 4):** Elevated risk, avoid schedule modifications
+- **RED (Level 5):** Critical issues, escalate to human
+
+Include defense level in session output. If ORANGE or RED, flag as blocker.
+
 ---
 
 ## Output Format

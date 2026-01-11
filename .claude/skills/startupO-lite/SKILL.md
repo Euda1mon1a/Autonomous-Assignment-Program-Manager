@@ -44,6 +44,16 @@ MCP_STATUS=$(docker inspect scheduler-local-mcp --format '{{.State.Health.Status
 
 Then call `mcp__residency-scheduler__rag_health` - if it fails, you're flying blind.
 
+### 2a. Resilience Status Check (REQUIRED)
+
+**If MCP is available, check system resilience:**
+
+```python
+mcp__residency-scheduler__get_defense_level_tool(coverage_rate=0.95)
+```
+
+**Interpret:** GREEN = proceed | YELLOW = cautious | ORANGE/RED = escalate before schedule work
+
 ### 2b. Container Staleness Check (if containers running)
 
 ```bash
