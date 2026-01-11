@@ -161,6 +161,42 @@ class BlockAssignmentExpansionService:
             self._absence_cache[absence.person_id].append(absence)
         logger.info(f"Pre-loaded absences for {len(self._absence_cache)} people")
 
+    def _preload_absence_templates(self) -> None:
+        """Pre-load absence rotation templates for 56-slot expansion.
+
+        These templates (W-AM, W-PM, LV-AM, LV-PM, OFF-AM, OFF-PM) are used to
+        create placeholder assignments for weekends, absences, and days off.
+        This enables the 56-assignment rule: every person gets 56 assignments
+        per block (28 days × 2 half-days), making gap detection trivial.
+        """
+        if hasattr(self, "_absence_templates"):
+            return  # Already loaded
+
+        self._absence_templates: dict[str, RotationTemplate] = {}
+        stmt = select(RotationTemplate).where(
+            RotationTemplate.abbreviation.in_(
+                [
+                    "W-AM",
+                    "W-PM",
+                    "LV-AM",
+                    "LV-PM",
+                    "OFF-AM",
+                    "OFF-PM",
+                    "HOL-AM",
+                    "HOL-PM",
+                ]
+            )
+        )
+        for rt in self.db.execute(stmt).scalars():
+            self._absence_templates[rt.abbreviation] = rt
+        logger.info(f"Pre-loaded {len(self._absence_templates)} absence templates")
+
+    def _get_absence_template(self, abbrev: str) -> RotationTemplate | None:
+        """Get absence rotation template by abbreviation (cached)."""
+        if not hasattr(self, "_absence_templates"):
+            self._preload_absence_templates()
+        return self._absence_templates.get(abbrev)
+
     def _expand_single_block_assignment(
         self,
         block_assignment: BlockAssignment,
@@ -246,6 +282,18 @@ class BlockAssignmentExpansionService:
             # ║  CODEX P2 REJECTED: "Reset on absence" is WRONG.                 ║
             # ╚══════════════════════════════════════════════════════════════════╝
             if is_absent or skip_weekend or force_day_off:
+                # 56-ASSIGNMENT RULE: Create placeholder assignments instead of skipping
+                self._create_absence_assignments(
+                    assignments,
+                    block_assignment,
+                    current_date,
+                    schedule_run_id,
+                    created_by,
+                    is_absent=is_absent,
+                    is_weekend=skip_weekend,
+                    is_day_off=force_day_off,
+                )
+
                 if not is_absent:  # PAUSE: Only reset for SCHEDULED day off
                     consecutive_days = 0
                     last_day_off = current_date
@@ -411,3 +459,83 @@ class BlockAssignmentExpansionService:
                 elif absence.should_block_assignment:
                     return True
         return False
+
+    def _create_absence_assignments(
+        self,
+        assignments: list[Assignment],
+        block_assignment: BlockAssignment,
+        current_date: date,
+        schedule_run_id: UUID | None,
+        created_by: str,
+        is_absent: bool,
+        is_weekend: bool,
+        is_day_off: bool,
+    ) -> None:
+        """Create AM and PM assignments for absence/weekend/day-off days.
+
+        56-ASSIGNMENT RULE IMPLEMENTATION
+        =================================
+        Instead of skipping days (which creates gaps), we now create placeholder
+        assignments using absence rotation templates. This ensures every person
+        has exactly 56 assignments per block, making gap detection trivial:
+        - 56 assignments = complete schedule
+        - <56 assignments = gap detected
+
+        The placeholder templates are:
+        - W-AM, W-PM: Weekend (rotation doesn't include weekend work)
+        - LV-AM, LV-PM: Leave/absence (blocking absence)
+        - OFF-AM, OFF-PM: Day off (1-in-7 rule forced day)
+
+        Args:
+            assignments: List to append new assignments to
+            block_assignment: The BlockAssignment being expanded
+            current_date: The date for these assignments
+            schedule_run_id: Provenance tracking ID
+            created_by: Audit field
+            is_absent: True if person has blocking absence
+            is_weekend: True if weekend and rotation excludes weekends
+            is_day_off: True if 1-in-7 rule forces day off
+        """
+        # Determine which absence template to use
+        if is_absent:
+            am_abbrev, pm_abbrev = "LV-AM", "LV-PM"
+        elif is_weekend:
+            am_abbrev, pm_abbrev = "W-AM", "W-PM"
+        elif is_day_off:
+            am_abbrev, pm_abbrev = "OFF-AM", "OFF-PM"
+        else:
+            return  # Should never happen
+
+        # Create AM assignment
+        am_template = self._get_absence_template(am_abbrev)
+        am_block = self._block_cache.get((current_date, "AM"))
+        if am_template and am_block:
+            assignments.append(
+                Assignment(
+                    block_id=am_block.id,
+                    person_id=block_assignment.resident_id,
+                    rotation_template_id=am_template.id,
+                    role="primary",
+                    schedule_run_id=schedule_run_id,
+                    created_by=created_by,
+                )
+            )
+        elif not am_template:
+            logger.warning(f"Missing absence template: {am_abbrev}")
+
+        # Create PM assignment
+        pm_template = self._get_absence_template(pm_abbrev)
+        pm_block = self._block_cache.get((current_date, "PM"))
+        if pm_template and pm_block:
+            assignments.append(
+                Assignment(
+                    block_id=pm_block.id,
+                    person_id=block_assignment.resident_id,
+                    rotation_template_id=pm_template.id,
+                    role="primary",
+                    schedule_run_id=schedule_run_id,
+                    created_by=created_by,
+                )
+            )
+        elif not pm_template:
+            logger.warning(f"Missing absence template: {pm_abbrev}")
