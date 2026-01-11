@@ -114,12 +114,8 @@ class FacultyAssignmentExpansionService:
         return all_new_assignments
 
     def _load_faculty(self) -> list[Person]:
-        """Load all active faculty members."""
-        stmt = (
-            select(Person)
-            .where(Person.type == "faculty")
-            .where(Person.is_active == True)  # noqa: E712
-        )
+        """Load all faculty members."""
+        stmt = select(Person).where(Person.type == "faculty")
         result = self.db.execute(stmt)
         return list(result.scalars().all())
 
