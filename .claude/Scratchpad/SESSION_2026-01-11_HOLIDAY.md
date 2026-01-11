@@ -25,11 +25,11 @@ Implementing holiday support for the 56-assignment rule (PR #690 in progress).
 - `scripts/generate_blocks.py` - Added holiday detection when creating blocks
 - `backend/app/services/block_assignment_expansion_service.py` - Added holiday support (IN PROGRESS)
 
-### Still TODO
-1. **Update faculty expansion service** for holiday support
-2. **Add tests** for holiday expansion
-3. **Create backfill script** for existing blocks
-4. **Commit and push**
+### Completed
+1. ✅ **Update faculty expansion service** - Added HOL-AM/HOL-PM support
+2. ✅ **Add tests** - Added `test_creates_holiday_assignment` (9 tests total)
+3. ✅ **Create backfill script** - `scripts/backfill_holidays.py`
+4. 🔲 **Commit and push** - In progress
 
 ---
 

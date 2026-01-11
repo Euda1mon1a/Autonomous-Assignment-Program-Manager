@@ -11,6 +11,7 @@ Key differences from resident expansion:
 - Existing assignments (FMIT, clinic, supervision) are preserved
 - Empty slots get GME (admin time) placeholder, not rotation activity
 - Weekends always get W-AM/W-PM (faculty don't work weekends)
+- Holidays always get HOL-AM/HOL-PM (faculty don't work holidays)
 - Absences get LV-AM/LV-PM
 
 PERSEC-compliant logging (no PII).
@@ -45,6 +46,7 @@ class FacultyAssignmentExpansionService:
        - If existing assignment → skip
        - If blocking absence → LV-AM/LV-PM
        - If weekend → W-AM/W-PM
+       - If holiday → HOL-AM/HOL-PM
        - Else → GME-AM/GME-PM (admin placeholder)
     4. Return list of new Assignment objects (not committed)
     """
@@ -181,7 +183,7 @@ class FacultyAssignmentExpansionService:
         )
 
     def _preload_placeholder_templates(self) -> None:
-        """Pre-load placeholder rotation templates (W, LV, GME)."""
+        """Pre-load placeholder rotation templates (W, LV, HOL, GME)."""
         if self._placeholder_templates:
             return  # Already loaded
 
@@ -191,6 +193,8 @@ class FacultyAssignmentExpansionService:
             "W-PM",  # Weekend
             "LV-AM",
             "LV-PM",  # Leave/absence
+            "HOL-AM",
+            "HOL-PM",  # Federal holiday
             "GME-AM",
             "GME-PM",  # Admin time (default for empty slots)
         ]
@@ -290,11 +294,16 @@ class FacultyAssignmentExpansionService:
         # Check for slot-specific absence (partial day)
         slot_absent = self._is_person_absent_slot(person.id, slot_date, time_of_day)
 
-        # Determine which template to use
+        # Check if holiday (faculty don't work holidays)
+        is_holiday = getattr(block, "is_holiday", False) is True
+
+        # Determine which template to use (priority order)
         if is_absent or slot_absent:
             template_abbrev = f"LV-{time_of_day}"
         elif is_weekend:
             template_abbrev = f"W-{time_of_day}"
+        elif is_holiday:
+            template_abbrev = f"HOL-{time_of_day}"
         else:
             template_abbrev = f"GME-{time_of_day}"
 

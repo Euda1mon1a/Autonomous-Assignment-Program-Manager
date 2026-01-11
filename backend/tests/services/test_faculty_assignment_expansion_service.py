@@ -175,6 +175,7 @@ class TestFillSlot:
 
         block = MagicMock()
         block.id = uuid.uuid4()
+        block.is_holiday = False  # Explicitly set for test
 
         gme_template = MagicMock()
         gme_template.id = uuid.uuid4()
@@ -194,6 +195,34 @@ class TestFillSlot:
 
         assert result is not None
         assert result.rotation_template_id == gme_template.id
+
+    def test_creates_holiday_assignment(self, service):
+        """Holiday slots should use HOL-AM/HOL-PM templates."""
+        person = MagicMock()
+        person.id = uuid.uuid4()
+
+        block = MagicMock()
+        block.id = uuid.uuid4()
+        block.is_holiday = True  # Federal holiday
+
+        hol_template = MagicMock()
+        hol_template.id = uuid.uuid4()
+
+        service._block_cache[(date(2026, 1, 1), "AM")] = block  # New Year's Day
+        service._placeholder_templates["HOL-AM"] = hol_template
+
+        result = service._fill_slot(
+            person=person,
+            slot_date=date(2026, 1, 1),
+            time_of_day="AM",
+            is_weekend=False,
+            is_absent=False,
+            schedule_run_id=None,
+            created_by="test",
+        )
+
+        assert result is not None
+        assert result.rotation_template_id == hol_template.id
 
 
 class TestFiftySixSlotRule:
