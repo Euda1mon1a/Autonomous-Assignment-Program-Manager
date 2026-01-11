@@ -261,6 +261,16 @@ class SchedulingContext:
     # Activities list (for reference during constraint evaluation)
     activities: list = field(default_factory=list)
 
+    # =========================================================================
+    # Protected Patterns Data (for ProtectedSlotConstraint)
+    # =========================================================================
+
+    # Protected weekly patterns indexed by template ID
+    # Structure: {rotation_template_id: [{"day_of_week": int, "time_of_day": str,
+    #             "activity_type": str, "week_number": int|None}, ...]}
+    # Populated by engine from weekly_patterns WHERE is_protected=True
+    protected_patterns: dict[UUID, list[dict]] = field(default_factory=dict)
+
     def __post_init__(self: "SchedulingContext") -> None:
         """
         Build lookup dictionaries and indices for fast constraint evaluation.

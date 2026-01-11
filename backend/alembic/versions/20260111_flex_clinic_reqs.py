@@ -40,7 +40,7 @@ def upgrade() -> None:
             (SELECT id FROM activities WHERE code = 'fm_clinic'),
             3, 3, 3,
             NULL,
-            '550e8400-e29b-41d4-a716-446655440000'::uuid,
+            '5eefc5da-40d2-5afc-af3a-e7b6c2730b0d'::uuid,
             true,
             80,
             NOW(), NOW()

@@ -96,7 +96,7 @@ def upgrade() -> None:
         SELECT
             gen_random_uuid(), rt.id,
             (SELECT id FROM activities WHERE code = 'advising'),
-            1, 1, 1, NULL, '550e8400-e29b-41d4-a716-446655440000'::uuid,
+            1, 1, 1, NULL, '5eefc5da-40d2-5afc-af3a-e7b6c2730b0d'::uuid,
             false, 100, NOW(), NOW()
         FROM rotation_templates rt
         WHERE rt.abbreviation IN ('{templates_str}')
@@ -184,7 +184,7 @@ def upgrade() -> None:
         SELECT
             gen_random_uuid(), rt.id,
             (SELECT id FROM activities WHERE code = 'lec'),
-            4, 4, 4, NULL, '550e8400-e29b-41d4-a716-446655440000'::uuid,
+            4, 4, 4, NULL, '5eefc5da-40d2-5afc-af3a-e7b6c2730b0d'::uuid,
             false, 100, NOW(), NOW()
         FROM rotation_templates rt
         WHERE rt.abbreviation IN ('{full_str}')
@@ -205,7 +205,7 @@ def upgrade() -> None:
         SELECT
             gen_random_uuid(), rt.id,
             (SELECT id FROM activities WHERE code = 'advising'),
-            1, 1, 1, NULL, '550e8400-e29b-41d4-a716-446655440000'::uuid,
+            1, 1, 1, NULL, '5eefc5da-40d2-5afc-af3a-e7b6c2730b0d'::uuid,
             false, 100, NOW(), NOW()
         FROM rotation_templates rt
         WHERE rt.abbreviation IN ('{full_str}')

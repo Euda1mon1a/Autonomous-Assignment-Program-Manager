@@ -148,6 +148,17 @@ class ProtectedSlotConstraint(HardConstraint):
                     conflicting.add(template.id)
         return conflicting
 
+    def _get_patterns(self, context: SchedulingContext) -> dict[UUID, list[dict]]:
+        """
+        Get protected patterns from instance or context.
+
+        If patterns were provided at construction time, use those.
+        Otherwise, fall back to patterns loaded into the context by the engine.
+        """
+        if self._protected_patterns:
+            return self._protected_patterns
+        return getattr(context, "protected_patterns", {})
+
     def add_to_cpsat(
         self,
         model: Any,
@@ -166,10 +177,11 @@ class ProtectedSlotConstraint(HardConstraint):
             logger.debug("No template_assignments variables found")
             return
 
+        protected_patterns = self._get_patterns(context)
         blocked_count = 0
 
         # Process each rotation template's protected patterns
-        for template_id, patterns in self._protected_patterns.items():
+        for template_id, patterns in protected_patterns.items():
             if not patterns:
                 continue
 
@@ -220,9 +232,10 @@ class ProtectedSlotConstraint(HardConstraint):
         if not template_vars:
             return
 
+        protected_patterns = self._get_patterns(context)
         constraint_count = 0
 
-        for template_id, patterns in self._protected_patterns.items():
+        for template_id, patterns in protected_patterns.items():
             if not patterns:
                 continue
 
@@ -274,6 +287,8 @@ class ProtectedSlotConstraint(HardConstraint):
         block_by_id = {b.id: b for b in context.blocks}
         template_by_id = {t.id: t for t in context.templates}
 
+        protected_patterns = self._get_patterns(context)
+
         for assignment in assignments:
             resident = resident_by_id.get(assignment.person_id)
             if not resident:
@@ -290,7 +305,7 @@ class ProtectedSlotConstraint(HardConstraint):
             assigned_activity = getattr(assigned_template, "activity_type", "")
 
             # Check if any protected pattern is violated
-            for template_id, patterns in self._protected_patterns.items():
+            for template_id, patterns in protected_patterns.items():
                 for pattern in patterns:
                     if not self._is_protected_slot(block, pattern):
                         continue

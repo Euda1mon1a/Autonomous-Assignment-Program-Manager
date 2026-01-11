@@ -61,7 +61,7 @@ def upgrade() -> None:
             COUNT(*),
             COUNT(*),
             NULL,
-            '550e8400-e29b-41d4-a716-446655440000'::uuid,
+            '5eefc5da-40d2-5afc-af3a-e7b6c2730b0d'::uuid,
             false,
             100,
             NOW(), NOW()
@@ -86,7 +86,7 @@ def upgrade() -> None:
             COUNT(*),
             COUNT(*),
             NULL,
-            '550e8400-e29b-41d4-a716-446655440000'::uuid,
+            '5eefc5da-40d2-5afc-af3a-e7b6c2730b0d'::uuid,
             false,
             100,
             NOW(), NOW()
@@ -111,7 +111,7 @@ def upgrade() -> None:
             COUNT(*),
             COUNT(*),
             NULL,
-            '550e8400-e29b-41d4-a716-446655440000'::uuid,
+            '5eefc5da-40d2-5afc-af3a-e7b6c2730b0d'::uuid,
             true,
             80,
             NOW(), NOW()
@@ -136,7 +136,7 @@ def upgrade() -> None:
             COUNT(*),
             COUNT(*),
             NULL,
-            '550e8400-e29b-41d4-a716-446655440000'::uuid,
+            '5eefc5da-40d2-5afc-af3a-e7b6c2730b0d'::uuid,
             true,
             80,
             NOW(), NOW()

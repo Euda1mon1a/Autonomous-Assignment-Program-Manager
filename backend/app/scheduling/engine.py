@@ -43,6 +43,7 @@ from app.models.call_assignment import CallAssignment
 from app.models.person import FacultyRole, Person
 from app.models.rotation_activity_requirement import RotationActivityRequirement
 from app.models.rotation_template import RotationTemplate
+from app.models.weekly_pattern import WeeklyPattern
 from app.models.schedule_run import ScheduleRun
 from app.resilience.service import ResilienceConfig, ResilienceService
 from app.scheduling.constraints import (
@@ -581,6 +582,7 @@ class SchedulingEngine:
         activities = self._load_activities()
         template_ids = [t.id for t in templates]
         activity_requirements = self._load_activity_requirements(template_ids)
+        protected_patterns = self._load_protected_patterns(template_ids)
 
         # Build base context
         context = SchedulingContext(
@@ -595,6 +597,7 @@ class SchedulingEngine:
             call_eligible_faculty=call_eligible,
             activities=activities,
             activity_requirements=activity_requirements,
+            protected_patterns=protected_patterns,
         )
 
         # Enable activity requirement constraint if we have data
@@ -603,6 +606,15 @@ class SchedulingEngine:
             logger.debug(
                 f"Loaded {len(activity_requirements)} activity requirements for "
                 f"{len(template_ids)} templates"
+            )
+
+        # Enable protected slot constraint if we have protected patterns
+        if protected_patterns and self.constraint_manager:
+            self.constraint_manager.enable("ProtectedSlot")
+            total_patterns = sum(len(p) for p in protected_patterns.values())
+            logger.debug(
+                f"Loaded {total_patterns} protected patterns for "
+                f"{len(protected_patterns)} templates"
             )
 
         # Populate resilience data if available and requested
@@ -1394,6 +1406,56 @@ class SchedulingEngine:
             .options(selectinload(RotationActivityRequirement.activity))
             .all()
         )
+
+    def _load_protected_patterns(
+        self, template_ids: list[UUID]
+    ) -> dict[UUID, list[dict]]:
+        """
+        Load protected weekly patterns for the given rotation templates.
+
+        Protected patterns define locked slots (is_protected=True) that the solver
+        cannot modify. These typically include:
+        - Wednesday PM lecture (weeks 1-3)
+        - Wednesday AM lecture (week 4)
+        - Wednesday PM advising (week 4)
+        - Fixed clinic times for FMIT/intern rotations
+
+        Args:
+            template_ids: List of RotationTemplate IDs to load patterns for.
+
+        Returns:
+            Dict mapping template_id to list of pattern dicts with keys:
+            day_of_week, time_of_day, activity_type, week_number
+        """
+        if not template_ids:
+            return {}
+
+        patterns = (
+            self.db.query(WeeklyPattern)
+            .filter(WeeklyPattern.rotation_template_id.in_(template_ids))
+            .filter(WeeklyPattern.is_protected == True)  # noqa: E712
+            .all()
+        )
+
+        # Group by template_id
+        result: dict[UUID, list[dict]] = {}
+        for pattern in patterns:
+            template_id = pattern.rotation_template_id
+            if template_id not in result:
+                result[template_id] = []
+            result[template_id].append(
+                {
+                    "day_of_week": pattern.day_of_week,
+                    "time_of_day": pattern.time_of_day,
+                    "activity_type": pattern.activity_type,
+                    "week_number": pattern.week_number,
+                }
+            )
+
+        logger.debug(
+            f"Loaded {len(patterns)} protected patterns for {len(result)} templates"
+        )
+        return result
 
     def _get_rotation_templates(
         self,
