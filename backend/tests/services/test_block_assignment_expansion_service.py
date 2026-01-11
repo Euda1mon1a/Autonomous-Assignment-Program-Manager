@@ -214,3 +214,295 @@ class TestBlockAssignmentExpansion:
         mock_db = MagicMock()
         service = BlockAssignmentExpansionService(mock_db)
         assert service.db == mock_db
+
+
+# =============================================================================
+# 56-SLOT EXPANSION TESTS
+# =============================================================================
+
+
+class TestFiftySixSlotExpansion:
+    """Tests for the 56-assignment rule implementation.
+
+    56-ASSIGNMENT RULE:
+    Every person should have exactly 56 assignments per block (28 days × 2 slots).
+    Instead of skipping days (creating gaps), we create placeholder assignments:
+    - W-AM, W-PM: Weekend (rotation doesn't include weekend work)
+    - LV-AM, LV-PM: Leave/absence (blocking absence)
+    - OFF-AM, OFF-PM: Day off (1-in-7 rule forced day)
+
+    This makes gap detection trivial: 56 = complete, <56 = gap.
+    """
+
+    def _create_mock_service(self):
+        """Create a mock service with absence templates pre-loaded."""
+        from app.services.block_assignment_expansion_service import (
+            BlockAssignmentExpansionService,
+        )
+
+        mock_db = MagicMock()
+        service = BlockAssignmentExpansionService(mock_db)
+
+        # Mock absence templates
+        service._absence_templates = {}
+        for abbrev in ["W-AM", "W-PM", "LV-AM", "LV-PM", "OFF-AM", "OFF-PM"]:
+            mock_template = MagicMock()
+            mock_template.id = uuid4()
+            mock_template.abbreviation = abbrev
+            service._absence_templates[abbrev] = mock_template
+
+        return service
+
+    def test_weekend_creates_w_assignments(self):
+        """Weekend days should create W-AM and W-PM assignments.
+
+        When a rotation doesn't include weekend work (includes_weekend_work=False),
+        Saturday and Sunday should get W-AM/W-PM assignments instead of skipping.
+        """
+        service = self._create_mock_service()
+
+        # Mock block assignment with rotation that doesn't include weekends
+        mock_rotation = MagicMock()
+        mock_rotation.id = uuid4()
+        mock_rotation.includes_weekend_work = False
+        mock_rotation.weekly_patterns = []
+        mock_rotation.activity_type = "clinic"
+
+        mock_block_assignment = MagicMock()
+        mock_block_assignment.id = uuid4()
+        mock_block_assignment.resident_id = uuid4()
+        mock_block_assignment.rotation_template = mock_rotation
+
+        # Set up block cache for a week (Mon-Sun)
+        service._block_cache = {}
+        service._absence_cache = {}
+        start = date(2026, 3, 9)  # Monday
+        for i in range(7):
+            d = start + timedelta(days=i)
+            am_block = MagicMock()
+            am_block.id = uuid4()
+            pm_block = MagicMock()
+            pm_block.id = uuid4()
+            service._block_cache[(d, "AM")] = am_block
+            service._block_cache[(d, "PM")] = pm_block
+
+        # Mock no absences
+        service._is_person_absent = lambda pid, d: False
+        service._is_person_absent_slot = lambda pid, d, slot: False
+
+        # Expand assignments
+        assignments = service._expand_single_block_assignment(
+            block_assignment=mock_block_assignment,
+            start_date=date(2026, 3, 9),
+            end_date=date(2026, 3, 15),  # 7 days (Mon-Sun)
+            schedule_run_id=uuid4(),
+            created_by="test",
+            apply_one_in_seven=False,  # Disable to test weekends only
+        )
+
+        # Should have 14 assignments (7 days × 2 slots)
+        assert len(assignments) == 14, (
+            f"Expected 14 assignments, got {len(assignments)}"
+        )
+
+        # Check that weekend assignments use W templates
+        weekend_template_ids = {
+            service._absence_templates["W-AM"].id,
+            service._absence_templates["W-PM"].id,
+        }
+
+        weekend_assignments = [
+            a for a in assignments if a.rotation_template_id in weekend_template_ids
+        ]
+        # Saturday and Sunday = 4 weekend assignments
+        assert len(weekend_assignments) == 4, (
+            f"Expected 4 weekend assignments, got {len(weekend_assignments)}"
+        )
+
+    def test_absence_creates_lv_assignments(self):
+        """Blocking absences should create LV-AM and LV-PM assignments.
+
+        When a person has a blocking absence (deployment, medical >7 days, etc.),
+        those days should get LV-AM/LV-PM assignments instead of skipping.
+        """
+        service = self._create_mock_service()
+
+        # Mock block assignment
+        mock_rotation = MagicMock()
+        mock_rotation.id = uuid4()
+        mock_rotation.includes_weekend_work = True  # Include weekends to simplify
+        mock_rotation.weekly_patterns = []
+        mock_rotation.activity_type = "clinic"
+
+        mock_block_assignment = MagicMock()
+        mock_block_assignment.id = uuid4()
+        mock_block_assignment.resident_id = uuid4()
+        mock_block_assignment.rotation_template = mock_rotation
+
+        # Set up block cache for 5 days
+        service._block_cache = {}
+        service._absence_cache = {}
+        start = date(2026, 3, 9)
+        for i in range(5):
+            d = start + timedelta(days=i)
+            am_block = MagicMock()
+            am_block.id = uuid4()
+            pm_block = MagicMock()
+            pm_block.id = uuid4()
+            service._block_cache[(d, "AM")] = am_block
+            service._block_cache[(d, "PM")] = pm_block
+
+        # Day 3 is absent
+        def mock_is_absent(person_id, check_date):
+            day_offset = (check_date - date(2026, 3, 9)).days
+            return day_offset == 2  # Day 3 (index 2) is absent
+
+        service._is_person_absent = mock_is_absent
+        service._is_person_absent_slot = lambda pid, d, slot: False
+
+        # Expand assignments
+        assignments = service._expand_single_block_assignment(
+            block_assignment=mock_block_assignment,
+            start_date=date(2026, 3, 9),
+            end_date=date(2026, 3, 13),  # 5 days
+            schedule_run_id=uuid4(),
+            created_by="test",
+            apply_one_in_seven=False,
+        )
+
+        # Should have 10 assignments (5 days × 2 slots)
+        assert len(assignments) == 10, (
+            f"Expected 10 assignments, got {len(assignments)}"
+        )
+
+        # Check that absence day uses LV templates
+        lv_template_ids = {
+            service._absence_templates["LV-AM"].id,
+            service._absence_templates["LV-PM"].id,
+        }
+
+        lv_assignments = [
+            a for a in assignments if a.rotation_template_id in lv_template_ids
+        ]
+        # 1 absence day = 2 LV assignments
+        assert len(lv_assignments) == 2, (
+            f"Expected 2 LV assignments, got {len(lv_assignments)}"
+        )
+
+    def test_one_in_seven_creates_off_assignments(self):
+        """1-in-7 forced day off should create OFF-AM and OFF-PM assignments.
+
+        When 6 consecutive days have been worked, day 7 should get OFF-AM/OFF-PM
+        assignments instead of skipping.
+        """
+        service = self._create_mock_service()
+
+        # Mock block assignment
+        mock_rotation = MagicMock()
+        mock_rotation.id = uuid4()
+        mock_rotation.includes_weekend_work = True  # No weekends to simplify
+        mock_rotation.weekly_patterns = []
+        mock_rotation.activity_type = "clinic"
+
+        mock_block_assignment = MagicMock()
+        mock_block_assignment.id = uuid4()
+        mock_block_assignment.resident_id = uuid4()
+        mock_block_assignment.rotation_template = mock_rotation
+
+        # Set up block cache for 10 days
+        service._block_cache = {}
+        service._absence_cache = {}
+        start = date(2026, 3, 9)
+        for i in range(10):
+            d = start + timedelta(days=i)
+            am_block = MagicMock()
+            am_block.id = uuid4()
+            pm_block = MagicMock()
+            pm_block.id = uuid4()
+            service._block_cache[(d, "AM")] = am_block
+            service._block_cache[(d, "PM")] = pm_block
+
+        # No absences
+        service._is_person_absent = lambda pid, d: False
+        service._is_person_absent_slot = lambda pid, d, slot: False
+
+        # Expand assignments with 1-in-7 enabled
+        assignments = service._expand_single_block_assignment(
+            block_assignment=mock_block_assignment,
+            start_date=date(2026, 3, 9),
+            end_date=date(2026, 3, 18),  # 10 days
+            schedule_run_id=uuid4(),
+            created_by="test",
+            apply_one_in_seven=True,
+        )
+
+        # Should have 20 assignments (10 days × 2 slots)
+        assert len(assignments) == 20, (
+            f"Expected 20 assignments, got {len(assignments)}"
+        )
+
+        # Check that day 7 uses OFF templates (after 6 consecutive work days)
+        off_template_ids = {
+            service._absence_templates["OFF-AM"].id,
+            service._absence_templates["OFF-PM"].id,
+        }
+
+        off_assignments = [
+            a for a in assignments if a.rotation_template_id in off_template_ids
+        ]
+        # Day 7 forced off = 2 OFF assignments
+        assert len(off_assignments) >= 2, (
+            f"Expected at least 2 OFF assignments, got {len(off_assignments)}"
+        )
+
+    def test_full_block_creates_56_assignments(self):
+        """A full 28-day block should create exactly 56 assignments.
+
+        This is the core test for the 56-assignment rule. Every slot must have
+        an assignment, whether it's work, weekend, absence, or day off.
+        """
+        service = self._create_mock_service()
+
+        # Mock block assignment (weekdays only rotation)
+        mock_rotation = MagicMock()
+        mock_rotation.id = uuid4()
+        mock_rotation.includes_weekend_work = False
+        mock_rotation.weekly_patterns = []
+        mock_rotation.activity_type = "clinic"
+
+        mock_block_assignment = MagicMock()
+        mock_block_assignment.id = uuid4()
+        mock_block_assignment.resident_id = uuid4()
+        mock_block_assignment.rotation_template = mock_rotation
+
+        # Set up block cache for 28 days
+        service._block_cache = {}
+        service._absence_cache = {}
+        start = date(2026, 3, 9)  # Monday
+        for i in range(28):
+            d = start + timedelta(days=i)
+            am_block = MagicMock()
+            am_block.id = uuid4()
+            pm_block = MagicMock()
+            pm_block.id = uuid4()
+            service._block_cache[(d, "AM")] = am_block
+            service._block_cache[(d, "PM")] = pm_block
+
+        # No absences
+        service._is_person_absent = lambda pid, d: False
+        service._is_person_absent_slot = lambda pid, d, slot: False
+
+        # Expand assignments
+        assignments = service._expand_single_block_assignment(
+            block_assignment=mock_block_assignment,
+            start_date=date(2026, 3, 9),
+            end_date=date(2026, 4, 5),  # 28 days
+            schedule_run_id=uuid4(),
+            created_by="test",
+            apply_one_in_seven=True,
+        )
+
+        # Should have exactly 56 assignments (28 days × 2 slots)
+        assert len(assignments) == 56, (
+            f"Expected 56 assignments, got {len(assignments)}. 56-assignment rule violated!"
+        )
