@@ -269,6 +269,35 @@ ACGME_MIN_REST_PGY2_PLUS = 8.0  # ACGME "must have"
 
 ---
 
+### Faculty FMIT and Call Equity
+**Priority:** Medium
+**Added:** 2026-01-11
+**Status:** Awaiting further design considerations
+
+**Context:** The 56-assignment rule (PR #688, #689, #690) fills all slots with assignments but does NOT optimize for equitable distribution of FMIT and call duties among faculty.
+
+**Current State:**
+- Faculty FMIT assignments are pre-loaded (existing process)
+- Faculty call assignments are created post-hoc
+- Empty slots get GME (admin) placeholder
+- No fairness optimization in distribution
+
+**Questions to Consider:**
+- [ ] How should FMIT weeks be distributed among faculty? (Round-robin? By preference?)
+- [ ] How should call duties be distributed? (Equal total? By seniority?)
+- [ ] Should part-time faculty have proportionally fewer duties?
+- [ ] Are there faculty-specific constraints (research days, admin duties)?
+- [ ] How do absences affect the equity calculation?
+
+**Implementation Dependencies:**
+- FacultyWeeklyTemplate model exists but is NOT used by solver
+- Post-hoc assignment may need to become solver-managed for true optimization
+- May require new constraints in scheduling engine
+
+**Deferred until:** Design decisions made on equity model
+
+---
+
 ### Resident Call Types
 **Priority:** Medium
 **Added:** 2025-12-26
@@ -1225,3 +1254,35 @@ Already partially covered by:
 - [ ] Review which patterns provide value vs. overhead
 - [ ] Decide implementation location (CLAUDE.md vs separate docs)
 - [ ] Prioritize based on observed failure modes
+
+---
+
+## CI/CD Issues (2026-01-11)
+
+### MCP Server Tests Failing in CI
+**Priority:** Medium
+**Added:** 2026-01-11
+**Status:** Pre-existing issue, needs investigation
+
+**Problem:** `mcp-server-tests` job fails on every CI run (including `main` branch).
+
+**Failed Tests:**
+- `test_api_client.py` - API client tests (health check, validate schedule, etc.)
+- `test_resilience_integration.py` - Resilience tool integration tests
+- `test_server.py::TestToolsRegistration::test_resilience_tools_exist`
+- Various Fourier/VaR calculation tests
+
+**Root Cause:** Integration tests require running backend, but CI environment doesn't start backend containers.
+
+**Options:**
+1. **Add backend service to CI workflow** - Start backend/db containers before MCP tests
+2. **Mock backend responses** - Use httpx mocking for API client tests
+3. **Split tests** - Unit tests (CI) vs Integration tests (local/staging)
+4. **Mark as integration** - Skip integration tests in CI with `@pytest.mark.integration`
+
+**Workaround:** Tests pass locally when backend is running. CI failure doesn't block merges if other checks pass.
+
+**Files to investigate:**
+- `.github/workflows/ci-tests.yml` - CI workflow
+- `mcp-server/tests/test_api_client.py` - Failing tests
+- `mcp-server/tests/conftest.py` - Test fixtures
