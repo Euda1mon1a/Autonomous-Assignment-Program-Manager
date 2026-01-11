@@ -108,8 +108,26 @@ Full plan at: `.claude/plans/virtual-snacking-summit.md`
 - Expansion services import: OK
 - generate_blocks.py syntax: OK
 
+## Codex Review Fixes (In Progress)
+
+### Findings Addressed:
+1. **HIGH:** Backfill query now includes `is_holiday=True & day_type=NORMAL` ✅
+2. **LOW:** Using `get_default_operational_intent()` instead of hard-coded values ✅
+3. **MEDIUM:** Year-boundary not an issue (OPM rules keep in same year)
+4. **LOW Tests:** Deferred for now
+
+### Files Modified:
+- `scripts/backfill_holidays.py` - Query fix + default mapping
+- `scripts/generate_blocks.py` - Using default mapping
+
+### Commits on `feature/holiday-support`:
+1. `095d9d45` - Phase 1: Codex P2 fix + enums
+2. `7e2fe8bd` - Phases 2-5: migration, model, scripts
+3. `b58fb14a` - Backfill script update
+4. (pending) - Codex review fixes
+
 ## Next Steps
 
-1. Commit all Phase 2-5 changes
-2. Create PR with full MEDCOM day-type system
+1. Commit Codex review fixes
+2. Push and create PR
 3. Future: Add NOP-AM/NOP-PM templates for DONSA/EO days

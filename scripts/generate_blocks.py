@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "backend"))
 
 from app.db.session import SessionLocal
 from app.models.block import Block
-from app.models.day_type import DayType, OperationalIntent
+from app.models.day_type import DayType, OperationalIntent, get_default_operational_intent
 from app.utils.holidays import get_federal_holidays, is_federal_holiday
 
 
@@ -139,8 +139,9 @@ def generate_blocks(
                 if not dry_run:
                     # Set day_type and operational_intent for holidays
                     day_type = DayType.FEDERAL_HOLIDAY if is_holiday else DayType.NORMAL
+                    # Use default mapping to prevent drift if defaults change
                     operational_intent = (
-                        OperationalIntent.REDUCED_CAPACITY
+                        get_default_operational_intent(day_type)
                         if is_holiday
                         else OperationalIntent.NORMAL
                     )

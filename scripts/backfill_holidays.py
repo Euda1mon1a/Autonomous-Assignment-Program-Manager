@@ -29,7 +29,7 @@ from sqlalchemy import or_
 
 from app.db.session import SessionLocal
 from app.models.block import Block
-from app.models.day_type import DayType, OperationalIntent
+from app.models.day_type import DayType, get_default_operational_intent
 from app.utils.holidays import get_federal_holidays, is_federal_holiday
 
 
@@ -56,10 +56,19 @@ def backfill_holidays(dry_run: bool = False, verbose: bool = False) -> tuple[int
     total = 0
 
     try:
-        # Find all blocks (we check both False and None for is_holiday)
+        # Find blocks that need holiday backfill:
+        # 1. is_holiday=False or NULL (never marked as holiday)
+        # 2. is_holiday=True but day_type=NORMAL (marked but missing new fields)
         blocks = (
             db.query(Block)
-            .filter(or_(Block.is_holiday == False, Block.is_holiday.is_(None)))  # noqa: E712
+            .filter(
+                or_(
+                    Block.is_holiday == False,  # noqa: E712
+                    Block.is_holiday.is_(None),
+                    # Also catch existing holidays missing new day_type fields
+                    (Block.is_holiday == True) & (Block.day_type == DayType.NORMAL),  # noqa: E712
+                )
+            )
             .order_by(Block.date, Block.time_of_day)
             .all()
         )
@@ -95,7 +104,10 @@ def backfill_holidays(dry_run: bool = False, verbose: bool = False) -> tuple[int
                     block.is_holiday = True
                     block.holiday_name = name
                     block.day_type = DayType.FEDERAL_HOLIDAY
-                    block.operational_intent = OperationalIntent.REDUCED_CAPACITY
+                    # Use default mapping to prevent drift if defaults change
+                    block.operational_intent = get_default_operational_intent(
+                        DayType.FEDERAL_HOLIDAY
+                    )
                     block.actual_date = actual_date
 
                 updated += 1
