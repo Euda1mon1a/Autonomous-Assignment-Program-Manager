@@ -1,0 +1,11 @@
+{
+  "_comment": "Map faculty last names to roles. Copy to faculty_roles.local.json and populate.",
+  "_roles": ["pd", "apd", "oic", "dept_chief", "sports_med", "adjunct", "core"],
+  "LastName1": "pd",
+  "LastName2": "apd",
+  "LastName3": "oic",
+  "LastName4": "dept_chief",
+  "LastName5": "sports_med",
+  "LastName6": "adjunct",
+  "LastName7": "adjunct"
+}

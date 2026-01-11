@@ -55,6 +55,9 @@ from app.scheduling.solvers import (
     SolverResult,
 )
 from app.scheduling.validator import ACGMEValidator
+from app.services.block_assignment_expansion_service import (
+    BlockAssignmentExpansionService,
+)
 from app.utils.academic_blocks import get_block_number_for_date
 
 
@@ -114,6 +117,9 @@ class SchedulingEngine:
         preserve_fmit: bool = True,
         preserve_resident_inpatient: bool = True,
         preserve_absence: bool = True,
+        expand_block_assignments: bool = True,
+        block_number: int | None = None,
+        academic_year: int | None = None,
     ) -> dict:
         """
         Generate a complete schedule.
@@ -129,6 +135,13 @@ class SchedulingEngine:
                                         (FMIT, NF, NICU) - prevents over-assignment bug
             preserve_absence: Preserve existing absence assignments (Leave, Weekend)
                              so solver skips people with scheduled time off
+            expand_block_assignments: Generate daily slots from block_assignments table
+                                     (default True). This bridges the gap between
+                                     "Resident X on FMIT for Block 10" and daily AM/PM slots.
+            block_number: Academic block number (1-13) for block_assignment expansion.
+                         Required if expand_block_assignments=True.
+            academic_year: Academic year (e.g., 2025 for AY 2025-2026).
+                          Required if expand_block_assignments=True.
 
         Returns:
             Dictionary with status, assignments, validation results, and resilience info
@@ -217,6 +230,36 @@ class SchedulingEngine:
                     "education assignments (FMO/GME/Lectures)"
                 )
 
+            # Step 1.5g: Expand block_assignments into daily slots
+            # This generates Assignment records from the master rotation schedule
+            expanded_assignments: list[Assignment] = []
+            if expand_block_assignments:
+                if block_number is None or academic_year is None:
+                    # Try to infer from date range
+                    block_number = get_block_number_for_date(self.start_date)
+                    # Academic year is the year of July 1 that starts the AY
+                    if self.start_date.month >= 7:
+                        academic_year = self.start_date.year
+                    else:
+                        academic_year = self.start_date.year - 1
+                    logger.info(
+                        f"Inferred block {block_number} AY {academic_year} from dates"
+                    )
+
+                expansion_service = BlockAssignmentExpansionService(self.db)
+                expanded_assignments = expansion_service.expand_block_assignments(
+                    block_number=block_number,
+                    academic_year=academic_year,
+                    schedule_run_id=run.id,
+                    created_by="engine_expansion",
+                    apply_one_in_seven=True,
+                )
+                if expanded_assignments:
+                    logger.info(
+                        f"Expanded {len(expanded_assignments)} assignments from "
+                        f"block_assignments for Block {block_number}"
+                    )
+
             # NOTE: Deletion deferred until after successful solve (see Step 5.5)
             # This prevents data loss if the solver fails
 
@@ -242,6 +285,7 @@ class SchedulingEngine:
 
             # Step 4: Create scheduling context (with resilience data if available)
             # Combine all preserved assignments to pass to context as immutable
+            # Note: expanded_assignments are NEW records from block_assignments expansion
             preserved_assignments = (
                 fmit_assignments
                 + resident_inpatient_assignments
@@ -249,6 +293,7 @@ class SchedulingEngine:
                 + offsite_assignments
                 + recovery_assignments
                 + education_assignments
+                + expanded_assignments  # NEW: from block_assignments expansion
             )
             context = self._build_context(
                 residents,
@@ -316,6 +361,16 @@ class SchedulingEngine:
             # Step 5.5: Delete existing assignments (except preserved ones)
             # This happens AFTER successful solve to prevent data loss on solver failure
             self._delete_existing_assignments(preserve_ids)
+
+            # Step 5.6: Add expanded assignments from block_assignments
+            # These are NEW records generated from the master rotation schedule
+            for assignment in expanded_assignments:
+                self.db.add(assignment)
+                self.assignments.append(assignment)
+            if expanded_assignments:
+                logger.info(
+                    f"Added {len(expanded_assignments)} expanded assignments to session"
+                )
 
             # Step 6: Convert solver results to assignments
             # Pass preserved_assignments to filter out conflicts with immutable slots
@@ -1394,17 +1449,25 @@ class SchedulingEngine:
         according to ACGME requirements.
 
         ACGME Supervision Ratios:
-            - PGY-1 residents: 1 faculty : 2 residents (intensive supervision)
-            - PGY-2/3 residents: 1 faculty : 4 residents (greater autonomy)
+            - PGY-1 residents: 1 faculty : 2 residents (0.5 AT load each)
+            - PGY-2/3 residents: 1 faculty : 4 residents (0.25 AT load each)
+            - Formula: ceil(0.5*PGY1_count + 0.25*Other_count)
+
+        Additional Rules:
+            - AM weekday floor: Minimum 1 AT for all AM weekday blocks (safeguard)
+            - Procedure clinic +1: PROC, VAS, BTX, COLPO require +1 faculty
+            - PCAT counts as AT: Post-Call Attending Time satisfies supervision
 
         Algorithm:
             1. Group existing resident assignments by block
             2. For each block with residents:
                a. Count PGY-1 vs. PGY-2/3 residents
-               b. Calculate required faculty: ⌈PGY1/2⌉ + ⌈Others/4⌉
-               c. Find available faculty (check availability matrix)
-               d. Select least-loaded faculty to balance workload
-               e. Create "supervising" role assignments with rotation_template_id
+               b. Calculate ACGME required: ceil(0.5*PGY1 + 0.25*Others)
+               c. Check for procedure clinic bonus (+1)
+               d. Apply AM weekday floor (min 1)
+               e. Final required = max(floor, ACGME) + procedure_bonus
+               f. Find available faculty and assign least-loaded
+            3. Second pass: Ensure empty AM weekday blocks get floor of 1
 
         Load Balancing:
             Faculty are sorted by current assignment count and selected in order
@@ -1413,15 +1476,17 @@ class SchedulingEngine:
         Args:
             faculty: List of Person objects with type="faculty"
             blocks: List of Block objects in the scheduling period
+            run_id: Schedule run ID for provenance
+            preserved_assignments: Assignments that are immutable (FMIT, absences)
 
         Side Effects:
             Appends faculty Assignment objects to self.assignments with role="supervising"
 
         Example:
             Block with 2 PGY-1 and 4 PGY-2/3 residents:
-            - PGY-1 faculty needed: ⌈2/2⌉ = 1
-            - PGY-2/3 faculty needed: ⌈4/4⌉ = 1
-            - Total: 2 faculty assigned to supervise this block
+            - ACGME required: ceil(0.5*2 + 0.25*4) = ceil(2.0) = 2 faculty
+            - If AM weekday: floor = 1, so final = max(1, 2) = 2
+            - If PROC clinic: +1 bonus, so final = 3 faculty
 
         Note:
             This method is separate from the main constraint solver because
@@ -1473,17 +1538,29 @@ class SchedulingEngine:
         )
         templates_by_id = {t.id: t for t in all_templates}
 
+        # Build blocks lookup for time_of_day and is_weekend checks
+        blocks_by_id = {b.id: b for b in blocks}
+
+        # Procedure clinic abbreviations that require +1 faculty for immediate supervision
+        PROCEDURE_CLINIC_ABBREVS = {"PROC", "VAS", "BTX", "COLPO"}
+
         # Assign faculty to each block
         faculty_assignments = {f.id: 0 for f in faculty}
 
         for block_id, block_assignments in assignments_by_block.items():
+            # Get block details for floor calculation
+            block = blocks_by_id.get(block_id)
+            is_am_weekday = (
+                block is not None and block.time_of_day == "AM" and not block.is_weekend
+            )
+
             # Get resident details for this block from pre-fetched data
             resident_ids = [a.person_id for a in block_assignments]
             residents_in_block = [
                 residents_by_id[rid] for rid in resident_ids if rid in residents_by_id
             ]
 
-            # Calculate required faculty
+            # Calculate required faculty using ACGME ratios
             pgy1_count = sum(1 for r in residents_in_block if r.pgy_level == 1)
             other_count = len(residents_in_block) - pgy1_count
 
@@ -1491,8 +1568,42 @@ class SchedulingEngine:
             # PGY-1: 2 units (0.5 load = 1:2 ratio), PGY-2/3: 1 unit (0.25 load = 1:4 ratio)
             # Sum loads THEN ceiling (4 units = 1 faculty)
             supervision_units = (pgy1_count * 2) + other_count
-            required = (supervision_units + 3) // 4 if supervision_units > 0 else 0
-            required = max(1, required) if residents_in_block else 0
+            acgme_required = (
+                (supervision_units + 3) // 4 if supervision_units > 0 else 0
+            )
+
+            # Check for procedure clinic requiring +1 faculty (immediate supervision)
+            # ONLY specific procedure clinics (PROC, VAS, BTX, COLPO) need +1
+            # Not all "procedures" activity_type - POCUS, PR-AM don't require +1
+            procedure_bonus = 0
+            for assignment in block_assignments:
+                # Check activity_override first (slot-level activity)
+                if assignment.activity_override:
+                    override_upper = assignment.activity_override.upper()
+                    if any(proc in override_upper for proc in PROCEDURE_CLINIC_ABBREVS):
+                        procedure_bonus = 1
+                        break
+
+                # Check rotation template abbreviation (ONLY specific clinics)
+                if assignment.rotation_template_id:
+                    template = templates_by_id.get(assignment.rotation_template_id)
+                    if template and template.abbreviation in PROCEDURE_CLINIC_ABBREVS:
+                        procedure_bonus = 1
+                        break
+
+            # Apply AM weekday floor: always at least 1 AT for AM weekdays (safeguard)
+            # PCAT (post-call AT) counts toward this requirement
+            if is_am_weekday:
+                floor = 1
+            else:
+                floor = 0
+
+            # Final required = max(floor, ACGME calc) + procedure bonus
+            # Cap at 6 (physical limit of faculty in clinic at any time)
+            MAX_FACULTY_IN_CLINIC = 6
+            required = min(
+                MAX_FACULTY_IN_CLINIC, max(floor, acgme_required) + procedure_bonus
+            )
 
             # Find available faculty (not on leave AND not already assigned to this block)
             available = [
@@ -1523,6 +1634,44 @@ class SchedulingEngine:
                 )
                 self.assignments.append(assignment)
                 faculty_assignments[fac.id] += 1
+
+        # Second pass: Ensure AM weekday blocks without resident assignments still get 1 AT
+        # This handles cases where no residents are in clinic but we still need supervision available
+        blocks_with_assignments = set(assignments_by_block.keys())
+        for block in blocks:
+            if block.id in blocks_with_assignments:
+                continue  # Already processed above
+
+            # Only apply floor to AM weekday blocks
+            if block.time_of_day != "AM" or block.is_weekend:
+                continue
+
+            # Check if faculty already assigned to this block (from preserved/expanded)
+            if any((f.id, block.id) in faculty_occupied_slots for f in faculty):
+                continue
+
+            # Assign 1 faculty for AM weekday floor
+            available = [
+                f
+                for f in faculty
+                if self._is_available(f.id, block.id)
+                and (f.id, block.id) not in faculty_occupied_slots
+            ]
+
+            if available:
+                selected = sorted(available, key=lambda f: faculty_assignments[f.id])[
+                    :1
+                ]
+                for fac in selected:
+                    assignment = Assignment(
+                        block_id=block.id,
+                        person_id=fac.id,
+                        rotation_template_id=None,  # No specific rotation, just AT coverage
+                        role="supervising",
+                        schedule_run_id=run_id,
+                    )
+                    self.assignments.append(assignment)
+                    faculty_assignments[fac.id] += 1
 
     def _get_primary_template_for_block(
         self,

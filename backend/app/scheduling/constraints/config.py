@@ -228,7 +228,7 @@ class ConstraintConfigManager:
 
         self._configs["PostCallAutoAssignment"] = ConstraintConfig(
             name="PostCallAutoAssignment",
-            enabled=False,  # Opt-in
+            enabled=True,  # ENABLED: auto-generate PCAT/DO after overnight call
             priority=ConstraintPriorityLevel.HIGH,
             category=ConstraintCategory.CALL,
             description="Auto-assigns PCAT/DO after overnight call",

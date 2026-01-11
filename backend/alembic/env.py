@@ -20,6 +20,38 @@ from app.models import (  # noqa: F401
     ScheduleRun,
 )
 
+# ============================================================================
+# Continuum Table Exclusion
+# ============================================================================
+# SQLAlchemy-Continuum auto-creates version tables at runtime.
+# These are NOT managed by Alembic migrations - exclude from autogenerate.
+# See: docs/development/SCHEMA_AUDIT_REPORT.md
+# ============================================================================
+CONTINUUM_TABLES = {
+    "transaction",
+    "absences_version",
+    "assignments_version",
+    "import_batches_version",
+    "import_staged_absences_version",
+    "import_staged_assignments_version",
+    "rotation_templates_version",
+    "schedule_runs_version",
+    "swap_records_version",
+    # Legacy variant (if exists)
+    "absence_version",
+}
+
+
+def include_object(object, name, type_, reflected, compare_to):
+    """Filter objects for autogenerate.
+
+    Excludes Continuum version tables which are auto-created at runtime.
+    """
+    if type_ == "table" and name in CONTINUUM_TABLES:
+        return False
+    return True
+
+
 # Alembic Config object
 config = context.config
 
@@ -51,6 +83,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -76,6 +109,7 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
+            include_object=include_object,
         )
 
         with context.begin_transaction():

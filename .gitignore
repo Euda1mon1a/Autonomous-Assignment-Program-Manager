@@ -107,6 +107,13 @@ docs/data/*.json
 docs/data/pii_mapping*.json
 docs/data/*_pii_mapping*.json
 
+# Block quality reports (contain real names/schedules - OPSEC/PERSEC)
+docs/reports/BLOCK_*_QUALITY_REPORT_*.md
+docs/reports/BLOCKS_*_SUMMARY_*.md
+
+# Local config files (contain real names/mappings)
+config/*.local.json
+
 # De-sanitized schedule files (contain real names - local only)
 docs/schedules/block_schedule.json
 docs/schedules/faculty.json
