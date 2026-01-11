@@ -132,6 +132,19 @@ ORCHESTRATOR (opus) ─── Supreme Commander
 
 > **Reserves Note:** Agents marked *(Reserves - production activation)* are production-ready reserves in `.claude/Reserves/`. They activate based on system maturity triggers, not development phase.
 
+## L3 Minimal Context Standing Order (2026-01-10)
+
+**All agents are authorized to use L3 pattern for delegation when:**
+1. Mission is clear (1-2 sentence objective)
+2. Key parameters are provided (dates, IDs, constraints)
+3. MCP tools are available for the task domain
+
+**L3 reduces context overhead by ~90% while maintaining MCP tool effectiveness.**
+
+Agents do NOT need explicit tool names in prompts - they discover appropriate tools from mission intent.
+
+---
+
 ## Coordinator Standing Orders
 
 See individual Coordinator specs for pre-authorized actions.

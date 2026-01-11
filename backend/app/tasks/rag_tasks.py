@@ -33,6 +33,7 @@ DOC_TYPE_MAP = {
     "session-learnings.md": "session_learnings",
     "session-protocols.md": "session_protocols",
     "delegation-patterns.md": "delegation_patterns",
+    "L3-minimal-context-pattern.md": "delegation_patterns",
     "exotic-concepts.md": "exotic_concepts",
 }
 

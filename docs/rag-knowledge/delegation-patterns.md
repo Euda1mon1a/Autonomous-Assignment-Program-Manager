@@ -2,7 +2,32 @@
 
 > **Purpose:** Capture learned delegation patterns for AI agents to retrieve and apply
 > **Category:** `delegation_patterns` (for RAG system semantic search)
-> **Updated:** 2026-01-01 (mcp-refinement session: 99/1 Rule, Embarrassingly Parallel)
+> **Updated:** 2026-01-10 (L3 Minimal Context Pattern validated)
+
+---
+
+## L3 MINIMAL CONTEXT PATTERN (CRITICAL)
+
+**Validated 2026-01-10:** Subagents can autonomously invoke MCP tools with ONLY mission + parameters.
+
+| Level | Context | MCP Used? |
+|-------|---------|-----------|
+| L1 | Identity + explicit tools | Yes |
+| L2 | Identity + mission | Yes |
+| **L3** | Mission + parameters | **Yes (3 tools)** |
+| L4 | Just question | No |
+
+**L3 Template:**
+```
+## MISSION
+[1-2 sentence objective]
+[Parameters: dates, IDs, constraints]
+
+## OUTPUT
+[Expected format]
+```
+
+**See:** `docs/rag-knowledge/L3-minimal-context-pattern.md` for full documentation.
 
 ---
 
