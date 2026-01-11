@@ -446,7 +446,7 @@ mcp = FastMCP(
 
 
 @mcp.prompt()
-def tool_usage_requirements() -> str:
+async def tool_usage_requirements() -> str:
     """
     Required tool usage patterns for medical residency scheduling.
 

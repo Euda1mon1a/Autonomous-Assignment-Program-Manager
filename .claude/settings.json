@@ -65,7 +65,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/hooks/pre-schedule-warning.sh"
+            "command": ".claude/hooks/pre-schedule-warning.sh"
           }
         ]
       },
