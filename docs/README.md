@@ -6,6 +6,18 @@ Welcome to the Residency Scheduler documentation. This comprehensive guide will 
 
 ---
 
+## Start Here (By Role)
+
+| Role | Start Here | Description |
+|------|------------|-------------|
+| **Program Coordinators** | [START_HERE_COORDINATOR.md](START_HERE_COORDINATOR.md) | Daily schedule management |
+| **System Administrators** | [START_HERE_ADMIN.md](START_HERE_ADMIN.md) | System maintenance |
+| **Developers** | [START_HERE_DEVELOPER.md](START_HERE_DEVELOPER.md) | Contributing code |
+
+**Master Reference**: [MASTER_GUIDE.md](MASTER_GUIDE.md) - Comprehensive consolidated guide
+
+---
+
 ## Quick Navigation
 
 ### For New Users
