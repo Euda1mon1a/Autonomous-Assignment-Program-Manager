@@ -16,6 +16,11 @@ from app.models.block import Block
 from app.models.person import Person
 from app.models.absence import Absence
 from app.models.swap import SwapRecord
+from app.models.rotation_template import RotationTemplate
+
+# Rotation template categories that represent placeholders (not actual work)
+# These should be excluded from compliance calculations
+PLACEHOLDER_CATEGORIES = {"absence", "time_off"}
 
 logger = logging.getLogger(__name__)
 
@@ -103,12 +108,16 @@ class MetricCalculator:
         )
 
         # Calculate workload (estimate 4 hours per half-day block)
-        total_hours = total_assignments * 4
+        # EXCLUDE placeholders (W, LV, OFF) - they're not actual work hours
+        work_assignments = [
+            a for a in assignments if not self._is_placeholder_assignment(a)
+        ]
+        total_hours = len(work_assignments) * 4
         days = (end_date - start_date).days + 1
         weeks = days / 7
         avg_weekly_hours = total_hours / weeks if weeks > 0 else 0
 
-        # Rotation distribution
+        # Rotation distribution (include all for visibility)
         rotation_counts: dict[str, int] = {}
         for assignment in assignments:
             rotation_name = assignment.activity_name
@@ -118,6 +127,7 @@ class MetricCalculator:
             "coverage_rate": round(coverage_rate, 2),
             "avg_workload_hours": round(avg_weekly_hours, 2),
             "total_assignments": total_assignments,
+            "work_assignments": len(work_assignments),  # Actual work slots
             "total_blocks": total_blocks,
             "unique_persons": unique_persons,
             "rotation_distribution": rotation_counts,
@@ -174,10 +184,17 @@ class MetricCalculator:
                     )
                 )
                 .options(selectinload(Assignment.block))
+                .options(selectinload(Assignment.rotation_template))
             )
 
             result = await self.db.execute(query)
-            assignments = result.scalars().all()
+            all_assignments = result.scalars().all()
+
+            # Filter out placeholder assignments (W, LV, OFF) for compliance
+            # These fill gaps for the 56-assignment rule but aren't worked hours
+            assignments = [
+                a for a in all_assignments if not self._is_placeholder_assignment(a)
+            ]
 
             # Check 80-hour rule (rolling 4-week average)
             violations_80hr = self._check_80_hour_rule(assignments)
@@ -394,3 +411,23 @@ class MetricCalculator:
 
         # Convert block counts to hours (4 hours per half-day)
         return [count * 4 for count in weeks.values()]
+
+    def _is_placeholder_assignment(self, assignment: Assignment) -> bool:
+        """
+        Check if assignment is a placeholder (not actual work).
+
+        Placeholder assignments are created by the 56-assignment rule
+        to fill gaps (weekends, leave, days off) but should NOT count
+        toward compliance calculations like 80-hour or 1-in-7 rules.
+
+        Args:
+            assignment: Assignment to check
+
+        Returns:
+            True if assignment is a placeholder (W, LV, OFF, etc.)
+        """
+        if not assignment.rotation_template:
+            return False
+
+        category = assignment.rotation_template.template_category
+        return category in PLACEHOLDER_CATEGORIES
