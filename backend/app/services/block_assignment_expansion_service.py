@@ -264,6 +264,12 @@ class BlockAssignmentExpansionService:
             is_weekend = day_of_week in (0, 6)  # Sunday or Saturday
             skip_weekend = is_weekend and not includes_weekends
 
+            # Check if holiday and rotation doesn't include weekend/holiday work
+            # Rotations that include weekends (FMIT, NF) also cover holidays
+            am_block = self._block_cache.get((current_date, "AM"))
+            is_holiday = am_block.is_holiday if am_block else False
+            skip_holiday = is_holiday and not includes_weekends
+
             # Apply 1-in-7 rule: force day off if 6 consecutive days worked
             force_day_off = False
             if apply_one_in_seven and consecutive_days >= 6:
@@ -281,7 +287,7 @@ class BlockAssignmentExpansionService:
             # ║                                                                  ║
             # ║  CODEX P2 REJECTED: "Reset on absence" is WRONG.                 ║
             # ╚══════════════════════════════════════════════════════════════════╝
-            if is_absent or skip_weekend or force_day_off:
+            if is_absent or skip_weekend or skip_holiday or force_day_off:
                 # 56-ASSIGNMENT RULE: Create placeholder assignments instead of skipping
                 self._create_absence_assignments(
                     assignments,
@@ -291,10 +297,13 @@ class BlockAssignmentExpansionService:
                     created_by,
                     is_absent=is_absent,
                     is_weekend=skip_weekend,
+                    is_holiday=skip_holiday,
                     is_day_off=force_day_off,
                 )
 
-                if not is_absent:  # PAUSE: Only reset for SCHEDULED day off
+                if (
+                    not is_absent and not skip_holiday
+                ):  # PAUSE: Only reset for SCHEDULED day off
                     consecutive_days = 0
                     last_day_off = current_date
                 # Absence: counter HOLDS (no reset) - correct ACGME interpretation
@@ -469,9 +478,10 @@ class BlockAssignmentExpansionService:
         created_by: str,
         is_absent: bool,
         is_weekend: bool,
+        is_holiday: bool,
         is_day_off: bool,
     ) -> None:
-        """Create AM and PM assignments for absence/weekend/day-off days.
+        """Create AM and PM assignments for absence/weekend/holiday/day-off days.
 
         56-ASSIGNMENT RULE IMPLEMENTATION
         =================================
@@ -484,6 +494,7 @@ class BlockAssignmentExpansionService:
         The placeholder templates are:
         - W-AM, W-PM: Weekend (rotation doesn't include weekend work)
         - LV-AM, LV-PM: Leave/absence (blocking absence)
+        - HOL-AM, HOL-PM: Federal holiday (rotation doesn't include holiday work)
         - OFF-AM, OFF-PM: Day off (1-in-7 rule forced day)
 
         Args:
@@ -494,13 +505,16 @@ class BlockAssignmentExpansionService:
             created_by: Audit field
             is_absent: True if person has blocking absence
             is_weekend: True if weekend and rotation excludes weekends
+            is_holiday: True if holiday and rotation excludes holidays
             is_day_off: True if 1-in-7 rule forces day off
         """
-        # Determine which absence template to use
+        # Determine which absence template to use (priority order)
         if is_absent:
             am_abbrev, pm_abbrev = "LV-AM", "LV-PM"
         elif is_weekend:
             am_abbrev, pm_abbrev = "W-AM", "W-PM"
+        elif is_holiday:
+            am_abbrev, pm_abbrev = "HOL-AM", "HOL-PM"
         elif is_day_off:
             am_abbrev, pm_abbrev = "OFF-AM", "OFF-PM"
         else:
