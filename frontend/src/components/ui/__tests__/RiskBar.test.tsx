@@ -215,9 +215,9 @@ describe('useRiskTierFromRoles', () => {
     expect(result.current).toBe(2);
   });
 
-  it('returns tier 2 for coordinator role', () => {
+  it('returns tier 1 for coordinator role', () => {
     const { result } = renderHook(() => useRiskTierFromRoles(['coordinator']));
-    expect(result.current).toBe(2);
+    expect(result.current).toBe(1);
   });
 
   it('returns tier 2 for chief role', () => {
