@@ -13,9 +13,10 @@
  * - Activity legend
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Loader2, ChevronLeft, ChevronRight, Filter, Users, X, Edit2, Check, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useFacultyMatrix } from '@/hooks/useFacultyActivities';
+import { useFairnessAudit, getWorkloadDeviation } from '@/hooks/useFairness';
 import { useUpdatePerson } from '@/hooks/usePeople';
 import type {
   DayOfWeek,
@@ -44,6 +45,8 @@ interface FacultyMatrixViewProps {
   showAdjunctToggle?: boolean;
   /** Callback when faculty is selected */
   onFacultySelect?: (personId: string) => void;
+  /** Show workload score badges next to faculty names */
+  showWorkloadBadges?: boolean;
 }
 
 interface MatrixCellProps {
@@ -327,6 +330,39 @@ function ActivityLegend({ faculty }: { faculty: FacultyMatrixRow[] }) {
 }
 
 /**
+ * Workload score badge for faculty (Tier 3 quick glance).
+ */
+function WorkloadBadge({
+  score,
+  deviation,
+}: {
+  score: number;
+  deviation: number;
+}) {
+  // Color based on deviation from mean
+  let bgColor = 'bg-green-500/20 text-green-400 border-green-500/50';
+  let icon: React.ReactNode = <CheckCircle2 className="w-3 h-3" />;
+
+  if (Math.abs(deviation) > 25) {
+    bgColor = 'bg-red-500/20 text-red-400 border-red-500/50';
+    icon = <AlertCircle className="w-3 h-3" />;
+  } else if (Math.abs(deviation) > 10) {
+    bgColor = 'bg-amber-500/20 text-amber-400 border-amber-500/50';
+    icon = null;
+  }
+
+  return (
+    <div
+      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-medium ${bgColor}`}
+      title={`Workload: ${score.toFixed(1)} (${deviation > 0 ? '+' : ''}${deviation.toFixed(0)}% from mean)`}
+    >
+      {icon}
+      <span>{score.toFixed(1)}</span>
+    </div>
+  );
+}
+
+/**
  * Inline role editor dropdown.
  */
 function InlineRoleEditor({
@@ -437,6 +473,7 @@ export function FacultyMatrixView({
   initialWeekStart,
   showAdjunctToggle = true,
   onFacultySelect,
+  showWorkloadBadges = false,
 }: FacultyMatrixViewProps) {
   // State
   const [weekStart, setWeekStart] = useState(
@@ -457,12 +494,39 @@ export function FacultyMatrixView({
   });
   const [editingRoleFor, setEditingRoleFor] = useState<string | null>(null);
 
+  // Calculate current month date range for workload badges
+  const today = new Date();
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+    .toISOString()
+    .split('T')[0];
+  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    .toISOString()
+    .split('T')[0];
+
   // Data fetching
   const { data, isLoading, isError, error, refetch } = useFacultyMatrix(
     weekStart,
     getWeekEnd(weekStart),
     includeAdjunct
   );
+
+  // Fetch workload data if badges enabled
+  const { data: fairnessData } = useFairnessAudit(
+    showWorkloadBadges ? monthStart : null,
+    showWorkloadBadges ? monthEnd : null,
+    true // Include titled faculty so their badges show
+  );
+
+  // Create workload lookup map
+  const workloadMap = useMemo(() => {
+    if (!fairnessData?.workloads) return new Map();
+    const map = new Map<string, { score: number; deviation: number }>();
+    for (const w of fairnessData.workloads) {
+      const deviation = getWorkloadDeviation(w, fairnessData.workloadStats.mean);
+      map.set(w.personId, { score: w.totalScore, deviation });
+    }
+    return map;
+  }, [fairnessData]);
 
   // Mutations
   const updatePerson = useUpdatePerson();
@@ -609,6 +673,7 @@ export function FacultyMatrixView({
                     const lastName = faculty.name.split(' ').pop();
                     const facultyId = getPersonId(faculty);
                     const isEditingRole = editingRoleFor === facultyId;
+                    const workloadInfo = workloadMap.get(facultyId);
 
                     return (
                       <tr
@@ -631,8 +696,16 @@ export function FacultyMatrixView({
                                 onClick={() => handleCellClick(faculty)}
                                 className="text-left flex-1"
                               >
-                                <div className="text-sm font-medium text-white group-hover:text-cyan-400 transition-colors">
-                                  Dr. {lastName}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-white group-hover:text-cyan-400 transition-colors">
+                                    Dr. {lastName}
+                                  </span>
+                                  {showWorkloadBadges && workloadInfo && (
+                                    <WorkloadBadge
+                                      score={workloadInfo.score}
+                                      deviation={workloadInfo.deviation}
+                                    />
+                                  )}
                                 </div>
                                 {faculty.facultyRole && (
                                   <div className="text-xs text-slate-500">

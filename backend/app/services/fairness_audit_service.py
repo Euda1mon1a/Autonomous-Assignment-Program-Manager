@@ -293,13 +293,13 @@ class FairnessAuditService:
         admin_stats = calc_stats([w.admin_halfdays for w in workloads])
         academic_stats = calc_stats([w.academic_halfdays for w in workloads])
 
-        # Total workload scores
+        # Total workload scores (preserve fractional precision from weighted scoring)
         scores = [w.total_score for w in workloads]
         workload_stats = CategoryStats(
-            min=int(min(scores)) if scores else 0,
-            max=int(max(scores)) if scores else 0,
+            min=min(scores) if scores else 0.0,
+            max=max(scores) if scores else 0.0,
             mean=sum(scores) / len(scores) if scores else 0.0,
-            spread=int(max(scores) - min(scores)) if scores else 0,
+            spread=max(scores) - min(scores) if scores else 0.0,
         )
 
         # Jain's fairness index

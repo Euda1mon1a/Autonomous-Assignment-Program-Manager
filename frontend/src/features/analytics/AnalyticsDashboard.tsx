@@ -17,10 +17,12 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
+  Scale,
   TrendingUp,
 } from "lucide-react";
 import { useState } from "react";
 import { FairnessTrend } from "./FairnessTrend";
+import { FacultyWorkloadTab } from "./FacultyWorkloadTab";
 import { MetricsCard, MetricsCardSkeleton } from "./MetricsCard";
 import { VersionComparison } from "./VersionComparison";
 import { WhatIfAnalysis } from "./WhatIfAnalysis";
@@ -43,7 +45,7 @@ interface AnalyticsDashboardProps {
   className?: string;
 }
 
-type DashboardView = "overview" | "trends" | "comparison" | "whatif";
+type DashboardView = "overview" | "trends" | "workload" | "comparison" | "whatif";
 
 // ============================================================================
 // Sub-Components
@@ -73,6 +75,11 @@ function ViewTabs({
       value: "trends",
       label: "Trends",
       icon: <TrendingUp className="w-4 h-4" />,
+    },
+    {
+      value: "workload",
+      label: "Faculty Workload",
+      icon: <Scale className="w-4 h-4" />,
     },
     {
       value: "comparison",
@@ -607,6 +614,12 @@ export function AnalyticsDashboard({
             Detailed Trends
           </h2>
           <FairnessTrend months={3} showPgyComparison={true} />
+        </div>
+      )}
+
+      {currentView === "workload" && (
+        <div role="tabpanel" id="workload-panel" aria-labelledby="workload-tab">
+          <FacultyWorkloadTab />
         </div>
       )}
 
