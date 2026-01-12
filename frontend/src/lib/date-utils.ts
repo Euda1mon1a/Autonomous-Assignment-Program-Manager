@@ -42,9 +42,12 @@ export function getLastOfMonthLocal(): string {
 
 /**
  * Add days to a date string and return YYYY-MM-DD.
+ * Parses as local time to avoid UTC date shift in negative timezones.
  */
 export function addDaysLocal(dateStr: string, days: number): string {
-  const date = new Date(dateStr);
+  // Parse as local time by splitting into components
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
   date.setDate(date.getDate() + days);
   return formatLocalDate(date);
 }
