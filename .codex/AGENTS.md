@@ -4,9 +4,23 @@
 
 ---
 
-## 🎯 ACTIVE TASK: None
+## 🎯 ACTIVE TASK: Review Fairness GUI Frontend Code
 
-Last completed: MCP server CI test mocking (see Completed Tasks).
+**Priority:** Code review before merge
+**Branch:** Check `main` (PR #692 merged) + this PR for useFairness.ts
+
+**Files to review:**
+1. `frontend/src/hooks/useFairness.ts` - NEW: React Query hooks (this PR)
+2. `frontend/src/app/admin/fairness/page.tsx` - Admin fairness page (already in main)
+3. `frontend/src/features/analytics/FacultyWorkloadTab.tsx` - Analytics tab (already in main)
+4. `frontend/src/components/FacultyMatrixView.tsx` - Workload badges (already in main)
+
+**Review focus:**
+- React performance (memoization, unnecessary re-renders)
+- Accessibility (ARIA, keyboard navigation)
+- Edge cases (empty data, loading states, error handling)
+- Type safety (proper TypeScript usage)
+- API integration patterns (query keys, error handling)
 
 ---
 
