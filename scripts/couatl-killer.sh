@@ -1,21 +1,28 @@
 #!/usr/bin/env bash
-# Pre-commit hook: Validate query parameters use snake_case
-# Backend API expects snake_case, axios interceptor doesn't convert query strings
+# ============================================================================
+# COUATL KILLER - Slays the camelCase serpent in query parameters
+# ============================================================================
 #
-# Why this matters:
-# - Axios interceptor converts request/response BODY keys (camelCase <-> snake_case)
-# - But URL query strings bypass the interceptor entirely
-# - Backend FastAPI expects snake_case: start_date, end_date, page_size, person_id
-# - Frontend camelCase params are silently ignored, causing data not to load
+# Named after the D&D Couatl (feathered serpent) - camelCase is serpentine naming
+# that slithers through your codebase causing silent API failures.
+#
+# The Couatl's curse: Axios interceptor converts request/response BODY keys
+# but URL query strings bypass the interceptor entirely, causing:
+#   - Backend expects: /api?start_date=2026-01-01
+#   - Frontend sends:  /api?startDate=2026-01-01
+#   - Result: Silent failure, data not loaded
+#
+# This hook slays any camelCase serpents before they reach production.
 
 set -euo pipefail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
-echo "Checking for camelCase query parameters..."
+echo -e "${CYAN}Couatl Killer: Hunting camelCase serpents...${NC}"
 
 # Pattern: Common camelCase param names that should be snake_case
 # Add new patterns here as they're discovered
@@ -31,8 +38,8 @@ VIOLATIONS=$(grep -rn --include="*.ts" --include="*.tsx" \
   grep -v "// @query-param-ok" || true)
 
 if [ -n "$VIOLATIONS" ]; then
-  echo -e "${RED}ERROR: camelCase query parameters detected!${NC}"
-  echo -e "${YELLOW}Backend API expects snake_case (e.g., start_date, not startDate)${NC}"
+  echo -e "${RED}SERPENT DETECTED! camelCase query parameters found!${NC}"
+  echo -e "${YELLOW}The Couatl's curse: Backend expects snake_case, not camelCase${NC}"
   echo ""
   echo "$VIOLATIONS"
   echo ""
@@ -49,5 +56,5 @@ if [ -n "$VIOLATIONS" ]; then
   exit 1
 fi
 
-echo -e "${GREEN}✓ All query parameters use snake_case${NC}"
+echo -e "${GREEN}✓ No serpents found - all query params use snake_case${NC}"
 exit 0

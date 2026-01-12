@@ -145,16 +145,17 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
-  # PHASE 6b: Query Parameter Case Validation
+  # PHASE 6b: Query Parameter Case Validation (COUATL KILLER)
   # ============================================================================
 
-  # Ensure frontend query params use snake_case (backend expectation)
+  # Slays the camelCase serpent - ensures query params use snake_case
+  # Named after the D&D feathered serpent (camelCase = serpentine naming)
   # Axios interceptor only converts request body keys, not URL query strings
   - repo: local
     hooks:
-      - id: query-params-check
-        name: Query Parameter Case Check (snake_case)
-        entry: scripts/validate-query-params.sh
+      - id: couatl-killer
+        name: Couatl Killer (snake_case query params)
+        entry: scripts/couatl-killer.sh
         language: script
         pass_filenames: false
         files: ^frontend/src/.*\.(ts|tsx)$
