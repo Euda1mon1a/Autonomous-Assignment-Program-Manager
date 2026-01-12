@@ -18,6 +18,13 @@ import { Loader2, ChevronLeft, ChevronRight, Filter, Users, X, Edit2, Check, Ale
 import { useFacultyMatrix } from '@/hooks/useFacultyActivities';
 import { useFairnessAudit, getWorkloadDeviation } from '@/hooks/useFairness';
 import { useUpdatePerson } from '@/hooks/usePeople';
+import {
+  formatLocalDate,
+  addDaysLocal,
+  getMondayOfWeek,
+  getFirstOfMonthLocal,
+  getLastOfMonthLocal,
+} from '@/lib/date-utils';
 import type {
   DayOfWeek,
   FacultyRole,
@@ -62,20 +69,14 @@ interface MatrixCellProps {
 /** Display order: Mon-Sun (work week first) */
 const DISPLAY_ORDER: DayOfWeek[] = [1, 2, 3, 4, 5, 6, 0];
 
-/** Get Monday of the current week */
+/** Get Monday of the current week (using local timezone) */
 function getCurrentWeekStart(): string {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(now.setDate(diff));
-  return monday.toISOString().split('T')[0];
+  return getMondayOfWeek();
 }
 
-/** Add days to a date string */
+/** Add days to a date string (using local timezone) */
 function addDays(dateStr: string, days: number): string {
-  const date = new Date(dateStr);
-  date.setDate(date.getDate() + days);
-  return date.toISOString().split('T')[0];
+  return addDaysLocal(dateStr, days);
 }
 
 /** Format date for display */
@@ -92,13 +93,9 @@ function getWeekEnd(weekStart: string): string {
   return addDays(weekStart, 6);
 }
 
-/** Normalize any date to the Monday of its week */
+/** Normalize any date to the Monday of its week (using local timezone) */
 function normalizeToMonday(dateStr: string): string {
-  const date = new Date(dateStr);
-  const day = date.getDay();
-  const diff = day === 0 ? -6 : 1 - day; // Sunday -> prev Monday, else back to Monday
-  date.setDate(date.getDate() + diff);
-  return date.toISOString().split('T')[0];
+  return getMondayOfWeek(new Date(dateStr));
 }
 
 // ============================================================================
@@ -185,7 +182,7 @@ function RoleFilter({
           {selectedRoles.length === FACULTY_ROLES.length
             ? 'All Roles'
             : selectedRoles.length === 0
-            ? 'No Filter'
+            ? 'None Selected'
             : `${selectedRoles.length} Roles`}
         </span>
       </button>
@@ -405,6 +402,7 @@ function InlineRoleEditor({
           disabled={isSaving}
           className="p-0.5 text-green-400 hover:text-green-300 disabled:opacity-50"
           title="Save"
+          aria-label="Save role change"
         >
           {isSaving ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -417,6 +415,7 @@ function InlineRoleEditor({
           disabled={isSaving}
           className="p-0.5 text-slate-400 hover:text-white disabled:opacity-50"
           title="Cancel"
+          aria-label="Cancel role change"
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -494,14 +493,9 @@ export function FacultyMatrixView({
   });
   const [editingRoleFor, setEditingRoleFor] = useState<string | null>(null);
 
-  // Calculate current month date range for workload badges
-  const today = new Date();
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
-    .toISOString()
-    .split('T')[0];
-  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-    .toISOString()
-    .split('T')[0];
+  // Calculate current month date range for workload badges (using local timezone)
+  const monthStart = getFirstOfMonthLocal();
+  const monthEnd = getLastOfMonthLocal();
 
   // Data fetching
   const { data, isLoading, isError, error, refetch } = useFacultyMatrix(
@@ -720,6 +714,7 @@ export function FacultyMatrixView({
                                 }}
                                 className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-cyan-400 transition-all"
                                 title="Edit role"
+                                aria-label={`Edit role for ${faculty.name}`}
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
