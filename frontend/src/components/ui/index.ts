@@ -8,3 +8,4 @@ export * from './Input';
 export * from './Alert';
 export * from './Tooltip';
 export * from './Tabs';
+export * from './RiskBar';
