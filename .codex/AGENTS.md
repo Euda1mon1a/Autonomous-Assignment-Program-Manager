@@ -25,7 +25,7 @@
 **Problem:**
 - `mcp-server-tests` job fails on every CI run (including main branch)
 - Failed tests: test_api_client.py, test_resilience_integration.py, test_server.py
-- Root cause: Integration tests require running backend, CI doesn't start containers
+- Likely root cause: Integration tests require running backend; CI doesn't start containers (confirm via CI logs)
 
 **Files to examine:**
 - `.github/workflows/ci-tests.yml` (CI workflow)
@@ -40,6 +40,7 @@
 
 **Deliverable:**
 - Recommend best approach
+- Capture failing CI log signature to confirm root cause
 - Implement the fix
 - Ensure CI passes for MCP tests
 
@@ -61,6 +62,9 @@ seaborn not available - enhanced visualization disabled
 - Some analytics code optionally imports seaborn for statistical charts
 - Seaborn is NOT used for frontend heatmaps (those use Plotly.js)
 - The warning is visual noise
+
+**Files to examine:**
+- `backend/` (search for seaborn imports and warning text)
 
 **Task:**
 1. Grep for "seaborn" in `backend/`
@@ -98,16 +102,29 @@ async def _ensure_authenticated(self) -> dict[str, str]:
 
 **Proposed fix:**
 ```python
-async def _request_with_retry(self, method: str, url: str, **kwargs) -> httpx.Response:
+async def _request_with_retry(
+    self,
+    method: str,
+    url: str,
+    *,
+    _token_refreshed: bool = False,
+    **kwargs,
+) -> httpx.Response:
     # ... existing retry logic ...
 
     # On 401, try refreshing token once before giving up
-    if response.status_code == 401 and not kwargs.get("_token_refreshed"):
+    if response.status_code == 401 and not _token_refreshed:
         logger.warning("Received 401 Unauthorized, attempting token refresh")
         self._token = None  # Clear stale token
-        kwargs["headers"] = await self._ensure_authenticated()
-        kwargs["_token_refreshed"] = True  # Prevent infinite loop
-        return await self._request_with_retry(method, url, **kwargs)
+        headers = dict(kwargs.get("headers", {}))
+        headers.update(await self._ensure_authenticated())
+        kwargs["headers"] = headers
+        return await self._request_with_retry(
+            method,
+            url,
+            _token_refreshed=True,
+            **kwargs,
+        )
 ```
 
 **Tests to add:**
