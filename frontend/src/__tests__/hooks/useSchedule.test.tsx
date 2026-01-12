@@ -385,7 +385,7 @@ describe('useValidateSchedule', () => {
     expect(result.current.data?.valid).toBe(true)
     expect(result.current.data?.totalViolations).toBe(0)
     expect(result.current.data?.coverageRate).toBe(0.95)
-    expect(mockedApi.get).toHaveBeenCalledWith('/schedule/validate?startDate=2024-01-01&endDate=2024-01-31')
+    expect(mockedApi.get).toHaveBeenCalledWith('/schedule/validate?start_date=2024-01-01&end_date=2024-01-31')
   })
 
   it('should return violations when schedule is invalid', async () => {

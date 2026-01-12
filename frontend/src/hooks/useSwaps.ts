@@ -365,7 +365,7 @@ export function useSwapCandidates(
     queryKey: swapQueryKeys.candidates(sourceId, sourceWeek),
     queryFn: () =>
       get<ListResponse<SwapCandidate>>(
-        `/swaps/candidates?sourceFacultyId=${sourceId}&sourceWeek=${sourceWeek}`
+        `/swaps/candidates?source_faculty_id=${sourceId}&source_week=${sourceWeek}`
       ),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes

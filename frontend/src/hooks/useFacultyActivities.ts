@@ -341,7 +341,7 @@ export function useEffectiveFacultyWeek(
     queryKey: facultyActivityQueryKeys.effectiveWeek(personId, weekStart, weekNumber),
     queryFn: async () => {
       return get<EffectiveWeekResponse>(
-        `/faculty/${personId}/weekly-template/effective?week_start=${weekStart}&weekNumber=${weekNumber}`
+        `/faculty/${personId}/weekly-template/effective?week_start=${weekStart}&week_number=${weekNumber}`
       );
     },
     enabled: !!personId && !!weekStart,

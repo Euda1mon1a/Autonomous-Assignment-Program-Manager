@@ -326,7 +326,7 @@ export function useAbsences(
   personId?: number,
   options?: Omit<UseQueryOptions<ListResponse<Absence>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  const params = personId !== undefined ? `?personId=${personId}` : ''
+  const params = personId !== undefined ? `?person_id=${personId}` : ''
 
   return useQuery<ListResponse<Absence>, ApiError>({
     queryKey: ['absences', personId],
@@ -380,7 +380,7 @@ export function useLeaveCalendar(
   return useQuery<LeaveCalendarResponse, ApiError>({
     queryKey: absenceQueryKeys.calendar(startDate, endDate),
     queryFn: () => get<LeaveCalendarResponse>(
-      `/leave/calendar?startDate=${startDate}&endDate=${endDate}`
+      `/leave/calendar?start_date=${startDate}&end_date=${endDate}`
     ),
     staleTime: 2 * 60 * 1000, // 2 minutes (shorter for calendar views)
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -867,7 +867,7 @@ export function useAwayComplianceDashboard(
   academicYear?: number,
   options?: Omit<UseQueryOptions<AllResidentsAwayStatus, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  const params = academicYear ? `?academicYear=${academicYear}` : ''
+  const params = academicYear ? `?academic_year=${academicYear}` : ''
 
   return useQuery<AllResidentsAwayStatus, ApiError>({
     queryKey: awayComplianceQueryKeys.dashboard(academicYear),
@@ -915,7 +915,7 @@ export function useAwayFromProgramSummary(
   academicYear?: number,
   options?: Omit<UseQueryOptions<AwayFromProgramSummary, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  const params = academicYear ? `?academicYear=${academicYear}` : ''
+  const params = academicYear ? `?academic_year=${academicYear}` : ''
 
   return useQuery<AwayFromProgramSummary, ApiError>({
     queryKey: awayComplianceQueryKeys.summary(personId, academicYear),

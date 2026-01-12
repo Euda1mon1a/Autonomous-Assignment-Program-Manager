@@ -272,7 +272,7 @@ export function useValidateSchedule(
     queryKey: scheduleQueryKeys.validation(startDate, endDate),
     queryFn: () =>
       get<ValidationResult>(
-        `/schedule/validate?startDate=${startDate}&endDate=${endDate}`
+        `/schedule/validate?start_date=${startDate}&end_date=${endDate}`
       ),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes

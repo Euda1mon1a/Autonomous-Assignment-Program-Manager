@@ -307,7 +307,7 @@ export function useResidents(
   pgyLevel?: number,
   options?: Omit<UseQueryOptions<ListResponse<Person>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  const params = pgyLevel !== undefined ? `?pgyLevel=${pgyLevel}` : ''
+  const params = pgyLevel !== undefined ? `?pgy_level=${pgyLevel}` : ''
 
   return useQuery<ListResponse<Person>, ApiError>({
     queryKey: peopleQueryKeys.residents(pgyLevel),
