@@ -10,6 +10,7 @@
 import { useState } from 'react';
 import { Scale, TrendingUp, TrendingDown, Minus, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
+import { getFirstOfMonthLocal, getLastOfMonthLocal } from '@/lib/date-utils';
 import {
   useFairnessSummary,
   getFairnessStatus,
@@ -107,17 +108,9 @@ function TrendIndicator({ value }: { value: number }) {
 // ============================================================================
 
 export function FacultyWorkloadTab() {
-  // Default to current month
-  const today = new Date();
-  const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const lastOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-  const [startDate] = useState<string>(
-    firstOfMonth.toISOString().split('T')[0]
-  );
-  const [endDate] = useState<string>(
-    lastOfMonth.toISOString().split('T')[0]
-  );
+  // Default to current month (using local timezone)
+  const [startDate] = useState<string>(getFirstOfMonthLocal);
+  const [endDate] = useState<string>(getLastOfMonthLocal);
 
   const { data, isLoading, error } = useFairnessSummary(startDate, endDate);
 

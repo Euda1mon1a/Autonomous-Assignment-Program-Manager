@@ -21,6 +21,7 @@ import { Switch } from '@/components/ui/Switch';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { DataTable, Column } from '@/components/ui/DataTable';
+import { getFirstOfMonthLocal, getLastOfMonthLocal } from '@/lib/date-utils';
 import {
   useFairnessAudit,
   fairnessQueryKeys,
@@ -148,17 +149,9 @@ function StatCard({
 export default function AdminFairnessPage() {
   const queryClient = useQueryClient();
 
-  // Default to current month
-  const today = new Date();
-  const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const lastOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-  const [startDate, setStartDate] = useState<string>(
-    firstOfMonth.toISOString().split('T')[0]
-  );
-  const [endDate, setEndDate] = useState<string>(
-    lastOfMonth.toISOString().split('T')[0]
-  );
+  // Default to current month (using local timezone)
+  const [startDate, setStartDate] = useState<string>(getFirstOfMonthLocal);
+  const [endDate, setEndDate] = useState<string>(getLastOfMonthLocal);
   const [includeTitled, setIncludeTitled] = useState(false);
 
   // Fetch data
@@ -270,6 +263,7 @@ export default function AdminFairnessPage() {
               disabled={isFetching}
               className="p-2 text-slate-300 hover:text-white transition-colors disabled:opacity-50"
               title="Refresh data"
+              aria-label="Refresh fairness data"
             >
               <RefreshCw className={`w-5 h-5 ${isFetching ? 'animate-spin' : ''}`} />
             </button>

@@ -190,7 +190,8 @@ export function useFacultyWorkload(
  */
 export function getFairnessColorClass(fairnessIndex: number): string {
   if (fairnessIndex >= 0.95) return 'text-green-500';
-  if (fairnessIndex >= 0.85) return 'text-yellow-500';
+  if (fairnessIndex >= 0.85) return 'text-emerald-500';
+  if (fairnessIndex >= 0.75) return 'text-yellow-500';
   return 'text-red-500';
 }
 
