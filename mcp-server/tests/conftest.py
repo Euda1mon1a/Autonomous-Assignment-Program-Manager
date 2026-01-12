@@ -120,6 +120,7 @@ def mock_httpx_client():
     """
     with patch("httpx.AsyncClient") as mock_client_class:
         mock_client = AsyncMock()
+        mock_client.aclose = AsyncMock()
         mock_client_class.return_value = mock_client
 
         # Setup async context manager

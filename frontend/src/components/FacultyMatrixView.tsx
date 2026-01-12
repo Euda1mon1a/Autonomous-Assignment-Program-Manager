@@ -13,10 +13,18 @@
  * - Activity legend
  */
 
-import { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Loader2, ChevronLeft, ChevronRight, Filter, Users, X, Edit2, Check, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useFacultyMatrix } from '@/hooks/useFacultyActivities';
+import { useFairnessAudit, getWorkloadDeviation } from '@/hooks/useFairness';
 import { useUpdatePerson } from '@/hooks/usePeople';
+import {
+  formatLocalDate,
+  addDaysLocal,
+  getMondayOfWeek,
+  getFirstOfMonthLocal,
+  getLastOfMonthLocal,
+} from '@/lib/date-utils';
 import type {
   DayOfWeek,
   FacultyRole,
@@ -44,6 +52,8 @@ interface FacultyMatrixViewProps {
   showAdjunctToggle?: boolean;
   /** Callback when faculty is selected */
   onFacultySelect?: (personId: string) => void;
+  /** Show workload score badges next to faculty names */
+  showWorkloadBadges?: boolean;
 }
 
 interface MatrixCellProps {
@@ -59,20 +69,14 @@ interface MatrixCellProps {
 /** Display order: Mon-Sun (work week first) */
 const DISPLAY_ORDER: DayOfWeek[] = [1, 2, 3, 4, 5, 6, 0];
 
-/** Get Monday of the current week */
+/** Get Monday of the current week (using local timezone) */
 function getCurrentWeekStart(): string {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(now.setDate(diff));
-  return monday.toISOString().split('T')[0];
+  return getMondayOfWeek();
 }
 
-/** Add days to a date string */
+/** Add days to a date string (using local timezone) */
 function addDays(dateStr: string, days: number): string {
-  const date = new Date(dateStr);
-  date.setDate(date.getDate() + days);
-  return date.toISOString().split('T')[0];
+  return addDaysLocal(dateStr, days);
 }
 
 /** Format date for display */
@@ -89,13 +93,9 @@ function getWeekEnd(weekStart: string): string {
   return addDays(weekStart, 6);
 }
 
-/** Normalize any date to the Monday of its week */
+/** Normalize any date to the Monday of its week (using local timezone) */
 function normalizeToMonday(dateStr: string): string {
-  const date = new Date(dateStr);
-  const day = date.getDay();
-  const diff = day === 0 ? -6 : 1 - day; // Sunday -> prev Monday, else back to Monday
-  date.setDate(date.getDate() + diff);
-  return date.toISOString().split('T')[0];
+  return getMondayOfWeek(new Date(dateStr));
 }
 
 // ============================================================================
@@ -182,7 +182,7 @@ function RoleFilter({
           {selectedRoles.length === FACULTY_ROLES.length
             ? 'All Roles'
             : selectedRoles.length === 0
-            ? 'No Filter'
+            ? 'None Selected'
             : `${selectedRoles.length} Roles`}
         </span>
       </button>
@@ -327,6 +327,39 @@ function ActivityLegend({ faculty }: { faculty: FacultyMatrixRow[] }) {
 }
 
 /**
+ * Workload score badge for faculty (Tier 3 quick glance).
+ */
+function WorkloadBadge({
+  score,
+  deviation,
+}: {
+  score: number;
+  deviation: number;
+}) {
+  // Color based on deviation from mean
+  let bgColor = 'bg-green-500/20 text-green-400 border-green-500/50';
+  let icon: React.ReactNode = <CheckCircle2 className="w-3 h-3" />;
+
+  if (Math.abs(deviation) > 25) {
+    bgColor = 'bg-red-500/20 text-red-400 border-red-500/50';
+    icon = <AlertCircle className="w-3 h-3" />;
+  } else if (Math.abs(deviation) > 10) {
+    bgColor = 'bg-amber-500/20 text-amber-400 border-amber-500/50';
+    icon = null;
+  }
+
+  return (
+    <div
+      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-medium ${bgColor}`}
+      title={`Workload: ${score.toFixed(1)} (${deviation > 0 ? '+' : ''}${deviation.toFixed(0)}% from mean)`}
+    >
+      {icon}
+      <span>{score.toFixed(1)}</span>
+    </div>
+  );
+}
+
+/**
  * Inline role editor dropdown.
  */
 function InlineRoleEditor({
@@ -369,6 +402,7 @@ function InlineRoleEditor({
           disabled={isSaving}
           className="p-0.5 text-green-400 hover:text-green-300 disabled:opacity-50"
           title="Save"
+          aria-label="Save role change"
         >
           {isSaving ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -381,6 +415,7 @@ function InlineRoleEditor({
           disabled={isSaving}
           className="p-0.5 text-slate-400 hover:text-white disabled:opacity-50"
           title="Cancel"
+          aria-label="Cancel role change"
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -437,6 +472,7 @@ export function FacultyMatrixView({
   initialWeekStart,
   showAdjunctToggle = true,
   onFacultySelect,
+  showWorkloadBadges = false,
 }: FacultyMatrixViewProps) {
   // State
   const [weekStart, setWeekStart] = useState(
@@ -457,12 +493,34 @@ export function FacultyMatrixView({
   });
   const [editingRoleFor, setEditingRoleFor] = useState<string | null>(null);
 
+  // Calculate current month date range for workload badges (using local timezone)
+  const monthStart = getFirstOfMonthLocal();
+  const monthEnd = getLastOfMonthLocal();
+
   // Data fetching
   const { data, isLoading, isError, error, refetch } = useFacultyMatrix(
     weekStart,
     getWeekEnd(weekStart),
     includeAdjunct
   );
+
+  // Fetch workload data if badges enabled
+  const { data: fairnessData } = useFairnessAudit(
+    showWorkloadBadges ? monthStart : null,
+    showWorkloadBadges ? monthEnd : null,
+    true // Include titled faculty so their badges show
+  );
+
+  // Create workload lookup map
+  const workloadMap = useMemo(() => {
+    if (!fairnessData?.workloads) return new Map();
+    const map = new Map<string, { score: number; deviation: number }>();
+    for (const w of fairnessData.workloads) {
+      const deviation = getWorkloadDeviation(w, fairnessData.workloadStats.mean);
+      map.set(w.personId, { score: w.totalScore, deviation });
+    }
+    return map;
+  }, [fairnessData]);
 
   // Mutations
   const updatePerson = useUpdatePerson();
@@ -609,6 +667,7 @@ export function FacultyMatrixView({
                     const lastName = faculty.name.split(' ').pop();
                     const facultyId = getPersonId(faculty);
                     const isEditingRole = editingRoleFor === facultyId;
+                    const workloadInfo = workloadMap.get(facultyId);
 
                     return (
                       <tr
@@ -631,8 +690,16 @@ export function FacultyMatrixView({
                                 onClick={() => handleCellClick(faculty)}
                                 className="text-left flex-1"
                               >
-                                <div className="text-sm font-medium text-white group-hover:text-cyan-400 transition-colors">
-                                  Dr. {lastName}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-white group-hover:text-cyan-400 transition-colors">
+                                    Dr. {lastName}
+                                  </span>
+                                  {showWorkloadBadges && workloadInfo && (
+                                    <WorkloadBadge
+                                      score={workloadInfo.score}
+                                      deviation={workloadInfo.deviation}
+                                    />
+                                  )}
                                 </div>
                                 {faculty.facultyRole && (
                                   <div className="text-xs text-slate-500">
@@ -647,6 +714,7 @@ export function FacultyMatrixView({
                                 }}
                                 className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-cyan-400 transition-all"
                                 title="Edit role"
+                                aria-label={`Edit role for ${faculty.name}`}
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
