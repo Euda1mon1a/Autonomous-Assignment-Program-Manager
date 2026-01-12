@@ -54,18 +54,25 @@ async def get_faculty_workload(
     faculty_id: str,
     start_date: date = Query(..., description="Start date for analysis"),
     end_date: date = Query(..., description="End date for analysis"),
+    include_titled_faculty: bool = Query(
+        True,
+        description="Include PD, APD, OIC, Dept Chief (default True for individual lookup)",
+    ),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """
     Get workload breakdown for a specific faculty member.
 
     Returns counts for each workload category and total weighted score.
+    Note: include_titled_faculty defaults to True here so PD/APD can look up their own workload.
     """
     if start_date > end_date:
         raise HTTPException(400, "start_date must be before end_date")
 
     service = FairnessAuditService(db)
-    report = await service.generate_audit_report(start_date, end_date)
+    report = await service.generate_audit_report(
+        start_date, end_date, include_titled_faculty
+    )
 
     # Find this faculty in report
     for workload in report.workloads:
