@@ -38,7 +38,6 @@ try:
     SEABORN_AVAILABLE = True
 except ImportError:
     SEABORN_AVAILABLE = False
-    logger.warning("seaborn not available - enhanced visualization disabled")
 
 
 def plot_energy_landscape(
