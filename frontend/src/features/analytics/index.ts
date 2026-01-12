@@ -27,6 +27,7 @@
 
 // Components
 export { AnalyticsDashboard } from './AnalyticsDashboard';
+export { FacultyWorkloadTab } from './FacultyWorkloadTab';
 export { MetricsCard, MetricsCardSkeleton } from './MetricsCard';
 export { FairnessTrend } from './FairnessTrend';
 export { VersionComparison } from './VersionComparison';
