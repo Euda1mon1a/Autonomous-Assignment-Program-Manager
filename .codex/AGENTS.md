@@ -1,27 +1,26 @@
-# Codex Task Tracker
+# Codex Agent Instructions
 
-> Tasks suitable for GitHub Codex async investigation via IDE
-> **Last Updated:** 2026-01-11
-> **Integration:** `/check-codex` skill, `codex-feedback-monitor.yml` workflow
+> Codex reads this file before starting work. See also: `docs/development/AGENTS.md` for monitoring patterns.
+
+---
+
+## Project Context
+
+**Residency Scheduler** - Military medical residency scheduling with ACGME compliance.
+
+- **Backend**: FastAPI, SQLAlchemy 2.0, PostgreSQL, Celery/Redis
+- **Frontend**: Next.js 14, React 18, TailwindCSS
+- **MCP Server**: 34+ AI tools for scheduling, validation, resilience
 
 ---
 
 ## Open Tasks
 
-### [HIGH] MCP Server Tests Failing in CI
+### Task 1: MCP Server Tests Failing in CI
 
-- **Status:** Open
-- **Created:** 2026-01-11
-- **Source:** HUMAN_TODO.md
-- **Files:**
-  - `.github/workflows/ci-tests.yml`
-  - `mcp-server/tests/test_api_client.py`
-  - `mcp-server/tests/test_resilience_integration.py`
-  - `mcp-server/tests/conftest.py`
-
-**Codex Prompt:**
-```
-Investigate why MCP server tests fail in CI but pass locally.
+**Priority:** HIGH
+**Status:** Open
+**Created:** 2026-01-11
 
 **Problem:**
 - `mcp-server-tests` job fails on every CI run (including main branch)
@@ -29,10 +28,10 @@ Investigate why MCP server tests fail in CI but pass locally.
 - Root cause: Integration tests require running backend, CI doesn't start containers
 
 **Files to examine:**
-- .github/workflows/ci-tests.yml (CI workflow)
-- mcp-server/tests/test_api_client.py (failing tests)
-- mcp-server/tests/conftest.py (test fixtures)
-- mcp-server/tests/test_resilience_integration.py
+- `.github/workflows/ci-tests.yml` (CI workflow)
+- `mcp-server/tests/test_api_client.py` (failing tests)
+- `mcp-server/tests/conftest.py` (test fixtures)
+- `mcp-server/tests/test_resilience_integration.py`
 
 **Options to evaluate:**
 1. Add pytest markers: `@pytest.mark.integration` and skip in CI
@@ -43,24 +42,20 @@ Investigate why MCP server tests fail in CI but pass locally.
 - Recommend best approach
 - Implement the fix
 - Ensure CI passes for MCP tests
-```
 
 ---
 
-### [HIGH] Seaborn Warning Cleanup
+### Task 2: Seaborn Warning Cleanup
 
-- **Status:** Open
-- **Created:** 2026-01-11
-- **Source:** HUMAN_TODO.md
-- **Files:** `backend/` (grep for seaborn)
-
-**Codex Prompt:**
-```
-Remove unnecessary seaborn import that clutters backend logs.
+**Priority:** HIGH
+**Status:** Open
+**Created:** 2026-01-11
 
 **Problem:**
 Every Python command in backend container logs:
-"seaborn not available - enhanced visualization disabled"
+```
+seaborn not available - enhanced visualization disabled
+```
 
 **Context:**
 - Some analytics code optionally imports seaborn for statistical charts
@@ -68,7 +63,7 @@ Every Python command in backend container logs:
 - The warning is visual noise
 
 **Task:**
-1. Grep for "seaborn" in backend/
+1. Grep for "seaborn" in `backend/`
 2. Determine if seaborn is actually used anywhere
 3. If unused: Remove the import and warning entirely
 4. If used: Silence the warning or add seaborn to requirements
@@ -78,28 +73,22 @@ Every Python command in backend container logs:
 **Deliverable:**
 - PR that eliminates the seaborn warning from logs
 - No functional regression
-```
 
 ---
 
-### [HIGH] MCP API Client 401 Token Refresh
+### Task 3: MCP API Client 401 Token Refresh
 
-- **Status:** Open
-- **Created:** 2026-01-11
-- **Source:** HUMAN_TODO.md
-- **Files:** `mcp-server/src/scheduler_mcp/api_client.py`
-
-**Codex Prompt:**
-```
-Implement automatic token refresh on 401 Unauthorized in MCP API client.
+**Priority:** HIGH
+**Status:** Open
+**Created:** 2026-01-11
 
 **Problem:**
 MCP API client caches JWT token indefinitely. If token expires or is invalidated,
 client returns 401 for all calls until container restart.
 
-**File:** mcp-server/src/scheduler_mcp/api_client.py
+**File:** `mcp-server/src/scheduler_mcp/api_client.py`
 
-**Current behavior (line ~50):**
+**Current behavior (~line 50):**
 ```python
 async def _ensure_authenticated(self) -> dict[str, str]:
     if self._token is None:  # Doesn't detect expired tokens
@@ -130,7 +119,6 @@ async def _request_with_retry(self, method: str, url: str, **kwargs) -> httpx.Re
 - Implement the fix per spec above
 - Add tests
 - Ensure existing MCP tests still pass
-```
 
 ---
 
@@ -140,15 +128,10 @@ async def _request_with_retry(self, method: str, url: str, **kwargs) -> httpx.Re
 
 ---
 
-## Usage
+## Conventions
 
-1. Copy the **Codex Prompt** block for a task
-2. Paste into Codex IDE (VS Code / GitHub)
-3. When Codex submits PR, update status here
-4. Move to Completed when merged
-
-## Related Files
-
-- `CODEX_REVIEW_FINDINGS.md` - Historical findings from Codex reviews
-- `.github/workflows/codex-feedback-monitor.yml` - Auto-labels PRs with Codex feedback
-- `.claude/skills/check-codex/SKILL.md` - Skill to fetch Codex comments
+See `docs/development/AGENTS.md` for:
+- Code rot detection patterns
+- Consistency drift checks
+- Type safety enforcement
+- Performance pattern detection
