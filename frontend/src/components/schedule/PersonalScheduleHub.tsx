@@ -55,8 +55,9 @@ export function PersonalScheduleHub({
   const router = useRouter();
 
   // State for selected person - default to initialPersonId or currentUserPersonId
+  // SECURITY: Tier 0 users MUST default to self (ignore initialPersonId from URL)
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(
-    initialPersonId ?? currentUserPersonId ?? null
+    tier === 0 ? (currentUserPersonId ?? null) : (initialPersonId ?? currentUserPersonId ?? null)
   );
 
   // View state
