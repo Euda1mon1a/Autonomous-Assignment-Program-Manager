@@ -44,20 +44,37 @@ The permission tier model determines what users can see and do across all hubs.
 
 | Tier | Role | Who | Access Level |
 |------|------|-----|--------------|
-| **0** | Self-service | Residents, Faculty | View own schedule, self-service actions |
+| **0** | Self-service | Residents, Faculty | **View all**, self-service actions |
 | **0.5** | Learner managers | Select faculty (clerkship directors, education leads) | Medical student schedule management |
-| **1** | Program operations | Coordinators, Program Directors | Full operational access, approvals |
+| **1** | Program operations | Coordinators, Program Directors | Full operational access, approvals, sensitive details |
 | **2** | System admin | Developers, Super Admin | Keys to kingdom, user management |
 
-### Tier Boundaries
+### Transparency Model (Critical)
 
-**Tier 0 (Green):** Read-only views, self-service requests (swap requests, absence requests)
+**Maximum transparency for Tier 0.** The tier system controls EDIT access, not VIEW access.
+
+| Data | Tier 0 View | Tier 1-2 Additional |
+|------|-------------|---------------------|
+| **All schedules** | ✅ Everyone's assignments | Edit access |
+| **All absences** | ✅ Who is away, when, reason (except sick) | Sick leave reasons |
+| **Credentials** | ✅ Who can do what procedures | Edit access |
+| **FMIT weeks** | ✅ Faculty teaching schedules | Edit access |
+| **Pending swaps** | ✅ All swap requests | Approve/deny |
+| **Fairness metrics** | ✅ Workload distribution | (preempts complaints) |
+| **Compliance dashboard** | ✅ Summary ("we're compliant") | Detailed violation data |
+| **Audit trail** | ❌ | ✅ Who changed what |
+
+**Rationale:** Transparency builds trust. Everyone can see schedules, absences (deployment/TDY fine - local system), credentials, and fairness data. Only sensitive details (sick reasons, audit logs, compliance details) are restricted.
+
+### Tier Boundaries (Actions)
+
+**Tier 0 (Green):** View everything (except audit), self-service requests (swap requests, absence requests)
 
 **Tier 0.5 (Special):** Faculty subset with learner management permissions (future Learner Hub)
 
-**Tier 1 (Amber):** Scoped, reversible changes (approve swaps, edit schedules, manage templates)
+**Tier 1 (Amber):** Approve/edit operations, see sensitive details (sick reasons, audit trail, compliance details)
 
-**Tier 2 (Red):** High impact operations (role assignment, system config, force overrides)
+**Tier 2 (Red):** System config, role assignment, force overrides, user management
 
 ---
 
@@ -82,13 +99,13 @@ The permission tier model determines what users can see and do across all hubs.
 
 | Hub | Route | Views/Tabs | Tier Access | Priority |
 |-----|-------|------------|-------------|----------|
-| **Activity Hub** | `/activities` | My Activities / Templates | 0: view, 1: edit templates | 1 |
-| **Absences Hub** | `/absences` | My Absences / Requests / Approvals | 0: view/request, 1: approve | 2 |
+| **Activity Hub** | `/activities` | My Activities / Templates | 0: view all, 1: edit templates | 1 |
+| **Absences Hub** | `/absences` | My Absences / Requests / Approvals | 0: view all + request, 1: approve + sick reasons | 2 |
 | **Procedures Hub** | `/procedures` | Catalog (view/edit modes) | 0: view, 1: edit | 4 |
-| **Ops Hub** | `/ops` | Manifest / Heatmap / Conflicts | 1 only | 5 |
-| **Compliance Hub** | `/compliance` | Dashboard / Audit Trail | 1 only | 6 |
-| **Analytics Hub** | `/analytics` | Fairness / Game Theory | 1 only | 7 |
-| **Config Hub** | `/config` | Rotations / Settings | 1 only | 9 |
+| **Ops Hub** | `/ops` | Manifest / Heatmap / Conflicts | 0: view, 1: resolve conflicts | 5 |
+| **Compliance Hub** | `/compliance` | Dashboard / Audit Trail | 0: summary, 1: details + audit | 6 |
+| **Analytics Hub** | `/analytics` | Fairness / Game Theory | 0: view (transparency), 1: edit params | 7 |
+| **Config Hub** | `/config` | Rotations / Settings | 1 only (setup/config) | 9 |
 
 ### Roadmapped (Future)
 
