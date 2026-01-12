@@ -81,28 +81,11 @@ The `/mcp` command shows "not authenticated" even when tools work fine. This is 
 
 ## Cleanup / Developer Experience (2026-01-09)
 
-### Seaborn Warning in Backend Logs
+### Seaborn Warning in Backend Logs - ✅ COMPLETE
 **Priority:** Low
-**Status:** TODO
+**Status:** DONE (2026-01-11, commit `9200055e`)
 
-**Issue:** Every Python command in the backend container logs:
-```
-seaborn not available - enhanced visualization disabled
-```
-
-**Context:**
-- Some analytics code optionally imports seaborn for statistical charts
-- Seaborn is NOT used for frontend heatmaps (those use Plotly.js)
-- The warning is visual noise that clutters logs
-
-**Options:**
-1. **Add seaborn** - `pip install seaborn` (~15MB, pulls matplotlib)
-2. **Silence the warning** - Wrap import in try/except with no log
-3. **Remove the import** - If we're not generating charts, delete it entirely
-
-**Recommendation:** Option 3 (remove) unless we plan to add backend chart generation.
-
-**Files to check:** Grep for `seaborn` in `backend/`
+Removed unused seaborn import from `spin_glass_visualizer.py`. Warning no longer appears.
 
 ---
 
@@ -269,61 +252,30 @@ ACGME_MIN_REST_PGY2_PLUS = 8.0  # ACGME "must have"
 
 ---
 
-### Faculty FMIT and Call Equity
+### Faculty FMIT and Call Equity - ✅ ADDRESSED
 **Priority:** Medium
 **Added:** 2026-01-11
-**Status:** Awaiting further design considerations
+**Status:** DONE (2026-01-11, commit `1bac63ca`)
 
-**Context:** The 56-assignment rule (PR #688, #689, #690) fills all slots with assignments but does NOT optimize for equitable distribution of FMIT and call duties among faculty.
+**Implementation:** `IntegratedWorkloadConstraint` tracks 5 workload categories with weighted scoring:
+- Call (overnight) - weight 1.0
+- FMIT weeks - weight 3.0
+- Clinic half-days - weight 0.5
+- Admin half-days (GME, DFM) - weight 0.25
+- Academic half-days (LEC, ADV) - weight 0.25
 
-**Current State:**
-- Faculty FMIT assignments are pre-loaded (existing process)
-- Faculty call assignments are created post-hoc
-- Empty slots get GME (admin) placeholder
-- No fairness optimization in distribution
+**Features:**
+- Min-max fairness optimization (minimize maximum workload)
+- Per-category statistics (min/max/mean/spread)
+- Excludes titled faculty (PD, APD, OIC, Dept Chief) by default
+- Jain's fairness index calculation
+- CP-SAT and PuLP solver support
 
-**Questions to Consider:**
-- [ ] How should FMIT weeks be distributed among faculty? (Round-robin? By preference?)
-- [ ] How should call duties be distributed? (Equal total? By seniority?)
-- [ ] Should part-time faculty have proportionally fewer duties?
-- [ ] Are there faculty-specific constraints (research days, admin duties)?
-- [ ] How do absences affect the equity calculation?
+**Files Created:**
+- `backend/app/scheduling/constraints/integrated_workload.py`
+- `backend/app/services/fairness_audit_service.py`
 
-**Implementation Dependencies:**
-- FacultyWeeklyTemplate model exists but is NOT used by solver
-- Post-hoc assignment may need to become solver-managed for true optimization
-- May require new constraints in scheduling engine
-
-**Deferred until:** Design decisions made on equity model
-
----
-
-### Resident Call Types
-**Priority:** Medium
-**Added:** 2025-12-26
-**Status:** Awaiting resident input
-
-Two new resident call types need to be captured in the scheduling system:
-
-| Call Type | Full Name | Status | Notes |
-|-----------|-----------|--------|-------|
-| **Resident NF Call** | Night Float Call (?) | Needs definition | Investigate with residents |
-| **Resident LND Call** | Labor and Delivery Call (?) | Needs definition | Investigate with residents |
-
-**Questions to clarify with residents:**
-- [ ] What are the exact duties/responsibilities for each call type?
-- [ ] What are the shift times (start/end)?
-- [ ] Which PGY levels are eligible for each?
-- [ ] Are there supervision requirements?
-- [ ] How do these interact with ACGME work hour limits?
-- [ ] Are there specific days/rotations when these apply?
-- [ ] How do these relate to existing NF (Night Float) assignments?
-
-**Implementation considerations (once defined):**
-- Add to `RotationTemplate` or as separate assignment types
-- Create scheduling constraints
-- Update ACGME compliance checks if needed
-- Add to solver if applicable
+**Remaining:** API endpoints and frontend dashboard (tracked in Scratchpad)
 
 ---
 
@@ -1125,53 +1077,17 @@ The following documentation improvements were completed in Stream 9:
 
 ## MCP API Client Improvements (2026-01-02)
 
-### Token Refresh on 401 Unauthorized
+### Token Refresh on 401 Unauthorized - ✅ COMPLETE
 **Priority:** Medium
-**Added:** 2026-01-02 (Session: subagent-rag exploration)
-**Status:** Roadmap
+**Added:** 2026-01-02
+**Status:** DONE (PR #608, commit `e6c4440e`)
 
-**Problem:** MCP API client singleton caches JWT token indefinitely. If:
-- Token expires (backend JWT lifetime)
-- Token is invalidated (password change, logout)
-- Container started before backend was ready
+**Implementation:** 401 token refresh is now implemented in `api_client.py` lines 113-121.
+- On 401 response, clears stale token and retries with fresh auth
+- `_token_refreshed` flag prevents infinite loop
+- Logs warning on refresh attempt
 
-...the client returns 401 for all subsequent calls until container restart.
-
-**Current Behavior:**
-```python
-# api_client.py - only checks if token is None
-async def _ensure_authenticated(self) -> dict[str, str]:
-    if self._token is None:  # <-- Doesn't detect expired/invalid tokens
-        await self._login()
-    return {"Authorization": f"Bearer {self._token}"}
-```
-
-**Proposed Fix:**
-```python
-async def _request_with_retry(self, method: str, url: str, **kwargs) -> httpx.Response:
-    # ... existing retry logic ...
-
-    # On 401, try refreshing token once before giving up
-    if response.status_code == 401 and not kwargs.get("_token_refreshed"):
-        logger.warning("Received 401 Unauthorized, attempting token refresh")
-        self._token = None  # Clear stale token
-        kwargs["headers"] = await self._ensure_authenticated()
-        kwargs["_token_refreshed"] = True  # Prevent infinite loop
-        return await self._request_with_retry(method, url, **kwargs)
-```
-
-**Files to modify:**
-- `mcp-server/src/scheduler_mcp/api_client.py`
-
-**Testing:**
-- [ ] Unit test: 401 triggers token refresh
-- [ ] Unit test: Second 401 after refresh raises (prevents loop)
-- [ ] Integration test: Token expiry recovery
-
-**Workaround (current):** Restart MCP container to clear stale client:
-```bash
-docker compose restart mcp-server
-```
+**Remaining:** Unit tests for 401 behavior (tracked in `.codex/AGENTS.md`)
 
 ---
 
@@ -1262,27 +1178,8 @@ Already partially covered by:
 ### MCP Server Tests Failing in CI
 **Priority:** Medium
 **Added:** 2026-01-11
-**Status:** Pre-existing issue, needs investigation
+**Status:** Delegated to Codex (see `.codex/AGENTS.md` Task 1)
 
-**Problem:** `mcp-server-tests` job fails on every CI run (including `main` branch).
+**Problem:** Integration tests require running backend; CI doesn't start containers.
 
-**Failed Tests:**
-- `test_api_client.py` - API client tests (health check, validate schedule, etc.)
-- `test_resilience_integration.py` - Resilience tool integration tests
-- `test_server.py::TestToolsRegistration::test_resilience_tools_exist`
-- Various Fourier/VaR calculation tests
-
-**Root Cause:** Integration tests require running backend, but CI environment doesn't start backend containers.
-
-**Options:**
-1. **Add backend service to CI workflow** - Start backend/db containers before MCP tests
-2. **Mock backend responses** - Use httpx mocking for API client tests
-3. **Split tests** - Unit tests (CI) vs Integration tests (local/staging)
-4. **Mark as integration** - Skip integration tests in CI with `@pytest.mark.integration`
-
-**Workaround:** Tests pass locally when backend is running. CI failure doesn't block merges if other checks pass.
-
-**Files to investigate:**
-- `.github/workflows/ci-tests.yml` - CI workflow
-- `mcp-server/tests/test_api_client.py` - Failing tests
-- `mcp-server/tests/conftest.py` - Test fixtures
+**Tracking:** Full task specification in `.codex/AGENTS.md` with options and deliverables.

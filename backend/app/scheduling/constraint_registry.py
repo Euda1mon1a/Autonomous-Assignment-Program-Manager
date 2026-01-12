@@ -213,11 +213,8 @@ class ConstraintRegistry:
             return None
 
         if not metadata.is_active():
-            logger.warning(
-                f"Constraint '{name}' is {
-                    'deprecated' if metadata.is_deprecated else 'disabled'
-                }"
-            )
+            status = "deprecated" if metadata.is_deprecated else "disabled"
+            logger.warning(f"Constraint '{name}' is {status}")
 
         return metadata.constraint_class
 
@@ -514,6 +511,9 @@ def _register_builtin_constraints() -> None:
         ContinuityConstraint,
         EquityConstraint,
     )
+    from app.scheduling.constraints.integrated_workload import (
+        IntegratedWorkloadConstraint,
+    )
 
     # Register ACGME constraints
     ConstraintRegistry.register(
@@ -587,6 +587,13 @@ def _register_builtin_constraints() -> None:
         category="EQUITY",
         description="Continuity of care for repeated assignments",
     )(ContinuityConstraint)
+
+    ConstraintRegistry.register(
+        name="IntegratedWorkload",
+        version="1.0",
+        category="EQUITY",
+        description="Balanced call/FMIT/clinic/admin/academic workload across faculty",
+    )(IntegratedWorkloadConstraint)
 
 
 # Register built-in constraints on import
