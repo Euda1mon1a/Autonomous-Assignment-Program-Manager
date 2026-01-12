@@ -35,6 +35,7 @@ export interface AssignmentFilters {
   endDate?: string;
   personId?: string;
   role?: string;
+  pageSize?: number;
 }
 
 export interface ScheduleGenerateRequest {
@@ -140,7 +141,7 @@ export function useSchedule(
     queryKey: ["schedule", startIso, endIso],
     queryFn: () =>
       get<ListResponse<Assignment>>(
-        `/assignments?startDate=${startDateStr}&endDate=${endDateStr}`
+        `/assignments?start_date=${startDateStr}&end_date=${endDateStr}&page_size=5000`
       ),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
@@ -271,7 +272,7 @@ export function useValidateSchedule(
     queryKey: scheduleQueryKeys.validation(startDate, endDate),
     queryFn: () =>
       get<ValidationResult>(
-        `/schedule/validate?startDate=${startDate}&endDate=${endDate}`
+        `/schedule/validate?start_date=${startDate}&end_date=${endDate}`
       ),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
@@ -600,10 +601,11 @@ export function useAssignments(
   >
 ) {
   const params = new URLSearchParams();
-  if (filters?.startDate) params.set("startDate", filters.startDate);
-  if (filters?.endDate) params.set("endDate", filters.endDate);
-  if (filters?.personId) params.set("personId", filters.personId);
+  if (filters?.startDate) params.set("start_date", filters.startDate);
+  if (filters?.endDate) params.set("end_date", filters.endDate);
+  if (filters?.personId) params.set("person_id", filters.personId);
   if (filters?.role) params.set("role", filters.role);
+  if (filters?.pageSize) params.set("page_size", filters.pageSize.toString());
   const queryString = params.toString();
 
   return useQuery<ListResponse<Assignment>, ApiError>({

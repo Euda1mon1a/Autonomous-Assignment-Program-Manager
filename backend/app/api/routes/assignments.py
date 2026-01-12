@@ -36,7 +36,7 @@ async def list_assignments(
         None, description="Filter by activity type (e.g., on_call, clinic, inpatient)"
     ),
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
-    page_size: int = Query(100, ge=1, le=500, description="Items per page (max 500)"),
+    page_size: int = Query(100, ge=1, le=5000, description="Items per page (max 5000)"),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):

@@ -79,6 +79,7 @@ export {
   absenceQueryKeys,
   useAbsence,
   useAbsences,
+  useAwayComplianceDashboard,
   useCreateAbsence,
   useDeleteAbsence,
   useUpdateAbsence,

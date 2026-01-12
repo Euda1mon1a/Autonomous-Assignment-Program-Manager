@@ -231,7 +231,7 @@ export function useEntityAuditHistory(
     queryKey: auditQueryKeys.entityHistory(entityType, entityId),
     queryFn: async () => {
       const response = await get<AuditLogResponse>(
-        `/audit/logs?entityType=${entityType}&entityId=${entityId}&sort_by=timestamp&sort_direction=desc`
+        `/audit/logs?entity_type=${entityType}&entity_id=${entityId}&sort_by=timestamp&sort_direction=desc`
       );
       return response.items;
     },

@@ -145,6 +145,23 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 6b: Query Parameter Case Validation (COUATL KILLER)
+  # ============================================================================
+
+  # Slays the camelCase serpent - ensures query params use snake_case
+  # Named after the D&D feathered serpent (camelCase = serpentine naming)
+  # Axios interceptor only converts request body keys, not URL query strings
+  - repo: local
+    hooks:
+      - id: couatl-killer
+        name: Couatl Killer (snake_case query params)
+        entry: scripts/couatl-killer.sh
+        language: script
+        pass_filenames: false
+        files: ^frontend/src/.*\.(ts|tsx)$
+        stages: [pre-commit]
+
+  # ============================================================================
   # PHASE 7: Frontend Type Checking
   # ============================================================================
 

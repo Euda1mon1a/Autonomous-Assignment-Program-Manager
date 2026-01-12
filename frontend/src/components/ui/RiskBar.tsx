@@ -103,18 +103,19 @@ export function RiskBar({
  * Can be used with authentication context to auto-determine tier
  */
 export function useRiskTierFromRoles(roles: string[]): RiskTier {
-  // High impact roles (Tier 2) - admin/skeleton key only
-  const highImpactRoles = ['admin', 'chief'];
-  // Scoped change roles (Tier 1) - coordinators and clinical staff
-  const scopedRoles = ['coordinator', 'faculty', 'resident', 'clinical_staff'];
+  // Tier 2: Admin only (keys to kingdom - system config, user management)
+  const tier2Roles = ['admin'];
+  // Tier 1: Program operations (coordinators, chiefs - approvals, schedule management)
+  const tier1Roles = ['coordinator', 'chief'];
 
-  if (roles.some(role => highImpactRoles.includes(role.toLowerCase()))) {
+  if (roles.some(role => tier2Roles.includes(role.toLowerCase()))) {
     return 2;
   }
 
-  if (roles.some(role => scopedRoles.includes(role.toLowerCase()))) {
+  if (roles.some(role => tier1Roles.includes(role.toLowerCase()))) {
     return 1;
   }
 
+  // Tier 0: Everyone else (faculty, resident, clinical_staff - view + self-service)
   return 0;
 }
