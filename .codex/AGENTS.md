@@ -4,6 +4,42 @@
 
 ---
 
+## 🎯 ACTIVE TASK: MCP Server Tests Failing in CI
+
+**Branch:** Create `codex/fix-mcp-ci-tests` from `main`
+
+**Mission:** Make `mcp-server-tests` CI job pass without breaking local integration tests.
+
+**Steps:**
+1. Check recent CI run logs: `gh run list --workflow=ci-tests.yml --limit=3`
+2. Find the specific failure: `gh run view <run-id> --log-failed`
+3. Confirm root cause is "backend not running" (look for connection refused, 401, timeout)
+4. Implement fix using **Option 2** (httpx mocking) - cleanest, no CI infrastructure changes
+5. Run tests locally: `cd mcp-server && pytest tests/ -v`
+6. Push and verify CI passes
+
+**Mocking pattern for api_client tests:**
+```python
+import pytest
+from unittest.mock import AsyncMock, patch
+
+@pytest.fixture
+def mock_httpx_client():
+    with patch("httpx.AsyncClient") as mock:
+        client = AsyncMock()
+        mock.return_value.__aenter__.return_value = client
+        yield client
+
+@pytest.mark.asyncio
+async def test_health_check_success(mock_httpx_client):
+    mock_httpx_client.request.return_value = MockResponse(200, {"status": "healthy"})
+    # ... test logic
+```
+
+**Commit message format:** `fix(mcp): mock API client tests for CI compatibility`
+
+---
+
 ## Project Context
 
 **Residency Scheduler** - Military medical residency scheduling with ACGME compliance.
