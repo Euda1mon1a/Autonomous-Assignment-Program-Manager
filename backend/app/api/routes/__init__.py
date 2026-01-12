@@ -53,6 +53,7 @@ from app.api.routes import (
     people,
     portal,
     procedures,
+    proxy_coverage,
     qubo_templates,
     queue,
     quota,
@@ -222,3 +223,6 @@ api_router.include_router(
 )
 api_router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 api_router.include_router(ws.router, tags=["websocket"])
+api_router.include_router(
+    proxy_coverage.router, prefix="/proxy-coverage", tags=["proxy-coverage"]
+)
