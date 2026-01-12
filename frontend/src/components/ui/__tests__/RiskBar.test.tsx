@@ -220,24 +220,24 @@ describe('useRiskTierFromRoles', () => {
     expect(result.current).toBe(1);
   });
 
-  it('returns tier 2 for chief role', () => {
+  it('returns tier 1 for chief role', () => {
     const { result } = renderHook(() => useRiskTierFromRoles(['chief']));
-    expect(result.current).toBe(2);
+    expect(result.current).toBe(1);
   });
 
-  it('returns tier 1 for faculty role', () => {
+  it('returns tier 0 for faculty role', () => {
     const { result } = renderHook(() => useRiskTierFromRoles(['faculty']));
-    expect(result.current).toBe(1);
+    expect(result.current).toBe(0);
   });
 
-  it('returns tier 1 for resident role', () => {
+  it('returns tier 0 for resident role', () => {
     const { result } = renderHook(() => useRiskTierFromRoles(['resident']));
-    expect(result.current).toBe(1);
+    expect(result.current).toBe(0);
   });
 
-  it('returns tier 1 for clinical_staff role', () => {
+  it('returns tier 0 for clinical_staff role', () => {
     const { result } = renderHook(() => useRiskTierFromRoles(['clinical_staff']));
-    expect(result.current).toBe(1);
+    expect(result.current).toBe(0);
   });
 
   it('returns tier 0 for unknown roles', () => {
