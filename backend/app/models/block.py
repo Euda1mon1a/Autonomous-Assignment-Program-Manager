@@ -8,6 +8,7 @@ from sqlalchemy import (
     CheckConstraint,
     Column,
     Date,
+    Enum,
     Integer,
     String,
     UniqueConstraint,
@@ -16,6 +17,7 @@ from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 from app.db.types import GUID
+from app.models.day_type import DayType, OperationalIntent
 
 
 class Block(Base):
@@ -38,6 +40,13 @@ class Block(Base):
     is_holiday = Column(Boolean, default=False)
     holiday_name = Column(String(255))
 
+    # MEDCOM day-type system
+    day_type = Column(Enum(DayType), default=DayType.NORMAL, nullable=False)
+    operational_intent = Column(
+        Enum(OperationalIntent), default=OperationalIntent.NORMAL, nullable=False
+    )
+    actual_date = Column(Date, nullable=True)  # When observed != actual for holidays
+
     # Relationships
     assignments = relationship("Assignment", back_populates="block")
 
@@ -58,6 +67,16 @@ class Block(Base):
     def is_workday(self) -> bool:
         """Check if this is a regular workday (not weekend or holiday)."""
         return not self.is_weekend and not self.is_holiday
+
+    @property
+    def is_non_operational(self) -> bool:
+        """Check if this block is non-operational (DONSA, EO closure, etc.)."""
+        return self.operational_intent == OperationalIntent.NON_OPERATIONAL
+
+    @property
+    def is_reduced_capacity(self) -> bool:
+        """Check if this block has reduced capacity (federal holiday, minimal manning)."""
+        return self.operational_intent == OperationalIntent.REDUCED_CAPACITY
 
     @property
     def block_half(self) -> int:
