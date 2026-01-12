@@ -77,7 +77,7 @@ function keysToCamelCase(obj: unknown): unknown {
 
 // API base URL from environment or default for development
 // Use /api/v1 directly to avoid 307 redirect which causes CORS issues
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1'
 
 // Import token refresh functions (lazy import to avoid circular dependency)
 // These will be dynamically imported when needed
