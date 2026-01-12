@@ -162,6 +162,15 @@ def is_federal_holiday(check_date: date) -> tuple[bool, str | None]:
     for holiday in holidays:
         if holiday.date == check_date:
             return True, holiday.name
+
+    # For Dec 31, also check if next year's New Year's Day is observed here.
+    # When Jan 1 falls on Saturday, it's observed Friday Dec 31 (previous year).
+    if check_date.month == 12 and check_date.day == 31:
+        next_year_holidays = get_federal_holidays(check_date.year + 1)
+        for holiday in next_year_holidays:
+            if holiday.date == check_date:
+                return True, holiday.name
+
     return False, None
 
 
@@ -173,14 +182,21 @@ def get_academic_year_holidays(academic_year: int) -> list[Holiday]:
         academic_year: Start year of academic year (e.g., 2025 for AY 2025-2026)
 
     Returns:
-        List of Holiday named tuples sorted by date
+        List of Holiday named tuples sorted by observed date
+
+    Note:
+        Uses date range filtering instead of month filtering to correctly
+        capture Dec 31 observed New Year's Day when Jan 1 falls on Saturday.
     """
-    # Academic year spans two calendar years
-    # July-December of start year + January-June of next year
-    start_year_holidays = [
-        h for h in get_federal_holidays(academic_year) if h.date.month >= 7
-    ]
-    end_year_holidays = [
-        h for h in get_federal_holidays(academic_year + 1) if h.date.month <= 6
-    ]
-    return sorted(start_year_holidays + end_year_holidays, key=lambda h: h.date)
+    start_date = date(academic_year, 7, 1)
+    end_date = date(academic_year + 1, 6, 30)
+
+    # Get holidays from both calendar years and filter by observed date range.
+    # This handles Dec 31 observed New Year's Day correctly.
+    all_holidays = get_federal_holidays(academic_year) + get_federal_holidays(
+        academic_year + 1
+    )
+    return sorted(
+        [h for h in all_holidays if start_date <= h.date <= end_date],
+        key=lambda h: h.date,
+    )

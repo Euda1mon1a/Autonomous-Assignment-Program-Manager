@@ -133,6 +133,21 @@ class TestIsFederalHoliday:
         is_hol, name = is_federal_holiday(date(2025, 11, 26))
         assert is_hol is False
 
+    def test_dec_31_observed_new_years_day(self):
+        """Dec 31 should be detected as holiday when Jan 1 next year is Saturday.
+
+        Jan 1, 2022 was Saturday → observed Friday Dec 31, 2021.
+        This tests the year-boundary observed holiday edge case.
+        """
+        # Dec 31, 2021 is observed New Year's Day (Jan 1, 2022 was Saturday)
+        is_hol, name = is_federal_holiday(date(2021, 12, 31))
+        assert is_hol is True
+        assert name == "New Year's Day"
+
+        # Dec 31, 2025 is NOT a holiday (Jan 1, 2026 is Thursday)
+        is_hol, name = is_federal_holiday(date(2025, 12, 31))
+        assert is_hol is False
+
 
 class TestGetAcademicYearHolidays:
     """Test get_academic_year_holidays function."""
@@ -169,3 +184,16 @@ class TestGetAcademicYearHolidays:
         holiday_dict = {h.name: h.date for h in holidays}
         # Christmas should be Dec 2025, not Dec 2026
         assert holiday_dict.get("Christmas Day") == date(2025, 12, 25)
+
+    def test_includes_dec_31_observed_new_years(self):
+        """Academic year should include Dec 31 observed New Year's Day.
+
+        AY 2021-2022: Jan 1, 2022 was Saturday → observed Dec 31, 2021.
+        This Dec 31 falls within the academic year (Jul 2021 - Jun 2022).
+        """
+        holidays = get_academic_year_holidays(2021)
+        dec_31_holidays = [h for h in holidays if h.date == date(2021, 12, 31)]
+        assert len(dec_31_holidays) == 1
+        assert dec_31_holidays[0].name == "New Year's Day"
+        # Actual date should be Jan 1, 2022
+        assert dec_31_holidays[0].actual_date == date(2022, 1, 1)
