@@ -145,6 +145,22 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 6b: Query Parameter Case Validation
+  # ============================================================================
+
+  # Ensure frontend query params use snake_case (backend expectation)
+  # Axios interceptor only converts request body keys, not URL query strings
+  - repo: local
+    hooks:
+      - id: query-params-check
+        name: Query Parameter Case Check (snake_case)
+        entry: scripts/validate-query-params.sh
+        language: script
+        pass_filenames: false
+        files: ^frontend/src/.*\.(ts|tsx)$
+        stages: [pre-commit]
+
+  # ============================================================================
   # PHASE 7: Frontend Type Checking
   # ============================================================================
 

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { startOfWeek, addDays, format, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { Upload, Download } from 'lucide-react'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { BlockNavigation } from '@/components/schedule/BlockNavigation'
@@ -17,12 +17,12 @@ import { MultiSelectPersonFilter } from '@/components/schedule/MultiSelectPerson
 import { ResidentAcademicYearView, FacultyInpatientWeeksView } from '@/components/schedule/drag'
 import { BlockAssignmentImportModal } from '@/components/admin/BlockAssignmentImportModal'
 import { BlockAssignmentExportModal } from '@/components/admin/BlockAssignmentExportModal'
-import { get } from '@/lib/api'
-import { usePeople, useRotationTemplates, useBlockRanges, ListResponse } from '@/lib/hooks'
+import { usePeople, useRotationTemplates, useBlockRanges } from '@/lib/hooks'
+import { useAssignmentsForRange, useBlocksForRange } from '@/hooks/useAssignmentsForRange'
 import { useRole } from '@/hooks/useAuth'
 import { useScheduleWebSocket } from '@/hooks/useWebSocket'
 import { WebSocketStatus } from '@/components/ui/WebSocketStatus'
-import type { Assignment, Block, RotationTemplate } from '@/types/api'
+import type { Block, RotationTemplate } from '@/types/api'
 
 /**
  * Schedule Page - The core schedule viewing feature
@@ -151,19 +151,11 @@ export default function SchedulePage() {
   const startDateStr = format(viewDateRange.start, 'yyyy-MM-dd')
   const endDateStr = format(viewDateRange.end, 'yyyy-MM-dd')
 
-  const { data: blocksData } = useQuery<ListResponse<Block>>({
-    queryKey: ['blocks', startDateStr, endDateStr, 'pagesize500'],
-    queryFn: () => get<ListResponse<Block>>(`/blocks?startDate=${startDateStr}&endDate=${endDateStr}&pageSize=500`),
-    staleTime: 5 * 60 * 1000,
-    enabled: currentView !== 'block', // Only fetch for non-block views (block view has its own fetching)
-  })
-
-  const { data: assignmentsData } = useQuery<ListResponse<Assignment>>({
-    queryKey: ['assignments', startDateStr, endDateStr, 'pagesize500'],
-    queryFn: () => get<ListResponse<Assignment>>(`/assignments?startDate=${startDateStr}&endDate=${endDateStr}&pageSize=500`),
-    staleTime: 60 * 1000,
-    enabled: currentView !== 'block',
-  })
+  // Use multi-page pagination hooks for Month/Week/Day views
+  // These fetch ALL assignments/blocks, not just the first page
+  const enableFetch = currentView !== 'block'
+  const { data: blocksData } = useBlocksForRange(startDateStr, endDateStr, enableFetch)
+  const { data: assignmentsData } = useAssignmentsForRange(startDateStr, endDateStr, enableFetch)
 
   const { data: peopleData } = usePeople()
   const { data: templatesData } = useRotationTemplates()

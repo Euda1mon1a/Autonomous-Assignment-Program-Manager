@@ -60,12 +60,12 @@ export function CalendarExportButton({
       let url = ''
 
       if (personId) {
-        url = `/api/calendar/export/person/${personId}?startDate=${dates.start}&endDate=${dates.end}`
+        url = `/api/calendar/export/person/${personId}?start_date=${dates.start}&end_date=${dates.end}`
         if (includeTypes && includeTypes.length > 0) {
           url += `&${includeTypes.map((t) => `include_types=${t}`).join('&')}`
         }
       } else if (rotationId) {
-        url = `/api/calendar/export/rotation/${rotationId}?startDate=${dates.start}&endDate=${dates.end}`
+        url = `/api/calendar/export/rotation/${rotationId}?start_date=${dates.start}&end_date=${dates.end}`
       } else {
         throw new Error('Either personId or rotationId must be provided')
       }
@@ -302,9 +302,9 @@ export function SimpleCalendarExportButton({
 
       let url = ''
       if (personId) {
-        url = `/api/calendar/export/person/${personId}?startDate=${dates.start}&endDate=${dates.end}`
+        url = `/api/calendar/export/person/${personId}?start_date=${dates.start}&end_date=${dates.end}`
       } else if (rotationId) {
-        url = `/api/calendar/export/rotation/${rotationId}?startDate=${dates.start}&endDate=${dates.end}`
+        url = `/api/calendar/export/rotation/${rotationId}?start_date=${dates.start}&end_date=${dates.end}`
       } else {
         throw new Error('Either personId or rotationId must be provided')
       }

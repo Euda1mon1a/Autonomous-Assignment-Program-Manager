@@ -147,7 +147,7 @@ export function useConflictsByDate(
   return useQuery<ConflictListResponse, ApiError>({
     queryKey: conflictQueryKeys.byDate(date),
     queryFn: () =>
-      get<ConflictListResponse>(`/conflicts?startDate=${date}&endDate=${date}`),
+      get<ConflictListResponse>(`/conflicts?start_date=${date}&end_date=${date}`),
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     enabled: !!date,

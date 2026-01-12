@@ -56,13 +56,13 @@ export default function MySchedulePage() {
   // Fetch data
   const { data: blocksData, isLoading: blocksLoading, error: blocksError } = useQuery<ListResponse<Block>>({
     queryKey: ['blocks', startDateStr, endDateStr],
-    queryFn: () => get<ListResponse<Block>>(`/blocks?startDate=${startDateStr}&endDate=${endDateStr}`),
+    queryFn: () => get<ListResponse<Block>>(`/blocks?start_date=${startDateStr}&end_date=${endDateStr}`),
     staleTime: 5 * 60 * 1000,
   })
 
   const { data: assignmentsData, isLoading: assignmentsLoading, error: assignmentsError } = useQuery<ListResponse<Assignment>>({
     queryKey: ['assignments', startDateStr, endDateStr],
-    queryFn: () => get<ListResponse<Assignment>>(`/assignments?startDate=${startDateStr}&endDate=${endDateStr}`),
+    queryFn: () => get<ListResponse<Assignment>>(`/assignments?start_date=${startDateStr}&end_date=${endDateStr}`),
     staleTime: 60 * 1000,
   })
 

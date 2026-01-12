@@ -148,7 +148,7 @@ export function BlockAnnualView({
       queryKey: ['block-scheduler-dashboard', blockNum, academicYear],
       queryFn: () =>
         get<BlockSchedulerDashboard>(
-          `/block-scheduler/dashboard?blockNumber=${blockNum}&academicYear=${academicYear}`
+          `/block-scheduler/dashboard?block_number=${blockNum}&academic_year=${academicYear}`
         ),
       staleTime: 5 * 60 * 1000,
       retry: 1,
