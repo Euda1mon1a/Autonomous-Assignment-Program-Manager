@@ -233,6 +233,8 @@ export function useSolverWebSocket(
           assignmentMap.set(key, {
             ...existing,
             templateId: a.newTemplateId,
+            // Clear tIdx so renderer uses new templateId for layer positioning
+            tIdx: undefined,
           });
         }
       });
