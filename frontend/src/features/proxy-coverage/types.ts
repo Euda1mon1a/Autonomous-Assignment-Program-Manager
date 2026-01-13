@@ -105,7 +105,7 @@ export interface PersonCoverageSummary {
  */
 export interface ProxyCoverageResponse {
   /** Date for which coverage is shown */
-  date: string;
+  coverageDate: string;
 
   /** All active coverage relationships for the date */
   activeCoverage: CoverageRelationship[];

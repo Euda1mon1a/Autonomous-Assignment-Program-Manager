@@ -107,7 +107,7 @@ class CoverageStats(BaseModel):
 class ProxyCoverageResponse(BaseModel):
     """Response for proxy coverage dashboard endpoint."""
 
-    date: date = Field(..., description="Date for which coverage is shown")
+    coverage_date: date = Field(..., description="Date for which coverage is shown")
     active_coverage: list[CoverageRelationship] = Field(
         default_factory=list, description="All active coverage for the date"
     )
@@ -128,6 +128,8 @@ class ProxyCoverageFilter(BaseModel):
 
     coverage_type: CoverageType | None = None
     status: CoverageStatus | None = None
-    person_id: UUID | None = Field(None, description="Filter by person (covering or covered)")
+    person_id: UUID | None = Field(
+        None, description="Filter by person (covering or covered)"
+    )
     start_date: date | None = None
     end_date: date | None = None
