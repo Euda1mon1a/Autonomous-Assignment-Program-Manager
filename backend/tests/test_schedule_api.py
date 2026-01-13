@@ -42,7 +42,9 @@ class TestGenerateSchedule:
 
         data = response.json()
         assert data["status"] in ["success", "partial"]
-        assert "total_blocks_assigned" in data
+        # total_assignments replaces misleading total_blocks_assigned
+        # (field stores assignment count, not block count)
+        assert "total_assignments" in data
         assert "total_blocks" in data
         assert "validation" in data
         assert data["total_blocks"] > 0

@@ -270,7 +270,7 @@ async def generate_schedule(
         response = ScheduleResponse(
             status=result["status"],
             message=result["message"],
-            total_blocks_assigned=result["total_assigned"],
+            total_assignments=result["total_assigned"],
             total_blocks=result["total_blocks"],
             validation=result["validation"],
             run_id=result.get("run_id"),

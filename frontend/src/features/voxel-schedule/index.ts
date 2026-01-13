@@ -53,6 +53,44 @@ export type {
   UseSolverWebSocketReturn,
 } from "./useSolverWebSocket";
 
+// High-performance instanced renderer
+export {
+  InstancedVoxelRenderer,
+  ACTIVITY_COLORS,
+  ACTIVITY_NAMES,
+  assignmentToVoxel,
+  calculateVoxelStats,
+} from "./InstancedVoxelRenderer";
+export type {
+  VoxelInstance,
+  VoxelTransition,
+  InstancedVoxelRendererProps,
+} from "./InstancedVoxelRenderer";
+
+// Real-time solver visualization
+export { SolverVisualization, SolverVisualizationDemo } from "./SolverVisualization";
+
+// Hooks
+export { useSolutionTransitions, easeOutCubic, easeInOutCubic, easeOutBack } from "./useSolutionTransitions";
+export type {
+  Assignment as TransitionAssignment,
+  SolutionDelta,
+  TransitionState,
+  UseSolutionTransitionsOptions,
+  UseSolutionTransitionsReturn,
+} from "./useSolutionTransitions";
+
+export { useSolverWebSocket, useSolverProgressPolling } from "./useSolverWebSocket";
+export type {
+  SolverMetrics,
+  Assignment,
+  SolverSolutionEvent,
+  SolverCompleteEvent,
+  SolverStatus,
+  UseSolverWebSocketOptions,
+  UseSolverWebSocketReturn,
+} from "./useSolverWebSocket";
+
 // Note: VoxelScheduleView3D should be lazy-loaded due to Three.js bundle size
 // Use: dynamic(() => import('@/features/voxel-schedule/VoxelScheduleView3D'), { ssr: false })
 
