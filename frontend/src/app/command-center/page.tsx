@@ -119,7 +119,9 @@ export default function CommandCenterPage() {
 
         {/* Main Content */}
         <div className="h-[calc(100vh-140px)]">
-          {webglSupported === false ? (
+          {webglSupported === null ? (
+            <LoadingFallback />
+          ) : webglSupported === false ? (
             <WebGLError />
           ) : (
             <Suspense fallback={<LoadingFallback />}>
