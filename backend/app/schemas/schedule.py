@@ -526,9 +526,16 @@ class ExperimentRunResponse(BaseModel):
         configuration = ExperimentRunConfiguration(
             algorithm=getattr(obj, "algorithm", "hybrid"),
             constraints=config_json.get("constraints", []),
-            preserveFMIT=config_json.get("preserve_fmit", True),
-            nfPostCallEnabled=config_json.get("nf_post_call", True),
-            academicYear=config_json.get("academic_year", "2025-2026"),
+            # Handle both camelCase (frontend) and snake_case (legacy) keys
+            preserveFMIT=config_json.get(
+                "preserveFMIT", config_json.get("preserve_fmit", True)
+            ),
+            nfPostCallEnabled=config_json.get(
+                "nfPostCallEnabled", config_json.get("nf_post_call", True)
+            ),
+            academicYear=config_json.get(
+                "academicYear", config_json.get("academic_year", "2025-2026")
+            ),
             blockRange=config_json.get("block_range", {"start": 1, "end": 26}),
             timeoutSeconds=config_json.get("timeout_seconds", 60),
             dryRun=config_json.get("dry_run", False),
@@ -552,9 +559,11 @@ class ExperimentRunResponse(BaseModel):
                 timestamp=getattr(obj, "created_at", datetime.now()),
             )
 
-        # Map status
+        # Map status (in_progress is the DB status when solver is actively running)
         status_map = {
             "queued": ExperimentRunStatus.QUEUED,
+            "pending": ExperimentRunStatus.QUEUED,
+            "in_progress": ExperimentRunStatus.RUNNING,
             "running": ExperimentRunStatus.RUNNING,
             "success": ExperimentRunStatus.COMPLETED,
             "partial": ExperimentRunStatus.COMPLETED,

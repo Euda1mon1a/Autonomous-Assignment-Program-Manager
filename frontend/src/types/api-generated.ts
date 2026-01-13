@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-13T09:08:24Z
+ * Generated at: 2026-01-13T14:51:43Z
  * Generator: openapi-typescript
  *
  * To regenerate:
@@ -19954,7 +19954,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["ExportFormat"];
+            format: components["schemas"]["app__schemas__block_assignment_import__ExportFormat"];
             /**
              * Academic Year
              * @description Academic year to export
@@ -20351,19 +20351,24 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Schema for list of blocks.
+         * @description Response for listing academic blocks.
          */
         BlockListResponse: {
             /**
-             * Items
-             * @description List of block responses
+             * Blocks
+             * @description List of academic blocks
              */
-            items: components["schemas"]["BlockResponse"][];
+            blocks: components["schemas"]["BlockSummary"][];
             /**
-             * Total
+             * Academic Year
+             * @description Academic year
+             */
+            academic_year: string;
+            /**
+             * Total Blocks
              * @description Total number of blocks
              */
-            total: number;
+            total_blocks: number;
         };
         /**
          * BlockMatrixResponse
@@ -22527,15 +22532,93 @@ export interface components {
         };
         /**
          * ConflictSummary
-         * @description Summary of conflicts found.
+         * @description Summary statistics for a set of conflicts.
+         *
+         *     Used for dashboard displays and reporting.
+         * @example {
+         *       "affected_people_count": 8,
+         *       "auto_resolvable_count": 6,
+         *       "average_impact_score": 0.65,
+         *       "critical_count": 3,
+         *       "high_count": 5,
+         *       "low_count": 3,
+         *       "medium_count": 4,
+         *       "total_conflicts": 15
+         *     }
          */
         ConflictSummary: {
-            /** Total Conflicts */
+            /**
+             * Total Conflicts
+             * @default 0
+             */
             total_conflicts: number;
-            /** Errors */
-            errors: number;
-            /** Warnings */
-            warnings: number;
+            /**
+             * Critical Count
+             * @default 0
+             */
+            critical_count: number;
+            /**
+             * High Count
+             * @default 0
+             */
+            high_count: number;
+            /**
+             * Medium Count
+             * @default 0
+             */
+            medium_count: number;
+            /**
+             * Low Count
+             * @default 0
+             */
+            low_count: number;
+            /** By Category */
+            by_category?: {
+                [key: string]: number | undefined;
+            };
+            /** By Type */
+            by_type?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Affected People Count
+             * @default 0
+             */
+            affected_people_count: number;
+            /**
+             * Affected Blocks Count
+             * @default 0
+             */
+            affected_blocks_count: number;
+            /**
+             * Auto Resolvable Count
+             * @default 0
+             */
+            auto_resolvable_count: number;
+            /**
+             * Requires Manual Count
+             * @default 0
+             */
+            requires_manual_count: number;
+            /**
+             * Average Impact Score
+             * @default 0
+             */
+            average_impact_score: number;
+            /**
+             * Average Urgency Score
+             * @default 0
+             */
+            average_urgency_score: number;
+            /**
+             * Average Complexity Score
+             * @default 0
+             */
+            average_complexity_score: number;
+            /** Earliest Date */
+            earliest_date?: string | null;
+            /** Latest Date */
+            latest_date?: string | null;
         };
         /**
          * ConflictType
@@ -24896,10 +24979,10 @@ export interface components {
         ExportDeliveryMethod: "email" | "s3" | "both";
         /**
          * ExportFormat
-         * @description Supported export formats.
+         * @description Export file formats.
          * @enum {string}
          */
-        ExportFormat: "csv" | "xlsx";
+        ExportFormat: "csv" | "json" | "xlsx" | "xml";
         /**
          * ExportFormat
          * @description Export file formats.
@@ -24927,7 +25010,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["app__models__export_job__ExportFormat"];
+            format: components["schemas"]["ExportFormat"];
             /**
              * @description Delivery method
              * @default email
@@ -25226,7 +25309,7 @@ export interface components {
             /** Description */
             description?: string | null;
             template?: components["schemas"]["ExportTemplate"] | null;
-            format?: components["schemas"]["app__models__export_job__ExportFormat"] | null;
+            format?: components["schemas"]["ExportFormat"] | null;
             delivery_method?: components["schemas"]["ExportDeliveryMethod"] | null;
             /** Email Recipients */
             email_recipients?: string[] | null;
@@ -28203,7 +28286,7 @@ export interface components {
              * @default []
              */
             recommendations: components["schemas"]["Recommendation"][];
-            summary?: components["schemas"]["ConflictSummary"] | null;
+            summary?: components["schemas"]["app__schemas__schedule__ConflictSummary"] | null;
         };
         /**
          * ImportApplyError
@@ -31680,6 +31763,7 @@ export interface components {
             queueName: string;
             /**
              * Confirm
+             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
@@ -39674,123 +39758,6 @@ export interface components {
             gap_size: number;
         };
         /**
-         * ExportFormat
-         * @description Export file formats.
-         * @enum {string}
-         */
-        app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
-        /**
-         * ConflictSummary
-         * @description Summary statistics for a set of conflicts.
-         *
-         *     Used for dashboard displays and reporting.
-         * @example {
-         *       "affected_people_count": 8,
-         *       "auto_resolvable_count": 6,
-         *       "average_impact_score": 0.65,
-         *       "critical_count": 3,
-         *       "high_count": 5,
-         *       "low_count": 3,
-         *       "medium_count": 4,
-         *       "total_conflicts": 15
-         *     }
-         */
-        app__scheduling__conflicts__types__ConflictSummary: {
-            /**
-             * Total Conflicts
-             * @default 0
-             */
-            total_conflicts: number;
-            /**
-             * Critical Count
-             * @default 0
-             */
-            critical_count: number;
-            /**
-             * High Count
-             * @default 0
-             */
-            high_count: number;
-            /**
-             * Medium Count
-             * @default 0
-             */
-            medium_count: number;
-            /**
-             * Low Count
-             * @default 0
-             */
-            low_count: number;
-            /** By Category */
-            by_category?: {
-                [key: string]: number | undefined;
-            };
-            /** By Type */
-            by_type?: {
-                [key: string]: number | undefined;
-            };
-            /**
-             * Affected People Count
-             * @default 0
-             */
-            affected_people_count: number;
-            /**
-             * Affected Blocks Count
-             * @default 0
-             */
-            affected_blocks_count: number;
-            /**
-             * Auto Resolvable Count
-             * @default 0
-             */
-            auto_resolvable_count: number;
-            /**
-             * Requires Manual Count
-             * @default 0
-             */
-            requires_manual_count: number;
-            /**
-             * Average Impact Score
-             * @default 0
-             */
-            average_impact_score: number;
-            /**
-             * Average Urgency Score
-             * @default 0
-             */
-            average_urgency_score: number;
-            /**
-             * Average Complexity Score
-             * @default 0
-             */
-            average_complexity_score: number;
-            /** Earliest Date */
-            earliest_date?: string | null;
-            /** Latest Date */
-            latest_date?: string | null;
-        };
-        /**
-         * BlockListResponse
-         * @description Response for listing academic blocks.
-         */
-        app__schemas__academic_blocks__BlockListResponse: {
-            /**
-             * Blocks
-             * @description List of academic blocks
-             */
-            blocks: components["schemas"]["BlockSummary"][];
-            /**
-             * Academic Year
-             * @description Academic year
-             */
-            academic_year: string;
-            /**
-             * Total Blocks
-             * @description Total number of blocks
-             */
-            total_blocks: number;
-        };
-        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
@@ -39808,6 +39775,22 @@ export interface components {
             error?: string | null;
             /** Warnings */
             warnings?: string[];
+        };
+        /**
+         * BlockListResponse
+         * @description Schema for list of blocks.
+         */
+        app__schemas__block__BlockListResponse: {
+            /**
+             * Items
+             * @description List of block responses
+             */
+            items: components["schemas"]["BlockResponse"][];
+            /**
+             * Total
+             * @description Total number of blocks
+             */
+            total: number;
         };
         /**
          * CoverageGap
@@ -39830,6 +39813,12 @@ export interface components {
             /** Severity */
             severity: string;
         };
+        /**
+         * ExportFormat
+         * @description Supported export formats.
+         * @enum {string}
+         */
+        app__schemas__block_assignment_import__ExportFormat: "csv" | "xlsx";
         /**
          * PersonSummary
          * @description Minimal person info for certification reports.
@@ -39872,6 +39861,19 @@ export interface components {
              * @description Alternative suggestions
              */
             suggestions?: string[];
+        };
+        /**
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
+         */
+        app__schemas__jobs__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
+            /**
+             * Confirm
+             * @default false
+             */
+            confirm: boolean;
         };
         /**
          * QueuePurgeResponse
@@ -39923,20 +39925,6 @@ export interface components {
             type: string;
         };
         /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
-         */
-        app__schemas__queue__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
-            /**
-             * Confirm
-             * @description Must be true to confirm purge
-             * @default false
-             */
-            confirm: boolean;
-        };
-        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
@@ -39955,6 +39943,18 @@ export interface components {
             success: boolean;
             /** Error */
             error?: string | null;
+        };
+        /**
+         * ConflictSummary
+         * @description Summary of conflicts found.
+         */
+        app__schemas__schedule__ConflictSummary: {
+            /** Total Conflicts */
+            total_conflicts: number;
+            /** Errors */
+            errors: number;
+            /** Warnings */
+            warnings: number;
         };
     };
     responses: never;
@@ -42001,7 +42001,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -42128,7 +42128,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -42194,7 +42194,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -57212,7 +57212,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__scheduling__conflicts__types__ConflictSummary"];
+                    "application/json": components["schemas"]["ConflictSummary"];
                 };
             };
             /** @description Validation Error */
@@ -58269,7 +58269,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -58636,7 +58636,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
