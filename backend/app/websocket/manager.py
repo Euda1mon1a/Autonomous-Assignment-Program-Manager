@@ -298,6 +298,39 @@ class ConnectionManager:
 
         return sent_count
 
+    async def broadcast_solver_event(self, data: dict) -> int:
+        """
+        Broadcast a solver event (raw dict) to all connected users.
+
+        Used for real-time solver visualization where events are plain dicts
+        with camelCase keys (solver_solution, solver_complete).
+
+        Args:
+            data: Event data dict with eventType, taskId, etc.
+
+        Returns:
+            Number of users successfully sent to
+        """
+        all_user_ids = list(self._connections.keys())
+        sent_count = 0
+
+        for user_id in all_user_ids:
+            connections = self._connections.get(user_id, [])
+            for connection in connections:
+                success = await connection.send_json(data)
+                if success:
+                    sent_count += 1
+                    break  # Only count once per user
+
+        event_type = data.get("eventType", "unknown")
+        task_id = data.get("taskId", "unknown")
+        logger.debug(
+            f"Broadcast solver event ({event_type}) to {sent_count} users "
+            f"(task_id={task_id})"
+        )
+
+        return sent_count
+
     async def handle_ping(self, connection: Connection):
         """
         Handle ping message from client.
@@ -583,3 +616,20 @@ async def broadcast_resilience_alert(
 
     # Broadcast to all users for system-wide alerts
     await manager.broadcast_to_all(event)
+
+
+async def broadcast_solver_event(data: dict) -> int:
+    """
+    Broadcast a solver event to all connected users.
+
+    Used by SolutionStreamingCallback for real-time solver visualization.
+    Events are plain dicts with camelCase keys matching frontend types.
+
+    Args:
+        data: Event dict with eventType, taskId, solutionNum, etc.
+
+    Returns:
+        Number of users the event was sent to
+    """
+    manager = get_connection_manager()
+    return await manager.broadcast_solver_event(data)

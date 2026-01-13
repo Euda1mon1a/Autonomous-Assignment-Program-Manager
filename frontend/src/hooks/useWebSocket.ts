@@ -31,6 +31,8 @@ export type EventType =
   | 'swap_approved'
   | 'conflict_detected'
   | 'resilience_alert'
+  | 'solver_solution'
+  | 'solver_complete'
   | 'connection_ack'
   | 'ping'
   | 'pong'

@@ -123,7 +123,8 @@ api_router.include_router(
     constraints.router, prefix="/schedule/constraints", tags=["schedule"]
 )
 api_router.include_router(metrics.router, prefix="/schedule/metrics", tags=["schedule"])
-api_router.include_router(queue.router, prefix="/schedule/queue", tags=["schedule"])
+# NOTE: queue endpoints for /schedule/queue are now in schedule.py
+# api_router.include_router(queue.router, prefix="/schedule/queue", tags=["schedule"])
 
 api_router.include_router(settings.router, prefix="/settings", tags=["settings"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])

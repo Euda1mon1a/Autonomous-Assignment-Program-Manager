@@ -15,6 +15,8 @@ import { Canvas, useFrame, useThree, ThreeEvent } from '@react-three/fiber';
 import { OrbitControls, Text, Html, Stars, Grid } from '@react-three/drei';
 import { useSpring, animated } from '@react-spring/three';
 import * as THREE from 'three';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import type { RiskTier } from '@/components/ui/RiskBar';
 
 // ============================================================================
@@ -52,6 +54,8 @@ interface AnimatedVoxelProps {
 
 interface VoxelScheduleView3DProps {
   userTier: RiskTier;
+  startDate?: string; // YYYY-MM-DD format
+  endDate?: string;   // YYYY-MM-DD format
 }
 
 // ============================================================================
@@ -321,14 +325,81 @@ const AnimatedCamera = ({ is3D }: { is3D: boolean }) => {
 // Main Component
 // ============================================================================
 
-export default function VoxelScheduleView3D({ userTier }: VoxelScheduleView3DProps) {
+export default function VoxelScheduleView3D({ userTier, startDate, endDate }: VoxelScheduleView3DProps) {
   const [is3D, setIs3D] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  // TODO: Replace with real data from useVoxelData hook
-  const voxels = TEST_VOXELS;
-  const axisLabels = AXIS_LABELS;
+  // Default to current week if no dates provided
+  const defaultStartDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - d.getDay()); // Start of week (Sunday)
+    return d.toISOString().split('T')[0];
+  }, []);
+  const defaultEndDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - d.getDay() + 6); // End of week (Saturday)
+    return d.toISOString().split('T')[0];
+  }, []);
+
+  const effectiveStartDate = startDate || defaultStartDate;
+  const effectiveEndDate = endDate || defaultEndDate;
+
+  // Fetch real voxel data from API
+  const { data: voxelGridData, isLoading, error } = useQuery({
+    queryKey: ['voxel-grid', effectiveStartDate, effectiveEndDate],
+    queryFn: async () => {
+      const response = await api.get('/visualization/voxel-grid', {
+        params: {
+          start_date: effectiveStartDate,
+          end_date: effectiveEndDate,
+          include_violations: true,
+        },
+      });
+      return response.data;
+    },
+  });
+
+  // Transform API data to VoxelData format, or use test data as fallback
+  const { voxels, axisLabels } = useMemo(() => {
+    if (!voxelGridData?.voxels || voxelGridData.voxels.length === 0) {
+      // Fall back to test data if no real data
+      return { voxels: TEST_VOXELS, axisLabels: AXIS_LABELS };
+    }
+
+    // Transform API voxels to component format
+    const transformedVoxels: VoxelData[] = voxelGridData.voxels.map((v: Record<string, unknown>, idx: number) => ({
+      id: (v.assignmentId as string) || `voxel-${idx}`,
+      position: { x: v.x as number, y: v.y as number, z: v.z as number },
+      person: (v.personName as string) || 'Unknown',
+      personId: v.personId as string,
+      activity: (v.activityName as string) || 'Unknown',
+      activityType: v.activityType as string,
+      color: v.color ? `rgb(${Math.round((v.color as { r: number }).r * 255)}, ${Math.round((v.color as { g: number }).g * 255)}, ${Math.round((v.color as { b: number }).b * 255)})` : '#888888',
+      isConflict: (v.isConflict as boolean) || false,
+      isViolation: (v.isViolation as boolean) || false,
+      assignmentId: v.assignmentId as string,
+      blockDate: v.blockDate as string,
+    }));
+
+    // Calculate stack indices for 2D mode
+    const map = new Map<string, number>();
+    const withStackIndices = transformedVoxels.map((v) => {
+      const key = `${v.position.x}-${v.position.y}`;
+      const count = map.get(key) || 0;
+      map.set(key, count + 1);
+      return { ...v, conflictStackIndex: count };
+    });
+
+    // Build axis labels from grid metadata
+    const labels = {
+      x: voxelGridData.dimensions?.timeLabels || AXIS_LABELS.x,
+      y: voxelGridData.dimensions?.personLabels || AXIS_LABELS.y,
+      z: voxelGridData.dimensions?.activityLabels || AXIS_LABELS.z,
+    };
+
+    return { voxels: withStackIndices, axisLabels: labels };
+  }, [voxelGridData]);
 
   const hoveredVoxel = voxels.find((v) => v.id === hoveredId);
 
@@ -340,6 +411,18 @@ export default function VoxelScheduleView3D({ userTier }: VoxelScheduleView3DPro
 
   return (
     <div className="w-full h-full relative overflow-hidden">
+      {/* Loading/Error States */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-slate-900/80 flex items-center justify-center z-20">
+          <div className="text-white text-lg">Loading schedule data...</div>
+        </div>
+      )}
+      {error && (
+        <div className="absolute top-4 left-4 bg-red-900/90 text-white px-4 py-2 rounded-lg z-20">
+          Failed to load schedule data. Using demo data.
+        </div>
+      )}
+
       {/* Controls Overlay */}
       <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-4">
         {/* 2D/3D Toggle */}

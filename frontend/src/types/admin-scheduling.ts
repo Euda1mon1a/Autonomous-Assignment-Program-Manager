@@ -263,12 +263,21 @@ export interface RunComparisonResponse {
   recommendation?: string;
 }
 
+// Matches backend ValidationResult schema (app/schemas/schedule.py)
 export interface ValidationResponse {
-  isValid: boolean;
-  warnings: ConfigWarning[];
-  safetyChecks: SafetyCheck[];
-  estimatedRuntime?: number;
-  estimatedCoverage?: number;
+  valid: boolean;
+  totalViolations: number;
+  violations: Array<{
+    type: string;
+    severity: string;
+    personId?: string;
+    personName?: string;
+    blockId?: string;
+    message: string;
+    details?: Record<string, unknown>;
+  }>;
+  coverageRate: number;
+  statistics?: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -280,7 +289,9 @@ export type AdminSchedulingTab =
   | 'experimentation'
   | 'metrics'
   | 'history'
-  | 'overrides';
+  | 'overrides'
+  | 'solver-viz'
+  | 'schedule-3d';
 
 export interface AdminSchedulingState {
   activeTab: AdminSchedulingTab;

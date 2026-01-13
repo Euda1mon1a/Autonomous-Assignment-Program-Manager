@@ -130,7 +130,41 @@ if [ -n "$BACKEND_STAGED" ]; then
 fi
 
 # ============================================================
-# Check 5: Optional Full Contract Validation
+# Check 5: Generated Types Drift Detection
+# ============================================================
+GENERATED_TYPES="frontend/src/types/api-generated.ts"
+
+echo -n "Checking generated API types... "
+
+if [ -f "$GENERATED_TYPES" ]; then
+    # Check if backend is running for live comparison
+    if curl -s http://localhost:8000/health >/dev/null 2>&1; then
+        # Run the drift check
+        if cd frontend && ./scripts/generate-api-types.sh --check >/dev/null 2>&1; then
+            cd ..
+            echo -e "${GREEN}OK${NC} (types in sync)"
+        else
+            cd ..
+            echo -e "${RED}DRIFT DETECTED${NC}"
+            echo -e "${RED}Generated types don't match backend schemas!${NC}"
+            echo ""
+            echo -e "Regenerate with: ${CYAN}cd frontend && npm run generate:types${NC}"
+            echo ""
+            ERRORS=$((ERRORS + 1))
+        fi
+    else
+        echo -e "${YELLOW}SKIPPED${NC} (backend not running)"
+        echo -e "  To enable drift detection, run backend first"
+    fi
+else
+    echo -e "${YELLOW}WARNING${NC}"
+    echo -e "${YELLOW}No generated types file found at $GENERATED_TYPES${NC}"
+    echo -e "Generate with: ${CYAN}cd frontend && npm run generate:types${NC}"
+    WARNINGS=$((WARNINGS + 1))
+fi
+
+# ============================================================
+# Check 5b: Optional Full Contract Validation (legacy)
 # ============================================================
 if [ "${API_CONTRACT_FULL:-0}" = "1" ]; then
     echo ""

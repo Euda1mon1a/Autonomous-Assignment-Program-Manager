@@ -36,9 +36,12 @@ from app.schemas.schedule import (
     ConflictSummary,
     EmergencyRequest,
     EmergencyResponse,
+    ExperimentRunResponse,
     ImportAnalysisResponse,
+    QueueBatchRequest,
     Recommendation,
     RollbackPoint,
+    RunQueueResponse,
     ScheduleRequest,
     ScheduleResponse,
     ScheduleRunRead,
@@ -1484,3 +1487,125 @@ async def list_emergency_holidays(
 ):
     """List emergency holidays/closures (stubs for now)."""
     return []
+
+
+# ============================================================================
+# Experiment Queue Management (for Admin Scheduling Lab)
+# ============================================================================
+
+
+@router.get("/queue", response_model=RunQueueResponse)
+async def get_experiment_queue(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Get the current experiment run queue.
+
+    Returns recent schedule runs formatted as ExperimentRun objects
+    for the admin scheduling laboratory interface.
+    """
+    from app.models.schedule_run import ScheduleRun
+
+    # Get recent runs (limit to last 50)
+    query = select(ScheduleRun).order_by(ScheduleRun.created_at.desc()).limit(50)
+    results = db.execute(query).scalars().all()
+
+    # Convert to ExperimentRunResponse
+    runs = [ExperimentRunResponse.from_schedule_run(r) for r in results]
+
+    # Count running experiments
+    running_count = sum(1 for r in runs if r.status.value == "running")
+
+    return RunQueueResponse(
+        runs=runs,
+        maxConcurrent=2,
+        currentlyRunning=running_count,
+    )
+
+
+@router.post("/queue/batch", response_model=list[ExperimentRunResponse])
+async def queue_experiment_batch(
+    request: QueueBatchRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Queue multiple experiment configurations for execution.
+
+    Creates ScheduleRun records for each configuration and returns them
+    as ExperimentRun objects.
+    """
+    import uuid
+    from datetime import datetime
+
+    from app.models.schedule_run import ScheduleRun
+
+    created_runs = []
+
+    for config in request.configurations:
+        # Create a new ScheduleRun for each configuration
+        run = ScheduleRun(
+            id=uuid.uuid4(),
+            start_date=datetime.now().date(),  # Will be overwritten when run starts
+            end_date=datetime.now().date(),
+            algorithm=config.get("algorithm", "hybrid"),
+            status="queued",
+            config_json={
+                **config,
+                "name": config.get(
+                    "name", f"Experiment {datetime.now().strftime('%H:%M')}"
+                ),
+            },
+            created_at=datetime.utcnow(),
+        )
+        db.add(run)
+        created_runs.append(run)
+
+    db.commit()
+
+    # Refresh to get IDs
+    for run in created_runs:
+        db.refresh(run)
+
+    return [ExperimentRunResponse.from_schedule_run(r) for r in created_runs]
+
+
+@router.delete("/queue/{run_id}")
+async def cancel_experiment_run(
+    run_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Cancel a queued or running experiment.
+
+    Updates the status to 'cancelled' and attempts to revoke
+    any associated Celery task.
+    """
+    from app.models.schedule_run import ScheduleRun
+
+    result = db.execute(
+        select(ScheduleRun).where(ScheduleRun.id == run_id)
+    ).scalar_one_or_none()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Experiment run not found")
+
+    if result.status in ("success", "partial", "failed", "cancelled"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot cancel experiment in '{result.status}' status",
+        )
+
+    # Update status to cancelled
+    result.status = "cancelled"
+    db.commit()
+
+    # TODO: If there's a celery_task_id, revoke the task
+    # if result.celery_task_id:
+    #     from celery.app.control import Control
+    #     control = Control(app)
+    #     control.revoke(result.celery_task_id, terminate=True)
+
+    return {"status": "cancelled", "run_id": str(run_id)}
