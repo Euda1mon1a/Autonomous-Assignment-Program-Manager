@@ -3,7 +3,7 @@
 > **Status:** In Progress
 > **Created:** 2026-01-12
 > **Last Updated:** 2026-01-12 (PR #699 added)
-> **Related PRs:** #694 (consolidation map), #695 (RiskBar), #696 (Swap Hub), #697 (PersonSelector), #699 (Proxy Coverage)
+> **Related PRs:** #694 (consolidation map), #695 (RiskBar), #696 (Swap Hub), #697 (PersonSelector), #699 (Proxy Coverage), #700 (Command Center)
 > **Source Analysis:** `docs/reviews/2026-01-11-frontend-consolidation-map.md`
 
 ---
@@ -389,6 +389,48 @@ These pages stay in `/admin/` and are **NOT** hub-ified:
 
 ---
 
+## Command Center (3D Voxel Visualization)
+
+**Route:** `/command-center`
+**Status:** Phase 1 Complete (PR #700)
+**Tech:** Three.js via React Three Fiber
+
+### Current Features
+- 3D voxel schedule visualization
+- Animated 2D↔3D toggle with spring physics
+- Conflict detection (pulsing red voxels)
+- Tier-based RiskBar integration
+- Lazy-loaded (~500KB isolated)
+
+### Roadmap
+
+| Phase | Features | Status |
+|-------|----------|--------|
+| 1 | Basic 3D with demo data | ✅ PR #700 |
+| 2 | Real schedule data integration | Pending |
+| 3 | CRUD operations by tier | Pending |
+| 4 | View mode switching (axes) | Pending |
+| **5** | **🥽 WebXR / Apple Vision Pro** | **Roadmapped** |
+
+### Phase 5: WebXR / Vision Pro Support
+
+visionOS 2+ supports WebXR by default. Levels of immersion:
+
+| Level | Experience | Effort |
+|-------|------------|--------|
+| Window | 3D in Safari floating window | ✅ Done |
+| Immersive VR | Schedule floats in space | Medium |
+| Hand Tracking | Pinch-to-select, grab-to-move | Higher |
+
+**Dependencies:** `@react-three/xr`
+
+**Vision Pro Interactions:**
+- Look + Pinch: Select voxels
+- Two-hand pinch: Zoom/scale
+- Voice: "Show conflicts"
+
+---
+
 ## Success Criteria
 
 - [ ] All hubs use RiskBar component
@@ -416,5 +458,6 @@ These pages stay in `/admin/` and are **NOT** hub-ified:
 
 | Date | Change |
 |------|--------|
+| 2026-01-12 | Added Command Center section with WebXR/Vision Pro roadmap |
 | 2026-01-12 | Added PR #699 Proxy Coverage → Ops Hub Coverage tab |
 | 2026-01-12 | Initial roadmap created |
