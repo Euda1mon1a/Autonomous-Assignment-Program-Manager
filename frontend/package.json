@@ -41,7 +41,11 @@
     "recharts": "^3.6.0",
     "uuid": "^13.0.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",
-    "zod": "^4.3.2"
+    "zod": "^4.3.2",
+    "three": "0.164.0",
+    "@react-three/fiber": "8.16.1",
+    "@react-three/drei": "9.105.0",
+    "@react-spring/three": "9.7.3"
   },
   "overrides": {
     "glob": "^10.5.0"
@@ -58,6 +62,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-plotly.js": "^2.6.4",
+    "@types/three": "0.164.0",
     "autoprefixer": "10.4.17",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.2.35",
