@@ -19,8 +19,9 @@
     "audit": "npm audit",
     "audit:fix": "npm audit fix",
     "validate": "npm run type-check && npm run lint && npm run test",
-    "generate:types": "openapi-typescript http://localhost:8000/openapi.json -o src/types/generated-api.ts",
-    "generate:types:file": "openapi-typescript ./openapi.json -o src/types/generated-api.ts"
+    "generate:types": "./scripts/generate-api-types.sh",
+    "generate:types:check": "./scripts/generate-api-types.sh --check",
+    "generate:types:file": "openapi-typescript ./openapi.json -o src/types/api-generated.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -1228,3 +1228,33 @@ Already partially covered by:
 **Problem:** Integration tests require running backend; CI doesn't start containers.
 
 **Tracking:** Full task specification in `.codex/AGENTS.md` with options and deliverables.
+
+---
+
+## Terminology Fixes (2026-01-13)
+
+### CP-SAT: Rename `total_blocks_assigned` → `total_assignments`
+**Priority:** Low
+**Added:** 2026-01-13
+**Status:** TODO
+
+**Problem:** `schedule_runs.total_blocks_assigned` is misleading - it counts assignments, not blocks.
+
+**Recommended Approach:** Option B - Alias in Pydantic schemas (no migration)
+```python
+# In backend/app/schemas/schedule.py
+total_assignments: int = Field(alias="total_blocks_assigned")
+```
+
+**Why Option B:**
+- No Alembic migration needed
+- DB column unchanged (backwards compatible)
+- Frontend sees correct name via camelCase conversion
+- 24 files reference this field - alias avoids mass rename
+
+**Files affected (for future full rename):**
+- `backend/app/models/schedule_run.py` - Column definition
+- `backend/app/schemas/schedule.py` - Response schema
+- `backend/app/scheduling/engine.py` - Assignment
+- `mcp-server/src/scheduler_mcp/scheduling_tools.py` - MCP tool
+- Tests and docs (20+ files)

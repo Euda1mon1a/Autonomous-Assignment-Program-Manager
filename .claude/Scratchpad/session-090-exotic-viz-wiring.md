@@ -1,57 +1,62 @@
 # Session 090: Exotic Visualization Wiring
 
-**Date:** 2026-01-12
+**Date:** 2026-01-12/13
 **Branch:** `feat/exotic-explorations`
 
 ## Summary
 
-Connected existing voxel visualization components that were built but not wired up. ~100 lines of integration code across 5 files.
+Connected 3D visualization components + added admin tabs + fixed backend bug.
 
-## What Was Done
+## Commits Made
 
-### PRs Merged
-- **#703** - Activity Hub consolidation (Phase 2)
-- **#705** - Real-time CP-SAT solver visualization prototype
-  - Fixed Codex P2: camelCase field names for WebSocket
-  - Fixed Codex P2: async callback handling
-- **#704, #706** - Research docs (Gaussian splatting, voxel features)
+### Commit 1: `109b3b23`
+```
+feat: Wire exotic visualization components to real data
+```
+- VoxelScheduleView3D now fetches from `/visualization/voxel-grid` API
+- WebSocket manager broadcasts solver events
+- SolverProgressCallback emits real-time updates
+- New `/solver-viz` route (standalone, deferred for hub project)
+- Added `@react-three/fiber`, `three`, `@react-three/drei` deps
 
-### New Integrations
+## Pending Changes (Not Committed)
 
-| Component | Change |
-|-----------|--------|
-| `VoxelScheduleView3D.tsx` | Now fetches real data from `/visualization/voxel-grid` API |
-| `useWebSocket.ts` | Added `solver_solution`, `solver_complete` event types |
-| `manager.py` | Added `broadcast_solver_event()` for real-time updates |
-| `solvers.py` | `SolverProgressCallback` now broadcasts to WebSocket |
-| `/solver-viz` page | NEW route mounting `SolverVisualization` component |
+### 1. Admin Scheduling 3D Tabs
+Added 2 new tabs to `/admin/scheduling`:
+- **Solver 3D** (Eye icon) - Real-time solver visualization
+- **Schedule 3D** (Boxes icon) - 3D voxel schedule view
 
-### Key Insight
+Files modified:
+- `frontend/src/types/admin-scheduling.ts` - Added tab types
+- `frontend/src/app/admin/scheduling/page.tsx` - Imports, TABS array, content
+- `frontend/src/features/voxel-schedule/index.ts` - Export VoxelScheduleView3D
 
-Exploration agent found **3 isolated systems** that weren't talking:
-1. Data system (API) ↔ Visualization (UI) - needed fetch
-2. Solver (engine) ↔ Events (WebSocket) - events defined but never fired
-3. Events (backend) ↔ Hook (frontend) - types missing
+### 2. Backend Bug Fix
+Fixed 500 error on `/schedule/queue`:
+```
+AttributeError: 'QueueManager' object has no attribute 'get_stats'
+```
+**Fix:** `backend/app/api/routes/queue.py:66`
+Changed `manager.get_stats()` → `manager.get_queue_stats()`
 
-~75 lines of actual code to connect everything that was already built.
+## Key Learnings
 
-## RAG Ingested
+1. **Docker context matters** - npm install on host doesn't affect container
+2. **WebSocket messages bypass axios interceptor** - need camelCase manually
+3. **Pre-existing bugs surface** - Backend queue endpoint was broken
 
-Added `exotic_concepts` doc type for cross-domain research ideas. Keywords: exotic, unintuitive, lateral thinking. Claude should approach these with curiosity, not pragmatic dismissal.
+## Next Steps
+
+1. Rebuild backend container to pick up fix
+2. Test admin/scheduling with working queue endpoint
+3. Commit all pending changes
+4. Test 3D visualization in admin tabs
 
 ## Files Changed (Uncommitted)
 
 ```
-M app/scheduling/solvers.py
-M app/websocket/manager.py
-M frontend/src/features/voxel-schedule/VoxelScheduleView3D.tsx
-M frontend/src/hooks/useWebSocket.ts
-A frontend/src/app/solver-viz/page.tsx
+M backend/app/api/routes/queue.py
+M frontend/src/app/admin/scheduling/page.tsx
+M frontend/src/features/voxel-schedule/index.ts
+M frontend/src/types/admin-scheduling.ts
 ```
-
-## Next Steps
-
-1. Commit changes
-2. Test command center with real data
-3. Test solver-viz with active schedule generation
-4. Consider: InstancedVoxelRenderer integration for large schedules

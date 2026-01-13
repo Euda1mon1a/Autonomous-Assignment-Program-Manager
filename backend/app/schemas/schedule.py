@@ -449,3 +449,146 @@ class SyncMetadata(BaseModel):
     sync_status: str  # 'synced', 'pending', 'error'
     source_system: str
     records_affected: int = 0
+
+
+# ============================================================================
+# Experiment Queue Schemas (for Admin Scheduling Lab)
+# ============================================================================
+
+
+class ExperimentRunStatus(str, Enum):
+    """Status of an experiment run in the queue."""
+
+    QUEUED = "queued"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class ExperimentRunResult(BaseModel):
+    """Result of a completed experiment run."""
+
+    run_id: str = Field(alias="runId")
+    status: str  # 'success', 'partial', 'failed'
+    coverage_percent: float = Field(alias="coveragePercent")
+    acgme_violations: int = Field(alias="acgmeViolations")
+    fairness_score: float = Field(default=0.0, alias="fairnessScore")
+    swap_churn: float = Field(default=0.0, alias="swapChurn")
+    runtime_seconds: float = Field(alias="runtimeSeconds")
+    stability: float = Field(default=1.0)
+    blocks_assigned: int = Field(alias="blocksAssigned")
+    total_blocks: int = Field(alias="totalBlocks")
+    timestamp: datetime
+
+    class Config:
+        populate_by_name = True
+
+
+class ExperimentRunConfiguration(BaseModel):
+    """Configuration for an experiment run."""
+
+    algorithm: str
+    constraints: list[dict] = Field(default_factory=list)
+    preserve_fmit: bool = Field(default=True, alias="preserveFMIT")
+    nf_post_call_enabled: bool = Field(default=True, alias="nfPostCallEnabled")
+    academic_year: str = Field(alias="academicYear")
+    block_range: dict = Field(alias="blockRange")
+    timeout_seconds: int = Field(alias="timeoutSeconds")
+    dry_run: bool = Field(default=False, alias="dryRun")
+
+    class Config:
+        populate_by_name = True
+
+
+class ExperimentRunResponse(BaseModel):
+    """Schema for an experiment run (ExperimentRun in frontend)."""
+
+    id: str
+    name: str
+    status: ExperimentRunStatus
+    configuration: ExperimentRunConfiguration
+    queued_at: datetime = Field(alias="queuedAt")
+    started_at: datetime | None = Field(default=None, alias="startedAt")
+    completed_at: datetime | None = Field(default=None, alias="completedAt")
+    progress: float | None = None  # 0.0 to 1.0
+    result: ExperimentRunResult | None = None
+
+    class Config:
+        populate_by_name = True
+
+    @classmethod
+    def from_schedule_run(cls, obj: Any) -> "ExperimentRunResponse":
+        """Convert a ScheduleRun model to ExperimentRunResponse."""
+        config_json = getattr(obj, "config_json", {}) or {}
+
+        # Build configuration from config_json
+        configuration = ExperimentRunConfiguration(
+            algorithm=getattr(obj, "algorithm", "hybrid"),
+            constraints=config_json.get("constraints", []),
+            preserveFMIT=config_json.get("preserve_fmit", True),
+            nfPostCallEnabled=config_json.get("nf_post_call", True),
+            academicYear=config_json.get("academic_year", "2025-2026"),
+            blockRange=config_json.get("block_range", {"start": 1, "end": 26}),
+            timeoutSeconds=config_json.get("timeout_seconds", 60),
+            dryRun=config_json.get("dry_run", False),
+        )
+
+        # Build result if completed
+        result = None
+        status_str = getattr(obj, "status", "queued")
+        if status_str in ("success", "partial", "failed", "completed"):
+            result = ExperimentRunResult(
+                runId=str(obj.id),
+                status=status_str if status_str != "completed" else "success",
+                coveragePercent=getattr(obj, "coverage_percent", 0.0) or 0.0,
+                acgmeViolations=getattr(obj, "acgme_violations", 0) or 0,
+                fairnessScore=getattr(obj, "fairness_score", 0.0) or 0.0,
+                swapChurn=getattr(obj, "swap_churn", 0.0) or 0.0,
+                runtimeSeconds=float(getattr(obj, "runtime_seconds", 0.0) or 0.0),
+                stability=getattr(obj, "stability", 1.0) or 1.0,
+                blocksAssigned=getattr(obj, "total_blocks_assigned", 0) or 0,
+                totalBlocks=getattr(obj, "total_blocks", 0) or 0,
+                timestamp=getattr(obj, "created_at", datetime.now()),
+            )
+
+        # Map status
+        status_map = {
+            "queued": ExperimentRunStatus.QUEUED,
+            "running": ExperimentRunStatus.RUNNING,
+            "success": ExperimentRunStatus.COMPLETED,
+            "partial": ExperimentRunStatus.COMPLETED,
+            "completed": ExperimentRunStatus.COMPLETED,
+            "failed": ExperimentRunStatus.FAILED,
+            "cancelled": ExperimentRunStatus.CANCELLED,
+        }
+        status = status_map.get(status_str, ExperimentRunStatus.QUEUED)
+
+        return cls(
+            id=str(obj.id),
+            name=config_json.get("name", f"Run {str(obj.id)[:8]}"),
+            status=status,
+            configuration=configuration,
+            queuedAt=getattr(obj, "created_at", datetime.now()),
+            startedAt=getattr(obj, "started_at", None),
+            completedAt=getattr(obj, "completed_at", None),
+            progress=getattr(obj, "progress", None),
+            result=result,
+        )
+
+
+class RunQueueResponse(BaseModel):
+    """Schema for experiment run queue (RunQueue in frontend)."""
+
+    runs: list[ExperimentRunResponse]
+    max_concurrent: int = Field(default=2, alias="maxConcurrent")
+    currently_running: int = Field(default=0, alias="currentlyRunning")
+
+    class Config:
+        populate_by_name = True
+
+
+class QueueBatchRequest(BaseModel):
+    """Request to queue multiple experiment configurations."""
+
+    configurations: list[dict]

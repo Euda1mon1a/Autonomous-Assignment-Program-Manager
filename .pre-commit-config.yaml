@@ -85,6 +85,7 @@ repos:
       - id: check-added-large-files
         name: Check for added large files
         args: ['--maxkb=1000']
+        exclude: '^frontend/src/types/api-generated\.ts$'  # Generated types file (source of truth for drift detection)
         stages: [pre-commit]
 
       # Check YAML syntax

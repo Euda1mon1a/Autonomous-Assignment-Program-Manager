@@ -63,7 +63,7 @@ async def get_queue_status(
 ):
     """Get overall queue status and statistics."""
     manager = QueueManager()
-    return manager.get_stats()
+    return manager.get_queue_stats()
 
 
 # ============================================================================

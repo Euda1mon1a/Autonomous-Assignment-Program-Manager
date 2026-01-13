@@ -237,7 +237,7 @@ class SchedulingEngine:
             if expand_block_assignments:
                 if block_number is None or academic_year is None:
                     # Try to infer from date range
-                    block_number = get_block_number_for_date(self.start_date)
+                    block_number, _ = get_block_number_for_date(self.start_date)
                     # Academic year is the year of July 1 that starts the AY
                     if self.start_date.month >= 7:
                         academic_year = self.start_date.year
