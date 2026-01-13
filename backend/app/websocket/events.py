@@ -20,6 +20,9 @@ class EventType(str, Enum):
     CONNECTION_ACK = "connection_ack"
     PING = "ping"
     PONG = "pong"
+    # Real-time solver visualization events
+    SOLVER_SOLUTION = "solver_solution"
+    SOLVER_COMPLETE = "solver_complete"
 
 
 class WebSocketEvent(BaseModel):
@@ -214,6 +217,103 @@ class PongEvent(BaseModel):
 
     event_type: EventType = EventType.PONG
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        """Pydantic config."""
+
+        use_enum_values = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat(),
+            UUID: lambda v: str(v),
+        }
+
+
+# =============================================================================
+# Real-Time Solver Visualization Events
+# =============================================================================
+
+
+class SolverAssignment(BaseModel):
+    """Single assignment from solver."""
+
+    person_id: str
+    block_id: str
+    template_id: str
+    r_idx: int | None = None  # Resident index for position calculation
+    b_idx: int | None = None  # Block index for position calculation
+    t_idx: int | None = None  # Template index for layer calculation
+
+
+class SolverDelta(BaseModel):
+    """Delta between consecutive solver solutions."""
+
+    added: list[SolverAssignment] = Field(default_factory=list)
+    removed: list[SolverAssignment] = Field(default_factory=list)
+    moved: list[dict[str, str]] = Field(default_factory=list)  # {person_id, block_id, old_template_id, new_template_id}
+
+
+class SolverSolutionEvent(BaseModel):
+    """
+    Event fired when CP-SAT solver finds a new feasible solution.
+
+    This enables real-time visualization of the solver progress,
+    showing voxels rearranging as better solutions are discovered.
+
+    For the first solution, `solution_type` is "full" and `assignments`
+    contains the complete assignment list.
+
+    For subsequent solutions, `solution_type` is "delta" and `delta`
+    contains only the changes from the previous solution.
+    """
+
+    event_type: EventType = EventType.SOLVER_SOLUTION
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+    # Task identification
+    task_id: str
+    solution_num: int
+
+    # Solution data
+    solution_type: str  # "full" or "delta"
+    assignments: list[SolverAssignment] | None = None  # For full solutions
+    delta: SolverDelta | None = None  # For delta solutions
+
+    # Metrics
+    assignment_count: int
+    objective_value: float
+    optimality_gap_pct: float
+    is_optimal: bool = False
+    elapsed_seconds: float
+
+    class Config:
+        """Pydantic config."""
+
+        use_enum_values = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat(),
+            UUID: lambda v: str(v),
+        }
+
+
+class SolverCompleteEvent(BaseModel):
+    """
+    Event fired when solver completes (optimal, timeout, or error).
+
+    Indicates the final state of the schedule generation process.
+    """
+
+    event_type: EventType = EventType.SOLVER_COMPLETE
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+    # Task identification
+    task_id: str
+
+    # Completion status
+    status: str  # "optimal", "feasible", "timeout", "infeasible", "error"
+    total_solutions: int
+    final_assignment_count: int
+    total_elapsed_seconds: float
+    message: str = ""
 
     class Config:
         """Pydantic config."""
