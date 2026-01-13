@@ -601,18 +601,29 @@ class SolverProgressCallback:
 
     This callback is invoked by OR-Tools whenever a new solution is found,
     allowing us to track progress and provide real-time feedback to users.
+    Optionally broadcasts to WebSocket for real-time visualization.
     """
 
-    def __init__(self, task_id: str, redis_client) -> None:
+    def __init__(
+        self,
+        task_id: str,
+        redis_client,
+        broadcast_callback: Any | None = None,
+    ) -> None:
         """
         Initialize the progress callback.
 
         Args:
             task_id: Unique identifier for the solver task
             redis_client: Redis client for storing progress data
+            broadcast_callback: Optional async callback for WebSocket broadcast
         """
+        self.broadcast_callback = broadcast_callback
+
         try:
             from ortools.sat.python import cp_model
+
+            outer = self
 
             # Create a dynamic class that inherits from CpSolverSolutionCallback
             class _ProgressCallback(cp_model.CpSolverSolutionCallback):
@@ -669,12 +680,48 @@ class SolverProgressCallback:
                     except Exception as e:
                         logger.error(f"Failed to store progress in Redis: {e}")
 
+                    # Broadcast to WebSocket if callback provided
+                    if outer.broadcast_callback:
+                        try:
+                            # Use camelCase for frontend compatibility
+                            ws_data = {
+                                "eventType": "solver_solution",
+                                "taskId": self.task_id,
+                                "solutionNum": self.solution_count,
+                                "solutionType": "progress",
+                                "objectiveValue": current_obj,
+                                "optimalityGapPct": round(gap, 2),
+                                "progressPct": round(progress_pct, 2),
+                                "elapsedSeconds": round(elapsed, 2),
+                                "isOptimal": gap < 0.01,
+                            }
+                            outer._trigger_broadcast(ws_data)
+                        except Exception as e:
+                            logger.error(f"Failed to broadcast solver event: {e}")
+
             # Store the callback instance
             self._callback = _ProgressCallback(task_id, redis_client)
 
         except ImportError:
             logger.warning("OR-Tools not available, progress callback disabled")
             self._callback = None
+
+    def _trigger_broadcast(self, data: dict) -> None:
+        """Trigger async broadcast from sync context."""
+        import asyncio
+        import inspect
+
+        if not self.broadcast_callback:
+            return
+
+        result = self.broadcast_callback(data)
+        if inspect.iscoroutine(result):
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(result)
+            except RuntimeError:
+                # No running event loop - skip broadcast
+                logger.debug("No event loop available for solver broadcast")
 
     def get_callback(self) -> Any | None:
         """Get the underlying OR-Tools callback object."""
@@ -1023,8 +1070,13 @@ class CPSATSolver(BaseSolver):
         callback = None
         if self.task_id and self.redis_client:
             try:
+                # Import broadcast function for real-time visualization
+                from app.websocket.manager import broadcast_solver_event
+
                 callback_wrapper = SolverProgressCallback(
-                    self.task_id, self.redis_client
+                    self.task_id,
+                    self.redis_client,
+                    broadcast_callback=broadcast_solver_event,
                 )
                 callback = callback_wrapper.get_callback()
                 logger.info(f"Progress tracking enabled for task {self.task_id}")

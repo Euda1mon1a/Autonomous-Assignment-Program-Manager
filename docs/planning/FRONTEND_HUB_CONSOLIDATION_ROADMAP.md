@@ -2,7 +2,7 @@
 
 > **Status:** In Progress
 > **Created:** 2026-01-12
-> **Last Updated:** 2026-01-12 (PR #699 added)
+> **Last Updated:** 2026-01-12 (Admin Scheduling wiring)
 > **Related PRs:** #694 (consolidation map), #695 (RiskBar), #696 (Swap Hub), #697 (PersonSelector), #699 (Proxy Coverage), #700 (Command Center)
 > **Source Analysis:** `docs/reviews/2026-01-11-frontend-consolidation-map.md`
 
@@ -30,9 +30,9 @@ Transform scattered frontend pages into a unified **hub-based navigation model**
 
 | Category | Count |
 |----------|-------|
-| Total Hubs | 13 |
+| Total Hubs | 14 |
 | Complete | 1 (Swap Hub) |
-| Partial/Exists | 4 (Schedule, People, Call, Import/Export) |
+| Partial/Exists | 5 (Schedule, People, Call, Import/Export, Admin Scheduling) |
 | To Build | 7 |
 | Roadmapped | 1 (Learner Hub) |
 
@@ -94,6 +94,7 @@ The permission tier model determines what users can see and do across all hubs.
 | **People Hub** | `/(hub)/people` | Directory / Credentials / FMIT / Absences | 0: view, 1: edit | Partial |
 | **Call Hub** | `/call-hub` | Roster / Schedule / Faculty Call | 0: view, 1: manage | Exists |
 | **Import/Export Hub** | `/hub/import-export` | Import / Export | 1 only | Started |
+| **Admin Scheduling Hub** | `/admin/scheduling` | Config / Constraints / Queue / History / Metrics / Solver 3D / Schedule 3D | 2 only | ✅ Wired |
 
 ### To Build
 
@@ -458,6 +459,7 @@ visionOS 2+ supports WebXR by default. Levels of immersion:
 
 | Date | Change |
 |------|--------|
+| 2026-01-12 | Added Admin Scheduling Hub (Tier 2, 7 tabs, 3D viz) - queue wiring complete |
 | 2026-01-12 | Added Command Center section with WebXR/Vision Pro roadmap |
 | 2026-01-12 | Added PR #699 Proxy Coverage → Ops Hub Coverage tab |
 | 2026-01-12 | Initial roadmap created |

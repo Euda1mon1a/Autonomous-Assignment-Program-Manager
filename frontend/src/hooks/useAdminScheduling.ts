@@ -114,10 +114,16 @@ export function useConstraintConfigs() {
 
 /**
  * Validates a run configuration before execution.
+ * Transforms RunConfiguration to ScheduleRequest format expected by backend.
  */
 export function useValidateConfiguration() {
   return useMutation<ValidationResponse, ApiError, RunConfiguration>({
-    mutationFn: (config) => post<ValidationResponse>('/schedule/validate-config', config),
+    mutationFn: (config) => post<ValidationResponse>('/schedule/validate-config', {
+      startDate: getBlockStartDate(config.blockRange.start, config.academicYear),
+      endDate: getBlockEndDate(config.blockRange.end, config.academicYear),
+      algorithm: config.algorithm,
+      timeoutSeconds: config.timeoutSeconds,
+    }),
   });
 }
 

@@ -13,6 +13,7 @@
 
 // Components
 export { VoxelScheduleView } from "./VoxelScheduleView";
+export { default as VoxelScheduleView3D } from "./VoxelScheduleView3D";
 
 // High-performance instanced renderer
 export {

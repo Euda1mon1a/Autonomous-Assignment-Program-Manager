@@ -35,6 +35,8 @@ import {
   AlertTriangle,
   RotateCcw,
   Pause,
+  Eye,
+  Boxes,
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import {
@@ -60,10 +62,21 @@ import type {
   RunConfiguration,
   ConstraintConfig,
   AdminSchedulingTab,
-  ConfigWarning,
   RunLogEntry,
   ExperimentRun,
 } from '@/types/admin-scheduling';
+import dynamic from 'next/dynamic';
+
+// Lazy load 3D components to avoid loading Three.js bundle on initial page load
+// Critical for DoD/DHA machines with limited GPU resources
+const SolverVisualization = dynamic(
+  () => import('@/features/voxel-schedule').then(m => ({ default: m.SolverVisualization })),
+  { ssr: false, loading: () => <div className="flex items-center justify-center h-full"><LoadingSpinner /></div> }
+);
+const VoxelScheduleView3D = dynamic(
+  () => import('@/features/voxel-schedule').then(m => ({ default: m.VoxelScheduleView3D })),
+  { ssr: false, loading: () => <div className="flex items-center justify-center h-full"><LoadingSpinner /></div> }
+);
 
 // ============================================================================
 // Constants
@@ -88,6 +101,8 @@ const TABS: { id: AdminSchedulingTab; label: string; icon: React.ElementType }[]
   { id: 'metrics', label: 'Metrics', icon: BarChart3 },
   { id: 'history', label: 'History', icon: History },
   { id: 'overrides', label: 'Overrides', icon: Shield },
+  { id: 'solver-viz', label: 'Solver 3D', icon: Eye },
+  { id: 'schedule-3d', label: 'Schedule 3D', icon: Boxes },
 ];
 
 const DEFAULT_CONFIGURATION: RunConfiguration = {
@@ -139,7 +154,7 @@ export default function AdminSchedulingPage() {
 
   const handleValidateAndRun = useCallback(async () => {
     const validation = await validateConfig.mutateAsync(configuration);
-    if (!validation.isValid) {
+    if (!validation.valid) {
       setShowConfirmModal(true);
       setPendingAction(() => () => generateRun.mutate(configuration));
       return;
@@ -300,6 +315,18 @@ export default function AdminSchedulingPage() {
             isUnlocking={unlockAssignment.isPending}
           />
         )}
+
+        {activeTab === 'solver-viz' && (
+          <div className="h-[600px] bg-slate-900 rounded-lg">
+            <SolverVisualization taskId={queue?.runs?.find(r => r.status === 'running')?.id ?? null} />
+          </div>
+        )}
+
+        {activeTab === 'schedule-3d' && (
+          <div className="h-[600px] bg-slate-900 rounded-lg">
+            <VoxelScheduleView3D userTier={2} />
+          </div>
+        )}
       </main>
 
       {/* Confirmation Modal */}
@@ -307,7 +334,7 @@ export default function AdminSchedulingPage() {
         <ConfirmationModal
           title="Configuration Warnings"
           message="There are warnings with your configuration. Do you want to proceed anyway?"
-          warnings={validateConfig.data?.warnings || []}
+          warnings={validateConfig.data?.violations || []}
           onConfirm={() => {
             pendingAction?.();
             setShowConfirmModal(false);
@@ -395,7 +422,7 @@ function ConfigurationPanel({
   onValidate: () => void;
   isRunning: boolean;
   isValidating: boolean;
-  validationResult?: { isValid: boolean; warnings: ConfigWarning[] };
+  validationResult?: { valid: boolean; violations?: Array<{ message: string }> };
 }) {
   const [expandedSections, setExpandedSections] = useState({
     algorithm: true,
@@ -628,13 +655,13 @@ function ConfigurationPanel({
           {validationResult && (
             <div className={`
               mt-4 p-4 rounded-lg border
-              ${validationResult.isValid
+              ${validationResult.valid
                 ? 'bg-emerald-500/10 border-emerald-500/30'
                 : 'bg-amber-500/10 border-amber-500/30'
               }
             `}>
               <div className="flex items-center gap-2 mb-2">
-                {validationResult.isValid ? (
+                {validationResult.valid ? (
                   <>
                     <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                     <span className="font-medium text-emerald-400">Valid Configuration</span>
@@ -643,22 +670,22 @@ function ConfigurationPanel({
                   <>
                     <AlertTriangle className="w-5 h-5 text-amber-400" />
                     <span className="font-medium text-amber-400">
-                      {validationResult.warnings.length} Warning(s)
+                      {validationResult.violations?.length ?? 0} Violation(s)
                     </span>
                   </>
                 )}
               </div>
-              {validationResult.warnings.length > 0 && (
+              {(validationResult.violations?.length ?? 0) > 0 && (
                 <ul className="text-sm text-slate-300 space-y-1">
-                  {validationResult.warnings.slice(0, 3).map((w, i) => (
+                  {validationResult.violations?.slice(0, 3).map((v, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <span className="text-amber-400">•</span>
-                      {w.message}
+                      {v.message}
                     </li>
                   ))}
-                  {validationResult.warnings.length > 3 && (
+                  {(validationResult.violations?.length ?? 0) > 3 && (
                     <li className="text-slate-300">
-                      +{validationResult.warnings.length - 3} more...
+                      +{(validationResult.violations?.length ?? 0) - 3} more...
                     </li>
                   )}
                 </ul>
@@ -1519,9 +1546,6 @@ function OverridesPanel({
           title="Confirm Rollback"
           message="Are you sure you want to revert to this rollback point? This action cannot be undone."
           warnings={[{
-            id: '1',
-            type: 'coverage_risk',
-            severity: 'high',
             message: 'All schedule changes since this point will be lost.',
           }]}
           onConfirm={() => {
@@ -1711,7 +1735,7 @@ function ConfirmationModal({
 }: {
   title: string;
   message: string;
-  warnings: ConfigWarning[];
+  warnings: Array<{ message: string }>;
   onConfirm: () => void;
   onCancel: () => void;
   confirmLabel?: string;
