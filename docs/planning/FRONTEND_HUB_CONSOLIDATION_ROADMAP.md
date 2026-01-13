@@ -2,8 +2,8 @@
 
 > **Status:** In Progress
 > **Created:** 2026-01-12
-> **Last Updated:** 2026-01-12
-> **Related PRs:** #694 (consolidation map), #695 (RiskBar), #696 (Swap Hub), #697 (PersonSelector)
+> **Last Updated:** 2026-01-12 (PR #699 added)
+> **Related PRs:** #694 (consolidation map), #695 (RiskBar), #696 (Swap Hub), #697 (PersonSelector), #699 (Proxy Coverage), #700 (Command Center)
 > **Source Analysis:** `docs/reviews/2026-01-11-frontend-consolidation-map.md`
 
 ---
@@ -102,7 +102,7 @@ The permission tier model determines what users can see and do across all hubs.
 | **Activity Hub** | `/activities` | My Activities / Templates | 0: view all, 1: edit templates | 1 |
 | **Absences Hub** | `/absences` | My Absences / Requests / Approvals | 0: view all + request, 1: approve + sick reasons | 2 |
 | **Procedures Hub** | `/procedures` | Catalog (view/edit modes) | 0: view, 1: edit | 4 |
-| **Ops Hub** | `/ops` | Manifest / Heatmap / Conflicts | 0: view, 1: resolve conflicts | 5 |
+| **Ops Hub** | `/ops` | Manifest / Heatmap / Conflicts / Coverage | 0: view, 1: resolve conflicts | 5 |
 | **Compliance Hub** | `/compliance` | Dashboard / Audit Trail | 0: summary, 1: details + audit | 6 |
 | **Analytics Hub** | `/analytics` | Fairness / Game Theory | 0: view (transparency), 1: edit params | 7 |
 | **Config Hub** | `/config` | Rotations / Settings | 1 only (setup/config) | 9 |
@@ -200,6 +200,9 @@ const currentRiskTier: RiskTier = useMemo(() => {
 ## Feature Module Pattern
 
 Each hub should have a corresponding feature module in `frontend/src/features/`:
+
+**Existing Examples:**
+- `frontend/src/features/proxy-coverage/` - Clean feature module (PR #699), needs RiskBar integration when moved to Ops Hub
 
 ```
 frontend/src/features/
@@ -363,6 +366,7 @@ These pages stay in `/admin/` and are **NOT** hub-ified:
 | `/daily-manifest` | Ops Hub | Become Manifest tab |
 | `/heatmap` | Ops Hub | Become Demand tab |
 | `/conflicts` | Ops Hub | Become Conflicts tab |
+| `/proxy-coverage` | Ops Hub | Become Coverage tab (PR #699) |
 | `/admin/audit` | Compliance Hub | Become Audit tab |
 | `/admin/compliance` | Compliance Hub | Become Dashboard tab |
 | `/admin/fairness` | Analytics Hub | Become Fairness tab |
@@ -382,6 +386,48 @@ These pages stay in `/admin/` and are **NOT** hub-ified:
 | `/settings` | User preferences |
 | `/schedule/[personId]` | Deep link to specific person |
 | `/my-schedule` | Personal schedule (may merge with Schedule Hub) |
+
+---
+
+## Command Center (3D Voxel Visualization)
+
+**Route:** `/command-center`
+**Status:** Phase 1 Complete (PR #700)
+**Tech:** Three.js via React Three Fiber
+
+### Current Features
+- 3D voxel schedule visualization
+- Animated 2D↔3D toggle with spring physics
+- Conflict detection (pulsing red voxels)
+- Tier-based RiskBar integration
+- Lazy-loaded (~500KB isolated)
+
+### Roadmap
+
+| Phase | Features | Status |
+|-------|----------|--------|
+| 1 | Basic 3D with demo data | ✅ PR #700 |
+| 2 | Real schedule data integration | Pending |
+| 3 | CRUD operations by tier | Pending |
+| 4 | View mode switching (axes) | Pending |
+| **5** | **🥽 WebXR / Apple Vision Pro** | **Roadmapped** |
+
+### Phase 5: WebXR / Vision Pro Support
+
+visionOS 2+ supports WebXR by default. Levels of immersion:
+
+| Level | Experience | Effort |
+|-------|------------|--------|
+| Window | 3D in Safari floating window | ✅ Done |
+| Immersive VR | Schedule floats in space | Medium |
+| Hand Tracking | Pinch-to-select, grab-to-move | Higher |
+
+**Dependencies:** `@react-three/xr`
+
+**Vision Pro Interactions:**
+- Look + Pinch: Select voxels
+- Two-hand pinch: Zoom/scale
+- Voice: "Show conflicts"
 
 ---
 
@@ -412,4 +458,6 @@ These pages stay in `/admin/` and are **NOT** hub-ified:
 
 | Date | Change |
 |------|--------|
+| 2026-01-12 | Added Command Center section with WebXR/Vision Pro roadmap |
+| 2026-01-12 | Added PR #699 Proxy Coverage → Ops Hub Coverage tab |
 | 2026-01-12 | Initial roadmap created |
