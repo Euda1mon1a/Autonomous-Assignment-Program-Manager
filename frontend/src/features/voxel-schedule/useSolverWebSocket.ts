@@ -233,6 +233,9 @@ export function useSolverWebSocket(
           assignmentMap.set(key, {
             ...existing,
             templateId: a.newTemplateId,
+            // Clear tIdx so renderer uses new templateId for layer positioning
+            // (prevents stale index from keeping voxel in old layer)
+            tIdx: undefined,
           });
         }
       });
