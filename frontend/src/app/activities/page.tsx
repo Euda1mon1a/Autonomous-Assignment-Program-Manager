@@ -1,220 +1,257 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Plus, RefreshCw, FileText, Calendar } from 'lucide-react'
-import { useRotationTemplates, useDeleteTemplate } from '@/lib/hooks'
-import { CardSkeleton } from '@/components/skeletons'
-import { CreateTemplateModal } from '@/components/CreateTemplateModal'
-import { EditTemplateModal } from '@/components/EditTemplateModal'
-import { TemplatePatternModal } from '@/components/TemplatePatternModal'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
-import { EmptyState } from '@/components/EmptyState'
-import { ConfirmDialog } from '@/components/ConfirmDialog'
-import type { RotationTemplate } from '@/types/api'
+/**
+ * Activity Hub Page
+ *
+ * Consolidated activity management interface combining:
+ * - Rotation Templates: View and manage rotation activity templates (Tier 0+)
+ * - Faculty Activities: Manage faculty weekly activity patterns (Tier 1+)
+ *
+ * Permission Tiers:
+ * - Tier 0 (Green): View templates, view faculty patterns (read-only)
+ * - Tier 1 (Amber): Create/edit templates and faculty patterns
+ * - Tier 2 (Red): Delete templates and advanced operations
+ *
+ * @see docs/planning/FRONTEND_HUB_CONSOLIDATION_ROADMAP.md
+ */
 
-export default function TemplatesPage() {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [editingTemplate, setEditingTemplate] = useState<RotationTemplate | null>(null)
-  const [patternTemplate, setPatternTemplate] = useState<RotationTemplate | null>(null)
-  const [templateToDelete, setTemplateToDelete] = useState<RotationTemplate | null>(null)
+import { useState, useMemo } from 'react';
+import { Calendar, Users, Layers } from 'lucide-react';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { RiskBar, type RiskTier, useRiskTierFromRoles } from '@/components/ui/RiskBar';
+import { useAuth } from '@/contexts/AuthContext';
+import { RotationTemplatesTab } from './components/RotationTemplatesTab';
+import { FacultyActivityTemplatesTab } from './components/FacultyActivityTemplatesTab';
 
-  const { data, isLoading, isError, error, refetch } = useRotationTemplates()
-  const deleteTemplate = useDeleteTemplate()
+// ============================================================================
+// Types
+// ============================================================================
 
-  const handleDeleteClick = (template: RotationTemplate) => {
-    setTemplateToDelete(template)
-  }
+type ActivityHubTab = 'templates' | 'faculty';
 
-  const handleConfirmDelete = () => {
-    if (templateToDelete) {
-      deleteTemplate.mutate(templateToDelete.id)
+interface TabConfig {
+  id: ActivityHubTab;
+  label: string;
+  icon: typeof Calendar;
+  description: string;
+  requiredTier: RiskTier;
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const TABS: TabConfig[] = [
+  {
+    id: 'templates',
+    label: 'Rotation Templates',
+    icon: Calendar,
+    description: 'View and manage rotation activity templates',
+    requiredTier: 0,
+  },
+  {
+    id: 'faculty',
+    label: 'Faculty Activities',
+    icon: Users,
+    description: 'Manage faculty weekly activity patterns',
+    requiredTier: 1,
+  },
+];
+
+// ============================================================================
+// Component
+// ============================================================================
+
+export default function ActivityHubPage() {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<ActivityHubTab>('templates');
+
+  // Determine user's permission tier from role
+  const userTier: RiskTier = useRiskTierFromRoles(user?.role ? [user.role] : []);
+
+  // Filter tabs based on user permissions
+  const availableTabs = useMemo(() => {
+    return TABS.filter((tab) => tab.requiredTier <= userTier);
+  }, [userTier]);
+
+  // Determine current risk tier based on active tab and user permissions
+  const currentRiskTier: RiskTier = useMemo(() => {
+    if (activeTab === 'templates') {
+      // Templates tab: Tier 0 for view, elevated for edit/delete
+      return userTier;
     }
-    setTemplateToDelete(null)
-  }
+    if (activeTab === 'faculty') {
+      // Faculty tab: Tier 1 for coordinators, Tier 2 for admins
+      return userTier >= 2 ? 2 : 1;
+    }
+    return 0;
+  }, [activeTab, userTier]);
+
+  // Generate appropriate label and tooltip for RiskBar
+  const riskBarConfig = useMemo(() => {
+    switch (currentRiskTier) {
+      case 0:
+        return {
+          label: 'View Mode',
+          tooltip: 'You can browse rotation templates. Contact an administrator to make changes.',
+        };
+      case 1:
+        return {
+          label: 'Edit Mode',
+          tooltip: 'You can create and edit templates. Deletion requires admin access.',
+        };
+      case 2:
+        return {
+          label: 'Admin Mode',
+          tooltip: 'You have full access to create, edit, and delete templates.',
+        };
+      default:
+        return { label: undefined, tooltip: undefined };
+    }
+  }, [currentRiskTier]);
+
+  // Reset to templates if user doesn't have access to current tab
+  useMemo(() => {
+    const currentTabConfig = TABS.find((t) => t.id === activeTab);
+    if (currentTabConfig && currentTabConfig.requiredTier > userTier) {
+      setActiveTab('templates');
+    }
+  }, [activeTab, userTier]);
+
+  // Permission flags for tab components
+  const canEdit = userTier >= 1;
+  const canDelete = userTier >= 2;
 
   return (
     <ProtectedRoute>
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Rotation Templates</h1>
-          <p className="text-gray-600">Define reusable activity patterns with constraints</p>
-        </div>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="btn-primary flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          New Template
-        </button>
-      </div>
+      <div className="min-h-screen bg-gray-50">
+        {/* Risk Bar */}
+        <RiskBar
+          tier={currentRiskTier}
+          label={riskBarConfig.label}
+          tooltip={riskBarConfig.tooltip}
+        />
 
-      {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <CardSkeleton key={i} />
-          ))}
-        </div>
-      ) : isError ? (
-        <div className="card flex flex-col items-center justify-center h-64 text-center">
-          <p className="text-gray-600 mb-4">
-            {error?.message || 'Failed to load templates'}
-          </p>
-          <button
-            onClick={() => refetch()}
-            className="btn-primary flex items-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Retry
-          </button>
-        </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {data?.items?.length === 0 ? (
-            <div className="col-span-full card">
-              <EmptyState
-                icon={FileText}
-                title="No rotation templates"
-                description="Create templates to define reusable activity patterns with constraints"
-                action={{
-                  label: 'Create Template',
-                  onClick: () => setIsCreateModalOpen(true),
-                }}
-              />
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
+                <Layers className="w-6 h-6 text-white" aria-hidden="true" />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Activity Hub</h1>
+                <p className="text-sm text-gray-600">
+                  Manage rotation templates and faculty activity patterns
+                </p>
+              </div>
             </div>
-          ) : (
-            data?.items?.map((template: RotationTemplate) => (
-              <TemplateCard
-                key={template.id}
-                template={template}
-                onEdit={() => setEditingTemplate(template)}
-                onEditPattern={() => setPatternTemplate(template)}
-                onDelete={() => handleDeleteClick(template)}
-              />
-            ))
+
+            {/* Tabs */}
+            {availableTabs.length > 1 && (
+              <nav className="mt-4 -mb-px flex space-x-4 sm:space-x-8" aria-label="Tabs">
+                {availableTabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`
+                        group flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors
+                        ${
+                          isActive
+                            ? 'border-emerald-500 text-emerald-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }
+                      `}
+                      role="tab"
+                      aria-selected={isActive}
+                      aria-controls={`tabpanel-${tab.id}`}
+                      title={tab.description}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                      <span>{tab.label}</span>
+                      {tab.requiredTier >= 1 && (
+                        <span
+                          className={`
+                            ml-1 px-1.5 py-0.5 text-xs rounded
+                            ${tab.requiredTier === 2 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}
+                          `}
+                          aria-label={tab.requiredTier === 2 ? 'Admin only' : 'Elevated permissions'}
+                        >
+                          {tab.requiredTier === 2 ? 'Admin' : 'Coord'}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+            )}
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          {/* Rotation Templates Tab */}
+          {activeTab === 'templates' && (
+            <div
+              id="tabpanel-templates"
+              role="tabpanel"
+              aria-labelledby="tab-templates"
+            >
+              <RotationTemplatesTab canEdit={canEdit} canDelete={canDelete} />
+            </div>
           )}
-        </div>
-      )}
 
-      {/* Create Template Modal */}
-      <CreateTemplateModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
+          {/* Faculty Activities Tab */}
+          {activeTab === 'faculty' && userTier >= 1 && (
+            <div
+              id="tabpanel-faculty"
+              role="tabpanel"
+              aria-labelledby="tab-faculty"
+            >
+              <FacultyActivityTemplatesTab canEdit={canEdit} canDelete={canDelete} />
+            </div>
+          )}
+        </main>
 
-        {/* Edit Template Modal */}
-        <EditTemplateModal
-          isOpen={editingTemplate !== null}
-          onClose={() => setEditingTemplate(null)}
-          template={editingTemplate}
-        />
-
-        {/* Delete Confirmation Dialog */}
-        <ConfirmDialog
-          isOpen={templateToDelete !== null}
-          onClose={() => setTemplateToDelete(null)}
-          onConfirm={handleConfirmDelete}
-          title="Delete Template"
-          message={`Are you sure you want to delete "${templateToDelete?.name || 'this template'}"? This action cannot be undone.`}
-          confirmLabel="Delete"
-          cancelLabel="Cancel"
-          variant="danger"
-          isLoading={deleteTemplate.isPending}
-        />
-
-        {/* Edit Pattern Modal */}
-        {patternTemplate && (
-          <TemplatePatternModal
-            isOpen={patternTemplate !== null}
-            onClose={() => setPatternTemplate(null)}
-            templateId={patternTemplate.id}
-            templateName={patternTemplate.name}
-            onSaved={() => refetch()}
-          />
-        )}
+        {/* Help Section */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              About the Activity Hub
+            </h2>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="w-5 h-5 text-emerald-600" aria-hidden="true" />
+                  <h3 className="font-medium text-gray-900">Rotation Templates</h3>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Define reusable activity patterns with constraints like maximum residents,
+                  supervision ratios, and specialty requirements. Templates form the building
+                  blocks of the schedule generation system.
+                </p>
+              </div>
+              {userTier >= 1 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-5 h-5 text-amber-600" aria-hidden="true" />
+                    <h3 className="font-medium text-gray-900">Faculty Activities</h3>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Manage weekly activity patterns for each faculty member. Set default
+                    templates and create week-specific overrides. Activities are filtered
+                    by faculty role permissions.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
       </div>
     </ProtectedRoute>
-  )
-}
-
-function TemplateCard({
-  template,
-  onEdit,
-  onEditPattern,
-  onDelete,
-}: {
-  template: RotationTemplate
-  onEdit: () => void
-  onEditPattern: () => void
-  onDelete: () => void
-}) {
-  const activityColors: Record<string, string> = {
-    clinic: 'bg-blue-100 text-blue-800',
-    inpatient: 'bg-purple-100 text-purple-800',
-    procedure: 'bg-red-100 text-red-800',
-    conference: 'bg-gray-100 text-gray-800',
-    elective: 'bg-green-100 text-green-800',
-    call: 'bg-orange-100 text-orange-800',
-  }
-
-  const colorClass = activityColors[template.activityType] || 'bg-gray-100 text-gray-800'
-
-  return (
-    <div className="card hover:shadow-lg transition-shadow">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="font-semibold text-gray-900">{template.name}</h3>
-          <span className={`inline-block px-2 py-1 rounded text-xs mt-1 ${colorClass}`}>
-            {template.activityType}
-          </span>
-        </div>
-        {template.abbreviation && (
-          <span className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">
-            {template.abbreviation}
-          </span>
-        )}
-      </div>
-
-      <div className="space-y-2 text-sm">
-        {template.maxResidents && (
-          <div className="flex justify-between">
-            <span className="text-gray-500">Max Residents:</span>
-            <span className="font-medium">{template.maxResidents}</span>
-          </div>
-        )}
-        <div className="flex justify-between">
-          <span className="text-gray-500">Supervision Ratio:</span>
-          <span className="font-medium">1:{template.maxSupervisionRatio}</span>
-        </div>
-        {template.requiresSpecialty && (
-          <div className="flex justify-between">
-            <span className="text-gray-500">Requires:</span>
-            <span className="font-medium text-amber-700">{template.requiresSpecialty}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-4 pt-4 border-t flex gap-2">
-        <button
-          onClick={onEdit}
-          className="text-blue-600 hover:underline text-sm"
-        >
-          Edit
-        </button>
-        <button
-          onClick={onEditPattern}
-          className="text-green-600 hover:underline text-sm flex items-center gap-1"
-        >
-          <Calendar className="w-3 h-3" />
-          Pattern
-        </button>
-        <button
-          onClick={onDelete}
-          className="text-red-600 hover:underline text-sm"
-        >
-          Delete
-        </button>
-      </div>
-    </div>
-  )
+  );
 }

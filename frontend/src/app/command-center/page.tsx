@@ -53,8 +53,8 @@ export default function CommandCenterPage() {
   const { user } = useAuth();
   const [webglSupported, setWebglSupported] = useState<boolean | null>(null);
 
-  // Calculate user tier from roles (hook must be called at top level)
-  const userTier: RiskTier = useRiskTierFromRoles(user?.roles ?? []);
+  // Calculate user tier from role (hook must be called at top level)
+  const userTier: RiskTier = useRiskTierFromRoles(user?.role ? [user.role] : []);
 
   // Risk bar label based on tier
   const riskBarConfig = useMemo(() => {
