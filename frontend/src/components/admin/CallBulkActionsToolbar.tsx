@@ -29,8 +29,8 @@ export interface CallBulkActionsToolbarProps {
   selectedCount: number;
   /** Callback to clear selection */
   onClearSelection: () => void;
-  /** Callback for bulk delete */
-  onBulkDelete: () => void;
+  /** Callback for bulk delete (optional if user lacks permission) */
+  onBulkDelete?: () => void;
   /** Callback for bulk reassign */
   onBulkReassign: (personId: string) => void;
   /** Callback for applying PCAT rules */
@@ -192,7 +192,7 @@ export function CallBulkActionsToolbar({
   }
 
   const handleDelete = () => {
-    onBulkDelete();
+    onBulkDelete?.();
     setShowDeleteConfirm(false);
   };
 

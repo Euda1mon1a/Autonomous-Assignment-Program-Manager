@@ -318,13 +318,13 @@ export default function AdminSchedulingPage() {
 
         {activeTab === 'solver-viz' && (
           <div className="h-[600px] bg-slate-900 rounded-lg">
-            <SolverVisualization taskId={queue?.runs?.find(r => r.status === 'running')?.id} />
+            <SolverVisualization taskId={queue?.runs?.find(r => r.status === 'running')?.id ?? null} />
           </div>
         )}
 
         {activeTab === 'schedule-3d' && (
           <div className="h-[600px] bg-slate-900 rounded-lg">
-            <VoxelScheduleView3D userTier="green" />
+            <VoxelScheduleView3D userTier={2} />
           </div>
         )}
       </main>
