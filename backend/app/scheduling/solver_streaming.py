@@ -31,6 +31,8 @@ Usage:
 
 from __future__ import annotations
 
+import asyncio
+import inspect
 import json
 import logging
 import time
@@ -236,23 +238,27 @@ class SolutionStreamingCallback:
                     block = self.context.blocks[b_idx]
                     template = self.context.rotation_templates[t_idx]
 
-                    assignments.append({
-                        "person_id": str(person.id),
-                        "block_id": str(block.id),
-                        "template_id": str(template.id),
-                        # Include indices for frontend position calculation
-                        "r_idx": r_idx,
-                        "b_idx": b_idx,
-                        "t_idx": t_idx,
-                    })
+                    assignments.append(
+                        {
+                            "personId": str(person.id),
+                            "blockId": str(block.id),
+                            "templateId": str(template.id),
+                            # Include indices for frontend position calculation
+                            "rIdx": r_idx,
+                            "bIdx": b_idx,
+                            "tIdx": t_idx,
+                        }
+                    )
                 except (IndexError, AttributeError) as e:
                     logger.warning(f"Index lookup failed: {e}")
                     # Fallback to indices only
-                    assignments.append({
-                        "r_idx": r_idx,
-                        "b_idx": b_idx,
-                        "t_idx": t_idx,
-                    })
+                    assignments.append(
+                        {
+                            "rIdx": r_idx,
+                            "bIdx": b_idx,
+                            "tIdx": t_idx,
+                        }
+                    )
 
         return assignments
 
@@ -336,16 +342,16 @@ class SolutionStreamingCallback:
             SolutionDelta with added/removed/moved lists
         """
         # Create lookup sets for O(1) comparison
-        # Key: (person_id, block_id), Value: template_id
+        # Key: (personId, blockId), Value: templateId
         prev_set: dict[tuple[str, str], str] = {}
         for a in prev.assignments:
-            key = (a.get("person_id", ""), a.get("block_id", ""))
-            prev_set[key] = a.get("template_id", "")
+            key = (a.get("personId", ""), a.get("blockId", ""))
+            prev_set[key] = a.get("templateId", "")
 
         curr_set: dict[tuple[str, str], str] = {}
         for a in curr.assignments:
-            key = (a.get("person_id", ""), a.get("block_id", ""))
-            curr_set[key] = a.get("template_id", "")
+            key = (a.get("personId", ""), a.get("blockId", ""))
+            curr_set[key] = a.get("templateId", "")
 
         prev_keys = set(prev_set.keys())
         curr_keys = set(curr_set.keys())
@@ -359,33 +365,39 @@ class SolutionStreamingCallback:
             person_id, block_id = key
             template_id = curr_set[key]
             if person_id and block_id:  # Skip if missing IDs
-                added.append({
-                    "person_id": person_id,
-                    "block_id": block_id,
-                    "template_id": template_id,
-                })
+                added.append(
+                    {
+                        "personId": person_id,
+                        "blockId": block_id,
+                        "templateId": template_id,
+                    }
+                )
 
         # Removed assignments (in prev but not curr)
         for key in prev_keys - curr_keys:
             person_id, block_id = key
             template_id = prev_set[key]
             if person_id and block_id:
-                removed.append({
-                    "person_id": person_id,
-                    "block_id": block_id,
-                    "template_id": template_id,
-                })
+                removed.append(
+                    {
+                        "personId": person_id,
+                        "blockId": block_id,
+                        "templateId": template_id,
+                    }
+                )
 
         # Moved assignments (same person/block, different template)
         for key in prev_keys & curr_keys:
             if prev_set[key] != curr_set[key]:
                 person_id, block_id = key
-                moved.append({
-                    "person_id": person_id,
-                    "block_id": block_id,
-                    "old_template_id": prev_set[key],
-                    "new_template_id": curr_set[key],
-                })
+                moved.append(
+                    {
+                        "personId": person_id,
+                        "blockId": block_id,
+                        "oldTemplateId": prev_set[key],
+                        "newTemplateId": curr_set[key],
+                    }
+                )
 
         return SolutionDelta(
             solution_num=curr.solution_num,
@@ -414,42 +426,55 @@ class SolutionStreamingCallback:
         if not self.broadcast_callback:
             return
 
-        # Prepare broadcast data
+        # Prepare broadcast data with camelCase keys for frontend compatibility
+        # (WebSocket messages bypass axios interceptor that converts snake_case)
         if snapshot.solution_num == 1:
             data = {
-                "event_type": "solver_solution",
-                "task_id": self.task_id,
-                "solution_num": snapshot.solution_num,
-                "solution_type": "full",
+                "eventType": "solver_solution",
+                "taskId": self.task_id,
+                "solutionNum": snapshot.solution_num,
+                "solutionType": "full",
                 "assignments": snapshot.assignments,
-                "assignment_count": len(snapshot.assignments),
-                "objective_value": snapshot.objective_value,
-                "optimality_gap_pct": snapshot.optimality_gap_pct,
-                "is_optimal": snapshot.is_optimal,
-                "elapsed_seconds": snapshot.timestamp,
+                "assignmentCount": len(snapshot.assignments),
+                "objectiveValue": snapshot.objective_value,
+                "optimalityGapPct": snapshot.optimality_gap_pct,
+                "isOptimal": snapshot.is_optimal,
+                "elapsedSeconds": snapshot.timestamp,
             }
         else:
             prev = self.solutions[-2]
             delta = self._calculate_delta(prev, snapshot)
             data = {
-                "event_type": "solver_solution",
-                "task_id": self.task_id,
-                "solution_num": snapshot.solution_num,
-                "solution_type": "delta",
+                "eventType": "solver_solution",
+                "taskId": self.task_id,
+                "solutionNum": snapshot.solution_num,
+                "solutionType": "delta",
                 "delta": {
                     "added": delta.added,
                     "removed": delta.removed,
                     "moved": delta.moved,
                 },
-                "assignment_count": len(snapshot.assignments),
-                "objective_value": snapshot.objective_value,
-                "optimality_gap_pct": snapshot.optimality_gap_pct,
-                "is_optimal": snapshot.is_optimal,
-                "elapsed_seconds": snapshot.timestamp,
+                "assignmentCount": len(snapshot.assignments),
+                "objectiveValue": snapshot.objective_value,
+                "optimalityGapPct": snapshot.optimality_gap_pct,
+                "isOptimal": snapshot.is_optimal,
+                "elapsedSeconds": snapshot.timestamp,
             }
 
-        # Queue for broadcast (implementation depends on event system)
-        self.broadcast_callback(data)
+        # Handle async callback - the callback may be an async function
+        result = self.broadcast_callback(data)
+        if inspect.iscoroutine(result):
+            # Schedule async callback without blocking the solver
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(result)
+            except RuntimeError:
+                # No running event loop - create a new one (sync context)
+                # This is a fallback; ideally the caller provides a sync wrapper
+                logger.warning(
+                    "No event loop available, running broadcast synchronously"
+                )
+                asyncio.run(result)
 
     def get_callback(self) -> Any:
         """
@@ -584,7 +609,7 @@ class SolutionStreamingCallback:
         # Build assignment set
         assignments: dict[tuple[str, str], dict] = {}
         for a in first.get("assignments", []):
-            key = (a["person_id"], a["block_id"])
+            key = (a["personId"], a["blockId"])
             assignments[key] = a
 
         # Apply deltas up to target
@@ -599,18 +624,18 @@ class SolutionStreamingCallback:
 
             # Remove
             for a in delta.get("removed", []):
-                key = (a["person_id"], a["block_id"])
+                key = (a["personId"], a["blockId"])
                 assignments.pop(key, None)
 
             # Move (update template)
             for a in delta.get("moved", []):
-                key = (a["person_id"], a["block_id"])
+                key = (a["personId"], a["blockId"])
                 if key in assignments:
-                    assignments[key]["template_id"] = a["new_template_id"]
+                    assignments[key]["templateId"] = a["newTemplateId"]
 
             # Add
             for a in delta.get("added", []):
-                key = (a["person_id"], a["block_id"])
+                key = (a["personId"], a["blockId"])
                 assignments[key] = a
 
         return list(assignments.values())
