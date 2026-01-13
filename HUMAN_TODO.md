@@ -275,7 +275,52 @@ ACGME_MIN_REST_PGY2_PLUS = 8.0  # ACGME "must have"
 - `backend/app/scheduling/constraints/integrated_workload.py`
 - `backend/app/services/fairness_audit_service.py`
 
-**Remaining:** API endpoints and frontend dashboard (tracked in Scratchpad)
+**Remaining:** ✅ COMPLETE - API endpoints (PR #692) and frontend dashboard (PR #693) merged
+
+---
+
+## Frontend Hub Consolidation (2026-01-12) - ✅ PHASE 1 COMPLETE
+
+**Priority:** High
+**Added:** 2026-01-11
+**Status:** Phase 1 Complete (PRs #694-700 merged)
+
+**Vision:** Transform scattered frontend pages into unified hub-based navigation with tier-based permissions.
+
+### Completed PRs
+
+| PR | Feature | Status |
+|----|---------|--------|
+| #694 | Frontend Consolidation Map (analysis) | ✅ Merged |
+| #695 | RiskBar design system component | ✅ Merged |
+| #696 | Swap Hub (`/swaps`) - Gold Standard | ✅ Merged |
+| #697 | PersonSelector + tier utilities | ✅ Merged |
+| #698 | Couatl Killer + Hub Roadmap | ✅ Merged |
+| #699 | Proxy Coverage Dashboard | ✅ Merged |
+| #700 | 3D Command Center + WebXR Roadmap | ✅ Merged |
+
+### Key Deliverables
+
+- **RiskBar Component:** Tier 0/1/2 permission indicator (green/amber/red)
+- **Swap Hub:** Reference implementation for hub pattern
+- **Couatl Killer:** Pre-commit hook catching snake_case query param bugs
+- **Proxy Coverage:** Dashboard showing coverage relationships
+- **Command Center:** 3D voxel schedule visualization (Three.js)
+- **Hub Roadmap:** `docs/planning/FRONTEND_HUB_CONSOLIDATION_ROADMAP.md`
+
+### Remaining Hubs (Roadmapped)
+
+| Priority | Hub | Status |
+|----------|-----|--------|
+| 1 | Activity Hub | Pending |
+| 2 | Absences Hub | Pending |
+| 3 | People Hub Enhancement | Pending |
+| 4 | Procedures Hub | Pending |
+| 5 | Ops Hub (consolidate manifest/heatmap/conflicts/coverage) | Planned |
+| 6 | Compliance Hub | Pending |
+| 7 | Analytics Hub | Pending |
+
+**Roadmap Location:** `docs/planning/FRONTEND_HUB_CONSOLIDATION_ROADMAP.md`
 
 ---
 
@@ -894,7 +939,7 @@ See also:
 
 ---
 
-*Last updated: 2025-12-30 (Session 025 - CD pipeline, procedure hooks, TypeScript errors fixed)*
+*Last updated: 2026-01-12 (Hub Consolidation Phase 1 complete, PRs #694-700 merged)*
 
 
 ---
