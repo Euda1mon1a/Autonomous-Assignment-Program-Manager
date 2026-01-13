@@ -27,6 +27,9 @@
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@react-spring/three": "9.7.3",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
     "@tanstack/react-query": "^5.90.14",
     "axios": "^1.6.3",
     "date-fns": "^4.1.0",
@@ -39,13 +42,10 @@
     "react-dom": "^18.2.0",
     "react-plotly.js": "^2.6.0",
     "recharts": "^3.6.0",
+    "three": "^0.164.1",
     "uuid": "^13.0.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",
-    "zod": "^4.3.2",
-    "three": "0.164.0",
-    "@react-three/fiber": "8.16.1",
-    "@react-three/drei": "9.105.0",
-    "@react-spring/three": "9.7.3"
+    "zod": "^4.3.2"
   },
   "overrides": {
     "glob": "^10.5.0"
