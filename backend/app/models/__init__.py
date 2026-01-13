@@ -3,6 +3,7 @@
 from app.models.absence import Absence
 from app.models.activity import Activity, ActivityCategory
 from app.models.activity_log import ActivityActionType, ActivityLog
+from app.models.approval_record import ApprovalAction, ApprovalRecord
 from app.models.agent_memory import AgentEmbedding, ModelTier, TaskHistory
 from app.models.assignment import Assignment
 from app.models.block_assignment import AssignmentReason, BlockAssignment
@@ -150,6 +151,9 @@ __all__ = [
     # Activity Log models
     "ActivityLog",
     "ActivityActionType",
+    # Approval Chain models
+    "ApprovalRecord",
+    "ApprovalAction",
     "Person",
     "ScreenerRole",
     "Block",
