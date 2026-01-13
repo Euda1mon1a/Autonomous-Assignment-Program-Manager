@@ -108,13 +108,19 @@ class ScheduleResponse(BaseModel):
 
     status: str  # 'success', 'partial', 'failed'
     message: str
-    total_blocks_assigned: int
+    # Note: Field stores assignment count, not block count. Exposed as total_assignments
+    # in API responses for clarity. DB column remains total_blocks_assigned for backwards
+    # compatibility. After axios camelCase conversion, frontend receives totalAssignments.
+    total_assignments: int = Field(serialization_alias="total_assignments")
     total_blocks: int
     validation: ValidationResult
     run_id: UUID | None = None
     solver_stats: SolverStatistics | None = None
     nf_pc_audit: NFPCAudit | None = None
     acgme_override_count: int = 0  # Number of acknowledged ACGME overrides
+
+    class Config:
+        populate_by_name = True
 
 
 class EmergencyRequest(BaseModel):
