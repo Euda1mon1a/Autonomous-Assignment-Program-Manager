@@ -15,7 +15,7 @@
  * @see docs/planning/FRONTEND_HUB_CONSOLIDATION_ROADMAP.md
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Calendar, Users, Layers } from 'lucide-react';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { RiskBar, type RiskTier, useRiskTierFromRoles } from '@/components/ui/RiskBar';
@@ -111,7 +111,7 @@ export default function ActivityHubPage() {
   }, [currentRiskTier]);
 
   // Reset to templates if user doesn't have access to current tab
-  useMemo(() => {
+  useEffect(() => {
     const currentTabConfig = TABS.find((t) => t.id === activeTab);
     if (currentTabConfig && currentTabConfig.requiredTier > userTier) {
       setActiveTab('templates');
