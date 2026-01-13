@@ -148,7 +148,9 @@ async def get_proxy_coverage(
             # Coverage 1: Source covering for target (on target's week)
             if swap.target_week:
                 is_active1 = swap.target_week == date_param
-                status1 = CoverageStatus.ACTIVE if is_active1 else CoverageStatus.SCHEDULED
+                status1 = (
+                    CoverageStatus.ACTIVE if is_active1 else CoverageStatus.SCHEDULED
+                )
 
                 rel1 = CoverageRelationship(
                     id=f"swap-{swap.id}-src",
@@ -215,7 +217,10 @@ async def get_proxy_coverage(
     remote_people_by_date: dict[date, list[tuple[Person, str]]] = defaultdict(list)
 
     for assignment in remote_assignments:
-        if assignment.rotation_template and assignment.rotation_template.clinic_location:
+        if (
+            assignment.rotation_template
+            and assignment.rotation_template.clinic_location
+        ):
             loc = assignment.rotation_template.clinic_location
             if loc in REMOTE_LOCATIONS:
                 block_date = assignment.block.date
@@ -392,10 +397,22 @@ async def get_proxy_coverage(
 
     for rel in active_coverage + upcoming_coverage:
         coverer_id = str(rel.covering_person.id)
-        if coverer_id not in seen_coverers and rel.covering_person.name != "(Surrogate TBD)" and rel.covering_person.name != "(Coverage TBD)":
+        if (
+            coverer_id not in seen_coverers
+            and rel.covering_person.name != "(Surrogate TBD)"
+            and rel.covering_person.name != "(Coverage TBD)"
+        ):
             seen_coverers.add(coverer_id)
-            providing = [r for r in active_coverage + upcoming_coverage if str(r.covering_person.id) == coverer_id]
-            receiving = [r for r in active_coverage + upcoming_coverage if str(r.covered_person.id) == coverer_id]
+            providing = [
+                r
+                for r in active_coverage + upcoming_coverage
+                if str(r.covering_person.id) == coverer_id
+            ]
+            receiving = [
+                r
+                for r in active_coverage + upcoming_coverage
+                if str(r.covered_person.id) == coverer_id
+            ]
             by_coverer.append(
                 PersonCoverageSummary(
                     person=rel.covering_person,
@@ -408,7 +425,7 @@ async def get_proxy_coverage(
     by_coverer.sort(key=lambda s: len(s.providing) + len(s.receiving), reverse=True)
 
     return ProxyCoverageResponse(
-        date=date_param,
+        coverage_date=date_param,
         active_coverage=active_coverage,
         upcoming_coverage=upcoming_coverage,
         by_coverer=by_coverer,
