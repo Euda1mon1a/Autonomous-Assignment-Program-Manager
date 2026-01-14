@@ -2,7 +2,7 @@
 name: tamc-excel-scheduling
 description: "TAMC Family Medicine Residency Excel-based scheduling. Use when working with AY 25-26 block schedule spreadsheets to assign faculty half-days (C, GME, DFM) and resident half-days, validate constraints, process FMIT/HAFP blocks, apply post-call rules, and meet AT coverage. Triggers: Block schedule, faculty scheduling, resident scheduling, half-day assignments, FMIT, clinic coverage, resident supervision, AY 25-26."
 audience: coworker
-version: "1.4"
+version: "1.5"
 last_updated: "2026-01-14"
 ---
 
@@ -28,6 +28,48 @@ The scheduling system uses **persisted half-day assignments** with actual dates 
 2. `manual` - Explicit human override
 3. `solver` - Computed by CP-SAT
 4. `template` - Default from WeeklyPattern
+
+## C vs AT Distinction (CRITICAL)
+
+**This table is the foundation of all scheduling logic.**
+
+| Activity | Definition | Physical Capacity | AT Coverage |
+|----------|------------|-------------------|-------------|
+| Resident C | Resident seeing patients | Counts (max 6) | Creates demand |
+| Faculty C | Faculty seeing OWN patients | Counts (max 6) | None |
+| Faculty AT | Faculty supervising residents | Does NOT count | Provides |
+| PCAT | Post Call Attending Time | Does NOT count | Provides (= AT) |
+| DO | Direct Observation | - | Auto-assigned after call |
+
+**Key Rules:**
+- **PROC/VAS:** +1.0 AT demand (dedicated 1:1 supervision)
+- **SM:** Closed loop - does NOT use AT resources, Tagawa's SM does NOT provide AT
+
+**Terminology (CRITICAL - do not confuse):**
+- **PCAT** = Post Call **Attending** Time (NOT Admin) - can precept, provides AT
+- **DO** = Direct Observation (NOT Day Off) - auto-assigned PM after call
+
+**Physical Capacity:** Max 6 people doing clinical work (C) per half-day. AT does NOT count toward this limit because AT faculty are supervising, not generating their own patient load.
+
+## Order of Operations (Canonical)
+
+**Phase 1: PRELOAD (locked before solver)**
+1. Absences (LV, HOL, DEP, TDY)
+2. FMIT - both faculty and resident
+3. FMIT Fri/Sat call - auto-assigned with FMIT
+4. C-I (inpatient follow-up clinic): PGY-1 Wed AM, PGY-2 Tue PM, PGY-3 Mon PM
+5. Night Float - full pattern including post-call
+6. aSM - Wednesday AM for SM faculty (Tagawa)
+7. Conferences (HAFP, USAFP, LEC)
+8. Protected time (SIM, PI, MM)
+
+**Phase 2: SOLVER (computed)**
+1. Assign Sun-Thu call (min-gap decay) → auto-generates PCAT baseline
+2. Solve outpatient (residents) - solver applies rotation patterns
+3. Calculate supervision demand (resident C creates demand)
+4. Assign faculty AT (to meet supervision demand)
+5. Assign faculty C (personal clinic, counts toward physical capacity)
+6. Fill admin time (GME/DFM/SM)
 
 ## Academic Year Calendar Structure
 
@@ -159,11 +201,10 @@ Each date uses 2 columns: AM (even col), PM (odd col+1)
 
 ## Faculty Section (Rows 31-43)
 
-**CRITICAL: C vs AT Distinction**
-- **C (Clinic)** = Faculty seeing their OWN patients → Has weekly cap
-- **AT (Attending)** = Faculty SUPERVISING residents → NO weekly cap
-- Weekly caps only apply to C, NOT to AT
-- If staffing is critical, faculty can do AT all day every day
+**See "C vs AT Distinction" table above for foundational rules.**
+
+Weekly caps apply to **C only** (personal clinic), NOT to AT (supervision).
+If staffing is critical, faculty can do AT all day every day.
 
 | Row | Template | Name | Min C/wk | Max C/wk | Admin | Notes |
 |-----|----------|------|----------|----------|-------|-------|
@@ -695,13 +736,19 @@ Sunday equity tracking:
 
 Tagawa is the Sports Medicine (SM) faculty. She does NOT do regular clinic (C).
 
+**CRITICAL: Tagawa does SM REGARDLESS of whether residents are on SM rotation.**
+- SM is Tagawa's primary clinical work (not C like other faculty)
+- 2-4 SM half-days/week independent of residents
+- When residents ARE on SM, they must match Tagawa's SM slots
+
 **Key Rules:**
 1. **SM requires Tagawa**: If a resident is scheduled SM, Tagawa must ALSO be SM that slot
 2. **No Tagawa = No SM**: If Tagawa is blocked (FMIT, PC, LV, etc.), resident cannot do SM - change to C
-3. **Weekly target**: Tagawa needs 3-4 SM slots per week
-4. **aSM is different**: Academic Sports Med (aSM) = ultrasound teaching, not patient care
+3. **Weekly target**: Tagawa needs 2-4 SM slots per week (independent of residents)
+4. **aSM is different**: Academic Sports Med (aSM) = ultrasound teaching, not patient care; Wed AM preload
 5. **FMIT blocks SM**: When Tagawa on FMIT, there can be NO SM that week
 6. **Call eligible**: Tagawa takes call with normal PCAT/DO rules
+7. **SM is closed loop**: Does NOT use AT resources, Tagawa's SM does NOT provide AT for other residents
 
 **Tagawa Schedule Codes:**
 - SM = Sports Medicine (with resident)
@@ -1014,19 +1061,12 @@ This is the typical workflow when scheduling by hand. The automated system shoul
 - Fill remaining empty slots after C assignments
 
 ### Physical Clinic Constraint
-```
-Max 6 people doing clinical work per half-day slot
 
-This includes:
-- Residents in clinic (C, CV, PR, VAS)
-- Faculty in clinic (C)
+**See "C vs AT Distinction" table for authoritative rules.**
 
-This does NOT count:
-- AT (Attending supervision) - they're precepting, not generating patients
-- PCAT - post-call admin, can precept but limited
-```
+Max 6 people doing clinical work (C) per half-day slot. AT does NOT count toward this limit.
 
-**Why this matters:** Staffing constraints limit how many patients can be seen. More than 6 providers overwhelms support staff.
+**Why this matters:** Staffing constraints limit how many patients can be seen. More than 6 physicians overwhelms support staff.
 
 ---
 
