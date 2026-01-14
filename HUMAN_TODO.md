@@ -1231,6 +1231,54 @@ Already partially covered by:
 
 ---
 
+## Half-Day Assignment Model - Pending Follow-ups (2026-01-14)
+
+**Added:** Session 104 (design phase)
+**Status:** Design complete, implementation pending
+**Docs:** `docs/architecture/HALF_DAY_ASSIGNMENT_MODEL.md`
+
+### 1. Peds Night Float (PedNF) Schedule Pattern
+**Priority:** HIGH - Need verification
+**Status:** TODO - Verify with Chief Residents
+
+**Question:** What is the exact Peds Night Float schedule pattern?
+- Start day/time?
+- End day/time?
+- Post-call rules (same as regular NF)?
+- Does it span blocks?
+
+**Current assumption (from Session 104):**
+- Similar to regular Night Float but on Pediatrics
+- Needs explicit confirmation before implementing in solver
+
+### 2. Resident Call System Details
+**Priority:** HIGH - Needed for preload table design
+**Status:** TODO - Document from Chief Residents
+
+**Known patterns:**
+- L&D 24-hour call: Friday
+- Night Float coverage: Various
+- Weekend call: TBD
+
+**Questions:**
+- [ ] How are call assignments distributed (equity tracking)?
+- [ ] What's the exact post-call pattern for residents?
+- [ ] Who assigns call? (Chief Residents confirmed)
+- [ ] Is there a call swap process?
+
+### 3. Create Alembic Migration for half_day_assignments
+**Priority:** HIGH - Next implementation step
+**Status:** Pending - Blocked on design approval
+
+**Tables to create:**
+- `half_day_assignments` - Core schedule table
+- `inpatient_preloads` - FMIT, NF, PedW, etc.
+- `resident_call_preloads` - L&D, NF coverage, weekend
+
+See `docs/architecture/HALF_DAY_ASSIGNMENT_MODEL.md` for full schema.
+
+---
+
 ## Terminology Fixes (2026-01-13)
 
 ### CP-SAT: Rename `total_blocks_assigned` → `total_assignments`
