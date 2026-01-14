@@ -39,6 +39,67 @@ from app.schemas.block_assignment_import import (
 logger = get_logger(__name__)
 
 
+# Combined rotation mappings: (primary, secondary) -> combined template
+# Used when xlsx has two rotations that map to a single combined template
+# Includes mirror rotations where both orderings map to the same template
+# Keys use both full names AND DB abbreviations for flexibility
+COMBINED_ROTATION_MAPPINGS: dict[tuple[str, str], str] = {
+    # Night Float + Endocrinology (full names and abbreviations)
+    ("NIGHT FLOAT", "ENDOCRINOLOGY"): "NF-ENDO",
+    ("ENDOCRINOLOGY", "NIGHT FLOAT"): "NF-ENDO",
+    ("NF-PM", "ENDO"): "NF-ENDO",
+    ("ENDO", "NF-PM"): "NF-ENDO",
+    ("NF", "ENDO"): "NF-ENDO",
+    ("ENDO", "NF"): "NF-ENDO",
+    ("NF", "ENDOCRINOLOGY"): "NF-ENDO",
+    ("ENDOCRINOLOGY", "NF"): "NF-ENDO",
+    # Night Float + Cardiology (both directions)
+    ("NIGHT FLOAT", "CARDIOLOGY"): "NF+",
+    ("CARDIOLOGY", "NIGHT FLOAT"): "C+N",
+    ("NF-PM", "CARDIO"): "NF+",
+    ("CARDIO", "NF-PM"): "C+N",
+    ("NF", "CARDIOLOGY"): "NF+",
+    ("CARDIOLOGY", "NF"): "C+N",
+    # Night Float + Dermatology (both directions)
+    ("NIGHT FLOAT", "DERMATOLOGY"): "NF-DERM",
+    ("DERMATOLOGY", "NIGHT FLOAT"): "D+N",
+    ("NF-PM", "DERM"): "NF-DERM",
+    ("DERM", "NF-PM"): "D+N",
+    ("NF", "DERMATOLOGY"): "NF-DERM",
+    ("DERMATOLOGY", "NF"): "D+N",
+    # Night Float + Medical Selective
+    ("NIGHT FLOAT", "MEDICAL SELECTIVE"): "NF-MED",
+    ("MEDICAL SELECTIVE", "NIGHT FLOAT"): "NF-MED",
+    ("NF-PM", "MED SEL"): "NF-MED",
+    ("MED SEL", "NF-PM"): "NF-MED",
+    ("NF", "MED SEL"): "NF-MED",
+    ("MED SEL", "NF"): "NF-MED",
+    # Night Float + NICU
+    ("NIGHT FLOAT", "NICU"): "NF-NICU",
+    ("NICU", "NIGHT FLOAT"): "NIC",
+    ("NF-PM", "NICU"): "NF-NICU",
+    ("NICU", "NF-PM"): "NIC",
+    ("NF", "NICU"): "NF-NICU",
+    ("NICU", "NF"): "NIC",
+    # Neurology + Night Float (both directions)
+    ("NEUROLOGY", "NIGHT FLOAT"): "NEURO-NF",
+    ("NIGHT FLOAT", "NEUROLOGY"): "NEURO-NF",
+    ("NEURO", "NF-PM"): "NEURO-NF",
+    ("NF-PM", "NEURO"): "NEURO-NF",
+    ("NEURO", "NF"): "NEURO-NF",
+    ("NF", "NEURO"): "NEURO-NF",
+    ("NEURO", "NIGHT FLOAT"): "NEURO-NF",
+    ("NIGHT FLOAT", "NEURO"): "NEURO-NF",
+    # Pediatrics Ward <-> Pediatrics Night Float (full names and abbreviations)
+    ("PEDIATRICS WARD", "PEDIATRICS NIGHT FLOAT"): "PEDS-W",
+    ("PEDIATRICS NIGHT FLOAT", "PEDIATRICS WARD"): "PNF",
+    ("PEDS-W", "PNF"): "PEDS-W",
+    ("PNF", "PEDS-W"): "PNF",
+    ("PEDS WARD", "PEDS NF"): "PEDS-W",
+    ("PEDS NF", "PEDS WARD"): "PNF",
+}
+
+
 class BlockAssignmentImportService:
     """
     Service for importing block assignments from CSV/Excel.
@@ -161,6 +222,50 @@ class BlockAssignmentImportService:
                 rot_id, rot_name = self._rotation_cache[var]
                 return rot_id, rot_name, 0.9
 
+        return None, None, 0.0
+
+    def _match_combined_rotation(
+        self, primary: str, secondary: str
+    ) -> tuple[uuid.UUID | None, str | None, float]:
+        """
+        Match a primary + secondary rotation pair to a combined template.
+
+        Args:
+            primary: Primary rotation from xlsx column A
+            secondary: Secondary rotation from xlsx column B
+
+        Returns:
+            Tuple of (rotation_id, rotation_name, confidence)
+        """
+        if not primary or not secondary:
+            return None, None, 0.0
+
+        key = (primary.upper().strip(), secondary.upper().strip())
+
+        # Look up in combined mappings
+        if key in COMBINED_ROTATION_MAPPINGS:
+            combined_abbrev = COMBINED_ROTATION_MAPPINGS[key]
+            # Look up the combined template
+            if combined_abbrev.upper() in self._rotation_cache:
+                rot_id, rot_name = self._rotation_cache[combined_abbrev.upper()]
+                logger.debug(
+                    f"Combined rotation match: {primary} + {secondary} -> {combined_abbrev}"
+                )
+                return rot_id, rot_name, 1.0
+
+        # Try variations of the keys
+        variations = [
+            (primary.upper().replace(" ", "-"), secondary.upper().replace(" ", "-")),
+            (primary.upper().replace("-", " "), secondary.upper().replace("-", " ")),
+        ]
+        for var_key in variations:
+            if var_key in COMBINED_ROTATION_MAPPINGS:
+                combined_abbrev = COMBINED_ROTATION_MAPPINGS[var_key]
+                if combined_abbrev.upper() in self._rotation_cache:
+                    rot_id, rot_name = self._rotation_cache[combined_abbrev.upper()]
+                    return rot_id, rot_name, 0.9
+
+        logger.warning(f"No combined template found for: {primary} + {secondary}")
         return None, None, 0.0
 
     def _match_resident(self, name: str) -> tuple[uuid.UUID | None, str | None, float]:
@@ -535,6 +640,13 @@ class BlockAssignmentImportService:
                             existing.rotation_template_id = uuid.UUID(
                                 row_data["rotation_id"]
                             )
+                            # Update secondary rotation (or clear if not present)
+                            if row_data.get("secondary_rotation_id"):
+                                existing.secondary_rotation_template_id = uuid.UUID(
+                                    row_data["secondary_rotation_id"]
+                                )
+                            else:
+                                existing.secondary_rotation_template_id = None
                             existing.assignment_reason = "manual"
                             existing.created_by = "gui_import"
                             existing.updated_at = datetime.utcnow()
@@ -550,11 +662,17 @@ class BlockAssignmentImportService:
 
             # Create new assignment
             try:
+                # Parse secondary rotation ID if present
+                secondary_rot_id = None
+                if row_data.get("secondary_rotation_id"):
+                    secondary_rot_id = uuid.UUID(row_data["secondary_rotation_id"])
+
                 assignment = BlockAssignment(
                     block_number=row_data["block_number"],
                     academic_year=request.academic_year,
                     resident_id=uuid.UUID(row_data["resident_id"]),
                     rotation_template_id=uuid.UUID(row_data["rotation_id"]),
+                    secondary_rotation_template_id=secondary_rot_id,
                     assignment_reason="manual",
                     created_by="gui_import",
                 )
@@ -647,8 +765,8 @@ class BlockAssignmentImportService:
         """
         Generate import preview from TRIPLER-format block schedule xlsx.
 
-        This method parses the native TRIPLER xlsx format and converts it
-        to the format expected by the standard import pipeline.
+        Processes xlsx directly to preserve secondary rotation (column B)
+        for mid-block transitions. Does NOT convert to CSV.
 
         Args:
             file_bytes: Excel file as bytes
@@ -666,6 +784,7 @@ class BlockAssignmentImportService:
         if not assignments:
             return BlockAssignmentPreviewResponse(
                 preview_id="",
+                format_detected=ImportFormat.XLSX,
                 items=[],
                 total_rows=0,
                 matched_count=0,
@@ -678,24 +797,187 @@ class BlockAssignmentImportService:
                 warnings=["No resident assignments found in file"],
             )
 
-        # Convert to CSV format for the standard pipeline
-        csv_lines = ["resident_name,rotation_name,block_number"]
-        for a in assignments:
-            # Escape commas in names
-            name = a.person_name.replace('"', '""')
-            rotation = a.rotation_template.replace('"', '""')
-            csv_lines.append(f'"{name}","{rotation}",{a.block_number}')
+        # Load caches for matching
+        await self.load_caches()
 
-        csv_content = "\n".join(csv_lines)
+        preview_id = str(uuid.uuid4())
+        academic_year = academic_year or self._calculate_academic_year()
 
-        # Use the standard preview pipeline
-        request = BlockAssignmentUploadRequest(
-            content=csv_content,
-            format=ImportFormat.CSV,
-            academic_year=academic_year,
+        items: list[BlockAssignmentPreviewItem] = []
+        unknown_rotation_counts: Counter[str] = Counter()
+        warnings: list[str] = []
+
+        for idx, a in enumerate(assignments, start=1):
+            errors: list[str] = []
+            row_warnings: list[str] = []
+
+            # If secondary rotation is present, try combined rotation match first
+            rotation_id, rotation_name, rotation_conf = None, None, 0.0
+            secondary_id, secondary_name, secondary_conf = None, None, 0.0
+            used_combined = False
+
+            if a.secondary_rotation:
+                # Try to match to a combined template (e.g., "Night Float" + "Endo" -> "NF-ENDO")
+                combined_id, combined_name, combined_conf = (
+                    self._match_combined_rotation(
+                        a.rotation_template, a.secondary_rotation
+                    )
+                )
+                if combined_id:
+                    # Use the combined template as the primary rotation
+                    rotation_id = combined_id
+                    rotation_name = combined_name
+                    rotation_conf = combined_conf
+                    used_combined = True
+                    row_warnings.append(
+                        f"Combined: {a.rotation_template} + {a.secondary_rotation} -> {combined_name}"
+                    )
+
+            # Fall back to matching primary rotation separately
+            if not rotation_id:
+                rotation_id, rotation_name, rotation_conf = self._match_rotation(
+                    a.rotation_template
+                )
+                if not rotation_id and a.rotation_template:
+                    unknown_rotation_counts[a.rotation_template.upper()] += 1
+
+            # Match secondary rotation separately (if not using combined)
+            if a.secondary_rotation and not used_combined:
+                secondary_id, secondary_name, secondary_conf = self._match_rotation(
+                    a.secondary_rotation
+                )
+                if not secondary_id:
+                    unknown_rotation_counts[a.secondary_rotation.upper()] += 1
+                    row_warnings.append(
+                        f"Secondary rotation '{a.secondary_rotation}' not found"
+                    )
+
+            # Match resident
+            resident_id, resident_name, resident_conf = self._match_resident(
+                a.person_name
+            )
+
+            # Check for duplicate
+            is_duplicate = False
+            existing_assignment_id = None
+            if rotation_id and resident_id:
+                is_duplicate, existing_assignment_id = await self._check_duplicate(
+                    a.block_number, academic_year, resident_id
+                )
+
+            # Determine match status
+            if not rotation_id:
+                match_status = MatchStatus.UNKNOWN_ROTATION
+            elif not resident_id:
+                match_status = MatchStatus.UNKNOWN_RESIDENT
+            elif is_duplicate:
+                match_status = MatchStatus.DUPLICATE
+            else:
+                match_status = MatchStatus.MATCHED
+
+            # Add low confidence warnings
+            if rotation_conf > 0 and rotation_conf < 1.0:
+                row_warnings.append(
+                    f"Rotation matched with {rotation_conf * 100:.0f}% confidence"
+                )
+            if resident_conf > 0 and resident_conf < 1.0:
+                row_warnings.append(
+                    f"Resident matched with {resident_conf * 100:.0f}% confidence"
+                )
+
+            items.append(
+                BlockAssignmentPreviewItem(
+                    row_number=idx,
+                    block_number=a.block_number,
+                    rotation_input=a.rotation_template,
+                    secondary_rotation_input=a.secondary_rotation,
+                    resident_display=self._anonymize_name(
+                        resident_name or a.person_name
+                    ),
+                    match_status=match_status,
+                    matched_rotation_id=rotation_id,
+                    matched_rotation_name=rotation_name,
+                    rotation_confidence=rotation_conf,
+                    matched_secondary_rotation_id=secondary_id,
+                    matched_secondary_rotation_name=secondary_name,
+                    secondary_rotation_confidence=secondary_conf,
+                    matched_resident_id=resident_id,
+                    resident_confidence=resident_conf,
+                    is_duplicate=is_duplicate,
+                    existing_assignment_id=existing_assignment_id,
+                    duplicate_action=DuplicateAction.SKIP,
+                    errors=errors,
+                    warnings=row_warnings,
+                )
+            )
+
+        # Build unknown rotations list
+        unknown_rotations = [
+            UnknownRotationItem(
+                abbreviation=abbrev,
+                occurrences=count,
+                suggested_name=self._suggest_rotation_name(abbrev),
+            )
+            for abbrev, count in unknown_rotation_counts.most_common()
+        ]
+
+        # Calculate summary statistics
+        matched_count = sum(1 for i in items if i.match_status == MatchStatus.MATCHED)
+        unknown_rotation_count = sum(
+            1 for i in items if i.match_status == MatchStatus.UNKNOWN_ROTATION
+        )
+        unknown_resident_count = sum(
+            1 for i in items if i.match_status == MatchStatus.UNKNOWN_RESIDENT
+        )
+        duplicate_count = sum(
+            1 for i in items if i.match_status == MatchStatus.DUPLICATE
+        )
+        invalid_count = sum(1 for i in items if i.match_status == MatchStatus.INVALID)
+
+        # Cache preview data for import execution (includes secondary rotation)
+        self._preview_cache[preview_id] = [
+            {
+                "row_number": item.row_number,
+                "block_number": item.block_number,
+                "rotation_id": str(item.matched_rotation_id)
+                if item.matched_rotation_id
+                else None,
+                "secondary_rotation_id": str(item.matched_secondary_rotation_id)
+                if item.matched_secondary_rotation_id
+                else None,
+                "resident_id": str(item.matched_resident_id)
+                if item.matched_resident_id
+                else None,
+                "match_status": item.match_status.value,
+                "is_duplicate": item.is_duplicate,
+                "existing_assignment_id": str(item.existing_assignment_id)
+                if item.existing_assignment_id
+                else None,
+            }
+            for item in items
+        ]
+
+        # Log summary (no PII)
+        logger.info(
+            f"XLSX preview generated: {len(items)} rows, "
+            f"{matched_count} matched, {unknown_rotation_count} unknown rotations, "
+            f"{unknown_resident_count} unknown residents, {duplicate_count} duplicates"
         )
 
-        return await self.preview_import(request)
+        return BlockAssignmentPreviewResponse(
+            preview_id=preview_id,
+            academic_year=academic_year,
+            format_detected=ImportFormat.XLSX,
+            items=items,
+            total_rows=len(items),
+            matched_count=matched_count,
+            unknown_rotation_count=unknown_rotation_count,
+            unknown_resident_count=unknown_resident_count,
+            duplicate_count=duplicate_count,
+            invalid_count=invalid_count,
+            unknown_rotations=unknown_rotations,
+            warnings=warnings,
+        )
 
 
 # Factory function for dependency injection

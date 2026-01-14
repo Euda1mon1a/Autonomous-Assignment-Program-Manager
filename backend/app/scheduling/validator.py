@@ -149,7 +149,7 @@ class ACGMEValidator:
             .filter(
                 Block.date >= start_date,
                 Block.date <= end_date,
-                not Block.is_weekend,
+                Block.is_weekend == False,  # noqa: E712 - SQLAlchemy requires == for filter
             )
             .count()
         )

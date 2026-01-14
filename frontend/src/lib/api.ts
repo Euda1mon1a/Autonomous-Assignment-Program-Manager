@@ -216,9 +216,29 @@ function createApiClient(): AxiosInstance {
     withCredentials: true,
   })
 
-  // Request interceptor - convert camelCase to snake_case for API
+  // Request interceptor - add auth header and convert camelCase to snake_case for API
   client.interceptors.request.use(
-    (config) => {
+    async (config) => {
+      // Add Authorization header if we have an access token
+      // This is needed because Next.js rewrites don't forward cookies to the backend.
+      // The cookie goes Browser → Next.js, but Next.js → Backend doesn't include it.
+      // We store the access token in memory (for WebSocket auth) and also use it here.
+      try {
+        const auth = await getAuthModule()
+        const token = auth.getAccessToken()
+        console.log('[API] Request interceptor:', {
+          url: config.url,
+          hasToken: !!token,
+          tokenPreview: token ? token.substring(0, 20) + '...' : 'none'
+        })
+        if (token && !config.headers.Authorization) {
+          config.headers.Authorization = `Bearer ${token}`
+          console.log('[API] Added Authorization header')
+        }
+      } catch (e) {
+        console.log('[API] Auth module error:', e)
+      }
+
       // Convert request body keys to snake_case
       if (config.data && typeof config.data === 'object') {
         config.data = keysToSnakeCase(config.data);

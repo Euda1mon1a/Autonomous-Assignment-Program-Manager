@@ -319,8 +319,27 @@ export interface UseWebSocketReturn {
  * @returns The WebSocket URL
  */
 function getWebSocketUrl(apiUrl?: string): string {
-  // Use provided URL or get from environment
-  const baseUrl = apiUrl || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+  // WebSocket connections come from browser (host), so need direct backend URL.
+  // NEXT_PUBLIC_WS_URL allows explicit override for production deployments.
+  //
+  // IMPORTANT: WebSocket CANNOT go through Next.js proxy (port 3000).
+  // It must connect directly to backend (port 8000).
+  // If NEXT_PUBLIC_API_URL points to the proxy, we override it for WebSocket.
+  let baseUrl = apiUrl ||
+                process.env.NEXT_PUBLIC_WS_URL ||
+                process.env.NEXT_PUBLIC_API_URL ||
+                'http://localhost:8000/api/v1'
+
+  // If URL points to Next.js dev server (port 3000), redirect to backend (port 8000)
+  // This handles the Docker development case where HTTP goes through proxy but WS can't
+  if (baseUrl.includes('localhost:3000') || baseUrl.includes('127.0.0.1:3000')) {
+    baseUrl = baseUrl.replace(':3000', ':8000')
+  }
+
+  // Handle relative URLs (e.g., "/api/v1") - these need absolute backend URL
+  if (baseUrl.startsWith('/')) {
+    baseUrl = `http://localhost:8000${baseUrl}`
+  }
 
   // Convert http(s) to ws(s)
   const wsUrl = baseUrl.replace(/^http/, 'ws')

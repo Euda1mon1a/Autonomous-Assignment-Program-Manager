@@ -96,15 +96,17 @@ export interface RefreshTokenResponse {
 // ============================================================================
 
 /**
- * In-memory storage for refresh token.
+ * In-memory storage for tokens.
  *
- * Security: Refresh token is stored in memory (not localStorage) for better
- * security. This means the token is lost on page refresh, but that's acceptable
+ * Security: Tokens are stored in memory (not localStorage) for better
+ * security. This means tokens are lost on page refresh, but that's acceptable
  * because the httpOnly cookie still allows re-authentication via the /me endpoint.
  *
- * The refresh token is only needed for proactive token refresh before expiry.
+ * The access token is needed for WebSocket authentication (can't use cookies
+ * cross-origin). The refresh token is for proactive token refresh before expiry.
  */
 let refreshToken: string | null = null
+let accessToken: string | null = null
 
 /**
  * Timestamp when the current access token expires.
@@ -185,8 +187,8 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
     withCredentials: true, // Required for cookies
   })
 
-  // Step 2: Store refresh token and schedule proactive refresh
-  storeTokens(tokenResponse.data.refreshToken)
+  // Step 2: Store tokens and schedule proactive refresh
+  storeTokens(tokenResponse.data.refreshToken, tokenResponse.data.accessToken)
 
   // Step 3: Fetch user data using the newly set token
   try {
@@ -389,14 +391,32 @@ export async function validateToken(): Promise<User | null> {
 // ============================================================================
 
 /**
- * Stores the refresh token and schedules proactive refresh.
+ * Stores tokens and schedules proactive refresh.
  *
- * @param token - The refresh token to store
+ * @param refresh - The refresh token to store
+ * @param access - The access token to store (optional, for WebSocket auth)
  */
-function storeTokens(token: string): void {
-  refreshToken = token
+function storeTokens(refresh: string, access?: string): void {
+  console.log('[Auth] storeTokens called:', { hasRefresh: !!refresh, hasAccess: !!access })
+  refreshToken = refresh
+  if (access) {
+    accessToken = access
+    console.log('[Auth] Access token stored:', access.substring(0, 20) + '...')
+  }
   tokenExpiresAt = Date.now() + ACCESS_TOKEN_EXPIRE_MINUTES * 60 * 1000
   scheduleProactiveRefresh()
+
+  // Persist refresh token to sessionStorage for page refresh recovery.
+  // This is needed because Next.js proxy doesn't forward cookies, so we
+  // can't rely on httpOnly cookies for session restoration.
+  // Security: sessionStorage is cleared when browser tab closes.
+  if (typeof window !== 'undefined') {
+    try {
+      sessionStorage.setItem('__rt', refresh)
+    } catch {
+      // sessionStorage not available (e.g., incognito mode)
+    }
+  }
 }
 
 /**
@@ -406,6 +426,7 @@ function storeTokens(token: string): void {
  */
 export function clearTokenState(): void {
   refreshToken = null
+  accessToken = null
   tokenExpiresAt = null
   isRefreshing = false
   refreshPromise = null
@@ -414,6 +435,72 @@ export function clearTokenState(): void {
     clearTimeout(refreshTimerId)
     refreshTimerId = null
   }
+
+  // Clear persisted refresh token
+  if (typeof window !== 'undefined') {
+    try {
+      sessionStorage.removeItem('__rt')
+    } catch {
+      // sessionStorage not available
+    }
+  }
+}
+
+/**
+ * Attempts to restore the session from sessionStorage on page refresh.
+ *
+ * This is needed because Next.js proxy doesn't forward httpOnly cookies,
+ * so we persist the refresh token in sessionStorage and use it to get
+ * a fresh access token on page load.
+ *
+ * @returns Promise resolving to true if session was restored, false otherwise
+ */
+export async function restoreSession(): Promise<boolean> {
+  // Try to get refresh token from sessionStorage
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  try {
+    const storedRefreshToken = sessionStorage.getItem('__rt')
+    if (!storedRefreshToken) {
+      console.log('[Auth] No stored refresh token found')
+      return false
+    }
+
+    console.log('[Auth] Found stored refresh token, attempting refresh...')
+    // Temporarily set the refresh token so performRefresh can use it
+    refreshToken = storedRefreshToken
+
+    const result = await performRefresh()
+    if (result) {
+      console.log('[Auth] Session restored successfully')
+      return true
+    } else {
+      console.log('[Auth] Session restore failed - refresh token invalid')
+      // Clear invalid token from storage
+      sessionStorage.removeItem('__rt')
+      refreshToken = null
+      return false
+    }
+  } catch {
+    console.log('[Auth] Session restore error')
+    return false
+  }
+}
+
+/**
+ * Gets the current access token for WebSocket authentication.
+ *
+ * WebSocket connections can't use httpOnly cookies cross-origin, so they need
+ * the token passed as a query parameter. This function provides access to the
+ * in-memory token for that purpose.
+ *
+ * @returns The current access token, or null if not authenticated
+ */
+export function getAccessToken(): string | null {
+  console.log('[Auth] getAccessToken called, token:', accessToken ? 'exists' : 'null')
+  return accessToken
 }
 
 /**
@@ -478,8 +565,8 @@ export async function performRefresh(): Promise<RefreshTokenResponse | null> {
         refreshToken: refreshToken,
       })
 
-      // Store the new refresh token (may be the same if rotation is disabled)
-      storeTokens(response.refreshToken)
+      // Store the new tokens
+      storeTokens(response.refreshToken, response.accessToken)
 
       return response
     } catch (_error) {

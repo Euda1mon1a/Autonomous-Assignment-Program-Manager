@@ -260,9 +260,9 @@ async def export_block_assignments(
 
 @router.post(
     "/parse-block-sheet",
-    summary="Parse TRIPLER-format block schedule xlsx",
+    summary="Parse block schedule-format block schedule xlsx",
     description="""
-    Parse a TRIPLER-format block schedule xlsx file.
+    Parse a block schedule-format block schedule xlsx file.
 
     Extracts:
     - Resident rotation assignments (from column A)
@@ -400,3 +400,96 @@ async def import_block_sheet(
         "failed": result.failed_count,
         "errors": result.error_messages,
     }
+
+
+@router.post(
+    "/upload-xlsx",
+    response_model=BlockAssignmentPreviewResponse,
+    summary="Preview block schedule xlsx import",
+    description="""
+    Upload a block schedule-format xlsx file and preview what will be imported.
+
+    Handles:
+    - Primary rotation (column A)
+    - Secondary rotation (column B) for mid-block transitions
+    - Combined rotations (NF + Endo → NF-ENDO)
+    """,
+)
+async def preview_xlsx_import(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_admin_user)],
+    file: Annotated[UploadFile, File(description="block schedule xlsx file")],
+    academic_year: Annotated[int | None, Form()] = None,
+) -> BlockAssignmentPreviewResponse:
+    """Preview block schedule xlsx import."""
+    if not file.filename or not file.filename.endswith((".xlsx", ".xls")):
+        raise HTTPException(
+            status_code=400,
+            detail="File must be an Excel file (.xlsx or .xls)",
+        )
+
+    file_bytes = await file.read()
+    service = get_block_assignment_import_service(db)
+    preview = await service.preview_block_sheet_import(file_bytes, academic_year)
+
+    logger.info(
+        f"XLSX preview by user {current_user.id}: "
+        f"{preview.total_rows} rows, {preview.matched_count} matched"
+    )
+
+    return preview
+
+
+@router.get(
+    "/export-block-format",
+    summary="Export schedule in block schedule xlsx format",
+    description="""
+    Export schedule data in block schedule xlsx format.
+
+    Uses a template xlsx to preserve formatting, colors, formulas, and merged cells.
+    Fills in daily assignment cells based on solved schedule.
+
+    **Parameters:**
+    - start_date: First day of block (e.g., 2025-03-12)
+    - end_date: Last day of block (e.g., 2025-04-08)
+
+    **Returns:** xlsx file matching input format for round-trip editing.
+    """,
+)
+async def export_block_format(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_admin_user)],
+    start_date: str,
+    end_date: str,
+) -> StreamingResponse:
+    """Export schedule in block schedule xlsx format."""
+    from datetime import datetime
+
+    from app.services.block_format_exporter import BlockFormatExporter
+
+    try:
+        start = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end = datetime.strptime(end_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Dates must be in YYYY-MM-DD format",
+        )
+
+    exporter = BlockFormatExporter(db)
+    xlsx_bytes = await exporter.export(start, end)
+
+    logger.info(
+        f"block schedule export by user {current_user.id}: {start_date} to {end_date}"
+    )
+
+    filename = f"Block_Schedule_{start_date}_to_{end_date}.xlsx"
+
+    def generate():
+        yield xlsx_bytes
+
+    return StreamingResponse(
+        generate(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )

@@ -14,6 +14,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { getAccessToken } from '@/lib/auth';
 
 // ============================================================================
 // Types
@@ -348,8 +349,9 @@ export function useSolverWebSocket(
     [onError]
   );
 
-  // WebSocket connection
+  // WebSocket connection - pass token for cross-origin auth
   const { isConnected, send } = useWebSocket({
+    token: getAccessToken() ?? undefined,
     onMessage: handleMessage,
     onError: handleError,
   });

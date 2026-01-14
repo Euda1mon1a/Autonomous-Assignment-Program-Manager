@@ -14,6 +14,7 @@ import {
   login as authLogin,
   logout as authLogout,
   validateToken,
+  restoreSession,
 } from '@/lib/auth'
 
 // ============================================================================
@@ -49,15 +50,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const isAuthenticated = !!user
 
-  // Validate token and load user on mount
-  // Security: Checks httpOnly cookie automatically via validateToken
+  // Restore session on mount
+  // First tries to restore from sessionStorage (for page refresh),
+  // then validates the token to get user data.
   useEffect(() => {
     async function initAuth() {
       try {
+        // Try to restore session from sessionStorage first
+        // This handles page refresh where in-memory tokens are lost
+        const restored = await restoreSession()
+        console.log('[AuthContext] restoreSession result:', restored)
+
+        // Now validate the token to get user data
+        // If session was restored, we have a fresh access token
+        // If not, this will fail and user will need to log in
         const validatedUser = await validateToken()
         setUser(validatedUser)
       } catch {
-        // Token validation failed, user remains null
+        // Token validation failed, user remains null (needs to log in)
+        console.log('[AuthContext] Session validation failed, user needs to log in')
       }
       setIsLoading(false)
     }

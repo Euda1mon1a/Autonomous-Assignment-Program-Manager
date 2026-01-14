@@ -246,6 +246,10 @@ async def generate_schedule(
                     rotation_template_ids=request.rotation_template_ids,
                     algorithm=algorithm,
                     timeout_seconds=request.timeout_seconds,
+                    # Block assignment expansion (Session 095)
+                    expand_block_assignments=request.expand_block_assignments,
+                    block_number=request.block_number,
+                    academic_year=request.academic_year,
                 )
         else:
             result = engine.generate(
@@ -253,6 +257,10 @@ async def generate_schedule(
                 rotation_template_ids=request.rotation_template_ids,
                 algorithm=algorithm,
                 timeout_seconds=request.timeout_seconds,
+                # Block assignment expansion (Session 095)
+                expand_block_assignments=request.expand_block_assignments,
+                block_number=request.block_number,
+                academic_year=request.academic_year,
             )
 
         # Build solver statistics if available

@@ -70,6 +70,20 @@ class BlockAssignmentPreviewItem(BaseModel):
         1.0, ge=0.0, le=1.0, description="Resident match confidence"
     )
 
+    # Secondary rotation (for mid-block transitions)
+    secondary_rotation_input: str | None = Field(
+        None, description="Secondary rotation as entered in source (column B)"
+    )
+    matched_secondary_rotation_id: UUID | None = Field(
+        None, description="Matched secondary rotation template ID"
+    )
+    matched_secondary_rotation_name: str | None = Field(
+        None, description="Matched secondary rotation display name"
+    )
+    secondary_rotation_confidence: float = Field(
+        0.0, ge=0.0, le=1.0, description="Secondary rotation match confidence"
+    )
+
     # Duplicate handling
     is_duplicate: bool = Field(False, description="True if assignment already exists")
     existing_assignment_id: UUID | None = Field(

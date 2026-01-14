@@ -63,6 +63,42 @@ for pattern in "${WARNING_PATTERNS[@]}"; do
     fi
 done
 
+# Special check: Auto-backup before destructive DB operations
+DB_DESTRUCTIVE_PATTERNS=(
+    "DELETE FROM"
+    "UPDATE.*SET"
+)
+
+for pattern in "${DB_DESTRUCTIVE_PATTERNS[@]}"; do
+    if echo "$COMMAND" | grep -qiE "$pattern"; then
+        BACKUP_DIR="$PROJECT_ROOT/backups/auto"
+        mkdir -p "$BACKUP_DIR"
+        BACKUP_FILE="$BACKUP_DIR/pre_destructive_$(date +%Y%m%d_%H%M%S).sql.gz"
+
+        # Quick backup using docker compose
+        if docker compose ps db --quiet 2>/dev/null | grep -q .; then
+            log "AUTO-BACKUP: Creating backup before destructive operation"
+            docker compose exec -T db pg_dump -U scheduler residency_scheduler 2>/dev/null | gzip > "$BACKUP_FILE"
+            if [ -s "$BACKUP_FILE" ]; then
+                echo "" >&2
+                echo "╔════════════════════════════════════════════════════╗" >&2
+                echo "║  AUTO-BACKUP: Destructive DB operation detected    ║" >&2
+                echo "╠════════════════════════════════════════════════════╣" >&2
+                echo "║  Backup created: $(basename "$BACKUP_FILE")    ║" >&2
+                echo "╚════════════════════════════════════════════════════╝" >&2
+                echo "" >&2
+                log "AUTO-BACKUP: Saved to $BACKUP_FILE"
+            else
+                echo "" >&2
+                echo "⚠️  AUTO-BACKUP FAILED: Could not create backup" >&2
+                echo "    Proceeding anyway (DB may not be running)" >&2
+                echo "" >&2
+                rm -f "$BACKUP_FILE"
+            fi
+        fi
+    fi
+done
+
 # Special check: git push without remote tracking
 if echo "$COMMAND" | grep -qE "^git push|git push "; then
     CURRENT_BRANCH=$(git -C "$PROJECT_ROOT" branch --show-current 2>/dev/null || echo "")

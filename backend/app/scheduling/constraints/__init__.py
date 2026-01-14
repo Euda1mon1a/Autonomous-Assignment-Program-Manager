@@ -163,6 +163,13 @@ from .temporal import (
     WednesdayPMSingleFacultyConstraint,
 )
 
+# Family Medicine scheduling constraints
+from .fm_scheduling import (
+    InternContinuityConstraint,
+    NightFloatSlotConstraint,
+    WednesdayPMLecConstraint,
+)
+
 # Define __all__ for explicit exports
 __all__ = [
     # Base classes and types
@@ -189,6 +196,10 @@ __all__ = [
     "WednesdayAMInternOnlyConstraint",
     "WednesdayPMSingleFacultyConstraint",
     "InvertedWednesdayConstraint",
+    # Family Medicine scheduling constraints
+    "InternContinuityConstraint",
+    "NightFloatSlotConstraint",
+    "WednesdayPMLecConstraint",
     # Faculty constraints
     "PreferenceConstraint",
     # Faculty role constraints

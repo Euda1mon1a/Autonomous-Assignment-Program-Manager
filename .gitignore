@@ -123,6 +123,12 @@ docs/schedules/residents.json
 *.sql
 !backend/alembic/**/*.sql
 
+# Local PII data folder (Excel schedules, real names - NEVER COMMIT)
+data/local/
+data/local/**/*.xlsx
+data/local/**/*.xls
+data/local/**/*.csv
+
 # Celery runtime files
 celerybeat-schedule
 backend/celerybeat-schedule
