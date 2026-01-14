@@ -7,6 +7,7 @@ from app.api.routes import (
     academic_blocks,
     activities,
     admin_block_assignments,
+    approval_chain,
     faculty_activities,
     admin_users,
     analytics,
@@ -172,6 +173,9 @@ api_router.include_router(
 )
 api_router.include_router(calendar.router, prefix="/calendar", tags=["calendar"])
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
+api_router.include_router(
+    approval_chain.router, prefix="/approval-chain", tags=["approval-chain"]
+)
 api_router.include_router(analytics.router, tags=["analytics"])
 api_router.include_router(fairness.router, tags=["fairness"])
 api_router.include_router(db_admin.router, tags=["db-admin"])
