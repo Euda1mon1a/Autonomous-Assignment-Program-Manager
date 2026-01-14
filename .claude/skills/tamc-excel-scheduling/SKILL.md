@@ -2,7 +2,7 @@
 name: tamc-excel-scheduling
 description: "TAMC Family Medicine Residency Excel-based scheduling. Use when working with AY 25-26 block schedule spreadsheets to assign faculty half-days (C, GME, DFM) and resident half-days, validate constraints, process FMIT/HAFP blocks, apply post-call rules, and meet AT coverage. Triggers: Block schedule, faculty scheduling, resident scheduling, half-day assignments, FMIT, clinic coverage, resident supervision, AY 25-26."
 audience: coworker
-version: "1.2"
+version: "1.4"
 last_updated: "2026-01-14"
 ---
 
@@ -13,6 +13,54 @@ Automates faculty and resident half-day assignments directly in Excel for Family
 ## Architecture Note
 
 **Excel is the communication layer to code.** The Excel workbook serves as configuration input - the scheduling engine reads from it and has more detailed logic internally. Think of Excel as the "what" and the code as the "how."
+
+## Data Model
+
+**See:** `docs/architecture/HALF_DAY_ASSIGNMENT_MODEL.md`
+
+The scheduling system uses **persisted half-day assignments** with actual dates (not block references). This enables:
+- Natural inter-block constraint handling (PCAT/DO carries to next block automatically)
+- FMIT spanning blocks without special logic
+- Leap year and year boundary handled by date arithmetic
+
+**Source Priority (when multiple sources want same slot):**
+1. `preload` - FMIT, call, absences - NEVER overwritten
+2. `manual` - Explicit human override
+3. `solver` - Computed by CP-SAT
+4. `template` - Default from WeeklyPattern
+
+## Academic Year Calendar Structure
+
+All blocks start Thursday, end Wednesday (except Block 0 and 13).
+
+```
+Academic Year: July 1 - June 30
+
+Block 0:  July 1 → First Thursday - 1 day
+          Variable length (1-6 days)
+          Purpose: Orientation, onboarding, calendar fudge factor
+
+Blocks 1-12: Thursday → Wednesday
+          Fixed 28 days each (56 half-day assignments per person)
+
+Block 13: Thursday → June 30
+          Variable length (28+ days)
+          Purpose: Absorb end-of-year remainder
+```
+
+**Example AY25-26:**
+- July 1, 2025 = Tuesday
+- Block 0 = July 1-2 (2 days)
+- Block 1 = July 3-30 (28 days, Thu-Wed)
+- Block 13 absorbs remainder to reach June 30, 2026
+
+**Block 0 Logic:**
+- New intern (no preceding year rotation): Assign FLX
+- Returning resident: Follow logic from preceding year rotation
+
+**Block 13 Logic:**
+- Normal assignments (not just administrative)
+- Longer than standard 28 days to reach June 30
 
 ## Build Order (Recommended Workflow)
 
@@ -1059,3 +1107,82 @@ pytest tests/scheduling/test_expansion_vs_rosetta.py -v
 4. Intern Wed AM continuity (PGY-1 → C)
 5. Mid-block transitions (col 28+)
 6. Default rotation pattern
+
+---
+
+## Edge Cases and Resolutions
+
+### Call/Post-Call Boundary Conditions
+
+| Edge Case | Resolution |
+|-----------|------------|
+| Call before FMIT | Min 3-day buffer; prefer no call week before FMIT |
+| PCAT/DO inter-block | Carries over via actual dates (Wednesday call → Thursday PCAT in next block) |
+| Call on last day of block | PCAT/DO applies to first day of next block automatically |
+
+### FMIT Week Boundary Conditions
+
+| Edge Case | Resolution |
+|-----------|------------|
+| FMIT spanning blocks | Date-based, not block-tied; solver handles naturally |
+| Post-FMIT PC in next block | Actual dates handle this (e.g., FMIT ends Thu → PC Fri may be in next block) |
+| FMIT + Wednesday call prohibition | Cannot take Sun-Thu call during FMIT week |
+
+### SM/Tagawa Dependencies
+
+| Edge Case | Resolution |
+|-----------|------------|
+| Multiple SM residents same slot | Max 2 residents; Tagawa supervises both; must match half-day |
+| Tagawa post-call + SM scheduled | Medium constraint - avoid if possible, not a hard fail |
+| Tagawa on FMIT + SM residents | No SM that week; convert resident SM → C |
+
+### FMIT Clinic (C-I) by PGY Level
+
+| PGY Level | C-I Day | Notes |
+|-----------|---------|-------|
+| PGY-1 | Wednesday AM | Hard constraint - intern continuity preserved |
+| PGY-2 | Tuesday PM | FMIT resident clinic day |
+| PGY-3 | Monday PM | FMIT resident clinic day |
+
+C-I is **PRELOADED**, not solved. These slots are locked before solver runs.
+
+### Inter-Block Continuity
+
+| Scenario | Handling |
+|----------|----------|
+| NF post-call inter-block | NF ends Wednesday → post-call Thursday = next block start |
+| PCAT/DO from Wed call | Thursday AM/PM may be in next block |
+| Rotation ending mid-week | Date arithmetic handles naturally |
+
+### Physical Capacity
+
+| Constraint | Limit |
+|------------|-------|
+| Clinical work per half-day | Max 6 people (residents + faculty in C/CV/PR/VAS) |
+| AT supervision | Does NOT count toward physical limit |
+
+### Holidays and Special Days
+
+| Scenario | Resolution |
+|----------|------------|
+| CLC on holiday | Skip; does NOT reschedule to another day |
+| HLC on holiday | Skip; does NOT reschedule |
+| Intern continuity on holiday | Skip; continuity does NOT reschedule |
+
+### Resident Call System (Separate from Faculty)
+
+Resident call is Chief-assigned and follows different rules:
+- L&D 24-hour call (Friday)
+- Night Float coverage
+- Weekend call patterns
+
+**Note:** Resident call is tracked in `resident_call_preloads` table, separate from faculty call.
+
+---
+
+## Related Documents
+
+- `docs/architecture/HALF_DAY_ASSIGNMENT_MODEL.md` - Data model specification
+- `.claude/Scratchpad/session-104-half-day-model.md` - Design session notes
+- `references/faculty-roster.md` - Faculty caps and constraints
+- `references/residents-rotations.md` - Resident rotation patterns
