@@ -17,6 +17,7 @@ import os
 import sys
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Optional
 
 import requests
 
@@ -123,7 +124,7 @@ def is_inpatient_rotation(rotation_name: str) -> bool:
     return any(kw.lower() in rotation_name.lower() for kw in INPATIENT_KEYWORDS)
 
 
-def get_inpatient_template(templates: dict, rotation_name: str) -> dict | None:
+def get_inpatient_template(templates: dict, rotation_name: str) -> Optional[dict]:
     """Find the appropriate inpatient template for a rotation."""
     rotation_lower = rotation_name.lower()
 

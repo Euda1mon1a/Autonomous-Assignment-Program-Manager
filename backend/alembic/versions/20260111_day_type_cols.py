@@ -28,7 +28,7 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     """Add day_type, operational_intent, and actual_date columns to blocks."""
 
-    # Create DayType enum
+    # Create DayType enum - must explicitly create in database first
     day_type_enum = sa.Enum(
         "NORMAL",
         "FEDERAL_HOLIDAY",
@@ -38,14 +38,16 @@ def upgrade() -> None:
         "INAUGURATION_DAY",
         name="daytype",
     )
+    day_type_enum.create(op.get_bind(), checkfirst=True)
 
-    # Create OperationalIntent enum
+    # Create OperationalIntent enum - must explicitly create in database first
     operational_intent_enum = sa.Enum(
         "NORMAL",
         "REDUCED_CAPACITY",
         "NON_OPERATIONAL",
         name="operationalintent",
     )
+    operational_intent_enum.create(op.get_bind(), checkfirst=True)
 
     # Add columns to blocks table
     op.add_column(

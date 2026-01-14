@@ -60,6 +60,13 @@ class BlockAssignment(Base):
         ForeignKey("rotation_templates.id", ondelete="SET NULL"),
         nullable=True,
     )
+    # Secondary rotation for mid-block transitions (starts day 14 of 28-day block)
+    # Excel: Column 1 = primary rotation, Column 2 = secondary rotation
+    secondary_rotation_template_id = Column(
+        GUID(),
+        ForeignKey("rotation_templates.id", ondelete="SET NULL"),
+        nullable=True,
+    )
 
     # Leave tracking
     has_leave = Column(Boolean, default=False, nullable=False)
@@ -76,7 +83,16 @@ class BlockAssignment(Base):
 
     # Relationships
     resident = relationship("Person", backref="block_assignments")
-    rotation_template = relationship("RotationTemplate", backref="block_assignments")
+    rotation_template = relationship(
+        "RotationTemplate",
+        foreign_keys=[rotation_template_id],
+        backref="block_assignments",
+    )
+    secondary_rotation_template = relationship(
+        "RotationTemplate",
+        foreign_keys=[secondary_rotation_template_id],
+        backref="secondary_block_assignments",
+    )
 
     __table_args__ = (
         UniqueConstraint(

@@ -146,27 +146,30 @@ def upgrade() -> None:
     """)
 
     # =========================================================================
-    # Phase 3: Rename NF templates to follow naming convention
+    # Phase 3: Update NF template display names to follow naming convention
     # =========================================================================
     # Convention: NF-{SPECIALTY} or NF-{SPECIALTY}-{PGY}
+    # NOTE: abbreviation column is VARCHAR(10) for short Excel codes
+    #       display_abbreviation column is VARCHAR(20) for user-facing names
+    # Update both: short abbr for Excel, long name for display
     op.execute("""
-        UPDATE rotation_templates SET abbreviation = 'NF-CARDIO'
+        UPDATE rotation_templates SET abbreviation = 'NF-CARD', display_abbreviation = 'NF-CARDIO'
         WHERE abbreviation = 'NF+';
     """)
     op.execute("""
-        UPDATE rotation_templates SET abbreviation = 'NF-FMIT-PGY1'
+        UPDATE rotation_templates SET abbreviation = 'NF-FMIT', display_abbreviation = 'NF-FMIT-PGY1'
         WHERE abbreviation = 'NFI';
     """)
     op.execute("""
-        UPDATE rotation_templates SET abbreviation = 'NF-DERM-PGY2'
+        UPDATE rotation_templates SET abbreviation = 'NF-DERM', display_abbreviation = 'NF-DERM-PGY2'
         WHERE abbreviation = 'NF-DERM';
     """)
     op.execute("""
-        UPDATE rotation_templates SET abbreviation = 'NF-MED-SEL'
+        UPDATE rotation_templates SET abbreviation = 'NF-MED', display_abbreviation = 'NF-MED-SEL'
         WHERE abbreviation = 'NF-MED';
     """)
     op.execute("""
-        UPDATE rotation_templates SET abbreviation = 'NF-NICU-PGY1'
+        UPDATE rotation_templates SET abbreviation = 'NF-NICU', display_abbreviation = 'NF-NICU-PGY1'
         WHERE abbreviation = 'NF-NICU';
     """)
 
@@ -176,24 +179,24 @@ def downgrade() -> None:
     # Revert Phase 3: Restore old NF template names
     # =========================================================================
     op.execute("""
-        UPDATE rotation_templates SET abbreviation = 'NF+'
-        WHERE abbreviation = 'NF-CARDIO';
+        UPDATE rotation_templates SET abbreviation = 'NF+', display_abbreviation = NULL
+        WHERE abbreviation = 'NF-CARD';
     """)
     op.execute("""
-        UPDATE rotation_templates SET abbreviation = 'NFI'
-        WHERE abbreviation = 'NF-FMIT-PGY1';
+        UPDATE rotation_templates SET abbreviation = 'NFI', display_abbreviation = NULL
+        WHERE abbreviation = 'NF-FMIT';
     """)
     op.execute("""
-        UPDATE rotation_templates SET abbreviation = 'NF-DERM'
-        WHERE abbreviation = 'NF-DERM-PGY2';
+        UPDATE rotation_templates SET abbreviation = 'NF-DERM', display_abbreviation = NULL
+        WHERE display_abbreviation = 'NF-DERM-PGY2';
     """)
     op.execute("""
-        UPDATE rotation_templates SET abbreviation = 'NF-MED'
-        WHERE abbreviation = 'NF-MED-SEL';
+        UPDATE rotation_templates SET display_abbreviation = NULL
+        WHERE abbreviation = 'NF-MED';
     """)
     op.execute("""
-        UPDATE rotation_templates SET abbreviation = 'NF-NICU'
-        WHERE abbreviation = 'NF-NICU-PGY1';
+        UPDATE rotation_templates SET display_abbreviation = NULL
+        WHERE abbreviation = 'NF-NICU';
     """)
 
     # =========================================================================

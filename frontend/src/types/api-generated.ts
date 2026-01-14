@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-13T14:51:43Z
+ * Generated at: 2026-01-14T02:44:44Z
  * Generator: openapi-typescript
  *
  * To regenerate:
@@ -6080,8 +6080,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Parse TRIPLER-format block schedule xlsx
-         * @description Parse a TRIPLER-format block schedule xlsx file.
+         * Parse block schedule-format block schedule xlsx
+         * @description Parse a block schedule-format block schedule xlsx file.
          *
          *         Extracts:
          *         - Resident rotation assignments (from column A)
@@ -6115,6 +6115,60 @@ export interface paths {
          *         - Absences for LV periods (if provided)
          */
         post: operations["import_block_sheet_api_v1_admin_block_assignments_import_block_sheet_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/block-assignments/upload-xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview block schedule xlsx import
+         * @description Upload a block schedule-format xlsx file and preview what will be imported.
+         *
+         *         Handles:
+         *         - Primary rotation (column A)
+         *         - Secondary rotation (column B) for mid-block transitions
+         *         - Combined rotations (NF + Endo → NF-ENDO)
+         */
+        post: operations["preview_xlsx_import_api_v1_admin_block_assignments_upload_xlsx_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/block-assignments/export-block-format": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export schedule in block schedule xlsx format
+         * @description Export schedule data in block schedule xlsx format.
+         *
+         *         Uses a template xlsx to preserve formatting, colors, formulas, and merged cells.
+         *         Fills in daily assignment cells based on solved schedule.
+         *
+         *         **Parameters:**
+         *         - start_date: First day of block (e.g., 2025-03-12)
+         *         - end_date: Last day of block (e.g., 2025-04-08)
+         *
+         *         **Returns:** xlsx file matching input format for round-trip editing.
+         */
+        get: operations["export_block_format_api_v1_admin_block_assignments_export_block_format_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -20155,6 +20209,27 @@ export interface components {
              */
             resident_confidence: number;
             /**
+             * Secondary Rotation Input
+             * @description Secondary rotation as entered in source (column B)
+             */
+            secondary_rotation_input?: string | null;
+            /**
+             * Matched Secondary Rotation Id
+             * @description Matched secondary rotation template ID
+             */
+            matched_secondary_rotation_id?: string | null;
+            /**
+             * Matched Secondary Rotation Name
+             * @description Matched secondary rotation display name
+             */
+            matched_secondary_rotation_name?: string | null;
+            /**
+             * Secondary Rotation Confidence
+             * @description Secondary rotation match confidence
+             * @default 0
+             */
+            secondary_rotation_confidence: number;
+            /**
              * Is Duplicate
              * @description True if assignment already exists
              * @default false
@@ -20351,24 +20426,19 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Response for listing academic blocks.
+         * @description Schema for list of blocks.
          */
         BlockListResponse: {
             /**
-             * Blocks
-             * @description List of academic blocks
+             * Items
+             * @description List of block responses
              */
-            blocks: components["schemas"]["BlockSummary"][];
+            items: components["schemas"]["BlockResponse"][];
             /**
-             * Academic Year
-             * @description Academic year
-             */
-            academic_year: string;
-            /**
-             * Total Blocks
+             * Total
              * @description Total number of blocks
              */
-            total_blocks: number;
+            total: number;
         };
         /**
          * BlockMatrixResponse
@@ -20857,6 +20927,17 @@ export interface components {
              * Academic Year
              * @description Academic year (auto-detected if not provided)
              */
+            academic_year?: number | null;
+        };
+        /** Body_preview_xlsx_import_api_v1_admin_block_assignments_upload_xlsx_post */
+        Body_preview_xlsx_import_api_v1_admin_block_assignments_upload_xlsx_post: {
+            /**
+             * File
+             * Format: binary
+             * @description block schedule xlsx file
+             */
+            file: string;
+            /** Academic Year */
             academic_year?: number | null;
         };
         /** Body_record_zone_incident_api_v1_resilience_tier2_zones_incident_post */
@@ -22377,15 +22458,29 @@ export interface components {
         };
         /**
          * ConflictCheckResponse
-         * @description Response for conflict check.
+         * @description Response for conflict checking before assignment.
          */
         ConflictCheckResponse: {
-            /** Has Conflicts */
-            has_conflicts: boolean;
-            /** Conflicts */
-            conflicts: components["schemas"]["TemplateConflict"][];
-            /** Can Proceed */
-            can_proceed: boolean;
+            /**
+             * Can Assign
+             * @description Whether assignment can proceed
+             */
+            can_assign: boolean;
+            /**
+             * Conflicts
+             * @description Detected conflicts
+             */
+            conflicts?: components["schemas"]["ConflictDetail"][];
+            /**
+             * Warnings
+             * @description Warnings
+             */
+            warnings?: string[];
+            /**
+             * Suggestions
+             * @description Alternative suggestions
+             */
+            suggestions?: string[];
         };
         /**
          * ConflictDetail
@@ -22829,36 +22924,34 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap in the schedule.
-         * @example {
-         *       "date": "2024-01-15",
-         *       "rotation": "FMIT Inpatient",
-         *       "severity": "high",
-         *       "time_of_day": "PM"
-         *     }
+         * @description Represents a coverage gap with details.
          */
         CoverageGap: {
+            /** Gap Id */
+            gap_id: string;
             /**
              * Date
              * Format: date
-             * @description Date of the gap
              */
             date: string;
-            /**
-             * Time Of Day
-             * @description AM or PM
-             */
+            /** Time Of Day */
             time_of_day: string;
-            /**
-             * Rotation
-             * @description Rotation with gap
-             */
-            rotation?: string | null;
-            /**
-             * Severity
-             * @description low, medium, high
-             */
+            /** Block Id */
+            block_id: string;
+            /** Severity */
             severity: string;
+            /** Days Until */
+            days_until: number;
+            /** Affected Area */
+            affected_area: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            current_assignments: number;
+            /** Required Assignments */
+            required_assignments: number;
+            /** Gap Size */
+            gap_size: number;
         };
         /**
          * CoverageGapsResponse
@@ -22885,7 +22978,7 @@ export interface components {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
+            gaps: components["schemas"]["CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
@@ -22937,7 +23030,7 @@ export interface components {
              * Gaps
              * @description List of coverage gaps
              */
-            gaps?: components["schemas"]["CoverageGap"][];
+            gaps?: components["schemas"]["app__schemas__visualization__CoverageGap"][];
             /**
              * Title
              * @description Title for the heatmap
@@ -29762,19 +29855,19 @@ export interface components {
             person_id?: string | null;
             /** Person Name */
             person_name?: string | null;
+            /** Nf Date */
+            nf_date?: string | null;
+            /** Pc Required Date */
+            pc_required_date?: string | null;
             /**
-             * Nf Date
-             * Format: date
+             * Missing Am Pc
+             * @default false
              */
-            nf_date: string;
-            /**
-             * Pc Required Date
-             * Format: date
-             */
-            pc_required_date: string;
-            /** Missing Am Pc */
             missing_am_pc: boolean;
-            /** Missing Pm Pc */
+            /**
+             * Missing Pm Pc
+             * @default false
+             */
             missing_pm_pc: boolean;
         };
         /**
@@ -31763,14 +31856,13 @@ export interface components {
             queueName: string;
             /**
              * Confirm
-             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
         };
         /**
          * QueuePurgeResponse
-         * @description Response after purging a queue.
+         * @description Response to queue purge request.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -34222,6 +34314,22 @@ export interface components {
              * @default 60
              */
             timeout_seconds: number;
+            /**
+             * Expand Block Assignments
+             * @description Expand block_assignments table into daily slots before solving
+             * @default false
+             */
+            expand_block_assignments: boolean;
+            /**
+             * Block Number
+             * @description Academic block number (0-13) for block_assignment expansion
+             */
+            block_number?: number | null;
+            /**
+             * Academic Year
+             * @description Academic year for block_assignment expansion (e.g., 2025 for AY 2025-2026)
+             */
+            academic_year?: number | null;
         };
         /**
          * ScheduleResponse
@@ -34232,8 +34340,8 @@ export interface components {
             status: string;
             /** Message */
             message: string;
-            /** Total Blocks Assigned */
-            total_blocks_assigned: number;
+            /** Total Assignments */
+            total_assignments: number;
             /** Total Blocks */
             total_blocks: number;
             validation: components["schemas"]["ValidationResult"];
@@ -34306,7 +34414,7 @@ export interface components {
             /** Components */
             components: components["schemas"]["ScoreComponentResponse"][];
             /** Suggestions */
-            suggestions?: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
+            suggestions?: components["schemas"]["SuggestionResponse"][];
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -35873,24 +35981,25 @@ export interface components {
         };
         /**
          * SuggestionResponse
-         * @description Response schema for autocomplete suggestions.
+         * @description Response for improvement suggestion.
          */
         SuggestionResponse: {
+            /** Type */
+            type: string;
             /**
-             * Suggestions
-             * @description List of suggestions
+             * Priority
+             * @description high, medium, low
              */
-            suggestions: string[];
+            priority: string;
+            /** Description */
+            description: string;
             /**
-             * Query
-             * @description Original query string
+             * Impact
+             * @description Expected improvement
              */
-            query: string;
-            /**
-             * Entity Type
-             * @description Entity type
-             */
-            entity_type: string;
+            impact: number;
+            /** Affected Items */
+            affected_items?: string[];
         };
         /**
          * SwapBarrierAnalysisRequest
@@ -39458,7 +39567,7 @@ export interface components {
             /** People */
             people: components["schemas"]["PersonWorkloadResponse"][];
             /** Rebalancing Suggestions */
-            rebalancing_suggestions: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
+            rebalancing_suggestions: components["schemas"]["SuggestionResponse"][];
         };
         /**
          * WorkloadSummary
@@ -39727,35 +39836,25 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
-         * CoverageGap
-         * @description Represents a coverage gap with details.
+         * BlockListResponse
+         * @description Response for listing academic blocks.
          */
-        app__api__routes__fmit_health__CoverageGap: {
-            /** Gap Id */
-            gap_id: string;
+        app__schemas__academic_blocks__BlockListResponse: {
             /**
-             * Date
-             * Format: date
+             * Blocks
+             * @description List of academic blocks
              */
-            date: string;
-            /** Time Of Day */
-            time_of_day: string;
-            /** Block Id */
-            block_id: string;
-            /** Severity */
-            severity: string;
-            /** Days Until */
-            days_until: number;
-            /** Affected Area */
-            affected_area: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            current_assignments: number;
-            /** Required Assignments */
-            required_assignments: number;
-            /** Gap Size */
-            gap_size: number;
+            blocks: components["schemas"]["BlockSummary"][];
+            /**
+             * Academic Year
+             * @description Academic year
+             */
+            academic_year: string;
+            /**
+             * Total Blocks
+             * @description Total number of blocks
+             */
+            total_blocks: number;
         };
         /**
          * BatchOperationResult
@@ -39775,22 +39874,6 @@ export interface components {
             error?: string | null;
             /** Warnings */
             warnings?: string[];
-        };
-        /**
-         * BlockListResponse
-         * @description Schema for list of blocks.
-         */
-        app__schemas__block__BlockListResponse: {
-            /**
-             * Items
-             * @description List of block responses
-             */
-            items: components["schemas"]["BlockResponse"][];
-            /**
-             * Total
-             * @description Total number of blocks
-             */
-            total: number;
         };
         /**
          * CoverageGap
@@ -39837,79 +39920,6 @@ export interface components {
             email?: string | null;
         };
         /**
-         * ConflictCheckResponse
-         * @description Response for conflict checking before assignment.
-         */
-        app__schemas__fmit_assignments__ConflictCheckResponse: {
-            /**
-             * Can Assign
-             * @description Whether assignment can proceed
-             */
-            can_assign: boolean;
-            /**
-             * Conflicts
-             * @description Detected conflicts
-             */
-            conflicts?: components["schemas"]["ConflictDetail"][];
-            /**
-             * Warnings
-             * @description Warnings
-             */
-            warnings?: string[];
-            /**
-             * Suggestions
-             * @description Alternative suggestions
-             */
-            suggestions?: string[];
-        };
-        /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
-         */
-        app__schemas__jobs__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
-            /**
-             * Confirm
-             * @default false
-             */
-            confirm: boolean;
-        };
-        /**
-         * QueuePurgeResponse
-         * @description Response to queue purge request.
-         */
-        app__schemas__jobs__QueuePurgeResponse: {
-            /** Queuename */
-            queueName: string;
-            /** Taskspurged */
-            tasksPurged: number;
-            /** Timestamp */
-            timestamp: string;
-        };
-        /**
-         * SuggestionResponse
-         * @description Response for improvement suggestion.
-         */
-        app__schemas__ml__SuggestionResponse: {
-            /** Type */
-            type: string;
-            /**
-             * Priority
-             * @description high, medium, low
-             */
-            priority: string;
-            /** Description */
-            description: string;
-            /**
-             * Impact
-             * @description Expected improvement
-             */
-            impact: number;
-            /** Affected Items */
-            affected_items?: string[];
-        };
-        /**
          * PersonSummary
          * @description Minimal person info for embedding in credential responses.
          */
@@ -39923,6 +39933,32 @@ export interface components {
             name: string;
             /** Type */
             type: string;
+        };
+        /**
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
+         */
+        app__schemas__queue__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
+            /**
+             * Confirm
+             * @description Must be true to confirm purge
+             * @default false
+             */
+            confirm: boolean;
+        };
+        /**
+         * QueuePurgeResponse
+         * @description Response after purging a queue.
+         */
+        app__schemas__queue__QueuePurgeResponse: {
+            /** Queuename */
+            queueName: string;
+            /** Taskspurged */
+            tasksPurged: number;
+            /** Timestamp */
+            timestamp: string;
         };
         /**
          * BatchOperationResult
@@ -39945,6 +39981,18 @@ export interface components {
             error?: string | null;
         };
         /**
+         * ConflictCheckResponse
+         * @description Response for conflict check.
+         */
+        app__schemas__rotation_template__ConflictCheckResponse: {
+            /** Has Conflicts */
+            has_conflicts: boolean;
+            /** Conflicts */
+            conflicts: components["schemas"]["TemplateConflict"][];
+            /** Can Proceed */
+            can_proceed: boolean;
+        };
+        /**
          * ConflictSummary
          * @description Summary of conflicts found.
          */
@@ -39955,6 +40003,60 @@ export interface components {
             errors: number;
             /** Warnings */
             warnings: number;
+        };
+        /**
+         * SuggestionResponse
+         * @description Response schema for autocomplete suggestions.
+         */
+        app__schemas__search__SuggestionResponse: {
+            /**
+             * Suggestions
+             * @description List of suggestions
+             */
+            suggestions: string[];
+            /**
+             * Query
+             * @description Original query string
+             */
+            query: string;
+            /**
+             * Entity Type
+             * @description Entity type
+             */
+            entity_type: string;
+        };
+        /**
+         * CoverageGap
+         * @description Represents a coverage gap in the schedule.
+         * @example {
+         *       "date": "2024-01-15",
+         *       "rotation": "FMIT Inpatient",
+         *       "severity": "high",
+         *       "time_of_day": "PM"
+         *     }
+         */
+        app__schemas__visualization__CoverageGap: {
+            /**
+             * Date
+             * Format: date
+             * @description Date of the gap
+             */
+            date: string;
+            /**
+             * Time Of Day
+             * @description AM or PM
+             */
+            time_of_day: string;
+            /**
+             * Rotation
+             * @description Rotation with gap
+             */
+            rotation?: string | null;
+            /**
+             * Severity
+             * @description low, medium, high
+             */
+            severity: string;
         };
     };
     responses: never;
@@ -42001,7 +42103,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -42128,7 +42230,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -42194,7 +42296,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -42588,7 +42690,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictCheckResponse"];
+                    "application/json": components["schemas"]["app__schemas__rotation_template__ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -47342,6 +47444,71 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_xlsx_import_api_v1_admin_block_assignments_upload_xlsx_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_preview_xlsx_import_api_v1_admin_block_assignments_upload_xlsx_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockAssignmentPreviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_block_format_api_v1_admin_block_assignments_export_block_format_get: {
+        parameters: {
+            query: {
+                start_date: string;
+                end_date: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -52351,7 +52518,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuggestionResponse"];
+                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -52384,7 +52551,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuggestionResponse"];
+                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -56797,7 +56964,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__fmit_assignments__ConflictCheckResponse"];
+                    "application/json": components["schemas"]["ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -58269,7 +58436,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -58279,7 +58446,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -58636,7 +58803,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -58646,7 +58813,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */

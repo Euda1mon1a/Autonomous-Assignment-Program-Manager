@@ -501,7 +501,7 @@ class NotificationService:
         query = self.db.query(Notification).filter(Notification.recipient_id == user_id)
 
         if unread_only:
-            query = query.filter(not Notification.is_read)
+            query = query.filter(Notification.is_read == False)  # noqa: E712
 
         notifications = (
             query.order_by(Notification.created_at.desc()).limit(limit).all()

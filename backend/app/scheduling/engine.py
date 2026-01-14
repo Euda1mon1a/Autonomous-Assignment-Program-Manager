@@ -393,6 +393,10 @@ class SchedulingEngine:
             for assignment in self.assignments:
                 self.db.add(assignment)
 
+            # Step 8.5: Flush to make assignments visible to validator
+            # Validator queries DB, so flush is needed before validation
+            self.db.flush()
+
             # Step 9: Validate
             validation = self.validator.validate_all(self.start_date, self.end_date)
 
@@ -940,6 +944,9 @@ class SchedulingEngine:
         Creates CallAssignment records from the solver's call_assignments output.
         Each assignment maps a faculty member to a specific date for overnight call.
 
+        Clears existing call assignments for the date range before inserting new ones
+        to avoid unique constraint violations on regeneration.
+
         Args:
             result: SolverResult containing call_assignments list
             context: SchedulingContext with block lookup data
@@ -952,6 +959,22 @@ class SchedulingEngine:
         if not result.call_assignments:
             return call_assignments
 
+        # Clear existing call assignments for this date range to avoid conflicts
+        # This allows regeneration without unique constraint violations
+        deleted_count = (
+            self.db.query(CallAssignment)
+            .filter(
+                CallAssignment.date >= self.start_date,
+                CallAssignment.date <= self.end_date,
+            )
+            .delete(synchronize_session=False)
+        )
+        if deleted_count:
+            logger.info(
+                f"Cleared {deleted_count} existing call assignments for "
+                f"{self.start_date} to {self.end_date}"
+            )
+
         # Build block lookup for date extraction
         block_by_id = {b.id: b for b in context.blocks}
 
@@ -961,11 +984,20 @@ class SchedulingEngine:
                 logger.warning(f"Block {block_id} not found for call assignment")
                 continue
 
+            # Map solver call types to database-allowed values
+            # Constraint allows: 'sunday', 'weekday', 'holiday', 'backup'
+            # Solver uses: 'overnight' (generic)
+            is_sunday = block.date.weekday() == 6
+            if call_type == "overnight":
+                mapped_call_type = "sunday" if is_sunday else "weekday"
+            else:
+                mapped_call_type = call_type
+
             call_assignment = CallAssignment(
                 date=block.date,
                 person_id=person_id,
-                call_type=call_type,
-                is_weekend=(block.date.weekday() == 6),  # Sunday
+                call_type=mapped_call_type,
+                is_weekend=is_sunday,
                 is_holiday=False,  # Could be enhanced to check holiday calendar
             )
             self.db.add(call_assignment)
@@ -1571,16 +1603,31 @@ class SchedulingEngine:
             if a.person_id in faculty_ids:
                 faculty_occupied_slots.add((a.person_id, a.block_id))
 
-        # Group assignments by block
+        # Group assignments by block - include BOTH new (self.assignments) AND preserved
+        # Preserved assignments in DB need faculty supervision too
         assignments_by_block = {}
+
+        # First add new assignments from this run
         for assignment in self.assignments:
             if assignment.block_id not in assignments_by_block:
                 assignments_by_block[assignment.block_id] = []
             assignments_by_block[assignment.block_id].append(assignment)
 
+        # Then add preserved assignments (already in DB, not deleted)
+        if preserved_assignments:
+            for assignment in preserved_assignments:
+                if assignment.block_id not in assignments_by_block:
+                    assignments_by_block[assignment.block_id] = []
+                # Avoid duplicates if same assignment is in both lists
+                if assignment not in assignments_by_block[assignment.block_id]:
+                    assignments_by_block[assignment.block_id].append(assignment)
+
         # Pre-fetch all residents who have assignments (N+1 fix)
         # This replaces the per-block query inside the loop
+        # Include both new and preserved assignments
         all_resident_ids = {a.person_id for a in self.assignments}
+        if preserved_assignments:
+            all_resident_ids.update(a.person_id for a in preserved_assignments)
         all_residents = (
             self.db.query(Person).filter(Person.id.in_(all_resident_ids)).all()
         )
@@ -1588,9 +1635,16 @@ class SchedulingEngine:
 
         # Pre-fetch all rotation templates used in assignments (N+1 fix)
         # This is used by _get_primary_template_for_block to break ties
+        # Include both new and preserved assignments
         all_template_ids = {
             a.rotation_template_id for a in self.assignments if a.rotation_template_id
         }
+        if preserved_assignments:
+            all_template_ids.update(
+                a.rotation_template_id
+                for a in preserved_assignments
+                if a.rotation_template_id
+            )
         all_templates = (
             self.db.query(RotationTemplate)
             .filter(RotationTemplate.id.in_(all_template_ids))
@@ -1881,6 +1935,10 @@ class SchedulingEngine:
                 f"Deleted {deleted_count} existing assignments for date range "
                 f"({self.start_date} to {self.end_date}), preserved {preserved_count}"
             )
+
+            # CRITICAL: Flush deletes before any inserts to avoid constraint violations
+            # SQLAlchemy may execute INSERTs before DELETEs without explicit flush
+            self.db.flush()
 
     def _audit_nf_pc_allocations(self) -> dict:
         """

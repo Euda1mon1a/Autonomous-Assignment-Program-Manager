@@ -33,6 +33,23 @@ class ScheduleRequest(BaseModel):
         le=300.0,
         description="Maximum solver runtime in seconds (5-300)",
     )
+    # Block assignment expansion params (Session 095)
+    expand_block_assignments: bool = Field(
+        default=False,
+        description="Expand block_assignments table into daily slots before solving",
+    )
+    block_number: int | None = Field(
+        default=None,
+        ge=0,
+        le=13,
+        description="Academic block number (0-13) for block_assignment expansion",
+    )
+    academic_year: int | None = Field(
+        default=None,
+        ge=2020,
+        le=2100,
+        description="Academic year for block_assignment expansion (e.g., 2025 for AY 2025-2026)",
+    )
 
     @field_validator("start_date", "end_date")
     @classmethod
@@ -48,6 +65,20 @@ class ScheduleRequest(BaseModel):
                 f"start_date ({self.start_date}) must be before or equal to "
                 f"end_date ({self.end_date})"
             )
+        return self
+
+    @model_validator(mode="after")
+    def validate_block_expansion_params(self) -> "ScheduleRequest":
+        """Ensure block_number and academic_year are provided if expand_block_assignments is True."""
+        if self.expand_block_assignments:
+            if self.block_number is None:
+                raise ValueError(
+                    "block_number is required when expand_block_assignments=True"
+                )
+            if self.academic_year is None:
+                raise ValueError(
+                    "academic_year is required when expand_block_assignments=True"
+                )
         return self
 
 
@@ -68,10 +99,10 @@ class NFPCAuditViolation(BaseModel):
 
     person_id: UUID | None = None
     person_name: str | None = None
-    nf_date: date
-    pc_required_date: date
-    missing_am_pc: bool
-    missing_pm_pc: bool
+    nf_date: date | None = None
+    pc_required_date: date | None = None
+    missing_am_pc: bool = False
+    missing_pm_pc: bool = False
 
 
 class NFPCAudit(BaseModel):

@@ -420,6 +420,24 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 24: Beholder Bane (Session 094 - SCHEDULER Domain)
+  # ============================================================================
+
+  # SQLAlchemy filter anti-magic detector - slays `not Column` in .filter()
+  # Named after D&D Beholder's anti-magic cone that nullifies magic.
+  # `not Column` similarly nullifies filters, returning nothing.
+  # Reference: Session 094 - validator.py coverage_rate bug
+  - repo: local
+    hooks:
+      - id: beholder-bane
+        name: Beholder Bane (SQLAlchemy anti-magic)
+        entry: scripts/beholder-bane.sh
+        language: script
+        pass_filenames: false
+        files: ^backend/.*\.py$
+        stages: [pre-commit]
+
+  # ============================================================================
   # Configuration
   # ============================================================================
 

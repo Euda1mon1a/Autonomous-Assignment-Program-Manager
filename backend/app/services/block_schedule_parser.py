@@ -65,23 +65,58 @@ class BlockScheduleParser:
     the existing BlockAssignmentImportService pipeline.
     """
 
-    # Rotation name mappings (xlsx abbreviation -> DB template name)
+    # Rotation name mappings (xlsx name/abbreviation -> DB abbreviation)
+    # Maps xlsx values to actual database rotation template abbreviations
     ROTATION_MAPPINGS: dict[str, str] = {
-        "NF": "Night Float",
-        "NEURO": "Neurology",
-        "SM": "Sports Medicine",
-        "FMIT 2": "FMIT",
-        "FMIT 1": "FMIT",
-        "L and D night float": "L&D Night Float",
-        "L and D NF": "L&D Night Float",
-        "Surg Exp": "Surgical Experience",
-        "Gyn Clinic": "GYN Clinic",
-        "Peds Ward": "Pediatrics Ward",
-        "Peds NF": "Pediatrics Night Float",
-        "Kapiolani L and D": "Kapiolani L&D",
-        "PROC": "Procedures",
-        "IM": "Internal Medicine",
-        "MS: Endo": "Endocrinology",
+        # Night Float variations
+        "NF": "NF-PM",
+        "Night Float": "NF-PM",
+        "NEURO": "NEURO",
+        "Neurology": "NEURO",
+        # Sports Medicine
+        "SM": "SM-AM",
+        "Sports Medicine": "SM-AM",
+        # FMIT
+        "FMIT 2": "FMIT-R",
+        "FMIT 1": "FMIT-R",
+        "FMIT": "FMIT-R",
+        # L&D Night Float
+        "L and D night float": "LDNF",
+        "L and D NF": "LDNF",
+        "L&D Night Float": "LDNF",
+        "L&D NF": "LDNF",
+        # Surgical Experience
+        "Surg Exp": "SURG-EXP",
+        "Surgical Experience": "SURG-EXP",
+        # GYN Clinic
+        "Gyn Clinic": "GYN-CLIN",
+        "GYN Clinic": "GYN-CLIN",
+        "Gynecology Clinic": "GYN-CLIN",
+        # Pediatrics
+        "Peds Ward": "PEDS-W",
+        "Pediatrics Ward": "PEDS-W",
+        "Peds NF": "PNF",
+        "Pediatrics Night Float": "PNF",
+        # Kapiolani
+        "Kapiolani L and D": "KAPI-LD",
+        "Kapiolani L&D": "KAPI-LD",
+        # Procedures
+        "PROC": "PR-AM",
+        "Procedures": "PR-AM",
+        # Internal Medicine
+        "IM": "IM-INT",
+        "Internal Medicine": "IM-INT",
+        # Endocrinology
+        "MS: Endo": "ENDO",
+        "Endocrinology": "ENDO",
+        # Hilo
+        "Hilo": "HILO",
+        # FMC
+        "FMC": "FMC",
+        "Family Medicine Clinic": "FMC",
+        # POCUS
+        "POCUS": "POCUS",
+        "Point of Care Ultrasound": "POCUS",
     }
 
     # Role patterns that identify residents
