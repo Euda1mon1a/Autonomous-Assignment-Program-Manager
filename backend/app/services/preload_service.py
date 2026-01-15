@@ -116,6 +116,14 @@ class PreloadService:
 
         count = 0
         for absence in absences:
+            # Only preload blocking absences (P2 Codex fix)
+            if not absence.should_block_assignment:
+                logger.debug(
+                    f"Skipping non-blocking absence: {absence.absence_type} "
+                    f"for person {absence.person_id}"
+                )
+                continue
+
             current = max(absence.start_date, start_date)
             end = min(absence.end_date, end_date)
 
@@ -157,8 +165,10 @@ class PreloadService:
             end = min(preload.end_date, end_date)
 
             while current <= end:
-                # Get AM/PM codes based on rotation type
-                am_code, pm_code = self._get_rotation_codes(preload.rotation_type)
+                # Get AM/PM codes based on rotation type and day of week
+                am_code, pm_code = self._get_rotation_codes(
+                    preload.rotation_type, current.weekday()
+                )
 
                 am_activity = await self._get_activity_id(am_code)
                 pm_activity = await self._get_activity_id(pm_code)
@@ -445,16 +455,51 @@ class PreloadService:
         # Protected time is typically assigned manually or from templates
         return 0
 
-    def _get_rotation_codes(self, rotation_type: str) -> tuple[str, str]:
-        """Get AM/PM activity codes for a rotation type."""
+    def _get_rotation_codes(
+        self, rotation_type: str, day_of_week: int
+    ) -> tuple[str, str]:
+        """
+        Get AM/PM activity codes for rotation with day-specific patterns.
+
+        P1 Codex fix: KAP and LDNF have day-specific rules that must be applied
+        here to avoid locking incorrect values as preloads.
+
+        Args:
+            rotation_type: Rotation code (FMIT, KAP, LDNF, etc.)
+            day_of_week: 0=Mon, 1=Tue, ..., 6=Sun
+
+        Returns:
+            Tuple of (AM_code, PM_code)
+        """
+        # Day-specific patterns for KAP (Kapiolani L&D)
+        # Mon PM=OFF (travel), Tue=OFF/OFF (recovery), Wed AM=C (continuity)
+        if rotation_type == "KAP":
+            if day_of_week == 0:  # Monday
+                return ("KAP", "OFF")  # Travel back from Kapiolani
+            elif day_of_week == 1:  # Tuesday
+                return ("OFF", "OFF")  # Recovery day
+            elif day_of_week == 2:  # Wednesday
+                return ("C", "LEC")  # Continuity clinic + lecture
+            else:  # Thu-Sun
+                return ("KAP", "KAP")  # On-site at Kapiolani
+
+        # Day-specific patterns for LDNF (L&D Night Float)
+        # CRITICAL: Friday clinic, NOT Wednesday!
+        if rotation_type == "LDNF":
+            if day_of_week == 4:  # Friday
+                return ("C", "OFF")  # Friday morning clinic!
+            elif day_of_week in (5, 6):  # Weekend
+                return ("W", "W")
+            else:  # Mon-Thu
+                return ("OFF", "LDNF")  # Working nights, sleeping days
+
+        # Fixed patterns for other rotations (no day-specific rules)
         codes = {
             "FMIT": ("FMIT", "FMIT"),
             "NF": ("OFF", "NF"),
             "PedW": ("PedW", "PedW"),
             "PedNF": ("OFF", "PedNF"),
-            "KAP": ("KAP", "KAP"),
             "IM": ("IM", "IM"),
-            "LDNF": ("OFF", "LDNF"),
         }
         return codes.get(rotation_type, (rotation_type, rotation_type))
 
