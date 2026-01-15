@@ -49,6 +49,19 @@ from app.models.gateway_auth import (
     OAuth2Client,
     RequestSignature,
 )
+from app.models.half_day_assignment import (
+    AssignmentSource,
+    HalfDayAssignment,
+)
+from app.models.inpatient_preload import (
+    InpatientPreload,
+    InpatientRotationType,
+    PreloadAssignedBy,
+)
+from app.models.resident_call_preload import (
+    ResidentCallPreload,
+    ResidentCallType,
+)
 from app.models.idempotency import IdempotencyRequest, IdempotencyStatus
 from app.models.import_staging import (
     ConflictResolutionMode,
@@ -300,6 +313,14 @@ __all__ = [
     "IPWhitelist",
     "IPBlacklist",
     "RequestSignature",
+    # Half-Day Assignment models (TAMC scheduling)
+    "HalfDayAssignment",
+    "AssignmentSource",
+    "InpatientPreload",
+    "InpatientRotationType",
+    "PreloadAssignedBy",
+    "ResidentCallPreload",
+    "ResidentCallType",
     # PKCE Auth models
     "PKCEClient",
     "OAuth2AuthorizationCode",

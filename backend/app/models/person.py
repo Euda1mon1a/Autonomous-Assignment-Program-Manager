@@ -96,6 +96,16 @@ class Person(Base):
         String(50)
     )  # FacultyRole enum value (pd, apd, oic, dept_chief, sports_med, core)
 
+    # Faculty clinic caps (per TAMC skill roster)
+    # MIN/MAX apply to C (clinic) only, NOT AT (attending time - unlimited)
+    min_clinic_halfdays_per_week = Column(
+        Integer, default=0, comment="Minimum clinic half-days per week (C only, not AT)"
+    )
+    max_clinic_halfdays_per_week = Column(
+        Integer, default=4, comment="Maximum clinic half-days per week (C only, not AT)"
+    )
+    admin_type = Column(String(20), default="GME", comment="Admin type: GME, DFM, SM")
+
     # Screener-specific fields
     screener_role = Column(
         String(50)
@@ -146,6 +156,23 @@ class Person(Base):
         back_populates="person",
         cascade="all, delete-orphan",
         foreign_keys="[FacultyWeeklyOverride.person_id]",
+    )
+
+    # Half-day assignment relationships (new unified schedule model)
+    half_day_assignments = relationship(
+        "HalfDayAssignment",
+        back_populates="person",
+        cascade="all, delete-orphan",
+    )
+    inpatient_preloads = relationship(
+        "InpatientPreload",
+        back_populates="person",
+        cascade="all, delete-orphan",
+    )
+    resident_call_preloads = relationship(
+        "ResidentCallPreload",
+        back_populates="person",
+        cascade="all, delete-orphan",
     )
 
     __table_args__ = (

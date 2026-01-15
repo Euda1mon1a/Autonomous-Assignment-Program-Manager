@@ -23,9 +23,11 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
 from app.models.absence import Absence
+from app.models.activity import Activity
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.block_assignment import BlockAssignment
+from app.models.half_day_assignment import HalfDayAssignment
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.weekly_pattern import WeeklyPattern
@@ -86,8 +88,11 @@ WEDNESDAY_DOW = 3  # ISO weekday: 1=Mon, ..., 3=Wed
 LEC_TEMPLATE_ABBREV = "LEC-PM"
 ADV_TEMPLATE_ABBREV = "ADV"  # Advising (last Wednesday PM)
 
-# Mid-block transition (28-day block, switch at day 14)
-MID_BLOCK_DAY = 14
+# Mid-block transition (28-day block, switch at day 11 = start of Week 3)
+# TAMC weeks: Week 1 (Thu-Sun, days 0-3), Week 2 (Mon-Sun, days 4-10),
+#             Week 3 (Mon-Sun, days 11-17), Week 4 (Mon-Sun, days 18-24)
+# Column 28 in Excel = day 11 = start of second-half rotations
+MID_BLOCK_DAY = 11
 
 # Intern continuity rule: PGY-1 gets clinic on Wednesday AM (except exempt rotations)
 # These rotations are exempt because they work nights, are off-site, or have special scheduling
@@ -129,6 +134,7 @@ class BlockAssignmentExpansionService:
         self.db = db
         self._absence_cache: dict[UUID, list[Absence]] = {}
         self._block_cache: dict[tuple[date, str], Block] = {}
+        self._activity_cache: dict[str, Activity | None] = {}
 
     def expand_block_assignments(
         self,
@@ -137,6 +143,7 @@ class BlockAssignmentExpansionService:
         schedule_run_id: UUID | None = None,
         created_by: str = "expansion_service",
         apply_one_in_seven: bool = True,
+        persist_half_day: bool = False,
     ) -> list[Assignment]:
         """
         Expand all BlockAssignments for a block into daily Assignments.
@@ -147,6 +154,7 @@ class BlockAssignmentExpansionService:
             schedule_run_id: Optional provenance tracking ID
             created_by: Audit field for who created assignments
             apply_one_in_seven: Whether to enforce 1-in-7 day off rule
+            persist_half_day: If True, also persist HalfDayAssignment records (dual-write)
 
         Returns:
             List of Assignment objects (not yet committed to DB)
@@ -171,6 +179,7 @@ class BlockAssignmentExpansionService:
 
         # Expand each block assignment
         all_assignments: list[Assignment] = []
+        all_half_day_assignments: list[HalfDayAssignment] = []
         for block_assignment in block_assignments:
             assignments = self._expand_single_block_assignment(
                 block_assignment,
@@ -182,7 +191,18 @@ class BlockAssignmentExpansionService:
             )
             all_assignments.extend(assignments)
 
+            # Dual-write: Also create HalfDayAssignment records
+            if persist_half_day:
+                half_day_records = self._persist_to_half_day_assignments(
+                    assignments, block_assignment
+                )
+                all_half_day_assignments.extend(half_day_records)
+
         logger.info(f"Expanded to {len(all_assignments)} daily assignments")
+        if persist_half_day:
+            logger.info(
+                f"Created {len(all_half_day_assignments)} half-day assignment records"
+            )
         return all_assignments
 
     def _load_block_assignments(
@@ -279,6 +299,25 @@ class BlockAssignmentExpansionService:
         if not hasattr(self, "_absence_templates"):
             self._preload_absence_templates()
         return self._absence_templates.get(abbrev)
+
+    def _lookup_activity_by_abbreviation(self, abbreviation: str) -> Activity | None:
+        """Lookup Activity by display_abbreviation or code (cached).
+
+        Args:
+            abbreviation: Activity display_abbreviation (e.g., 'C', 'LEC', 'FMIT')
+
+        Returns:
+            Activity if found, None otherwise
+        """
+        if abbreviation not in self._activity_cache:
+            # Try display_abbreviation first, then code
+            stmt = select(Activity).where(
+                (Activity.display_abbreviation == abbreviation)
+                | (Activity.code == abbreviation)
+            )
+            result = self.db.execute(stmt)
+            self._activity_cache[abbreviation] = result.scalars().first()
+        return self._activity_cache.get(abbreviation)
 
     def _get_active_rotation(
         self,
@@ -1274,3 +1313,83 @@ class BlockAssignmentExpansionService:
             )
         elif not pm_template:
             logger.warning(f"Missing absence template: {pm_abbrev}")
+
+    # ╔══════════════════════════════════════════════════════════════════════════════╗
+    # ║  DUAL-WRITE: Assignment → HalfDayAssignment                                  ║
+    # ║  Persists half-day records for the new data model (Session 104)              ║
+    # ╚══════════════════════════════════════════════════════════════════════════════╝
+
+    def _persist_to_half_day_assignments(
+        self,
+        assignments: list[Assignment],
+        block_assignment: BlockAssignment,
+    ) -> list[HalfDayAssignment]:
+        """
+        Dual-write: Convert Assignment → HalfDayAssignment.
+
+        For each Assignment, create corresponding HalfDayAssignment record
+        with resolved activity_id from rotation template abbreviation.
+
+        This enables the transition from compute-on-read (Assignment via expansion)
+        to persisted half-day slots (HalfDayAssignment table).
+
+        Args:
+            assignments: Expanded Assignment records for a single BlockAssignment
+            block_assignment: Parent BlockAssignment for provenance tracking
+
+        Returns:
+            List of HalfDayAssignment records (added to session, not committed)
+        """
+        half_day_records: list[HalfDayAssignment] = []
+
+        # Cache rotation template lookups to avoid N+1 queries
+        rotation_cache: dict[UUID, RotationTemplate] = {}
+
+        for assignment in assignments:
+            # Get Block to extract date and time_of_day
+            block = None
+
+            # First try to find block by ID from cache
+            for cache_key, cached_block in self._block_cache.items():
+                if cached_block.id == assignment.block_id:
+                    block = cached_block
+                    break
+
+            if not block:
+                logger.warning(
+                    f"Cannot find block for assignment block_id={assignment.block_id}"
+                )
+                continue
+
+            # Get rotation template (cached)
+            rotation_id = assignment.rotation_template_id
+            if rotation_id not in rotation_cache:
+                rotation_stmt = select(RotationTemplate).where(
+                    RotationTemplate.id == rotation_id
+                )
+                rotation_cache[rotation_id] = (
+                    self.db.execute(rotation_stmt).scalars().first()
+                )
+
+            rotation = rotation_cache.get(rotation_id)
+
+            # Lookup activity by rotation abbreviation
+            activity = None
+            if rotation:
+                abbrev = rotation.display_abbreviation or rotation.abbreviation
+                if abbrev:
+                    activity = self._lookup_activity_by_abbreviation(abbrev)
+
+            # Create HalfDayAssignment record
+            half_day = HalfDayAssignment(
+                person_id=assignment.person_id,
+                date=block.date,
+                time_of_day=block.time_of_day,
+                activity_id=activity.id if activity else None,
+                source="solver",
+                block_assignment_id=block_assignment.id,
+            )
+            self.db.add(half_day)
+            half_day_records.append(half_day)
+
+        return half_day_records
