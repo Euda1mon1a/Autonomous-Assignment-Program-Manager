@@ -1,8 +1,9 @@
 /**
- * Activities Hub Components
+ * Activities Page Tab Components
  *
- * Tab content components for the unified Activities Hub.
+ * These components provide the content for the Activities hub tabs.
+ * They wrap existing rotation and faculty template functionality.
  */
 
-export { RotationTemplatesTab, type RotationTemplatesTabProps } from './RotationTemplatesTab';
-export { FacultyActivityTemplatesTab, type FacultyActivityTemplatesTabProps } from './FacultyActivityTemplatesTab';
+export { RotationTemplatesTab } from './RotationTemplatesTab'
+export { FacultyActivityTemplatesTab } from './FacultyActivityTemplatesTab'
