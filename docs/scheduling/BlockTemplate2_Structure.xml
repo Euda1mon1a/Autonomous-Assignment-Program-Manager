@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+<block_template name="Block Template2" source="Block_Template2.xlsx">
+  <layout>
+    <call_row row="4"/>
+    <resident_call_row row="5"/>
+    <schedule_col_start>6</schedule_col_start>
+    <cols_per_day>2</cols_per_day>
+  </layout>
+  <residents>
+    <!-- PGY-3 Residents (Rows 9-13) -->
+    <resident row="9" name="R3-A, Resident" pgy="3" rotation1="Hilo"/>
+    <resident row="10" name="R3-B, Resident" pgy="3" rotation1="NF" rotation2="Elective"/>
+    <resident row="11" name="R3-C, Resident" pgy="3" rotation1="FMC"/>
+    <resident row="12" name="R3-D, Resident" pgy="3" rotation1="FMIT 2"/>
+    <resident row="13" name="R3-E, Resident" pgy="3" rotation1="NEURO" rotation2="NF"/>
+    <!-- PGY-2 Residents (Rows 14-19) -->
+    <resident row="14" name="R2-A, Resident" pgy="2" rotation1="FMIT 2"/>
+    <resident row="15" name="R2-B, Resident" pgy="2" rotation1="SM"/>
+    <resident row="16" name="R2-C, Resident" pgy="2" rotation1="POCUS"/>
+    <resident row="17" name="R2-D, Resident" pgy="2" rotation1="L and D night float"/>
+    <resident row="18" name="R2-E, Resident" pgy="2" rotation1="Surg Exp"/>
+    <resident row="19" name="R2-F, Resident" pgy="2" rotation1="Gyn Clinic"/>
+    <!-- PGY-1 Residents (Rows 20-25) -->
+    <resident row="20" name="R1-A, Resident" pgy="1" rotation1="FMC"/>
+    <resident row="21" name="R1-B, Resident" pgy="1" rotation1="Peds Ward" rotation2="Peds NF"/>
+    <resident row="22" name="R1-C, Resident" pgy="1" rotation1="Kapiolani L and D"/>
+    <resident row="23" name="R1-D, Resident" pgy="1" rotation1="Peds NF" rotation2="Peds Ward"/>
+    <resident row="24" name="R1-E, Resident" pgy="1" rotation1="PROC"/>
+    <resident row="25" name="R1-F, Resident" pgy="1" rotation1="IM"/>
+  </residents>
+  <faculty>
+    <!-- Core Faculty (Rows 31-40) -->
+    <person row="31" name="F-A, Faculty" template="C19"/>
+    <person row="32" name="F-B, Faculty" template="C19"/>
+    <person row="33" name="F-C, Faculty" template="C19"/>
+    <person row="34" name="F-D, Faculty" template="C19"/>
+    <person row="35" name="F-E, Faculty" template="C19"/>
+    <person row="36" name="F-F, Faculty" template="C19"/>
+    <person row="37" name="F-G, Faculty" template="C19"/>
+    <person row="38" name="F-H, Faculty" template="C19"/>
+    <person row="39" name="F-I, Faculty" template="C19"/>
+    <person row="40" name="F-J, Faculty" template="C19"/>
+    <!-- Adjunct Faculty (Rows 41-42) -->
+    <person row="41" name="F-K, Faculty" template="ADJ"/>
+    <person row="42" name="F-L, Faculty" template="ADJ"/>
+    <!-- Specialist (Row 43) -->
+    <person row="43" name="F-M, Faculty" template="SPEC"/>
+  </faculty>
+</block_template>

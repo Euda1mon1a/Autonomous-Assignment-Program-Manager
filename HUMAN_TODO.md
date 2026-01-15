@@ -1279,6 +1279,37 @@ See `docs/architecture/HALF_DAY_ASSIGNMENT_MODEL.md` for full schema.
 
 ---
 
+## UI Enhancement: Color Selection for Templates (2026-01-14)
+
+### Add Color Picker to Activity/Assignment and Rotation Templates
+**Priority:** Medium
+**Added:** 2026-01-14
+**Status:** TODO
+
+**Request:** Add color selection UI to activity/assignment and rotation template editors.
+
+**Color Semantics:**
+| Color | Meaning |
+|-------|---------|
+| Red | Leave **ineligible** - Cannot take leave during this rotation |
+| Yellow | Leave **eligible** - Can take leave during this rotation |
+
+**Implementation Notes:**
+- Color scheme reference: `docs/scheduling/TAMC_Color_Scheme_Reference.xml`
+- Existing rotation column colors in XML:
+  - `inpatient_critical` (red): IM, Peds Ward, KAP, LDNF, Surg Exp, ICU
+  - `elective_outpatient` (yellow): FMC, NEURO, SM, POCUS, PROC, Gyn Clinic
+  - `fmit` (cyan): FMIT1, FMIT2
+  - `night_float` (black): NF, Peds NF
+  - `orientation` (purple): FMO, DCC/BOLC/FMO
+
+**Files to modify:**
+- `frontend/src/app/admin/templates/page.tsx` - Add color picker to template editor
+- `backend/app/models/rotation_template.py` - Add `color_hex` column (optional)
+- Or use `leave_eligible: bool` flag and derive color from that
+
+---
+
 ## Terminology Fixes (2026-01-13)
 
 ### CP-SAT: Rename `total_blocks_assigned` → `total_assignments`
