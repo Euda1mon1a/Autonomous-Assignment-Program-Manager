@@ -54,29 +54,74 @@ class XMLToXlsxConverter:
     """
     Convert ScheduleXMLExporter XML to Excel xlsx format.
 
-    Generates xlsx matching ROSETTA format for validation:
-    - Row 1: Headers
-    - Row 2+: Residents with schedule data
-    - Cols 1-5: Metadata (Name, PGY, Rotation1, Rotation2, Notes)
-    - Cols 6-61: Schedule (28 days × 2 AM/PM slots)
+    Supports two modes:
+    1. ROSETTA format (validation): Row 1 headers, Row 2+ residents
+    2. Block Template2 format (production): Uses template row mappings
+
+    When structure_xml_path is provided, uses Block Template2 layout with
+    exact row positions for residents/faculty/call.
     """
 
     def __init__(
         self,
         template_path: Path | str | None = None,
         apply_colors: bool = True,
+        structure_xml_path: Path | str | None = None,
     ):
         """
         Initialize converter with optional template.
 
         Args:
-            template_path: Path to Excel template (e.g., ROSETTA xlsx).
+            template_path: Path to Excel template (e.g., Block_Template2.xlsx).
                           If not provided, creates new workbook.
             apply_colors: Whether to apply TAMC color scheme to cells.
+            structure_xml_path: Path to BlockTemplate2_Structure.xml for row mappings.
+                               If provided, uses name → row lookup instead of sequential.
         """
         self.template_path = Path(template_path) if template_path else None
         self.apply_colors = apply_colors
         self.color_scheme = get_color_scheme() if apply_colors else None
+
+        # Load row mappings from structure XML if provided
+        self.row_mappings: dict[str, int] = {}
+        self.call_row: int = 4  # Default
+        if structure_xml_path:
+            self._load_structure_xml(Path(structure_xml_path))
+
+    def _load_structure_xml(self, xml_path: Path) -> None:
+        """Load row mappings from BlockTemplate2_Structure.xml."""
+        if not xml_path.exists():
+            logger.warning(f"Structure XML not found: {xml_path}")
+            return
+
+        tree = ElementTree.parse(xml_path)
+        root = tree.getroot()
+
+        # Load layout settings
+        layout = root.find("layout")
+        if layout is not None:
+            call_row_elem = layout.find("call_row")
+            if call_row_elem is not None:
+                self.call_row = int(call_row_elem.get("row", "4"))
+
+        # Load resident row mappings (name → row)
+        for resident in root.findall(".//resident"):
+            name = resident.get("name", "")
+            row = resident.get("row", "")
+            if name and row:
+                # Normalize name (remove asterisks, extra spaces)
+                normalized = name.replace("*", "").strip()
+                self.row_mappings[normalized] = int(row)
+
+        # Load faculty row mappings
+        for person in root.findall(".//faculty/person"):
+            name = person.get("name", "")
+            row = person.get("row", "")
+            if name and row:
+                normalized = name.replace("*", "").strip()
+                self.row_mappings[normalized] = int(row)
+
+        logger.info(f"Loaded {len(self.row_mappings)} row mappings from {xml_path}")
 
     def convert_from_string(
         self,
@@ -100,16 +145,32 @@ class XMLToXlsxConverter:
 
         logger.info(f"Converting XML to xlsx: {block_start} to {block_end}")
 
-        # Create workbook (ROSETTA validation format)
-        wb = self._create_new_workbook(block_start, block_end)
-        sheet = wb.active
+        # Load template or create new workbook
+        if self.template_path and self.template_path.exists():
+            wb = load_workbook(self.template_path)
+            # Use "Block Template2" sheet if available, else active
+            if "Block Template2" in wb.sheetnames:
+                sheet = wb["Block Template2"]
+            else:
+                sheet = wb.active
+            logger.info(f"Loaded template from {self.template_path}")
+        else:
+            # Create new workbook (ROSETTA validation format)
+            wb = self._create_new_workbook(block_start, block_end)
+            sheet = wb.active
 
-        # Fill header row
-        self._fill_header_row(sheet, block_start, block_end)
+        # Fill header row (skip if using template with row mappings)
+        if not self.row_mappings:
+            self._fill_header_row(sheet, block_start, block_end)
 
-        # Fill residents from XML (sorted by name to match ROSETTA)
+        # Fill residents from XML
         residents = root.findall(".//resident")
         self._fill_residents(sheet, residents, block_start)
+
+        # Fill call row (Row 4) - single cells for user to merge
+        call_section = root.find(".//call")
+        if call_section is not None:
+            self._fill_call_row(sheet, call_section, block_start, block_end)
 
         # Save to bytes
         buffer = BytesIO()
@@ -127,7 +188,7 @@ class XMLToXlsxConverter:
         """Apply background and font color to cell based on schedule code.
 
         Font colors have semantic meaning:
-        - Red: +1 AT demand (PR, VAS, COLPO, GER) or visibility (HV for Lamoureux)
+        - Red: +1 AT demand (PR, VAS, COLPO, GER) or high-visibility roles
         - Light gray: Night Float (NF, Peds NF)
         - White: Contrast on dark backgrounds
         """
@@ -231,32 +292,63 @@ class XMLToXlsxConverter:
         residents: list,
         block_start: date,
     ) -> None:
-        """Fill resident rows from XML elements (sorted by name)."""
-        # Sort residents by name to match ROSETTA order
+        """Fill resident rows from XML elements.
+
+        If row_mappings loaded from structure XML, uses name → row lookup.
+        Otherwise, uses sequential rows starting at row 2 (ROSETTA format).
+        """
+        # Sort residents by name to match ROSETTA order (when no mappings)
         sorted_residents = sorted(residents, key=lambda r: r.get("name", ""))
 
         for i, resident in enumerate(sorted_residents):
-            row = i + 2  # Start at row 2 (row 1 is headers)
-
             name = resident.get("name", "")
+
+            # Use row mapping if available, else sequential
+            if self.row_mappings:
+                # Normalize name for lookup (remove asterisks, extra spaces)
+                normalized = name.replace("*", "").strip()
+                row = self.row_mappings.get(normalized)
+
+                # Try fuzzy match by last name if exact match fails
+                if not row:
+                    last_name = (
+                        normalized.split(",")[0].strip()
+                        if "," in normalized
+                        else normalized
+                    )
+                    for mapping_name, mapping_row in self.row_mappings.items():
+                        if mapping_name.startswith(last_name + ","):
+                            row = mapping_row
+                            logger.info(
+                                f"Fuzzy matched '{name}' to '{mapping_name}' (row {row})"
+                            )
+                            break
+
+                if not row:
+                    logger.warning(f"No row mapping for resident: {name}")
+                    continue
+            else:
+                row = i + 2  # Start at row 2 (row 1 is headers)
+
             pgy = resident.get("pgy", "")
             rotation1 = resident.get("rotation1", "")
             rotation2 = resident.get("rotation2", "")
 
-            # Fill metadata columns
-            sheet.cell(row=row, column=COL_RESIDENT_NAME).value = name
-            sheet.cell(row=row, column=COL_PGY).value = pgy
+            # Fill metadata columns (skip if using template - already has names)
+            if not self.row_mappings:
+                sheet.cell(row=row, column=COL_RESIDENT_NAME).value = name
+                sheet.cell(row=row, column=COL_PGY).value = pgy
 
-            rot1_cell = sheet.cell(row=row, column=COL_ROTATION1)
-            rot1_cell.value = rotation1
-            self._apply_rotation_color(rot1_cell, rotation1)
+                rot1_cell = sheet.cell(row=row, column=COL_ROTATION1)
+                rot1_cell.value = rotation1
+                self._apply_rotation_color(rot1_cell, rotation1)
 
-            rot2_cell = sheet.cell(row=row, column=COL_ROTATION2)
-            rot2_cell.value = rotation2 or ""
-            if rotation2:
-                self._apply_rotation_color(rot2_cell, rotation2)
+                rot2_cell = sheet.cell(row=row, column=COL_ROTATION2)
+                rot2_cell.value = rotation2 or ""
+                if rotation2:
+                    self._apply_rotation_color(rot2_cell, rotation2)
 
-            sheet.cell(row=row, column=COL_NOTES).value = ""  # Notes can be added later
+                sheet.cell(row=row, column=COL_NOTES).value = ""
 
             # Fill schedule columns from day elements
             for day in resident.findall("day"):
@@ -280,6 +372,42 @@ class XMLToXlsxConverter:
                     self._apply_cell_color(am_cell, am_code)
                 if pm_code:
                     self._apply_cell_color(pm_cell, pm_code)
+
+    def _fill_call_row(
+        self,
+        sheet,
+        call_section,
+        block_start: date,
+        block_end: date,
+    ) -> None:
+        """Fill call row with staff names (single cells, user merges manually).
+
+        Writes staff name to AM column only (even columns 6, 8, 10, ...).
+        User can manually merge AM/PM cells in Excel if desired.
+
+        Row position comes from self.call_row (default 4, from structure XML).
+        """
+
+        # Build date -> staff lookup from XML
+        call_lookup: dict[date, str] = {}
+        for night in call_section.findall("night"):
+            night_date_str = night.get("date", "")
+            if night_date_str:
+                night_date = date.fromisoformat(night_date_str)
+                staff_name = night.get("staff", "")
+                if staff_name:
+                    call_lookup[night_date] = staff_name
+
+        # Write to call row, AM column only (col 6, 8, 10, ...)
+        current = block_start
+        col = COL_SCHEDULE_START  # Column 6
+        while current <= block_end:
+            staff = call_lookup.get(current, "")
+            if staff:
+                cell = sheet.cell(row=self.call_row, column=col)
+                cell.value = staff
+            current += timedelta(days=1)
+            col += 2  # Skip PM column (write to AM only)
 
     def _calculate_block_number(self, block_start: date) -> int:
         """Calculate block number from start date."""
