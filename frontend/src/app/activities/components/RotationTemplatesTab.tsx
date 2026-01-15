@@ -40,7 +40,7 @@ export function RotationTemplatesTab({
     error,
   } = useQuery<ListResponse<RotationTemplate>>({
     queryKey: ['rotation-templates'],
-    queryFn: () => get('/api/rotation-templates'),
+    queryFn: () => get('/rotation-templates'),
   })
 
   // Memoize templates array to prevent dependency warnings

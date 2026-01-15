@@ -43,7 +43,7 @@ export function FacultyActivityTemplatesTab({
     error,
   } = useQuery<ListResponse<Person>>({
     queryKey: ['people', { type: 'faculty' }],
-    queryFn: () => get('/api/people?type=faculty&limit=100'),
+    queryFn: () => get('/people?type=faculty&limit=100'),
   })
 
   // Memoize faculty array to prevent dependency warnings
