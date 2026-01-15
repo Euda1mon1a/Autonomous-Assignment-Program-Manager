@@ -501,7 +501,533 @@ The schedule grid becomes an **evolutionary petri dish** where cooperation emerg
 
 ---
 
-## 6. Next Steps
+## 6. Endosymbiosis: Coalition Phase Transitions
+
+### 6.1 Concept: From Partnership to Permanent Fusion
+
+**Biological Analog:** ~2 billion years ago, a prokaryote engulfed an aerobic bacterium. Instead of digesting it, they formed a permanent symbiosis. That bacterium became the mitochondrion - no longer a separate organism, but an integral organelle. The host gained ATP production it could never evolve alone.
+
+**Schedule Analog:** When certain cell coalitions prove so consistently successful that separating them would degrade fitness, they **fuse into atomic scheduling units**. The coalition stops being "cells that cooperate" and becomes "a single indivisible gene."
+
+```
+BEFORE (Coalition):           AFTER (Endosymbiont):
+┌───────┐    ┌───────┐        ┌─────────────────┐
+│ R2-NF │◄──►│ R3-AT │        │ [R2-NF ⊕ R3-AT] │
+└───────┘    └───────┘        │   ATOMIC UNIT   │
+  ▲              ▲            └─────────────────┘
+  │              │                    │
+  └──cooperation─┘                    └── Cannot be separated
+     (breakable)                         (fused genome)
+```
+
+### 6.2 Detection Criteria: When to Trigger Absorption
+
+A coalition becomes an endosymbiont candidate when it crosses multiple thresholds:
+
+```python
+class EndosymbiosisDetector:
+    """
+    Monitors coalitions for phase transition signals.
+    """
+
+    # Thresholds for endosymbiosis trigger
+    CO_OCCURRENCE_THRESHOLD = 0.95  # Appear together 95%+ of time
+    GENERATION_STABILITY = 20       # Stable for 20+ generations
+    MUTUAL_DEPENDENCY = 0.8         # 80%+ fitness drop if separated
+    MIN_COALITION_SIZE = 2          # At least 2 cells
+    MAX_COALITION_SIZE = 5          # Don't absorb too many at once
+
+    def detect_candidates(self, history: GenerationHistory) -> List[Coalition]:
+        """
+        Identify coalitions ready for endosymbiosis.
+        """
+        candidates = []
+
+        for coalition in history.get_stable_coalitions():
+            if self._meets_criteria(coalition, history):
+                candidates.append(coalition)
+
+        return candidates
+
+    def _meets_criteria(self, coalition: Coalition, history: GenerationHistory) -> bool:
+        """
+        All criteria must be met for phase transition.
+        """
+        # Criterion 1: Co-occurrence frequency
+        co_occurrence = history.calculate_co_occurrence(coalition)
+        if co_occurrence < self.CO_OCCURRENCE_THRESHOLD:
+            return False
+
+        # Criterion 2: Generational stability
+        stable_generations = history.count_stable_generations(coalition)
+        if stable_generations < self.GENERATION_STABILITY:
+            return False
+
+        # Criterion 3: Mutual fitness dependency
+        dependency = self._calculate_mutual_dependency(coalition)
+        if dependency < self.MUTUAL_DEPENDENCY:
+            return False
+
+        # Criterion 4: Size bounds
+        if not (self.MIN_COALITION_SIZE <= len(coalition) <= self.MAX_COALITION_SIZE):
+            return False
+
+        return True
+
+    def _calculate_mutual_dependency(self, coalition: Coalition) -> float:
+        """
+        Measure how much each member depends on others.
+
+        High dependency = removing any member crashes coalition fitness.
+        """
+        baseline_fitness = coalition.total_fitness()
+        dependencies = []
+
+        for member in coalition.members:
+            # Fitness without this member
+            reduced = coalition.fitness_without(member)
+            # How much did fitness drop?
+            drop = (baseline_fitness - reduced) / baseline_fitness
+            dependencies.append(drop)
+
+        # Return minimum dependency (weakest link)
+        return min(dependencies)
+```
+
+**Detection Signals in Practice:**
+
+| Signal | Threshold | Meaning |
+|--------|-----------|---------|
+| Co-occurrence | >95% | They always appear together |
+| Stability | >20 generations | Not a lucky streak |
+| Mutual dependency | >80% drop | Neither survives alone |
+| Fitness boost | >40% combined | Together > sum of parts |
+
+### 6.3 Implementation: Endosymbiont Templates
+
+When absorption triggers, the coalition becomes a **template** - an atomic unit in the scheduling genome.
+
+```python
+@dataclass
+class Endosymbiont:
+    """
+    A fused scheduling unit that propagates as one gene.
+
+    Born from coalitions that proved inseparable.
+    """
+    id: str
+    members: FrozenSet[CellTemplate]  # Immutable member set
+    pattern: SchedulePattern          # The spatial arrangement
+    fitness_baseline: float           # Expected combined fitness
+    generation_born: int              # When fusion occurred
+    lineage: str                      # Ancestry tracking
+
+    # Emergent capabilities (see 6.5)
+    unlocked_patterns: List[str]      # Patterns only this combo enables
+    coverage_guarantee: float         # Coverage this unit guarantees
+    supervision_guarantee: bool       # Does this unit self-supervise?
+
+    def __hash__(self):
+        """Endosymbionts are immutable and hashable."""
+        return hash(self.id)
+
+    def instantiate(self, grid: ScheduleGrid, anchor: Position) -> List[Cell]:
+        """
+        Place this endosymbiont into a grid at the anchor position.
+
+        All members are placed atomically - all or nothing.
+        """
+        cells = []
+        for template in self.members:
+            offset = self.pattern.get_offset(template)
+            position = anchor + offset
+            cell = template.instantiate(position)
+            cells.append(cell)
+        return cells
+
+    def is_compatible(self, grid: ScheduleGrid, anchor: Position) -> bool:
+        """
+        Check if this endosymbiont can be placed at anchor.
+
+        Unlike individual cells, endosymbionts check ALL member
+        positions before committing.
+        """
+        for template in self.members:
+            offset = self.pattern.get_offset(template)
+            position = anchor + offset
+            if not grid.position_available(position):
+                return False
+            if not template.constraints_satisfied(position, grid):
+                return False
+        return True
+```
+
+**The Absorption/Merger Logic:**
+
+```python
+class EndosymbiosisEngine:
+    """
+    Executes coalition-to-endosymbiont phase transitions.
+    """
+
+    def __init__(self, genome: ScheduleGenome):
+        self.genome = genome
+        self.detector = EndosymbiosisDetector()
+        self.endosymbiont_registry = {}
+
+    def process_generation(self, generation: int, history: GenerationHistory):
+        """
+        Check for and execute any endosymbiosis events this generation.
+        """
+        # Step 1: Detect candidates
+        candidates = self.detector.detect_candidates(history)
+
+        for coalition in candidates:
+            # Step 2: Verify no overlap with existing endosymbionts
+            if self._overlaps_existing(coalition):
+                continue
+
+            # Step 3: Execute absorption
+            endosymbiont = self._absorb(coalition, generation)
+
+            # Step 4: Register in genome
+            self._register(endosymbiont)
+
+            # Step 5: Remove individual genes, add fused gene
+            self._update_genome(coalition, endosymbiont)
+
+            # Step 6: Log the phase transition
+            self._log_endosymbiosis_event(coalition, endosymbiont, generation)
+
+    def _absorb(self, coalition: Coalition, generation: int) -> Endosymbiont:
+        """
+        Execute the absorption: coalition → endosymbiont.
+
+        This is the phase transition moment.
+        """
+        # Extract the pattern (spatial arrangement)
+        pattern = self._extract_pattern(coalition)
+
+        # Calculate emergent properties
+        unlocked = self._discover_unlocked_patterns(coalition)
+        coverage = self._calculate_coverage_guarantee(coalition)
+        supervision = self._check_supervision_guarantee(coalition)
+
+        # Create the endosymbiont
+        endosymbiont = Endosymbiont(
+            id=f"endo_{generation}_{hash(coalition)}",
+            members=frozenset(c.to_template() for c in coalition.members),
+            pattern=pattern,
+            fitness_baseline=coalition.total_fitness(),
+            generation_born=generation,
+            lineage=self._trace_lineage(coalition),
+            unlocked_patterns=unlocked,
+            coverage_guarantee=coverage,
+            supervision_guarantee=supervision,
+        )
+
+        return endosymbiont
+
+    def _update_genome(self, coalition: Coalition, endosymbiont: Endosymbiont):
+        """
+        Replace individual genes with fused endosymbiont gene.
+
+        Before: [gene_A, gene_B, gene_C, ...]
+        After:  [endo_ABC, ...]  (genes A, B, C removed)
+        """
+        # Remove individual member genes
+        for member in coalition.members:
+            self.genome.remove_gene(member.gene_id)
+
+        # Add endosymbiont as single gene
+        self.genome.add_gene(endosymbiont)
+
+    def _extract_pattern(self, coalition: Coalition) -> SchedulePattern:
+        """
+        Capture the spatial relationship between coalition members.
+
+        This pattern is preserved forever in the endosymbiont.
+        """
+        anchor = coalition.get_anchor()  # Reference point
+        offsets = {}
+
+        for member in coalition.members:
+            offset = member.position - anchor.position
+            offsets[member.template()] = offset
+
+        return SchedulePattern(anchor_type=anchor.type, offsets=offsets)
+```
+
+### 6.4 Emergent Lock-in: Indivisible Propagation
+
+Once endosymbiosis occurs, the fused unit **cannot be separated** by normal evolutionary operations.
+
+```python
+class CooperativeGeneticOptimizer:
+    """
+    GA that respects endosymbiont atomicity.
+    """
+
+    def crossover(self, parent_a: Genome, parent_b: Genome) -> Genome:
+        """
+        Crossover that preserves endosymbionts.
+
+        Endosymbionts cross over as atomic units.
+        Individual genes cross normally.
+        """
+        child = Genome()
+
+        # Handle endosymbionts first (atomic transfer)
+        for endo in parent_a.endosymbionts:
+            if random.random() < 0.5:
+                child.add_endosymbiont(endo)
+
+        for endo in parent_b.endosymbionts:
+            if endo not in child.endosymbionts and random.random() < 0.5:
+                child.add_endosymbiont(endo)
+
+        # Handle individual genes (normal crossover)
+        individual_genes = self._standard_crossover(
+            parent_a.individual_genes,
+            parent_b.individual_genes
+        )
+        child.add_genes(individual_genes)
+
+        return child
+
+    def mutate(self, genome: Genome, mutation_rate: float) -> Genome:
+        """
+        Mutation that respects endosymbiont boundaries.
+
+        Endosymbionts mutate as units (position shift) not internally.
+        """
+        mutated = genome.copy()
+
+        # Endosymbionts: can shift position, cannot break apart
+        for endo in mutated.endosymbionts:
+            if random.random() < mutation_rate:
+                # Shift entire endosymbiont, don't mutate members
+                self._shift_endosymbiont(endo, mutated)
+
+        # Individual genes: normal mutation
+        for gene in mutated.individual_genes:
+            if random.random() < mutation_rate:
+                self._mutate_gene(gene)
+
+        return mutated
+
+    def _shift_endosymbiont(self, endo: Endosymbiont, genome: Genome):
+        """
+        Move an endosymbiont to a new valid position.
+
+        All members move together, preserving their pattern.
+        """
+        current_anchor = genome.get_anchor_position(endo)
+        valid_positions = genome.grid.find_valid_positions(endo)
+
+        if valid_positions:
+            new_anchor = random.choice(valid_positions)
+            genome.relocate_endosymbiont(endo, new_anchor)
+```
+
+**Lock-in Visualization:**
+
+```
+Generation 50: Endosymbiosis occurs
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│   Coalition [R2-NF, R3-AT, Fac-Sup] triggers absorption        │
+│                                                                 │
+│   ┌───────┐   ┌───────┐   ┌───────┐                            │
+│   │ R2-NF │ + │ R3-AT │ + │Fac-Sup│                            │
+│   └───────┘   └───────┘   └───────┘                            │
+│       │           │           │                                 │
+│       └───────────┼───────────┘                                 │
+│                   ▼                                             │
+│   ┌─────────────────────────────────┐                          │
+│   │   ENDOSYMBIONT: "TeachingTrio"  │                          │
+│   │   ┌───────┬───────┬───────┐     │                          │
+│   │   │ R2-NF │ R3-AT │Fac-Sup│     │  ← Atomic, indivisible   │
+│   │   └───────┴───────┴───────┘     │                          │
+│   │   Coverage: 100% | Supervision: ✓│                          │
+│   └─────────────────────────────────┘                          │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+Generation 51+: TeachingTrio propagates as single gene
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│   Crossover: TeachingTrio transfers whole or not at all       │
+│   Mutation:  TeachingTrio shifts position, never breaks        │
+│   Selection: TeachingTrio competes as unit                     │
+│                                                                 │
+│   ┌─────────────────────────────────┐                          │
+│   │      TeachingTrio              │──► Child A inherits       │
+│   └─────────────────────────────────┘                          │
+│                                                                 │
+│   ┌─────────────────────────────────┐                          │
+│   │      TeachingTrio (shifted)    │──► Child B inherits       │
+│   └─────────────────────────────────┘     (different position)  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 6.5 Fitness Implications: Emergent Capabilities
+
+Endosymbionts gain capabilities that **neither component had alone**. This is the evolutionary payoff for fusion.
+
+```python
+def discover_unlocked_patterns(endosymbiont: Endosymbiont) -> List[EmergentCapability]:
+    """
+    Identify capabilities that only exist in the fused state.
+
+    These are the 'mitochondrial ATP' of scheduling.
+    """
+    capabilities = []
+
+    # Capability 1: Coverage Guarantee
+    # Individual cells might cover their slot. Endosymbionts can
+    # guarantee continuous multi-slot coverage.
+    if endosymbiont.provides_continuous_coverage():
+        capabilities.append(EmergentCapability(
+            name="CoverageChainLock",
+            description="Guarantees unbroken coverage across member slots",
+            fitness_bonus=50,
+            constraint_satisfaction=["no_coverage_gap"]
+        ))
+
+    # Capability 2: Self-Supervision
+    # A senior-junior endosymbiont satisfies its own supervision
+    # requirement - no external dependency.
+    if endosymbiont.is_self_supervising():
+        capabilities.append(EmergentCapability(
+            name="SelfSupervision",
+            description="Contains both supervisor and supervisee",
+            fitness_bonus=40,
+            constraint_satisfaction=["supervision_ratio"]
+        ))
+
+    # Capability 3: Training Synergy
+    # Teaching pairs that fused unlock training bonuses.
+    if endosymbiont.has_teaching_relationship():
+        capabilities.append(EmergentCapability(
+            name="TrainingSynergy",
+            description="Locked-in teaching relationship",
+            fitness_bonus=30,
+            constraint_satisfaction=["procedure_exposure"]
+        ))
+
+    # Capability 4: Resilience Guarantee
+    # Fused units that include backup coverage are inherently resilient.
+    if endosymbiont.has_backup_coverage():
+        capabilities.append(EmergentCapability(
+            name="InherentResilience",
+            description="Built-in backup for member absence",
+            fitness_bonus=60,
+            constraint_satisfaction=["n_minus_1_coverage"]
+        ))
+
+    return capabilities
+
+
+@dataclass
+class EmergentCapability:
+    """
+    A capability that only exists in fused endosymbiont state.
+    """
+    name: str
+    description: str
+    fitness_bonus: float
+    constraint_satisfaction: List[str]  # Constraints auto-satisfied
+
+    def apply_to_fitness(self, base_fitness: float) -> float:
+        """Endosymbionts get capability bonuses on top of member fitness."""
+        return base_fitness + self.fitness_bonus
+```
+
+**Emergent Capability Examples:**
+
+| Endosymbiont Type | Members | Emergent Capability | Why It's Emergent |
+|-------------------|---------|---------------------|-------------------|
+| **TeachingTrio** | R2 + R3 + Faculty | Self-Supervision + Training | No external supervisor needed; teaching happens automatically |
+| **CoverageChain** | 5 consecutive AM slots | Coverage Guarantee | Gap impossible; chain is atomic |
+| **CallRecovery** | Call + Post-Call Light | Burnout Prevention | Recovery is built-in, not optional |
+| **CrossCover** | Clinic + Hospital backup | N-1 Resilience | Backup is structural, not assigned |
+
+**Fitness Comparison:**
+
+```
+Individual Cells (Pre-Endosymbiosis):
+┌─────────────────────────────────────────────────────────────────┐
+│ R2-NF:    base=70, uplift=20, patterns=10     → total = 100    │
+│ R3-AT:    base=75, uplift=25, patterns=15     → total = 115    │
+│ Fac-Sup:  base=80, uplift=15, patterns=10     → total = 105    │
+│                                                                 │
+│ Combined (as coalition): 100 + 115 + 105      = 320            │
+└─────────────────────────────────────────────────────────────────┘
+
+TeachingTrio Endosymbiont (Post-Endosymbiosis):
+┌─────────────────────────────────────────────────────────────────┐
+│ Base (inherited):                              = 320           │
+│ + SelfSupervision capability:                  +  40           │
+│ + TrainingSynergy capability:                  +  30           │
+│ + CoverageChainLock capability:                +  50           │
+│ ─────────────────────────────────────────────────────          │
+│ Endosymbiont fitness:                          = 440           │
+│                                                                 │
+│ Emergent bonus: 440 - 320 = +120 (37.5% boost)                 │
+│                                                                 │
+│ This bonus exists ONLY in fused state.                         │
+│ Breaking the endosymbiont loses all 120 points.                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 6.6 Evolutionary Dynamics: Endosymbiont Ecology
+
+Over many generations, an ecosystem of endosymbionts emerges:
+
+```
+Generation 1-50: Coalition Phase
+├── Individual cells compete
+├── Coalitions form through cooperative selection
+└── No endosymbionts yet
+
+Generation 50-100: First Absorptions
+├── Strongest coalitions cross thresholds
+├── First endosymbionts appear (2-3 cell units)
+└── Endosymbionts outcompete equivalent coalitions (+37% fitness)
+
+Generation 100-200: Endosymbiont Competition
+├── Multiple endosymbionts compete for grid space
+├── Larger endosymbionts absorb smaller ones (meta-endosymbiosis)
+└── Genome shifts from cells → endosymbionts as primary units
+
+Generation 200+: Stabilization
+├── Dominant endosymbiont species established
+├── New coalitions rare (most niches filled)
+├── Evolution operates on endosymbiont-level variation
+└── Schedule genome is mostly "organelles, not cells"
+```
+
+**The Endgame:**
+
+```
+Early Genome:                    Late Genome:
+┌─────────────────────────┐     ┌─────────────────────────┐
+│ [c][c][c][c][c][c][c]   │     │ [ENDO-A ][ENDO-B ]      │
+│ [c][c][c][c][c][c][c]   │     │ [ENDO-C    ][c][c]      │
+│ [c][c][c][c][c][c][c]   │  →  │ [ENDO-D][ENDO-E  ]      │
+│ [c][c][c][c][c][c][c]   │     │ [ENDO-F      ][c]       │
+│ [c][c][c][c][c][c][c]   │     │ [ENDO-G ][ENDO-H ]      │
+│                         │     │                         │
+│ 35 individual cells     │     │ 8 endosymbionts + 4 cells│
+│ High entropy            │     │ Low entropy, high order │
+└─────────────────────────┘     └─────────────────────────┘
+```
+
+---
+
+## 7. Next Steps
 
 1. **Prototype `cooperative_fitness()`** - Implement and validate scoring
 2. **Build NetworkX integration** - Graph-based coalition detection
