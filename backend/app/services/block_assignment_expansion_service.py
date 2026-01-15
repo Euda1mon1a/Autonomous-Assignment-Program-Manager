@@ -27,7 +27,7 @@ from app.models.activity import Activity
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.block_assignment import BlockAssignment
-from app.models.half_day_assignment import HalfDayAssignment
+from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.weekly_pattern import WeeklyPattern
@@ -1325,10 +1325,14 @@ class BlockAssignmentExpansionService:
         block_assignment: BlockAssignment,
     ) -> list[HalfDayAssignment]:
         """
-        Dual-write: Convert Assignment → HalfDayAssignment.
+        Dual-write: Convert Assignment → HalfDayAssignment with source priority.
 
-        For each Assignment, create corresponding HalfDayAssignment record
-        with resolved activity_id from rotation template abbreviation.
+        For each Assignment, create or update corresponding HalfDayAssignment record
+        respecting the source priority system:
+        - preload: Never overwritten (locked by preload service)
+        - manual: Never overwritten (locked by manual override)
+        - solver: Overwrites template, skipped if preload/manual exists
+        - template: Lowest priority, overwritten by all others
 
         This enables the transition from compute-on-read (Assignment via expansion)
         to persisted half-day slots (HalfDayAssignment table).
@@ -1338,7 +1342,7 @@ class BlockAssignmentExpansionService:
             block_assignment: Parent BlockAssignment for provenance tracking
 
         Returns:
-            List of HalfDayAssignment records (added to session, not committed)
+            List of HalfDayAssignment records (added/updated in session, not committed)
         """
         half_day_records: list[HalfDayAssignment] = []
 
@@ -1380,13 +1384,47 @@ class BlockAssignmentExpansionService:
                 if abbrev:
                     activity = self._lookup_activity_by_abbreviation(abbrev)
 
-            # Create HalfDayAssignment record
+            # Check if slot already has an assignment (source priority check)
+            existing_stmt = select(HalfDayAssignment).where(
+                HalfDayAssignment.person_id == assignment.person_id,
+                HalfDayAssignment.date == block.date,
+                HalfDayAssignment.time_of_day == block.time_of_day,
+            )
+            existing = self.db.execute(existing_stmt).scalars().first()
+
+            if existing:
+                # Check source priority - skip if locked (preload/manual)
+                if existing.is_locked:
+                    logger.debug(
+                        f"Skipping solver assignment: slot locked by "
+                        f"source={existing.source} for person={assignment.person_id} "
+                        f"date={block.date} time={block.time_of_day}"
+                    )
+                    continue
+
+                # Can overwrite template source
+                if existing.source == AssignmentSource.TEMPLATE.value:
+                    # Update existing record
+                    existing.activity_id = activity.id if activity else None
+                    existing.source = AssignmentSource.SOLVER.value
+                    existing.block_assignment_id = block_assignment.id
+                    half_day_records.append(existing)
+                    continue
+
+                # Existing is also solver - update it
+                if existing.source == AssignmentSource.SOLVER.value:
+                    existing.activity_id = activity.id if activity else None
+                    existing.block_assignment_id = block_assignment.id
+                    half_day_records.append(existing)
+                    continue
+
+            # Create new HalfDayAssignment record
             half_day = HalfDayAssignment(
                 person_id=assignment.person_id,
                 date=block.date,
                 time_of_day=block.time_of_day,
                 activity_id=activity.id if activity else None,
-                source="solver",
+                source=AssignmentSource.SOLVER.value,
                 block_assignment_id=block_assignment.id,
             )
             self.db.add(half_day)
