@@ -385,7 +385,7 @@ async def batch_update_people(
     return controller.batch_update_people(updates, request.dry_run)
 
 
-@router.delete("/batch", response_model=BatchPersonResponse)
+@router.post("/batch/delete", response_model=BatchPersonResponse)
 async def batch_delete_people(
     request: BatchPersonDeleteRequest,
     db=Depends(get_db),
