@@ -40,14 +40,17 @@ export function PersonSelector({
   const listboxId = useId()
 
   // Group people by type and PGY level
+  // Note: -1 is used as a sentinel for residents with null pgyLevel ("Unassigned")
   const groupedPeople = useMemo<GroupedPeople>(() => {
     const residents = new Map<number, Person[]>()
     const faculty: Person[] = []
 
     people.forEach((person) => {
-      if (person.type === 'resident' && person.pgyLevel !== null) {
-        const existing = residents.get(person.pgyLevel) ?? []
-        residents.set(person.pgyLevel, [...existing, person])
+      if (person.type === 'resident') {
+        // Use -1 as key for unassigned residents (null pgyLevel)
+        const level = person.pgyLevel ?? -1
+        const existing = residents.get(level) ?? []
+        residents.set(level, [...existing, person])
       } else if (person.type === 'faculty') {
         faculty.push(person)
       }
@@ -204,11 +207,16 @@ export function PersonSelector({
               <>
                 {/* Residents by PGY */}
                 {Array.from(groupedPeople.residents.entries())
-                  .sort(([a], [b]) => b - a) // PGY-3 first
+                  .sort(([a], [b]) => {
+                    // Put unassigned (-1) at the end, otherwise sort PGY-3 first
+                    if (a === -1) return 1
+                    if (b === -1) return -1
+                    return b - a
+                  })
                   .map(([pgyLevel, residents]) => (
                     <div key={`pgy-${pgyLevel}`}>
                       <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 uppercase tracking-wider">
-                        PGY-{pgyLevel}
+                        {pgyLevel === -1 ? 'Unassigned' : `PGY-${pgyLevel}`}
                       </div>
                       {residents.map(renderPersonOption)}
                     </div>

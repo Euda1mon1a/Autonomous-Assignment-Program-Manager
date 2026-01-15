@@ -126,6 +126,10 @@ export function RotationTemplatesTab({
         {canEdit && (
           <button
             type="button"
+            onClick={() => {
+              // TODO: Implement create template modal
+              alert('Create template feature coming soon')
+            }}
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Plus className="h-4 w-4" />
