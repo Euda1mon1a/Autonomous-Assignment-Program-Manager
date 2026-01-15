@@ -1,11 +1,14 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { format, startOfWeek, addWeeks, addDays, subWeeks, startOfMonth, endOfMonth } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Calendar, Download, Printer } from 'lucide-react'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
+import { RiskBar } from '@/components/ui/RiskBar'
+import { PersonSelector } from '@/components/schedule/PersonSelector'
 import { PersonalScheduleCard, ScheduleAssignment } from '@/components/schedule/PersonalScheduleCard'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { ErrorAlert } from '@/components/ErrorAlert'
@@ -17,24 +20,44 @@ import { CopyUrlButton } from '@/components/common/CopyToClipboard'
 import { useKeyboardShortcut } from '@/components/common/KeyboardShortcutHelp'
 import { get } from '@/lib/api'
 import { ListResponse, usePeople, useRotationTemplates } from '@/lib/hooks'
+import { calculateTierFromRole, getRiskBarTooltip, getRiskBarLabel } from '@/lib/tierUtils'
 import type { Assignment, Block, Person, RotationTemplate } from '@/types/api'
 
 /**
- * My Schedule Page - Personal schedule view for logged-in users
+ * My Schedule Page - Personal Schedule Hub
  *
- * Shows the current user's own schedule in a personalized format.
- * Features:
- * - Week/month range selector
- * - Print-friendly layout
- * - Export to CSV/PDF
+ * Unified schedule viewing hub that consolidates:
+ * - /my-schedule (personal schedule)
+ * - /schedule/[personId] (viewing other's schedule)
+ *
+ * Access Control (Tier Model):
+ * - Tier 0 (Resident/Faculty): View own schedule only, no person selector
+ * - Tier 1 (Coordinator): Can view and export others' schedules via selector
+ * - Tier 2 (Admin): Full access with high-impact indicator
+ *
+ * The person selector is NOT CSS-hidden for Tier 0 - it simply doesn't render.
+ * This follows security best practices (no client-side security through obscurity).
+ *
+ * URL Parameters:
+ * - ?person={personId} - View specific person's schedule (Tier 1+ only)
  */
 
 type ViewRange = 'week' | '2weeks' | 'month'
 
 export default function MySchedulePage() {
   const { user } = useAuth()
+  const searchParams = useSearchParams()
   const [viewRange, setViewRange] = useState<ViewRange>('2weeks')
   const [currentDate, setCurrentDate] = useState(() => new Date())
+
+  // Calculate tier based on user role
+  const tier = useMemo(() => calculateTierFromRole(user?.role), [user?.role])
+
+  // Get person ID from URL if provided (for Tier 1+ users)
+  const urlPersonId = searchParams.get('person')
+
+  // Track if user is selecting a different person
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(urlPersonId)
 
   // Calculate date range based on selected view
   const dateRange = useMemo(() => {
@@ -70,7 +93,7 @@ export default function MySchedulePage() {
   const { data: templatesData, isLoading: templatesLoading } = useRotationTemplates()
 
   // Find the current user's person record
-  const currentPerson = useMemo<Person | null>(() => {
+  const currentUserPerson = useMemo<Person | null>(() => {
     if (!user || !peopleData?.items) return null
 
     // Match by email or by user ID (if person has userId field)
@@ -79,9 +102,25 @@ export default function MySchedulePage() {
     ) || null
   }, [user, peopleData])
 
+  // Determine which person to display:
+  // - Tier 0: Always show current user (ignore URL param)
+  // - Tier 1+: Show selected person or current user
+  const displayPerson = useMemo<Person | null>(() => {
+    if (tier === 0) return currentUserPerson
+
+    // For tier 1+, check if a different person is selected
+    const personIdToShow = selectedPersonId || currentUserPerson?.id
+    if (!personIdToShow || !peopleData?.items) return currentUserPerson
+
+    return peopleData.items.find((p) => p.id === personIdToShow) || currentUserPerson
+  }, [tier, selectedPersonId, currentUserPerson, peopleData])
+
+  // Check if viewing another person's schedule
+  const isViewingOther = displayPerson?.id !== currentUserPerson?.id
+
   // Transform assignments to PersonalScheduleCard format
   const myAssignments = useMemo<ScheduleAssignment[]>(() => {
-    if (!currentPerson || !blocksData?.items || !assignmentsData?.items) {
+    if (!displayPerson || !blocksData?.items || !assignmentsData?.items) {
       return []
     }
 
@@ -94,7 +133,7 @@ export default function MySchedulePage() {
     const assignments: ScheduleAssignment[] = []
 
     assignmentsData.items
-      .filter((assignment) => assignment.personId === currentPerson.id)
+      .filter((assignment) => assignment.personId === displayPerson.id)
       .forEach((assignment) => {
         const block = blockMap.get(assignment.blockId)
         if (!block) return
@@ -123,7 +162,7 @@ export default function MySchedulePage() {
       if (a.date !== b.date) return a.date.localeCompare(b.date)
       return a.timeOfDay === 'AM' ? -1 : 1
     })
-  }, [currentPerson, blocksData, assignmentsData, templatesData])
+  }, [displayPerson, blocksData, assignmentsData, templatesData])
 
   // Navigation handlers
   const handlePrev = () => {
@@ -162,7 +201,7 @@ export default function MySchedulePage() {
   const handlePrint = () => window.print()
 
   const handleExport = () => {
-    if (!currentPerson || myAssignments.length === 0) return
+    if (!displayPerson || myAssignments.length === 0) return
 
     // Create CSV content
     const headers = ['Date', 'Day', 'Time', 'Activity', 'Role', 'Notes']
@@ -184,10 +223,21 @@ export default function MySchedulePage() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `my-schedule-${startDateStr}-to-${endDateStr}.csv`
+    const personName = displayPerson.name.replace(/\s+/g, '-').toLowerCase()
+    link.download = `schedule-${personName}-${startDateStr}-to-${endDateStr}.csv`
     link.click()
     URL.revokeObjectURL(url)
   }
+
+  // Handle person selection
+  const handlePersonSelect = (personId: string | null) => {
+    setSelectedPersonId(personId)
+  }
+
+  // Page title based on context
+  const pageTitle = isViewingOther && displayPerson
+    ? `${displayPerson.name}'s Schedule`
+    : 'My Schedule'
 
   // Loading state
   const isLoading = blocksLoading || assignmentsLoading || peopleLoading || templatesLoading
@@ -195,17 +245,39 @@ export default function MySchedulePage() {
 
   return (
     <ProtectedRoute>
+      {/* Risk Bar - always visible, color based on tier */}
+      <RiskBar
+        tier={tier}
+        label={getRiskBarLabel(tier, isViewingOther)}
+        tooltip={getRiskBarTooltip(tier, isViewingOther)}
+      />
+
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Breadcrumbs */}
         <PageBreadcrumbs className="mb-4" />
 
         {/* Header */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Schedule</h1>
-            <p className="text-gray-600 mt-1">
-              {user?.username ? `Viewing schedule for ${user.username}` : 'Your personal rotation schedule'}
-            </p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{pageTitle}</h1>
+              <p className="text-gray-600 mt-1">
+                {isViewingOther && displayPerson
+                  ? `${displayPerson.type === 'resident' ? `PGY-${displayPerson.pgyLevel}` : 'Faculty'} rotation schedule`
+                  : user?.username
+                    ? `Viewing schedule for ${user.username}`
+                    : 'Your personal rotation schedule'}
+              </p>
+            </div>
+
+            {/* Person Selector - only renders for tier 1+ (no CSS hiding) */}
+            <PersonSelector
+              people={peopleData?.items || []}
+              selectedPersonId={selectedPersonId || currentUserPerson?.id || null}
+              onSelect={handlePersonSelect}
+              tier={tier}
+              isLoading={peopleLoading}
+            />
           </div>
           <div className="flex items-center gap-2">
             <CopyUrlButton label="Share" size="sm" variant="outline" />
@@ -288,7 +360,7 @@ export default function MySchedulePage() {
         {isLoading && (
           <div className="flex items-center justify-center py-12">
             <LoadingSpinner />
-            <span className="ml-3 text-gray-600">Loading your schedule...</span>
+            <span className="ml-3 text-gray-600">Loading schedule...</span>
           </div>
         )}
 
@@ -298,7 +370,7 @@ export default function MySchedulePage() {
           />
         )}
 
-        {!isLoading && !error && !currentPerson && (
+        {!isLoading && !error && !displayPerson && (
           <EmptyState
             title="Profile Not Found"
             description="We couldn't find a person profile linked to your account. Please contact your administrator."
@@ -306,13 +378,13 @@ export default function MySchedulePage() {
           />
         )}
 
-        {!isLoading && !error && currentPerson && (
+        {!isLoading && !error && displayPerson && (
           <>
             {/* Schedule Legend */}
             <ScheduleLegend compact className="mb-4" />
 
             <PersonalScheduleCard
-              person={currentPerson}
+              person={displayPerson}
               assignments={myAssignments}
               startDate={dateRange.start}
               endDate={dateRange.end}
@@ -322,7 +394,7 @@ export default function MySchedulePage() {
         )}
 
         {/* Work Hours & Summary Stats */}
-        {!isLoading && !error && currentPerson && myAssignments.length > 0 && (
+        {!isLoading && !error && displayPerson && myAssignments.length > 0 && (
           <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Work Hours Calculator */}
             <div className="lg:col-span-1">

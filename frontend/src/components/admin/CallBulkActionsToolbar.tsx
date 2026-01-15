@@ -29,7 +29,7 @@ export interface CallBulkActionsToolbarProps {
   selectedCount: number;
   /** Callback to clear selection */
   onClearSelection: () => void;
-  /** Callback for bulk delete (optional if user lacks permission) */
+  /** Callback for bulk delete (optional - hide delete button if not provided) */
   onBulkDelete?: () => void;
   /** Callback for bulk reassign */
   onBulkReassign: (personId: string) => void;
