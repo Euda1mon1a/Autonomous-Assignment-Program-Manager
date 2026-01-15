@@ -1037,12 +1037,619 @@ Early Genome:                    Late Genome:
 
 ---
 
+## Appendix A: Exotic Mechanisms (99.9% → 100%)
+
+> *"The last 0.1% requires abandoning assumptions that got you to 99.9%."*
+
+These are orthogonal, unintuitive, or speculative mechanisms that could unlock capabilities beyond standard evolutionary computing.
+
+---
+
+### A.1 Horizontal Gene Transfer (Breaking the Tree)
+
+**Biology:** Bacteria don't just inherit genes from parents - they swap genes with unrelated species via plasmids. This is why antibiotic resistance spreads so fast.
+
+**Schedule Analog:** Endosymbionts can share sub-components with non-descendant endosymbionts.
+
+```python
+def horizontal_transfer(endo_a: Endosymbiont, endo_b: Endosymbiont) -> Tuple[Endosymbiont, Endosymbiont]:
+    """
+    Non-hereditary gene exchange between endosymbionts.
+
+    Unlike crossover, this happens between unrelated individuals
+    that happen to be spatially adjacent.
+    """
+    if not are_grid_neighbors(endo_a, endo_b):
+        return endo_a, endo_b  # Must be adjacent
+
+    # Find transferable sub-components
+    transferable_a = endo_a.get_modular_components()
+    transferable_b = endo_b.get_modular_components()
+
+    # Swap if compatible
+    if is_compatible(transferable_a[0], endo_b):
+        endo_b_new = endo_b.integrate(transferable_a[0])
+        endo_a_new = endo_a.shed(transferable_a[0])
+        return endo_a_new, endo_b_new
+
+    return endo_a, endo_b
+```
+
+**Why it matters:** Traditional GA assumes tree-structured inheritance. HGT allows **lateral capability acquisition** - an endosymbiont can gain a supervision capability from an unrelated neighbor without breeding.
+
+```
+Standard Inheritance:          Horizontal Transfer:
+      A                             A ←──┐
+     / \                           / \   │
+    B   C                         B   C  │
+   /                             /       │ (capability swap)
+  D (inherits from B only)      D ───────┘
+```
+
+---
+
+### A.2 Epigenetic Context Markers
+
+**Biology:** Same DNA, different expression. A liver cell and neuron have identical genomes, but methylation patterns determine which genes activate.
+
+**Schedule Analog:** Same cell assignment behaves differently based on invisible "context markers" from its history.
+
+```python
+@dataclass
+class EpigeneticCell:
+    """
+    A cell with context-dependent expression.
+
+    The base assignment is fixed, but its effective behavior
+    depends on accumulated markers.
+    """
+    base_assignment: Assignment
+    methylation: Dict[str, float]  # Context markers
+
+    def effective_fitness(self, grid: ScheduleGrid) -> float:
+        """
+        Fitness is modulated by epigenetic state.
+        """
+        base = self.base_assignment.fitness(grid)
+
+        # Marker: "stress_exposure" - cells that survived stress gain resilience
+        if self.methylation.get("stress_exposure", 0) > 0.5:
+            base *= 1.1  # 10% resilience bonus
+
+        # Marker: "teaching_history" - cells that taught before teach better
+        if self.methylation.get("teaching_history", 0) > 0.3:
+            base += 15  # Teaching bonus
+
+        # Marker: "coverage_fatigue" - over-used patterns degrade
+        if self.methylation.get("coverage_fatigue", 0) > 0.8:
+            base *= 0.9  # Fatigue penalty
+
+        return base
+
+    def inherit_markers(self, parent: "EpigeneticCell", environment: str):
+        """
+        Partial marker inheritance + environment imprinting.
+        """
+        # Inherit 50% of parent methylation
+        for marker, value in parent.methylation.items():
+            self.methylation[marker] = value * 0.5
+
+        # Environment imprints new markers
+        if environment == "high_stress":
+            self.methylation["stress_exposure"] += 0.3
+```
+
+**Why it matters:** Two identical `R2 → Night Float` assignments could have different fitness if one "remembers" being in a stressful context and developed resilience.
+
+---
+
+### A.3 Quorum Sensing (Collective Decision Making)
+
+**Biology:** Bacteria release signaling molecules. When concentration exceeds threshold (enough bacteria present), they collectively switch behavior (biofilm formation, virulence).
+
+**Schedule Analog:** Cells vote on local optima. Majority preference triggers collective state change.
+
+```python
+class QuorumSensor:
+    """
+    Local consensus mechanism for grid regions.
+    """
+    QUORUM_THRESHOLD = 0.7  # 70% agreement triggers action
+
+    def sense_region(self, grid: ScheduleGrid, center: Position, radius: int) -> Signal:
+        """
+        Aggregate signals from nearby cells.
+        """
+        neighbors = grid.get_cells_within(center, radius)
+        signals = [cell.emit_signal() for cell in neighbors]
+
+        # Count signal types
+        signal_counts = Counter(signals)
+        total = len(signals)
+
+        for signal_type, count in signal_counts.items():
+            if count / total >= self.QUORUM_THRESHOLD:
+                return QuorumReached(signal_type, strength=count/total)
+
+        return NoQuorum()
+
+    def apply_quorum_effect(self, grid: ScheduleGrid, quorum: QuorumReached):
+        """
+        When quorum reached, all cells in region shift behavior.
+        """
+        if quorum.signal_type == "request_supervision":
+            # All cells signal they need supervision
+            # → Attract supervisor to this region
+            grid.emit_attractor("supervisor", quorum.center)
+
+        elif quorum.signal_type == "coverage_saturated":
+            # Too much coverage here
+            # → Repel new assignments from region
+            grid.emit_repellor("coverage", quorum.center)
+```
+
+**Why it matters:** Individual cells making local decisions can't solve global problems. Quorum sensing allows **emergent coordination** without central control.
+
+---
+
+### A.4 Stigmergy (Indirect Coordination via Environment)
+
+**Biology:** Ants leave pheromone trails. No ant knows the global path, but collective trail-following finds shortest routes.
+
+**Schedule Analog:** Cells leave "traces" in the grid that influence future placement decisions.
+
+```python
+class StigmergicGrid(ScheduleGrid):
+    """
+    Grid with pheromone-like traces.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.pheromones = defaultdict(float)  # position → trace strength
+        self.decay_rate = 0.95  # Traces fade over time
+
+    def deposit_trace(self, position: Position, trace_type: str, strength: float):
+        """
+        Cell leaves a trace at its position.
+        """
+        key = (position, trace_type)
+        self.pheromones[key] += strength
+
+    def sense_trace(self, position: Position, trace_type: str) -> float:
+        """
+        Cell senses accumulated traces at position.
+        """
+        key = (position, trace_type)
+        return self.pheromones.get(key, 0)
+
+    def decay_all_traces(self):
+        """
+        Called each generation - traces fade.
+        """
+        for key in self.pheromones:
+            self.pheromones[key] *= self.decay_rate
+
+    def trace_guided_placement(self, cell: Cell) -> Position:
+        """
+        Use traces to guide placement decisions.
+        """
+        candidates = self.get_valid_positions(cell)
+
+        # Score each position by trace attractiveness
+        scored = []
+        for pos in candidates:
+            # Positive: "success" traces from cells that thrived here
+            attract = self.sense_trace(pos, "success")
+            # Negative: "failure" traces from cells that died here
+            repel = self.sense_trace(pos, "failure")
+            score = attract - repel
+            scored.append((pos, score))
+
+        # Probabilistic selection weighted by trace score
+        return weighted_choice(scored)
+```
+
+**Why it matters:** The grid develops a "memory" of what worked where. Good placements reinforce themselves across generations without explicit encoding.
+
+---
+
+### A.5 Apoptosis (Programmed Self-Destruction)
+
+**Biology:** Cells that detect internal damage trigger self-destruction to protect the organism.
+
+**Schedule Analog:** Cells that recognize they're degrading schedule quality actively remove themselves.
+
+```python
+class ApoptoticCell(Cell):
+    """
+    Cell capable of programmed self-destruction.
+    """
+    DAMAGE_THRESHOLD = -50  # Net negative contribution triggers death
+
+    def check_apoptosis(self, grid: ScheduleGrid) -> bool:
+        """
+        Should this cell self-destruct?
+        """
+        # Calculate net contribution to neighbors
+        contribution = self.calculate_neighbor_contribution(grid)
+
+        if contribution < self.DAMAGE_THRESHOLD:
+            return True  # Trigger apoptosis
+
+        # Also check if this cell is blocking better alternatives
+        alternatives = grid.get_alternative_assignments(self.position)
+        best_alternative = max(a.fitness(grid) for a in alternatives)
+
+        if best_alternative > self.fitness(grid) * 1.5:
+            return True  # Better option exists, sacrifice self
+
+        return False
+
+    def execute_apoptosis(self, grid: ScheduleGrid):
+        """
+        Clean self-removal with signals to neighbors.
+        """
+        # Notify neighbors of impending removal
+        for neighbor in grid.get_adjacent(self):
+            neighbor.receive_apoptosis_signal(self)
+
+        # Leave a "death marker" for stigmergy
+        grid.deposit_trace(self.position, "failure", strength=10)
+
+        # Remove self
+        grid.remove_cell(self)
+```
+
+**Why it matters:** Bad cells don't just get outcompeted (slow) - they actively remove themselves (fast). This **accelerates convergence** by clearing deadwood.
+
+---
+
+### A.6 Niche Construction (Cells That Reshape Constraints)
+
+**Biology:** Beavers build dams, changing the environment. Earthworms modify soil chemistry. Organisms don't just adapt to environment - they modify it.
+
+**Schedule Analog:** Cells that relax or tighten local constraints based on what they need.
+
+```python
+class NicheConstructor:
+    """
+    Cells that modify local constraint landscape.
+    """
+
+    def construct_niche(self, cell: Cell, grid: ScheduleGrid):
+        """
+        Cell modifies constraints in its neighborhood.
+        """
+        if cell.type == "senior_resident":
+            # Seniors create "teaching zones" where juniors get bonus
+            grid.add_local_modifier(
+                center=cell.position,
+                radius=2,
+                modifier=TeachingZoneModifier(bonus=20)
+            )
+
+        elif cell.type == "call_shift":
+            # Call shifts create "recovery zones" in adjacent slots
+            grid.add_local_modifier(
+                center=cell.position.next_day(),
+                radius=1,
+                modifier=RecoveryZoneModifier(light_duty_bonus=30)
+            )
+
+        elif cell.type == "coverage_anchor":
+            # Anchors tighten constraints - no gaps allowed nearby
+            grid.add_local_modifier(
+                center=cell.position,
+                radius=3,
+                modifier=NoCoverageGapModifier(penalty=-100)
+            )
+```
+
+**Why it matters:** Instead of cells adapting to fixed constraints, **constraints co-evolve with cells**. This allows the system to discover constraint configurations that weren't in the original spec.
+
+---
+
+### A.7 The Baldwin Effect (Learned → Genetic)
+
+**Biology:** Behaviors learned during lifetime become genetic over generations. Organisms that can learn X faster eventually evolve to do X instinctively.
+
+**Schedule Analog:** Manually placed patterns that consistently work become encoded as endosymbionts.
+
+```python
+class BaldwinEncoder:
+    """
+    Detects learned patterns and encodes them genetically.
+    """
+
+    def __init__(self):
+        self.manual_placements = []  # Track human overrides
+        self.pattern_frequency = Counter()
+
+    def record_manual_placement(self, cells: List[Cell], reason: str):
+        """
+        Human coordinator manually places cells.
+        """
+        pattern = self.extract_pattern(cells)
+        self.manual_placements.append({
+            "pattern": pattern,
+            "reason": reason,
+            "timestamp": now()
+        })
+        self.pattern_frequency[pattern] += 1
+
+    def check_for_encoding(self) -> Optional[Endosymbiont]:
+        """
+        Patterns placed manually 5+ times become genetic.
+        """
+        for pattern, count in self.pattern_frequency.items():
+            if count >= 5:
+                # This learned pattern is now instinctive
+                return self.encode_as_endosymbiont(pattern)
+        return None
+
+    def encode_as_endosymbiont(self, pattern: Pattern) -> Endosymbiont:
+        """
+        Convert learned pattern to genetic endosymbiont.
+
+        Future generations will produce this pattern
+        without human intervention.
+        """
+        return Endosymbiont(
+            id=f"baldwin_{hash(pattern)}",
+            members=pattern.cells,
+            pattern=pattern.spatial,
+            fitness_baseline=pattern.observed_fitness,
+            generation_born=-1,  # "Pre-genetic" origin
+            lineage="learned→genetic",
+            unlocked_patterns=["human_validated"],
+        )
+```
+
+**Why it matters:** Human expertise gets **crystallized into the genome**. The system learns from coordinators, then automates their patterns.
+
+---
+
+### A.8 Anticipatory Modeling (Cells That Predict)
+
+**Biology:** Some organisms model their own future - predators anticipate prey movement, immune systems predict pathogen evolution.
+
+**Schedule Analog:** Cells that simulate their neighborhood's response before committing.
+
+```python
+class AnticipatoryCell(Cell):
+    """
+    Cell that models consequences before acting.
+    """
+
+    def anticipatory_fitness(self, grid: ScheduleGrid, depth: int = 2) -> float:
+        """
+        Fitness includes predicted future states.
+        """
+        immediate = self.calculate_fitness(grid)
+
+        if depth == 0:
+            return immediate
+
+        # Simulate neighbor responses
+        predicted_future = 0
+        for neighbor in grid.get_adjacent(self):
+            # What will neighbor do in response to me?
+            neighbor_response = neighbor.predict_response(self, grid)
+            # How does that affect my fitness?
+            future_effect = self.evaluate_neighbor_response(neighbor_response)
+            predicted_future += future_effect
+
+        # Discount future (uncertainty)
+        discount = 0.8 ** depth
+
+        return immediate + (predicted_future * discount)
+
+    def predict_response(self, stimulus: Cell, grid: ScheduleGrid) -> Response:
+        """
+        Model: "If stimulus does X, I will do Y."
+        """
+        # Simple reactive model
+        if stimulus.provides_supervision_for(self):
+            return Response("accept_supervision", benefit=30)
+        elif stimulus.competes_for_coverage(self):
+            return Response("yield_coverage", cost=-10)
+        else:
+            return Response("no_change", effect=0)
+```
+
+**Why it matters:** Cells don't just react to current state - they **anticipate consequences**. This enables strategic behavior that simple fitness can't capture.
+
+---
+
+### A.9 Vestigial Pattern Archaeology
+
+**Biology:** Vestigial structures (appendix, tailbone) reveal evolutionary history.
+
+**Schedule Analog:** Dead patterns in the genome reveal optimization history and constraint archaeology.
+
+```python
+class VestigialAnalyzer:
+    """
+    Analyze inactive patterns for optimization insights.
+    """
+
+    def find_vestigial_patterns(self, genome: Genome) -> List[VestigialPattern]:
+        """
+        Find patterns that exist but are never expressed.
+        """
+        vestigial = []
+
+        for pattern in genome.all_patterns():
+            if pattern.expression_frequency < 0.01:  # <1% of schedules
+                vestigial.append(VestigialPattern(
+                    pattern=pattern,
+                    probable_origin=self.infer_origin(pattern),
+                    last_active=self.find_last_active(pattern),
+                ))
+
+        return vestigial
+
+    def infer_origin(self, pattern: Pattern) -> str:
+        """
+        Why does this pattern exist if it's never used?
+        """
+        # Check if pattern satisfies old constraints
+        for old_constraint in self.historical_constraints:
+            if pattern.satisfies(old_constraint):
+                return f"Evolved for removed constraint: {old_constraint.name}"
+
+        # Check if pattern is fragment of broken endosymbiont
+        for endo in self.historical_endosymbionts:
+            if pattern in endo.members:
+                return f"Fragment of extinct endosymbiont: {endo.id}"
+
+        return "Origin unknown - possible exaptation candidate"
+```
+
+**Why it matters:** Vestigial patterns are **free options**. They might solve future constraints we haven't encountered yet (exaptation potential).
+
+---
+
+### A.10 Metabolic Scaling (Size-Dependent Dynamics)
+
+**Biology:** Larger organisms have slower metabolisms, longer lifespans, slower reproduction. Mouse vs elephant.
+
+**Schedule Analog:** Larger endosymbionts evolve slower, mutate less, but are more stable.
+
+```python
+class MetabolicScaler:
+    """
+    Size-dependent evolutionary dynamics.
+    """
+
+    def scaled_mutation_rate(self, entity: Union[Cell, Endosymbiont], base_rate: float) -> float:
+        """
+        Larger entities mutate slower.
+
+        Kleiber's law: metabolic rate ~ mass^0.75
+        """
+        if isinstance(entity, Cell):
+            size = 1
+        else:
+            size = len(entity.members)
+
+        # Inverse scaling - larger = slower mutation
+        scaled = base_rate * (size ** -0.25)
+        return scaled
+
+    def scaled_reproduction_rate(self, entity: Union[Cell, Endosymbiont]) -> float:
+        """
+        Larger entities reproduce slower but offspring more robust.
+        """
+        size = len(entity.members) if isinstance(entity, Endosymbiont) else 1
+
+        rate = 1.0 / (size ** 0.5)
+        offspring_robustness = size ** 0.25
+
+        return rate, offspring_robustness
+```
+
+**Why it matters:** Prevents runaway endosymbiont growth. Large endosymbionts become **conservative stabilizers** while small cells remain **innovative mutators**.
+
+---
+
+### A.11 Prion-like Pattern Propagation
+
+**Biology:** Prions are misfolded proteins that convert normal proteins to misfolded form. Infectious conformation.
+
+**Schedule Analog:** Strong patterns that "convert" adjacent weak patterns to match themselves.
+
+```python
+class PrionPattern:
+    """
+    Self-propagating pattern that converts neighbors.
+    """
+    CONVERSION_THRESHOLD = 0.7  # Fitness ratio triggers conversion
+
+    def attempt_conversion(self, neighbor: Cell, grid: ScheduleGrid) -> bool:
+        """
+        Try to convert neighbor to match this pattern.
+        """
+        my_fitness = self.fitness(grid)
+        their_fitness = neighbor.fitness(grid)
+
+        if my_fitness / their_fitness > self.CONVERSION_THRESHOLD:
+            # I'm significantly fitter - attempt conversion
+            converted = neighbor.convert_to_pattern(self.pattern)
+            if converted.fitness(grid) > their_fitness:
+                grid.replace(neighbor, converted)
+                return True
+
+        return False
+
+    def propagation_wave(self, grid: ScheduleGrid, origin: Position, max_hops: int = 3):
+        """
+        Propagate pattern outward from origin.
+        """
+        frontier = [origin]
+        visited = set()
+
+        for hop in range(max_hops):
+            next_frontier = []
+            for pos in frontier:
+                if pos in visited:
+                    continue
+                visited.add(pos)
+
+                cell = grid.get(pos)
+                if self.attempt_conversion(cell, grid):
+                    next_frontier.extend(grid.get_adjacent_positions(pos))
+
+            frontier = next_frontier
+```
+
+**Why it matters:** Good patterns don't just survive - they **actively spread**. This accelerates convergence when a winning pattern is discovered.
+
+---
+
+### Summary: The Exotic Toolkit
+
+| Mechanism | Biological Analog | Schedule Application | 99.9%→100% Contribution |
+|-----------|-------------------|---------------------|------------------------|
+| **Horizontal Gene Transfer** | Bacterial plasmids | Endosymbiont capability sharing | Lateral acquisition of traits |
+| **Epigenetics** | Methylation | Context-dependent fitness | Same gene, different behavior |
+| **Quorum Sensing** | Biofilm formation | Collective local decisions | Emergent coordination |
+| **Stigmergy** | Ant pheromones | Grid memory of success/failure | Indirect learning |
+| **Apoptosis** | Programmed cell death | Self-destructive bad cells | Accelerated cleanup |
+| **Niche Construction** | Beaver dams | Cells modify constraints | Co-evolving landscape |
+| **Baldwin Effect** | Learned→innate | Manual patterns→endosymbionts | Human expertise crystallization |
+| **Anticipatory Modeling** | Predator-prey | Cells predict responses | Strategic behavior |
+| **Vestigial Archaeology** | Appendix | Dead pattern analysis | Exaptation candidates |
+| **Metabolic Scaling** | Mouse vs elephant | Size-dependent dynamics | Stability/innovation balance |
+| **Prion Propagation** | Infectious proteins | Self-spreading patterns | Accelerated convergence |
+
+The common thread: **abandoning the assumptions of standard evolutionary computing** (fixed fitness landscape, tree-structured inheritance, passive adaptation, isolated individuals) to embrace the full weirdness of biological evolution.
+
+---
+
+## 7. Next Steps
+
+1. **Prototype `cooperative_fitness()`** - Implement and validate scoring
+2. **Build NetworkX integration** - Graph-based coalition detection
+3. **Benchmark against standard GA** - Compare convergence speed and solution quality
+4. **Tune cooperation weights** - Find optimal balance of base vs uplift
+5. **Visualize emergence** - Animate coalition formation over generations
+6. **Exotic prototype selection** - Pick 2-3 mechanisms from Appendix A for experimental implementation
+
+---
+
 ## References
 
 - Axelrod, R. (1984). *The Evolution of Cooperation*
 - Shapley, L.S. (1953). "A Value for n-Person Games"
 - NetworkX Documentation: Community Detection
 - DEAP Documentation: Coevolutionary Algorithms
+- Margulis, L. (1967). "On the Origin of Mitosing Cells" (Endosymbiosis)
+- Odling-Smee, F.J. et al. (2003). *Niche Construction: The Neglected Process in Evolution*
+- Baldwin, J.M. (1896). "A New Factor in Evolution" (Baldwin Effect)
+- Rosen, R. (1985). *Anticipatory Systems* (Predictive Modeling)
+- West-Eberhard, M.J. (2003). *Developmental Plasticity and Evolution* (Epigenetics)
 
 ---
 
