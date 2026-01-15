@@ -182,6 +182,51 @@ else
   echo -e "${GREEN}OK${NC}"
 fi
 
+# ============================================================
+# Personnel Name Detection (PERSEC)
+# Catches real resident/faculty names in committed files
+# ============================================================
+
+echo -n "Checking for personnel names in staged files... "
+
+# Known personnel names (last names only - add as needed)
+# These are from the residency program roster
+KNOWN_NAMES="Bevis|Byrnes|Cataquiz|Chu|Colgan|Connolly|Cook|Dahl|Gigon|Headid|Hernandez|Kinkennon|LaBounty|Lamoureux|Maher|Mayell|McGuire|McRae|Monsivais|Montgomery|Napierala|Petrie|Sawyer|Sloss|Tagawa|Thomas|Travis|Van Brunt|Wilhelm|You"
+
+# Get staged files (or all tracked files if not in pre-commit context)
+if [ "${1:-}" = "--staged-only" ]; then
+  STAGED_FILES=$(git diff --cached --name-only 2>/dev/null || true)
+else
+  STAGED_FILES=$(git diff --cached --name-only 2>/dev/null || true)
+fi
+
+# Check staged markdown and text files for names
+if [ -n "$STAGED_FILES" ]; then
+  NAME_MATCHES=""
+  for file in $STAGED_FILES; do
+    if [[ "$file" =~ \.(md|txt|json|xml|csv)$ ]] && [ -f "$file" ]; then
+      MATCHES=$(grep -nE "\b($KNOWN_NAMES)\b" "$file" 2>/dev/null || true)
+      if [ -n "$MATCHES" ]; then
+        NAME_MATCHES="${NAME_MATCHES}${file}:
+${MATCHES}
+"
+      fi
+    fi
+  done
+
+  if [ -n "$NAME_MATCHES" ]; then
+    echo -e "${RED}FOUND${NC}"
+    echo -e "${RED}ERROR: Personnel names detected in staged files!${NC}"
+    echo "$NAME_MATCHES" | head -20
+    echo -e "${YELLOW}Hint: Use role descriptions (e.g., 'SM faculty') instead of names${NC}"
+    ERRORS=1
+  else
+    echo -e "${GREEN}OK${NC}"
+  fi
+else
+  echo -e "${GREEN}OK (no staged files)${NC}"
+fi
+
 # Summary
 echo ""
 if [ $ERRORS -eq 0 ]; then
