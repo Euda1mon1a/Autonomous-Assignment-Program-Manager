@@ -1,299 +1,346 @@
 #!/usr/bin/env python3
 """
-Validate expansion service against ROSETTA_COMPLETE ground truth.
+Validate ROSETTA_COMPLETE.xml against ROSETTA_COMPLETE.xlsx.
 
-Parses Block10_ROSETTA_COMPLETE.xml and compares against expansion service output.
+This script compares XML and XLSX files cell-by-cell to ensure
+they contain the same data. Does NOT validate against scheduling rules.
 """
 
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 from xml.etree import ElementTree
+
+from openpyxl import load_workbook
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-ROSETTA_PATH = (
+ROSETTA_XML = (
     Path(__file__).parent.parent.parent
     / "docs"
     / "scheduling"
     / "Block10_ROSETTA_COMPLETE.xml"
 )
 
+ROSETTA_XLSX = (
+    Path(__file__).parent.parent.parent
+    / "docs"
+    / "scheduling"
+    / "Block10_ROSETTA_COMPLETE.xlsx"
+)
 
-def parse_rosetta_xml(path: Path) -> dict[str, dict]:
+# Block 10 dates
+BLOCK_START = date(2026, 3, 12)
+BLOCK_END = date(2026, 4, 8)
+
+# XLSX column mapping (Block Template2 format)
+# Row 3 = Headers: Rotation 1, Rotation 2, Template, Role, Provider, dates...
+# Data rows start at row 9 (after header, call rows, and empty rows)
+COL_ROTATION1 = 1  # "Hilo", "NF", "FMC", etc.
+COL_ROTATION2 = 2  # Second-half rotation (if mid-block switch)
+COL_TEMPLATE = 3  # "R3", "R2", "R1", "C19", "ADJ", etc.
+COL_ROLE = 4  # "PGY 3", "PGY 2", "PGY 1", "FAC", etc.
+COL_NAME = 5  # Provider name ("Connolly, Laura", etc.)
+COL_SCHEDULE_START = 6  # First schedule column (Mar 12 AM)
+DATA_ROW_START = 9  # First data row (after headers and call rows)
+
+
+def parse_xml() -> tuple[dict, dict, dict]:
     """
-    Parse ROSETTA XML into resident schedules.
+    Parse ROSETTA XML into structured data.
 
     Returns:
-        Dict mapping resident name to schedule dict:
-        {
-            "Travis, Colin": {
-                "pgy": 1,
-                "rotation1": "KAP",
-                "rotation2": "",
-                "days": {
-                    "2026-03-12": {"am": "KAP", "pm": "KAP"},
-                    ...
-                }
-            }
-        }
+        Tuple of (residents, faculty, call_schedule)
     """
-    tree = ElementTree.parse(path)
+    tree = ElementTree.parse(ROSETTA_XML)
     root = tree.getroot()
 
+    # Parse call schedule
+    call_schedule = {}
+    call_elem = root.find("call")
+    if call_elem is not None:
+        for night in call_elem.findall("night"):
+            call_schedule[night.get("date")] = night.get("faculty")
+
+    # Parse residents
     residents = {}
-    for resident in root.findall("resident"):
-        name = resident.get("name")
-        pgy = int(resident.get("pgy", 0))
-        rotation1 = resident.get("rotation1", "")
-        rotation2 = resident.get("rotation2", "")
-
-        days = {}
-        for day in resident.findall("day"):
-            date_str = day.get("date")
-            am = day.get("am")
-            pm = day.get("pm")
-            days[date_str] = {"am": am, "pm": pm}
-
+    for elem in root.findall("resident"):
+        name = elem.get("name")
         residents[name] = {
+            "pgy": elem.get("pgy"),
+            "rotation1": elem.get("rotation1", ""),
+            "rotation2": elem.get("rotation2", ""),
+            "days": {
+                day.get("date"): {"am": day.get("am"), "pm": day.get("pm")}
+                for day in elem.findall("day")
+            },
+        }
+
+    # Parse faculty
+    faculty = {}
+    for elem in root.findall("faculty"):
+        name = elem.get("name")
+        faculty[name] = {
+            "role": elem.get("role", ""),
+            "notes": elem.get("notes", ""),
+            "days": {
+                day.get("date"): {"am": day.get("am"), "pm": day.get("pm")}
+                for day in elem.findall("day")
+            },
+        }
+
+    return residents, faculty, call_schedule
+
+
+def parse_xlsx() -> tuple[dict, dict, dict]:
+    """
+    Parse ROSETTA XLSX (Block Template2 format) into structured data.
+
+    Returns:
+        Tuple of (residents, faculty, call_schedule)
+    """
+    wb = load_workbook(ROSETTA_XLSX, data_only=True)
+    sheet = wb.active
+
+    residents = {}
+    faculty = {}
+    call_schedule = {}
+
+    # Build date-to-column mapping
+    date_to_cols = {}
+    current = BLOCK_START
+    col = COL_SCHEDULE_START
+    while current <= BLOCK_END:
+        date_to_cols[current.isoformat()] = col
+        current += timedelta(days=1)
+        col += 2  # AM, PM
+
+    # Parse call row (row 4)
+    for date_str, start_col in date_to_cols.items():
+        call_val = sheet.cell(row=4, column=start_col).value
+        if call_val and call_val not in ("Staff Call", "CALL"):
+            call_schedule[date_str] = call_val
+
+    # Parse data rows (starting at row 9)
+    for row in range(DATA_ROW_START, sheet.max_row + 1):
+        name = sheet.cell(row=row, column=COL_NAME).value
+        if not name or str(name).strip() == "":
+            continue
+
+        role = sheet.cell(row=row, column=COL_ROLE).value or ""
+        rotation1 = sheet.cell(row=row, column=COL_ROTATION1).value or ""
+        rotation2 = sheet.cell(row=row, column=COL_ROTATION2).value or ""
+
+        # Read schedule
+        days = {}
+        for date_str, start_col in date_to_cols.items():
+            am = sheet.cell(row=row, column=start_col).value or ""
+            pm = sheet.cell(row=row, column=start_col + 1).value or ""
+            days[date_str] = {"am": str(am), "pm": str(pm)}
+
+        # Determine PGY level from role
+        pgy = ""
+        if "PGY 1" in str(role) or "PGY1" in str(role):
+            pgy = "1"
+        elif "PGY 2" in str(role) or "PGY2" in str(role):
+            pgy = "2"
+        elif "PGY 3" in str(role) or "PGY3" in str(role):
+            pgy = "3"
+
+        entry = {
             "pgy": pgy,
-            "rotation1": rotation1,
-            "rotation2": rotation2,
+            "rotation1": str(rotation1),
+            "rotation2": str(rotation2),
+            "role": str(role),
             "days": days,
         }
 
-    return residents
+        # Determine if resident or faculty based on role
+        if pgy:
+            residents[name] = entry
+        elif "FAC" in str(role):
+            faculty[name] = entry
+        # Skip other roles (ADJ, SPEC, etc. that aren't in XML)
+
+    return residents, faculty, call_schedule
 
 
-def get_rotation_pattern(
-    rotation: str, day_of_week: int, is_last_wed: bool = False
-) -> tuple[str, str]:
+def compare_schedules(xml_data: dict, xlsx_data: dict, label: str) -> list[dict]:
     """
-    Get expected AM/PM codes for a rotation on a given day.
+    Compare XML and XLSX schedule data.
 
-    Args:
-        rotation: Rotation name
-        day_of_week: 0=Mon, 1=Tue, ..., 6=Sun
-        is_last_wed: True if this is the last Wednesday of the block
-
-    Returns:
-        Tuple of (AM_code, PM_code)
+    Returns list of mismatches.
     """
-    # Last Wednesday override
-    if is_last_wed:
-        return ("LEC", "ADV")
-
-    # Weekend
-    if day_of_week in (5, 6):  # Sat, Sun
-        # Some rotations work weekends
-        if rotation in ("IM", "FMIT", "PedW"):
-            pass  # These work weekends
-        elif rotation == "KAP":
-            return ("KAP", "KAP")  # KAP works weekends
-        else:
-            return ("W", "W")
-
-    # Wednesday PM is LEC for most
-    if day_of_week == 2:  # Wednesday
-        # Get AM code, PM is LEC
-        am, _ = _get_base_pattern(rotation, day_of_week)
-        return (am, "LEC")
-
-    return _get_base_pattern(rotation, day_of_week)
-
-
-def _get_base_pattern(rotation: str, day_of_week: int) -> tuple[str, str]:
-    """Get base AM/PM pattern for rotation."""
-
-    # KAP - Kapiolani L&D (PGY-1)
-    if rotation == "KAP":
-        if day_of_week == 0:  # Monday
-            return ("KAP", "OFF")
-        elif day_of_week == 1:  # Tuesday
-            return ("OFF", "OFF")
-        elif day_of_week == 2:  # Wednesday
-            return ("C", "LEC")
-        else:  # Thu-Sun
-            return ("KAP", "KAP")
-
-    # LDNF - L&D Night Float (PGY-2)
-    if rotation in ("LDNF", "L&D Night Float"):
-        if day_of_week == 4:  # Friday
-            return ("C", "OFF")
-        elif day_of_week in (5, 6):  # Weekend
-            return ("W", "W")
-        else:  # Mon-Thu
-            return ("OFF", "LDNF")
-
-    # Night Float
-    if rotation == "NF":
-        return ("OFF", "NF")
-
-    # Peds Night Float
-    if rotation in ("Peds NF", "PedNF"):
-        return ("OFF", "PedNF")
-
-    # Peds Ward
-    if rotation in ("Peds Ward", "PedW"):
-        return ("PedW", "PedW")
-
-    # FMIT
-    if rotation in ("FMIT", "FMIT 2"):
-        return ("FMIT", "FMIT")
-
-    # IM
-    if rotation == "IM":
-        return ("IM", "IM")
-
-    # FMC - Family Medicine Clinic
-    if rotation == "FMC":
-        return ("C", "C")
-
-    # PROC - Procedures
-    if rotation == "PROC":
-        return ("PR", "C")
-
-    # Neurology
-    if rotation == "NEURO":
-        return ("NEURO", "C")
-
-    # Sports Medicine
-    if rotation == "SM":
-        return ("SM", "C")
-
-    # POCUS
-    if rotation == "POCUS":
-        return ("US", "C")
-
-    # Surgery Experience
-    if rotation in ("Surg Exp", "SURG"):
-        return ("SURG", "C")
-
-    # Gyn Clinic
-    if rotation in ("Gyn Clinic", "GYN"):
-        return ("GYN", "C")
-
-    # Hilo TDY
-    if rotation == "Hilo":
-        return ("TDY", "TDY")
-
-    # Default
-    return (rotation, rotation)
-
-
-def main():
-    """Run validation."""
-    print("=" * 70)
-    print("ROSETTA_COMPLETE VALIDATION")
-    print("=" * 70)
-    print()
-
-    if not ROSETTA_PATH.exists():
-        print(f"ERROR: ROSETTA file not found at {ROSETTA_PATH}")
-        sys.exit(1)
-
-    # Parse ROSETTA
-    print(f"Parsing: {ROSETTA_PATH}")
-    residents = parse_rosetta_xml(ROSETTA_PATH)
-    print(f"Found {len(residents)} residents")
-    print()
-
-    # Display summary
-    print("Residents by PGY level:")
-    by_pgy = {}
-    for name, data in residents.items():
-        pgy = data["pgy"]
-        by_pgy.setdefault(pgy, []).append(name)
-
-    for pgy in sorted(by_pgy.keys()):
-        print(f"  PGY-{pgy}: {len(by_pgy[pgy])}")
-        for name in sorted(by_pgy[pgy]):
-            rot = residents[name]["rotation1"]
-            rot2 = residents[name].get("rotation2", "")
-            if rot2:
-                print(f"    - {name}: {rot} → {rot2}")
-            else:
-                print(f"    - {name}: {rot}")
-
-    print()
-
-    # Validate patterns
-    print("Validating patterns...")
-    print("-" * 70)
-
     mismatches = []
-    for name, data in residents.items():
-        rot1 = data["rotation1"]
-        rot2 = data.get("rotation2", "")
 
-        for date_str, slots in data["days"].items():
-            d = date.fromisoformat(date_str)
-            dow = d.weekday()
+    # Check for names in XML not in XLSX
+    for name in xml_data:
+        if name not in xlsx_data:
+            mismatches.append(
+                {
+                    "name": name,
+                    "issue": "In XML but not in XLSX",
+                    "type": "missing",
+                }
+            )
 
-            # Determine if mid-block (Mar 23+)
-            mid_block_date = date(2026, 3, 23)
-            rotation = rot2 if (rot2 and d >= mid_block_date) else rot1
+    # Check for names in XLSX not in XML
+    for name in xlsx_data:
+        if name not in xml_data:
+            mismatches.append(
+                {
+                    "name": name,
+                    "issue": "In XLSX but not in XML",
+                    "type": "missing",
+                }
+            )
 
-            # Check if last Wednesday (Apr 8)
-            is_last_wed = date_str == "2026-04-08"
+    # Compare day-by-day for matching names
+    for name in xml_data:
+        if name not in xlsx_data:
+            continue
 
-            expected_am, expected_pm = get_rotation_pattern(rotation, dow, is_last_wed)
-            actual_am = slots["am"]
-            actual_pm = slots["pm"]
+        xml_entry = xml_data[name]
+        xlsx_entry = xlsx_data[name]
 
-            if expected_am != actual_am:
+        # Compare each day
+        for date_str in xml_entry["days"]:
+            xml_day = xml_entry["days"].get(date_str, {})
+            xlsx_day = xlsx_entry["days"].get(date_str, {})
+
+            xml_am = xml_day.get("am", "")
+            xml_pm = xml_day.get("pm", "")
+            xlsx_am = xlsx_day.get("am", "")
+            xlsx_pm = xlsx_day.get("pm", "")
+
+            if xml_am != xlsx_am:
                 mismatches.append(
                     {
                         "name": name,
                         "date": date_str,
                         "slot": "AM",
-                        "expected": expected_am,
-                        "actual": actual_am,
-                        "rotation": rotation,
+                        "xml": xml_am,
+                        "xlsx": xlsx_am,
+                        "type": "value",
                     }
                 )
 
-            if expected_pm != actual_pm:
+            if xml_pm != xlsx_pm:
                 mismatches.append(
                     {
                         "name": name,
                         "date": date_str,
                         "slot": "PM",
-                        "expected": expected_pm,
-                        "actual": actual_pm,
-                        "rotation": rotation,
+                        "xml": xml_pm,
+                        "xlsx": xlsx_pm,
+                        "type": "value",
                     }
                 )
 
-    if mismatches:
-        print(f"Found {len(mismatches)} mismatches:")
-        print()
+    return mismatches
 
-        # Group by resident
-        by_resident = {}
-        for m in mismatches:
-            by_resident.setdefault(m["name"], []).append(m)
 
-        for name in sorted(by_resident.keys()):
-            items = by_resident[name]
-            print(f"{name} ({len(items)} mismatches):")
-            for m in items[:5]:  # Show first 5
-                print(
-                    f"  {m['date']} {m['slot']}: expected {m['expected']}, got {m['actual']} (rot={m['rotation']})"
-                )
-            if len(items) > 5:
-                print(f"  ... and {len(items) - 5} more")
-            print()
-    else:
-        print("All patterns match!")
-
+def main():
+    """Run XML ↔ XLSX validation."""
     print("=" * 70)
-    if mismatches:
-        print(f"VALIDATION: {len(mismatches)} mismatches found")
-        print("These indicate where our pattern logic differs from ROSETTA")
+    print("ROSETTA XML ↔ XLSX VALIDATION")
+    print("=" * 70)
+    print()
+
+    # Check files exist
+    if not ROSETTA_XML.exists():
+        print(f"ERROR: XML file not found: {ROSETTA_XML}")
+        sys.exit(1)
+    if not ROSETTA_XLSX.exists():
+        print(f"ERROR: XLSX file not found: {ROSETTA_XLSX}")
+        sys.exit(1)
+
+    # Parse both files
+    print("Parsing XML...")
+    xml_residents, xml_faculty, xml_call = parse_xml()
+    print(f"  Residents: {len(xml_residents)}")
+    print(f"  Faculty: {len(xml_faculty)}")
+    print(f"  Call nights: {len(xml_call)}")
+    print()
+
+    print("Parsing XLSX...")
+    xlsx_residents, xlsx_faculty, xlsx_call = parse_xlsx()
+    print(f"  Residents: {len(xlsx_residents)}")
+    print(f"  Faculty: {len(xlsx_faculty)}")
+    print(f"  Call nights: {len(xlsx_call)}")
+    print()
+
+    # Compare residents
+    print("=" * 70)
+    print("RESIDENT COMPARISON")
+    print("=" * 70)
+    resident_mismatches = compare_schedules(xml_residents, xlsx_residents, "Resident")
+
+    if resident_mismatches:
+        print(f"\nFound {len(resident_mismatches)} resident mismatches:")
+        by_name = {}
+        for m in resident_mismatches:
+            by_name.setdefault(m["name"], []).append(m)
+
+        for name in sorted(by_name.keys()):
+            items = by_name[name]
+            print(f"\n{name}:")
+            for m in items[:10]:
+                if m["type"] == "missing":
+                    print(f"  {m['issue']}")
+                else:
+                    print(
+                        f"  {m['date']} {m['slot']}: XML={m['xml']!r} vs XLSX={m['xlsx']!r}"
+                    )
+            if len(items) > 10:
+                print(f"  ... and {len(items) - 10} more")
     else:
-        print("VALIDATION PASSED")
+        print("\nAll residents match!")
+
+    # Compare faculty
+    print()
+    print("=" * 70)
+    print("FACULTY COMPARISON")
+    print("=" * 70)
+    faculty_mismatches = compare_schedules(xml_faculty, xlsx_faculty, "Faculty")
+
+    if faculty_mismatches:
+        print(f"\nFound {len(faculty_mismatches)} faculty mismatches:")
+        by_name = {}
+        for m in faculty_mismatches:
+            by_name.setdefault(m["name"], []).append(m)
+
+        for name in sorted(by_name.keys()):
+            items = by_name[name]
+            print(f"\n{name}:")
+            for m in items[:10]:
+                if m["type"] == "missing":
+                    print(f"  {m['issue']}")
+                else:
+                    print(
+                        f"  {m['date']} {m['slot']}: XML={m['xml']!r} vs XLSX={m['xlsx']!r}"
+                    )
+            if len(items) > 10:
+                print(f"  ... and {len(items) - 10} more")
+    else:
+        print("\nAll faculty match!")
+
+    # Summary
+    print()
+    print("=" * 70)
+    print("SUMMARY")
+    print("=" * 70)
+    total = len(resident_mismatches) + len(faculty_mismatches)
+    print(f"\nResident mismatches: {len(resident_mismatches)}")
+    print(f"Faculty mismatches:  {len(faculty_mismatches)}")
+    print(f"TOTAL:               {total}")
+
+    if total == 0:
+        print("\n✓ XML and XLSX are in sync!")
+    else:
+        print("\n✗ XML and XLSX have differences")
+
     print("=" * 70)
 
 
