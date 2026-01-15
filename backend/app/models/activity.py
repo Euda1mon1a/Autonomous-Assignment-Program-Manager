@@ -152,6 +152,16 @@ class Activity(Base):
         comment="True for supervision activities (AT, PCAT, DO) that count toward supervision ratios",
     )
 
+    # Physical capacity tracking (C vs AT distinction)
+    # Max 6 people doing clinical work (C) per half-day
+    # AT does NOT count toward this limit (supervising, not generating patient load)
+    counts_toward_physical_capacity = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+        comment="True for clinical work (C, CV, PR, VAS) that counts toward max 6/slot",
+    )
+
     # UI ordering
     display_order = Column(
         Integer,
