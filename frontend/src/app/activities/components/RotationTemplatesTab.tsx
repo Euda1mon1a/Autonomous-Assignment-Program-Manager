@@ -1,312 +1,185 @@
-'use client';
+'use client'
+
+import { useState, useMemo } from 'react'
+import { Plus, Search, ChevronDown } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { get } from '@/lib/api'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { ErrorAlert } from '@/components/ErrorAlert'
+import { EmptyState } from '@/components/EmptyState'
+import type { RotationTemplate } from '@/types/api'
+
+interface RotationTemplatesTabProps {
+  canEdit: boolean
+  canDelete: boolean
+}
+
+interface ListResponse<T> {
+  items: T[]
+  total: number
+  skip: number
+  limit: number
+}
 
 /**
- * Rotation Templates Tab Component
+ * RotationTemplatesTab - Displays and manages rotation templates
  *
- * Displays and manages rotation templates for resident scheduling.
- * Templates define activity patterns with constraints like max residents,
- * supervision requirements, and specialty prerequisites.
- *
- * Permission-gated actions:
- * - Tier 0: View only
- * - Tier 1: Create and edit templates
- * - Tier 2: Create, edit, and delete templates
+ * Rotation templates define reusable activity patterns for resident scheduling.
  */
-
-import { useState } from 'react';
-import { Plus, RefreshCw, FileText, Calendar, Eye } from 'lucide-react';
-import { useRotationTemplates, useDeleteTemplate } from '@/lib/hooks';
-import { CardSkeleton } from '@/components/skeletons';
-import { CreateTemplateModal } from '@/components/CreateTemplateModal';
-import { EditTemplateModal } from '@/components/EditTemplateModal';
-import { TemplatePatternModal } from '@/components/TemplatePatternModal';
-import { EmptyState } from '@/components/EmptyState';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
-import type { RotationTemplate } from '@/types/api';
-
-// ============================================================================
-// Types
-// ============================================================================
-
-export interface RotationTemplatesTabProps {
-  /** Whether the user can create/edit templates */
-  canEdit: boolean;
-  /** Whether the user can delete templates */
-  canDelete: boolean;
-}
-
-// ============================================================================
-// Activity Colors
-// ============================================================================
-
-const ACTIVITY_COLORS: Record<string, string> = {
-  clinic: 'bg-blue-100 text-blue-800',
-  inpatient: 'bg-purple-100 text-purple-800',
-  procedure: 'bg-red-100 text-red-800',
-  conference: 'bg-gray-100 text-gray-800',
-  elective: 'bg-green-100 text-green-800',
-  call: 'bg-orange-100 text-orange-800',
-};
-
-// ============================================================================
-// Template Card Component
-// ============================================================================
-
-interface TemplateCardProps {
-  template: RotationTemplate;
-  canEdit: boolean;
-  canDelete: boolean;
-  onView: () => void;
-  onEdit: () => void;
-  onEditPattern: () => void;
-  onDelete: () => void;
-}
-
-function TemplateCard({
-  template,
+export function RotationTemplatesTab({
   canEdit,
-  canDelete,
-  onView,
-  onEdit,
-  onEditPattern,
-  onDelete,
-}: TemplateCardProps) {
-  const colorClass = ACTIVITY_COLORS[template.activityType] || 'bg-gray-100 text-gray-800';
+  canDelete: _canDelete,
+}: RotationTemplatesTabProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activityTypeFilter, setActivityTypeFilter] = useState<string | null>(null)
 
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="font-semibold text-gray-900">{template.name}</h3>
-          <span className={`inline-block px-2 py-1 rounded text-xs mt-1 ${colorClass}`}>
-            {template.activityType}
-          </span>
-        </div>
-        {template.abbreviation && (
-          <span className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">
-            {template.abbreviation}
-          </span>
-        )}
-      </div>
+  // Fetch rotation templates
+  const {
+    data: templatesData,
+    isLoading,
+    error,
+  } = useQuery<ListResponse<RotationTemplate>>({
+    queryKey: ['rotation-templates'],
+    queryFn: () => get('/rotation-templates'),
+  })
 
-      <div className="space-y-2 text-sm">
-        {template.maxResidents && (
-          <div className="flex justify-between">
-            <span className="text-gray-500">Max Residents:</span>
-            <span className="font-medium">{template.maxResidents}</span>
-          </div>
-        )}
-        <div className="flex justify-between">
-          <span className="text-gray-500">Supervision Ratio:</span>
-          <span className="font-medium">1:{template.maxSupervisionRatio}</span>
-        </div>
-        {template.requiresSpecialty && (
-          <div className="flex justify-between">
-            <span className="text-gray-500">Requires:</span>
-            <span className="font-medium text-amber-700">{template.requiresSpecialty}</span>
-          </div>
-        )}
-      </div>
+  // Memoize templates array to prevent dependency warnings
+  const templates = useMemo(
+    () => templatesData?.items ?? [],
+    [templatesData?.items]
+  )
 
-      <div className="mt-4 pt-4 border-t flex gap-2 flex-wrap">
-        <button
-          onClick={onView}
-          className="text-gray-600 hover:text-gray-900 hover:underline text-sm flex items-center gap-1"
-        >
-          <Eye className="w-3 h-3" />
-          View
-        </button>
-        {canEdit && (
-          <>
-            <button
-              onClick={onEdit}
-              className="text-blue-600 hover:underline text-sm"
-            >
-              Edit
-            </button>
-            <button
-              onClick={onEditPattern}
-              className="text-green-600 hover:underline text-sm flex items-center gap-1"
-            >
-              <Calendar className="w-3 h-3" />
-              Pattern
-            </button>
-          </>
-        )}
-        {canDelete && (
-          <button
-            onClick={onDelete}
-            className="text-red-600 hover:underline text-sm"
-          >
-            Delete
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
+  // Get unique activity types
+  const activityTypes = useMemo(() => {
+    const types = new Set<string>()
+    templates.forEach((t) => {
+      if (t.activityType) types.add(t.activityType)
+    })
+    return Array.from(types).sort()
+  }, [templates])
 
-// ============================================================================
-// Main Tab Component
-// ============================================================================
+  // Filter templates
+  const filteredTemplates = useMemo(() => {
+    return templates.filter((template) => {
+      const matchesSearch =
+        !searchQuery ||
+        template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        template.abbreviation?.toLowerCase().includes(searchQuery.toLowerCase())
 
-export function RotationTemplatesTab({ canEdit, canDelete }: RotationTemplatesTabProps) {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<RotationTemplate | null>(null);
-  const [viewingTemplate, setViewingTemplate] = useState<RotationTemplate | null>(null);
-  const [patternTemplate, setPatternTemplate] = useState<RotationTemplate | null>(null);
-  const [templateToDelete, setTemplateToDelete] = useState<RotationTemplate | null>(null);
+      const matchesActivityType =
+        !activityTypeFilter || template.activityType === activityTypeFilter
 
-  const { data, isLoading, isError, error, refetch } = useRotationTemplates();
-  const deleteTemplate = useDeleteTemplate();
+      return matchesSearch && matchesActivityType
+    })
+  }, [templates, searchQuery, activityTypeFilter])
 
-  const handleDeleteClick = (template: RotationTemplate) => {
-    setTemplateToDelete(template);
-  };
-
-  const handleConfirmDelete = () => {
-    if (templateToDelete) {
-      deleteTemplate.mutate(templateToDelete.id);
-    }
-    setTemplateToDelete(null);
-  };
-
-  // Loading state
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <CardSkeleton key={i} />
-        ))}
+      <div className="flex justify-center py-12">
+        <LoadingSpinner size="lg" />
       </div>
-    );
+    )
   }
 
-  // Error state
-  if (isError) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 flex flex-col items-center justify-center text-center">
-        <p className="text-gray-600 mb-4">
-          {error?.message || 'Failed to load rotation templates'}
-        </p>
-        <button
-          onClick={() => refetch()}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Retry
-        </button>
-      </div>
-    );
+  if (error) {
+    return <ErrorAlert message="Failed to load rotation templates" />
   }
 
   return (
-    <div>
-      {/* Action Bar */}
-      {canEdit && (
-        <div className="mb-6 flex justify-between items-center">
-          <p className="text-sm text-gray-600">
-            {data?.items?.length ?? 0} template{data?.items?.length !== 1 ? 's' : ''} defined
-          </p>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            New Template
-          </button>
-        </div>
-      )}
+    <div className="space-y-6">
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between">
+        <div className="flex flex-1 gap-4">
+          {/* Search */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search templates..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-      {/* Templates Grid */}
-      {data?.items?.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          <EmptyState
-            icon={FileText}
-            title="No rotation templates"
-            description={
-              canEdit
-                ? 'Create templates to define reusable activity patterns with constraints'
-                : 'No rotation templates have been created yet. Contact an administrator to set up templates.'
-            }
-            action={
-              canEdit
-                ? {
-                    label: 'Create Template',
-                    onClick: () => setIsCreateModalOpen(true),
-                  }
-                : undefined
-            }
-          />
+          {/* Activity type filter */}
+          <div className="relative">
+            <select
+              value={activityTypeFilter ?? ''}
+              onChange={(e) =>
+                setActivityTypeFilter(e.target.value || null)
+              }
+              className="appearance-none pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="">All Types</option>
+              {activityTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+          </div>
         </div>
+
+        {/* Add button */}
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => {
+              // TODO: Implement create template modal
+              alert('Create template feature coming soon')
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <Plus className="h-4 w-4" />
+            Add Template
+          </button>
+        )}
+      </div>
+
+      {/* Templates grid */}
+      {filteredTemplates.length === 0 ? (
+        <EmptyState
+          title="No templates found"
+          description={
+            searchQuery || activityTypeFilter
+              ? 'Try adjusting your filters'
+              : 'Create your first rotation template to get started'
+          }
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {data?.items?.map((template: RotationTemplate) => (
-            <TemplateCard
+          {filteredTemplates.map((template) => (
+            <div
               key={template.id}
-              template={template}
-              canEdit={canEdit}
-              canDelete={canDelete}
-              onView={() => setViewingTemplate(template)}
-              onEdit={() => setEditingTemplate(template)}
-              onEditPattern={() => setPatternTemplate(template)}
-              onDelete={() => handleDeleteClick(template)}
-            />
+              className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-medium text-gray-900">{template.name}</h3>
+                {template.abbreviation && (
+                  <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded">
+                    {template.abbreviation}
+                  </span>
+                )}
+              </div>
+
+              {template.activityType && (
+                <p className="text-sm text-gray-500 mb-2">{template.activityType}</p>
+              )}
+
+              <div className="text-sm text-gray-600 space-y-1">
+                {template.maxResidents && (
+                  <p>Max Residents: {template.maxResidents}</p>
+                )}
+                {template.maxSupervisionRatio && (
+                  <p>Supervision: {template.maxSupervisionRatio}:1</p>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       )}
-
-      {/* Create Template Modal */}
-      {canEdit && (
-        <CreateTemplateModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-        />
-      )}
-
-      {/* Edit Template Modal */}
-      {canEdit && (
-        <EditTemplateModal
-          isOpen={editingTemplate !== null}
-          onClose={() => setEditingTemplate(null)}
-          template={editingTemplate}
-        />
-      )}
-
-      {/* View Template Modal (Read-only) */}
-      {viewingTemplate && !canEdit && (
-        <EditTemplateModal
-          isOpen={viewingTemplate !== null}
-          onClose={() => setViewingTemplate(null)}
-          template={viewingTemplate}
-        />
-      )}
-
-      {/* Delete Confirmation Dialog */}
-      {canDelete && (
-        <ConfirmDialog
-          isOpen={templateToDelete !== null}
-          onClose={() => setTemplateToDelete(null)}
-          onConfirm={handleConfirmDelete}
-          title="Delete Template"
-          message={`Are you sure you want to delete "${templateToDelete?.name || 'this template'}"? This action cannot be undone and may affect existing schedule assignments.`}
-          confirmLabel="Delete"
-          cancelLabel="Cancel"
-          variant="danger"
-          isLoading={deleteTemplate.isPending}
-        />
-      )}
-
-      {/* Edit Pattern Modal */}
-      {canEdit && patternTemplate && (
-        <TemplatePatternModal
-          isOpen={patternTemplate !== null}
-          onClose={() => setPatternTemplate(null)}
-          templateId={patternTemplate.id}
-          templateName={patternTemplate.name}
-          onSaved={() => refetch()}
-        />
-      )}
     </div>
-  );
+  )
 }

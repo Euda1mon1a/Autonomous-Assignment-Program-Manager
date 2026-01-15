@@ -1,39 +1,28 @@
-'use client';
+'use client'
 
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { ChevronDown, Search, User, X } from 'lucide-react';
-import type { Person } from '@/types/api';
-import type { RiskTier } from '@/components/ui/RiskBar';
+import { useState, useMemo, useRef, useEffect, useId } from 'react'
+import { ChevronDown, Search, User, Users, X } from 'lucide-react'
+import type { Person } from '@/types/api'
 
 export interface PersonSelectorProps {
-  /** List of people to select from */
-  people: Person[];
-  /** Currently selected person ID */
-  selectedPersonId: string | null;
-  /** Callback when selection changes */
-  onSelect: (personId: string) => void;
-  /** Current user's tier level - selector only visible for tier 1+ */
-  tier: RiskTier;
-  /** Whether the selector is loading */
-  isLoading?: boolean;
-  /** Whether to show the selector even for tier 0 (defaults to false) */
-  forceShow?: boolean;
-  /** Additional CSS classes */
-  className?: string;
+  people: Person[]
+  selectedPersonId: string | null
+  onSelect: (personId: string | null) => void
+  tier: number
+  isLoading?: boolean
+  className?: string
+}
+
+interface GroupedPeople {
+  residents: Map<number, Person[]>
+  faculty: Person[]
 }
 
 /**
- * PersonSelector component for selecting a person's schedule to view.
+ * PersonSelector - Tier-aware person selection dropdown
  *
- * SECURITY: This component is only visible to Tier 1+ users (coordinators, admins).
- * Tier 0 users (residents, faculty viewing their own) never see the selector.
- * NO CSS hiding is used - the component simply doesn't render for Tier 0.
- *
- * WCAG 2.1 AA Compliance:
- * - Keyboard navigable with proper focus management
- * - Proper ARIA attributes for combobox pattern
- * - Visible focus indicators
- * - 4.5:1 contrast ratios maintained
+ * Only renders for Tier 1+ users (coordinators/admins).
+ * Tier 0 users (residents/faculty) should not see this component at all.
  */
 export function PersonSelector({
   people,
@@ -41,297 +30,212 @@ export function PersonSelector({
   onSelect,
   tier,
   isLoading = false,
-  forceShow = false,
   className = '',
 }: PersonSelectorProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [focusedIndex, setFocusedIndex] = useState(-1);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
-  const listboxIdRef = useRef(`person-selector-listbox-${Math.random().toString(36).slice(2)}`);
-  const listboxId = listboxIdRef.current;
+  // All hooks must be called unconditionally (React rules of hooks)
+  const [isOpen, setIsOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const listboxId = useId()
 
-  // Determine if we should render (all hooks must be called before this)
-  const shouldRender = tier > 0 || forceShow;
+  // Group people by type and PGY level
+  // Note: -1 is used as a sentinel for residents with null pgyLevel ("Unassigned")
+  const groupedPeople = useMemo<GroupedPeople>(() => {
+    const residents = new Map<number, Person[]>()
+    const faculty: Person[] = []
 
-  // Find selected person
-  const selectedPerson = useMemo(() => {
-    if (!shouldRender) return null;
-    return people.find((p) => p.id === selectedPersonId) ?? null;
-  }, [people, selectedPersonId, shouldRender]);
+    people.forEach((person) => {
+      if (person.type === 'resident') {
+        // Use -1 as key for unassigned residents (null pgyLevel)
+        const level = person.pgyLevel ?? -1
+        const existing = residents.get(level) ?? []
+        residents.set(level, [...existing, person])
+      } else if (person.type === 'faculty') {
+        faculty.push(person)
+      }
+    })
 
-  // Filter and sort people based on search query
+    // Sort each PGY group by name
+    residents.forEach((group, level) => {
+      residents.set(level, group.sort((a, b) => a.name.localeCompare(b.name)))
+    })
+    faculty.sort((a, b) => a.name.localeCompare(b.name))
+
+    return { residents, faculty }
+  }, [people])
+
+  // Filter people based on search query
   const filteredPeople = useMemo(() => {
-    if (!shouldRender) return [];
+    if (!searchQuery.trim()) return null
 
-    const query = searchQuery.toLowerCase().trim();
+    const query = searchQuery.toLowerCase()
+    return people.filter(
+      (person) =>
+        person.name.toLowerCase().includes(query) ||
+        person.email?.toLowerCase().includes(query)
+    )
+  }, [people, searchQuery])
 
-    let filtered = people;
-    if (query) {
-      filtered = people.filter((person) => {
-        const nameMatch = person.name.toLowerCase().includes(query);
-        const emailMatch = person.email?.toLowerCase().includes(query) ?? false;
-        const typeMatch = person.type.toLowerCase().includes(query);
-        const pgyMatch = person.pgyLevel
-          ? `pgy${person.pgyLevel}`.includes(query) || `pgy-${person.pgyLevel}`.includes(query)
-          : false;
-        return nameMatch || emailMatch || typeMatch || pgyMatch;
-      });
-    }
+  // Get selected person details
+  const selectedPerson = useMemo(() => {
+    if (!selectedPersonId) return null
+    return people.find((p) => p.id === selectedPersonId) ?? null
+  }, [people, selectedPersonId])
 
-    // Sort: residents by PGY level descending, then faculty, alphabetically within groups
-    return [...filtered].sort((a, b) => {
-      // Residents first
-      if (a.type !== b.type) {
-        return a.type === 'resident' ? -1 : 1;
-      }
-      // Within residents, sort by PGY level descending
-      if (a.type === 'resident' && b.type === 'resident') {
-        const pgyDiff = (b.pgyLevel ?? 0) - (a.pgyLevel ?? 0);
-        if (pgyDiff !== 0) return pgyDiff;
-      }
-      // Alphabetical within same type/PGY
-      return a.name.localeCompare(b.name);
-    });
-  }, [people, searchQuery, shouldRender]);
+  // Get display text for button
+  const displayText = useMemo(() => {
+    if (selectedPerson) return selectedPerson.name
+    return 'Select Person'
+  }, [selectedPerson])
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    if (!shouldRender) return;
-
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-        setSearchQuery('');
-        setFocusedIndex(-1);
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false)
+        setSearchQuery('')
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [shouldRender]);
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
-  // Reset focused index when filtered list changes
+  // Focus search input when opening
   useEffect(() => {
-    if (!shouldRender) return;
-    setFocusedIndex(-1);
-  }, [searchQuery, shouldRender]);
-
-  // Scroll focused item into view
-  useEffect(() => {
-    if (!shouldRender) return;
-    if (focusedIndex >= 0 && listRef.current) {
-      const focusedElement = listRef.current.children[focusedIndex] as HTMLElement;
-      focusedElement?.scrollIntoView({ block: 'nearest' });
+    if (isOpen && searchInputRef.current) {
+      searchInputRef.current.focus()
     }
-  }, [focusedIndex, shouldRender]);
+  }, [isOpen])
 
-  // SECURITY: Don't render for Tier 0 unless explicitly forced
-  // This is NOT CSS hiding - the component genuinely doesn't mount
-  // All hooks are called above this point to comply with Rules of Hooks
-  if (!shouldRender) {
-    return null;
+  // Tier 0 users should not see the selector - check AFTER all hooks
+  if (tier < 1) {
+    return null
   }
 
-  const handleToggle = () => {
-    setIsOpen(!isOpen);
-    if (!isOpen) {
-      // Focus input when opening
-      setTimeout(() => inputRef.current?.focus(), 0);
-    } else {
-      setSearchQuery('');
-      setFocusedIndex(-1);
-    }
-  };
+  const handleSelect = (personId: string | null) => {
+    onSelect(personId)
+    setIsOpen(false)
+    setSearchQuery('')
+  }
 
-  const handleSelect = (person: Person) => {
-    onSelect(person.id);
-    setIsOpen(false);
-    setSearchQuery('');
-    setFocusedIndex(-1);
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault();
-        if (!isOpen) {
-          setIsOpen(true);
-        } else {
-          setFocusedIndex((prev) =>
-            prev < filteredPeople.length - 1 ? prev + 1 : prev
-          );
-        }
-        break;
-      case 'ArrowUp':
-        event.preventDefault();
-        if (isOpen) {
-          setFocusedIndex((prev) => (prev > 0 ? prev - 1 : 0));
-        }
-        break;
-      case 'Enter':
-        event.preventDefault();
-        if (isOpen && focusedIndex >= 0 && filteredPeople[focusedIndex]) {
-          handleSelect(filteredPeople[focusedIndex]);
-        } else if (!isOpen) {
-          setIsOpen(true);
-        }
-        break;
-      case 'Escape':
-        event.preventDefault();
-        setIsOpen(false);
-        setSearchQuery('');
-        setFocusedIndex(-1);
-        break;
-      case 'Tab':
-        if (isOpen) {
-          setIsOpen(false);
-          setSearchQuery('');
-        }
-        break;
-    }
-  };
-
-  const formatPersonLabel = (person: Person): string => {
-    if (person.type === 'resident' && person.pgyLevel) {
-      return `${person.name} (PGY-${person.pgyLevel})`;
-    }
-    return `${person.name} (Faculty)`;
-  };
+  const renderPersonOption = (person: Person) => (
+    <button
+      key={person.id}
+      type="button"
+      role="option"
+      aria-selected={selectedPersonId === person.id}
+      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${
+        selectedPersonId === person.id
+          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+          : 'text-gray-700 dark:text-gray-300'
+      }`}
+      onClick={() => handleSelect(person.id)}
+    >
+      <User className="h-4 w-4 flex-shrink-0" />
+      <span className="truncate">{person.name}</span>
+    </button>
+  )
 
   return (
-    <div
-      ref={containerRef}
-      className={`relative ${className}`}
-      onKeyDown={handleKeyDown}
-    >
-      {/* Trigger Button */}
+    <div ref={dropdownRef} className={`relative ${className}`}>
       <button
         type="button"
-        onClick={handleToggle}
-        disabled={isLoading}
-        className={`
-          flex items-center gap-2 px-4 py-2 rounded-lg border
-          bg-white text-gray-900 border-gray-300
-          hover:bg-gray-50 hover:border-gray-400
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-          disabled:opacity-50 disabled:cursor-not-allowed
-          transition-colors min-w-[200px]
-        `}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={listboxId}
-        aria-label="Select person to view schedule"
+        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        onClick={() => setIsOpen(!isOpen)}
+        disabled={isLoading}
       >
-        <User className="w-4 h-4 text-gray-500 flex-shrink-0" />
-        <span className="flex-1 text-left truncate">
-          {isLoading
-            ? 'Loading...'
-            : selectedPerson
-              ? formatPersonLabel(selectedPerson)
-              : 'Select person...'}
+        <Users className="h-4 w-4" />
+        <span className="truncate max-w-[200px]">
+          {isLoading ? 'Loading...' : displayText}
         </span>
         <ChevronDown
-          className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
-      {/* Dropdown */}
       {isOpen && (
         <div
-          className="absolute z-50 mt-1 w-full min-w-[280px] bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
-          role="presentation"
+          id={listboxId}
+          role="listbox"
+          className="absolute z-50 mt-1 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
         >
-          {/* Search Input */}
-          <div className="p-2 border-b border-gray-100">
+          {/* Search input */}
+          <div className="p-2 border-b border-gray-200 dark:border-gray-700">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
-                ref={inputRef}
+                ref={searchInputRef}
                 type="text"
+                placeholder="Search people..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name, email, or PGY..."
-                className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-md
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                aria-label="Search people"
-                aria-controls={listboxId}
+                className="w-full pl-9 pr-8 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
-                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  <X className="w-3 h-3 text-gray-400" />
+                  <X className="h-4 w-4" />
                 </button>
               )}
             </div>
           </div>
 
-          {/* People List */}
-          <ul
-            ref={listRef}
-            id={listboxId}
-            role="listbox"
-            aria-label="Select a person"
-            className="max-h-64 overflow-y-auto py-1"
-          >
-            {filteredPeople.length === 0 ? (
-              <li className="px-4 py-3 text-sm text-gray-500 text-center">
-                No people found
-              </li>
+          {/* Results */}
+          <div className="max-h-64 overflow-y-auto">
+            {filteredPeople ? (
+              // Search results
+              filteredPeople.length > 0 ? (
+                filteredPeople.map(renderPersonOption)
+              ) : (
+                <div className="px-3 py-4 text-sm text-gray-500 text-center">
+                  No results found
+                </div>
+              )
             ) : (
-              filteredPeople.map((person, index) => {
-                const isSelected = person.id === selectedPersonId;
-                const isFocused = index === focusedIndex;
-
-                return (
-                  <li
-                    key={person.id}
-                    role="option"
-                    aria-selected={isSelected}
-                    onClick={() => handleSelect(person)}
-                    onMouseEnter={() => setFocusedIndex(index)}
-                    className={`
-                      flex items-center gap-3 px-4 py-2 cursor-pointer
-                      ${isSelected ? 'bg-blue-50 text-blue-900' : 'text-gray-900'}
-                      ${isFocused && !isSelected ? 'bg-gray-100' : ''}
-                      ${!isSelected && !isFocused ? 'hover:bg-gray-50' : ''}
-                    `}
-                  >
-                    <div
-                      className={`
-                        w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                        ${person.type === 'resident' ? 'bg-blue-100' : 'bg-purple-100'}
-                      `}
-                    >
-                      <User
-                        className={`w-4 h-4 ${person.type === 'resident' ? 'text-blue-600' : 'text-purple-600'}`}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{person.name}</div>
-                      <div className="text-xs text-gray-500 truncate">
-                        {person.type === 'resident'
-                          ? `PGY-${person.pgyLevel}`
-                          : 'Faculty'}
-                        {person.email && ` - ${person.email}`}
+              // Grouped view
+              <>
+                {/* Residents by PGY */}
+                {Array.from(groupedPeople.residents.entries())
+                  .sort(([a], [b]) => {
+                    // Put unassigned (-1) at the end, otherwise sort PGY-3 first
+                    if (a === -1) return 1
+                    if (b === -1) return -1
+                    return b - a
+                  })
+                  .map(([pgyLevel, residents]) => (
+                    <div key={`pgy-${pgyLevel}`}>
+                      <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 uppercase tracking-wider">
+                        {pgyLevel === -1 ? 'Unassigned' : `PGY-${pgyLevel}`}
                       </div>
+                      {residents.map(renderPersonOption)}
                     </div>
-                    {isSelected && (
-                      <span className="text-blue-600 text-sm font-medium">Selected</span>
-                    )}
-                  </li>
-                );
-              })
+                  ))}
+
+                {/* Faculty */}
+                {groupedPeople.faculty.length > 0 && (
+                  <div>
+                    <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 uppercase tracking-wider">
+                      Faculty
+                    </div>
+                    {groupedPeople.faculty.map(renderPersonOption)}
+                  </div>
+                )}
+              </>
             )}
-          </ul>
+          </div>
         </div>
       )}
     </div>
-  );
+  )
 }
