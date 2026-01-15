@@ -21,6 +21,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from app.core.logging import get_logger
+from app.services.tamc_color_scheme import get_color_scheme
 
 logger = get_logger(__name__)
 
@@ -60,15 +61,22 @@ class XMLToXlsxConverter:
     - Cols 6-61: Schedule (28 days × 2 AM/PM slots)
     """
 
-    def __init__(self, template_path: Path | str | None = None):
+    def __init__(
+        self,
+        template_path: Path | str | None = None,
+        apply_colors: bool = True,
+    ):
         """
         Initialize converter with optional template.
 
         Args:
             template_path: Path to Excel template (e.g., ROSETTA xlsx).
                           If not provided, creates new workbook.
+            apply_colors: Whether to apply TAMC color scheme to cells.
         """
         self.template_path = Path(template_path) if template_path else None
+        self.apply_colors = apply_colors
+        self.color_scheme = get_color_scheme() if apply_colors else None
 
     def convert_from_string(
         self,
@@ -115,6 +123,39 @@ class XMLToXlsxConverter:
 
         return xlsx_bytes
 
+    def _apply_cell_color(self, cell, code: str) -> None:
+        """Apply background color to cell based on schedule code."""
+        if not self.apply_colors or not self.color_scheme:
+            return
+
+        hex_color = self.color_scheme.get_code_color(code)
+        if hex_color:
+            cell.fill = PatternFill(start_color=hex_color, fill_type="solid")
+            # Use white text for dark backgrounds (black, red)
+            if hex_color in ("000000", "FF0000"):
+                cell.font = Font(color="FFFFFF")
+
+    def _apply_header_color(self, cell, day_of_week: int) -> None:
+        """Apply header background color based on day of week."""
+        if not self.apply_colors or not self.color_scheme:
+            return
+
+        hex_color = self.color_scheme.get_header_color(day_of_week)
+        if hex_color and hex_color != "FFFFFF":  # Skip white (default)
+            cell.fill = PatternFill(start_color=hex_color, fill_type="solid")
+
+    def _apply_rotation_color(self, cell, rotation: str) -> None:
+        """Apply color to rotation column cell."""
+        if not self.apply_colors or not self.color_scheme:
+            return
+
+        hex_color = self.color_scheme.get_rotation_color(rotation)
+        if hex_color:
+            cell.fill = PatternFill(start_color=hex_color, fill_type="solid")
+            # Use white text for dark backgrounds
+            if hex_color in ("000000", "FF0000"):
+                cell.font = Font(color="FFFFFF")
+
     def _create_new_workbook(
         self,
         block_start: date,
@@ -159,8 +200,15 @@ class XMLToXlsxConverter:
         while current <= block_end:
             day_str = current.strftime("%a %b %d").replace(" 0", " ")  # "Thu Mar 12"
 
-            sheet.cell(row=ROW_HEADERS, column=col).value = f"{day_str} AM"
-            sheet.cell(row=ROW_HEADERS, column=col + 1).value = f"{day_str} PM"
+            am_cell = sheet.cell(row=ROW_HEADERS, column=col)
+            pm_cell = sheet.cell(row=ROW_HEADERS, column=col + 1)
+
+            am_cell.value = f"{day_str} AM"
+            pm_cell.value = f"{day_str} PM"
+
+            # Apply header colors based on day of week
+            self._apply_header_color(am_cell, current.weekday())
+            self._apply_header_color(pm_cell, current.weekday())
 
             current += timedelta(days=1)
             col += 2
@@ -186,8 +234,16 @@ class XMLToXlsxConverter:
             # Fill metadata columns
             sheet.cell(row=row, column=COL_RESIDENT_NAME).value = name
             sheet.cell(row=row, column=COL_PGY).value = pgy
-            sheet.cell(row=row, column=COL_ROTATION1).value = rotation1
-            sheet.cell(row=row, column=COL_ROTATION2).value = rotation2 or ""
+
+            rot1_cell = sheet.cell(row=row, column=COL_ROTATION1)
+            rot1_cell.value = rotation1
+            self._apply_rotation_color(rot1_cell, rotation1)
+
+            rot2_cell = sheet.cell(row=row, column=COL_ROTATION2)
+            rot2_cell.value = rotation2 or ""
+            if rotation2:
+                self._apply_rotation_color(rot2_cell, rotation2)
+
             sheet.cell(row=row, column=COL_NOTES).value = ""  # Notes can be added later
 
             # Fill schedule columns from day elements
@@ -201,8 +257,17 @@ class XMLToXlsxConverter:
                 am_col = COL_SCHEDULE_START + (day_offset * 2)
                 pm_col = am_col + 1
 
-                sheet.cell(row=row, column=am_col).value = am_code
-                sheet.cell(row=row, column=pm_col).value = pm_code
+                am_cell = sheet.cell(row=row, column=am_col)
+                pm_cell = sheet.cell(row=row, column=pm_col)
+
+                am_cell.value = am_code
+                pm_cell.value = pm_code
+
+                # Apply colors based on schedule code
+                if am_code:
+                    self._apply_cell_color(am_cell, am_code)
+                if pm_code:
+                    self._apply_cell_color(pm_cell, pm_code)
 
     def _calculate_block_number(self, block_start: date) -> int:
         """Calculate block number from start date."""
@@ -218,6 +283,7 @@ def convert_xml_to_xlsx(
     xml_string: str,
     output_path: Path | str | None = None,
     template_path: Path | str | None = None,
+    apply_colors: bool = True,
 ) -> bytes:
     """
     Convenience function to convert XML to xlsx.
@@ -226,9 +292,10 @@ def convert_xml_to_xlsx(
         xml_string: XML from ScheduleXMLExporter
         output_path: Optional path to save xlsx
         template_path: Optional template xlsx
+        apply_colors: Whether to apply TAMC color scheme (default: True)
 
     Returns:
         xlsx bytes
     """
-    converter = XMLToXlsxConverter(template_path)
+    converter = XMLToXlsxConverter(template_path, apply_colors=apply_colors)
     return converter.convert_from_string(xml_string, output_path)

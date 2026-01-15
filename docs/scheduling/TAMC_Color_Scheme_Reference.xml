@@ -1,0 +1,138 @@
+<?xml version="1.0" ?>
+<tamc_color_scheme version="1.1" extracted_from="Current AY 25-26 pulled 22DEC2025.xlsx" generated="2026-01-15" includes="fill_colors,font_colors,rotation_colors,header_colors">
+  <fill_colors description="Background/cell fill colors">
+    <color_group name="weekend_nonworking" display_name="Weekend/Non-working" hex_color="FF9BC2E6" emoji="🌊">
+      <code value="W" description="Weekend off" sample_count="6477"/>
+      <code value="NBN" description="Newborn nursery" sample_count="8"/>
+    </color_group>
+    <color_group name="fmit_inpatient" display_name="FMIT Inpatient Working" hex_color="FFFFC000" emoji="🟠">
+      <code value="FMIT" description="FM Inpatient Team working shifts" sample_count="885"/>
+      <code value="IM" description="Internal Medicine ward" sample_count="0"/>
+      <code value="PedW" description="Pediatrics Ward" sample_count="0"/>
+      <code value="SURG" description="Surgery rotation" sample_count="0"/>
+    </color_group>
+    <color_group name="blocked_protected" display_name="Blocked/Protected Time" hex_color="FF000000" emoji="⚫">
+      <code value="HOL" description="Holiday" sample_count="617"/>
+      <code value="LEC" description="Lecture/Conference" sample_count="70"/>
+      <code value="TNG" description="Training" sample_count="59"/>
+      <code value="MM" description="Morbidity &amp; Mortality" sample_count="19"/>
+      <code value="GME" description="GME admin" sample_count="18"/>
+      <code value="FED" description="Federal holiday" sample_count="10"/>
+      <code value="DFM" description="DFM admin (like GME)" sample_count="0"/>
+      <code value="ADV" description="Advising session" sample_count="0"/>
+    </color_group>
+    <color_group name="clinical_outpatient" display_name="Clinical Outpatient Work" hex_color="FFFFFF00" emoji="🟡">
+      <code value="C" description="Regular clinic" sample_count="485"/>
+      <code value="C40" description="40-min slots" sample_count="68"/>
+      <code value="PR" description="Procedures" sample_count="53"/>
+      <code value="SM" description="Sports Medicine" sample_count="35"/>
+      <code value="CC" description="Continuity Clinic" sample_count="25"/>
+      <code value="C30" description="30-min slots" sample_count="23"/>
+      <code value="C-I" description="Continuity clinic for inpatient" sample_count="21"/>
+      <code value="CV" description="CV clinic" sample_count="18"/>
+      <code value="VAS" description="Vasectomy" sample_count="9"/>
+      <code value="NEURO" description="Neurology elective" sample_count="0"/>
+      <code value="GYN" description="Gynecology clinic" sample_count="0"/>
+      <code value="US" description="Ultrasound/POCUS" sample_count="0"/>
+    </color_group>
+    <color_group name="leave_absence" display_name="Leave/Absence" hex_color="FFBFBFBF" emoji="⬜">
+      <code value="LV" description="Leave" sample_count="617"/>
+      <code value="OP" description="Other protected" sample_count="4"/>
+      <code value="DO" description="Direct Observation" sample_count="1"/>
+      <code value="PCAT" description="Post-Call AT" sample_count="1"/>
+      <code value="DEP" description="Deployed" sample_count="0"/>
+    </color_group>
+    <color_group name="night_float_patterns" display_name="Night Float/Special" hex_color="FFA6A6A6" emoji="🔘">
+      <code value="NF" description="Night Float" sample_count="247"/>
+      <code value="OFF" description="Off duty" sample_count="130"/>
+      <code value="L&amp;D" description="L&amp;D night float" sample_count="74"/>
+      <code value="PC" description="Post-call" sample_count="33"/>
+      <code value="PedNF" description="Pediatrics Night Float" sample_count="0"/>
+      <code value="LDNF" description="L&amp;D Night Float" sample_count="0"/>
+    </color_group>
+    <color_group name="mandatory_critical" display_name="Mandatory/Critical" hex_color="FFFF0000" emoji="🔴">
+      <code value="RTRT" description="Required training" sample_count="338"/>
+      <code value="CLC" description="Clinic Learning Conf" sample_count="16"/>
+      <code value="aSM" description="Academic SM" sample_count="11"/>
+      <code value="ATLS" description="ATLS" sample_count="4"/>
+    </color_group>
+    <color_group name="tdy_offsite" display_name="TDY/Off-site" hex_color="FF92D050" emoji="💚">
+      <code value="TDY" description="Temporary Duty" sample_count="258"/>
+      <code value="ER" description="Emergency Room" sample_count="10"/>
+      <code value="ICU" description="ICU" sample_count="9"/>
+      <code value="KAP" description="Kapiolani L&amp;D (off-site)" sample_count="0"/>
+    </color_group>
+    <color_group name="ccc_special" display_name="CCC/Special" hex_color="FF00B050" emoji="🌿">
+      <code value="CCC" description="Clinical Competency Committee" sample_count="157"/>
+      <code value="USU" description="USU" sample_count="22"/>
+    </color_group>
+    <color_group name="protected_pi" display_name="Protected/PI" hex_color="FFC6E0B4" emoji="🟢">
+      <code value="PI" description="Performance Improvement" sample_count="51"/>
+      <code value="STRAUB" description="STRAUB rotation" sample_count="3"/>
+    </color_group>
+    <color_group name="hospital_committee" display_name="Hospital Committee" hex_color="FFFF66CC" emoji="💗">
+      <code value="HC" description="Hospital Committee" sample_count="23"/>
+    </color_group>
+    <color_group name="ite_fmit_special" display_name="ITE/FMIT Special" hex_color="FF00B0F0" emoji="🔵">
+      <code value="ITE" description="In-Training Exam" sample_count="15"/>
+      <code value="EPIC" description="EPIC training" sample_count="1"/>
+    </color_group>
+  </fill_colors>
+  <font_colors description="Text/font colors - separate from fill colors">
+    <font_color_group name="theme_dark" display_name="Theme:1 - Standard body text" hex_color="theme:1" actual_rgb="FF000000">
+      <code value="W" description="Weekend" sample_count="2423"/>
+      <code value="FMIT" description="FMIT working" sample_count="330"/>
+      <code value="LEC" description="Lecture" sample_count="266"/>
+      <code value="LV" description="Leave" sample_count="201"/>
+      <code value="GME" description="GME admin" sample_count="177"/>
+      <code value="C" description="Clinic" sample_count="119"/>
+      <code value="AT" description="Attending Time" sample_count="115"/>
+    </font_color_group>
+    <font_color_group name="white" display_name="White - On dark backgrounds" hex_color="FFFFFFFF" actual_rgb="FFFFFFFF" usage="Used with black fill for contrast">
+      <code value="HOL" description="Holiday (on black fill)" sample_count="735"/>
+      <code value="TNG" description="Training (on black)" sample_count="81"/>
+      <code value="MM" description="M&amp;M (on black)" sample_count="19"/>
+      <code value="FED" description="Federal holiday" sample_count="10"/>
+    </font_color_group>
+    <font_color_group name="black" display_name="Black - Default text" hex_color="FF000000" actual_rgb="FF000000">
+      <code value="R1" description="Row labels" sample_count="125"/>
+      <code value="R2" description="Row labels" sample_count="79"/>
+      <code value="R3" description="Row labels" sample_count="104"/>
+      <code value="ICU" description="ICU rotation" sample_count="53"/>
+      <code value="[Names]" description="Faculty/Resident names" sample_count="200"/>
+    </font_color_group>
+    <font_color_group name="red" display_name="Red - Procedures requiring AT" hex_color="FFFF0000" actual_rgb="FFFF0000" usage="Indicates activities needing attending supervision">
+      <code value="PR" description="Procedures (needs AT)" sample_count="94"/>
+      <code value="AT" description="Attending Time" sample_count="54"/>
+      <code value="VAS" description="Vasectomy (needs AT)" sample_count="24"/>
+      <code value="VasC" description="Vas consult" sample_count="16"/>
+      <code value="HV" description="Home visit" sample_count="16"/>
+      <code value="COLPO" description="Colposcopy" sample_count="19"/>
+      <code value="GER" description="Geriatrics" sample_count="26"/>
+    </font_color_group>
+    <font_color_group name="light_gray" display_name="Light Gray - Night Float text" hex_color="FFE8E8E8" actual_rgb="FFE8E8E8">
+      <code value="NF" description="Night Float" sample_count="40"/>
+      <code value="Peds NF" description="Peds Night Float" sample_count="12"/>
+    </font_color_group>
+  </font_colors>
+  <semantic_groupings>
+    <grouping name="clinical_work" description="Counts toward physical capacity (max 6)" codes="C,C30,C40,C60,CC,CV,PR,SM,VAS,GAC,HV"/>
+    <grouping name="inpatient" description="Works weekends, special patterns" codes="FMIT,NF,L&amp;D"/>
+    <grouping name="leave_off" description="Not working" codes="W,LV,SLV,OP,OFF,PC"/>
+    <grouping name="protected_time" description="Blocked, not available" codes="HOL,LEC,TNG,MM,FED,RTRT,CLC,ATLS,ALS,BLS,PI,HC"/>
+    <grouping name="offsite" description="Off-site rotations" codes="TDY,ER,ICU,USU"/>
+    <grouping name="requires_at" description="Activities requiring AT supervision (red font)" codes="PR,VAS,HV,COLPO,GER"/>
+  </semantic_groupings>
+  <header_colors>
+    <header name="tuesday_thursday" hex_color="FF99CCFF" description="Light blue for Tue/Thu headers"/>
+    <header name="weekend" hex_color="FF9BC2E6" description="Blue-gray for Sat/Sun headers"/>
+    <header name="weekday" hex_color="FFFFFFFF" description="White for Mon/Wed/Fri headers"/>
+  </header_colors>
+  <rotation_column_colors description="Colors for rotation type column (Column 1)">
+    <rotation_type name="inpatient_critical" hex_color="FFFF0000" color_name="Red" rotations="IM,Peds Ward,KAP,LDNF,Surg Exp,ICU,Hilo" leave_eligible="false"/>
+    <rotation_type name="elective_outpatient" hex_color="FFFFFF00" color_name="Yellow" rotations="FMC,NEURO,SM,POCUS,PROC,Gyn Clinic" leave_eligible="true"/>
+    <rotation_type name="fmit" hex_color="FF00B0F0" color_name="Cyan" rotations="FMIT1,FMIT2" leave_eligible="false"/>
+    <rotation_type name="night_float" hex_color="FF000000" color_name="Black" rotations="NF,Peds NF" leave_eligible="false"/>
+    <rotation_type name="orientation" hex_color="FF7030A0" color_name="Purple" rotations="FMO,DCC/BOLC/FMO" leave_eligible="true"/>
+  </rotation_column_colors>
+</tamc_color_scheme>
