@@ -241,6 +241,33 @@ def compare_schedules(xml_data: dict, xlsx_data: dict, label: str) -> list[dict]
     return mismatches
 
 
+def compare_call_schedules(xml_call: dict, xlsx_call: dict) -> list[dict]:
+    """
+    Compare XML and XLSX call schedules.
+
+    Returns list of mismatches.
+    """
+    mismatches = []
+
+    # All dates from both
+    all_dates = set(xml_call.keys()) | set(xlsx_call.keys())
+
+    for date_str in sorted(all_dates):
+        xml_faculty = xml_call.get(date_str, "")
+        xlsx_faculty = xlsx_call.get(date_str, "")
+
+        if xml_faculty != xlsx_faculty:
+            mismatches.append(
+                {
+                    "date": date_str,
+                    "xml": xml_faculty or "(none)",
+                    "xlsx": xlsx_faculty or "(none)",
+                }
+            )
+
+    return mismatches
+
+
 def main():
     """Run XML ↔ XLSX validation."""
     print("=" * 70)
@@ -326,14 +353,31 @@ def main():
     else:
         print("\nAll faculty match!")
 
+    # Compare call schedules
+    print()
+    print("-" * 70)
+    print("CALL SCHEDULE COMPARISON")
+    print("-" * 70)
+    call_mismatches = compare_call_schedules(xml_call, xlsx_call)
+
+    if call_mismatches:
+        print(f"\nCall mismatches: {len(call_mismatches)}")
+        for m in call_mismatches[:10]:
+            print(f"  {m['date']}: XML={m['xml']!r} vs XLSX={m['xlsx']!r}")
+        if len(call_mismatches) > 10:
+            print(f"  ... and {len(call_mismatches) - 10} more")
+    else:
+        print("\nAll call assignments match!")
+
     # Summary
     print()
     print("=" * 70)
     print("SUMMARY")
     print("=" * 70)
-    total = len(resident_mismatches) + len(faculty_mismatches)
+    total = len(resident_mismatches) + len(faculty_mismatches) + len(call_mismatches)
     print(f"\nResident mismatches: {len(resident_mismatches)}")
     print(f"Faculty mismatches:  {len(faculty_mismatches)}")
+    print(f"Call mismatches:     {len(call_mismatches)}")
     print(f"TOTAL:               {total}")
 
     if total == 0:
