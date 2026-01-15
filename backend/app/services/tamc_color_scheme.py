@@ -47,6 +47,9 @@ class TAMCColorScheme:
         # Code → hex color mapping (without leading FF for openpyxl)
         self._code_colors: dict[str, str] = {}
 
+        # Code → font hex color mapping
+        self._font_colors: dict[str, str] = {}
+
         # Header colors by type
         self._header_colors: dict[str, str] = {}
 
@@ -83,6 +86,21 @@ class TAMCColorScheme:
                     if code:
                         self._code_colors[code] = hex_color
 
+            # Parse font colors (text colors with semantic meaning)
+            for font_group in root.findall(".//font_colors/font_color_group"):
+                hex_color = font_group.get("hex_color", "")
+                # Handle theme references (theme:1 → use actual_rgb)
+                if hex_color.startswith("theme:"):
+                    hex_color = font_group.get("actual_rgb", "FF000000")
+                # Remove leading "FF" (alpha channel) for openpyxl
+                if hex_color.startswith("FF") and len(hex_color) == 8:
+                    hex_color = hex_color[2:]
+
+                for code_elem in font_group.findall("code"):
+                    code = code_elem.get("value", "")
+                    if code:
+                        self._font_colors[code] = hex_color
+
             # Parse header colors
             for header in root.findall(".//header_colors/header"):
                 name = header.get("name", "")
@@ -105,7 +123,8 @@ class TAMCColorScheme:
             self._build_rotation_mappings()
 
             logger.info(
-                f"Loaded color scheme: {len(self._code_colors)} codes, "
+                f"Loaded color scheme: {len(self._code_colors)} fill codes, "
+                f"{len(self._font_colors)} font codes, "
                 f"{len(self._header_colors)} headers, "
                 f"{len(self._rotation_colors)} rotation types"
             )
@@ -144,6 +163,25 @@ class TAMCColorScheme:
             Hex color without alpha (e.g., "FFC000") or None if not found
         """
         return self._code_colors.get(code)
+
+    def get_font_color(self, code: str) -> str | None:
+        """
+        Get font hex color for a schedule code.
+
+        Font colors have semantic meaning:
+        - Red (#FF0000): +1 AT demand (dedicated supervision) - PR, VAS, COLPO, GER
+        - Red (#FF0000): Visibility for Lamoureux - HV
+        - Light gray (#E8E8E8): Night Float - NF, Peds NF
+        - White (#FFFFFF): Contrast on dark backgrounds - HOL, TNG, MM, FED
+        - Black (#000000): Default text
+
+        Args:
+            code: Schedule code (PR, NF, HOL, etc.)
+
+        Returns:
+            Hex color without alpha (e.g., "FF0000") or None if not found
+        """
+        return self._font_colors.get(code)
 
     def get_header_color(self, day_of_week: int) -> str | None:
         """
@@ -201,6 +239,11 @@ def get_color_scheme() -> TAMCColorScheme:
 def get_code_color(code: str) -> str | None:
     """Convenience function to get color for a schedule code."""
     return get_color_scheme().get_code_color(code)
+
+
+def get_font_color(code: str) -> str | None:
+    """Convenience function to get font color for a schedule code."""
+    return get_color_scheme().get_font_color(code)
 
 
 def get_header_color(day_of_week: int) -> str | None:

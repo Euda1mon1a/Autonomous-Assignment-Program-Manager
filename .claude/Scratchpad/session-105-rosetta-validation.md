@@ -43,49 +43,29 @@ Parsing XLSX...
 
 ### Residents by PGY
 
-| PGY | Count | Names |
-|-----|-------|-------|
-| PGY-1 | 6 | Byrnes, Monsivais, Sawyer, Sloss, Travis, Wilhelm |
-| PGY-2 | 6 | Cataquiz, Cook, Gigon, Headid, Maher, Thomas |
-| PGY-3 | 5 | Connolly, Hernandez, Mayell, Petrie, You |
+| PGY | Count |
+|-----|-------|
+| PGY-1 | 6 |
+| PGY-2 | 6 |
+| PGY-3 | 5 |
 
 ### Faculty
 
-| Name | Notes |
+| Role | Count |
 |------|-------|
-| Bevis | APD (100% admin) |
-| Chu | FMIT weeks 1 & 3 |
-| Colgan | DEP (deployed) |
-| Dahl | OUT (not available) |
-| Kinkennon | Regular |
-| LaBounty | FMIT week 4 |
-| Lamoureux | Regular |
-| McGuire | Uses DFM (not GME) |
-| McRae | Regular |
-| Montgomery | Regular |
-| Napierala | ADJ (FMIT/call only) |
-| Tagawa | SM faculty |
-| Van Brunt | ADJ (FMIT/call only) |
+| Regular | 6 |
+| ADJ (FMIT/call only) | 2 |
+| FMIT rotation | 3 |
+| DEP/OUT | 2 |
 
 ---
 
 ## Key Patterns in ROSETTA
 
-### Call Schedule (20 nights)
+### Call Schedule
 
-```
-Mar 12 (Thu): Kinkennon    Mar 29 (Sun): Montgomery
-Mar 15 (Sun): McGuire      Mar 30 (Mon): Tagawa
-Mar 16 (Mon): McRae        Mar 31 (Tue): Lamoureux
-Mar 17 (Tue): Montgomery   Apr 01 (Wed): Napierala
-Mar 18 (Wed): Tagawa       Apr 02 (Thu): Van Brunt
-Mar 19 (Thu): Lamoureux    Apr 05 (Sun): Kinkennon
-Mar 22 (Sun): Napierala    Apr 06 (Mon): McGuire
-Mar 23 (Mon): Van Brunt    Apr 07 (Tue): McRae
-Mar 24 (Tue): Kinkennon    Apr 08 (Wed): Montgomery
-Mar 25 (Wed): McGuire
-Mar 26 (Thu): McRae
-```
+- 20 nights total (Sun-Thu pattern)
+- Distributed across available faculty
 
 ### Faculty Patterns
 
@@ -93,15 +73,15 @@ Mar 26 (Thu): McRae
 |---------|------|
 | Post-call | PCAT (AM) + DO (PM) next day |
 | FMIT week | Fri → Thu, then PC/PC Friday |
-| Tagawa | SM (AM) + GME (PM), should be aSM on Wed AM |
-| McGuire | Uses DFM not GME for admin |
+| SM faculty | SM (AM) + GME (PM), aSM on Wed AM |
+| DFM admin | One faculty uses DFM not GME |
 
-### Known ROSETTA Issues (coworker noted "wrong information")
+### Known ROSETTA Issues
 
 | Issue | In File | Should Be |
 |-------|---------|-----------|
-| Tagawa Wed AM | SM | aSM |
-| Dahl all block | OFF | OUT |
+| SM faculty Wed AM | SM | aSM |
+| Unavailable faculty | OFF | OUT |
 
 ---
 

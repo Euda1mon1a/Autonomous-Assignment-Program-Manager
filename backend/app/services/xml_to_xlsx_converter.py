@@ -124,16 +124,28 @@ class XMLToXlsxConverter:
         return xlsx_bytes
 
     def _apply_cell_color(self, cell, code: str) -> None:
-        """Apply background color to cell based on schedule code."""
+        """Apply background and font color to cell based on schedule code.
+
+        Font colors have semantic meaning:
+        - Red: +1 AT demand (PR, VAS, COLPO, GER) or visibility (HV for Lamoureux)
+        - Light gray: Night Float (NF, Peds NF)
+        - White: Contrast on dark backgrounds
+        """
         if not self.apply_colors or not self.color_scheme:
             return
 
+        # Apply fill color
         hex_color = self.color_scheme.get_code_color(code)
         if hex_color:
             cell.fill = PatternFill(start_color=hex_color, fill_type="solid")
-            # Use white text for dark backgrounds (black, red)
-            if hex_color in ("000000", "FF0000"):
-                cell.font = Font(color="FFFFFF")
+
+        # Apply font color (priority: explicit mapping > contrast fallback)
+        font_color = self.color_scheme.get_font_color(code)
+        if font_color:
+            cell.font = Font(color=font_color)
+        elif hex_color in ("000000", "FF0000"):
+            # Fallback: white text on dark backgrounds
+            cell.font = Font(color="FFFFFF")
 
     def _apply_header_color(self, cell, day_of_week: int) -> None:
         """Apply header background color based on day of week."""
