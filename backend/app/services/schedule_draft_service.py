@@ -260,6 +260,9 @@ class ScheduleDraftService:
             UUID of the created draft assignment, or None on error.
         """
         try:
+            # Normalize time_of_day: None -> "ALL" (full-day sentinel)
+            normalized_time = time_of_day or "ALL"
+
             # Check if assignment already exists in draft
             existing = (
                 self.db.query(ScheduleDraftAssignment)
@@ -267,7 +270,7 @@ class ScheduleDraftService:
                     ScheduleDraftAssignment.draft_id == draft_id,
                     ScheduleDraftAssignment.person_id == person_id,
                     ScheduleDraftAssignment.assignment_date == assignment_date,
-                    ScheduleDraftAssignment.time_of_day == time_of_day,
+                    ScheduleDraftAssignment.time_of_day == normalized_time,
                 )
                 .first()
             )
@@ -287,7 +290,7 @@ class ScheduleDraftService:
                 draft_id=draft_id,
                 person_id=person_id,
                 assignment_date=assignment_date,
-                time_of_day=time_of_day,
+                time_of_day=normalized_time,  # Use normalized value
                 activity_code=activity_code,
                 rotation_id=rotation_id,
                 change_type=change_type,
@@ -485,7 +488,7 @@ class ScheduleDraftService:
             for a in draft.assignments
         ]
 
-        # Build flags list
+        # Build flags list with timestamps
         flags = [
             {
                 "id": str(f.id),
@@ -493,6 +496,10 @@ class ScheduleDraftService:
                 "severity": f.severity.value,
                 "message": f.message,
                 "acknowledged": f.acknowledged_at is not None,
+                "acknowledged_at": (
+                    f.acknowledged_at.isoformat() if f.acknowledged_at else None
+                ),
+                "created_at": f.created_at.isoformat() if f.created_at else None,
                 "date": f.affected_date.isoformat() if f.affected_date else None,
             }
             for f in draft.flags
@@ -1152,7 +1159,7 @@ class ScheduleDraftService:
                 draft_id=draft_id,
                 person_id=assignment.person_id,
                 assignment_date=assignment.date,
-                time_of_day=assignment.time_of_day,
+                time_of_day=assignment.time_of_day or "ALL",  # Normalize None to ALL
                 activity_code=assignment.activity_code,
                 rotation_id=assignment.rotation_template_id,
                 change_type=change_type,
