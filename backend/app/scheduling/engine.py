@@ -369,7 +369,9 @@ class SchedulingEngine:
 
             # Step 5.5: Delete existing assignments (except preserved ones)
             # This happens AFTER successful solve to prevent data loss on solver failure
-            self._delete_existing_assignments(preserve_ids)
+            # SKIP in draft mode - draft staging should not modify live schedule
+            if not create_draft:
+                self._delete_existing_assignments(preserve_ids)
 
             # Step 5.6: Add expanded assignments from block_assignments
             # These are NEW records generated from the master rotation schedule

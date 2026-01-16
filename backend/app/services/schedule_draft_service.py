@@ -1136,12 +1136,16 @@ class ScheduleDraftService:
             change_type = DraftAssignmentChangeType.ADD
 
             # Check if there's an existing live assignment at this slot
+            # Assignment doesn't have date/time_of_day directly - access via block relationship
+            from app.models.block import Block
+
             existing_assignment = (
                 self.db.query(Assignment)
+                .join(Block, Assignment.block_id == Block.id)
                 .filter(
                     Assignment.person_id == assignment.person_id,
-                    Assignment.date == assignment.date,
-                    Assignment.time_of_day == assignment.time_of_day,
+                    Block.date == assignment.block.date,
+                    Block.time_of_day == assignment.block.time_of_day,
                 )
                 .first()
             )
@@ -1154,13 +1158,15 @@ class ScheduleDraftService:
                 existing_assignment_id = None
 
             # Create draft assignment
+            # Access date/time_of_day via block relationship
             draft_assignment = ScheduleDraftAssignment(
                 id=uuid4(),
                 draft_id=draft_id,
                 person_id=assignment.person_id,
-                assignment_date=assignment.date,
-                time_of_day=assignment.time_of_day or "ALL",  # Normalize None to ALL
-                activity_code=assignment.activity_code,
+                assignment_date=assignment.block.date,
+                time_of_day=assignment.block.time_of_day
+                or "ALL",  # Normalize None to ALL
+                activity_code=getattr(assignment, "activity_code", None),
                 rotation_id=assignment.rotation_template_id,
                 change_type=change_type,
                 existing_assignment_id=existing_assignment_id,
@@ -1376,12 +1382,16 @@ class ScheduleDraftService:
             change_type = DraftAssignmentChangeType.ADD
 
             # Check if there's an existing live assignment at this slot
+            # Assignment doesn't have date/time_of_day directly - access via block relationship
+            from app.models.block import Block
+
             existing_assignment = (
                 self.db.query(Assignment)
+                .join(Block, Assignment.block_id == Block.id)
                 .filter(
                     Assignment.person_id == assignment.person_id,
-                    Assignment.date == assignment.date,
-                    Assignment.time_of_day == assignment.time_of_day,
+                    Block.date == assignment.block.date,
+                    Block.time_of_day == assignment.block.time_of_day,
                 )
                 .first()
             )
@@ -1394,13 +1404,14 @@ class ScheduleDraftService:
                 existing_assignment_id = None
 
             # Create draft assignment
+            # Access date/time_of_day via block relationship
             draft_assignment = ScheduleDraftAssignment(
                 id=uuid4(),
                 draft_id=draft_id,
                 person_id=assignment.person_id,
-                assignment_date=assignment.date,
-                time_of_day=assignment.time_of_day or "ALL",
-                activity_code=assignment.activity_code,
+                assignment_date=assignment.block.date,
+                time_of_day=assignment.block.time_of_day or "ALL",
+                activity_code=getattr(assignment, "activity_code", None),
                 rotation_id=assignment.rotation_template_id,
                 change_type=change_type,
                 existing_assignment_id=existing_assignment_id,
