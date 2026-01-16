@@ -5002,7 +5002,7 @@ async def spawn_agent_tool(
     logger.info(f"Preparing agent spawn: {agent_name} for mission: {mission[:50]}...")
 
     # Load agent registry
-    project_root = Path(__file__).parent.parent.parent.parent.parent
+    project_root = Path(__file__).parent.parent.parent.parent
     registry_path = project_root / ".claude" / "agents.yaml"
     identities_path = project_root / ".claude" / "Identities"
     audit_path = project_root / ".claude" / "History" / "agent_invocations"
