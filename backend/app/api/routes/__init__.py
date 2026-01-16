@@ -7,7 +7,7 @@ from app.api.routes import (
     academic_blocks,
     activities,
     admin_block_assignments,
-    approval_chain,
+    # approval_chain,  # QUARANTINED: requires_coordinator_or_above not implemented
     faculty_activities,
     admin_users,
     analytics,
@@ -66,6 +66,7 @@ from app.api.routes import (
     role_views,
     rotation_templates,
     schedule,
+    schedule_drafts,
     scheduler_ops,
     scheduling_catalyst,
     search,
@@ -173,9 +174,10 @@ api_router.include_router(
 )
 api_router.include_router(calendar.router, prefix="/calendar", tags=["calendar"])
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
-api_router.include_router(
-    approval_chain.router, prefix="/approval-chain", tags=["approval-chain"]
-)
+# QUARANTINED: approval_chain requires require_coordinator_or_above (not implemented)
+# api_router.include_router(
+#     approval_chain.router, prefix="/approval-chain", tags=["approval-chain"]
+# )
 api_router.include_router(analytics.router, tags=["analytics"])
 api_router.include_router(fairness.router, tags=["fairness"])
 api_router.include_router(db_admin.router, tags=["db-admin"])
@@ -225,6 +227,9 @@ api_router.include_router(upload.router, prefix="/uploads", tags=["upload"])
 api_router.include_router(imports.router, prefix="/imports", tags=["imports"])
 api_router.include_router(
     import_staging.router, prefix="/import", tags=["import-staging"]
+)
+api_router.include_router(
+    schedule_drafts.router, prefix="/schedules/drafts", tags=["schedule-drafts"]
 )
 api_router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 api_router.include_router(ws.router, tags=["websocket"])
