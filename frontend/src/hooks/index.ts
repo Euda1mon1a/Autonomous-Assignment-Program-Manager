@@ -102,10 +102,14 @@ export {
 // ============================================================================
 export {
   resilienceQueryKeys,
+  useBreakerHealth,
   useBurnoutRt,
+  useCircuitBreakers,
   useDefenseLevel,
   useEmergencyCoverage,
+  useMTFCompliance,
   useSystemHealth,
+  useUnifiedCriticalIndex,
   useUtilizationThreshold,
   useVulnerabilityReport,
 } from "./useResilience";

@@ -215,3 +215,158 @@ export interface BurnoutRtResponse {
   };
   interventions: string[];
 }
+
+// ============================================================================
+// Circuit Breaker Types (Netflix Hystrix pattern)
+// ============================================================================
+
+export enum CircuitState {
+  CLOSED = "closed", // Normal operation
+  OPEN = "open", // Circuit tripped, fail-fast
+  HALF_OPEN = "half_open", // Testing recovery
+}
+
+export enum BreakerSeverity {
+  HEALTHY = "healthy",
+  WARNING = "warning",
+  CRITICAL = "critical",
+  EMERGENCY = "emergency",
+}
+
+export interface StateTransitionInfo {
+  fromState: string;
+  toState: string;
+  timestamp: string;
+  reason: string;
+}
+
+export interface CircuitBreakerStatusInfo {
+  name: string;
+  state: CircuitState;
+  failureRate: number;
+  successRate: number;
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  rejectedRequests: number;
+  consecutiveFailures: number;
+  consecutiveSuccesses: number;
+  openedAt: string | null;
+  lastFailureTime: string | null;
+  lastSuccessTime: string | null;
+  recentTransitions: StateTransitionInfo[];
+}
+
+export interface AllBreakersStatusResponse {
+  totalBreakers: number;
+  closedBreakers: number;
+  openBreakers: number;
+  halfOpenBreakers: number;
+  openBreakerNames: string[];
+  halfOpenBreakerNames: string[];
+  breakers: CircuitBreakerStatusInfo[];
+  overallHealth: string;
+  recommendations: string[];
+  checkedAt: string;
+}
+
+export interface BreakerHealthMetrics {
+  totalRequests: number;
+  totalFailures: number;
+  totalRejections: number;
+  overallFailureRate: number;
+  breakersAboveThreshold: number;
+  averageFailureRate: number;
+  maxFailureRate: number;
+  unhealthiestBreaker: string | null;
+}
+
+export interface BreakerHealthResponse {
+  totalBreakers: number;
+  metrics: BreakerHealthMetrics;
+  breakersNeedingAttention: string[];
+  trendAnalysis: string;
+  severity: BreakerSeverity;
+  recommendations: string[];
+  analyzedAt: string;
+}
+
+// ============================================================================
+// MTF Compliance Types (Military Multi-Tier Functionality)
+// ============================================================================
+
+export interface MTFComplianceResponse {
+  drrsCategory: string; // DRRS C-rating (C1-C5)
+  missionCapability: string;
+  personnelRating: string; // P-rating (P1-P4)
+  capabilityRating: string; // S-rating (S1-S4)
+  circuitBreaker: Record<string, unknown> | null;
+  executiveSummary: string;
+  deficiencies: string[];
+  ironDomeStatus: string; // green/yellow/red
+  severity: string; // healthy/warning/critical/emergency
+}
+
+// ============================================================================
+// Unified Critical Index Types (Multi-factor risk aggregation)
+// ============================================================================
+
+export enum RiskPattern {
+  UNIVERSAL_CRITICAL = "universal_critical",
+  STRUCTURAL_BURNOUT = "structural_burnout",
+  INFLUENTIAL_HUB = "influential_hub",
+  SOCIAL_CONNECTOR = "social_connector",
+  ISOLATED_WORKHORSE = "isolated_workhorse",
+  BURNOUT_VECTOR = "burnout_vector",
+  NETWORK_ANCHOR = "network_anchor",
+  LOW_RISK = "low_risk",
+}
+
+export enum InterventionType {
+  IMMEDIATE_PROTECTION = "immediate_protection",
+  CROSS_TRAINING = "cross_training",
+  WORKLOAD_REDUCTION = "workload_reduction",
+  NETWORK_DIVERSIFICATION = "network_diversification",
+  MONITORING = "monitoring",
+  WELLNESS_SUPPORT = "wellness_support",
+}
+
+export interface DomainScoreInfo {
+  rawScore: number;
+  normalizedScore: number;
+  percentile: number;
+  isCritical: boolean;
+  details: Record<string, unknown>;
+}
+
+export interface FacultyUnifiedIndex {
+  facultyId: string;
+  facultyName: string;
+  compositeIndex: number;
+  riskPattern: RiskPattern;
+  confidence: number;
+  domainScores: Record<string, DomainScoreInfo>;
+  domainAgreement: number;
+  leadingDomain: string | null;
+  conflictDetails: string[];
+  recommendedInterventions: InterventionType[];
+  priorityRank: number;
+}
+
+export interface UnifiedCriticalIndexResponse {
+  analyzedAt: string;
+  totalFaculty: number;
+  overallIndex: number;
+  riskLevel: string;
+  riskConcentration: number;
+  criticalCount: number;
+  universalCriticalCount: number;
+  patternDistribution: Record<string, number>;
+  topPriority: string[];
+  topCriticalFaculty: FacultyUnifiedIndex[];
+  contributingFactors: Record<string, number>;
+  trend: string;
+  topConcerns: string[];
+  recommendations: string[];
+  severity: string;
+}
