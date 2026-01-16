@@ -23,31 +23,46 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create enum types
+    # Create enum types using DO blocks to handle idempotency
     op.execute("""
-        CREATE TYPE schedule_draft_status AS ENUM (
-            'draft', 'published', 'rolled_back', 'discarded'
-        );
+        DO $$ BEGIN
+            CREATE TYPE schedule_draft_status AS ENUM (
+                'draft', 'published', 'rolled_back', 'discarded'
+            );
+        EXCEPTION WHEN duplicate_object THEN null;
+        END $$;
     """)
     op.execute("""
-        CREATE TYPE draft_source_type AS ENUM (
-            'solver', 'manual', 'swap', 'import'
-        );
+        DO $$ BEGIN
+            CREATE TYPE draft_source_type AS ENUM (
+                'solver', 'manual', 'swap', 'import'
+            );
+        EXCEPTION WHEN duplicate_object THEN null;
+        END $$;
     """)
     op.execute("""
-        CREATE TYPE draft_assignment_change_type AS ENUM (
-            'add', 'modify', 'delete'
-        );
+        DO $$ BEGIN
+            CREATE TYPE draft_assignment_change_type AS ENUM (
+                'add', 'modify', 'delete'
+            );
+        EXCEPTION WHEN duplicate_object THEN null;
+        END $$;
     """)
     op.execute("""
-        CREATE TYPE draft_flag_type AS ENUM (
-            'conflict', 'acgme_violation', 'coverage_gap', 'manual_review'
-        );
+        DO $$ BEGIN
+            CREATE TYPE draft_flag_type AS ENUM (
+                'conflict', 'acgme_violation', 'coverage_gap', 'manual_review'
+            );
+        EXCEPTION WHEN duplicate_object THEN null;
+        END $$;
     """)
     op.execute("""
-        CREATE TYPE draft_flag_severity AS ENUM (
-            'error', 'warning', 'info'
-        );
+        DO $$ BEGIN
+            CREATE TYPE draft_flag_severity AS ENUM (
+                'error', 'warning', 'info'
+            );
+        EXCEPTION WHEN duplicate_object THEN null;
+        END $$;
     """)
 
     # Create schedule_drafts table
@@ -70,7 +85,7 @@ def upgrade() -> None:
         # Status
         sa.Column(
             "status",
-            sa.Enum(
+            postgresql.ENUM(
                 "draft",
                 "published",
                 "rolled_back",
@@ -84,7 +99,7 @@ def upgrade() -> None:
         # Source tracking
         sa.Column(
             "source_type",
-            sa.Enum(
+            postgresql.ENUM(
                 "solver",
                 "manual",
                 "swap",
@@ -172,7 +187,7 @@ def upgrade() -> None:
         # Change tracking
         sa.Column(
             "change_type",
-            sa.Enum(
+            postgresql.ENUM(
                 "add",
                 "modify",
                 "delete",
@@ -222,7 +237,7 @@ def upgrade() -> None:
         # Flag details
         sa.Column(
             "flag_type",
-            sa.Enum(
+            postgresql.ENUM(
                 "conflict",
                 "acgme_violation",
                 "coverage_gap",
@@ -234,7 +249,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "severity",
-            sa.Enum(
+            postgresql.ENUM(
                 "error",
                 "warning",
                 "info",
