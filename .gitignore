@@ -153,3 +153,59 @@ backups/
 backups/full_*
 full_year_assignments.csv
 docs/scheduling/BlockTemplate2_Structure_LOCAL.xml
+
+# ============================================================================
+# LOCAL WORK PRODUCTS - Not suitable for sacred timeline
+# ============================================================================
+
+# Block schedule work products (generated Excel/XML files)
+Block10_*.xlsx
+Block10_*.xml
+backend/Block10_*.xlsx
+backend/Block10_*.xml
+test_write.xlsx
+
+# Excel temp files (open file locks)
+~$*.xlsx
+~$*.xls
+
+# AI session artifacts
+.claude/Scratchpad/session-*
+.claude/plans/
+.claude/Missions/
+.claude/skills/*/
+.agent/
+
+# Local scheduling docs (may contain PII)
+docs/scheduling/*.xlsx
+docs/scheduling/*.xml
+docs/scheduling/~$*
+docs/scheduling/VBA_MACROS.bas
+docs/scheduling/*.csv
+
+# Backend local data
+backend/data/
+backend/docs/
+backend/scripts/*.json
+backend/tests/services/test_block_schedule_export_service.py
+backend/tests/services/test_xml_vs_rosetta.py
+
+# Frontend local files
+frontend/src/api/schedule-drafts.ts
+frontend/src/app/admin/schedule-drafts/
+frontend/src/hooks/useScheduleDrafts.ts
+frontend/src/types/schedule-draft.ts
+
+# Misc local work
+FACULTY_CONSTRAINTS_PROPOSAL.md
+skills/
+src/
+tests/
+scripts/setup-antigravity-skills.sh
+
+# PII-containing handoff docs (real names)
+docs/scheduling/HANDOFF_CLAUDE_MACOS.md
+
+# WIP - needs investigation before commit
+backend/app/schemas/schedule_draft.py
+backend/scripts/validate_xml_vs_rosetta.py
