@@ -406,6 +406,25 @@ class WellnessService:
                 message="Survey not found",
             )
 
+        # Check role targeting - ensure caller's role is allowed for this survey
+        if survey.target_roles_json:
+            person_result = await self.db.execute(
+                select(Person).where(Person.id == person_id)
+            )
+            person = person_result.scalar_one_or_none()
+            if person and person.type not in survey.target_roles_json:
+                allowed_roles = ", ".join(survey.target_roles_json)
+                return SurveySubmissionResult(
+                    success=False,
+                    response_id=None,
+                    score=None,
+                    score_interpretation=None,
+                    points_result=PointsResult(0, 0, 0),
+                    streak_result=StreakResult(0, 0, False, 0),
+                    achievement_result=AchievementResult([], []),
+                    message=f"Survey '{survey.name}' is only available to: {allowed_roles}",
+                )
+
         # Check availability
         availability = await self._get_survey_availability(person_id, survey_id)
         if availability and availability.next_available_at:
@@ -639,7 +658,14 @@ class WellnessService:
     # ------------------------------------------------------------------------
 
     async def _update_streak(self, account: WellnessAccount) -> StreakResult:
-        """Update streak based on activity."""
+        """Update streak based on activity.
+
+        Uses ISO week comparison to properly handle weekly streaks:
+        - Monday week N → Tuesday week N+1 (8 days) = valid continuation
+        - Handles year boundary (Dec week 52 → Jan week 1) correctly
+        - Same week activity doesn't increment streak
+        - Gap > 1 week resets streak
+        """
         today = date.today()
         streak_bonus = 0
 
@@ -648,24 +674,31 @@ class WellnessService:
             account.current_streak_weeks = 1
             account.streak_start_date = today
         else:
-            days_since_last = (today - account.last_activity_date).days
+            # Use ISO week comparison for proper weekly streak tracking
+            last_iso = account.last_activity_date.isocalendar()
+            this_iso = today.isocalendar()
 
-            if days_since_last <= 7:
-                # Check if we're in a new week
-                last_week = account.last_activity_date.isocalendar()[1]
-                this_week = today.isocalendar()[1]
+            last_year = last_iso[0]  # ISO year
+            last_week = last_iso[1]  # ISO week number (1-53)
+            this_year = this_iso[0]
+            this_week = this_iso[1]
 
-                if this_week != last_week:
-                    # New week, increment streak
-                    account.current_streak_weeks += 1
+            # Calculate weeks difference accounting for year boundaries
+            # ISO week 1 may start in late December, so use ISO year
+            weeks_diff = (this_year - last_year) * 52 + (this_week - last_week)
 
-                    # Award streak bonus after 2+ weeks
-                    if account.current_streak_weeks >= 2:
-                        streak_bonus = POINTS_STREAK_BONUS
-            elif days_since_last > 14:
-                # Streak broken (more than 2 weeks)
+            if weeks_diff == 1:
+                # Consecutive weeks - increment streak
+                account.current_streak_weeks += 1
+
+                # Award streak bonus after 2+ weeks
+                if account.current_streak_weeks >= 2:
+                    streak_bonus = POINTS_STREAK_BONUS
+            elif weeks_diff > 1:
+                # Gap of more than 1 week - reset streak
                 account.current_streak_weeks = 1
                 account.streak_start_date = today
+            # weeks_diff == 0 means same week - no streak change
 
         # Update longest streak
         if account.current_streak_weeks > account.longest_streak_weeks:
