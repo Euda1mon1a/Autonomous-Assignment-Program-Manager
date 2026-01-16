@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hopfield Energy Landscape - Schedule Stability Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #0f0f1a; }
+        #canvas-container { width: 100vw; height: 100vh; }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            height: 6px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #22c55e, #facc15);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <!-- Control Panel -->
+    <div class="glass fixed top-4 left-4 p-6 rounded-2xl w-80 text-white">
+        <h1 class="text-xl font-bold mb-1 bg-gradient-to-r from-green-400 to-amber-400 bg-clip-text text-transparent">
+            Hopfield Energy Landscape
+        </h1>
+        <p class="text-xs text-gray-400 mb-4">Schedule stability as neural attractor dynamics</p>
+
+        <div class="space-y-4">
+            <div>
+                <label class="text-sm text-gray-300 flex justify-between">
+                    <span>Supervision Coverage</span>
+                    <span id="coverage-val" class="text-green-400">50%</span>
+                </label>
+                <input type="range" id="coverage" min="0" max="100" value="50" class="w-full mt-1">
+            </div>
+
+            <div>
+                <label class="text-sm text-gray-300 flex justify-between">
+                    <span>Faculty Load Balance</span>
+                    <span id="balance-val" class="text-amber-400">50%</span>
+                </label>
+                <input type="range" id="balance" min="0" max="100" value="50" class="w-full mt-1">
+            </div>
+
+            <div class="pt-2 border-t border-white/10">
+                <div class="flex justify-between text-sm text-gray-400 mb-2">
+                    <span>Energy Level:</span>
+                    <span id="energy-display" class="font-mono text-yellow-400">0.00</span>
+                </div>
+                <div id="status-indicator" class="text-center text-sm font-semibold py-1 px-2 rounded mb-2 bg-amber-500/20 text-amber-400">
+                    AMBER - Caution
+                </div>
+                <button id="settle-btn"
+                    class="w-full py-2 px-4 rounded-lg bg-gradient-to-r from-green-600 to-amber-500
+                           hover:from-green-700 hover:to-amber-600 transition-all font-semibold
+                           shadow-lg shadow-green-500/20">
+                    SETTLE (Gradient Descent)
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-white/10 text-xs text-gray-500 space-y-1">
+            <p><span class="inline-block w-3 h-3 rounded-sm bg-white mr-2"></span>White = Optimal (exceeds expectations)</p>
+            <p><span class="inline-block w-3 h-3 rounded-sm bg-green-500 mr-2"></span>Green = Stable (good)</p>
+            <p><span class="inline-block w-3 h-3 rounded-sm bg-amber-500 mr-2"></span>Amber = Caution (marginal)</p>
+            <p><span class="inline-block w-3 h-3 rounded-sm bg-red-500 mr-2"></span>Red = Danger (unstable)</p>
+            <p><span class="inline-block w-3 h-3 rounded-sm bg-gray-900 border border-gray-700 mr-2"></span>Black = Death Zone</p>
+            <p class="pt-1 text-gray-600">Drag to rotate scene</p>
+        </div>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="glass fixed bottom-4 right-4 p-4 rounded-xl text-white max-w-xs">
+        <h3 class="text-sm font-semibold text-green-300 mb-2">What is this?</h3>
+        <p class="text-xs text-gray-400 leading-relaxed">
+            Hopfield networks model how systems "settle" into stable states (attractors).
+            The ball represents the current schedule—it rolls toward energy minima
+            where coverage is high and workload is balanced. Military color coding
+            shows operational readiness at a glance.
+        </p>
+    </div>
+
+    <script>
+        // Scene setup
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Camera position
+        camera.position.set(4, 4, 4);
+        camera.lookAt(0, 0, 0);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 10, 5);
+        scene.add(directionalLight);
+        const pointLight = new THREE.PointLight(0x22c55e, 0.5);
+        pointLight.position.set(-3, 3, -3);
+        scene.add(pointLight);
+
+        // Energy function - creates landscape with local minima
+        const GRID_SIZE = 60;
+        function computeEnergy(u, v) {
+            // u = normalized coverage (0-1), v = normalized balance (0-1)
+            // Global minimum near (1, 1) - full coverage, perfect balance
+            const noise = 0.4 * Math.sin(u * 12) * Math.cos(v * 12);
+            const base = -1.5 * ((u - 0.5) * (u - 0.5) + (v - 0.5) * (v - 0.5));
+            const globalMin = -2.5 * Math.exp(-((u - 0.85) ** 2 + (v - 0.85) ** 2) * 8);
+            const localMin1 = -1.2 * Math.exp(-((u - 0.3) ** 2 + (v - 0.7) ** 2) * 12);
+            const localMin2 = -1.0 * Math.exp(-((u - 0.6) ** 2 + (v - 0.25) ** 2) * 10);
+            return (base + noise + globalMin + localMin1 + localMin2) * 0.8;
+        }
+
+        // Create energy surface
+        const surfaceGeometry = new THREE.PlaneGeometry(4, 4, GRID_SIZE - 1, GRID_SIZE - 1);
+        const vertices = surfaceGeometry.attributes.position.array;
+        const colors = new Float32Array(vertices.length);
+
+        let minEnergy = Infinity, maxEnergy = -Infinity;
+
+        // First pass: compute energy and find range
+        for (let i = 0; i < vertices.length; i += 3) {
+            const x = vertices[i];
+            const y = vertices[i + 1];
+            const u = (x + 2) / 4; // 0 to 1
+            const v = (y + 2) / 4; // 0 to 1
+            const energy = computeEnergy(u, v);
+            vertices[i + 2] = energy;
+            minEnergy = Math.min(minEnergy, energy);
+            maxEnergy = Math.max(maxEnergy, energy);
+        }
+
+        // Military color stops: White (0) → Green (0.25) → Amber (0.5) → Red (0.75) → Black (1)
+        function getMilitaryColor(t) {
+            // t = 0 (lowest energy/best) to 1 (highest energy/worst)
+            if (t < 0.15) {
+                // White (optimal) - exceeds expectations
+                const blend = t / 0.15;
+                return { r: 1.0 - blend * 0.1, g: 1.0 - blend * 0.13, b: 1.0 - blend * 0.6 };
+            } else if (t < 0.35) {
+                // Green (stable) - good operational state
+                const blend = (t - 0.15) / 0.2;
+                return { r: 0.13 + blend * 0.87, g: 0.87 - blend * 0.22, b: 0.4 - blend * 0.2 };
+            } else if (t < 0.55) {
+                // Amber (caution) - marginal
+                const blend = (t - 0.35) / 0.2;
+                return { r: 1.0 - blend * 0.07, g: 0.65 - blend * 0.43, b: 0.2 - blend * 0.05 };
+            } else if (t < 0.8) {
+                // Red (danger) - unstable
+                const blend = (t - 0.55) / 0.25;
+                return { r: 0.93 - blend * 0.83, g: 0.22 - blend * 0.17, b: 0.15 - blend * 0.1 };
+            } else {
+                // Black (death zone) - critical failure
+                const blend = (t - 0.8) / 0.2;
+                return { r: 0.1 - blend * 0.08, g: 0.05 - blend * 0.03, b: 0.05 - blend * 0.03 };
+            }
+        }
+
+        // Second pass: assign colors based on energy
+        for (let i = 0; i < vertices.length; i += 3) {
+            const energy = vertices[i + 2];
+            const t = (energy - minEnergy) / (maxEnergy - minEnergy); // 0 (low/good) to 1 (high/bad)
+
+            const color = getMilitaryColor(t);
+            colors[i] = color.r;
+            colors[i + 1] = color.g;
+            colors[i + 2] = color.b;
+        }
+
+        surfaceGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        surfaceGeometry.computeVertexNormals();
+
+        const surfaceMaterial = new THREE.MeshStandardMaterial({
+            vertexColors: true,
+            side: THREE.DoubleSide,
+            metalness: 0.3,
+            roughness: 0.6,
+            wireframe: false
+        });
+        const surface = new THREE.Mesh(surfaceGeometry, surfaceMaterial);
+        surface.rotation.x = -Math.PI / 2;
+        scene.add(surface);
+
+        // Add wireframe overlay
+        const wireframeMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true,
+            opacity: 0.05,
+            transparent: true
+        });
+        const wireframe = new THREE.Mesh(surfaceGeometry.clone(), wireframeMaterial);
+        wireframe.rotation.x = -Math.PI / 2;
+        scene.add(wireframe);
+
+        // Ball representing current schedule state
+        const ballGeometry = new THREE.SphereGeometry(0.12, 32, 32);
+        const ballMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffd700,
+            emissive: 0xff8c00,
+            emissiveIntensity: 0.3,
+            metalness: 0.8,
+            roughness: 0.2
+        });
+        const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+        scene.add(ball);
+
+        // Ball glow
+        const glowGeometry = new THREE.SphereGeometry(0.18, 32, 32);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffd700,
+            transparent: true,
+            opacity: 0.2
+        });
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        scene.add(glow);
+
+        // State
+        let ballU = 0.5, ballV = 0.5;
+        let isSettling = false;
+        let rotationY = 0;
+        let isDragging = false;
+        let previousMouseX = 0;
+
+        // UI elements
+        const coverageSlider = document.getElementById('coverage');
+        const balanceSlider = document.getElementById('balance');
+        const coverageVal = document.getElementById('coverage-val');
+        const balanceVal = document.getElementById('balance-val');
+        const energyDisplay = document.getElementById('energy-display');
+        const settleBtn = document.getElementById('settle-btn');
+        const statusIndicator = document.getElementById('status-indicator');
+
+        // Get status based on normalized energy
+        function getStatus(t) {
+            if (t < 0.15) return { text: 'WHITE - Optimal', class: 'bg-white/20 text-white' };
+            if (t < 0.35) return { text: 'GREEN - Stable', class: 'bg-green-500/20 text-green-400' };
+            if (t < 0.55) return { text: 'AMBER - Caution', class: 'bg-amber-500/20 text-amber-400' };
+            if (t < 0.8) return { text: 'RED - Danger', class: 'bg-red-500/20 text-red-400' };
+            return { text: 'BLACK - Death Zone', class: 'bg-gray-900 text-red-500 border border-red-900' };
+        }
+
+        function updateBallPosition() {
+            const x = (ballU - 0.5) * 4;
+            // Fix: flip Z to match rotated surface coordinate system
+            const z = (0.5 - ballV) * 4;
+            const energy = computeEnergy(ballU, ballV);
+
+            // Position ball ON the surface (energy is the Y after rotation)
+            ball.position.set(x, energy + 0.12, z);
+            glow.position.copy(ball.position);
+
+            energyDisplay.textContent = energy.toFixed(3);
+
+            // Update slider displays
+            coverageVal.textContent = Math.round(ballU * 100) + '%';
+            balanceVal.textContent = Math.round(ballV * 100) + '%';
+
+            // Update status indicator
+            const t = (energy - minEnergy) / (maxEnergy - minEnergy);
+            const status = getStatus(t);
+            statusIndicator.textContent = status.text;
+            statusIndicator.className = `text-center text-sm font-semibold py-1 px-2 rounded mb-2 ${status.class}`;
+        }
+
+        // Gradient descent
+        function gradientDescent() {
+            const step = 0.005;
+            const eps = 0.01;
+
+            const currentE = computeEnergy(ballU, ballV);
+            const dEdU = (computeEnergy(ballU + eps, ballV) - computeEnergy(ballU - eps, ballV)) / (2 * eps);
+            const dEdV = (computeEnergy(ballU, ballV + eps) - computeEnergy(ballU, ballV - eps)) / (2 * eps);
+
+            const gradMag = Math.sqrt(dEdU * dEdU + dEdV * dEdV);
+
+            if (gradMag < 0.01) {
+                isSettling = false;
+                settleBtn.textContent = 'SETTLE (Gradient Descent)';
+                return;
+            }
+
+            ballU = Math.max(0, Math.min(1, ballU - step * dEdU));
+            ballV = Math.max(0, Math.min(1, ballV - step * dEdV));
+
+            coverageSlider.value = ballU * 100;
+            balanceSlider.value = ballV * 100;
+        }
+
+        // Event listeners
+        coverageSlider.addEventListener('input', (e) => {
+            ballU = e.target.value / 100;
+            isSettling = false;
+            settleBtn.textContent = 'SETTLE (Gradient Descent)';
+        });
+
+        balanceSlider.addEventListener('input', (e) => {
+            ballV = e.target.value / 100;
+            isSettling = false;
+            settleBtn.textContent = 'SETTLE (Gradient Descent)';
+        });
+
+        settleBtn.addEventListener('click', () => {
+            isSettling = !isSettling;
+            settleBtn.textContent = isSettling ? 'PAUSE' : 'SETTLE (Gradient Descent)';
+        });
+
+        // Mouse rotation
+        container.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMouseX = e.clientX;
+        });
+
+        container.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - previousMouseX;
+                rotationY += deltaX * 0.005;
+                previousMouseX = e.clientX;
+            }
+        });
+
+        container.addEventListener('mouseup', () => isDragging = false);
+        container.addEventListener('mouseleave', () => isDragging = false);
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isSettling) {
+                gradientDescent();
+            }
+
+            updateBallPosition();
+
+            // Rotate scene
+            scene.rotation.y = rotationY;
+
+            // Gentle auto-rotation when not dragging
+            if (!isDragging && !isSettling) {
+                rotationY += 0.001;
+            }
+
+            // Ball hover animation
+            ball.position.y += Math.sin(Date.now() * 0.003) * 0.002;
+            glow.scale.setScalar(1 + Math.sin(Date.now() * 0.005) * 0.1);
+
+            renderer.render(scene, camera);
+        }
+
+        updateBallPosition();
+        animate();
+    </script>
+</body>
+</html>
