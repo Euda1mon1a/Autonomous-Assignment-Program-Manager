@@ -195,6 +195,24 @@ repos:
         files: ^backend/alembic/versions/.*\.py$
 
   # ============================================================================
+  # PHASE 8b: Lich's Phylactery (Sacred Timeline)
+  # ============================================================================
+
+  # Auto-dump schema.sql when migrations or models change
+  # Named after the D&D lich's phylactery - stores the soul for resurrection
+  # schema.sql stores the DB's essence so structure can be resurrected
+  # Reference: Sacred Timeline preservation for dev environments
+  - repo: local
+    hooks:
+      - id: lichs-phylactery
+        name: Lich's Phylactery (schema snapshot)
+        entry: scripts/lichs-phylactery.sh
+        language: script
+        pass_filenames: false
+        files: ^backend/(alembic/versions/.*\.py|app/models/.*\.py)$
+        stages: [pre-commit]
+
+  # ============================================================================
   # PHASE 9: MCP Configuration Validation
   # ============================================================================
 

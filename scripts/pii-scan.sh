@@ -82,8 +82,9 @@ else
 fi
 
 # Check for tracked data files that shouldn't be committed
+# Exclude: alembic migrations, backend/schema.sql (Lich's Phylactery - schema only, no data)
 echo -n "Checking for staged data files... "
-STAGED_DATA=$(git diff --cached --name-only 2>/dev/null | grep -E '\.(csv|dump|sql)$' | grep -v 'alembic' || true)
+STAGED_DATA=$(git diff --cached --name-only 2>/dev/null | grep -E '\.(csv|dump|sql)$' | grep -v 'alembic' | grep -v 'backend/schema.sql' || true)
 
 if [ -n "$STAGED_DATA" ]; then
   echo -e "${RED}FOUND${NC}"

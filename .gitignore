@@ -122,6 +122,7 @@ docs/schedules/residents.json
 *.dump
 *.sql
 !backend/alembic/**/*.sql
+!backend/schema.sql
 
 # Local PII data folder (Excel schedules, real names - NEVER COMMIT)
 data/local/
