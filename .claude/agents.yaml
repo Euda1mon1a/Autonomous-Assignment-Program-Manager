@@ -1,0 +1,668 @@
+# PAI Agent Registry
+# Runtime manifest for spawn_agent_tool MCP integration
+# Generated from .claude/Identities/*.identity.md
+
+# Tier determines execution model:
+#   Deputy (opus)     - Full agentic loop, can spawn sub-agents
+#   Coordinator (sonnet) - Bounded agentic loop, domain tools only
+#   Specialist (haiku)   - Single-shot execution, focused task
+#   G-Staff (sonnet)     - Advisory/staff function, research-focused
+
+version: "1.0"
+generated: "2026-01-16"
+
+agents:
+  # =============================================================================
+  # DEPUTIES - Strategic Thinkers (opus, full autonomy)
+  # =============================================================================
+
+  ARCHITECT:
+    tier: Deputy
+    model: opus
+    archetype: Synthesizer
+    role: "Deputy for Systems - Architecture, design, and technical infrastructure"
+    reports_to: ORCHESTRATOR
+    can_spawn: [COORD_PLATFORM, COORD_QUALITY, COORD_ENGINE, COORD_TOOLING, G6_SIGNAL, G2_RECON, G5_PLANNING, DEVCOM_RESEARCH]
+    max_turns: 50
+    tools_access: [validate_schedule, detect_conflicts, rag_search]
+    relevant_doc_types: [architecture, patterns, decisions]
+
+  SYNTHESIZER:
+    tier: Deputy
+    model: opus
+    archetype: Synthesizer
+    role: "Deputy for Operations - Execution, coordination, and cross-domain integration"
+    reports_to: ORCHESTRATOR
+    can_spawn: [COORD_OPS, COORD_RESILIENCE, COORD_FRONTEND, COORD_INTEL, HISTORIAN]
+    max_turns: 50
+    tools_access: [validate_schedule, detect_conflicts, rag_search, get_defense_level_tool]
+    relevant_doc_types: [operations, workflows, integrations]
+
+  # =============================================================================
+  # COORDINATORS - Domain Managers (sonnet, bounded autonomy)
+  # =============================================================================
+
+  COORD_ENGINE:
+    tier: Coordinator
+    model: sonnet
+    archetype: Generator
+    role: "Coordinator for Scheduling Engine & Optimization"
+    reports_to: ARCHITECT
+    can_spawn: [SCHEDULER, SWAP_MANAGER, OPTIMIZATION_SPECIALIST]
+    max_turns: 20
+    tools_access: [validate_schedule, generate_schedule, detect_conflicts, analyze_swap_candidates, run_contingency_analysis]
+    relevant_doc_types: [scheduling, constraints, acgme]
+
+  COORD_RESILIENCE:
+    tier: Coordinator
+    model: sonnet
+    archetype: Validator
+    role: "Coordinator for Resilience Framework & System Health"
+    reports_to: SYNTHESIZER
+    can_spawn: [COMPLIANCE_AUDITOR, RESILIENCE_ENGINEER]
+    max_turns: 20
+    tools_access: [validate_schedule, get_defense_level_tool, check_circuit_breakers_tool, run_contingency_analysis_resilience]
+    relevant_doc_types: [resilience, compliance, monitoring]
+
+  COORD_PLATFORM:
+    tier: Coordinator
+    model: sonnet
+    archetype: Generator
+    role: "Coordinator for Backend, Database & API development"
+    reports_to: ARCHITECT
+    can_spawn: [BACKEND_ENGINEER, DBA, API_DEVELOPER]
+    max_turns: 20
+    tools_access: [rag_search, check_schema_drift_tool]
+    relevant_doc_types: [backend, database, api]
+
+  COORD_FRONTEND:
+    tier: Coordinator
+    model: sonnet
+    archetype: Generator
+    role: "Coordinator for Frontend & UX development"
+    reports_to: SYNTHESIZER
+    can_spawn: [FRONTEND_ENGINEER, UX_SPECIALIST]
+    max_turns: 20
+    tools_access: [rag_search]
+    relevant_doc_types: [frontend, components, styling]
+
+  COORD_QUALITY:
+    tier: Coordinator
+    model: sonnet
+    archetype: Validator
+    role: "Coordinator for Testing & Quality Assurance"
+    reports_to: ARCHITECT
+    can_spawn: [QA_TESTER, CODE_REVIEWER, TOOL_QA]
+    max_turns: 20
+    tools_access: [validate_schedule, detect_conflicts]
+    relevant_doc_types: [testing, quality, coverage]
+
+  COORD_TOOLING:
+    tier: Coordinator
+    model: sonnet
+    archetype: Generator
+    role: "Coordinator for MCP Tools & Skills development"
+    reports_to: ARCHITECT
+    can_spawn: [TOOLSMITH, TOOL_REVIEWER]
+    max_turns: 20
+    tools_access: [rag_search, module_usage_analysis]
+    relevant_doc_types: [mcp, tools, skills]
+
+  COORD_OPS:
+    tier: Coordinator
+    model: sonnet
+    archetype: Synthesizer
+    role: "Coordinator for Releases, Documentation & CI/CD"
+    reports_to: SYNTHESIZER
+    can_spawn: [RELEASE_MANAGER, CI_LIAISON]
+    max_turns: 20
+    tools_access: [rag_search, get_deployment_status_tool]
+    relevant_doc_types: [operations, releases, ci]
+
+  COORD_INTEL:
+    tier: Coordinator
+    model: sonnet
+    archetype: Researcher
+    role: "Coordinator for Investigations & Forensics"
+    reports_to: SYNTHESIZER
+    can_spawn: [G2_RECON, SECURITY_AUDITOR]
+    max_turns: 20
+    tools_access: [rag_search, detect_conflicts]
+    relevant_doc_types: [security, audit, investigation]
+
+  # =============================================================================
+  # SPECIALISTS - Task Executors (haiku, single-shot)
+  # =============================================================================
+
+  SCHEDULER:
+    tier: Specialist
+    model: haiku
+    archetype: Generator
+    role: "Schedule generation specialist - CP-SAT solver operations and ACGME compliance"
+    reports_to: COORD_ENGINE
+    can_spawn: []
+    max_turns: 5
+    tools_access: [validate_schedule, generate_schedule, detect_conflicts]
+    relevant_doc_types: [scheduling, constraints]
+
+  COMPLIANCE_AUDITOR:
+    tier: Specialist
+    model: haiku
+    archetype: Validator
+    role: "ACGME compliance specialist"
+    reports_to: COORD_RESILIENCE
+    can_spawn: []
+    max_turns: 5
+    tools_access: [validate_schedule, check_mtf_compliance_tool]
+    relevant_doc_types: [acgme, compliance]
+
+  SWAP_MANAGER:
+    tier: Specialist
+    model: haiku
+    archetype: Generator
+    role: "Schedule swap execution and validation"
+    reports_to: COORD_ENGINE
+    can_spawn: []
+    max_turns: 5
+    tools_access: [analyze_swap_candidates, validate_schedule, detect_conflicts]
+    relevant_doc_types: [swaps, scheduling]
+
+  RESILIENCE_ENGINEER:
+    tier: Specialist
+    model: haiku
+    archetype: Validator
+    role: "Resilience framework specialist"
+    reports_to: COORD_RESILIENCE
+    can_spawn: []
+    max_turns: 5
+    tools_access: [get_defense_level_tool, check_circuit_breakers_tool, run_contingency_analysis_resilience]
+    relevant_doc_types: [resilience, monitoring]
+
+  BACKEND_ENGINEER:
+    tier: Specialist
+    model: haiku
+    archetype: Generator
+    role: "FastAPI backend development"
+    reports_to: COORD_PLATFORM
+    can_spawn: []
+    max_turns: 5
+    tools_access: [rag_search]
+    relevant_doc_types: [backend, fastapi]
+
+  FRONTEND_ENGINEER:
+    tier: Specialist
+    model: haiku
+    archetype: Generator
+    role: "Next.js/React frontend development"
+    reports_to: COORD_FRONTEND
+    can_spawn: []
+    max_turns: 5
+    tools_access: [rag_search]
+    relevant_doc_types: [frontend, react]
+
+  DBA:
+    tier: Specialist
+    model: haiku
+    archetype: Generator
+    role: "Database administration and migrations"
+    reports_to: COORD_PLATFORM
+    can_spawn: []
+    max_turns: 5
+    tools_access: [check_schema_drift_tool, rag_search]
+    relevant_doc_types: [database, migrations]
+
+  QA_TESTER:
+    tier: Specialist
+    model: haiku
+    archetype: Validator
+    role: "Test writing and execution"
+    reports_to: COORD_QUALITY
+    can_spawn: []
+    max_turns: 5
+    tools_access: [rag_search]
+    relevant_doc_types: [testing, pytest]
+
+  CODE_REVIEWER:
+    tier: Specialist
+    model: haiku
+    archetype: Critic
+    role: "Code review and quality analysis"
+    reports_to: COORD_QUALITY
+    can_spawn: []
+    max_turns: 5
+    tools_access: [rag_search]
+    relevant_doc_types: [patterns, review]
+
+  SECURITY_AUDITOR:
+    tier: Specialist
+    model: haiku
+    archetype: Critic
+    role: "Security analysis and OPSEC compliance"
+    reports_to: COORD_INTEL
+    can_spawn: []
+    max_turns: 5
+    tools_access: [rag_search, run_security_scan_tool]
+    relevant_doc_types: [security, opsec]
+
+  # =============================================================================
+  # G-STAFF - Advisory Functions (sonnet, research-focused)
+  # =============================================================================
+
+  G1_PERSONNEL:
+    tier: G-Staff
+    model: sonnet
+    archetype: Researcher
+    role: "Personnel & Roster management - Team composition analysis"
+    reports_to: SYNTHESIZER
+    can_spawn: []
+    max_turns: 20
+    tools_access: [rag_search]
+    relevant_doc_types: [personnel, roster]
+
+  G2_RECON:
+    tier: G-Staff
+    model: sonnet
+    archetype: Researcher
+    role: "Intelligence & Reconnaissance - Codebase exploration"
+    reports_to: ARCHITECT
+    can_spawn: []
+    max_turns: 20
+    tools_access: [rag_search]
+    relevant_doc_types: [architecture, patterns]
+
+  G3_OPERATIONS:
+    tier: G-Staff
+    model: sonnet
+    archetype: Validator
+    role: "Operations & Workflow validation"
+    reports_to: SYNTHESIZER
+    can_spawn: []
+    max_turns: 20
+    tools_access: [rag_search, validate_schedule]
+    relevant_doc_types: [operations, workflows]
+
+  G4_CONTEXT_MANAGER:
+    tier: G-Staff
+    model: sonnet
+    archetype: Synthesizer
+    role: "Context & Documentation management"
+    reports_to: SYNTHESIZER
+    can_spawn: [G4_LIBRARIAN, G4_SCRIPT_KIDDY]
+    max_turns: 20
+    tools_access: [rag_search, rag_ingest]
+    relevant_doc_types: [context, documentation]
+
+  G4_LIBRARIAN:
+    tier: G-Staff
+    model: haiku
+    archetype: Researcher
+    role: "Documentation curation and indexing"
+    reports_to: G4_CONTEXT_MANAGER
+    can_spawn: []
+    max_turns: 10
+    tools_access: [rag_search, rag_ingest]
+    relevant_doc_types: [documentation]
+
+  G4_SCRIPT_KIDDY:
+    tier: G-Staff
+    model: haiku
+    archetype: Generator
+    role: "Automation script generation"
+    reports_to: G4_CONTEXT_MANAGER
+    can_spawn: []
+    max_turns: 10
+    tools_access: [rag_search]
+    relevant_doc_types: [scripts, automation]
+
+  G5_PLANNING:
+    tier: G-Staff
+    model: sonnet
+    archetype: Researcher
+    role: "Plans & Strategy - Implementation planning"
+    reports_to: ARCHITECT
+    can_spawn: []
+    max_turns: 20
+    tools_access: [rag_search]
+    relevant_doc_types: [planning, strategy]
+
+  G6_SIGNAL:
+    tier: G-Staff
+    model: sonnet
+    archetype: Researcher
+    role: "Metrics & Signal processing - Data analysis"
+    reports_to: ARCHITECT
+    can_spawn: []
+    max_turns: 20
+    tools_access: [rag_search, get_unified_critical_index_tool]
+    relevant_doc_types: [metrics, signals]
+
+  DEVCOM_RESEARCH:
+    tier: G-Staff
+    model: opus
+    archetype: Researcher
+    role: "Research & Development - Cross-disciplinary analysis"
+    reports_to: ARCHITECT
+    can_spawn: []
+    max_turns: 30
+    tools_access: [rag_search]
+    relevant_doc_types: [research, exotic]
+
+  # =============================================================================
+  # SPECIAL STAFF - Unique Functions
+  # =============================================================================
+
+  MEDCOM:
+    tier: Special
+    model: sonnet
+    archetype: Researcher
+    role: "Military medical advisory - ACGME interpretation and clinical knowledge"
+    reports_to: ORCHESTRATOR
+    can_spawn: []
+    max_turns: 20
+    tools_access: [rag_search, check_mtf_compliance_tool]
+    relevant_doc_types: [acgme, medical, military]
+
+  HISTORIAN:
+    tier: Special
+    model: sonnet
+    archetype: Synthesizer
+    role: "Session documentation and historical records"
+    reports_to: SYNTHESIZER
+    can_spawn: []
+    max_turns: 10
+    tools_access: [rag_search]
+    relevant_doc_types: [history, sessions]
+
+  FORCE_MANAGER:
+    tier: Special
+    model: sonnet
+    archetype: Synthesizer
+    role: "Task force assembly and team composition"
+    reports_to: ORCHESTRATOR
+    can_spawn: []
+    max_turns: 15
+    tools_access: [rag_search]
+    relevant_doc_types: [teams, composition]
+
+  CRASH_RECOVERY_SPECIALIST:
+    tier: Special
+    model: sonnet
+    archetype: Synthesizer
+    role: "Session recovery and context reconstruction"
+    reports_to: ORCHESTRATOR
+    can_spawn: []
+    max_turns: 15
+    tools_access: [rag_search]
+    relevant_doc_types: [recovery, sessions]
+
+  AGENT_FACTORY:
+    tier: Special
+    model: opus
+    archetype: Generator
+    role: "Create new PAI agents using established archetypes"
+    reports_to: ARCHITECT
+    can_spawn: []
+    max_turns: 30
+    tools_access: [rag_search]
+    relevant_doc_types: [agents, archetypes]
+
+  TOOLSMITH:
+    tier: Special
+    model: sonnet
+    archetype: Generator
+    role: "MCP tool and skill development"
+    reports_to: COORD_TOOLING
+    can_spawn: []
+    max_turns: 20
+    tools_access: [rag_search, module_usage_analysis]
+    relevant_doc_types: [tools, skills, mcp]
+
+  META_UPDATER:
+    tier: Special
+    model: haiku
+    archetype: Generator
+    role: "Metadata and documentation updates"
+    reports_to: G4_CONTEXT_MANAGER
+    can_spawn: []
+    max_turns: 5
+    tools_access: [rag_search]
+    relevant_doc_types: [metadata, documentation]
+
+  # =============================================================================
+  # OVERSIGHT - Governance Functions
+  # =============================================================================
+
+  DELEGATION_AUDITOR:
+    tier: Oversight
+    model: sonnet
+    archetype: Validator
+    role: "Inspector General - Audit delegation patterns and agent behavior"
+    reports_to: ORCHESTRATOR
+    can_spawn: []
+    max_turns: 20
+    tools_access: [rag_search]
+    relevant_doc_types: [governance, audit]
+
+  # =============================================================================
+  # SOF - Special Operations Forces (18-series)
+  # =============================================================================
+
+  18A_DETACHMENT_COMMANDER:
+    tier: SOF
+    model: opus
+    archetype: Synthesizer
+    role: "ODA Commander - Multi-domain task force coordination"
+    reports_to: ORCHESTRATOR
+    can_spawn: [18B_WEAPONS, 18C_ENGINEER, 18D_MEDICAL, 18E_COMMS, 18F_INTEL, 18Z_OPERATIONS]
+    max_turns: 50
+    tools_access: [rag_search, validate_schedule, detect_conflicts]
+    relevant_doc_types: [operations, sof]
+
+  18B_WEAPONS:
+    tier: SOF
+    model: haiku
+    archetype: Critic
+    role: "Weapons Sergeant - Destructive testing and stress analysis"
+    reports_to: 18A_DETACHMENT_COMMANDER
+    can_spawn: []
+    max_turns: 10
+    tools_access: [rag_search]
+    relevant_doc_types: [testing, stress]
+
+  18C_ENGINEER:
+    tier: SOF
+    model: haiku
+    archetype: Generator
+    role: "Engineer Sergeant - Infrastructure and build systems"
+    reports_to: 18A_DETACHMENT_COMMANDER
+    can_spawn: []
+    max_turns: 10
+    tools_access: [rag_search]
+    relevant_doc_types: [infrastructure, build]
+
+  18D_MEDICAL:
+    tier: SOF
+    model: haiku
+    archetype: Validator
+    role: "Medical Sergeant - System health and diagnostics"
+    reports_to: 18A_DETACHMENT_COMMANDER
+    can_spawn: []
+    max_turns: 10
+    tools_access: [rag_search, check_circuit_breakers_tool]
+    relevant_doc_types: [health, diagnostics]
+
+  18E_COMMS:
+    tier: SOF
+    model: haiku
+    archetype: Generator
+    role: "Communications Sergeant - Integration and messaging"
+    reports_to: 18A_DETACHMENT_COMMANDER
+    can_spawn: []
+    max_turns: 10
+    tools_access: [rag_search]
+    relevant_doc_types: [integration, api]
+
+  18F_INTEL:
+    tier: SOF
+    model: sonnet
+    archetype: Researcher
+    role: "Intelligence Sergeant - Deep reconnaissance"
+    reports_to: 18A_DETACHMENT_COMMANDER
+    can_spawn: []
+    max_turns: 20
+    tools_access: [rag_search]
+    relevant_doc_types: [intelligence, analysis]
+
+  18Z_OPERATIONS:
+    tier: SOF
+    model: sonnet
+    archetype: Synthesizer
+    role: "Operations Sergeant - Mission planning and execution"
+    reports_to: 18A_DETACHMENT_COMMANDER
+    can_spawn: []
+    max_turns: 20
+    tools_access: [rag_search, validate_schedule]
+    relevant_doc_types: [operations, planning]
+
+  USASOC:
+    tier: SOF
+    model: opus
+    archetype: Synthesizer
+    role: "Special Operations Command - Strategic SOF coordination"
+    reports_to: ORCHESTRATOR
+    can_spawn: [18A_DETACHMENT_COMMANDER]
+    max_turns: 30
+    tools_access: [rag_search]
+    relevant_doc_types: [sof, strategy]
+
+  # =============================================================================
+  # ADDITIONAL SPECIALISTS
+  # =============================================================================
+
+  API_DEVELOPER:
+    tier: Specialist
+    model: haiku
+    archetype: Generator
+    role: "REST API endpoint development"
+    reports_to: COORD_PLATFORM
+    can_spawn: []
+    max_turns: 5
+    tools_access: [rag_search]
+    relevant_doc_types: [api, fastapi]
+
+  UX_SPECIALIST:
+    tier: Specialist
+    model: haiku
+    archetype: Researcher
+    role: "User experience design and analysis"
+    reports_to: COORD_FRONTEND
+    can_spawn: []
+    max_turns: 5
+    tools_access: [rag_search]
+    relevant_doc_types: [ux, design]
+
+  OPTIMIZATION_SPECIALIST:
+    tier: Specialist
+    model: haiku
+    archetype: Generator
+    role: "Performance optimization and solver tuning"
+    reports_to: COORD_ENGINE
+    can_spawn: []
+    max_turns: 5
+    tools_access: [rag_search, benchmark_solvers_tool]
+    relevant_doc_types: [optimization, performance]
+
+  TOOL_QA:
+    tier: Specialist
+    model: haiku
+    archetype: Critic
+    role: "MCP tool testing and validation"
+    reports_to: COORD_QUALITY
+    can_spawn: []
+    max_turns: 5
+    tools_access: [rag_search]
+    relevant_doc_types: [tools, testing]
+
+  TOOL_REVIEWER:
+    tier: Specialist
+    model: haiku
+    archetype: Critic
+    role: "MCP tool code review"
+    reports_to: COORD_TOOLING
+    can_spawn: []
+    max_turns: 5
+    tools_access: [rag_search]
+    relevant_doc_types: [tools, review]
+
+  RELEASE_MANAGER:
+    tier: Specialist
+    model: haiku
+    archetype: Validator
+    role: "Release coordination and deployment validation"
+    reports_to: COORD_OPS
+    can_spawn: []
+    max_turns: 5
+    tools_access: [rag_search, get_deployment_status_tool]
+    relevant_doc_types: [releases, deployment]
+
+  CI_LIAISON:
+    tier: Specialist
+    model: haiku
+    archetype: Validator
+    role: "CI/CD pipeline management"
+    reports_to: COORD_OPS
+    can_spawn: []
+    max_turns: 5
+    tools_access: [rag_search]
+    relevant_doc_types: [ci, pipeline]
+
+  COORD_AAR:
+    tier: Coordinator
+    model: sonnet
+    archetype: Synthesizer
+    role: "After Action Review coordination"
+    reports_to: SYNTHESIZER
+    can_spawn: [HISTORIAN]
+    max_turns: 15
+    tools_access: [rag_search]
+    relevant_doc_types: [aar, review]
+
+  ASTRONAUT:
+    tier: Special
+    model: opus
+    archetype: Researcher
+    role: "Exploration beyond known boundaries - Novel problem solving"
+    reports_to: DEVCOM_RESEARCH
+    can_spawn: []
+    max_turns: 50
+    tools_access: [rag_search]
+    relevant_doc_types: [research, exotic, novel]
+
+# =============================================================================
+# Archetype Definitions (for skill matching)
+# =============================================================================
+archetypes:
+  Researcher:
+    description: "Explore, investigate, synthesize findings (read-only)"
+    default_skills: [search-party, context-party]
+    risk_tolerance: low
+
+  Validator:
+    description: "Verify correctness, check constraints, ensure compliance"
+    default_skills: [qa-party, constraint-preflight]
+    risk_tolerance: low
+
+  Generator:
+    description: "Create solutions, propose implementations, generate code"
+    default_skills: [plan-party]
+    risk_tolerance: medium
+
+  Critic:
+    description: "Find flaws, test edge cases, adversarial analysis"
+    default_skills: [code-review, security-audit]
+    risk_tolerance: high
+
+  Synthesizer:
+    description: "Combine outputs, resolve conflicts, create unified view"
+    default_skills: [context-party, plan-party]
+    risk_tolerance: low
