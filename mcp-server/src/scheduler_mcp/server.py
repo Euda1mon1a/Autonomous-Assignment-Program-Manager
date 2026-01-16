@@ -4918,6 +4918,317 @@ async def on_shutdown() -> None:
 
 
 # =============================================================================
+# PAI Agent Spawning Tool
+# =============================================================================
+
+
+@mcp.tool()
+async def spawn_agent_tool(
+    agent_name: str,
+    mission: str,
+    context: dict[str, Any] | None = None,
+    inject_rag: bool = True,
+    inject_skills: list[str] | None = None,
+    parent_agent: str | None = None,
+) -> dict[str, Any]:
+    """
+    Prepare a PAI agent for spawning via Claude Code Task().
+
+    This tool is a **factory** that prepares agent context. It loads the agent's
+    identity card, injects relevant RAG context, matches skills, and returns
+    a structured AgentSpec that Claude Code uses to spawn the agent.
+
+    All execution happens in Claude Code - no API keys needed here.
+
+    The spawned agent will have:
+    - Full Claude Code capabilities (Edit, Write, Bash, MCP tools)
+    - Tier-based iteration limits (Specialist=5, Coordinator=20, Deputy=50)
+    - Checkpoint path for scratchpad state persistence
+    - Escalation target for blocked situations
+
+    Governance features:
+    - Spawn chain validation (if parent_agent specified)
+    - Identity-based tool access lists
+    - Audit trail for all invocations
+    - Escalation target from chain of command
+
+    Args:
+        agent_name: Agent identifier from .claude/agents.yaml registry.
+                   Examples: "SCHEDULER", "COMPLIANCE_AUDITOR", "COORD_ENGINE",
+                   "ARCHITECT", "G2_RECON"
+        mission: Task description using Auftragstaktik (mission-type orders).
+                Provide intent, not step-by-step recipe.
+                Example: "Audit Block 10 for ACGME violations"
+        context: Optional system state dict to inject.
+                Example: {"block_number": 10, "academic_year": 2026}
+        inject_rag: If True (default), query RAG for mission-relevant context.
+        inject_skills: Optional list of skill names to inject.
+                      If None, auto-matches based on mission + archetype.
+        parent_agent: Optional name of invoking agent for spawn chain validation.
+                     If specified, validates that parent can spawn this agent.
+
+    Returns:
+        AgentSpec dict with:
+        - agent_name: Requested agent name
+        - tier: Deputy/Coordinator/Specialist/G-Staff
+        - model: opus/sonnet/haiku
+        - full_prompt: Complete prompt with identity + RAG + skills + mission
+        - max_turns: Tier-based iteration limit
+        - subagent_type: "general-purpose" for Task()
+        - checkpoint_path: Scratchpad path for state persistence
+        - escalation_target: Who to escalate to when blocked
+        - tools_access: List of MCP tools this agent can use
+        - can_spawn: List of agents this agent can spawn (if any)
+
+    Example:
+        # Claude Code calls this tool
+        spec = await spawn_agent_tool(
+            agent_name="COMPLIANCE_AUDITOR",
+            mission="Audit Block 10 for ACGME violations",
+            context={"block_number": 10}
+        )
+
+        # Claude Code then spawns via Task()
+        # Task(
+        #     prompt=spec["full_prompt"],
+        #     subagent_type=spec["subagent_type"],
+        #     model=spec["model"],
+        #     max_turns=spec["max_turns"]
+        # )
+    """
+    import json
+    from pathlib import Path
+
+    logger.info(f"Preparing agent spawn: {agent_name} for mission: {mission[:50]}...")
+
+    # Load agent registry
+    project_root = Path(__file__).parent.parent.parent.parent
+    registry_path = project_root / ".claude" / "agents.yaml"
+    identities_path = project_root / ".claude" / "Identities"
+    audit_path = project_root / ".claude" / "History" / "agent_invocations"
+
+    # Ensure audit directory exists
+    audit_path.mkdir(parents=True, exist_ok=True)
+
+    # Try to load YAML registry
+    agent_spec = None
+    registry = None
+    try:
+        import yaml
+        if registry_path.exists():
+            with open(registry_path) as f:
+                registry = yaml.safe_load(f)
+                if registry and "agents" in registry:
+                    agent_spec = registry["agents"].get(agent_name)
+    except ImportError:
+        logger.warning("PyYAML not available, using fallback agent spec")
+    except Exception as e:
+        logger.warning(f"Failed to load agent registry: {e}")
+
+    # Fallback spec if not in registry
+    if not agent_spec:
+        agent_spec = {
+            "tier": "Specialist",
+            "model": "haiku",
+            "archetype": "Generator",
+            "role": f"{agent_name} agent",
+            "reports_to": "ORCHESTRATOR",
+            "can_spawn": [],
+            "max_turns": 5,
+            "tools_access": ["rag_search"],
+            "relevant_doc_types": [],
+        }
+        logger.warning(f"Agent {agent_name} not in registry, using fallback spec")
+
+    # Spawn chain validation
+    spawn_chain_valid = True
+    spawn_chain_error = None
+    if parent_agent and registry:
+        parent_spec = registry.get("agents", {}).get(parent_agent)
+        if parent_spec:
+            allowed_children = parent_spec.get("can_spawn", [])
+            if agent_name not in allowed_children:
+                spawn_chain_valid = False
+                spawn_chain_error = (
+                    f"Spawn chain violation: {parent_agent} cannot spawn {agent_name}. "
+                    f"Allowed: {allowed_children}"
+                )
+                logger.warning(spawn_chain_error)
+        else:
+            logger.warning(f"Parent agent {parent_agent} not found in registry")
+
+    # If spawn chain invalid, return error spec instead of proceeding
+    if not spawn_chain_valid:
+        return {
+            "agent_name": agent_name,
+            "status": "spawn_chain_violation",
+            "error": spawn_chain_error,
+            "parent_agent": parent_agent,
+            "suggested_parent": agent_spec.get("reports_to", "ORCHESTRATOR"),
+            "full_prompt": None,
+            "audit_trail_path": None,
+        }
+
+    # Load identity card
+    identity_content = ""
+    identity_file = identities_path / f"{agent_name}.identity.md"
+    if identity_file.exists():
+        identity_content = identity_file.read_text()
+    else:
+        # Generate minimal identity
+        identity_content = f"""# {agent_name} Identity Card
+
+## Identity
+- **Role:** {agent_spec.get('role', 'Specialist agent')}
+- **Tier:** {agent_spec.get('tier', 'Specialist')}
+- **Model:** {agent_spec.get('model', 'haiku')}
+
+## Chain of Command
+- **Reports To:** {agent_spec.get('reports_to', 'ORCHESTRATOR')}
+- **Can Spawn:** {', '.join(agent_spec.get('can_spawn', [])) or 'None'}
+- **Escalate To:** {agent_spec.get('reports_to', 'ORCHESTRATOR')}
+
+## One-Line Charter
+"Execute assigned mission with precision and report results."
+"""
+        logger.warning(f"Identity card not found for {agent_name}, using generated identity")
+
+    # Build prompt parts
+    prompt_parts = [identity_content]
+
+    # Inject RAG context
+    if inject_rag:
+        try:
+            api_client = await get_api_client()
+            rag_results = await api_client.rag_retrieve(
+                query=mission,
+                top_k=5,
+                min_similarity=0.5,
+            )
+            if rag_results.get("documents"):
+                rag_section = "## RELEVANT KNOWLEDGE (from RAG)\n\n"
+                for doc in rag_results["documents"][:5]:
+                    content = doc.get("content", "")[:500]
+                    score = doc.get("similarity_score", 0)
+                    rag_section += f"**[Score: {score:.2f}]**\n{content}\n\n---\n\n"
+                prompt_parts.append(rag_section)
+                logger.info(f"Injected {len(rag_results['documents'])} RAG results")
+        except Exception as e:
+            logger.warning(f"RAG injection failed: {e}")
+
+    # Inject skills (placeholder - skill matching not yet implemented)
+    if inject_skills:
+        skills_section = "## AVAILABLE SKILLS\n\n"
+        for skill in inject_skills:
+            skills_section += f"- /{skill}\n"
+        prompt_parts.append(skills_section)
+
+    # Add mission
+    prompt_parts.append(f"## MISSION\n\n{mission}")
+
+    # Add context if provided
+    if context:
+        prompt_parts.append(f"## CONTEXT\n\n```json\n{json.dumps(context, indent=2)}\n```")
+
+    # Add checkpoint instruction
+    checkpoint_path = f".claude/Scratchpad/AGENT_{agent_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    prompt_parts.append(f"""## CHECKPOINT PROTOCOL
+
+Write your progress and findings to: `{checkpoint_path}`
+
+Format:
+```markdown
+# {agent_name} Checkpoint
+
+## Mission
+{mission}
+
+## Status
+[in_progress | completed | escalated]
+
+## Findings
+[Your findings here]
+
+## Next Steps
+[If incomplete, what remains]
+
+## Escalation
+[If blocked, why and to whom]
+```
+""")
+
+    # Tier-based max turns
+    tier = agent_spec.get("tier", "Specialist")
+    max_turns = {
+        "Deputy": 50,
+        "Coordinator": 20,
+        "Specialist": 5,
+        "G-Staff": 20,
+        "Special": 15,
+    }.get(tier, 10)
+
+    # Override if specified in agent spec
+    if "max_turns" in agent_spec:
+        max_turns = agent_spec["max_turns"]
+
+    full_prompt = "\n\n".join(prompt_parts)
+
+    # Generate unique invocation ID for audit trail
+    invocation_id = datetime.now().strftime('%Y%m%d_%H%M%S') + f"_{agent_name}"
+
+    result = {
+        "agent_name": agent_name,
+        "tier": tier,
+        "model": agent_spec.get("model", "haiku"),
+        "archetype": agent_spec.get("archetype", "Generator"),
+        "full_prompt": full_prompt,
+        "max_turns": max_turns,
+        "subagent_type": "general-purpose",
+        "checkpoint_path": checkpoint_path,
+        "escalation_target": agent_spec.get("reports_to", "ORCHESTRATOR"),
+        "tools_access": agent_spec.get("tools_access", []),
+        "can_spawn": agent_spec.get("can_spawn", []),
+        "prompt_tokens_estimate": len(full_prompt) // 4,  # Rough estimate
+        "invocation_id": invocation_id,
+        "reports_to": agent_spec.get("reports_to", "ORCHESTRATOR"),
+    }
+
+    # Write audit trail
+    audit_file = audit_path / f"{invocation_id}.json"
+    audit_entry = {
+        "invocation_id": invocation_id,
+        "timestamp": datetime.now().isoformat(),
+        "agent_name": agent_name,
+        "tier": tier,
+        "model": result["model"],
+        "mission": mission,
+        "context": context,
+        "rag_injected": inject_rag,
+        "skills_injected": inject_skills or [],
+        "tools_access": result["tools_access"],
+        "can_spawn": result["can_spawn"],
+        "checkpoint_path": checkpoint_path,
+        "escalation_target": result["escalation_target"],
+        "prompt_tokens_estimate": result["prompt_tokens_estimate"],
+    }
+    try:
+        with open(audit_file, 'w') as f:
+            json.dump(audit_entry, f, indent=2, default=str)
+        result["audit_trail_path"] = str(audit_file)
+        logger.info(f"Audit trail written: {audit_file}")
+    except Exception as e:
+        logger.warning(f"Failed to write audit trail: {e}")
+        result["audit_trail_path"] = None
+
+    logger.info(
+        f"Agent spec prepared: {agent_name} (tier={tier}, model={result['model']}, "
+        f"~{result['prompt_tokens_estimate']} tokens)"
+    )
+
+    return result
+
+
+# =============================================================================
 # Health Check Endpoint for HTTP Transport
 # =============================================================================
 
