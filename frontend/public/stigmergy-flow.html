@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stigmergy Flow - Exotic Schedule Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #050505; font-family: 'Inter', sans-serif; }
+        canvas { display: block; }
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(0,255,255,0.5);
+            z-index: 10;
+        }
+        .ai-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 320px;
+            background: rgba(0,0,0,0.85);
+            border: 1px solid rgba(0,255,255,0.2);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            backdrop-filter: blur(15px);
+            z-index: 20;
+        }
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            pointer-events: auto;
+            color: white;
+            z-index: 20;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 10px; box-shadow: 0 0 8px currentColor; flex-shrink: 0; }
+        .controls-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.4);
+            font-size: 0.75rem;
+        }
+        .loading {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+        .gemini-btn {
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            transition: all 0.2s ease;
+        }
+        .gemini-btn:hover {
+            filter: brightness(1.2);
+            transform: translateY(-1px);
+        }
+        .gemini-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #ai-response-text {
+            max-height: 200px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #4facfe transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen" class="loading">
+        <div class="text-center">
+            <div class="inline-block w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-cyan-400 tracking-widest text-sm uppercase">Initializing Spacetime Flow...</p>
+        </div>
+    </div>
+
+    <div class="hud">
+        <h1 class="text-2xl font-bold tracking-tighter text-cyan-400">STIGMERGY FLOW v1.0</h1>
+        <p class="text-xs text-gray-400">Exotic Schedule Visualization Framework</p>
+        <div class="mt-4 space-y-1">
+            <div id="date-display" class="text-lg font-mono">2026-01-15</div>
+            <div id="stats" class="text-[10px] opacity-60">ACTIVE NODES: 0 | COMPLIANCE: 98.4%</div>
+        </div>
+    </div>
+
+    <div class="ai-panel">
+        <div class="flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <h2 class="text-sm font-bold tracking-widest uppercase text-cyan-400">AI Insights</h2>
+        </div>
+
+        <div class="space-y-3">
+            <button onclick="generateScheduleReport()" id="report-btn" class="gemini-btn w-full py-2 px-4 rounded-lg text-black font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+                Analyze Flow State
+            </button>
+            <button onclick="solveConflicts()" id="solve-btn" class="w-full py-2 px-4 rounded-lg border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+                Resolve Red Vortices
+            </button>
+        </div>
+
+        <div id="ai-response-container" class="mt-4 hidden animate-in fade-in slide-in-from-top-2">
+            <div class="bg-white/5 rounded-lg p-3 border border-white/10">
+                <p id="ai-response-text" class="text-xs leading-relaxed text-gray-300 italic"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="legend">
+        <h3 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-widest">Pheromone Trail Map</h3>
+        <div class="legend-item">
+            <div class="dot" style="color: #0088ff; background: #0088ff;"></div>
+            <span>Clinic Assignments</span>
+        </div>
+        <div class="legend-item">
+            <div class="dot" style="color: #00ff88; background: #00ff88;"></div>
+            <span>FMIT Rotations</span>
+        </div>
+        <div class="legend-item">
+            <div class="dot" style="color: #ffff00; background: #ffff00;"></div>
+            <span>Call Shifts (Night Side)</span>
+        </div>
+        <div class="legend-item">
+            <div class="dot" style="color: #ff3333; background: #ff3333;"></div>
+            <span>Conflict Vortices</span>
+        </div>
+        <div class="legend-item">
+            <div class="dot" style="color: #ffffff; background: #ffffff;"></div>
+            <span>Unassigned Slots</span>
+        </div>
+    </div>
+
+    <div class="controls-hint">
+        DRAG TO ROTATE | SCROLL TO ZOOM | SHIFT + DRAG TO PAN
+    </div>
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+        varying vec3 vColor;
+        varying float vOpacity;
+        uniform float time;
+        attribute float size;
+        attribute float opacity;
+
+        void main() {
+            vColor = color;
+            vOpacity = opacity;
+            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+            gl_PointSize = size * (300.0 / -mvPosition.z);
+            gl_Position = projectionMatrix * mvPosition;
+        }
+    </script>
+
+    <script id="fragmentShader" type="x-shader/x-fragment">
+        varying vec3 vColor;
+        varying float vOpacity;
+
+        void main() {
+            float dist = distance(gl_PointCoord, vec2(0.5));
+            if (dist > 0.5) discard;
+            float strength = (1.0 - dist * 2.0);
+            strength = pow(strength, 1.5);
+            gl_FragColor = vec4(vColor, strength * vOpacity);
+        }
+    </script>
+
+    <script>
+        // --- MOCK AI ANALYSIS (no external API needed) ---
+        async function generateScheduleReport() {
+            const btn = document.getElementById('report-btn');
+            const responseContainer = document.getElementById('ai-response-container');
+            const responseText = document.getElementById('ai-response-text');
+
+            btn.disabled = true;
+            btn.innerText = "Scanning Spacetime...";
+
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            const insights = [
+                "The flow manifold shows healthy coverage density across the primary timeline. Detected 3 potential conflict vortices in the FMIT rotation stream near day 45-50. Recommend pre-emptive duty hour rebalancing.",
+                "Spacetime analysis complete. Faculty supervision lines (magnetic fields) show strong connectivity in AM blocks but fragmentation during PM transitions. Consider strengthening evening supervision coverage.",
+                "Flow state nominal. The schedule demonstrates 98.4% ACGME compliance with minor perturbations in the call shift sector. Night-side trajectories are within acceptable bounds.",
+                "Detected clustering in clinic assignments around mid-block. This creates potential for cascade failures if a single faculty node is removed. Recommend distributing clinic load more evenly across the timeline."
+            ];
+
+            responseText.innerText = insights[Math.floor(Math.random() * insights.length)];
+            responseContainer.classList.remove('hidden');
+
+            btn.disabled = false;
+            btn.innerText = "Analyze Flow State";
+        }
+
+        async function solveConflicts() {
+            const btn = document.getElementById('solve-btn');
+            const responseText = document.getElementById('ai-response-text');
+            const responseContainer = document.getElementById('ai-response-container');
+
+            btn.disabled = true;
+            btn.innerText = "Calculating Safe Paths...";
+
+            await new Promise(resolve => setTimeout(resolve, 1200));
+
+            const solutions = [
+                "Recommendation: Execute swap between Resident Delta (Day 47 PM) and Resident Echo (Day 49 AM) to resolve the conflict vortex while maintaining supervision coverage.",
+                "Optimal resolution: Shift the FMIT cluster 2 days forward. This creates breathing room in the conflict zone and improves N-1 contingency resilience.",
+                "Strategy: Redistribute call assignments using stigmergic load balancing - allow residents with lower utilization to absorb excess from the conflict nodes."
+            ];
+
+            responseText.innerText = solutions[Math.floor(Math.random() * solutions.length)];
+            responseContainer.classList.remove('hidden');
+
+            btn.disabled = false;
+            btn.innerText = "Resolve Red Vortices";
+        }
+
+        // --- THREE.JS ENGINE ---
+        let scene, camera, renderer, controls;
+        let particles, particleSystem;
+        const MAX_PARTICLES = 2500;
+        const RESIDENT_COUNT = 30;
+        const DAYS = 90;
+        const GRID_SIZE_Z = 200;
+
+        window.onload = function() {
+            init();
+            animate();
+            document.getElementById('loading-screen').style.opacity = '0';
+            setTimeout(() => { document.getElementById('loading-screen').style.display = 'none'; }, 500);
+        };
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.0015);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(60, 40, 100);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            scene.add(new THREE.AmbientLight(0x404040));
+            createGridGuides();
+            setupParticleSystem();
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function createGridGuides() {
+            const material = new THREE.LineBasicMaterial({ color: 0x222222, transparent: true, opacity: 0.3 });
+            const geometry = new THREE.BufferGeometry();
+            const points = [];
+            for(let x = -RESIDENT_COUNT; x <= RESIDENT_COUNT; x += 5) {
+                points.push(new THREE.Vector3(x, 0, 0), new THREE.Vector3(x, 0, -GRID_SIZE_Z));
+            }
+            for(let z = 0; z >= -GRID_SIZE_Z; z -= 10) {
+                points.push(new THREE.Vector3(-RESIDENT_COUNT, 0, z), new THREE.Vector3(RESIDENT_COUNT, 0, z));
+            }
+            geometry.setFromPoints(points);
+            scene.add(new THREE.LineSegments(geometry, material));
+        }
+
+        function setupParticleSystem() {
+            const positions = new Float32Array(MAX_PARTICLES * 3);
+            const colors = new Float32Array(MAX_PARTICLES * 3);
+            const sizes = new Float32Array(MAX_PARTICLES);
+            const opacities = new Float32Array(MAX_PARTICLES);
+
+            const colorPalette = {
+                clinic: new THREE.Color(0x0088ff),
+                fmit: new THREE.Color(0x00ff88),
+                call: new THREE.Color(0xffff00),
+                conflict: new THREE.Color(0xff3333),
+                unassigned: new THREE.Color(0xffffff)
+            };
+
+            for (let i = 0; i < MAX_PARTICLES; i++) {
+                const resIdx = Math.floor(Math.random() * RESIDENT_COUNT) - (RESIDENT_COUNT/2);
+                const dayIdx = Math.floor(Math.random() * DAYS);
+                const timeOfDay = (Math.random() - 0.5) * 10;
+                positions[i * 3] = resIdx * 3;
+                positions[i * 3 + 1] = timeOfDay;
+                positions[i * 3 + 2] = -dayIdx * (GRID_SIZE_Z / DAYS);
+
+                let type = 'clinic';
+                const rand = Math.random();
+                if (rand > 0.95) type = 'conflict';
+                else if (rand > 0.85) type = 'call';
+                else if (rand > 0.65) type = 'fmit';
+                else if (rand < 0.05) type = 'unassigned';
+
+                const c = colorPalette[type];
+                colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+                sizes[i] = type === 'conflict' ? 8.0 : 4.0;
+                opacities[i] = Math.random();
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+            geometry.setAttribute('opacity', new THREE.BufferAttribute(opacities, 1));
+
+            const material = new THREE.ShaderMaterial({
+                uniforms: { time: { value: 1.0 } },
+                vertexShader: document.getElementById('vertexShader').textContent,
+                fragmentShader: document.getElementById('fragmentShader').textContent,
+                transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, vertexColors: true
+            });
+
+            particleSystem = new THREE.Points(geometry, material);
+            scene.add(particleSystem);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now() * 0.001;
+            controls.update();
+            const positions = particleSystem.geometry.attributes.position.array;
+            const opacities = particleSystem.geometry.attributes.opacity.array;
+            for(let i = 0; i < MAX_PARTICLES; i++) {
+                positions[i * 3 + 2] += 0.05;
+                if(positions[i * 3 + 2] > 0) positions[i * 3 + 2] = -GRID_SIZE_Z;
+                positions[i * 3 + 1] += Math.sin(time + i) * 0.01;
+                opacities[i] = 0.4 + Math.sin(time * 2 + i) * 0.3;
+            }
+            particleSystem.geometry.attributes.position.needsUpdate = true;
+            particleSystem.geometry.attributes.opacity.needsUpdate = true;
+
+            const dateOffset = Math.abs(Math.floor(camera.position.z / (GRID_SIZE_Z / DAYS)));
+            const date = new Date(2026, 0, 15 + dateOffset);
+            document.getElementById('date-display').innerText = date.toISOString().split('T')[0];
+            const activeNodes = Math.floor(1800 + Math.sin(time) * 200);
+            document.getElementById('stats').innerText = `ACTIVE NODES: ${activeNodes} | COMPLIANCE: ${(98.4 + Math.sin(time*0.5)*0.5).toFixed(1)}%`;
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
