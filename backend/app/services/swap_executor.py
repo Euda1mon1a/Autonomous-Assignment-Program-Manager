@@ -53,8 +53,18 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.transaction import transactional, transactional_with_retry
+from app.models.activity import Activity
+from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.call_assignment import CallAssignment
+from app.models.half_day_assignment import HalfDayAssignment
+from app.models.schedule_draft import (
+    DraftAssignmentChangeType,
+    DraftSourceType,
+    ScheduleDraft,
+    ScheduleDraftAssignment,
+    ScheduleDraftStatus,
+)
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 
 logger = logging.getLogger(__name__)
@@ -494,6 +504,176 @@ class SwapExecutor:
         )
         return can_rb
 
+    def stage_swap_to_draft(
+        self,
+        source_faculty_id: UUID,
+        source_week: date,
+        target_faculty_id: UUID,
+        target_week: date | None,
+        swap_type: str,
+        reason: str | None = None,
+        created_by_id: UUID | None = None,
+    ) -> ExecutionResult:
+        """
+        Stage a swap to a draft instead of executing immediately.
+
+        Creates a schedule draft with the swap changes staged as MODIFY entries.
+        The swap must be published through the draft workflow to take effect.
+
+        This enables review of swap changes before they go live, which is useful
+        for complex swaps or when additional approval is needed.
+
+        Args:
+            source_faculty_id: UUID of the faculty giving up their week.
+            source_week: Start date (Monday) of the week being transferred.
+            target_faculty_id: UUID of the faculty receiving the week.
+            target_week: For one-to-one swaps, the start date of the reciprocal
+                week. None for absorb swaps.
+            swap_type: Type of swap - "one_to_one" or "absorb".
+            reason: Optional human-readable reason for the swap.
+            created_by_id: UUID of the user staging the swap.
+
+        Returns:
+            ExecutionResult: Contains success status and draft_id if successful.
+
+        Example:
+            >>> result = executor.stage_swap_to_draft(
+            ...     source_faculty_id=dr_smith.id,
+            ...     source_week=date(2025, 1, 6),
+            ...     target_faculty_id=dr_jones.id,
+            ...     target_week=None,
+            ...     swap_type="absorb",
+            ...     reason="Dr. Smith on TDY",
+            ...     created_by_id=scheduler.id,
+            ... )
+            >>> if result.success:
+            ...     print(f"Staged in draft {result.swap_id}")
+        """
+        try:
+            # Calculate week end dates
+            source_week_end = source_week + timedelta(days=6)
+            target_week_end = target_week + timedelta(days=6) if target_week else None
+
+            # Get half-day assignments for source faculty in the swap week
+            # Using HalfDayAssignment (the new persisted date+AM/PM model)
+            source_assignments = (
+                self.db.query(HalfDayAssignment)
+                .options(selectinload(HalfDayAssignment.activity))
+                .filter(
+                    and_(
+                        HalfDayAssignment.person_id == source_faculty_id,
+                        HalfDayAssignment.date >= source_week,
+                        HalfDayAssignment.date <= source_week_end,
+                    )
+                )
+                .all()
+            )
+
+            # Collect assignments to stage
+            assignments_to_stage = []
+            for hda in source_assignments:
+                # This assignment would be transferred to target
+                assignments_to_stage.append(
+                    {
+                        "assignment": hda,
+                        "new_person_id": target_faculty_id,
+                    }
+                )
+
+            # Handle target week for one-to-one swaps
+            if target_week and target_week_end:
+                target_assignments = (
+                    self.db.query(HalfDayAssignment)
+                    .options(selectinload(HalfDayAssignment.activity))
+                    .filter(
+                        and_(
+                            HalfDayAssignment.person_id == target_faculty_id,
+                            HalfDayAssignment.date >= target_week,
+                            HalfDayAssignment.date <= target_week_end,
+                        )
+                    )
+                    .all()
+                )
+
+                for hda in target_assignments:
+                    # This assignment would be transferred to source
+                    assignments_to_stage.append(
+                        {
+                            "assignment": hda,
+                            "new_person_id": source_faculty_id,
+                        }
+                    )
+
+            if not assignments_to_stage:
+                return ExecutionResult(
+                    success=False,
+                    message="No assignments found to swap",
+                    error_code="NO_ASSIGNMENTS",
+                )
+
+            # Create draft
+            draft_id = uuid4()
+            draft = ScheduleDraft(
+                id=draft_id,
+                created_at=datetime.utcnow(),
+                created_by_id=created_by_id,
+                target_start_date=source_week,
+                target_end_date=target_week_end or source_week_end,
+                status=ScheduleDraftStatus.DRAFT,
+                source_type=DraftSourceType.SWAP,
+                notes=f"Swap: {reason}" if reason else "Schedule swap",
+                change_summary={
+                    "added": 0,
+                    "modified": len(assignments_to_stage),
+                    "deleted": 0,
+                },
+                flags_total=0,
+                flags_acknowledged=0,
+            )
+            self.db.add(draft)
+
+            # Create draft assignments for each swap change
+            for item in assignments_to_stage:
+                hda = item["assignment"]  # HalfDayAssignment object
+                # Get activity code from the activity relationship
+                activity_code = hda.activity.code if hda.activity else None
+
+                draft_assignment = ScheduleDraftAssignment(
+                    id=uuid4(),
+                    draft_id=draft_id,
+                    person_id=item["new_person_id"],  # The NEW person
+                    assignment_date=hda.date,  # From HalfDayAssignment.date
+                    time_of_day=hda.time_of_day,  # From HalfDayAssignment.time_of_day
+                    activity_code=activity_code,  # From activity relationship
+                    rotation_id=None,  # HalfDayAssignment doesn't track rotation
+                    change_type=DraftAssignmentChangeType.MODIFY,
+                    existing_assignment_id=hda.id,  # Link to original HalfDayAssignment
+                )
+                self.db.add(draft_assignment)
+
+            self.db.commit()
+
+            logger.info(
+                f"Swap staged to draft {draft_id}: "
+                f"{len(assignments_to_stage)} assignments staged "
+                f"(source: {source_faculty_id}, target: {target_faculty_id})"
+            )
+
+            return ExecutionResult(
+                success=True,
+                swap_id=draft_id,  # Return draft_id as swap_id for consistency
+                message=f"Swap staged to draft {draft_id}. Publish draft to execute.",
+            )
+
+        except (SQLAlchemyError, ValueError, KeyError) as e:
+            logger.exception(f"Swap staging failed: {e}")
+            self.db.rollback()
+            return ExecutionResult(
+                success=False,
+                message=f"Swap staging failed: {str(e)}",
+                error_code="STAGING_FAILED",
+            )
+
     def _update_schedule_assignments(
         self,
         source_faculty_id: UUID,
@@ -504,15 +684,14 @@ class SwapExecutor:
         """
         Update schedule assignments for the swap.
 
-        Transfers all block assignments within the specified week(s) from one
+        Transfers all half-day assignments within the specified week(s) from one
         faculty member to another. For one-to-one swaps, performs a bidirectional
         transfer; for absorb swaps, performs a one-way transfer.
 
         Implementation Details:
             - Uses row-level locking (SELECT ... FOR UPDATE) to prevent race
               conditions during concurrent swap operations.
-            - Uses selectinload to eagerly fetch assignments for all blocks in
-              the week range, preventing N+1 queries.
+            - Queries HalfDayAssignment directly by date range.
             - Assumes weeks start on Monday and span 7 days.
 
         Args:
@@ -524,22 +703,21 @@ class SwapExecutor:
                 week where target's assignments go to source. None for absorb.
 
         Note:
-            This method modifies Assignment objects in place. The caller is
+            This method modifies HalfDayAssignment objects in place. The caller is
             responsible for committing the transaction.
         """
         # Calculate week end date (assuming week starts on Monday)
         source_week_end = source_week + timedelta(days=6)
 
-        # Get all blocks in the source week with eager-loaded assignments
+        # Get all half-day assignments for source faculty in the week
         # Row-level lock to prevent concurrent modifications
-        # N+1 Optimization: Load blocks with their assignments in a single batch query
-        source_blocks = (
-            self.db.query(Block)
-            .options(selectinload(Block.assignments))
+        source_assignments = (
+            self.db.query(HalfDayAssignment)
             .filter(
                 and_(
-                    Block.date >= source_week,
-                    Block.date <= source_week_end,
+                    HalfDayAssignment.person_id == source_faculty_id,
+                    HalfDayAssignment.date >= source_week,
+                    HalfDayAssignment.date <= source_week_end,
                 )
             )
             .with_for_update()
@@ -547,42 +725,39 @@ class SwapExecutor:
         )
 
         # Update assignments for source faculty in source week
-        # N+1 Optimization: Assignments are already loaded, no additional queries needed
-        for block in source_blocks:
-            for assignment in block.assignments:
-                if assignment.person_id == source_faculty_id:
-                    # Transfer assignment to target faculty
-                    assignment.person_id = target_faculty_id
-                    assignment.notes = (
-                        f"Swapped from faculty {source_faculty_id} via swap execution"
-                    )
+        for hda in source_assignments:
+            # Transfer assignment to target faculty
+            hda.person_id = target_faculty_id
+            hda.is_override = True
+            hda.override_reason = (
+                f"Swapped from faculty {source_faculty_id} via swap execution"
+            )
 
         # If this is a one-to-one swap, update target week assignments
         if target_week:
             target_week_end = target_week + timedelta(days=6)
 
-            # N+1 Optimization: Eager load assignments for target week blocks
             # Row-level lock to prevent concurrent modifications
-            target_blocks = (
-                self.db.query(Block)
-                .options(selectinload(Block.assignments))
+            target_assignments = (
+                self.db.query(HalfDayAssignment)
                 .filter(
                     and_(
-                        Block.date >= target_week,
-                        Block.date <= target_week_end,
+                        HalfDayAssignment.person_id == target_faculty_id,
+                        HalfDayAssignment.date >= target_week,
+                        HalfDayAssignment.date <= target_week_end,
                     )
                 )
                 .with_for_update()
                 .all()
             )
 
-            # N+1 Optimization: Assignments are already loaded
-            for block in target_blocks:
-                for assignment in block.assignments:
-                    if assignment.person_id == target_faculty_id:
-                        # Transfer assignment to source faculty
-                        assignment.person_id = source_faculty_id
-                        assignment.notes = f"Swapped from faculty {target_faculty_id} via swap execution"
+            for hda in target_assignments:
+                # Transfer assignment to source faculty
+                hda.person_id = source_faculty_id
+                hda.is_override = True
+                hda.override_reason = (
+                    f"Swapped from faculty {target_faculty_id} via swap execution"
+                )
 
     def _update_call_cascade(self, week: date, new_faculty_id: UUID) -> None:
         """
