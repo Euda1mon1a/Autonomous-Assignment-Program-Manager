@@ -30,6 +30,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import select, and_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -211,7 +212,16 @@ class PreloadService:
         return count
 
     async def _load_fmit_call(self, start_date: date, end_date: date) -> int:
-        """Load FMIT Fri/Sat call (auto-assigned with FMIT)."""
+        """
+        Load FMIT Fri/Sat call (auto-assigned with FMIT).
+
+        FMIT faculty automatically cover Friday and Saturday call during their
+        FMIT week. This creates CALL preloads in the PM slot (overnight starts PM).
+
+        Note: Faculty call also triggers PCAT/DO on the following day, but that's
+        handled separately in _load_faculty_call since it applies to all call,
+        not just FMIT call.
+        """
         # FMIT faculty cover Fri/Sat call during their FMIT week
         stmt = (
             select(InpatientPreload)
@@ -227,20 +237,33 @@ class PreloadService:
         result = await self.session.execute(stmt)
         fmit_preloads = result.scalars().all()
 
+        # Get CALL activity ID
+        call_activity_id = await self._get_activity_id("CALL")
+        if not call_activity_id:
+            logger.warning("CALL activity not found, skipping FMIT call preload")
+            return 0
+
         count = 0
         for preload in fmit_preloads:
             # Only for faculty (not residents)
             if not preload.person or preload.person.type != "faculty":
                 continue
 
-            # Friday and Saturday of FMIT week
-            current = preload.start_date
-            while current <= preload.end_date:
+            # Friday and Saturday of FMIT week (within date range)
+            current = max(preload.start_date, start_date)
+            fmit_end = min(preload.end_date, end_date)
+
+            while current <= fmit_end:
                 if current.weekday() in (4, 5):  # Friday=4, Saturday=5
-                    # Create call assignment for this night
-                    # Note: This would typically create CallAssignment, not HalfDayAssignment
-                    # For now, mark as on-call in the schedule
-                    pass
+                    # Create call assignment in PM slot (overnight starts PM)
+                    created = await self._create_preload(
+                        person_id=preload.person_id,
+                        date_val=current,
+                        time_of_day="PM",
+                        activity_id=call_activity_id,
+                    )
+                    if created:
+                        count += 1
                 current += timedelta(days=1)
 
         logger.info(f"Loaded {count} FMIT call preloads")
@@ -526,8 +549,13 @@ class PreloadService:
         time_of_day: str,
         activity_id: UUID | None,
     ) -> HalfDayAssignment | None:
-        """Create a preload assignment (idempotent - skips if exists)."""
-        # Check if already exists
+        """
+        Create a preload assignment (idempotent - skips if exists).
+
+        Race condition safe: uses check-then-insert with IntegrityError handling
+        for the unique constraint on (person_id, date, time_of_day).
+        """
+        # Build query for checking existence (reused after IntegrityError)
         stmt = select(HalfDayAssignment).where(
             and_(
                 HalfDayAssignment.person_id == person_id,
@@ -535,6 +563,8 @@ class PreloadService:
                 HalfDayAssignment.time_of_day == time_of_day,
             )
         )
+
+        # Check if already exists
         result = await self.session.execute(stmt)
         existing = result.scalar_one_or_none()
 
@@ -551,6 +581,25 @@ class PreloadService:
             source=AssignmentSource.PRELOAD.value,
         )
         self.session.add(assignment)
+
+        try:
+            # Flush to trigger constraint check
+            await self.session.flush()
+        except IntegrityError:
+            # Race condition - another process inserted first
+            await self.session.rollback()
+            # Re-fetch the existing record
+            result = await self.session.execute(stmt)
+            existing = result.scalar_one_or_none()
+            if existing:
+                logger.debug(
+                    f"Race condition handled for preload: "
+                    f"person={person_id}, date={date_val}, time={time_of_day}"
+                )
+                return existing
+            # Re-raise if still not found (different integrity error)
+            raise
+
         return assignment
 
     async def _is_on_fmit(self, person_id: UUID, date_val: date) -> bool:

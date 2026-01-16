@@ -14,7 +14,7 @@ import {
   fetchVulnerabilityReport,
   requestEmergencyCoverage,
 } from "@/api/resilience";
-import { ApiError, post } from "@/lib/api";
+import { ApiError, get, post } from "@/lib/api";
 import type {
   HealthCheckResponse,
   VulnerabilityReportResponse,
@@ -23,6 +23,10 @@ import type {
   BurnoutRtResponse,
   DefenseLevelResponse,
   UtilizationThresholdResponse,
+  AllBreakersStatusResponse,
+  BreakerHealthResponse,
+  MTFComplianceResponse,
+  UnifiedCriticalIndexResponse,
 } from "@/types/resilience";
 import {
   useQuery,
@@ -52,6 +56,12 @@ export const resilienceQueryKeys = {
   }) => ["resilience", "utilization", params] as const,
   burnoutRt: (providerIds: string[]) =>
     ["resilience", "burnout-rt", providerIds] as const,
+  circuitBreakers: () => ["resilience", "circuit-breakers"] as const,
+  breakerHealth: () => ["resilience", "breaker-health"] as const,
+  mtfCompliance: (checkCircuitBreaker?: boolean) =>
+    ["resilience", "mtf-compliance", checkCircuitBreaker] as const,
+  unifiedCriticalIndex: (topN?: number) =>
+    ["resilience", "unified-critical-index", topN] as const,
 };
 
 // ============================================================================
@@ -432,5 +442,239 @@ export function useEmergencyCoverage(): UseMutationResult<
       queryClient.invalidateQueries({ queryKey: ["absences"] });
       queryClient.invalidateQueries({ queryKey: ["validation"] });
     },
+  });
+}
+
+// ============================================================================
+// Circuit Breaker Hooks (Netflix Hystrix Pattern)
+// ============================================================================
+
+/**
+ * Fetches status of all circuit breakers.
+ *
+ * Circuit breakers provide failure isolation based on the Netflix Hystrix pattern:
+ * - CLOSED: Normal operation, requests pass through
+ * - OPEN: Circuit tripped due to failures, requests fail fast
+ * - HALF_OPEN: Testing recovery, limited requests allowed
+ *
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing:
+ *   - `data`: All breakers status with health assessment
+ *   - `isLoading`: Whether the fetch is in progress
+ *   - `error`: Any error that occurred
+ *
+ * @example
+ * ```tsx
+ * function CircuitBreakerPanel() {
+ *   const { data, isLoading } = useCircuitBreakers();
+ *
+ *   if (isLoading) return <Skeleton />;
+ *
+ *   return (
+ *     <div>
+ *       <StatusBadge status={data.overallHealth} />
+ *       <span>Open: {data.openBreakers} / {data.totalBreakers}</span>
+ *       {data.breakers.map(b => (
+ *         <BreakerCard key={b.name} breaker={b} />
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useCircuitBreakers(
+  options?: Omit<
+    UseQueryOptions<AllBreakersStatusResponse, ApiError>,
+    "queryKey" | "queryFn"
+  >
+) {
+  return useQuery<AllBreakersStatusResponse, ApiError>({
+    queryKey: resilienceQueryKeys.circuitBreakers(),
+    queryFn: async () => {
+      const response = await get<AllBreakersStatusResponse>(
+        "/resilience/circuit-breakers"
+      );
+      return response;
+    },
+    staleTime: 30 * 1000, // 30 seconds
+    refetchInterval: 30 * 1000, // Auto-refresh every 30 seconds
+    ...options,
+  });
+}
+
+/**
+ * Fetches aggregated health metrics for all circuit breakers.
+ *
+ * Provides a high-level health assessment across all circuit breakers:
+ * - Aggregated metrics (failure rates, rejections)
+ * - Trend analysis (improving, stable, degrading)
+ * - Severity assessment (healthy, warning, critical, emergency)
+ * - Breakers needing immediate attention
+ *
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing aggregated health metrics
+ *
+ * @example
+ * ```tsx
+ * function BreakerHealthSummary() {
+ *   const { data, isLoading } = useBreakerHealth();
+ *
+ *   if (isLoading) return <Skeleton />;
+ *
+ *   return (
+ *     <div className={`severity-${data.severity}`}>
+ *       <span>Failure Rate: {(data.metrics.overallFailureRate * 100).toFixed(1)}%</span>
+ *       <span>Trend: {data.trendAnalysis}</span>
+ *       {data.breakersNeedingAttention.length > 0 && (
+ *         <Alert>Attention needed: {data.breakersNeedingAttention.join(', ')}</Alert>
+ *       )}
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useBreakerHealth(
+  options?: Omit<
+    UseQueryOptions<BreakerHealthResponse, ApiError>,
+    "queryKey" | "queryFn"
+  >
+) {
+  return useQuery<BreakerHealthResponse, ApiError>({
+    queryKey: resilienceQueryKeys.breakerHealth(),
+    queryFn: async () => {
+      const response = await get<BreakerHealthResponse>(
+        "/resilience/circuit-breakers/health"
+      );
+      return response;
+    },
+    staleTime: 30 * 1000, // 30 seconds
+    refetchInterval: 30 * 1000, // Auto-refresh every 30 seconds
+    ...options,
+  });
+}
+
+// ============================================================================
+// MTF Compliance Hooks (Military Multi-Tier Functionality)
+// ============================================================================
+
+/**
+ * Fetches MTF compliance status with military readiness ratings.
+ *
+ * Translates scheduling metrics into military reporting format:
+ * - DRRS C-ratings (C1-C5): Overall readiness category
+ * - P-ratings (P1-P4): Personnel status
+ * - S-ratings (S1-S4): Capability status
+ * - Iron Dome status: Regulatory protection level
+ *
+ * @param checkCircuitBreaker - Whether to include circuit breaker status (default: true)
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing military compliance metrics
+ *
+ * @example
+ * ```tsx
+ * function CompliancePanel() {
+ *   const { data, isLoading } = useMTFCompliance(true);
+ *
+ *   if (isLoading) return <Skeleton />;
+ *
+ *   return (
+ *     <div>
+ *       <DRRSBadge category={data.drrsCategory} />
+ *       <span>Mission: {data.missionCapability}</span>
+ *       <IronDomeIndicator status={data.ironDomeStatus} />
+ *       {data.deficiencies.length > 0 && (
+ *         <DeficiencyList items={data.deficiencies} />
+ *       )}
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useMTFCompliance(
+  checkCircuitBreaker: boolean = true,
+  options?: Omit<
+    UseQueryOptions<MTFComplianceResponse, ApiError>,
+    "queryKey" | "queryFn"
+  >
+) {
+  return useQuery<MTFComplianceResponse, ApiError>({
+    queryKey: resilienceQueryKeys.mtfCompliance(checkCircuitBreaker),
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.set("check_circuit_breaker", String(checkCircuitBreaker));
+      const response = await get<MTFComplianceResponse>(
+        `/resilience/mtf-compliance?${params.toString()}`
+      );
+      return response;
+    },
+    staleTime: 60 * 1000, // 1 minute
+    ...options,
+  });
+}
+
+// ============================================================================
+// Unified Critical Index Hooks (Multi-Factor Risk Aggregation)
+// ============================================================================
+
+/**
+ * Fetches unified critical index aggregating all resilience signals.
+ *
+ * Combines signals from three domains into a single actionable risk score:
+ * 1. Contingency (N-1/N-2 Vulnerability) - Weight: 40%
+ * 2. Epidemiology (Burnout Super-Spreader) - Weight: 25%
+ * 3. Hub Analysis (Network Centrality) - Weight: 35%
+ *
+ * Risk Patterns:
+ * - UNIVERSAL_CRITICAL: All domains high - maximum risk
+ * - STRUCTURAL_BURNOUT: Contingency + Epidemiology high
+ * - INFLUENTIAL_HUB: Contingency + Hub high
+ * - SOCIAL_CONNECTOR: Epidemiology + Hub high
+ * - LOW_RISK: No domains elevated
+ *
+ * @param topN - Number of top-risk faculty to return (default: 5)
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing unified risk assessment
+ *
+ * @example
+ * ```tsx
+ * function CriticalFacultyPanel() {
+ *   const { data, isLoading } = useUnifiedCriticalIndex(5);
+ *
+ *   if (isLoading) return <Skeleton />;
+ *
+ *   return (
+ *     <div>
+ *       <RiskGauge value={data.overallIndex} level={data.riskLevel} />
+ *       <span>Critical: {data.criticalCount} / {data.totalFaculty}</span>
+ *       {data.topCriticalFaculty.map(f => (
+ *         <FacultyRiskCard key={f.facultyId} faculty={f} />
+ *       ))}
+ *       <RecommendationsList items={data.recommendations} />
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useUnifiedCriticalIndex(
+  topN: number = 5,
+  options?: Omit<
+    UseQueryOptions<UnifiedCriticalIndexResponse, ApiError>,
+    "queryKey" | "queryFn"
+  >
+) {
+  return useQuery<UnifiedCriticalIndexResponse, ApiError>({
+    queryKey: resilienceQueryKeys.unifiedCriticalIndex(topN),
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.set("top_n", String(topN));
+      params.set("include_details", "true");
+      const response = await post<UnifiedCriticalIndexResponse>(
+        "/resilience/unified-critical-index",
+        { topN, includeDetails: true }
+      );
+      return response;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes (expensive computation)
+    ...options,
   });
 }

@@ -283,42 +283,9 @@ def _seed_activity_capacity_flags() -> None:
 
 
 def downgrade() -> None:
-    # Drop indexes
-    op.drop_index("idx_resident_call_date", table_name="resident_call_preloads")
-    op.drop_index("idx_resident_call_person_id", table_name="resident_call_preloads")
-    op.drop_index("idx_inpatient_preload_dates", table_name="inpatient_preloads")
-    op.drop_index("idx_inpatient_preload_start_date", table_name="inpatient_preloads")
-    op.drop_index(
-        "idx_inpatient_preload_rotation_type", table_name="inpatient_preloads"
+    """Downgrade not supported for data-seeding migration."""
+    raise NotImplementedError(
+        "Downgrade not supported. This migration seeds faculty caps and activity "
+        "capacity flags that cannot be safely reversed. If you need to undo these "
+        "changes, restore from a database backup."
     )
-    op.drop_index("idx_inpatient_preload_person_id", table_name="inpatient_preloads")
-    op.drop_index("idx_hda_date_time", table_name="half_day_assignments")
-    op.drop_index("idx_hda_person_date", table_name="half_day_assignments")
-    op.drop_index("idx_hda_block_assignment_id", table_name="half_day_assignments")
-    op.drop_index("idx_hda_source", table_name="half_day_assignments")
-    op.drop_index("idx_hda_activity_id", table_name="half_day_assignments")
-    op.drop_index("idx_hda_date", table_name="half_day_assignments")
-    op.drop_index("idx_hda_person_id", table_name="half_day_assignments")
-
-    # Drop tables
-    op.drop_table("resident_call_preloads")
-    op.drop_table("inpatient_preloads")
-    op.drop_table("half_day_assignments")
-
-    # Remove columns from people (only if they exist and were added by this migration)
-    # Note: admin_type may have been added by a different migration, so we don't drop it
-    conn = op.get_bind()
-    inspector = sa.inspect(conn)
-    people_cols = {c["name"] for c in inspector.get_columns("people")}
-    activities_cols = {c["name"] for c in inspector.get_columns("activities")}
-
-    # Only drop columns that we added (be conservative to avoid breaking other migrations)
-    if "max_clinic_halfdays_per_week" in people_cols:
-        op.drop_column("people", "max_clinic_halfdays_per_week")
-    if "min_clinic_halfdays_per_week" in people_cols:
-        op.drop_column("people", "min_clinic_halfdays_per_week")
-    # Note: admin_type not dropped as it may belong to another migration
-
-    # Remove column from activities
-    if "counts_toward_physical_capacity" in activities_cols:
-        op.drop_column("activities", "counts_toward_physical_capacity")
