@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-16T05:53:53Z
+ * Generated at: 2026-01-16T20:18:45Z
  * Generator: openapi-typescript
  *
  * To regenerate:
@@ -16722,6 +16722,414 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/wellness/surveys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Available Surveys
+         * @description List all surveys available for the current user.
+         *
+         *     Returns surveys with availability status based on cooldowns and
+         *     completion history. Surveys are filtered by role targeting.
+         *
+         *     Returns:
+         *         list[SurveyListItem]: Available surveys with metadata
+         */
+        get: operations["list_available_surveys_api_v1_wellness_surveys_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wellness/surveys/{survey_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Survey
+         * @description Get a specific survey by ID.
+         *
+         *     Returns the full survey definition including questions.
+         *
+         *     Args:
+         *         survey_id: UUID of the survey
+         *
+         *     Returns:
+         *         SurveyResponse: Complete survey with questions
+         */
+        get: operations["get_survey_api_v1_wellness_surveys__survey_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wellness/surveys/{survey_id}/respond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit Survey Response
+         * @description Submit a response to a survey.
+         *
+         *     Validates responses, calculates score, awards points, updates streak,
+         *     and checks for new achievements. Also captures algorithm snapshot
+         *     for research correlation.
+         *
+         *     Args:
+         *         survey_id: UUID of the survey
+         *         request: Response data including answers
+         *
+         *     Returns:
+         *         SurveySubmissionResult: Submission result with points, achievements
+         */
+        post: operations["submit_survey_response_api_v1_wellness_surveys__survey_id__respond_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wellness/surveys/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Survey History
+         * @description Get the current user's survey response history.
+         *
+         *     Returns paginated list of past survey responses with scores.
+         *
+         *     Args:
+         *         page: Page number (1-indexed)
+         *         page_size: Items per page (max 100)
+         *
+         *     Returns:
+         *         SurveyHistoryResponse: Paginated response history
+         */
+        get: operations["get_survey_history_api_v1_wellness_surveys_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wellness/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Wellness Account
+         * @description Get the current user's wellness account.
+         *
+         *     Returns points balance, streak info, achievements, and settings.
+         *
+         *     Returns:
+         *         WellnessAccountResponse: Account details with achievements
+         */
+        get: operations["get_wellness_account_api_v1_wellness_account_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Wellness Account
+         * @description Update wellness account settings.
+         *
+         *     Allows updating leaderboard opt-in, display name, and research consent.
+         *
+         *     Args:
+         *         request: Update data
+         *
+         *     Returns:
+         *         WellnessAccountResponse: Updated account details
+         */
+        patch: operations["update_wellness_account_api_v1_wellness_account_patch"];
+        trace?: never;
+    };
+    "/api/v1/wellness/account/consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Provide Research Consent
+         * @description Provide or withdraw research consent.
+         *
+         *     Research consent is required for survey responses to be used in
+         *     correlation studies. Can be withdrawn at any time.
+         *
+         *     Args:
+         *         request: Consent decision and version
+         *
+         *     Returns:
+         *         dict: Confirmation message
+         */
+        post: operations["provide_research_consent_api_v1_wellness_account_consent_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wellness/account/leaderboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Opt In Leaderboard
+         * @description Opt in or out of the anonymous leaderboard.
+         *
+         *     When opting in, can provide an anonymous display name.
+         *
+         *     Args:
+         *         request: Opt-in decision and display name
+         *
+         *     Returns:
+         *         dict: Confirmation message
+         */
+        post: operations["opt_in_leaderboard_api_v1_wellness_account_leaderboard_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wellness/points/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Points History
+         * @description Get the current user's points transaction history.
+         *
+         *     Returns paginated ledger of all point credits and debits.
+         *
+         *     Args:
+         *         page: Page number (1-indexed)
+         *         page_size: Items per page (max 100)
+         *
+         *     Returns:
+         *         PointHistoryResponse: Paginated transaction history
+         */
+        get: operations["get_points_history_api_v1_wellness_points_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wellness/leaderboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Leaderboard
+         * @description Get the anonymous wellness leaderboard.
+         *
+         *     Shows opt-in participants ranked by lifetime points.
+         *     Current user's position is highlighted if they have opted in.
+         *
+         *     Returns:
+         *         LeaderboardResponse: Ranked participants and stats
+         */
+        get: operations["get_leaderboard_api_v1_wellness_leaderboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wellness/hopfield/position": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit Hopfield Position
+         * @description Submit a position on the Hopfield energy landscape.
+         *
+         *     Users drag a ball to indicate where they perceive the program
+         *     currently sits on the energy landscape. Position is recorded
+         *     with computed metrics for research correlation.
+         *
+         *     Args:
+         *         request: Position coordinates and optional metadata
+         *
+         *     Returns:
+         *         HopfieldPositionResult: Computed metrics at position
+         */
+        post: operations["submit_hopfield_position_api_v1_wellness_hopfield_position_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wellness/hopfield/aggregates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Hopfield Aggregates
+         * @description Get aggregated Hopfield positions for program-wide view.
+         *
+         *     Returns anonymized aggregate of all positions, useful for
+         *     comparing individual perception to group perception.
+         *
+         *     Args:
+         *         block_number: Optional filter by academic block
+         *         academic_year: Optional filter by academic year
+         *
+         *     Returns:
+         *         HopfieldAggregatesResponse: Aggregate position data
+         */
+        get: operations["get_hopfield_aggregates_api_v1_wellness_hopfield_aggregates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wellness/widget/data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Widget Data
+         * @description Get data for the quick pulse dashboard widget.
+         *
+         *     Returns current account status, available surveys, and
+         *     recent achievements for the embedded dashboard widget.
+         *
+         *     Returns:
+         *         QuickPulseWidgetData: Widget display data
+         */
+        get: operations["get_widget_data_api_v1_wellness_widget_data_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wellness/pulse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit Quick Pulse
+         * @description Submit a quick pulse check-in.
+         *
+         *     Simple mood/energy check-in that awards points but requires
+         *     less time commitment than full surveys.
+         *
+         *     Args:
+         *         request: Mood (1-5) and optional energy (1-5)
+         *
+         *     Returns:
+         *         QuickPulseResult: Points awarded and streak info
+         */
+        post: operations["submit_quick_pulse_api_v1_wellness_pulse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wellness/admin/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Wellness Analytics
+         * @description Get wellness analytics summary (admin only).
+         *
+         *     Provides aggregate statistics on participation, scores, and engagement.
+         *     All data is de-identified.
+         *
+         *     Args:
+         *         block_number: Optional filter by academic block
+         *         academic_year: Optional filter by academic year
+         *
+         *     Returns:
+         *         WellnessAnalyticsSummary: Aggregate analytics
+         */
+        get: operations["get_wellness_analytics_api_v1_wellness_admin_analytics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ws/stats": {
         parameters: {
             query?: never;
@@ -17486,6 +17894,31 @@ export interface components {
             lockedBy?: string | null;
             /** Message */
             message: string;
+        };
+        /**
+         * AchievementInfo
+         * @description Information about an achievement.
+         */
+        AchievementInfo: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Icon */
+            icon: string;
+            /**
+             * Earned
+             * @default false
+             */
+            earned: boolean;
+            /** Earned At */
+            earned_at?: string | null;
+            /** Progress */
+            progress?: number | null;
+            /** Criteria */
+            criteria?: string | null;
         };
         /**
          * ActivationEnergyResponse
@@ -19423,14 +19856,15 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
+            /**
+             * Template Id
+             * Format: uuid
+             */
+            template_id: string;
             /** Success */
             success: boolean;
-            /** Assignment Id */
-            assignment_id?: string | null;
             /** Error */
             error?: string | null;
-            /** Warnings */
-            warnings?: string[];
         };
         /**
          * BatchOperationStatus
@@ -19828,7 +20262,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__batch__BatchOperationResult"][];
             /**
              * Errors
              * @description Global errors
@@ -19975,7 +20409,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -20612,19 +21046,24 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Schema for list of blocks.
+         * @description Response for listing academic blocks.
          */
         BlockListResponse: {
             /**
-             * Items
-             * @description List of block responses
+             * Blocks
+             * @description List of academic blocks
              */
-            items: components["schemas"]["BlockResponse"][];
+            blocks: components["schemas"]["BlockSummary"][];
             /**
-             * Total
+             * Academic Year
+             * @description Academic year
+             */
+            academic_year: string;
+            /**
+             * Total Blocks
              * @description Total number of blocks
              */
-            total: number;
+            total_blocks: number;
         };
         /**
          * BlockMatrixResponse
@@ -20863,7 +21302,7 @@ export interface components {
             /** Residents With Leave */
             residents_with_leave: number;
             /** Coverage Gaps */
-            coverage_gaps: components["schemas"]["app__schemas__block_assignment__CoverageGap"][];
+            coverage_gaps: components["schemas"]["CoverageGap"][];
             /** Leave Conflicts */
             leave_conflicts: components["schemas"]["LeaveConflict"][];
             /** Rotation Capacities */
@@ -22852,6 +23291,19 @@ export interface components {
             utilization_percent: number;
         };
         /**
+         * ConsentRequest
+         * @description Request to provide research consent.
+         */
+        ConsentRequest: {
+            /** Consent */
+            consent: boolean;
+            /**
+             * Consent Version
+             * @default 1.0
+             */
+            consent_version: string;
+        };
+        /**
          * ConstraintEnableResponse
          * @description Response model for enable/disable operations.
          */
@@ -23018,34 +23470,24 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap with details.
+         * @description Identified coverage gap.
          */
         CoverageGap: {
-            /** Gap Id */
-            gap_id: string;
             /**
-             * Date
-             * Format: date
+             * Rotation Template Id
+             * Format: uuid
              */
-            date: string;
-            /** Time Of Day */
-            time_of_day: string;
-            /** Block Id */
-            block_id: string;
+            rotation_template_id: string;
+            /** Rotation Name */
+            rotation_name: string;
+            /** Required Coverage */
+            required_coverage: number;
+            /** Assigned Coverage */
+            assigned_coverage: number;
+            /** Gap */
+            gap: number;
             /** Severity */
             severity: string;
-            /** Days Until */
-            days_until: number;
-            /** Affected Area */
-            affected_area: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            current_assignments: number;
-            /** Required Assignments */
-            required_assignments: number;
-            /** Gap Size */
-            gap_size: number;
         };
         /**
          * CoverageGapsResponse
@@ -23072,7 +23514,7 @@ export interface components {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["CoverageGap"][];
+            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
@@ -28305,6 +28747,78 @@ export interface components {
             positive_risks: components["schemas"]["PositiveFeedbackRiskInfo"][];
         };
         /**
+         * HopfieldAggregatesResponse
+         * @description Aggregated Hopfield positions for program-wide view.
+         */
+        HopfieldAggregatesResponse: {
+            /** Total Positions */
+            total_positions: number;
+            /** Average X */
+            average_x?: number | null;
+            /** Average Y */
+            average_y?: number | null;
+            /** Average Basin Depth */
+            average_basin_depth?: number | null;
+            /** Average Energy */
+            average_energy?: number | null;
+            /** Computed Basin Depth */
+            computed_basin_depth?: number | null;
+            /** Agreement Score */
+            agreement_score?: number | null;
+            /** Block Number */
+            block_number?: number | null;
+            /** Academic Year */
+            academic_year?: number | null;
+        };
+        /**
+         * HopfieldPositionCreate
+         * @description Schema for submitting a Hopfield landscape position.
+         */
+        HopfieldPositionCreate: {
+            /** X Position */
+            x_position: number;
+            /** Y Position */
+            y_position: number;
+            /** Z Position */
+            z_position?: number | null;
+            /** Confidence */
+            confidence?: number | null;
+            /** Notes */
+            notes?: string | null;
+            /** Block Number */
+            block_number?: number | null;
+            /** Academic Year */
+            academic_year?: number | null;
+        };
+        /**
+         * HopfieldPositionResult
+         * @description Result after submitting a Hopfield position.
+         */
+        HopfieldPositionResult: {
+            /** Success */
+            success: boolean;
+            /** Position Id */
+            position_id?: string | null;
+            /** Basin Depth */
+            basin_depth?: number | null;
+            /** Energy Value */
+            energy_value?: number | null;
+            /** Stability Score */
+            stability_score?: number | null;
+            /** Nearest Attractor Type */
+            nearest_attractor_type?: string | null;
+            /**
+             * Points Earned
+             * @default 0
+             */
+            points_earned: number;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+        };
+        /**
          * HubAnalysisResponse
          * @description Response from hub analysis.
          */
@@ -29234,6 +29748,51 @@ export interface components {
             workerUtilizationPercentage: number;
             /** Timestamp */
             timestamp: string;
+        };
+        /**
+         * LeaderboardEntry
+         * @description A single entry on the leaderboard.
+         */
+        LeaderboardEntry: {
+            /** Rank */
+            rank: number;
+            /** Display Name */
+            display_name: string;
+            /** Points */
+            points: number;
+            /** Streak */
+            streak: number;
+            /**
+             * Is You
+             * @default false
+             */
+            is_you: boolean;
+        };
+        /**
+         * LeaderboardOptInRequest
+         * @description Request to opt into leaderboard with display name.
+         */
+        LeaderboardOptInRequest: {
+            /** Opt In */
+            opt_in: boolean;
+            /** Display Name */
+            display_name?: string | null;
+        };
+        /**
+         * LeaderboardResponse
+         * @description Response for leaderboard endpoint.
+         */
+        LeaderboardResponse: {
+            /** Entries */
+            entries: components["schemas"]["LeaderboardEntry"][];
+            /** Total Participants */
+            total_participants: number;
+            /** Your Rank */
+            your_rank?: number | null;
+            /** Your Points */
+            your_points?: number | null;
+            /** Snapshot Date */
+            snapshot_date?: string | null;
         };
         /**
          * LeaveCalendarEntry
@@ -31340,6 +31899,45 @@ export interface components {
             source: string;
         };
         /**
+         * PointHistoryResponse
+         * @description Response for point history endpoint.
+         */
+        PointHistoryResponse: {
+            /** Transactions */
+            transactions: components["schemas"]["PointTransactionResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Current Balance */
+            current_balance: number;
+        };
+        /**
+         * PointTransactionResponse
+         * @description A single point transaction.
+         */
+        PointTransactionResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Points */
+            points: number;
+            /** Balance After */
+            balance_after: number;
+            transaction_type: components["schemas"]["TransactionTypeEnum"];
+            /** Source */
+            source: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
          * PopulationSnapshot
          * @description Population state at a point in time.
          */
@@ -32248,6 +32846,18 @@ export interface components {
             recommendations: string[];
         };
         /**
+         * QuestionOption
+         * @description An option for a multiple-choice question.
+         */
+        QuestionOption: {
+            /** Value */
+            value: number | string;
+            /** Label */
+            label: string;
+            /** Score */
+            score?: number | null;
+        };
+        /**
          * QueueBatchRequest
          * @description Request to queue multiple experiment configurations.
          */
@@ -32309,6 +32919,68 @@ export interface components {
             reservedTasks: number;
             /** Totalpending */
             totalPending: number;
+        };
+        /**
+         * QuickPulseResult
+         * @description Result of quick pulse submission.
+         */
+        QuickPulseResult: {
+            /** Success */
+            success: boolean;
+            /**
+             * Points Earned
+             * @default 0
+             */
+            points_earned: number;
+            /**
+             * Current Streak
+             * @default 0
+             */
+            current_streak: number;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+        };
+        /**
+         * QuickPulseSubmit
+         * @description Schema for quick pulse check-in.
+         */
+        QuickPulseSubmit: {
+            /** Mood */
+            mood: number;
+            /** Energy */
+            energy?: number | null;
+            /** Notes */
+            notes?: string | null;
+        };
+        /**
+         * QuickPulseWidgetData
+         * @description Data for the quick pulse dashboard widget.
+         */
+        QuickPulseWidgetData: {
+            /**
+             * Can Submit
+             * @default true
+             */
+            can_submit: boolean;
+            /** Last Submitted At */
+            last_submitted_at?: string | null;
+            /**
+             * Current Streak
+             * @default 0
+             */
+            current_streak: number;
+            /**
+             * Points Balance
+             * @default 0
+             */
+            points_balance: number;
+            /** Available Surveys */
+            available_surveys?: components["schemas"]["SurveyListItem"][];
+            /** Recent Achievements */
+            recent_achievements?: components["schemas"]["AchievementInfo"][];
         };
         /**
          * QuickSearchResponse
@@ -36698,6 +37370,218 @@ export interface components {
             entity_type: string;
         };
         /**
+         * SurveyFrequencyEnum
+         * @description How often surveys can be taken.
+         * @enum {string}
+         */
+        SurveyFrequencyEnum: "daily" | "weekly" | "biweekly" | "block" | "annual";
+        /**
+         * SurveyHistoryResponse
+         * @description Response for survey history endpoint.
+         */
+        SurveyHistoryResponse: {
+            /** Responses */
+            responses: components["schemas"]["SurveyResponseSummary"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /**
+         * SurveyListItem
+         * @description Abbreviated survey for list views.
+         */
+        SurveyListItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Display Name */
+            display_name: string;
+            survey_type: components["schemas"]["SurveyTypeEnum"];
+            /** Points Value */
+            points_value: number;
+            /** Estimated Seconds */
+            estimated_seconds: number;
+            frequency: components["schemas"]["SurveyFrequencyEnum"];
+            /**
+             * Is Available
+             * @default true
+             */
+            is_available: boolean;
+            /** Next Available At */
+            next_available_at?: string | null;
+            /**
+             * Completed This Period
+             * @default false
+             */
+            completed_this_period: boolean;
+        };
+        /**
+         * SurveyQuestion
+         * @description A single question in a survey.
+         */
+        SurveyQuestion: {
+            /** Id */
+            id: string;
+            /** Text */
+            text: string;
+            /**
+             * Question Type
+             * @default likert
+             */
+            question_type: string;
+            /**
+             * Required
+             * @default true
+             */
+            required: boolean;
+            /** Options */
+            options?: components["schemas"]["QuestionOption"][] | null;
+            /** Min Value */
+            min_value?: number | null;
+            /** Max Value */
+            max_value?: number | null;
+            /** Min Label */
+            min_label?: string | null;
+            /** Max Label */
+            max_label?: string | null;
+        };
+        /**
+         * SurveyResponse
+         * @description Schema for survey in responses.
+         */
+        SurveyResponse: {
+            /** Name */
+            name: string;
+            /** Display Name */
+            display_name: string;
+            survey_type: components["schemas"]["SurveyTypeEnum"];
+            /** Description */
+            description?: string | null;
+            /** Instructions */
+            instructions?: string | null;
+            /**
+             * Points Value
+             * @default 50
+             */
+            points_value: number;
+            /**
+             * Estimated Seconds
+             * @default 60
+             */
+            estimated_seconds: number;
+            /** @default weekly */
+            frequency: components["schemas"]["SurveyFrequencyEnum"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Questions */
+            questions: components["schemas"]["SurveyQuestion"][];
+            /** Is Active */
+            is_active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * SurveyResponseCreate
+         * @description Schema for submitting a survey response.
+         */
+        SurveyResponseCreate: {
+            /** Responses */
+            responses: {
+                [key: string]: (number | string) | undefined;
+            };
+            /** Block Number */
+            block_number?: number | null;
+            /** Academic Year */
+            academic_year?: number | null;
+        };
+        /**
+         * SurveyResponseSummary
+         * @description Summary of a past survey response.
+         */
+        SurveyResponseSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Survey Id
+             * Format: uuid
+             */
+            survey_id: string;
+            /** Survey Name */
+            survey_name: string;
+            survey_type: components["schemas"]["SurveyTypeEnum"];
+            /** Score */
+            score: number | null;
+            /** Score Interpretation */
+            score_interpretation: string | null;
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+            /** Block Number */
+            block_number: number | null;
+            /** Academic Year */
+            academic_year: number | null;
+        };
+        /**
+         * SurveySubmissionResult
+         * @description Result of submitting a survey response.
+         */
+        SurveySubmissionResult: {
+            /** Success */
+            success: boolean;
+            /** Response Id */
+            response_id?: string | null;
+            /** Score */
+            score?: number | null;
+            /** Score Interpretation */
+            score_interpretation?: string | null;
+            /**
+             * Points Earned
+             * @default 0
+             */
+            points_earned: number;
+            /** New Achievements */
+            new_achievements?: string[];
+            /**
+             * Streak Updated
+             * @default false
+             */
+            streak_updated: boolean;
+            /**
+             * Current Streak
+             * @default 0
+             */
+            current_streak: number;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+        };
+        /**
+         * SurveyTypeEnum
+         * @description Types of validated survey instruments.
+         * @enum {string}
+         */
+        SurveyTypeEnum: "burnout" | "stress" | "sleep" | "efficacy" | "pulse" | "hopfield" | "custom";
+        /**
          * SwapBarrierAnalysisRequest
          * @description Request to analyze barriers for a swap operation.
          */
@@ -38311,6 +39195,12 @@ export interface components {
             /** Path */
             path?: string | null;
         };
+        /**
+         * TransactionTypeEnum
+         * @description Types of point transactions.
+         * @enum {string}
+         */
+        TransactionTypeEnum: "survey" | "streak" | "achievement" | "block_bonus" | "admin" | "redemption";
         /**
          * TransitionStateResponse
          * @description Response schema for a transition state.
@@ -40006,6 +40896,95 @@ export interface components {
             generated_at: string;
         };
         /**
+         * WellnessAccountResponse
+         * @description Response for wellness account details.
+         */
+        WellnessAccountResponse: {
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            person_id: string;
+            /** Points Balance */
+            points_balance: number;
+            /** Points Lifetime */
+            points_lifetime: number;
+            /** Current Streak Weeks */
+            current_streak_weeks: number;
+            /** Longest Streak Weeks */
+            longest_streak_weeks: number;
+            /** Last Activity Date */
+            last_activity_date: string | null;
+            /** Streak Start Date */
+            streak_start_date: string | null;
+            /** Leaderboard Opt In */
+            leaderboard_opt_in: boolean;
+            /** Display Name */
+            display_name: string | null;
+            /** Research Consent */
+            research_consent: boolean;
+            /** Achievements */
+            achievements: components["schemas"]["AchievementInfo"][];
+            /**
+             * Surveys Completed This Week
+             * @default 0
+             */
+            surveys_completed_this_week: number;
+            /**
+             * Surveys Available
+             * @default 0
+             */
+            surveys_available: number;
+        };
+        /**
+         * WellnessAccountUpdate
+         * @description Schema for updating wellness account settings.
+         */
+        WellnessAccountUpdate: {
+            /** Leaderboard Opt In */
+            leaderboard_opt_in?: boolean | null;
+            /** Display Name */
+            display_name?: string | null;
+            /** Research Consent */
+            research_consent?: boolean | null;
+        };
+        /**
+         * WellnessAnalyticsSummary
+         * @description Summary analytics for wellness dashboard.
+         */
+        WellnessAnalyticsSummary: {
+            /** Total Participants */
+            total_participants: number;
+            /** Active This Week */
+            active_this_week: number;
+            /** Active This Block */
+            active_this_block: number;
+            /** Participation Rate */
+            participation_rate: number;
+            /** Total Responses This Week */
+            total_responses_this_week: number;
+            /** Total Responses This Block */
+            total_responses_this_block: number;
+            /** Average Responses Per Person */
+            average_responses_per_person: number;
+            /** Average Burnout Score */
+            average_burnout_score?: number | null;
+            /** Average Stress Score */
+            average_stress_score?: number | null;
+            /** Average Sleep Score */
+            average_sleep_score?: number | null;
+            /** Average Streak */
+            average_streak: number;
+            /** Longest Streak */
+            longest_streak: number;
+            /** Total Points Earned This Week */
+            total_points_earned_this_week: number;
+            /** Hopfield Positions This Week */
+            hopfield_positions_this_week: number;
+            /** Average Basin Depth */
+            average_basin_depth?: number | null;
+        };
+        /**
          * WhatIfMetricImpact
          * @description Predicted impact on a metric.
          */
@@ -40532,6 +41511,37 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
+         * CoverageGap
+         * @description Represents a coverage gap with details.
+         */
+        app__api__routes__fmit_health__CoverageGap: {
+            /** Gap Id */
+            gap_id: string;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Time Of Day */
+            time_of_day: string;
+            /** Block Id */
+            block_id: string;
+            /** Severity */
+            severity: string;
+            /** Days Until */
+            days_until: number;
+            /** Affected Area */
+            affected_area: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            current_assignments: number;
+            /** Required Assignments */
+            required_assignments: number;
+            /** Gap Size */
+            gap_size: number;
+        };
+        /**
          * ExportFormat
          * @description Export file formats.
          * @enum {string}
@@ -40628,46 +41638,39 @@ export interface components {
             latest_date?: string | null;
         };
         /**
-         * BlockListResponse
-         * @description Response for listing academic blocks.
+         * BatchOperationResult
+         * @description Result for a single operation in a batch.
          */
-        app__schemas__academic_blocks__BlockListResponse: {
+        app__schemas__batch__BatchOperationResult: {
             /**
-             * Blocks
-             * @description List of academic blocks
+             * Index
+             * @description Index of the operation in the batch
              */
-            blocks: components["schemas"]["BlockSummary"][];
-            /**
-             * Academic Year
-             * @description Academic year
-             */
-            academic_year: string;
-            /**
-             * Total Blocks
-             * @description Total number of blocks
-             */
-            total_blocks: number;
+            index: number;
+            /** Success */
+            success: boolean;
+            /** Assignment Id */
+            assignment_id?: string | null;
+            /** Error */
+            error?: string | null;
+            /** Warnings */
+            warnings?: string[];
         };
         /**
-         * CoverageGap
-         * @description Identified coverage gap.
+         * BlockListResponse
+         * @description Schema for list of blocks.
          */
-        app__schemas__block_assignment__CoverageGap: {
+        app__schemas__block__BlockListResponse: {
             /**
-             * Rotation Template Id
-             * Format: uuid
+             * Items
+             * @description List of block responses
              */
-            rotation_template_id: string;
-            /** Rotation Name */
-            rotation_name: string;
-            /** Required Coverage */
-            required_coverage: number;
-            /** Assigned Coverage */
-            assigned_coverage: number;
-            /** Gap */
-            gap: number;
-            /** Severity */
-            severity: string;
+            items: components["schemas"]["BlockResponse"][];
+            /**
+             * Total
+             * @description Total number of blocks
+             */
+            total: number;
         };
         /**
          * PersonSummary
@@ -40791,26 +41794,6 @@ export interface components {
             tasksPurged: number;
             /** Timestamp */
             timestamp: string;
-        };
-        /**
-         * BatchOperationResult
-         * @description Result for a single operation in a batch.
-         */
-        app__schemas__rotation_template__BatchOperationResult: {
-            /**
-             * Index
-             * @description Index of the operation in the batch
-             */
-            index: number;
-            /**
-             * Template Id
-             * Format: uuid
-             */
-            template_id: string;
-            /** Success */
-            success: boolean;
-            /** Error */
-            error?: string | null;
         };
         /**
          * CoverageGap
@@ -42890,7 +43873,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -43017,7 +44000,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -43083,7 +44066,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -61160,6 +62143,445 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WebhookDeadLetterResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_available_surveys_api_v1_wellness_surveys_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyListItem"][];
+                };
+            };
+        };
+    };
+    get_survey_api_v1_wellness_surveys__survey_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                survey_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_survey_response_api_v1_wellness_surveys__survey_id__respond_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                survey_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyResponseCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveySubmissionResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_survey_history_api_v1_wellness_surveys_history_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyHistoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_wellness_account_api_v1_wellness_account_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WellnessAccountResponse"];
+                };
+            };
+        };
+    };
+    update_wellness_account_api_v1_wellness_account_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WellnessAccountUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WellnessAccountResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    provide_research_consent_api_v1_wellness_account_consent_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConsentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    opt_in_leaderboard_api_v1_wellness_account_leaderboard_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeaderboardOptInRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_points_history_api_v1_wellness_points_history_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PointHistoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_leaderboard_api_v1_wellness_leaderboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaderboardResponse"];
+                };
+            };
+        };
+    };
+    submit_hopfield_position_api_v1_wellness_hopfield_position_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HopfieldPositionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HopfieldPositionResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_hopfield_aggregates_api_v1_wellness_hopfield_aggregates_get: {
+        parameters: {
+            query?: {
+                block_number?: number | null;
+                academic_year?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HopfieldAggregatesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_widget_data_api_v1_wellness_widget_data_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickPulseWidgetData"];
+                };
+            };
+        };
+    };
+    submit_quick_pulse_api_v1_wellness_pulse_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuickPulseSubmit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickPulseResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_wellness_analytics_api_v1_wellness_admin_analytics_get: {
+        parameters: {
+            query?: {
+                block_number?: number | null;
+                academic_year?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WellnessAnalyticsSummary"];
                 };
             };
             /** @description Validation Error */

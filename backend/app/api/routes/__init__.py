@@ -76,6 +76,7 @@ from app.api.routes import (
     upload,
     visualization,
     webhooks,
+    wellness,
     ws,
 )
 
@@ -232,6 +233,7 @@ api_router.include_router(
     schedule_drafts.router, prefix="/schedules/drafts", tags=["schedule-drafts"]
 )
 api_router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
+api_router.include_router(wellness.router)  # prefix="/wellness" defined in router
 api_router.include_router(ws.router, tags=["websocket"])
 api_router.include_router(
     proxy_coverage.router, prefix="/proxy-coverage", tags=["proxy-coverage"]

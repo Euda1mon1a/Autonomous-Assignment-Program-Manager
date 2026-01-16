@@ -207,3 +207,9 @@ docs/scheduling/HANDOFF_CLAUDE_MACOS.md
 
 # WIP - needs investigation before commit (PII - local only)
 backend/scripts/validate_xml_vs_rosetta.py
+
+# Human deliverables workspace (Cowork outputs, Word docs, presentations)
+workspace/
+
+# PDF files (research papers, personal docs - keep local)
+*.pdf
