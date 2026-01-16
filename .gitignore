@@ -190,22 +190,20 @@ backend/scripts/*.json
 backend/tests/services/test_block_schedule_export_service.py
 backend/tests/services/test_xml_vs_rosetta.py
 
-# Frontend local files
+# Frontend local files (WIP UI components)
 frontend/src/api/schedule-drafts.ts
 frontend/src/app/admin/schedule-drafts/
 frontend/src/hooks/useScheduleDrafts.ts
-frontend/src/types/schedule-draft.ts
 
-# Misc local work
+# Misc local work (root-level only)
 FACULTY_CONSTRAINTS_PROPOSAL.md
-skills/
-src/
-tests/
+/skills/
+/src/
+/tests/
 scripts/setup-antigravity-skills.sh
 
 # PII-containing handoff docs (real names)
 docs/scheduling/HANDOFF_CLAUDE_MACOS.md
 
-# WIP - needs investigation before commit
-backend/app/schemas/schedule_draft.py
+# WIP - needs investigation before commit (PII - local only)
 backend/scripts/validate_xml_vs_rosetta.py
