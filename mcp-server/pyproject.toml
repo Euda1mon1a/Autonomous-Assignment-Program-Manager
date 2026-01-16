@@ -42,6 +42,14 @@ dependencies = [
     # Scientific computing for exotic research tools
     "numpy>=1.21.0",
     "scipy>=1.7.0",
+    # Exotic research tool dependencies (Armory)
+    "networkx>=3.0",        # Hub centrality, burnout contagion graphs
+    "PyWavelets>=1.4.0",    # Wavelet transforms for signal analysis
+    "statsmodels>=0.14.0",  # STL decomposition, ARIMA forecasting
+    "ruptures>=1.1.0",      # Change point detection (PELT algorithm)
+    "ripser>=0.6.0",        # Persistent homology (TDA)
+    "persim>=0.3.0",        # Persistence diagram utilities
+    "ndlib>=5.1.0",         # Network diffusion SIR contagion modeling
     # HTTP transport dependencies for remote deployment
     "uvicorn>=0.27.0",
     "starlette>=0.36.0",

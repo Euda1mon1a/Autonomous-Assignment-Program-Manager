@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-14T02:44:44Z
+ * Generated at: 2026-01-16T05:53:53Z
  * Generator: openapi-typescript
  *
  * To regenerate:
@@ -1911,6 +1911,21 @@ export interface paths {
          *         X-Contains-PHI header is set.
          */
         post: operations["batch_create_people_api_v1_people_batch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/people/batch/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * Batch Delete People
          * @description Batch delete multiple people atomically.
@@ -1932,7 +1947,8 @@ export interface paths {
          *     Security:
          *         Requires authentication
          */
-        delete: operations["batch_delete_people_api_v1_people_batch_delete"];
+        post: operations["batch_delete_people_api_v1_people_batch_delete_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -16269,6 +16285,174 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/schedules/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List schedule drafts
+         * @description List all schedule drafts with pagination.
+         */
+        get: operations["list_drafts_api_v1_schedules_drafts_get"];
+        put?: never;
+        /**
+         * Create a schedule draft
+         * @description Create a new draft for a block or date range.
+         */
+        post: operations["create_draft_api_v1_schedules_drafts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schedules/drafts/{draft_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get draft details
+         * @description Get details of a specific schedule draft.
+         */
+        get: operations["get_draft_api_v1_schedules_drafts__draft_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Discard draft
+         * @description Discard a draft without publishing.
+         */
+        delete: operations["discard_draft_api_v1_schedules_drafts__draft_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schedules/drafts/{draft_id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview draft
+         * @description Preview changes in draft compared to live assignments.
+         */
+        get: operations["preview_draft_api_v1_schedules_drafts__draft_id__preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schedules/drafts/{draft_id}/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add assignment to draft
+         * @description Add a new assignment to an existing draft.
+         */
+        post: operations["add_assignment_api_v1_schedules_drafts__draft_id__assignments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schedules/drafts/{draft_id}/flags/{flag_id}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Acknowledge flag
+         * @description Acknowledge a review flag on a draft.
+         */
+        post: operations["acknowledge_flag_api_v1_schedules_drafts__draft_id__flags__flag_id__acknowledge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schedules/drafts/{draft_id}/flags/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk acknowledge flags
+         * @description Acknowledge multiple flags at once.
+         */
+        post: operations["bulk_acknowledge_flags_api_v1_schedules_drafts__draft_id__flags_acknowledge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schedules/drafts/{draft_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish draft
+         * @description Publish draft to live assignments table.
+         */
+        post: operations["publish_draft_api_v1_schedules_drafts__draft_id__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schedules/drafts/{draft_id}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rollback draft
+         * @description Rollback a published draft within the 24-hour window.
+         */
+        post: operations["rollback_draft_api_v1_schedules_drafts__draft_id__rollback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/webhooks": {
         parameters: {
             query?: never;
@@ -19239,12 +19423,14 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
-            /** Person Id */
-            person_id?: string | null;
             /** Success */
             success: boolean;
+            /** Assignment Id */
+            assignment_id?: string | null;
             /** Error */
             error?: string | null;
+            /** Warnings */
+            warnings?: string[];
         };
         /**
          * BatchOperationStatus
@@ -19480,7 +19666,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__person__BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -19642,7 +19828,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__batch__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Errors
              * @description Global errors
@@ -20008,7 +20194,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["app__schemas__block_assignment_import__ExportFormat"];
+            format: components["schemas"]["ExportFormat"];
             /**
              * Academic Year
              * @description Academic year to export
@@ -22458,29 +22644,15 @@ export interface components {
         };
         /**
          * ConflictCheckResponse
-         * @description Response for conflict checking before assignment.
+         * @description Response for conflict check.
          */
         ConflictCheckResponse: {
-            /**
-             * Can Assign
-             * @description Whether assignment can proceed
-             */
-            can_assign: boolean;
-            /**
-             * Conflicts
-             * @description Detected conflicts
-             */
-            conflicts?: components["schemas"]["ConflictDetail"][];
-            /**
-             * Warnings
-             * @description Warnings
-             */
-            warnings?: string[];
-            /**
-             * Suggestions
-             * @description Alternative suggestions
-             */
-            suggestions?: string[];
+            /** Has Conflicts */
+            has_conflicts: boolean;
+            /** Conflicts */
+            conflicts: components["schemas"]["TemplateConflict"][];
+            /** Can Proceed */
+            can_proceed: boolean;
         };
         /**
          * ConflictDetail
@@ -22627,93 +22799,15 @@ export interface components {
         };
         /**
          * ConflictSummary
-         * @description Summary statistics for a set of conflicts.
-         *
-         *     Used for dashboard displays and reporting.
-         * @example {
-         *       "affected_people_count": 8,
-         *       "auto_resolvable_count": 6,
-         *       "average_impact_score": 0.65,
-         *       "critical_count": 3,
-         *       "high_count": 5,
-         *       "low_count": 3,
-         *       "medium_count": 4,
-         *       "total_conflicts": 15
-         *     }
+         * @description Summary of conflicts found.
          */
         ConflictSummary: {
-            /**
-             * Total Conflicts
-             * @default 0
-             */
+            /** Total Conflicts */
             total_conflicts: number;
-            /**
-             * Critical Count
-             * @default 0
-             */
-            critical_count: number;
-            /**
-             * High Count
-             * @default 0
-             */
-            high_count: number;
-            /**
-             * Medium Count
-             * @default 0
-             */
-            medium_count: number;
-            /**
-             * Low Count
-             * @default 0
-             */
-            low_count: number;
-            /** By Category */
-            by_category?: {
-                [key: string]: number | undefined;
-            };
-            /** By Type */
-            by_type?: {
-                [key: string]: number | undefined;
-            };
-            /**
-             * Affected People Count
-             * @default 0
-             */
-            affected_people_count: number;
-            /**
-             * Affected Blocks Count
-             * @default 0
-             */
-            affected_blocks_count: number;
-            /**
-             * Auto Resolvable Count
-             * @default 0
-             */
-            auto_resolvable_count: number;
-            /**
-             * Requires Manual Count
-             * @default 0
-             */
-            requires_manual_count: number;
-            /**
-             * Average Impact Score
-             * @default 0
-             */
-            average_impact_score: number;
-            /**
-             * Average Urgency Score
-             * @default 0
-             */
-            average_urgency_score: number;
-            /**
-             * Average Complexity Score
-             * @default 0
-             */
-            average_complexity_score: number;
-            /** Earliest Date */
-            earliest_date?: string | null;
-            /** Latest Date */
-            latest_date?: string | null;
+            /** Errors */
+            errors: number;
+            /** Warnings */
+            warnings: number;
         };
         /**
          * ConflictType
@@ -23889,6 +23983,236 @@ export interface components {
              */
             chunk_overlap: number;
         };
+        /**
+         * DraftAssignmentChangeType
+         * @description Type of change in a draft assignment.
+         * @enum {string}
+         */
+        DraftAssignmentChangeType: "add" | "modify" | "delete";
+        /**
+         * DraftAssignmentCreate
+         * @description Schema for adding an assignment to a draft.
+         */
+        DraftAssignmentCreate: {
+            /**
+             * Person Id
+             * Format: uuid
+             * @description UUID of the person
+             */
+            person_id: string;
+            /**
+             * Assignment Date
+             * Format: date
+             * @description Date of the assignment
+             */
+            assignment_date: string;
+            /**
+             * Time Of Day
+             * @description AM/PM or None for full day
+             */
+            time_of_day?: string | null;
+            /**
+             * Activity Code
+             * @description Activity code
+             */
+            activity_code?: string | null;
+            /**
+             * Rotation Id
+             * @description Rotation template ID
+             */
+            rotation_id?: string | null;
+            /**
+             * @description Type of change
+             * @default add
+             */
+            change_type: components["schemas"]["DraftAssignmentChangeType"];
+            /**
+             * Existing Assignment Id
+             * @description For modify/delete, the existing assignment ID
+             */
+            existing_assignment_id?: string | null;
+        };
+        /**
+         * DraftAssignmentResponse
+         * @description Schema for draft assignment response.
+         */
+        DraftAssignmentResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Draft Id
+             * Format: uuid
+             */
+            draft_id: string;
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            person_id: string;
+            /** Person Name */
+            person_name?: string | null;
+            /**
+             * Assignment Date
+             * Format: date
+             */
+            assignment_date: string;
+            /** Time Of Day */
+            time_of_day?: string | null;
+            /** Activity Code */
+            activity_code?: string | null;
+            /** Rotation Id */
+            rotation_id?: string | null;
+            /** Rotation Name */
+            rotation_name?: string | null;
+            change_type: components["schemas"]["DraftAssignmentChangeType"];
+            /** Existing Assignment Id */
+            existing_assignment_id?: string | null;
+            /** Created Assignment Id */
+            created_assignment_id?: string | null;
+        };
+        /**
+         * DraftFlagAcknowledge
+         * @description Schema for acknowledging a flag.
+         */
+        DraftFlagAcknowledge: {
+            /**
+             * Resolution Note
+             * @description Optional note about resolution
+             */
+            resolution_note?: string | null;
+        };
+        /**
+         * DraftFlagBulkAcknowledge
+         * @description Schema for bulk acknowledging flags.
+         */
+        DraftFlagBulkAcknowledge: {
+            /**
+             * Flag Ids
+             * @description Flag IDs to acknowledge
+             */
+            flag_ids: string[];
+            /**
+             * Resolution Note
+             * @description Optional note about resolution
+             */
+            resolution_note?: string | null;
+        };
+        /**
+         * DraftFlagResponse
+         * @description Schema for draft flag response.
+         */
+        DraftFlagResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Draft Id
+             * Format: uuid
+             */
+            draft_id: string;
+            flag_type: components["schemas"]["DraftFlagType"];
+            severity: components["schemas"]["DraftFlagSeverity"];
+            /** Message */
+            message: string;
+            /** Assignment Id */
+            assignment_id?: string | null;
+            /** Person Id */
+            person_id?: string | null;
+            /** Person Name */
+            person_name?: string | null;
+            /** Affected Date */
+            affected_date?: string | null;
+            /** Acknowledged At */
+            acknowledged_at?: string | null;
+            /** Acknowledged By Id */
+            acknowledged_by_id?: string | null;
+            /** Resolution Note */
+            resolution_note?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * DraftFlagSeverity
+         * @description Severity level of a flag.
+         * @enum {string}
+         */
+        DraftFlagSeverity: "error" | "warning" | "info";
+        /**
+         * DraftFlagType
+         * @description Types of flags that require review.
+         * @enum {string}
+         */
+        DraftFlagType: "conflict" | "acgme_violation" | "coverage_gap" | "manual_review";
+        /**
+         * DraftPreviewResponse
+         * @description Schema for draft preview - comparison of draft vs live.
+         */
+        DraftPreviewResponse: {
+            /**
+             * Draft Id
+             * Format: uuid
+             */
+            draft_id: string;
+            /**
+             * Add Count
+             * @description New assignments to add
+             * @default 0
+             */
+            add_count: number;
+            /**
+             * Modify Count
+             * @description Assignments to modify
+             * @default 0
+             */
+            modify_count: number;
+            /**
+             * Delete Count
+             * @description Assignments to delete
+             * @default 0
+             */
+            delete_count: number;
+            /**
+             * Flags Total
+             * @description Total flags
+             * @default 0
+             */
+            flags_total: number;
+            /**
+             * Flags Acknowledged
+             * @description Acknowledged flags
+             * @default 0
+             */
+            flags_acknowledged: number;
+            /**
+             * Acgme Violations
+             * @description ACGME violations that would occur after publish
+             */
+            acgme_violations?: string[];
+            /**
+             * Assignments
+             * @description Staged assignments
+             */
+            assignments?: components["schemas"]["DraftAssignmentResponse"][];
+            /**
+             * Flags
+             * @description Review flags
+             */
+            flags?: components["schemas"]["DraftFlagResponse"][];
+        };
+        /**
+         * DraftSourceType
+         * @description Source of draft changes.
+         * @enum {string}
+         */
+        DraftSourceType: "solver" | "manual" | "swap" | "import";
         /**
          * DuplicateAction
          * @description Action to take for duplicate assignments.
@@ -25072,10 +25396,10 @@ export interface components {
         ExportDeliveryMethod: "email" | "s3" | "both";
         /**
          * ExportFormat
-         * @description Export file formats.
+         * @description Supported export formats.
          * @enum {string}
          */
-        ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        ExportFormat: "csv" | "xlsx";
         /**
          * ExportFormat
          * @description Export file formats.
@@ -25103,7 +25427,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["ExportFormat"];
+            format: components["schemas"]["app__models__export_job__ExportFormat"];
             /**
              * @description Delivery method
              * @default email
@@ -25402,7 +25726,7 @@ export interface components {
             /** Description */
             description?: string | null;
             template?: components["schemas"]["ExportTemplate"] | null;
-            format?: components["schemas"]["ExportFormat"] | null;
+            format?: components["schemas"]["app__models__export_job__ExportFormat"] | null;
             delivery_method?: components["schemas"]["ExportDeliveryMethod"] | null;
             /** Email Recipients */
             email_recipients?: string[] | null;
@@ -28379,7 +28703,7 @@ export interface components {
              * @default []
              */
             recommendations: components["schemas"]["Recommendation"][];
-            summary?: components["schemas"]["app__schemas__schedule__ConflictSummary"] | null;
+            summary?: components["schemas"]["ConflictSummary"] | null;
         };
         /**
          * ImportApplyError
@@ -31436,6 +31760,92 @@ export interface components {
             generated_at?: string;
         };
         /**
+         * PublishError
+         * @description Error details for a failed publish operation.
+         */
+        PublishError: {
+            /**
+             * Draft Assignment Id
+             * Format: uuid
+             */
+            draft_assignment_id: string;
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            person_id: string;
+            /**
+             * Assignment Date
+             * Format: date
+             */
+            assignment_date: string;
+            /** Error Message */
+            error_message: string;
+        };
+        /**
+         * PublishRequest
+         * @description Request schema for publishing a draft.
+         */
+        PublishRequest: {
+            /**
+             * Override Comment
+             * @description Required for Tier 1 if unacknowledged flags exist
+             */
+            override_comment?: string | null;
+            /**
+             * Validate Acgme
+             * @description If True, validate ACGME compliance after publish
+             * @default true
+             */
+            validate_acgme: boolean;
+        };
+        /**
+         * PublishResponse
+         * @description Response schema for publish operation.
+         */
+        PublishResponse: {
+            /**
+             * Draft Id
+             * Format: uuid
+             */
+            draft_id: string;
+            status: components["schemas"]["ScheduleDraftStatus"];
+            /**
+             * Published Count
+             * @description Successfully published assignments
+             * @default 0
+             */
+            published_count: number;
+            /**
+             * Error Count
+             * @description Failed to publish
+             * @default 0
+             */
+            error_count: number;
+            /**
+             * Errors
+             * @description Detailed error information
+             */
+            errors?: components["schemas"]["PublishError"][];
+            /**
+             * Acgme Warnings
+             * @description ACGME warnings after publish
+             */
+            acgme_warnings?: string[];
+            /**
+             * Rollback Available
+             * @default true
+             */
+            rollback_available: boolean;
+            /** Rollback Expires At */
+            rollback_expires_at?: string | null;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+        };
+        /**
          * QUBOAnnealingConfig
          * @description Configuration for simulated annealing.
          */
@@ -33737,6 +34147,55 @@ export interface components {
             can_revert: boolean;
         };
         /**
+         * RollbackRequest
+         * @description Request schema for rolling back a published draft.
+         */
+        RollbackRequest: {
+            /**
+             * Reason
+             * @description Reason for rollback
+             */
+            reason?: string | null;
+        };
+        /**
+         * RollbackResponse
+         * @description Response schema for rollback operation.
+         */
+        RollbackResponse: {
+            /**
+             * Draft Id
+             * Format: uuid
+             */
+            draft_id: string;
+            status: components["schemas"]["ScheduleDraftStatus"];
+            /**
+             * Rolled Back Count
+             * @description Assignments rolled back
+             * @default 0
+             */
+            rolled_back_count: number;
+            /**
+             * Failed Count
+             * @description Failed to rollback
+             * @default 0
+             */
+            failed_count: number;
+            /**
+             * Rolled Back At
+             * Format: date-time
+             */
+            rolled_back_at: string;
+            /** Rolled Back By Id */
+            rolled_back_by_id?: string | null;
+            /** Errors */
+            errors?: string[];
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+        };
+        /**
          * RotationCapacity
          * @description Rotation capacity information.
          */
@@ -34132,6 +34591,244 @@ export interface components {
             notes?: string | null;
         };
         /**
+         * ScheduleDraftCounts
+         * @description Aggregated counts for a schedule draft.
+         */
+        ScheduleDraftCounts: {
+            /**
+             * Assignments Total
+             * @description Total staged assignments
+             * @default 0
+             */
+            assignments_total: number;
+            /**
+             * Added
+             * @description New assignments to add
+             * @default 0
+             */
+            added: number;
+            /**
+             * Modified
+             * @description Existing assignments to modify
+             * @default 0
+             */
+            modified: number;
+            /**
+             * Deleted
+             * @description Assignments to delete
+             * @default 0
+             */
+            deleted: number;
+            /**
+             * Flags Total
+             * @description Total flags
+             * @default 0
+             */
+            flags_total: number;
+            /**
+             * Flags Acknowledged
+             * @description Acknowledged flags
+             * @default 0
+             */
+            flags_acknowledged: number;
+            /**
+             * Flags Unacknowledged
+             * @description Unacknowledged flags
+             * @default 0
+             */
+            flags_unacknowledged: number;
+        };
+        /**
+         * ScheduleDraftCreate
+         * @description Schema for creating a new schedule draft.
+         */
+        ScheduleDraftCreate: {
+            /** @description Source of the draft (solver, manual, swap, import) */
+            source_type: components["schemas"]["DraftSourceType"];
+            /**
+             * Target Block
+             * @description Target block number (1-26)
+             */
+            target_block?: number | null;
+            /**
+             * Target Start Date
+             * Format: date
+             * @description Start date of draft scope
+             */
+            target_start_date: string;
+            /**
+             * Target End Date
+             * Format: date
+             * @description End date of draft scope
+             */
+            target_end_date: string;
+            /**
+             * Schedule Run Id
+             * @description Optional link to schedule_runs for solver drafts
+             */
+            schedule_run_id?: string | null;
+            /**
+             * Notes
+             * @description Optional notes
+             */
+            notes?: string | null;
+        };
+        /**
+         * ScheduleDraftList
+         * @description Schema for paginated schedule draft list response.
+         */
+        ScheduleDraftList: {
+            /**
+             * Items
+             * @description List of drafts
+             */
+            items: components["schemas"]["ScheduleDraftListItem"][];
+            /**
+             * Total
+             * @description Total count of drafts
+             */
+            total: number;
+            /**
+             * Page
+             * @description Current page number
+             * @default 1
+             */
+            page: number;
+            /**
+             * Page Size
+             * @description Items per page
+             * @default 50
+             */
+            page_size: number;
+            /**
+             * Has Next
+             * @description Has next page
+             */
+            has_next: boolean;
+            /**
+             * Has Previous
+             * @description Has previous page
+             */
+            has_previous: boolean;
+        };
+        /**
+         * ScheduleDraftListItem
+         * @description Schema for schedule draft in list view (lightweight).
+         */
+        ScheduleDraftListItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            status: components["schemas"]["ScheduleDraftStatus"];
+            source_type: components["schemas"]["DraftSourceType"];
+            /** Target Block */
+            target_block?: number | null;
+            /**
+             * Target Start Date
+             * Format: date
+             */
+            target_start_date: string;
+            /**
+             * Target End Date
+             * Format: date
+             */
+            target_end_date: string;
+            /**
+             * Flags Total
+             * @default 0
+             */
+            flags_total: number;
+            /**
+             * Flags Acknowledged
+             * @default 0
+             */
+            flags_acknowledged: number;
+            counts?: components["schemas"]["ScheduleDraftCounts"];
+        };
+        /**
+         * ScheduleDraftResponse
+         * @description Schema for schedule draft response.
+         */
+        ScheduleDraftResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By Id */
+            created_by_id?: string | null;
+            /** Target Block */
+            target_block?: number | null;
+            /**
+             * Target Start Date
+             * Format: date
+             */
+            target_start_date: string;
+            /**
+             * Target End Date
+             * Format: date
+             */
+            target_end_date: string;
+            status: components["schemas"]["ScheduleDraftStatus"];
+            source_type: components["schemas"]["DraftSourceType"];
+            /** Source Schedule Run Id */
+            source_schedule_run_id?: string | null;
+            /** Published At */
+            published_at?: string | null;
+            /** Published By Id */
+            published_by_id?: string | null;
+            /**
+             * Rollback Available
+             * @default true
+             */
+            rollback_available: boolean;
+            /** Rollback Expires At */
+            rollback_expires_at?: string | null;
+            /** Rolled Back At */
+            rolled_back_at?: string | null;
+            /** Rolled Back By Id */
+            rolled_back_by_id?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Change Summary */
+            change_summary?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Flags Total
+             * @default 0
+             */
+            flags_total: number;
+            /**
+             * Flags Acknowledged
+             * @default 0
+             */
+            flags_acknowledged: number;
+            /** Override Comment */
+            override_comment?: string | null;
+            /** Override By Id */
+            override_by_id?: string | null;
+            counts?: components["schemas"]["ScheduleDraftCounts"];
+        };
+        /**
+         * ScheduleDraftStatus
+         * @description Status of a schedule draft.
+         * @enum {string}
+         */
+        ScheduleDraftStatus: "draft" | "published" | "rolled_back" | "discarded";
+        /**
          * ScheduleFatigueAssessmentRequest
          * @description Request to assess fatigue risk for proposed schedule.
          */
@@ -34414,7 +35111,7 @@ export interface components {
             /** Components */
             components: components["schemas"]["ScoreComponentResponse"][];
             /** Suggestions */
-            suggestions?: components["schemas"]["SuggestionResponse"][];
+            suggestions?: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -35981,25 +36678,24 @@ export interface components {
         };
         /**
          * SuggestionResponse
-         * @description Response for improvement suggestion.
+         * @description Response schema for autocomplete suggestions.
          */
         SuggestionResponse: {
-            /** Type */
-            type: string;
             /**
-             * Priority
-             * @description high, medium, low
+             * Suggestions
+             * @description List of suggestions
              */
-            priority: string;
-            /** Description */
-            description: string;
+            suggestions: string[];
             /**
-             * Impact
-             * @description Expected improvement
+             * Query
+             * @description Original query string
              */
-            impact: number;
-            /** Affected Items */
-            affected_items?: string[];
+            query: string;
+            /**
+             * Entity Type
+             * @description Entity type
+             */
+            entity_type: string;
         };
         /**
          * SwapBarrierAnalysisRequest
@@ -39567,7 +40263,7 @@ export interface components {
             /** People */
             people: components["schemas"]["PersonWorkloadResponse"][];
             /** Rebalancing Suggestions */
-            rebalancing_suggestions: components["schemas"]["SuggestionResponse"][];
+            rebalancing_suggestions: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
         };
         /**
          * WorkloadSummary
@@ -39836,6 +40532,102 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
+         * ExportFormat
+         * @description Export file formats.
+         * @enum {string}
+         */
+        app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        /**
+         * ConflictSummary
+         * @description Summary statistics for a set of conflicts.
+         *
+         *     Used for dashboard displays and reporting.
+         * @example {
+         *       "affected_people_count": 8,
+         *       "auto_resolvable_count": 6,
+         *       "average_impact_score": 0.65,
+         *       "critical_count": 3,
+         *       "high_count": 5,
+         *       "low_count": 3,
+         *       "medium_count": 4,
+         *       "total_conflicts": 15
+         *     }
+         */
+        app__scheduling__conflicts__types__ConflictSummary: {
+            /**
+             * Total Conflicts
+             * @default 0
+             */
+            total_conflicts: number;
+            /**
+             * Critical Count
+             * @default 0
+             */
+            critical_count: number;
+            /**
+             * High Count
+             * @default 0
+             */
+            high_count: number;
+            /**
+             * Medium Count
+             * @default 0
+             */
+            medium_count: number;
+            /**
+             * Low Count
+             * @default 0
+             */
+            low_count: number;
+            /** By Category */
+            by_category?: {
+                [key: string]: number | undefined;
+            };
+            /** By Type */
+            by_type?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Affected People Count
+             * @default 0
+             */
+            affected_people_count: number;
+            /**
+             * Affected Blocks Count
+             * @default 0
+             */
+            affected_blocks_count: number;
+            /**
+             * Auto Resolvable Count
+             * @default 0
+             */
+            auto_resolvable_count: number;
+            /**
+             * Requires Manual Count
+             * @default 0
+             */
+            requires_manual_count: number;
+            /**
+             * Average Impact Score
+             * @default 0
+             */
+            average_impact_score: number;
+            /**
+             * Average Urgency Score
+             * @default 0
+             */
+            average_urgency_score: number;
+            /**
+             * Average Complexity Score
+             * @default 0
+             */
+            average_complexity_score: number;
+            /** Earliest Date */
+            earliest_date?: string | null;
+            /** Latest Date */
+            latest_date?: string | null;
+        };
+        /**
          * BlockListResponse
          * @description Response for listing academic blocks.
          */
@@ -39855,25 +40647,6 @@ export interface components {
              * @description Total number of blocks
              */
             total_blocks: number;
-        };
-        /**
-         * BatchOperationResult
-         * @description Result for a single operation in a batch.
-         */
-        app__schemas__batch__BatchOperationResult: {
-            /**
-             * Index
-             * @description Index of the operation in the batch
-             */
-            index: number;
-            /** Success */
-            success: boolean;
-            /** Assignment Id */
-            assignment_id?: string | null;
-            /** Error */
-            error?: string | null;
-            /** Warnings */
-            warnings?: string[];
         };
         /**
          * CoverageGap
@@ -39897,12 +40670,6 @@ export interface components {
             severity: string;
         };
         /**
-         * ExportFormat
-         * @description Supported export formats.
-         * @enum {string}
-         */
-        app__schemas__block_assignment_import__ExportFormat: "csv" | "xlsx";
-        /**
          * PersonSummary
          * @description Minimal person info for certification reports.
          */
@@ -39918,6 +40685,71 @@ export interface components {
             type: string;
             /** Email */
             email?: string | null;
+        };
+        /**
+         * ConflictCheckResponse
+         * @description Response for conflict checking before assignment.
+         */
+        app__schemas__fmit_assignments__ConflictCheckResponse: {
+            /**
+             * Can Assign
+             * @description Whether assignment can proceed
+             */
+            can_assign: boolean;
+            /**
+             * Conflicts
+             * @description Detected conflicts
+             */
+            conflicts?: components["schemas"]["ConflictDetail"][];
+            /**
+             * Warnings
+             * @description Warnings
+             */
+            warnings?: string[];
+            /**
+             * Suggestions
+             * @description Alternative suggestions
+             */
+            suggestions?: string[];
+        };
+        /**
+         * SuggestionResponse
+         * @description Response for improvement suggestion.
+         */
+        app__schemas__ml__SuggestionResponse: {
+            /** Type */
+            type: string;
+            /**
+             * Priority
+             * @description high, medium, low
+             */
+            priority: string;
+            /** Description */
+            description: string;
+            /**
+             * Impact
+             * @description Expected improvement
+             */
+            impact: number;
+            /** Affected Items */
+            affected_items?: string[];
+        };
+        /**
+         * BatchOperationResult
+         * @description Result for a single operation in a batch.
+         */
+        app__schemas__person__BatchOperationResult: {
+            /**
+             * Index
+             * @description Index of the operation in the batch
+             */
+            index: number;
+            /** Person Id */
+            person_id?: string | null;
+            /** Success */
+            success: boolean;
+            /** Error */
+            error?: string | null;
         };
         /**
          * PersonSummary
@@ -39979,51 +40811,6 @@ export interface components {
             success: boolean;
             /** Error */
             error?: string | null;
-        };
-        /**
-         * ConflictCheckResponse
-         * @description Response for conflict check.
-         */
-        app__schemas__rotation_template__ConflictCheckResponse: {
-            /** Has Conflicts */
-            has_conflicts: boolean;
-            /** Conflicts */
-            conflicts: components["schemas"]["TemplateConflict"][];
-            /** Can Proceed */
-            can_proceed: boolean;
-        };
-        /**
-         * ConflictSummary
-         * @description Summary of conflicts found.
-         */
-        app__schemas__schedule__ConflictSummary: {
-            /** Total Conflicts */
-            total_conflicts: number;
-            /** Errors */
-            errors: number;
-            /** Warnings */
-            warnings: number;
-        };
-        /**
-         * SuggestionResponse
-         * @description Response schema for autocomplete suggestions.
-         */
-        app__schemas__search__SuggestionResponse: {
-            /**
-             * Suggestions
-             * @description List of suggestions
-             */
-            suggestions: string[];
-            /**
-             * Query
-             * @description Original query string
-             */
-            query: string;
-            /**
-             * Entity Type
-             * @description Entity type
-             */
-            entity_type: string;
         };
         /**
          * CoverageGap
@@ -42048,7 +42835,7 @@ export interface operations {
             };
         };
     };
-    batch_delete_people_api_v1_people_batch_delete: {
+    batch_delete_people_api_v1_people_batch_delete_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -42690,7 +43477,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__rotation_template__ConflictCheckResponse"];
+                    "application/json": components["schemas"]["ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -52518,7 +53305,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -52551,7 +53338,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -56964,7 +57751,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictCheckResponse"];
+                    "application/json": components["schemas"]["app__schemas__fmit_assignments__ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -57379,7 +58166,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictSummary"];
+                    "application/json": components["schemas"]["app__scheduling__conflicts__types__ConflictSummary"];
                 };
             };
             /** @description Validation Error */
@@ -59605,6 +60392,350 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImportRollbackResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_drafts_api_v1_schedules_drafts_get: {
+        parameters: {
+            query?: {
+                /** @description Page number (1-indexed) */
+                page?: number;
+                /** @description Items per page */
+                page_size?: number;
+                /** @description Filter by status */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleDraftList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_draft_api_v1_schedules_drafts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleDraftCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_draft_api_v1_schedules_drafts__draft_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleDraftResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    discard_draft_api_v1_schedules_drafts__draft_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_draft_api_v1_schedules_drafts__draft_id__preview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftPreviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_assignment_api_v1_schedules_drafts__draft_id__assignments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftAssignmentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    acknowledge_flag_api_v1_schedules_drafts__draft_id__flags__flag_id__acknowledge_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: string;
+                flag_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DraftFlagAcknowledge"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bulk_acknowledge_flags_api_v1_schedules_drafts__draft_id__flags_acknowledge_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftFlagBulkAcknowledge"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_draft_api_v1_schedules_drafts__draft_id__publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PublishRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublishResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rollback_draft_api_v1_schedules_drafts__draft_id__rollback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RollbackRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RollbackResponse"];
                 };
             };
             /** @description Validation Error */

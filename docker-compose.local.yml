@@ -308,6 +308,11 @@ services:
       API_USERNAME: admin
       API_PASSWORD: admin123
 
+      # ARMORY - Enable ALL exotic MCP tools (50+ tools across 5 domains)
+      # With Claude Code v2.1.7 lazy loading, context tax is eliminated
+      # Domains: physics, biology, operations_research, resilience_advanced, fatigue_detailed
+      ARMORY_DOMAINS: all
+
       # Logging
       LOG_LEVEL: DEBUG
     ports:
