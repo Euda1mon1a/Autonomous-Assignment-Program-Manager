@@ -158,6 +158,18 @@ from app.models.state_machine import (
 from app.models.swap import SwapApproval, SwapRecord, SwapStatus, SwapType
 from app.models.token_blacklist import TokenBlacklist
 from app.models.user import User
+from app.models.wellness import (
+    AchievementType,
+    HopfieldPosition,
+    Survey,
+    SurveyAvailability,
+    SurveyFrequency,
+    SurveyResponse,
+    SurveyType,
+    WellnessAccount,
+    WellnessLeaderboardSnapshot,
+    WellnessPointTransaction,
+)
 from app.webhooks.models import (
     Webhook,
     WebhookDeadLetter,
@@ -352,4 +364,15 @@ __all__ = [
     "StateMachineInstance",
     "StateMachineTransition",
     "StateMachineStatus",
+    # Wellness & Survey models
+    "Survey",
+    "SurveyResponse",
+    "SurveyType",
+    "SurveyFrequency",
+    "SurveyAvailability",
+    "WellnessAccount",
+    "WellnessPointTransaction",
+    "WellnessLeaderboardSnapshot",
+    "HopfieldPosition",
+    "AchievementType",
 ]
