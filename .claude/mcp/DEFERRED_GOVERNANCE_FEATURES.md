@@ -96,20 +96,56 @@ The existing permission model from CLAUDE.md could extend to MCP tools:
 | **Tier 2: Review-Required** | State-changing, reversible | `backup_verified` | `execute_swap`, `generate_schedule` |
 | **Tier 3: Blocked/Approval** | Destructive, irreversible | `requires_approval` | `execute_sacrifice_hierarchy`, bulk deletes |
 
+### Human User Role Access (RBAC Integration)
+
+The system already defines 8 RBAC roles. MCP tool access should align:
+
+| Role | Tool Access | Use Cases |
+|------|-------------|-----------|
+| **Admin** | All tools | System administration, emergency overrides |
+| **Program Director** | Tier 1-2 + approval authority for Tier 3 | Final approval on sacrifices, policy changes |
+| **Coordinator** | Tier 1-2 (own program) | Schedule generation, swap execution, compliance reports |
+| **Faculty** | Tier 1 + limited Tier 2 (supervised residents) | Validate schedules, approve resident swaps |
+| **Resident** | Tier 1 (own schedule only) | View schedule, request swaps, check conflicts |
+| **Clinical Staff** | Tier 1 (read-only) | View coverage, check assignments |
+| **RN/LPN** | Tier 1 (read-only, filtered) | View relevant coverage |
+| **MSA** | Tier 1 (administrative views) | Scheduling support queries |
+
+**Example Tool-Role Matrix:**
+
+| Tool | Resident | Faculty | Coordinator | Director | Admin |
+|------|----------|---------|-------------|----------|-------|
+| `validate_schedule` | ✓ (own) | ✓ (supervised) | ✓ (program) | ✓ | ✓ |
+| `detect_conflicts` | ✓ (own) | ✓ (supervised) | ✓ (program) | ✓ | ✓ |
+| `rag_search` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `analyze_swap_candidates` | ✓ (own) | ✓ | ✓ | ✓ | ✓ |
+| `execute_swap` | ✗ | ✗ | ✓ | ✓ | ✓ |
+| `generate_schedule` | ✗ | ✗ | ✓ | ✓ | ✓ |
+| `execute_sacrifice_hierarchy` | ✗ | ✗ | ✗ | ✓ (approve) | ✓ |
+| `run_contingency_analysis` | ✗ | ✗ | ✓ | ✓ | ✓ |
+
+**Scope Filtering:**
+- Residents see only their own schedule data
+- Faculty see residents they supervise
+- Coordinators see their program
+- Directors see all programs at their MTF
+- Admins see everything
+
 **User-facing tools (Tier 1):**
-- Coordinators, residents, faculty could safely call validation tools
+- All roles can use read-only tools (scoped to their access level)
 - No preconditions—always safe
 - Examples: schedule validation, conflict detection, RAG queries
 
-**Agent-only tools (Tier 2):**
+**Coordinator/Director tools (Tier 2):**
 - Require system context (backup status, prior validation)
-- Not exposed directly to end users
+- Limited to authorized users with program-level access
 - Agents must satisfy preconditions programmatically
 
-**Governance-gated tools (Tier 3):**
+**Director/Admin tools (Tier 3):**
 - Human approval required even for agents
 - Critical operations that affect multiple residents/schedules
 - Audit trail shows who approved and why
+- Only Program Director or Admin can approve
 
 ### Implementation Complexity
 
