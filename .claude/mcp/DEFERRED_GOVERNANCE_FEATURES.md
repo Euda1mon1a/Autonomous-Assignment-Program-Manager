@@ -86,13 +86,39 @@ LLM: "I'll call execute_swap..."
 | Multi-MTF (50 programs) | Inconsistent enforcement | Uniform safety gates |
 | LLM-driven operations | No guardrails | Enforced sequences |
 
+### Tiered Tool Access (Aligns with CLAUDE.md)
+
+The existing permission model from CLAUDE.md could extend to MCP tools:
+
+| Tier | Tools | Preconditions | Example |
+|------|-------|---------------|---------|
+| **Tier 1: Autonomous** | Read-only, validation, search | None | `validate_schedule`, `rag_search`, `detect_conflicts` |
+| **Tier 2: Review-Required** | State-changing, reversible | `backup_verified` | `execute_swap`, `generate_schedule` |
+| **Tier 3: Blocked/Approval** | Destructive, irreversible | `requires_approval` | `execute_sacrifice_hierarchy`, bulk deletes |
+
+**User-facing tools (Tier 1):**
+- Coordinators, residents, faculty could safely call validation tools
+- No preconditions—always safe
+- Examples: schedule validation, conflict detection, RAG queries
+
+**Agent-only tools (Tier 2):**
+- Require system context (backup status, prior validation)
+- Not exposed directly to end users
+- Agents must satisfy preconditions programmatically
+
+**Governance-gated tools (Tier 3):**
+- Human approval required even for agents
+- Critical operations that affect multiple residents/schedules
+- Audit trail shows who approved and why
+
 ### Implementation Complexity
 
 **Low** - The validation logic already exists in `spawn_agent_tool`. Adding precondition checks requires:
-1. Define `TOOL_PRECONDITIONS` dict
+1. Define `TOOL_PRECONDITIONS` dict with tier classification
 2. Track `tools_called` in session context
 3. Check preconditions before tool execution
 4. Return clear error if unmet
+5. For Tier 3: Queue for human approval workflow
 
 ### Recommendation
 
