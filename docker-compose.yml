@@ -224,6 +224,9 @@ services:
       LOG_LEVEL: ${MCP_LOG_LEVEL:-INFO}
       # Python path for imports
       PYTHONPATH: /app/src
+      # ARMORY - Enable ALL exotic MCP tools (50+ tools across 5 domains)
+      # With Claude Code v2.1.7 lazy loading, context tax is eliminated
+      ARMORY_DOMAINS: ${ARMORY_DOMAINS:-all}
     # Security constraints (Docker MCP Toolkit pattern)
     # - Resource limits prevent runaway processes
     # - no-new-privileges prevents privilege escalation

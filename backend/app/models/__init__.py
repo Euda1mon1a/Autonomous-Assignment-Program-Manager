@@ -70,6 +70,16 @@ from app.models.import_staging import (
     ImportStagedAssignment,
     StagedAssignmentStatus,
 )
+from app.models.schedule_draft import (
+    DraftAssignmentChangeType,
+    DraftFlagSeverity,
+    DraftFlagType,
+    DraftSourceType,
+    ScheduleDraft,
+    ScheduleDraftAssignment,
+    ScheduleDraftFlag,
+    ScheduleDraftStatus,
+)
 from app.models.intern_stagger import InternStaggerPattern
 from app.models.notification import (
     Notification,
@@ -205,6 +215,15 @@ __all__ = [
     "ImportStagedAssignment",
     "StagedAssignmentStatus",
     "ConflictResolutionMode",
+    # Schedule draft models
+    "ScheduleDraft",
+    "ScheduleDraftAssignment",
+    "ScheduleDraftFlag",
+    "ScheduleDraftStatus",
+    "DraftSourceType",
+    "DraftAssignmentChangeType",
+    "DraftFlagType",
+    "DraftFlagSeverity",
     # Credentialing models
     "Procedure",
     "ProcedureCredential",

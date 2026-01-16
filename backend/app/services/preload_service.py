@@ -527,13 +527,34 @@ class PreloadService:
         return codes.get(rotation_type, (rotation_type, rotation_type))
 
     async def _get_activity_id(self, code: str) -> UUID | None:
-        """Get activity ID by code (cached)."""
+        """Get activity ID by code (cached).
+
+        Lookup order:
+        1. Exact code match
+        2. Case-insensitive code match (CALL -> call)
+        3. Display abbreviation match (C-I -> fm_clinic_i)
+        """
         if code in self._activity_cache:
             return self._activity_cache[code]
 
+        # Try exact code match first
         stmt = select(Activity).where(Activity.code == code)
         result = await self.session.execute(stmt)
         activity = result.scalar_one_or_none()
+
+        if not activity:
+            # Try case-insensitive code match
+            from sqlalchemy import func
+
+            stmt = select(Activity).where(func.lower(Activity.code) == code.lower())
+            result = await self.session.execute(stmt)
+            activity = result.scalar_one_or_none()
+
+        if not activity:
+            # Try display abbreviation match
+            stmt = select(Activity).where(Activity.display_abbreviation == code)
+            result = await self.session.execute(stmt)
+            activity = result.scalar_one_or_none()
 
         if activity:
             self._activity_cache[code] = activity.id
