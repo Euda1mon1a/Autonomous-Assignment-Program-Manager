@@ -1,0 +1,1638 @@
+{
+  "tables": [
+    {
+      "name": "people",
+      "domain": "Core Scheduling",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "email", "type": "VARCHAR(255)", "nullable": true, "unique": true},
+        {"name": "pgy_level", "type": "INTEGER", "nullable": true},
+        {"name": "target_clinical_blocks", "type": "INTEGER", "nullable": true},
+        {"name": "performs_procedures", "type": "BOOLEAN", "nullable": true},
+        {"name": "specialties", "type": "ARRAY", "nullable": true},
+        {"name": "primary_duty", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "faculty_role", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "min_clinic_halfdays_per_week", "type": "INTEGER", "nullable": true},
+        {"name": "max_clinic_halfdays_per_week", "type": "INTEGER", "nullable": true},
+        {"name": "admin_type", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "screener_role", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "can_screen", "type": "BOOLEAN", "nullable": true},
+        {"name": "screening_efficiency", "type": "INTEGER", "nullable": true},
+        {"name": "sunday_call_count", "type": "INTEGER", "nullable": true},
+        {"name": "weekday_call_count", "type": "INTEGER", "nullable": true},
+        {"name": "fmit_weeks_count", "type": "INTEGER", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true},
+        {"name": "updated_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "blocks",
+      "domain": "Core Scheduling",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "date", "type": "DATE", "nullable": false},
+        {"name": "time_of_day", "type": "VARCHAR(2)", "nullable": false},
+        {"name": "block_number", "type": "INTEGER", "nullable": false},
+        {"name": "is_weekend", "type": "BOOLEAN", "nullable": true},
+        {"name": "is_holiday", "type": "BOOLEAN", "nullable": true},
+        {"name": "holiday_name", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "day_type", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "operational_intent", "type": "VARCHAR(30)", "nullable": false},
+        {"name": "actual_date", "type": "DATE", "nullable": true}
+      ]
+    },
+    {
+      "name": "assignments",
+      "domain": "Core Scheduling",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "block_id", "type": "UUID", "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "rotation_template_id", "type": "UUID", "nullable": true},
+        {"name": "role", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "activity_override", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "notes", "type": "TEXT", "nullable": true},
+        {"name": "override_reason", "type": "TEXT", "nullable": true},
+        {"name": "override_acknowledged_at", "type": "DATETIME", "nullable": true},
+        {"name": "explain_json", "type": "JSON", "nullable": true},
+        {"name": "confidence", "type": "FLOAT", "nullable": true},
+        {"name": "score", "type": "FLOAT", "nullable": true},
+        {"name": "alternatives_json", "type": "JSON", "nullable": true},
+        {"name": "audit_hash", "type": "VARCHAR(64)", "nullable": true},
+        {"name": "created_by", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true},
+        {"name": "updated_at", "type": "DATETIME", "nullable": true},
+        {"name": "schedule_run_id", "type": "UUID", "nullable": true}
+      ]
+    },
+    {
+      "name": "schedule_runs",
+      "domain": "Core Scheduling",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "started_at", "type": "DATETIME", "nullable": false},
+        {"name": "completed_at", "type": "DATETIME", "nullable": true},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "algorithm_version", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "config_snapshot", "type": "JSON", "nullable": true},
+        {"name": "results_summary", "type": "JSON", "nullable": true},
+        {"name": "error_message", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "rotation_templates",
+      "domain": "Rotations",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "abbreviation", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "display_abbreviation", "type": "VARCHAR(10)", "nullable": true},
+        {"name": "category", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "description", "type": "TEXT", "nullable": true},
+        {"name": "duration_weeks", "type": "INTEGER", "nullable": true},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true},
+        {"name": "updated_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "weekly_patterns",
+      "domain": "Rotations",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "rotation_template_id", "type": "UUID", "nullable": false},
+        {"name": "day_of_week", "type": "INTEGER", "nullable": false},
+        {"name": "time_of_day", "type": "VARCHAR(2)", "nullable": false},
+        {"name": "activity_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "location", "type": "VARCHAR(255)", "nullable": true}
+      ]
+    },
+    {
+      "name": "rotation_preferences",
+      "domain": "Rotations",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "rotation_template_id", "type": "UUID", "nullable": false},
+        {"name": "preference_weight", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "notes", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "rotation_halfday_requirements",
+      "domain": "Rotations",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "rotation_template_id", "type": "UUID", "nullable": false},
+        {"name": "day_of_week", "type": "INTEGER", "nullable": false},
+        {"name": "time_of_day", "type": "VARCHAR(2)", "nullable": false},
+        {"name": "required_count", "type": "INTEGER", "nullable": true}
+      ]
+    },
+    {
+      "name": "rotation_activity_requirements",
+      "domain": "Rotations",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "rotation_template_id", "type": "UUID", "nullable": false},
+        {"name": "activity_id", "type": "UUID", "nullable": true},
+        {"name": "halfdays_per_week", "type": "INTEGER", "nullable": true},
+        {"name": "is_required", "type": "BOOLEAN", "nullable": true}
+      ]
+    },
+    {
+      "name": "resident_weekly_requirements",
+      "domain": "Rotations",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "rotation_template_id", "type": "UUID", "nullable": false},
+        {"name": "pgy_level", "type": "INTEGER", "nullable": true},
+        {"name": "halfdays_per_week", "type": "INTEGER", "nullable": true}
+      ]
+    },
+    {
+      "name": "block_assignments",
+      "domain": "Rotations",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "rotation_template_id", "type": "UUID", "nullable": false},
+        {"name": "block_number", "type": "INTEGER", "nullable": false},
+        {"name": "academic_year", "type": "INTEGER", "nullable": false},
+        {"name": "assignment_reason", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "notes", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "activities",
+      "domain": "Activities",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "abbreviation", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "category_id", "type": "UUID", "nullable": true},
+        {"name": "description", "type": "TEXT", "nullable": true},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": true}
+      ]
+    },
+    {
+      "name": "activity_categories",
+      "domain": "Activities",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false},
+        {"name": "description", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "half_day_assignments",
+      "domain": "Half-Day Scheduling",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "date", "type": "DATE", "nullable": false},
+        {"name": "time_of_day", "type": "VARCHAR(2)", "nullable": false},
+        {"name": "activity_code", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "block_number", "type": "INTEGER", "nullable": true},
+        {"name": "assignment_source", "type": "VARCHAR(30)", "nullable": true},
+        {"name": "notes", "type": "TEXT", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true},
+        {"name": "updated_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "inpatient_preloads",
+      "domain": "Half-Day Scheduling",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "rotation_type", "type": "VARCHAR(30)", "nullable": false},
+        {"name": "start_date", "type": "DATE", "nullable": false},
+        {"name": "end_date", "type": "DATE", "nullable": false},
+        {"name": "assigned_by", "type": "VARCHAR(30)", "nullable": true}
+      ]
+    },
+    {
+      "name": "resident_call_preloads",
+      "domain": "Half-Day Scheduling",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "call_type", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "date", "type": "DATE", "nullable": false}
+      ]
+    },
+    {
+      "name": "intern_stagger_patterns",
+      "domain": "Half-Day Scheduling",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "block_number", "type": "INTEGER", "nullable": false},
+        {"name": "pattern_json", "type": "JSON", "nullable": true}
+      ]
+    },
+    {
+      "name": "absences",
+      "domain": "Absences & Call",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "absence_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "start_date", "type": "DATE", "nullable": false},
+        {"name": "end_date", "type": "DATE", "nullable": false},
+        {"name": "reason", "type": "TEXT", "nullable": true},
+        {"name": "approved_by_id", "type": "UUID", "nullable": true},
+        {"name": "approved_at", "type": "DATETIME", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "call_assignments",
+      "domain": "Absences & Call",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "date", "type": "DATE", "nullable": false},
+        {"name": "call_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "notes", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "swap_records",
+      "domain": "Swaps",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "source_faculty_id", "type": "UUID", "nullable": false},
+        {"name": "source_week", "type": "DATE", "nullable": false},
+        {"name": "target_faculty_id", "type": "UUID", "nullable": false},
+        {"name": "target_week", "type": "DATE", "nullable": true},
+        {"name": "swap_type", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "requested_at", "type": "DATETIME", "nullable": false},
+        {"name": "requested_by_id", "type": "UUID", "nullable": true},
+        {"name": "approved_at", "type": "DATETIME", "nullable": true},
+        {"name": "approved_by_id", "type": "UUID", "nullable": true},
+        {"name": "executed_at", "type": "DATETIME", "nullable": true},
+        {"name": "executed_by_id", "type": "UUID", "nullable": true},
+        {"name": "rolled_back_at", "type": "DATETIME", "nullable": true},
+        {"name": "rolled_back_by_id", "type": "UUID", "nullable": true},
+        {"name": "rollback_reason", "type": "TEXT", "nullable": true},
+        {"name": "reason", "type": "TEXT", "nullable": true},
+        {"name": "notes", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "swap_approvals",
+      "domain": "Swaps",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "swap_id", "type": "UUID", "nullable": false},
+        {"name": "faculty_id", "type": "UUID", "nullable": false},
+        {"name": "role", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "approved", "type": "BOOLEAN", "nullable": true},
+        {"name": "responded_at", "type": "DATETIME", "nullable": true},
+        {"name": "response_notes", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "schedule_drafts",
+      "domain": "Drafts",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "source_type", "type": "VARCHAR(30)", "nullable": true},
+        {"name": "block_number", "type": "INTEGER", "nullable": true},
+        {"name": "created_by_id", "type": "UUID", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true},
+        {"name": "published_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "schedule_draft_assignments",
+      "domain": "Drafts",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "draft_id", "type": "UUID", "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "date", "type": "DATE", "nullable": false},
+        {"name": "time_of_day", "type": "VARCHAR(2)", "nullable": false},
+        {"name": "activity_code", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "change_type", "type": "VARCHAR(20)", "nullable": true}
+      ]
+    },
+    {
+      "name": "schedule_draft_flags",
+      "domain": "Drafts",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "draft_id", "type": "UUID", "nullable": false},
+        {"name": "flag_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "severity", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "message", "type": "TEXT", "nullable": true},
+        {"name": "resolved", "type": "BOOLEAN", "nullable": true}
+      ]
+    },
+    {
+      "name": "import_batches",
+      "domain": "Import/Export",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "filename", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "total_rows", "type": "INTEGER", "nullable": true},
+        {"name": "processed_rows", "type": "INTEGER", "nullable": true},
+        {"name": "error_count", "type": "INTEGER", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "import_staged_assignments",
+      "domain": "Import/Export",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "batch_id", "type": "UUID", "nullable": false},
+        {"name": "row_number", "type": "INTEGER", "nullable": true},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "data_json", "type": "JSON", "nullable": true},
+        {"name": "error_message", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "export_jobs",
+      "domain": "Import/Export",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "export_format", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "delivery_method", "type": "VARCHAR(30)", "nullable": true},
+        {"name": "schedule_cron", "type": "VARCHAR(100)", "nullable": true},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": true}
+      ]
+    },
+    {
+      "name": "export_job_executions",
+      "domain": "Import/Export",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "job_id", "type": "UUID", "nullable": false},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "started_at", "type": "DATETIME", "nullable": true},
+        {"name": "completed_at", "type": "DATETIME", "nullable": true},
+        {"name": "output_path", "type": "VARCHAR(500)", "nullable": true}
+      ]
+    },
+    {
+      "name": "export_templates",
+      "domain": "Import/Export",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "template_type", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "config_json", "type": "JSON", "nullable": true}
+      ]
+    },
+    {
+      "name": "clinic_sessions",
+      "domain": "Clinic Sessions",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "date", "type": "DATE", "nullable": false},
+        {"name": "time_of_day", "type": "VARCHAR(2)", "nullable": false},
+        {"name": "clinic_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "session_type", "type": "VARCHAR(30)", "nullable": true},
+        {"name": "staffing_status", "type": "VARCHAR(30)", "nullable": true}
+      ]
+    },
+    {
+      "name": "faculty_preferences",
+      "domain": "Faculty Configuration",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "preference_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "preference_value", "type": "JSON", "nullable": true},
+        {"name": "priority", "type": "INTEGER", "nullable": true}
+      ]
+    },
+    {
+      "name": "faculty_weekly_templates",
+      "domain": "Faculty Configuration",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "day_of_week", "type": "INTEGER", "nullable": false},
+        {"name": "time_of_day", "type": "VARCHAR(2)", "nullable": false},
+        {"name": "activity_code", "type": "VARCHAR(20)", "nullable": false}
+      ]
+    },
+    {
+      "name": "faculty_weekly_overrides",
+      "domain": "Faculty Configuration",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "date", "type": "DATE", "nullable": false},
+        {"name": "time_of_day", "type": "VARCHAR(2)", "nullable": false},
+        {"name": "activity_code", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "reason", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "procedures",
+      "domain": "Credentialing",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "code", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "category", "type": "VARCHAR(100)", "nullable": true},
+        {"name": "requires_supervision", "type": "BOOLEAN", "nullable": true}
+      ]
+    },
+    {
+      "name": "procedure_credentials",
+      "domain": "Credentialing",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "procedure_id", "type": "UUID", "nullable": false},
+        {"name": "credential_level", "type": "VARCHAR(30)", "nullable": false},
+        {"name": "granted_at", "type": "DATETIME", "nullable": true},
+        {"name": "expires_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "person_certifications",
+      "domain": "Credentialing",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "certification_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "certification_name", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "issued_at", "type": "DATE", "nullable": true},
+        {"name": "expires_at", "type": "DATE", "nullable": true}
+      ]
+    },
+    {
+      "name": "notifications",
+      "domain": "Notifications",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "user_id", "type": "UUID", "nullable": false},
+        {"name": "title", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "message", "type": "TEXT", "nullable": true},
+        {"name": "notification_type", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "read_at", "type": "DATETIME", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "notification_preferences",
+      "domain": "Notifications",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "user_id", "type": "UUID", "nullable": false},
+        {"name": "notification_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "enabled", "type": "BOOLEAN", "nullable": true},
+        {"name": "channel", "type": "VARCHAR(30)", "nullable": true}
+      ]
+    },
+    {
+      "name": "scheduled_notifications",
+      "domain": "Notifications",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "scheduled_for", "type": "DATETIME", "nullable": false},
+        {"name": "sent_at", "type": "DATETIME", "nullable": true},
+        {"name": "notification_type", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "payload_json", "type": "JSON", "nullable": true}
+      ]
+    },
+    {
+      "name": "email_logs",
+      "domain": "Notifications",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "recipient", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "subject", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "sent_at", "type": "DATETIME", "nullable": true},
+        {"name": "error_message", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "email_templates",
+      "domain": "Notifications",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false},
+        {"name": "template_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "subject_template", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "body_template", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "webhooks",
+      "domain": "Webhooks",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "url", "type": "VARCHAR(500)", "nullable": false},
+        {"name": "event_types", "type": "ARRAY", "nullable": true},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "secret", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "webhook_deliveries",
+      "domain": "Webhooks",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "webhook_id", "type": "UUID", "nullable": false},
+        {"name": "event_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "payload_json", "type": "JSON", "nullable": true},
+        {"name": "response_code", "type": "INTEGER", "nullable": true},
+        {"name": "delivered_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "webhook_dead_letters",
+      "domain": "Webhooks",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "webhook_id", "type": "UUID", "nullable": false},
+        {"name": "delivery_id", "type": "UUID", "nullable": true},
+        {"name": "payload_json", "type": "JSON", "nullable": true},
+        {"name": "error_message", "type": "TEXT", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "users",
+      "domain": "Auth & Users",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "email", "type": "VARCHAR(255)", "nullable": false, "unique": true},
+        {"name": "hashed_password", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "role", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": true},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true},
+        {"name": "last_login", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "token_blacklist",
+      "domain": "Auth & Users",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "jti", "type": "VARCHAR(255)", "nullable": false, "unique": true},
+        {"name": "token_type", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "expires_at", "type": "DATETIME", "nullable": false},
+        {"name": "blacklisted_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "api_keys",
+      "domain": "Auth & Users",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "key_hash", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false},
+        {"name": "scopes", "type": "ARRAY", "nullable": true},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": true},
+        {"name": "expires_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "oauth2_clients",
+      "domain": "Auth & Users",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "client_id", "type": "VARCHAR(100)", "nullable": false, "unique": true},
+        {"name": "client_secret_hash", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "redirect_uris", "type": "ARRAY", "nullable": true},
+        {"name": "scopes", "type": "ARRAY", "nullable": true}
+      ]
+    },
+    {
+      "name": "ip_whitelist",
+      "domain": "Auth & Users",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "ip_address", "type": "VARCHAR(45)", "nullable": false},
+        {"name": "description", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "ip_blacklist",
+      "domain": "Auth & Users",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "ip_address", "type": "VARCHAR(45)", "nullable": false},
+        {"name": "reason", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "blocked_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "request_signatures",
+      "domain": "Auth & Users",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "signature_hash", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "expires_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "pkce_clients",
+      "domain": "Auth & Users",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "client_id", "type": "VARCHAR(100)", "nullable": false, "unique": true},
+        {"name": "name", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "redirect_uris", "type": "ARRAY", "nullable": true}
+      ]
+    },
+    {
+      "name": "oauth2_authorization_codes",
+      "domain": "Auth & Users",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "code", "type": "VARCHAR(255)", "nullable": false, "unique": true},
+        {"name": "client_id", "type": "VARCHAR(100)", "nullable": false},
+        {"name": "user_id", "type": "UUID", "nullable": false},
+        {"name": "code_challenge", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "expires_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "conflict_alerts",
+      "domain": "Conflict Management",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "conflict_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "severity", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "description", "type": "TEXT", "nullable": true},
+        {"name": "affected_entities_json", "type": "JSON", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true},
+        {"name": "resolved_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "approval_records",
+      "domain": "Conflict Management",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "entity_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "entity_id", "type": "UUID", "nullable": false},
+        {"name": "action", "type": "VARCHAR(30)", "nullable": false},
+        {"name": "approved_by_id", "type": "UUID", "nullable": true},
+        {"name": "approved_at", "type": "DATETIME", "nullable": true},
+        {"name": "notes", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "resilience_health_checks",
+      "domain": "Resilience T1",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "timestamp", "type": "DATETIME", "nullable": false},
+        {"name": "overall_status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "utilization_rate", "type": "FLOAT", "nullable": false},
+        {"name": "utilization_level", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "buffer_remaining", "type": "FLOAT", "nullable": true},
+        {"name": "defense_level", "type": "VARCHAR(30)", "nullable": true},
+        {"name": "load_shedding_level", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "n1_pass", "type": "BOOLEAN", "nullable": true},
+        {"name": "n2_pass", "type": "BOOLEAN", "nullable": true},
+        {"name": "phase_transition_risk", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "active_fallbacks", "type": "ARRAY", "nullable": true},
+        {"name": "crisis_mode", "type": "BOOLEAN", "nullable": true},
+        {"name": "immediate_actions", "type": "JSON", "nullable": true},
+        {"name": "watch_items", "type": "JSON", "nullable": true},
+        {"name": "metrics_snapshot", "type": "JSON", "nullable": true}
+      ]
+    },
+    {
+      "name": "resilience_events",
+      "domain": "Resilience T1",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "timestamp", "type": "DATETIME", "nullable": false},
+        {"name": "event_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "severity", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "reason", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "triggered_by", "type": "VARCHAR(100)", "nullable": true},
+        {"name": "previous_state", "type": "JSON", "nullable": true},
+        {"name": "new_state", "type": "JSON", "nullable": true},
+        {"name": "related_health_check_id", "type": "UUID", "nullable": true},
+        {"name": "event_metadata", "type": "JSON", "nullable": true}
+      ]
+    },
+    {
+      "name": "sacrifice_decisions",
+      "domain": "Resilience T1",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "timestamp", "type": "DATETIME", "nullable": false},
+        {"name": "from_level", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "to_level", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "reason", "type": "VARCHAR(500)", "nullable": false},
+        {"name": "activities_suspended", "type": "ARRAY", "nullable": true},
+        {"name": "activities_protected", "type": "ARRAY", "nullable": true},
+        {"name": "approved_by", "type": "VARCHAR(100)", "nullable": true},
+        {"name": "approval_method", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "utilization_at_decision", "type": "FLOAT", "nullable": true},
+        {"name": "coverage_at_decision", "type": "FLOAT", "nullable": true},
+        {"name": "related_event_id", "type": "UUID", "nullable": true},
+        {"name": "recovered_at", "type": "DATETIME", "nullable": true},
+        {"name": "recovery_reason", "type": "VARCHAR(500)", "nullable": true}
+      ]
+    },
+    {
+      "name": "fallback_activations",
+      "domain": "Resilience T1",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "activated_at", "type": "DATETIME", "nullable": false},
+        {"name": "scenario", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "scenario_description", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "activated_by", "type": "VARCHAR(100)", "nullable": true},
+        {"name": "activation_reason", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "assignments_count", "type": "INTEGER", "nullable": true},
+        {"name": "coverage_rate", "type": "FLOAT", "nullable": true},
+        {"name": "services_reduced", "type": "ARRAY", "nullable": true},
+        {"name": "assumptions", "type": "ARRAY", "nullable": true},
+        {"name": "deactivated_at", "type": "DATETIME", "nullable": true},
+        {"name": "deactivated_by", "type": "VARCHAR(100)", "nullable": true},
+        {"name": "deactivation_reason", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "related_event_id", "type": "UUID", "nullable": true}
+      ]
+    },
+    {
+      "name": "vulnerability_records",
+      "domain": "Resilience T1",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "analyzed_at", "type": "DATETIME", "nullable": false},
+        {"name": "period_start", "type": "DATETIME", "nullable": true},
+        {"name": "period_end", "type": "DATETIME", "nullable": true},
+        {"name": "faculty_count", "type": "INTEGER", "nullable": true},
+        {"name": "block_count", "type": "INTEGER", "nullable": true},
+        {"name": "n1_pass", "type": "BOOLEAN", "nullable": false},
+        {"name": "n2_pass", "type": "BOOLEAN", "nullable": false},
+        {"name": "phase_transition_risk", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "n1_vulnerabilities", "type": "JSON", "nullable": true},
+        {"name": "n2_fatal_pairs", "type": "JSON", "nullable": true},
+        {"name": "most_critical_faculty", "type": "JSON", "nullable": true},
+        {"name": "recommended_actions", "type": "ARRAY", "nullable": true},
+        {"name": "related_health_check_id", "type": "UUID", "nullable": true}
+      ]
+    },
+    {
+      "name": "allostasis_records",
+      "domain": "Resilience T2",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "entity_id", "type": "UUID", "nullable": false},
+        {"name": "entity_type", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "calculated_at", "type": "DATETIME", "nullable": false},
+        {"name": "consecutive_weekend_calls", "type": "INTEGER", "nullable": true},
+        {"name": "nights_past_month", "type": "INTEGER", "nullable": true},
+        {"name": "schedule_changes_absorbed", "type": "INTEGER", "nullable": true},
+        {"name": "holidays_worked_this_year", "type": "INTEGER", "nullable": true},
+        {"name": "overtime_hours_month", "type": "FLOAT", "nullable": true},
+        {"name": "coverage_gap_responses", "type": "INTEGER", "nullable": true},
+        {"name": "cross_coverage_events", "type": "INTEGER", "nullable": true},
+        {"name": "acute_stress_score", "type": "FLOAT", "nullable": true},
+        {"name": "chronic_stress_score", "type": "FLOAT", "nullable": true},
+        {"name": "total_allostatic_load", "type": "FLOAT", "nullable": true},
+        {"name": "allostasis_state", "type": "VARCHAR(30)", "nullable": true},
+        {"name": "risk_level", "type": "VARCHAR(20)", "nullable": true}
+      ]
+    },
+    {
+      "name": "positive_feedback_alerts",
+      "domain": "Resilience T2",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false},
+        {"name": "description", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "detected_at", "type": "DATETIME", "nullable": false},
+        {"name": "trigger", "type": "VARCHAR(200)", "nullable": true},
+        {"name": "amplification", "type": "VARCHAR(200)", "nullable": true},
+        {"name": "consequence", "type": "VARCHAR(200)", "nullable": true},
+        {"name": "evidence", "type": "JSON", "nullable": true},
+        {"name": "confidence", "type": "FLOAT", "nullable": true},
+        {"name": "severity", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "intervention_recommended", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "urgency", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "resolved_at", "type": "DATETIME", "nullable": true},
+        {"name": "resolution_notes", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "intervention_effective", "type": "BOOLEAN", "nullable": true}
+      ]
+    },
+    {
+      "name": "scheduling_zones",
+      "domain": "Resilience T2",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false},
+        {"name": "zone_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "description", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": false},
+        {"name": "services", "type": "ARRAY", "nullable": true},
+        {"name": "minimum_coverage", "type": "INTEGER", "nullable": true},
+        {"name": "optimal_coverage", "type": "INTEGER", "nullable": true},
+        {"name": "maximum_coverage", "type": "INTEGER", "nullable": true},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "containment_level", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "last_status_change", "type": "DATETIME", "nullable": true},
+        {"name": "borrowing_limit", "type": "INTEGER", "nullable": true},
+        {"name": "lending_limit", "type": "INTEGER", "nullable": true},
+        {"name": "priority", "type": "INTEGER", "nullable": true},
+        {"name": "can_borrow_from_zones", "type": "ARRAY", "nullable": true},
+        {"name": "can_lend_to_zones", "type": "ARRAY", "nullable": true},
+        {"name": "total_borrowing_requests", "type": "INTEGER", "nullable": true},
+        {"name": "total_lending_events", "type": "INTEGER", "nullable": true},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": true}
+      ]
+    },
+    {
+      "name": "zone_faculty_assignments",
+      "domain": "Resilience T2",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "zone_id", "type": "UUID", "nullable": false},
+        {"name": "faculty_id", "type": "UUID", "nullable": false},
+        {"name": "faculty_name", "type": "VARCHAR(200)", "nullable": true},
+        {"name": "role", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "assigned_at", "type": "DATETIME", "nullable": false},
+        {"name": "is_available", "type": "BOOLEAN", "nullable": true},
+        {"name": "removed_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "zone_borrowing_records",
+      "domain": "Resilience T2",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "requesting_zone_id", "type": "UUID", "nullable": false},
+        {"name": "lending_zone_id", "type": "UUID", "nullable": false},
+        {"name": "faculty_id", "type": "UUID", "nullable": false},
+        {"name": "priority", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "reason", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "duration_hours", "type": "INTEGER", "nullable": true},
+        {"name": "requested_at", "type": "DATETIME", "nullable": false},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "approved_by", "type": "VARCHAR(100)", "nullable": true},
+        {"name": "approved_at", "type": "DATETIME", "nullable": true},
+        {"name": "denial_reason", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "started_at", "type": "DATETIME", "nullable": true},
+        {"name": "completed_at", "type": "DATETIME", "nullable": true},
+        {"name": "was_effective", "type": "BOOLEAN", "nullable": true}
+      ]
+    },
+    {
+      "name": "zone_incidents",
+      "domain": "Resilience T2",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "zone_id", "type": "UUID", "nullable": false},
+        {"name": "incident_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "description", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "started_at", "type": "DATETIME", "nullable": false},
+        {"name": "severity", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "faculty_affected", "type": "ARRAY", "nullable": true},
+        {"name": "capacity_lost", "type": "FLOAT", "nullable": true},
+        {"name": "services_affected", "type": "ARRAY", "nullable": true},
+        {"name": "resolved_at", "type": "DATETIME", "nullable": true},
+        {"name": "resolution_notes", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "containment_successful", "type": "BOOLEAN", "nullable": true}
+      ]
+    },
+    {
+      "name": "equilibrium_shifts",
+      "domain": "Resilience T2",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "calculated_at", "type": "DATETIME", "nullable": false},
+        {"name": "original_capacity", "type": "FLOAT", "nullable": false},
+        {"name": "original_demand", "type": "FLOAT", "nullable": false},
+        {"name": "original_coverage_rate", "type": "FLOAT", "nullable": false},
+        {"name": "stress_types", "type": "ARRAY", "nullable": true},
+        {"name": "total_capacity_impact", "type": "FLOAT", "nullable": true},
+        {"name": "total_demand_impact", "type": "FLOAT", "nullable": true},
+        {"name": "compensation_types", "type": "ARRAY", "nullable": true},
+        {"name": "total_compensation", "type": "FLOAT", "nullable": true},
+        {"name": "compensation_efficiency", "type": "FLOAT", "nullable": true},
+        {"name": "new_capacity", "type": "FLOAT", "nullable": false},
+        {"name": "new_demand", "type": "FLOAT", "nullable": false},
+        {"name": "new_coverage_rate", "type": "FLOAT", "nullable": false},
+        {"name": "sustainable_capacity", "type": "FLOAT", "nullable": true},
+        {"name": "compensation_debt", "type": "FLOAT", "nullable": true},
+        {"name": "daily_debt_rate", "type": "FLOAT", "nullable": true},
+        {"name": "burnout_risk", "type": "FLOAT", "nullable": true},
+        {"name": "days_until_exhaustion", "type": "INTEGER", "nullable": true},
+        {"name": "equilibrium_state", "type": "VARCHAR(30)", "nullable": true},
+        {"name": "is_sustainable", "type": "BOOLEAN", "nullable": true}
+      ]
+    },
+    {
+      "name": "system_stress_records",
+      "domain": "Resilience T2",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "stress_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "description", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "applied_at", "type": "DATETIME", "nullable": false},
+        {"name": "magnitude", "type": "FLOAT", "nullable": false},
+        {"name": "duration_days", "type": "INTEGER", "nullable": true},
+        {"name": "is_acute", "type": "BOOLEAN", "nullable": true},
+        {"name": "is_reversible", "type": "BOOLEAN", "nullable": true},
+        {"name": "capacity_impact", "type": "FLOAT", "nullable": true},
+        {"name": "demand_impact", "type": "FLOAT", "nullable": true},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": true},
+        {"name": "resolved_at", "type": "DATETIME", "nullable": true},
+        {"name": "resolution_notes", "type": "VARCHAR(500)", "nullable": true}
+      ]
+    },
+    {
+      "name": "compensation_records",
+      "domain": "Resilience T2",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "stress_id", "type": "UUID", "nullable": false},
+        {"name": "compensation_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "description", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "initiated_at", "type": "DATETIME", "nullable": false},
+        {"name": "compensation_magnitude", "type": "FLOAT", "nullable": false},
+        {"name": "effectiveness", "type": "FLOAT", "nullable": true},
+        {"name": "immediate_cost", "type": "FLOAT", "nullable": true},
+        {"name": "hidden_cost", "type": "FLOAT", "nullable": true},
+        {"name": "sustainability_days", "type": "INTEGER", "nullable": true},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": true},
+        {"name": "ended_at", "type": "DATETIME", "nullable": true},
+        {"name": "end_reason", "type": "VARCHAR(200)", "nullable": true}
+      ]
+    },
+    {
+      "name": "feedback_loop_states",
+      "domain": "Resilience T2",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "loop_name", "type": "VARCHAR(100)", "nullable": false},
+        {"name": "setpoint_name", "type": "VARCHAR(100)", "nullable": false},
+        {"name": "timestamp", "type": "DATETIME", "nullable": false},
+        {"name": "target_value", "type": "FLOAT", "nullable": false},
+        {"name": "tolerance", "type": "FLOAT", "nullable": false},
+        {"name": "is_critical", "type": "BOOLEAN", "nullable": true},
+        {"name": "current_value", "type": "FLOAT", "nullable": true},
+        {"name": "deviation", "type": "FLOAT", "nullable": true},
+        {"name": "deviation_severity", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "consecutive_deviations", "type": "INTEGER", "nullable": true},
+        {"name": "trend_direction", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "is_improving", "type": "BOOLEAN", "nullable": true},
+        {"name": "correction_triggered", "type": "BOOLEAN", "nullable": true},
+        {"name": "correction_type", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "correction_effective", "type": "BOOLEAN", "nullable": true}
+      ]
+    },
+    {
+      "name": "cognitive_sessions",
+      "domain": "Resilience T3",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "user_id", "type": "UUID", "nullable": false},
+        {"name": "started_at", "type": "DATETIME", "nullable": false},
+        {"name": "ended_at", "type": "DATETIME", "nullable": true},
+        {"name": "max_decisions_before_break", "type": "INTEGER", "nullable": false},
+        {"name": "total_cognitive_cost", "type": "FLOAT", "nullable": false},
+        {"name": "decisions_count", "type": "INTEGER", "nullable": false},
+        {"name": "breaks_taken", "type": "INTEGER", "nullable": false},
+        {"name": "final_state", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "cognitive_decisions",
+      "domain": "Resilience T3",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "session_id", "type": "UUID", "nullable": true},
+        {"name": "category", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "complexity", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "description", "type": "VARCHAR(1000)", "nullable": false},
+        {"name": "options", "type": "JSON", "nullable": true},
+        {"name": "recommended_option", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "safe_default", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "has_safe_default", "type": "BOOLEAN", "nullable": true},
+        {"name": "is_urgent", "type": "BOOLEAN", "nullable": true},
+        {"name": "can_defer", "type": "BOOLEAN", "nullable": true},
+        {"name": "deadline", "type": "DATETIME", "nullable": true},
+        {"name": "context", "type": "JSON", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": false},
+        {"name": "outcome", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "chosen_option", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "decided_at", "type": "DATETIME", "nullable": true},
+        {"name": "decided_by", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "estimated_cognitive_cost", "type": "FLOAT", "nullable": false},
+        {"name": "actual_time_seconds", "type": "FLOAT", "nullable": true}
+      ]
+    },
+    {
+      "name": "preference_trails",
+      "domain": "Resilience T3",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "faculty_id", "type": "UUID", "nullable": false},
+        {"name": "trail_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "slot_id", "type": "UUID", "nullable": true},
+        {"name": "slot_type", "type": "VARCHAR(100)", "nullable": true},
+        {"name": "block_type", "type": "VARCHAR(100)", "nullable": true},
+        {"name": "service_type", "type": "VARCHAR(100)", "nullable": true},
+        {"name": "target_faculty_id", "type": "UUID", "nullable": true},
+        {"name": "strength", "type": "FLOAT", "nullable": false},
+        {"name": "peak_strength", "type": "FLOAT", "nullable": false},
+        {"name": "evaporation_rate", "type": "FLOAT", "nullable": false},
+        {"name": "reinforcement_count", "type": "INTEGER", "nullable": false},
+        {"name": "created_at", "type": "DATETIME", "nullable": false},
+        {"name": "last_reinforced", "type": "DATETIME", "nullable": true},
+        {"name": "last_evaporated", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "trail_signals",
+      "domain": "Resilience T3",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "trail_id", "type": "UUID", "nullable": false},
+        {"name": "signal_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "strength_change", "type": "FLOAT", "nullable": false},
+        {"name": "recorded_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "faculty_centrality",
+      "domain": "Resilience T3",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "faculty_id", "type": "UUID", "nullable": false},
+        {"name": "faculty_name", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "calculated_at", "type": "DATETIME", "nullable": false},
+        {"name": "degree_centrality", "type": "FLOAT", "nullable": false},
+        {"name": "betweenness_centrality", "type": "FLOAT", "nullable": false},
+        {"name": "eigenvector_centrality", "type": "FLOAT", "nullable": false},
+        {"name": "pagerank", "type": "FLOAT", "nullable": false},
+        {"name": "composite_score", "type": "FLOAT", "nullable": false},
+        {"name": "services_covered", "type": "INTEGER", "nullable": false},
+        {"name": "unique_services", "type": "INTEGER", "nullable": false},
+        {"name": "total_assignments", "type": "INTEGER", "nullable": false},
+        {"name": "replacement_difficulty", "type": "FLOAT", "nullable": false},
+        {"name": "risk_level", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "is_hub", "type": "BOOLEAN", "nullable": false}
+      ]
+    },
+    {
+      "name": "hub_protection_plans",
+      "domain": "Resilience T3",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "hub_faculty_id", "type": "UUID", "nullable": false},
+        {"name": "hub_faculty_name", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "period_start", "type": "DATETIME", "nullable": false},
+        {"name": "period_end", "type": "DATETIME", "nullable": false},
+        {"name": "reason", "type": "VARCHAR(1000)", "nullable": false},
+        {"name": "workload_reduction", "type": "FLOAT", "nullable": false},
+        {"name": "backup_assigned", "type": "BOOLEAN", "nullable": false},
+        {"name": "backup_faculty_ids", "type": "ARRAY", "nullable": true},
+        {"name": "critical_only", "type": "BOOLEAN", "nullable": false},
+        {"name": "status", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "created_at", "type": "DATETIME", "nullable": false},
+        {"name": "activated_at", "type": "DATETIME", "nullable": true},
+        {"name": "deactivated_at", "type": "DATETIME", "nullable": true},
+        {"name": "created_by", "type": "VARCHAR(255)", "nullable": true}
+      ]
+    },
+    {
+      "name": "cross_training_recommendations",
+      "domain": "Resilience T3",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "skill", "type": "VARCHAR(255)", "nullable": false},
+        {"name": "current_holders", "type": "ARRAY", "nullable": true},
+        {"name": "recommended_trainees", "type": "ARRAY", "nullable": true},
+        {"name": "priority", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "reason", "type": "VARCHAR(1000)", "nullable": false},
+        {"name": "estimated_training_hours", "type": "INTEGER", "nullable": false},
+        {"name": "risk_reduction", "type": "FLOAT", "nullable": false},
+        {"name": "status", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "created_at", "type": "DATETIME", "nullable": false},
+        {"name": "started_at", "type": "DATETIME", "nullable": true},
+        {"name": "completed_at", "type": "DATETIME", "nullable": true},
+        {"name": "approved_by", "type": "VARCHAR(255)", "nullable": true}
+      ]
+    },
+    {
+      "name": "surveys",
+      "domain": "Wellness",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(50)", "nullable": false, "unique": true},
+        {"name": "display_name", "type": "VARCHAR(200)", "nullable": false},
+        {"name": "survey_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "description", "type": "TEXT", "nullable": true},
+        {"name": "instructions", "type": "TEXT", "nullable": true},
+        {"name": "questions_json", "type": "JSON", "nullable": false},
+        {"name": "scoring_json", "type": "JSON", "nullable": true},
+        {"name": "points_value", "type": "INTEGER", "nullable": false},
+        {"name": "estimated_seconds", "type": "INTEGER", "nullable": true},
+        {"name": "frequency", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": false},
+        {"name": "target_roles_json", "type": "JSON", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": false},
+        {"name": "updated_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "survey_responses",
+      "domain": "Wellness",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "survey_id", "type": "UUID", "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": true},
+        {"name": "block_number", "type": "INTEGER", "nullable": true},
+        {"name": "academic_year", "type": "INTEGER", "nullable": true},
+        {"name": "response_data", "type": "JSON", "nullable": false},
+        {"name": "score", "type": "FLOAT", "nullable": true},
+        {"name": "score_interpretation", "type": "VARCHAR(100)", "nullable": true},
+        {"name": "submitted_at", "type": "DATETIME", "nullable": false},
+        {"name": "ip_address", "type": "VARCHAR(45)", "nullable": true},
+        {"name": "user_agent", "type": "VARCHAR(500)", "nullable": true},
+        {"name": "algorithm_snapshot_json", "type": "JSON", "nullable": true}
+      ]
+    },
+    {
+      "name": "wellness_accounts",
+      "domain": "Wellness",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false, "unique": true},
+        {"name": "points_balance", "type": "INTEGER", "nullable": false},
+        {"name": "points_lifetime", "type": "INTEGER", "nullable": false},
+        {"name": "points_spent", "type": "INTEGER", "nullable": false},
+        {"name": "current_streak_weeks", "type": "INTEGER", "nullable": false},
+        {"name": "longest_streak_weeks", "type": "INTEGER", "nullable": false},
+        {"name": "last_activity_date", "type": "DATE", "nullable": true},
+        {"name": "streak_start_date", "type": "DATE", "nullable": true},
+        {"name": "achievements_json", "type": "JSON", "nullable": true},
+        {"name": "achievements_earned_at_json", "type": "JSON", "nullable": true},
+        {"name": "leaderboard_opt_in", "type": "BOOLEAN", "nullable": false},
+        {"name": "display_name", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "research_consent", "type": "BOOLEAN", "nullable": false},
+        {"name": "consent_date", "type": "DATETIME", "nullable": true},
+        {"name": "consent_version", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": false},
+        {"name": "updated_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "wellness_point_transactions",
+      "domain": "Wellness",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "account_id", "type": "UUID", "nullable": false},
+        {"name": "points", "type": "INTEGER", "nullable": false},
+        {"name": "balance_after", "type": "INTEGER", "nullable": false},
+        {"name": "transaction_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "source", "type": "VARCHAR(200)", "nullable": false},
+        {"name": "survey_response_id", "type": "UUID", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "wellness_leaderboard_snapshots",
+      "domain": "Wellness",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "snapshot_date", "type": "DATE", "nullable": false},
+        {"name": "snapshot_type", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "rankings_json", "type": "JSON", "nullable": false},
+        {"name": "total_participants", "type": "INTEGER", "nullable": false},
+        {"name": "average_points", "type": "FLOAT", "nullable": true},
+        {"name": "median_points", "type": "FLOAT", "nullable": true},
+        {"name": "top_10_cutoff", "type": "INTEGER", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "hopfield_positions",
+      "domain": "Wellness",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "x_position", "type": "FLOAT", "nullable": false},
+        {"name": "y_position", "type": "FLOAT", "nullable": false},
+        {"name": "z_position", "type": "FLOAT", "nullable": true},
+        {"name": "basin_depth", "type": "FLOAT", "nullable": true},
+        {"name": "energy_value", "type": "FLOAT", "nullable": true},
+        {"name": "stability_score", "type": "FLOAT", "nullable": true},
+        {"name": "nearest_attractor_id", "type": "VARCHAR(100)", "nullable": true},
+        {"name": "nearest_attractor_type", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "hamming_distance", "type": "INTEGER", "nullable": true},
+        {"name": "confidence", "type": "INTEGER", "nullable": true},
+        {"name": "notes", "type": "TEXT", "nullable": true},
+        {"name": "block_number", "type": "INTEGER", "nullable": true},
+        {"name": "academic_year", "type": "INTEGER", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "survey_availability",
+      "domain": "Wellness",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "survey_id", "type": "UUID", "nullable": false},
+        {"name": "last_completed_at", "type": "DATETIME", "nullable": true},
+        {"name": "next_available_at", "type": "DATETIME", "nullable": true},
+        {"name": "completions_this_block", "type": "INTEGER", "nullable": true},
+        {"name": "completions_this_year", "type": "INTEGER", "nullable": true},
+        {"name": "current_block_number", "type": "INTEGER", "nullable": true},
+        {"name": "current_academic_year", "type": "INTEGER", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": false},
+        {"name": "updated_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "task_history",
+      "domain": "AI Agents",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "task_id", "type": "VARCHAR(100)", "nullable": false},
+        {"name": "task_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "input_json", "type": "JSON", "nullable": true},
+        {"name": "output_json", "type": "JSON", "nullable": true},
+        {"name": "model_tier", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "started_at", "type": "DATETIME", "nullable": true},
+        {"name": "completed_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "agent_embeddings",
+      "domain": "AI Agents",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "content_hash", "type": "VARCHAR(64)", "nullable": false},
+        {"name": "embedding", "type": "ARRAY", "nullable": true},
+        {"name": "content_type", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "rag_documents",
+      "domain": "AI Agents",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "title", "type": "VARCHAR(500)", "nullable": false},
+        {"name": "content", "type": "TEXT", "nullable": false},
+        {"name": "source", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "document_type", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "embedding", "type": "ARRAY", "nullable": true},
+        {"name": "metadata_json", "type": "JSON", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "scheduled_jobs",
+      "domain": "Jobs & Tasks",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false},
+        {"name": "schedule_cron", "type": "VARCHAR(100)", "nullable": false},
+        {"name": "job_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "config_json", "type": "JSON", "nullable": true},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": true},
+        {"name": "last_run_at", "type": "DATETIME", "nullable": true},
+        {"name": "next_run_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "job_executions",
+      "domain": "Jobs & Tasks",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "job_id", "type": "UUID", "nullable": false},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "started_at", "type": "DATETIME", "nullable": true},
+        {"name": "completed_at", "type": "DATETIME", "nullable": true},
+        {"name": "result_json", "type": "JSON", "nullable": true},
+        {"name": "error_message", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "idempotency_requests",
+      "domain": "Jobs & Tasks",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "idempotency_key", "type": "VARCHAR(255)", "nullable": false, "unique": true},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "response_json", "type": "JSON", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true},
+        {"name": "expires_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "state_machine_instances",
+      "domain": "State Machines",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "machine_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "current_state", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "context_json", "type": "JSON", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true},
+        {"name": "updated_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "state_machine_transitions",
+      "domain": "State Machines",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "instance_id", "type": "UUID", "nullable": false},
+        {"name": "from_state", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "to_state", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "event", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "transitioned_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "activity_logs",
+      "domain": "Audit",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "actor_id", "type": "UUID", "nullable": true},
+        {"name": "action_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "entity_type", "type": "VARCHAR(50)", "nullable": true},
+        {"name": "entity_id", "type": "UUID", "nullable": true},
+        {"name": "details_json", "type": "JSON", "nullable": true},
+        {"name": "ip_address", "type": "VARCHAR(45)", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "feature_flags",
+      "domain": "Feature Flags",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "name", "type": "VARCHAR(100)", "nullable": false, "unique": true},
+        {"name": "description", "type": "TEXT", "nullable": true},
+        {"name": "is_enabled", "type": "BOOLEAN", "nullable": false},
+        {"name": "rollout_percentage", "type": "INTEGER", "nullable": true},
+        {"name": "conditions_json", "type": "JSON", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true},
+        {"name": "updated_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "feature_flag_evaluations",
+      "domain": "Feature Flags",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "flag_id", "type": "UUID", "nullable": false},
+        {"name": "user_id", "type": "UUID", "nullable": true},
+        {"name": "result", "type": "BOOLEAN", "nullable": false},
+        {"name": "evaluated_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "feature_flag_audits",
+      "domain": "Feature Flags",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "flag_id", "type": "UUID", "nullable": false},
+        {"name": "changed_by_id", "type": "UUID", "nullable": true},
+        {"name": "old_value_json", "type": "JSON", "nullable": true},
+        {"name": "new_value_json", "type": "JSON", "nullable": true},
+        {"name": "changed_at", "type": "DATETIME", "nullable": false}
+      ]
+    },
+    {
+      "name": "schema_versions",
+      "domain": "Schema Management",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "version", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "status", "type": "VARCHAR(20)", "nullable": false},
+        {"name": "schema_json", "type": "JSON", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "schema_change_events",
+      "domain": "Schema Management",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "version_id", "type": "UUID", "nullable": false},
+        {"name": "change_type", "type": "VARCHAR(50)", "nullable": false},
+        {"name": "description", "type": "TEXT", "nullable": true},
+        {"name": "compatibility_type", "type": "VARCHAR(30)", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "calendar_subscriptions",
+      "domain": "Calendar",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "user_id", "type": "UUID", "nullable": false},
+        {"name": "token", "type": "VARCHAR(255)", "nullable": false, "unique": true},
+        {"name": "calendar_type", "type": "VARCHAR(30)", "nullable": true},
+        {"name": "is_active", "type": "BOOLEAN", "nullable": true},
+        {"name": "created_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "day_types",
+      "domain": "Day Types",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "date", "type": "DATE", "nullable": false, "unique": true},
+        {"name": "day_type", "type": "VARCHAR(30)", "nullable": false},
+        {"name": "name", "type": "VARCHAR(255)", "nullable": true},
+        {"name": "notes", "type": "TEXT", "nullable": true}
+      ]
+    },
+    {
+      "name": "application_settings",
+      "domain": "Settings",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "key", "type": "VARCHAR(100)", "nullable": false, "unique": true},
+        {"name": "value_json", "type": "JSON", "nullable": true},
+        {"name": "description", "type": "TEXT", "nullable": true},
+        {"name": "updated_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "faculty_egalitarian_scores",
+      "domain": "Game Theory",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "faculty_id", "type": "UUID", "nullable": false},
+        {"name": "block_number", "type": "INTEGER", "nullable": false},
+        {"name": "academic_year", "type": "INTEGER", "nullable": false},
+        {"name": "call_score", "type": "FLOAT", "nullable": true},
+        {"name": "fmit_score", "type": "FLOAT", "nullable": true},
+        {"name": "composite_score", "type": "FLOAT", "nullable": true},
+        {"name": "calculated_at", "type": "DATETIME", "nullable": true}
+      ]
+    },
+    {
+      "name": "egalitarian_score_snapshots",
+      "domain": "Game Theory",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "snapshot_date", "type": "DATE", "nullable": false},
+        {"name": "block_number", "type": "INTEGER", "nullable": true},
+        {"name": "academic_year", "type": "INTEGER", "nullable": true},
+        {"name": "scores_json", "type": "JSON", "nullable": false},
+        {"name": "gini_coefficient", "type": "FLOAT", "nullable": true}
+      ]
+    },
+    {
+      "name": "fatigue_risk_records",
+      "domain": "Other",
+      "columns": [
+        {"name": "id", "type": "UUID", "pk": true, "nullable": false},
+        {"name": "person_id", "type": "UUID", "nullable": false},
+        {"name": "calculated_at", "type": "DATETIME", "nullable": false},
+        {"name": "fatigue_score", "type": "FLOAT", "nullable": true},
+        {"name": "risk_level", "type": "VARCHAR(20)", "nullable": true},
+        {"name": "factors_json", "type": "JSON", "nullable": true}
+      ]
+    }
+  ],
+  "foreign_keys": [
+    {"from": "assignments.block_id", "to": "blocks.id"},
+    {"from": "assignments.person_id", "to": "people.id"},
+    {"from": "assignments.rotation_template_id", "to": "rotation_templates.id"},
+    {"from": "assignments.schedule_run_id", "to": "schedule_runs.id"},
+    {"from": "weekly_patterns.rotation_template_id", "to": "rotation_templates.id"},
+    {"from": "rotation_preferences.person_id", "to": "people.id"},
+    {"from": "rotation_preferences.rotation_template_id", "to": "rotation_templates.id"},
+    {"from": "rotation_halfday_requirements.rotation_template_id", "to": "rotation_templates.id"},
+    {"from": "rotation_activity_requirements.rotation_template_id", "to": "rotation_templates.id"},
+    {"from": "rotation_activity_requirements.activity_id", "to": "activities.id"},
+    {"from": "resident_weekly_requirements.rotation_template_id", "to": "rotation_templates.id"},
+    {"from": "block_assignments.person_id", "to": "people.id"},
+    {"from": "block_assignments.rotation_template_id", "to": "rotation_templates.id"},
+    {"from": "activities.category_id", "to": "activity_categories.id"},
+    {"from": "half_day_assignments.person_id", "to": "people.id"},
+    {"from": "inpatient_preloads.person_id", "to": "people.id"},
+    {"from": "resident_call_preloads.person_id", "to": "people.id"},
+    {"from": "absences.person_id", "to": "people.id"},
+    {"from": "absences.approved_by_id", "to": "users.id"},
+    {"from": "call_assignments.person_id", "to": "people.id"},
+    {"from": "swap_records.source_faculty_id", "to": "people.id"},
+    {"from": "swap_records.target_faculty_id", "to": "people.id"},
+    {"from": "swap_records.requested_by_id", "to": "users.id"},
+    {"from": "swap_records.approved_by_id", "to": "users.id"},
+    {"from": "swap_records.executed_by_id", "to": "users.id"},
+    {"from": "swap_records.rolled_back_by_id", "to": "users.id"},
+    {"from": "swap_approvals.swap_id", "to": "swap_records.id"},
+    {"from": "swap_approvals.faculty_id", "to": "people.id"},
+    {"from": "schedule_drafts.created_by_id", "to": "users.id"},
+    {"from": "schedule_draft_assignments.draft_id", "to": "schedule_drafts.id"},
+    {"from": "schedule_draft_assignments.person_id", "to": "people.id"},
+    {"from": "schedule_draft_flags.draft_id", "to": "schedule_drafts.id"},
+    {"from": "import_staged_assignments.batch_id", "to": "import_batches.id"},
+    {"from": "export_job_executions.job_id", "to": "export_jobs.id"},
+    {"from": "faculty_preferences.person_id", "to": "people.id"},
+    {"from": "faculty_weekly_templates.person_id", "to": "people.id"},
+    {"from": "faculty_weekly_overrides.person_id", "to": "people.id"},
+    {"from": "procedure_credentials.person_id", "to": "people.id"},
+    {"from": "procedure_credentials.procedure_id", "to": "procedures.id"},
+    {"from": "person_certifications.person_id", "to": "people.id"},
+    {"from": "notifications.user_id", "to": "users.id"},
+    {"from": "notification_preferences.user_id", "to": "users.id"},
+    {"from": "webhook_deliveries.webhook_id", "to": "webhooks.id"},
+    {"from": "webhook_dead_letters.webhook_id", "to": "webhooks.id"},
+    {"from": "users.person_id", "to": "people.id"},
+    {"from": "oauth2_authorization_codes.user_id", "to": "users.id"},
+    {"from": "approval_records.approved_by_id", "to": "users.id"},
+    {"from": "resilience_events.related_health_check_id", "to": "resilience_health_checks.id"},
+    {"from": "sacrifice_decisions.related_event_id", "to": "resilience_events.id"},
+    {"from": "fallback_activations.related_event_id", "to": "resilience_events.id"},
+    {"from": "vulnerability_records.related_health_check_id", "to": "resilience_health_checks.id"},
+    {"from": "zone_faculty_assignments.zone_id", "to": "scheduling_zones.id"},
+    {"from": "zone_borrowing_records.requesting_zone_id", "to": "scheduling_zones.id"},
+    {"from": "zone_borrowing_records.lending_zone_id", "to": "scheduling_zones.id"},
+    {"from": "zone_incidents.zone_id", "to": "scheduling_zones.id"},
+    {"from": "compensation_records.stress_id", "to": "system_stress_records.id"},
+    {"from": "cognitive_decisions.session_id", "to": "cognitive_sessions.id"},
+    {"from": "trail_signals.trail_id", "to": "preference_trails.id"},
+    {"from": "survey_responses.survey_id", "to": "surveys.id"},
+    {"from": "survey_responses.person_id", "to": "people.id"},
+    {"from": "wellness_accounts.person_id", "to": "people.id"},
+    {"from": "wellness_point_transactions.account_id", "to": "wellness_accounts.id"},
+    {"from": "wellness_point_transactions.survey_response_id", "to": "survey_responses.id"},
+    {"from": "hopfield_positions.person_id", "to": "people.id"},
+    {"from": "survey_availability.person_id", "to": "people.id"},
+    {"from": "survey_availability.survey_id", "to": "surveys.id"},
+    {"from": "job_executions.job_id", "to": "scheduled_jobs.id"},
+    {"from": "state_machine_transitions.instance_id", "to": "state_machine_instances.id"},
+    {"from": "feature_flag_evaluations.flag_id", "to": "feature_flags.id"},
+    {"from": "feature_flag_evaluations.user_id", "to": "users.id"},
+    {"from": "feature_flag_audits.flag_id", "to": "feature_flags.id"},
+    {"from": "feature_flag_audits.changed_by_id", "to": "users.id"},
+    {"from": "schema_change_events.version_id", "to": "schema_versions.id"},
+    {"from": "calendar_subscriptions.user_id", "to": "users.id"},
+    {"from": "faculty_egalitarian_scores.faculty_id", "to": "people.id"},
+    {"from": "fatigue_risk_records.person_id", "to": "people.id"}
+  ],
+  "domains": [
+    {"name": "Core Scheduling", "color": "#3b82f6", "tables": ["assignments", "blocks", "people", "schedule_runs"]},
+    {"name": "Absences & Call", "color": "#f97316", "tables": ["absences", "call_assignments"]},
+    {"name": "Activities", "color": "#6366f1", "tables": ["activities", "activity_categories"]},
+    {"name": "AI Agents", "color": "#0284c7", "tables": ["agent_embeddings", "rag_documents", "task_history"]},
+    {"name": "Audit", "color": "#475569", "tables": ["activity_logs"]},
+    {"name": "Auth & Users", "color": "#ef4444", "tables": ["api_keys", "ip_blacklist", "ip_whitelist", "oauth2_authorization_codes", "oauth2_clients", "pkce_clients", "request_signatures", "token_blacklist", "users"]},
+    {"name": "Calendar", "color": "#2563eb", "tables": ["calendar_subscriptions"]},
+    {"name": "Clinic Sessions", "color": "#ec4899", "tables": ["clinic_sessions"]},
+    {"name": "Conflict Management", "color": "#dc2626", "tables": ["approval_records", "conflict_alerts"]},
+    {"name": "Credentialing", "color": "#06b6d4", "tables": ["person_certifications", "procedure_credentials", "procedures"]},
+    {"name": "Day Types", "color": "#9333ea", "tables": ["day_types"]},
+    {"name": "Drafts", "color": "#84cc16", "tables": ["schedule_draft_assignments", "schedule_draft_flags", "schedule_drafts"]},
+    {"name": "Faculty Configuration", "color": "#a855f7", "tables": ["faculty_preferences", "faculty_weekly_overrides", "faculty_weekly_templates"]},
+    {"name": "Feature Flags", "color": "#ca8a04", "tables": ["feature_flag_audits", "feature_flag_evaluations", "feature_flags"]},
+    {"name": "Game Theory", "color": "#c026d3", "tables": ["egalitarian_score_snapshots", "faculty_egalitarian_scores"]},
+    {"name": "Half-Day Scheduling", "color": "#0ea5e9", "tables": ["half_day_assignments", "inpatient_preloads", "intern_stagger_patterns", "resident_call_preloads"]},
+    {"name": "Import/Export", "color": "#14b8a6", "tables": ["export_job_executions", "export_jobs", "export_templates", "import_batches", "import_staged_assignments"]},
+    {"name": "Jobs & Tasks", "color": "#64748b", "tables": ["idempotency_requests", "job_executions", "scheduled_jobs"]},
+    {"name": "Notifications", "color": "#f59e0b", "tables": ["email_logs", "email_templates", "notification_preferences", "notifications", "scheduled_notifications"]},
+    {"name": "Resilience T1", "color": "#22c55e", "tables": ["fallback_activations", "resilience_events", "resilience_health_checks", "sacrifice_decisions", "vulnerability_records"]},
+    {"name": "Resilience T2", "color": "#16a34a", "tables": ["allostasis_records", "compensation_records", "equilibrium_shifts", "feedback_loop_states", "positive_feedback_alerts", "scheduling_zones", "system_stress_records", "zone_borrowing_records", "zone_faculty_assignments", "zone_incidents"]},
+    {"name": "Resilience T3", "color": "#15803d", "tables": ["cognitive_decisions", "cognitive_sessions", "cross_training_recommendations", "faculty_centrality", "hub_protection_plans", "preference_trails", "trail_signals"]},
+    {"name": "Rotations", "color": "#8b5cf6", "tables": ["block_assignments", "resident_weekly_requirements", "rotation_activity_requirements", "rotation_halfday_requirements", "rotation_preferences", "rotation_templates", "weekly_patterns"]},
+    {"name": "Schema Management", "color": "#737373", "tables": ["schema_change_events", "schema_versions"]},
+    {"name": "Settings", "color": "#52525b", "tables": ["application_settings"]},
+    {"name": "State Machines", "color": "#7c3aed", "tables": ["state_machine_instances", "state_machine_transitions"]},
+    {"name": "Swaps", "color": "#eab308", "tables": ["swap_approvals", "swap_records"]},
+    {"name": "Webhooks", "color": "#78716c", "tables": ["webhook_dead_letters", "webhook_deliveries", "webhooks"]},
+    {"name": "Wellness", "color": "#d946ef", "tables": ["hopfield_positions", "survey_availability", "survey_responses", "surveys", "wellness_accounts", "wellness_leaderboard_snapshots", "wellness_point_transactions"]},
+    {"name": "Other", "color": "#6b7280", "tables": ["fatigue_risk_records"]}
+  ],
+  "meta": {
+    "total_tables": 102,
+    "total_foreign_keys": 77,
+    "total_domains": 30,
+    "generated_at": "2026-01-16"
+  }
+}

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Schema Visualizer - Residency Scheduler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #0f0f1a; font-family: system-ui, -apple-system, sans-serif; }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .domain-checkbox:checked + label { opacity: 1; }
+        .domain-checkbox:not(:checked) + label { opacity: 0.5; }
+
+        /* SVG Styles */
+        .table-node { cursor: pointer; transition: transform 0.2s; }
+        .table-node:hover { filter: brightness(1.2); }
+        .table-pill { rx: 6; ry: 6; }
+        .table-card { rx: 8; ry: 8; }
+        .fk-line { stroke-opacity: 0.3; fill: none; stroke-width: 1.5; }
+        .fk-line.highlighted { stroke-opacity: 0.9; stroke-width: 2.5; }
+        .fk-arrow { fill-opacity: 0.5; }
+        .fk-arrow.highlighted { fill-opacity: 0.9; }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+
+        #search-input:focus { outline: none; border-color: rgba(59, 130, 246, 0.5); }
+    </style>
+</head>
+<body>
+    <!-- SVG Canvas -->
+    <svg id="canvas" width="100vw" height="100vh">
+        <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" class="fk-arrow" fill="#64748b"/>
+            </marker>
+            <marker id="arrowhead-highlighted" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" class="fk-arrow highlighted" fill="#3b82f6"/>
+            </marker>
+            <filter id="glow">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+        <g id="viewport">
+            <g id="fk-lines"></g>
+            <g id="domain-backgrounds"></g>
+            <g id="tables"></g>
+        </g>
+    </svg>
+
+    <!-- Control Panel -->
+    <div class="glass fixed top-4 left-4 p-5 rounded-2xl w-72 text-white max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
+        <h1 class="text-xl font-bold mb-1 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            Database Schema
+        </h1>
+        <p class="text-xs text-gray-400 mb-4">Interactive entity relationship diagram</p>
+
+        <!-- Search -->
+        <div class="mb-4">
+            <input type="text" id="search-input" placeholder="Search tables..."
+                class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-gray-500">
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+            <div class="bg-white/5 rounded-lg p-2">
+                <div id="stat-tables" class="text-lg font-bold text-blue-400">0</div>
+                <div class="text-xs text-gray-500">Tables</div>
+            </div>
+            <div class="bg-white/5 rounded-lg p-2">
+                <div id="stat-fks" class="text-lg font-bold text-purple-400">0</div>
+                <div class="text-xs text-gray-500">FKs</div>
+            </div>
+            <div class="bg-white/5 rounded-lg p-2">
+                <div id="stat-domains" class="text-lg font-bold text-green-400">0</div>
+                <div class="text-xs text-gray-500">Domains</div>
+            </div>
+        </div>
+
+        <!-- Domain Filters -->
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm text-gray-300">Domains</span>
+                <div class="flex gap-1">
+                    <button id="select-all" class="text-xs text-blue-400 hover:text-blue-300">All</button>
+                    <span class="text-gray-600">|</span>
+                    <button id="select-none" class="text-xs text-blue-400 hover:text-blue-300">None</button>
+                </div>
+            </div>
+            <div id="domain-filters" class="space-y-1 max-h-48 overflow-y-auto pr-1"></div>
+        </div>
+
+        <!-- View Controls -->
+        <div class="border-t border-white/10 pt-3 mt-auto">
+            <div class="flex gap-2 mb-2">
+                <button id="zoom-in" class="flex-1 py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-sm">
+                    + Zoom
+                </button>
+                <button id="zoom-out" class="flex-1 py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-sm">
+                    - Zoom
+                </button>
+            </div>
+            <button id="reset-view" class="w-full py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-sm">
+                Reset View
+            </button>
+        </div>
+    </div>
+
+    <!-- Legend Panel -->
+    <div class="glass fixed bottom-4 right-4 p-4 rounded-xl text-white max-w-xs">
+        <h3 class="text-sm font-semibold text-blue-300 mb-2">Legend</h3>
+        <div class="text-xs text-gray-400 space-y-1">
+            <p><span class="inline-block w-2 h-2 rounded-full bg-yellow-400 mr-2"></span>Primary Key</p>
+            <p><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2"></span>Foreign Key</p>
+            <p class="pt-1 text-gray-500">Click table to expand/collapse</p>
+            <p class="text-gray-500">Drag to pan, scroll to zoom</p>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading" class="fixed inset-0 flex items-center justify-center bg-[#0f0f1a]">
+        <div class="text-white text-center">
+            <div class="animate-spin w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full mx-auto mb-2"></div>
+            <p class="text-sm text-gray-400">Loading schema...</p>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let schema = null;
+        let tablePositions = {};
+        let expandedTables = new Set();
+        let visibleDomains = new Set();
+        let viewBox = { x: 0, y: 0, width: 3000, height: 2000 };
+        let isDragging = false;
+        let dragStart = { x: 0, y: 0 };
+        let searchTerm = '';
+
+        // Constants
+        const COLLAPSED_WIDTH = 140;
+        const COLLAPSED_HEIGHT = 30;
+        const EXPANDED_WIDTH = 220;
+        const ROW_HEIGHT = 18;
+        const DOMAIN_PADDING = 40;
+
+        // DOM Elements
+        const svg = document.getElementById('canvas');
+        const viewport = document.getElementById('viewport');
+        const fkLinesGroup = document.getElementById('fk-lines');
+        const tablesGroup = document.getElementById('tables');
+        const domainBgGroup = document.getElementById('domain-backgrounds');
+        const searchInput = document.getElementById('search-input');
+        const domainFilters = document.getElementById('domain-filters');
+        const loading = document.getElementById('loading');
+
+        // Load schema data
+        async function loadSchema() {
+            try {
+                const response = await fetch('data/schema.json');
+                schema = await response.json();
+
+                // Update stats
+                document.getElementById('stat-tables').textContent = schema.meta.total_tables;
+                document.getElementById('stat-fks').textContent = schema.meta.total_foreign_keys;
+                document.getElementById('stat-domains').textContent = schema.meta.total_domains;
+
+                // Initialize visible domains
+                schema.domains.forEach(d => visibleDomains.add(d.name));
+
+                // Create domain filters
+                createDomainFilters();
+
+                // Calculate positions
+                calculateLayout();
+
+                // Render
+                render();
+
+                // Hide loading
+                loading.style.display = 'none';
+            } catch (error) {
+                console.error('Failed to load schema:', error);
+                loading.innerHTML = '<p class="text-red-400">Failed to load schema data</p>';
+            }
+        }
+
+        // Create domain filter checkboxes
+        function createDomainFilters() {
+            domainFilters.innerHTML = schema.domains.map(domain => `
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="domain-${domain.name.replace(/\s+/g, '-')}"
+                           class="domain-checkbox hidden" checked data-domain="${domain.name}">
+                    <label for="domain-${domain.name.replace(/\s+/g, '-')}"
+                           class="flex items-center gap-2 text-xs cursor-pointer select-none">
+                        <span class="w-3 h-3 rounded" style="background: ${domain.color}"></span>
+                        <span class="text-gray-300">${domain.name}</span>
+                        <span class="text-gray-500">(${domain.tables.length})</span>
+                    </label>
+                </div>
+            `).join('');
+
+            // Add event listeners
+            domainFilters.querySelectorAll('.domain-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const domain = e.target.dataset.domain;
+                    if (e.target.checked) {
+                        visibleDomains.add(domain);
+                    } else {
+                        visibleDomains.delete(domain);
+                    }
+                    render();
+                });
+            });
+        }
+
+        // Calculate radial layout for domains
+        function calculateLayout() {
+            const centerX = viewBox.width / 2;
+            const centerY = viewBox.height / 2;
+            const radius = Math.min(viewBox.width, viewBox.height) * 0.35;
+
+            const domainCount = schema.domains.length;
+
+            schema.domains.forEach((domain, domainIndex) => {
+                const domainAngle = (2 * Math.PI * domainIndex) / domainCount - Math.PI / 2;
+                const domainCenterX = centerX + Math.cos(domainAngle) * radius;
+                const domainCenterY = centerY + Math.sin(domainAngle) * radius;
+
+                // Position tables within domain in a grid
+                const tablesInDomain = domain.tables;
+                const cols = Math.ceil(Math.sqrt(tablesInDomain.length));
+                const spacing = 160;
+
+                tablesInDomain.forEach((tableName, tableIndex) => {
+                    const row = Math.floor(tableIndex / cols);
+                    const col = tableIndex % cols;
+                    const gridWidth = (cols - 1) * spacing;
+                    const gridHeight = (Math.ceil(tablesInDomain.length / cols) - 1) * spacing;
+
+                    tablePositions[tableName] = {
+                        x: domainCenterX + (col * spacing) - gridWidth / 2,
+                        y: domainCenterY + (row * spacing) - gridHeight / 2,
+                        domain: domain.name,
+                        color: domain.color
+                    };
+                });
+            });
+        }
+
+        // Get table height based on expanded state
+        function getTableHeight(table) {
+            if (expandedTables.has(table.name)) {
+                return 28 + (table.columns.length * ROW_HEIGHT) + 8;
+            }
+            return COLLAPSED_HEIGHT;
+        }
+
+        // Get table width
+        function getTableWidth(table) {
+            return expandedTables.has(table.name) ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
+        }
+
+        // Render everything
+        function render() {
+            renderFKLines();
+            renderTables();
+        }
+
+        // Render FK relationship lines
+        function renderFKLines() {
+            fkLinesGroup.innerHTML = '';
+
+            const visibleTables = new Set(
+                schema.tables
+                    .filter(t => visibleDomains.has(t.domain))
+                    .filter(t => !searchTerm || t.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                    .map(t => t.name)
+            );
+
+            schema.foreign_keys.forEach(fk => {
+                const [fromTable, fromCol] = fk.from.split('.');
+                const [toTable, toCol] = fk.to.split('.');
+
+                if (!visibleTables.has(fromTable) || !visibleTables.has(toTable)) return;
+
+                const fromPos = tablePositions[fromTable];
+                const toPos = tablePositions[toTable];
+                if (!fromPos || !toPos) return;
+
+                const fromTableData = schema.tables.find(t => t.name === fromTable);
+                const toTableData = schema.tables.find(t => t.name === toTable);
+
+                const fromWidth = getTableWidth(fromTableData);
+                const fromHeight = getTableHeight(fromTableData);
+                const toWidth = getTableWidth(toTableData);
+                const toHeight = getTableHeight(toTableData);
+
+                // Calculate connection points
+                const fromCenterX = fromPos.x + fromWidth / 2;
+                const fromCenterY = fromPos.y + fromHeight / 2;
+                const toCenterX = toPos.x + toWidth / 2;
+                const toCenterY = toPos.y + toHeight / 2;
+
+                // Determine which sides to connect
+                let startX, startY, endX, endY;
+                const dx = toCenterX - fromCenterX;
+                const dy = toCenterY - fromCenterY;
+
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    // Horizontal connection
+                    startX = dx > 0 ? fromPos.x + fromWidth : fromPos.x;
+                    startY = fromCenterY;
+                    endX = dx > 0 ? toPos.x : toPos.x + toWidth;
+                    endY = toCenterY;
+                } else {
+                    // Vertical connection
+                    startX = fromCenterX;
+                    startY = dy > 0 ? fromPos.y + fromHeight : fromPos.y;
+                    endX = toCenterX;
+                    endY = dy > 0 ? toPos.y : toPos.y + toHeight;
+                }
+
+                // Create bezier curve
+                const midX = (startX + endX) / 2;
+                const midY = (startY + endY) / 2;
+                const ctrlX1 = Math.abs(dx) > Math.abs(dy) ? midX : startX;
+                const ctrlY1 = Math.abs(dx) > Math.abs(dy) ? startY : midY;
+                const ctrlX2 = Math.abs(dx) > Math.abs(dy) ? midX : endX;
+                const ctrlY2 = Math.abs(dx) > Math.abs(dy) ? endY : midY;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', `M ${startX} ${startY} C ${ctrlX1} ${ctrlY1}, ${ctrlX2} ${ctrlY2}, ${endX} ${endY}`);
+                path.setAttribute('class', 'fk-line');
+                path.setAttribute('stroke', fromPos.color);
+                path.setAttribute('marker-end', 'url(#arrowhead)');
+                path.dataset.from = fromTable;
+                path.dataset.to = toTable;
+
+                fkLinesGroup.appendChild(path);
+            });
+        }
+
+        // Render tables
+        function renderTables() {
+            tablesGroup.innerHTML = '';
+
+            schema.tables
+                .filter(t => visibleDomains.has(t.domain))
+                .filter(t => !searchTerm || t.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                .forEach(table => {
+                    const pos = tablePositions[table.name];
+                    if (!pos) return;
+
+                    const isExpanded = expandedTables.has(table.name);
+                    const width = getTableWidth(table);
+                    const height = getTableHeight(table);
+
+                    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                    group.setAttribute('class', 'table-node');
+                    group.setAttribute('transform', `translate(${pos.x}, ${pos.y})`);
+                    group.dataset.table = table.name;
+
+                    // Background rect
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('width', width);
+                    rect.setAttribute('height', height);
+                    rect.setAttribute('fill', isExpanded ? '#1a1a2e' : pos.color + '33');
+                    rect.setAttribute('stroke', pos.color);
+                    rect.setAttribute('stroke-width', isExpanded ? '2' : '1');
+                    rect.setAttribute('class', isExpanded ? 'table-card' : 'table-pill');
+                    group.appendChild(rect);
+
+                    if (isExpanded) {
+                        // Header
+                        const header = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        header.setAttribute('width', width);
+                        header.setAttribute('height', '24');
+                        header.setAttribute('fill', pos.color);
+                        header.setAttribute('rx', '8');
+                        header.setAttribute('ry', '8');
+                        group.appendChild(header);
+
+                        // Header bottom cover (to make rounded corners only on top)
+                        const headerBottom = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        headerBottom.setAttribute('y', '16');
+                        headerBottom.setAttribute('width', width);
+                        headerBottom.setAttribute('height', '8');
+                        headerBottom.setAttribute('fill', pos.color);
+                        group.appendChild(headerBottom);
+
+                        // Table name
+                        const nameText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        nameText.setAttribute('x', '10');
+                        nameText.setAttribute('y', '16');
+                        nameText.setAttribute('fill', 'white');
+                        nameText.setAttribute('font-size', '12');
+                        nameText.setAttribute('font-weight', 'bold');
+                        nameText.textContent = table.name;
+                        group.appendChild(nameText);
+
+                        // Columns
+                        table.columns.forEach((col, idx) => {
+                            const y = 28 + (idx * ROW_HEIGHT) + 12;
+
+                            // Column indicator
+                            const indicator = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            indicator.setAttribute('cx', '14');
+                            indicator.setAttribute('cy', y - 4);
+                            indicator.setAttribute('r', '3');
+                            if (col.pk) {
+                                indicator.setAttribute('fill', '#fbbf24'); // Yellow for PK
+                            } else if (schema.foreign_keys.some(fk => fk.from === `${table.name}.${col.name}`)) {
+                                indicator.setAttribute('fill', '#3b82f6'); // Blue for FK
+                            } else {
+                                indicator.setAttribute('fill', 'transparent');
+                                indicator.setAttribute('stroke', '#4b5563');
+                                indicator.setAttribute('stroke-width', '1');
+                            }
+                            group.appendChild(indicator);
+
+                            // Column name
+                            const colName = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                            colName.setAttribute('x', '24');
+                            colName.setAttribute('y', y);
+                            colName.setAttribute('fill', '#e5e7eb');
+                            colName.setAttribute('font-size', '10');
+                            colName.textContent = col.name.length > 18 ? col.name.substring(0, 16) + '...' : col.name;
+                            group.appendChild(colName);
+
+                            // Column type
+                            const colType = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                            colType.setAttribute('x', width - 10);
+                            colType.setAttribute('y', y);
+                            colType.setAttribute('fill', '#6b7280');
+                            colType.setAttribute('font-size', '9');
+                            colType.setAttribute('text-anchor', 'end');
+                            const shortType = col.type.replace('VARCHAR', 'VC').replace('DATETIME', 'DT').replace('INTEGER', 'INT').replace('BOOLEAN', 'BOOL');
+                            colType.textContent = shortType.length > 10 ? shortType.substring(0, 8) + '..' : shortType;
+                            group.appendChild(colType);
+                        });
+                    } else {
+                        // Collapsed view - table name and column count
+                        const nameText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        nameText.setAttribute('x', '10');
+                        nameText.setAttribute('y', '20');
+                        nameText.setAttribute('fill', 'white');
+                        nameText.setAttribute('font-size', '11');
+                        nameText.setAttribute('font-weight', '500');
+                        const displayName = table.name.length > 14 ? table.name.substring(0, 12) + '..' : table.name;
+                        nameText.textContent = displayName;
+                        group.appendChild(nameText);
+
+                        // Column count
+                        const countText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        countText.setAttribute('x', width - 10);
+                        countText.setAttribute('y', '20');
+                        countText.setAttribute('fill', '#9ca3af');
+                        countText.setAttribute('font-size', '10');
+                        countText.setAttribute('text-anchor', 'end');
+                        countText.textContent = `(${table.columns.length})`;
+                        group.appendChild(countText);
+                    }
+
+                    // Click handler
+                    group.addEventListener('click', () => toggleTable(table.name));
+
+                    // Hover handlers for FK highlighting
+                    group.addEventListener('mouseenter', () => highlightConnections(table.name, true));
+                    group.addEventListener('mouseleave', () => highlightConnections(table.name, false));
+
+                    tablesGroup.appendChild(group);
+                });
+        }
+
+        // Toggle table expanded state
+        function toggleTable(tableName) {
+            if (expandedTables.has(tableName)) {
+                expandedTables.delete(tableName);
+            } else {
+                expandedTables.add(tableName);
+            }
+            render();
+        }
+
+        // Highlight FK connections for a table
+        function highlightConnections(tableName, highlight) {
+            fkLinesGroup.querySelectorAll('.fk-line').forEach(line => {
+                if (line.dataset.from === tableName || line.dataset.to === tableName) {
+                    if (highlight) {
+                        line.classList.add('highlighted');
+                        line.setAttribute('marker-end', 'url(#arrowhead-highlighted)');
+                    } else {
+                        line.classList.remove('highlighted');
+                        line.setAttribute('marker-end', 'url(#arrowhead)');
+                    }
+                }
+            });
+        }
+
+        // Pan and zoom handlers
+        function updateViewBox() {
+            svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+        }
+
+        svg.addEventListener('mousedown', (e) => {
+            if (e.target === svg || e.target.tagName === 'path') {
+                isDragging = true;
+                dragStart = { x: e.clientX, y: e.clientY };
+                svg.style.cursor = 'grabbing';
+            }
+        });
+
+        svg.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const scale = viewBox.width / svg.clientWidth;
+                viewBox.x -= (e.clientX - dragStart.x) * scale;
+                viewBox.y -= (e.clientY - dragStart.y) * scale;
+                dragStart = { x: e.clientX, y: e.clientY };
+                updateViewBox();
+            }
+        });
+
+        svg.addEventListener('mouseup', () => {
+            isDragging = false;
+            svg.style.cursor = 'default';
+        });
+
+        svg.addEventListener('mouseleave', () => {
+            isDragging = false;
+            svg.style.cursor = 'default';
+        });
+
+        svg.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const scale = e.deltaY > 0 ? 1.1 : 0.9;
+            const rect = svg.getBoundingClientRect();
+            const mouseX = (e.clientX - rect.left) / rect.width;
+            const mouseY = (e.clientY - rect.top) / rect.height;
+
+            const newWidth = viewBox.width * scale;
+            const newHeight = viewBox.height * scale;
+
+            // Limit zoom
+            if (newWidth < 500 || newWidth > 10000) return;
+
+            viewBox.x += (viewBox.width - newWidth) * mouseX;
+            viewBox.y += (viewBox.height - newHeight) * mouseY;
+            viewBox.width = newWidth;
+            viewBox.height = newHeight;
+
+            updateViewBox();
+        });
+
+        // Control buttons
+        document.getElementById('zoom-in').addEventListener('click', () => {
+            viewBox.width *= 0.8;
+            viewBox.height *= 0.8;
+            viewBox.x += viewBox.width * 0.1;
+            viewBox.y += viewBox.height * 0.1;
+            updateViewBox();
+        });
+
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            viewBox.width *= 1.2;
+            viewBox.height *= 1.2;
+            viewBox.x -= viewBox.width * 0.1;
+            viewBox.y -= viewBox.height * 0.1;
+            updateViewBox();
+        });
+
+        document.getElementById('reset-view').addEventListener('click', () => {
+            viewBox = { x: 0, y: 0, width: 3000, height: 2000 };
+            updateViewBox();
+        });
+
+        document.getElementById('select-all').addEventListener('click', () => {
+            schema.domains.forEach(d => visibleDomains.add(d.name));
+            domainFilters.querySelectorAll('.domain-checkbox').forEach(cb => cb.checked = true);
+            render();
+        });
+
+        document.getElementById('select-none').addEventListener('click', () => {
+            visibleDomains.clear();
+            domainFilters.querySelectorAll('.domain-checkbox').forEach(cb => cb.checked = false);
+            render();
+        });
+
+        // Search
+        searchInput.addEventListener('input', (e) => {
+            searchTerm = e.target.value;
+            render();
+        });
+
+        // Initialize
+        updateViewBox();
+        loadSchema();
+    </script>
+</body>
+</html>

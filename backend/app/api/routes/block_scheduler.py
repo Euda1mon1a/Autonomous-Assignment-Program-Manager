@@ -198,3 +198,29 @@ async def delete_assignment(
         affected_blocks_count=1,
         message="Block assignment deleted",
     )
+
+
+@router.get(
+    "/{block_number}/explorer",
+    summary="Get Block Explorer data",
+    description="""
+    Get complete Block Explorer data for pre-launch verification UI.
+
+    Aggregates data from multiple sources:
+    - Dashboard data (residents, rotations, capacities)
+    - ACGME validation results (80-hour, 1-in-7, supervision)
+    - Assignment details with half-day breakdown
+    - Completeness metrics for all entity types
+
+    This endpoint powers the Block Explorer verification interface.
+    """,
+)
+def get_explorer_data(
+    block_number: int,
+    academic_year: int = Query(..., ge=2020, le=2100, description="Academic year"),
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get Block Explorer data for pre-launch verification."""
+    controller = BlockSchedulerController(db)
+    return controller.get_explorer_data(block_number, academic_year)

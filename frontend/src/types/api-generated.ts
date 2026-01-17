@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-16T20:18:45Z
+ * Generated at: 2026-01-17T02:38:49Z
  * Generator: openapi-typescript
  *
  * To regenerate:
@@ -2201,6 +2201,34 @@ export interface paths {
          *         manually assigning residents to specific rotations.
          */
         post: operations["create_assignment_api_v1_block_scheduler_assignments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/block-scheduler/{block_number}/explorer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Block Explorer data
+         * @description Get complete Block Explorer data for pre-launch verification UI.
+         *
+         *         Aggregates data from multiple sources:
+         *         - Dashboard data (residents, rotations, capacities)
+         *         - ACGME validation results (80-hour, 1-in-7, supervision)
+         *         - Assignment details with half-day breakdown
+         *         - Completeness metrics for all entity types
+         *
+         *         This endpoint powers the Block Explorer verification interface.
+         */
+        get: operations["get_explorer_data_api_v1_block_scheduler__block_number__explorer_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -17652,7 +17680,7 @@ export interface components {
          *     Shows who is absent and why (vacation, sick, deployment, etc.)
          */
         AbsenceInfo: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Absence Type
              * @description Type of absence (vacation, sick, deployment)
@@ -19178,7 +19206,7 @@ export interface components {
          * @description Summary of an assignment for manifest display.
          */
         AssignmentSummary: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Role
              * @description primary, supervising, or backup
@@ -19314,9 +19342,9 @@ export interface components {
          */
         AttendingInfo: {
             /** @description AM attending */
-            am?: components["schemas"]["PersonSummary"] | null;
+            am?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
             /** @description PM attending */
-            pm?: components["schemas"]["PersonSummary"] | null;
+            pm?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
         };
         /**
          * AuditExportConfig
@@ -21046,24 +21074,19 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Response for listing academic blocks.
+         * @description Schema for list of blocks.
          */
         BlockListResponse: {
             /**
-             * Blocks
-             * @description List of academic blocks
+             * Items
+             * @description List of block responses
              */
-            blocks: components["schemas"]["BlockSummary"][];
+            items: components["schemas"]["BlockResponse"][];
             /**
-             * Academic Year
-             * @description Academic year
-             */
-            academic_year: string;
-            /**
-             * Total Blocks
+             * Total
              * @description Total number of blocks
              */
-            total_blocks: number;
+            total: number;
         };
         /**
          * BlockMatrixResponse
@@ -21302,7 +21325,7 @@ export interface components {
             /** Residents With Leave */
             residents_with_leave: number;
             /** Coverage Gaps */
-            coverage_gaps: components["schemas"]["CoverageGap"][];
+            coverage_gaps: components["schemas"]["app__schemas__block_assignment__CoverageGap"][];
             /** Leave Conflicts */
             leave_conflicts: components["schemas"]["LeaveConflict"][];
             /** Rotation Capacities */
@@ -23238,15 +23261,93 @@ export interface components {
         };
         /**
          * ConflictSummary
-         * @description Summary of conflicts found.
+         * @description Summary statistics for a set of conflicts.
+         *
+         *     Used for dashboard displays and reporting.
+         * @example {
+         *       "affected_people_count": 8,
+         *       "auto_resolvable_count": 6,
+         *       "average_impact_score": 0.65,
+         *       "critical_count": 3,
+         *       "high_count": 5,
+         *       "low_count": 3,
+         *       "medium_count": 4,
+         *       "total_conflicts": 15
+         *     }
          */
         ConflictSummary: {
-            /** Total Conflicts */
+            /**
+             * Total Conflicts
+             * @default 0
+             */
             total_conflicts: number;
-            /** Errors */
-            errors: number;
-            /** Warnings */
-            warnings: number;
+            /**
+             * Critical Count
+             * @default 0
+             */
+            critical_count: number;
+            /**
+             * High Count
+             * @default 0
+             */
+            high_count: number;
+            /**
+             * Medium Count
+             * @default 0
+             */
+            medium_count: number;
+            /**
+             * Low Count
+             * @default 0
+             */
+            low_count: number;
+            /** By Category */
+            by_category?: {
+                [key: string]: number | undefined;
+            };
+            /** By Type */
+            by_type?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Affected People Count
+             * @default 0
+             */
+            affected_people_count: number;
+            /**
+             * Affected Blocks Count
+             * @default 0
+             */
+            affected_blocks_count: number;
+            /**
+             * Auto Resolvable Count
+             * @default 0
+             */
+            auto_resolvable_count: number;
+            /**
+             * Requires Manual Count
+             * @default 0
+             */
+            requires_manual_count: number;
+            /**
+             * Average Impact Score
+             * @default 0
+             */
+            average_impact_score: number;
+            /**
+             * Average Urgency Score
+             * @default 0
+             */
+            average_urgency_score: number;
+            /**
+             * Average Complexity Score
+             * @default 0
+             */
+            average_complexity_score: number;
+            /** Earliest Date */
+            earliest_date?: string | null;
+            /** Latest Date */
+            latest_date?: string | null;
         };
         /**
          * ConflictType
@@ -23470,24 +23571,34 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Identified coverage gap.
+         * @description Represents a coverage gap with details.
          */
         CoverageGap: {
+            /** Gap Id */
+            gap_id: string;
             /**
-             * Rotation Template Id
-             * Format: uuid
+             * Date
+             * Format: date
              */
-            rotation_template_id: string;
-            /** Rotation Name */
-            rotation_name: string;
-            /** Required Coverage */
-            required_coverage: number;
-            /** Assigned Coverage */
-            assigned_coverage: number;
-            /** Gap */
-            gap: number;
+            date: string;
+            /** Time Of Day */
+            time_of_day: string;
+            /** Block Id */
+            block_id: string;
             /** Severity */
             severity: string;
+            /** Days Until */
+            days_until: number;
+            /** Affected Area */
+            affected_area: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            current_assignments: number;
+            /** Required Assignments */
+            required_assignments: number;
+            /** Gap Size */
+            gap_size: number;
         };
         /**
          * CoverageGapsResponse
@@ -23514,7 +23625,7 @@ export interface components {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
+            gaps: components["schemas"]["CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
@@ -25806,7 +25917,7 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            person: components["schemas"]["app__schemas__certification__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             certification_type: components["schemas"]["CertificationTypeSummary"];
             /**
              * Expiration Date
@@ -26659,12 +26770,12 @@ export interface components {
          */
         FMITSection: {
             /** @description Attending physician for inpatient */
-            attending?: components["schemas"]["PersonSummary"] | null;
+            attending?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
             /**
              * Residents
              * @description Residents on FMIT
              */
-            residents?: components["schemas"]["PersonSummary"][];
+            residents?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"][];
         };
         /**
          * FMITWeekInfo
@@ -29217,7 +29328,7 @@ export interface components {
              * @default []
              */
             recommendations: components["schemas"]["Recommendation"][];
-            summary?: components["schemas"]["ConflictSummary"] | null;
+            summary?: components["schemas"]["app__schemas__schedule__ConflictSummary"] | null;
         };
         /**
          * ImportApplyError
@@ -30760,7 +30871,7 @@ export interface components {
          *     Shows who is on night call so staff know they're unavailable during day.
          */
         NightCallInfo: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Call Type
              * @description Type of call (night, backup)
@@ -31470,7 +31581,7 @@ export interface components {
          *     Shows person with their AM and PM assignments (if any).
          */
         PersonClinicCoverage: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /** @description AM assignment */
             am?: components["schemas"]["AssignmentInfo"] | null;
             /** @description PM assignment */
@@ -31481,7 +31592,7 @@ export interface components {
          * @description Certification compliance for a single person.
          */
         PersonComplianceResponse: {
-            person: components["schemas"]["app__schemas__certification__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /** Total Required */
             total_required: number;
             /** Total Current */
@@ -31760,7 +31871,7 @@ export interface components {
         };
         /**
          * PersonSummary
-         * @description Summary of person for manifest display.
+         * @description Minimal person info for certification reports.
          */
         PersonSummary: {
             /**
@@ -31770,11 +31881,10 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /**
-             * Pgy Level
-             * @description PGY level for residents
-             */
-            pgy_level?: number | null;
+            /** Type */
+            type: string;
+            /** Email */
+            email?: string | null;
         };
         /**
          * PersonType
@@ -32882,7 +32992,7 @@ export interface components {
         };
         /**
          * QueuePurgeResponse
-         * @description Response to queue purge request.
+         * @description Response after purging a queue.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -33697,14 +33807,14 @@ export interface components {
          *     Shows who is away at a remote site and their local surrogate/proxy.
          */
         RemoteAssignment: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Location
              * @description Remote location name
              */
             location: string;
             /** @description Local proxy/surrogate if assigned */
-            surrogate?: components["schemas"]["PersonSummary"] | null;
+            surrogate?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
         };
         /**
          * RenewalRequest
@@ -41511,131 +41621,31 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
-         * CoverageGap
-         * @description Represents a coverage gap with details.
-         */
-        app__api__routes__fmit_health__CoverageGap: {
-            /** Gap Id */
-            gap_id: string;
-            /**
-             * Date
-             * Format: date
-             */
-            date: string;
-            /** Time Of Day */
-            time_of_day: string;
-            /** Block Id */
-            block_id: string;
-            /** Severity */
-            severity: string;
-            /** Days Until */
-            days_until: number;
-            /** Affected Area */
-            affected_area: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            current_assignments: number;
-            /** Required Assignments */
-            required_assignments: number;
-            /** Gap Size */
-            gap_size: number;
-        };
-        /**
          * ExportFormat
          * @description Export file formats.
          * @enum {string}
          */
         app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
         /**
-         * ConflictSummary
-         * @description Summary statistics for a set of conflicts.
-         *
-         *     Used for dashboard displays and reporting.
-         * @example {
-         *       "affected_people_count": 8,
-         *       "auto_resolvable_count": 6,
-         *       "average_impact_score": 0.65,
-         *       "critical_count": 3,
-         *       "high_count": 5,
-         *       "low_count": 3,
-         *       "medium_count": 4,
-         *       "total_conflicts": 15
-         *     }
+         * BlockListResponse
+         * @description Response for listing academic blocks.
          */
-        app__scheduling__conflicts__types__ConflictSummary: {
+        app__schemas__academic_blocks__BlockListResponse: {
             /**
-             * Total Conflicts
-             * @default 0
+             * Blocks
+             * @description List of academic blocks
              */
-            total_conflicts: number;
+            blocks: components["schemas"]["BlockSummary"][];
             /**
-             * Critical Count
-             * @default 0
+             * Academic Year
+             * @description Academic year
              */
-            critical_count: number;
+            academic_year: string;
             /**
-             * High Count
-             * @default 0
+             * Total Blocks
+             * @description Total number of blocks
              */
-            high_count: number;
-            /**
-             * Medium Count
-             * @default 0
-             */
-            medium_count: number;
-            /**
-             * Low Count
-             * @default 0
-             */
-            low_count: number;
-            /** By Category */
-            by_category?: {
-                [key: string]: number | undefined;
-            };
-            /** By Type */
-            by_type?: {
-                [key: string]: number | undefined;
-            };
-            /**
-             * Affected People Count
-             * @default 0
-             */
-            affected_people_count: number;
-            /**
-             * Affected Blocks Count
-             * @default 0
-             */
-            affected_blocks_count: number;
-            /**
-             * Auto Resolvable Count
-             * @default 0
-             */
-            auto_resolvable_count: number;
-            /**
-             * Requires Manual Count
-             * @default 0
-             */
-            requires_manual_count: number;
-            /**
-             * Average Impact Score
-             * @default 0
-             */
-            average_impact_score: number;
-            /**
-             * Average Urgency Score
-             * @default 0
-             */
-            average_urgency_score: number;
-            /**
-             * Average Complexity Score
-             * @default 0
-             */
-            average_complexity_score: number;
-            /** Earliest Date */
-            earliest_date?: string | null;
-            /** Latest Date */
-            latest_date?: string | null;
+            total_blocks: number;
         };
         /**
          * BatchOperationResult
@@ -41657,26 +41667,31 @@ export interface components {
             warnings?: string[];
         };
         /**
-         * BlockListResponse
-         * @description Schema for list of blocks.
+         * CoverageGap
+         * @description Identified coverage gap.
          */
-        app__schemas__block__BlockListResponse: {
+        app__schemas__block_assignment__CoverageGap: {
             /**
-             * Items
-             * @description List of block responses
+             * Rotation Template Id
+             * Format: uuid
              */
-            items: components["schemas"]["BlockResponse"][];
-            /**
-             * Total
-             * @description Total number of blocks
-             */
-            total: number;
+            rotation_template_id: string;
+            /** Rotation Name */
+            rotation_name: string;
+            /** Required Coverage */
+            required_coverage: number;
+            /** Assigned Coverage */
+            assigned_coverage: number;
+            /** Gap */
+            gap: number;
+            /** Severity */
+            severity: string;
         };
         /**
          * PersonSummary
-         * @description Minimal person info for certification reports.
+         * @description Summary of person for manifest display.
          */
-        app__schemas__certification__PersonSummary: {
+        app__schemas__daily_manifest__PersonSummary: {
             /**
              * Id
              * Format: uuid
@@ -41684,10 +41699,11 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /** Type */
-            type: string;
-            /** Email */
-            email?: string | null;
+            /**
+             * Pgy Level
+             * @description PGY level for residents
+             */
+            pgy_level?: number | null;
         };
         /**
          * ConflictCheckResponse
@@ -41714,6 +41730,18 @@ export interface components {
              * @description Alternative suggestions
              */
             suggestions?: string[];
+        };
+        /**
+         * QueuePurgeResponse
+         * @description Response to queue purge request.
+         */
+        app__schemas__jobs__QueuePurgeResponse: {
+            /** Queuename */
+            queueName: string;
+            /** Taskspurged */
+            tasksPurged: number;
+            /** Timestamp */
+            timestamp: string;
         };
         /**
          * SuggestionResponse
@@ -41784,16 +41812,16 @@ export interface components {
             confirm: boolean;
         };
         /**
-         * QueuePurgeResponse
-         * @description Response after purging a queue.
+         * ConflictSummary
+         * @description Summary of conflicts found.
          */
-        app__schemas__queue__QueuePurgeResponse: {
-            /** Queuename */
-            queueName: string;
-            /** Taskspurged */
-            tasksPurged: number;
-            /** Timestamp */
-            timestamp: string;
+        app__schemas__schedule__ConflictSummary: {
+            /** Total Conflicts */
+            total_conflicts: number;
+            /** Errors */
+            errors: number;
+            /** Warnings */
+            warnings: number;
         };
         /**
          * CoverageGap
@@ -43873,7 +43901,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -44000,7 +44028,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -44066,7 +44094,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -44262,6 +44290,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BlockAssignmentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_explorer_data_api_v1_block_scheduler__block_number__explorer_get: {
+        parameters: {
+            query: {
+                /** @description Academic year */
+                academic_year: number;
+            };
+            header?: never;
+            path: {
+                block_number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -59149,7 +59211,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__scheduling__conflicts__types__ConflictSummary"];
+                    "application/json": components["schemas"]["ConflictSummary"];
                 };
             };
             /** @description Validation Error */
@@ -60216,7 +60278,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -60583,7 +60645,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */

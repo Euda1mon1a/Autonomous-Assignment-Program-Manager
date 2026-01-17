@@ -24,6 +24,8 @@ import {
   UserCog,
   Award,
   LayoutTemplate,
+  Database,
+  Network,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -51,7 +53,8 @@ const navItems: NavItem[] = [
   { href: '/admin/people', label: 'People Admin', icon: UserCog, adminOnly: true },
   { href: '/admin/credentials', label: 'Credentials', icon: Award, adminOnly: true },
   { href: '/admin/rotations', label: 'Rotations', icon: LayoutTemplate, adminOnly: true },
-  // Faculty Activities now consolidated into Activity Hub at /activities
+  { href: '/admin/schema', label: 'Schema', icon: Database, adminOnly: true },
+  { href: '/admin/block-explorer', label: 'Block Explorer', icon: Network, adminOnly: true },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ]
 
