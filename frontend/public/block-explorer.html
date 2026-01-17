@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Explorer - Block 10 | Residency Scheduler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow-x: hidden; background: #0f172a; font-family: system-ui, -apple-system, sans-serif; }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Reviewed state */
+        .resident-row.reviewed { opacity: 0.35; }
+        .resident-row.reviewed:hover { opacity: 0.6; }
+
+        /* Needs attention highlight */
+        .needs-attention {
+            animation: attention-pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.5);
+        }
+        @keyframes attention-pulse {
+            0%, 100% { box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3); }
+            50% { box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.6); }
+        }
+
+        /* Calendar cell */
+        .calendar-cell {
+            min-width: 60px;
+            transition: all 0.15s;
+        }
+        .calendar-cell:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        /* Source indicators */
+        .source-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .source-pre { background: #3b82f6; }
+        .source-gen { background: #10b981; }
+        .source-man { background: #f59e0b; }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+
+        /* Modal */
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Group header */
+        .group-header {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, transparent 100%);
+        }
+
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #374151;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .toggle-switch.active { background: #3b82f6; }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        .toggle-switch.active::after { transform: translateX(20px); }
+
+        /* Progress bar */
+        .progress-bar {
+            height: 6px;
+            background: #1e293b;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            transition: width 0.3s ease;
+        }
+
+        /* Validation check */
+        .validation-check { transition: all 0.2s; }
+        .validation-check:hover { background: rgba(255,255,255,0.05); }
+
+        /* Nav buttons in modal */
+        .nav-btn {
+            transition: all 0.15s;
+        }
+        .nav-btn:hover:not(:disabled) {
+            background: rgba(255,255,255,0.1);
+        }
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Collapsible panel */
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+        }
+        .collapsible-header:hover { background: rgba(255,255,255,0.05); }
+        .collapsible-content { overflow: hidden; transition: max-height 0.3s ease; }
+        .collapsible-content.collapsed { max-height: 0 !important; }
+
+        /* Completeness item */
+        .completeness-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+            transition: background 0.2s;
+        }
+        .completeness-item:hover { background: rgba(255,255,255,0.06); }
+
+        /* ACGME rule row */
+        .acgme-rule {
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+            transition: background 0.2s;
+        }
+        .acgme-rule:hover { background: rgba(255,255,255,0.06); }
+
+        /* Export footer */
+        .export-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Checklist item */
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.05);
+        }
+        .checklist-item.checked { background: rgba(16, 185, 129, 0.15); }
+        .checklist-item.unchecked { background: rgba(251, 191, 36, 0.1); }
+
+        /* Export button */
+        .export-btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .export-btn:disabled {
+            background: #374151;
+            color: #6b7280;
+            cursor: not-allowed;
+        }
+        .export-btn:not(:disabled) {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            cursor: pointer;
+        }
+        .export-btn:not(:disabled):hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Ready badge animation */
+        .ready-badge {
+            animation: ready-pulse 2s ease-in-out infinite;
+        }
+        @keyframes ready-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header Bar -->
+    <header class="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10">
+        <div class="flex items-center justify-between px-6 py-3">
+            <div class="flex items-center gap-4">
+                <div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                        Block Explorer
+                    </h1>
+                    <p id="block-subtitle" class="text-xs text-gray-400">Block 10 | March 12 - April 8, 2026</p>
+                </div>
+
+                <!-- Block Selector -->
+                <select id="block-selector" class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-blue-500/50">
+                    <option value="1">Block 1</option>
+                    <option value="2">Block 2</option>
+                    <option value="3">Block 3</option>
+                    <option value="4">Block 4</option>
+                    <option value="5">Block 5</option>
+                    <option value="6">Block 6</option>
+                    <option value="7">Block 7</option>
+                    <option value="8">Block 8</option>
+                    <option value="9">Block 9</option>
+                    <option value="10" selected>Block 10</option>
+                    <option value="11">Block 11</option>
+                    <option value="12">Block 12</option>
+                    <option value="13">Block 13</option>
+                </select>
+
+                <!-- Progress Bar -->
+                <div class="ml-6 flex items-center gap-3">
+                    <div class="w-32">
+                        <div class="progress-bar">
+                            <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <span id="progress-text" class="text-sm text-gray-400">0/14 reviewed</span>
+                </div>
+            </div>
+
+            <!-- Health Bar -->
+            <div id="health-bar" class="flex items-center gap-6 text-sm">
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span class="text-gray-300"><span id="health-coverage">98</span>% Coverage</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div id="conflict-indicator" class="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span class="text-gray-300"><span id="health-conflicts">0</span> Conflicts</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-300"><span id="health-residents">14</span>/<span id="health-total">14</span> Residents</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div id="acgme-indicator" class="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span id="acgme-label" class="text-gray-300">ACGME Compliant</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Hide Reviewed Toggle -->
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <span class="text-sm text-gray-400">Hide Reviewed</span>
+                    <div id="hide-reviewed-toggle" class="toggle-switch" onclick="toggleHideReviewed()"></div>
+                </label>
+                <button id="refresh-btn" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-sm transition-colors">
+                    Refresh
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-20 pb-24 flex">
+        <!-- Left Panel: Resident List -->
+        <div class="flex-1 px-6">
+            <!-- Data Completeness Panel -->
+            <div id="completeness-panel" class="glass rounded-lg mb-4">
+                <div class="collapsible-header flex items-center justify-between px-4 py-3 rounded-lg" onclick="toggleCompletenessPanel()">
+                    <div class="flex items-center gap-2">
+                        <svg id="completeness-chevron" class="w-4 h-4 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                        <h3 class="text-sm font-semibold text-white">DATA COMPLETENESS</h3>
+                    </div>
+                    <div id="completeness-summary" class="flex items-center gap-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                <div id="completeness-content" class="collapsible-content px-4 pb-4" style="max-height: 300px;">
+                    <div class="space-y-2 pt-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Bar -->
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-4">
+                    <!-- Search -->
+                    <input type="text" id="search-input" placeholder="Search residents..."
+                        class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder-gray-500 w-64 focus:outline-none focus:border-blue-500/50">
+
+                    <!-- Group By -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-400">Group by:</span>
+                        <select id="group-by" class="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none">
+                            <option value="pgy">PGY Level</option>
+                            <option value="rotation">Rotation</option>
+                            <option value="alpha">Alphabetical</option>
+                            <option value="none">None</option>
+                        </select>
+                    </div>
+
+                    <!-- Show Needs Attention Only -->
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="attention-only" class="rounded bg-white/10 border-white/20 text-amber-500 focus:ring-amber-500">
+                        <span class="text-sm text-gray-400">Needs attention only</span>
+                    </label>
+                </div>
+
+                <!-- Legend -->
+                <div class="flex items-center gap-4 text-xs text-gray-400">
+                    <div class="flex items-center gap-1.5">
+                        <div class="source-dot source-pre"></div>
+                        <span>Preloaded</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="source-dot source-gen"></div>
+                        <span>Generated</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="source-dot source-man"></div>
+                        <span>Manual</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resident List -->
+            <div id="resident-list" class="space-y-2">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Right Panel: Validation & Compliance -->
+        <div class="w-80 px-6 border-l border-white/10">
+            <div class="sticky top-24">
+                <!-- ACGME Compliance Widget -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-lg font-semibold text-white">ACGME Compliance</h2>
+                        <button id="refresh-compliance-btn" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors" title="Refresh compliance check">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="acgme-compliance-widget" class="space-y-2">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div id="acgme-overall-status" class="mt-3 p-3 rounded-lg text-center">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Validation Checks -->
+                <h2 class="text-lg font-semibold text-white mb-4">Validation Checks</h2>
+                <div id="validation-checks" class="space-y-2">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Keyboard Shortcuts -->
+                <div class="mt-6 pt-4 border-t border-white/10">
+                    <h3 class="text-sm font-medium text-gray-400 mb-2">Keyboard Shortcuts</h3>
+                    <div class="text-xs text-gray-500 space-y-1">
+                        <p><kbd class="px-1.5 py-0.5 rounded bg-gray-700 text-gray-300">↑</kbd> <kbd class="px-1.5 py-0.5 rounded bg-gray-700 text-gray-300">↓</kbd> Navigate residents in modal</p>
+                        <p><kbd class="px-1.5 py-0.5 rounded bg-gray-700 text-gray-300">R</kbd> Toggle reviewed status</p>
+                        <p><kbd class="px-1.5 py-0.5 rounded bg-gray-700 text-gray-300">Esc</kbd> Close modal</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pre-Export Checklist Footer -->
+    <footer class="export-footer px-6 py-4">
+        <div class="flex items-center justify-between max-w-screen-2xl mx-auto">
+            <div class="flex items-center gap-2">
+                <h3 class="text-sm font-semibold text-white mr-4">PRE-EXPORT CHECKLIST</h3>
+                <div id="checklist-items" class="flex items-center gap-3">
+                    <!-- Data Complete -->
+                    <div id="check-data" class="checklist-item unchecked">
+                        <svg class="w-4 h-4 text-gray-400 check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-sm text-gray-300">Data Complete</span>
+                        <span id="check-data-detail" class="text-xs text-gray-500">(0/6)</span>
+                    </div>
+                    <!-- ACGME Compliant -->
+                    <div id="check-acgme" class="checklist-item unchecked">
+                        <svg class="w-4 h-4 text-gray-400 check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-sm text-gray-300">ACGME Compliant</span>
+                    </div>
+                    <!-- All Reviewed -->
+                    <div id="check-reviewed" class="checklist-item unchecked">
+                        <svg class="w-4 h-4 text-gray-400 check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-sm text-gray-300">All Reviewed</span>
+                        <span id="check-reviewed-detail" class="text-xs text-gray-500">(0/14)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="export-ready-badge" class="hidden ready-badge flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    READY
+                </div>
+                <button id="download-json-btn" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-sm transition-colors">
+                    Download JSON
+                </button>
+                <button id="export-excel-btn" class="export-btn" disabled title="Complete all checklist items to enable export">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Export Excel
+                    </span>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 56-Assignment Modal -->
+    <div id="assignment-modal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-backdrop absolute inset-0" onclick="closeModal()"></div>
+        <div class="absolute inset-4 md:inset-8 lg:inset-12 glass rounded-2xl overflow-hidden flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                <div class="flex items-center gap-4">
+                    <!-- Prev/Next Navigation -->
+                    <button id="prev-resident-btn" class="nav-btn p-2 rounded-lg text-gray-400" onclick="navigateResident(-1)">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <div>
+                        <h2 id="modal-title" class="text-xl font-bold text-white">Dr. Adams</h2>
+                        <p id="modal-subtitle" class="text-sm text-gray-400">PGY-3 | FMIT | 56/56 assignments</p>
+                    </div>
+                    <button id="next-resident-btn" class="nav-btn p-2 rounded-lg text-gray-400" onclick="navigateResident(1)">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <!-- Position indicator -->
+                    <span id="modal-position" class="text-sm text-gray-500">1 of 14</span>
+                    <button id="mark-reviewed-btn" class="px-4 py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-400 text-sm transition-colors">
+                        Mark as Reviewed
+                    </button>
+                    <button onclick="closeModal()" class="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Attention Banner (if applicable) -->
+            <div id="modal-attention-banner" class="hidden px-6 py-3 bg-amber-500/20 border-b border-amber-500/30">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <span id="modal-attention-text" class="text-sm text-amber-300"></span>
+                </div>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div class="flex-1 overflow-auto p-6">
+                <div id="calendar-grid" class="min-w-max">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-white/10 flex items-center justify-between">
+                <div class="flex items-center gap-6 text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded bg-blue-500"></div>
+                        <span class="text-gray-400">Preloaded (locked)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded bg-green-500"></div>
+                        <span class="text-gray-400">Generated</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded bg-amber-500"></div>
+                        <span class="text-gray-400">Manual override</span>
+                    </div>
+                </div>
+                <div id="modal-notes" class="text-sm text-gray-400 italic"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading" class="fixed inset-0 flex items-center justify-center bg-[#0f172a] z-50">
+        <div class="text-white text-center">
+            <div class="animate-spin w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full mx-auto mb-2"></div>
+            <p class="text-sm text-gray-400">Loading block data...</p>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let blockData = null;
+        let currentBlock = 10;
+        let currentAcademicYear = getCurrentAcademicYear();
+        let reviewedResidents = new Set(JSON.parse(localStorage.getItem(`block${currentBlock}-reviewed`) || '[]'));
+        let hideReviewed = false;
+        let selectedResident = null;
+        let currentResidentIndex = 0;
+        let filteredResidentsList = [];
+        let completenessPanelCollapsed = false;
+        let isAuthenticated = false;
+        let filters = {
+            search: '',
+            groupBy: 'pgy',
+            attentionOnly: false
+        };
+
+        // Calculate current academic year (July = new AY start)
+        // Returns the STARTING year of the academic year (e.g., 2025 for AY 2025-2026)
+        function getCurrentAcademicYear() {
+            const now = new Date();
+            const month = now.getMonth(); // 0-indexed (0 = Jan, 6 = July)
+            const year = now.getFullYear();
+            // Academic year starts July 1: July 2025 onward = AY 2025-2026 (return 2025)
+            // Jan-June 2026 is still AY 2025-2026 (return 2025)
+            return month >= 6 ? year : year - 1;
+        }
+
+        // DOM Elements
+        const residentList = document.getElementById('resident-list');
+        const searchInput = document.getElementById('search-input');
+        const groupBySelect = document.getElementById('group-by');
+        const attentionOnlyCheckbox = document.getElementById('attention-only');
+        const modal = document.getElementById('assignment-modal');
+        const loading = document.getElementById('loading');
+
+        // Check authentication
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/v1/users/me', { credentials: 'include' });
+                if (!response.ok) {
+                    // Redirect to login
+                    window.location.href = '/login?redirect=/admin/block-explorer';
+                    return false;
+                }
+                isAuthenticated = true;
+                return true;
+            } catch (error) {
+                console.warn('Auth check failed, continuing in demo mode:', error);
+                // Allow demo mode without authentication for development
+                return true;
+            }
+        }
+
+        // Load block data from API with fallback to static JSON
+        async function loadBlockData() {
+            loading.style.display = 'flex';
+
+            // Update reviewed residents set for new block
+            reviewedResidents = new Set(JSON.parse(localStorage.getItem(`block${currentBlock}-reviewed`) || '[]'));
+
+            try {
+                // Try API first
+                const apiUrl = `/api/v1/block-scheduler/${currentBlock}/explorer?academic_year=${currentAcademicYear}`;
+                const response = await fetch(apiUrl, { credentials: 'include' });
+
+                if (response.ok) {
+                    blockData = await response.json();
+                    console.log('Loaded from API:', apiUrl);
+                } else {
+                    throw new Error(`API returned ${response.status}`);
+                }
+            } catch (apiError) {
+                // Fallback to static JSON for development/demo
+                console.warn('API unavailable, falling back to static JSON:', apiError.message);
+                try {
+                    const response = await fetch('data/block-10-explorer.json');
+                    if (!response.ok) throw new Error('Static JSON not found');
+                    blockData = await response.json();
+                    console.log('Loaded from static JSON');
+                } catch (fallbackError) {
+                    console.error('Failed to load block data:', fallbackError);
+                    loading.innerHTML = '<p class="text-red-400">Failed to load block data. Check console for details.</p>';
+                    return;
+                }
+            }
+
+            // Update header
+            document.getElementById('block-subtitle').textContent =
+                `Block ${blockData.meta.blockNumber} | ${blockData.meta.dateRange}`;
+            document.title = `Block Explorer - Block ${blockData.meta.blockNumber}`;
+
+            // Update block selector to match loaded data
+            document.getElementById('block-selector').value = blockData.meta.blockNumber;
+
+            // Update health bar
+            updateHealthBar();
+
+            // Render completeness panel
+            renderCompletenessPanel();
+
+            // Render ACGME compliance widget
+            renderACGMEComplianceWidget();
+
+            // Render validation checks
+            renderValidationChecks();
+
+            // Render
+            render();
+
+            // Update export checklist
+            updateExportChecklist();
+
+            // Hide loading
+            loading.style.display = 'none';
+        }
+
+        // Update health bar
+        function updateHealthBar() {
+            const h = blockData.health;
+            document.getElementById('health-coverage').textContent = h.coverage;
+            document.getElementById('health-conflicts').textContent = h.conflicts;
+            document.getElementById('health-residents').textContent = h.residentCount;
+            document.getElementById('health-total').textContent = h.totalResidents;
+
+            const conflictInd = document.getElementById('conflict-indicator');
+            conflictInd.className = `w-3 h-3 rounded-full ${h.conflicts === 0 ? 'bg-green-500' : 'bg-red-500'}`;
+
+            const acgmeInd = document.getElementById('acgme-indicator');
+            const acgmeLabel = document.getElementById('acgme-label');
+            if (h.acgmeCompliant) {
+                acgmeInd.className = 'w-3 h-3 rounded-full bg-green-500';
+                acgmeLabel.textContent = 'ACGME Compliant';
+            } else {
+                acgmeInd.className = 'w-3 h-3 rounded-full bg-red-500';
+                acgmeLabel.textContent = 'ACGME Violations';
+            }
+        }
+
+        // Update progress bar
+        function updateProgress() {
+            const total = blockData.residents.length;
+            const reviewed = blockData.residents.filter(r => reviewedResidents.has(r.id)).length;
+            const percentage = Math.round((reviewed / total) * 100);
+
+            document.getElementById('progress-bar-fill').style.width = `${percentage}%`;
+            document.getElementById('progress-text').textContent = `${reviewed}/${total} reviewed`;
+
+            // Also update export checklist
+            updateExportChecklist();
+        }
+
+        // Render Data Completeness Panel
+        function renderCompletenessPanel() {
+            const c = blockData.completeness;
+            const container = document.getElementById('completeness-content').querySelector('.space-y-2');
+
+            // Status icon helper
+            const statusIcon = (status) => {
+                if (status === 'pass') {
+                    return '<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                } else if (status === 'warn') {
+                    return '<svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+                } else {
+                    return '<svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                }
+            };
+
+            const items = [
+                { label: 'Residents', value: `${c.residents.assigned}/${c.residents.total} assigned`, status: c.residents.status },
+                { label: 'Faculty', value: `${c.faculty.active} active`, status: c.faculty.status },
+                { label: 'Rotations', value: `${c.rotations.defined} defined`, status: c.rotations.status },
+                { label: 'Absences', value: c.absences.pending > 0 ? `${c.absences.pending} pending` : `${c.absences.recorded} recorded`, status: c.absences.status },
+                { label: 'Call Roster', value: `${c.callRoster.filled}/${c.callRoster.total} days`, status: c.callRoster.status },
+                { label: 'Coverage', value: c.coverage.gaps > 0 ? `${c.coverage.gaps} gaps` : `${c.coverage.filled}/${c.coverage.total} slots`, status: c.coverage.status }
+            ];
+
+            container.innerHTML = items.map(item => `
+                <div class="completeness-item">
+                    <div class="flex items-center gap-2">
+                        ${statusIcon(item.status)}
+                        <span class="text-sm text-gray-300">${item.label}</span>
+                    </div>
+                    <span class="text-sm ${item.status === 'pass' ? 'text-green-400' : item.status === 'warn' ? 'text-amber-400' : 'text-red-400'}">${item.value}</span>
+                </div>
+            `).join('');
+
+            // Update summary badge
+            const passCount = items.filter(i => i.status === 'pass').length;
+            const summary = document.getElementById('completeness-summary');
+            if (passCount === items.length) {
+                summary.innerHTML = `
+                    <span class="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">${passCount}/${items.length} Complete</span>
+                `;
+            } else {
+                const warnCount = items.filter(i => i.status === 'warn').length;
+                const failCount = items.filter(i => i.status === 'fail').length;
+                summary.innerHTML = `
+                    <span class="text-xs px-2 py-1 rounded-full ${failCount > 0 ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}">${passCount}/${items.length} Complete</span>
+                `;
+            }
+        }
+
+        // Toggle completeness panel
+        function toggleCompletenessPanel() {
+            completenessPanelCollapsed = !completenessPanelCollapsed;
+            const content = document.getElementById('completeness-content');
+            const chevron = document.getElementById('completeness-chevron');
+
+            if (completenessPanelCollapsed) {
+                content.classList.add('collapsed');
+                chevron.style.transform = 'rotate(-90deg)';
+            } else {
+                content.classList.remove('collapsed');
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Render ACGME Compliance Widget
+        function renderACGMEComplianceWidget() {
+            const compliance = blockData.acgmeCompliance;
+            const container = document.getElementById('acgme-compliance-widget');
+
+            container.innerHTML = compliance.rules.map(rule => `
+                <div class="acgme-rule">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-2 h-2 rounded-full ${rule.status === 'pass' ? 'bg-green-400' : rule.status === 'warn' ? 'bg-amber-400' : 'bg-red-400'}"></div>
+                            <span class="text-sm font-medium text-white">${rule.name}</span>
+                        </div>
+                        <span class="text-xs px-2 py-0.5 rounded ${rule.status === 'pass' ? 'bg-green-500/20 text-green-400' : rule.status === 'warn' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'}">
+                            ${rule.status === 'pass' ? 'PASS' : rule.status === 'warn' ? 'WARN' : 'FAIL'}
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-400 ml-4">${rule.detail}</p>
+                </div>
+            `).join('');
+
+            // Update overall status
+            const overallStatus = document.getElementById('acgme-overall-status');
+            if (compliance.overallStatus === 'pass') {
+                overallStatus.className = 'mt-3 p-3 rounded-lg text-center bg-green-500/10 border border-green-500/30';
+                overallStatus.innerHTML = `
+                    <div class="flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-sm font-semibold text-green-400">COMPLIANT</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Last checked: ${new Date(compliance.lastChecked).toLocaleString()}</p>
+                `;
+            } else {
+                overallStatus.className = 'mt-3 p-3 rounded-lg text-center bg-red-500/10 border border-red-500/30';
+                overallStatus.innerHTML = `
+                    <div class="flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <span class="text-sm font-semibold text-red-400">VIOLATIONS DETECTED</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Last checked: ${new Date(compliance.lastChecked).toLocaleString()}</p>
+                `;
+            }
+        }
+
+        // Update export checklist
+        function updateExportChecklist() {
+            if (!blockData) return;
+
+            const c = blockData.completeness;
+            const compliance = blockData.acgmeCompliance;
+            const total = blockData.residents.length;
+            const reviewed = blockData.residents.filter(r => reviewedResidents.has(r.id)).length;
+
+            // Check 1: Data Complete
+            const dataItems = [c.residents, c.faculty, c.rotations, c.absences, c.callRoster, c.coverage];
+            const dataPassCount = dataItems.filter(item => item.status === 'pass').length;
+            const dataComplete = dataPassCount === dataItems.length;
+
+            // Check 2: ACGME Compliant
+            const acgmeCompliant = compliance.overallStatus === 'pass';
+
+            // Check 3: All Reviewed
+            const allReviewed = reviewed === total;
+
+            // Update UI
+            updateChecklistItem('check-data', dataComplete, `(${dataPassCount}/${dataItems.length})`);
+            updateChecklistItem('check-acgme', acgmeCompliant);
+            updateChecklistItem('check-reviewed', allReviewed, `(${reviewed}/${total})`);
+
+            // Update export button
+            const exportBtn = document.getElementById('export-excel-btn');
+            const readyBadge = document.getElementById('export-ready-badge');
+            const allChecksPass = dataComplete && acgmeCompliant && allReviewed;
+
+            exportBtn.disabled = !allChecksPass;
+            if (allChecksPass) {
+                exportBtn.title = 'Export schedule to Excel';
+                readyBadge.classList.remove('hidden');
+            } else {
+                const missing = [];
+                if (!dataComplete) missing.push('complete data');
+                if (!acgmeCompliant) missing.push('ACGME compliance');
+                if (!allReviewed) missing.push('all reviews');
+                exportBtn.title = `Missing: ${missing.join(', ')}`;
+                readyBadge.classList.add('hidden');
+            }
+        }
+
+        // Helper to update a checklist item
+        function updateChecklistItem(id, isChecked, detail = null) {
+            const item = document.getElementById(id);
+            const icon = item.querySelector('.check-icon');
+
+            if (isChecked) {
+                item.classList.remove('unchecked');
+                item.classList.add('checked');
+                icon.classList.remove('text-gray-400');
+                icon.classList.add('text-green-400');
+            } else {
+                item.classList.remove('checked');
+                item.classList.add('unchecked');
+                icon.classList.remove('text-green-400');
+                icon.classList.add('text-gray-400');
+            }
+
+            if (detail) {
+                const detailEl = document.getElementById(`${id}-detail`);
+                if (detailEl) {
+                    detailEl.textContent = detail;
+                }
+            }
+        }
+
+        // Export to JSON
+        function downloadJSON() {
+            const dataStr = JSON.stringify(blockData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Block-${blockData.meta.blockNumber}-Schedule.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Export to Excel - calls export API
+        async function exportToExcel() {
+            const { startDate, endDate, blockNumber } = blockData.meta;
+
+            try {
+                const btn = document.getElementById('export-excel-btn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="flex items-center gap-2"><svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Exporting...</span>';
+
+                const response = await fetch(
+                    `/api/v1/export/schedule/xlsx?start_date=${startDate}&end_date=${endDate}&block_number=${blockNumber}`,
+                    { credentials: 'include' }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+                }
+
+                // Download the file
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Block-${blockNumber}-Schedule.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                console.log('Excel export successful');
+            } catch (error) {
+                console.error('Export failed:', error);
+                alert(`Export failed: ${error.message}\n\nFalling back to JSON download.`);
+                downloadJSON();
+            } finally {
+                // Restore button state
+                updateExportChecklist();
+            }
+        }
+
+        // Render validation checks panel
+        function renderValidationChecks() {
+            const container = document.getElementById('validation-checks');
+            container.innerHTML = blockData.validationChecks.map(check => `
+                <div class="validation-check glass rounded-lg p-3">
+                    <div class="flex items-center gap-2 mb-1">
+                        ${check.status === 'pass'
+                            ? '<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+                            : '<svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>'
+                        }
+                        <span class="text-sm font-medium text-white">${check.name}</span>
+                    </div>
+                    <p class="text-xs text-gray-400 ml-6">${check.description}</p>
+                    <p class="text-xs text-gray-500 ml-6 mt-1">${check.details}</p>
+                </div>
+            `).join('');
+        }
+
+        // Get filtered and sorted residents
+        function getFilteredResidents() {
+            let residents = blockData.residents.filter(res => {
+                // Search filter
+                if (filters.search && !res.name.toLowerCase().includes(filters.search.toLowerCase())) {
+                    return false;
+                }
+                // Attention only filter
+                if (filters.attentionOnly && !res.needsAttention) {
+                    return false;
+                }
+                // Hide reviewed
+                if (hideReviewed && reviewedResidents.has(res.id)) {
+                    return false;
+                }
+                return true;
+            });
+
+            return residents;
+        }
+
+        // Group residents
+        function groupResidents(residents) {
+            const groups = {};
+
+            residents.forEach(res => {
+                let groupKey;
+                switch (filters.groupBy) {
+                    case 'pgy':
+                        groupKey = `PGY-${res.pgyLevel}`;
+                        break;
+                    case 'rotation':
+                        groupKey = res.rotation;
+                        break;
+                    case 'alpha':
+                        groupKey = res.name.charAt(4).toUpperCase(); // First letter after "Dr. "
+                        break;
+                    default:
+                        groupKey = 'All Residents';
+                }
+
+                if (!groups[groupKey]) {
+                    groups[groupKey] = [];
+                }
+                groups[groupKey].push(res);
+            });
+
+            // Sort groups
+            const sortedKeys = Object.keys(groups).sort((a, b) => {
+                if (filters.groupBy === 'pgy') {
+                    return a.localeCompare(b);
+                }
+                return a.localeCompare(b);
+            });
+
+            return sortedKeys.map(key => ({ name: key, residents: groups[key] }));
+        }
+
+        // Render resident list
+        function render() {
+            const residents = getFilteredResidents();
+            filteredResidentsList = residents; // Store for navigation
+            const groups = groupResidents(residents);
+
+            residentList.innerHTML = groups.map(group => {
+                const groupResidentIds = group.residents.map(r => r.id);
+                const allReviewed = groupResidentIds.every(id => reviewedResidents.has(id));
+                const someReviewed = groupResidentIds.some(id => reviewedResidents.has(id));
+
+                return `
+                    <div class="mb-6">
+                        <div class="group-header px-4 py-2 rounded-lg mb-2 flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-blue-300">${group.name} <span class="text-gray-500">(${group.residents.length})</span></h3>
+                            <button onclick="markGroupReviewed('${group.name}', ${!allReviewed})"
+                                    class="text-xs px-2 py-1 rounded ${allReviewed ? 'bg-green-500/20 text-green-400' : 'bg-white/5 text-gray-400 hover:bg-white/10'} transition-colors">
+                                ${allReviewed ? 'All Reviewed' : (someReviewed ? 'Mark Rest Reviewed' : 'Mark All Reviewed')}
+                            </button>
+                        </div>
+                        <div class="space-y-1">
+                            ${group.residents.map(res => renderResidentRow(res)).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Add click handlers
+            document.querySelectorAll('.resident-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    const resId = row.dataset.residentId;
+                    const resident = blockData.residents.find(r => r.id === resId);
+                    currentResidentIndex = filteredResidentsList.findIndex(r => r.id === resId);
+                    openModal(resident);
+                });
+            });
+
+            // Update progress
+            updateProgress();
+        }
+
+        // Mark all in group as reviewed
+        function markGroupReviewed(groupName, markAsReviewed) {
+            const residents = getFilteredResidents();
+            const groups = groupResidents(residents);
+            const group = groups.find(g => g.name === groupName);
+
+            if (group) {
+                group.residents.forEach(res => {
+                    if (markAsReviewed) {
+                        reviewedResidents.add(res.id);
+                    } else {
+                        reviewedResidents.delete(res.id);
+                    }
+                });
+                localStorage.setItem('block10-reviewed', JSON.stringify([...reviewedResidents]));
+                render();
+            }
+        }
+
+        // Render a single resident row
+        function renderResidentRow(res) {
+            const rot = blockData.rotations.find(r => r.id === res.rotationId);
+            const isReviewed = reviewedResidents.has(res.id);
+            const sourceColors = { PRE: 'blue', GEN: 'green', MAN: 'amber' };
+            const sourceColor = sourceColors[res.source] || 'gray';
+
+            return `
+                <div class="resident-row glass rounded-lg px-4 py-3 cursor-pointer hover:bg-white/10 transition-all flex items-center justify-between ${isReviewed ? 'reviewed' : ''} ${res.needsAttention ? 'needs-attention' : ''}"
+                     data-resident-id="${res.id}">
+                    <div class="flex items-center gap-4">
+                        <!-- Reviewed checkbox -->
+                        <div class="flex items-center" onclick="event.stopPropagation(); toggleReviewed('${res.id}')">
+                            <div class="w-5 h-5 rounded border-2 ${isReviewed ? 'bg-green-500 border-green-500' : 'border-gray-500'} flex items-center justify-center cursor-pointer hover:border-green-400 transition-colors">
+                                ${isReviewed ? '<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                            </div>
+                        </div>
+
+                        <!-- Name and info -->
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-white font-medium">${res.name}</span>
+                                <span class="text-xs px-1.5 py-0.5 rounded bg-gray-700 text-gray-300">PGY-${res.pgyLevel}</span>
+                                ${res.needsAttention ? '<span class="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400">Needs Review</span>' : ''}
+                            </div>
+                            <div class="text-sm text-gray-400">${res.notes || 'No notes'}</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-6">
+                        <!-- Rotation badge -->
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded" style="background: ${rot?.color || '#666'}"></div>
+                            <span class="text-sm font-medium text-white">${res.rotation}</span>
+                        </div>
+
+                        <!-- Assignment count -->
+                        <div class="text-sm">
+                            <span class="${res.completeAssignments === res.assignmentCount ? 'text-green-400' : 'text-amber-400'}">${res.completeAssignments}</span>
+                            <span class="text-gray-500">/${res.assignmentCount}</span>
+                        </div>
+
+                        <!-- Source badge -->
+                        <div class="px-2 py-1 rounded text-xs font-bold text-white" style="background: ${blockData.sources[res.source]?.color || '#666'}">
+                            ${res.source}
+                        </div>
+
+                        <!-- Arrow -->
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Toggle reviewed status
+        function toggleReviewed(residentId) {
+            if (reviewedResidents.has(residentId)) {
+                reviewedResidents.delete(residentId);
+            } else {
+                reviewedResidents.add(residentId);
+            }
+            localStorage.setItem('block10-reviewed', JSON.stringify([...reviewedResidents]));
+            render();
+        }
+
+        // Toggle hide reviewed
+        function toggleHideReviewed() {
+            hideReviewed = !hideReviewed;
+            document.getElementById('hide-reviewed-toggle').classList.toggle('active', hideReviewed);
+            render();
+        }
+
+        // Navigate between residents in modal
+        function navigateResident(direction) {
+            const newIndex = currentResidentIndex + direction;
+            if (newIndex >= 0 && newIndex < filteredResidentsList.length) {
+                currentResidentIndex = newIndex;
+                openModal(filteredResidentsList[currentResidentIndex]);
+            }
+        }
+
+        // Update navigation buttons state
+        function updateNavButtons() {
+            const prevBtn = document.getElementById('prev-resident-btn');
+            const nextBtn = document.getElementById('next-resident-btn');
+
+            prevBtn.disabled = currentResidentIndex <= 0;
+            nextBtn.disabled = currentResidentIndex >= filteredResidentsList.length - 1;
+
+            document.getElementById('modal-position').textContent =
+                `${currentResidentIndex + 1} of ${filteredResidentsList.length}`;
+        }
+
+        // Open modal with 56-assignment calendar
+        function openModal(resident) {
+            selectedResident = resident;
+            const rot = blockData.rotations.find(r => r.id === resident.rotationId);
+
+            // Update modal header
+            document.getElementById('modal-title').textContent = resident.name;
+            document.getElementById('modal-subtitle').textContent =
+                `PGY-${resident.pgyLevel} | ${resident.rotation} | ${resident.completeAssignments}/${resident.assignmentCount} assignments`;
+
+            // Update navigation
+            updateNavButtons();
+
+            // Update attention banner
+            const banner = document.getElementById('modal-attention-banner');
+            if (resident.needsAttention) {
+                banner.classList.remove('hidden');
+                document.getElementById('modal-attention-text').textContent = resident.attentionReason;
+            } else {
+                banner.classList.add('hidden');
+            }
+
+            // Update notes
+            document.getElementById('modal-notes').textContent = resident.notes || '';
+
+            // Update mark reviewed button
+            updateReviewButton();
+
+            // Render calendar
+            renderCalendar(resident);
+
+            // Show modal
+            modal.classList.remove('hidden');
+        }
+
+        // Update the review button state
+        function updateReviewButton() {
+            const reviewBtn = document.getElementById('mark-reviewed-btn');
+            const isReviewed = reviewedResidents.has(selectedResident.id);
+            reviewBtn.textContent = isReviewed ? 'Reviewed' : 'Mark as Reviewed (R)';
+            reviewBtn.className = isReviewed
+                ? 'px-4 py-2 rounded-lg bg-green-500/30 text-green-300 text-sm cursor-default'
+                : 'px-4 py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-400 text-sm transition-colors cursor-pointer';
+            reviewBtn.onclick = isReviewed ? null : () => {
+                toggleReviewed(selectedResident.id);
+                updateReviewButton();
+            };
+        }
+
+        // Close modal
+        function closeModal() {
+            modal.classList.add('hidden');
+            selectedResident = null;
+        }
+
+        // Render 56-assignment calendar
+        function renderCalendar(resident) {
+            const grid = document.getElementById('calendar-grid');
+            const calendar = blockData.calendar;
+            const activityColors = blockData.activityColors;
+
+            // Build calendar HTML
+            let html = `
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr>
+                            <th class="p-2 text-left text-xs text-gray-500 font-medium w-20">Week</th>
+                            ${calendar.dayLabels.map(day => `
+                                <th class="p-2 text-center text-xs text-gray-500 font-medium">${day}</th>
+                            `).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            calendar.weeks.forEach(week => {
+                html += `
+                    <tr>
+                        <td class="p-2 text-sm text-gray-400 font-medium">Week ${week.weekNum}</td>
+                        ${week.dates.map(date => {
+                            const dayData = resident.halfDays?.find(d => d.date === date);
+                            if (!dayData) {
+                                return `<td class="p-1"><div class="calendar-cell rounded-lg bg-gray-800/50 p-2 text-center text-xs text-gray-600">No data</div></td>`;
+                            }
+
+                            const dateObj = new Date(date);
+                            const dayNum = dateObj.getDate();
+                            const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+
+                            const amColor = activityColors[dayData.am] || '#374151';
+                            const pmColor = activityColors[dayData.pm] || '#374151';
+                            const amSourceClass = `source-${dayData.amSource.toLowerCase()}`;
+                            const pmSourceClass = `source-${dayData.pmSource.toLowerCase()}`;
+
+                            return `
+                                <td class="p-1">
+                                    <div class="calendar-cell rounded-lg ${isWeekend ? 'bg-gray-800/30' : 'bg-gray-800/50'} overflow-hidden">
+                                        <div class="text-center text-xs text-gray-500 py-1 border-b border-gray-700/50">${dayNum}</div>
+                                        <div class="p-1 space-y-1">
+                                            <div class="flex items-center gap-1 rounded px-2 py-1" style="background: ${amColor}33">
+                                                <div class="source-dot ${amSourceClass}"></div>
+                                                <span class="text-xs font-medium" style="color: ${amColor}">${dayData.am}</span>
+                                                <span class="text-xs text-gray-500 ml-auto">AM</span>
+                                            </div>
+                                            <div class="flex items-center gap-1 rounded px-2 py-1" style="background: ${pmColor}33">
+                                                <div class="source-dot ${pmSourceClass}"></div>
+                                                <span class="text-xs font-medium" style="color: ${pmColor}">${dayData.pm}</span>
+                                                <span class="text-xs text-gray-500 ml-auto">PM</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            `;
+                        }).join('')}
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            grid.innerHTML = html;
+        }
+
+        // Event listeners
+        searchInput.addEventListener('input', (e) => {
+            filters.search = e.target.value;
+            render();
+        });
+
+        groupBySelect.addEventListener('change', (e) => {
+            filters.groupBy = e.target.value;
+            render();
+        });
+
+        attentionOnlyCheckbox.addEventListener('change', (e) => {
+            filters.attentionOnly = e.target.checked;
+            render();
+        });
+
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            loading.style.display = 'flex';
+            loadBlockData();
+        });
+
+        // Block selector
+        document.getElementById('block-selector').addEventListener('change', (e) => {
+            currentBlock = parseInt(e.target.value);
+            loadBlockData();
+        });
+
+        // Export buttons
+        document.getElementById('download-json-btn').addEventListener('click', downloadJSON);
+        document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
+
+        // Refresh compliance button - calls validation API
+        document.getElementById('refresh-compliance-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('refresh-compliance-btn');
+            btn.classList.add('animate-spin');
+
+            try {
+                const { startDate, endDate } = blockData.meta;
+                const response = await fetch(
+                    `/api/v1/schedule/validate?start_date=${startDate}&end_date=${endDate}`,
+                    { credentials: 'include' }
+                );
+
+                if (response.ok) {
+                    const validation = await response.json();
+                    // Transform validation result to compliance format
+                    blockData.acgmeCompliance = transformValidationToCompliance(validation);
+                    renderACGMEComplianceWidget();
+                    updateExportChecklist();
+                    console.log('ACGME compliance refreshed from API');
+                } else {
+                    console.warn('Validation API returned', response.status);
+                }
+            } catch (error) {
+                console.warn('Compliance refresh failed:', error);
+            } finally {
+                btn.classList.remove('animate-spin');
+            }
+        });
+
+        // Transform ValidationResult to acgmeCompliance format
+        function transformValidationToCompliance(validation) {
+            const has80Hour = validation.violations?.some(v => v.type?.includes('80_HOUR')) || false;
+            const has1In7 = validation.violations?.some(v => v.type?.includes('1_IN_7')) || false;
+            const hasSupervision = validation.violations?.some(v => v.type?.includes('SUPERVISION')) || false;
+
+            return {
+                overallStatus: validation.valid ? 'pass' : 'fail',
+                lastChecked: new Date().toISOString(),
+                rules: [
+                    {
+                        id: '80-hour',
+                        name: '80-Hour Rule',
+                        status: has80Hour ? 'fail' : 'pass',
+                        detail: has80Hour ? 'Violations found' : 'All residents within limit',
+                        threshold: '80 hrs/wk averaged over 4 weeks'
+                    },
+                    {
+                        id: '1-in-7',
+                        name: '1-in-7 Day Off',
+                        status: has1In7 ? 'fail' : 'pass',
+                        detail: has1In7 ? 'Violations found' : 'All residents compliant',
+                        threshold: '1 day off per 7-day period'
+                    },
+                    {
+                        id: 'supervision',
+                        name: 'Supervision Ratios',
+                        status: hasSupervision ? 'fail' : 'pass',
+                        detail: 'PGY-1: 1:2 | PGY-2/3: 1:4',
+                        threshold: 'PGY-1 max 1:2, PGY-2/3 max 1:4'
+                    }
+                ]
+            };
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            const isModalOpen = !modal.classList.contains('hidden');
+
+            if (isModalOpen) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    navigateResident(-1);
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    navigateResident(1);
+                } else if (e.key === 'r' || e.key === 'R') {
+                    e.preventDefault();
+                    if (selectedResident) {
+                        toggleReviewed(selectedResident.id);
+                        updateReviewButton();
+                    }
+                }
+            }
+        });
+
+        // Initialize with auth check
+        async function init() {
+            // Check authentication (allows demo mode on failure)
+            await checkAuth();
+            // Load initial block data
+            loadBlockData();
+        }
+
+        init();
+    </script>
+</body>
+</html>

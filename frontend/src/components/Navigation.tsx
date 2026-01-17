@@ -23,6 +23,7 @@ import {
   FileUp,
   HelpCircle,
   LogIn,
+  Network,
   Phone,
   Settings,
   Shield,
@@ -60,9 +61,9 @@ const navItems: NavItem[] = [
   { href: "/admin/scheduling", label: "Lab", icon: Beaker, adminOnly: true },
   { href: "/admin/users", label: "Users", icon: Shield, adminOnly: true },
   { href: "/admin/resilience-hub", label: "Resilience", icon: Activity, adminOnly: true },
+  { href: "/admin/schema", label: "Schema", icon: Database, adminOnly: true },
+  { href: "/admin/block-explorer", label: "Blocks", icon: Network, adminOnly: true },
   { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
-  // Legacy routes (deprecated but accessible)
-  { href: "/admin/legacy", label: "Legacy", icon: Database, adminOnly: true },
 ];
 
 export function Navigation() {

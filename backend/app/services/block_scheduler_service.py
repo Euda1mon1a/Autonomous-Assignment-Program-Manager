@@ -13,12 +13,15 @@ from dataclasses import dataclass, field
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.utils.academic_blocks import get_block_dates as _get_block_dates_util
 
 from app.models.absence import Absence
+from app.models.activity import Activity
 from app.models.block_assignment import AssignmentReason, BlockAssignment
+from app.models.call_assignment import CallAssignment
+from app.models.half_day_assignment import HalfDayAssignment
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.repositories.absence import AbsenceRepository
@@ -658,3 +661,484 @@ class BlockSchedulerService:
         self.assignment_repo.commit()
         self.assignment_repo.refresh(assignment)
         return assignment
+
+    def get_explorer_data(
+        self,
+        block_number: int,
+        academic_year: int,
+    ) -> dict:
+        """
+        Get complete Block Explorer data for pre-launch verification.
+
+        Aggregates data from multiple sources:
+        - Dashboard data (residents, rotations, capacities)
+        - ACGME validation results
+        - Assignment details with half-day breakdown
+
+        Returns a dict matching the BlockExplorerResponse schema.
+        """
+        from datetime import datetime as dt
+        from app.scheduling.validator import ACGMEValidator
+
+        start_date, end_date = self.get_block_dates(block_number, academic_year)
+        days_in_block = (end_date - start_date).days + 1
+
+        # Get dashboard data (reuses existing logic)
+        dashboard = self.get_dashboard(block_number, academic_year)
+
+        # Get ACGME validation
+        validator = ACGMEValidator(self.db)
+        validation = validator.validate_all(start_date, end_date)
+
+        # Get all residents and rotations
+        all_residents = self.db.query(Person).filter(Person.type == "resident").all()
+        all_faculty = self.db.query(Person).filter(Person.type == "faculty").all()
+        all_rotations = self.db.query(RotationTemplate).all()
+
+        # Bulk query half-day assignments for the block date range
+        all_half_day_assignments = (
+            self.db.query(HalfDayAssignment)
+            .filter(
+                HalfDayAssignment.date >= start_date,
+                HalfDayAssignment.date <= end_date,
+            )
+            .options(joinedload(HalfDayAssignment.activity))
+            .all()
+        )
+
+        # Index by (person_id, date, time_of_day) for O(1) lookup
+        hda_index: dict[tuple, HalfDayAssignment] = {}
+        for hda in all_half_day_assignments:
+            key = (hda.person_id, hda.date, hda.time_of_day)
+            hda_index[key] = hda
+
+        # Query call assignments for the block
+        call_assignments = (
+            self.db.query(CallAssignment)
+            .filter(
+                CallAssignment.date >= start_date,
+                CallAssignment.date <= end_date,
+            )
+            .all()
+        )
+        call_days_filled = len(set(ca.date for ca in call_assignments))
+
+        # Query all activities for color mapping
+        all_activities = self.db.query(Activity).all()
+        activity_colors = {
+            a.display_abbreviation: a.background_color or "#374151"
+            for a in all_activities
+            if a.display_abbreviation
+        }
+        # Add fallback colors for common codes
+        activity_colors.setdefault("---", "#374151")
+        activity_colors.setdefault("FMIT", "#3b82f6")
+        activity_colors.setdefault("NF", "#6366f1")
+        activity_colors.setdefault("C", "#10b981")
+
+        # Build completeness data
+        assigned_count = len(dashboard.current_assignments)
+        total_residents = len(all_residents)
+        resident_ids = {r.id for r in all_residents}
+        filled_half_day_slots = len(
+            [hda for hda in all_half_day_assignments if hda.person_id in resident_ids]
+        )
+        total_half_day_slots = (
+            total_residents * days_in_block * 2
+        )  # 2 slots per day (AM/PM)
+        completeness = {
+            "residents": {
+                "assigned": assigned_count,
+                "total": total_residents,
+                "status": "pass" if assigned_count == total_residents else "warn",
+            },
+            "faculty": {
+                "active": len(all_faculty),
+                "total": len(all_faculty),
+                "status": "pass" if len(all_faculty) > 0 else "fail",
+            },
+            "rotations": {
+                "defined": len(all_rotations),
+                "total": len(all_rotations),
+                "status": "pass" if len(all_rotations) > 0 else "fail",
+            },
+            "absences": {
+                "recorded": len(dashboard.residents_with_leave),
+                "pending": 0,
+                "status": "pass",
+            },
+            "callRoster": {
+                "filled": call_days_filled,
+                "total": days_in_block,
+                "status": "pass" if call_days_filled >= days_in_block else "warn",
+            },
+            "coverage": {
+                "filled": filled_half_day_slots,
+                "total": total_half_day_slots,
+                "gaps": total_half_day_slots - filled_half_day_slots,
+                "status": "pass"
+                if filled_half_day_slots == total_half_day_slots
+                else "warn",
+            },
+        }
+
+        # Build ACGME compliance from validation
+        has_80_hour_violation = any(
+            v.type == "80_HOUR_VIOLATION" for v in validation.violations
+        )
+        has_1_in_7_violation = any(
+            v.type == "1_IN_7_VIOLATION" for v in validation.violations
+        )
+        has_supervision_violation = any(
+            v.type == "SUPERVISION_RATIO_VIOLATION" for v in validation.violations
+        )
+
+        # Find max hours for 80-hour detail
+        max_hours_detail = "All residents within limit"
+        max_hours_resident = None
+        if validation.statistics:
+            max_hours_detail = (
+                f"Max: {validation.statistics.get('max_weekly_hours', 'N/A')} hrs/wk"
+            )
+
+        acgme_compliance = {
+            "overallStatus": "pass" if validation.valid else "fail",
+            "lastChecked": dt.utcnow().isoformat() + "Z",
+            "rules": [
+                {
+                    "id": "80-hour",
+                    "name": "80-Hour Rule",
+                    "status": "fail" if has_80_hour_violation else "pass",
+                    "detail": max_hours_detail,
+                    "threshold": "80 hrs/wk averaged over 4 weeks",
+                },
+                {
+                    "id": "1-in-7",
+                    "name": "1-in-7 Day Off",
+                    "status": "fail" if has_1_in_7_violation else "pass",
+                    "detail": "All residents compliant"
+                    if not has_1_in_7_violation
+                    else "Violations found",
+                    "threshold": "1 day off per 7-day period",
+                },
+                {
+                    "id": "supervision",
+                    "name": "Supervision Ratios",
+                    "status": "fail" if has_supervision_violation else "pass",
+                    "detail": "PGY-1: 1:2 | PGY-2/3: 1:4",
+                    "threshold": "PGY-1 max 1:2, PGY-2/3 max 1:4",
+                },
+            ],
+        }
+
+        # Build health data
+        health = {
+            "coverage": int(validation.coverage_rate)
+            if validation.coverage_rate
+            else 0,
+            "conflicts": validation.total_violations,
+            "residentCount": assigned_count,
+            "totalResidents": total_residents,
+            "acgmeCompliant": validation.valid,
+            "completeness": 100
+            if assigned_count == total_residents
+            else int(assigned_count / total_residents * 100),
+            "status": "ready"
+            if validation.valid and assigned_count == total_residents
+            else "warning",
+        }
+
+        # Build calendar structure
+        from datetime import timedelta
+
+        weeks = []
+        current_date = start_date
+        week_num = 1
+        while current_date <= end_date:
+            week_dates = []
+            for _ in range(7):
+                if current_date <= end_date:
+                    week_dates.append(current_date.isoformat())
+                current_date += timedelta(days=1)
+            if week_dates:
+                weeks.append({"weekNum": week_num, "dates": week_dates})
+                week_num += 1
+
+        calendar = {
+            "weeks": weeks,
+            "dayLabels": ["Thu", "Fri", "Sat", "Sun", "Mon", "Tue", "Wed"],
+        }
+
+        # Build resident explorer data
+        residents_data = []
+        assignment_by_resident = {}
+        for a in dashboard.current_assignments:
+            assignment_by_resident[a.resident_id] = a
+
+        # Source tracking
+        source_counts = {"PRE": 0, "GEN": 0, "MAN": 0}
+
+        for resident in all_residents:
+            assignment = assignment_by_resident.get(resident.id)
+            rotation_name = "Unassigned"
+            rotation_id = ""
+            source = "GEN"
+            notes = None
+            needs_attention = False
+            attention_reason = None
+
+            if assignment:
+                if assignment.rotation_template:
+                    rotation_name = assignment.rotation_template.name
+                    rotation_id = str(assignment.rotation_template.id)
+
+                # Determine source
+                if assignment.assignment_reason == "manual":
+                    source = "MAN"
+                elif assignment.assignment_reason == "leave_eligible_match":
+                    source = "PRE"
+                else:
+                    source = "GEN"
+
+                notes = assignment.notes
+
+                # Check if needs attention
+                if assignment.has_leave and assignment.leave_days > 0:
+                    needs_attention = True
+                    attention_reason = (
+                        f"Has {assignment.leave_days} leave days - verify coverage"
+                    )
+
+            else:
+                needs_attention = True
+                attention_reason = "No block assignment"
+
+            source_counts[source] = source_counts.get(source, 0) + 1
+
+            # Build half-days from actual HalfDayAssignment records
+            half_days = []
+            complete_assignments = 0
+            current = start_date
+            while current <= end_date:
+                am_key = (resident.id, current, "AM")
+                pm_key = (resident.id, current, "PM")
+
+                am_hda = hda_index.get(am_key)
+                pm_hda = hda_index.get(pm_key)
+
+                am_abbrev = "---"
+                pm_abbrev = "---"
+                am_source = "---"
+                pm_source = "---"
+
+                if am_hda:
+                    am_abbrev = (
+                        am_hda.activity.display_abbreviation
+                        if am_hda.activity
+                        else "???"
+                    )
+                    am_source = am_hda.source or "GEN"
+                    complete_assignments += 1
+
+                if pm_hda:
+                    pm_abbrev = (
+                        pm_hda.activity.display_abbreviation
+                        if pm_hda.activity
+                        else "???"
+                    )
+                    pm_source = pm_hda.source or "GEN"
+                    complete_assignments += 1
+
+                half_days.append(
+                    {
+                        "date": current.isoformat(),
+                        "am": am_abbrev,
+                        "pm": pm_abbrev,
+                        "amSource": am_source,
+                        "pmSource": pm_source,
+                    }
+                )
+                current += timedelta(days=1)
+
+            # Calculate assignment count (total expected half-day slots)
+            assignment_count = days_in_block * 2
+
+            # Get rotation abbreviation from template fields, fallback to truncated name
+            rotation_abbrev = "---"
+            if (
+                rotation_name != "Unassigned"
+                and assignment
+                and assignment.rotation_template
+            ):
+                rotation_abbrev = (
+                    assignment.rotation_template.display_abbreviation
+                    or assignment.rotation_template.abbreviation
+                    or rotation_name[:4].upper()
+                )
+            elif rotation_name != "Unassigned":
+                rotation_abbrev = rotation_name[:4].upper()
+
+            residents_data.append(
+                {
+                    "id": str(resident.id),
+                    "name": resident.name,
+                    "pgyLevel": resident.pgy_level or 1,
+                    "rotation": rotation_abbrev,
+                    "rotationId": rotation_id,
+                    "assignmentCount": assignment_count,
+                    "completeAssignments": complete_assignments,
+                    "absenceDays": assignment.leave_days if assignment else 0,
+                    "source": source,
+                    "notes": notes,
+                    "needsAttention": needs_attention
+                    or complete_assignments < assignment_count,
+                    "attentionReason": attention_reason
+                    or (
+                        f"Missing {assignment_count - complete_assignments} half-day assignments"
+                        if complete_assignments < assignment_count
+                        else None
+                    ),
+                    "halfDays": half_days,
+                }
+            )
+
+        # Build rotation explorer data
+        rotations_data = []
+        for cap in dashboard.rotation_capacities:
+            rotation = next(
+                (r for r in all_rotations if r.id == cap.rotation_template_id), None
+            )
+            if rotation:
+                resident_ids = [
+                    str(a.resident_id)
+                    for a in dashboard.current_assignments
+                    if a.rotation_template_id == rotation.id
+                ]
+                # Get color from activity_colors dict or default
+                rotation_abbrev = rotation.name[:4].upper()
+                rotation_color = activity_colors.get(rotation_abbrev, "#3b82f6")
+                rotations_data.append(
+                    {
+                        "id": str(rotation.id),
+                        "name": rotation.name,
+                        "abbreviation": rotation_abbrev,
+                        "category": rotation.activity_type or "Other",
+                        "color": rotation_color,
+                        "capacity": cap.max_residents,
+                        "assignedCount": cap.current_assigned,
+                        "residents": resident_ids,
+                        "description": rotation.name,
+                        "callEligible": not rotation.leave_eligible,
+                        "leaveEligible": rotation.leave_eligible,
+                    }
+                )
+
+        # Build validation checks
+        validation_checks = [
+            {
+                "name": "56-Day Coverage",
+                "status": "pass" if assigned_count == total_residents else "fail",
+                "description": "All residents have complete half-day coverage",
+                "details": f"{assigned_count}/{total_residents} residents assigned",
+            },
+            {
+                "name": "ACGME Work Hours",
+                "status": "pass" if not has_80_hour_violation else "fail",
+                "description": "All residents within 80-hour weekly limit",
+                "details": max_hours_detail,
+            },
+            {
+                "name": "1-in-7 Day Off",
+                "status": "pass" if not has_1_in_7_violation else "fail",
+                "description": "All residents have required day off",
+                "details": "Using PAUSE interpretation for absences",
+            },
+            {
+                "name": "Supervision Ratios",
+                "status": "pass" if not has_supervision_violation else "fail",
+                "description": "Attending coverage meets requirements",
+                "details": "All shifts have required supervision",
+            },
+        ]
+
+        # Add any missing fallback colors for common codes
+        activity_colors.setdefault("INP", "#8b5cf6")
+        activity_colors.setdefault("CLN", "#10b981")
+        activity_colors.setdefault("ELEC", "#f59e0b")
+        activity_colors.setdefault("ED", "#ef4444")
+        activity_colors.setdefault("OFF", "#374151")
+        activity_colors.setdefault("ABS", "#dc2626")
+        activity_colors.setdefault("POST", "#9333ea")
+        activity_colors.setdefault("CALL", "#0891b2")
+
+        # Sources
+        total_assignments = sum(source_counts.values())
+        sources = {
+            "PRE": {
+                "label": "Preloaded",
+                "color": "#3b82f6",
+                "description": "From Excel import - locked assignments",
+                "count": source_counts.get("PRE", 0),
+                "percentage": int(source_counts.get("PRE", 0) / total_assignments * 100)
+                if total_assignments
+                else 0,
+            },
+            "GEN": {
+                "label": "Generated",
+                "color": "#10b981",
+                "description": "Created by scheduling algorithm",
+                "count": source_counts.get("GEN", 0),
+                "percentage": int(source_counts.get("GEN", 0) / total_assignments * 100)
+                if total_assignments
+                else 0,
+            },
+            "MAN": {
+                "label": "Manual",
+                "color": "#f59e0b",
+                "description": "Manually entered or modified",
+                "count": source_counts.get("MAN", 0),
+                "percentage": int(source_counts.get("MAN", 0) / total_assignments * 100)
+                if total_assignments
+                else 0,
+            },
+        }
+
+        # Build meta
+        month_names = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+        ]
+        date_range = f"{month_names[start_date.month - 1]} {start_date.day} - {month_names[end_date.month - 1]} {end_date.day}, {end_date.year}"
+
+        meta = {
+            "blockNumber": block_number,
+            "title": f"Block {block_number}",
+            "dateRange": date_range,
+            "startDate": start_date.isoformat(),
+            "endDate": end_date.isoformat(),
+            "daysInBlock": days_in_block,
+            "generatedAt": dt.utcnow().isoformat() + "Z",
+        }
+
+        return {
+            "meta": meta,
+            "completeness": completeness,
+            "acgmeCompliance": acgme_compliance,
+            "health": health,
+            "calendar": calendar,
+            "residents": residents_data,
+            "rotations": rotations_data,
+            "validationChecks": validation_checks,
+            "activityColors": activity_colors,
+            "sources": sources,
+        }

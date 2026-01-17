@@ -136,3 +136,11 @@ class BlockSchedulerController:
         success = self.service.delete_assignment(assignment_id)
         if not success:
             raise HTTPException(status_code=404, detail="Block assignment not found")
+
+    def get_explorer_data(
+        self,
+        block_number: int,
+        academic_year: int,
+    ) -> dict:
+        """Get Block Explorer data for pre-launch verification."""
+        return self.service.get_explorer_data(block_number, academic_year)
