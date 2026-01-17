@@ -913,6 +913,127 @@ class SchedulerAPIClient:
         response.raise_for_status()
         return response.json()
 
+    # ==================== BACKUP METHODS ====================
+
+    async def create_backup(
+        self,
+        strategy: str = "full",
+        description: str = "",
+    ) -> dict[str, Any]:
+        """Create a database backup.
+
+        Args:
+            strategy: Backup strategy - "full", "incremental", or "differential"
+            description: Optional description for audit trail
+
+        Returns:
+            BackupResult with backup_id, timestamp, size, and status
+        """
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/backup/create",
+            headers=headers,
+            json={
+                "strategy": strategy,
+                "description": description,
+            },
+            timeout=300.0,  # 5 minute timeout for backups
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def list_backups(
+        self,
+        limit: int = 50,
+        strategy: str | None = None,
+    ) -> dict[str, Any]:
+        """List available database backups.
+
+        Args:
+            limit: Maximum backups to return (default 50)
+            strategy: Filter by strategy type (optional)
+
+        Returns:
+            List of backups with metadata and storage stats
+        """
+        headers = await self._ensure_authenticated()
+        params: dict[str, Any] = {"limit": limit}
+        if strategy:
+            params["strategy"] = strategy
+
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/backup/list",
+            headers=headers,
+            params=params,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def restore_backup(
+        self,
+        backup_id: str,
+        dry_run: bool = True,
+    ) -> dict[str, Any]:
+        """Restore database from a backup.
+
+        WARNING: Non-dry-run will replace all database data.
+
+        Args:
+            backup_id: ID of backup to restore
+            dry_run: If True, preview restore without applying (default True)
+
+        Returns:
+            Restore result with status
+        """
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/backup/restore/{backup_id}",
+            headers=headers,
+            json={"dry_run": dry_run},
+            timeout=600.0,  # 10 minute timeout for restore
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def verify_backup(
+        self,
+        backup_id: str,
+    ) -> dict[str, Any]:
+        """Verify backup integrity.
+
+        Args:
+            backup_id: ID of backup to verify
+
+        Returns:
+            Verification result with checksum and validity
+        """
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/backup/verify/{backup_id}",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def get_backup_status(self) -> dict[str, Any]:
+        """Get backup system health status.
+
+        Returns:
+            Backup system status with latest backup age, count, and warnings
+        """
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/backup/status",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
 
 # Module-level client instance
 _api_client: SchedulerAPIClient | None = None
