@@ -746,12 +746,17 @@ async def list_backups(
 
             metadata = parse_backup_metadata(backup_file)
 
+            # Filter by strategy if specified
+            backup_strategy = metadata.get("strategy", "full")
+            if strategy and backup_strategy != strategy:
+                continue
+
             backups.append(
                 BackupResult(
                     backup_id=filename,
                     created_at=created_at,
                     size_mb=round(size_mb, 2),
-                    strategy=metadata.get("strategy", "full"),
+                    strategy=backup_strategy,
                     status=BackupStatus.SUCCESS.value,
                     file_path=str(backup_file),
                     schema_version=metadata.get("alembic_version"),
