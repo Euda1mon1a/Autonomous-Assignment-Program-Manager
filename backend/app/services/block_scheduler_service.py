@@ -963,14 +963,27 @@ class BlockSchedulerService:
             # Calculate assignment count (total expected half-day slots)
             assignment_count = days_in_block * 2
 
+            # Get rotation abbreviation from template fields, fallback to truncated name
+            rotation_abbrev = "---"
+            if (
+                rotation_name != "Unassigned"
+                and assignment
+                and assignment.rotation_template
+            ):
+                rotation_abbrev = (
+                    assignment.rotation_template.display_abbreviation
+                    or assignment.rotation_template.abbreviation
+                    or rotation_name[:4].upper()
+                )
+            elif rotation_name != "Unassigned":
+                rotation_abbrev = rotation_name[:4].upper()
+
             residents_data.append(
                 {
                     "id": str(resident.id),
                     "name": resident.name,
                     "pgyLevel": resident.pgy_level or 1,
-                    "rotation": rotation_name[:4].upper()
-                    if rotation_name != "Unassigned"
-                    else "---",
+                    "rotation": rotation_abbrev,
                     "rotationId": rotation_id,
                     "assignmentCount": assignment_count,
                     "completeAssignments": complete_assignments,

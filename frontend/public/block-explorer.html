@@ -538,12 +538,14 @@
         };
 
         // Calculate current academic year (July = new AY start)
+        // Returns the STARTING year of the academic year (e.g., 2025 for AY 2025-2026)
         function getCurrentAcademicYear() {
             const now = new Date();
             const month = now.getMonth(); // 0-indexed (0 = Jan, 6 = July)
             const year = now.getFullYear();
-            // Academic year starts July 1, so July-Dec is next calendar year's AY
-            return month >= 6 ? year + 1 : year;
+            // Academic year starts July 1: July 2025 onward = AY 2025-2026 (return 2025)
+            // Jan-June 2026 is still AY 2025-2026 (return 2025)
+            return month >= 6 ? year : year - 1;
         }
 
         // DOM Elements
