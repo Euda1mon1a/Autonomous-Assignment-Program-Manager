@@ -314,7 +314,7 @@ export function useSolutionTransitions(
 
         setTransitions((prev) => {
           const updated = new Map(prev);
-          const _allComplete = true;
+          let allComplete = true;
           const nowCompleted: string[] = [];
 
           let index = 0;
