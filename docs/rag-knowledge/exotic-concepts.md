@@ -1,5 +1,10 @@
 # Exotic Frontier Concepts for Residency Scheduling
 
+> **See [EXOTIC_CONCEPTS_UNIFIED.md](../research/EXOTIC_CONCEPTS_UNIFIED.md) for complete reference**
+> This is the canonical single URL covering all tiers: Implemented, Experimental, and Research.
+
+---
+
 > **Document Type**: exotic_concepts
 > **Purpose**: RAG knowledge base for Tier 5 cross-disciplinary resilience concepts
 > **Version**: 1.0

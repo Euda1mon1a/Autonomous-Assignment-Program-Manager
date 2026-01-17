@@ -1,5 +1,10 @@
 # Exotic Frontier Concepts for Residency Scheduling
 
+> **See [EXOTIC_CONCEPTS_UNIFIED.md](../research/EXOTIC_CONCEPTS_UNIFIED.md) for complete reference**
+> This is the canonical single URL covering all tiers: Implemented, Experimental, and Research.
+
+---
+
 > **Status**: Production-ready
 > **Version**: 1.0
 > **Created**: 2025-12-29
