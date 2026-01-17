@@ -1,20 +1,27 @@
 'use client';
 
 /**
- * Admin Fairness Audit Page
+ * Admin Fairness Dashboard
  *
- * Full-detail workload fairness view for Program Directors.
- * Features:
- * - Date range selection
- * - Jain's fairness index gauge
- * - Category statistics (call, FMIT, clinic, admin, academic)
- * - Per-faculty workload table (sortable)
- * - Outlier highlighting
- * - Include titled faculty toggle
+ * Comprehensive workload fairness analysis with multiple visualization views:
+ * - Overview: Jain's fairness index, category stats, faculty table
+ * - Lorenz Curve: Visual inequality representation with Gini coefficient
+ * - Shapley Values: Game theory fair workload distribution
+ * - Trends: Historical fairness metrics over time
  */
 
 import { useState, useMemo } from 'react';
-import { Scale, RefreshCw, AlertTriangle, CheckCircle2, Users } from 'lucide-react';
+import {
+  Scale,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle2,
+  Users,
+  BarChart3,
+  GitBranch,
+  TrendingUp,
+  PieChart,
+} from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Switch } from '@/components/ui/Switch';
@@ -30,10 +37,93 @@ import {
   getWorkloadDeviation,
   type FacultyWorkload,
 } from '@/hooks/useFairness';
+import { LorenzCurveChart } from '@/components/admin/LorenzCurveChart';
+import { ShapleyValueAnalysis } from '@/components/admin/ShapleyValueAnalysis';
+import { FairnessTrend } from '@/features/analytics/FairnessTrend';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+type TabId = 'overview' | 'lorenz' | 'shapley' | 'trends';
+
+interface TabConfig {
+  id: TabId;
+  label: string;
+  icon: React.ElementType;
+  description: string;
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const TABS: TabConfig[] = [
+  {
+    id: 'overview',
+    label: 'Overview',
+    icon: PieChart,
+    description: "Jain's fairness index and category breakdown",
+  },
+  {
+    id: 'lorenz',
+    label: 'Lorenz Curve',
+    icon: BarChart3,
+    description: 'Visual inequality with Gini coefficient',
+  },
+  {
+    id: 'shapley',
+    label: 'Shapley Values',
+    icon: GitBranch,
+    description: 'Game theory fair workload distribution',
+  },
+  {
+    id: 'trends',
+    label: 'Trends',
+    icon: TrendingUp,
+    description: 'Historical fairness over time',
+  },
+];
 
 // ============================================================================
 // Helper Components
 // ============================================================================
+
+function TabNavigation({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: TabId;
+  onTabChange: (tab: TabId) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2 p-1 bg-slate-800/50 border border-slate-700 rounded-lg">
+      {TABS.map((tab) => {
+        const Icon = tab.icon;
+        const isActive = activeTab === tab.id;
+
+        return (
+          <button
+            key={tab.id}
+            onClick={() => onTabChange(tab.id)}
+            className={`
+              flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all
+              ${
+                isActive
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+              }
+            `}
+            title={tab.description}
+          >
+            <Icon className="w-4 h-4" />
+            <span>{tab.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function FairnessGauge({ value }: { value: number }) {
   const status = getFairnessStatus(value);
@@ -45,14 +135,6 @@ function FairnessGauge({ value }: { value: number }) {
     good: 'text-emerald-500',
     warning: 'text-amber-500',
     critical: 'text-red-500',
-  }[status];
-
-  // bgColorClass is defined for potential future use (e.g., filled gauge backgrounds)
-  const _bgColorClass = {
-    excellent: 'bg-green-500',
-    good: 'bg-emerald-500',
-    warning: 'bg-amber-500',
-    critical: 'bg-red-500',
   }[status];
 
   return (
@@ -87,7 +169,15 @@ function FairnessGauge({ value }: { value: number }) {
         </div>
       </div>
       <Badge
-        variant={status === 'excellent' ? 'success' : status === 'good' ? 'primary' : status === 'warning' ? 'warning' : 'danger'}
+        variant={
+          status === 'excellent'
+            ? 'success'
+            : status === 'good'
+              ? 'primary'
+              : status === 'warning'
+                ? 'warning'
+                : 'danger'
+        }
         className="mt-2"
       >
         {label}
@@ -144,11 +234,178 @@ function StatCard({
 }
 
 // ============================================================================
+// Tab Content Components
+// ============================================================================
+
+interface OverviewContentProps {
+  data: NonNullable<ReturnType<typeof useFairnessAudit>['data']>;
+  columns: Column<FacultyWorkload>[];
+}
+
+function OverviewContent({ data, columns }: OverviewContentProps) {
+  return (
+    <div className="space-y-6">
+      {/* Summary Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Fairness Index */}
+        <Card className="bg-slate-800 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">Fairness Index</CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <FairnessGauge value={data.fairnessIndex} />
+          </CardContent>
+        </Card>
+
+        {/* Workload Summary */}
+        <Card className="bg-slate-800 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">Workload Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Faculty Count:</span>
+                <span className="text-white font-medium">{data.facultyCount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Min Score:</span>
+                <span className="text-white font-medium">
+                  {data.workloadStats.min.toFixed(1)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Max Score:</span>
+                <span className="text-white font-medium">
+                  {data.workloadStats.max.toFixed(1)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Mean Score:</span>
+                <span className="text-white font-medium">
+                  {data.workloadStats.mean.toFixed(1)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Spread:</span>
+                <span className="text-white font-medium">
+                  {data.workloadStats.spread.toFixed(1)}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Outliers */}
+        <Card className="bg-slate-800 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">Outliers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                  <span className="text-sm text-slate-300">
+                    High Workload ({data.outliers.high.length})
+                  </span>
+                </div>
+                {data.outliers.high.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {data.outliers.high.map((name) => (
+                      <Badge key={name} variant="danger" size="sm">
+                        {name}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-slate-400 text-sm">None</span>
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="w-4 h-4 text-amber-500" />
+                  <span className="text-sm text-slate-300">
+                    Low Workload ({data.outliers.low.length})
+                  </span>
+                </div>
+                {data.outliers.low.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {data.outliers.low.map((name) => (
+                      <Badge key={name} variant="warning" size="sm">
+                        {name}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-slate-400 text-sm">None</span>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Category Stats */}
+      <div>
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <Users className="w-5 h-5" />
+          Category Statistics
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <StatCard
+            title="Call (Overnight)"
+            {...data.categoryStats.call}
+            weight={data.weights.call}
+          />
+          <StatCard
+            title="FMIT Weeks"
+            {...data.categoryStats.fmit}
+            weight={data.weights.fmit}
+          />
+          <StatCard
+            title="Clinic Half-Days"
+            {...data.categoryStats.clinic}
+            weight={data.weights.clinic}
+          />
+          <StatCard
+            title="Admin (GME/DFM)"
+            {...data.categoryStats.admin}
+            weight={data.weights.admin}
+          />
+          <StatCard
+            title="Academic (LEC/ADV)"
+            {...data.categoryStats.academic}
+            weight={data.weights.academic}
+          />
+        </div>
+      </div>
+
+      {/* Faculty Table */}
+      <div>
+        <h2 className="text-lg font-semibold text-white mb-4">Faculty Workloads</h2>
+        <DataTable
+          data={data.workloads}
+          columns={columns}
+          rowKey={(row) => row.personId}
+          pageSize={15}
+          searchable
+          className="[&_table]:bg-slate-800 [&_thead]:bg-slate-700 [&_th]:text-slate-300 [&_td]:text-slate-200 [&_input]:bg-slate-700 [&_input]:border-slate-600 [&_input]:text-white"
+        />
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
 // Main Page Component
 // ============================================================================
 
 export default function AdminFairnessPage() {
   const queryClient = useQueryClient();
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<TabId>('overview');
 
   // Default to current month (using local timezone)
   const [startDate, setStartDate] = useState<string>(getFirstOfMonthLocal);
@@ -162,7 +419,18 @@ export default function AdminFairnessPage() {
     includeTitled
   );
 
-  // Table columns
+  // Derive data for child components
+  const workloadValues = useMemo(
+    () => data?.workloads.map((w) => w.totalScore) ?? null,
+    [data]
+  );
+
+  const facultyIds = useMemo(
+    () => data?.workloads.map((w) => w.personId) ?? null,
+    [data]
+  );
+
+  // Table columns for Overview tab
   const columns: Column<FacultyWorkload>[] = useMemo(
     () => [
       {
@@ -251,10 +519,10 @@ export default function AdminFairnessPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">
-                  Workload Fairness Audit
+                  Workload Fairness Dashboard
                 </h1>
                 <p className="text-sm text-slate-300">
-                  Analyze faculty workload distribution across categories
+                  Multi-dimensional fairness analysis with Lorenz curves and Shapley values
                 </p>
               </div>
             </div>
@@ -273,7 +541,7 @@ export default function AdminFairnessPage() {
       </header>
 
       {/* Controls */}
-      <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
         <div className="flex flex-wrap items-center gap-4 p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
           <div className="flex items-center gap-2">
             <label className="text-sm text-slate-300">From:</label>
@@ -301,12 +569,15 @@ export default function AdminFairnessPage() {
             />
           </div>
         </div>
+
+        {/* Tab Navigation */}
+        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 py-6">
         {/* Loading State */}
-        {isLoading && (
+        {isLoading && activeTab !== 'trends' && (
           <div className="flex items-center justify-center py-12">
             <div className="flex items-center gap-3 text-slate-300">
               <RefreshCw className="w-5 h-5 animate-spin" />
@@ -316,7 +587,7 @@ export default function AdminFairnessPage() {
         )}
 
         {/* Error State */}
-        {error && (
+        {error && activeTab !== 'trends' && (
           <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-red-500" />
             <span className="text-red-400">
@@ -325,165 +596,35 @@ export default function AdminFairnessPage() {
           </div>
         )}
 
-        {/* Data Display */}
-        {data && (
-          <>
-            {/* Summary Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Fairness Index */}
-              <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Fairness Index</CardTitle>
-                </CardHeader>
-                <CardContent className="flex justify-center">
-                  <FairnessGauge value={data.fairnessIndex} />
-                </CardContent>
-              </Card>
+        {/* Tab Content */}
+        {activeTab === 'overview' && data && (
+          <OverviewContent data={data} columns={columns} />
+        )}
 
-              {/* Workload Summary */}
-              <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Workload Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Faculty Count:</span>
-                      <span className="text-white font-medium">{data.facultyCount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Min Score:</span>
-                      <span className="text-white font-medium">
-                        {data.workloadStats.min.toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Max Score:</span>
-                      <span className="text-white font-medium">
-                        {data.workloadStats.max.toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Mean Score:</span>
-                      <span className="text-white font-medium">
-                        {data.workloadStats.mean.toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Spread:</span>
-                      <span className="text-white font-medium">
-                        {data.workloadStats.spread.toFixed(1)}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        {activeTab === 'lorenz' && (
+          <LorenzCurveChart values={workloadValues} isParentLoading={isLoading} />
+        )}
 
-              {/* Outliers */}
-              <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Outliers</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <AlertTriangle className="w-4 h-4 text-red-500" />
-                        <span className="text-sm text-slate-300">
-                          High Workload ({data.outliers.high.length})
-                        </span>
-                      </div>
-                      {data.outliers.high.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {data.outliers.high.map((name) => (
-                            <Badge key={name} variant="danger" size="sm">
-                              {name}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 text-sm">None</span>
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle2 className="w-4 h-4 text-amber-500" />
-                        <span className="text-sm text-slate-300">
-                          Low Workload ({data.outliers.low.length})
-                        </span>
-                      </div>
-                      {data.outliers.low.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {data.outliers.low.map((name) => (
-                            <Badge key={name} variant="warning" size="sm">
-                              {name}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 text-sm">None</span>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+        {activeTab === 'shapley' && (
+          <ShapleyValueAnalysis
+            facultyIds={facultyIds}
+            startDate={startDate}
+            endDate={endDate}
+            isParentLoading={isLoading}
+          />
+        )}
 
-            {/* Category Stats */}
-            <div>
-              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Category Statistics
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <StatCard
-                  title="Call (Overnight)"
-                  {...data.categoryStats.call}
-                  weight={data.weights.call}
-                />
-                <StatCard
-                  title="FMIT Weeks"
-                  {...data.categoryStats.fmit}
-                  weight={data.weights.fmit}
-                />
-                <StatCard
-                  title="Clinic Half-Days"
-                  {...data.categoryStats.clinic}
-                  weight={data.weights.clinic}
-                />
-                <StatCard
-                  title="Admin (GME/DFM)"
-                  {...data.categoryStats.admin}
-                  weight={data.weights.admin}
-                />
-                <StatCard
-                  title="Academic (LEC/ADV)"
-                  {...data.categoryStats.academic}
-                  weight={data.weights.academic}
-                />
-              </div>
-            </div>
+        {activeTab === 'trends' && (
+          <div className="space-y-6">
+            <FairnessTrend months={3} showPgyComparison />
+          </div>
+        )}
 
-            {/* Faculty Table */}
-            <div>
-              <h2 className="text-lg font-semibold text-white mb-4">
-                Faculty Workloads
-              </h2>
-              <DataTable
-                data={data.workloads}
-                columns={columns}
-                rowKey={(row) => row.personId}
-                pageSize={15}
-                searchable
-                className="[&_table]:bg-slate-800 [&_thead]:bg-slate-700 [&_th]:text-slate-300 [&_td]:text-slate-200 [&_input]:bg-slate-700 [&_input]:border-slate-600 [&_input]:text-white"
-              />
-            </div>
-
-            {/* Period Info */}
-            <div className="text-sm text-slate-400 text-center">
-              Data for period: {data.period.start} to {data.period.end}
-            </div>
-          </>
+        {/* Period Info - only show for overview */}
+        {activeTab === 'overview' && data && (
+          <div className="mt-6 text-sm text-slate-400 text-center">
+            Data for period: {data.period.start} to {data.period.end}
+          </div>
         )}
       </main>
     </div>
