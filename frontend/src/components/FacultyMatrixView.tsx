@@ -19,7 +19,6 @@ import { useFacultyMatrix } from '@/hooks/useFacultyActivities';
 import { useFairnessAudit, getWorkloadDeviation } from '@/hooks/useFairness';
 import { useUpdatePerson } from '@/hooks/usePeople';
 import {
-  formatLocalDate,
   addDaysLocal,
   getMondayOfWeek,
   getFirstOfMonthLocal,
@@ -363,14 +362,12 @@ function WorkloadBadge({
  * Inline role editor dropdown.
  */
 function InlineRoleEditor({
-  personId,
   personName,
   currentRole,
   onSave,
   onCancel,
   isSaving,
 }: {
-  personId: string;
   personName: string;
   currentRole: FacultyRole | null;
   onSave: (role: FacultyRole) => void;
@@ -677,7 +674,6 @@ export function FacultyMatrixView({
                         <td className="p-2 sticky left-0 bg-slate-900 z-10">
                           {isEditingRole ? (
                             <InlineRoleEditor
-                              personId={facultyId}
                               personName={faculty.name}
                               currentRole={faculty.facultyRole ?? null}
                               onSave={(role) => handleRoleSave(facultyId, role)}

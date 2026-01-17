@@ -94,7 +94,7 @@ export const ComplianceTimeline: React.FC<ComplianceTimelineProps> = ({
 
         {/* Events */}
         <div className="space-y-6">
-          {sortedEvents.map((event, idx) => {
+          {sortedEvents.map((event, _idx) => {
             const config = typeConfig[event.type];
 
             return (

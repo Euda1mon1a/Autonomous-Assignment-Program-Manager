@@ -191,7 +191,7 @@ export function ScheduleDragProvider({
 
   // Handle drag end
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event
+    const { active: _active, over } = event
 
     if (over && activeAssignment) {
       const target = over.data.current as DropTarget | undefined

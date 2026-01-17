@@ -19,11 +19,9 @@ import {
 } from "@/api/block-assignment-import";
 import {
   type BlockAssignmentPreviewResponse,
-  type BlockAssignmentPreviewItem,
   type BlockAssignmentImportResult,
   type QuickTemplateCreateRequest,
   DuplicateAction,
-  type MatchStatus,
 } from "@/types/block-assignment-import";
 
 export type ImportStep = "upload" | "preview" | "importing" | "complete";

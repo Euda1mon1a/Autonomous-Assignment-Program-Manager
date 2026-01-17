@@ -177,13 +177,13 @@ interface FilmProps {
   pressureB: number;
 }
 
-const Film: React.FC<FilmProps> = ({ start, end, pressureA, pressureB }) => {
+const Film: React.FC<FilmProps> = ({ start, end, pressureA: _pressureA, pressureB: _pressureB }) => {
   const ref = useRef<THREE.Mesh>(null);
   const dist = start.distanceTo(end);
   const mid = start.clone().add(end).multiplyScalar(0.5);
 
   // Calculate stress on the film (difference in pressure)
-  const stress = Math.abs(pressureA - pressureB);
+  const stress = Math.abs(_pressureA - _pressureB);
   const isCritical = stress > 0.8;
 
   useFrame((state) => {
@@ -226,7 +226,7 @@ interface FoamSimulationProps {
   onFilmsUpdate: (films: FilmData[]) => void;
 }
 
-const FoamSimulation: React.FC<FoamSimulationProps> = ({ cells, isRunning, onFilmsUpdate }) => {
+const FoamSimulation: React.FC<FoamSimulationProps> = ({ cells, setCells: _setCells, isRunning, onFilmsUpdate }) => {
   // Simple force-directed graph physics
   useFrame((state, delta) => {
     if (!isRunning) return;

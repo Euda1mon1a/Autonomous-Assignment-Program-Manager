@@ -13,10 +13,6 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import {
-  History,
-  Filter,
-  Download,
-  Search,
   RefreshCw,
   FileText,
   AlertTriangle,

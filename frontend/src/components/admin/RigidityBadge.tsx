@@ -11,7 +11,6 @@ import { Loader2, Lock, Shield, AlertTriangle, Flame } from 'lucide-react';
 import {
   useRigidityScore,
   getRigidityColorClass,
-  getStabilityIcon,
 } from '@/hooks/useRigidityScore';
 
 // ============================================================================

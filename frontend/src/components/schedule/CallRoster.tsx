@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { format, parseISO, startOfDay, isWithinInterval } from 'date-fns'
 import { Phone, Mail, AlertCircle, Calendar, Users } from 'lucide-react'
 import { useAssignments, usePeople, useRotationTemplates } from '@/lib/hooks'
-import type { Person, Assignment } from '@/types/api'
+import type { Person } from '@/types/api'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { EmptyState } from '@/components/EmptyState'
 

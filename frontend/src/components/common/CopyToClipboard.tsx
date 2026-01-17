@@ -48,8 +48,8 @@ export function CopyToClipboard({
 
       // Reset after 2 seconds
       setTimeout(() => setCopied(false), 2000)
-    } catch (error) {
-      // console.error('Failed to copy to clipboard:', error)
+    } catch (_error) {
+      // console.error('Failed to copy to clipboard:', _error)
 
       // Fallback for older browsers
       const textArea = document.createElement('textarea')
@@ -169,8 +169,8 @@ export function CopyInputField({
       setCopied(true)
       onCopy?.()
       setTimeout(() => setCopied(false), 2000)
-    } catch (error) {
-      // console.error('Failed to copy:', error)
+    } catch (_error) {
+      // console.error('Failed to copy:', _error)
     }
   }, [value, onCopy])
 
@@ -256,8 +256,8 @@ export function ShareButton({
       await navigator.clipboard.writeText(shareUrl)
       setShared(true)
       setTimeout(() => setShared(false), 2000)
-    } catch (error) {
-      // console.error('Share failed:', error)
+    } catch (_error) {
+      // console.error('Share failed:', _error)
     }
   }, [title, text, url])
 

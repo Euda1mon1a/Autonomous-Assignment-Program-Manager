@@ -57,7 +57,7 @@ export function BlockNavigation({
   }, [blocksData])
 
   // Find current block range, previous block, and next block
-  const { currentBlockRange, previousBlockRange, nextBlockRange, todayBlockRange } = useMemo(() => {
+  const { currentBlockRange: _currentBlockRange, previousBlockRange, nextBlockRange, todayBlockRange } = useMemo(() => {
     if (!blockRanges?.length) {
       return {
         currentBlockRange: null,

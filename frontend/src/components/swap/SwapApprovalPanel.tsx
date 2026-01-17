@@ -27,7 +27,7 @@ export const SwapApprovalPanel: React.FC<SwapApprovalPanelProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const selectedSwap = pendingSwaps.find(s => s.id === selectedSwapId);
+  const _selectedSwap = pendingSwaps.find(s => s.id === selectedSwapId);
 
   const handleAction = async () => {
     if (!selectedSwapId || !actionType) return;

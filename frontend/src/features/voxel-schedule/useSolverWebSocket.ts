@@ -12,7 +12,7 @@
  * @module features/voxel-schedule/useSolverWebSocket
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { getAccessToken } from '@/lib/auth';
 
@@ -342,7 +342,7 @@ export function useSolverWebSocket(
    * Handle WebSocket errors.
    */
   const handleError = useCallback(
-    (error: Event) => {
+    (_error: Event) => {
       setStatus('error');
       onError?.(new Error('WebSocket connection error'));
     },
@@ -500,7 +500,7 @@ export function useSolverProgressPolling(
             intervalRef.current = null;
           }
         }
-      } catch (error) {
+      } catch (_error) {
         // Polling error - continue trying
       }
     };

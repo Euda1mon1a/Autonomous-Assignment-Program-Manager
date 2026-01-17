@@ -29,8 +29,8 @@ export function ContactInfo({
       await navigator.clipboard.writeText(text);
       setCopiedField(field);
       setTimeout(() => setCopiedField(null), 2000);
-    } catch (err) {
-      // console.error('Failed to copy:', err);
+    } catch (_err) {
+      // console.error('Failed to copy:', _err);
     }
   };
 

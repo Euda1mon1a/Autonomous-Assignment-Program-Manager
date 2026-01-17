@@ -23,7 +23,7 @@
  * @module features/voxel-schedule/InstancedVoxelRenderer
  */
 
-import React, { useRef, useMemo, useEffect, useCallback } from 'react';
+import React, { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 

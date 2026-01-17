@@ -63,7 +63,7 @@ export const SwapRequestForm: React.FC<SwapRequestFormProps> = ({
       try {
         const blocks = await getAvailableBlocksForPerson(personId);
         setTargetBlocks(blocks);
-      } catch (err) {
+      } catch (_err) {
         setError('Failed to load available blocks');
         setTargetBlocks([]);
       } finally {

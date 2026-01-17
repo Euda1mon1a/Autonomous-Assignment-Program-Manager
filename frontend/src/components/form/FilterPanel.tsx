@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { Filter, X, ChevronDown } from 'lucide-react';
-import { Button } from '../ui/Button';
 
 export type FilterValue = string | string[] | boolean | { start: string; end: string } | null | undefined;
 

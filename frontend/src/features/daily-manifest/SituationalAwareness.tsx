@@ -1,6 +1,6 @@
 'use client';
 
-import { Hospital, Moon, Palmtree, User } from 'lucide-react';
+import { Hospital, Moon, User } from 'lucide-react';
 import type { SituationalAwareness as SituationalAwarenessType, AttendingInfo } from './types';
 
 interface SituationalAwarenessProps {

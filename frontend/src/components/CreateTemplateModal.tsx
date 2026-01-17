@@ -133,7 +133,7 @@ export function CreateTemplateModal({ isOpen, onClose }: CreateTemplateModalProp
     try {
       await createTemplate.mutateAsync(templateData);
       handleClose();
-    } catch (err) {
+    } catch (_err) {
       setErrors({ general: 'Failed to create template. Please try again.' });
     }
   };

@@ -11,7 +11,7 @@
  * - Optimistic updates with rollback on error
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { Loader2, Lock, X, FileText } from 'lucide-react';
 import type {
   WeeklyPatternGrid,
@@ -28,8 +28,6 @@ import { DAY_ABBREVIATIONS, DAY_NAMES, updateSlot, toggleSlotProtected, updateSl
 // ============================================================================
 
 interface WeeklyGridEditorProps {
-  /** Template ID for the pattern being edited */
-  templateId: string;
   /** Current pattern grid */
   pattern: WeeklyPatternGrid;
   /** Available rotation templates for selection */
@@ -392,7 +390,6 @@ function TemplateSelector({
 // ============================================================================
 
 export function WeeklyGridEditor({
-  templateId,
   pattern,
   templates,
   isLoading = false,
@@ -435,11 +432,8 @@ export function WeeklyGridEditor({
     });
   }, [pattern, onChange]);
 
-  // Track if there are unsaved changes
-  const hasChanges = useMemo(() => {
-    // Could implement deep comparison here
-    return false; // Simplified for now
-  }, []);
+  // Track if there are unsaved changes (simplified for now, could implement deep comparison)
+  // const _hasChanges = useMemo(() => { return false; }, []);
 
   // Handle slot click
   const handleSlotClick = useCallback(

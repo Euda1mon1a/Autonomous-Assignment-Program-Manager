@@ -1,10 +1,10 @@
 'use client'
 
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react'
-import { format, eachWeekOfInterval, startOfWeek, addDays, isWeekend, eachDayOfInterval, parseISO, isSameMonth, getMonth } from 'date-fns'
+import { format, eachWeekOfInterval, addDays, isWeekend, eachDayOfInterval, getMonth } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Calendar, Download } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Calendar } from 'lucide-react'
 import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, ListResponse } from '@/lib/hooks'
 import type { Person, RotationTemplate, Assignment, Block } from '@/types/api'
@@ -40,7 +40,7 @@ interface PersonGroup {
 // Academic year typically runs July 1 to June 30
 function getAcademicYearDates(year: number, startMonth: number = 6) {
   const startDate = new Date(year, startMonth, 1) // July 1
-  const endDate = new Date(year + 1, startMonth - 1 + 12, 0) // June 30 next year (handles month wrap)
+  const _endDate = new Date(year + 1, startMonth - 1 + 12, 0) // June 30 next year (handles month wrap)
 
   // Actually calculate last day of June next year
   const actualEndDate = new Date(year + 1, 5, 30) // June 30 of next year

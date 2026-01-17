@@ -172,7 +172,7 @@ export function useBidirectionalInfiniteQuery<T>({
   queryKey,
   fetchFn,
   pageSize = 20,
-  initialPage = 0,
+  initialPage: _initialPage = 0,
 }: BidirectionalInfiniteQueryOptions<T>) {
   const downQuery = useInfiniteQuery({
     queryKey: [...queryKey, 'down'],

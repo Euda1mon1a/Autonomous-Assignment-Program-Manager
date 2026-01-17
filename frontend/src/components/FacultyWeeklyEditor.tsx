@@ -12,14 +12,13 @@
  * - Shows Dr. [Last Name] with role info in header
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Loader2, Lock, X, Calendar, Settings, Save, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   useFacultyTemplate,
   useUpdateFacultyTemplate,
   useEffectiveFacultyWeek,
   useCreateFacultyOverride,
-  useDeleteFacultyOverride,
   usePermittedActivities,
 } from '@/hooks/useFacultyActivities';
 import type {

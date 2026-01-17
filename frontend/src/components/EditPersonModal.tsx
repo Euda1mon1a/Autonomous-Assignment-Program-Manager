@@ -107,7 +107,7 @@ export function EditPersonModal({ isOpen, onClose, person }: EditPersonModalProp
     try {
       await updatePerson.mutateAsync({ id: person.id, data: personData });
       handleClose();
-    } catch (err) {
+    } catch (_err) {
       setErrors({ general: 'Failed to update person. Please try again.' });
     }
   };

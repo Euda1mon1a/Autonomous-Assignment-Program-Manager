@@ -8,7 +8,6 @@ import {
   Check,
   ChevronDown,
   Star,
-  Clock,
   Loader2,
   Download,
   Upload,
@@ -128,8 +127,8 @@ export function ConfigurationPresets({
         const stored = localStorage.getItem(PRESETS_STORAGE_KEY)
         const userPresets = stored ? JSON.parse(stored) : []
         setPresets([...BUILT_IN_PRESETS, ...userPresets])
-      } catch (error) {
-        // console.error('Failed to load presets:', error)
+      } catch (_error) {
+        // console.error('Failed to load presets:', _error)
         setPresets(BUILT_IN_PRESETS)
       }
     }
@@ -143,8 +142,8 @@ export function ConfigurationPresets({
     )
     try {
       localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(userPresets))
-    } catch (error) {
-      // console.error('Failed to save presets:', error)
+    } catch (_error) {
+      // console.error('Failed to save presets:', _error)
     }
   }, [])
 
@@ -232,8 +231,8 @@ export function ConfigurationPresets({
             setPresets(updatedPresets)
             savePresetsToStorage(updatedPresets)
           }
-        } catch (error) {
-          // console.error('Failed to import presets:', error)
+        } catch (_error) {
+          // console.error('Failed to import presets:', _error)
         }
       }
       reader.readAsText(file)

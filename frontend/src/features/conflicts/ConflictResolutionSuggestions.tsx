@@ -130,7 +130,7 @@ export function ConflictResolutionSuggestions({
       if (onResolved) {
         onResolved(result);
       }
-    } catch (err) {
+    } catch (_err) {
       // Error handled by mutation
     }
   };

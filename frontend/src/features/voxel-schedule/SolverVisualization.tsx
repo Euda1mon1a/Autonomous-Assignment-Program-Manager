@@ -19,7 +19,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Grid, Text, Html, Stats } from '@react-three/drei';
+import { OrbitControls, Grid, Text, Stats } from '@react-three/drei';
 
 import {
   InstancedVoxelRenderer,
@@ -33,7 +33,6 @@ import {
 } from './useSolutionTransitions';
 import {
   useSolverWebSocket,
-  Assignment,
   SolverMetrics,
 } from './useSolverWebSocket';
 
@@ -315,11 +314,11 @@ export const SolverVisualization: React.FC<SolverVisualizationProps> = ({
     status,
     metrics,
     currentAssignments,
-    latestDelta,
+    latestDelta: _latestDelta,
     latestSolutionNum,
   } = useSolverWebSocket({
     taskId,
-    onDelta: (delta, solutionNum) => {
+    onDelta: (delta, _solutionNum) => {
       // Trigger animation when delta arrives
       applyDelta(delta, personIndex, blockIndex, templateToLayer);
     },

@@ -365,7 +365,7 @@ function parseMessage(data: string): AnyWebSocketEvent | null {
       return null
     }
     return parsed
-  } catch (error) {
+  } catch (_error) {
     // Failed to parse WebSocket message
     return null
   }
@@ -615,7 +615,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
           setConnectionState('disconnected')
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // Failed to create WebSocket connection
       setConnectionState('disconnected')
     }

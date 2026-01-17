@@ -9,7 +9,7 @@ import { X, Upload, FileText, AlertCircle, AlertTriangle, CheckCircle, Download 
 import { useImport } from './useImport';
 import { ImportPreview } from './ImportPreview';
 import { ImportProgressIndicator } from './ImportProgressIndicator';
-import type { ImportDataType, ImportOptions } from './types';
+import type { ImportDataType } from './types';
 
 // ============================================================================
 // Types

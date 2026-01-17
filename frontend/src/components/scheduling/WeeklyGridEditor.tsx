@@ -278,7 +278,7 @@ export function WeeklyGridEditor({
   }, []);
 
   // Filter slots for current week view
-  const visibleSlots = useMemo(() => {
+  const _visibleSlots = useMemo(() => {
     if (samePatternAllWeeks || selectedWeek === null) {
       // Show slots without week number (or all slots if no week-specific exist)
       return completePattern.slots.filter(

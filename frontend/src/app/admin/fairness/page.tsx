@@ -47,7 +47,8 @@ function FairnessGauge({ value }: { value: number }) {
     critical: 'text-red-500',
   }[status];
 
-  const bgColorClass = {
+  // bgColorClass is defined for potential future use (e.g., filled gauge backgrounds)
+  const _bgColorClass = {
     excellent: 'bg-green-500',
     good: 'bg-emerald-500',
     warning: 'bg-amber-500',

@@ -53,7 +53,6 @@ function getInitials(name: string): string {
 // Memoized day cell component to prevent unnecessary re-renders
 interface AbsenceDayCellProps {
   day: Date
-  dateKey: string
   dayAbsences: Absence[]
   isWeekend: boolean
   isCurrentMonth: boolean
@@ -64,7 +63,6 @@ interface AbsenceDayCellProps {
 
 const AbsenceDayCell = React.memo(function AbsenceDayCell({
   day,
-  dateKey,
   dayAbsences,
   isWeekend,
   isCurrentMonth,
@@ -121,13 +119,12 @@ export function AbsenceCalendar({ absences, people, onAbsenceClick }: AbsenceCal
   const [currentDate, setCurrentDate] = useState(new Date())
 
   // Memoize date calculations
-  const { days, blankDays, monthStart } = useMemo(() => {
+  const { days, blankDays } = useMemo(() => {
     const start = startOfMonth(currentDate)
     const end = endOfMonth(currentDate)
     return {
       days: eachDayOfInterval({ start, end }),
-      blankDays: Array.from({ length: getDay(start) }, (_, i) => i),
-      monthStart: start,
+      blankDays: Array.from({ length: getDay(start) }, (_elem, i) => i),
     }
   }, [currentDate])
 
@@ -219,7 +216,6 @@ export function AbsenceCalendar({ absences, people, onAbsenceClick }: AbsenceCal
             <AbsenceDayCell
               key={dateKey}
               day={day}
-              dateKey={dateKey}
               dayAbsences={dayAbsences}
               isWeekend={isWeekend}
               isCurrentMonth={isSameMonth(day, currentDate)}

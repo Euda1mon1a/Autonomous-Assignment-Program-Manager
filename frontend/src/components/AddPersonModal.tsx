@@ -111,7 +111,7 @@ export function AddPersonModal({ isOpen, onClose }: AddPersonModalProps) {
     try {
       await createPerson.mutateAsync(personData);
       handleClose();
-    } catch (err) {
+    } catch (_err) {
       setErrors({ general: 'Failed to create person. Please try again.' });
     }
   };

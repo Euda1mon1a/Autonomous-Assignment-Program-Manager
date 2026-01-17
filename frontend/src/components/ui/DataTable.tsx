@@ -5,7 +5,6 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Badge } from './Badge';
 
 export interface Column<T> {
   key: string;

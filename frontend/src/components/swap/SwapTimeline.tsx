@@ -107,7 +107,7 @@ export const SwapTimeline: React.FC<SwapTimelineProps> = ({
 
         {/* Events */}
         <div className="space-y-4">
-          {sortedEvents.map((event, idx) => {
+          {sortedEvents.map((event, _idx) => {
             const config = eventConfig[event.type];
 
             return (

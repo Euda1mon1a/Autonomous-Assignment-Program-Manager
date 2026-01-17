@@ -67,8 +67,8 @@ function formatValue(value: unknown): string {
   if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}/)) {
     try {
       return format(parseISO(value), 'MMM d, yyyy HH:mm');
-    } catch (error) {
-      // console.error('Failed to parse date:', error);
+    } catch (_error) {
+      // console.error('Failed to parse date:', _error);
       return value;
     }
   }

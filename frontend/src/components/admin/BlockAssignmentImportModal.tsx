@@ -35,8 +35,6 @@ import {
   MATCH_STATUS_LABELS,
 } from '@/types/block-assignment-import';
 import type {
-  BlockAssignmentPreviewItem,
-  UnknownRotationItem,
   QuickTemplateCreateRequest,
 } from '@/types/block-assignment-import';
 
@@ -83,10 +81,10 @@ export function BlockAssignmentImportModal({
     duplicateActions,
     canImport,
     matchedCount,
-    errorCount,
+    errorCount: _errorCount,
     uploadContent,
     uploadFile,
-    setDuplicateAction,
+    setDuplicateAction: _setDuplicateAction,
     setAllDuplicateActions,
     createTemplate,
     executeImport,
