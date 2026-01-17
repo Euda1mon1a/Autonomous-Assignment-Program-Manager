@@ -22,8 +22,7 @@ import {
 } from 'recharts';
 import { TrendingUp, TrendingDown, Info, BarChart3, Activity } from 'lucide-react';
 import { useFairnessTrend, usePgyEquity } from './hooks';
-import type { TimePeriod, TrendDirection } from './types';
-import { TIME_PERIOD_LABELS } from './types';
+import type { TrendDirection } from './types';
 
 // ============================================================================
 // Types
@@ -35,7 +34,7 @@ interface FairnessTrendProps {
   className?: string;
 }
 
-type ChartType = 'line' | 'bar';
+type _ChartType = 'line' | 'bar';
 type MetricType = 'gini' | 'variance' | 'equity' | 'all';
 
 // Recharts tooltip payload type

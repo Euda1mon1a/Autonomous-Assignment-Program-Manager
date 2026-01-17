@@ -36,7 +36,6 @@ import type {
   Activity,
   ActivityRequirement,
   ActivityRequirementCreateRequest,
-  ApplicableWeeks,
 } from '@/types/activity';
 import {
   DAY_ABBREVIATIONS,
@@ -176,40 +175,6 @@ function WeekTabs({
 }
 
 /**
- * Activity selector dropdown.
- */
-function ActivitySelector({
-  activities,
-  selectedId,
-  onSelect,
-  disabled,
-}: {
-  activities: Activity[];
-  selectedId: string | null;
-  onSelect: (activityId: string | null) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="relative">
-      <select
-        value={selectedId ?? ''}
-        onChange={(e) => onSelect(e.target.value || null)}
-        disabled={disabled}
-        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
-      >
-        <option value="">Select activity...</option>
-        <option value="">-- Clear --</option>
-        {activities.map((activity) => (
-          <option key={activity.id} value={activity.id}>
-            {activity.displayAbbreviation ?? activity.name} - {activity.name}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-/**
  * Activity palette for quick selection.
  */
 function ActivityPalette({
@@ -329,7 +294,7 @@ function PatternGrid({
   pattern,
   activities,
   selectedWeek,
-  selectedActivityId,
+  _selectedActivityId,
   readOnly,
   onSlotClick,
   onToggleProtected,
@@ -337,7 +302,7 @@ function PatternGrid({
   pattern: WeeklyPatternGrid;
   activities: Activity[];
   selectedWeek: WeekNumber;
-  selectedActivityId: string | null;
+  _selectedActivityId: string | null;
   readOnly?: boolean;
   onSlotClick: (day: DayOfWeek, time: WeeklyPatternTimeOfDay) => void;
   onToggleProtected: (day: DayOfWeek, time: WeeklyPatternTimeOfDay) => void;
@@ -712,7 +677,7 @@ function RequirementsPanel({
 // ============================================================================
 
 export function RotationEditor({
-  templateId,
+  _templateId,
   pattern,
   activities,
   requirements,

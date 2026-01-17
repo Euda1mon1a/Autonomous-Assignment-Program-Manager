@@ -28,7 +28,6 @@ import { format } from "date-fns";
 import {
   ManifoldPoint,
   ConstraintType,
-  SpectralLayer,
   CONSTRAINT_COLORS,
   LayerVisibility,
 } from "./types";
@@ -371,7 +370,7 @@ export function HolographicManifold({
     selectPoint,
     hoverPoint,
     setAnimating,
-    setQuality,
+    setQuality: _setQuality,
     setAllLayersVisible,
     setAllConstraintsVisible,
   } = useHolographicState();

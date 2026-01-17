@@ -51,7 +51,7 @@ export function QuickSwapButton({
 }: QuickSwapButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [reason, setReason] = useState('')
-  const { user } = useAuth()
+  const { user: _user } = useAuth()
   const queryClient = useQueryClient()
 
   const swapMutation = useMutation({

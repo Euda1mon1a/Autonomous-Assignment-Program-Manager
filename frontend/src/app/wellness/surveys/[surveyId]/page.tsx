@@ -20,7 +20,7 @@ import { useSurvey, useSubmitSurvey } from '@/features/wellness/hooks/useWellnes
 import { SURVEY_TYPE_DISPLAY, type SurveyQuestion } from '@/features/wellness/types';
 
 export default function SurveyPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const params = useParams();
   const surveyId = params?.surveyId as string;
 

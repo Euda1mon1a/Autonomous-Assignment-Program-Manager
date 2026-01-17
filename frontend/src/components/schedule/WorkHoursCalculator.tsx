@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Clock, AlertTriangle, CheckCircle, TrendingUp, Info, Calendar } from 'lucide-react'
+import { AlertTriangle, CheckCircle, TrendingUp, Info, Calendar } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 interface ScheduledHourMetrics {
@@ -69,7 +69,7 @@ function getScheduledHoursForActivity(activity: string): number {
  */
 export function WorkHoursCalculator({
   assignments,
-  hoursPerBlock = 4,
+  hoursPerBlock: _hoursPerBlock = 4,
   maxWeeklyHours = 80,
   showDetails = true,
   className = '',

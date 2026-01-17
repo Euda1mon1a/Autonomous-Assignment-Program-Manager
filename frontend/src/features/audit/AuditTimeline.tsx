@@ -8,7 +8,7 @@
  */
 
 import { useMemo, useState, useCallback } from 'react';
-import { format, parseISO, isSameDay, startOfDay } from 'date-fns';
+import { format, parseISO, isSameDay } from 'date-fns';
 import {
   Plus,
   Pencil,
@@ -33,7 +33,6 @@ import type {
   AuditLogEntry,
   AuditActionType,
   AuditSeverity,
-  TimelineEvent,
 } from './types';
 import {
   ENTITY_TYPE_LABELS,

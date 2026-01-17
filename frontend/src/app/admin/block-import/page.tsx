@@ -44,7 +44,7 @@ export default function BlockImportPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
-  const [rawData, setRawData] = useState<string[][]>([]);
+  const [, setRawData] = useState<string[][]>([]);
   const [isImporting, setIsImporting] = useState(false);
   const [importComplete, setImportComplete] = useState(false);
 

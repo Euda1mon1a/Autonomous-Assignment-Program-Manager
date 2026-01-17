@@ -12,7 +12,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { X, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
-import { Modal } from '@/components/Modal';
 import { WeeklyGridEditor } from '@/components/WeeklyGridEditor';
 import {
   useWeeklyPattern,
@@ -20,7 +19,6 @@ import {
   useAvailableTemplates,
 } from '@/hooks/useWeeklyPattern';
 import type { WeeklyPatternGrid } from '@/types/weekly-pattern';
-import { createEmptyPattern } from '@/types/weekly-pattern';
 
 // ============================================================================
 // Types

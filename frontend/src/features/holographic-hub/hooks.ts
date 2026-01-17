@@ -38,7 +38,6 @@ import {
 } from "./types";
 import {
   generateMockHolographicData,
-  buildHolographicDataset,
 } from "./data-pipeline";
 
 // ============================================================================
@@ -501,8 +500,8 @@ export function useRealTimeUpdates(options: RealTimeUpdateOptions = {}) {
         );
 
         onUpdate?.(data);
-      } catch (err) {
-        // console.error("Failed to parse real-time update:", err);
+      } catch (_err) {
+        // console.error("Failed to parse real-time update:", _err);
       }
     };
 

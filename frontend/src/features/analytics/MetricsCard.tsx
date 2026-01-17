@@ -48,7 +48,7 @@ function getStatusIcon(status: MetricStatus): React.ReactNode {
 /**
  * Get trend icon based on direction
  */
-function getTrendIcon(direction: TrendDirection, trendValue: number): React.ReactNode {
+function getTrendIcon(direction: TrendDirection, _trendValue: number): React.ReactNode {
   const className = 'w-4 h-4';
 
   switch (direction) {

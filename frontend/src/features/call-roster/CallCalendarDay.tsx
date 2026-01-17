@@ -8,7 +8,7 @@
 'use client';
 
 import { useState } from 'react';
-import { format, isSameDay } from 'date-fns';
+import { format } from 'date-fns';
 import type { CallAssignment } from './types';
 import { ROLE_COLORS } from './types';
 import { ContactInfo } from './ContactInfo';

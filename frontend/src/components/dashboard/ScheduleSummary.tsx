@@ -35,7 +35,7 @@ export function ScheduleSummary() {
 
   const hasSchedule = (schedule?.total ?? 0) > 0
   const totalResidents = people?.items?.filter((p) => p.type === 'resident').length ?? 0
-  const totalFaculty = people?.items?.filter((p) => p.type === 'faculty').length ?? 0
+  const _totalFaculty = people?.items?.filter((p) => p.type === 'faculty').length ?? 0
 
   // Determine coverage status
   const residentCoverage = totalResidents > 0 ? (scheduledResidents.size / totalResidents) * 100 : 0

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useClaudeChat, SavedSession, ClaudeCodeContext } from '../hooks/useClaudeChat';
-import { ChatMessage, ChatSession, StreamUpdate } from '../types/chat';
+import { ChatSession, StreamUpdate } from '../types/chat';
 
 /**
  * Exported session data structure.

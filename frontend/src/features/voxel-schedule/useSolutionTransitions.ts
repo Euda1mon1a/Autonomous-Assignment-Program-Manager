@@ -227,7 +227,7 @@ export function useSolutionTransitions(
       }
 
       const newTransitions = new Map<string, TransitionState>();
-      const newCompleted: string[] = [];
+      const _newCompleted: string[] = [];
 
       // Process added voxels (drop in from above)
       delta.added.forEach((assignment) => {

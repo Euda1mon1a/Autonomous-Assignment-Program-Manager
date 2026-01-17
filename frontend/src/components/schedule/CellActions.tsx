@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   useCreateAssignment,
@@ -53,7 +53,7 @@ export function useCellActions(options: UseCellActionsOptions = {}): UseCellActi
   const {
     onEditModalOpen,
     onQuickMenuOpen,
-    longPressDelay = 500,
+    longPressDelay: _longPressDelay = 500,
   } = options;
 
   const { user } = useAuth();
@@ -347,8 +347,8 @@ export function getRecentRotations(): string[] {
   try {
     const stored = localStorage.getItem(RECENT_ROTATIONS_KEY);
     return stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    // console.error('Failed to read recent rotations from localStorage:', error);
+  } catch (_error) {
+    // console.error('Failed to read recent rotations from localStorage:', _error);
     return [];
   }
 }
@@ -361,9 +361,9 @@ export function addRecentRotation(rotationId: string): void {
     const filtered = recent.filter((id) => id !== rotationId);
     const updated = [rotationId, ...filtered].slice(0, MAX_RECENT_ROTATIONS);
     localStorage.setItem(RECENT_ROTATIONS_KEY, JSON.stringify(updated));
-  } catch (error) {
+  } catch (_error) {
     // Silently fail if localStorage is not available
-    // console.error('Failed to save recent rotation to localStorage:', error);
+    // console.error('Failed to save recent rotation to localStorage:', _error);
   }
 }
 
@@ -371,9 +371,9 @@ export function clearRecentRotations(): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.removeItem(RECENT_ROTATIONS_KEY);
-  } catch (error) {
+  } catch (_error) {
     // Silently fail if localStorage is not available
-    // console.error('Failed to clear recent rotations from localStorage:', error);
+    // console.error('Failed to clear recent rotations from localStorage:', _error);
   }
 }
 

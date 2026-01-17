@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Loader2, CheckCircle, XCircle, Clock, Zap, AlertTriangle } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Loader2, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 type ProgressStatus = 'idle' | 'pending' | 'running' | 'success' | 'error' | 'warning'
 

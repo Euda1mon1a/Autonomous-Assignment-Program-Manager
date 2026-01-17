@@ -21,7 +21,6 @@ import type {
   ActivityUpdateRequest,
   ActivityRequirement,
   ActivityRequirementCreateRequest,
-  ActivityRequirementBulkUpdateRequest,
 } from '@/types/activity';
 
 // ============================================================================

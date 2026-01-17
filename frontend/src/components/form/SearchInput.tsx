@@ -41,7 +41,7 @@ export function SearchInput({
   showClearButton = true,
   className = '',
 }: SearchInputProps) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
+  const [_debouncedValue, setDebouncedValue] = useState(value);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
   // Debounce the search

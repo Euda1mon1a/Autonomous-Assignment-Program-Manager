@@ -176,7 +176,7 @@ export function useOptimisticUpdateWithConflictResolution<T, V>({
 
       return { previousData };
     },
-    onSuccess: (serverData: T, variables: V, context: MutationContext<T> | undefined) => {
+    onSuccess: (serverData: T, _variables: V, _context: MutationContext<T> | undefined) => {
       const localData = queryClient.getQueryData<T>(queryKey);
 
       // Check for conflicts

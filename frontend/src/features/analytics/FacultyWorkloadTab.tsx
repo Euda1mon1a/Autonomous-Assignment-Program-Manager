@@ -78,7 +78,7 @@ function MetricCard({
   );
 }
 
-function TrendIndicator({ value }: { value: number }) {
+function _TrendIndicator({ value }: { value: number }) {
   if (value > 0) {
     return (
       <div className="flex items-center gap-1 text-red-600">

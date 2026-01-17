@@ -28,8 +28,8 @@ export function QuickActions() {
     setIsExporting(true)
     try {
       await exportToLegacyXlsx(blockStartStr, blockEndStr)
-    } catch (error) {
-      // console.error('Export failed:', error)
+    } catch (_error) {
+      // console.error('Export failed:', _error)
     } finally {
       setIsExporting(false)
     }

@@ -166,7 +166,7 @@ export function EditTemplateModal({ isOpen, onClose, template }: EditTemplateMod
     try {
       await updateTemplate.mutateAsync({ id: template.id, data: templateData });
       handleClose();
-    } catch (err) {
+    } catch (_err) {
       setErrors({ general: 'Failed to update template. Please try again.' });
     }
   };

@@ -12,7 +12,6 @@ import {
   addDays,
   isSameMonth,
   isToday,
-  isSameDay,
 } from 'date-fns'
 import { ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
 

@@ -24,7 +24,8 @@ export const UtilizationGauge: React.FC<UtilizationGaugeProps> = ({
   const isAboveThreshold = current >= threshold;
   const isWarning = current >= threshold * 0.9;
 
-  const getColor = () => {
+  // Color function for potential future use
+  const _getColor = () => {
     if (isAboveThreshold) return 'bg-red-500';
     if (isWarning) return 'bg-yellow-500';
     return 'bg-green-500';

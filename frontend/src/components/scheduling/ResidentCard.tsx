@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { User, Clock, AlertCircle } from 'lucide-react';
+import { Clock, AlertCircle } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 
@@ -37,7 +37,7 @@ export interface ResidentCardProps {
  * ```
  */
 export function ResidentCard({
-  id,
+  id: _id,
   name,
   role,
   pgyLevel,
@@ -49,7 +49,7 @@ export function ResidentCard({
   onClick,
   className = '',
 }: ResidentCardProps) {
-  const complianceColors = {
+  const _complianceColors = {
     compliant: 'success',
     warning: 'warning',
     violation: 'danger',

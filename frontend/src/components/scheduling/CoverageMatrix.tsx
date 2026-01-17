@@ -65,7 +65,7 @@ export function CoverageMatrix({
     return 'bg-red-100 text-red-900';
   };
 
-  const getCoverageStatus = (slot?: CoverageSlot) => {
+  const _getCoverageStatus = (slot?: CoverageSlot) => {
     if (!slot) return 'empty';
 
     const coverage = slot.assigned / slot.required;

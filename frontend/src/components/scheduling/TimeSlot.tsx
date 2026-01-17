@@ -32,7 +32,7 @@ export interface TimeSlotProps {
  * ```
  */
 export function TimeSlot({
-  date,
+  date: _date,
   period,
   rotation,
   person,

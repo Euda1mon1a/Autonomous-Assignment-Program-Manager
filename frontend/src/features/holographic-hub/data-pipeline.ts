@@ -22,7 +22,6 @@ import {
   HolographicDataset,
   ManifoldPoint,
   ProjectionConfig,
-  ProjectionMethod,
   CONSTRAINT_COLORS,
   LAYER_COLORS,
 } from "./types";

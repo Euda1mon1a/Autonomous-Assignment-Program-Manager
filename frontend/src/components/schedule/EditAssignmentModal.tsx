@@ -22,7 +22,7 @@ import {
   generateWarnings,
   WarningCheckContext,
 } from './AssignmentWarnings';
-import { Trash2, Save, X, Loader2, AlertTriangle } from 'lucide-react';
+import { Trash2, Save, X, Loader2 } from 'lucide-react';
 
 // ============================================================================
 // Types
@@ -206,8 +206,8 @@ export function EditAssignmentModal({
         month: 'long',
         day: 'numeric',
       });
-    } catch (error) {
-      // console.error('Failed to format date:', error);
+    } catch (_error) {
+      // console.error('Failed to format date:', _error);
       return date;
     }
   }, [date]);

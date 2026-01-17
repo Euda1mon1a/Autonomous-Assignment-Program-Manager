@@ -2,8 +2,8 @@
 
 import { useMemo } from 'react'
 import Link from 'next/link'
-import { format, addDays, parseISO, isToday, isTomorrow, isWithinInterval } from 'date-fns'
-import { Calendar, ChevronRight, Clock, Sun, Moon } from 'lucide-react'
+import { format, addDays, parseISO, isToday, isTomorrow } from 'date-fns'
+import { Calendar, ChevronRight, Sun, Moon } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'

@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import Link from 'next/link'
 import { format, parseISO, isToday, startOfDay, addMonths } from 'date-fns'
-import { Calendar, ChevronRight, Clock, User } from 'lucide-react'
+import { Calendar, ChevronRight, User } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAssignments, usePeople, useRotationTemplates } from '@/lib/hooks'
 import { EmptyState } from '@/components/EmptyState'

@@ -26,7 +26,7 @@ const ClaudeCodeChat: React.FC<ClaudeCodeChatProps> = ({
   } = useClaudeChatContext();
 
   const [input, setInput] = useState('');
-  const [context, setContext] = useState<Partial<ClaudeCodeExecutionContext> | undefined>(undefined);
+  const [_context, _setContext] = useState<Partial<ClaudeCodeExecutionContext> | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [selectedArtifact, setSelectedArtifact] = useState<ChatArtifact | null>(null);
 

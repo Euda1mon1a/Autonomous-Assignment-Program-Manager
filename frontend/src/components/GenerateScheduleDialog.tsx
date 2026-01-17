@@ -97,7 +97,7 @@ export function GenerateScheduleDialog({
         pgyLevels: pgyLevels,
       });
       setShowResults(true);
-    } catch (err) {
+    } catch (_err) {
       setErrors({ general: 'Failed to generate schedule. Please try again.' });
     }
   };
