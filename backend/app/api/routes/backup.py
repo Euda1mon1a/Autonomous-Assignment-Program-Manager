@@ -7,6 +7,7 @@ Creates point-in-time table snapshots before bulk operations for rollback.
 import logging
 import subprocess
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Literal
 
@@ -480,4 +481,558 @@ async def restore_snapshot(
         raise HTTPException(
             status_code=500,
             detail="An error occurred restoring the snapshot",
+        )
+
+
+# ============================================================================
+# Full Database Backup Schemas
+# ============================================================================
+
+
+class BackupStrategy(str, Enum):
+    """Backup strategy types."""
+
+    FULL = "full"
+    INCREMENTAL = "incremental"
+    DIFFERENTIAL = "differential"
+
+
+class BackupStatus(str, Enum):
+    """Backup operation status."""
+
+    SUCCESS = "success"
+    FAILED = "failed"
+    IN_PROGRESS = "in_progress"
+
+
+class CreateBackupRequest(BaseModel):
+    """Request to create a full database backup."""
+
+    strategy: BackupStrategy = Field(
+        BackupStrategy.FULL, description="Backup strategy to use"
+    )
+    description: str = Field("", description="Optional description for audit trail")
+
+
+class BackupResult(BaseModel):
+    """Result of a backup operation."""
+
+    backup_id: str = Field(..., description="Unique backup identifier")
+    created_at: datetime = Field(..., description="Backup creation timestamp")
+    size_mb: float = Field(..., description="Backup file size in MB")
+    strategy: str = Field(..., description="Backup strategy used")
+    status: str = Field(..., description="Backup status")
+    file_path: str = Field(..., description="Path to backup file")
+    schema_version: str | None = Field(None, description="Alembic schema version")
+
+
+class BackupListResult(BaseModel):
+    """List of available backups."""
+
+    backups: list[BackupResult]
+    total_count: int
+    storage_used_mb: float
+
+
+class BackupVerifyResult(BaseModel):
+    """Result of backup verification."""
+
+    backup_id: str
+    valid: bool
+    checksum: str | None
+    file_exists: bool
+    size_mb: float
+    error: str | None = None
+
+
+class BackupStatusResponse(BaseModel):
+    """Backup system health status."""
+
+    healthy: bool
+    latest_backup_age_hours: float | None
+    latest_backup_id: str | None
+    total_backups: int
+    storage_used_mb: float
+    backup_directory: str
+    warnings: list[str]
+
+
+class RestoreBackupRequest(BaseModel):
+    """Request to restore from a backup."""
+
+    dry_run: bool = Field(True, description="Preview restore without applying")
+
+
+# ============================================================================
+# Full Database Backup Helper Functions
+# ============================================================================
+
+BACKUP_DIR = Path("backups/postgres")
+
+
+def get_backup_dir() -> Path:
+    """Get or create backup directory."""
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    return BACKUP_DIR
+
+
+def parse_backup_metadata(backup_file: Path) -> dict:
+    """Parse backup metadata from companion .metadata file."""
+    metadata_file = backup_file.with_suffix(".metadata")
+    if metadata_file.exists():
+        try:
+            with open(metadata_file) as f:
+                import json
+
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
+# ============================================================================
+# Full Database Backup Routes
+# ============================================================================
+
+
+@router.post(
+    "/backup/create",
+    response_model=BackupResult,
+    dependencies=[Depends(require_role("ADMIN"))],
+)
+async def create_backup(
+    request: CreateBackupRequest,
+    current_user: User = Depends(get_current_active_user),
+) -> BackupResult:
+    """
+    Create a full database backup.
+
+    Triggers the backup script to create a compressed PostgreSQL backup.
+    Requires ADMIN role.
+
+    Args:
+        request: Backup request with strategy and description
+
+    Returns:
+        Backup result with backup_id, size, and status
+    """
+    try:
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        backup_id = f"residency_scheduler_{timestamp}"
+
+        # Run backup script
+        script_path = Path("scripts/backup-db.sh")
+        if not script_path.exists():
+            raise HTTPException(
+                status_code=500,
+                detail="Backup script not found",
+            )
+
+        cmd = ["bash", str(script_path), "--docker"]
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=300,  # 5 minute timeout
+            cwd=Path(".").absolute(),
+        )
+
+        if result.returncode != 0:
+            logger.error(f"Backup script failed: {result.stderr}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Backup failed: {result.stderr[:200]}",
+            )
+
+        # Find the created backup file
+        backup_dir = get_backup_dir()
+        backup_files = sorted(backup_dir.glob("*.sql.gz"), reverse=True)
+
+        if not backup_files:
+            raise HTTPException(
+                status_code=500,
+                detail="Backup file not created",
+            )
+
+        latest_backup = backup_files[0]
+        size_bytes = latest_backup.stat().st_size
+        size_mb = size_bytes / (1024 * 1024)
+
+        # Get schema version from metadata
+        metadata = parse_backup_metadata(latest_backup)
+        schema_version = metadata.get("alembic_version")
+
+        # Log the backup for audit
+        logger.info(
+            f"Full backup created: {latest_backup.stem} "
+            f"({size_mb:.2f}MB) by {current_user.username}. "
+            f"Strategy: {request.strategy.value}. Description: {request.description}"
+        )
+
+        return BackupResult(
+            backup_id=latest_backup.stem.replace(".sql", ""),
+            created_at=datetime.utcnow(),
+            size_mb=round(size_mb, 2),
+            strategy=request.strategy.value,
+            status=BackupStatus.SUCCESS.value,
+            file_path=str(latest_backup),
+            schema_version=schema_version,
+        )
+
+    except HTTPException:
+        raise
+    except subprocess.TimeoutExpired:
+        raise HTTPException(
+            status_code=500,
+            detail="Backup operation timed out",
+        )
+    except Exception as e:
+        logger.error(f"Error creating backup: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred creating the backup",
+        )
+
+
+@router.get(
+    "/backup/list",
+    response_model=BackupListResult,
+    dependencies=[Depends(require_role("ADMIN"))],
+)
+async def list_backups(
+    limit: int = Query(50, ge=1, le=100, description="Max backups to return"),
+    strategy: str | None = Query(None, description="Filter by strategy"),
+    current_user: User = Depends(get_current_active_user),
+) -> BackupListResult:
+    """
+    List available database backups.
+
+    Requires ADMIN role.
+
+    Args:
+        limit: Maximum number of backups to return
+        strategy: Optional filter by strategy type
+
+    Returns:
+        List of backups with metadata and storage stats
+    """
+    try:
+        backup_dir = get_backup_dir()
+        backup_files = sorted(backup_dir.glob("*.sql.gz"), reverse=True)[:limit]
+
+        backups = []
+        total_size = 0.0
+
+        for backup_file in backup_files:
+            size_bytes = backup_file.stat().st_size
+            size_mb = size_bytes / (1024 * 1024)
+            total_size += size_mb
+
+            # Parse timestamp from filename
+            # Format: residency_scheduler_YYYYMMDD_HHMMSS.sql.gz
+            filename = backup_file.stem.replace(".sql", "")
+            parts = filename.split("_")
+            if len(parts) >= 4:
+                try:
+                    date_str = parts[-2]
+                    time_str = parts[-1]
+                    created_at = datetime.strptime(
+                        f"{date_str}_{time_str}", "%Y%m%d_%H%M%S"
+                    )
+                except ValueError:
+                    created_at = datetime.fromtimestamp(backup_file.stat().st_mtime)
+            else:
+                created_at = datetime.fromtimestamp(backup_file.stat().st_mtime)
+
+            metadata = parse_backup_metadata(backup_file)
+
+            backups.append(
+                BackupResult(
+                    backup_id=filename,
+                    created_at=created_at,
+                    size_mb=round(size_mb, 2),
+                    strategy=metadata.get("strategy", "full"),
+                    status=BackupStatus.SUCCESS.value,
+                    file_path=str(backup_file),
+                    schema_version=metadata.get("alembic_version"),
+                )
+            )
+
+        return BackupListResult(
+            backups=backups,
+            total_count=len(backups),
+            storage_used_mb=round(total_size, 2),
+        )
+
+    except Exception as e:
+        logger.error(f"Error listing backups: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred listing backups",
+        )
+
+
+@router.post(
+    "/backup/restore/{backup_id}",
+    response_model=RestoreResponse,
+    dependencies=[Depends(require_role("ADMIN"))],
+)
+async def restore_from_backup(
+    backup_id: str,
+    request: RestoreBackupRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> RestoreResponse:
+    """
+    Restore database from a full backup.
+
+    WARNING: This will replace all data in the database.
+
+    Requires ADMIN role.
+
+    Args:
+        backup_id: ID of backup to restore
+        request: Restore request with dry_run flag
+
+    Returns:
+        Restore result
+    """
+    try:
+        backup_dir = get_backup_dir()
+        backup_file = backup_dir / f"{backup_id}.sql.gz"
+
+        if not backup_file.exists():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Backup '{backup_id}' not found",
+            )
+
+        if request.dry_run:
+            size_mb = backup_file.stat().st_size / (1024 * 1024)
+            return RestoreResponse(
+                snapshot_id=backup_id,
+                table="full_database",
+                rows_restored=-1,
+                dry_run=True,
+                message=f"DRY RUN: Would restore full database from {backup_id} ({size_mb:.2f}MB)",
+            )
+
+        # Parse database connection
+        database_url = str(settings.DATABASE_URL)
+
+        if database_url.startswith("postgresql://"):
+            db_part = database_url.replace("postgresql://", "")
+            user_pass, host_db = db_part.split("@", 1)
+            if ":" in user_pass:
+                db_user, db_pass = user_pass.split(":", 1)
+            else:
+                db_user = user_pass
+                db_pass = ""
+            host_port, db_name = host_db.split("/", 1)
+            if ":" in host_port:
+                db_host, db_port = host_port.split(":", 1)
+            else:
+                db_host = host_port
+                db_port = "5432"
+
+            # Decompress and restore
+            env = {"PGPASSWORD": db_pass}
+
+            # Use gunzip piped to psql
+            cmd = f"gunzip -c {backup_file} | psql -h {db_host} -p {db_port} -U {db_user} -d {db_name}"
+
+            result = subprocess.run(
+                cmd,
+                shell=True,  # noqa: S602 - required for pipe
+                env={**subprocess.os.environ, **env},
+                capture_output=True,
+                text=True,
+                timeout=600,  # 10 minute timeout
+            )
+
+            if result.returncode != 0:
+                logger.error(f"Restore failed: {result.stderr}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to restore backup: {result.stderr[:200]}",
+                )
+
+            logger.warning(
+                f"Full restore completed: {backup_id} by {current_user.username}"
+            )
+
+            return RestoreResponse(
+                snapshot_id=backup_id,
+                table="full_database",
+                rows_restored=-1,  # Unknown for full restore
+                dry_run=False,
+                message=f"Successfully restored database from {backup_id}",
+            )
+
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail="Unsupported database URL format",
+            )
+
+    except HTTPException:
+        raise
+    except subprocess.TimeoutExpired:
+        raise HTTPException(
+            status_code=500,
+            detail="Restore operation timed out",
+        )
+    except Exception as e:
+        logger.error(f"Error restoring backup: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred restoring the backup",
+        )
+
+
+@router.get(
+    "/backup/verify/{backup_id}",
+    response_model=BackupVerifyResult,
+    dependencies=[Depends(require_role("ADMIN"))],
+)
+async def verify_backup(
+    backup_id: str,
+    current_user: User = Depends(get_current_active_user),
+) -> BackupVerifyResult:
+    """
+    Verify backup integrity.
+
+    Checks file existence and calculates checksum.
+
+    Requires ADMIN role.
+
+    Args:
+        backup_id: ID of backup to verify
+
+    Returns:
+        Verification result with checksum and validity
+    """
+    try:
+        import hashlib
+
+        backup_dir = get_backup_dir()
+        backup_file = backup_dir / f"{backup_id}.sql.gz"
+
+        if not backup_file.exists():
+            return BackupVerifyResult(
+                backup_id=backup_id,
+                valid=False,
+                checksum=None,
+                file_exists=False,
+                size_mb=0.0,
+                error="Backup file not found",
+            )
+
+        # Calculate MD5 checksum
+        hash_md5 = hashlib.md5()  # noqa: S324 - MD5 ok for checksum
+        with open(backup_file, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                hash_md5.update(chunk)
+
+        checksum = hash_md5.hexdigest()
+        size_mb = backup_file.stat().st_size / (1024 * 1024)
+
+        # Basic validation - file should be at least 1KB
+        valid = size_mb > 0.001
+
+        logger.info(
+            f"Backup verified: {backup_id} - valid={valid}, checksum={checksum}"
+        )
+
+        return BackupVerifyResult(
+            backup_id=backup_id,
+            valid=valid,
+            checksum=checksum,
+            file_exists=True,
+            size_mb=round(size_mb, 2),
+            error=None,
+        )
+
+    except Exception as e:
+        logger.error(f"Error verifying backup: {e}")
+        return BackupVerifyResult(
+            backup_id=backup_id,
+            valid=False,
+            checksum=None,
+            file_exists=False,
+            size_mb=0.0,
+            error=str(e),
+        )
+
+
+@router.get(
+    "/backup/status",
+    response_model=BackupStatusResponse,
+    dependencies=[Depends(require_role("ADMIN"))],
+)
+async def get_backup_status(
+    current_user: User = Depends(get_current_active_user),
+) -> BackupStatusResponse:
+    """
+    Get backup system health status.
+
+    Returns latest backup age, total count, and warnings.
+
+    Requires ADMIN role.
+
+    Returns:
+        Backup system status with health indicators
+    """
+    try:
+        backup_dir = get_backup_dir()
+        backup_files = sorted(backup_dir.glob("*.sql.gz"), reverse=True)
+
+        warnings = []
+        latest_backup_age_hours = None
+        latest_backup_id = None
+        total_size = 0.0
+
+        for backup_file in backup_files:
+            total_size += backup_file.stat().st_size / (1024 * 1024)
+
+        if backup_files:
+            latest_backup = backup_files[0]
+            latest_backup_id = latest_backup.stem.replace(".sql", "")
+            mtime = datetime.fromtimestamp(latest_backup.stat().st_mtime)
+            age = datetime.utcnow() - mtime
+            latest_backup_age_hours = age.total_seconds() / 3600
+
+            # Warn if backup is older than 24 hours
+            if latest_backup_age_hours > 24:
+                warnings.append(
+                    f"Latest backup is {latest_backup_age_hours:.1f} hours old"
+                )
+
+            # Warn if backup is older than 7 days
+            if latest_backup_age_hours > 168:
+                warnings.append("CRITICAL: No backup in over 7 days")
+        else:
+            warnings.append("No backups found")
+
+        healthy = len(warnings) == 0 or (
+            len(warnings) == 1 and "24 hours" in warnings[0]
+        )
+
+        return BackupStatusResponse(
+            healthy=healthy,
+            latest_backup_age_hours=round(latest_backup_age_hours, 2)
+            if latest_backup_age_hours
+            else None,
+            latest_backup_id=latest_backup_id,
+            total_backups=len(backup_files),
+            storage_used_mb=round(total_size, 2),
+            backup_directory=str(backup_dir.absolute()),
+            warnings=warnings,
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting backup status: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred getting backup status",
         )

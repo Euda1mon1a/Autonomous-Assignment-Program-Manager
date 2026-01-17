@@ -28,7 +28,6 @@ except ImportError:
 
 # Import API client for RAG tools
 from .api_client import get_api_client
-
 from .async_tools import (
     ActiveTasksResult,
     BackgroundTaskResult,
@@ -39,6 +38,20 @@ from .async_tools import (
     get_task_status,
     list_active_tasks,
     start_background_task,
+)
+
+# Import backup tools
+from .backup_tools import (
+    BackupStatusResult,
+    CreateBackupResult,
+    ListBackupsResult,
+    RestoreBackupResult,
+    VerifyBackupResult,
+    create_backup,
+    get_backup_status,
+    list_backups,
+    restore_backup,
+    verify_backup,
 )
 
 # Import circuit breaker tools
@@ -54,8 +67,6 @@ from .circuit_breaker_tools import (
 )
 
 # Import API client for RAG tools
-from .api_client import get_api_client
-
 # Import composite/advanced resilience tools
 from .composite_resilience_tools import (
     # Creep Fatigue
@@ -156,6 +167,24 @@ from .frms_integration import (
     # Tool Functions
     run_frms_assessment,
     scan_team_fatigue,
+)
+
+# Import Hopfield network attractor tools (energy landscape & schedule stability)
+from .hopfield_attractor_tools import (
+    # Enums
+    BasinDepthResponse,
+    NearbyAttractorsResponse,
+    SpuriousAttractorsResponse,
+    detect_spurious_attractors,
+    find_nearby_attractors,
+    measure_basin_depth,
+)
+from .hopfield_attractor_tools import (
+    ScheduleEnergyResponse as HopfieldEnergyResponse,
+)
+from .hopfield_attractor_tools import (
+    # Tool Functions
+    calculate_schedule_energy as calculate_hopfield_energy,
 )
 
 # Import immune system tools (AIS - Artificial Immune System)
@@ -281,126 +310,11 @@ from .time_crystal_tools import (
     get_time_crystal_health,
 )
 
-# Import Hopfield network attractor tools (energy landscape & schedule stability)
-from .hopfield_attractor_tools import (
-    # Enums
-    AttractorTypeEnum,
-    StabilityLevelEnum,
-    # Response Models
-    AttractorInfo,
-    BasinDepthMetrics,
-    BasinDepthResponse,
-    NearbyAttractorsResponse,
-    ScheduleEnergyMetrics,
-    ScheduleEnergyResponse as HopfieldEnergyResponse,
-    SpuriousAttractorInfo,
-    SpuriousAttractorsResponse,
-    # Tool Functions
-    calculate_schedule_energy as calculate_hopfield_energy,
-    detect_spurious_attractors,
-    find_nearby_attractors,
-    measure_basin_depth,
-)
-
 # Import VaR (Value-at-Risk) tools for schedule vulnerability analysis
-from .var_risk_tools import (
-    # Enums
-    ConfidenceLevel,
-    DisruptionType,
-    RiskSeverity,
-    # Request Models
-    ConditionalVaRRequest,
-    CoverageVaRRequest,
-    DisruptionSimulationRequest,
-    WorkloadVaRRequest,
-    # Response Models
-    ConditionalVaRResponse,
-    CoverageVaRResponse,
-    DisruptionScenario,
-    DisruptionSimulationResponse,
-    VaRMetric,
-    WorkloadVaRResponse,
-    # Tool Functions
-    calculate_conditional_var,
-    calculate_coverage_var,
-    calculate_workload_var,
-    simulate_disruption_scenarios,
-)
-
 # Import Game Theory tools for Nash equilibrium analysis
-from .tools.game_theory_tools import (
-    # Enums
-    CoordinationFailureType,
-    DeviationType,
-    StabilityStatus,
-    # Request Models
-    DeviationIncentivesRequest,
-    NashStabilityRequest,
-    # Response Models
-    CoordinationFailure,
-    CoordinationFailuresResponse,
-    DeviationIncentive,
-    NashStabilityResponse,
-    PersonDeviationAnalysis,
-    UtilityComponents,
-    # Tool Functions
-    analyze_nash_stability,
-    calculate_person_utility,
-    detect_coordination_failures,
-    find_deviation_incentives,
-)
-
 # Import Ecological dynamics tools (Lotka-Volterra supply/demand modeling)
-from .tools.ecological_dynamics_tools import (
-    # Enums
-    InterventionTypeEnum,
-    RiskLevelEnum,
-    SystemStabilityEnum,
-    # Request Models
-    CapacityCrunchRequest,
-    EquilibriumRequest,
-    InterventionRequest,
-    SupplyDemandCyclesRequest,
-    # Response Models
-    CapacityCrunchResponse,
-    EquilibriumResponse,
-    HistoricalDataPoint,
-    InterventionResponse,
-    SupplyDemandCyclesResponse,
-    # Tool Functions
-    analyze_supply_demand_cycles,
-    find_equilibrium_point,
-    predict_capacity_crunch,
-    simulate_intervention,
-)
-
 # Import Kalman filter tools for workload trend analysis
-from .tools.kalman_filter_tools import (
-    # Request Models
-    WorkloadAnomalyRequest,
-    WorkloadTrendRequest,
-    # Response Models
-    AnomalyPoint,
-    WorkloadAnomalyResponse,
-    WorkloadTrendResponse,
-    # Tool Functions
-    analyze_workload_trend,
-    detect_workload_anomalies,
-)
-
 # Import Fourier/FFT analysis tools for periodicity detection
-from .tools.fourier_analysis_tools import (
-    # Response Models
-    DominantPeriod,
-    HarmonicResonanceResponse,
-    ScheduleCyclesResponse,
-    SpectralEntropyResponse,
-    # Tool Functions
-    analyze_harmonic_resonance,
-    calculate_spectral_entropy,
-    detect_schedule_cycles,
-)
-
 # Import validate_schedule tool with ConstraintService integration
 from .tools.validate_schedule import (
     ConstraintConfig,
@@ -510,7 +424,8 @@ These tools exist to prevent errors and ensure ACGME compliance. Use them.
 # Armory Conditional Loading
 # =============================================================================
 # Import armory loader for conditional tool registration
-from .armory.loader import should_load_tool, get_armory_status, ALL_ARMORY_TOOLS
+from .armory.loader import ALL_ARMORY_TOOLS, get_armory_status, should_load_tool
+
 
 def armory_tool(tool_name: str):
     """
@@ -968,6 +883,152 @@ async def list_active_tasks_tool(
             ) from e
 
     return await list_active_tasks(task_type_enum)
+
+
+# Database Backup Tools
+
+
+@mcp.tool()
+async def create_backup_tool(
+    strategy: str = "full",
+    description: str = "",
+) -> CreateBackupResult:
+    """
+    Create a database backup.
+
+    Triggers backup creation via the backend API, which runs the backup
+    script and creates a compressed PostgreSQL dump.
+
+    Args:
+        strategy: Backup strategy - "full", "incremental", or "differential"
+        description: Optional description for audit trail
+
+    Returns:
+        CreateBackupResult with backup details or error
+
+    Example:
+        # Create a full backup before deployment
+        result = await create_backup_tool(
+            strategy="full",
+            description="Pre-deployment backup"
+        )
+
+        if result.success:
+            print(f"Backup created: {result.backup.backup_id}")
+    """
+    return await create_backup(strategy=strategy, description=description)
+
+
+@mcp.tool()
+async def list_backups_tool(
+    limit: int = 50,
+    strategy: str | None = None,
+) -> ListBackupsResult:
+    """
+    List available database backups.
+
+    Retrieves list of backups from the backend API with metadata
+    and storage statistics.
+
+    Args:
+        limit: Maximum backups to return (default 50, max 100)
+        strategy: Filter by strategy type (optional)
+
+    Returns:
+        ListBackupsResult with backups and storage stats
+
+    Example:
+        # List recent backups
+        result = await list_backups_tool(limit=10)
+        for backup in result.backups:
+            print(f"{backup.backup_id}: {backup.size_mb}MB ({backup.created_at})")
+    """
+    return await list_backups(limit=limit, strategy=strategy)
+
+
+@mcp.tool()
+async def restore_backup_tool(
+    backup_id: str,
+    dry_run: bool = True,
+) -> RestoreBackupResult:
+    """
+    Restore database from a backup.
+
+    WARNING: Non-dry-run will replace ALL data in the database.
+    Always run with dry_run=True first to preview the restore.
+
+    Args:
+        backup_id: ID of backup to restore
+        dry_run: If True, preview restore without applying (default True)
+
+    Returns:
+        RestoreBackupResult with status and message
+
+    Example:
+        # Preview restore first
+        preview = await restore_backup_tool(
+            backup_id="residency_scheduler_20260116_165316",
+            dry_run=True
+        )
+
+        # If preview looks good, actually restore (DANGEROUS!)
+        # result = await restore_backup_tool(
+        #     backup_id="residency_scheduler_20260116_165316",
+        #     dry_run=False
+        # )
+    """
+    return await restore_backup(backup_id=backup_id, dry_run=dry_run)
+
+
+@mcp.tool()
+async def verify_backup_tool(
+    backup_id: str,
+) -> VerifyBackupResult:
+    """
+    Verify backup integrity.
+
+    Checks that the backup file exists and calculates its checksum
+    for integrity verification.
+
+    Args:
+        backup_id: ID of backup to verify
+
+    Returns:
+        VerifyBackupResult with checksum and validity status
+
+    Example:
+        result = await verify_backup_tool(
+            backup_id="residency_scheduler_20260116_165316"
+        )
+
+        if result.valid:
+            print(f"Backup valid. Checksum: {result.checksum}")
+        else:
+            print(f"Backup invalid: {result.error}")
+    """
+    return await verify_backup(backup_id=backup_id)
+
+
+@mcp.tool()
+async def get_backup_status_tool() -> BackupStatusResult:
+    """
+    Get backup system health status.
+
+    Returns the age of the latest backup, total backup count,
+    storage usage, and any warnings about backup health.
+
+    Returns:
+        BackupStatusResult with health indicators and warnings
+
+    Example:
+        result = await get_backup_status_tool()
+
+        if result.healthy:
+            print(f"Backup system healthy. Latest: {result.latest_backup_id}")
+        else:
+            print(f"Warnings: {result.warnings}")
+    """
+    return await get_backup_status()
 
 
 # Resilience Framework Tools
@@ -5414,7 +5475,7 @@ Examples:
     try:
         import uvicorn
         from starlette.applications import Starlette
-        from starlette.routing import Route, Mount
+        from starlette.routing import Mount, Route
 
         # Get the MCP ASGI app with stateless_http=True to disable session management
         # This is required because Claude Code's HTTP transport doesn't send
