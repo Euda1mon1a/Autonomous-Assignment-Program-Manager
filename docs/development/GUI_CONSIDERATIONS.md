@@ -1,6 +1,6 @@
 # GUI Considerations for Residency Scheduler
 
-> **Last Updated:** 2026-01-15 | **Purpose:** Frontend library decisions and UI patterns for Claude Code CLI
+> **Last Updated:** 2026-01-17 | **Purpose:** Frontend library decisions and UI patterns
 
 ---
 
@@ -21,6 +21,78 @@
 | Dates | date-fns | 4.1.0 | Installed |
 | Excel | xlsx | 0.20.2 | Installed |
 | Validation | zod | 4.3.2 | Installed |
+
+---
+
+## Existing Custom Implementations
+
+The codebase already includes custom implementations for common UI needs. **Consider these before adding new libraries.**
+
+### Data Tables
+**Component:** `frontend/src/components/ui/DataTable.tsx`
+
+Features:
+- Sorting, filtering, pagination
+- Search functionality
+- Custom column rendering
+- Used by: `CallAssignmentTable`, `TemplateTable`, `PeopleTable`
+
+```tsx
+import { DataTable } from '@/components/ui/DataTable';
+
+<DataTable
+  data={residents}
+  columns={columns}
+  searchable
+  sortable
+  pagination
+/>
+```
+
+### Calendar/Scheduler Views
+**Components:**
+- `AbsenceCalendar.tsx` - Full month view with date-fns
+- `ScheduleCalendar.tsx` - Week-based schedule view
+- `ScheduleGrid.tsx` - Grid-based block schedule
+
+All use date-fns for date logic (already installed).
+
+### Toast Notifications
+**Component:** `frontend/src/components/Toast.tsx`
+
+Features:
+- Success, error, warning, info types
+- Auto-dismiss with pause on hover
+- Progress bar indicator
+- Action buttons
+- Persistent mode option
+- Slide-in/out animations
+
+```tsx
+import { toast, ToastContainer } from '@/components/Toast';
+
+// In layout
+<ToastContainer />
+
+// Usage
+toast.success('Schedule saved');
+toast.error('Validation failed');
+toast.warning('Approaching limit');
+```
+
+### Accessible Modals
+**Component:** `frontend/src/components/ConfirmDialog.tsx`
+
+Features:
+- WAI-ARIA compliant (alertdialog role)
+- Keyboard navigation (Tab, Escape)
+- Focus trapping and return
+- Customizable actions
+
+### UI Primitives
+- `Dropdown.tsx` - Accessible dropdown menu
+- `Alert.tsx` - Alert/banner component
+- Various form inputs with Tailwind styling
 
 ---
 
@@ -47,20 +119,6 @@ import { Calendar, Users, Shield, Activity } from 'lucide-react';
 | [Iconify](https://iconify.design) | Meta-library (275k+ icons, on-demand) | `npm i @iconify/react` |
 | [Health Icons](https://healthicons.org) | Open-source medical-specific | Manual SVG import |
 
-### Three.js / 3D Icons
-
-Already installed: `three`, `@react-three/fiber`, `@react-three/drei`
-
-For 3D extruded icons:
-```bash
-npm install react-3d-icons  # Uses simpleicons.org catalogue
-```
-
-Features:
-- Extrude any SVG into 3D
-- Customizable depth, rotation, spin animation
-- Requires peer deps already installed (three, @react-three/fiber)
-
 ### Military Medical Symbology
 
 No React library exists for MIL-STD-2525 (NATO Joint Military Symbology). Options:
@@ -70,100 +128,41 @@ No React library exists for MIL-STD-2525 (NATO Joint Military Symbology). Option
 
 ---
 
-## GUI Gaps & Recommendations
+## Enhancement Opportunities
 
-### 1. Data Tables (HIGH PRIORITY)
+These are **optional improvements**, not critical gaps. Custom implementations already handle core functionality.
 
-**Gap:** No table library for resident rosters, schedule grids, compliance reports.
+### 1. Form Validation Library (MEDIUM PRIORITY)
 
-**Recommendation:** TanStack Table (headless, pairs with Tailwind)
-
-```bash
-npm install @tanstack/react-table @tanstack/react-virtual
-```
-
-Why:
-- Headless = full styling control with Tailwind
-- Virtualization for large datasets (17 residents x 13 blocks x years)
-- Sorting, filtering, grouping built-in
-- Same ecosystem as @tanstack/react-query (already installed)
-
-### 2. Calendar/Scheduler Component (HIGH PRIORITY)
-
-**Gap:** No dedicated calendar UI for schedule visualization.
-
-| Option | Cost | Best For |
-|--------|------|----------|
-| [react-big-calendar](https://github.com/jquense/react-big-calendar) | Free | Monthly/weekly views, Google Calendar-style |
-| [FullCalendar](https://fullcalendar.io/docs/react) | Free + Premium | Resource views, timeline, more features |
-| [DHTMLX Scheduler](https://dhtmlx.com/docs/products/dhtmlxScheduler/) | Commercial | Medical-specific, multi-resource views |
-| [Planby](https://planby.app/) | Commercial | TV guide-style timeline |
-
-**Recommendation:** Start with `react-big-calendar`, upgrade to FullCalendar Premium if resource views needed.
-
-```bash
-npm install react-big-calendar
-```
-
-### 3. Form Handling (MEDIUM PRIORITY)
-
-**Gap:** No form library for swap requests, user preferences, admin forms.
-
-**Recommendation:** react-hook-form + zod resolver (zod already installed)
+**Current:** Native React form handling with useState
+**Enhancement:** react-hook-form + zod resolver
 
 ```bash
 npm install react-hook-form @hookform/resolvers
 ```
 
 Benefits:
-- Minimal re-renders (performance)
-- Native zod integration for validation
-- Uncontrolled inputs = less state management
+- Reduced boilerplate for complex forms
+- Native zod integration (zod already installed)
+- Minimal re-renders
 
-### 4. Toast/Notifications (MEDIUM PRIORITY)
+Best for: Swap request forms, admin settings, complex multi-step forms.
 
-**Gap:** No notification system for:
-- Swap confirmations
-- ACGME compliance alerts
-- Import success/failure
-- Async operation feedback
+### 2. Table Virtualization (LOW PRIORITY)
 
-**Options:**
-
-| Library | Style | Size |
-|---------|-------|------|
-| [sonner](https://sonner.emilkowal.ski/) | Modern, stacked | 5KB |
-| [react-hot-toast](https://react-hot-toast.com/) | Minimal | 5KB |
-| [react-toastify](https://fkhadra.github.io/react-toastify/) | Feature-rich | 12KB |
-
-**Recommendation:** `sonner` - cleanest API, best animations
+**Current:** Custom DataTable handles typical datasets well
+**Enhancement:** @tanstack/react-virtual for 1000+ row datasets
 
 ```bash
-npm install sonner
+npm install @tanstack/react-table @tanstack/react-virtual
 ```
 
-### 5. Date/Time Pickers (MEDIUM PRIORITY)
+Only needed if performance issues arise with very large datasets.
 
-**Gap:** date-fns handles logic but no picker UI.
+### 3. Command Palette (LOW PRIORITY)
 
-**Options:**
-
-| Library | Style | Notes |
-|---------|-------|-------|
-| [react-day-picker](https://react-day-picker.js.org/) | Minimal | Powers shadcn calendar |
-| [react-datepicker](https://reactdatepicker.com/) | Full-featured | Time picker included |
-
-**Recommendation:** `react-day-picker` - lightweight, pairs with Tailwind
-
-```bash
-npm install react-day-picker
-```
-
-### 6. Command Palette (LOW PRIORITY)
-
-**Gap:** No quick navigation for complex UIs.
-
-**Recommendation:** cmdk - Vercel-style command menu
+**Current:** No equivalent exists
+**Enhancement:** cmdk for quick navigation
 
 ```bash
 npm install cmdk
@@ -174,120 +173,27 @@ Use cases:
 - Jump to block: `⌘K` → "Block 10"
 - Quick actions: `⌘K` → "Generate schedule"
 
-### 7. Accessible Primitives (LOW PRIORITY)
+### 4. Additional Accessible Primitives (LOW PRIORITY)
 
-**Gap:** No headless UI primitives for modals, dropdowns, popovers.
-
-**Recommendation:** Radix UI (or shadcn/ui which wraps Radix)
+**Current:** ConfirmDialog.tsx is ARIA-compliant
+**Enhancement:** Radix UI for additional primitives (tooltips, popovers)
 
 ```bash
-npm install @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-popover @radix-ui/react-tooltip
+npm install @radix-ui/react-tooltip @radix-ui/react-popover
 ```
 
-Benefits:
-- WAI-ARIA compliant out of box
-- Keyboard navigation
-- Focus management
-- Works with Tailwind
+Only add as needed for new UI patterns.
 
----
+### 5. Date Picker UI (LOW PRIORITY)
 
-## Priority Installation Order
+**Current:** Native date inputs with date-fns logic
+**Enhancement:** react-day-picker for richer UX
 
-### Phase 1: Core Functionality
 ```bash
-# Tables for schedule grids
-npm install @tanstack/react-table @tanstack/react-virtual
-
-# Forms for user input
-npm install react-hook-form @hookform/resolvers
-
-# Notifications for feedback
-npm install sonner
-```
-
-### Phase 2: Enhanced UX
-```bash
-# Calendar visualization
-npm install react-big-calendar
-
-# Date pickers
 npm install react-day-picker
-
-# Accessible primitives
-npm install @radix-ui/react-dialog @radix-ui/react-dropdown-menu
 ```
 
-### Phase 3: Power Features
-```bash
-# Command palette
-npm install cmdk
-
-# Additional icon weights
-npm install @phosphor-icons/react
-
-# 3D icons (if using)
-npm install react-3d-icons
-```
-
----
-
-## Component Patterns
-
-### Schedule Grid (TanStack Table + Tailwind)
-
-```tsx
-// Headless table with Tailwind styling
-import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
-
-const columns = [
-  { accessorKey: 'residentName', header: 'Resident' },
-  { accessorKey: 'block1', header: 'Block 1' },
-  { accessorKey: 'block2', header: 'Block 2' },
-  // ... blocks 3-13
-];
-
-// Virtual scrolling for large datasets
-import { useVirtualizer } from '@tanstack/react-virtual';
-```
-
-### Toast Notifications (Sonner)
-
-```tsx
-import { toast, Toaster } from 'sonner';
-
-// In layout
-<Toaster position="top-right" richColors />
-
-// Usage
-toast.success('Schedule saved');
-toast.error('ACGME violation detected');
-toast.warning('Approaching 80-hour limit');
-toast.promise(saveSchedule(), {
-  loading: 'Saving...',
-  success: 'Schedule saved',
-  error: 'Failed to save'
-});
-```
-
-### Form with Zod Validation
-
-```tsx
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-
-const swapSchema = z.object({
-  fromResidentId: z.string().uuid(),
-  toResidentId: z.string().uuid(),
-  blockNumber: z.number().min(1).max(13),
-  reason: z.string().min(10, 'Please provide a reason')
-});
-
-const { register, handleSubmit, formState: { errors } } = useForm({
-  resolver: zodResolver(swapSchema)
-});
-```
+Only add if users request better date selection UX.
 
 ---
 
@@ -306,7 +212,6 @@ const { register, handleSubmit, formState: { errors } } = useForm({
 ### ACGME Compliance Indicators
 
 ```tsx
-// Visual hierarchy for compliance status
 const complianceColors = {
   compliant: 'bg-green-100 text-green-800 border-green-200',
   warning: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -316,7 +221,6 @@ const complianceColors = {
 
 ### Rotation Type Colors
 
-Standardize across UI:
 | Type | Color | Example Rotations |
 |------|-------|-------------------|
 | Inpatient | Red/Orange | IM, Peds, L&D, Night Float |
@@ -348,7 +252,7 @@ Standardize across UI:
 | Icons | < 50KB | Tree-shake, import individual icons |
 | Charts | < 100KB | Plotly is heavy, consider recharts-only |
 | 3D | Lazy load | Only load Three.js when 3D view active |
-| Tables | < 30KB | TanStack Table is lightweight |
+| Tables | < 30KB | Custom DataTable is lightweight |
 
 ### Lazy Loading Pattern
 
@@ -367,8 +271,8 @@ const ScheduleVisualization3D = dynamic(
 
 ## Related Documentation
 
-- `docs/planning/GUI_IMPORT_LESSONS.md` - Import workflow UX patterns
-- `docs/guides/3d-schedule-visualization.md` - Three.js visualization guide
+- `frontend/src/components/ui/` - UI component library
+- `frontend/src/components/Toast.tsx` - Notification system
 - `frontend/src/lib/api.ts` - API client with camelCase conversion
 - `CLAUDE.md` - TypeScript naming conventions (camelCase required)
 
@@ -378,7 +282,7 @@ const ScheduleVisualization3D = dynamic(
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
+| 2026-01-17 | Document existing implementations | Custom Toast, DataTable, Calendar already built |
+| 2026-01-17 | Reframe gaps as enhancements | Most functionality exists via custom components |
 | 2026-01-15 | Lucide as primary icons | Already integrated, good medical coverage |
-| 2026-01-15 | TanStack Table recommended | Headless, same ecosystem as Query |
-| 2026-01-15 | sonner for toasts | Smallest bundle, best DX |
 | 2026-01-15 | No military symbology library | Custom SVGs needed for MIL-STD-2525 |
