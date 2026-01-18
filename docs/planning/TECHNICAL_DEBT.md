@@ -346,9 +346,9 @@ export async function logout(): Promise<void> {
 
 | ID | Status | Resolved Date | PR/Commit |
 |----|--------|---------------|-----------|
-| DEBT-001 | Open | - | - |
-| DEBT-002 | Open | - | - |
-| DEBT-003 | Open | - | - |
+| DEBT-001 | ✅ Resolved | 2025-12-30 | PR #546 |
+| DEBT-002 | ✅ Resolved | 2025-12-30 | PR #546 |
+| DEBT-003 | ✅ Resolved | 2025-12-30 | PR #546 |
 | DEBT-004 | Open | - | - |
 | DEBT-005 | Open | - | - |
 | DEBT-006 | Open | - | - |

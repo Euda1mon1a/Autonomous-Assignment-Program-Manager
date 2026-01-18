@@ -1,7 +1,9 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Supersedes:** Scattered tracking in TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md
+> **Last Updated:** 2026-01-18
+> **Authority:** This is the single source of truth for codebase priorities.
+> **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
 
 ---
@@ -29,14 +31,17 @@
 
 **Ref:** `docs/TODO_INVENTORY.md` line 6
 
-### 3. Documentation Contradictions
-| Doc A | Doc B | Contradiction |
-|-------|-------|---------------|
-| PRIORITY_LIST.md | TECHNICAL_DEBT.md | DEBT-001/002/003 marked "RESOLVED" vs "Open" |
-| ROADMAP.md | TODO_INVENTORY.md | Items marked done that aren't |
-| ARCHITECTURAL_DISCONNECTS.md | itself | Claims issues resolved then documents them as critical |
+### 3. ~~Documentation Contradictions~~ ✅ RESOLVED
+Contradictions fixed (commit `pending`):
 
-**Action:** Reconcile documents or consolidate into this file.
+| Doc | Fix Applied |
+|-----|-------------|
+| TECHNICAL_DEBT.md | Tracking table now shows DEBT-001/002/003 as Resolved |
+| ARCHITECTURAL_DISCONNECTS.md | Removed stale STATUS UPDATE section, added authority note |
+| PRIORITY_LIST.md | Added deprecation header pointing here |
+| TODO_INVENTORY.md | Added deprecation header pointing here |
+
+**Resolved:** 2026-01-18 in `feature/master-priority-implementation`
 
 ### 4. ~~Frontend API Path Mismatches~~ ✅ RESOLVED
 3 hooks fixed (commit `b92a9e02`):
@@ -233,7 +238,7 @@ Excel-like grid editor for schedule verification - eases transition for "normie"
 
 | Priority | Issues | Scope |
 |----------|--------|-------|
-| **CRITICAL** | 3 open, 2 resolved | ~~orphan routes~~✅, PII, doc contradictions, ~~API mismatches~~✅, rollback data loss |
+| **CRITICAL** | 2 open, 3 resolved | ~~orphan routes~~✅, PII, ~~doc contradictions~~✅, ~~API mismatches~~✅, rollback data loss |
 | **HIGH** | 5 | frameworks, feature flags, MCP stubs, mock GUI, ACGME compliance gaps |
 | **MEDIUM** | 5 | Activity logging, emails, pagination, docs, CLI/security cleanup |
 | **LOW** | 4 | A/B testing, ML, time crystal, spreadsheet editor (tier 1 UX) |
@@ -244,7 +249,7 @@ Excel-like grid editor for schedule verification - eases transition for "normie"
 2. ~~**Fix 3 API path mismatches**~~ ✅ DONE → Game theory, exotic resilience now working
 3. **Fix rollback serialization** → Prevent schedule data loss on restore (MEDIUM effort, CRITICAL impact)
 4. **Decide on CQRS/Saga/EventBus** → 12K LOC to integrate or remove (MEDIUM effort)
-5. **Fix doc contradictions** → Restore trust in documentation (LOW effort)
+5. ~~**Fix doc contradictions**~~ ✅ DONE → Trust in documentation restored
 6. **Expand feature flag usage** → Labs, 3D viz behind flags (LOW effort)
 7. **Wire mock dashboards** → Real data for ResilienceOverseer, SovereignPortal (MEDIUM effort)
 

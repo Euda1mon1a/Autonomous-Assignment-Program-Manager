@@ -1,5 +1,7 @@
 # Repository Priority List
 
+> ⚠️ **DEPRECATED:** This document is no longer maintained. See **`docs/MASTER_PRIORITY_LIST.md`** for the authoritative priority list.
+
 > **Generated:** 2025-12-19
 > **Purpose:** Consolidated, verified priority list for repository improvements
 > **Supersedes:** Outdated sections of ARCHITECTURAL_DISCONNECTS.md
