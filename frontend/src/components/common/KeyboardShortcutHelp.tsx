@@ -54,7 +54,7 @@ const createShortcuts = (router: ReturnType<typeof useRouter>): Shortcut[] => [
 
   // Help
   { key: '?', description: 'Show keyboard shortcuts', category: 'Help' },
-  { key: 'Ctrl+/', description: 'Search (command palette)', category: 'Help' },
+  { key: '⌘K', description: 'Command palette', category: 'Help' },
 ];
 
 export function KeyboardShortcutHelp() {
@@ -100,12 +100,7 @@ export function KeyboardShortcutHelp() {
         return;
       }
 
-      // Command palette trigger
-      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
-        e.preventDefault();
-        setIsOpen(true);
-        return;
-      }
+      // Note: Command palette (⌘K) is handled by CommandPalette component
 
       // Handle 'g' prefix for navigation shortcuts
       if (e.key === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey) {
