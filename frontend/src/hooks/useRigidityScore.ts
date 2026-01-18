@@ -126,7 +126,7 @@ export function useRigidityScore(
 
       // Call exotic resilience API endpoint
       const response = await post<RigidityResponse>(
-        '/exotic-resilience/time-crystal/rigidity',
+        '/resilience/exotic/time-crystal/rigidity',
         request
       );
 

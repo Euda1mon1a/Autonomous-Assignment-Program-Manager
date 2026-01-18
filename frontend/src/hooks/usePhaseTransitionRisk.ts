@@ -126,7 +126,7 @@ export function usePhaseTransitionRisk(
 
       // Call exotic resilience API endpoint
       const response = await post<PhaseTransitionResponse>(
-        '/exotic-resilience/thermodynamics/phase-transition',
+        '/resilience/exotic/thermodynamics/phase-transition',
         request
       );
 

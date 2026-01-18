@@ -25,7 +25,7 @@ import type {
   GameTheorySummary,
 } from '@/types/game-theory';
 
-const BASE_URL = '/v1/game-theory';
+const BASE_URL = '/game-theory';
 
 // ============================================================================
 // Strategy Hooks
