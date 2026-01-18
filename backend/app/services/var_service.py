@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.assignment import Assignment
 from app.models.block import Block
+from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.schemas.var_analytics import (
     ConditionalVaRRequest,
@@ -100,7 +101,11 @@ class VaRService:
         end_date: date,
         rotation_types: list[str] | None = None,
     ) -> list[float]:
-        """Get daily coverage rates from assignments via Block join."""
+        """Get daily coverage rates from assignments via Block join.
+
+        Includes all days in the date range, even those with zero assignments,
+        to avoid underestimating coverage-drop risk.
+        """
         # Query assignments grouped by block date
         query = (
             select(
@@ -122,16 +127,28 @@ class VaRService:
         result = await db.execute(query)
         rows = result.fetchall()
 
-        if not rows:
-            # No data - return synthetic coverage rates
+        # Build a map of date -> filled_slots from query results
+        filled_by_date: dict[date, int] = {}
+        for row in rows:
+            filled_by_date[row.day] = row.filled_slots
+
+        # Generate all dates in range, including days with zero assignments
+        all_dates = []
+        current = start_date
+        while current <= end_date:
+            all_dates.append(current)
+            current += timedelta(days=1)
+
+        if not all_dates:
+            # No date range - return synthetic coverage rates
             return [0.95 - i * 0.001 for i in range(90)]
 
         # Calculate coverage rate per day (slots filled / expected slots)
         # Assume 20 expected slots per day (10 residents × 2 blocks)
         expected_per_day = 20
         coverage_rates = []
-        for row in rows:
-            filled = row.filled_slots
+        for day in all_dates:
+            filled = filled_by_date.get(day, 0)  # Default to 0 for missing days
             rate = min(1.0, filled / expected_per_day)
             coverage_rates.append(rate)
 
@@ -146,8 +163,16 @@ class VaRService:
         """Get total assignment count per person in date range.
 
         Since each block is a half-day (4 hours), we multiply count by 4 for hours.
+        Includes all active people, even those with zero assignments, to avoid
+        underestimating workload imbalance (Gini/variance).
         """
-        query = (
+        # First, get all active people
+        people_query = select(Person.id).where(Person.is_active.is_(True))
+        people_result = await db.execute(people_query)
+        all_person_ids = {row[0] for row in people_result.fetchall()}
+
+        # Then, get assignment counts for people who have assignments
+        assignment_query = (
             select(
                 Assignment.person_id,
                 func.count(Assignment.id).label("assignment_count"),
@@ -158,15 +183,24 @@ class VaRService:
             .group_by(Assignment.person_id)
         )
 
-        result = await db.execute(query)
+        result = await db.execute(assignment_query)
         rows = result.fetchall()
 
-        if not rows:
-            # No data - return synthetic workload distribution
+        # Build map of person_id -> assignment_count
+        assignments_by_person: dict = {}
+        for row in rows:
+            assignments_by_person[row.person_id] = row.assignment_count
+
+        if not all_person_ids:
+            # No people - return synthetic workload distribution
             return [40.0 + i * 2 for i in range(20)]
 
+        # Include all active people, defaulting to 0 for those without assignments
         # Each assignment is a half-day block (~4 hours)
-        return [float(row.assignment_count * 4) for row in rows]
+        return [
+            float(assignments_by_person.get(person_id, 0) * 4)
+            for person_id in all_person_ids
+        ]
 
     # ==========================================================================
     # Coverage VaR
