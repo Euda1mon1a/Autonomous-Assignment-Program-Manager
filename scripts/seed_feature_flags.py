@@ -36,6 +36,79 @@ FEATURE_FLAGS = [
         "dependencies": None,
         "custom_attributes": None,
     },
+    {
+        "key": "labs_hub_enabled",
+        "name": "Research Labs Hub",
+        "description": (
+            "Gates access to the experimental Research Labs Hub (/admin/labs). "
+            "Contains wellness analytics, optimization algorithms, fairness metrics, "
+            "and advanced resilience tools. Enabled by default for admin and coordinator roles."
+        ),
+        "flag_type": "boolean",
+        "enabled": True,
+        "target_roles": ["admin", "coordinator"],
+        "environments": None,
+        "rollout_percentage": None,
+        "target_user_ids": None,
+        "variants": None,
+        "dependencies": None,
+        "custom_attributes": None,
+    },
+    {
+        "key": "exotic_resilience_enabled",
+        "name": "Exotic Resilience Features",
+        "description": (
+            "Gates access to exotic resilience endpoints including thermodynamics (entropy, "
+            "phase transitions), immune system (AIS anomaly detection), time crystal "
+            "(anti-churn, periodicity), and advanced physics-based analytics. "
+            "Disabled by default due to experimental nature and computational cost."
+        ),
+        "flag_type": "boolean",
+        "enabled": False,
+        "target_roles": ["admin"],
+        "environments": None,
+        "rollout_percentage": None,
+        "target_user_ids": None,
+        "variants": None,
+        "dependencies": None,
+        "custom_attributes": None,
+    },
+    {
+        "key": "voxel_visualization_enabled",
+        "name": "3D Voxel Grid Visualization",
+        "description": (
+            "Gates access to the 3D voxel grid visualization for schedule coverage. "
+            "Performance-intensive feature that renders schedule data as 3D WebGL elements. "
+            "Disabled by default due to high client-side resource requirements."
+        ),
+        "flag_type": "boolean",
+        "enabled": False,
+        "target_roles": ["admin"],
+        "environments": None,
+        "rollout_percentage": None,
+        "target_user_ids": None,
+        "variants": None,
+        "dependencies": None,
+        "custom_attributes": None,
+    },
+    {
+        "key": "command_center_enabled",
+        "name": "Command Center Dashboard",
+        "description": (
+            "Gates access to the Command Center overseer dashboard. "
+            "Provides real-time operational overview, incident management, "
+            "and cross-system monitoring. Disabled by default for admin-only access."
+        ),
+        "flag_type": "boolean",
+        "enabled": False,
+        "target_roles": ["admin"],
+        "environments": None,
+        "rollout_percentage": None,
+        "target_user_ids": None,
+        "variants": None,
+        "dependencies": None,
+        "custom_attributes": None,
+    },
 ]
 
 

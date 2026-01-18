@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-18
+> **Last Updated:** 2026-01-18 (Feature Flag Expansion)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -83,10 +83,25 @@ Built but never integrated into production code paths:
 
 **Decision needed:** Integrate into scheduler engine OR remove to reduce maintenance burden.
 
-### 7. Feature Flags Underutilized
+### 7. ~~Feature Flags Underutilized~~ ✅ RESOLVED (Phase 1)
 - **Location:** `backend/app/features/` - 45KB of production-ready code
-- **Actual usage:** 1 flag (`swap_marketplace_enabled` in `portal.py`)
-- **Should flag:** Labs hub, 3D visualizations, experimental scheduling algorithms
+- **Before:** 1 flag (`swap_marketplace_enabled`)
+- **After:** 5 flags with backend gating on 12 exotic resilience endpoints
+
+| Flag Key | Default | Target Roles | Purpose |
+|----------|---------|--------------|---------|
+| `swap_marketplace_enabled` | true | admin, coordinator, faculty | Original flag |
+| `labs_hub_enabled` | true | admin, coordinator | Gates `/admin/labs` hierarchy |
+| `exotic_resilience_enabled` | false | admin | Gates 12 `/resilience/exotic/*` endpoints |
+| `voxel_visualization_enabled` | false | admin | Gates 3D voxel viz (perf-intensive) |
+| `command_center_enabled` | false | admin | Gates overseer dashboard |
+
+**Files modified:**
+- `scripts/seed_feature_flags.py` - Added 4 new flag definitions
+- `backend/app/api/routes/exotic_resilience.py` - Added `@require_feature_flag` to 12 endpoints
+
+**Resolved:** 2026-01-18 in `feature/feature-flag-expansion`
+**Future work:** Frontend `useFeatureFlag` hook, percentage rollouts, individual lab category flags
 
 ### 8. MCP Tool Placeholders (16 tools)
 
@@ -239,7 +254,7 @@ Excel-like grid editor for schedule verification - eases transition for "normie"
 | Priority | Issues | Scope |
 |----------|--------|-------|
 | **CRITICAL** | 2 open, 3 resolved | ~~orphan routes~~✅, PII, ~~doc contradictions~~✅, ~~API mismatches~~✅, rollback data loss |
-| **HIGH** | 5 | frameworks, feature flags, MCP stubs, mock GUI, ACGME compliance gaps |
+| **HIGH** | 4 open, 1 resolved | frameworks, ~~feature flags~~✅, MCP stubs, mock GUI, ACGME compliance gaps |
 | **MEDIUM** | 5 | Activity logging, emails, pagination, docs, CLI/security cleanup |
 | **LOW** | 4 | A/B testing, ML, time crystal, spreadsheet editor (tier 1 UX) |
 
@@ -250,7 +265,7 @@ Excel-like grid editor for schedule verification - eases transition for "normie"
 3. **Fix rollback serialization** → Prevent schedule data loss on restore (MEDIUM effort, CRITICAL impact)
 4. **Decide on CQRS/Saga/EventBus** → 12K LOC to integrate or remove (MEDIUM effort)
 5. ~~**Fix doc contradictions**~~ ✅ DONE → Trust in documentation restored
-6. **Expand feature flag usage** → Labs, 3D viz behind flags (LOW effort)
+6. ~~**Expand feature flag usage**~~ ✅ DONE → 5 flags, 12 exotic endpoints gated (Phase 1)
 7. **Wire mock dashboards** → Real data for ResilienceOverseer, SovereignPortal (MEDIUM effort)
 
 ---

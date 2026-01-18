@@ -23,6 +23,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.features.decorators import require_feature_flag
 from app.models.assignment import Assignment
 
 # Import thermodynamics modules
@@ -522,6 +523,7 @@ class CatastropheResponse(BaseModel):
 
 
 @router.post("/thermodynamics/entropy", response_model=EntropyMetricsResponse)
+@require_feature_flag("exotic_resilience_enabled")
 async def analyze_schedule_entropy(
     request: EntropyAnalysisRequest,
     db: Session = Depends(get_db),
@@ -579,6 +581,7 @@ async def analyze_schedule_entropy(
 
 
 @router.post("/thermodynamics/phase-transition", response_model=PhaseTransitionResponse)
+@require_feature_flag("exotic_resilience_enabled")
 async def detect_phase_transition(
     request: PhaseTransitionRequest,
     db: Session = Depends(get_db),
@@ -661,6 +664,7 @@ async def detect_phase_transition(
 
 
 @router.post("/immune/assess", response_model=ImmuneAssessmentResponse)
+@require_feature_flag("exotic_resilience_enabled")
 async def assess_immune_response(
     request: ImmuneAssessmentRequest,
     db: Session = Depends(get_db),
@@ -738,6 +742,7 @@ async def assess_immune_response(
 
 
 @router.get("/immune/memory-cells", response_model=MemoryCellsResponse)
+@require_feature_flag("exotic_resilience_enabled")
 async def get_memory_cells(
     db: Session = Depends(get_db),
 ) -> MemoryCellsResponse:
@@ -768,6 +773,7 @@ async def get_memory_cells(
 
 
 @router.post("/immune/antibody-analysis", response_model=AntibodyAnalysisResponse)
+@require_feature_flag("exotic_resilience_enabled")
 async def analyze_antibodies(
     request: AntibodyAnalysisRequest,
     db: Session = Depends(get_db),
@@ -837,6 +843,7 @@ async def analyze_antibodies(
 
 
 @router.post("/time-crystal/rigidity", response_model=RigidityResponse)
+@require_feature_flag("exotic_resilience_enabled")
 async def calculate_rigidity(
     request: RigidityRequest,
     db: Session = Depends(get_db),
@@ -906,6 +913,7 @@ async def calculate_rigidity(
 
 
 @router.post("/time-crystal/subharmonics", response_model=SubharmonicResponse)
+@require_feature_flag("exotic_resilience_enabled")
 async def detect_subharmonics(
     request: SubharmonicRequest,
     db: Session = Depends(get_db),
@@ -959,6 +967,7 @@ async def detect_subharmonics(
 
 
 @router.get("/time-crystal/checkpoints", response_model=CheckpointResponse)
+@require_feature_flag("exotic_resilience_enabled")
 async def get_stroboscopic_checkpoints(
     schedule_id: UUID | None = None,
     db: Session = Depends(get_db),
@@ -1158,6 +1167,7 @@ def _grade_stability(rigidity: float) -> str:
 
 
 @router.post("/exotic/metastability", response_model=MetastabilityResponse)
+@require_feature_flag("exotic_resilience_enabled")
 async def analyze_metastability(
     request: MetastabilityRequest,
     db: Session = Depends(get_db),
@@ -1240,6 +1250,7 @@ async def analyze_metastability(
 
 
 @router.post("/exotic/reorganization-risk", response_model=ReorganizationRiskResponse)
+@require_feature_flag("exotic_resilience_enabled")
 async def predict_reorganization_risk(
     request: ReorganizationRiskRequest,
     db: Session = Depends(get_db),
@@ -1275,6 +1286,7 @@ async def predict_reorganization_risk(
 
 
 @router.post("/exotic/spin-glass", response_model=SpinGlassResponse)
+@require_feature_flag("exotic_resilience_enabled")
 async def generate_spin_glass_replicas(
     request: SpinGlassRequest,
     db: Session = Depends(get_db),
@@ -1332,6 +1344,7 @@ async def generate_spin_glass_replicas(
 
 
 @router.post("/exotic/catastrophe", response_model=CatastropheResponse)
+@require_feature_flag("exotic_resilience_enabled")
 async def predict_catastrophe(
     request: CatastropheRequest,
     db: Session = Depends(get_db),
