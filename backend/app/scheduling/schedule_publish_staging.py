@@ -155,7 +155,7 @@ class StagingPublisher:
             # Create backups
             backup_result = self._create_backups(draft_assignments)
 
-            if not backup_result.success:
+            if not backup_result.success:  # noqa: resilience-ok (error handling, not SPOF)
                 return StagingResult(
                     success=False,
                     draft_id=draft_id,
@@ -288,7 +288,16 @@ class StagingPublisher:
                     )
                     if other:
                         results.append(other)
-                return results
+                    # FIX: Only return if we got BOTH slots for ALL
+                    # Otherwise fall through to fallback path to try again
+                    if len(results) == 2:
+                        return results
+                else:
+                    # Single slot request - can return with one result
+                    return results
+
+        # Clear results before fallback to avoid duplicates
+        results = []
 
         # Fallback to matching by person/date/time
         base_query = self.db.query(HalfDayAssignment).filter(
@@ -364,6 +373,30 @@ class StagingPublisher:
             if getattr(assignment, "updated_at", None)
             else None,
         }
+
+    def _parse_datetime_from_backup(
+        self, value: str | datetime | None
+    ) -> datetime | None:
+        """
+        Parse datetime from backup data, handling both string and datetime objects.
+
+        Args:
+            value: String (ISO format), datetime, or None
+
+        Returns:
+            datetime object or None if parsing fails
+        """
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value)
+            except ValueError:
+                logger.warning(f"Could not parse datetime string: {value}")
+                return None
+        return None
 
     def restore_from_backups(
         self, draft_id: UUID, restored_by_id: UUID | None = None
@@ -451,6 +484,10 @@ class StagingPublisher:
             if isinstance(assignment_date, str):
                 assignment_date = date_type.fromisoformat(assignment_date)
 
+            # Parse timestamps for provenance restoration
+            created_at = self._parse_datetime_from_backup(data.get("created_at"))
+            overridden_at = self._parse_datetime_from_backup(data.get("overridden_at"))
+
             new_assignment = HalfDayAssignment(
                 person_id=UUID(data["person_id"]),
                 date=assignment_date,
@@ -462,6 +499,19 @@ class StagingPublisher:
                 is_override=data.get("is_override", False),
                 override_reason=data.get("override_reason"),
                 notes=data.get("notes"),
+                # Provenance fields for complete restoration
+                block_assignment_id=UUID(data["block_assignment_id"])
+                if data.get("block_assignment_id")
+                else None,
+                # Override tracking fields
+                overridden_by=UUID(data["overridden_by"])
+                if data.get("overridden_by")
+                else None,
+                overridden_at=overridden_at,
+                # Preserve original timestamps
+                created_at=created_at or datetime.utcnow(),
+                updated_at=self._parse_datetime_from_backup(data.get("updated_at"))
+                or datetime.utcnow(),
             )
 
             self.db.add(new_assignment)
@@ -487,6 +537,27 @@ class StagingPublisher:
                     existing.override_reason = data.get("override_reason")
                     existing.notes = data.get("notes")
 
+                    # Restore provenance fields
+                    if data.get("block_assignment_id"):
+                        existing.block_assignment_id = UUID(data["block_assignment_id"])
+
+                    # Restore override tracking fields
+                    existing.overridden_by = (
+                        UUID(data["overridden_by"])
+                        if data.get("overridden_by")
+                        else None
+                    )
+                    existing.overridden_at = self._parse_datetime_from_backup(
+                        data.get("overridden_at")
+                    )
+
+                    # Restore updated_at for audit fidelity
+                    restored_updated_at = self._parse_datetime_from_backup(
+                        data.get("updated_at")
+                    )
+                    if restored_updated_at:
+                        existing.updated_at = restored_updated_at
+
                     logger.debug(
                         f"Restored modified assignment {backup.original_assignment_id}"
                     )
@@ -495,6 +566,14 @@ class StagingPublisher:
                     assignment_date = data.get("date")
                     if isinstance(assignment_date, str):
                         assignment_date = date_type.fromisoformat(assignment_date)
+
+                    # Parse timestamps for provenance restoration
+                    created_at = self._parse_datetime_from_backup(
+                        data.get("created_at")
+                    )
+                    overridden_at = self._parse_datetime_from_backup(
+                        data.get("overridden_at")
+                    )
 
                     new_assignment = HalfDayAssignment(
                         person_id=UUID(data["person_id"]),
@@ -507,6 +586,21 @@ class StagingPublisher:
                         is_override=data.get("is_override", False),
                         override_reason=data.get("override_reason"),
                         notes=data.get("notes"),
+                        # Provenance fields for complete restoration
+                        block_assignment_id=UUID(data["block_assignment_id"])
+                        if data.get("block_assignment_id")
+                        else None,
+                        # Override tracking fields
+                        overridden_by=UUID(data["overridden_by"])
+                        if data.get("overridden_by")
+                        else None,
+                        overridden_at=overridden_at,
+                        # Preserve original timestamps
+                        created_at=created_at or datetime.utcnow(),
+                        updated_at=self._parse_datetime_from_backup(
+                            data.get("updated_at")
+                        )
+                        or datetime.utcnow(),
                     )
                     self.db.add(new_assignment)
                     logger.debug(

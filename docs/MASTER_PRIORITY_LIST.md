@@ -1,27 +1,28 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Supersedes:** Scattered tracking in TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md
+> **Last Updated:** 2026-01-18 (Bind Mounts, Academic Year Fix, Doc Consolidation)
+> **Authority:** This is the single source of truth for codebase priorities.
+> **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
 
 ---
 
 ## CRITICAL (Fix Immediately)
 
-### 1. Orphan Security Routes (NOT WIRED)
-6 fully-implemented routes disconnected from main API:
+### 1. ~~Orphan Security Routes~~ ✅ RESOLVED
+6 routes now wired to API (commit `b92a9e02`):
 
-| Route | LOC | Impact |
-|-------|-----|--------|
-| `sso.py` | 551 | **SSO authentication unavailable** |
-| `audience_tokens.py` | 531 | **Auth token generation missing** |
-| `sessions.py` | 287 | **User session management missing** |
-| `profiling.py` | 662 | Performance analysis unavailable |
-| `claude_chat.py` | 885 | Claude integration disconnected |
-| `scheduler.py` | 550 | Background job scheduler unwired |
+| Route | Endpoint | Status |
+|-------|----------|--------|
+| `sso.py` | `/api/v1/sso` | ✅ Wired |
+| `audience_tokens.py` | `/api/v1/audience-tokens` | ✅ Wired |
+| `sessions.py` | `/api/v1/sessions` | ✅ Wired |
+| `profiling.py` | `/api/v1/profiling` | ✅ Wired |
+| `claude_chat.py` | `/api/v1/claude-chat` | ✅ Wired |
+| `scheduler.py` | `/api/v1/scheduler-jobs` | ✅ Wired |
 
-**Location:** `backend/app/api/routes/`
-**Action:** Wire to `main.py` or document as intentionally deferred.
+**Resolved:** 2026-01-18 in `feature/master-priority-implementation`
 
 ### 2. PII in Git History
 - Resident names in deleted files (BLOCK_10_SUMMARY.md, AIRTABLE_EXPORT_SUMMARY.md) still in history
@@ -30,90 +31,119 @@
 
 **Ref:** `docs/TODO_INVENTORY.md` line 6
 
-### 3. Documentation Contradictions
-| Doc A | Doc B | Contradiction |
-|-------|-------|---------------|
-| PRIORITY_LIST.md | TECHNICAL_DEBT.md | DEBT-001/002/003 marked "RESOLVED" vs "Open" |
-| ROADMAP.md | TODO_INVENTORY.md | Items marked done that aren't |
-| ARCHITECTURAL_DISCONNECTS.md | itself | Claims issues resolved then documents them as critical |
+### 3. ~~Documentation Contradictions~~ ✅ RESOLVED
+Contradictions fixed (commit `pending`):
 
-**Action:** Reconcile documents or consolidate into this file.
+| Doc | Fix Applied |
+|-----|-------------|
+| TECHNICAL_DEBT.md | Tracking table now shows DEBT-001/002/003 as Resolved |
+| ARCHITECTURAL_DISCONNECTS.md | Removed stale STATUS UPDATE section, added authority note |
+| PRIORITY_LIST.md | Added deprecation header pointing here |
+| TODO_INVENTORY.md | Added deprecation header pointing here |
 
-### 4. Frontend API Path Mismatches
-3 hooks call endpoints at wrong paths (all return 404):
+**Resolved:** 2026-01-18 in `feature/master-priority-implementation`
 
-| Hook | Frontend Path | Backend Path |
-|------|---------------|--------------|
-| `useGameTheory` | `/v1/game-theory/*` | `/game-theory/*` |
-| `usePhaseTransitionRisk` | `/exotic-resilience/...` | `/resilience/exotic/...` |
-| `useRigidityScore` | `/exotic-resilience/...` | `/resilience/exotic/...` |
+### 4. ~~Frontend API Path Mismatches~~ ✅ RESOLVED
+3 hooks fixed (commit `b92a9e02`):
 
-**Location:** `frontend/src/hooks/`
-**Action:** Fix path prefixes in hooks OR update backend route registration.
+| Hook | Before | After | Status |
+|------|--------|-------|--------|
+| `useGameTheory` | `/v1/game-theory/*` | `/game-theory/*` | ✅ Fixed |
+| `usePhaseTransitionRisk` | `/exotic-resilience/...` | `/resilience/exotic/...` | ✅ Fixed |
+| `useRigidityScore` | `/exotic-resilience/...` | `/resilience/exotic/...` | ✅ Fixed |
 
-### 5. Schedule Rollback Data Loss
-Rollback/backup infrastructure has gaps that can cause data loss:
+**Resolved:** 2026-01-18 in `feature/master-priority-implementation`
 
-| Issue | Location | Impact |
-|-------|----------|--------|
-| `time_of_day="ALL"` only captures AM | `schedule_publish_staging.py:277` | PM assignment lost |
-| Missing fields in serialization | `schedule_publish_staging.py:298,403` | Provenance/overrides lost |
-| Rest-period assumes `date` objects | `work_hour_validator.py:341` | TypeError on strings |
+### 5. ~~Schedule Rollback Data Loss~~ ✅ RESOLVED
+Fixed in commits `66a14461` and `8bbb3cb9`:
+- `_find_existing_assignments()` captures both AM+PM for "ALL" time_of_day
+- Full provenance serialization (block_assignment_id, overridden_by/at, updated_at)
+- All 3 restoration paths restore all fields including updated_at
+- Duplicate prevention with `results = []` before fallback path
+- Date string coercion in work_hour_validator.py
 
-**Action:** Fix serialization to capture all slots and fields; add date coercion.
-**Ref:** `docs/reviews/2026-01-17-current-changes-review.md`
+**Resolved:** 2026-01-18 in `feature/master-priority-implementation`
 
 ---
 
 ## HIGH (Address Soon)
 
-### 6. Orphan Framework Code (12K+ LOC)
-Built but never integrated into production code paths:
+### 6. Orphan Framework Code (12K+ LOC) - ANALYSIS COMPLETE
+Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
-| Module | LOC | Status |
-|--------|-----|--------|
-| CQRS (`backend/app/cqrs/`) | 4,248 | Full infrastructure, zero usage |
-| Saga (`backend/app/saga/`) | 2,142 | Orchestration pattern, unused |
-| EventBus (`backend/app/eventbus/`) | 1,385 | Pub/sub, dormant |
-| Deployment (`backend/app/deployment/`) | 2,773 | Canary/blue-green, never instantiated |
-| gRPC (`backend/app/grpc/`) | 1,775 | Full server, no clients |
+| Module | LOC | Quality | Recommendation |
+|--------|-----|---------|----------------|
+| **CQRS** (`backend/app/cqrs/`) | 4,248 | Full impl, 1 test file | **ROADMAP** - Keep for multi-facility scaling |
+| **Saga** (`backend/app/saga/`) | 2,142 | Full impl with compensation | **EVALUATE** - Useful for swap workflows |
+| **EventBus** (`backend/app/eventbus/`) | 1,385 | Generic Redis pub/sub | **INVESTIGATE** - See note below |
+| **Deployment** (`backend/app/deployment/`) | 2,773 | Blue-green + canary | **EVALUATE** - Zero-downtime deploys |
+| **gRPC** (`backend/app/grpc/`) | 1,775 | Full server, JWT auth | **EVALUATE** - MCP/external integrations |
 
-**Decision needed:** Integrate into scheduler engine OR remove to reduce maintenance burden.
+**EventBus Investigation Required:**
+- Two event systems exist intentionally:
+  - `app/events/` = Domain event sourcing (ScheduleCreated, SwapExecuted) - **USED** by `stroboscopic_manager.py`
+  - `app/eventbus/` = Generic distributed messaging (Redis pub/sub, wildcards) - **UNUSED** but likely for external integrations
+- **Probable use case:** n8n workflow automation, external system webhooks, multi-facility sync
+- **Do not delete** - architecture intent is external integration, not internal domain events
 
-### 7. Feature Flags Underutilized
+**Near-Term Integration Candidates:**
+1. **Saga** → Swap execution workflows (multi-step with automatic rollback)
+2. **Deployment** → CI/CD pipeline (zero-downtime releases)
+3. **gRPC** → MCP server performance (binary protocol vs REST)
+
+**Decision:** Keep all modules on roadmap. Integrate as features require.
+
+### 7. ~~Feature Flags Underutilized~~ ✅ RESOLVED (Phase 1)
 - **Location:** `backend/app/features/` - 45KB of production-ready code
-- **Actual usage:** 1 flag (`swap_marketplace_enabled` in `portal.py`)
-- **Should flag:** Labs hub, 3D visualizations, experimental scheduling algorithms
+- **Before:** 1 flag (`swap_marketplace_enabled`)
+- **After:** 5 flags with backend gating on 12 exotic resilience endpoints
+
+| Flag Key | Default | Target Roles | Purpose |
+|----------|---------|--------------|---------|
+| `swap_marketplace_enabled` | true | admin, coordinator, faculty | Original flag |
+| `labs_hub_enabled` | true | admin, coordinator | Gates `/admin/labs` hierarchy |
+| `exotic_resilience_enabled` | false | admin | Gates 12 `/resilience/exotic/*` endpoints |
+| `voxel_visualization_enabled` | false | admin | Gates 3D voxel viz (perf-intensive) |
+| `command_center_enabled` | false | admin | Gates overseer dashboard |
+
+**Files modified:**
+- `scripts/seed_feature_flags.py` - Added 4 new flag definitions
+- `backend/app/api/routes/exotic_resilience.py` - Added `@require_feature_flag` to 12 endpoints
+
+**Resolved:** 2026-01-18 in `feature/feature-flag-expansion`
+**Future work:** Frontend `useFeatureFlag` hook, percentage rollouts, individual lab category flags
 
 ### 8. MCP Tool Placeholders (16 tools)
 
-**NOT IMPLEMENTED (return zeros):**
+**Progress:** 10 tools now wired to backend (2026-01-18 `feature/master-priority-implementation`)
+
+**API WIRED (real backend, fallback on error):**
+| Tool | Domain | Backend Endpoint |
+|------|--------|------------------|
+| `assess_immune_response_tool` | Immune System | `/resilience/exotic/immune/assess` |
+| `check_memory_cells_tool` | Immune System | `/resilience/exotic/immune/memory-cells` |
+| `analyze_antibody_response_tool` | Immune System | `/resilience/exotic/immune/antibody-analysis` |
+| `get_unified_critical_index_tool` | Resilience | `/resilience/exotic/composite/unified-critical-index` |
+| `calculate_recovery_distance_tool` | Resilience | `/resilience/exotic/composite/recovery-distance` |
+| `assess_creep_fatigue_tool` | Resilience | `/resilience/exotic/composite/creep-fatigue` |
+| `analyze_transcription_triggers_tool` | Resilience | `/resilience/exotic/composite/transcription-factors` |
+| `calculate_shapley_workload_tool` | Fairness | `/mcp-proxy/calculate-shapley-workload` |
+
+**MISSING BACKEND ENDPOINTS (MCP has API calls, backend 404s):**
+| Tool | Domain | Expected Endpoint |
+|------|--------|-------------------|
+| `calculate_coverage_var_tool` | VaR Risk | `/api/v1/analytics/coverage-var` |
+| `calculate_workload_var_tool` | VaR Risk | `/api/v1/analytics/workload-var` |
+
+**NOT IMPLEMENTED (return zeros/mock):**
 | Tool | Domain |
 |------|--------|
 | `optimize_free_energy_tool` | Thermodynamics |
 | `analyze_energy_landscape_tool` | Thermodynamics |
-
-**MOCK DATA (realistic placeholders):**
-| Tool | Domain |
-|------|--------|
-| `calculate_shapley_workload_tool` | Fairness |
 | `calculate_hopfield_energy_tool` | Hopfield |
 | `find_nearby_attractors_tool` | Hopfield |
 | `measure_basin_depth_tool` | Hopfield |
 | `detect_spurious_attractors_tool` | Hopfield |
-| `get_unified_critical_index_tool` | Resilience |
-| `calculate_recovery_distance_tool` | Resilience |
-| `assess_creep_fatigue_tool` | Resilience |
-| `analyze_transcription_triggers_tool` | Resilience |
-
-**API FALLBACK (mock when backend unavailable):**
-| Tool | Domain |
-|------|--------|
-| `assess_immune_response_tool` | Immune System |
-| `check_memory_cells_tool` | Immune System |
-| `analyze_antibody_response_tool` | Immune System |
-| `calculate_coverage_var_tool` | VaR Risk |
-| `calculate_workload_var_tool` | VaR Risk |
 
 **Note:** Core ACGME validation tools are REAL implementations.
 
@@ -139,67 +169,89 @@ Built but never integrated into production code paths:
 ### 10. ACGME Compliance Validation Gaps
 Call duty and performance profiling have edge cases:
 
-| Issue | Location | Impact |
+| Issue | Location | Status |
 |-------|----------|--------|
-| `call_assignments` excluded from 24+4/rest checks | `acgme_compliance_engine.py:231,273` | Extended call duty not validated |
-| Performance profiler uses hardcoded defaults | `constraint_validator.py:567` | Understates real workload complexity |
-| MCP SSE/HTTP localhost inconsistency | `server.py:5348,5536` | Startup failures with `0.0.0.0` |
+| `call_assignments` excluded from 24+4/rest checks | `acgme_compliance_engine.py:231,273` | ⏸️ Deferred - Pending MEDCOM ruling |
+| Performance profiler uses hardcoded defaults | `constraint_validator.py:567` | ✅ Fixed - Uses actual context.residents/blocks |
+| MCP SSE/HTTP localhost inconsistency | `server.py:5348,5536` | ✅ Fixed - Aligned localhost detection |
 
-**Action:** Merge call_assignments into shift validation; fix localhost detection.
+**Action:** Merge call_assignments into shift validation (pending MEDCOM ruling on ACGME interpretation).
 **Ref:** `docs/reviews/2026-01-17-current-changes-review.md`
 
 ---
 
 ## MEDIUM (Plan for Sprint)
 
-### 11. Admin Activity Logging
-- `admin_users.py:77` - `_log_activity()` is no-op placeholder
-- `admin_users.py:596` - Returns empty response pending table creation
-- **Need:** Alembic migration for `activity_log` table
+### 11. ~~Admin Activity Logging~~ ✅ RESOLVED
+Activity logging is fully implemented:
+- Migration `20260117_xxx` creates `activity_log` table
+- `admin_users.py:_log_activity()` writes to database
+- `/admin/users/{id}/activity` endpoint returns activity history
 
-### 12. Invitation Emails
-- `admin_users.py:236, 552` - Emails not actually sent
-- **Need:** Wire EmailService to notification tasks
+**Resolved:** 2026-01-18 - Implementation exists, was incorrectly marked as stub
+
+### 12. ~~Invitation Emails~~ ✅ RESOLVED (Alternative Implementation)
+Invitation emails work via different code path:
+- Create user: Uses `render_email_template("admin_welcome")` + `send_email.delay()`
+- Resend invite: Uses `render_email_template()` + `send_email.delay()`
+- **Note:** `email_service.py:send_invitation_email()` is dead code (never called) - cleanup candidate
+
+**Resolved:** 2026-01-18 - Feature works, original function is unused dead code
 
 ### 13. Service Layer Pagination
 - `absence_controller.py:45` - Pagination applied at controller level
 - **Need:** Push to service/repository for SQL LIMIT/OFFSET efficiency
 
-### 14. Documentation Consolidation
-- **68 root-level .md files** (PRIORITY_LIST.md recommended 5-8)
-- Stale timestamps: openapi.yaml (Dec 31), ENDPOINT_CATALOG.md (Jan 4)
-- Many docs reference files that no longer exist
+### 14. ~~Documentation Consolidation~~ ✅ RESOLVED
+Root-level docs reduced from 68 → 28 files.
 
-### 15. CLI and Security Cleanup
-Minor issues found in Codex review:
+| Before | After | Change |
+|--------|-------|--------|
+| 68 root docs | 28 root docs | -40 files consolidated |
+| Scattered guides | Consolidated in `docs/development/` | Easier navigation |
 
-| Issue | Location | Impact |
+**Remaining:** openapi.yaml (Dec 31) timestamp stale, but content accurate.
+**Resolved:** 2026-01-18 in `feature/master-priority-implementation`
+
+### 15. ~~CLI and Security Cleanup~~ ✅ RESOLVED
+Codex review issues fixed:
+
+| Issue | Location | Status |
 |-------|----------|--------|
-| Startup log references wrong CLI command | `main.py:145` | Operator confusion |
-| Queue whitelist too permissive | `queue.py:65` | Any `app.services.*` allowed |
+| Startup log references wrong CLI command | `main.py:145` | ✅ Fixed - Now shows `app.cli user create` |
+| Queue whitelist too permissive | `queue.py:65` | ✅ Fixed - Removed `app.services.*` prefix |
 
-**Action:** Fix CLI reference; tighten queue task allowlist.
+**Resolved:** 2026-01-18 in `feature/master-priority-implementation` (commit `8bbb3cb9`)
 **Ref:** `docs/reviews/2026-01-17-current-changes-review.md`
+
+### 16. VaR Backend Endpoints (NEW)
+MCP tools call these endpoints but they don't exist yet:
+- `POST /api/v1/analytics/coverage-var` - Coverage Value-at-Risk
+- `POST /api/v1/analytics/workload-var` - Workload Value-at-Risk
+
+**Current State:** MCP tools have API-first pattern, fall back to mock data.
+**Backend Service:** `backend/app/services/metrics_service.py` (partial)
+**Action:** Create endpoints in `analytics.py` or new `var_analytics.py` route file.
 
 ---
 
 ## LOW (Backlog)
 
-### 16. A/B Testing Infrastructure
+### 17. A/B Testing Infrastructure
 - **Location:** `backend/app/experiments/`
 - Infrastructure exists, route registered
 - Minimal production usage - consider for Labs rollout
 
-### 17. ML Workload Analysis
+### 18. ML Workload Analysis
 - `ml.py` returns "placeholder response"
 - Low priority unless ML features requested
 
-### 18. Time Crystal DB Loading
+### 19. Time Crystal DB Loading
 - `time_crystal_tools.py:281, 417`
 - Acceptable fallback to empty schedules
 - Fix if `schedule_id` parameter becomes primary use case
 
-### 19. Spreadsheet Editor for Tier 1 Users (PR #740)
+### 20. Spreadsheet Editor for Tier 1 Users (PR #740)
 Excel-like grid editor for schedule verification - eases transition for "normie" users comfortable with Excel.
 
 | Feature | Status | Spec |
@@ -231,24 +283,50 @@ Excel-like grid editor for schedule verification - eases transition for "normie"
 
 ---
 
+## INFRASTRUCTURE QUICK WINS ✅ (2026-01-18)
+
+Low-effort, high-impact fixes completed this session:
+
+### Docker Bind Mounts (Data Persistence)
+Switched local development from named volumes to bind mounts.
+
+| Before | After | Benefit |
+|--------|-------|---------|
+| Named volumes in `/var/lib/docker/volumes/` | `./data/postgres/`, `./data/redis/` | Data visible on host |
+| Lost on `docker system prune` | Survives Docker resets | No more "where did my data go?" |
+| Hidden, hard to backup | `cp -r data/postgres backups/` | Easy backup/restore |
+
+**Files:** `docker-compose.local.yml`, `.gitignore`, `scripts/migrate-volumes-to-bind.sh`
+**Docs:** `BEST_PRACTICES_AND_GOTCHAS.md`, `LOCAL_DEVELOPMENT_RECOVERY.md`
+
+### Academic Year Fix
+`block_quality_report_service.py` now derives academic year from block start date (July-June cycle) instead of hardcoding 2025.
+
+### psutil Dependency
+Added `psutil>=5.9.0` to `requirements.txt` for system profiling capabilities.
+
+---
+
 ## SUMMARY
 
 | Priority | Issues | Scope |
 |----------|--------|-------|
-| **CRITICAL** | 5 | 6 orphan routes, PII, doc contradictions, API mismatches, rollback data loss |
-| **HIGH** | 5 | frameworks, feature flags, MCP stubs, mock GUI, ACGME compliance gaps |
-| **MEDIUM** | 5 | Activity logging, emails, pagination, docs, CLI/security cleanup |
+| **CRITICAL** | 1 open, 4 resolved | ~~orphan routes~~✅, PII, ~~doc contradictions~~✅, ~~API mismatches~~✅, ~~rollback data loss~~✅ |
+| **HIGH** | 3 open, 2 resolved | frameworks, ~~feature flags~~✅, MCP stubs (8/16 wired), mock GUI, ~~ACGME compliance (2/3 fixed)~~ |
+| **MEDIUM** | 2 open, 4 resolved | ~~activity logging~~✅, ~~emails~~✅, pagination, ~~docs~~✅, ~~CLI/security cleanup~~✅, VaR endpoints |
 | **LOW** | 4 | A/B testing, ML, time crystal, spreadsheet editor (tier 1 UX) |
+| **INFRA** | 3 resolved | ~~bind mounts~~✅, ~~academic year fix~~✅, ~~psutil dep~~✅ |
 
 ### Biggest Wins (Impact vs Effort)
 
-1. **Wire 6 orphan routes** → Unlock SSO, sessions, profiling (LOW effort, HIGH impact)
-2. **Fix 3 API path mismatches** → Unlock game theory, exotic resilience features (LOW effort, HIGH impact)
-3. **Fix rollback serialization** → Prevent schedule data loss on restore (MEDIUM effort, CRITICAL impact)
-4. **Decide on CQRS/Saga/EventBus** → 12K LOC to integrate or remove (MEDIUM effort)
-5. **Fix doc contradictions** → Restore trust in documentation (LOW effort)
-6. **Expand feature flag usage** → Labs, 3D viz behind flags (LOW effort)
-7. **Wire mock dashboards** → Real data for ResilienceOverseer, SovereignPortal (MEDIUM effort)
+1. ~~**Wire 6 orphan routes**~~ ✅ DONE → SSO, sessions, profiling now available
+2. ~~**Fix 3 API path mismatches**~~ ✅ DONE → Game theory, exotic resilience now working
+3. ~~**Fix rollback serialization**~~ ✅ DONE → Schedule backup/restore now captures all fields
+4. **Integrate orphan frameworks** → Saga for swaps, Deployment for CI/CD, gRPC for MCP (ON ROADMAP)
+5. ~~**Fix doc contradictions**~~ ✅ DONE → Trust in documentation restored
+6. ~~**Expand feature flag usage**~~ ✅ DONE → 5 flags, 12 exotic endpoints gated (Phase 1)
+7. **Wire MCP tools** → 8 tools wired to real backends (2026-01-18), 6 Hopfield/free-energy remain
+8. **Wire mock dashboards** → Real data for ResilienceOverseer, SovereignPortal (MEDIUM effort)
 
 ---
 

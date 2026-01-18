@@ -13,6 +13,7 @@ from app.api.routes import (
     analytics,
     assignments,
     audit,
+    audience_tokens,
     auth,
     backup,
     batch,
@@ -22,6 +23,7 @@ from app.api.routes import (
     call_assignments,
     certifications,
     changelog,
+    claude_chat,
     conflict_resolution,
     conflicts,
     constraints,
@@ -54,6 +56,7 @@ from app.api.routes import (
     people,
     portal,
     procedures,
+    profiling,
     proxy_coverage,
     qubo_templates,
     queue,
@@ -67,10 +70,13 @@ from app.api.routes import (
     rotation_templates,
     schedule,
     schedule_drafts,
+    scheduler,
     scheduler_ops,
     scheduling_catalyst,
     search,
+    sessions,
     settings,
+    sso,
     swap,
     unified_heatmap,
     upload,
@@ -237,4 +243,16 @@ api_router.include_router(wellness.router)  # prefix="/wellness" defined in rout
 api_router.include_router(ws.router, tags=["websocket"])
 api_router.include_router(
     proxy_coverage.router, prefix="/proxy-coverage", tags=["proxy-coverage"]
+)
+
+# Previously orphaned routes (wired 2026-01-18)
+api_router.include_router(sso.router, prefix="/sso", tags=["sso"])
+api_router.include_router(
+    audience_tokens.router, prefix="/audience-tokens", tags=["audience-tokens"]
+)
+api_router.include_router(sessions.router, prefix="/sessions", tags=["sessions"])
+api_router.include_router(profiling.router, prefix="/profiling", tags=["profiling"])
+api_router.include_router(claude_chat.router, tags=["claude-chat"])  # prefix in router
+api_router.include_router(
+    scheduler.router, prefix="/scheduler-jobs", tags=["scheduler-jobs"]
 )

@@ -1,5 +1,7 @@
 # TODO Inventory
 
+> ⚠️ **DEPRECATED:** This document is no longer maintained. See **`docs/MASTER_PRIORITY_LIST.md`** for the authoritative priority list.
+
 Generated: 2026-01-02
 
 ## Critical (Blocking)

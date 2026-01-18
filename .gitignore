@@ -131,6 +131,10 @@ data/local/**/*.xlsx
 data/local/**/*.xls
 data/local/**/*.csv
 
+# Docker bind mount data (local persistence - contains database files)
+data/postgres/
+data/redis/
+
 # Celery runtime files
 celerybeat-schedule
 backend/celerybeat-schedule

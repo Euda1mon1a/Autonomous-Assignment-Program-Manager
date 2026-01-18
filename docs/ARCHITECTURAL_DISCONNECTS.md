@@ -7,23 +7,7 @@
 
 ---
 
-## STATUS UPDATE (2025-12-19)
-
-Several issues documented below have been **RESOLVED**. See `docs/PRIORITY_LIST.md` for the current, verified priority list.
-
-### RESOLVED ISSUES:
-- **#6 Unauthenticated Routes** - FIXED: All 4 routes now have `get_current_active_user` dependency
-- **#4 SwapExecutor Facade** - FIXED: `_update_schedule_assignments()` and `_update_call_cascade()` now have real implementations
-- **#2 Resilience Disabled by Default** - PARTIALLY FIXED: Tier 1 constraints (HubProtection, UtilizationBuffer) now enabled by default
-
-### ALSO NOW RESOLVED (2025-12-19):
-- **#14 API Session No Rollback** - FIXED: `get_db()` now calls `db.rollback()` on exception
-- **#1 Email Disconnect** - FIXED: `send_email` task now uses `EmailService` for real SMTP delivery
-- **#10 Celery Retry Broken** - FIXED: All tasks now use `bind=True`, `autoretry_for`, and `retry_backoff`
-- **#11 Timezone Issues** - FIXED: All tasks now use `datetime.utcnow()`
-
-### ALL CRITICAL ISSUES RESOLVED
-See `docs/PRIORITY_LIST.md` for complete status.
+> **NOTE:** This document is preserved for historical reference. For the current authoritative priority list, see **`docs/MASTER_PRIORITY_LIST.md`**.
 
 ---
 

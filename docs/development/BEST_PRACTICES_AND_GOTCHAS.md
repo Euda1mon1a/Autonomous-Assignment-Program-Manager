@@ -132,6 +132,46 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build b
 | Redis | 6379 | Cache/Celery broker |
 | MCP | 8081 | AI tools (not 8080 to avoid Claude Code conflict) |
 
+### Data Persistence: Bind Mounts vs Named Volumes
+
+**Current Setup (Local Dev):** Bind mounts for postgres/redis
+**Why:** Data visible on host, survives Docker resets, easy backup
+
+| Volume Type | Where Data Lives | Survives `docker system prune`? | Easy to Inspect? |
+|-------------|------------------|--------------------------------|------------------|
+| Named Volume | `/var/lib/docker/volumes/` | ❌ No | ❌ Hidden |
+| Bind Mount | `./data/postgres/`, `./data/redis/` | ✅ Yes | ✅ Visible |
+
+**The Problem with Named Volumes:**
+- Data hidden in Docker's internal storage
+- `docker system prune -a --volumes` deletes everything
+- Docker Desktop updates/resets can wipe data
+- Can't easily verify data exists without running containers
+- **Hours lost to "where did my data go?" debugging**
+
+**Current Config (docker-compose.local.yml):**
+```yaml
+# Bind mounts - data on host filesystem
+db:
+  volumes:
+    - ./data/postgres:/var/lib/postgresql/data
+redis:
+  volumes:
+    - ./data/redis:/data
+```
+
+**Quick Verification:**
+```bash
+# Check data exists
+ls -la data/postgres/   # Should see PG_VERSION, base/, etc.
+ls -la data/redis/      # Should see dump.rdb, appendonlydir/
+
+# Check database size
+du -sh data/postgres/   # ~80MB typical
+```
+
+> **Multi-user/Production:** See [LOCAL_DEVELOPMENT_RECOVERY.md](LOCAL_DEVELOPMENT_RECOVERY.md#volume-strategy--multi-user-transition) for transitioning back to named volumes.
+
 ---
 
 ## 3. Database & Migrations

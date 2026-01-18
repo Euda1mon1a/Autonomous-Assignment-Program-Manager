@@ -11,8 +11,7 @@ Generates comprehensive quality reports for schedule blocks including:
 PERSEC-compliant: Uses anonymized IDs in logs, names only in reports.
 """
 
-from datetime import date, datetime
-from typing import Optional
+from datetime import UTC, date, datetime
 
 from sqlalchemy import select, func, text
 from sqlalchemy.orm import Session
@@ -73,10 +72,16 @@ class BlockQualityReportService:
             raise ValueError(f"Block {block_number} not found in database")
 
         days = row[2]
+        # Derive academic year from start date (July-June cycle)
+        # If month >= 7 (July), use that year; otherwise use previous year
+        start_date = row[0]
+        academic_year = (
+            start_date.year if start_date.month >= 7 else start_date.year - 1
+        )
         return BlockDates(
             block_number=block_number,
-            academic_year=2025,  # TODO: derive from dates
-            start_date=row[0],
+            academic_year=academic_year,
+            start_date=start_date,
             end_date=row[1],
             days=days,
             slots=days * 2,
@@ -405,19 +410,24 @@ class BlockQualityReportService:
         return residents, faculty
 
     def generate_report(
-        self, block_number: int, academic_year: int = 2025
+        self, block_number: int, academic_year: int | None = None
     ) -> BlockQualityReport:
         """Generate complete block quality report."""
         logger.info(f"Generating quality report for Block {block_number}")
 
-        # Get block dates
+        # Get block dates (derives academic year from block start date)
         block_dates = self.get_block_dates(block_number)
         start_date = block_dates.start_date
         end_date = block_dates.end_date
         max_slots = block_dates.slots
 
+        # Use derived academic year if not explicitly provided
+        resolved_year = (
+            academic_year if academic_year is not None else block_dates.academic_year
+        )
+
         # Section A: Preloaded
-        block_assignments = self.get_block_assignments(block_number, academic_year)
+        block_assignments = self.get_block_assignments(block_number, resolved_year)
         absences = self.get_absences(start_date, end_date)
         call_coverage = self.get_call_coverage(start_date, end_date)
         faculty_preloaded = self.get_faculty_preloaded(start_date, end_date)
@@ -534,11 +544,11 @@ class BlockQualityReportService:
             section_c=section_c,
             section_d=section_d,
             section_e=section_e,
-            generated_at=datetime.utcnow().isoformat(),
+            generated_at=datetime.now(UTC).isoformat(),
         )
 
     def generate_summary(
-        self, block_numbers: list[int], academic_year: int = 2025
+        self, block_numbers: list[int], academic_year: int | None = None
     ) -> CrossBlockSummary:
         """Generate cross-block summary report."""
         logger.info(f"Generating summary for blocks {block_numbers}")
@@ -548,8 +558,14 @@ class BlockQualityReportService:
         total_faculty = 0
         gaps = []
 
+        # Derive academic year from first block if not provided
+        resolved_year = academic_year
+        if resolved_year is None and block_numbers:
+            first_block_dates = self.get_block_dates(block_numbers[0])
+            resolved_year = first_block_dates.academic_year
+
         for block_num in block_numbers:
-            report = self.generate_report(block_num, academic_year)
+            report = self.generate_report(block_num, resolved_year)
 
             blocks.append(
                 BlockSummaryEntry(
@@ -573,14 +589,14 @@ class BlockQualityReportService:
                 gaps.append(f"Block {block_num}: Post-Call PCAT/DO gap")
 
         return CrossBlockSummary(
-            academic_year=academic_year,
+            academic_year=resolved_year,
             blocks=blocks,
             total_assignments=total_resident + total_faculty,
             total_resident=total_resident,
             total_faculty=total_faculty,
             overall_status="PASS" if not gaps else "PASS with gaps",
             gaps_identified=gaps,
-            generated_at=datetime.utcnow().isoformat(),
+            generated_at=datetime.now(UTC).isoformat(),
         )
 
     def to_markdown(self, report: BlockQualityReport) -> str:
