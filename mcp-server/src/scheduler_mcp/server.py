@@ -5345,8 +5345,10 @@ class APIKeyAuthMiddleware:
         # SECURITY: Only health endpoints are exempt, NOT the root path
         self.exempt_paths = {"/health", "/health/"}
         # Check if we're in a production-like environment
+        # SECURITY: 0.0.0.0 is a bind address (listen on all interfaces), NOT a client address.
+        # Treating it as localhost would bypass auth when the server binds to all interfaces.
         host = os.environ.get("MCP_HOST", "127.0.0.1")
-        self.is_localhost = host in ("127.0.0.1", "localhost", "0.0.0.0")
+        self.is_localhost = host in ("127.0.0.1", "localhost")
         self._auth_warning_logged = False
 
     async def __call__(self, scope, receive, send):
@@ -5533,9 +5535,9 @@ Examples:
 
         # SECURITY: SSE transport does not support API key authentication
         # Only allow on localhost without explicit override
-        # Note: 0.0.0.0 treated as localhost for consistency with HTTP auth check
+        # SECURITY: 0.0.0.0 is a bind address, NOT a client address - don't treat as localhost
         api_key = os.environ.get("MCP_API_KEY")
-        is_localhost = args.host in ("127.0.0.1", "localhost", "0.0.0.0")
+        is_localhost = args.host in ("127.0.0.1", "localhost")
 
         if not is_localhost and not api_key:
             logger.error(

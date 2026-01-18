@@ -369,6 +369,16 @@ class WorkHourValidator:
         current_end_dt = self._parse_time_to_datetime(current_date, current_end)
         next_start_dt = self._parse_time_to_datetime(next_date, next_start)
 
+        # Handle overnight shifts: if end_time appears earlier than start_time,
+        # the shift crossed midnight and end_time is actually on the next day.
+        # Example: 19:00-07:00 shift - end_time (07:00) < start_time (19:00)
+        current_start = current_shift.get("start_time")
+        if current_end_dt is not None and current_start:
+            current_start_dt = self._parse_time_to_datetime(current_date, current_start)
+            if current_start_dt is not None and current_end_dt < current_start_dt:
+                # Overnight shift - end time is on the next day
+                current_end_dt = current_end_dt + timedelta(days=1)
+
         if current_end_dt is None or next_start_dt is None:
             # Fallback: estimate based on dates
             days_diff = (next_date - current_date).days
