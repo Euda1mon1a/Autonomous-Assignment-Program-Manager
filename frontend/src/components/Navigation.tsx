@@ -30,6 +30,7 @@ import {
   Settings,
   Shield,
   Users,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -67,6 +68,7 @@ const navItems: NavItem[] = [
   { href: "/admin/block-explorer", label: "Blocks", icon: Network, adminOnly: true },
   { href: "/admin/foam-topology", label: "Foam", icon: Circle, adminOnly: true },
   { href: "/admin/resilience-overseer", label: "Overseer", icon: Eye, adminOnly: true },
+  { href: "/admin/visualizations/synapse-monitor", label: "Synapse", icon: Zap, adminOnly: true },
   { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];
 
