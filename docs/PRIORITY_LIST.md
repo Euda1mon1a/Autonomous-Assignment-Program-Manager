@@ -133,6 +133,10 @@ Consolidate all to `docs/research/` or archive completed research.
 7. **Timezone Standardization** - Minor consistency issue
 8. **Documentation Consolidation** - Reduce maintenance burden
 9. **OWNERSHIP.md Consolidation** - 8 scattered ownership files
+10. **LecturePro AI Integration (External)** - AI-powered presentation tool for educational content
+    - Location: `~/Downloads/lecturepro-ai` (local reference)
+    - Features: Gemini-based slide generation, presenter mode, PDF/PPTX export
+    - Use case: Training presentations, orientation materials
 
 ---
 
