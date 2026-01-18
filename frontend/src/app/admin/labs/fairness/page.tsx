@@ -1,16 +1,21 @@
 'use client';
 
 /**
- * Admin Fairness Dashboard
+ * Fairness & Equity Labs
  *
- * Comprehensive workload fairness analysis with multiple visualization views:
- * - Overview: Jain's fairness index, category stats, faculty table
- * - Lorenz Curve: Visual inequality representation with Gini coefficient
+ * Analyze workload distribution using economic fairness metrics.
+ * Target: Tier 1 users (high graduation readiness)
+ *
+ * Contains:
+ * - Lorenz Curve: Visual inequality with Gini coefficient
  * - Shapley Values: Game theory fair workload distribution
- * - Trends: Historical fairness metrics over time
+ * - Jain's Index: Fairness gauge and trend analysis
+ *
+ * @route /admin/labs/fairness
  */
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import {
   Scale,
   RefreshCw,
@@ -21,6 +26,7 @@ import {
   GitBranch,
   TrendingUp,
   PieChart,
+  ArrowLeft,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { DatePicker } from '@/components/ui/DatePicker';
@@ -401,7 +407,7 @@ function OverviewContent({ data, columns }: OverviewContentProps) {
 // Main Page Component
 // ============================================================================
 
-export default function AdminFairnessPage() {
+export default function FairnessLabsPage() {
   const queryClient = useQueryClient();
 
   // Tab state
@@ -513,17 +519,28 @@ export default function AdminFairnessPage() {
       <header className="border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
-                <Scale className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-white">
-                  Workload Fairness Dashboard
-                </h1>
-                <p className="text-sm text-slate-300">
-                  Multi-dimensional fairness analysis with Lorenz curves and Shapley values
-                </p>
+            <div className="flex items-center gap-4">
+              {/* Back to Labs */}
+              <Link
+                href="/admin/labs"
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-400 hover:text-emerald-400 hover:border-emerald-500/50 transition-all"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-sm">Labs</span>
+              </Link>
+
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
+                  <Scale className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-white">
+                    Fairness & Equity
+                  </h1>
+                  <p className="text-sm text-slate-300">
+                    Lorenz curves, Shapley values, and workload distribution
+                  </p>
+                </div>
               </div>
             </div>
 

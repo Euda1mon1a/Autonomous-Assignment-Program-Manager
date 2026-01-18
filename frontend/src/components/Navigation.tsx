@@ -66,9 +66,8 @@ const navItems: NavItem[] = [
   { href: "/admin/resilience-hub", label: "Resilience", icon: Activity, adminOnly: true },
   { href: "/admin/schema", label: "Schema", icon: Database, adminOnly: true },
   { href: "/admin/block-explorer", label: "Blocks", icon: Network, adminOnly: true },
-  { href: "/admin/foam-topology", label: "Foam", icon: Circle, adminOnly: true },
+  { href: "/admin/labs", label: "Labs", icon: Beaker, adminOnly: true },
   { href: "/admin/resilience-overseer", label: "Overseer", icon: Eye, adminOnly: true },
-  { href: "/admin/visualizations/synapse-monitor", label: "Synapse", icon: Zap, adminOnly: true },
   { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];
 
