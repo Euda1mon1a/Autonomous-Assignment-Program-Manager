@@ -39,11 +39,23 @@
 
 **Action:** Reconcile documents or consolidate into this file.
 
+### 4. Frontend API Path Mismatches
+3 hooks call endpoints at wrong paths (all return 404):
+
+| Hook | Frontend Path | Backend Path |
+|------|---------------|--------------|
+| `useGameTheory` | `/v1/game-theory/*` | `/game-theory/*` |
+| `usePhaseTransitionRisk` | `/exotic-resilience/...` | `/resilience/exotic/...` |
+| `useRigidityScore` | `/exotic-resilience/...` | `/resilience/exotic/...` |
+
+**Location:** `frontend/src/hooks/`
+**Action:** Fix path prefixes in hooks OR update backend route registration.
+
 ---
 
 ## HIGH (Address Soon)
 
-### 4. Orphan Framework Code (12K+ LOC)
+### 5. Orphan Framework Code (12K+ LOC)
 Built but never integrated into production code paths:
 
 | Module | LOC | Status |
@@ -56,12 +68,12 @@ Built but never integrated into production code paths:
 
 **Decision needed:** Integrate into scheduler engine OR remove to reduce maintenance burden.
 
-### 5. Feature Flags Underutilized
+### 6. Feature Flags Underutilized
 - **Location:** `backend/app/features/` - 45KB of production-ready code
 - **Actual usage:** 1 flag (`swap_marketplace_enabled` in `portal.py`)
 - **Should flag:** Labs hub, 3D visualizations, experimental scheduling algorithms
 
-### 6. MCP Tool Placeholders (16 tools)
+### 7. MCP Tool Placeholders (16 tools)
 
 **NOT IMPLEMENTED (return zeros):**
 | Tool | Domain |
@@ -93,24 +105,43 @@ Built but never integrated into production code paths:
 
 **Note:** Core ACGME validation tools are REAL implementations.
 
+### 8. GUI Components Using Mock Data (10 components)
+
+**Command Center Dashboards (HIGH - misleading operators):**
+| Component | Location | Issue |
+|-----------|----------|-------|
+| ResilienceOverseerDashboard | `components/scheduling/` | `generateMockData()` simulates live metrics |
+| SovereignPortal | `features/sovereign-portal/` | `generateMockDashboardState()` fakes all 4 panels |
+| ResilienceLabsPage | `app/admin/labs/resilience/` | "Mock AI analysis" with hardcoded responses |
+
+**Labs Visualizations (MEDIUM - beta/demo status):**
+| Component | Location | Issue |
+|-----------|----------|-------|
+| Synapse Monitor | `features/synapse-monitor/` | Uses `MOCK_PERSONNEL` |
+| Fragility Triage | `features/fragility-triage/` | `generateMockDays()` creates random fragility |
+| N-1/N-2 Resilience | Labs page | `MOCK_FACULTY` with simulated cascades |
+| Holographic Hub | `features/holographic-hub/` | `generateMockHolographicData()` |
+
+**Decision needed:** Wire to real MCP tools OR add "DEMO" badges to UI.
+
 ---
 
 ## MEDIUM (Plan for Sprint)
 
-### 7. Admin Activity Logging
+### 9. Admin Activity Logging
 - `admin_users.py:77` - `_log_activity()` is no-op placeholder
 - `admin_users.py:596` - Returns empty response pending table creation
 - **Need:** Alembic migration for `activity_log` table
 
-### 8. Invitation Emails
+### 10. Invitation Emails
 - `admin_users.py:236, 552` - Emails not actually sent
 - **Need:** Wire EmailService to notification tasks
 
-### 9. Service Layer Pagination
+### 11. Service Layer Pagination
 - `absence_controller.py:45` - Pagination applied at controller level
 - **Need:** Push to service/repository for SQL LIMIT/OFFSET efficiency
 
-### 10. Documentation Consolidation
+### 12. Documentation Consolidation
 - **68 root-level .md files** (PRIORITY_LIST.md recommended 5-8)
 - Stale timestamps: openapi.yaml (Dec 31), ENDPOINT_CATALOG.md (Jan 4)
 - Many docs reference files that no longer exist
@@ -119,16 +150,16 @@ Built but never integrated into production code paths:
 
 ## LOW (Backlog)
 
-### 11. A/B Testing Infrastructure
+### 13. A/B Testing Infrastructure
 - **Location:** `backend/app/experiments/`
 - Infrastructure exists, route registered
 - Minimal production usage - consider for Labs rollout
 
-### 12. ML Workload Analysis
+### 14. ML Workload Analysis
 - `ml.py` returns "placeholder response"
 - Low priority unless ML features requested
 
-### 13. Time Crystal DB Loading
+### 15. Time Crystal DB Loading
 - `time_crystal_tools.py:281, 417`
 - Acceptable fallback to empty schedules
 - Fix if `schedule_id` parameter becomes primary use case
@@ -146,6 +177,7 @@ Built but never integrated into production code paths:
 | RAG Search | ✅ Real | Vector embeddings working |
 | Circuit Breakers | ✅ Real | State tracking functional |
 | Feature Flags | ✅ Real | Infrastructure complete (underutilized) |
+| Fairness Suite | ✅ Production | Lorenz, Shapley, Trends fully wired |
 
 ---
 
@@ -153,17 +185,19 @@ Built but never integrated into production code paths:
 
 | Priority | Issues | Scope |
 |----------|--------|-------|
-| **CRITICAL** | 3 | 6 orphan routes, PII in history, doc contradictions |
-| **HIGH** | 3 | 12K LOC orphan frameworks, feature flags, 16 MCP stubs |
+| **CRITICAL** | 4 | 6 orphan routes, PII in history, doc contradictions, 3 API path mismatches |
+| **HIGH** | 4 | 12K LOC orphan frameworks, feature flags, 16 MCP stubs, 10 mock GUI components |
 | **MEDIUM** | 4 | Activity logging, emails, pagination, doc consolidation |
 | **LOW** | 3 | A/B testing, ML, time crystal |
 
 ### Biggest Wins (Impact vs Effort)
 
 1. **Wire 6 orphan routes** → Unlock SSO, sessions, profiling (LOW effort, HIGH impact)
-2. **Decide on CQRS/Saga/EventBus** → 12K LOC to integrate or remove (MEDIUM effort)
-3. **Fix doc contradictions** → Restore trust in documentation (LOW effort)
-4. **Expand feature flag usage** → Labs, 3D viz behind flags (LOW effort)
+2. **Fix 3 API path mismatches** → Unlock game theory, exotic resilience features (LOW effort, HIGH impact)
+3. **Decide on CQRS/Saga/EventBus** → 12K LOC to integrate or remove (MEDIUM effort)
+4. **Fix doc contradictions** → Restore trust in documentation (LOW effort)
+5. **Expand feature flag usage** → Labs, 3D viz behind flags (LOW effort)
+6. **Wire mock dashboards** → Real data for ResilienceOverseer, SovereignPortal (MEDIUM effort)
 
 ---
 
