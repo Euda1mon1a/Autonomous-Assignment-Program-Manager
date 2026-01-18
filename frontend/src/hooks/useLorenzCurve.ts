@@ -50,7 +50,7 @@ export interface LorenzDataPoint {
 export const lorenzCurveQueryKeys = {
   all: ['lorenz-curve'] as const,
   generate: (values: number[]) =>
-    ['lorenz-curve', 'generate', values.sort((a, b) => a - b).join(',')] as const,
+    ['lorenz-curve', 'generate', [...values].sort((a, b) => a - b).join(',')] as const,
 };
 
 // ============================================================================

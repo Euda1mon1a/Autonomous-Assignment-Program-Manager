@@ -72,7 +72,7 @@ export interface ShapleyMetricsResponse {
 export const shapleyQueryKeys = {
   all: ['shapley-workload'] as const,
   calculate: (facultyIds: string[], startDate: string, endDate: string) =>
-    ['shapley-workload', 'calculate', facultyIds.sort().join(','), startDate, endDate] as const,
+    ['shapley-workload', 'calculate', [...facultyIds].sort().join(','), startDate, endDate] as const,
 };
 
 // ============================================================================
