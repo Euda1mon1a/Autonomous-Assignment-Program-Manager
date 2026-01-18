@@ -510,7 +510,8 @@ class StagingPublisher:
                 overridden_at=overridden_at,
                 # Preserve original timestamps
                 created_at=created_at or datetime.utcnow(),
-                updated_at=self._parse_datetime_from_backup(data.get("updated_at")),
+                updated_at=self._parse_datetime_from_backup(data.get("updated_at"))
+                or datetime.utcnow(),
             )
 
             self.db.add(new_assignment)
@@ -598,7 +599,8 @@ class StagingPublisher:
                         created_at=created_at or datetime.utcnow(),
                         updated_at=self._parse_datetime_from_backup(
                             data.get("updated_at")
-                        ),
+                        )
+                        or datetime.utcnow(),
                     )
                     self.db.add(new_assignment)
                     logger.debug(
