@@ -461,14 +461,45 @@ async def get_unified_critical_index(
     logger.info(f"Calculating unified critical index (top_n={top_n})")
 
     try:
-        # Try to import the actual backend module to verify availability
-        import importlib.util
-        if importlib.util.find_spec("app.resilience.unified_critical_index") is None:
-            raise ImportError("Module not found")
+        # Try to call backend API first
+        from .api_client import SchedulerAPIClient
 
-        # In production, this would fetch data from the database
-        # For now, return mock data showing the structure
-        logger.warning("Unified critical index using placeholder data")
+        try:
+            async with SchedulerAPIClient() as client:
+                response = await client.client.post(
+                    f"{client.config.api_prefix}/resilience/exotic/composite/unified-critical-index",
+                    json={"include_details": include_details, "top_n": top_n},
+                    headers=await client._ensure_authenticated(),
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                logger.info("Unified critical index retrieved from backend API")
+
+                # Map backend response to MCP schema
+                return UnifiedCriticalIndexResponse(
+                    analyzed_at=data.get("analyzed_at", datetime.now().isoformat()),
+                    total_faculty=data.get("total_faculty", 0),
+                    overall_index=data.get("overall_index", 0.0),
+                    risk_level=data.get("risk_level", "unknown"),
+                    risk_concentration=0.35,  # Not in simplified backend response
+                    critical_count=data.get("critical_count", 0),
+                    universal_critical_count=data.get("universal_critical_count", 0),
+                    pattern_distribution=data.get("pattern_distribution", {}),
+                    top_priority=data.get("top_priority", []),
+                    top_critical_faculty=[],  # Simplified backend doesn't include details
+                    contributing_factors={"contingency": 0.40, "hub_analysis": 0.35, "epidemiology": 0.25},
+                    trend="stable",
+                    top_concerns=data.get("recommendations", []),
+                    recommendations=data.get("recommendations", []),
+                    severity="warning" if data.get("critical_count", 0) > 0 else "healthy",
+                )
+
+        except Exception as api_error:
+            logger.warning(f"Backend API call failed, using fallback: {api_error}")
+
+        # Fallback to mock data
+        logger.warning("Unified critical index using placeholder data (backend unavailable)")
 
         # Mock response demonstrating the response structure
         return UnifiedCriticalIndexResponse(
@@ -631,13 +662,45 @@ async def calculate_recovery_distance(
     end = date.fromisoformat(end_date) if end_date else (today + timedelta(days=30))
 
     try:
-        # Try to import the actual backend module to verify availability
-        import importlib.util
-        if importlib.util.find_spec("app.resilience.recovery_distance") is None:
-            raise ImportError("Module not found")
+        # Try to call backend API first
+        from .api_client import SchedulerAPIClient
 
-        # In production, would fetch schedule and run actual analysis
-        logger.warning("Recovery distance using placeholder data")
+        try:
+            async with SchedulerAPIClient() as client:
+                response = await client.client.post(
+                    f"{client.config.api_prefix}/resilience/exotic/composite/recovery-distance",
+                    json={"schedule_id": None, "max_depth": 5},
+                    headers=await client._ensure_authenticated(),
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                logger.info("Recovery distance retrieved from backend API")
+
+                return RecoveryDistanceResponse(
+                    analyzed_at=data.get("analyzed_at", datetime.now().isoformat()),
+                    start_date=str(start),
+                    end_date=str(end),
+                    events_tested=data.get("events_tested", 0),
+                    rd_mean=data.get("rd_mean", 0.0),
+                    rd_p95=data.get("rd_p95", 0.0),
+                    rd_max=data.get("rd_max", 0),
+                    rd_min=0,
+                    feasible_count=data.get("feasible_count", 0),
+                    infeasible_count=data.get("infeasible_count", 0),
+                    breakglass_count=0,
+                    fragility_score=1.0 - (data.get("feasible_count", 0) / max(data.get("events_tested", 1), 1)),
+                    sample_results=[],
+                    interpretation=data.get("interpretation", ""),
+                    recommendations=data.get("recommendations", []),
+                    severity="healthy" if data.get("infeasible_count", 0) == 0 else "warning",
+                )
+
+        except Exception as api_error:
+            logger.warning(f"Backend API call failed, using fallback: {api_error}")
+
+        # Fallback to mock data
+        logger.warning("Recovery distance using placeholder data (backend unavailable)")
 
         # Mock response showing typical structure
         sample_results = []
@@ -793,13 +856,40 @@ async def assess_creep_fatigue(
     logger.info(f"Assessing creep-fatigue burnout risk (top_n={top_n})")
 
     try:
-        # Try to import the actual backend module to verify availability
-        import importlib.util
-        if importlib.util.find_spec("app.resilience.creep_fatigue") is None:
-            raise ImportError("Module not found")
+        # Try to call backend API first
+        from .api_client import SchedulerAPIClient
 
-        # In production, would fetch resident workload data
-        logger.warning("Creep-fatigue using placeholder data")
+        try:
+            async with SchedulerAPIClient() as client:
+                response = await client.client.post(
+                    f"{client.config.api_prefix}/resilience/exotic/composite/creep-fatigue",
+                    json={"faculty_ids": None, "lookback_days": 90},
+                    headers=await client._ensure_authenticated(),
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                logger.info("Creep fatigue assessed from backend API")
+
+                return CreepFatigueResponse(
+                    analyzed_at=data.get("analyzed_at", datetime.now().isoformat()),
+                    total_assessed=data.get("total_analyzed", 0),
+                    primary_creep_count=data.get("primary_count", 0),
+                    secondary_creep_count=data.get("secondary_count", 0),
+                    tertiary_creep_count=data.get("tertiary_count", 0),
+                    average_cumulative_damage=data.get("average_damage", 0.0),
+                    high_risk_count=len(data.get("high_risk_faculty", [])),
+                    assessments=[],  # Simplified backend doesn't include detailed assessments
+                    system_recommendations=data.get("recommendations", []),
+                    interpretation=data.get("interpretation", ""),
+                    severity="critical" if data.get("tertiary_count", 0) > 0 else "warning",
+                )
+
+        except Exception as api_error:
+            logger.warning(f"Backend API call failed, using fallback: {api_error}")
+
+        # Fallback to mock data
+        logger.warning("Creep-fatigue using placeholder data (backend unavailable)")
 
         assessments = []
         if include_assessments:
@@ -948,13 +1038,43 @@ async def analyze_transcription_triggers(
     logger.info("Analyzing transcription factor regulatory network")
 
     try:
-        # Try to import the actual backend module to verify availability
-        import importlib.util
-        if importlib.util.find_spec("app.resilience.transcription_factors") is None:
-            raise ImportError("Module not found")
+        # Try to call backend API first
+        from .api_client import SchedulerAPIClient
 
-        # In production, would access actual TF scheduler state
-        logger.warning("Transcription factors using placeholder data")
+        try:
+            async with SchedulerAPIClient() as client:
+                response = await client.client.post(
+                    f"{client.config.api_prefix}/resilience/exotic/composite/transcription-factors",
+                    json={"constraint_context": None},
+                    headers=await client._ensure_authenticated(),
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                logger.info("Transcription factors retrieved from backend API")
+
+                return TranscriptionTriggersResponse(
+                    analyzed_at=data.get("analyzed_at", datetime.now().isoformat()),
+                    total_tfs=data.get("active_factors", 0),
+                    active_tfs=data.get("activators_active", 0) + data.get("repressors_active", 0),
+                    constraints_with_modified_weight=len(data.get("constraint_modifications", {})),
+                    positive_loops_detected=0,
+                    negative_loops_detected=0,
+                    dominant_tf=data.get("dominant_factor"),
+                    active_tfs_list=[],  # Simplified backend doesn't include TF details
+                    constraint_status=[],  # Simplified backend doesn't include constraint details
+                    detected_loops=[],
+                    signal_cascade_depth=0,
+                    interpretation=data.get("interpretation", ""),
+                    recommendations=data.get("recommendations", []),
+                    severity="healthy",
+                )
+
+        except Exception as api_error:
+            logger.warning(f"Backend API call failed, using fallback: {api_error}")
+
+        # Fallback to mock data
+        logger.warning("Transcription factors using placeholder data (backend unavailable)")
 
         active_tfs = []
         if include_tf_details:
