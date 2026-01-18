@@ -8,20 +8,19 @@
 
 ## CRITICAL (Fix Immediately)
 
-### 1. Orphan Security Routes (NOT WIRED)
-6 fully-implemented routes disconnected from main API:
+### 1. ~~Orphan Security Routes~~ ✅ RESOLVED
+6 routes now wired to API (commit `b92a9e02`):
 
-| Route | LOC | Impact |
-|-------|-----|--------|
-| `sso.py` | 551 | **SSO authentication unavailable** |
-| `audience_tokens.py` | 531 | **Auth token generation missing** |
-| `sessions.py` | 287 | **User session management missing** |
-| `profiling.py` | 662 | Performance analysis unavailable |
-| `claude_chat.py` | 885 | Claude integration disconnected |
-| `scheduler.py` | 550 | Background job scheduler unwired |
+| Route | Endpoint | Status |
+|-------|----------|--------|
+| `sso.py` | `/api/v1/sso` | ✅ Wired |
+| `audience_tokens.py` | `/api/v1/audience-tokens` | ✅ Wired |
+| `sessions.py` | `/api/v1/sessions` | ✅ Wired |
+| `profiling.py` | `/api/v1/profiling` | ✅ Wired |
+| `claude_chat.py` | `/api/v1/claude-chat` | ✅ Wired |
+| `scheduler.py` | `/api/v1/scheduler-jobs` | ✅ Wired |
 
-**Location:** `backend/app/api/routes/`
-**Action:** Wire to `main.py` or document as intentionally deferred.
+**Resolved:** 2026-01-18 in `feature/master-priority-implementation`
 
 ### 2. PII in Git History
 - Resident names in deleted files (BLOCK_10_SUMMARY.md, AIRTABLE_EXPORT_SUMMARY.md) still in history
@@ -39,17 +38,16 @@
 
 **Action:** Reconcile documents or consolidate into this file.
 
-### 4. Frontend API Path Mismatches
-3 hooks call endpoints at wrong paths (all return 404):
+### 4. ~~Frontend API Path Mismatches~~ ✅ RESOLVED
+3 hooks fixed (commit `b92a9e02`):
 
-| Hook | Frontend Path | Backend Path |
-|------|---------------|--------------|
-| `useGameTheory` | `/v1/game-theory/*` | `/game-theory/*` |
-| `usePhaseTransitionRisk` | `/exotic-resilience/...` | `/resilience/exotic/...` |
-| `useRigidityScore` | `/exotic-resilience/...` | `/resilience/exotic/...` |
+| Hook | Before | After | Status |
+|------|--------|-------|--------|
+| `useGameTheory` | `/v1/game-theory/*` | `/game-theory/*` | ✅ Fixed |
+| `usePhaseTransitionRisk` | `/exotic-resilience/...` | `/resilience/exotic/...` | ✅ Fixed |
+| `useRigidityScore` | `/exotic-resilience/...` | `/resilience/exotic/...` | ✅ Fixed |
 
-**Location:** `frontend/src/hooks/`
-**Action:** Fix path prefixes in hooks OR update backend route registration.
+**Resolved:** 2026-01-18 in `feature/master-priority-implementation`
 
 ### 5. Schedule Rollback Data Loss
 Rollback/backup infrastructure has gaps that can cause data loss:
@@ -235,15 +233,15 @@ Excel-like grid editor for schedule verification - eases transition for "normie"
 
 | Priority | Issues | Scope |
 |----------|--------|-------|
-| **CRITICAL** | 5 | 6 orphan routes, PII, doc contradictions, API mismatches, rollback data loss |
+| **CRITICAL** | 3 open, 2 resolved | ~~orphan routes~~✅, PII, doc contradictions, ~~API mismatches~~✅, rollback data loss |
 | **HIGH** | 5 | frameworks, feature flags, MCP stubs, mock GUI, ACGME compliance gaps |
 | **MEDIUM** | 5 | Activity logging, emails, pagination, docs, CLI/security cleanup |
 | **LOW** | 4 | A/B testing, ML, time crystal, spreadsheet editor (tier 1 UX) |
 
 ### Biggest Wins (Impact vs Effort)
 
-1. **Wire 6 orphan routes** → Unlock SSO, sessions, profiling (LOW effort, HIGH impact)
-2. **Fix 3 API path mismatches** → Unlock game theory, exotic resilience features (LOW effort, HIGH impact)
+1. ~~**Wire 6 orphan routes**~~ ✅ DONE → SSO, sessions, profiling now available
+2. ~~**Fix 3 API path mismatches**~~ ✅ DONE → Game theory, exotic resilience now working
 3. **Fix rollback serialization** → Prevent schedule data loss on restore (MEDIUM effort, CRITICAL impact)
 4. **Decide on CQRS/Saga/EventBus** → 12K LOC to integrate or remove (MEDIUM effort)
 5. **Fix doc contradictions** → Restore trust in documentation (LOW effort)
