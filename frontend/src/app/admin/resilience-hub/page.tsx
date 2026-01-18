@@ -397,11 +397,11 @@ function FairnessTab() {
   startDate.setMonth(startDate.getMonth() - 1);
   const endDate = new Date();
 
-  const { data: fairness, isLoading, error } = useFairnessAudit({
-    startDate: startDate.toISOString().split('T')[0],
-    endDate: endDate.toISOString().split('T')[0],
-    includeTitled: false,
-  });
+  const { data: fairness, isLoading, error } = useFairnessAudit(
+    startDate.toISOString().split('T')[0],
+    endDate.toISOString().split('T')[0],
+    false
+  );
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message="Failed to load fairness data" />;
