@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-17T02:38:49Z
+ * Generated at: 2026-01-18T22:01:33Z
  * Generator: openapi-typescript
  *
  * To regenerate:
@@ -8219,6 +8219,98 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/resilience/exotic/composite/unified-critical-index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Get Unified Critical Index
+         * @description Calculate unified critical index aggregating N-1/N-2, burnout, and hub analysis.
+         *
+         *     Cross-domain risk assessment identifying faculty who are critical across
+         *     multiple resilience dimensions.
+         */
+        post: operations["get_unified_critical_index_api_v1_resilience_exotic_composite_unified_critical_index_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/exotic/composite/recovery-distance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calculate Recovery Distance
+         * @description Calculate recovery distance - minimum edits to recover from N-1 events.
+         *
+         *     Lower recovery distance = more resilient schedule (can absorb shocks
+         *     with fewer changes).
+         */
+        post: operations["calculate_recovery_distance_api_v1_resilience_exotic_composite_recovery_distance_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/exotic/composite/creep-fatigue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assess Creep Fatigue
+         * @description Assess long-term stress accumulation using materials science fatigue models.
+         *
+         *     Models chronic stress like material fatigue through Larson-Miller parameter
+         *     and Miner's rule cumulative damage.
+         */
+        post: operations["assess_creep_fatigue_api_v1_resilience_exotic_composite_creep_fatigue_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/exotic/composite/transcription-factors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Analyze Transcription Factors
+         * @description Analyze bio-inspired constraint regulation using gene regulatory network concepts.
+         *
+         *     Models constraints as genes with activators/repressors that modify their
+         *     weight based on context (like holiday coverage, crisis mode).
+         */
+        post: operations["analyze_transcription_factors_api_v1_resilience_exotic_composite_transcription_factors_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/fatigue-risk/samn-perelli/levels": {
         parameters: {
             query?: never;
@@ -10672,6 +10764,82 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/coverage-var": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calculate Coverage Var
+         * @description Calculate Value-at-Risk for coverage metrics.
+         *
+         *     VaR quantifies the worst expected coverage drop at specified confidence levels.
+         *     For example, 95% VaR of 0.15 means: "With 95% confidence, coverage drop
+         *     won't exceed 15%."
+         *
+         *     Used by MCP tools for risk assessment and capacity planning.
+         */
+        post: operations["calculate_coverage_var_api_v1_coverage_var_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workload-var": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calculate Workload Var
+         * @description Calculate Value-at-Risk for workload distribution metrics.
+         *
+         *     Analyzes workload imbalance risk using metrics like Gini coefficient,
+         *     max hours, or variance. Helps identify risk of unfair distribution.
+         *
+         *     Used by MCP tools for workload equity analysis.
+         */
+        post: operations["calculate_workload_var_api_v1_workload_var_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/conditional-var": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calculate Conditional Var
+         * @description Calculate Conditional VaR (Expected Shortfall).
+         *
+         *     CVaR measures average loss in worst-case scenarios beyond VaR threshold.
+         *     More conservative than VaR - captures "how bad it gets when it gets bad."
+         *
+         *     Used by MCP tools for tail risk analysis and contingency planning.
+         */
+        post: operations["calculate_conditional_var_api_v1_conditional_var_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/fairness/audit": {
         parameters: {
             query?: never;
@@ -11037,6 +11205,152 @@ export interface paths {
          *         Restore result
          */
         post: operations["restore_snapshot_api_v1_backup_restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/backup/create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Backup
+         * @description Create a full database backup.
+         *
+         *     Triggers the backup script to create a compressed PostgreSQL backup.
+         *     Requires ADMIN role.
+         *
+         *     Args:
+         *         request: Backup request with strategy and description
+         *
+         *     Returns:
+         *         Backup result with backup_id, size, and status
+         */
+        post: operations["create_backup_api_v1_backup_create_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/backup/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Backups
+         * @description List available database backups.
+         *
+         *     Requires ADMIN role.
+         *
+         *     Args:
+         *         limit: Maximum number of backups to return
+         *         strategy: Optional filter by strategy type
+         *
+         *     Returns:
+         *         List of backups with metadata and storage stats
+         */
+        get: operations["list_backups_api_v1_backup_list_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/backup/restore/{backup_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore From Backup
+         * @description Restore database from a full backup.
+         *
+         *     WARNING: This will replace all data in the database.
+         *
+         *     Requires ADMIN role.
+         *
+         *     Args:
+         *         backup_id: ID of backup to restore
+         *         request: Restore request with dry_run flag
+         *
+         *     Returns:
+         *         Restore result
+         */
+        post: operations["restore_from_backup_api_v1_backup_restore__backup_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/backup/verify/{backup_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Verify Backup
+         * @description Verify backup integrity.
+         *
+         *     Checks file existence and calculates checksum.
+         *
+         *     Requires ADMIN role.
+         *
+         *     Args:
+         *         backup_id: ID of backup to verify
+         *
+         *     Returns:
+         *         Verification result with checksum and validity
+         */
+        get: operations["verify_backup_api_v1_backup_verify__backup_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/backup/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Backup Status
+         * @description Get backup system health status.
+         *
+         *     Returns latest backup age, total count, and warnings.
+         *
+         *     Requires ADMIN role.
+         *
+         *     Returns:
+         *         Backup system status with health indicators
+         */
+        get: operations["get_backup_status_api_v1_backup_status_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -12839,6 +13153,42 @@ export interface paths {
          *         Lorenz curve coordinates for plotting
          */
         post: operations["generate_lorenz_curve_endpoint_api_v1_mcp_generate_lorenz_curve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mcp/calculate-shapley-workload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calculate Shapley Workload
+         * @description Calculate Shapley values for fair workload distribution.
+         *
+         *     Uses cooperative game theory to determine each faculty member's fair share
+         *     of workload based on their marginal contribution to schedule coverage.
+         *
+         *     The Shapley value is the unique fair division satisfying:
+         *     - Efficiency: Sum of all values = total value
+         *     - Symmetry: Identical players get identical payoffs
+         *     - Null player: Zero contribution = zero payoff
+         *
+         *     **Requires admin role.**
+         *
+         *     Args:
+         *         request: Faculty IDs, date range, and Monte Carlo sample count
+         *
+         *     Returns:
+         *         Shapley metrics including per-faculty results and summary statistics
+         */
+        post: operations["calculate_shapley_workload_api_v1_mcp_calculate_shapley_workload_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -17234,6 +17584,1190 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sso/saml/metadata": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Saml Metadata
+         * @description Get SAML Service Provider metadata.
+         *
+         *     Returns SP metadata XML for IdP configuration.
+         */
+        get: operations["saml_metadata_api_v1_sso_saml_metadata_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sso/saml/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Saml Login
+         * @description Initiate SAML login flow.
+         *
+         *     Redirects user to IdP for authentication.
+         *
+         *     Args:
+         *         relay_state: Optional URL to redirect after successful authentication
+         */
+        get: operations["saml_login_api_v1_sso_saml_login_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sso/saml/acs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Saml Acs
+         * @description SAML Assertion Consumer Service (ACS).
+         *
+         *     Receives SAML response from IdP, validates it, and creates user session.
+         */
+        post: operations["saml_acs_api_v1_sso_saml_acs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sso/saml/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Saml Logout
+         * @description Initiate SAML logout flow.
+         *
+         *     Redirects user to IdP for logout.
+         */
+        get: operations["saml_logout_api_v1_sso_saml_logout_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sso/oauth2/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Oauth2 Login
+         * @description Initiate OAuth2/OIDC login flow.
+         *
+         *     Redirects user to OAuth2 provider for authentication.
+         *
+         *     Args:
+         *         redirect_uri: Optional URL to redirect after successful authentication
+         */
+        get: operations["oauth2_login_api_v1_sso_oauth2_login_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sso/oauth2/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Oauth2 Callback
+         * @description OAuth2/OIDC callback endpoint.
+         *
+         *     Receives authorization code, exchanges it for tokens, and creates user session.
+         */
+        get: operations["oauth2_callback_api_v1_sso_oauth2_callback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sso/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Providers
+         * @description List available SSO providers.
+         *
+         *     Returns configuration info for active SSO providers.
+         */
+        get: operations["list_providers_api_v1_sso_providers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sso/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sso Status
+         * @description Get SSO configuration status.
+         *
+         *     Returns current SSO configuration (admin info).
+         */
+        get: operations["sso_status_api_v1_sso_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audience-tokens/audiences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Audiences
+         * @description List all available audience scopes.
+         *
+         *     Returns a mapping of audience keys to their descriptions.
+         *     This helps frontends display available operations to users.
+         *
+         *     **Authentication Required**: Yes (any authenticated user)
+         *
+         *     **Example Response**:
+         *     ```json
+         *     {
+         *         "audiences": {
+         *             "jobs.abort": "Abort running background jobs",
+         *             "schedule.generate": "Generate new schedules",
+         *             "swap.execute": "Execute schedule swaps"
+         *         }
+         *     }
+         *     ```
+         */
+        get: operations["list_audiences_api_v1_audience_tokens_audiences_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audience-tokens/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request Audience Token
+         * @description Request an audience-scoped token for elevated operations.
+         *
+         *     This endpoint creates a short-lived JWT token that grants permission
+         *     for a specific operation type. The token should be used immediately
+         *     and discarded after the operation completes.
+         *
+         *     **Authentication Required**: Yes (normal access token)
+         *
+         *     **Request Body**:
+         *     - `audience`: Operation scope (e.g., "jobs.abort")
+         *     - `ttl_seconds`: Time-to-live (30-600 seconds, default: 120)
+         *
+         *     **Security Notes**:
+         *     - Token is valid only for the specified audience
+         *     - Maximum TTL is 10 minutes (600 seconds)
+         *     - Token creation is logged for audit trail
+         *     - Token inherits user permissions (cannot escalate beyond user's role)
+         *
+         *     **Example Request**:
+         *     ```json
+         *     {
+         *         "audience": "jobs.abort",
+         *         "ttl_seconds": 120
+         *     }
+         *     ```
+         *
+         *     **Example Response**:
+         *     ```json
+         *     {
+         *         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+         *         "audience": "jobs.abort",
+         *         "expires_at": "2025-12-29T15:30:00Z",
+         *         "ttl_seconds": 120
+         *     }
+         *     ```
+         *
+         *     **Usage**:
+         *     1. Store token temporarily in memory (not localStorage)
+         *     2. Include in Authorization header: `Bearer <token>`
+         *     3. Discard after operation completes
+         *
+         *     **Role Requirements**:
+         *     - admin.impersonate, database.backup, database.restore: admin only
+         *     - schedule.delete, resilience.override, audit.export, jobs.kill, solver.abort: coordinator+
+         *     - swap.execute, swap.rollback: faculty+
+         *     - Other audiences: any authenticated user
+         */
+        post: operations["request_audience_token_api_v1_audience_tokens_tokens_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audience-tokens/tokens/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke Token
+         * @description Revoke an audience-scoped token.
+         *
+         *     This adds the token to the blacklist, preventing further use.
+         *     Useful for:
+         *     - Immediate revocation if token is compromised
+         *     - Cleanup after operation completion
+         *     - Security incident response
+         *
+         *     **Authentication Required**: Yes
+         *
+         *     **Security**: Users can only revoke their own tokens (unless admin)
+         *
+         *     **Request Body**:
+         *     - `jti`: JWT ID of the token to revoke
+         *     - `reason`: Optional reason for revocation
+         *
+         *     **Example Request**:
+         *     ```json
+         *     {
+         *         "jti": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+         *         "reason": "operation_completed"
+         *     }
+         *     ```
+         *
+         *     **Example Response**:
+         *     ```json
+         *     {
+         *         "success": true,
+         *         "jti": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+         *         "message": "Token successfully revoked"
+         *     }
+         *     ```
+         *
+         *     **Ownership Verification**:
+         *     Token ownership is verified in the following order:
+         *     1. If `token` is provided in request, decode it to get user_id
+         *     2. Check if token is already in blacklist (has recorded user_id)
+         *     3. Admins can revoke any token regardless of ownership
+         */
+        post: operations["revoke_token_api_v1_audience_tokens_tokens_revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audience-tokens/example/abort-job/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Abort Job Example
+         * @description Example endpoint showing audience authentication usage.
+         *
+         *     This demonstrates how to protect an endpoint with audience-scoped tokens.
+         *     The endpoint requires:
+         *     1. Valid user authentication (normal access token)
+         *     2. Valid audience token for "jobs.abort"
+         *
+         *     **Authentication Required**:
+         *     - Access token (normal authentication)
+         *     - Audience token in Authorization header
+         *
+         *     **Headers**:
+         *     ```
+         *     Authorization: Bearer <audience-token>
+         *     ```
+         *
+         *     **Flow**:
+         *     1. User authenticates normally
+         *     2. User requests audience token: POST /api/audience-tokens/tokens
+         *     3. User calls this endpoint with audience token
+         *     4. Backend validates token has "jobs.abort" audience
+         *     5. Operation executes
+         *
+         *     **Security**:
+         *     - audience_token.sub contains user_id from token
+         *     - current_user is from normal authentication
+         *     - Verify they match to prevent token theft
+         */
+        post: operations["abort_job_example_api_v1_audience_tokens_example_abort_job__job_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get My Sessions
+         * @description Get all active sessions for the current user.
+         *
+         *     Returns list of sessions with device info, last activity, etc.
+         *     Useful for "Where you're logged in" feature.
+         */
+        get: operations["get_my_sessions_api_v1_sessions_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/me/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Current Session
+         * @description Get information about the current session.
+         *
+         *     Returns session details for the current request.
+         */
+        get: operations["get_current_session_api_v1_sessions_me_current_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/me/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh Current Session
+         * @description Refresh the current session to extend its expiration.
+         *
+         *     Useful for "Stay logged in" functionality.
+         */
+        post: operations["refresh_current_session_api_v1_sessions_me_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/me/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Logout Specific Session
+         * @description Logout a specific session.
+         *
+         *     Allows users to logout from a specific device/browser.
+         *     Validates that the session belongs to the current user.
+         */
+        delete: operations["logout_specific_session_api_v1_sessions_me__session_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/me/other": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Logout Other Sessions
+         * @description Logout all other sessions except the current one.
+         *
+         *     Useful for "Logout everywhere else" functionality.
+         *     Keeps the current session active.
+         */
+        delete: operations["logout_other_sessions_api_v1_sessions_me_other_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/me/all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Logout All My Sessions
+         * @description Logout all sessions for the current user.
+         *
+         *     This will log out the current session as well.
+         *     User will need to login again.
+         */
+        delete: operations["logout_all_my_sessions_api_v1_sessions_me_all_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Session Stats
+         * @description Get session statistics (admin only).
+         *
+         *     Returns metrics about active sessions, concurrent users, etc.
+         */
+        get: operations["get_session_stats_api_v1_sessions_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/user/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get User Sessions Admin
+         * @description Get all sessions for a specific user (admin only).
+         *
+         *     Allows administrators to view sessions for any user.
+         */
+        get: operations["get_user_sessions_admin_api_v1_sessions_user__user_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/user/{user_id}/force-logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Force Logout User
+         * @description Force logout all sessions for a user (admin only).
+         *
+         *     Used for security incidents or account suspension.
+         *     All sessions are revoked immediately.
+         */
+        delete: operations["force_logout_user_api_v1_sessions_user__user_id__force_logout_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/session/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke Session Admin
+         * @description Revoke a specific session (admin only).
+         *
+         *     Immediately invalidates the session.
+         *     Used for security purposes.
+         */
+        delete: operations["revoke_session_admin_api_v1_sessions_session__session_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/cleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cleanup Expired Sessions
+         * @description Manually trigger cleanup of expired sessions (admin only).
+         *
+         *     Note: Redis automatically handles TTL expiration,
+         *     so this is mainly for manual maintenance.
+         */
+        post: operations["cleanup_expired_sessions_api_v1_sessions_cleanup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiling/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Profiling Status
+         * @description Get current status of profiling system (admin only)
+         */
+        get: operations["get_profiling_status_api_v1_profiling_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiling/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Profiling Session
+         * @description Start a new profiling session (admin only)
+         */
+        post: operations["start_profiling_session_api_v1_profiling_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiling/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stop Profiling Session
+         * @description Stop current profiling session (admin only)
+         */
+        post: operations["stop_profiling_session_api_v1_profiling_stop_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiling/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Profiling Report
+         * @description Generate comprehensive profiling report (admin only)
+         */
+        get: operations["get_profiling_report_api_v1_profiling_report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiling/queries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get SQL Query Metrics
+         * @description Get SQL query profiling metrics (admin only)
+         */
+        get: operations["get_query_metrics_api_v1_profiling_queries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiling/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Request Metrics
+         * @description Get HTTP request profiling metrics (admin only)
+         */
+        get: operations["get_request_metrics_api_v1_profiling_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiling/traces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Distributed Traces
+         * @description Get distributed trace data (admin only)
+         */
+        get: operations["get_traces_api_v1_profiling_traces_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiling/bottlenecks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Detect Performance Bottlenecks
+         * @description Detect and analyze performance bottlenecks (admin only)
+         */
+        get: operations["detect_bottlenecks_api_v1_profiling_bottlenecks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiling/flamegraph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Generate Flame Graph
+         * @description Generate flame graph data for visualization (admin only)
+         */
+        get: operations["generate_flamegraph_api_v1_profiling_flamegraph_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiling/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Analyze Profiling Data
+         * @description Perform detailed analysis of profiling data (admin only)
+         */
+        post: operations["analyze_profiling_data_api_v1_profiling_analyze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiling/clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Clear Profiling Data
+         * @description Clear all collected profiling data (admin only)
+         */
+        delete: operations["clear_profiling_data_api_v1_profiling_clear_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/claude-chat/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Sessions
+         * @description List chat sessions for current user.
+         */
+        get: operations["list_sessions_api_v1_claude_chat_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/claude-chat/sessions/{session_id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Session History
+         * @description Get chat history for a session.
+         */
+        get: operations["get_session_history_api_v1_claude_chat_sessions__session_id__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/claude-chat/sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Session
+         * @description Delete a chat session.
+         */
+        delete: operations["delete_session_api_v1_claude_chat_sessions__session_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/scheduler-jobs/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Jobs
+         * @description List all scheduled jobs.
+         *
+         *     Requires authentication.
+         *
+         *     Example:
+         *         >>> GET /api/v1/scheduler/jobs?enabled_only=true
+         *         {
+         *             "total": 5,
+         *             "jobs": [...]
+         *         }
+         */
+        get: operations["list_jobs_api_v1_scheduler_jobs_jobs_get"];
+        put?: never;
+        /**
+         * Create Job
+         * @description Create a new scheduled job.
+         *
+         *     Requires authentication and admin/coordinator role.
+         *
+         *     Example:
+         *         >>> POST /api/v1/scheduler/jobs
+         *         >>> {
+         *         >>>     "name": "daily_cleanup",
+         *         >>>     "job_func": "app.scheduler.jobs.cleanup_old_executions",
+         *         >>>     "trigger_type": "cron",
+         *         >>>     "trigger_config": {"hour": 3, "minute": 0},
+         *         >>>     "kwargs": {"retention_days": 90},
+         *         >>>     "description": "Clean up old job execution records"
+         *         >>> }
+         */
+        post: operations["create_job_api_v1_scheduler_jobs_jobs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/scheduler-jobs/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Job
+         * @description Get a specific scheduled job.
+         *
+         *     Requires authentication.
+         *
+         *     Example:
+         *         >>> GET /api/v1/scheduler/jobs/{job_id}
+         */
+        get: operations["get_job_api_v1_scheduler_jobs_jobs__job_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Job
+         * @description Delete a scheduled job.
+         *
+         *     Requires authentication and admin/coordinator role.
+         *
+         *     Example:
+         *         >>> DELETE /api/v1/scheduler/jobs/{job_id}
+         */
+        delete: operations["delete_job_api_v1_scheduler_jobs_jobs__job_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Job
+         * @description Update a scheduled job.
+         *
+         *     Requires authentication and admin/coordinator role.
+         *
+         *     Example:
+         *         >>> PATCH /api/v1/scheduler/jobs/{job_id}
+         *         >>> {
+         *         >>>     "enabled": false,
+         *         >>>     "description": "Updated description"
+         *         >>> }
+         */
+        patch: operations["update_job_api_v1_scheduler_jobs_jobs__job_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/scheduler-jobs/jobs/{job_id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pause Job
+         * @description Pause a scheduled job.
+         *
+         *     Requires authentication and admin/coordinator role.
+         *
+         *     Example:
+         *         >>> POST /api/v1/scheduler/jobs/{job_id}/pause
+         */
+        post: operations["pause_job_api_v1_scheduler_jobs_jobs__job_id__pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/scheduler-jobs/jobs/{job_id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resume Job
+         * @description Resume a paused job.
+         *
+         *     Requires authentication and admin/coordinator role.
+         *
+         *     Example:
+         *         >>> POST /api/v1/scheduler/jobs/{job_id}/resume
+         */
+        post: operations["resume_job_api_v1_scheduler_jobs_jobs__job_id__resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/scheduler-jobs/jobs/{job_id}/executions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Job Executions
+         * @description Get execution history for a job.
+         *
+         *     Requires authentication.
+         *
+         *     Example:
+         *         >>> GET /api/v1/scheduler/jobs/{job_id}/executions?limit=50
+         */
+        get: operations["get_job_executions_api_v1_scheduler_jobs_jobs__job_id__executions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/scheduler-jobs/executions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get All Executions
+         * @description Get execution history for all jobs.
+         *
+         *     Requires authentication.
+         *
+         *     Example:
+         *         >>> GET /api/v1/scheduler/executions?limit=50
+         */
+        get: operations["get_all_executions_api_v1_scheduler_jobs_executions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/scheduler-jobs/jobs/{job_id}/statistics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Job Statistics
+         * @description Get statistics for a job.
+         *
+         *     Requires authentication.
+         *
+         *     Example:
+         *         >>> GET /api/v1/scheduler/jobs/{job_id}/statistics
+         */
+        get: operations["get_job_statistics_api_v1_scheduler_jobs_jobs__job_id__statistics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/scheduler-jobs/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync Scheduler
+         * @description Sync scheduler with database.
+         *
+         *     Loads any new jobs from the database and removes deleted jobs.
+         *     Requires authentication and admin/coordinator role.
+         *
+         *     Example:
+         *         >>> POST /api/v1/scheduler/sync
+         */
+        post: operations["sync_scheduler_api_v1_scheduler_jobs_sync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/scheduler-jobs/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Scheduler Status
+         * @description Get scheduler status.
+         *
+         *     Requires authentication.
+         *
+         *     Example:
+         *         >>> GET /api/v1/scheduler/status
+         */
+        get: operations["get_scheduler_status_api_v1_scheduler_jobs_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/graphql": {
         parameters: {
             query?: never;
@@ -18781,6 +20315,42 @@ export interface components {
             include_trends: boolean;
         };
         /**
+         * AnalyzeRequest
+         * @description Analyze profiling data request.
+         */
+        AnalyzeRequest: {
+            /**
+             * Cpu Threshold Percent
+             * @description CPU usage threshold
+             * @default 80
+             */
+            cpu_threshold_percent: number | null;
+            /**
+             * Memory Threshold Mb
+             * @description Memory usage threshold
+             * @default 1000
+             */
+            memory_threshold_mb: number | null;
+            /**
+             * Duration Threshold Ms
+             * @description Duration threshold
+             * @default 1000
+             */
+            duration_threshold_ms: number | null;
+            /**
+             * Sql Slow Threshold Ms
+             * @description SQL slow query threshold
+             * @default 100
+             */
+            sql_slow_threshold_ms: number | null;
+            /**
+             * Request Slow Threshold Ms
+             * @description Request slow threshold
+             * @default 1000
+             */
+            request_slow_threshold_ms: number | null;
+        };
+        /**
          * AntibodyAnalysisRequest
          * @description Request for antibody analysis.
          */
@@ -19347,6 +20917,76 @@ export interface components {
             pm?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
         };
         /**
+         * AudienceListResponse
+         * @description Response listing all available audiences.
+         * @example {
+         *       "audiences": {
+         *         "jobs.abort": "Abort running background jobs",
+         *         "schedule.generate": "Generate new schedules",
+         *         "swap.execute": "Execute schedule swaps"
+         *       }
+         *     }
+         */
+        AudienceListResponse: {
+            /**
+             * Audiences
+             * @description Map of audience keys to descriptions
+             */
+            audiences: {
+                [key: string]: string | undefined;
+            };
+        };
+        /**
+         * AudienceTokenRequest
+         * @description Request to create an audience-scoped token.
+         */
+        AudienceTokenRequest: {
+            /**
+             * Audience
+             * @description Operation scope for the token
+             */
+            audience: string;
+            /**
+             * Ttl Seconds
+             * @description Time-to-live in seconds (30-600, default: 120)
+             * @default 120
+             */
+            ttl_seconds: number;
+        };
+        /**
+         * AudienceTokenResponse
+         * @description Response when creating an audience-scoped token.
+         * @example {
+         *       "audience": "jobs.abort",
+         *       "expires_at": "2025-12-29T15:30:00Z",
+         *       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+         *       "ttl_seconds": 120
+         *     }
+         */
+        AudienceTokenResponse: {
+            /**
+             * Token
+             * @description JWT token for the requested operation
+             */
+            token: string;
+            /**
+             * Audience
+             * @description Operation scope
+             */
+            audience: string;
+            /**
+             * Expires At
+             * Format: date-time
+             * @description Token expiration timestamp (UTC)
+             */
+            expires_at: string;
+            /**
+             * Ttl Seconds
+             * @description Time-to-live in seconds
+             */
+            ttl_seconds: number;
+        };
+        /**
          * AuditExportConfig
          * @description Export configuration.
          */
@@ -19690,6 +21330,104 @@ export interface components {
             absences?: components["schemas"]["AwayAbsenceDetail"][];
         };
         /**
+         * BackupListResult
+         * @description List of available backups.
+         */
+        BackupListResult: {
+            /** Backups */
+            backups: components["schemas"]["BackupResult"][];
+            /** Total Count */
+            total_count: number;
+            /** Storage Used Mb */
+            storage_used_mb: number;
+        };
+        /**
+         * BackupResult
+         * @description Result of a backup operation.
+         */
+        BackupResult: {
+            /**
+             * Backup Id
+             * @description Unique backup identifier
+             */
+            backup_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             * @description Backup creation timestamp
+             */
+            created_at: string;
+            /**
+             * Size Mb
+             * @description Backup file size in MB
+             */
+            size_mb: number;
+            /**
+             * Strategy
+             * @description Backup strategy used
+             */
+            strategy: string;
+            /**
+             * Status
+             * @description Backup status
+             */
+            status: string;
+            /**
+             * File Path
+             * @description Path to backup file
+             */
+            file_path: string;
+            /**
+             * Schema Version
+             * @description Alembic schema version
+             */
+            schema_version?: string | null;
+        };
+        /**
+         * BackupStatusResponse
+         * @description Backup system health status.
+         */
+        BackupStatusResponse: {
+            /** Healthy */
+            healthy: boolean;
+            /** Latest Backup Age Hours */
+            latest_backup_age_hours: number | null;
+            /** Latest Backup Id */
+            latest_backup_id: string | null;
+            /** Total Backups */
+            total_backups: number;
+            /** Storage Used Mb */
+            storage_used_mb: number;
+            /** Backup Directory */
+            backup_directory: string;
+            /** Warnings */
+            warnings: string[];
+        };
+        /**
+         * BackupStrategy
+         * @description Backup strategy types.
+         * @enum {string}
+         */
+        BackupStrategy: "full" | "incremental" | "differential";
+        /**
+         * BackupVerifyResult
+         * @description Result of backup verification.
+         */
+        BackupVerifyResult: {
+            /** Backup Id */
+            backup_id: string;
+            /** Valid */
+            valid: boolean;
+            /** Checksum */
+            checksum: string | null;
+            /** File Exists */
+            file_exists: boolean;
+            /** Size Mb */
+            size_mb: number;
+            /** Error */
+            error?: string | null;
+        };
+        /**
          * BarrierAnalysisResponse
          * @description Response schema for barrier analysis.
          */
@@ -19884,11 +21622,8 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
-            /**
-             * Template Id
-             * Format: uuid
-             */
-            template_id: string;
+            /** Person Id */
+            person_id?: string | null;
             /** Success */
             success: boolean;
             /** Error */
@@ -20128,7 +21863,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__person__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -20437,7 +22172,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -20656,7 +22391,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["ExportFormat"];
+            format: components["schemas"]["app__schemas__block_assignment_import__ExportFormat"];
             /**
              * Academic Year
              * @description Academic year to export
@@ -21074,19 +22809,24 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Schema for list of blocks.
+         * @description Response for listing academic blocks.
          */
         BlockListResponse: {
             /**
-             * Items
-             * @description List of block responses
+             * Blocks
+             * @description List of academic blocks
              */
-            items: components["schemas"]["BlockResponse"][];
+            blocks: components["schemas"]["BlockSummary"][];
             /**
-             * Total
+             * Academic Year
+             * @description Academic year
+             */
+            academic_year: string;
+            /**
+             * Total Blocks
              * @description Total number of blocks
              */
-            total: number;
+            total_blocks: number;
         };
         /**
          * BlockMatrixResponse
@@ -21325,7 +23065,7 @@ export interface components {
             /** Residents With Leave */
             residents_with_leave: number;
             /** Coverage Gaps */
-            coverage_gaps: components["schemas"]["app__schemas__block_assignment__CoverageGap"][];
+            coverage_gaps: components["schemas"]["CoverageGap"][];
             /** Leave Conflicts */
             leave_conflicts: components["schemas"]["LeaveConflict"][];
             /** Rotation Capacities */
@@ -22987,6 +24727,108 @@ export interface components {
             notes: string;
         };
         /**
+         * ConditionalVaRRequest
+         * @description Request for Conditional VaR (Expected Shortfall) calculation.
+         */
+        ConditionalVaRRequest: {
+            /**
+             * Start Date
+             * Format: date
+             * @description Start date for analysis
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             * @description End date for analysis
+             */
+            end_date: string;
+            /**
+             * Confidence Level
+             * @description Confidence level for CVaR
+             * @default 0.95
+             */
+            confidence_level: number;
+            /**
+             * Loss Metric
+             * @description Loss metric: coverage_drop, workload_spike, acgme_violations
+             * @default coverage_drop
+             */
+            loss_metric: string;
+        };
+        /**
+         * ConditionalVaRResponse
+         * @description Response from Conditional VaR (Expected Shortfall) calculation.
+         */
+        ConditionalVaRResponse: {
+            /**
+             * Analyzed At
+             * Format: date-time
+             * @description Timestamp of analysis
+             */
+            analyzed_at: string;
+            /**
+             * Period Start
+             * Format: date
+             * @description Analysis period start
+             */
+            period_start: string;
+            /**
+             * Period End
+             * Format: date
+             * @description Analysis period end
+             */
+            period_end: string;
+            /**
+             * Confidence Level
+             * @description Confidence level used
+             */
+            confidence_level: number;
+            /**
+             * Loss Metric
+             * @description Loss metric analyzed
+             */
+            loss_metric: string;
+            /**
+             * Var Value
+             * @description VaR at specified confidence level
+             */
+            var_value: number;
+            /**
+             * Cvar Value
+             * @description CVaR (expected shortfall) value
+             */
+            cvar_value: number;
+            /**
+             * Interpretation
+             * @description Human-readable interpretation
+             */
+            interpretation: string;
+            /**
+             * Tail Scenarios Count
+             * @description Number of scenarios in tail
+             */
+            tail_scenarios_count: number;
+            /**
+             * Tail Mean
+             * @description Mean loss in tail
+             */
+            tail_mean: number;
+            /**
+             * Tail Std
+             * @description Standard deviation in tail
+             */
+            tail_std: number;
+            /** Recommendations */
+            recommendations?: string[];
+            /** @description Overall risk severity */
+            severity: components["schemas"]["RiskSeverity"];
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
          * ConfigAnalysisRequest
          * @description Request to analyze current resilience config using game theory.
          */
@@ -23571,34 +25413,24 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap with details.
+         * @description Identified coverage gap.
          */
         CoverageGap: {
-            /** Gap Id */
-            gap_id: string;
             /**
-             * Date
-             * Format: date
+             * Rotation Template Id
+             * Format: uuid
              */
-            date: string;
-            /** Time Of Day */
-            time_of_day: string;
-            /** Block Id */
-            block_id: string;
+            rotation_template_id: string;
+            /** Rotation Name */
+            rotation_name: string;
+            /** Required Coverage */
+            required_coverage: number;
+            /** Assigned Coverage */
+            assigned_coverage: number;
+            /** Gap */
+            gap: number;
             /** Severity */
             severity: string;
-            /** Days Until */
-            days_until: number;
-            /** Affected Area */
-            affected_area: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            current_assignments: number;
-            /** Required Assignments */
-            required_assignments: number;
-            /** Gap Size */
-            gap_size: number;
         };
         /**
          * CoverageGapsResponse
@@ -23625,7 +25457,7 @@ export interface components {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["CoverageGap"][];
+            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
@@ -23885,6 +25717,119 @@ export interface components {
          */
         CoverageType: "remote_surrogate" | "swap_absorb" | "swap_exchange" | "backup_call" | "absence_coverage" | "temporary_proxy";
         /**
+         * CoverageVaRRequest
+         * @description Request for coverage VaR calculation.
+         */
+        CoverageVaRRequest: {
+            /**
+             * Start Date
+             * Format: date
+             * @description Start date for analysis
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             * @description End date for analysis
+             */
+            end_date: string;
+            /**
+             * Confidence Levels
+             * @description Confidence levels for VaR (e.g., [0.90, 0.95, 0.99])
+             * @default [
+             *       0.9,
+             *       0.95,
+             *       0.99
+             *     ]
+             */
+            confidence_levels: number[];
+            /**
+             * Rotation Types
+             * @description Specific rotation types to analyze (None = all)
+             */
+            rotation_types?: string[] | null;
+            /**
+             * Historical Days
+             * @description Days of historical data to use
+             * @default 90
+             */
+            historical_days: number;
+        };
+        /**
+         * CoverageVaRResponse
+         * @description Response from coverage VaR calculation.
+         */
+        CoverageVaRResponse: {
+            /**
+             * Analyzed At
+             * Format: date-time
+             * @description Timestamp of analysis
+             */
+            analyzed_at: string;
+            /**
+             * Period Start
+             * Format: date
+             * @description Analysis period start
+             */
+            period_start: string;
+            /**
+             * Period End
+             * Format: date
+             * @description Analysis period end
+             */
+            period_end: string;
+            /**
+             * Historical Days
+             * @description Days of historical data used
+             */
+            historical_days: number;
+            /**
+             * Scenarios Analyzed
+             * @description Number of scenarios analyzed
+             */
+            scenarios_analyzed: number;
+            /**
+             * Var Metrics
+             * @description VaR at each confidence level
+             */
+            var_metrics: components["schemas"]["VaRMetric"][];
+            /**
+             * Baseline Coverage
+             * @description Baseline coverage rate (0-1)
+             */
+            baseline_coverage: number;
+            /**
+             * Worst Case Coverage
+             * @description Worst historical coverage (0-1)
+             */
+            worst_case_coverage: number;
+            /** Recommendations */
+            recommendations?: string[];
+            /** @description Overall risk severity */
+            severity: components["schemas"]["RiskSeverity"];
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * CreateBackupRequest
+         * @description Request to create a full database backup.
+         */
+        CreateBackupRequest: {
+            /**
+             * @description Backup strategy to use
+             * @default full
+             */
+            strategy: components["schemas"]["BackupStrategy"];
+            /**
+             * Description
+             * @description Optional description for audit trail
+             * @default
+             */
+            description: string;
+        };
+        /**
          * CredentialCreate
          * @description Schema for creating a credential.
          */
@@ -24012,6 +25957,52 @@ export interface components {
             max_per_academic_year?: number | null;
             /** Notes */
             notes?: string | null;
+        };
+        /**
+         * CreepFatigueRequest
+         * @description Request for creep fatigue assessment.
+         */
+        CreepFatigueRequest: {
+            /**
+             * Faculty Ids
+             * @description Faculty IDs to analyze
+             */
+            faculty_ids?: string[] | null;
+            /**
+             * Lookback Days
+             * @description Historical window
+             * @default 90
+             */
+            lookback_days: number;
+        };
+        /**
+         * CreepFatigueResponse
+         * @description Creep fatigue response.
+         */
+        CreepFatigueResponse: {
+            /** Analyzed At */
+            analyzed_at: string;
+            /** Total Analyzed */
+            total_analyzed: number;
+            /** Primary Count */
+            primary_count: number;
+            /** Secondary Count */
+            secondary_count: number;
+            /** Tertiary Count */
+            tertiary_count: number;
+            /** Average Damage */
+            average_damage: number;
+            /** High Risk Faculty */
+            high_risk_faculty: string[];
+            /** Interpretation */
+            interpretation: string;
+            /** Recommendations */
+            recommendations: string[];
+            /**
+             * Source
+             * @default backend
+             */
+            source: string;
         };
         /**
          * CrisisActivationRequest
@@ -24501,6 +26492,33 @@ export interface components {
          * @enum {string}
          */
         DeviationSeverity: "none" | "minor" | "moderate" | "major" | "critical";
+        /**
+         * DeviceInfo
+         * @description Device information for session tracking.
+         *
+         *     Captures device details for security auditing and
+         *     multi-device session management.
+         */
+        DeviceInfo: {
+            /** @default unknown */
+            device_type: components["schemas"]["DeviceType"];
+            /** User Agent */
+            user_agent?: string | null;
+            /** Ip Address */
+            ip_address?: string | null;
+            /** Platform */
+            platform?: string | null;
+            /** Browser */
+            browser?: string | null;
+            /** Os */
+            os?: string | null;
+        };
+        /**
+         * DeviceType
+         * @description Device type enumeration.
+         * @enum {string}
+         */
+        DeviceType: "web" | "mobile" | "desktop" | "api" | "unknown";
         /**
          * DocumentIngestRequest
          * @description Request to ingest a document into the RAG system.
@@ -25917,7 +27935,7 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__certification__PersonSummary"];
             certification_type: components["schemas"]["CertificationTypeSummary"];
             /**
              * Expiration Date
@@ -25949,10 +27967,10 @@ export interface components {
         ExportDeliveryMethod: "email" | "s3" | "both";
         /**
          * ExportFormat
-         * @description Supported export formats.
+         * @description Export file formats.
          * @enum {string}
          */
-        ExportFormat: "csv" | "xlsx";
+        ExportFormat: "csv" | "json" | "xlsx" | "xml";
         /**
          * ExportFormat
          * @description Export file formats.
@@ -25980,7 +27998,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["app__models__export_job__ExportFormat"];
+            format: components["schemas"]["ExportFormat"];
             /**
              * @description Delivery method
              * @default email
@@ -26279,7 +28297,7 @@ export interface components {
             /** Description */
             description?: string | null;
             template?: components["schemas"]["ExportTemplate"] | null;
-            format?: components["schemas"]["app__models__export_job__ExportFormat"] | null;
+            format?: components["schemas"]["ExportFormat"] | null;
             delivery_method?: components["schemas"]["ExportDeliveryMethod"] | null;
             /** Email Recipients */
             email_recipients?: string[] | null;
@@ -29837,6 +31855,301 @@ export interface components {
             message: string;
         };
         /**
+         * JobActionResponseSchema
+         * @description Schema for job action response.
+         *
+         *     Attributes:
+         *         success: Whether action was successful
+         *         message: Response message
+         *         job_id: Job ID
+         */
+        JobActionResponseSchema: {
+            /** Success */
+            success: boolean;
+            /** Message */
+            message: string;
+            /** Job Id */
+            job_id?: string | null;
+        };
+        /**
+         * JobCreateSchema
+         * @description Schema for creating a scheduled job.
+         *
+         *     Attributes:
+         *         name: Unique job name
+         *         job_func: Fully qualified function path
+         *         trigger_type: Type of trigger (cron, interval, date)
+         *         trigger_config: Trigger configuration
+         *         args: Positional arguments for job function
+         *         kwargs: Keyword arguments for job function
+         *         max_instances: Maximum concurrent instances
+         *         misfire_grace_time: Seconds after scheduled time to still run
+         *         coalesce: Whether to run once or multiple times for missed runs
+         *         description: Job description
+         */
+        JobCreateSchema: {
+            /** Name */
+            name: string;
+            /** Job Func */
+            job_func: string;
+            /** Trigger Type */
+            trigger_type: string;
+            /** Trigger Config */
+            trigger_config: {
+                [key: string]: unknown;
+            };
+            /** Args */
+            args?: unknown[];
+            /** Kwargs */
+            kwargs?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Max Instances
+             * @default 1
+             */
+            max_instances: number;
+            /** Misfire Grace Time */
+            misfire_grace_time?: number | null;
+            /**
+             * Coalesce
+             * @default true
+             */
+            coalesce: boolean;
+            /** Description */
+            description?: string | null;
+        };
+        /**
+         * JobExecutionListSchema
+         * @description Schema for job execution list response.
+         *
+         *     Attributes:
+         *         total: Total number of executions
+         *         limit: Query limit
+         *         offset: Query offset
+         *         executions: List of executions
+         */
+        JobExecutionListSchema: {
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Executions */
+            executions: components["schemas"]["JobExecutionSchema"][];
+        };
+        /**
+         * JobExecutionSchema
+         * @description Schema for job execution record.
+         *
+         *     Attributes:
+         *         id: Execution ID
+         *         job_id: Job ID
+         *         job_name: Job name
+         *         started_at: Start time
+         *         finished_at: Finish time
+         *         status: Execution status
+         *         result: Execution result
+         *         error: Error message
+         *         runtime_seconds: Runtime in seconds
+         *         scheduled_run_time: Scheduled run time
+         */
+        JobExecutionSchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Job Id
+             * Format: uuid
+             */
+            job_id: string;
+            /** Job Name */
+            job_name: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Finished At */
+            finished_at: string | null;
+            /** Status */
+            status: string;
+            /** Result */
+            result: unknown | null;
+            /** Error */
+            error: string | null;
+            /** Runtime Seconds */
+            runtime_seconds: number | null;
+            /**
+             * Scheduled Run Time
+             * Format: date-time
+             */
+            scheduled_run_time: string;
+        };
+        /**
+         * JobListResponseSchema
+         * @description Schema for job list response.
+         *
+         *     Attributes:
+         *         total: Total number of jobs
+         *         jobs: List of jobs
+         */
+        JobListResponseSchema: {
+            /** Total */
+            total: number;
+            /** Jobs */
+            jobs: components["schemas"]["JobResponseSchema"][];
+        };
+        /**
+         * JobResponseSchema
+         * @description Schema for scheduled job response.
+         *
+         *     Attributes:
+         *         id: Job ID
+         *         name: Job name
+         *         job_func: Function path
+         *         trigger_type: Type of trigger
+         *         trigger_config: Trigger configuration
+         *         args: Positional arguments
+         *         kwargs: Keyword arguments
+         *         next_run_time: Next scheduled run time
+         *         last_run_time: Last execution time
+         *         run_count: Number of executions
+         *         max_instances: Maximum concurrent instances
+         *         misfire_grace_time: Misfire grace time
+         *         coalesce: Coalesce setting
+         *         enabled: Whether job is enabled
+         *         description: Job description
+         *         created_at: Creation timestamp
+         *         updated_at: Update timestamp
+         *         created_by: User who created the job
+         */
+        JobResponseSchema: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Job Func */
+            job_func: string;
+            /** Trigger Type */
+            trigger_type: string;
+            /** Trigger Config */
+            trigger_config: {
+                [key: string]: unknown;
+            };
+            /** Args */
+            args: unknown[];
+            /** Kwargs */
+            kwargs: {
+                [key: string]: unknown;
+            };
+            /** Next Run Time */
+            next_run_time: string | null;
+            /** Last Run Time */
+            last_run_time: string | null;
+            /** Run Count */
+            run_count: number;
+            /** Max Instances */
+            max_instances: number;
+            /** Misfire Grace Time */
+            misfire_grace_time: number | null;
+            /** Coalesce */
+            coalesce: boolean;
+            /** Enabled */
+            enabled: boolean;
+            /** Description */
+            description: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Created By */
+            created_by: string | null;
+        };
+        /**
+         * JobStatisticsSchema
+         * @description Schema for job statistics.
+         *
+         *     Attributes:
+         *         job_id: Job ID
+         *         job_name: Job name
+         *         total_runs: Total number of runs
+         *         success_count: Number of successful runs
+         *         failure_count: Number of failed runs
+         *         missed_count: Number of missed runs
+         *         average_runtime_seconds: Average runtime
+         *         last_run_time: Last run time
+         *         next_run_time: Next run time
+         */
+        JobStatisticsSchema: {
+            /** Job Id */
+            job_id: string;
+            /** Job Name */
+            job_name: string;
+            /** Total Runs */
+            total_runs: number;
+            /** Success Count */
+            success_count: number;
+            /** Failure Count */
+            failure_count: number;
+            /** Missed Count */
+            missed_count: number;
+            /** Average Runtime Seconds */
+            average_runtime_seconds: number;
+            /** Last Run Time */
+            last_run_time: string | null;
+            /** Next Run Time */
+            next_run_time: string | null;
+        };
+        /**
+         * JobUpdateSchema
+         * @description Schema for updating a scheduled job.
+         *
+         *     Attributes:
+         *         trigger_config: Updated trigger configuration
+         *         args: Updated positional arguments
+         *         kwargs: Updated keyword arguments
+         *         max_instances: Updated max concurrent instances
+         *         misfire_grace_time: Updated misfire grace time
+         *         coalesce: Updated coalesce setting
+         *         enabled: Whether the job is enabled
+         *         description: Updated description
+         */
+        JobUpdateSchema: {
+            /** Trigger Config */
+            trigger_config?: {
+                [key: string]: unknown;
+            } | null;
+            /** Args */
+            args?: unknown[] | null;
+            /** Kwargs */
+            kwargs?: {
+                [key: string]: unknown;
+            } | null;
+            /** Max Instances */
+            max_instances?: number | null;
+            /** Misfire Grace Time */
+            misfire_grace_time?: number | null;
+            /** Coalesce */
+            coalesce?: boolean | null;
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Description */
+            description?: string | null;
+        };
+        /**
          * JobsDashboardOverview
          * @description Overview data for jobs dashboard.
          */
@@ -31592,7 +33905,7 @@ export interface components {
          * @description Certification compliance for a single person.
          */
         PersonComplianceResponse: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__certification__PersonSummary"];
             /** Total Required */
             total_required: number;
             /** Total Current */
@@ -31871,7 +34184,7 @@ export interface components {
         };
         /**
          * PersonSummary
-         * @description Minimal person info for certification reports.
+         * @description Minimal person info for embedding in credential responses.
          */
         PersonSummary: {
             /**
@@ -31883,8 +34196,6 @@ export interface components {
             name: string;
             /** Type */
             type: string;
-            /** Email */
-            email?: string | null;
         };
         /**
          * PersonType
@@ -32434,6 +34745,85 @@ export interface components {
             is_active?: boolean | null;
         };
         /**
+         * ProfilingSessionRequest
+         * @description Start profiling session request.
+         */
+        ProfilingSessionRequest: {
+            /**
+             * Cpu
+             * @description Enable CPU profiling
+             * @default true
+             */
+            cpu: boolean;
+            /**
+             * Memory
+             * @description Enable memory profiling
+             * @default true
+             */
+            memory: boolean;
+            /**
+             * Sql
+             * @description Enable SQL query collection
+             * @default true
+             */
+            sql: boolean;
+            /**
+             * Requests
+             * @description Enable request collection
+             * @default true
+             */
+            requests: boolean;
+            /**
+             * Traces
+             * @description Enable trace collection
+             * @default true
+             */
+            traces: boolean;
+        };
+        /**
+         * ProfilingStatusResponse
+         * @description Profiling status response.
+         */
+        ProfilingStatusResponse: {
+            /**
+             * Enabled
+             * @description Whether profiling is enabled
+             */
+            enabled: boolean;
+            /**
+             * Cpu Profiling
+             * @description CPU profiling status
+             */
+            cpu_profiling: boolean;
+            /**
+             * Memory Profiling
+             * @description Memory profiling status
+             */
+            memory_profiling: boolean;
+            /**
+             * Sql Collection
+             * @description SQL query collection status
+             */
+            sql_collection: boolean;
+            /**
+             * Request Collection
+             * @description Request collection status
+             */
+            request_collection: boolean;
+            /**
+             * Trace Collection
+             * @description Trace collection status
+             */
+            trace_collection: boolean;
+            /**
+             * Stats
+             * @description Current profiling statistics
+             */
+            stats: {
+                [key: string]: unknown;
+            };
+        };
+        /**
          * ProxyCoverageResponse
          * @description Response for proxy coverage dashboard endpoint.
          */
@@ -32870,7 +35260,7 @@ export interface components {
             /** Procedure Name */
             procedure_name: string;
             /** Qualified Faculty */
-            qualified_faculty: components["schemas"]["app__schemas__procedure_credential__PersonSummary"][];
+            qualified_faculty: components["schemas"]["PersonSummary"][];
             /** Total */
             total: number;
         };
@@ -32986,13 +35376,14 @@ export interface components {
             queueName: string;
             /**
              * Confirm
+             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
         };
         /**
          * QueuePurgeResponse
-         * @description Response after purging a queue.
+         * @description Response to queue purge request.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -33775,6 +36166,52 @@ export interface components {
              * @description Monthly usage after recording
              */
             monthly_usage: number;
+        };
+        /**
+         * RecoveryDistanceRequest
+         * @description Request for recovery distance calculation.
+         */
+        RecoveryDistanceRequest: {
+            /**
+             * Schedule Id
+             * @description Schedule ID to analyze
+             */
+            schedule_id?: string | null;
+            /**
+             * Max Depth
+             * @description Maximum edit depth to search
+             * @default 5
+             */
+            max_depth: number;
+        };
+        /**
+         * RecoveryDistanceResponse
+         * @description Recovery distance response.
+         */
+        RecoveryDistanceResponse: {
+            /** Analyzed At */
+            analyzed_at: string;
+            /** Rd Mean */
+            rd_mean: number;
+            /** Rd P95 */
+            rd_p95: number;
+            /** Rd Max */
+            rd_max: number;
+            /** Events Tested */
+            events_tested: number;
+            /** Feasible Count */
+            feasible_count: number;
+            /** Infeasible Count */
+            infeasible_count: number;
+            /** Interpretation */
+            interpretation: string;
+            /** Recommendations */
+            recommendations: string[];
+            /**
+             * Source
+             * @default backend
+             */
+            source: string;
         };
         /**
          * RedundancyStatus
@@ -34715,6 +37152,18 @@ export interface components {
             percentage: components["schemas"]["QuotaPercentage"];
         };
         /**
+         * RestoreBackupRequest
+         * @description Request to restore from a backup.
+         */
+        RestoreBackupRequest: {
+            /**
+             * Dry Run
+             * @description Preview restore without applying
+             * @default true
+             */
+            dry_run: boolean;
+        };
+        /**
          * RestoreRequest
          * @description Request to restore from a snapshot.
          */
@@ -34816,6 +37265,54 @@ export interface components {
             timestamp: string;
         };
         /**
+         * RevokeTokenRequest
+         * @description Request to revoke an audience-scoped token.
+         */
+        RevokeTokenRequest: {
+            /**
+             * Jti
+             * @description JWT ID of the token to revoke
+             */
+            jti: string;
+            /**
+             * Token
+             * @description The actual JWT token (optional, for ownership verification). If provided, the token is decoded to verify the requester owns it.
+             */
+            token?: string | null;
+            /**
+             * Reason
+             * @description Reason for revocation
+             * @default manual_revocation
+             */
+            reason: string;
+        };
+        /**
+         * RevokeTokenResponse
+         * @description Response after revoking a token.
+         * @example {
+         *       "jti": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+         *       "message": "Token successfully revoked",
+         *       "success": true
+         *     }
+         */
+        RevokeTokenResponse: {
+            /**
+             * Success
+             * @description Whether revocation succeeded
+             */
+            success: boolean;
+            /**
+             * Jti
+             * @description JWT ID that was revoked
+             */
+            jti: string;
+            /**
+             * Message
+             * @description Human-readable message
+             */
+            message: string;
+        };
+        /**
          * RigidityRequest
          * @description Request for schedule rigidity calculation.
          */
@@ -34894,6 +37391,12 @@ export interface components {
              */
             source: string;
         };
+        /**
+         * RiskSeverity
+         * @description Risk severity classification.
+         * @enum {string}
+         */
+        RiskSeverity: "low" | "moderate" | "high" | "critical" | "extreme";
         /** RoleViewConfig */
         RoleViewConfig: {
             role: components["schemas"]["StaffRole"];
@@ -35893,7 +38396,7 @@ export interface components {
             /** Components */
             components: components["schemas"]["ScoreComponentResponse"][];
             /** Suggestions */
-            suggestions?: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
+            suggestions?: components["schemas"]["SuggestionResponse"][];
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -36265,6 +38768,90 @@ export interface components {
             } | null;
         };
         /**
+         * SessionListResponse
+         * @description Response schema for listing sessions.
+         */
+        SessionListResponse: {
+            /** Sessions */
+            sessions: components["schemas"]["SessionResponse"][];
+            /** Total */
+            total: number;
+            /** Active Count */
+            active_count: number;
+        };
+        /**
+         * SessionResponse
+         * @description Response schema for session data.
+         */
+        SessionResponse: {
+            /** Session Id */
+            session_id: string;
+            /** User Id */
+            user_id: string;
+            /** Username */
+            username: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Last Activity
+             * Format: date-time
+             */
+            last_activity: string;
+            /** Expires At */
+            expires_at: string | null;
+            status: components["schemas"]["SessionStatus"];
+            device_info: components["schemas"]["DeviceInfo"];
+            /** Request Count */
+            request_count: number;
+        };
+        /**
+         * SessionStats
+         * @description Session statistics for monitoring.
+         *
+         *     Provides metrics about active sessions, concurrent users,
+         *     and session activity patterns.
+         */
+        SessionStats: {
+            /**
+             * Total Active Sessions
+             * @default 0
+             */
+            total_active_sessions: number;
+            /**
+             * Unique Active Users
+             * @default 0
+             */
+            unique_active_users: number;
+            /** Sessions By Device */
+            sessions_by_device?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Sessions Created Today
+             * @default 0
+             */
+            sessions_created_today: number;
+            /**
+             * Sessions Expired Today
+             * @default 0
+             */
+            sessions_expired_today: number;
+            /**
+             * Average Session Duration Minutes
+             * @default 0
+             */
+            average_session_duration_minutes: number;
+        };
+        /**
+         * SessionStatus
+         * @description Session status enumeration.
+         * @enum {string}
+         */
+        SessionStatus: "active" | "expired" | "revoked" | "logged_out";
+        /**
          * SetCustomQuotaRequest
          * @description Request to set custom quota for a user.
          *
@@ -36460,6 +39047,75 @@ export interface components {
             enable_holiday_scheduling?: boolean | null;
             /** Default Block Duration Hours */
             default_block_duration_hours?: number | null;
+        };
+        /**
+         * ShapleyFacultyResult
+         * @description Shapley value result for a single faculty member.
+         */
+        ShapleyFacultyResult: {
+            /** Faculty Id */
+            faculty_id: string;
+            /** Faculty Name */
+            faculty_name: string;
+            /** Shapley Value */
+            shapley_value: number;
+            /** Marginal Contribution */
+            marginal_contribution: number;
+            /** Fair Workload Target */
+            fair_workload_target: number;
+            /** Current Workload */
+            current_workload: number;
+            /** Equity Gap */
+            equity_gap: number;
+        };
+        /**
+         * ShapleyMetricsResponse
+         * @description Response with Shapley-based equity metrics.
+         */
+        ShapleyMetricsResponse: {
+            /** Faculty Results */
+            faculty_results: components["schemas"]["ShapleyFacultyResult"][];
+            /** Total Workload */
+            total_workload: number;
+            /** Total Fair Target */
+            total_fair_target: number;
+            /** Equity Gap Std Dev */
+            equity_gap_std_dev: number;
+            /** Overworked Count */
+            overworked_count: number;
+            /** Underworked Count */
+            underworked_count: number;
+            /** Most Overworked Faculty Id */
+            most_overworked_faculty_id?: string | null;
+            /** Most Underworked Faculty Id */
+            most_underworked_faculty_id?: string | null;
+        };
+        /**
+         * ShapleyWorkloadRequest
+         * @description Request for Shapley workload calculation.
+         */
+        ShapleyWorkloadRequest: {
+            /**
+             * Faculty Ids
+             * @description Faculty member IDs to analyze (minimum 2)
+             */
+            faculty_ids: string[];
+            /**
+             * Start Date
+             * @description Start date in YYYY-MM-DD format
+             */
+            start_date: string;
+            /**
+             * End Date
+             * @description End date in YYYY-MM-DD format
+             */
+            end_date: string;
+            /**
+             * Num Samples
+             * @description Monte Carlo samples (more = better accuracy)
+             * @default 1000
+             */
+            num_samples: number;
         };
         /**
          * ShiftPatternInput
@@ -37460,24 +40116,25 @@ export interface components {
         };
         /**
          * SuggestionResponse
-         * @description Response schema for autocomplete suggestions.
+         * @description Response for improvement suggestion.
          */
         SuggestionResponse: {
+            /** Type */
+            type: string;
             /**
-             * Suggestions
-             * @description List of suggestions
+             * Priority
+             * @description high, medium, low
              */
-            suggestions: string[];
+            priority: string;
+            /** Description */
+            description: string;
             /**
-             * Query
-             * @description Original query string
+             * Impact
+             * @description Expected improvement
              */
-            query: string;
-            /**
-             * Entity Type
-             * @description Entity type
-             */
-            entity_type: string;
+            impact: number;
+            /** Affected Items */
+            affected_items?: string[];
         };
         /**
          * SurveyFrequencyEnum
@@ -38125,6 +40782,29 @@ export interface components {
              * @default 0
              */
             records_affected: number;
+        };
+        /**
+         * SyncResultSchema
+         * @description Schema for scheduler sync result.
+         *
+         *     Attributes:
+         *         added: Number of jobs added
+         *         removed: Number of jobs removed
+         *         updated: Number of jobs updated
+         *         timestamp: Sync timestamp
+         */
+        SyncResultSchema: {
+            /** Added */
+            added: number;
+            /** Removed */
+            removed: number;
+            /** Updated */
+            updated: number;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
         };
         /**
          * TableStatisticsResponse
@@ -39312,6 +41992,46 @@ export interface components {
          */
         TransactionTypeEnum: "survey" | "streak" | "achievement" | "block_bonus" | "admin" | "redemption";
         /**
+         * TranscriptionFactorsRequest
+         * @description Request for transcription factor analysis.
+         */
+        TranscriptionFactorsRequest: {
+            /**
+             * Constraint Context
+             * @description Context for constraint weighting (e.g., 'holiday', 'crisis')
+             */
+            constraint_context?: string | null;
+        };
+        /**
+         * TranscriptionFactorsResponse
+         * @description Transcription factors response.
+         */
+        TranscriptionFactorsResponse: {
+            /** Analyzed At */
+            analyzed_at: string;
+            /** Active Factors */
+            active_factors: number;
+            /** Repressors Active */
+            repressors_active: number;
+            /** Activators Active */
+            activators_active: number;
+            /** Dominant Factor */
+            dominant_factor: string | null;
+            /** Constraint Modifications */
+            constraint_modifications: {
+                [key: string]: number | undefined;
+            };
+            /** Interpretation */
+            interpretation: string;
+            /** Recommendations */
+            recommendations: string[];
+            /**
+             * Source
+             * @default backend
+             */
+            source: string;
+        };
+        /**
          * TransitionStateResponse
          * @description Response schema for a transition state.
          */
@@ -39438,6 +42158,55 @@ export interface components {
              * @description Timestamp of generation
              */
             generated_at?: string;
+        };
+        /**
+         * UnifiedCriticalIndexRequest
+         * @description Request for unified critical index calculation.
+         */
+        UnifiedCriticalIndexRequest: {
+            /**
+             * Include Details
+             * @description Include individual faculty details
+             * @default true
+             */
+            include_details: boolean;
+            /**
+             * Top N
+             * @description Number of top-risk faculty to return
+             * @default 5
+             */
+            top_n: number;
+        };
+        /**
+         * UnifiedCriticalIndexResponse
+         * @description Unified critical index response.
+         */
+        UnifiedCriticalIndexResponse: {
+            /** Analyzed At */
+            analyzed_at: string;
+            /** Total Faculty */
+            total_faculty: number;
+            /** Overall Index */
+            overall_index: number;
+            /** Risk Level */
+            risk_level: string;
+            /** Critical Count */
+            critical_count: number;
+            /** Universal Critical Count */
+            universal_critical_count: number;
+            /** Pattern Distribution */
+            pattern_distribution: {
+                [key: string]: number | undefined;
+            };
+            /** Top Priority */
+            top_priority: string[];
+            /** Recommendations */
+            recommendations: string[];
+            /**
+             * Source
+             * @default backend
+             */
+            source: string;
         };
         /**
          * UnifiedHeatmapRequest
@@ -39788,6 +42557,32 @@ export interface components {
             current_demand: number;
             /** Theoretical Capacity */
             theoretical_capacity: number;
+        };
+        /**
+         * VaRMetric
+         * @description Single VaR metric at a specific confidence level.
+         */
+        VaRMetric: {
+            /**
+             * Confidence Level
+             * @description Confidence level (0-1)
+             */
+            confidence_level: number;
+            /**
+             * Var Value
+             * @description VaR threshold value
+             */
+            var_value: number;
+            /**
+             * Interpretation
+             * @description Human-readable interpretation (e.g., 'With 95% confidence, loss <= X')
+             */
+            interpretation: string;
+            /**
+             * Percentile
+             * @description Percentile rank
+             */
+            percentile: number;
         };
         /**
          * VacuumResponse
@@ -41352,7 +44147,7 @@ export interface components {
             /** People */
             people: components["schemas"]["PersonWorkloadResponse"][];
             /** Rebalancing Suggestions */
-            rebalancing_suggestions: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
+            rebalancing_suggestions: components["schemas"]["SuggestionResponse"][];
         };
         /**
          * WorkloadSummary
@@ -41389,6 +44184,92 @@ export interface components {
              * @default 0
              */
             variance_from_target: number;
+        };
+        /**
+         * WorkloadVaRRequest
+         * @description Request for workload distribution VaR calculation.
+         */
+        WorkloadVaRRequest: {
+            /**
+             * Start Date
+             * Format: date
+             * @description Start date for analysis
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             * @description End date for analysis
+             */
+            end_date: string;
+            /**
+             * Confidence Levels
+             * @description Confidence levels for VaR
+             * @default [
+             *       0.9,
+             *       0.95,
+             *       0.99
+             *     ]
+             */
+            confidence_levels: number[];
+            /**
+             * Metric
+             * @description Workload metric: gini_coefficient, max_hours, variance
+             * @default gini_coefficient
+             */
+            metric: string;
+        };
+        /**
+         * WorkloadVaRResponse
+         * @description Response from workload VaR calculation.
+         */
+        WorkloadVaRResponse: {
+            /**
+             * Analyzed At
+             * Format: date-time
+             * @description Timestamp of analysis
+             */
+            analyzed_at: string;
+            /**
+             * Period Start
+             * Format: date
+             * @description Analysis period start
+             */
+            period_start: string;
+            /**
+             * Period End
+             * Format: date
+             * @description Analysis period end
+             */
+            period_end: string;
+            /**
+             * Metric
+             * @description Workload metric analyzed
+             */
+            metric: string;
+            /**
+             * Var Metrics
+             * @description VaR at each confidence level
+             */
+            var_metrics: components["schemas"]["VaRMetric"][];
+            /**
+             * Baseline Value
+             * @description Baseline metric value
+             */
+            baseline_value: number;
+            /**
+             * Worst Case Value
+             * @description Worst historical value
+             */
+            worst_case_value: number;
+            /** Recommendations */
+            recommendations?: string[];
+            /** @description Overall risk severity */
+            severity: components["schemas"]["RiskSeverity"];
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            };
         };
         /**
          * XlsxParseError
@@ -41621,31 +44502,35 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
-         * ExportFormat
-         * @description Export file formats.
-         * @enum {string}
+         * CoverageGap
+         * @description Represents a coverage gap with details.
          */
-        app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
-        /**
-         * BlockListResponse
-         * @description Response for listing academic blocks.
-         */
-        app__schemas__academic_blocks__BlockListResponse: {
+        app__api__routes__fmit_health__CoverageGap: {
+            /** Gap Id */
+            gap_id: string;
             /**
-             * Blocks
-             * @description List of academic blocks
+             * Date
+             * Format: date
              */
-            blocks: components["schemas"]["BlockSummary"][];
-            /**
-             * Academic Year
-             * @description Academic year
-             */
-            academic_year: string;
-            /**
-             * Total Blocks
-             * @description Total number of blocks
-             */
-            total_blocks: number;
+            date: string;
+            /** Time Of Day */
+            time_of_day: string;
+            /** Block Id */
+            block_id: string;
+            /** Severity */
+            severity: string;
+            /** Days Until */
+            days_until: number;
+            /** Affected Area */
+            affected_area: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            current_assignments: number;
+            /** Required Assignments */
+            required_assignments: number;
+            /** Gap Size */
+            gap_size: number;
         };
         /**
          * BatchOperationResult
@@ -41667,25 +44552,43 @@ export interface components {
             warnings?: string[];
         };
         /**
-         * CoverageGap
-         * @description Identified coverage gap.
+         * BlockListResponse
+         * @description Schema for list of blocks.
          */
-        app__schemas__block_assignment__CoverageGap: {
+        app__schemas__block__BlockListResponse: {
             /**
-             * Rotation Template Id
+             * Items
+             * @description List of block responses
+             */
+            items: components["schemas"]["BlockResponse"][];
+            /**
+             * Total
+             * @description Total number of blocks
+             */
+            total: number;
+        };
+        /**
+         * ExportFormat
+         * @description Supported export formats.
+         * @enum {string}
+         */
+        app__schemas__block_assignment_import__ExportFormat: "csv" | "xlsx";
+        /**
+         * PersonSummary
+         * @description Minimal person info for certification reports.
+         */
+        app__schemas__certification__PersonSummary: {
+            /**
+             * Id
              * Format: uuid
              */
-            rotation_template_id: string;
-            /** Rotation Name */
-            rotation_name: string;
-            /** Required Coverage */
-            required_coverage: number;
-            /** Assigned Coverage */
-            assigned_coverage: number;
-            /** Gap */
-            gap: number;
-            /** Severity */
-            severity: string;
+            id: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+            /** Email */
+            email?: string | null;
         };
         /**
          * PersonSummary
@@ -41732,10 +44635,23 @@ export interface components {
             suggestions?: string[];
         };
         /**
-         * QueuePurgeResponse
-         * @description Response to queue purge request.
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
          */
-        app__schemas__jobs__QueuePurgeResponse: {
+        app__schemas__jobs__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
+            /**
+             * Confirm
+             * @default false
+             */
+            confirm: boolean;
+        };
+        /**
+         * QueuePurgeResponse
+         * @description Response after purging a queue.
+         */
+        app__schemas__queue__QueuePurgeResponse: {
             /** Queuename */
             queueName: string;
             /** Taskspurged */
@@ -41744,72 +44660,24 @@ export interface components {
             timestamp: string;
         };
         /**
-         * SuggestionResponse
-         * @description Response for improvement suggestion.
-         */
-        app__schemas__ml__SuggestionResponse: {
-            /** Type */
-            type: string;
-            /**
-             * Priority
-             * @description high, medium, low
-             */
-            priority: string;
-            /** Description */
-            description: string;
-            /**
-             * Impact
-             * @description Expected improvement
-             */
-            impact: number;
-            /** Affected Items */
-            affected_items?: string[];
-        };
-        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
-        app__schemas__person__BatchOperationResult: {
+        app__schemas__rotation_template__BatchOperationResult: {
             /**
              * Index
              * @description Index of the operation in the batch
              */
             index: number;
-            /** Person Id */
-            person_id?: string | null;
+            /**
+             * Template Id
+             * Format: uuid
+             */
+            template_id: string;
             /** Success */
             success: boolean;
             /** Error */
             error?: string | null;
-        };
-        /**
-         * PersonSummary
-         * @description Minimal person info for embedding in credential responses.
-         */
-        app__schemas__procedure_credential__PersonSummary: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /** Type */
-            type: string;
-        };
-        /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
-         */
-        app__schemas__queue__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
-            /**
-             * Confirm
-             * @description Must be true to confirm purge
-             * @default false
-             */
-            confirm: boolean;
         };
         /**
          * ConflictSummary
@@ -41822,6 +44690,27 @@ export interface components {
             errors: number;
             /** Warnings */
             warnings: number;
+        };
+        /**
+         * SuggestionResponse
+         * @description Response schema for autocomplete suggestions.
+         */
+        app__schemas__search__SuggestionResponse: {
+            /**
+             * Suggestions
+             * @description List of suggestions
+             */
+            suggestions: string[];
+            /**
+             * Query
+             * @description Original query string
+             */
+            query: string;
+            /**
+             * Entity Type
+             * @description Entity type
+             */
+            entity_type: string;
         };
         /**
          * CoverageGap
@@ -43901,7 +46790,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -44028,7 +46917,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -44094,7 +46983,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -51978,6 +54867,138 @@ export interface operations {
             };
         };
     };
+    get_unified_critical_index_api_v1_resilience_exotic_composite_unified_critical_index_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnifiedCriticalIndexRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnifiedCriticalIndexResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calculate_recovery_distance_api_v1_resilience_exotic_composite_recovery_distance_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecoveryDistanceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryDistanceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assess_creep_fatigue_api_v1_resilience_exotic_composite_creep_fatigue_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreepFatigueRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreepFatigueResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyze_transcription_factors_api_v1_resilience_exotic_composite_transcription_factors_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TranscriptionFactorsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranscriptionFactorsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_samn_perelli_levels_api_v1_fatigue_risk_samn_perelli_levels_get: {
         parameters: {
             query?: never;
@@ -54350,7 +57371,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuggestionResponse"];
+                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -54383,7 +57404,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuggestionResponse"];
+                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -55532,6 +58553,105 @@ export interface operations {
             };
         };
     };
+    calculate_coverage_var_api_v1_coverage_var_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CoverageVaRRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoverageVaRResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calculate_workload_var_api_v1_workload_var_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkloadVaRRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkloadVaRResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calculate_conditional_var_api_v1_conditional_var_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConditionalVaRRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConditionalVaRResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_fairness_audit_api_v1_fairness_audit_get: {
         parameters: {
             query: {
@@ -55945,6 +59065,159 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_backup_api_v1_backup_create_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBackupRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_backups_api_v1_backup_list_get: {
+        parameters: {
+            query?: {
+                /** @description Max backups to return */
+                limit?: number;
+                /** @description Filter by strategy */
+                strategy?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupListResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_from_backup_api_v1_backup_restore__backup_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backup_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestoreBackupRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestoreResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_backup_api_v1_backup_verify__backup_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backup_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupVerifyResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_backup_status_api_v1_backup_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupStatusResponse"];
                 };
             };
         };
@@ -57774,6 +61047,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LorenzCurveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calculate_shapley_workload_api_v1_mcp_calculate_shapley_workload_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShapleyWorkloadRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShapleyMetricsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -60268,7 +63574,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -60278,7 +63584,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -60635,7 +63941,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -60645,7 +63951,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -62733,6 +66039,1484 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    saml_metadata_api_v1_sso_saml_metadata_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    saml_login_api_v1_sso_saml_login_get: {
+        parameters: {
+            query?: {
+                relay_state?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    saml_acs_api_v1_sso_saml_acs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    saml_logout_api_v1_sso_saml_logout_get: {
+        parameters: {
+            query: {
+                name_id: string;
+                session_index?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    oauth2_login_api_v1_sso_oauth2_login_get: {
+        parameters: {
+            query?: {
+                redirect_uri?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    oauth2_callback_api_v1_sso_oauth2_callback_get: {
+        parameters: {
+            query: {
+                code: string;
+                state: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_providers_api_v1_sso_providers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    sso_status_api_v1_sso_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    list_audiences_api_v1_audience_tokens_audiences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AudienceListResponse"];
+                };
+            };
+        };
+    };
+    request_audience_token_api_v1_audience_tokens_tokens_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AudienceTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AudienceTokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_token_api_v1_audience_tokens_tokens_revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokeTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevokeTokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    abort_job_example_api_v1_audience_tokens_example_abort_job__job_id__post: {
+        parameters: {
+            query?: {
+                authorization?: string | null;
+            };
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_my_sessions_api_v1_sessions_me_get: {
+        parameters: {
+            query: {
+                storage?: unknown;
+                kwargs: unknown;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_current_session_api_v1_sessions_me_current_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    refresh_current_session_api_v1_sessions_me_refresh_post: {
+        parameters: {
+            query: {
+                storage?: unknown;
+                kwargs: unknown;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_specific_session_api_v1_sessions_me__session_id__delete: {
+        parameters: {
+            query: {
+                storage?: unknown;
+                kwargs: unknown;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_other_sessions_api_v1_sessions_me_other_delete: {
+        parameters: {
+            query: {
+                storage?: unknown;
+                kwargs: unknown;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_all_my_sessions_api_v1_sessions_me_all_delete: {
+        parameters: {
+            query: {
+                storage?: unknown;
+                kwargs: unknown;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_session_stats_api_v1_sessions_stats_get: {
+        parameters: {
+            query: {
+                storage?: unknown;
+                kwargs: unknown;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionStats"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_user_sessions_admin_api_v1_sessions_user__user_id__get: {
+        parameters: {
+            query: {
+                storage?: unknown;
+                kwargs: unknown;
+            };
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    force_logout_user_api_v1_sessions_user__user_id__force_logout_delete: {
+        parameters: {
+            query: {
+                storage?: unknown;
+                kwargs: unknown;
+            };
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_session_admin_api_v1_sessions_session__session_id__delete: {
+        parameters: {
+            query: {
+                storage?: unknown;
+                kwargs: unknown;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cleanup_expired_sessions_api_v1_sessions_cleanup_post: {
+        parameters: {
+            query: {
+                storage?: unknown;
+                kwargs: unknown;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_profiling_status_api_v1_profiling_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfilingStatusResponse"];
+                };
+            };
+        };
+    };
+    start_profiling_session_api_v1_profiling_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfilingSessionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stop_profiling_session_api_v1_profiling_stop_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_profiling_report_api_v1_profiling_report_get: {
+        parameters: {
+            query?: {
+                /** @description Report format (json or html) */
+                format?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_query_metrics_api_v1_profiling_queries_get: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of queries to return */
+                limit?: number;
+                /** @description Return only slow queries */
+                slow_only?: boolean;
+                /** @description Slow query threshold in ms */
+                threshold_ms?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_request_metrics_api_v1_profiling_requests_get: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of requests to return */
+                limit?: number;
+                /** @description Return only slow requests */
+                slow_only?: boolean;
+                /** @description Slow request threshold in ms */
+                threshold_ms?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_traces_api_v1_profiling_traces_get: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of traces to return */
+                limit?: number;
+                /** @description Filter by trace ID */
+                trace_id?: string | null;
+                /** @description Return only slow traces */
+                slow_only?: boolean;
+                /** @description Slow trace threshold in ms */
+                threshold_ms?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    detect_bottlenecks_api_v1_profiling_bottlenecks_get: {
+        parameters: {
+            query?: {
+                /** @description SQL slow query threshold */
+                sql_threshold_ms?: number;
+                /** @description Request slow threshold */
+                request_threshold_ms?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_flamegraph_api_v1_profiling_flamegraph_get: {
+        parameters: {
+            query?: {
+                /** @description Type of flame graph (cpu or traces) */
+                type?: string;
+                /** @description Profile result index (-1 for latest) */
+                profile_index?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyze_profiling_data_api_v1_profiling_analyze_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalyzeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clear_profiling_data_api_v1_profiling_clear_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    list_sessions_api_v1_claude_chat_sessions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    get_session_history_api_v1_claude_chat_sessions__session_id__history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_session_api_v1_claude_chat_sessions__session_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_jobs_api_v1_scheduler_jobs_jobs_get: {
+        parameters: {
+            query?: {
+                /** @description Only return enabled jobs */
+                enabled_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobListResponseSchema"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_job_api_v1_scheduler_jobs_jobs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobCreateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobResponseSchema"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_job_api_v1_scheduler_jobs_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobResponseSchema"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_job_api_v1_scheduler_jobs_jobs__job_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobActionResponseSchema"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_job_api_v1_scheduler_jobs_jobs__job_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobUpdateSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobResponseSchema"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pause_job_api_v1_scheduler_jobs_jobs__job_id__pause_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobActionResponseSchema"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resume_job_api_v1_scheduler_jobs_jobs__job_id__resume_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobActionResponseSchema"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_job_executions_api_v1_scheduler_jobs_jobs__job_id__executions_get: {
+        parameters: {
+            query?: {
+                /** @description Maximum records to return */
+                limit?: number;
+                /** @description Records to skip */
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobExecutionListSchema"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_all_executions_api_v1_scheduler_jobs_executions_get: {
+        parameters: {
+            query?: {
+                /** @description Maximum records to return */
+                limit?: number;
+                /** @description Records to skip */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobExecutionListSchema"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_job_statistics_api_v1_scheduler_jobs_jobs__job_id__statistics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobStatisticsSchema"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_scheduler_api_v1_scheduler_jobs_sync_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncResultSchema"];
+                };
+            };
+        };
+    };
+    get_scheduler_status_api_v1_scheduler_jobs_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };

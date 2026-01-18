@@ -128,6 +128,16 @@ from app.schemas.swap_matching import (
     ScoringBreakdown,
     SwapMatch,
 )
+from app.schemas.var_analytics import (
+    ConditionalVaRRequest,
+    ConditionalVaRResponse,
+    CoverageVaRRequest,
+    CoverageVaRResponse,
+    RiskSeverity,
+    VaRMetric,
+    WorkloadVaRRequest,
+    WorkloadVaRResponse,
+)
 
 __all__ = [
     "PersonCreate",
@@ -254,4 +264,13 @@ __all__ = [
     "ContextBuildRequest",
     "RAGContext",
     "RAGHealthResponse",
+    # VaR analytics schemas
+    "RiskSeverity",
+    "VaRMetric",
+    "CoverageVaRRequest",
+    "CoverageVaRResponse",
+    "WorkloadVaRRequest",
+    "WorkloadVaRResponse",
+    "ConditionalVaRRequest",
+    "ConditionalVaRResponse",
 ]

@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, and_
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 
@@ -23,7 +24,7 @@ from app.analytics.metrics import (
     calculate_fairness_index,
 )
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db, get_db
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
@@ -47,6 +48,15 @@ from app.schemas.analytics import (
     WhatIfResult,
     WhatIfViolation,
 )
+from app.schemas.var_analytics import (
+    ConditionalVaRRequest,
+    ConditionalVaRResponse,
+    CoverageVaRRequest,
+    CoverageVaRResponse,
+    WorkloadVaRRequest,
+    WorkloadVaRResponse,
+)
+from app.services.var_service import VaRService
 
 logger = logging.getLogger(__name__)
 
@@ -960,3 +970,84 @@ async def export_for_research(
             f"Data processing error exporting research data: {e}", exc_info=True
         )
         raise HTTPException(status_code=500, detail="Data processing error occurred")
+
+
+# ============================================================================
+# VaR (Value-at-Risk) Endpoints
+# ============================================================================
+
+
+@router.post("/coverage-var", response_model=CoverageVaRResponse)
+async def calculate_coverage_var(
+    request: CoverageVaRRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+) -> CoverageVaRResponse:
+    """
+    Calculate Value-at-Risk for coverage metrics.
+
+    VaR quantifies the worst expected coverage drop at specified confidence levels.
+    For example, 95% VaR of 0.15 means: "With 95% confidence, coverage drop
+    won't exceed 15%."
+
+    Used by MCP tools for risk assessment and capacity planning.
+    """
+    try:
+        service = VaRService()
+        return await service.calculate_coverage_var(db, request)
+    except SQLAlchemyError as e:
+        logger.error(f"Database error calculating coverage VaR: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Database error occurred")
+    except Exception as e:
+        logger.error(f"Error calculating coverage VaR: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error calculating coverage VaR")
+
+
+@router.post("/workload-var", response_model=WorkloadVaRResponse)
+async def calculate_workload_var(
+    request: WorkloadVaRRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+) -> WorkloadVaRResponse:
+    """
+    Calculate Value-at-Risk for workload distribution metrics.
+
+    Analyzes workload imbalance risk using metrics like Gini coefficient,
+    max hours, or variance. Helps identify risk of unfair distribution.
+
+    Used by MCP tools for workload equity analysis.
+    """
+    try:
+        service = VaRService()
+        return await service.calculate_workload_var(db, request)
+    except SQLAlchemyError as e:
+        logger.error(f"Database error calculating workload VaR: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Database error occurred")
+    except Exception as e:
+        logger.error(f"Error calculating workload VaR: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error calculating workload VaR")
+
+
+@router.post("/conditional-var", response_model=ConditionalVaRResponse)
+async def calculate_conditional_var(
+    request: ConditionalVaRRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+) -> ConditionalVaRResponse:
+    """
+    Calculate Conditional VaR (Expected Shortfall).
+
+    CVaR measures average loss in worst-case scenarios beyond VaR threshold.
+    More conservative than VaR - captures "how bad it gets when it gets bad."
+
+    Used by MCP tools for tail risk analysis and contingency planning.
+    """
+    try:
+        service = VaRService()
+        return await service.calculate_conditional_var(db, request)
+    except SQLAlchemyError as e:
+        logger.error(f"Database error calculating conditional VaR: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Database error occurred")
+    except Exception as e:
+        logger.error(f"Error calculating conditional VaR: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error calculating conditional VaR")
