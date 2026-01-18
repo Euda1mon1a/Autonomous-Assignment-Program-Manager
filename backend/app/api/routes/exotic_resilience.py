@@ -22,9 +22,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.features.decorators import require_feature_flag
 from app.models.assignment import Assignment
+from app.models.user import User
 
 # Import thermodynamics modules
 from app.resilience.thermodynamics import (
@@ -527,6 +529,7 @@ class CatastropheResponse(BaseModel):
 async def analyze_schedule_entropy(
     request: EntropyAnalysisRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> EntropyMetricsResponse:
     """
     Analyze schedule entropy using information theory.
@@ -585,6 +588,7 @@ async def analyze_schedule_entropy(
 async def detect_phase_transition(
     request: PhaseTransitionRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> PhaseTransitionResponse:
     """
     Detect approaching phase transitions using critical phenomena theory.
@@ -668,6 +672,7 @@ async def detect_phase_transition(
 async def assess_immune_response(
     request: ImmuneAssessmentRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> ImmuneAssessmentResponse:
     """
     Assess schedule anomalies using Artificial Immune System (AIS).
@@ -745,6 +750,7 @@ async def assess_immune_response(
 @require_feature_flag("exotic_resilience_enabled")
 async def get_memory_cells(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> MemoryCellsResponse:
     """
     Get status of immune system memory cells.
@@ -777,6 +783,7 @@ async def get_memory_cells(
 async def analyze_antibodies(
     request: AntibodyAnalysisRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> AntibodyAnalysisResponse:
     """
     Analyze antibody (repair strategy) coverage for anomaly patterns.
@@ -847,6 +854,7 @@ async def analyze_antibodies(
 async def calculate_rigidity(
     request: RigidityRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> RigidityResponse:
     """
     Calculate schedule rigidity (stability under perturbation).
@@ -917,6 +925,7 @@ async def calculate_rigidity(
 async def detect_subharmonics(
     request: SubharmonicRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> SubharmonicResponse:
     """
     Detect natural periodic cycles (subharmonics) in schedule patterns.
@@ -971,6 +980,7 @@ async def detect_subharmonics(
 async def get_stroboscopic_checkpoints(
     schedule_id: UUID | None = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> CheckpointResponse:
     """
     Get stroboscopic checkpoint status.
@@ -1171,6 +1181,7 @@ def _grade_stability(rigidity: float) -> str:
 async def analyze_metastability(
     request: MetastabilityRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> MetastabilityResponse:
     """
     Detect metastable states using statistical mechanics.
@@ -1254,6 +1265,7 @@ async def analyze_metastability(
 async def predict_reorganization_risk(
     request: ReorganizationRiskRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> ReorganizationRiskResponse:
     """
     Predict risk of sudden system reorganization.
@@ -1290,6 +1302,7 @@ async def predict_reorganization_risk(
 async def generate_spin_glass_replicas(
     request: SpinGlassRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> SpinGlassResponse:
     """
     Generate diverse schedule replicas using spin glass model.
@@ -1348,6 +1361,7 @@ async def generate_spin_glass_replicas(
 async def predict_catastrophe(
     request: CatastropheRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ) -> CatastropheResponse:
     """
     Predict sudden system failures using catastrophe theory.

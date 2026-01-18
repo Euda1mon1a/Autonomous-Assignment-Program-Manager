@@ -155,7 +155,7 @@ class StagingPublisher:
             # Create backups
             backup_result = self._create_backups(draft_assignments)
 
-            if not backup_result.success:
+            if not backup_result.success:  # noqa: resilience-ok (error handling, not SPOF)
                 return StagingResult(
                     success=False,
                     draft_id=draft_id,
@@ -295,6 +295,9 @@ class StagingPublisher:
                 else:
                     # Single slot request - can return with one result
                     return results
+
+        # Clear results before fallback to avoid duplicates
+        results = []
 
         # Fallback to matching by person/date/time
         base_query = self.db.query(HalfDayAssignment).filter(
@@ -505,8 +508,9 @@ class StagingPublisher:
                 if data.get("overridden_by")
                 else None,
                 overridden_at=overridden_at,
-                # Preserve original timestamp
+                # Preserve original timestamps
                 created_at=created_at or datetime.utcnow(),
+                updated_at=self._parse_datetime_from_backup(data.get("updated_at")),
             )
 
             self.db.add(new_assignment)
@@ -546,6 +550,13 @@ class StagingPublisher:
                         data.get("overridden_at")
                     )
 
+                    # Restore updated_at for audit fidelity
+                    restored_updated_at = self._parse_datetime_from_backup(
+                        data.get("updated_at")
+                    )
+                    if restored_updated_at:
+                        existing.updated_at = restored_updated_at
+
                     logger.debug(
                         f"Restored modified assignment {backup.original_assignment_id}"
                     )
@@ -583,8 +594,11 @@ class StagingPublisher:
                         if data.get("overridden_by")
                         else None,
                         overridden_at=overridden_at,
-                        # Preserve original timestamp
+                        # Preserve original timestamps
                         created_at=created_at or datetime.utcnow(),
+                        updated_at=self._parse_datetime_from_backup(
+                            data.get("updated_at")
+                        ),
                     )
                     self.db.add(new_assignment)
                     logger.debug(

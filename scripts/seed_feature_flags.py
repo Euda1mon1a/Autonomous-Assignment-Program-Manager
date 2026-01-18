@@ -3,10 +3,13 @@
 
 Run with: python scripts/seed_feature_flags.py
 
+Optionally set ADMIN_PASSWORD env var (default: admin123 for debug mode).
+
 This script creates the default feature flags for the application.
 Flags can later be modified via the admin API at /api/v1/features/.
 """
 
+import os
 import sys
 
 import requests
@@ -114,9 +117,10 @@ FEATURE_FLAGS = [
 
 def login():
     """Login and get auth token."""
+    password = os.environ.get("ADMIN_PASSWORD", "admin123")
     resp = requests.post(
         f"{BASE_URL}/api/v1/auth/login/json",
-        json={"username": "admin", "password": "AdminPassword123!"},
+        json={"username": "admin", "password": password},
     )
     if resp.status_code != 200:
         print(f"Login failed: {resp.text}")
