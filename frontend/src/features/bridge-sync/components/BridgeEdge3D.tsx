@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { BridgeEdge, BridgeNode } from '../types';
@@ -44,6 +44,13 @@ export function BridgeEdge3D({ edge, nodes }: BridgeEdge3DProps) {
     if (points.length < 2) return null;
     return new THREE.BufferGeometry().setFromPoints(points);
   }, [points]);
+
+  // Compute line distances for dashed material to work
+  useEffect(() => {
+    if (lineRef.current && geometry) {
+      lineRef.current.computeLineDistances();
+    }
+  }, [geometry]);
 
   useFrame((state, delta) => {
     if (!lineRef.current?.material) return;
