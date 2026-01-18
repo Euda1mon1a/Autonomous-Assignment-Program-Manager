@@ -190,7 +190,7 @@ class ConstraintValidator:
         # Phase 6: Performance profiling
         logger.info("Phase 6: Profiling performance...")
         self.performance_profiler.profile_performance(
-            self.manager.get_enabled(), report
+            self.manager.get_enabled(), self.context, report
         )
 
         logger.info(f"Validation complete: {report.is_valid}")
@@ -299,12 +299,74 @@ class ConstraintFeasibilityChecker:
         constraints: list[HardConstraint],
         report: ValidationReport,
     ) -> None:
-        """Check for known infeasible combinations."""
+        """
+        Check for known infeasible constraint combinations.
+
+        Detects combinations that can never be satisfied together, such as:
+        - Contradictory availability requirements
+        - Capacity constraints that exceed resource limits
+        - Mutually exclusive assignments
+        """
+        constraint_names = {c.name for c in constraints}
         constraint_types = {c.constraint_type for c in constraints}
 
-        # Example: Cannot have both CRITICAL availability and complete coverage
-        # (in a scheduling scenario where requirements exceed capacity)
-        pass
+        # Known infeasible combinations
+        infeasible_pairs = [
+            # Strict no-overlap + mandatory double-booking = impossible
+            ("NoDoubleBooking", "MandatoryDoubleBooking"),
+            # Full coverage + no overtime = may be impossible with limited staff
+            ("FullCoverageRequired", "ZeroOvertimeStrict"),
+            # Block all leaves + mandatory leave compliance = impossible
+            ("BlockAllLeaves", "MandatoryLeaveCompliance"),
+        ]
+
+        for c1_name, c2_name in infeasible_pairs:
+            if c1_name in constraint_names and c2_name in constraint_names:
+                report.add_error(
+                    "FEASIBILITY",
+                    f"Infeasible combination: {c1_name} and {c2_name} cannot both be satisfied",
+                    details={"constraint1": c1_name, "constraint2": c2_name},
+                )
+
+        # Check for ACGME compliance + aggressive scheduling conflicts
+        acgme_constraints = [
+            c for c in constraints if "ACGME" in c.name.upper() or "80Hour" in c.name
+        ]
+        aggressive_work = [
+            c
+            for c in constraints
+            if "MaximizeCoverage" in c.name or "FillAllSlots" in c.name
+        ]
+
+        if acgme_constraints and aggressive_work:
+            report.add_warning(
+                "FEASIBILITY",
+                "ACGME compliance constraints may conflict with aggressive coverage constraints. "
+                "Solver may not find a solution or may prioritize incorrectly.",
+                details={
+                    "acgme_constraints": [c.name for c in acgme_constraints],
+                    "coverage_constraints": [c.name for c in aggressive_work],
+                },
+            )
+
+        # Check capacity vs demand ratio
+        capacity_constraints = [
+            c for c in constraints if c.constraint_type == ConstraintType.CAPACITY
+        ]
+        coverage_constraints = [
+            c for c in constraints if c.constraint_type == ConstraintType.COVERAGE
+        ]
+
+        if len(capacity_constraints) > 3 and len(coverage_constraints) > 3:
+            report.add_warning(
+                "FEASIBILITY",
+                f"High number of capacity ({len(capacity_constraints)}) and coverage ({len(coverage_constraints)}) "
+                "constraints may reduce solution feasibility",
+                details={
+                    "capacity_count": len(capacity_constraints),
+                    "coverage_count": len(coverage_constraints),
+                },
+            )
 
 
 class ConstraintConflictDetector:
@@ -394,63 +456,202 @@ class ConstraintCoverageAnalyzer:
 class ConstraintDependencyAnalyzer:
     """Analyzes dependencies between constraints."""
 
+    # Known constraint dependencies (dependent -> required constraints)
+    KNOWN_DEPENDENCIES = {
+        # Post-call assignments need call tracking
+        "PostCallAutoAssignment": ["CallAvailability", "CallCoverageMandatory"],
+        "PostFMITRecovery": ["FMITMandatoryCall"],
+        "NightFloatPostCall": ["OvernightCallGeneration"],
+        # ACGME validation needs work tracking
+        "ACGME80HourRule": ["WorkHourTracking"],
+        "ACGME24Plus4Rule": ["ShiftDurationTracking"],
+        # Supervision needs faculty assignment
+        "SupervisionRatioEnforcement": ["FacultyAvailability"],
+        # Leave handling needs availability tracking
+        "LeaveBlockEnforcement": ["AvailabilityTracking"],
+        # Equity constraints need workload tracking
+        "CallEquityDistribution": ["CallTracking", "WorkloadTracking"],
+        # Night float scheduling chains
+        "NightFloatRotation": ["NightFloatAvailability", "PostCallAutoAssignment"],
+    }
+
     def analyze_dependencies(
         self,
         constraints: list[Constraint],
         report: ValidationReport,
     ) -> None:
-        """Analyze constraint dependencies."""
-        # Known dependencies
-        dependencies = {
-            "PostCallAutoAssignment": ["CallAvailability"],
-            "PostFMITRecovery": ["FMITMandatoryCall"],
-            "NightFloatPostCall": ["OvernightCallGeneration"],
-        }
+        """
+        Analyze constraint dependencies.
 
+        Checks that when a constraint is enabled, all of its required
+        dependencies are also enabled for proper functioning.
+        """
         constraint_names = {c.name for c in constraints}
 
-        for dependent, required_list in dependencies.items():
+        for dependent, required_list in self.KNOWN_DEPENDENCIES.items():
             if dependent in constraint_names:
-                for required in required_list:
-                    if required not in constraint_names:
-                        report.add_warning(
-                            "DEPENDENCY",
-                            f"{dependent} requires {required} to function correctly",
-                            dependent,
-                            {"depends_on": required},
-                        )
+                missing = [req for req in required_list if req not in constraint_names]
+                if missing:
+                    report.add_warning(
+                        "DEPENDENCY",
+                        f"{dependent} requires {', '.join(missing)} to function correctly",
+                        dependent,
+                        {"depends_on": missing, "all_dependencies": required_list},
+                    )
+
+        # Check for circular dependencies (shouldn't happen but good to verify)
+        self._check_circular_dependencies(constraints, report)
+
+    def _check_circular_dependencies(
+        self,
+        constraints: list[Constraint],
+        report: ValidationReport,
+    ) -> None:
+        """Check for circular dependency chains."""
+        constraint_names = {c.name for c in constraints}
+
+        # Build dependency graph for active constraints
+        active_deps = {
+            name: deps
+            for name, deps in self.KNOWN_DEPENDENCIES.items()
+            if name in constraint_names
+        }
+
+        # Simple cycle detection using visited tracking
+        def has_cycle(node: str, visited: set, path: set) -> bool:
+            if node in path:
+                return True
+            if node in visited:
+                return False
+
+            visited.add(node)
+            path.add(node)
+
+            for dep in active_deps.get(node, []):
+                if dep in constraint_names and has_cycle(dep, visited, path):
+                    return True
+
+            path.remove(node)
+            return False
+
+        for name in active_deps:
+            if has_cycle(name, set(), set()):
+                report.add_error(
+                    "DEPENDENCY",
+                    f"Circular dependency detected involving {name}",
+                    name,
+                    {"constraint": name},
+                )
+                break  # Stop after first cycle found
 
 
 class ConstraintPerformanceProfiler:
     """Estimates performance impact of constraints."""
 
+    # Base complexity per constraint type (operations per unit)
+    BASE_COMPLEXITY = {
+        ConstraintType.AVAILABILITY: 1,  # O(n) - linear
+        ConstraintType.CAPACITY: 10,  # O(n²) - quadratic
+        ConstraintType.EQUITY: 5,  # O(n log n)
+        ConstraintType.CALL: 8,  # O(n log n)
+        ConstraintType.SUPERVISION: 3,  # O(n)
+        ConstraintType.CONSECUTIVE_DAYS: 2,  # O(n)
+        ConstraintType.DUTY_HOURS: 4,  # O(n)
+        ConstraintType.ROTATION: 3,  # O(n)
+        ConstraintType.CONTINUITY: 2,  # O(n)
+        ConstraintType.RESILIENCE: 6,  # O(n log n)
+    }
+
     def profile_performance(
         self,
         constraints: list[Constraint],
+        context: SchedulingContext,
         report: ValidationReport,
     ) -> None:
-        """Profile constraint performance."""
-        # Estimate computational complexity
-        total_complexity = 0
+        """
+        Profile constraint performance with dynamic complexity estimation.
 
-        complexity_estimates = {
-            ConstraintType.AVAILABILITY: 10,  # O(n)
-            ConstraintType.CAPACITY: 100,  # O(n²)
-            ConstraintType.EQUITY: 50,  # O(n)
-            ConstraintType.CALL: 75,  # O(n log n)
-        }
+        Complexity is calculated as O(residents × blocks × constraint_factor).
+        """
+        # Get problem size from context - use actual list lengths, not arbitrary defaults
+        # This ensures complexity warnings are accurate for real workloads
+        num_residents = (
+            len(context.residents)
+            if hasattr(context, "residents") and context.residents
+            else getattr(context, "num_residents", 20)
+        )
+        num_blocks = (
+            len(context.blocks)
+            if hasattr(context, "blocks") and context.blocks
+            else getattr(context, "num_blocks", 100)
+        )
+        problem_size = num_residents * num_blocks
+
+        # Calculate complexity per constraint
+        total_complexity = 0
+        constraint_complexities = []
 
         for constraint in constraints:
-            complexity = complexity_estimates.get(constraint.constraint_type, 50)
+            base = self.BASE_COMPLEXITY.get(constraint.constraint_type, 5)
+
+            # Hard constraints add more overhead (must be strictly enforced)
+            multiplier = 2.0 if isinstance(constraint, HardConstraint) else 1.0
+
+            # High priority constraints are checked more frequently
+            priority_factor = {
+                ConstraintPriority.MANDATORY: 1.5,
+                ConstraintPriority.HIGH: 1.2,
+                ConstraintPriority.MEDIUM: 1.0,
+                ConstraintPriority.LOW: 0.8,
+            }.get(constraint.priority, 1.0)
+
+            complexity = int(base * multiplier * priority_factor * (problem_size / 100))
             total_complexity += complexity
 
-        report.summary["estimated_complexity"] = total_complexity
+            constraint_complexities.append(
+                {
+                    "name": constraint.name,
+                    "type": constraint.constraint_type.value
+                    if hasattr(constraint.constraint_type, "value")
+                    else str(constraint.constraint_type),
+                    "complexity": complexity,
+                }
+            )
 
-        if total_complexity > 1000:
+        report.summary["estimated_complexity"] = total_complexity
+        report.summary["problem_size"] = {
+            "residents": num_residents,
+            "blocks": num_blocks,
+            "decision_variables": problem_size,
+        }
+
+        # Sort by complexity for reporting
+        constraint_complexities.sort(key=lambda x: x["complexity"], reverse=True)
+        report.summary["top_complexity_constraints"] = constraint_complexities[:5]
+
+        # Warnings based on estimated solver time
+        # Rough estimate: 1000 complexity units ≈ 1 second of solver time
+        estimated_seconds = total_complexity / 1000
+
+        if estimated_seconds > 60:
             report.add_warning(
                 "PERFORMANCE",
-                f"High estimated computational complexity: {total_complexity}",
-                details={"complexity_score": total_complexity},
+                f"High complexity: estimated {estimated_seconds:.0f}s solver time "
+                f"(complexity={total_complexity}, problem_size={problem_size})",
+                details={
+                    "complexity_score": total_complexity,
+                    "estimated_seconds": estimated_seconds,
+                    "problem_size": problem_size,
+                },
+            )
+        elif estimated_seconds > 10:
+            report.add_warning(
+                "PERFORMANCE",
+                f"Moderate complexity: estimated {estimated_seconds:.0f}s solver time",
+                details={
+                    "complexity_score": total_complexity,
+                    "estimated_seconds": estimated_seconds,
+                },
             )
 
         # Check for soft constraint weight distribution
@@ -458,7 +659,6 @@ class ConstraintPerformanceProfiler:
         if soft_constraints:
             weights = [c.weight for c in soft_constraints]
             avg_weight = sum(weights) / len(weights)
-
             max_weight = max(weights)
             min_weight = min(weights)
 
@@ -467,7 +667,22 @@ class ConstraintPerformanceProfiler:
                 "avg_weight": avg_weight,
                 "max_weight": max_weight,
                 "min_weight": min_weight,
+                "weight_ratio": max_weight / min_weight
+                if min_weight > 0
+                else float("inf"),
             }
+
+            # Warn if weights are highly imbalanced
+            if min_weight > 0 and max_weight / min_weight > 100:
+                report.add_warning(
+                    "PERFORMANCE",
+                    f"Soft constraint weights highly imbalanced (ratio: {max_weight / min_weight:.0f}x). "
+                    "Lower-weight constraints may be effectively ignored.",
+                    details={
+                        "max_weight": max_weight,
+                        "min_weight": min_weight,
+                    },
+                )
 
 
 # Convenience functions

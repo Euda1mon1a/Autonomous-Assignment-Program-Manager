@@ -12,7 +12,7 @@ from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.schemas.academic_blocks import ACGMEStatus
 from app.services.academic_block_service import AcademicBlockService
-from app.validators.advanced_acgme import ACGMEViolation
+from app.validators.advanced_acgme import Violation as ACGMEViolation
 
 
 class TestAcademicBlockService:

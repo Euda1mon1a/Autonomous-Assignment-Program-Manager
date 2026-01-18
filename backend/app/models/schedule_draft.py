@@ -37,6 +37,7 @@ from app.db.base import Base
 from app.db.types import JSONType
 
 if TYPE_CHECKING:
+    from app.models.assignment_backup import AssignmentBackup
     from app.models.person import Person
     from app.models.rotation_template import RotationTemplate
     from app.models.schedule_run import ScheduleRun
@@ -239,6 +240,11 @@ class ScheduleDraftAssignment(Base):
     draft = relationship("ScheduleDraft", back_populates="assignments")
     person = relationship("Person", foreign_keys=[person_id])
     rotation = relationship("RotationTemplate", foreign_keys=[rotation_id])
+    backups = relationship(
+        "AssignmentBackup",
+        back_populates="draft_assignment",
+        cascade="all, delete-orphan",
+    )
 
     __table_args__ = (
         UniqueConstraint(

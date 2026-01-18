@@ -105,39 +105,46 @@ async def lifespan(app: FastAPI):
     # Validate security configuration at startup
     _validate_security_config()
 
-    # Initialize default admin user if database is empty (for RAG auth bootstrap)
-    try:
-        from app.db.session import SessionLocal
-        from app.models.user import User
-        from app.core.security import get_password_hash
-
-        db = SessionLocal()
+    # Initialize default admin user if database is empty (for local development only)
+    # SECURITY: Only create default admin in DEBUG mode to prevent production footgun
+    if settings.DEBUG:
         try:
-            user_count = db.query(User).count()
-            if user_count == 0:
-                logger.info(
-                    "Database is empty. Creating default admin user for initial setup."
-                )
-                admin_user = User(
-                    username="admin",
-                    email="admin@local.dev",
-                    hashed_password=get_password_hash("admin123"),
-                    role="admin",
-                    is_active=True,
-                )
-                db.add(admin_user)
-                db.commit()
-                logger.info(
-                    "Default admin user created. Username: admin, Password: admin123"
-                )
-                logger.warning(
-                    "SECURITY: Default admin user was created with default credentials. "
-                    "Please change the password in production!"
-                )
-        finally:
-            db.close()
-    except Exception as e:
-        logger.warning(f"Failed to auto-initialize admin user: {e}")
+            from app.db.session import SessionLocal
+            from app.models.user import User
+            from app.core.security import get_password_hash
+
+            db = SessionLocal()
+            try:
+                user_count = db.query(User).count()
+                if user_count == 0:
+                    logger.info(
+                        "Database is empty. Creating default admin user for initial setup."
+                    )
+                    admin_user = User(
+                        username="admin",
+                        email="admin@local.dev",
+                        hashed_password=get_password_hash("admin123"),
+                        role="admin",
+                        is_active=True,
+                    )
+                    db.add(admin_user)
+                    db.commit()
+                    logger.info(
+                        "Default admin user created. Username: admin, Password: admin123"
+                    )
+                    logger.warning(
+                        "SECURITY: Default admin user was created with default credentials. "
+                        "Please change the password immediately!"
+                    )
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning(f"Failed to auto-initialize admin user: {e}")
+    else:
+        logger.info(
+            "Skipping default admin creation (DEBUG=False). "
+            "Use 'python -m app.cli user create --role admin' to create an admin user."
+        )
 
     # Initialize OpenTelemetry tracer if enabled
     if settings.TELEMETRY_ENABLED:

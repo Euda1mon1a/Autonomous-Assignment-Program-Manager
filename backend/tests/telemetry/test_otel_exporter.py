@@ -7,6 +7,8 @@ This module tests the OTLP and other exporter configurations for distributed tra
 import pytest
 from unittest.mock import MagicMock, patch
 
+# Skip if opentelemetry dependencies are not available
+pytest.importorskip("opentelemetry.propagators.b3")
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 

@@ -20,6 +20,36 @@ from app.models.assignment import Assignment as DBAssignment
 from app.models.person import Person as DBPerson
 
 
+# Roles that can perform write operations
+WRITE_ROLES = {"admin", "coordinator", "faculty"}
+# Roles that can perform delete operations (more restricted)
+DELETE_ROLES = {"admin", "coordinator"}
+
+
+def _check_write_permission(info) -> None:
+    """Check if user has permission to create/update records."""
+    user = info.context.get("user")
+    role = info.context.get("user_role")
+
+    if not user:
+        raise Exception("Authentication required")
+
+    if role not in WRITE_ROLES:
+        raise Exception(f"Permission denied: Role '{role}' cannot modify records")
+
+
+def _check_delete_permission(info) -> None:
+    """Check if user has permission to delete records."""
+    user = info.context.get("user")
+    role = info.context.get("user_role")
+
+    if not user:
+        raise Exception("Authentication required")
+
+    if role not in DELETE_ROLES:
+        raise Exception(f"Permission denied: Role '{role}' cannot delete records")
+
+
 @strawberry.type
 class Mutation:
     """Root mutation type."""
@@ -29,14 +59,13 @@ class Mutation:
         """
         Create a new person (resident or faculty).
 
-        Requires authentication and appropriate permissions.
+        Requires authentication and write permissions (admin, coordinator, faculty).
         """
         db: Session = info.context["db"]
         user = info.context.get("user")
 
-        # Authentication check
-        if not user:
-            raise Exception("Authentication required")
+        # Permission check (includes auth check)
+        _check_write_permission(info)
 
         # Validate input
         if input.type not in ("resident", "faculty"):
@@ -74,14 +103,13 @@ class Mutation:
         """
         Update an existing person.
 
-        Requires authentication and appropriate permissions.
+        Requires authentication and write permissions (admin, coordinator, faculty).
         """
         db: Session = info.context["db"]
         user = info.context.get("user")
 
-        # Authentication check
-        if not user:
-            raise Exception("Authentication required")
+        # Permission check (includes auth check)
+        _check_write_permission(info)
 
         # Find person
         db_person = db.query(DBPerson).filter(DBPerson.id == UUID(id)).first()
@@ -120,15 +148,14 @@ class Mutation:
         """
         Delete a person.
 
-        Requires authentication and appropriate permissions.
+        Requires authentication and delete permissions (admin, coordinator only).
         WARNING: This will cascade delete all related assignments.
         """
         db: Session = info.context["db"]
         user = info.context.get("user")
 
-        # Authentication check
-        if not user:
-            raise Exception("Authentication required")
+        # Permission check (delete requires admin/coordinator)
+        _check_delete_permission(info)
 
         # Find and delete person
         db_person = db.query(DBPerson).filter(DBPerson.id == UUID(id)).first()
@@ -149,14 +176,13 @@ class Mutation:
         """
         Create a new assignment.
 
-        Requires authentication and appropriate permissions.
+        Requires authentication and write permissions (admin, coordinator, faculty).
         """
         db: Session = info.context["db"]
         user = info.context.get("user")
 
-        # Authentication check
-        if not user:
-            raise Exception("Authentication required")
+        # Permission check (includes auth check)
+        _check_write_permission(info)
 
         # Validate role
         if input.role.value not in ("primary", "supervising", "backup"):
@@ -192,14 +218,13 @@ class Mutation:
         """
         Update an existing assignment.
 
-        Requires authentication and appropriate permissions.
+        Requires authentication and write permissions (admin, coordinator, faculty).
         """
         db: Session = info.context["db"]
         user = info.context.get("user")
 
-        # Authentication check
-        if not user:
-            raise Exception("Authentication required")
+        # Permission check (includes auth check)
+        _check_write_permission(info)
 
         # Find assignment
         db_assignment = (
@@ -234,14 +259,13 @@ class Mutation:
         """
         Delete an assignment.
 
-        Requires authentication and appropriate permissions.
+        Requires authentication and delete permissions (admin, coordinator only).
         """
         db: Session = info.context["db"]
         user = info.context.get("user")
 
-        # Authentication check
-        if not user:
-            raise Exception("Authentication required")
+        # Permission check (delete requires admin/coordinator)
+        _check_delete_permission(info)
 
         # Find and delete assignment
         db_assignment = (
@@ -265,14 +289,13 @@ class Mutation:
         Create multiple assignments in a single transaction.
 
         Useful for bulk schedule operations.
-        Requires authentication and appropriate permissions.
+        Requires authentication and write permissions (admin, coordinator, faculty).
         """
         db: Session = info.context["db"]
         user = info.context.get("user")
 
-        # Authentication check
-        if not user:
-            raise Exception("Authentication required")
+        # Permission check (includes auth check)
+        _check_write_permission(info)
 
         created_assignments = []
 

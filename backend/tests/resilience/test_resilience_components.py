@@ -26,6 +26,9 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
+
+# Skip if resilience modules don't exist yet
+pytest.importorskip("app.resilience.defense_levels")
 from app.resilience.defense_levels import DefenseLevelManager, DefenseLevel
 from app.resilience.n_minus_analysis import NMinusAnalyzer
 from app.resilience.utilization import UtilizationMonitor

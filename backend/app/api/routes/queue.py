@@ -56,6 +56,68 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+# =============================================================================
+# Security: Task Whitelist
+# =============================================================================
+# SECURITY: Only allow submission of known, safe task types.
+# Prevents privilege escalation via arbitrary Celery task execution.
+
+ALLOWED_TASK_PREFIXES = frozenset(
+    [
+        "app.tasks.",  # Application tasks
+        "app.outbox.tasks.",  # Outbox processing
+        "app.resilience.tasks.",  # Resilience monitoring
+        "app.scheduling.tasks.",  # Schedule generation
+        # NOTE: Removed "app.services." - too broad, allows arbitrary service execution
+        # Add specific service task prefixes here if needed
+    ]
+)
+
+ALLOWED_TASKS = frozenset(
+    [
+        # Schedule generation
+        "app.scheduling.tasks.generate_schedule",
+        "app.scheduling.tasks.validate_schedule",
+        "app.scheduling.tasks.publish_schedule",
+        # Outbox
+        "app.outbox.tasks.relay_outbox_messages",
+        "app.outbox.tasks.archive_published_messages",
+        "app.outbox.tasks.collect_outbox_metrics",
+        # Resilience
+        "app.resilience.tasks.periodic_health_check",
+        "app.resilience.tasks.calculate_metrics",
+        # Reporting
+        "app.tasks.reports.generate_compliance_report",
+        "app.tasks.reports.generate_coverage_report",
+    ]
+)
+
+
+def _validate_task_name(task_name: str) -> None:
+    """Validate that task name is in the allowed list.
+
+    Args:
+        task_name: Celery task name to validate
+
+    Raises:
+        HTTPException: If task is not allowed
+    """
+    # Check exact match first
+    if task_name in ALLOWED_TASKS:
+        return
+
+    # Check prefix match
+    for prefix in ALLOWED_TASK_PREFIXES:
+        if task_name.startswith(prefix):
+            return
+
+    # Task not allowed
+    logger.warning(f"Rejected task submission: {task_name} not in whitelist")
+    raise HTTPException(
+        status_code=403,
+        detail=f"Task '{task_name}' is not allowed. Contact administrator to add it to the whitelist.",
+    )
+
 
 @router.get("", response_model=dict)
 async def get_queue_status(
@@ -95,6 +157,9 @@ async def submit_task(
         ...     "countdown": 60
         ... }
     """
+    # SECURITY: Validate task is in whitelist before submission
+    _validate_task_name(request.task_name)
+
     try:
         manager = QueueManager()
 
@@ -161,6 +226,10 @@ async def submit_task_chain(
         ...     "priority": 5
         ... }
     """
+    # SECURITY: Validate all tasks in chain are in whitelist
+    for task in request.tasks:
+        _validate_task_name(task["taskName"])
+
     try:
         manager = QueueManager()
 
@@ -209,6 +278,10 @@ async def submit_task_group(
         ...     "priority": 5
         ... }
     """
+    # SECURITY: Validate all tasks in group are in whitelist
+    for task in request.tasks:
+        _validate_task_name(task["taskName"])
+
     try:
         manager = QueueManager()
 
@@ -257,6 +330,9 @@ async def submit_task_with_dependencies(
         ...     "priority": 7
         ... }
     """
+    # SECURITY: Validate task is in whitelist
+    _validate_task_name(request.task_name)
+
     try:
         manager = QueueManager()
 
@@ -679,6 +755,9 @@ async def schedule_task(
         ...     "priority": 7
         ... }
     """
+    # SECURITY: Validate task is in whitelist
+    _validate_task_name(request.task_name)
+
     try:
         scheduler = TaskScheduler()
 
@@ -741,6 +820,9 @@ async def add_periodic_task(
         ...     }
         ... }
     """
+    # SECURITY: Validate task is in whitelist
+    _validate_task_name(request.task_name)
+
     try:
         scheduler = TaskScheduler()
 

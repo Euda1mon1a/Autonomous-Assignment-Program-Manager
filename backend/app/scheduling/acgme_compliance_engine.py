@@ -227,6 +227,28 @@ class ACGMEComplianceEngine:
                 hours_by_date=hours_by_date,
             )
         )
+
+        # 1b. Build shift data for 24+4 and rest period validation
+        shift_data = self._build_shift_data(assignments, blocks)
+
+        # 1c. Validate 24+4 rule (max continuous duty)
+        rule_24_violations, rule_24_warnings = (
+            self.work_hour_validator.validate_24_plus_4_rule(
+                person_id=person_id,
+                shift_data=shift_data,
+            )
+        )
+        wh_violations.extend(rule_24_violations)
+        wh_warnings.extend(rule_24_warnings)
+
+        # 1d. Validate 10-hour rest period after long shifts
+        rest_violations, rest_warnings = self.work_hour_validator.validate_rest_period(
+            person_id=person_id,
+            shift_data=shift_data,
+        )
+        wh_violations.extend(rest_violations)
+        wh_warnings.extend(rest_warnings)
+
         violations_by_domain["work_hours"] = wh_violations
         warnings_by_domain["work_hours"] = wh_warnings
 
@@ -234,6 +256,10 @@ class ACGMEComplianceEngine:
             remediation.append(
                 "Reduce work hour assignments to maintain 80-hour rolling average"
             )
+        if rule_24_violations:
+            remediation.append("Adjust shift lengths to comply with 24+4 hour maximum")
+        if rest_violations:
+            remediation.append("Ensure minimum 10-hour rest between extended shifts")
 
         # 2. Supervision Validation (as resident)
         # Supervision is checked per-block, not per-resident
@@ -445,6 +471,68 @@ class ACGMEComplianceEngine:
                 hours_by_date[block_date] = hours
 
         return hours_by_date
+
+    def _build_shift_data(
+        self,
+        assignments: list[dict],
+        blocks: list[dict],
+    ) -> list[dict]:
+        """
+        Build shift data for 24+4 and rest period validation.
+
+        Args:
+            assignments: Resident's assignments with block_id
+            blocks: All blocks with id, date, time_of_day, start_time, end_time
+
+        Returns:
+            List of shift dicts with date, start_time, end_time, duration_hours
+        """
+        # Build block lookup
+        blocks_by_id = {b.get("id"): b for b in blocks}
+
+        shift_data = []
+        for assignment in assignments:
+            block_id = assignment.get("block_id")
+            block = blocks_by_id.get(block_id)
+
+            if not block:
+                continue
+
+            block_date = block.get("date")
+            if not block_date:
+                continue
+
+            # Get shift times from block or use defaults based on time_of_day
+            time_of_day = block.get("time_of_day", "AM")
+            start_time = block.get("start_time")
+            end_time = block.get("end_time")
+
+            # Default times if not specified
+            if not start_time:
+                start_time = "07:00" if time_of_day == "AM" else "13:00"
+            if not end_time:
+                end_time = "13:00" if time_of_day == "AM" else "19:00"
+
+            # Calculate duration
+            duration_hours = block.get("duration_hours", 6.0)
+
+            shift_data.append(
+                {
+                    "date": block_date,
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "duration_hours": duration_hours,
+                    "block_id": block_id,
+                    "time_of_day": time_of_day,
+                }
+            )
+
+        # Sort by date and start_time
+        shift_data.sort(
+            key=lambda x: (x.get("date", date.min), str(x.get("start_time", "")))
+        )
+
+        return shift_data
 
     def _generate_executive_summary(
         self,

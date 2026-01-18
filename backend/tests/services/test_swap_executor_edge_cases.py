@@ -25,7 +25,7 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
-from app.models.swap import SwapRequest, SwapStatus, SwapType
+from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.services.swap_executor import SwapExecutor
 
 
@@ -173,7 +173,7 @@ class TestConcurrentSwapHandling:
         assignment = create_assignment(db, faculty_a, block, clinic_rotation)
 
         # Create two swap requests for same shift
-        swap1 = SwapRequest(
+        swap1 = SwapRecord(
             id=uuid4(),
             requester_id=faculty_a.id,
             target_id=faculty_b.id,
@@ -182,7 +182,7 @@ class TestConcurrentSwapHandling:
             status=SwapStatus.PENDING,
             requested_at=datetime.utcnow(),
         )
-        swap2 = SwapRequest(
+        swap2 = SwapRecord(
             id=uuid4(),
             requester_id=faculty_a.id,
             target_id=faculty_c.id,
@@ -232,7 +232,7 @@ class TestConcurrentSwapHandling:
         assignment_b = create_assignment(db, faculty_b, block_b, clinic_rotation)
 
         # Create bidirectional swap requests
-        swap_a_to_b = SwapRequest(
+        swap_a_to_b = SwapRecord(
             id=uuid4(),
             requester_id=faculty_a.id,
             target_id=faculty_b.id,
@@ -241,7 +241,7 @@ class TestConcurrentSwapHandling:
             target_assignment_id=assignment_b.id,
             status=SwapStatus.PENDING,
         )
-        swap_b_to_a = SwapRequest(
+        swap_b_to_a = SwapRecord(
             id=uuid4(),
             requester_id=faculty_b.id,
             target_id=faculty_a.id,
@@ -307,7 +307,7 @@ class TestACGMEComplianceDuringSwaps:
 
         assignment_a = create_assignment(db, faculty_a, new_block, call_rotation)
 
-        swap = SwapRequest(
+        swap = SwapRecord(
             id=uuid4(),
             requester_id=faculty_a.id,
             target_id=faculty_b.id,
@@ -360,7 +360,7 @@ class TestACGMEComplianceDuringSwaps:
 
         assignment_a = create_assignment(db, faculty_a, day7_block, clinic_rotation)
 
-        swap = SwapRequest(
+        swap = SwapRecord(
             id=uuid4(),
             requester_id=faculty_a.id,
             target_id=faculty_b.id,
@@ -404,7 +404,7 @@ class TestSwapRollbackScenarios:
 
         assignment = create_assignment(db, faculty_a, block, clinic_rotation)
 
-        swap = SwapRequest(
+        swap = SwapRecord(
             id=uuid4(),
             requester_id=faculty_a.id,
             target_id=faculty_b.id,
@@ -447,7 +447,7 @@ class TestSwapRollbackScenarios:
 
         assignment = create_assignment(db, faculty_a, block, clinic_rotation)
 
-        swap = SwapRequest(
+        swap = SwapRecord(
             id=uuid4(),
             requester_id=faculty_a.id,
             target_id=faculty_b.id,
@@ -493,7 +493,7 @@ class TestSwapRollbackScenarios:
         assignment2 = create_assignment(db, faculty_b, block2, clinic_rotation)
 
         # First swap: A gives shift to B
-        swap1 = SwapRequest(
+        swap1 = SwapRecord(
             id=uuid4(),
             requester_id=faculty_a.id,
             target_id=faculty_b.id,
@@ -507,7 +507,7 @@ class TestSwapRollbackScenarios:
         swap_executor.execute_swap(swap1.id)
 
         # Second swap: B gives shift to C
-        swap2 = SwapRequest(
+        swap2 = SwapRecord(
             id=uuid4(),
             requester_id=faculty_b.id,
             target_id=faculty_c.id,
@@ -553,7 +553,7 @@ class TestSwapEdgeCases:
 
         assignment = create_assignment(db, faculty_a, block, clinic_rotation)
 
-        swap = SwapRequest(
+        swap = SwapRecord(
             id=uuid4(),
             requester_id=faculty_a.id,
             target_id=faculty_b.id,
@@ -593,7 +593,7 @@ class TestSwapEdgeCases:
 
         assignment = create_assignment(db, faculty_a, block, clinic_rotation)
 
-        swap = SwapRequest(
+        swap = SwapRecord(
             id=uuid4(),
             requester_id=faculty_a.id,
             target_id=faculty_b.id,
@@ -627,7 +627,7 @@ class TestSwapEdgeCases:
 
         assignment = create_assignment(db, faculty_a, block, clinic_rotation)
 
-        swap = SwapRequest(
+        swap = SwapRecord(
             id=uuid4(),
             requester_id=faculty_a.id,
             target_id=faculty_a.id,  # Same person
@@ -661,7 +661,7 @@ class TestSwapEdgeCases:
 
         assignment = create_assignment(db, faculty_a, block, clinic_rotation)
 
-        swap = SwapRequest(
+        swap = SwapRecord(
             id=uuid4(),
             requester_id=faculty_a.id,
             target_id=uuid4(),  # Nonexistent person
@@ -695,7 +695,7 @@ class TestSwapEdgeCases:
 
         assignment = create_assignment(db, faculty_a, block, clinic_rotation)
 
-        swap = SwapRequest(
+        swap = SwapRecord(
             id=uuid4(),
             requester_id=faculty_a.id,
             target_id=faculty_b.id,
