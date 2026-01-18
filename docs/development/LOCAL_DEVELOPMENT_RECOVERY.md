@@ -373,6 +373,113 @@ SECRET_KEY=<32+ chars>
 
 ---
 
+## Volume Strategy & Multi-User Transition
+
+### Current Setup: Bind Mounts (Single Developer)
+
+For local development, we use **bind mounts** (`./data/postgres`, `./data/redis`) because:
+- Data survives Docker resets, updates, and `prune` commands
+- Easy to verify: `ls data/postgres/` shows actual database files
+- Simple backup: `cp -r data/postgres backups/`
+- Debugging: Can inspect data without running containers
+
+### When to Use Named Volumes
+
+Switch to named volumes when:
+- **Multi-user deployment** - Bind mounts have permission issues across users
+- **Production** - Named volumes integrate with Docker Swarm/Kubernetes
+- **CI/CD** - Ephemeral containers shouldn't write to host
+
+### Transitioning Back to Named Volumes
+
+**Step 1: Update docker-compose.local.yml**
+```yaml
+# Change FROM bind mounts:
+db:
+  volumes:
+    - ./data/postgres:/var/lib/postgresql/data
+redis:
+  volumes:
+    - ./data/redis:/data
+
+# TO named volumes:
+db:
+  volumes:
+    - postgres_local_data:/var/lib/postgresql/data
+redis:
+  volumes:
+    - redis_local_data:/data
+
+# Add volume definitions at bottom:
+volumes:
+  postgres_local_data:
+    driver: local
+  redis_local_data:
+    driver: local
+  backend_local_venv:
+    driver: local
+```
+
+**Step 2: Migrate Data to Named Volumes**
+```bash
+# Stop containers
+docker compose -f docker-compose.local.yml down
+
+# Create named volumes and copy data
+docker volume create autonomous-assignment-program-manager_postgres_local_data
+docker volume create autonomous-assignment-program-manager_redis_local_data
+
+# Copy postgres data
+docker run --rm \
+  -v "$(pwd)/data/postgres:/src:ro" \
+  -v autonomous-assignment-program-manager_postgres_local_data:/dst \
+  alpine cp -a /src/. /dst/
+
+# Copy redis data
+docker run --rm \
+  -v "$(pwd)/data/redis:/src:ro" \
+  -v autonomous-assignment-program-manager_redis_local_data:/dst \
+  alpine cp -a /src/. /dst/
+
+# Start with new config
+docker compose -f docker-compose.local.yml up -d
+```
+
+**Step 3: Verify and Clean Up**
+```bash
+# Verify data migrated
+docker exec scheduler-local-db psql -U scheduler -d residency_scheduler \
+  -c "SELECT COUNT(*) FROM people;"
+
+# Once confirmed, optionally remove bind mount data
+rm -rf data/postgres data/redis
+```
+
+### Backup Strategy by Volume Type
+
+| Setup | Backup Command | Restore Command |
+|-------|----------------|-----------------|
+| Bind Mount | `cp -r data/postgres backups/` | `cp -r backups/postgres data/` |
+| Named Volume | See below | See below |
+
+**Named Volume Backup:**
+```bash
+docker run --rm \
+  -v autonomous-assignment-program-manager_postgres_local_data:/data:ro \
+  -v $(pwd)/backups:/backup \
+  alpine tar czf /backup/postgres_backup.tar.gz -C /data .
+```
+
+**Named Volume Restore:**
+```bash
+docker run --rm \
+  -v autonomous-assignment-program-manager_postgres_local_data:/data \
+  -v $(pwd)/backups:/backup \
+  alpine sh -c "rm -rf /data/* && tar xzf /backup/postgres_backup.tar.gz -C /data"
+```
+
+---
+
 ## Related Documentation
 
 - [DOCKER_WORKAROUNDS.md](DOCKER_WORKAROUNDS.md) - Docker cp patterns

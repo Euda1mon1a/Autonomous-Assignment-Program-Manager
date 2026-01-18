@@ -42,7 +42,7 @@ services:
     ports:
       - "5432:5432"  # Exposed for direct DB access (e.g., pgAdmin, DBeaver)
     volumes:
-      - postgres_local_data:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U scheduler -d residency_scheduler"]
       interval: 10s
@@ -63,7 +63,7 @@ services:
       - "6379:6379"  # Exposed for debugging with redis-cli or RedisInsight
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass local_dev_redis_pass
     volumes:
-      - redis_local_data:/data
+      - ./data/redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "local_dev_redis_pass", "ping"]
       interval: 10s
@@ -331,14 +331,10 @@ services:
 # Volumes - Local Development Data
 # =============================================================================
 volumes:
-  postgres_local_data:
-    driver: local
-  redis_local_data:
-    driver: local
-  n8n_local_data:
-    driver: local
+  # Keep venv as named volume (doesn't need host visibility, avoids permission issues)
   backend_local_venv:
     driver: local
+  # postgres and redis now use bind mounts: ./data/postgres, ./data/redis
 
 # =============================================================================
 # Networks
