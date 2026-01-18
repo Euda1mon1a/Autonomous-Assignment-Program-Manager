@@ -51,11 +51,23 @@
 **Location:** `frontend/src/hooks/`
 **Action:** Fix path prefixes in hooks OR update backend route registration.
 
+### 5. Schedule Rollback Data Loss
+Rollback/backup infrastructure has gaps that can cause data loss:
+
+| Issue | Location | Impact |
+|-------|----------|--------|
+| `time_of_day="ALL"` only captures AM | `schedule_publish_staging.py:277` | PM assignment lost |
+| Missing fields in serialization | `schedule_publish_staging.py:298,403` | Provenance/overrides lost |
+| Rest-period assumes `date` objects | `work_hour_validator.py:341` | TypeError on strings |
+
+**Action:** Fix serialization to capture all slots and fields; add date coercion.
+**Ref:** `docs/reviews/2026-01-17-current-changes-review.md`
+
 ---
 
 ## HIGH (Address Soon)
 
-### 5. Orphan Framework Code (12K+ LOC)
+### 6. Orphan Framework Code (12K+ LOC)
 Built but never integrated into production code paths:
 
 | Module | LOC | Status |
@@ -68,12 +80,12 @@ Built but never integrated into production code paths:
 
 **Decision needed:** Integrate into scheduler engine OR remove to reduce maintenance burden.
 
-### 6. Feature Flags Underutilized
+### 7. Feature Flags Underutilized
 - **Location:** `backend/app/features/` - 45KB of production-ready code
 - **Actual usage:** 1 flag (`swap_marketplace_enabled` in `portal.py`)
 - **Should flag:** Labs hub, 3D visualizations, experimental scheduling algorithms
 
-### 7. MCP Tool Placeholders (16 tools)
+### 8. MCP Tool Placeholders (16 tools)
 
 **NOT IMPLEMENTED (return zeros):**
 | Tool | Domain |
@@ -105,7 +117,7 @@ Built but never integrated into production code paths:
 
 **Note:** Core ACGME validation tools are REAL implementations.
 
-### 8. GUI Components Using Mock Data (10 components)
+### 9. GUI Components Using Mock Data (10 components)
 
 **Command Center Dashboards (HIGH - misleading operators):**
 | Component | Location | Issue |
@@ -124,42 +136,65 @@ Built but never integrated into production code paths:
 
 **Decision needed:** Wire to real MCP tools OR add "DEMO" badges to UI.
 
+### 10. ACGME Compliance Validation Gaps
+Call duty and performance profiling have edge cases:
+
+| Issue | Location | Impact |
+|-------|----------|--------|
+| `call_assignments` excluded from 24+4/rest checks | `acgme_compliance_engine.py:231,273` | Extended call duty not validated |
+| Performance profiler uses hardcoded defaults | `constraint_validator.py:567` | Understates real workload complexity |
+| MCP SSE/HTTP localhost inconsistency | `server.py:5348,5536` | Startup failures with `0.0.0.0` |
+
+**Action:** Merge call_assignments into shift validation; fix localhost detection.
+**Ref:** `docs/reviews/2026-01-17-current-changes-review.md`
+
 ---
 
 ## MEDIUM (Plan for Sprint)
 
-### 9. Admin Activity Logging
+### 11. Admin Activity Logging
 - `admin_users.py:77` - `_log_activity()` is no-op placeholder
 - `admin_users.py:596` - Returns empty response pending table creation
 - **Need:** Alembic migration for `activity_log` table
 
-### 10. Invitation Emails
+### 12. Invitation Emails
 - `admin_users.py:236, 552` - Emails not actually sent
 - **Need:** Wire EmailService to notification tasks
 
-### 11. Service Layer Pagination
+### 13. Service Layer Pagination
 - `absence_controller.py:45` - Pagination applied at controller level
 - **Need:** Push to service/repository for SQL LIMIT/OFFSET efficiency
 
-### 12. Documentation Consolidation
+### 14. Documentation Consolidation
 - **68 root-level .md files** (PRIORITY_LIST.md recommended 5-8)
 - Stale timestamps: openapi.yaml (Dec 31), ENDPOINT_CATALOG.md (Jan 4)
 - Many docs reference files that no longer exist
+
+### 15. CLI and Security Cleanup
+Minor issues found in Codex review:
+
+| Issue | Location | Impact |
+|-------|----------|--------|
+| Startup log references wrong CLI command | `main.py:145` | Operator confusion |
+| Queue whitelist too permissive | `queue.py:65` | Any `app.services.*` allowed |
+
+**Action:** Fix CLI reference; tighten queue task allowlist.
+**Ref:** `docs/reviews/2026-01-17-current-changes-review.md`
 
 ---
 
 ## LOW (Backlog)
 
-### 13. A/B Testing Infrastructure
+### 16. A/B Testing Infrastructure
 - **Location:** `backend/app/experiments/`
 - Infrastructure exists, route registered
 - Minimal production usage - consider for Labs rollout
 
-### 14. ML Workload Analysis
+### 17. ML Workload Analysis
 - `ml.py` returns "placeholder response"
 - Low priority unless ML features requested
 
-### 15. Time Crystal DB Loading
+### 18. Time Crystal DB Loading
 - `time_crystal_tools.py:281, 417`
 - Acceptable fallback to empty schedules
 - Fix if `schedule_id` parameter becomes primary use case
@@ -185,19 +220,20 @@ Built but never integrated into production code paths:
 
 | Priority | Issues | Scope |
 |----------|--------|-------|
-| **CRITICAL** | 4 | 6 orphan routes, PII in history, doc contradictions, 3 API path mismatches |
-| **HIGH** | 4 | 12K LOC orphan frameworks, feature flags, 16 MCP stubs, 10 mock GUI components |
-| **MEDIUM** | 4 | Activity logging, emails, pagination, doc consolidation |
+| **CRITICAL** | 5 | 6 orphan routes, PII, doc contradictions, API mismatches, rollback data loss |
+| **HIGH** | 5 | frameworks, feature flags, MCP stubs, mock GUI, ACGME compliance gaps |
+| **MEDIUM** | 5 | Activity logging, emails, pagination, docs, CLI/security cleanup |
 | **LOW** | 3 | A/B testing, ML, time crystal |
 
 ### Biggest Wins (Impact vs Effort)
 
 1. **Wire 6 orphan routes** → Unlock SSO, sessions, profiling (LOW effort, HIGH impact)
 2. **Fix 3 API path mismatches** → Unlock game theory, exotic resilience features (LOW effort, HIGH impact)
-3. **Decide on CQRS/Saga/EventBus** → 12K LOC to integrate or remove (MEDIUM effort)
-4. **Fix doc contradictions** → Restore trust in documentation (LOW effort)
-5. **Expand feature flag usage** → Labs, 3D viz behind flags (LOW effort)
-6. **Wire mock dashboards** → Real data for ResilienceOverseer, SovereignPortal (MEDIUM effort)
+3. **Fix rollback serialization** → Prevent schedule data loss on restore (MEDIUM effort, CRITICAL impact)
+4. **Decide on CQRS/Saga/EventBus** → 12K LOC to integrate or remove (MEDIUM effort)
+5. **Fix doc contradictions** → Restore trust in documentation (LOW effort)
+6. **Expand feature flag usage** → Labs, 3D viz behind flags (LOW effort)
+7. **Wire mock dashboards** → Real data for ResilienceOverseer, SovereignPortal (MEDIUM effort)
 
 ---
 
