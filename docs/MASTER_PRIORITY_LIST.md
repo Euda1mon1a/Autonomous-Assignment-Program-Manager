@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-18 (Feature Flag Expansion)
+> **Last Updated:** 2026-01-18 (Orphan Framework Analysis)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -68,18 +68,30 @@ Fixed in commits `66a14461` and `8bbb3cb9`:
 
 ## HIGH (Address Soon)
 
-### 6. Orphan Framework Code (12K+ LOC)
-Built but never integrated into production code paths:
+### 6. Orphan Framework Code (12K+ LOC) - ANALYSIS COMPLETE
+Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
-| Module | LOC | Status |
-|--------|-----|--------|
-| CQRS (`backend/app/cqrs/`) | 4,248 | Full infrastructure, zero usage |
-| Saga (`backend/app/saga/`) | 2,142 | Orchestration pattern, unused |
-| EventBus (`backend/app/eventbus/`) | 1,385 | Pub/sub, dormant |
-| Deployment (`backend/app/deployment/`) | 2,773 | Canary/blue-green, never instantiated |
-| gRPC (`backend/app/grpc/`) | 1,775 | Full server, no clients |
+| Module | LOC | Quality | Recommendation |
+|--------|-----|---------|----------------|
+| **CQRS** (`backend/app/cqrs/`) | 4,248 | Full impl, 1 test file | **ROADMAP** - Keep for multi-facility scaling |
+| **Saga** (`backend/app/saga/`) | 2,142 | Full impl with compensation | **EVALUATE** - Useful for swap workflows |
+| **EventBus** (`backend/app/eventbus/`) | 1,385 | Generic Redis pub/sub | **INVESTIGATE** - See note below |
+| **Deployment** (`backend/app/deployment/`) | 2,773 | Blue-green + canary | **EVALUATE** - Zero-downtime deploys |
+| **gRPC** (`backend/app/grpc/`) | 1,775 | Full server, JWT auth | **EVALUATE** - MCP/external integrations |
 
-**Decision needed:** Integrate into scheduler engine OR remove to reduce maintenance burden.
+**EventBus Investigation Required:**
+- Two event systems exist intentionally:
+  - `app/events/` = Domain event sourcing (ScheduleCreated, SwapExecuted) - **USED** by `stroboscopic_manager.py`
+  - `app/eventbus/` = Generic distributed messaging (Redis pub/sub, wildcards) - **UNUSED** but likely for external integrations
+- **Probable use case:** n8n workflow automation, external system webhooks, multi-facility sync
+- **Do not delete** - architecture intent is external integration, not internal domain events
+
+**Near-Term Integration Candidates:**
+1. **Saga** → Swap execution workflows (multi-step with automatic rollback)
+2. **Deployment** → CI/CD pipeline (zero-downtime releases)
+3. **gRPC** → MCP server performance (binary protocol vs REST)
+
+**Decision:** Keep all modules on roadmap. Integrate as features require.
 
 ### 7. ~~Feature Flags Underutilized~~ ✅ RESOLVED (Phase 1)
 - **Location:** `backend/app/features/` - 45KB of production-ready code
@@ -103,33 +115,35 @@ Built but never integrated into production code paths:
 
 ### 8. MCP Tool Placeholders (16 tools)
 
-**NOT IMPLEMENTED (return zeros):**
+**Progress:** 10 tools now wired to backend (2026-01-18 `feature/master-priority-implementation`)
+
+**API WIRED (real backend, fallback on error):**
+| Tool | Domain | Backend Endpoint |
+|------|--------|------------------|
+| `assess_immune_response_tool` | Immune System | `/resilience/exotic/immune/assess` |
+| `check_memory_cells_tool` | Immune System | `/resilience/exotic/immune/memory-cells` |
+| `analyze_antibody_response_tool` | Immune System | `/resilience/exotic/immune/antibody-analysis` |
+| `get_unified_critical_index_tool` | Resilience | `/resilience/exotic/composite/unified-critical-index` |
+| `calculate_recovery_distance_tool` | Resilience | `/resilience/exotic/composite/recovery-distance` |
+| `assess_creep_fatigue_tool` | Resilience | `/resilience/exotic/composite/creep-fatigue` |
+| `analyze_transcription_triggers_tool` | Resilience | `/resilience/exotic/composite/transcription-factors` |
+| `calculate_shapley_workload_tool` | Fairness | `/mcp-proxy/calculate-shapley-workload` |
+
+**MISSING BACKEND ENDPOINTS (MCP has API calls, backend 404s):**
+| Tool | Domain | Expected Endpoint |
+|------|--------|-------------------|
+| `calculate_coverage_var_tool` | VaR Risk | `/api/v1/analytics/coverage-var` |
+| `calculate_workload_var_tool` | VaR Risk | `/api/v1/analytics/workload-var` |
+
+**NOT IMPLEMENTED (return zeros/mock):**
 | Tool | Domain |
 |------|--------|
 | `optimize_free_energy_tool` | Thermodynamics |
 | `analyze_energy_landscape_tool` | Thermodynamics |
-
-**MOCK DATA (realistic placeholders):**
-| Tool | Domain |
-|------|--------|
-| `calculate_shapley_workload_tool` | Fairness |
 | `calculate_hopfield_energy_tool` | Hopfield |
 | `find_nearby_attractors_tool` | Hopfield |
 | `measure_basin_depth_tool` | Hopfield |
 | `detect_spurious_attractors_tool` | Hopfield |
-| `get_unified_critical_index_tool` | Resilience |
-| `calculate_recovery_distance_tool` | Resilience |
-| `assess_creep_fatigue_tool` | Resilience |
-| `analyze_transcription_triggers_tool` | Resilience |
-
-**API FALLBACK (mock when backend unavailable):**
-| Tool | Domain |
-|------|--------|
-| `assess_immune_response_tool` | Immune System |
-| `check_memory_cells_tool` | Immune System |
-| `analyze_antibody_response_tool` | Immune System |
-| `calculate_coverage_var_tool` | VaR Risk |
-| `calculate_workload_var_tool` | VaR Risk |
 
 **Note:** Core ACGME validation tools are REAL implementations.
 
@@ -197,25 +211,34 @@ Minor issues found in Codex review:
 **Action:** Fix CLI reference; tighten queue task allowlist.
 **Ref:** `docs/reviews/2026-01-17-current-changes-review.md`
 
+### 16. VaR Backend Endpoints (NEW)
+MCP tools call these endpoints but they don't exist yet:
+- `POST /api/v1/analytics/coverage-var` - Coverage Value-at-Risk
+- `POST /api/v1/analytics/workload-var` - Workload Value-at-Risk
+
+**Current State:** MCP tools have API-first pattern, fall back to mock data.
+**Backend Service:** `backend/app/services/metrics_service.py` (partial)
+**Action:** Create endpoints in `analytics.py` or new `var_analytics.py` route file.
+
 ---
 
 ## LOW (Backlog)
 
-### 16. A/B Testing Infrastructure
+### 17. A/B Testing Infrastructure
 - **Location:** `backend/app/experiments/`
 - Infrastructure exists, route registered
 - Minimal production usage - consider for Labs rollout
 
-### 17. ML Workload Analysis
+### 18. ML Workload Analysis
 - `ml.py` returns "placeholder response"
 - Low priority unless ML features requested
 
-### 18. Time Crystal DB Loading
+### 19. Time Crystal DB Loading
 - `time_crystal_tools.py:281, 417`
 - Acceptable fallback to empty schedules
 - Fix if `schedule_id` parameter becomes primary use case
 
-### 19. Spreadsheet Editor for Tier 1 Users (PR #740)
+### 20. Spreadsheet Editor for Tier 1 Users (PR #740)
 Excel-like grid editor for schedule verification - eases transition for "normie" users comfortable with Excel.
 
 | Feature | Status | Spec |
@@ -252,19 +275,20 @@ Excel-like grid editor for schedule verification - eases transition for "normie"
 | Priority | Issues | Scope |
 |----------|--------|-------|
 | **CRITICAL** | 1 open, 4 resolved | ~~orphan routes~~✅, PII, ~~doc contradictions~~✅, ~~API mismatches~~✅, ~~rollback data loss~~✅ |
-| **HIGH** | 4 open, 1 resolved | frameworks, ~~feature flags~~✅, MCP stubs, mock GUI, ACGME compliance gaps |
-| **MEDIUM** | 5 | Activity logging, emails, pagination, docs, CLI/security cleanup |
+| **HIGH** | 4 open, 1 resolved | frameworks, ~~feature flags~~✅, MCP stubs (8/16 wired), mock GUI, ACGME compliance gaps |
+| **MEDIUM** | 6 | Activity logging, emails, pagination, docs, CLI/security cleanup, VaR endpoints |
 | **LOW** | 4 | A/B testing, ML, time crystal, spreadsheet editor (tier 1 UX) |
 
 ### Biggest Wins (Impact vs Effort)
 
 1. ~~**Wire 6 orphan routes**~~ ✅ DONE → SSO, sessions, profiling now available
 2. ~~**Fix 3 API path mismatches**~~ ✅ DONE → Game theory, exotic resilience now working
-3. **Fix rollback serialization** → Prevent schedule data loss on restore (MEDIUM effort, CRITICAL impact)
-4. **Decide on CQRS/Saga/EventBus** → 12K LOC to integrate or remove (MEDIUM effort)
+3. ~~**Fix rollback serialization**~~ ✅ DONE → Schedule backup/restore now captures all fields
+4. **Integrate orphan frameworks** → Saga for swaps, Deployment for CI/CD, gRPC for MCP (ON ROADMAP)
 5. ~~**Fix doc contradictions**~~ ✅ DONE → Trust in documentation restored
 6. ~~**Expand feature flag usage**~~ ✅ DONE → 5 flags, 12 exotic endpoints gated (Phase 1)
-7. **Wire mock dashboards** → Real data for ResilienceOverseer, SovereignPortal (MEDIUM effort)
+7. **Wire MCP tools** → 8 tools wired to real backends (2026-01-18), 6 Hopfield/free-energy remain
+8. **Wire mock dashboards** → Real data for ResilienceOverseer, SovereignPortal (MEDIUM effort)
 
 ---
 

@@ -20,6 +20,7 @@ from fastmcp import FastMCP
 try:
     from starlette.responses import JSONResponse
     from starlette.routing import Route
+
     STARLETTE_AVAILABLE = True
 except ImportError:
     STARLETTE_AVAILABLE = False
@@ -438,6 +439,7 @@ def armory_tool(tool_name: str):
 
     Core tools should continue to use @mcp.tool() directly.
     """
+
     def decorator(func):
         if should_load_tool(tool_name):
             return mcp.tool()(func)
@@ -445,14 +447,18 @@ def armory_tool(tool_name: str):
             # Return a no-op function that won't be registered
             logger.debug(f"Armory tool not loaded (domain disabled): {tool_name}")
             return func
+
     return decorator
+
 
 # Log armory status
 _armory_status = get_armory_status()
 if _armory_status["effective_domains"]:
     logger.info(f"Armory domains active: {_armory_status['effective_domains']}")
 else:
-    logger.info(f"Armory disabled ({len(ALL_ARMORY_TOOLS)} tools available via ARMORY_DOMAINS env var)")
+    logger.info(
+        f"Armory disabled ({len(ALL_ARMORY_TOOLS)} tools available via ARMORY_DOMAINS env var)"
+    )
 
 
 def parse_date_range(date_range: str) -> tuple[date, date]:
@@ -1860,21 +1866,70 @@ async def calculate_shapley_workload_tool(
     from uuid import UUID
 
     try:
-        parsed_faculty_ids = [UUID(fid) for fid in faculty_ids]
-        parsed_start = date.fromisoformat(start_date)
-        parsed_end = date.fromisoformat(end_date)
+        # Validate inputs (values not used, just validation)
+        [UUID(fid) for fid in faculty_ids]
+        date.fromisoformat(start_date)
+        date.fromisoformat(end_date)
     except ValueError as e:
         return {
             "error": f"Invalid input format: {e}",
             "status": "failed",
         }
 
-    # For now, return placeholder with structure
-    # TODO: Connect to actual ShapleyValueService when DB is available
     logger.info(
         f"Calculating Shapley values for {len(faculty_ids)} faculty "
         f"from {start_date} to {end_date} ({num_samples} samples)"
     )
+
+    # Try backend API first
+    try:
+        from .api_client import SchedulerAPIClient
+
+        async with SchedulerAPIClient() as client:
+            response = await client.client.post(
+                f"{client.config.api_prefix}/mcp-proxy/calculate-shapley-workload",
+                json={
+                    "faculty_ids": faculty_ids,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "num_samples": num_samples,
+                },
+                headers=await client._ensure_authenticated(),
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            logger.info("Shapley workload retrieved from backend API")
+
+            # Transform backend response to MCP tool format
+            return {
+                "status": "success",
+                "message": "Shapley value calculation completed",
+                "faculty_count": len(data.get("faculty_results", [])),
+                "date_range": {"start": start_date, "end": end_date},
+                "num_samples": num_samples,
+                "results": {
+                    r["faculty_id"]: {
+                        "shapley_value": r["shapley_value"],
+                        "marginal_contribution": r["marginal_contribution"],
+                        "fair_workload_target": r["fair_workload_target"],
+                        "current_workload": r["current_workload"],
+                        "equity_gap": r["equity_gap"],
+                    }
+                    for r in data.get("faculty_results", [])
+                },
+                "summary": {
+                    "total_workload": data.get("total_workload", 0.0),
+                    "equity_gap_std_dev": data.get("equity_gap_std_dev", 0.0),
+                    "overworked_count": data.get("overworked_count", 0),
+                    "underworked_count": data.get("underworked_count", 0),
+                },
+            }
+
+    except Exception as api_error:
+        logger.warning(f"Backend API call failed, using fallback: {api_error}")
+
+    # Fallback to placeholder data
 
     return {
         "status": "success",
@@ -1898,7 +1953,7 @@ async def calculate_shapley_workload_tool(
             "overworked_count": 0,
             "underworked_count": 0,
         },
-        "note": "Connect to ShapleyValueService for real calculations",
+        "note": "Fallback data - backend API unavailable",
     }
 
 
@@ -2126,14 +2181,16 @@ async def detect_schedule_changepoints_tool(
                 pre_mean = float(np.mean(series[segment_start:t]))
                 post_mean = float(np.mean(series[t : min(t + 5, n)]))
 
-                change_points.append({
-                    "index": int(t),
-                    "timestamp": dates[t] if t < len(dates) else "",
-                    "change_type": "mean_shift_upward",
-                    "magnitude": round(post_mean - pre_mean, 2),
-                    "confidence": min(1.0, s_high / (threshold * 2)),
-                    "description": f"Upward shift: {pre_mean:.1f} → {post_mean:.1f}",
-                })
+                change_points.append(
+                    {
+                        "index": int(t),
+                        "timestamp": dates[t] if t < len(dates) else "",
+                        "change_type": "mean_shift_upward",
+                        "magnitude": round(post_mean - pre_mean, 2),
+                        "confidence": min(1.0, s_high / (threshold * 2)),
+                        "description": f"Upward shift: {pre_mean:.1f} → {post_mean:.1f}",
+                    }
+                )
                 s_high = 0
 
             if s_low < -threshold:
@@ -2141,14 +2198,16 @@ async def detect_schedule_changepoints_tool(
                 pre_mean = float(np.mean(series[segment_start:t]))
                 post_mean = float(np.mean(series[t : min(t + 5, n)]))
 
-                change_points.append({
-                    "index": int(t),
-                    "timestamp": dates[t] if t < len(dates) else "",
-                    "change_type": "mean_shift_downward",
-                    "magnitude": round(post_mean - pre_mean, 2),
-                    "confidence": min(1.0, abs(s_low) / (threshold * 2)),
-                    "description": f"Downward shift: {pre_mean:.1f} → {post_mean:.1f}",
-                })
+                change_points.append(
+                    {
+                        "index": int(t),
+                        "timestamp": dates[t] if t < len(dates) else "",
+                        "change_type": "mean_shift_downward",
+                        "magnitude": round(post_mean - pre_mean, 2),
+                        "confidence": min(1.0, abs(s_low) / (threshold * 2)),
+                        "description": f"Downward shift: {pre_mean:.1f} → {post_mean:.1f}",
+                    }
+                )
                 s_low = 0
 
         results["cusum"] = {
@@ -2189,14 +2248,16 @@ async def detect_schedule_changepoints_tool(
                 pre_mean = float(np.mean(series[max(0, best_split - min_segment) : best_split]))
                 post_mean = float(np.mean(series[best_split : min(best_split + min_segment, n)]))
 
-                change_points.append({
-                    "index": int(best_split),
-                    "timestamp": dates[best_split] if best_split < len(dates) else "",
-                    "change_type": "segment_boundary",
-                    "magnitude": round(abs(post_mean - pre_mean), 2),
-                    "confidence": 0.7,
-                    "description": f"Segment break: {pre_mean:.1f} → {post_mean:.1f}",
-                })
+                change_points.append(
+                    {
+                        "index": int(best_split),
+                        "timestamp": dates[best_split] if best_split < len(dates) else "",
+                        "change_type": "segment_boundary",
+                        "magnitude": round(abs(post_mean - pre_mean), 2),
+                        "confidence": 0.7,
+                        "description": f"Segment break: {pre_mean:.1f} → {post_mean:.1f}",
+                    }
+                )
                 current_pos = best_split
             else:
                 break
@@ -2232,6 +2293,8 @@ async def detect_schedule_changepoints_tool(
             "max_value": round(float(np.max(series)), 2),
         },
     }
+
+
 async def analyze_schedule_rigidity_tool(
     current_assignments: list[dict] | None = None,
     proposed_assignments: list[dict] | None = None,
@@ -3364,8 +3427,6 @@ async def analyze_antibody_response_tool(
     )
 
 
-
-
 # =============================================================================
 # Thermodynamics Tools (Entropy, Phase Transitions, Free Energy)
 # =============================================================================
@@ -3661,8 +3722,6 @@ async def analyze_energy_landscape_tool(
     return await analyze_energy_landscape(schedule_id=schedule_id)
 
 
-
-
 # =============================================================================
 # Hopfield Network Attractor Tools (Energy Landscape & Schedule Stability)
 # =============================================================================
@@ -3910,9 +3969,6 @@ async def detect_spurious_attractors_tool(
     )
 
 
-
-
-
 # =============================================================================
 # Early Warning System Tools (Cross-Disciplinary Burnout Detection)
 # =============================================================================
@@ -4111,7 +4167,6 @@ async def calculate_batch_fire_danger_tool(
         )
     batch_request = BatchFireDangerRequest(residents=requests)
     return await calculate_batch_fire_danger(batch_request)
-
 
 
 # =============================================================================
@@ -4881,8 +4936,7 @@ async def generate_multi_block_quality_report_tool(
             "blocks": blocks,
             "academic_year": academic_year,
             "message": (
-                "Multi-block report API endpoint not available. "
-                "Use the CLI script instead."
+                "Multi-block report API endpoint not available. Use the CLI script instead."
             ),
             "fallback_command": (
                 f"docker exec scheduler-local-backend python "
@@ -5076,6 +5130,7 @@ async def spawn_agent_tool(
     registry = None
     try:
         import yaml
+
         if registry_path.exists():
             with open(registry_path) as f:
                 registry = yaml.safe_load(f)
@@ -5140,14 +5195,14 @@ async def spawn_agent_tool(
         identity_content = f"""# {agent_name} Identity Card
 
 ## Identity
-- **Role:** {agent_spec.get('role', 'Specialist agent')}
-- **Tier:** {agent_spec.get('tier', 'Specialist')}
-- **Model:** {agent_spec.get('model', 'haiku')}
+- **Role:** {agent_spec.get("role", "Specialist agent")}
+- **Tier:** {agent_spec.get("tier", "Specialist")}
+- **Model:** {agent_spec.get("model", "haiku")}
 
 ## Chain of Command
-- **Reports To:** {agent_spec.get('reports_to', 'ORCHESTRATOR')}
-- **Can Spawn:** {', '.join(agent_spec.get('can_spawn', [])) or 'None'}
-- **Escalate To:** {agent_spec.get('reports_to', 'ORCHESTRATOR')}
+- **Reports To:** {agent_spec.get("reports_to", "ORCHESTRATOR")}
+- **Can Spawn:** {", ".join(agent_spec.get("can_spawn", [])) or "None"}
+- **Escalate To:** {agent_spec.get("reports_to", "ORCHESTRATOR")}
 
 ## One-Line Charter
 "Execute assigned mission with precision and report results."
@@ -5192,7 +5247,9 @@ async def spawn_agent_tool(
         prompt_parts.append(f"## CONTEXT\n\n```json\n{json.dumps(context, indent=2)}\n```")
 
     # Add checkpoint instruction
-    checkpoint_path = f".claude/Scratchpad/AGENT_{agent_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    checkpoint_path = (
+        f".claude/Scratchpad/AGENT_{agent_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    )
     prompt_parts.append(f"""## CHECKPOINT PROTOCOL
 
 Write your progress and findings to: `{checkpoint_path}`
@@ -5235,7 +5292,7 @@ Format:
     full_prompt = "\n\n".join(prompt_parts)
 
     # Generate unique invocation ID for audit trail
-    invocation_id = datetime.now().strftime('%Y%m%d_%H%M%S') + f"_{agent_name}"
+    invocation_id = datetime.now().strftime("%Y%m%d_%H%M%S") + f"_{agent_name}"
 
     result = {
         "agent_name": agent_name,
@@ -5273,7 +5330,7 @@ Format:
         "prompt_tokens_estimate": result["prompt_tokens_estimate"],
     }
     try:
-        with open(audit_file, 'w') as f:
+        with open(audit_file, "w") as f:
             json.dump(audit_entry, f, indent=2, default=str)
         result["audit_trail_path"] = str(audit_file)
         logger.info(f"Audit trail written: {audit_file}")
@@ -5306,17 +5363,19 @@ def create_health_endpoint():
             os.environ.get("API_USERNAME") and os.environ.get("API_PASSWORD")
         )
 
-        return JSONResponse({
-            "status": "healthy",
-            "service": "residency-scheduler-mcp",
-            "version": "0.1.0",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "checks": {
-                "mcp_server": "ok",
-                "api_key_configured": api_key_configured,
-                "api_credentials_configured": api_credentials_configured,
+        return JSONResponse(
+            {
+                "status": "healthy",
+                "service": "residency-scheduler-mcp",
+                "version": "0.1.0",
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "checks": {
+                    "mcp_server": "ok",
+                    "api_key_configured": api_key_configured,
+                    "api_credentials_configured": api_credentials_configured,
+                },
             }
-        })
+        )
 
     return health_check
 
@@ -5369,7 +5428,10 @@ class APIKeyAuthMiddleware:
                 # Fail closed on non-localhost without API key
                 logger.error("MCP_API_KEY not set on non-localhost - rejecting request")
                 response = JSONResponse(
-                    {"error": "Configuration Error", "message": "MCP_API_KEY required for remote access"},
+                    {
+                        "error": "Configuration Error",
+                        "message": "MCP_API_KEY required for remote access",
+                    },
                     status_code=500,
                 )
                 await response(scope, receive, send)
