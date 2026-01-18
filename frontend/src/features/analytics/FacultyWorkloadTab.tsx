@@ -225,7 +225,7 @@ export function FacultyWorkloadTab() {
         </p>
         <p className="text-sm text-blue-600 mt-2">
           For detailed per-faculty breakdown, visit{' '}
-          <a href="/admin/fairness" className="underline font-medium">
+          <a href="/admin/labs/fairness" className="underline font-medium">
             Admin &rarr; Fairness Audit
           </a>
         </p>

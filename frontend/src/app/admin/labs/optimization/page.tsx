@@ -10,14 +10,21 @@
  * - CP-SAT Simulator: 3D optimization landscape
  * - Brane Topology: Multi-dimensional scheduling manifold
  * - Foam Topology: Constraint foam visualization
+ * - Stigmergy Flow: Particle flow schedule visualization
  *
  * @route /admin/labs/optimization
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowLeft, Cpu, Layers, Circle, Box } from 'lucide-react';
+import { ArrowLeft, Cpu, Layers, Circle, Box, Waves } from 'lucide-react';
+import type {
+  ScheduleNode,
+  SimulationConfig,
+  GeminiAnalysisResult,
+} from '@/app/admin/visualizations/stigmergy-flow/types';
+import { generateMockData } from '@/app/admin/visualizations/stigmergy-flow/constants';
 
 // Dynamic imports for 3D visualizations - only load when tab is active
 const CpsatSimulator = dynamic(
@@ -47,7 +54,24 @@ const FoamTopologyVisualizer = dynamic(
   }
 );
 
-type TabId = 'cpsat' | 'brane' | 'foam';
+// Stigmergy Flow components
+const StigmergyScene = dynamic(
+  () =>
+    import('@/app/admin/visualizations/stigmergy-flow/components/StigmergyScene').then(
+      (mod) => mod.StigmergyScene
+    ),
+  { ssr: false }
+);
+
+const StigmergyUIOverlay = dynamic(
+  () =>
+    import('@/app/admin/visualizations/stigmergy-flow/components/UIOverlay').then(
+      (mod) => mod.UIOverlay
+    ),
+  { ssr: false }
+);
+
+type TabId = 'cpsat' | 'brane' | 'foam' | 'stigmergy';
 
 interface Tab {
   id: TabId;
@@ -75,6 +99,12 @@ const TABS: Tab[] = [
     icon: Circle,
     description: 'Constraint foam structure',
   },
+  {
+    id: 'stigmergy',
+    label: 'Stigmergy Flow',
+    icon: Waves,
+    description: 'Particle flow schedule visualization',
+  },
 ];
 
 function LoadingScreen({ label }: { label: string }) {
@@ -86,6 +116,81 @@ function LoadingScreen({ label }: { label: string }) {
           {label}
         </p>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Wrapper component for Stigmergy Flow with all required state
+ */
+function StigmergyFlowWrapper() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState<ScheduleNode[]>([]);
+  const [config, setConfig] = useState<SimulationConfig>({
+    speed: 1,
+    bloomStrength: 1.5,
+    showConnections: true,
+    distortion: 0.5,
+  });
+  const [analysis, setAnalysis] = useState<GeminiAnalysisResult | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    const mockData = generateMockData();
+    setData(mockData);
+    const timer = setTimeout(() => {
+      if (mountedRef.current) setIsLoading(false);
+    }, 1000);
+    return () => {
+      mountedRef.current = false;
+      clearTimeout(timer);
+    };
+  }, []);
+
+  const handleAnalyze = useCallback(async () => {
+    if (!mountedRef.current) return;
+    setIsAnalyzing(true);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    if (!mountedRef.current) return;
+
+    const conflictCount = data.filter((d) => d.type === 'CONFLICT').length;
+    const callCount = data.filter((d) => d.type === 'CALL').length;
+
+    setAnalysis({
+      summary: `Flow analysis complete. Detected ${data.length} assignment nodes across the spacetime manifold. ${conflictCount} conflict vortices require attention. Call distribution shows ${callCount} night-side trajectories.`,
+      hotspots:
+        conflictCount > 0
+          ? [
+              `${conflictCount} conflict vortices detected in the flow`,
+              'Potential duty hour clustering on day 3-4',
+              'Supervision gap risk in NIGHT sector',
+            ]
+          : [],
+      recommendations: [
+        'Consider redistributing CALL assignments to reduce clustering',
+        'Strengthen magnetic field lines (supervision connections) in sparse regions',
+        'Pre-compute fallback trajectories for N-1 contingency',
+      ],
+    });
+    setIsAnalyzing(false);
+  }, [data]);
+
+  if (isLoading) {
+    return <LoadingScreen label="Initializing Spacetime Flow..." />;
+  }
+
+  return (
+    <div className="w-full h-full relative overflow-hidden">
+      <StigmergyScene data={data} config={config} />
+      <StigmergyUIOverlay
+        config={config}
+        setConfig={setConfig}
+        onAnalyze={handleAnalyze}
+        analysis={analysis}
+        isAnalyzing={isAnalyzing}
+      />
     </div>
   );
 }
@@ -153,6 +258,7 @@ export default function OptimizationLabsPage() {
         {activeTab === 'cpsat' && <CpsatSimulator />}
         {activeTab === 'brane' && <BraneTopologyVisualizer />}
         {activeTab === 'foam' && <FoamTopologyVisualizer />}
+        {activeTab === 'stigmergy' && <StigmergyFlowWrapper />}
       </div>
     </div>
   );

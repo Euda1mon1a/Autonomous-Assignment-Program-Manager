@@ -14,7 +14,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useEffect, Suspense } from "react";
+import React, { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   PerspectiveCamera,
@@ -46,12 +46,23 @@ export function CpsatSimulator({
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [loadingAI, setLoadingAI] = useState(false);
 
+  // Track mounted state to prevent state updates after unmount
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // Initial AI greeting (using fallback descriptions)
   useEffect(() => {
     const initAI = async () => {
+      if (!mountedRef.current) return;
       setLoadingAI(true);
       // Simulate AI delay
       await new Promise((resolve) => setTimeout(resolve, 500));
+      if (!mountedRef.current) return;
       const explanation =
         "Optimization node online. Traversing the constraint satisfaction manifold. " +
         "Seeking global minimum across multi-modal terrain.";
@@ -66,11 +77,13 @@ export function CpsatSimulator({
   }, []);
 
   const handleScenarioPrompt = async (prompt: string) => {
+    if (!mountedRef.current) return;
     setLoadingAI(true);
     setChatHistory((prev) => [...prev, { role: "user", content: prompt }]);
 
     // Simulate AI processing
     await new Promise((resolve) => setTimeout(resolve, 800));
+    if (!mountedRef.current) return;
 
     // Generate new config based on prompt keywords
     const newConfig: LandscapeConfig = {
@@ -87,8 +100,10 @@ export function CpsatSimulator({
   };
 
   const handleRefreshExplain = async () => {
+    if (!mountedRef.current) return;
     setLoadingAI(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
+    if (!mountedRef.current) return;
     const explanation = getStatusDescription(metrics.status);
     setChatHistory((prev) => [...prev, { role: "assistant", content: explanation }]);
     setLoadingAI(false);
