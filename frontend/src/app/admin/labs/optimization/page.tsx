@@ -11,6 +11,8 @@
  * - Brane Topology: Multi-dimensional scheduling manifold
  * - Foam Topology: Constraint foam visualization
  * - Stigmergy Flow: Particle flow schedule visualization
+ * - Hopfield Energy: Neural attractor energy landscape
+ * - BridgeSync: Real-time Python→Three.js data sync
  *
  * @route /admin/labs/optimization
  */
@@ -18,7 +20,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowLeft, Cpu, Layers, Circle, Box, Waves } from 'lucide-react';
+import { ArrowLeft, Cpu, Layers, Circle, Box, Waves, Zap, GitBranch } from 'lucide-react';
 import type {
   ScheduleNode,
   SimulationConfig,
@@ -71,7 +73,25 @@ const StigmergyUIOverlay = dynamic(
   { ssr: false }
 );
 
-type TabId = 'cpsat' | 'brane' | 'foam' | 'stigmergy';
+const HopfieldVisualizer = dynamic(
+  () =>
+    import('@/features/hopfield-energy').then((mod) => mod.HopfieldVisualizer),
+  {
+    ssr: false,
+    loading: () => <LoadingScreen label="Computing Energy Landscape..." />,
+  }
+);
+
+const BridgeSyncVisualizer = dynamic(
+  () =>
+    import('@/features/bridge-sync').then((mod) => mod.BridgeSyncVisualizer),
+  {
+    ssr: false,
+    loading: () => <LoadingScreen label="Establishing Data Bridge..." />,
+  }
+);
+
+type TabId = 'cpsat' | 'brane' | 'foam' | 'stigmergy' | 'hopfield' | 'bridge';
 
 interface Tab {
   id: TabId;
@@ -104,6 +124,18 @@ const TABS: Tab[] = [
     label: 'Stigmergy Flow',
     icon: Waves,
     description: 'Particle flow schedule visualization',
+  },
+  {
+    id: 'hopfield',
+    label: 'Hopfield Energy',
+    icon: Zap,
+    description: 'Neural attractor energy landscape',
+  },
+  {
+    id: 'bridge',
+    label: 'BridgeSync',
+    icon: GitBranch,
+    description: 'Real-time Python→Three.js data sync',
   },
 ];
 
@@ -259,6 +291,8 @@ export default function OptimizationLabsPage() {
         {activeTab === 'brane' && <BraneTopologyVisualizer />}
         {activeTab === 'foam' && <FoamTopologyVisualizer />}
         {activeTab === 'stigmergy' && <StigmergyFlowWrapper />}
+        {activeTab === 'hopfield' && <HopfieldVisualizer />}
+        {activeTab === 'bridge' && <BridgeSyncVisualizer />}
       </div>
     </div>
   );

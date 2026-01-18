@@ -8,6 +8,7 @@
  * - Schedule Optimization: Solver landscapes and topology for Tier 1-2
  * - Fairness / Equity: Workload distribution analysis for Tier 1
  * - Resilience / Risk: Cascading failure analysis for Tier 1-2
+ * - Command Center: Unified dashboard for system monitoring
  *
  * @route /admin/labs
  */
@@ -24,6 +25,7 @@ import {
   TrendingUp,
   AlertTriangle,
   Zap,
+  Command,
 } from 'lucide-react';
 
 interface LabCategory {
@@ -86,7 +88,19 @@ const LAB_CATEGORIES: LabCategory[] = [
     iconColor: 'text-amber-500',
     targetTier: 'Tier 1-2',
     readiness: 'medium',
-    features: ['Fragility Triage', 'Cascade Simulation', 'N-1 Analysis'],
+    features: ['Fragility Triage', 'N-1/N-2 Resilience', 'Cascade Simulation'],
+  },
+  {
+    id: 'command',
+    title: 'Command Center',
+    description: 'Unified command dashboard for monitoring all scheduling subsystems from a single view.',
+    href: '/admin/labs/command',
+    icon: Command,
+    iconBg: 'from-purple-500 to-indigo-600',
+    iconColor: 'text-purple-500',
+    targetTier: 'Tier 1',
+    readiness: 'medium',
+    features: ['Sovereign Portal', '4-Panel View', 'System Alerts'],
   },
 ];
 
@@ -162,28 +176,28 @@ function QuickStats() {
           <Activity className="w-4 h-4 text-cyan-500" />
           <span className="text-xs text-slate-400 uppercase tracking-wide">Visualizations</span>
         </div>
-        <span className="text-2xl font-bold text-white">7</span>
+        <span className="text-2xl font-bold text-white">12</span>
       </div>
       <div className="bg-slate-800/30 border border-slate-700/30 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-2">
           <TrendingUp className="w-4 h-4 text-emerald-500" />
           <span className="text-xs text-slate-400 uppercase tracking-wide">Ready</span>
         </div>
-        <span className="text-2xl font-bold text-white">4</span>
+        <span className="text-2xl font-bold text-white">5</span>
       </div>
       <div className="bg-slate-800/30 border border-slate-700/30 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-2">
           <AlertTriangle className="w-4 h-4 text-amber-500" />
           <span className="text-xs text-slate-400 uppercase tracking-wide">Beta</span>
         </div>
-        <span className="text-2xl font-bold text-white">3</span>
+        <span className="text-2xl font-bold text-white">7</span>
       </div>
       <div className="bg-slate-800/30 border border-slate-700/30 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-2">
           <Zap className="w-4 h-4 text-violet-500" />
           <span className="text-xs text-slate-400 uppercase tracking-wide">3D/WebGL</span>
         </div>
-        <span className="text-2xl font-bold text-white">5</span>
+        <span className="text-2xl font-bold text-white">8</span>
       </div>
     </div>
   );
