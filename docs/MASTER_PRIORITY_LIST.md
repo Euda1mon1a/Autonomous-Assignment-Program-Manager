@@ -54,17 +54,15 @@ Contradictions fixed (commit `pending`):
 
 **Resolved:** 2026-01-18 in `feature/master-priority-implementation`
 
-### 5. Schedule Rollback Data Loss
-Rollback/backup infrastructure has gaps that can cause data loss:
+### 5. ~~Schedule Rollback Data Loss~~ ✅ RESOLVED
+Fixed in commits `66a14461` and `8bbb3cb9`:
+- `_find_existing_assignments()` captures both AM+PM for "ALL" time_of_day
+- Full provenance serialization (block_assignment_id, overridden_by/at, updated_at)
+- All 3 restoration paths restore all fields including updated_at
+- Duplicate prevention with `results = []` before fallback path
+- Date string coercion in work_hour_validator.py
 
-| Issue | Location | Impact |
-|-------|----------|--------|
-| `time_of_day="ALL"` only captures AM | `schedule_publish_staging.py:277` | PM assignment lost |
-| Missing fields in serialization | `schedule_publish_staging.py:298,403` | Provenance/overrides lost |
-| Rest-period assumes `date` objects | `work_hour_validator.py:341` | TypeError on strings |
-
-**Action:** Fix serialization to capture all slots and fields; add date coercion.
-**Ref:** `docs/reviews/2026-01-17-current-changes-review.md`
+**Resolved:** 2026-01-18 in `feature/master-priority-implementation`
 
 ---
 
@@ -253,7 +251,7 @@ Excel-like grid editor for schedule verification - eases transition for "normie"
 
 | Priority | Issues | Scope |
 |----------|--------|-------|
-| **CRITICAL** | 2 open, 3 resolved | ~~orphan routes~~✅, PII, ~~doc contradictions~~✅, ~~API mismatches~~✅, rollback data loss |
+| **CRITICAL** | 1 open, 4 resolved | ~~orphan routes~~✅, PII, ~~doc contradictions~~✅, ~~API mismatches~~✅, ~~rollback data loss~~✅ |
 | **HIGH** | 4 open, 1 resolved | frameworks, ~~feature flags~~✅, MCP stubs, mock GUI, ACGME compliance gaps |
 | **MEDIUM** | 5 | Activity logging, emails, pagination, docs, CLI/security cleanup |
 | **LOW** | 4 | A/B testing, ML, time crystal, spreadsheet editor (tier 1 UX) |
