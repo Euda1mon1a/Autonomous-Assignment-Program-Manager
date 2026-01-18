@@ -7,7 +7,7 @@ from uuid import uuid4
 from sqlalchemy.orm import Session
 
 from app.models.person import Person
-from app.services.karma_mechanism import KarmaMechanismService
+from app.services.karma_mechanism import KarmaMechanism as KarmaMechanismService
 
 
 class TestKarmaMechanismService:

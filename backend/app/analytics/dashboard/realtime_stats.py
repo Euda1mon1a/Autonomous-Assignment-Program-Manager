@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.models.assignment import Assignment
 from app.models.person import Person
-from app.models.swap import SwapRequest
+from app.models.swap import SwapRecord
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ class RealtimeStats:
         """Get recent activity counts."""
         # Recent swaps
         recent_swaps_result = await self.db.execute(
-            select(func.count(SwapRequest.id)).where(SwapRequest.status == "pending")
+            select(func.count(SwapRecord.id)).where(SwapRecord.status == "pending")
         )
         pending_swaps = recent_swaps_result.scalar() or 0
 

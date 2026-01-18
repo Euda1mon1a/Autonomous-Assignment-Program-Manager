@@ -376,7 +376,8 @@ def find_available_faculty(
         .all()
     )
 
-    available = []
+    if not all_faculty:
+        return []
 
     # Find block for target date/time
     target_block = (
@@ -388,43 +389,46 @@ def find_available_faculty(
     if not target_block:
         return []
 
-    for faculty in all_faculty:
-        # Check if faculty already has assignment on this block
-        existing = (
-            db.query(Assignment)
-            .filter(
-                and_(
-                    Assignment.block_id == target_block.id,
-                    Assignment.person_id == faculty.id,
-                )
+    # Pre-fetch: Get all same-time blocks ONCE (prevents N+1)
+    same_time_blocks = (
+        db.query(Block)
+        .filter(and_(Block.date == target_date, Block.time_of_day == time_of_day))
+        .all()
+    )
+    same_time_block_ids = {b.id for b in same_time_blocks}
+
+    # Pre-fetch: Get all assignments for the target block (prevents N+1)
+    target_block_assignments = (
+        db.query(Assignment).filter(Assignment.block_id == target_block.id).all()
+    )
+    assigned_person_ids = {a.person_id for a in target_block_assignments}
+
+    # Pre-fetch: Get all faculty assignments on same-time blocks (prevents N+1)
+    faculty_ids = [f.id for f in all_faculty]
+    conflicting_assignments = (
+        db.query(Assignment.person_id)
+        .filter(
+            and_(
+                Assignment.person_id.in_(faculty_ids),
+                Assignment.block_id.in_(same_time_block_ids),
             )
-            .first()
         )
+        .all()
+    )
+    faculty_with_conflicts = {a.person_id for a in conflicting_assignments}
 
-        if not existing:
-            # Check for conflicts (assignments on other blocks at same time)
-            same_time_blocks = (
-                db.query(Block)
-                .filter(
-                    and_(Block.date == target_date, Block.time_of_day == time_of_day)
-                )
-                .all()
-            )
+    # Now check availability using pre-fetched data (no more queries in loop)
+    available = []
+    for faculty in all_faculty:
+        # Skip if already assigned to target block
+        if faculty.id in assigned_person_ids:
+            continue
 
-            block_ids = [b.id for b in same_time_blocks]
-            conflicts = (
-                db.query(Assignment)
-                .filter(
-                    and_(
-                        Assignment.person_id == faculty.id,
-                        Assignment.block_id.in_(block_ids),
-                    )
-                )
-                .count()
-            )
+        # Skip if has conflicts on same-time blocks
+        if faculty.id in faculty_with_conflicts:
+            continue
 
-            if conflicts == 0:
-                available.append(f"{faculty.first_name} {faculty.last_name}")
+        available.append(f"{faculty.first_name} {faculty.last_name}")
 
     return available
 

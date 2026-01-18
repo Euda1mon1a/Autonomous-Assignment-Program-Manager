@@ -3,6 +3,9 @@ Pytest fixtures for CLI tests.
 """
 
 import pytest
+
+# Skip all CLI tests if typer is not installed
+typer = pytest.importorskip("typer")
 from typer.testing import CliRunner
 
 

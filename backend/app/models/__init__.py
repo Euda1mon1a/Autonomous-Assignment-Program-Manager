@@ -80,6 +80,7 @@ from app.models.schedule_draft import (
     ScheduleDraftFlag,
     ScheduleDraftStatus,
 )
+from app.models.assignment_backup import AssignmentBackup
 from app.models.intern_stagger import InternStaggerPattern
 from app.models.notification import (
     Notification,
@@ -236,6 +237,7 @@ __all__ = [
     "DraftAssignmentChangeType",
     "DraftFlagType",
     "DraftFlagSeverity",
+    "AssignmentBackup",
     # Credentialing models
     "Procedure",
     "ProcedureCredential",

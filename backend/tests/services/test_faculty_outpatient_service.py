@@ -10,7 +10,9 @@ from app.models.person import Person
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.rotation_template import RotationTemplate
-from app.services.faculty_outpatient_service import FacultyOutpatientService
+from app.services.faculty_outpatient_service import (
+    FacultyOutpatientAssignmentService as FacultyOutpatientService,
+)
 
 
 class TestFacultyOutpatientService:

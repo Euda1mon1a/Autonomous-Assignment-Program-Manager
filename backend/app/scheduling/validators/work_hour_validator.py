@@ -248,7 +248,11 @@ class WorkHourValidator:
 
         Args:
             person_id: Resident ID
-            shift_data: List of dicts with shift timing info
+            shift_data: List of dicts with shift timing info:
+                - date: date object
+                - start_time: time string "HH:MM" or time object
+                - end_time: time string "HH:MM" or time object
+                - duration_hours: float
 
         Returns:
             (violations, warnings) tuples
@@ -259,7 +263,24 @@ class WorkHourValidator:
         if len(shift_data) < 2:
             return violations, warnings
 
-        sorted_shifts = sorted(shift_data, key=lambda x: x.get("end_time", "00:00"))
+        # Sort by date then start_time for proper chronological order
+        def shift_sort_key(shift: dict) -> tuple:
+            shift_date = shift.get("date", date.min)
+            start_time = shift.get("start_time", "00:00")
+            if hasattr(start_time, "hour"):  # It's a time object
+                return (shift_date, start_time.hour, start_time.minute)
+            # Parse string time
+            try:
+                parts = str(start_time).split(":")
+                return (
+                    shift_date,
+                    int(parts[0]),
+                    int(parts[1]) if len(parts) > 1 else 0,
+                )
+            except (ValueError, IndexError):
+                return (shift_date, 0, 0)
+
+        sorted_shifts = sorted(shift_data, key=shift_sort_key)
 
         for i in range(len(sorted_shifts) - 1):
             current_shift = sorted_shifts[i]
@@ -269,9 +290,8 @@ class WorkHourValidator:
             if current_duration < MAX_CONSECUTIVE_HOURS:
                 continue  # No rest requirement after short shifts
 
-            # Calculate rest period
-            # Simplified: assumes shifts on consecutive days
-            rest_hours = 10  # Placeholder for actual calculation
+            # Calculate actual rest period between shifts
+            rest_hours = self._calculate_rest_hours(current_shift, next_shift)
 
             if rest_hours < MIN_REST_HOURS_AFTER_SHIFT:
                 violations.append(
@@ -289,10 +309,146 @@ class WorkHourValidator:
                         ),
                         hours=rest_hours,
                         limit=MIN_REST_HOURS_AFTER_SHIFT,
+                        violation_percentage=(MIN_REST_HOURS_AFTER_SHIFT - rest_hours)
+                        / MIN_REST_HOURS_AFTER_SHIFT
+                        * 100,
+                    )
+                )
+            elif rest_hours < MIN_REST_HOURS_AFTER_SHIFT + 2:  # Within 2 hours of limit
+                warnings.append(
+                    WorkHourWarning(
+                        person_id=person_id,
+                        warning_type="approaching_limit",
+                        message=(
+                            f"Rest period approaching minimum: {rest_hours:.1f}h "
+                            f"(minimum {MIN_REST_HOURS_AFTER_SHIFT}h)"
+                        ),
+                        current_hours=rest_hours,
+                        warning_threshold=MIN_REST_HOURS_AFTER_SHIFT,
+                        days_remaining=0,
                     )
                 )
 
         return violations, warnings
+
+    def _calculate_rest_hours(self, current_shift: dict, next_shift: dict) -> float:
+        """
+        Calculate rest hours between two shifts with minute-level precision.
+
+        Args:
+            current_shift: Dict with 'date' and 'end_time'
+            next_shift: Dict with 'date' and 'start_time'
+
+        Returns:
+            Rest hours as a float (can be negative if shifts overlap)
+        """
+        current_date = current_shift.get("date")
+        next_date = next_shift.get("date")
+        current_end = current_shift.get("end_time")
+        next_start = next_shift.get("start_time")
+
+        # Parse string dates to date objects if needed (handles JSON/cached data)
+        current_date = self._ensure_date(current_date)
+        next_date = self._ensure_date(next_date)
+
+        # Handle missing data gracefully
+        if not all([current_date, next_date, current_end, next_start]):
+            logger.warning(
+                f"Missing shift timing data for rest calculation: "
+                f"current_date={current_date}, next_date={next_date}, "
+                f"current_end={current_end}, next_start={next_start}"
+            )
+            # Estimate based on dates only if times are missing
+            if current_date and next_date:
+                days_diff = (next_date - current_date).days
+                # Assume standard 12-hour rest between consecutive days
+                return max(0, days_diff * 24 - 12)
+            return 0.0
+
+        # Parse end_time to datetime
+        current_end_dt = self._parse_time_to_datetime(current_date, current_end)
+        next_start_dt = self._parse_time_to_datetime(next_date, next_start)
+
+        # Handle overnight shifts: if end_time appears earlier than start_time,
+        # the shift crossed midnight and end_time is actually on the next day.
+        # Example: 19:00-07:00 shift - end_time (07:00) < start_time (19:00)
+        current_start = current_shift.get("start_time")
+        if current_end_dt is not None and current_start:
+            current_start_dt = self._parse_time_to_datetime(current_date, current_start)
+            if current_start_dt is not None and current_end_dt < current_start_dt:
+                # Overnight shift - end time is on the next day
+                current_end_dt = current_end_dt + timedelta(days=1)
+
+        if current_end_dt is None or next_start_dt is None:
+            # Fallback: estimate based on dates
+            days_diff = (next_date - current_date).days
+            return max(0, days_diff * 24 - 12)
+
+        # Calculate rest period
+        rest_delta = next_start_dt - current_end_dt
+        rest_hours = rest_delta.total_seconds() / 3600
+
+        return rest_hours
+
+    def _ensure_date(self, value) -> date | None:
+        """
+        Ensure a value is a date object.
+
+        Handles string dates (ISO format) that may come from JSON or cached data.
+
+        Args:
+            value: A date object, string, or None
+
+        Returns:
+            date object or None
+        """
+        if value is None:
+            return None
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            try:
+                return date.fromisoformat(value)
+            except ValueError:
+                logger.warning(f"Could not parse date string: {value}")
+                return None
+        logger.warning(f"Unexpected date type: {type(value)}")
+        return None
+
+    def _parse_time_to_datetime(self, shift_date: date, time_value) -> datetime | None:
+        """
+        Parse a time value to a full datetime.
+
+        Args:
+            shift_date: The date of the shift
+            time_value: Can be a time object, string "HH:MM", or string "HH:MM:SS"
+
+        Returns:
+            datetime object or None if parsing fails
+        """
+        try:
+            if hasattr(time_value, "hour"):
+                # It's already a time object
+                return datetime.combine(shift_date, time_value)
+
+            # Parse string time
+            time_str = str(time_value)
+            parts = time_str.split(":")
+            hour = int(parts[0])
+            minute = int(parts[1]) if len(parts) > 1 else 0
+            second = int(parts[2]) if len(parts) > 2 else 0
+
+            return datetime(
+                shift_date.year,
+                shift_date.month,
+                shift_date.day,
+                hour,
+                minute,
+                second,
+            )
+        except (ValueError, IndexError, TypeError) as e:
+            logger.warning(f"Failed to parse time '{time_value}': {e}")
+            return None
 
     def validate_moonlighting_integration(
         self,

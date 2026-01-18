@@ -11,7 +11,7 @@ Validates schedules against ACGME requirements:
 from collections import defaultdict
 from datetime import date, timedelta
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.assignment import Assignment
 from app.models.block import Block
@@ -120,9 +120,14 @@ class ACGMEValidator:
         # Get all residents
         residents = self.db.query(Person).filter(Person.type == "resident").all()
 
-        # Get all assignments in range
+        # Get all assignments in range with eager loading to prevent N+1 queries
         assignments = (
             self.db.query(Assignment)
+            .options(
+                selectinload(Assignment.block),
+                selectinload(Assignment.person),
+                selectinload(Assignment.rotation_template),
+            )
             .join(Block)
             .filter(Block.date >= start_date, Block.date <= end_date)
             .all()
@@ -165,7 +170,11 @@ class ACGMEValidator:
                 "total_assignments": len(assignments),
                 "total_blocks": total_blocks,
                 "residents_scheduled": len(
-                    {a.person_id for a in assignments if self._is_resident(a.person_id)}
+                    {
+                        a.person_id
+                        for a in assignments
+                        if a.person and a.person.type == "resident"
+                    }
                 ),
             },
         )
@@ -241,12 +250,11 @@ class ACGMEValidator:
         if not assignments:
             return violations
 
-        # Get unique dates with assignments
+        # Get unique dates with assignments (use eager-loaded block)
         dates_with_assignments = set()
         for assignment in assignments:
-            block = self.db.query(Block).filter(Block.id == assignment.block_id).first()
-            if block:
-                dates_with_assignments.add(block.date)
+            if assignment.block:
+                dates_with_assignments.add(assignment.block.date)
 
         if not dates_with_assignments:
             return violations
@@ -300,30 +308,28 @@ class ACGMEValidator:
         for assignment in assignments:
             assignments_by_block[assignment.block_id].append(assignment)
 
-        # Check each block
+        # Check each block (use eager-loaded relationships to prevent N+1)
         for block_id, block_assignments in assignments_by_block.items():
             supervised_residents = []
             faculty = []
+            block = None  # Will be set from first assignment with block
 
             for assignment in block_assignments:
-                person = (
-                    self.db.query(Person)
-                    .filter(Person.id == assignment.person_id)
-                    .first()
-                )
+                # Use eager-loaded person instead of querying
+                person = assignment.person
                 if not person:
                     continue
+
+                # Capture block from any assignment (all have same block_id)
+                if block is None and assignment.block:
+                    block = assignment.block
 
                 if person.type == "faculty":
                     faculty.append(person)
                 elif person.type == "resident":
                     # Only count residents on rotations that require FMC supervision
-                    # Uses supervision_required field on rotation_template
-                    rotation = (
-                        self.db.query(RotationTemplate)
-                        .filter(RotationTemplate.id == assignment.rotation_template_id)
-                        .first()
-                    )
+                    # Uses eager-loaded rotation_template
+                    rotation = assignment.rotation_template
                     if rotation and rotation.supervision_required:
                         supervised_residents.append(person)
 
@@ -340,7 +346,6 @@ class ACGMEValidator:
             required = max(1, required)
 
             if len(faculty) < required:
-                block = self.db.query(Block).filter(Block.id == block_id).first()
                 violations.append(
                     Violation(
                         type="SUPERVISION_RATIO_VIOLATION",
@@ -359,17 +364,12 @@ class ACGMEValidator:
         return violations
 
     def _assignments_to_hours(self, assignments: list[Assignment]) -> dict[date, int]:
-        """Convert assignments to hours per date."""
+        """Convert assignments to hours per date (uses eager-loaded block)."""
         hours_by_date = defaultdict(int)
 
         for assignment in assignments:
-            block = self.db.query(Block).filter(Block.id == assignment.block_id).first()
-            if block:
-                hours_by_date[block.date] += self.HOURS_PER_HALF_DAY
+            # Use eager-loaded block instead of querying
+            if assignment.block:
+                hours_by_date[assignment.block.date] += self.HOURS_PER_HALF_DAY
 
         return dict(hours_by_date)
-
-    def _is_resident(self, person_id) -> bool:
-        """Check if person is a resident."""
-        person = self.db.query(Person).filter(Person.id == person_id).first()
-        return person and person.type == "resident"

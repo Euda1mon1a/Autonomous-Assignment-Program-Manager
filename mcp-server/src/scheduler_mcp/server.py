@@ -5332,12 +5332,24 @@ class APIKeyAuthMiddleware:
 
     Validates the Authorization header against MCP_API_KEY environment variable.
     Health endpoint is excluded from authentication.
+
+    SECURITY:
+    - Only /health endpoints are exempt from auth
+    - If MCP_API_KEY is not set on non-localhost, requests are rejected
+    - All other paths require valid API key
     """
 
     def __init__(self, app, api_key: str | None = None):
         self.app = app
         self.api_key = api_key or os.environ.get("MCP_API_KEY")
-        self.exempt_paths = {"/health", "/health/", "/"}
+        # SECURITY: Only health endpoints are exempt, NOT the root path
+        self.exempt_paths = {"/health", "/health/"}
+        # Check if we're in a production-like environment
+        # SECURITY: 0.0.0.0 is a bind address (listen on all interfaces), NOT a client address.
+        # Treating it as localhost would bypass auth when the server binds to all interfaces.
+        host = os.environ.get("MCP_HOST", "127.0.0.1")
+        self.is_localhost = host in ("127.0.0.1", "localhost")
+        self._auth_warning_logged = False
 
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
@@ -5351,9 +5363,21 @@ class APIKeyAuthMiddleware:
             await self.app(scope, receive, send)
             return
 
-        # If no API key configured, allow all requests (dev mode)
+        # SECURITY: If no API key configured, only allow on localhost
         if not self.api_key:
-            logger.warning("MCP_API_KEY not set - running without authentication")
+            if not self.is_localhost:
+                # Fail closed on non-localhost without API key
+                logger.error("MCP_API_KEY not set on non-localhost - rejecting request")
+                response = JSONResponse(
+                    {"error": "Configuration Error", "message": "MCP_API_KEY required for remote access"},
+                    status_code=500,
+                )
+                await response(scope, receive, send)
+                return
+            # Only log warning once to avoid spam
+            if not self._auth_warning_logged:
+                logger.warning("MCP_API_KEY not set - allowing unauthenticated localhost access")
+                self._auth_warning_logged = True
             await self.app(scope, receive, send)
             return
 
@@ -5508,6 +5532,27 @@ Examples:
     except (ImportError, AttributeError) as e:
         logger.warning(f"Advanced HTTP features not available: {e}")
         logger.info("Falling back to basic FastMCP HTTP transport (SSE)")
+
+        # SECURITY: SSE transport does not support API key authentication
+        # Only allow on localhost without explicit override
+        # SECURITY: 0.0.0.0 is a bind address, NOT a client address - don't treat as localhost
+        api_key = os.environ.get("MCP_API_KEY")
+        is_localhost = args.host in ("127.0.0.1", "localhost")
+
+        if not is_localhost and not api_key:
+            logger.error(
+                "SECURITY: SSE transport on non-localhost requires MCP_API_KEY. "
+                "SSE fallback does not support authentication - this is unsafe for remote access. "
+                "Either set MCP_API_KEY (will log warning but run) or use HTTP transport with proper auth."
+            )
+            raise RuntimeError("SSE transport on non-localhost requires MCP_API_KEY to be set")
+
+        if not api_key:
+            logger.warning(
+                "SECURITY WARNING: SSE transport does not support API key authentication. "
+                "Only use on localhost or behind a reverse proxy with authentication."
+            )
+
         # FastMCP 1.x uses settings object for host/port configuration
         mcp.settings.host = args.host
         mcp.settings.port = args.port

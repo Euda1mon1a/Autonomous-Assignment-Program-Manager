@@ -16,9 +16,12 @@ Endpoints:
 import logging
 from typing import Dict, List
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
+from app.api.dependencies.role_filter import require_admin
+from app.core.security import get_current_active_user
+from app.models.user import User
 from app.scheduling.constraints.config import (
     ConstraintCategory,
     ConstraintConfig,
@@ -182,7 +185,11 @@ async def list_constraints_by_category(category: str) -> list[ConstraintStatusRe
 
 
 @router.post("/{name}/enable", response_model=ConstraintEnableResponse)
-async def enable_constraint(name: str) -> ConstraintEnableResponse:
+async def enable_constraint(
+    name: str,
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
+) -> ConstraintEnableResponse:
     """
     Enable a constraint.
 
@@ -241,7 +248,11 @@ async def enable_constraint(name: str) -> ConstraintEnableResponse:
 
 
 @router.post("/{name}/disable", response_model=ConstraintEnableResponse)
-async def disable_constraint(name: str) -> ConstraintEnableResponse:
+async def disable_constraint(
+    name: str,
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
+) -> ConstraintEnableResponse:
     """
     Disable a constraint.
 
@@ -300,7 +311,11 @@ async def disable_constraint(name: str) -> ConstraintEnableResponse:
 
 
 @router.post("/preset/{preset}", response_model=PresetApplyResponse)
-async def apply_constraint_preset(preset: str) -> PresetApplyResponse:
+async def apply_constraint_preset(
+    preset: str,
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_admin()),
+) -> PresetApplyResponse:
     """
     Apply a constraint preset.
 

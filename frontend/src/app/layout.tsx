@@ -5,6 +5,7 @@ import { Providers } from './providers'
 import { Navigation } from '@/components/Navigation'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { KeyboardShortcutHelp } from '@/components/common/KeyboardShortcutHelp'
+import { CommandPalette } from '@/components/CommandPalette'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
@@ -45,6 +46,7 @@ export default function RootLayout({
               </main>
             </div>
             <KeyboardShortcutHelp />
+            <CommandPalette />
           </ErrorBoundary>
         </Providers>
       </body>

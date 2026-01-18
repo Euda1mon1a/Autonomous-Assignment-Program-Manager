@@ -18,7 +18,6 @@ from sqlalchemy.orm import selectinload
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.models.person import Person
 from app.models.assignment import Assignment
-from app.schemas.swap import SwapCreate, SwapUpdate
 
 
 logger = logging.getLogger(__name__)
