@@ -199,6 +199,21 @@ Minor issues found in Codex review:
 - Acceptable fallback to empty schedules
 - Fix if `schedule_id` parameter becomes primary use case
 
+### 19. Spreadsheet Editor for Tier 1 Users (PR #740)
+Excel-like grid editor for schedule verification - eases transition for "normie" users comfortable with Excel.
+
+| Feature | Status | Spec |
+|---------|--------|------|
+| Grid display (residents × dates) | Specified | `docs/design/SPREADSHEET_EDITOR_SPEC.md` |
+| Click-to-edit with rotation dropdowns | Specified | Custom build (no license cost) |
+| SheetJS export to `.xlsx` | Library installed | `xlsx@0.20.2` already in deps |
+| ACGME hours validation per row | Specified | Reuses existing validators |
+| Keyboard nav (arrows, Tab, Enter) | Specified | ~3-4 days implementation |
+
+**Target:** Program coordinators, schedulers, admins who prefer Excel workflow.
+**Benefit:** Eliminates export→edit→reimport friction; keeps data in-app.
+**Ref:** PR #740, `docs/design/SPREADSHEET_EDITOR_SPEC.md`
+
 ---
 
 ## ALREADY WORKING (No Action Required)
@@ -223,7 +238,7 @@ Minor issues found in Codex review:
 | **CRITICAL** | 5 | 6 orphan routes, PII, doc contradictions, API mismatches, rollback data loss |
 | **HIGH** | 5 | frameworks, feature flags, MCP stubs, mock GUI, ACGME compliance gaps |
 | **MEDIUM** | 5 | Activity logging, emails, pagination, docs, CLI/security cleanup |
-| **LOW** | 3 | A/B testing, ML, time crystal |
+| **LOW** | 4 | A/B testing, ML, time crystal, spreadsheet editor (tier 1 UX) |
 
 ### Biggest Wins (Impact vs Effort)
 
