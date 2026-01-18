@@ -2,8 +2,43 @@
 
 > **Status:** Accepted
 > **Date:** 2026-01-18
-> **Decision:** Stay with Three.js/R3F, selectively add Theatre.js and Deck.gl
+> **Decision:** Stay with Three.js/R3F v8, selectively add Theatre.js and Deck.gl
 > **Context:** Evaluate alternative 3D libraries for schedule visualization
+> **Constraint:** React 18.2 locks us to R3F v8 (v9 requires React 19)
+
+---
+
+## Critical Constraint: React 18
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    ⚠️  DEPENDENCY LOCK                                  │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│   CURRENT STACK                         BLOCKED UPGRADE PATH            │
+│   ┌─────────────────┐                   ┌─────────────────┐             │
+│   │  React 18.2.0   │ ═══════╳═══════►  │  React 19.x     │             │
+│   │  Next.js 14.2   │                   │  Next.js 15.x   │             │
+│   │  R3F v8.18.0    │                   │  R3F v9.x       │             │
+│   └─────────────────┘                   └─────────────────┘             │
+│                                                                         │
+│   WHY R3F v9 IS BLOCKED:                                                │
+│   ┌─────────────────────────────────────────────────────────────┐      │
+│   │  @react-three/fiber@9.x peerDependencies:                   │      │
+│   │    react: "^19.0.0"        ◄── We have 18.2.0               │      │
+│   │    react-dom: "^19.0.0"    ◄── We have 18.2.0               │      │
+│   └─────────────────────────────────────────────────────────────┘      │
+│                                                                         │
+│   IMPACT:                                                               │
+│   • Postprocessing effects remain partially broken                      │
+│   • Must work within R3F v8 ecosystem                                   │
+│   • Theatre.js @theatre/r3f works fine (requires R3F ^8.13.6) ✓        │
+│                                                                         │
+│   UPGRADE PATH (FUTURE):                                                │
+│   React 19 stable + Next.js 15 stable → Then R3F v9 → Postprocessing   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -114,13 +149,14 @@
 │ Recharts       │ KEEP ✓  │ —         │ —          │ 2D charts covered   │
 │ Plotly         │ KEEP ✓  │ —         │ —          │ Interactive viz     │
 ├────────────────┼─────────┼───────────┼────────────┼─────────────────────┤
-│ Theatre.js     │ ADD ✓   │ P2 Medium │ ★★☆☆☆     │ Animation timeline  │
-│ Deck.gl        │ ADD ✓   │ P3 Low    │ ★★★☆☆     │ Geospatial only     │
+│ Theatre.js     │ ADD ✓   │ P1 High   │ ★★☆☆☆     │ Animation timeline  │
+│ Deck.gl        │ ADD ✓   │ P2 Medium │ ★★★☆☆     │ Geospatial only     │
 ├────────────────┼─────────┼───────────┼────────────┼─────────────────────┤
+│ R3F v9         │ BLOCKED │ —         │ ★★★★★     │ Requires React 19   │
 │ Babylon.js     │ REJECT  │ —         │ ★★★★★     │ Full rewrite needed │
 │ PixiJS         │ REJECT  │ —         │ ★★★☆☆     │ 2D only, niche use  │
 │ OGL.js         │ REJECT  │ —         │ ★★★★☆     │ Duplicates R3F      │
-│ Rapier         │ DEFER   │ P4 Future │ ★★★☆☆     │ If physics needed   │
+│ Rapier         │ DEFER   │ P3 Future │ ★★★☆☆     │ If physics needed   │
 └────────────────┴─────────┴───────────┴────────────┴─────────────────────┘
 ```
 
@@ -496,48 +532,56 @@
 
 ## Implementation Roadmap
 
-### Phase 1: R3F v9 Upgrade (P1)
+### Phase 0: R3F v9 Upgrade — BLOCKED
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  PHASE 1: REACT THREE FIBER v9 UPGRADE                                  │
+│  ⛔ BLOCKED: REACT THREE FIBER v9 UPGRADE                               │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│  Current Blocker:                                                       │
+│  BLOCKING DEPENDENCY:                                                   │
 │  ┌─────────────────────────────────────────────────────────────┐       │
-│  │  @react-three/postprocessing v3 requires R3F v9             │       │
-│  │  Currently on R3F v8.18.0                                    │       │
-│  │  Postprocessing effects DISABLED in VoxelScheduleView3D     │       │
+│  │                                                               │       │
+│  │  @react-three/fiber@9.x ──► requires ──► react@^19.0.0       │       │
+│  │                                              ▲                │       │
+│  │                                              │                │       │
+│  │  Our stack: react@18.2.0 ════════════════════╝ INCOMPATIBLE  │       │
+│  │                                                               │       │
 │  └─────────────────────────────────────────────────────────────┘       │
 │                                                                         │
-│  Steps:                                                                 │
+│  WHAT'S BLOCKED:                                                        │
+│  • @react-three/postprocessing full compatibility                       │
+│  • Bloom, Vignette, and other post-effects                             │
+│  • R3F v9 performance improvements                                      │
+│                                                                         │
+│  UNBLOCK CONDITIONS:                                                    │
 │  ┌────┐                                                                 │
-│  │ 1  │ npm install @react-three/fiber@^9.0.0                          │
+│  │ 1  │ React 19 reaches stable + battle-tested                        │
 │  └────┘                                                                 │
 │  ┌────┐                                                                 │
-│  │ 2  │ Update @react-three/drei to compatible version                 │
+│  │ 2  │ Next.js 15 stable with React 19 support                        │
 │  └────┘                                                                 │
 │  ┌────┐                                                                 │
-│  │ 3  │ Test all 4 existing 3D visualizations                          │
+│  │ 3  │ Audit all 50+ components for React 19 breaking changes         │
 │  └────┘                                                                 │
 │  ┌────┐                                                                 │
-│  │ 4  │ Re-enable postprocessing in VoxelScheduleView3D                │
-│  └────┘                                                                 │
-│  ┌────┐                                                                 │
-│  │ 5  │ Add Bloom, Vignette effects to all 3D scenes                   │
+│  │ 4  │ Update TanStack Query, Framer Motion, etc. for React 19        │
 │  └────┘                                                                 │
 │                                                                         │
-│  Difficulty: ★★☆☆☆                                                      │
-│  Risk: Medium (API changes between v8 and v9)                          │
+│  ESTIMATED UNBLOCK: When React 19 ecosystem matures (6-12 months?)     │
+│                                                                         │
+│  WORKAROUND (Current):                                                  │
+│  • Use @react-three/postprocessing@2.x (R3F v8 compatible)             │
+│  • Or implement effects via raw Three.js EffectComposer                │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Phase 2: Theatre.js Integration (P2)
+### Phase 1: Theatre.js Integration (P1 — ACTIONABLE NOW)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  PHASE 2: THEATRE.JS INTEGRATION                                        │
+│  ✅ PHASE 1: THEATRE.JS INTEGRATION (Works with R3F v8)                 │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
 │  Install:                                                               │
