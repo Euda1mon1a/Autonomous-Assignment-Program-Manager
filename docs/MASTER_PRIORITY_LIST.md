@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-18 (VaR endpoints merged, feature flag injection issue identified)
+> **Last Updated:** 2026-01-18 (Code review findings validated - both issues already fixed in PR #743)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -93,32 +93,25 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
 **Decision:** Keep all modules on roadmap. Integrate as features require.
 
-### 7. Feature Flags - Phase 1 Done, Phase 2 Needed
+### 7. ~~Feature Flags~~ ✅ RESOLVED
 - **Location:** `backend/app/features/` - 45KB of production-ready code
 - **Before:** 1 flag (`swap_marketplace_enabled`)
-- **After:** 5 flags with backend gating on 12+ exotic resilience endpoints
+- **After:** 5 flags with backend gating on 17 exotic resilience endpoints
 
 | Flag Key | Default | Target Roles | Purpose |
 |----------|---------|--------------|---------|
 | `swap_marketplace_enabled` | true | admin, coordinator, faculty | Original flag |
 | `labs_hub_enabled` | true | admin, coordinator | Gates `/admin/labs` hierarchy |
-| `exotic_resilience_enabled` | false | admin | Gates 12 `/resilience/exotic/*` endpoints |
+| `exotic_resilience_enabled` | false | admin | Gates 17 `/resilience/exotic/*` endpoints |
 | `voxel_visualization_enabled` | false | admin | Gates 3D voxel viz (perf-intensive) |
 | `command_center_enabled` | false | admin | Gates overseer dashboard |
 
-**⚠️ HIGH: Endpoints Missing `current_user` Injection**
-Most feature-flagged exotic resilience endpoints don't inject `current_user: User = Depends(get_current_active_user)`. The `@require_feature_flag` decorator pulls `current_user` from kwargs for role targeting. When `user_role` is None, `_check_role_target()` returns False for any flag with `target_roles` set, causing 404s even for admins.
+**~~HIGH: Endpoints Missing `current_user` Injection~~** ✅ FIXED
+All 17 feature-flagged endpoints now have `current_user: User = Depends(get_current_active_user)`.
+Issue identified in code review was based on commit `66a14461`, but PR #743 fixed this before merge.
 
-| Status | Count | Evidence |
-|--------|-------|----------|
-| Has `current_user` | 5 | Lines 538, 597, 681, 759, 792 |
-| Missing `current_user` | 12+ | Lines 535, 594, 678, 860, 931, 986, etc. |
-
-**Fix:** Add `current_user: User = Depends(get_current_active_user)` to all `@require_feature_flag` decorated endpoints.
-**Ref:** `docs/reviews/2026-01-18-commit-66a1446-review.md`
-
-**Phase 1 Resolved:** 2026-01-18 - Flags created, decorator applied
-**Phase 2 TODO:** Fix current_user injection, frontend `useFeatureFlag` hook, percentage rollouts
+**Resolved:** 2026-01-18 in PR #743
+**Future work:** Frontend `useFeatureFlag` hook, percentage rollouts, individual lab category flags
 
 ### 8. MCP Tool Placeholders (16 tools)
 
@@ -244,36 +237,32 @@ Endpoints created and wired to MCP tools:
 
 **Resolved:** 2026-01-18 in PR #744
 
-### 17. Seed Script Credentials (NEW)
-`scripts/seed_feature_flags.py` hard-codes a non-default admin password (`admin123` fallback), so a fresh DEBUG instance with default password will fail to seed flags.
+### 17. ~~Seed Script Credentials~~ ✅ RESOLVED
+Issue identified in code review was based on commit `66a14461` which had hard-coded `AdminPassword123!`.
+PR #743 fixed this - now uses `os.environ.get("ADMIN_PASSWORD", "admin123")` matching the app's default.
 
-| Issue | Location | Impact |
-|-------|----------|--------|
-| Hard-coded password | `seed_feature_flags.py:115` | Seed script fails on fresh installs |
-| No env var fallback | Same | Creates false sense flags were created |
-
-**Fix:** Read credentials from env vars or support a fallback list.
+**Resolved:** 2026-01-18 in PR #743
 **Ref:** `docs/reviews/2026-01-18-commit-66a1446-review.md`
 
 ---
 
 ## LOW (Backlog)
 
-### 17. A/B Testing Infrastructure
+### 18. A/B Testing Infrastructure
 - **Location:** `backend/app/experiments/`
 - Infrastructure exists, route registered
 - Minimal production usage - consider for Labs rollout
 
-### 18. ML Workload Analysis
+### 19. ML Workload Analysis
 - `ml.py` returns "placeholder response"
 - Low priority unless ML features requested
 
-### 19. Time Crystal DB Loading
+### 20. Time Crystal DB Loading
 - `time_crystal_tools.py:281, 417`
 - Acceptable fallback to empty schedules
 - Fix if `schedule_id` parameter becomes primary use case
 
-### 20. Spreadsheet Editor for Tier 1 Users (PR #740)
+### 21. Spreadsheet Editor for Tier 1 Users (PR #740)
 Excel-like grid editor for schedule verification - eases transition for "normie" users comfortable with Excel.
 
 | Feature | Status | Spec |
@@ -334,8 +323,8 @@ Added `psutil>=5.9.0` to `requirements.txt` for system profiling capabilities.
 | Priority | Issues | Scope |
 |----------|--------|-------|
 | **CRITICAL** | 1 open, 4 resolved | ~~orphan routes~~✅, PII, ~~doc contradictions~~✅, ~~API mismatches~~✅, ~~rollback data loss~~✅ |
-| **HIGH** | 4 open, 1 resolved | frameworks, feature flags (Phase 2), MCP stubs (12/16 wired), mock GUI, ACGME compliance |
-| **MEDIUM** | 2 open, 5 resolved | ~~activity logging~~✅, ~~emails~~✅, pagination, ~~docs~~✅, ~~CLI/security cleanup~~✅, ~~VaR endpoints~~✅, seed script creds |
+| **HIGH** | 3 open, 2 resolved | frameworks, ~~feature flags~~✅, MCP stubs (12/16 wired), mock GUI, ACGME compliance |
+| **MEDIUM** | 1 open, 6 resolved | ~~activity logging~~✅, ~~emails~~✅, pagination, ~~docs~~✅, ~~CLI/security cleanup~~✅, ~~VaR endpoints~~✅, ~~seed script~~✅ |
 | **LOW** | 4 | A/B testing, ML, time crystal, spreadsheet editor (tier 1 UX) |
 | **INFRA** | 3 resolved | ~~bind mounts~~✅, ~~academic year fix~~✅, ~~psutil dep~~✅ |
 
@@ -346,7 +335,7 @@ Added `psutil>=5.9.0` to `requirements.txt` for system profiling capabilities.
 3. ~~**Fix rollback serialization**~~ ✅ DONE → Schedule backup/restore now captures all fields
 4. **Integrate orphan frameworks** → Saga for swaps, Deployment for CI/CD, gRPC for MCP (ON ROADMAP)
 5. ~~**Fix doc contradictions**~~ ✅ DONE → Trust in documentation restored
-6. **Fix feature flag current_user injection** → HIGH - 12+ exotic endpoints unreachable (Phase 2)
+6. ~~**Fix feature flag issues**~~ ✅ DONE → All 17 endpoints have current_user injection, seed script uses env vars
 7. **Wire MCP tools** → 12 tools wired (2026-01-18), 6 Hopfield/free-energy remain
 8. **Wire mock dashboards** → Real data for ResilienceOverseer, SovereignPortal (MEDIUM effort)
 
