@@ -2,6 +2,7 @@
  * Hopfield Energy Landscape
  *
  * 3D visualization of schedule stability using neural attractor dynamics.
+ * Now with real API data integration.
  */
 
 export { HopfieldVisualizer } from './HopfieldVisualizer';
@@ -15,7 +16,18 @@ export type {
   EnergySurfaceProps,
   EnergyBallProps,
   ControlPanelProps,
+  HopfieldEnergyResponse,
+  EnergyMetricsResponse,
+  StabilityLevel,
 } from './types';
+
+// Re-export hooks from centralized location
+export {
+  useHopfieldEnergy,
+  useNearbyAttractors,
+  useBasinDepth,
+  useSpuriousAttractors,
+} from '@/hooks/useHopfield';
 
 // Constants
 export {
