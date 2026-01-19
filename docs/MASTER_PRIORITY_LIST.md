@@ -115,7 +115,7 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
 ### 8. MCP Tool Placeholders (16 tools)
 
-**Progress:** 10 tools now wired to backend (2026-01-18 `feature/master-priority-implementation`)
+**Progress:** 14 tools now wired to backend (2026-01-18)
 
 **API WIRED (real backend, fallback on error):**
 | Tool | Domain | Backend Endpoint |
@@ -123,11 +123,15 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 | `assess_immune_response_tool` | Immune System | `/resilience/exotic/immune/assess` |
 | `check_memory_cells_tool` | Immune System | `/resilience/exotic/immune/memory-cells` |
 | `analyze_antibody_response_tool` | Immune System | `/resilience/exotic/immune/antibody-analysis` |
-| `get_unified_critical_index_tool` | Resilience | `/resilience/exotic/composite/unified-critical-index` |
-| `calculate_recovery_distance_tool` | Resilience | `/resilience/exotic/composite/recovery-distance` |
-| `assess_creep_fatigue_tool` | Resilience | `/resilience/exotic/composite/creep-fatigue` |
-| `analyze_transcription_triggers_tool` | Resilience | `/resilience/exotic/composite/transcription-factors` |
+| `get_unified_critical_index_tool` | Composite | `/resilience/exotic/composite/unified-critical-index` |
+| `calculate_recovery_distance_tool` | Composite | `/resilience/exotic/composite/recovery-distance` |
+| `assess_creep_fatigue_tool` | Composite | `/resilience/exotic/composite/creep-fatigue` |
+| `analyze_transcription_triggers_tool` | Composite | `/resilience/exotic/composite/transcription-factors` |
 | `calculate_shapley_workload_tool` | Fairness | `/mcp-proxy/calculate-shapley-workload` |
+| `calculate_hopfield_energy_tool` | Hopfield | `/resilience/exotic/hopfield/energy` |
+| `find_nearby_attractors_tool` | Hopfield | `/resilience/exotic/hopfield/attractors` |
+| `measure_basin_depth_tool` | Hopfield | `/resilience/exotic/hopfield/basin-depth` |
+| `detect_spurious_attractors_tool` | Hopfield | `/resilience/exotic/hopfield/spurious` |
 
 **MISSING BACKEND ENDPOINTS (MCP has API calls, backend 404s):**
 | Tool | Domain | Expected Endpoint |
@@ -140,10 +144,6 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 |------|--------|
 | `optimize_free_energy_tool` | Thermodynamics |
 | `analyze_energy_landscape_tool` | Thermodynamics |
-| `calculate_hopfield_energy_tool` | Hopfield |
-| `find_nearby_attractors_tool` | Hopfield |
-| `measure_basin_depth_tool` | Hopfield |
-| `detect_spurious_attractors_tool` | Hopfield |
 
 **Note:** Core ACGME validation tools are REAL implementations.
 
