@@ -74,6 +74,19 @@ function _extractCodeBlock(content: string, metadata?: StreamMetadata): CodeBloc
 }
 
 /**
+ * Infer artifact type from tool name.
+ * Used to categorize tool results for UI display.
+ */
+function inferArtifactType(toolName?: string): ChatArtifact['type'] {
+  if (!toolName) return 'report';
+  const name = toolName.toLowerCase();
+  if (name.includes('schedule') || name.includes('assignment')) return 'schedule';
+  if (name.includes('analysis') || name.includes('validate') || name.includes('check')) return 'analysis';
+  if (name.includes('config') || name.includes('setting')) return 'configuration';
+  return 'report';
+}
+
+/**
  * Helper function to extract ChatArtifact from streaming data.
  * Kept for potential future use with tool results.
  */
@@ -215,6 +228,7 @@ export const useClaudeChat = () => {
   const currentAssistantMessageIdRef = useRef<string | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleWsMessageRef = useRef<((data: WsMessage) => void) | null>(null);
+  const onStreamUpdateRef = useRef<((update: StreamUpdate) => void) | null>(null);
 
   // Persist session to localStorage when it changes
   useEffect(() => {
@@ -371,8 +385,47 @@ export const useClaudeChat = () => {
       }
 
       case 'tool_result': {
-        // Tool result - could display in UI
+        // Tool result - surface to UI as artifact and notify callback
         console.log('[useClaudeChat] Tool result:', data.id, data.result);
+
+        // Extract tool name from result if available, otherwise use generic title
+        const resultData = data.result || {};
+        const toolTitle = (resultData.tool_name as string) || `Tool Result (${data.id.slice(0, 8)})`;
+
+        // Create artifact from tool result
+        const artifact: ChatArtifact = {
+          id: data.id || uuidv4(),
+          type: inferArtifactType(toolTitle),
+          title: toolTitle,
+          data: resultData,
+          createdAt: new Date(),
+        };
+
+        // Add artifact to current assistant message
+        const messageId = currentAssistantMessageIdRef.current;
+        if (messageId) {
+          setMessages(prev =>
+            prev.map(msg =>
+              msg.id === messageId
+                ? { ...msg, artifacts: [...(msg.artifacts || []), artifact] }
+                : msg
+            )
+          );
+        }
+
+        // Notify stream update callback (used by ClaudeCodeChat for artifact handling)
+        if (onStreamUpdateRef.current) {
+          onStreamUpdateRef.current({
+            type: 'artifact',
+            content: toolTitle,
+            metadata: {
+              id: artifact.id,
+              type: artifact.type,
+              title: artifact.title,
+              createdAt: artifact.createdAt.toISOString(),
+            },
+          });
+        }
         break;
       }
 
@@ -504,6 +557,9 @@ export const useClaudeChat = () => {
         setError('Message cannot be empty');
         return;
       }
+
+      // Store stream update callback for use in message handler
+      onStreamUpdateRef.current = _onStreamUpdate || null;
 
       // Ensure WebSocket is connected
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {

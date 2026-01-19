@@ -165,12 +165,25 @@ export function useBlockRanges(
       // causing navigation to only see Block 0 out of 1,516+ blocks
       let allBlocks: Block[] = []
       let page = 1
-      let hasMore = true
+      const MAX_PAGES = 100 // Safety limit to prevent infinite loops
+      let previousCount = 0
 
-      while (hasMore) {
+      while (page <= MAX_PAGES) {
         const response = await get<ListResponse<Block>>(`/blocks?page=${page}&limit=500`)
         allBlocks = [...allBlocks, ...response.items]
-        hasMore = response.items.length === 500
+
+        // Stop if: no items returned, less than limit (last page), or no new items added
+        // The "no new items" check handles backends that don't support pagination
+        // and return the full list every time
+        if (
+          response.items.length === 0 ||
+          response.items.length < 500 ||
+          allBlocks.length === previousCount
+        ) {
+          break
+        }
+
+        previousCount = allBlocks.length
         page++
       }
       // Group blocks by blockNumber and calculate date ranges
