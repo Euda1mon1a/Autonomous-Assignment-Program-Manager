@@ -25,6 +25,16 @@ export interface EnergyState {
 }
 
 /**
+ * API response types for real data integration
+ * Re-exported from exotic-resilience API client
+ */
+export type {
+  HopfieldEnergyResponse,
+  EnergyMetricsResponse,
+  StabilityLevel,
+} from '@/api/exotic-resilience';
+
+/**
  * Props for the main visualizer component
  */
 export interface HopfieldVisualizerProps {
@@ -36,6 +46,14 @@ export interface HopfieldVisualizerProps {
   showControls?: boolean;
   /** Custom class name */
   className?: string;
+  /** Real API data for metrics display */
+  apiData?: import('@/api/exotic-resilience').HopfieldEnergyResponse;
+  /** Loading state for API data */
+  isLoading?: boolean;
+  /** Error state for API data */
+  error?: string | null;
+  /** Callback to trigger analysis */
+  onAnalyze?: () => void;
 }
 
 /**

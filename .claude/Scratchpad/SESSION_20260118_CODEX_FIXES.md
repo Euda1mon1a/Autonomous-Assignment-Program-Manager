@@ -77,6 +77,29 @@ PHASE 3 (Verification):
 
 ---
 
+### 5. Hopfield API Infrastructure + Page Integration (PR #753)
+
+**Branch:** `feature/hopfield-api-wiring`
+**Status:** ✅ COMPLETE
+
+| Component | File | Status |
+|-----------|------|--------|
+| API Functions | `frontend/src/api/exotic-resilience.ts` | ✅ Added 3 functions + types |
+| Hooks | `frontend/src/hooks/useHopfield.ts` | ✅ Created 4 mutations |
+| Visualizer Props | `frontend/src/features/hopfield-energy/` | ✅ Accepts apiData prop |
+| Page Integration | `/admin/labs/optimization` | ✅ HopfieldVisualizerWrapper calls hooks |
+
+**Implementation:**
+- `findNearbyAttractors()`, `measureBasinDepth()`, `detectSpuriousAttractors()` API functions
+- `useHopfieldEnergy()`, `useNearbyAttractors()`, etc. hooks
+- HopfieldVisualizer accepts `apiData` prop and displays metrics panel
+- Loading/error states in visualizer
+- `HopfieldVisualizerWrapper` component calls `useHopfieldEnergy()` mutation
+- "Analyze Schedule" button triggers 30-day schedule analysis
+- Results display: stability level, total energy, recommendations
+
+---
+
 ## Outstanding After This Session
 
 | Item | Status |
@@ -85,6 +108,7 @@ PHASE 3 (Verification):
 | ACGME Call Duty Gaps | Deferred - MEDCOM ruling |
 | Stigmergy Three.js | Terminal Bravo working on it |
 | Service Layer Pagination | Not started (MEDIUM) |
+| ~~Hopfield Page Integration~~ | ✅ Completed - wrapper calls hooks and passes data |
 
 ---
 
@@ -93,3 +117,4 @@ PHASE 3 (Verification):
 1. **Utilization scaling:** Backend returns 0-1, not 0-100. Frontend was dividing by 100 unnecessarily.
 2. **Stigmergy response:** Backend wasn't wrapping in schema structure, causing silent fallback to mock data.
 3. **Codex false positives:** Always verify - `useVulnerabilityReport` was correctly implemented despite Codex flagging it.
+4. **Hopfield "wiring" is multi-step:** Creating hooks/types is infrastructure, but page integration is separate work. Visualizer needs a parent component to call hooks and pass data down.

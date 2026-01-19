@@ -9,6 +9,7 @@
  * - Ball representing current schedule state
  * - Gradient descent to find stable configurations
  * - Coverage and balance sliders
+ * - Real API data integration for actual schedule metrics
  *
  * @route Part of /admin/labs/optimization
  */
@@ -24,12 +25,86 @@ import { EnergySurface } from './components/EnergySurface';
 import { EnergyBall } from './components/EnergyBall';
 import { ControlPanel } from './components/ControlPanel';
 import type { HopfieldVisualizerProps, ReadinessStatus } from './types';
+import type { StabilityLevel } from '@/api/exotic-resilience';
+
+/**
+ * Get color scheme for stability level from API
+ */
+function getStabilityColor(level: StabilityLevel): {
+  bg: string;
+  text: string;
+  border: string;
+  label: string;
+} {
+  switch (level) {
+    case 'very_stable':
+      return {
+        bg: 'bg-emerald-900/40',
+        text: 'text-emerald-400',
+        border: 'border-emerald-700/50',
+        label: 'Very Stable',
+      };
+    case 'stable':
+      return {
+        bg: 'bg-green-900/40',
+        text: 'text-green-400',
+        border: 'border-green-700/50',
+        label: 'Stable',
+      };
+    case 'marginally_stable':
+      return {
+        bg: 'bg-amber-900/40',
+        text: 'text-amber-400',
+        border: 'border-amber-700/50',
+        label: 'Marginally Stable',
+      };
+    case 'unstable':
+      return {
+        bg: 'bg-orange-900/40',
+        text: 'text-orange-400',
+        border: 'border-orange-700/50',
+        label: 'Unstable',
+      };
+    case 'highly_unstable':
+      return {
+        bg: 'bg-red-900/40',
+        text: 'text-red-400',
+        border: 'border-red-700/50',
+        label: 'Highly Unstable',
+      };
+    default:
+      return {
+        bg: 'bg-slate-900/40',
+        text: 'text-slate-400',
+        border: 'border-slate-700/50',
+        label: 'Unknown',
+      };
+  }
+}
+
+/**
+ * Format timestamp for display
+ */
+function formatTimestamp(isoString: string): string {
+  try {
+    return new Date(isoString).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return 'Unknown';
+  }
+}
 
 export function HopfieldVisualizer({
   initialCoverage = 50,
   initialBalance = 50,
   showControls = true,
   className = '',
+  apiData,
+  isLoading = false,
+  error = null,
+  onAnalyze,
 }: HopfieldVisualizerProps): JSX.Element {
   const [coverage, setCoverage] = useState(initialCoverage);
   const [balance, setBalance] = useState(initialBalance);
@@ -130,6 +205,114 @@ export function HopfieldVisualizer({
           onToggleSettle={handleToggleSettle}
         />
       )}
+
+      {/* API Metrics Panel */}
+      <div className="absolute top-4 right-4 max-w-sm">
+        {/* Loading State */}
+        {isLoading && (
+          <div className="bg-slate-950/90 border border-slate-800 p-4 rounded-xl backdrop-blur-md text-white">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm text-slate-300">Analyzing schedule...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="bg-red-950/90 border border-red-800 p-4 rounded-xl backdrop-blur-md text-white">
+            <h3 className="text-sm font-semibold text-red-300 mb-2">Analysis Error</h3>
+            <p className="text-xs text-red-400">{error}</p>
+            {onAnalyze && (
+              <button
+                onClick={onAnalyze}
+                className="mt-3 px-3 py-1.5 text-xs bg-red-800/50 hover:bg-red-800/70 rounded transition-colors"
+              >
+                Retry
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* API Data Display */}
+        {apiData && !isLoading && !error && (
+          <div className={`border p-4 rounded-xl backdrop-blur-md text-white ${getStabilityColor(apiData.stabilityLevel as StabilityLevel).bg} ${getStabilityColor(apiData.stabilityLevel as StabilityLevel).border}`}>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-slate-200">Schedule Analysis</h3>
+              <span className={`px-2 py-1 text-xs rounded-full border ${getStabilityColor(apiData.stabilityLevel as StabilityLevel).text} ${getStabilityColor(apiData.stabilityLevel as StabilityLevel).border}`}>
+                {getStabilityColor(apiData.stabilityLevel as StabilityLevel).label}
+              </span>
+            </div>
+
+            {/* Key Metrics */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-black/20 rounded p-2">
+                <div className="text-xs text-slate-400">Total Energy</div>
+                <div className={`text-lg font-bold ${getStabilityColor(apiData.stabilityLevel as StabilityLevel).text}`}>
+                  {apiData.metrics.totalEnergy.toFixed(3)}
+                </div>
+              </div>
+              <div className="bg-black/20 rounded p-2">
+                <div className="text-xs text-slate-400">Stability Score</div>
+                <div className={`text-lg font-bold ${getStabilityColor(apiData.stabilityLevel as StabilityLevel).text}`}>
+                  {(apiData.metrics.stabilityScore * 100).toFixed(0)}%
+                </div>
+              </div>
+              <div className="bg-black/20 rounded p-2">
+                <div className="text-xs text-slate-400">Assignments</div>
+                <div className="text-lg font-bold text-slate-200">{apiData.assignmentsAnalyzed}</div>
+              </div>
+              <div className="bg-black/20 rounded p-2">
+                <div className="text-xs text-slate-400">Local Minimum</div>
+                <div className={`text-lg font-bold ${apiData.metrics.isLocalMinimum ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  {apiData.metrics.isLocalMinimum ? 'Yes' : 'No'}
+                </div>
+              </div>
+            </div>
+
+            {/* Interpretation */}
+            <div className="mb-4 p-3 bg-black/20 rounded">
+              <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Analysis</h4>
+              <p className="text-xs text-slate-300 leading-relaxed">{apiData.interpretation}</p>
+            </div>
+
+            {/* Recommendations */}
+            {apiData.recommendations && apiData.recommendations.length > 0 && (
+              <div className="mb-3">
+                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Recommendations</h4>
+                <ul className="space-y-1">
+                  {apiData.recommendations.slice(0, 3).map((rec, idx) => (
+                    <li key={idx} className="flex gap-2 text-xs">
+                      <span className="text-cyan-400 flex-shrink-0">•</span>
+                      <span className="text-slate-300">{rec}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Metadata */}
+            <div className="pt-2 border-t border-slate-700/30 flex justify-between text-xs text-slate-500">
+              <span>{formatTimestamp(apiData.analyzedAt)}</span>
+              <span>{apiData.periodStart} - {apiData.periodEnd}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Analyze Button (when no data and not loading) */}
+        {!apiData && !isLoading && !error && onAnalyze && (
+          <button
+            onClick={onAnalyze}
+            className="bg-cyan-900/40 hover:bg-cyan-900/60 border border-cyan-700/50 px-4 py-3 rounded-xl backdrop-blur-md text-white transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🔬</span>
+              <span className="text-sm font-medium">Analyze Schedule</span>
+            </div>
+          </button>
+        )}
+      </div>
 
       {/* Info Panel */}
       <div className="absolute bottom-4 right-4 max-w-xs bg-slate-950/90 border border-slate-800 p-4 rounded-xl backdrop-blur-md text-white">

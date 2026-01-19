@@ -43,6 +43,24 @@ export interface MetastabilityRequest {
   temperature?: number;
 }
 
+export interface NearbyAttractorsRequest {
+  startDate: string;
+  endDate: string;
+  maxDistance?: number; // 1-50, default 10
+}
+
+export interface BasinDepthRequest {
+  startDate: string;
+  endDate: string;
+  numPerturbations?: number; // 10-1000, default 100
+}
+
+export interface SpuriousAttractorsRequest {
+  startDate: string;
+  endDate: string;
+  searchRadius?: number; // 5-50, default 20
+}
+
 // =============================================================================
 // Response Types (camelCase for TypeScript - axios converts from snake_case)
 // =============================================================================
@@ -113,6 +131,92 @@ export interface MetastabilityResponse {
   source: string;
 }
 
+// Hopfield Attractor Types
+export type StabilityLevel =
+  | "very_stable"
+  | "stable"
+  | "marginally_stable"
+  | "unstable"
+  | "highly_unstable";
+
+export type AttractorType =
+  | "global_minimum"
+  | "local_minimum"
+  | "spurious"
+  | "metastable"
+  | "saddle_point";
+
+export interface AttractorInfoResponse {
+  attractorId: string;
+  attractorType: AttractorType;
+  energyLevel: number;
+  basinDepth: number;
+  basinVolume: number;
+  hammingDistance: number;
+  patternDescription: string;
+  confidence: number;
+}
+
+export interface NearbyAttractorsResponse {
+  analyzedAt: string;
+  currentStateEnergy: number;
+  attractorsFound: number;
+  attractors: AttractorInfoResponse[];
+  globalMinimumIdentified: boolean;
+  currentBasinId: string | null;
+  interpretation: string;
+  recommendations: string[];
+  source: string;
+}
+
+export interface BasinMetricsResponse {
+  minEscapeEnergy: number;
+  avgEscapeEnergy: number;
+  maxEscapeEnergy: number;
+  basinStabilityIndex: number;
+  numEscapePaths: number;
+  nearestSaddleDistance: number;
+  basinRadius: number;
+  criticalPerturbationSize: number;
+}
+
+export interface BasinDepthResponse {
+  analyzedAt: string;
+  scheduleId: string | null;
+  attractorId: string;
+  metrics: BasinMetricsResponse;
+  stabilityLevel: StabilityLevel;
+  isRobust: boolean;
+  robustnessThreshold: number;
+  interpretation: string;
+  recommendations: string[];
+  source: string;
+}
+
+export interface SpuriousAttractorInfoResponse {
+  attractorId: string;
+  energyLevel: number;
+  basinSize: number;
+  antiPatternType: string;
+  description: string;
+  riskLevel: string;
+  distanceFromValid: number;
+  probabilityOfCapture: number;
+  mitigationStrategy: string;
+}
+
+export interface SpuriousAttractorsResponse {
+  analyzedAt: string;
+  spuriousAttractorsFound: number;
+  spuriousAttractors: SpuriousAttractorInfoResponse[];
+  totalBasinCoverage: number;
+  highestRiskAttractor: string | null;
+  isCurrentStateSpurious: boolean;
+  interpretation: string;
+  recommendations: string[];
+  source: string;
+}
+
 // =============================================================================
 // API Functions
 // =============================================================================
@@ -167,6 +271,57 @@ export async function analyzeHopfieldEnergy(
   request: HopfieldEnergyRequest
 ): Promise<HopfieldEnergyResponse> {
   return post<HopfieldEnergyResponse>(`${BASE_URL}/hopfield/energy`, request);
+}
+
+/**
+ * Find nearby attractors in the energy landscape.
+ *
+ * Identifies stable states near the current schedule configuration
+ * using Hamming distance exploration.
+ *
+ * @param request - Date range and optional max distance
+ * @returns Nearby attractors with basin information
+ */
+export async function findNearbyAttractors(
+  request: NearbyAttractorsRequest
+): Promise<NearbyAttractorsResponse> {
+  return post<NearbyAttractorsResponse>(
+    `${BASE_URL}/hopfield/attractors`,
+    request
+  );
+}
+
+/**
+ * Measure basin of attraction depth.
+ *
+ * Determines how robust the current schedule state is by
+ * analyzing escape energy barriers.
+ *
+ * @param request - Date range and perturbation count
+ * @returns Basin metrics with robustness assessment
+ */
+export async function measureBasinDepth(
+  request: BasinDepthRequest
+): Promise<BasinDepthResponse> {
+  return post<BasinDepthResponse>(`${BASE_URL}/hopfield/basin-depth`, request);
+}
+
+/**
+ * Detect spurious attractors (scheduling anti-patterns).
+ *
+ * Identifies local minima that represent suboptimal or
+ * invalid scheduling configurations.
+ *
+ * @param request - Date range and search radius
+ * @returns Spurious attractors with risk assessment
+ */
+export async function detectSpuriousAttractors(
+  request: SpuriousAttractorsRequest
+): Promise<SpuriousAttractorsResponse> {
+  return post<SpuriousAttractorsResponse>(
+    `${BASE_URL}/hopfield/spurious`,
+    request
+  );
 }
 
 /**
