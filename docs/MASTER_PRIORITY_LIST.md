@@ -117,7 +117,7 @@ Issue identified in code review was based on commit `66a14461`, but PR #743 fixe
 
 **Progress:** 14 tools now wired to backend (2026-01-18)
 
-**API WIRED (real backend, fallback on error):**
+**FULLY WORKING (real backend with real data):**
 | Tool | Domain | Backend Endpoint |
 |------|--------|------------------|
 | `assess_immune_response_tool` | Immune System | `/resilience/exotic/immune/assess` |
