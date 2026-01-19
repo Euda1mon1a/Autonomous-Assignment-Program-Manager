@@ -153,7 +153,7 @@ export function HopfieldVisualizer({
   }, []);
 
   return (
-    <div className={`relative w-full h-full bg-[#0f0f1a] ${className}`}>
+    <div className={`relative w-full h-screen bg-[#0f0f1a] ${className}`}>
       {/* 3D Canvas */}
       <Canvas shadows gl={{ antialias: true }}>
         <PerspectiveCamera makeDefault position={[4, 4, 4]} fov={60} />
