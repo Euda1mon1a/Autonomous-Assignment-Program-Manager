@@ -108,7 +108,7 @@ export function BridgeSyncVisualizer({
   }, []);
 
   return (
-    <div className={`relative w-full h-full bg-[#0a0a0f] ${className}`}>
+    <div className={`relative w-full h-screen bg-[#0a0a0f] ${className}`}>
       {/* 3D Canvas */}
       <Canvas shadows gl={{ antialias: true }}>
         <PerspectiveCamera makeDefault position={[0, 2, 8]} fov={60} />

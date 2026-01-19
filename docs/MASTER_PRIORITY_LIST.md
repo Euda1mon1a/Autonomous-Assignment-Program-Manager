@@ -1,10 +1,35 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-18 (PR #750: Codex fixes + resilience visualizers wired)
+> **Last Updated:** 2026-01-18 (PR #753: Hopfield API wiring + Bottleneck Flow visualization)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
+
+---
+
+## PENDING REVIEW
+
+### PAI² Governance Revision Proposal
+**File:** [`docs/proposals/PAI2_GOVERNANCE_REVISION_PROPOSAL.md`](proposals/PAI2_GOVERNANCE_REVISION_PROPOSAL.md)
+**Date:** 2026-01-18
+**Source:** PLAN_PARTY (10 probes) analysis of HUMAN_REPORT
+
+Addresses 7 gaps in PAI² governance framework:
+
+| Gap | Severity | Summary |
+|-----|----------|---------|
+| 1 | HIGH | No standardized handoff kit ORCH→Deputies |
+| 2 | MEDIUM | Exceptions (USASOC/user/subagent) not surfaced |
+| 3 | LOW | ORCHESTRATOR not in agents.yaml |
+| 4 | MEDIUM | Standing orders dispersed across identity cards |
+| 5 | LOW | MCP audit logs not visible in-repo |
+| 6 | MEDIUM | /force-multiplier lacks RAG health check |
+| 7 | HIGH | No formal offline SOP |
+
+**Decision Required:** Gap 3 has 5/5 probe split - Option A (add to yaml), B (identity only), or C (spawnable:false flag)?
+
+**Action:** Review proposal, make Gap 3 decision, approve phases.
 
 ---
 
@@ -161,6 +186,8 @@ Issue identified in code review was based on commit `66a14461`, but PR #743 fixe
 | Keystone Species | ✗ | ✗ | Not implemented | - |
 | Quantum Zeno | ✗ | ✗ | Not implemented | - |
 | Stigmergy | ✓ | ✗ | `app/admin/visualizations/stigmergy-flow/` | API ✅ (PR #750) |
+| Bottleneck Flow | ✓ | ✗ | `features/bottleneck-flow/` | Mock ✅ (PR #753) |
+| Bridge Sync | ✓ | ✗ | `features/bridge-sync/` | Mock ✅ (PR #753) |
 | Static Stability | ✓ | ✗ | `features/sovereign-portal/` | API ✅ |
 | Le Chatelier | ✗ | ✓ | MCP tool analysis | API |
 
@@ -183,8 +210,10 @@ Issue identified in code review was based on commit `66a14461`, but PR #743 fixe
 | Free Energy | `features/free-energy/` | ✅ New visualizer (PR #750) |
 | Energy Landscape | `features/energy-landscape/` | ✅ New visualizer (PR #750) |
 | Hopfield Network | `features/hopfield-energy/` | ✅ Fully wired (PR #753) |
+| Bottleneck Flow | `features/bottleneck-flow/` | ✅ New visualizer (PR #753) |
+| Bridge Sync | `features/bridge-sync/` | ✅ Height fixed (PR #753) |
 
-**Resolved:** 2026-01-18 (PR #750 visualizers, PR #753 Hopfield complete)
+**Resolved:** 2026-01-18 (PR #750 visualizers, PR #753 Hopfield + Bottleneck + Bridge)
 
 ### 10. ACGME Compliance Validation Gaps
 Call duty and performance profiling have edge cases:
