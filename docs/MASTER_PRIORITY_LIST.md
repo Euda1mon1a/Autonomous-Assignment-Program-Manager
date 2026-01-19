@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-18 (Code review findings validated - both issues already fixed in PR #743)
+> **Last Updated:** 2026-01-18 (Hopfield MCP backend wired PR #747)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -146,6 +146,27 @@ Issue identified in code review was based on commit `66a14461`, but PR #743 fixe
 | `analyze_energy_landscape_tool` | Thermodynamics |
 
 **Note:** Core ACGME validation tools are REAL implementations.
+
+**Frontend Visualizer/Dashboard Status:**
+
+| Module | Viz | Dash | Frontend Location | Data |
+|--------|-----|------|-------------------|------|
+| Unified Critical Index | ✓ | ✓ | `features/resilience/ResilienceHub.tsx` | API |
+| Recovery Distance | ✗ | ✗ | Not implemented | - |
+| Creep Fatigue | ✗ | ✗ | Not implemented | - |
+| Transcription Factors | ✗ | ✗ | Not implemented | - |
+| Hopfield Network | ✓ | ✗ | `features/hopfield-energy/` | Mock |
+| Free Energy | ✗ | ✗ | Not implemented | - |
+| Energy Landscape | ✗ | ✗ | Not implemented | - |
+| Circadian Phase | ✓ | ✗ | `features/synapse-monitor/` | Mock |
+| Penrose Efficiency | ✗ | ✗ | Not implemented | - |
+| Anderson Localization | ✗ | ✗ | Not implemented | - |
+| Persistent Homology | ✗ | ✗ | Not implemented | - |
+| Keystone Species | ✗ | ✗ | Not implemented | - |
+| Quantum Zeno | ✗ | ✗ | Not implemented | - |
+| Stigmergy | ✓ | ✗ | `app/admin/visualizations/stigmergy-flow/` | Mock |
+| Static Stability | ✓ | ✗ | `features/sovereign-portal/` | API |
+| Le Chatelier | ✗ | ✓ | MCP tool analysis | API |
 
 ### 9. GUI Components Using Mock Data (10 components)
 
@@ -323,7 +344,7 @@ Added `psutil>=5.9.0` to `requirements.txt` for system profiling capabilities.
 | Priority | Issues | Scope |
 |----------|--------|-------|
 | **CRITICAL** | 1 open, 4 resolved | ~~orphan routes~~✅, PII, ~~doc contradictions~~✅, ~~API mismatches~~✅, ~~rollback data loss~~✅ |
-| **HIGH** | 3 open, 2 resolved | frameworks, ~~feature flags~~✅, MCP stubs (12/16 wired), mock GUI, ACGME compliance |
+| **HIGH** | 3 open, 2 resolved | frameworks, ~~feature flags~~✅, MCP stubs (15/16 wired, 2 remain), mock GUI, ACGME compliance |
 | **MEDIUM** | 1 open, 6 resolved | ~~activity logging~~✅, ~~emails~~✅, pagination, ~~docs~~✅, ~~CLI/security cleanup~~✅, ~~VaR endpoints~~✅, ~~seed script~~✅ |
 | **LOW** | 4 | A/B testing, ML, time crystal, spreadsheet editor (tier 1 UX) |
 | **INFRA** | 3 resolved | ~~bind mounts~~✅, ~~academic year fix~~✅, ~~psutil dep~~✅ |
@@ -336,8 +357,9 @@ Added `psutil>=5.9.0` to `requirements.txt` for system profiling capabilities.
 4. **Integrate orphan frameworks** → Saga for swaps, Deployment for CI/CD, gRPC for MCP (ON ROADMAP)
 5. ~~**Fix doc contradictions**~~ ✅ DONE → Trust in documentation restored
 6. ~~**Fix feature flag issues**~~ ✅ DONE → All 17 endpoints have current_user injection, seed script uses env vars
-7. **Wire MCP tools** → 12 tools wired (2026-01-18), 6 Hopfield/free-energy remain
-8. **Wire mock dashboards** → Real data for ResilienceOverseer, SovereignPortal (MEDIUM effort)
+7. ~~**Wire Hopfield MCP tools**~~ ✅ DONE (PR #747) → 4 endpoints with real backend calculations
+8. **Wire remaining MCP tools** → 2 thermodynamics tools remain (free energy, energy landscape)
+9. **Wire mock dashboards** → Real data for ResilienceOverseer, SovereignPortal (MEDIUM effort)
 
 ---
 
