@@ -151,7 +151,7 @@ Issue identified in code review was based on commit `66a14461`, but PR #743 fixe
 | Recovery Distance | ✗ | ✗ | Not implemented | - |
 | Creep Fatigue | ✗ | ✗ | Not implemented | - |
 | Transcription Factors | ✗ | ✗ | Not implemented | - |
-| Hopfield Network | ✓ | ✗ | `features/hopfield-energy/` | Mock |
+| Hopfield Network | ✓ | ✓ | `features/hopfield-energy/` | API ✅ |
 | Free Energy | ✓ | ✗ | `features/free-energy/` | API ✅ |
 | Energy Landscape | ✓ | ✗ | `features/energy-landscape/` | API ✅ |
 | Circadian Phase | ✓ | ✗ | `features/synapse-monitor/` | API ✅ |
@@ -182,11 +182,9 @@ Issue identified in code review was based on commit `66a14461`, but PR #743 fixe
 | Holographic Hub | `features/holographic-hub/` | ✅ Wired via `hooks.ts` |
 | Free Energy | `features/free-energy/` | ✅ New visualizer (PR #750) |
 | Energy Landscape | `features/energy-landscape/` | ✅ New visualizer (PR #750) |
-| Hopfield Network | `features/hopfield-energy/` | 🔶 Infrastructure done, page integration pending |
+| Hopfield Network | `features/hopfield-energy/` | ✅ Fully wired (PR #753) |
 
-**Remaining:** Hopfield hooks created (`useHopfield.ts`) and visualizer accepts `apiData` prop (PR #753), but the optimization page (`/admin/labs/optimization`) hasn't been updated to call the hooks and pass data to the visualizer.
-
-**Partially Resolved:** 2026-01-18 (PR #750 visualizers, PR #753 Hopfield infra)
+**Resolved:** 2026-01-18 (PR #750 visualizers, PR #753 Hopfield complete)
 
 ### 10. ACGME Compliance Validation Gaps
 Call duty and performance profiling have edge cases:

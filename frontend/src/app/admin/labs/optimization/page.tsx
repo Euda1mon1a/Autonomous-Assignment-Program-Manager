@@ -27,6 +27,7 @@ import type {
 } from '@/app/admin/visualizations/stigmergy-flow/types';
 import { transformPatternsToNodes } from '@/app/admin/visualizations/stigmergy-flow/constants';
 import { useStigmergyPatterns } from '@/hooks/useResilience';
+import { useHopfieldEnergy } from '@/hooks/useHopfield';
 
 // Dynamic imports for 3D visualizations - only load when tab is active
 const CpsatSimulator = dynamic(
@@ -241,6 +242,36 @@ function StigmergyFlowWrapper() {
   );
 }
 
+/**
+ * Wrapper component for Hopfield Visualizer with API integration.
+ * Calls the real Hopfield energy analysis endpoint and passes data
+ * to the 3D visualizer.
+ */
+function HopfieldVisualizerWrapper() {
+  const mutation = useHopfieldEnergy();
+
+  const handleAnalyze = useCallback(() => {
+    // Default to analyzing next 30 days
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() + 30);
+
+    mutation.mutate({
+      startDate: today.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    });
+  }, [mutation]);
+
+  return (
+    <HopfieldVisualizer
+      apiData={mutation.data}
+      isLoading={mutation.isPending}
+      error={mutation.error?.message ?? null}
+      onAnalyze={handleAnalyze}
+    />
+  );
+}
+
 export default function OptimizationLabsPage() {
   const [activeTab, setActiveTab] = useState<TabId>('cpsat');
 
@@ -305,7 +336,7 @@ export default function OptimizationLabsPage() {
         {activeTab === 'brane' && <BraneTopologyVisualizer />}
         {activeTab === 'foam' && <FoamTopologyVisualizer />}
         {activeTab === 'stigmergy' && <StigmergyFlowWrapper />}
-        {activeTab === 'hopfield' && <HopfieldVisualizer />}
+        {activeTab === 'hopfield' && <HopfieldVisualizerWrapper />}
         {activeTab === 'bridge' && <BridgeSyncVisualizer />}
       </div>
     </div>
