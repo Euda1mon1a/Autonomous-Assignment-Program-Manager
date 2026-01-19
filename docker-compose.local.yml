@@ -56,7 +56,7 @@ services:
   # Redis - Message Broker & Cache
   # ===========================================================================
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.5-alpine  # CVE-2025-32023 patched
     container_name: scheduler-local-redis
     restart: unless-stopped
     ports:

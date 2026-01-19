@@ -27,7 +27,7 @@ services:
 
   # Redis - Message Broker for Celery
   redis:
-    image: redis:7.4.2-alpine  # CVE-2025-49844 (CVSS 9.9 RCE) patched
+    image: redis:7.4.5-alpine  # CVE-2025-32023 (hyperloglog RCE), CVE-2025-49844 patched
     container_name: residency-scheduler-redis
     restart: unless-stopped
     # Port removed for production security - Redis only accessible within Docker network

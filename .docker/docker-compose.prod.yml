@@ -76,7 +76,7 @@ services:
   # Redis Cache (for Celery and caching)
   # ===========================================================================
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.5-alpine  # CVE-2025-32023 patched
     container_name: rs-redis-prod
     restart: always
 

@@ -67,7 +67,7 @@ manufacturing>=1.2.0  # Six Sigma Cp/Cpk process capability analysis
 pyworkforce>=0.2.0  # Erlang C queuing theory for workforce optimization
 
 # Constraint Programming & Optimization
-ortools>=9.8
+ortools>=9.15  # Jan 2026 release - Python 3.14 support
 pulp>=2.7.0
 pyomo>=6.7.0  # Algebraic modeling + rich solution data capture (duals, slacks)
 
