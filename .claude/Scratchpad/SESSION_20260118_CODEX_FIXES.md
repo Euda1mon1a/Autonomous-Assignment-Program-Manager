@@ -77,6 +77,32 @@ PHASE 3 (Verification):
 
 ---
 
+### 5. Hopfield API Infrastructure (PR #753)
+
+**Branch:** `feature/hopfield-api-wiring`
+**Status:** Infrastructure done, page integration NOT done
+
+| Component | File | Status |
+|-----------|------|--------|
+| API Functions | `frontend/src/api/exotic-resilience.ts` | ✅ Added 3 functions + types |
+| Hooks | `frontend/src/hooks/useHopfield.ts` | ✅ Created 4 mutations |
+| Visualizer Props | `frontend/src/features/hopfield-energy/` | ✅ Accepts apiData prop |
+| Page Integration | `/admin/labs/optimization` | ❌ NOT DONE - page doesn't call hooks |
+
+**What's done:**
+- `findNearbyAttractors()`, `measureBasinDepth()`, `detectSpuriousAttractors()` API functions
+- `useHopfieldEnergy()`, `useNearbyAttractors()`, etc. hooks
+- HopfieldVisualizer accepts `apiData` prop and displays metrics panel
+- Loading/error states in visualizer
+
+**What's NOT done:**
+- The optimization page doesn't call the hooks
+- Nothing passes data to the visualizer yet
+- 3D ball/surface still uses local `computeEnergy()`, not API values
+- Need to update the page to wire hooks → visualizer
+
+---
+
 ## Outstanding After This Session
 
 | Item | Status |
@@ -85,6 +111,7 @@ PHASE 3 (Verification):
 | ACGME Call Duty Gaps | Deferred - MEDCOM ruling |
 | Stigmergy Three.js | Terminal Bravo working on it |
 | Service Layer Pagination | Not started (MEDIUM) |
+| **Hopfield Page Integration** | **PR #753 merged, but page not updated to use hooks** |
 
 ---
 
@@ -93,3 +120,4 @@ PHASE 3 (Verification):
 1. **Utilization scaling:** Backend returns 0-1, not 0-100. Frontend was dividing by 100 unnecessarily.
 2. **Stigmergy response:** Backend wasn't wrapping in schema structure, causing silent fallback to mock data.
 3. **Codex false positives:** Always verify - `useVulnerabilityReport` was correctly implemented despite Codex flagging it.
+4. **Hopfield "wiring" is multi-step:** Creating hooks/types is infrastructure, but page integration is separate work. Visualizer needs a parent component to call hooks and pass data down.
