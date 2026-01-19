@@ -11,7 +11,27 @@
 version: "1.0"
 generated: "2026-01-16"
 
+# Schema Notes:
+#   spawnable: Controls whether this agent can be spawned by other agents.
+#              Default is true (implicit). Set to false for user-only agents.
+
 agents:
+  # =============================================================================
+  # COMMAND - Supreme Commander (user-instantiated only)
+  # =============================================================================
+
+  ORCHESTRATOR:
+    tier: Command
+    model: opus
+    archetype: Synthesizer
+    role: "Supreme Commander - Strategic delegation and human interface"
+    reports_to: Human
+    can_spawn: [ARCHITECT, SYNTHESIZER, FORCE_MANAGER, MEDCOM, DELEGATION_AUDITOR, CRASH_RECOVERY_SPECIALIST, USASOC, 18A_DETACHMENT_COMMANDER]
+    max_turns: 100
+    tools_access: [rag_search, get_defense_level_tool, check_circuit_breakers_tool]
+    relevant_doc_types: [governance, hierarchy, strategy]
+    spawnable: false  # User-instantiated only - cannot be spawned by agents
+
   # =============================================================================
   # DEPUTIES - Strategic Thinkers (opus, full autonomy)
   # =============================================================================

@@ -445,6 +445,17 @@ YYYYMMDD_short_description
 - `.claude/dontreadme/synthesis/DECISIONS.md` - Architectural decisions
 - `docs/development/AGENT_SKILLS.md` - AI skills reference
 
+### Audit & Logs
+
+| Log Type | Location | Purpose |
+|----------|----------|---------|
+| Application logs | `logs/app.log` | Backend application events |
+| Offline events | `logs/offline_events.log` | System outages and recovery |
+| Schedule audit | Database `activity_log` table | Schedule modification history |
+| Agent governance | Session transcripts | PAI agent actions and decisions |
+
+**Governance Review:** DELEGATION_AUDITOR reviews offline logs weekly. See `.claude/SOPs/OFFLINE_SOP.md` for offline procedures.
+
 ### RAG Queries
 
 - `rag_search('Auftragstaktik doctrine')` - **Delegation philosophy (critical)**
