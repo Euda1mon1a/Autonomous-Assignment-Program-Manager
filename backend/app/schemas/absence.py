@@ -36,6 +36,9 @@ class AbsenceType(str, Enum):
     SICK = "sick"
     CONVALESCENT = "convalescent"
     MATERNITY_PATERNITY = "maternity_paternity"
+    # Military-specific types
+    TRAINING = "training"
+    MILITARY_DUTY = "military_duty"
 
 
 # Valid types as tuple for validation

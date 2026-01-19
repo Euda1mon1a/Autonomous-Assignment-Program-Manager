@@ -1,9 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { ChatMessage, ChatSession, ClaudeCodeRequest, StreamUpdate, CodeBlock, ChatArtifact, StreamMetadata } from '../types/chat';
+import { ChatMessage, ChatSession, StreamUpdate, CodeBlock, ChatArtifact, StreamMetadata } from '../types/chat';
+import { getAccessToken } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 
+// WebSocket endpoint - connects to backend Claude chat bridge
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const CLAUDE_STREAM_ENDPOINT = `${API_BASE_URL}/api/claude/chat/stream`;
+const WS_BASE_URL = API_BASE_URL.replace(/^http/, 'ws');
+const CLAUDE_WS_ENDPOINT = `${WS_BASE_URL}/api/v1/claude-chat/ws`;
 
 // localStorage keys
 const STORAGE_KEY_SESSION = 'claude_chat_session';
@@ -12,16 +15,9 @@ const STORAGE_KEY_SESSIONS_LIST = 'claude_chat_sessions_list';
 
 /**
  * Helper to safely parse dates from JSON.
- *
- * Reviver function for JSON.parse that converts ISO date strings to Date objects.
- *
- * @param key - The property key being parsed
- * @param value - The property value being parsed
- * @returns Date object if value is an ISO date string, otherwise the original value
  */
 const reviveDates = (key: string, value: unknown): unknown => {
   if (typeof value === 'string') {
-    // Check for ISO date format
     const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
     if (dateRegex.test(value)) {
       return new Date(value);
@@ -45,11 +41,6 @@ const loadFromStorage = <T>(key: string): T | null => {
 
 /**
  * Helper to save data to localStorage.
- *
- * Serializes the value to JSON and stores it in localStorage with error handling.
- *
- * @param key - The localStorage key
- * @param value - The value to store (must be JSON-serializable)
  */
 const saveToStorage = (key: string, value: unknown): void => {
   try {
@@ -58,8 +49,6 @@ const saveToStorage = (key: string, value: unknown): void => {
     // Silent failure - localStorage may be full or unavailable
   }
 };
-
-
 
 /**
  * Context data for Claude Code requests.
@@ -73,9 +62,9 @@ export interface ClaudeCodeContext {
 
 /**
  * Helper function to extract CodeBlock from streaming metadata.
- * Converts StreamMetadata to CodeBlock format.
+ * Kept for potential future use with tool results.
  */
-function extractCodeBlock(content: string, metadata?: StreamMetadata): CodeBlock | null {
+function _extractCodeBlock(content: string, metadata?: StreamMetadata): CodeBlock | null {
   if (!metadata) return null;
   return {
     language: typeof metadata.language === 'string' ? metadata.language : 'text',
@@ -86,8 +75,9 @@ function extractCodeBlock(content: string, metadata?: StreamMetadata): CodeBlock
 
 /**
  * Helper function to extract ChatArtifact from streaming data.
+ * Kept for potential future use with tool results.
  */
-function extractArtifact(content: string, metadata?: StreamMetadata): ChatArtifact | null {
+function _extractArtifact(content: string, metadata?: StreamMetadata): ChatArtifact | null {
   if (!metadata) return null;
   const artifactType = typeof metadata.type === 'string' ? metadata.type : 'configuration';
   const validTypes = ['schedule', 'analysis', 'report', 'configuration'] as const;
@@ -111,6 +101,8 @@ export type ClaudeChatErrorType =
   | 'NO_SESSION'
   | 'EMPTY_MESSAGE'
   | 'NETWORK_ERROR'
+  | 'WEBSOCKET_ERROR'
+  | 'AUTH_ERROR'
   | 'STREAM_ERROR'
   | 'PARSE_ERROR'
   | 'ABORT_ERROR'
@@ -135,6 +127,77 @@ export interface SavedSession {
   programId: string;
 }
 
+/**
+ * WebSocket message types from backend
+ */
+interface WsConnectedMessage {
+  type: 'connected';
+  session_id: string;
+  history_count: number;
+}
+
+interface WsTokenMessage {
+  type: 'token';
+  content: string;
+}
+
+interface WsToolCallMessage {
+  type: 'tool_call' | 'tool_call_start';
+  name: string;
+  input?: Record<string, unknown>;
+  id: string;
+}
+
+interface WsToolResultMessage {
+  type: 'tool_result';
+  id: string;
+  result: Record<string, unknown>;
+}
+
+interface WsCompleteMessage {
+  type: 'complete';
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+  };
+}
+
+interface WsErrorMessage {
+  type: 'error';
+  message: string;
+}
+
+interface WsInterruptedMessage {
+  type: 'interrupted';
+  message: string;
+  partial_response?: boolean;
+}
+
+interface WsHistoryMessage {
+  type: 'history';
+  messages: Array<{
+    role: string;
+    content: string;
+    timestamp: string;
+    tool_calls?: Array<Record<string, unknown>>;
+  }>;
+}
+
+type WsMessage =
+  | WsConnectedMessage
+  | WsTokenMessage
+  | WsToolCallMessage
+  | WsToolResultMessage
+  | WsCompleteMessage
+  | WsErrorMessage
+  | WsInterruptedMessage
+  | WsHistoryMessage;
+
+/**
+ * WebSocket connection state
+ */
+type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
+
 export const useClaudeChat = () => {
   // Load initial state from localStorage
   const [session, setSession] = useState<ChatSession | null>(() =>
@@ -145,13 +208,18 @@ export const useClaudeChat = () => {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
+
+  // WebSocket refs
+  const wsRef = useRef<WebSocket | null>(null);
+  const currentAssistantMessageIdRef = useRef<string | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleWsMessageRef = useRef<((data: WsMessage) => void) | null>(null);
 
   // Persist session to localStorage when it changes
   useEffect(() => {
     if (session) {
       saveToStorage(STORAGE_KEY_SESSION, session);
-      // Also update sessions list
       updateSessionsList(session, messages.length);
     }
   }, [session, messages.length]);
@@ -159,11 +227,22 @@ export const useClaudeChat = () => {
   // Persist messages to localStorage when they change
   useEffect(() => {
     saveToStorage(STORAGE_KEY_MESSAGES, messages);
-    // Update session's updatedAt and message count in list
     if (session && messages.length > 0) {
       updateSessionsList({ ...session, updatedAt: new Date() }, messages.length);
     }
   }, [messages, session]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Update sessions list for session history
   const updateSessionsList = (currentSession: ChatSession, messageCount: number): void => {
@@ -185,10 +264,185 @@ export const useClaudeChat = () => {
       sessionsList.unshift(savedSession);
     }
 
-    // Keep only last 20 sessions
     const trimmedList = sessionsList.slice(0, 20);
     saveToStorage(STORAGE_KEY_SESSIONS_LIST, trimmedList);
   };
+
+  /**
+   * Connect to WebSocket
+   */
+  const connect = useCallback((sessionId?: string) => {
+    // Don't connect if already connected or connecting
+    if (wsRef.current?.readyState === WebSocket.OPEN ||
+        wsRef.current?.readyState === WebSocket.CONNECTING) {
+      return;
+    }
+
+    const token = getAccessToken();
+    if (!token) {
+      setError('Not authenticated. Please log in.');
+      setConnectionState('error');
+      return;
+    }
+
+    setConnectionState('connecting');
+
+    // Build WebSocket URL with query params
+    const wsUrl = new URL(CLAUDE_WS_ENDPOINT);
+    wsUrl.searchParams.set('token', token);
+    if (sessionId) {
+      wsUrl.searchParams.set('session_id', sessionId);
+    }
+
+    console.log('[useClaudeChat] Connecting to WebSocket:', wsUrl.toString().replace(token, '***'));
+
+    const ws = new WebSocket(wsUrl.toString());
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log('[useClaudeChat] WebSocket connected');
+      setConnectionState('connected');
+      setError(null);
+    };
+
+    ws.onclose = (event) => {
+      console.log('[useClaudeChat] WebSocket closed:', event.code, event.reason);
+      setConnectionState('disconnected');
+      wsRef.current = null;
+
+      // Auto-reconnect after 3 seconds if not intentional close
+      if (event.code !== 1000 && event.code !== 4001 && event.code !== 4003) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (session) {
+            connect(session.id);
+          }
+        }, 3000);
+      }
+    };
+
+    ws.onerror = (event) => {
+      console.error('[useClaudeChat] WebSocket error:', event);
+      setConnectionState('error');
+      setError('WebSocket connection failed');
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data) as WsMessage;
+        // Use ref to get latest handler without stale closure
+        handleWsMessageRef.current?.(data);
+      } catch (e) {
+        console.error('[useClaudeChat] Failed to parse message:', e);
+      }
+    };
+  }, [session]);
+
+  /**
+   * Handle incoming WebSocket messages
+   */
+  const handleWsMessage = useCallback((data: WsMessage) => {
+    switch (data.type) {
+      case 'connected':
+        console.log('[useClaudeChat] Session connected:', data.session_id);
+        // Update session ID if we got a new one from server
+        setSession(prev => prev ? { ...prev, id: data.session_id } : prev);
+        break;
+
+      case 'token': {
+        // Streaming token - update assistant message content
+        const messageId = currentAssistantMessageIdRef.current;
+        if (messageId) {
+          setMessages(prev =>
+            prev.map(msg =>
+              msg.id === messageId
+                ? { ...msg, content: msg.content + data.content }
+                : msg
+            )
+          );
+        }
+        break;
+      }
+
+      case 'tool_call_start':
+      case 'tool_call': {
+        // Tool being executed - could add to UI
+        console.log('[useClaudeChat] Tool call:', data.name, data.input);
+        break;
+      }
+
+      case 'tool_result': {
+        // Tool result - could display in UI
+        console.log('[useClaudeChat] Tool result:', data.id, data.result);
+        break;
+      }
+
+      case 'complete': {
+        // Generation complete
+        const messageId = currentAssistantMessageIdRef.current;
+        if (messageId) {
+          setMessages(prev =>
+            prev.map(msg =>
+              msg.id === messageId
+                ? { ...msg, isStreaming: false }
+                : msg
+            )
+          );
+        }
+        currentAssistantMessageIdRef.current = null;
+        setIsLoading(false);
+        console.log('[useClaudeChat] Complete:', data.usage);
+        break;
+      }
+
+      case 'interrupted': {
+        // Generation interrupted
+        const messageId = currentAssistantMessageIdRef.current;
+        if (messageId) {
+          setMessages(prev =>
+            prev.map(msg =>
+              msg.id === messageId
+                ? { ...msg, isStreaming: false, content: msg.content + ' [interrupted]' }
+                : msg
+            )
+          );
+        }
+        currentAssistantMessageIdRef.current = null;
+        setIsLoading(false);
+        console.log('[useClaudeChat] Interrupted:', data.message);
+        break;
+      }
+
+      case 'error': {
+        // Error occurred
+        const messageId = currentAssistantMessageIdRef.current;
+        if (messageId) {
+          setMessages(prev =>
+            prev.map(msg =>
+              msg.id === messageId
+                ? { ...msg, isStreaming: false, error: data.message, content: `Error: ${data.message}` }
+                : msg
+            )
+          );
+        }
+        currentAssistantMessageIdRef.current = null;
+        setIsLoading(false);
+        setError(data.message);
+        console.error('[useClaudeChat] Error:', data.message);
+        break;
+      }
+
+      case 'history': {
+        // Session history received
+        console.log('[useClaudeChat] History received:', data.messages.length, 'messages');
+        break;
+      }
+    }
+  }, []);
+
+  // Keep the ref updated with latest handler to avoid stale closures
+  useEffect(() => {
+    handleWsMessageRef.current = handleWsMessage;
+  }, [handleWsMessage]);
 
   // Get list of saved sessions
   const getSavedSessions = useCallback((): SavedSession[] => {
@@ -197,16 +451,16 @@ export const useClaudeChat = () => {
 
   // Load a previous session
   const loadSession = useCallback((sessionId: string): boolean => {
-    // For now, we only support loading the current session
-    // Full session history would require storing messages per session
     const storedSession = loadFromStorage<ChatSession>(STORAGE_KEY_SESSION);
     if (storedSession && storedSession.id === sessionId) {
       setSession(storedSession);
       setMessages(loadFromStorage<ChatMessage[]>(STORAGE_KEY_MESSAGES) || []);
+      // Reconnect with this session ID
+      connect(sessionId);
       return true;
     }
     return false;
-  }, []);
+  }, [connect]);
 
   // Initialize new session
   const initializeSession = useCallback(
@@ -223,23 +477,23 @@ export const useClaudeChat = () => {
       setSession(newSession);
       setMessages([]);
       setError(null);
+
+      // Connect WebSocket for new session
+      connect(newSession.id);
+
       return newSession;
     },
-    []
+    [connect]
   );
 
   /**
-   * Send message to Claude with streaming response.
-   *
-   * @param userInput - The user's message to send
-   * @param context - Optional context data for the request
-   * @param onStreamUpdate - Optional callback for stream updates
+   * Send message to Claude via WebSocket.
    */
   const sendMessage = useCallback(
     async (
       userInput: string,
-      context?: Partial<ClaudeCodeContext>,
-      onStreamUpdate?: (update: StreamUpdate) => void
+      _context?: Partial<ClaudeCodeContext>,
+      _onStreamUpdate?: (update: StreamUpdate) => void
     ) => {
       if (!session) {
         setError('No active session');
@@ -251,6 +505,19 @@ export const useClaudeChat = () => {
         return;
       }
 
+      // Ensure WebSocket is connected
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        console.log('[useClaudeChat] Connecting before send...');
+        connect(session.id);
+        // Wait a bit for connection
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+          setError('Failed to connect to chat server');
+          return;
+        }
+      }
+
       // Add user message
       const userMessage: ChatMessage = {
         id: uuidv4(),
@@ -259,7 +526,7 @@ export const useClaudeChat = () => {
         timestamp: new Date(),
       };
 
-      setMessages((prev) => [...prev, userMessage]);
+      setMessages(prev => [...prev, userMessage]);
       setIsLoading(true);
       setError(null);
 
@@ -272,157 +539,43 @@ export const useClaudeChat = () => {
         isStreaming: true,
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      currentAssistantMessageIdRef.current = assistantMessage.id;
+      setMessages(prev => [...prev, assistantMessage]);
 
-      try {
-        // Abort previous request if any
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
-        abortControllerRef.current = new AbortController();
-
-        const request: ClaudeCodeRequest = {
-          action: 'custom',
-          context: {
-            programId: session.programId,
-            adminId: session.adminId,
-            sessionId: session.id,
-            ...context,
-          },
-          userQuery: userInput,
-        };
-
-        const response = await fetch(CLAUDE_STREAM_ENDPOINT, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify(request),
-          signal: abortControllerRef.current.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error('No response body');
-
-        const decoder = new TextDecoder();
-        let fullContent = '';
-        const codeBlocks: CodeBlock[] = [];
-        const artifacts: ChatArtifact[] = [];
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6)) as StreamUpdate;
-                fullContent += data.content;
-
-                if (data.type === 'code') {
-                  const codeBlock = extractCodeBlock(data.content, data.metadata);
-                  if (codeBlock) {
-                    codeBlocks.push(codeBlock);
-                  }
-                } else if (data.type === 'artifact') {
-                  const artifact = extractArtifact(data.content, data.metadata);
-                  if (artifact) {
-                    artifacts.push(artifact);
-                  }
-                }
-
-                onStreamUpdate?.(data);
-
-                // Update assistant message in real-time
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === assistantMessage.id
-                      ? {
-                          ...msg,
-                          content: fullContent,
-                          codeBlocks,
-                          artifacts,
-                        }
-                      : msg
-                  )
-                );
-              } catch (error) {
-                // Continue on JSON parse error
-                if (error instanceof Error) {
-                  console.warn('[useClaudeChat] Failed to parse stream chunk:', error.message);
-                }
-              }
-            }
-          }
-        }
-
-        // Finalize assistant message
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMessage.id
-              ? {
-                  ...msg,
-                  isStreaming: false,
-                  content: fullContent || 'Processing complete.',
-                  codeBlocks,
-                  artifacts,
-                }
-              : msg
-          )
-        );
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error occurred';
-        setError(errorMessage);
-
-        // Log detailed error for debugging
-        if (error instanceof Error) {
-          console.error('[useClaudeChat] Stream error:', {
-            message: error.message,
-            name: error.name,
-            stack: error.stack,
-          });
-        }
-
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMessage.id
-              ? {
-                  ...msg,
-                  isStreaming: false,
-                  error: errorMessage,
-                  content: `Error: ${errorMessage}`,
-                }
-              : msg
-          )
-        );
-      } finally {
-        setIsLoading(false);
-      }
+      // Send message via WebSocket
+      wsRef.current.send(JSON.stringify({
+        type: 'user_message',
+        content: userInput,
+        session_id: session.id,
+      }));
     },
-    [session]
+    [session, connect]
   );
 
-  // Cancel ongoing request
+  // Cancel/interrupt ongoing request
   const cancelRequest = useCallback((): void => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      setIsLoading(false);
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'interrupt' }));
     }
+    setIsLoading(false);
   }, []);
 
   // Clear messages
   const clearMessages = useCallback((): void => {
     setMessages([]);
     setError(null);
+  }, []);
+
+  // Disconnect WebSocket
+  const disconnect = useCallback((): void => {
+    if (wsRef.current) {
+      wsRef.current.close(1000, 'User disconnected');
+      wsRef.current = null;
+    }
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+    setConnectionState('disconnected');
   }, []);
 
   // Export session
@@ -439,6 +592,7 @@ export const useClaudeChat = () => {
     messages,
     isLoading,
     error,
+    connectionState,
     initializeSession,
     sendMessage,
     cancelRequest,
@@ -446,5 +600,7 @@ export const useClaudeChat = () => {
     exportSession,
     getSavedSessions,
     loadSession,
+    connect,
+    disconnect,
   };
 };

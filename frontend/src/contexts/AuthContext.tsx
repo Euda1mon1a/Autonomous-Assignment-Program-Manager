@@ -54,6 +54,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // First tries to restore from sessionStorage (for page refresh),
   // then validates the token to get user data.
   useEffect(() => {
+    // Timeout for auth check to prevent infinite loading on network issues
+    const AUTH_TIMEOUT_MS = 5000
+
     async function initAuth() {
       try {
         // Try to restore session from sessionStorage first
@@ -73,7 +76,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(false)
     }
 
-    initAuth()
+    // Race auth init against timeout to prevent infinite loading
+    // If auth takes longer than timeout, assume not authenticated
+    const timeoutPromise = new Promise<void>((resolve) => {
+      setTimeout(() => {
+        console.log('[AuthContext] Auth check timed out, proceeding as unauthenticated')
+        resolve()
+      }, AUTH_TIMEOUT_MS)
+    })
+
+    Promise.race([initAuth(), timeoutPromise]).then(() => {
+      // Ensure loading is set to false regardless of which promise resolved
+      setIsLoading(false)
+    })
   }, [])
 
   // Login function

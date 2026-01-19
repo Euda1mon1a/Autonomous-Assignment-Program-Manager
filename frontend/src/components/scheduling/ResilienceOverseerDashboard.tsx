@@ -274,6 +274,7 @@ export default function ResilienceOverseerDashboard() {
   const {
     data: breakersData,
     isLoading: isBreakersLoading,
+    error: breakersError,
   } = useCircuitBreakers({
     refetchInterval: 30000,
     staleTime: 10000,
@@ -309,8 +310,9 @@ export default function ResilienceOverseerDashboard() {
     );
   }
 
-  // Error state
-  if (healthError) {
+  // Error state - check both health and breakers errors
+  const error = healthError || breakersError;
+  if (error) {
     return (
       <div className="min-h-screen bg-black text-zinc-100 p-4 md:p-6 font-sans flex items-center justify-center">
         <div className="text-center space-y-4 max-w-md">
@@ -321,7 +323,7 @@ export default function ResilienceOverseerDashboard() {
               Unable to fetch resilience data. The backend may be unavailable.
             </p>
             <p className="text-xs text-zinc-600 font-mono mt-4">
-              {healthError.message || 'Unknown error'}
+              {error.message || 'Unknown error'}
             </p>
           </div>
         </div>

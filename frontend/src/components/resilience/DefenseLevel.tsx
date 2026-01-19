@@ -91,8 +91,10 @@ export const DefenseLevel: React.FC<DefenseLevelProps> = ({
   onDrillDown,
   className = '',
 }) => {
-  const config = levelConfig[level];
-  const currentIndex = allLevels.indexOf(level);
+  // Default to GREEN if level is undefined or invalid
+  const safeLevel: DefenseLevelType = level && levelConfig[level] ? level : 'GREEN';
+  const config = levelConfig[safeLevel];
+  const currentIndex = allLevels.indexOf(safeLevel);
 
   return (
     <div className={`defense-level ${className}`}>

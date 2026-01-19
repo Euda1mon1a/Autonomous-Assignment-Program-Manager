@@ -160,25 +160,46 @@ export function useBlockRanges(
   return useQuery<BlockRange[], ApiError>({
     queryKey: blockQueryKeys.blockRanges(),
     queryFn: async () => {
-      // Fetch all blocks (no date filter)
-      const response = await get<ListResponse<Block>>('/blocks')
+      // Fetch ALL blocks with pagination (API returns paginated results)
+      // Without this loop, only the first page (~100 blocks) is fetched,
+      // causing navigation to only see Block 0 out of 1,516+ blocks
+      let allBlocks: Block[] = []
+      let page = 1
+      let hasMore = true
 
+      while (hasMore) {
+        const response = await get<ListResponse<Block>>(`/blocks?page=${page}&limit=500`)
+        allBlocks = [...allBlocks, ...response.items]
+        hasMore = response.items.length === 500
+        page++
+      }
       // Group blocks by blockNumber and calculate date ranges
+      // Handle both camelCase (from interceptor) and snake_case (fallback) property names
       const blockMap = new Map<number, { minDate: string; maxDate: string }>()
 
-      response.items.forEach((block) => {
-        const existing = blockMap.get(block.blockNumber)
+      allBlocks.forEach((block) => {
+        // Handle both camelCase and snake_case property names for robustness
+        const rawBlock = block as unknown as Record<string, unknown>
+        const blockNum = (block.blockNumber ?? rawBlock.block_number) as number
+        const blockDate = (block.date ?? rawBlock.date) as string
+
+        if (blockNum === undefined || blockNum === null) {
+          console.warn('[useBlockRanges] Block missing blockNumber:', block)
+          return
+        }
+
+        const existing = blockMap.get(blockNum)
         if (!existing) {
-          blockMap.set(block.blockNumber, {
-            minDate: block.date,
-            maxDate: block.date,
+          blockMap.set(blockNum, {
+            minDate: blockDate,
+            maxDate: blockDate,
           })
         } else {
-          if (block.date < existing.minDate) {
-            existing.minDate = block.date
+          if (blockDate < existing.minDate) {
+            existing.minDate = blockDate
           }
-          if (block.date > existing.maxDate) {
-            existing.maxDate = block.date
+          if (blockDate > existing.maxDate) {
+            existing.maxDate = blockDate
           }
         }
       })
