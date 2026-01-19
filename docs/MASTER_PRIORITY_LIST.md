@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-18 (Thermodynamics free-energy + energy-landscape MCP tools wired)
+> **Last Updated:** 2026-01-18 (PR #750: Codex fixes + resilience visualizers wired)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -152,36 +152,40 @@ Issue identified in code review was based on commit `66a14461`, but PR #743 fixe
 | Creep Fatigue | ✗ | ✗ | Not implemented | - |
 | Transcription Factors | ✗ | ✗ | Not implemented | - |
 | Hopfield Network | ✓ | ✗ | `features/hopfield-energy/` | Mock |
-| Free Energy | ✗ | ✗ | Not implemented | API ✅ |
-| Energy Landscape | ✗ | ✗ | Not implemented | API ✅ |
-| Circadian Phase | ✓ | ✗ | `features/synapse-monitor/` | Mock |
+| Free Energy | ✓ | ✗ | `features/free-energy/` | API ✅ |
+| Energy Landscape | ✓ | ✗ | `features/energy-landscape/` | API ✅ |
+| Circadian Phase | ✓ | ✗ | `features/synapse-monitor/` | API ✅ |
 | Penrose Efficiency | ✗ | ✗ | Not implemented | - |
 | Anderson Localization | ✗ | ✗ | Not implemented | - |
 | Persistent Homology | ✗ | ✗ | Not implemented | - |
 | Keystone Species | ✗ | ✗ | Not implemented | - |
 | Quantum Zeno | ✗ | ✗ | Not implemented | - |
-| Stigmergy | ✓ | ✗ | `app/admin/visualizations/stigmergy-flow/` | Mock |
-| Static Stability | ✓ | ✗ | `features/sovereign-portal/` | API |
+| Stigmergy | ✓ | ✗ | `app/admin/visualizations/stigmergy-flow/` | API ✅ (PR #750) |
+| Static Stability | ✓ | ✗ | `features/sovereign-portal/` | API ✅ |
 | Le Chatelier | ✗ | ✓ | MCP tool analysis | API |
 
-### 9. GUI Components Using Mock Data (10 components)
+### 9. ~~GUI Components Using Mock Data~~ ✅ MOSTLY RESOLVED (PR #750)
 
-**Command Center Dashboards (HIGH - misleading operators):**
-| Component | Location | Issue |
-|-----------|----------|-------|
-| ResilienceOverseerDashboard | `components/scheduling/` | `generateMockData()` simulates live metrics |
-| SovereignPortal | `features/sovereign-portal/` | `generateMockDashboardState()` fakes all 4 panels |
-| ResilienceLabsPage | `app/admin/labs/resilience/` | "Mock AI analysis" with hardcoded responses |
+**Command Center Dashboards - WIRED:**
+| Component | Location | Status |
+|-----------|----------|--------|
+| ResilienceOverseerDashboard | `components/scheduling/` | ✅ Wired to `/resilience/health` |
+| SovereignPortal | `features/sovereign-portal/` | ✅ Wired via `hooks.ts` |
+| ResilienceLabsPage | `app/admin/labs/resilience/` | ✅ Wired to vulnerability API |
 
-**Labs Visualizations (MEDIUM - beta/demo status):**
-| Component | Location | Issue |
-|-----------|----------|-------|
-| Synapse Monitor | `features/synapse-monitor/` | Uses `MOCK_PERSONNEL` |
-| Fragility Triage | `features/fragility-triage/` | `generateMockDays()` creates random fragility |
-| N-1/N-2 Resilience | Labs page | `MOCK_FACULTY` with simulated cascades |
-| Holographic Hub | `features/holographic-hub/` | `generateMockHolographicData()` |
+**Labs Visualizations - WIRED:**
+| Component | Location | Status |
+|-----------|----------|--------|
+| Synapse Monitor | `features/synapse-monitor/` | ✅ Wired via `useSynapseData.ts` |
+| Fragility Triage | `features/fragility-triage/` | ✅ Wired via `useFragilityData.ts` |
+| N-1/N-2 Resilience | `features/n1n2-resilience/` | ✅ Wired via `useN1N2Data.ts` |
+| Holographic Hub | `features/holographic-hub/` | ✅ Wired via `hooks.ts` |
+| Free Energy | `features/free-energy/` | ✅ New visualizer (PR #750) |
+| Energy Landscape | `features/energy-landscape/` | ✅ New visualizer (PR #750) |
 
-**Decision needed:** Wire to real MCP tools OR add "DEMO" badges to UI.
+**Remaining:** Hopfield Network still uses mock data.
+
+**Resolved:** 2026-01-18 in PR #750
 
 ### 10. ACGME Compliance Validation Gaps
 Call duty and performance profiling have edge cases:
