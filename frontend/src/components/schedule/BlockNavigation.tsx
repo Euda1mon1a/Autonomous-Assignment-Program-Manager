@@ -5,6 +5,18 @@ import { format, addDays, subDays, parseISO } from 'date-fns'
 import { AlertTriangle } from 'lucide-react'
 import { useBlocks, useBlockRanges } from '@/hooks'
 
+/**
+ * Calculate academic year from a Date object.
+ * Academic year starts July 1, so:
+ * - 2024-07-01 to 2025-06-30 = AY 2024
+ * - 2025-07-01 to 2026-06-30 = AY 2025
+ */
+function getAcademicYear(date: Date): number {
+  const month = date.getMonth() + 1 // getMonth() is 0-indexed
+  const year = date.getFullYear()
+  return month < 7 ? year - 1 : year
+}
+
 interface BlockNavigationProps {
   startDate: Date
   endDate: Date
@@ -67,13 +79,21 @@ export function BlockNavigation({
       }
     }
 
-    // Find the block range that matches our current block number
-    const currentIdx = blockRanges.findIndex((r) => r.blockNumber === currentBlockNumber)
+    // Calculate current academic year from the view's start date
+    // This ensures we match the correct block when multiple years have same block numbers
+    const currentAY = getAcademicYear(startDate)
+
+    // Find the block range that matches BOTH block number AND academic year
+    // Without academicYear check, Block 10 AY2024 could match Block 10 AY2025
+    const currentIdx = blockRanges.findIndex(
+      (r) => r.blockNumber === currentBlockNumber && r.academicYear === currentAY
+    )
     const current = currentIdx >= 0 ? blockRanges[currentIdx] : null
+    // Previous/next can cross academic year boundaries (e.g., Block 13 → Block 1)
     const previous = currentIdx > 0 ? blockRanges[currentIdx - 1] : null
     const next = currentIdx >= 0 && currentIdx < blockRanges.length - 1 ? blockRanges[currentIdx + 1] : null
 
-    // Find the block that contains today's date
+    // Find the block that contains today's date (date-based, not AY-based)
     const today = format(new Date(), 'yyyy-MM-dd')
     const todayBlock = blockRanges.find((r) => r.startDate <= today && r.endDate >= today)
 
@@ -83,7 +103,7 @@ export function BlockNavigation({
       nextBlockRange: next,
       todayBlockRange: todayBlock ?? null,
     }
-  }, [blockRanges, currentBlockNumber])
+  }, [blockRanges, currentBlockNumber, startDate])
 
   // Navigate to previous block using actual block boundaries from API
   const handlePreviousBlock = () => {

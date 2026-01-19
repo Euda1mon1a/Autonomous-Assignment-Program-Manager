@@ -175,16 +175,19 @@ export function BlockAnnualView({
   }, [dashboardQueries, blockNumbers])
 
   // Get block dates for headers
+  // Filter by academicYear to prevent wrong-year date display when multiple AYs exist
   const blockDates = useMemo(() => {
     const dates = new Map<number, { start: string; end: string }>()
-    blockRanges?.forEach((range) => {
-      dates.set(range.blockNumber, {
-        start: range.startDate,
-        end: range.endDate,
+    blockRanges
+      ?.filter((range) => range.academicYear === academicYear)
+      .forEach((range) => {
+        dates.set(range.blockNumber, {
+          start: range.startDate,
+          end: range.endDate,
+        })
       })
-    })
     return dates
-  }, [blockRanges])
+  }, [blockRanges, academicYear])
 
   // Loading state
   const isLoading = blocksLoading || peopleLoading || dashboardQueries.some((q) => q.isLoading)
