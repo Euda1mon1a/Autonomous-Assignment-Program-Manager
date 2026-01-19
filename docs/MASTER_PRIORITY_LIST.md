@@ -183,8 +183,10 @@ Issue identified in code review was based on commit `66a14461`, but PR #743 fixe
 | Free Energy | `features/free-energy/` | ✅ New visualizer (PR #750) |
 | Energy Landscape | `features/energy-landscape/` | ✅ New visualizer (PR #750) |
 | Hopfield Network | `features/hopfield-energy/` | ✅ Fully wired (PR #753) |
+| Bottleneck Flow | `features/bottleneck-flow/` | ✅ New visualizer (PR #753) |
+| Bridge Sync | `features/bridge-sync/` | ✅ Height fixed (PR #753) |
 
-**Resolved:** 2026-01-18 (PR #750 visualizers, PR #753 Hopfield complete)
+**Resolved:** 2026-01-18 (PR #750 visualizers, PR #753 Hopfield + Bottleneck + Bridge)
 
 ### 10. ACGME Compliance Validation Gaps
 Call duty and performance profiling have edge cases:
