@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### ADK Integration Analysis (2026-01-19)
+
+**Comprehensive Analysis Document:**
+- `docs/research/ADK_INTEGRATION_ANALYSIS.md` - 476-line disposition matrix
+- 10 PLAN_PARTY probes analyzed Google ADK TypeScript exploration
+- Three-tier priority classification (Immediate/Review/Skip)
+
+**Key Finding:** ADK evaluation patterns are additive; ADK tools redundant (MCP covers).
+
+**Tier 1 - Incorporate Immediately (7-10 days):**
+- Tool trajectory scoring (from ADK evaluation/criteria.ts)
+- Response match scoring (ROUGE-based quality metrics)
+- Test case framework (10 test case patterns)
+- Zod schema patterns for TypeScript skills
+- Evaluation criteria YAML for skill metadata
+
+**New Skills Recommended:**
+- `agent-evaluation` (P1) - Tool trajectory + response match scoring
+- `trajectory-analyzer` (P2) - Tool call sequence validation
+- `response-matcher` (P3) - Semantic equivalence checking
+
+**Gemini Post-Production Learning:**
+- Sanctioned uses: Code review, documentation, test generation (no PHI)
+- Prohibited uses: Schedule generation, ACGME validation (PHI risk)
+
 #### PAI² Governance Revision (2026-01-19)
 
 **7 Governance Gaps Addressed:**
