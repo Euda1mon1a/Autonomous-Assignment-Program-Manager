@@ -350,10 +350,22 @@ describe('ScheduleCalendar', () => {
       expect(screen.getByText(/no schedule data for this week/i)).toBeInTheDocument()
     })
 
-    it('should show generate schedule button in empty state', () => {
+    it('should show generate schedule link in empty state when no callback provided', () => {
       render(<ScheduleCalendar weekStart={weekStart} schedule={{}} />)
 
-      expect(screen.getByRole('button', { name: /generate schedule/i })).toBeInTheDocument()
+      const link = screen.getByRole('link', { name: /generate schedule/i })
+      expect(link).toBeInTheDocument()
+      expect(link).toHaveAttribute('href', '/admin/scheduling')
+    })
+
+    it('should show generate schedule button when callback is provided', () => {
+      const mockCallback = jest.fn()
+      render(<ScheduleCalendar weekStart={weekStart} schedule={{}} onGenerateSchedule={mockCallback} />)
+
+      const button = screen.getByRole('button', { name: /generate schedule/i })
+      expect(button).toBeInTheDocument()
+      button.click()
+      expect(mockCallback).toHaveBeenCalledTimes(1)
     })
 
     it('should not render person rows when empty', () => {

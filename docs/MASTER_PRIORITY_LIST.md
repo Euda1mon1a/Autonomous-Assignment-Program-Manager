@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-19 (Added: ADK Integration Analysis - Item #22)
+> **Last Updated:** 2026-01-19 (Added: Block 10 GUI Fixes - PR #758)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -305,7 +305,38 @@ Repository automation consolidation addressing performance, reliability, and mai
 
 **Key Files:** `.pre-commit-config.yaml`, `scripts/pii-scan.sh`, `.claude/hooks/*.sh`
 
-### 15. ~~Documentation Consolidation~~ ✅ RESOLVED
+### 15. ~~Block 10 GUI Navigation~~ ✅ RESOLVED (PR #758)
+**Priority:** MEDIUM
+**Added:** 2026-01-19 (Chrome Extension exploration)
+**Branch:** `feat/block10-gui-human-corrections`
+
+Fixed critical issues preventing Block 10 navigation for human review and corrections:
+
+| Issue | Root Cause | Fix |
+|-------|------------|-----|
+| People API 500 | `performs_procedures` NULL validation | Field validator: NULL → False |
+| Block navigation stuck on Block 0 | Cross-year block merging | Group by `academicYear-blockNumber` composite key |
+| Couatl Killer violations | camelCase query params | Fixed to snake_case (`start_date`, `end_date`, `block_number`) |
+
+**Root Cause Analysis:**
+Block navigation was stuck because blocks from different academic years (AY 2024, AY 2025) had the same `block_number` and were merged by `useBlockRanges`. This created 2-year spans like "Block 0: Jul 1, 2024 - Jul 1, 2026" instead of proper 4-week blocks.
+
+**Files Changed:**
+| File | Change |
+|------|--------|
+| `backend/app/schemas/person.py` | Add `@field_validator("performs_procedures", mode="before")` |
+| `frontend/src/hooks/useBlocks.ts` | Add `academicYear` calculation, composite key grouping, snake_case params |
+| `frontend/src/api/resilience.ts` | Fix snake_case query params |
+
+**Verification:**
+- ✅ Navigate to Block 10 (Mar 13 - Apr 9, 2025)
+- ✅ Proper 4-week date ranges
+- ✅ People loading (no 500 errors)
+- ✅ Schedule assignments visible
+
+**Ref:** PR #758, `.claude/plans/quirky-percolating-feather.md`
+
+### 16. ~~Documentation Consolidation~~ ✅ RESOLVED
 Root-level docs reduced from 68 → 28 files.
 
 | Before | After | Change |
@@ -647,7 +678,7 @@ Added `psutil>=5.9.0` to `requirements.txt` for system profiling capabilities.
 |----------|--------|-------|
 | **CRITICAL** | 1 open, 4 resolved | ~~orphan routes~~✅, PII, ~~doc contradictions~~✅, ~~API mismatches~~✅, ~~rollback data loss~~✅ |
 | **HIGH** | 2 open, 3 resolved | frameworks, ~~feature flags~~✅, ~~MCP stubs~~✅ (16/16 wired), mock GUI, ACGME compliance |
-| **MEDIUM** | 2 open, 6 resolved | ~~activity logging~~✅, ~~emails~~✅, pagination, hooks/scripts, ~~docs~~✅, ~~CLI/security cleanup~~✅, ~~VaR endpoints~~✅, ~~seed script~~✅ |
+| **MEDIUM** | 2 open, 7 resolved | ~~activity logging~~✅, ~~emails~~✅, pagination, hooks/scripts, ~~Block 10 GUI~~✅, ~~docs~~✅, ~~CLI/security cleanup~~✅, ~~VaR endpoints~~✅, ~~seed script~~✅ |
 | **LOW** | 12 | A/B testing, ML, time crystal, spreadsheet editor, experimental analytics, CLI guide, string theory, optional modules, GUI guide, cooperative evolution, foam topology, ORCH spec handoff |
 | **INFRA** | 3 resolved | ~~bind mounts~~✅, ~~academic year fix~~✅, ~~psutil dep~~✅ |
 

@@ -27,8 +27,21 @@ export interface BlockFilters {
  */
 export interface BlockRange {
   blockNumber: number
+  academicYear: number
   startDate: string
   endDate: string
+}
+
+/**
+ * Calculate academic year from a date string.
+ * Academic year starts July 1, so:
+ * - 2024-07-01 to 2025-06-30 = AY 2024
+ * - 2025-07-01 to 2026-06-30 = AY 2025
+ */
+function getAcademicYear(dateStr: string): number {
+  const [year, month] = dateStr.split('-').map(Number)
+  // If before July, it's the previous academic year
+  return month < 7 ? year - 1 : year
 }
 
 // ============================================================================
@@ -89,9 +102,10 @@ export function useBlocks(
   options?: Omit<UseQueryOptions<ListResponse<Block>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams()
-  if (filters?.startDate) params.set('startDate', filters.startDate)
-  if (filters?.endDate) params.set('endDate', filters.endDate)
-  if (filters?.blockNumber) params.set('blockNumber', filters.blockNumber.toString())
+  // URL query params MUST use snake_case (backend expects snake_case, axios only converts request/response bodies)
+  if (filters?.startDate) params.set('start_date', filters.startDate)
+  if (filters?.endDate) params.set('end_date', filters.endDate)
+  if (filters?.blockNumber) params.set('block_number', filters.blockNumber.toString())
   const queryString = params.toString()
 
   return useQuery<ListResponse<Block>, ApiError>({
@@ -186,9 +200,9 @@ export function useBlockRanges(
         previousCount = allBlocks.length
         page++
       }
-      // Group blocks by blockNumber and calculate date ranges
+      // Group blocks by blockNumber AND academicYear to prevent cross-year merging
       // Handle both camelCase (from interceptor) and snake_case (fallback) property names
-      const blockMap = new Map<number, { minDate: string; maxDate: string }>()
+      const blockMap = new Map<string, { blockNumber: number; academicYear: number; minDate: string; maxDate: string }>()
 
       allBlocks.forEach((block) => {
         // Handle both camelCase and snake_case property names for robustness
@@ -201,9 +215,15 @@ export function useBlockRanges(
           return
         }
 
-        const existing = blockMap.get(blockNum)
+        // Calculate academic year from the date to prevent cross-year merging
+        const academicYear = getAcademicYear(blockDate)
+        const key = `${academicYear}-${blockNum}`
+
+        const existing = blockMap.get(key)
         if (!existing) {
-          blockMap.set(blockNum, {
+          blockMap.set(key, {
+            blockNumber: blockNum,
+            academicYear,
             minDate: blockDate,
             maxDate: blockDate,
           })
@@ -217,14 +237,21 @@ export function useBlockRanges(
         }
       })
 
-      // Convert to BlockRange array and sort by blockNumber
-      const ranges: BlockRange[] = Array.from(blockMap.entries())
-        .map(([blockNumber, { minDate, maxDate }]) => ({
+      // Convert to BlockRange array and sort by academicYear, then blockNumber
+      const ranges: BlockRange[] = Array.from(blockMap.values())
+        .map(({ blockNumber, academicYear, minDate, maxDate }) => ({
           blockNumber,
+          academicYear,
           startDate: minDate,
           endDate: maxDate,
         }))
-        .sort((a, b) => a.blockNumber - b.blockNumber)
+        .sort((a, b) => {
+          // Sort by academic year first, then by block number
+          if (a.academicYear !== b.academicYear) {
+            return a.academicYear - b.academicYear
+          }
+          return a.blockNumber - b.blockNumber
+        })
 
       return ranges
     },

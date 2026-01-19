@@ -10,7 +10,7 @@
  * Both tabs are read-only (Tier 0), making this a green-risk page.
  */
 import { useState, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 import {
   CheckCircle,
@@ -559,6 +559,13 @@ function AwayFromProgramStatusBadge({ status, size = 'md' }: { status: Threshold
 
 function AwayFromProgramResidentRow({ summary, personName, pgyLevel, isExpanded, onToggle }: { summary: AwayFromProgramSummary; personName: string; pgyLevel?: number; isExpanded: boolean; onToggle: () => void }) {
   const config = STATUS_CONFIG[summary.thresholdStatus];
+  const router = useRouter();
+
+  const handleViewDetails = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Navigate to person's schedule page which shows their full schedule including absences
+    router.push(`/my-schedule?person=${summary.personId}`);
+  };
 
   return (
     <>
@@ -588,7 +595,7 @@ function AwayFromProgramResidentRow({ summary, personName, pgyLevel, isExpanded,
           <AwayFromProgramStatusBadge status={summary.thresholdStatus} size="sm" />
         </td>
         <td className="px-4 py-3 whitespace-nowrap text-right">
-          <button onClick={(e) => { e.stopPropagation(); }} className="text-purple-600 hover:text-purple-800 p-1 hover:bg-purple-50 rounded transition-colors" title="View details" aria-label={`View details for ${personName}`}>
+          <button onClick={handleViewDetails} className="text-purple-600 hover:text-purple-800 p-1 hover:bg-purple-50 rounded transition-colors" title="View schedule" aria-label={`View schedule for ${personName}`}>
             <Eye className="w-4 h-4" />
           </button>
         </td>

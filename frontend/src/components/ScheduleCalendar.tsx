@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useMemo } from 'react'
+import Link from 'next/link'
 import { format, addDays } from 'date-fns'
 import { DayCell } from './DayCell'
 
@@ -27,9 +28,11 @@ interface ScheduleData {
 interface ScheduleCalendarProps {
   weekStart: Date
   schedule: ScheduleData
+  /** Optional callback when Generate Schedule is clicked. If not provided, navigates to /admin/scheduling */
+  onGenerateSchedule?: () => void
 }
 
-export function ScheduleCalendar({ weekStart, schedule }: ScheduleCalendarProps) {
+export function ScheduleCalendar({ weekStart, schedule, onGenerateSchedule }: ScheduleCalendarProps) {
   // Memoize days array to prevent recalculation on each render
   const days = useMemo(() =>
     Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -84,7 +87,18 @@ export function ScheduleCalendar({ weekStart, schedule }: ScheduleCalendarProps)
         <div className="p-8 text-center text-gray-500">
           No schedule data for this week.
           <br />
-          <button className="btn-primary mt-4">Generate Schedule</button>
+          {onGenerateSchedule ? (
+            <button
+              className="btn-primary mt-4"
+              onClick={onGenerateSchedule}
+            >
+              Generate Schedule
+            </button>
+          ) : (
+            <Link href="/admin/scheduling" className="btn-primary mt-4 inline-block">
+              Generate Schedule
+            </Link>
+          )}
         </div>
       ) : (
         people.map(([personId, person]) => (
