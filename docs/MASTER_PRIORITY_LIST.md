@@ -8,6 +8,31 @@
 
 ---
 
+## PENDING REVIEW
+
+### PAI² Governance Revision Proposal
+**File:** [`docs/proposals/PAI2_GOVERNANCE_REVISION_PROPOSAL.md`](proposals/PAI2_GOVERNANCE_REVISION_PROPOSAL.md)
+**Date:** 2026-01-18
+**Source:** PLAN_PARTY (10 probes) analysis of HUMAN_REPORT
+
+Addresses 7 gaps in PAI² governance framework:
+
+| Gap | Severity | Summary |
+|-----|----------|---------|
+| 1 | HIGH | No standardized handoff kit ORCH→Deputies |
+| 2 | MEDIUM | Exceptions (USASOC/user/subagent) not surfaced |
+| 3 | LOW | ORCHESTRATOR not in agents.yaml |
+| 4 | MEDIUM | Standing orders dispersed across identity cards |
+| 5 | LOW | MCP audit logs not visible in-repo |
+| 6 | MEDIUM | /force-multiplier lacks RAG health check |
+| 7 | HIGH | No formal offline SOP |
+
+**Decision Required:** Gap 3 has 5/5 probe split - Option A (add to yaml), B (identity only), or C (spawnable:false flag)?
+
+**Action:** Review proposal, make Gap 3 decision, approve phases.
+
+---
+
 ## CRITICAL (Fix Immediately)
 
 ### 1. ~~Orphan Security Routes~~ ✅ RESOLVED
