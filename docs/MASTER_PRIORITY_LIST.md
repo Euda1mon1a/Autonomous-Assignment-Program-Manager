@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-18 (Bind Mounts, Academic Year Fix, Doc Consolidation)
+> **Last Updated:** 2026-01-18 (VaR endpoints merged, feature flag injection issue identified)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -93,10 +93,10 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
 **Decision:** Keep all modules on roadmap. Integrate as features require.
 
-### 7. ~~Feature Flags Underutilized~~ ✅ RESOLVED (Phase 1)
+### 7. Feature Flags - Phase 1 Done, Phase 2 Needed
 - **Location:** `backend/app/features/` - 45KB of production-ready code
 - **Before:** 1 flag (`swap_marketplace_enabled`)
-- **After:** 5 flags with backend gating on 12 exotic resilience endpoints
+- **After:** 5 flags with backend gating on 12+ exotic resilience endpoints
 
 | Flag Key | Default | Target Roles | Purpose |
 |----------|---------|--------------|---------|
@@ -106,12 +106,19 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 | `voxel_visualization_enabled` | false | admin | Gates 3D voxel viz (perf-intensive) |
 | `command_center_enabled` | false | admin | Gates overseer dashboard |
 
-**Files modified:**
-- `scripts/seed_feature_flags.py` - Added 4 new flag definitions
-- `backend/app/api/routes/exotic_resilience.py` - Added `@require_feature_flag` to 12 endpoints
+**⚠️ HIGH: Endpoints Missing `current_user` Injection**
+Most feature-flagged exotic resilience endpoints don't inject `current_user: User = Depends(get_current_active_user)`. The `@require_feature_flag` decorator pulls `current_user` from kwargs for role targeting. When `user_role` is None, `_check_role_target()` returns False for any flag with `target_roles` set, causing 404s even for admins.
 
-**Resolved:** 2026-01-18 in `feature/feature-flag-expansion`
-**Future work:** Frontend `useFeatureFlag` hook, percentage rollouts, individual lab category flags
+| Status | Count | Evidence |
+|--------|-------|----------|
+| Has `current_user` | 5 | Lines 538, 597, 681, 759, 792 |
+| Missing `current_user` | 12+ | Lines 535, 594, 678, 860, 931, 986, etc. |
+
+**Fix:** Add `current_user: User = Depends(get_current_active_user)` to all `@require_feature_flag` decorated endpoints.
+**Ref:** `docs/reviews/2026-01-18-commit-66a1446-review.md`
+
+**Phase 1 Resolved:** 2026-01-18 - Flags created, decorator applied
+**Phase 2 TODO:** Fix current_user injection, frontend `useFeatureFlag` hook, percentage rollouts
 
 ### 8. MCP Tool Placeholders (16 tools)
 
@@ -224,14 +231,29 @@ Codex review issues fixed:
 **Resolved:** 2026-01-18 in `feature/master-priority-implementation` (commit `8bbb3cb9`)
 **Ref:** `docs/reviews/2026-01-17-current-changes-review.md`
 
-### 16. VaR Backend Endpoints (NEW)
-MCP tools call these endpoints but they don't exist yet:
+### 16. ~~VaR Backend Endpoints~~ ✅ RESOLVED
+Endpoints created and wired to MCP tools:
 - `POST /api/v1/analytics/coverage-var` - Coverage Value-at-Risk
 - `POST /api/v1/analytics/workload-var` - Workload Value-at-Risk
+- `POST /api/v1/analytics/conditional-var` - Conditional VaR (CVaR/Expected Shortfall)
 
-**Current State:** MCP tools have API-first pattern, fall back to mock data.
-**Backend Service:** `backend/app/services/metrics_service.py` (partial)
-**Action:** Create endpoints in `analytics.py` or new `var_analytics.py` route file.
+**Files added:**
+- `backend/app/schemas/var_analytics.py` - Request/response schemas
+- `backend/app/services/var_service.py` - VaR calculation service
+- `backend/tests/services/test_var_service.py` - Unit tests
+
+**Resolved:** 2026-01-18 in PR #744
+
+### 17. Seed Script Credentials (NEW)
+`scripts/seed_feature_flags.py` hard-codes a non-default admin password (`admin123` fallback), so a fresh DEBUG instance with default password will fail to seed flags.
+
+| Issue | Location | Impact |
+|-------|----------|--------|
+| Hard-coded password | `seed_feature_flags.py:115` | Seed script fails on fresh installs |
+| No env var fallback | Same | Creates false sense flags were created |
+
+**Fix:** Read credentials from env vars or support a fallback list.
+**Ref:** `docs/reviews/2026-01-18-commit-66a1446-review.md`
 
 ---
 
@@ -312,8 +334,8 @@ Added `psutil>=5.9.0` to `requirements.txt` for system profiling capabilities.
 | Priority | Issues | Scope |
 |----------|--------|-------|
 | **CRITICAL** | 1 open, 4 resolved | ~~orphan routes~~✅, PII, ~~doc contradictions~~✅, ~~API mismatches~~✅, ~~rollback data loss~~✅ |
-| **HIGH** | 3 open, 2 resolved | frameworks, ~~feature flags~~✅, MCP stubs (8/16 wired), mock GUI, ~~ACGME compliance (2/3 fixed)~~ |
-| **MEDIUM** | 2 open, 4 resolved | ~~activity logging~~✅, ~~emails~~✅, pagination, ~~docs~~✅, ~~CLI/security cleanup~~✅, VaR endpoints |
+| **HIGH** | 4 open, 1 resolved | frameworks, feature flags (Phase 2), MCP stubs (12/16 wired), mock GUI, ACGME compliance |
+| **MEDIUM** | 2 open, 5 resolved | ~~activity logging~~✅, ~~emails~~✅, pagination, ~~docs~~✅, ~~CLI/security cleanup~~✅, ~~VaR endpoints~~✅, seed script creds |
 | **LOW** | 4 | A/B testing, ML, time crystal, spreadsheet editor (tier 1 UX) |
 | **INFRA** | 3 resolved | ~~bind mounts~~✅, ~~academic year fix~~✅, ~~psutil dep~~✅ |
 
@@ -324,8 +346,8 @@ Added `psutil>=5.9.0` to `requirements.txt` for system profiling capabilities.
 3. ~~**Fix rollback serialization**~~ ✅ DONE → Schedule backup/restore now captures all fields
 4. **Integrate orphan frameworks** → Saga for swaps, Deployment for CI/CD, gRPC for MCP (ON ROADMAP)
 5. ~~**Fix doc contradictions**~~ ✅ DONE → Trust in documentation restored
-6. ~~**Expand feature flag usage**~~ ✅ DONE → 5 flags, 12 exotic endpoints gated (Phase 1)
-7. **Wire MCP tools** → 8 tools wired to real backends (2026-01-18), 6 Hopfield/free-energy remain
+6. **Fix feature flag current_user injection** → HIGH - 12+ exotic endpoints unreachable (Phase 2)
+7. **Wire MCP tools** → 12 tools wired (2026-01-18), 6 Hopfield/free-energy remain
 8. **Wire mock dashboards** → Real data for ResilienceOverseer, SovereignPortal (MEDIUM effort)
 
 ---
