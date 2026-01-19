@@ -27,6 +27,8 @@ import type {
   BreakerHealthResponse,
   MTFComplianceResponse,
   UnifiedCriticalIndexResponse,
+  BlastRadiusReportResponse,
+  StigmergyPatternsResponse,
 } from "@/types/resilience";
 import {
   useQuery,
@@ -62,6 +64,8 @@ export const resilienceQueryKeys = {
     ["resilience", "mtf-compliance", checkCircuitBreaker] as const,
   unifiedCriticalIndex: (topN?: number) =>
     ["resilience", "unified-critical-index", topN] as const,
+  blastRadiusReport: () => ["resilience", "tier2", "zones", "report"] as const,
+  stigmergyPatterns: () => ["resilience", "tier3", "stigmergy", "patterns"] as const,
 };
 
 // ============================================================================
@@ -675,6 +679,118 @@ export function useUnifiedCriticalIndex(
       return response;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes (expensive computation)
+    ...options,
+  });
+}
+
+// ============================================================================
+// Blast Radius (Zone) Hooks (Tier 2 Strategic)
+// ============================================================================
+
+/**
+ * Fetches comprehensive blast radius containment report.
+ *
+ * Returns health status of all scheduling zones and overall containment status.
+ * This provides the data for N-1/N-2 resilience visualization including:
+ * - Zone health reports with faculty availability
+ * - Containment levels and isolation status
+ * - Active borrowing requests between zones
+ *
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing:
+ *   - `data`: Blast radius report with zone health and containment data
+ *   - `isLoading`: Whether the fetch is in progress
+ *   - `error`: Any error that occurred
+ *
+ * @example
+ * ```tsx
+ * function ZoneHealthPanel() {
+ *   const { data, isLoading } = useBlastRadiusReport();
+ *
+ *   if (isLoading) return <Skeleton />;
+ *
+ *   return (
+ *     <div>
+ *       <span>Zones: {data.zonesHealthy}/{data.totalZones} healthy</span>
+ *       <ContainmentBadge level={data.containmentLevel} />
+ *       {data.zoneReports.map(zone => (
+ *         <ZoneCard key={zone.zoneId} zone={zone} />
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useBlastRadiusReport(
+  options?: Omit<
+    UseQueryOptions<BlastRadiusReportResponse, ApiError>,
+    "queryKey" | "queryFn"
+  >
+) {
+  return useQuery<BlastRadiusReportResponse, ApiError>({
+    queryKey: resilienceQueryKeys.blastRadiusReport(),
+    queryFn: async () => {
+      const response = await get<BlastRadiusReportResponse>(
+        "/resilience/tier2/zones/report"
+      );
+      return response;
+    },
+    staleTime: 60 * 1000, // 1 minute
+    refetchInterval: 60 * 1000, // Auto-refresh every minute
+    ...options,
+  });
+}
+
+// ============================================================================
+// Stigmergy Hooks (Tier 3: Preference Trail Patterns)
+// ============================================================================
+
+/**
+ * Fetches stigmergy preference patterns from collective trail analysis.
+ *
+ * Stigmergy is an indirect coordination mechanism where agents leave "trails"
+ * that influence future behavior. This hook retrieves:
+ * - Popular/unpopular slot preferences (aggregated across faculty)
+ * - Swap pair affinities (who prefers swapping with whom)
+ * - Pattern totals and trail metadata
+ *
+ * Used by the StigmergyFlow visualization to render schedule patterns as
+ * particle flows through spacetime.
+ *
+ * @param options - Optional React Query configuration options
+ * @returns Query result containing:
+ *   - `data`: Stigmergy patterns response with aggregated preference data
+ *   - `isLoading`: Whether the fetch is in progress
+ *   - `error`: Any error that occurred
+ *
+ * @example
+ * ```tsx
+ * function StigmergyFlowWrapper() {
+ *   const { data, isLoading, error } = useStigmergyPatterns();
+ *
+ *   if (isLoading) return <LoadingScreen label="Loading patterns..." />;
+ *   if (error) return <ErrorMessage error={error} />;
+ *
+ *   const scheduleNodes = transformPatternsToNodes(data);
+ *   return <StigmergyScene data={scheduleNodes} />;
+ * }
+ * ```
+ */
+export function useStigmergyPatterns(
+  options?: Omit<
+    UseQueryOptions<StigmergyPatternsResponse, ApiError>,
+    "queryKey" | "queryFn"
+  >
+) {
+  return useQuery<StigmergyPatternsResponse, ApiError>({
+    queryKey: resilienceQueryKeys.stigmergyPatterns(),
+    queryFn: async () => {
+      const response = await get<StigmergyPatternsResponse>(
+        "/resilience/tier3/stigmergy/patterns"
+      );
+      return response;
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes
     ...options,
   });
 }

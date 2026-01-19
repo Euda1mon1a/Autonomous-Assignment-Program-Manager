@@ -97,6 +97,7 @@ export {
 // Hooks
 export {
   useHolographicData,
+  useHolographicRealData,
   useHolographicState,
   useFilteredManifoldPoints,
   useAnimationFrame,

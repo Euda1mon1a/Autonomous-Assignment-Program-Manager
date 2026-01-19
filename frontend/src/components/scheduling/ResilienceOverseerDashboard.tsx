@@ -8,8 +8,11 @@ import {
   TrendingUp,
   AlertOctagon,
   LayoutGrid,
-  Flame
+  Flame,
+  Loader2
 } from 'lucide-react';
+import { useSystemHealth, useCircuitBreakers } from '@/hooks/useResilience';
+import type { HealthCheckResponse, DefenseLevel } from '@/types/resilience';
 
 // --- Types ---
 
@@ -29,8 +32,11 @@ interface Vulnerability {
   violationTime: number | null;
 }
 
+// Dashboard defense level type - mapped from API DefenseLevel
+type DashboardDefenseLevel = 'NORMAL' | 'DEGRADED' | 'N_MINUS_1' | 'N_MINUS_2' | 'CRITICAL';
+
 interface DashboardData {
-  defenseLevel: 'NORMAL' | 'DEGRADED' | 'N_MINUS_1' | 'N_MINUS_2' | 'CRITICAL';
+  defenseLevel: DashboardDefenseLevel;
   utilizationRate: number;
   burnoutRt: number;
   circuitBreakers: CircuitBreaker[];
@@ -107,7 +113,7 @@ const CountDownTimer: React.FC<CountDownTimerProps> = ({ initialSeconds }) => {
 
 // --- Helper: Readiness Gauge Component ---
 interface ReadinessGaugeProps {
-  level: DashboardData['defenseLevel'];
+  level: DashboardDefenseLevel;
 }
 
 const ReadinessGauge: React.FC<ReadinessGaugeProps> = ({ level }) => {
@@ -145,50 +151,183 @@ const ReadinessGauge: React.FC<ReadinessGaugeProps> = ({ level }) => {
   );
 };
 
-// --- Mock Data Generators ---
+// --- API Data Mapping Helpers ---
 
-const generateMockData = (): DashboardData => ({
-  defenseLevel: ["NORMAL", "DEGRADED", "N_MINUS_1", "N_MINUS_2", "CRITICAL"][Math.floor(Math.random() * 3)] as DashboardData['defenseLevel'],
-  utilizationRate: 0.88,
-  burnoutRt: 1.15,
-  circuitBreakers: [
-    { name: "ACGME Constraints", state: "CLOSED", tripCount: 0, lastTrip: "N/A" },
-    { name: "Leave Balancer", state: "HALF_OPEN", tripCount: 4, lastTrip: "14:02Z" },
-    { name: "Shift Optimizer", state: "CLOSED", tripCount: 1, lastTrip: "09:00Z" },
-    { name: "Crisis Failover", state: "OPEN", tripCount: 12, lastTrip: "08:45Z" },
-  ],
-  vulnerabilities: [
-    { id: 1, personName: "Maj. Miller", hoursThisWeek: 78, projectedHours: 84, riskLevel: "CRITICAL", violationTime: 3400 },
-    { id: 2, personName: "Capt. Davis", hoursThisWeek: 68, projectedHours: 72, riskLevel: "HIGH", violationTime: null },
-    { id: 3, personName: "Lt. Smith", hoursThisWeek: 60, projectedHours: 65, riskLevel: "MEDIUM", violationTime: null }
-  ]
-});
+/**
+ * Maps the API DefenseLevel enum to dashboard display level.
+ * API uses nuclear safety paradigm levels; dashboard uses simplified status.
+ */
+function mapDefenseLevel(apiLevel: DefenseLevel | undefined): DashboardDefenseLevel {
+  if (!apiLevel) return 'NORMAL';
 
-const ROTATIONS: Rotation[] = [
-  { name: "Trauma ICU", utilization: 105, staff: 4, required: 5, status: "Gap" },
-  { name: "Emergency Rm", utilization: 82, staff: 8, required: 8, status: "Nominal" },
-  { name: "Operating Rm", utilization: 94, staff: 12, required: 12, status: "Fragile" },
-  { name: "Radiology", utilization: 45, staff: 3, required: 2, status: "Surplus" },
-];
+  switch (apiLevel) {
+    case 'PREVENTION':
+      return 'NORMAL';
+    case 'CONTROL':
+      return 'DEGRADED';
+    case 'SAFETY_SYSTEMS':
+      return 'N_MINUS_1';
+    case 'CONTAINMENT':
+      return 'N_MINUS_2';
+    case 'EMERGENCY':
+      return 'CRITICAL';
+    default:
+      return 'NORMAL';
+  }
+}
+
+/**
+ * Maps API circuit breakers to dashboard format.
+ * Converts from detailed API response to simplified dashboard view.
+ */
+function mapCircuitBreakers(
+  breakers: Array<{
+    name: string;
+    state: string;
+    failureCount?: number;
+    failedRequests?: number;
+    lastFailureTime?: string | null;
+  }> | undefined
+): CircuitBreaker[] {
+  if (!breakers?.length) {
+    // Return defaults if no breakers available
+    return [
+      { name: "ACGME Constraints", state: "CLOSED", tripCount: 0, lastTrip: "N/A" },
+      { name: "Leave Balancer", state: "CLOSED", tripCount: 0, lastTrip: "N/A" },
+      { name: "Shift Optimizer", state: "CLOSED", tripCount: 0, lastTrip: "N/A" },
+      { name: "Crisis Failover", state: "CLOSED", tripCount: 0, lastTrip: "N/A" },
+    ];
+  }
+
+  return breakers.map(b => ({
+    name: b.name,
+    state: (b.state?.toUpperCase() === 'OPEN' ? 'OPEN' :
+            b.state?.toUpperCase() === 'HALF_OPEN' || b.state?.toUpperCase() === 'HALF-OPEN' ? 'HALF_OPEN' :
+            'CLOSED') as CircuitBreaker['state'],
+    tripCount: b.failedRequests || b.failureCount || 0,
+    lastTrip: b.lastFailureTime
+      ? new Date(b.lastFailureTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + 'Z'
+      : 'N/A',
+  }));
+}
+
+/**
+ * Maps redundancy status to rotation display.
+ * Uses API redundancy data or provides sensible defaults.
+ */
+function mapRotations(
+  redundancyStatus: HealthCheckResponse['redundancyStatus'] | undefined
+): Rotation[] {
+  if (!redundancyStatus?.length) {
+    // Default rotations when no data available
+    return [
+      { name: "Loading...", utilization: 0, staff: 0, required: 0, status: "..." },
+    ];
+  }
+
+  return redundancyStatus.map(r => {
+    const utilization = r.minimumRequired > 0
+      ? Math.round((r.available / r.minimumRequired) * 100)
+      : 100;
+
+    let status = "Nominal";
+    if (utilization > 100) status = "Surplus";
+    else if (utilization < 80) status = "Gap";
+    else if (utilization < 95) status = "Fragile";
+
+    return {
+      name: r.service,
+      utilization,
+      staff: r.available,
+      required: r.minimumRequired,
+      status,
+    };
+  });
+}
+
+/**
+ * Generate mock vulnerabilities for demo purposes.
+ * TODO: Wire to real vulnerability endpoint when available.
+ */
+function getMockVulnerabilities(): Vulnerability[] {
+  return [
+    { id: 1, personName: "Provider A", hoursThisWeek: 78, projectedHours: 84, riskLevel: "CRITICAL", violationTime: 3400 },
+    { id: 2, personName: "Provider B", hoursThisWeek: 68, projectedHours: 72, riskLevel: "HIGH", violationTime: null },
+    { id: 3, personName: "Provider C", hoursThisWeek: 60, projectedHours: 65, riskLevel: "MEDIUM", violationTime: null }
+  ];
+}
 
 // --- Main Component ---
 
 export default function ResilienceOverseerDashboard() {
-  const [data, setData] = useState<DashboardData>(generateMockData());
+  // Fetch real data from backend API
+  const {
+    data: healthData,
+    isLoading: isHealthLoading,
+    error: healthError,
+    isRefetching
+  } = useSystemHealth({
+    refetchInterval: 30000, // 30s auto-refresh
+    staleTime: 10000,       // 10s stale time
+  });
 
-  // Simulate Live Data Pulse
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setData(prev => ({
-        ...prev,
-        burnoutRt: +(Math.random() * (1.3 - 0.8) + 0.8).toFixed(2),
-        circuitBreakers: prev.circuitBreakers.map(cb =>
-          Math.random() > 0.95 ? { ...cb, state: cb.state === "CLOSED" ? "HALF_OPEN" : "CLOSED" } as CircuitBreaker : cb
-        )
-      }));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  const {
+    data: breakersData,
+    isLoading: isBreakersLoading,
+  } = useCircuitBreakers({
+    refetchInterval: 30000,
+    staleTime: 10000,
+  });
+
+  // Map API response to dashboard format
+  const data: DashboardData = {
+    defenseLevel: mapDefenseLevel(healthData?.defenseLevel),
+    utilizationRate: healthData?.utilization?.utilizationRate ?? 0,
+    burnoutRt: 1.0, // TODO: Wire to burnout Rt endpoint
+    circuitBreakers: mapCircuitBreakers(breakersData?.breakers),
+    vulnerabilities: getMockVulnerabilities(), // TODO: Wire to vulnerability endpoint
+  };
+
+  // Derive rotations from redundancy status
+  const rotations = mapRotations(healthData?.redundancyStatus);
+
+  // Loading state
+  const isLoading = isHealthLoading || isBreakersLoading;
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-zinc-100 p-4 md:p-6 font-sans flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto" />
+          <div className="space-y-2">
+            <p className="text-lg font-semibold text-zinc-200">Initializing Resilience Systems</p>
+            <p className="text-sm text-zinc-500">Connecting to backend services...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (healthError) {
+    return (
+      <div className="min-h-screen bg-black text-zinc-100 p-4 md:p-6 font-sans flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-md">
+          <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto" />
+          <div className="space-y-2">
+            <p className="text-lg font-semibold text-zinc-200">Connection Error</p>
+            <p className="text-sm text-zinc-500">
+              Unable to fetch resilience data. The backend may be unavailable.
+            </p>
+            <p className="text-xs text-zinc-600 font-mono mt-4">
+              {healthError.message || 'Unknown error'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 p-4 md:p-6 font-sans selection:bg-blue-500/30">
@@ -197,8 +336,9 @@ export default function ResilienceOverseerDashboard() {
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-zinc-900 pb-6">
         <div>
           <div className="flex items-center gap-2 text-blue-500 mb-1">
-            <Shield size={20} className="animate-pulse" />
+            <Shield size={20} className={isRefetching ? "animate-pulse" : ""} />
             <span className="text-xs font-bold tracking-[0.25em] uppercase text-blue-500/80">Med-Ops Command</span>
+            {isRefetching && <span className="text-[8px] text-zinc-500 uppercase">Updating...</span>}
           </div>
           <h1 className="text-2xl font-light tracking-tight text-white">Residency <span className="font-bold text-zinc-100">Overseer</span></h1>
         </div>
@@ -303,7 +443,7 @@ export default function ResilienceOverseerDashboard() {
             </div>
 
             <div className="space-y-6 flex-grow">
-              {ROTATIONS.map((rot, i) => (
+              {rotations.map((rot, i) => (
                 <div key={i} className="space-y-2">
                   <div className="flex justify-between text-xs items-end">
                     <span className="font-medium text-zinc-300 flex items-center gap-2">
@@ -418,13 +558,15 @@ export default function ResilienceOverseerDashboard() {
       <footer className="mt-12 pt-6 border-t border-zinc-900 flex flex-col md:flex-row justify-between items-center text-zinc-600 gap-4">
         <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-[0.15em]">
           <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-emerald-500/80">Uplink Stable</span>
+            <div className={`w-1.5 h-1.5 rounded-full ${healthData ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
+            <span className={healthData ? 'text-emerald-500/80' : 'text-amber-500/80'}>
+              {healthData ? 'API Connected' : 'Connecting...'}
+            </span>
           </div>
-          <span>Latency: 12ms</span>
+          <span>Auto-refresh: 30s</span>
         </div>
         <div className="text-[10px] font-mono text-zinc-700">
-          SECURE CHANNEL // UNCLASSIFIED // SIMULATION MODE
+          SECURE CHANNEL // UNCLASSIFIED // {healthData?.overallStatus?.toUpperCase() || 'UNKNOWN'}
         </div>
       </footer>
     </div>

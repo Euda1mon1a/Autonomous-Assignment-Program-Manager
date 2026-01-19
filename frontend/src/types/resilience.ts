@@ -370,3 +370,129 @@ export interface UnifiedCriticalIndexResponse {
   recommendations: string[];
   severity: string;
 }
+
+// ============================================================================
+// Blast Radius Zone Types (Tier 2 Strategic)
+// ============================================================================
+
+export enum ZoneType {
+  INPATIENT = "inpatient",
+  OUTPATIENT = "outpatient",
+  EDUCATION = "education",
+  RESEARCH = "research",
+  ADMINISTRATIVE = "admin",
+  ON_CALL = "on_call",
+}
+
+export enum ZoneStatus {
+  GREEN = "green",
+  YELLOW = "yellow",
+  ORANGE = "orange",
+  RED = "red",
+  BLACK = "black",
+}
+
+export enum ContainmentLevel {
+  NONE = "none",
+  SOFT = "soft",
+  MODERATE = "moderate",
+  STRICT = "strict",
+  LOCKDOWN = "lockdown",
+}
+
+/**
+ * Health report for a scheduling zone
+ */
+export interface ZoneHealthReport {
+  zoneId: string;
+  zoneName: string;
+  zoneType: ZoneType;
+  checkedAt: string;
+  status: ZoneStatus;
+  containmentLevel: ContainmentLevel;
+  isSelfSufficient: boolean;
+  hasSurplus: boolean;
+  availableFaculty: number;
+  minimumRequired: number;
+  optimalRequired: number;
+  capacityRatio: number;
+  facultyBorrowed: number;
+  facultyLent: number;
+  netBorrowing: number;
+  activeIncidents: number;
+  servicesAffected: string[];
+  recommendations: string[];
+}
+
+/**
+ * Overall blast radius containment report
+ */
+export interface BlastRadiusReportResponse {
+  generatedAt: string;
+  totalZones: number;
+  zonesHealthy: number;
+  zonesDegraded: number;
+  zonesCritical: number;
+  containmentActive: boolean;
+  containmentLevel: ContainmentLevel;
+  zonesIsolated: number;
+  activeBorrowingRequests: number;
+  pendingBorrowingRequests: number;
+  zoneReports: ZoneHealthReport[];
+  recommendations: string[];
+}
+
+// ============================================================================
+// Stigmergy Types (Tier 3: Preference Trails)
+// ============================================================================
+
+/**
+ * A single slot preference pattern from stigmergy analysis
+ */
+export interface SlotPreferencePattern {
+  slotType: string;
+  netPreference: number;
+}
+
+/**
+ * A swap pair affinity from stigmergy analysis
+ */
+export interface SwapPairPattern {
+  facultyId1: string;
+  facultyId2: string;
+  affinity: number;
+}
+
+/**
+ * Response from stigmergy patterns endpoint
+ */
+export interface StigmergyPatternsResponse {
+  patterns: StigmergyPatternData[];
+  total: number;
+}
+
+/**
+ * Individual pattern data from the stigmergy API.
+ * The backend returns a single pattern object with arrays of slot preferences and swap pairs.
+ *
+ * Structure (after axios camelCase conversion):
+ * {
+ *   popularSlots: [[slotType, netPreference], ...],
+ *   unpopularSlots: [[slotType, netPreference], ...],
+ *   neutralSlots: [[slotType, netPreference], ...],
+ *   strongSwapPairs: [[facultyId1, facultyId2, strength], ...],
+ *   totalPatterns: number
+ * }
+ */
+export interface StigmergyPatternData {
+  // Slot preference patterns: [slotType, netPreference][]
+  popularSlots: Array<[string, number]>;
+  unpopularSlots: Array<[string, number]>;
+  neutralSlots?: Array<[string, number]>;
+
+  // Swap pair patterns: [facultyId1, facultyId2, strength][]
+  strongSwapPairs: Array<[string, string, number]>;
+
+  // Metadata
+  totalPatterns: number;
+}

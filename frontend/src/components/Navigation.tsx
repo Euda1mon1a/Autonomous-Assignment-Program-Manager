@@ -67,6 +67,7 @@ const navItems: NavItem[] = [
   { href: "/admin/schema", label: "Schema", icon: Database, adminOnly: true },
   { href: "/admin/block-explorer", label: "Blocks", icon: Network, adminOnly: true },
   { href: "/admin/labs", label: "Labs", icon: Beaker, adminOnly: true },
+  { href: "/admin/pec", label: "PEC", icon: ClipboardList, adminOnly: true },
   { href: "/admin/resilience-overseer", label: "Overseer", icon: Eye, adminOnly: true },
   { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];

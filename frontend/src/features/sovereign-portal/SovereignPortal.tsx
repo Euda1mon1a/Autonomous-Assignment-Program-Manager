@@ -4,13 +4,17 @@
  * Unified 4-panel view for schedule system monitoring.
  * Displays Spatial, Fairness, Solver, and Fragility metrics.
  *
+ * Data is fetched from real backend APIs:
+ * - /api/v1/resilience/health - Fragility and system status
+ * - /api/v1/visualization/coverage - Spatial coverage metrics
+ *
  * @route /admin/labs/command
  */
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { RefreshCw, Maximize2 } from 'lucide-react';
+import { useState } from 'react';
+import { RefreshCw, Maximize2, AlertTriangle, WifiOff } from 'lucide-react';
 import { Panel } from './components/Panel';
 import { StatusBadge } from './components/StatusBadge';
 import { AlertFeed } from './components/AlertFeed';
@@ -18,45 +22,83 @@ import { SpatialMini } from './components/SpatialMini';
 import { FairnessMini } from './components/FairnessMini';
 import { SolverMini } from './components/SolverMini';
 import { FragilityMini } from './components/FragilityMini';
-import { PANEL_CONFIGS, generateMockDashboardState } from './constants';
-import type { SovereignPortalProps, DashboardState, PanelId } from './types';
+import { PANEL_CONFIGS } from './constants';
+import { useSovereignDashboard } from './hooks';
+import type { SovereignPortalProps, PanelId } from './types';
 
 export function SovereignPortal({
   className = '',
 }: SovereignPortalProps): JSX.Element {
-  const [state, setState] = useState<DashboardState | null>(null);
   const [expandedPanel, setExpandedPanel] = useState<PanelId | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const mountedRef = useRef(true);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    setState(generateMockDashboardState());
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  // Fetch real data from backend APIs
+  const {
+    data: state,
+    isLoading,
+    isError,
+    error,
+    isFetching,
+    refetch,
+  } = useSovereignDashboard({
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await new Promise((r) => setTimeout(r, 500));
-    if (mountedRef.current) {
-      setState(generateMockDashboardState());
-      setIsRefreshing(false);
-    }
+    await refetch();
   };
 
   const handleToggleExpand = (panelId: PanelId) => {
     setExpandedPanel((prev) => (prev === panelId ? null : panelId));
   };
 
-  if (!state) {
+  // Loading state
+  if (isLoading && !state) {
     return (
       <div className="flex items-center justify-center h-full bg-slate-900">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
           <p className="mt-4 text-sm uppercase tracking-widest text-purple-400">
-            Initializing Command Portal...
+            Connecting to Command Systems...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError && !state) {
+    return (
+      <div className="flex items-center justify-center h-full bg-slate-900">
+        <div className="text-center max-w-md">
+          <WifiOff className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-white mb-2">
+            Connection Failed
+          </h2>
+          <p className="text-sm text-slate-400 mb-4">
+            Unable to connect to backend services.
+            {error?.message && (
+              <span className="block mt-1 text-red-400/80">{error.message}</span>
+            )}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-sm transition-colors"
+          >
+            Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // No data state (shouldn't happen normally but handle gracefully)
+  if (!state) {
+    return (
+      <div className="flex items-center justify-center h-full bg-slate-900">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
+          <p className="text-sm uppercase tracking-widest text-amber-400">
+            Awaiting System Data...
           </p>
         </div>
       </div>
@@ -79,11 +121,11 @@ export function SovereignPortal({
           <StatusBadge status={state.status} lastUpdate={state.lastUpdate} />
           <button
             onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            disabled={isFetching}
+            className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
           >
             <RefreshCw
-              className={`w-5 h-5 text-slate-400 ${isRefreshing ? 'animate-spin' : ''}`}
+              className={`w-5 h-5 text-slate-400 ${isFetching ? 'animate-spin' : ''}`}
             />
           </button>
         </div>

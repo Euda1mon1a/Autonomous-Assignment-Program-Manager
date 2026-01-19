@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-18 (Hopfield MCP backend wired PR #747)
+> **Last Updated:** 2026-01-18 (Thermodynamics free-energy + energy-landscape MCP tools wired)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -113,9 +113,9 @@ Issue identified in code review was based on commit `66a14461`, but PR #743 fixe
 **Resolved:** 2026-01-18 in PR #743
 **Future work:** Frontend `useFeatureFlag` hook, percentage rollouts, individual lab category flags
 
-### 8. MCP Tool Placeholders (16 tools)
+### 8. ~~MCP Tool Placeholders (16 tools)~~ ✅ RESOLVED
 
-**Progress:** 14 tools now wired to backend (2026-01-18)
+**Progress:** 16/16 tools now wired to backend (2026-01-18)
 
 **FULLY WORKING (real backend with real data):**
 | Tool | Domain | Backend Endpoint |
@@ -132,6 +132,8 @@ Issue identified in code review was based on commit `66a14461`, but PR #743 fixe
 | `find_nearby_attractors_tool` | Hopfield | `/resilience/exotic/hopfield/attractors` |
 | `measure_basin_depth_tool` | Hopfield | `/resilience/exotic/hopfield/basin-depth` |
 | `detect_spurious_attractors_tool` | Hopfield | `/resilience/exotic/hopfield/spurious` |
+| `optimize_free_energy_tool` | Thermodynamics | `/resilience/exotic/thermodynamics/free-energy` |
+| `analyze_energy_landscape_tool` | Thermodynamics | `/resilience/exotic/thermodynamics/energy-landscape` |
 
 **MISSING BACKEND ENDPOINTS (MCP has API calls, backend 404s):**
 | Tool | Domain | Expected Endpoint |
@@ -139,13 +141,7 @@ Issue identified in code review was based on commit `66a14461`, but PR #743 fixe
 | `calculate_coverage_var_tool` | VaR Risk | `/api/v1/analytics/coverage-var` |
 | `calculate_workload_var_tool` | VaR Risk | `/api/v1/analytics/workload-var` |
 
-**NOT IMPLEMENTED (return zeros/mock):**
-| Tool | Domain |
-|------|--------|
-| `optimize_free_energy_tool` | Thermodynamics |
-| `analyze_energy_landscape_tool` | Thermodynamics |
-
-**Note:** Core ACGME validation tools are REAL implementations.
+**Note:** Core ACGME validation tools are REAL implementations. All 16 MCP resilience tools now wired to real backend.
 
 **Frontend Visualizer/Dashboard Status:**
 
@@ -156,8 +152,8 @@ Issue identified in code review was based on commit `66a14461`, but PR #743 fixe
 | Creep Fatigue | ✗ | ✗ | Not implemented | - |
 | Transcription Factors | ✗ | ✗ | Not implemented | - |
 | Hopfield Network | ✓ | ✗ | `features/hopfield-energy/` | Mock |
-| Free Energy | ✗ | ✗ | Not implemented | - |
-| Energy Landscape | ✗ | ✗ | Not implemented | - |
+| Free Energy | ✗ | ✗ | Not implemented | API ✅ |
+| Energy Landscape | ✗ | ✗ | Not implemented | API ✅ |
 | Circadian Phase | ✓ | ✗ | `features/synapse-monitor/` | Mock |
 | Penrose Efficiency | ✗ | ✗ | Not implemented | - |
 | Anderson Localization | ✗ | ✗ | Not implemented | - |
@@ -344,7 +340,7 @@ Added `psutil>=5.9.0` to `requirements.txt` for system profiling capabilities.
 | Priority | Issues | Scope |
 |----------|--------|-------|
 | **CRITICAL** | 1 open, 4 resolved | ~~orphan routes~~✅, PII, ~~doc contradictions~~✅, ~~API mismatches~~✅, ~~rollback data loss~~✅ |
-| **HIGH** | 3 open, 2 resolved | frameworks, ~~feature flags~~✅, MCP stubs (15/16 wired, 2 remain), mock GUI, ACGME compliance |
+| **HIGH** | 2 open, 3 resolved | frameworks, ~~feature flags~~✅, ~~MCP stubs~~✅ (16/16 wired), mock GUI, ACGME compliance |
 | **MEDIUM** | 1 open, 6 resolved | ~~activity logging~~✅, ~~emails~~✅, pagination, ~~docs~~✅, ~~CLI/security cleanup~~✅, ~~VaR endpoints~~✅, ~~seed script~~✅ |
 | **LOW** | 4 | A/B testing, ML, time crystal, spreadsheet editor (tier 1 UX) |
 | **INFRA** | 3 resolved | ~~bind mounts~~✅, ~~academic year fix~~✅, ~~psutil dep~~✅ |

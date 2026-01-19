@@ -2,6 +2,7 @@
  * N-1/N-2 Resilience Feature
  *
  * Interactive absence simulation to test schedule resilience.
+ * Fetches real zone data from the blast radius API.
  */
 
 export { N1N2Visualizer } from './N1N2Visualizer';
@@ -19,8 +20,12 @@ export type {
   ModeSelectorProps,
 } from './types';
 
-// Constants
-export { MOCK_FACULTY, computeCascadeMetrics } from './constants';
+// Hooks
+export { useN1N2Data } from './hooks/useN1N2Data';
+export type { UseN1N2DataResult } from './hooks/useN1N2Data';
+
+// Constants (computeCascadeMetrics still used for client-side simulation)
+export { computeCascadeMetrics } from './constants';
 
 // Components (for advanced usage)
 export { FacultyGrid } from './components/FacultyGrid';
