@@ -15,7 +15,7 @@ Created: 2025-12-30 (Session 024 - Marathon Execution)
 import logging
 from datetime import datetime
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -26,6 +26,8 @@ from app.core.security import get_current_active_user
 from app.db.session import get_db
 from app.features.decorators import require_feature_flag
 from app.models.assignment import Assignment
+from app.models.block import Block
+from app.models.person import Person
 from app.models.user import User
 
 # Import thermodynamics modules
@@ -60,10 +62,37 @@ from app.resilience.exotic import (
 )
 
 # Import composite resilience modules
-from app.resilience.unified_critical_index import UnifiedCriticalIndexAnalyzer
+from app.resilience.unified_critical_index import (
+    UnifiedCriticalIndexAnalyzer,
+    get_top_critical,
+    RiskPattern,
+)
 from app.resilience.recovery_distance import RecoveryDistanceCalculator
 from app.resilience.creep_fatigue import CreepFatigueModel
-from app.resilience.transcription_factors import TranscriptionFactorScheduler
+from app.resilience.transcription_factors import (
+    TranscriptionFactorScheduler,
+    SignalEvent,
+    TFType,
+)
+
+# Import Hopfield network service and schemas
+from app.services.hopfield_service import HopfieldService
+from app.schemas.hopfield_schemas import (
+    AttractorInfoResponse,
+    AttractorType as HopfieldAttractorType,
+    BasinDepthRequest,
+    BasinDepthResponse,
+    BasinMetricsResponse,
+    EnergyMetricsResponse,
+    HopfieldEnergyRequest,
+    HopfieldEnergyResponse,
+    NearbyAttractorsRequest,
+    NearbyAttractorsResponse,
+    SpuriousAttractorInfoResponse,
+    SpuriousAttractorsRequest,
+    SpuriousAttractorsResponse,
+    StabilityLevel as HopfieldStabilityLevel,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1502,28 +1531,140 @@ async def get_unified_critical_index(
     """
     logger.info(f"Calculating unified critical index: {request}")
 
-    # TODO: Wire to UnifiedCriticalIndexAnalyzer with real faculty/assignment data
-    # For now, return structured placeholder to enable MCP integration
-    return UnifiedCriticalIndexResponse(
-        analyzed_at=datetime.now().isoformat(),
-        total_faculty=25,
-        overall_index=42.5,
-        risk_level="moderate",
-        critical_count=3,
-        universal_critical_count=1,
-        pattern_distribution={
-            "universal_critical": 1,
-            "structural_burnout": 1,
-            "influential_hub": 1,
-            "low_risk": 22,
-        },
-        top_priority=["Faculty-001", "Faculty-007", "Faculty-012"],
-        recommendations=[
-            "Monitor Faculty-001 (universal critical)",
-            "Cross-train backup for Faculty-007 (structural)",
-        ],
-        source="backend",
-    )
+    # Fetch faculty members (type='faculty')
+    faculty_query = select(Person).where(Person.type == "faculty")
+    faculty_result = db.execute(faculty_query)
+    faculty = list(faculty_result.scalars().all())
+
+    if len(faculty) < 2:
+        # Not enough faculty for meaningful analysis
+        return UnifiedCriticalIndexResponse(
+            analyzed_at=datetime.now().isoformat(),
+            total_faculty=len(faculty),
+            overall_index=0.0,
+            risk_level="insufficient_data",
+            critical_count=0,
+            universal_critical_count=0,
+            pattern_distribution={"low_risk": len(faculty)},
+            top_priority=[],
+            recommendations=[
+                "Insufficient faculty data for cross-domain analysis. "
+                "Add more faculty members to enable network-based risk assessment."
+            ],
+            source="backend",
+        )
+
+    # Fetch assignments
+    assignment_query = select(Assignment)
+    assignment_result = db.execute(assignment_query)
+    assignments = list(assignment_result.scalars().all())
+
+    if len(assignments) < 10:
+        # Not enough assignments for network analysis
+        return UnifiedCriticalIndexResponse(
+            analyzed_at=datetime.now().isoformat(),
+            total_faculty=len(faculty),
+            overall_index=0.0,
+            risk_level="insufficient_data",
+            critical_count=0,
+            universal_critical_count=0,
+            pattern_distribution={"low_risk": len(faculty)},
+            top_priority=[],
+            recommendations=[
+                "Insufficient assignment data for network-based analysis. "
+                "Need at least 10 assignments to build meaningful faculty network."
+            ],
+            source="backend",
+        )
+
+    try:
+        # Initialize analyzer
+        analyzer = UnifiedCriticalIndexAnalyzer()
+
+        # Build network and analyze population
+        analyzer.build_network(faculty, assignments, shared_shift_threshold=2)
+        analysis = analyzer.analyze_population(
+            faculty=faculty,
+            assignments=assignments,
+            coverage_requirements={},  # Empty = default 1 per block
+        )
+
+        # Get top N critical faculty
+        top_critical = get_top_critical(analysis, n=request.top_n)
+
+        # Calculate overall index (mean of top 5 composite indices)
+        if top_critical:
+            overall_index = sum(tc.composite_index for tc in top_critical[:5]) / min(
+                5, len(top_critical)
+            )
+        else:
+            overall_index = 0.0
+
+        # Determine risk level from overall index
+        if overall_index >= 0.7:
+            risk_level = "critical"
+        elif overall_index >= 0.5:
+            risk_level = "high"
+        elif overall_index >= 0.3:
+            risk_level = "moderate"
+        else:
+            risk_level = "low"
+
+        # Build recommendations from top critical faculty
+        recommendations = []
+        for idx in top_critical[:3]:
+            pattern_name = idx.risk_pattern.value.replace("_", " ").title()
+            recommendations.append(
+                f"Monitor {idx.faculty_name} ({pattern_name}) - "
+                f"composite index: {idx.composite_index:.2f}"
+            )
+
+        if analysis.universal_critical_count > 0:
+            recommendations.insert(
+                0,
+                f"URGENT: {analysis.universal_critical_count} faculty member(s) "
+                "critical across ALL domains - immediate intervention needed",
+            )
+
+        return UnifiedCriticalIndexResponse(
+            analyzed_at=analysis.analyzed_at.isoformat(),
+            total_faculty=analysis.total_faculty,
+            overall_index=round(overall_index * 100, 1),  # Convert to percentage
+            risk_level=risk_level,
+            critical_count=analysis.critical_count,
+            universal_critical_count=analysis.universal_critical_count,
+            pattern_distribution={
+                k.value: v for k, v in analysis.pattern_distribution.items()
+            },
+            top_priority=[str(fid) for fid in analysis.top_priority[: request.top_n]],
+            recommendations=recommendations or ["No critical concerns identified"],
+            source="backend",
+        )
+
+    except ImportError as e:
+        # NetworkX not available
+        logger.warning(f"NetworkX not available for unified critical index: {e}")
+        return UnifiedCriticalIndexResponse(
+            analyzed_at=datetime.now().isoformat(),
+            total_faculty=len(faculty),
+            overall_index=0.0,
+            risk_level="unavailable",
+            critical_count=0,
+            universal_critical_count=0,
+            pattern_distribution={},
+            top_priority=[],
+            recommendations=[
+                "NetworkX library required for unified critical index analysis. "
+                "Install with: pip install networkx"
+            ],
+            source="backend",
+        )
+    except Exception as e:
+        logger.error(f"Error calculating unified critical index: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error calculating unified critical index: {str(e)}",
+        )
 
 
 class RecoveryDistanceRequest(BaseModel):
@@ -1563,22 +1704,127 @@ async def calculate_recovery_distance(
     """
     logger.info(f"Calculating recovery distance: {request}")
 
-    # TODO: Wire to RecoveryDistanceCalculator with real schedule data
-    return RecoveryDistanceResponse(
-        analyzed_at=datetime.now().isoformat(),
-        rd_mean=2.3,
-        rd_p95=4.0,
-        rd_max=5,
-        events_tested=15,
-        feasible_count=13,
-        infeasible_count=2,
-        interpretation="Schedule has moderate resilience (RD mean=2.3)",
-        recommendations=[
-            "2 events have no recovery path - consider backup coverage",
-            "Mean RD of 2.3 indicates schedule can absorb most shocks",
-        ],
-        source="backend",
-    )
+    # Fetch assignments (optionally filtered by schedule)
+    assignment_query = select(Assignment)
+    if request.schedule_id:
+        assignment_query = assignment_query.where(
+            Assignment.schedule_id == request.schedule_id
+        )
+    assignment_result = db.execute(assignment_query)
+    assignments = list(assignment_result.scalars().all())
+
+    # Fetch blocks
+    block_query = select(Block)
+    block_result = db.execute(block_query)
+    blocks = list(block_result.scalars().all())
+
+    # Fetch people (faculty and residents)
+    people_query = select(Person)
+    people_result = db.execute(people_query)
+    people = list(people_result.scalars().all())
+
+    if len(assignments) < 5 or len(people) < 2:
+        return RecoveryDistanceResponse(
+            analyzed_at=datetime.now().isoformat(),
+            rd_mean=0.0,
+            rd_p95=0.0,
+            rd_max=0,
+            events_tested=0,
+            feasible_count=0,
+            infeasible_count=0,
+            interpretation="Insufficient data for recovery distance analysis",
+            recommendations=[
+                "Need at least 5 assignments and 2 people for meaningful analysis."
+            ],
+            source="backend",
+        )
+
+    try:
+        # Build schedule dict for calculator
+        schedule_dict = {
+            "assignments": assignments,
+            "blocks": blocks,
+            "people": people,
+        }
+
+        # Initialize calculator with max depth
+        calculator = RecoveryDistanceCalculator(max_depth=request.max_depth)
+
+        # Generate test events and calculate aggregate metrics
+        events = calculator.generate_test_events(schedule_dict)
+
+        if not events:
+            return RecoveryDistanceResponse(
+                analyzed_at=datetime.now().isoformat(),
+                rd_mean=0.0,
+                rd_p95=0.0,
+                rd_max=0,
+                events_tested=0,
+                feasible_count=0,
+                infeasible_count=0,
+                interpretation="No N-1 test events could be generated",
+                recommendations=[
+                    "Schedule data may be incomplete or not support N-1 analysis."
+                ],
+                source="backend",
+            )
+
+        metrics = calculator.calculate_aggregate(schedule_dict, events)
+
+        # Build interpretation
+        if metrics.rd_mean <= 1.5:
+            interpretation = f"Excellent resilience (RD mean={metrics.rd_mean:.1f})"
+        elif metrics.rd_mean <= 2.5:
+            interpretation = f"Good resilience (RD mean={metrics.rd_mean:.1f})"
+        elif metrics.rd_mean <= 3.5:
+            interpretation = f"Moderate resilience (RD mean={metrics.rd_mean:.1f})"
+        else:
+            interpretation = f"Low resilience (RD mean={metrics.rd_mean:.1f})"
+
+        # Build recommendations
+        recommendations = []
+        if metrics.infeasible_count > 0:
+            recommendations.append(
+                f"{metrics.infeasible_count} events have no recovery path - "
+                "consider adding backup coverage or cross-training"
+            )
+        if metrics.breakglass_count > 0:
+            recommendations.append(
+                f"{metrics.breakglass_count} events require 4+ edits (break-glass) - "
+                "review schedule for single points of failure"
+            )
+        if metrics.rd_p95 > 4:
+            recommendations.append(
+                f"95th percentile RD is {metrics.rd_p95:.0f} - "
+                "worst-case scenarios may overwhelm recovery capacity"
+            )
+        if not recommendations:
+            recommendations.append(
+                f"Schedule can absorb most N-1 shocks with {metrics.rd_mean:.1f} "
+                "edits on average"
+            )
+
+        feasible_count = metrics.events_tested - metrics.infeasible_count
+
+        return RecoveryDistanceResponse(
+            analyzed_at=datetime.now().isoformat(),
+            rd_mean=round(metrics.rd_mean, 2),
+            rd_p95=round(metrics.rd_p95, 1),
+            rd_max=metrics.rd_max,
+            events_tested=metrics.events_tested,
+            feasible_count=feasible_count,
+            infeasible_count=metrics.infeasible_count,
+            interpretation=interpretation,
+            recommendations=recommendations,
+            source="backend",
+        )
+
+    except Exception as e:
+        logger.error(f"Error calculating recovery distance: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error calculating recovery distance: {str(e)}",
+        )
 
 
 class CreepFatigueRequest(BaseModel):
@@ -1618,22 +1864,165 @@ async def assess_creep_fatigue(
     """
     logger.info(f"Assessing creep fatigue: {request}")
 
-    # TODO: Wire to CreepFatigueModel with real workload data
-    return CreepFatigueResponse(
-        analyzed_at=datetime.now().isoformat(),
-        total_analyzed=25,
-        primary_count=18,
-        secondary_count=5,
-        tertiary_count=2,
-        average_damage=0.35,
-        high_risk_faculty=["Faculty-003", "Faculty-015"],
-        interpretation="2 faculty in tertiary creep stage (imminent failure risk)",
-        recommendations=[
-            "Immediate workload reduction for Faculty-003, Faculty-015",
-            "5 faculty approaching secondary stage - monitor closely",
-        ],
-        source="backend",
+    from datetime import timedelta
+
+    # Fetch faculty
+    faculty_query = select(Person).where(Person.type == "faculty")
+    if request.faculty_ids:
+        # Filter to specific faculty IDs
+        faculty_uuids = [UUID(fid) for fid in request.faculty_ids]
+        faculty_query = faculty_query.where(Person.id.in_(faculty_uuids))
+    faculty_result = db.execute(faculty_query)
+    faculty = list(faculty_result.scalars().all())
+
+    if not faculty:
+        return CreepFatigueResponse(
+            analyzed_at=datetime.now().isoformat(),
+            total_analyzed=0,
+            primary_count=0,
+            secondary_count=0,
+            tertiary_count=0,
+            average_damage=0.0,
+            high_risk_faculty=[],
+            interpretation="No faculty found for analysis",
+            recommendations=["Add faculty members to enable creep/fatigue assessment."],
+            source="backend",
+        )
+
+    # Fetch assignments for lookback period
+    lookback_start = datetime.now() - timedelta(days=request.lookback_days)
+    assignment_query = (
+        select(Assignment)
+        .where(Assignment.created_at >= lookback_start)
+        .where(Assignment.person_id.in_([f.id for f in faculty]))
     )
+    assignment_result = db.execute(assignment_query)
+    assignments = list(assignment_result.scalars().all())
+
+    # Group assignments by faculty
+    assignments_by_faculty: dict[UUID, list] = {}
+    for assignment in assignments:
+        if assignment.person_id not in assignments_by_faculty:
+            assignments_by_faculty[assignment.person_id] = []
+        assignments_by_faculty[assignment.person_id].append(assignment)
+
+    try:
+        # Initialize model
+        model = CreepFatigueModel()
+
+        # Analyze each faculty member
+        results = []
+        stage_counts = {"primary": 0, "secondary": 0, "tertiary": 0}
+        damage_values = []
+        high_risk = []
+
+        for fac in faculty:
+            fac_assignments = assignments_by_faculty.get(fac.id, [])
+
+            # Calculate sustained workload (assignments per day normalized)
+            # Assume typical target is ~20 assignments over lookback_days
+            target_assignments = request.lookback_days * 0.22  # ~20 per 90 days
+            if target_assignments > 0:
+                workload = min(1.0, len(fac_assignments) / target_assignments)
+            else:
+                workload = 0.0
+
+            # Build rotation stresses (approximate from assignment count per week)
+            weeks = request.lookback_days // 7
+            stresses = []
+            for week in range(weeks):
+                week_start = lookback_start + timedelta(weeks=week)
+                week_end = week_start + timedelta(weeks=1)
+                week_count = sum(
+                    1
+                    for a in fac_assignments
+                    if a.created_at and week_start <= a.created_at < week_end
+                )
+                # Normalize week count to stress (0-1)
+                week_stress = min(
+                    1.0, week_count / 5.0
+                )  # 5 assignments/week = max stress
+                if week_stress > 0:
+                    stresses.append(week_stress)
+
+            # Run combined risk assessment
+            risk = model.assess_combined_risk(
+                resident_id=fac.id,  # Works for faculty too
+                sustained_workload=workload,
+                duration=timedelta(days=request.lookback_days),
+                rotation_stresses=stresses if stresses else [0.5],  # Default if no data
+            )
+
+            results.append(risk)
+
+            # Count stages
+            creep_stage = risk["creep_analysis"]["stage"]
+            stage_counts[creep_stage] = stage_counts.get(creep_stage, 0) + 1
+
+            # Track damage
+            remaining_life = risk["fatigue_analysis"]["remaining_life"]
+            damage = 1.0 - remaining_life
+            damage_values.append(damage)
+
+            # Track high risk
+            if risk["overall_risk"] == "high":
+                high_risk.append(fac.name)
+
+        # Calculate average damage
+        avg_damage = sum(damage_values) / len(damage_values) if damage_values else 0.0
+
+        # Build interpretation
+        if stage_counts.get("tertiary", 0) > 0:
+            interpretation = (
+                f"{stage_counts.get('tertiary', 0)} faculty in tertiary creep stage "
+                "(imminent failure risk)"
+            )
+        elif stage_counts.get("secondary", 0) > len(faculty) * 0.3:
+            interpretation = (
+                f"{stage_counts.get('secondary', 0)} faculty in secondary stage "
+                "(sustainable but approaching limits)"
+            )
+        else:
+            interpretation = "Faculty stress levels within sustainable range"
+
+        # Build recommendations
+        recommendations = []
+        if high_risk:
+            recommendations.append(
+                f"Immediate workload reduction for: {', '.join(high_risk[:5])}"
+            )
+        if stage_counts.get("secondary", 0) > 0:
+            recommendations.append(
+                f"{stage_counts.get('secondary', 0)} faculty approaching secondary stage - "
+                "monitor closely"
+            )
+        if avg_damage > 0.5:
+            recommendations.append(
+                f"Average cumulative damage is {avg_damage:.0%} - "
+                "consider rest rotations"
+            )
+        if not recommendations:
+            recommendations.append("Continue current workload distribution")
+
+        return CreepFatigueResponse(
+            analyzed_at=datetime.now().isoformat(),
+            total_analyzed=len(faculty),
+            primary_count=stage_counts.get("primary", 0),
+            secondary_count=stage_counts.get("secondary", 0),
+            tertiary_count=stage_counts.get("tertiary", 0),
+            average_damage=round(avg_damage, 3),
+            high_risk_faculty=high_risk[:10],  # Limit to top 10
+            interpretation=interpretation,
+            recommendations=recommendations,
+            source="backend",
+        )
+
+    except Exception as e:
+        logger.error(f"Error assessing creep fatigue: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error assessing creep fatigue: {str(e)}",
+        )
 
 
 class TranscriptionFactorsRequest(BaseModel):
@@ -1675,22 +2064,349 @@ async def analyze_transcription_factors(
     """
     logger.info(f"Analyzing transcription factors: {request}")
 
-    # TODO: Wire to TranscriptionFactorScheduler with real constraint context
-    return TranscriptionFactorsResponse(
+    try:
+        # Initialize scheduler (comes with default TFs)
+        scheduler = TranscriptionFactorScheduler()
+
+        # If context provided, process as a signal
+        if request.constraint_context:
+            signal = SignalEvent(
+                id=uuid4(),
+                event_type=request.constraint_context,
+                description=f"Context signal: {request.constraint_context}",
+                timestamp=datetime.now(),
+                target_tf_ids=[],  # Will be matched by event_type
+                signal_strength=1.0,
+            )
+            scheduler.process_signal(signal)
+
+        # Get comprehensive status
+        status = scheduler.get_status()
+
+        # Get TF expression report for detailed breakdown
+        expression_report = scheduler.get_tf_expression_report()
+
+        # Count activators vs repressors
+        activators_active = sum(
+            1
+            for tf in scheduler.transcription_factors.values()
+            if tf.is_active and tf.tf_type == TFType.ACTIVATOR
+        )
+        repressors_active = sum(
+            1
+            for tf in scheduler.transcription_factors.values()
+            if tf.is_active and tf.tf_type == TFType.REPRESSOR
+        )
+
+        # Find dominant factor (highest expression among active)
+        active_tfs = [
+            tf for tf in scheduler.transcription_factors.values() if tf.is_active
+        ]
+        dominant_factor = None
+        if active_tfs:
+            dominant = max(active_tfs, key=lambda tf: tf.expression_level)
+            dominant_factor = dominant.name
+
+        # Get constraint weight modifications
+        constraint_weights = scheduler.get_constraint_weights()
+        # Convert UUID keys to strings, filter to non-default weights
+        constraint_modifications = {
+            str(k): round(v, 2) for k, v in constraint_weights.items() if v != 1.0
+        }
+
+        # Build interpretation
+        if repressors_active > activators_active:
+            interpretation = (
+                "Crisis/emergency mode active - non-essential constraints repressed"
+            )
+        elif activators_active > 0 and request.constraint_context:
+            interpretation = (
+                f"Context '{request.constraint_context}' activated "
+                f"{activators_active} transcription factor(s)"
+            )
+        elif status.get("master_regulators_active", 0) > 0:
+            interpretation = "Master regulators active - core constraints enforced"
+        else:
+            interpretation = "Baseline regulatory state - normal constraint weighting"
+
+        # Build recommendations
+        recommendations = []
+        if status.get("total_repression", 0) > 0.5:
+            recommendations.append(
+                "High repression detected - some constraints are relaxed"
+            )
+        if dominant_factor:
+            recommendations.append(f"Dominant factor: {dominant_factor}")
+        for entry in expression_report[:3]:
+            if entry["is_active"] and entry["targets"] > 0:
+                recommendations.append(
+                    f"{entry['name']} ({entry['type']}) targeting "
+                    f"{entry['targets']} constraints"
+                )
+        if not recommendations:
+            recommendations.append(
+                "Regulatory network stable - no significant modifications"
+            )
+
+        return TranscriptionFactorsResponse(
+            analyzed_at=status.get("timestamp", datetime.now().isoformat()),
+            active_factors=status.get("active_tfs", 0),
+            repressors_active=repressors_active,
+            activators_active=activators_active,
+            dominant_factor=dominant_factor,
+            constraint_modifications=constraint_modifications,
+            interpretation=interpretation,
+            recommendations=recommendations,
+            source="backend",
+        )
+
+    except Exception as e:
+        logger.error(f"Error analyzing transcription factors: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error analyzing transcription factors: {str(e)}",
+        )
+
+
+# =============================================================================
+# Hopfield Network Endpoints
+# =============================================================================
+
+
+@router.post("/hopfield/energy", response_model=HopfieldEnergyResponse)
+@require_feature_flag("exotic_resilience_enabled")
+async def calculate_hopfield_energy(
+    request: HopfieldEnergyRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> HopfieldEnergyResponse:
+    """
+    Calculate Hopfield energy of schedule configuration.
+
+    The energy function E = -0.5 * sum(w_ij * s_i * s_j) measures how well
+    the current schedule matches learned stable patterns.
+
+    Returns energy metrics, stability assessment, and recommendations.
+    """
+    logger.info(f"Calculating Hopfield energy: {request}")
+
+    from datetime import date as date_type
+
+    start = date_type.fromisoformat(request.start_date)
+    end = date_type.fromisoformat(request.end_date)
+
+    service = HopfieldService()
+    metrics, stability_level, interpretation, recommendations = (
+        service.calculate_energy(db, start, end, request.schedule_id)
+    )
+
+    # Count assignments for response
+    from sqlalchemy import func
+
+    count_query = select(func.count(Assignment.id)).where(
+        Assignment.date >= start,
+        Assignment.date <= end,
+    )
+    result = db.execute(count_query)
+    num_assignments = result.scalar() or 0
+
+    return HopfieldEnergyResponse(
         analyzed_at=datetime.now().isoformat(),
-        active_factors=8,
-        repressors_active=2,
-        activators_active=6,
-        dominant_factor="COVERAGE_PRIORITY_TF",
-        constraint_modifications={
-            "acgme_80_hour": 1.0,  # No modification
-            "weekend_coverage": 1.2,  # Slightly elevated
-            "preference_weight": 0.6,  # Reduced during high-load
-        },
-        interpretation="Coverage priority transcription factor active - soft constraints relaxed",
-        recommendations=[
-            "Context suggests coverage-focused mode",
-            "Preference constraints reduced to 60% weight",
-        ],
+        schedule_id=request.schedule_id,
+        period_start=request.start_date,
+        period_end=request.end_date,
+        assignments_analyzed=num_assignments,
+        metrics=EnergyMetricsResponse(
+            total_energy=metrics.total_energy,
+            normalized_energy=metrics.normalized_energy,
+            energy_density=metrics.energy_density,
+            interaction_energy=metrics.interaction_energy,
+            stability_score=metrics.stability_score,
+            gradient_magnitude=metrics.gradient_magnitude,
+            is_local_minimum=metrics.is_local_minimum,
+            distance_to_minimum=metrics.distance_to_minimum,
+        ),
+        stability_level=HopfieldStabilityLevel(stability_level.value),
+        interpretation=interpretation,
+        recommendations=recommendations,
+        source="backend",
+    )
+
+
+@router.post("/hopfield/attractors", response_model=NearbyAttractorsResponse)
+@require_feature_flag("exotic_resilience_enabled")
+async def find_hopfield_attractors(
+    request: NearbyAttractorsRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> NearbyAttractorsResponse:
+    """
+    Find stable attractors near the current schedule state.
+
+    Attractors are stable states (energy minima) that the system naturally
+    evolves toward. Finding nearby attractors shows alternative stable
+    configurations.
+    """
+    logger.info(f"Finding Hopfield attractors: {request}")
+
+    from datetime import date as date_type
+
+    start = date_type.fromisoformat(request.start_date)
+    end = date_type.fromisoformat(request.end_date)
+
+    service = HopfieldService()
+    attractors, current_energy, global_found, interpretation, recommendations = (
+        service.find_nearby_attractors(db, start, end, request.max_distance)
+    )
+
+    # Convert service attractors to response format
+    attractor_responses = [
+        AttractorInfoResponse(
+            attractor_id=a.attractor_id,
+            attractor_type=HopfieldAttractorType(a.attractor_type.value),
+            energy_level=a.energy_level,
+            basin_depth=a.basin_depth,
+            basin_volume=a.basin_volume,
+            hamming_distance=a.hamming_distance,
+            pattern_description=a.pattern_description,
+            confidence=a.confidence,
+        )
+        for a in attractors
+    ]
+
+    # Determine current basin ID (nearest attractor)
+    current_basin_id = attractors[0].attractor_id if attractors else None
+
+    return NearbyAttractorsResponse(
+        analyzed_at=datetime.now().isoformat(),
+        current_state_energy=current_energy,
+        attractors_found=len(attractors),
+        attractors=attractor_responses,
+        global_minimum_identified=global_found,
+        current_basin_id=current_basin_id,
+        interpretation=interpretation,
+        recommendations=recommendations,
+        source="backend",
+    )
+
+
+@router.post("/hopfield/basin-depth", response_model=BasinDepthResponse)
+@require_feature_flag("exotic_resilience_enabled")
+async def measure_hopfield_basin_depth(
+    request: BasinDepthRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> BasinDepthResponse:
+    """
+    Measure the depth of the basin of attraction for current state.
+
+    Basin depth is the energy barrier that must be overcome to escape.
+    Deeper basins = more stable attractors = more robust schedules.
+    """
+    logger.info(f"Measuring Hopfield basin depth: {request}")
+
+    from datetime import date as date_type
+
+    start = date_type.fromisoformat(request.start_date)
+    end = date_type.fromisoformat(request.end_date)
+
+    service = HopfieldService()
+    (
+        metrics,
+        stability_level,
+        is_robust,
+        robustness_threshold,
+        interpretation,
+        recommendations,
+    ) = service.measure_basin_depth(db, start, end, request.num_perturbations)
+
+    return BasinDepthResponse(
+        analyzed_at=datetime.now().isoformat(),
+        schedule_id=None,
+        attractor_id="attr_current",
+        metrics=BasinMetricsResponse(
+            min_escape_energy=metrics.min_escape_energy,
+            avg_escape_energy=metrics.avg_escape_energy,
+            max_escape_energy=metrics.max_escape_energy,
+            basin_stability_index=metrics.basin_stability_index,
+            num_escape_paths=metrics.num_escape_paths,
+            nearest_saddle_distance=metrics.nearest_saddle_distance,
+            basin_radius=metrics.basin_radius,
+            critical_perturbation_size=metrics.critical_perturbation_size,
+        ),
+        stability_level=HopfieldStabilityLevel(stability_level.value),
+        is_robust=is_robust,
+        robustness_threshold=robustness_threshold,
+        interpretation=interpretation,
+        recommendations=recommendations,
+        source="backend",
+    )
+
+
+@router.post("/hopfield/spurious", response_model=SpuriousAttractorsResponse)
+@require_feature_flag("exotic_resilience_enabled")
+async def detect_hopfield_spurious_attractors(
+    request: SpuriousAttractorsRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> SpuriousAttractorsResponse:
+    """
+    Detect spurious attractors (scheduling anti-patterns) in energy landscape.
+
+    Spurious attractors are unintended stable states like:
+    - Concentrated overload on subset of faculty
+    - Systematic underutilization
+    - Clustering violations
+    """
+    logger.info(f"Detecting Hopfield spurious attractors: {request}")
+
+    from datetime import date as date_type
+
+    start = date_type.fromisoformat(request.start_date)
+    end = date_type.fromisoformat(request.end_date)
+
+    service = HopfieldService()
+    (
+        spurious_attractors,
+        basin_coverage,
+        is_current_spurious,
+        interpretation,
+        recommendations,
+    ) = service.detect_spurious_attractors(db, start, end, request.search_radius)
+
+    # Convert service attractors to response format
+    spurious_responses = [
+        SpuriousAttractorInfoResponse(
+            attractor_id=s.attractor_id,
+            energy_level=s.energy_level,
+            basin_size=s.basin_size,
+            anti_pattern_type=s.anti_pattern_type,
+            description=s.description,
+            risk_level=s.risk_level,
+            distance_from_valid=s.distance_from_valid,
+            probability_of_capture=s.probability_of_capture,
+            mitigation_strategy=s.mitigation_strategy,
+        )
+        for s in spurious_attractors
+    ]
+
+    # Find highest risk attractor
+    highest_risk_id = None
+    if spurious_attractors:
+        risk_order = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+        highest_risk = max(
+            spurious_attractors, key=lambda s: risk_order.get(s.risk_level, 0)
+        )
+        highest_risk_id = highest_risk.attractor_id
+
+    return SpuriousAttractorsResponse(
+        analyzed_at=datetime.now().isoformat(),
+        spurious_attractors_found=len(spurious_attractors),
+        spurious_attractors=spurious_responses,
+        total_basin_coverage=basin_coverage,
+        highest_risk_attractor=highest_risk_id,
+        is_current_state_spurious=is_current_spurious,
+        interpretation=interpretation,
+        recommendations=recommendations,
         source="backend",
     )

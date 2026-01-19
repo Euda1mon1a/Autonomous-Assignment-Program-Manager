@@ -138,6 +138,22 @@ from app.schemas.var_analytics import (
     WorkloadVaRRequest,
     WorkloadVaRResponse,
 )
+from app.schemas.hopfield_schemas import (
+    AttractorInfoResponse,
+    AttractorType,
+    BasinDepthRequest,
+    BasinDepthResponse,
+    BasinMetricsResponse,
+    EnergyMetricsResponse,
+    HopfieldEnergyRequest,
+    HopfieldEnergyResponse,
+    NearbyAttractorsRequest,
+    NearbyAttractorsResponse,
+    SpuriousAttractorInfoResponse,
+    SpuriousAttractorsRequest,
+    SpuriousAttractorsResponse,
+    StabilityLevel,
+)
 
 __all__ = [
     "PersonCreate",
@@ -273,4 +289,19 @@ __all__ = [
     "WorkloadVaRResponse",
     "ConditionalVaRRequest",
     "ConditionalVaRResponse",
+    # Hopfield network schemas
+    "AttractorInfoResponse",
+    "AttractorType",
+    "BasinDepthRequest",
+    "BasinDepthResponse",
+    "BasinMetricsResponse",
+    "EnergyMetricsResponse",
+    "HopfieldEnergyRequest",
+    "HopfieldEnergyResponse",
+    "NearbyAttractorsRequest",
+    "NearbyAttractorsResponse",
+    "SpuriousAttractorInfoResponse",
+    "SpuriousAttractorsRequest",
+    "SpuriousAttractorsResponse",
+    "StabilityLevel",
 ]
