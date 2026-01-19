@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bottleneck Flow - Supervision Cascade Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #0a0a0a; font-family: 'Inter', system-ui, sans-serif; }
+        canvas { display: block; }
+
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+            color: #fff;
+            z-index: 10;
+        }
+
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            backdrop-filter: blur(20px);
+            z-index: 20;
+        }
+
+        .lane-labels {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 80px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .lane-label {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0.6;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(10, 10, 10, 0.9);
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 20;
+        }
+
+        .legend-section {
+            margin-bottom: 12px;
+        }
+
+        .legend-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-title {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        .legend-size {
+            width: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+
+        .size-circle {
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .toggle-label {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #22c55e;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+
+        .faculty-list {
+            max-height: 280px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.2) transparent;
+        }
+
+        .faculty-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .faculty-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .faculty-item.disabled {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .faculty-item.disabled .faculty-name {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .faculty-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .faculty-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .faculty-name {
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .faculty-meta {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 2px;
+        }
+
+        .faculty-cohort {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .status-banner {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .status-nominal { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .status-degraded { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+        .status-critical { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .metric-box {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .metric-label {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 10px;
+            text-align: right;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 12px;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hud">
+        <h1 class="text-xl font-bold tracking-tight" style="color: #22c55e;">BOTTLENECK FLOW</h1>
+        <p class="text-xs opacity-50 mt-1">Supervision Cascade Visualization</p>
+        <div class="mt-4">
+            <div id="flow-stats" class="text-xs font-mono opacity-60">
+                STREAM VOLUME: 100% | DIVERSIONS: 0
+            </div>
+        </div>
+    </div>
+
+    <div class="lane-labels">
+        <div class="lane-label" style="color: #3b82f6;">AT Coverage</div>
+        <div class="lane-label" style="color: #22c55e;">FMIT Rotations</div>
+        <div class="lane-label" style="color: #a855f7;">Reserve Pool</div>
+    </div>
+
+    <div class="control-panel">
+        <div id="status-banner" class="status-banner status-nominal">
+            System Nominal
+        </div>
+
+        <div class="toggle-container">
+            <span class="toggle-label">Show Suggested Fix</span>
+            <div id="fix-toggle" class="toggle-switch" onclick="toggleFixMode()"></div>
+        </div>
+
+        <div class="text-xs font-semibold uppercase tracking-widest opacity-50 mb-3">
+            Faculty (Click to Disable)
+        </div>
+
+        <div id="faculty-list" class="faculty-list">
+            <!-- Faculty items populated by JS -->
+        </div>
+
+        <button class="reset-btn" onclick="resetAll()">Reset All</button>
+
+        <div class="metrics-grid">
+            <div class="metric-box">
+                <div id="metric-coverage" class="metric-value" style="color: #22c55e;">100%</div>
+                <div class="metric-label">Coverage</div>
+            </div>
+            <div class="metric-box">
+                <div id="metric-orphaned" class="metric-value">0</div>
+                <div class="metric-label">Orphaned</div>
+            </div>
+            <div class="metric-box">
+                <div id="metric-rerouted" class="metric-value" style="color: #3b82f6;">0</div>
+                <div class="metric-label">Rerouted</div>
+            </div>
+            <div class="metric-box">
+                <div id="metric-atRisk" class="metric-value" style="color: #fbbf24;">0</div>
+                <div class="metric-label">At Risk</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-section">
+            <div class="legend-title">Constraint Status</div>
+            <div class="legend-item">
+                <div class="legend-dot" style="color: #22c55e; background: #22c55e;"></div>
+                <span>Green - Nominal</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="color: #fbbf24; background: #fbbf24;"></div>
+                <span>Amber - Degraded</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="color: #ef4444; background: #ef4444;"></div>
+                <span>Red - Critical</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="color: #1a1a1a; background: #1a1a1a; border: 1px solid #444;"></div>
+                <span>Black - Down</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="color: #ffffff; background: #ffffff;"></div>
+                <span>White - Reserve</span>
+            </div>
+        </div>
+        <div class="legend-section">
+            <div class="legend-title">Role Hierarchy (Size)</div>
+            <div class="legend-item">
+                <div class="legend-size"><div class="size-circle" style="width: 14px; height: 14px;"></div></div>
+                <span>Faculty</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-size"><div class="size-circle" style="width: 10px; height: 10px;"></div></div>
+                <span>PGY-1 / Intern</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-size"><div class="size-circle" style="width: 7px; height: 7px;"></div></div>
+                <span>PGY-2 / PGY-3</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls-hint">
+        Drag to rotate<br>
+        Scroll to zoom<br>
+        Shift+drag to pan
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const CONFIG = {
+            lanes: {
+                AT: { y: 8, color: 0x3b82f6, name: 'AT Coverage' },
+                FMIT: { y: 0, color: 0x22c55e, name: 'FMIT Rotations' },
+                RESERVE: { y: -8, color: 0xa855f7, name: 'Reserve Pool' }
+            },
+            sizes: {
+                faculty: 1.2,
+                pgy1: 0.7,
+                pgy2: 0.45,
+                pgy3: 0.4
+            },
+            colors: {
+                nominal: 0x22c55e,    // Green
+                degraded: 0xfbbf24,   // Amber
+                critical: 0xef4444,   // Red
+                down: 0x1a1a1a,       // Black
+                reserve: 0xffffff     // White
+            },
+            streamLength: 150,
+            flowSpeed: 0.15
+        };
+
+        // ============================================
+        // STATE
+        // ============================================
+        let state = {
+            showSuggestedFix: false,
+            disabledFaculty: new Set(),
+            faculty: [],
+            trainees: [],
+            metrics: {
+                coverage: 100,
+                orphaned: 0,
+                rerouted: 0,
+                atRisk: 0
+            }
+        };
+
+        // ============================================
+        // MOCK DATA - Structure for backend integration
+        // ============================================
+        function generateMockData() {
+            const faculty = [
+                // AT Faculty
+                { id: 'F001', name: 'Dr. Anderson', lane: 'AT', specialty: 'FM Clinic', trainees: ['R001', 'R002', 'R003'] },
+                { id: 'F002', name: 'Dr. Bradley', lane: 'AT', specialty: 'FM Clinic', trainees: ['R004', 'R005'] },
+                { id: 'F003', name: 'Dr. Chen', lane: 'AT', specialty: 'Inpatient', trainees: ['R006', 'R007', 'R008'] },
+                // FMIT Faculty
+                { id: 'F004', name: 'Dr. Davis', lane: 'FMIT', specialty: 'FMIT Lead', trainees: ['R009', 'R010', 'R011', 'R012'] },
+                { id: 'F005', name: 'Dr. Edwards', lane: 'FMIT', specialty: 'FMIT', trainees: ['R013', 'R014'] },
+                { id: 'F006', name: 'Dr. Foster', lane: 'FMIT', specialty: 'OB/Peds', trainees: ['R015', 'R016', 'R017'] },
+                // Reserve Faculty
+                { id: 'F007', name: 'Dr. Garcia', lane: 'RESERVE', specialty: 'Float', trainees: [] },
+                { id: 'F008', name: 'Dr. Hamilton', lane: 'RESERVE', specialty: 'Backup', trainees: [] }
+            ];
+
+            const trainees = [
+                // AT Trainees
+                { id: 'R001', name: 'Intern Adams', pgy: 1, facultyId: 'F001', backupFacultyId: 'F007' },
+                { id: 'R002', name: 'Res. Brown', pgy: 2, facultyId: 'F001', backupFacultyId: 'F002' },
+                { id: 'R003', name: 'Res. Clark', pgy: 3, facultyId: 'F001', backupFacultyId: 'F002' },
+                { id: 'R004', name: 'Intern Davis', pgy: 1, facultyId: 'F002', backupFacultyId: 'F007' },
+                { id: 'R005', name: 'Res. Evans', pgy: 2, facultyId: 'F002', backupFacultyId: 'F001' },
+                { id: 'R006', name: 'Intern Frank', pgy: 1, facultyId: 'F003', backupFacultyId: 'F008' },
+                { id: 'R007', name: 'Res. Grant', pgy: 2, facultyId: 'F003', backupFacultyId: 'F001' },
+                { id: 'R008', name: 'Res. Hill', pgy: 3, facultyId: 'F003', backupFacultyId: 'F002' },
+                // FMIT Trainees
+                { id: 'R009', name: 'Intern Irving', pgy: 1, facultyId: 'F004', backupFacultyId: 'F005' },
+                { id: 'R010', name: 'Res. Jones', pgy: 2, facultyId: 'F004', backupFacultyId: 'F005' },
+                { id: 'R011', name: 'Res. King', pgy: 3, facultyId: 'F004', backupFacultyId: 'F006' },
+                { id: 'R012', name: 'Intern Lee', pgy: 1, facultyId: 'F004', backupFacultyId: 'F008' },
+                { id: 'R013', name: 'Res. Moore', pgy: 2, facultyId: 'F005', backupFacultyId: 'F004' },
+                { id: 'R014', name: 'Res. Nelson', pgy: 3, facultyId: 'F005', backupFacultyId: 'F006' },
+                { id: 'R015', name: 'Intern Owen', pgy: 1, facultyId: 'F006', backupFacultyId: 'F008' },
+                { id: 'R016', name: 'Res. Parker', pgy: 2, facultyId: 'F006', backupFacultyId: 'F004' },
+                { id: 'R017', name: 'Res. Quinn', pgy: 3, facultyId: 'F006', backupFacultyId: 'F005' }
+            ];
+
+            return { faculty, trainees };
+        }
+
+        // ============================================
+        // THREE.JS SETUP
+        // ============================================
+        let scene, camera, renderer, controls;
+        let facultyMeshes = {};
+        let traineeMeshes = {};
+        let connectionLines = [];
+        let laneGeometries = [];
+        let veeringParticles = [];
+
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+            scene.fog = new THREE.FogExp2(0x0a0a0a, 0.008);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(30, 25, 50);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.body.appendChild(renderer.domElement);
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.target.set(0, 0, -30);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(20, 30, 20);
+            scene.add(directionalLight);
+
+            // Initialize data
+            const data = generateMockData();
+            state.faculty = data.faculty;
+            state.trainees = data.trainees;
+
+            // Build scene
+            createLanes();
+            createFlowParticles();
+            createFacultyNodes();
+            createTraineeNodes();
+            createConnections();
+            populateFacultyList();
+
+            // Event listeners
+            window.addEventListener('resize', onWindowResize);
+
+            // Start animation
+            animate();
+        }
+
+        function createLanes() {
+            Object.entries(CONFIG.lanes).forEach(([key, lane]) => {
+                // Lane floor
+                const floorGeometry = new THREE.PlaneGeometry(20, CONFIG.streamLength);
+                const floorMaterial = new THREE.MeshBasicMaterial({
+                    color: lane.color,
+                    transparent: true,
+                    opacity: 0.03,
+                    side: THREE.DoubleSide
+                });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.set(0, lane.y - 0.5, -CONFIG.streamLength / 2);
+                scene.add(floor);
+
+                // Lane edge lines
+                const edgeMaterial = new THREE.LineBasicMaterial({
+                    color: lane.color,
+                    transparent: true,
+                    opacity: 0.15
+                });
+
+                [-10, 10].forEach(x => {
+                    const points = [
+                        new THREE.Vector3(x, lane.y - 0.5, 0),
+                        new THREE.Vector3(x, lane.y - 0.5, -CONFIG.streamLength)
+                    ];
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const line = new THREE.Line(geometry, edgeMaterial);
+                    scene.add(line);
+                });
+
+                laneGeometries.push({ key, lane, floor });
+            });
+        }
+
+        function createFlowParticles() {
+            // Subtle background flow particles per lane
+            Object.entries(CONFIG.lanes).forEach(([key, lane]) => {
+                const particleCount = 200;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const opacities = new Float32Array(particleCount);
+
+                for (let i = 0; i < particleCount; i++) {
+                    positions[i * 3] = (Math.random() - 0.5) * 18;
+                    positions[i * 3 + 1] = lane.y + (Math.random() - 0.5) * 2;
+                    positions[i * 3 + 2] = -Math.random() * CONFIG.streamLength;
+                    opacities[i] = Math.random() * 0.3 + 0.1;
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('opacity', new THREE.BufferAttribute(opacities, 1));
+
+                const material = new THREE.PointsMaterial({
+                    color: lane.color,
+                    size: 0.15,
+                    transparent: true,
+                    opacity: 0.4,
+                    blending: THREE.AdditiveBlending
+                });
+
+                const particles = new THREE.Points(geometry, material);
+                particles.userData = { laneKey: key, baseOpacity: 0.4 };
+                scene.add(particles);
+                laneGeometries.push({ particles, lane });
+            });
+        }
+
+        function createFacultyNodes() {
+            state.faculty.forEach((faculty, index) => {
+                const lane = CONFIG.lanes[faculty.lane];
+                const xSpread = (index % 3 - 1) * 5;
+                const zPosition = -20 - (Math.floor(index / 3) * 25);
+
+                const geometry = new THREE.SphereGeometry(CONFIG.sizes.faculty, 32, 32);
+                const material = new THREE.MeshStandardMaterial({
+                    color: faculty.lane === 'RESERVE' ? CONFIG.colors.reserve : CONFIG.colors.nominal,
+                    emissive: faculty.lane === 'RESERVE' ? CONFIG.colors.reserve : CONFIG.colors.nominal,
+                    emissiveIntensity: 0.3,
+                    metalness: 0.3,
+                    roughness: 0.7
+                });
+
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(xSpread, lane.y, zPosition);
+                mesh.userData = {
+                    id: faculty.id,
+                    type: 'faculty',
+                    lane: faculty.lane,
+                    originalPosition: mesh.position.clone(),
+                    originalColor: material.color.getHex()
+                };
+
+                scene.add(mesh);
+                facultyMeshes[faculty.id] = mesh;
+            });
+        }
+
+        function createTraineeNodes() {
+            state.trainees.forEach((trainee, index) => {
+                const faculty = state.faculty.find(f => f.id === trainee.facultyId);
+                if (!faculty) return;
+
+                const facultyMesh = facultyMeshes[faculty.id];
+                const size = trainee.pgy === 1 ? CONFIG.sizes.pgy1 :
+                            trainee.pgy === 2 ? CONFIG.sizes.pgy2 : CONFIG.sizes.pgy3;
+
+                // Position trainees in orbit around faculty
+                const cohortIndex = faculty.trainees.indexOf(trainee.id);
+                const angle = (cohortIndex / faculty.trainees.length) * Math.PI * 2;
+                const orbitRadius = 2.5;
+
+                const geometry = new THREE.SphereGeometry(size, 24, 24);
+                const material = new THREE.MeshStandardMaterial({
+                    color: CONFIG.colors.nominal,
+                    emissive: CONFIG.colors.nominal,
+                    emissiveIntensity: 0.2,
+                    metalness: 0.2,
+                    roughness: 0.8
+                });
+
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(
+                    facultyMesh.position.x + Math.cos(angle) * orbitRadius,
+                    facultyMesh.position.y + (Math.random() - 0.5) * 0.5,
+                    facultyMesh.position.z + Math.sin(angle) * orbitRadius
+                );
+                mesh.userData = {
+                    id: trainee.id,
+                    type: 'trainee',
+                    pgy: trainee.pgy,
+                    facultyId: trainee.facultyId,
+                    backupFacultyId: trainee.backupFacultyId,
+                    originalPosition: mesh.position.clone(),
+                    originalColor: CONFIG.colors.nominal,
+                    orbitAngle: angle,
+                    orbitRadius: orbitRadius,
+                    isVeering: false,
+                    veerProgress: 0,
+                    veerTarget: null
+                };
+
+                scene.add(mesh);
+                traineeMeshes[trainee.id] = mesh;
+            });
+        }
+
+        function createConnections() {
+            // Clear existing connections
+            connectionLines.forEach(line => scene.remove(line));
+            connectionLines = [];
+
+            state.trainees.forEach(trainee => {
+                const traineeMesh = traineeMeshes[trainee.id];
+                const facultyMesh = facultyMeshes[trainee.facultyId];
+                if (!traineeMesh || !facultyMesh) return;
+
+                const material = new THREE.LineBasicMaterial({
+                    color: CONFIG.colors.nominal,
+                    transparent: true,
+                    opacity: 0.3
+                });
+
+                const points = [
+                    traineeMesh.position.clone(),
+                    facultyMesh.position.clone()
+                ];
+
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.Line(geometry, material);
+                line.userData = {
+                    traineeId: trainee.id,
+                    facultyId: trainee.facultyId
+                };
+
+                scene.add(line);
+                connectionLines.push(line);
+            });
+        }
+
+        // ============================================
+        // UI FUNCTIONS
+        // ============================================
+        function populateFacultyList() {
+            const container = document.getElementById('faculty-list');
+            container.innerHTML = '';
+
+            state.faculty.forEach(faculty => {
+                const isDisabled = state.disabledFaculty.has(faculty.id);
+                const lane = CONFIG.lanes[faculty.lane];
+                const traineeCount = faculty.trainees.length;
+
+                const item = document.createElement('div');
+                item.className = `faculty-item ${isDisabled ? 'disabled' : ''}`;
+                item.onclick = () => toggleFaculty(faculty.id);
+
+                item.innerHTML = `
+                    <div class="faculty-indicator" style="background: #${lane.color.toString(16).padStart(6, '0')};"></div>
+                    <div class="faculty-info">
+                        <div class="faculty-name">${faculty.name}</div>
+                        <div class="faculty-meta">${faculty.specialty} | ${faculty.lane}</div>
+                    </div>
+                    <div class="faculty-cohort">${traineeCount} ${traineeCount === 1 ? 'trainee' : 'trainees'}</div>
+                `;
+
+                container.appendChild(item);
+            });
+        }
+
+        function toggleFaculty(facultyId) {
+            if (state.disabledFaculty.has(facultyId)) {
+                state.disabledFaculty.delete(facultyId);
+            } else {
+                state.disabledFaculty.add(facultyId);
+            }
+            updateVisualization();
+            populateFacultyList();
+        }
+
+        function toggleFixMode() {
+            state.showSuggestedFix = !state.showSuggestedFix;
+            const toggle = document.getElementById('fix-toggle');
+            toggle.classList.toggle('active', state.showSuggestedFix);
+            updateVisualization();
+        }
+
+        function resetAll() {
+            state.disabledFaculty.clear();
+            state.showSuggestedFix = false;
+            document.getElementById('fix-toggle').classList.remove('active');
+
+            // Reset all trainee positions
+            Object.values(traineeMeshes).forEach(mesh => {
+                mesh.userData.isVeering = false;
+                mesh.userData.veerProgress = 0;
+                mesh.userData.veerTarget = null;
+            });
+
+            updateVisualization();
+            populateFacultyList();
+        }
+
+        // ============================================
+        // VISUALIZATION UPDATE
+        // ============================================
+        function updateVisualization() {
+            let orphaned = 0;
+            let rerouted = 0;
+            let atRisk = 0;
+
+            // Update faculty appearance
+            state.faculty.forEach(faculty => {
+                const mesh = facultyMeshes[faculty.id];
+                if (!mesh) return;
+
+                const isDisabled = state.disabledFaculty.has(faculty.id);
+
+                if (isDisabled) {
+                    mesh.material.color.setHex(CONFIG.colors.down);
+                    mesh.material.emissive.setHex(CONFIG.colors.down);
+                    mesh.material.emissiveIntensity = 0;
+                } else if (faculty.lane === 'RESERVE') {
+                    mesh.material.color.setHex(CONFIG.colors.reserve);
+                    mesh.material.emissive.setHex(CONFIG.colors.reserve);
+                    mesh.material.emissiveIntensity = 0.3;
+                } else {
+                    mesh.material.color.setHex(CONFIG.colors.nominal);
+                    mesh.material.emissive.setHex(CONFIG.colors.nominal);
+                    mesh.material.emissiveIntensity = 0.3;
+                }
+            });
+
+            // Update trainees based on faculty status
+            state.trainees.forEach(trainee => {
+                const mesh = traineeMeshes[trainee.id];
+                if (!mesh) return;
+
+                const primaryDisabled = state.disabledFaculty.has(trainee.facultyId);
+                const backupDisabled = state.disabledFaculty.has(trainee.backupFacultyId);
+                const backupFaculty = state.faculty.find(f => f.id === trainee.backupFacultyId);
+                const backupMesh = facultyMeshes[trainee.backupFacultyId];
+
+                if (primaryDisabled) {
+                    if (state.showSuggestedFix && backupFaculty && !backupDisabled && backupMesh) {
+                        // Reroute to backup faculty
+                        mesh.userData.isVeering = true;
+                        mesh.userData.veerTarget = backupMesh.position.clone();
+                        mesh.material.color.setHex(CONFIG.colors.degraded);
+                        mesh.material.emissive.setHex(CONFIG.colors.degraded);
+                        rerouted++;
+                    } else if (backupDisabled || !backupFaculty) {
+                        // Both faculty down - orphaned
+                        mesh.userData.isVeering = true;
+                        mesh.userData.veerTarget = new THREE.Vector3(
+                            mesh.userData.originalPosition.x + 25,
+                            mesh.userData.originalPosition.y - 5,
+                            mesh.userData.originalPosition.z
+                        );
+                        mesh.material.color.setHex(CONFIG.colors.critical);
+                        mesh.material.emissive.setHex(CONFIG.colors.critical);
+                        orphaned++;
+                    } else {
+                        // Primary down, backup available but not showing fix
+                        mesh.userData.isVeering = true;
+                        mesh.userData.veerTarget = new THREE.Vector3(
+                            mesh.userData.originalPosition.x + 20,
+                            mesh.userData.originalPosition.y - 3,
+                            mesh.userData.originalPosition.z
+                        );
+                        mesh.material.color.setHex(CONFIG.colors.critical);
+                        mesh.material.emissive.setHex(CONFIG.colors.critical);
+                        atRisk++;
+                    }
+                } else {
+                    // Primary available - return to normal
+                    mesh.userData.isVeering = false;
+                    mesh.userData.veerTarget = null;
+                    mesh.material.color.setHex(CONFIG.colors.nominal);
+                    mesh.material.emissive.setHex(CONFIG.colors.nominal);
+                }
+            });
+
+            // Update metrics
+            const totalTrainees = state.trainees.length;
+            const covered = totalTrainees - orphaned;
+            state.metrics = {
+                coverage: Math.round((covered / totalTrainees) * 100),
+                orphaned,
+                rerouted,
+                atRisk
+            };
+
+            updateMetricsDisplay();
+            updateConnectionLines();
+        }
+
+        function updateMetricsDisplay() {
+            const { coverage, orphaned, rerouted, atRisk } = state.metrics;
+
+            document.getElementById('metric-coverage').textContent = `${coverage}%`;
+            document.getElementById('metric-coverage').style.color =
+                coverage === 100 ? '#22c55e' : coverage >= 80 ? '#fbbf24' : '#ef4444';
+
+            document.getElementById('metric-orphaned').textContent = orphaned;
+            document.getElementById('metric-orphaned').style.color = orphaned > 0 ? '#ef4444' : '#22c55e';
+
+            document.getElementById('metric-rerouted').textContent = rerouted;
+            document.getElementById('metric-atRisk').textContent = atRisk;
+            document.getElementById('metric-atRisk').style.color = atRisk > 0 ? '#fbbf24' : '#22c55e';
+
+            // Update status banner
+            const banner = document.getElementById('status-banner');
+            if (orphaned > 0) {
+                banner.className = 'status-banner status-critical';
+                banner.textContent = `Critical: ${orphaned} Orphaned`;
+            } else if (atRisk > 0 || rerouted > 0) {
+                banner.className = 'status-banner status-degraded';
+                banner.textContent = `Degraded: ${atRisk + rerouted} Affected`;
+            } else {
+                banner.className = 'status-banner status-nominal';
+                banner.textContent = 'System Nominal';
+            }
+
+            // Update flow stats
+            const streamVolume = Math.round(100 - (orphaned + atRisk) * 5);
+            document.getElementById('flow-stats').textContent =
+                `STREAM VOLUME: ${Math.max(0, streamVolume)}% | DIVERSIONS: ${rerouted + atRisk}`;
+        }
+
+        function updateConnectionLines() {
+            connectionLines.forEach(line => {
+                const trainee = state.trainees.find(t => t.id === line.userData.traineeId);
+                const traineeMesh = traineeMeshes[trainee.id];
+                const primaryDisabled = state.disabledFaculty.has(trainee.facultyId);
+                const backupDisabled = state.disabledFaculty.has(trainee.backupFacultyId);
+
+                if (primaryDisabled) {
+                    if (state.showSuggestedFix && !backupDisabled) {
+                        // Show connection to backup
+                        const backupMesh = facultyMeshes[trainee.backupFacultyId];
+                        if (backupMesh) {
+                            const positions = line.geometry.attributes.position.array;
+                            positions[0] = traineeMesh.position.x;
+                            positions[1] = traineeMesh.position.y;
+                            positions[2] = traineeMesh.position.z;
+                            positions[3] = backupMesh.position.x;
+                            positions[4] = backupMesh.position.y;
+                            positions[5] = backupMesh.position.z;
+                            line.geometry.attributes.position.needsUpdate = true;
+                            line.material.color.setHex(CONFIG.colors.degraded);
+                            line.material.opacity = 0.5;
+                        }
+                    } else {
+                        // Hide connection (veering off)
+                        line.material.opacity = 0.05;
+                    }
+                } else {
+                    // Normal connection to primary
+                    const facultyMesh = facultyMeshes[trainee.facultyId];
+                    const positions = line.geometry.attributes.position.array;
+                    positions[0] = traineeMesh.position.x;
+                    positions[1] = traineeMesh.position.y;
+                    positions[2] = traineeMesh.position.z;
+                    positions[3] = facultyMesh.position.x;
+                    positions[4] = facultyMesh.position.y;
+                    positions[5] = facultyMesh.position.z;
+                    line.geometry.attributes.position.needsUpdate = true;
+                    line.material.color.setHex(CONFIG.colors.nominal);
+                    line.material.opacity = 0.3;
+                }
+            });
+        }
+
+        // ============================================
+        // ANIMATION
+        // ============================================
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now() * 0.001;
+
+            controls.update();
+
+            // Animate flow particles
+            laneGeometries.forEach(item => {
+                if (item.particles) {
+                    const positions = item.particles.geometry.attributes.position.array;
+                    for (let i = 0; i < positions.length / 3; i++) {
+                        positions[i * 3 + 2] += CONFIG.flowSpeed;
+                        if (positions[i * 3 + 2] > 0) {
+                            positions[i * 3 + 2] = -CONFIG.streamLength;
+                        }
+                    }
+                    item.particles.geometry.attributes.position.needsUpdate = true;
+                }
+            });
+
+            // Animate faculty nodes (subtle pulse)
+            Object.values(facultyMeshes).forEach(mesh => {
+                if (!state.disabledFaculty.has(mesh.userData.id)) {
+                    const scale = 1 + Math.sin(time * 2) * 0.05;
+                    mesh.scale.setScalar(scale);
+                }
+            });
+
+            // Animate trainee veering
+            Object.values(traineeMeshes).forEach(mesh => {
+                const data = mesh.userData;
+
+                if (data.isVeering && data.veerTarget) {
+                    // Smoothly move toward target
+                    data.veerProgress = Math.min(data.veerProgress + 0.02, 1);
+                    const t = easeOutCubic(data.veerProgress);
+
+                    mesh.position.lerpVectors(data.originalPosition, data.veerTarget, t);
+
+                    // Add some wobble during veering
+                    if (data.veerProgress < 1) {
+                        mesh.position.x += Math.sin(time * 5 + data.orbitAngle) * 0.1 * (1 - t);
+                        mesh.position.y += Math.cos(time * 4 + data.orbitAngle) * 0.05 * (1 - t);
+                    }
+                } else if (!data.isVeering) {
+                    // Return to orbit around faculty
+                    data.veerProgress = Math.max(data.veerProgress - 0.03, 0);
+
+                    if (data.veerProgress > 0 && data.veerTarget) {
+                        const t = easeOutCubic(data.veerProgress);
+                        mesh.position.lerpVectors(data.originalPosition, data.veerTarget, t);
+                    } else {
+                        // Orbit animation around faculty
+                        const facultyMesh = facultyMeshes[data.facultyId];
+                        if (facultyMesh) {
+                            const orbitSpeed = 0.3;
+                            const angle = data.orbitAngle + time * orbitSpeed;
+                            mesh.position.x = facultyMesh.position.x + Math.cos(angle) * data.orbitRadius;
+                            mesh.position.z = facultyMesh.position.z + Math.sin(angle) * data.orbitRadius;
+                            mesh.position.y = data.originalPosition.y + Math.sin(time * 2 + data.orbitAngle) * 0.2;
+                        }
+                    }
+                }
+
+                // Update connection line positions
+                const line = connectionLines.find(l => l.userData.traineeId === data.id);
+                if (line) {
+                    const positions = line.geometry.attributes.position.array;
+                    positions[0] = mesh.position.x;
+                    positions[1] = mesh.position.y;
+                    positions[2] = mesh.position.z;
+                    line.geometry.attributes.position.needsUpdate = true;
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        window.onload = init;
+    </script>
+</body>
+</html>
