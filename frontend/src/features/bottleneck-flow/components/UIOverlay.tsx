@@ -60,12 +60,12 @@ export function UIOverlay({
         </div>
       </div>
 
-      {/* Lane Labels (Left Side) */}
-      <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col gap-24 pointer-events-none">
+      {/* Lane Labels (Left Side) - positioned to align with 3D lane Y positions */}
+      <div className="absolute left-4 top-24 bottom-24 flex flex-col justify-between pointer-events-none">
         {Object.entries(LANES).map(([key, lane]) => (
           <div
             key={key}
-            className="[writing-mode:vertical-rl] rotate-180 text-xs font-bold tracking-[0.2em] uppercase opacity-60"
+            className="text-[10px] font-bold tracking-[0.15em] uppercase opacity-70 whitespace-nowrap"
             style={{ color: lane.color }}
           >
             {lane.name}
