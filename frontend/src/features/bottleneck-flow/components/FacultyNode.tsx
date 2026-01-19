@@ -36,7 +36,7 @@ export function FacultyNode({
       ? THREE_COLORS.reserve
       : THREE_COLORS.nominal;
 
-  const emissiveIntensity = isDisabled ? 0 : 0.7;
+  const emissiveIntensity = isDisabled ? 0 : 0.4;
 
   return (
     <mesh ref={meshRef} position={position}>

@@ -84,7 +84,7 @@ export function BottleneckFlowVisualizer({
   }
 
   return (
-    <div className={`relative w-full h-screen bg-[#0a0a0a] ${className}`}>
+    <div className={`relative w-full h-full bg-[#0a0a0a] min-h-[500px] ${className}`}>
       {/* 3D Canvas */}
       <Canvas
         camera={{ position: [30, 25, 50], fov: 60 }}

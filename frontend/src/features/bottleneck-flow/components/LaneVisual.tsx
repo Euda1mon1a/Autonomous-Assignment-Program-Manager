@@ -86,7 +86,7 @@ export function LaneVisual({ config }: LaneVisualProps) {
         <meshBasicMaterial
           color={config.threeColor}
           transparent
-          opacity={0.08}
+          opacity={0.03}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -96,8 +96,8 @@ export function LaneVisual({ config }: LaneVisualProps) {
         points={leftEdgePoints}
         color={config.color}
         transparent
-        opacity={0.4}
-        lineWidth={2}
+        opacity={0.15}
+        lineWidth={1}
       />
 
       {/* Right Edge Line */}
@@ -105,8 +105,8 @@ export function LaneVisual({ config }: LaneVisualProps) {
         points={rightEdgePoints}
         color={config.color}
         transparent
-        opacity={0.4}
-        lineWidth={2}
+        opacity={0.15}
+        lineWidth={1}
       />
 
       {/* Streaming Particles */}
@@ -114,9 +114,9 @@ export function LaneVisual({ config }: LaneVisualProps) {
         <primitive object={particles} />
         <pointsMaterial
           color={config.threeColor}
-          size={0.25}
+          size={0.15}
           transparent
-          opacity={0.6}
+          opacity={0.4}
           blending={THREE.AdditiveBlending}
         />
       </points>

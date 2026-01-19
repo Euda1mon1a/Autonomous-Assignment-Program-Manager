@@ -121,10 +121,9 @@ export function SimulationScene({
 
   return (
     <>
-      {/* Lighting - increased for visibility */}
-      <ambientLight intensity={0.8} />
-      <directionalLight position={[20, 30, 20]} intensity={1.2} />
-      <pointLight position={[0, 10, -30]} intensity={0.6} color="#22c55e" />
+      {/* Lighting */}
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[20, 30, 20]} intensity={0.8} />
 
       {/* Lanes */}
       {Object.entries(LANES).map(([key, config]) => (
@@ -178,8 +177,8 @@ export function SimulationScene({
         );
       })}
 
-      {/* Fog - reduced for better visibility */}
-      <fog attach="fog" args={['#0a0a0a', 80, 200]} />
+      {/* Fog for depth effect */}
+      <fog attach="fog" args={['#0a0a0a', 0.002, 100]} />
     </>
   );
 }

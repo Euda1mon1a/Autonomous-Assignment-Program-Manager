@@ -95,45 +95,96 @@ export function generateMockData(): {
   faculty: BottleneckFaculty[];
   trainees: BottleneckTrainee[];
 } {
-  // 10 Faculty: 4 AT, 4 FMIT, 2 Reserve
   const faculty: BottleneckFaculty[] = [
-    // AT Faculty (4)
-    { id: 'F001', name: 'Dr. Alpha', lane: 'AT', specialty: 'FM Clinic', traineeIds: ['R001', 'R002'], isDisabled: false },
-    { id: 'F002', name: 'Dr. Bravo', lane: 'AT', specialty: 'FM Clinic', traineeIds: ['R003', 'R004'], isDisabled: false },
-    { id: 'F003', name: 'Dr. Charlie', lane: 'AT', specialty: 'Inpatient', traineeIds: ['R05', 'R06'], isDisabled: false },
-    { id: 'F004', name: 'Dr. Delta', lane: 'AT', specialty: 'Geriatrics', traineeIds: ['R07', 'R08'], isDisabled: false },
-    // FMIT Faculty (4)
-    { id: 'F005', name: 'Dr. Echo', lane: 'FMIT', specialty: 'FMIT Lead', traineeIds: ['R09', 'R10'], isDisabled: false },
-    { id: 'F006', name: 'Dr. Foxtrot', lane: 'FMIT', specialty: 'OB/Peds', traineeIds: ['R11', 'R12'], isDisabled: false },
-    { id: 'F007', name: 'Dr. Golf', lane: 'FMIT', specialty: 'Sports Med', traineeIds: ['R13', 'R14'], isDisabled: false },
-    { id: 'F008', name: 'Dr. Hotel', lane: 'FMIT', specialty: 'Behavioral', traineeIds: ['R15', 'R16', 'R17'], isDisabled: false },
-    // Reserve Faculty (2)
-    { id: 'F009', name: 'Dr. India', lane: 'RESERVE', specialty: 'Float', traineeIds: [], isDisabled: false },
-    { id: 'F010', name: 'Dr. Juliet', lane: 'RESERVE', specialty: 'Backup', traineeIds: [], isDisabled: false },
+    // AT Faculty
+    {
+      id: 'F001',
+      name: 'Dr. Alpha',
+      lane: 'AT',
+      specialty: 'FM Clinic',
+      traineeIds: ['R001', 'R002', 'R003'],
+      isDisabled: false,
+    },
+    {
+      id: 'F002',
+      name: 'Dr. Bravo',
+      lane: 'AT',
+      specialty: 'FM Clinic',
+      traineeIds: ['R004', 'R005'],
+      isDisabled: false,
+    },
+    {
+      id: 'F003',
+      name: 'Dr. Charlie',
+      lane: 'AT',
+      specialty: 'Inpatient',
+      traineeIds: ['R006', 'R007', 'R008'],
+      isDisabled: false,
+    },
+    // FMIT Faculty
+    {
+      id: 'F004',
+      name: 'Dr. Delta',
+      lane: 'FMIT',
+      specialty: 'FMIT Lead',
+      traineeIds: ['R009', 'R010', 'R011', 'R012'],
+      isDisabled: false,
+    },
+    {
+      id: 'F005',
+      name: 'Dr. Echo',
+      lane: 'FMIT',
+      specialty: 'FMIT',
+      traineeIds: ['R013', 'R014'],
+      isDisabled: false,
+    },
+    {
+      id: 'F006',
+      name: 'Dr. Foxtrot',
+      lane: 'FMIT',
+      specialty: 'OB/Peds',
+      traineeIds: ['R015', 'R016', 'R017'],
+      isDisabled: false,
+    },
+    // Reserve Faculty
+    {
+      id: 'F007',
+      name: 'Dr. Golf',
+      lane: 'RESERVE',
+      specialty: 'Float',
+      traineeIds: [],
+      isDisabled: false,
+    },
+    {
+      id: 'F008',
+      name: 'Dr. Hotel',
+      lane: 'RESERVE',
+      specialty: 'Backup',
+      traineeIds: [],
+      isDisabled: false,
+    },
   ];
 
-  // 17 Trainees: 6 PGY-1 (interns), 6 PGY-2, 5 PGY-3 (11 residents total)
   const trainees: BottleneckTrainee[] = [
-    // PGY-1 Interns (6)
-    { id: 'R001', name: 'Int. Kilo', pgy: 1, primaryFacultyId: 'F001', backupFacultyId: 'F009' },
-    { id: 'R003', name: 'Int. Lima', pgy: 1, primaryFacultyId: 'F002', backupFacultyId: 'F009' },
-    { id: 'R05', name: 'Int. Mike', pgy: 1, primaryFacultyId: 'F003', backupFacultyId: 'F010' },
-    { id: 'R07', name: 'Int. November', pgy: 1, primaryFacultyId: 'F004', backupFacultyId: 'F010' },
-    { id: 'R09', name: 'Int. Oscar', pgy: 1, primaryFacultyId: 'F005', backupFacultyId: 'F009' },
-    { id: 'R11', name: 'Int. Papa', pgy: 1, primaryFacultyId: 'F006', backupFacultyId: 'F010' },
-    // PGY-2 Residents (6)
-    { id: 'R002', name: 'Res. Quebec', pgy: 2, primaryFacultyId: 'F001', backupFacultyId: 'F002' },
-    { id: 'R004', name: 'Res. Romeo', pgy: 2, primaryFacultyId: 'F002', backupFacultyId: 'F001' },
-    { id: 'R06', name: 'Res. Sierra', pgy: 2, primaryFacultyId: 'F003', backupFacultyId: 'F004' },
-    { id: 'R08', name: 'Res. Tango', pgy: 2, primaryFacultyId: 'F004', backupFacultyId: 'F003' },
-    { id: 'R10', name: 'Res. Uniform', pgy: 2, primaryFacultyId: 'F005', backupFacultyId: 'F006' },
-    { id: 'R12', name: 'Res. Victor', pgy: 2, primaryFacultyId: 'F006', backupFacultyId: 'F005' },
-    // PGY-3 Residents (5)
-    { id: 'R13', name: 'Res. Whiskey', pgy: 3, primaryFacultyId: 'F007', backupFacultyId: 'F008' },
-    { id: 'R14', name: 'Res. X-Ray', pgy: 3, primaryFacultyId: 'F007', backupFacultyId: 'F006' },
-    { id: 'R15', name: 'Res. Yankee', pgy: 3, primaryFacultyId: 'F008', backupFacultyId: 'F007' },
-    { id: 'R16', name: 'Res. Zulu', pgy: 3, primaryFacultyId: 'F008', backupFacultyId: 'F005' },
-    { id: 'R17', name: 'Res. Alpha-2', pgy: 3, primaryFacultyId: 'F008', backupFacultyId: 'F009' },
+    // AT Trainees
+    { id: 'R001', name: 'Res. India', pgy: 1, primaryFacultyId: 'F001', backupFacultyId: 'F007' },
+    { id: 'R002', name: 'Res. Juliet', pgy: 2, primaryFacultyId: 'F001', backupFacultyId: 'F002' },
+    { id: 'R003', name: 'Res. Kilo', pgy: 3, primaryFacultyId: 'F001', backupFacultyId: 'F002' },
+    { id: 'R004', name: 'Res. Lima', pgy: 1, primaryFacultyId: 'F002', backupFacultyId: 'F007' },
+    { id: 'R005', name: 'Res. Mike', pgy: 2, primaryFacultyId: 'F002', backupFacultyId: 'F001' },
+    { id: 'R006', name: 'Res. November', pgy: 1, primaryFacultyId: 'F003', backupFacultyId: 'F008' },
+    { id: 'R007', name: 'Res. Oscar', pgy: 2, primaryFacultyId: 'F003', backupFacultyId: 'F001' },
+    { id: 'R008', name: 'Res. Papa', pgy: 3, primaryFacultyId: 'F003', backupFacultyId: 'F002' },
+    // FMIT Trainees
+    { id: 'R009', name: 'Res. Quebec', pgy: 1, primaryFacultyId: 'F004', backupFacultyId: 'F005' },
+    { id: 'R010', name: 'Res. Romeo', pgy: 2, primaryFacultyId: 'F004', backupFacultyId: 'F005' },
+    { id: 'R011', name: 'Res. Sierra', pgy: 3, primaryFacultyId: 'F004', backupFacultyId: 'F006' },
+    { id: 'R012', name: 'Res. Tango', pgy: 1, primaryFacultyId: 'F004', backupFacultyId: 'F008' },
+    { id: 'R013', name: 'Res. Uniform', pgy: 2, primaryFacultyId: 'F005', backupFacultyId: 'F004' },
+    { id: 'R014', name: 'Res. Victor', pgy: 3, primaryFacultyId: 'F005', backupFacultyId: 'F006' },
+    { id: 'R015', name: 'Res. Whiskey', pgy: 1, primaryFacultyId: 'F006', backupFacultyId: 'F008' },
+    { id: 'R016', name: 'Res. X-Ray', pgy: 2, primaryFacultyId: 'F006', backupFacultyId: 'F004' },
+    { id: 'R017', name: 'Res. Yankee', pgy: 3, primaryFacultyId: 'F006', backupFacultyId: 'F005' },
   ];
 
   return { faculty, trainees };
