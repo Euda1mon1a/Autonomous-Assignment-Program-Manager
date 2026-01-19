@@ -88,7 +88,7 @@ export function BatchResolution({
   const [method, setMethod] = useState<ResolutionMethod>('auto_resolved');
   const [ignoreReason, setIgnoreReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [_isPaused, _setIsPaused] = useState(false);
+  const [_isPaused, setIsPaused] = useState(false);
   const [results, setResults] = useState<BatchResolutionResult | null>(null);
   const [filterSeverity, setFilterSeverity] = useState<ConflictSeverity | null>(null);
   const [filterType, setFilterType] = useState<ConflictType | null>(null);

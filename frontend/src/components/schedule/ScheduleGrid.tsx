@@ -9,6 +9,7 @@ import { usePeople, useRotationTemplates, ListResponse } from '@/lib/hooks'
 import { useAssignmentsForRange } from '@/hooks/useAssignmentsForRange'
 import type { Person, RotationTemplate, Block } from '@/types/api'
 import {
+  ABBREVIATION_LENGTH,
   BLOCKS_STALE_TIME_MS,
   BLOCKS_GC_TIME_MS,
   PGY_LEVEL_1,
