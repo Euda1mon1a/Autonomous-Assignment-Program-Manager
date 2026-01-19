@@ -40,6 +40,13 @@ class PersonBase(BaseModel):
     performs_procedures: bool = Field(
         False, description="Whether person performs procedures"
     )
+
+    @field_validator("performs_procedures", mode="before")
+    @classmethod
+    def coerce_performs_procedures(cls, v: bool | None) -> bool:
+        """Convert None to False for performs_procedures."""
+        return v if v is not None else False
+
     specialties: list[str] | None = Field(
         None, max_length=10, description="List of specialties (max 10)"
     )

@@ -47,8 +47,9 @@ export async function fetchVulnerabilityReport(params?: {
   include_n2?: boolean;
 }): Promise<VulnerabilityReportResponse> {
   const queryParams = new URLSearchParams();
-  if (params?.startDate) queryParams.set("startDate", params.startDate);
-  if (params?.endDate) queryParams.set("endDate", params.endDate);
+  // URL query params MUST use snake_case (backend expects snake_case)
+  if (params?.startDate) queryParams.set("start_date", params.startDate);
+  if (params?.endDate) queryParams.set("end_date", params.endDate);
   if (params?.include_n2 !== undefined)
     queryParams.set("include_n2", String(params.include_n2));
 
