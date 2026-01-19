@@ -439,6 +439,23 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 25: Modron March - Frontend-Backend Type Contract Enforcement
+  # ============================================================================
+
+  # Named after D&D Modrons - lawful constructs from Mechanus who enforce cosmic
+  # order. Validates that frontend TypeScript types match backend Pydantic schemas.
+  # Prevents the snake_case/camelCase type drift that causes runtime crashes.
+  - repo: local
+    hooks:
+      - id: modron-march
+        name: Modron March (Type Contract Enforcement)
+        entry: scripts/modron-march.sh
+        language: script
+        pass_filenames: false
+        files: ^(backend/app/schemas/.*\.py|backend/app/api/routes/.*\.py|frontend/src/types/.*\.ts|frontend/src/hooks/use.*\.ts|frontend/src/lib/api\.ts|frontend/src/lib/hooks\.ts)$
+        stages: [pre-commit]
+
+  # ============================================================================
   # Configuration
   # ============================================================================
 
