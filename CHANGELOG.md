@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### PAI² Governance Revision (2026-01-19)
+
+**7 Governance Gaps Addressed:**
+- **Gap 1**: Standardized handoff template (`.claude/templates/HANDOFF_KIT_v1.md`)
+- **Gap 2**: Exception catalog (`.claude/Governance/EXCEPTIONS.md`) - 3 tiers of override authority
+- **Gap 3**: ORCHESTRATOR in agents.yaml with `spawnable: false` flag
+- **Gap 4**: Standing orders index (`.claude/Governance/STANDING_ORDERS_INDEX.md`) + generation script
+- **Gap 5**: Audit log locations documented in `CLAUDE.md`
+- **Gap 6**: RAG health check (`rag_health()`) added to `/force-multiplier` skill
+- **Gap 7**: Offline SOP (`.claude/SOPs/OFFLINE_SOP.md`) with 12 HARD BLOCKs
+
+**MCP Discovery:**
+- All new governance files include MCP Discovery sections
+- RAG queries and related MCP tools documented per file
+- 7 chunks ingested into RAG for discoverability
+
+**Key Files:**
+- `.claude/Identities/ORCHESTRATOR.identity.md` - Commander identity card
+- `scripts/generate-standing-orders-index.sh` - Automation for index generation
+
 #### Session 049 - Rotation Template Bulk Editing (2026-01-04)
 
 **Rotation Template Batch Operations (Backend):**
@@ -1430,4 +1450,3 @@ For issues or questions:
 - Environment-specific settings
 - Comprehensive metrics tracking
 - Automated regression detection
-
