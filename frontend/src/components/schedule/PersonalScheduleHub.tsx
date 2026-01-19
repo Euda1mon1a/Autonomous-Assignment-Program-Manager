@@ -230,12 +230,18 @@ export function PersonalScheduleHub({
 
   // Handle person selection with URL update (for tier 1+)
   const handlePersonSelect = useCallback(
-    (personId: string) => {
-      setSelectedPersonId(personId);
-      // Update URL without full navigation (shallow routing)
-      if (personId !== currentUserPersonId) {
-        router.replace(`/my-schedule?person=${personId}`, { scroll: false });
+    (personId: string | null) => {
+      if (personId) {
+        setSelectedPersonId(personId);
+        // Update URL without full navigation (shallow routing)
+        if (personId !== currentUserPersonId) {
+          router.replace(`/my-schedule?person=${personId}`, { scroll: false });
+        } else {
+          router.replace('/my-schedule', { scroll: false });
+        }
       } else {
+        // null means "back to my schedule"
+        setSelectedPersonId(currentUserPersonId ?? null);
         router.replace('/my-schedule', { scroll: false });
       }
     },

@@ -46,11 +46,14 @@ import { BurnoutRtDisplay } from '@/components/resilience/BurnoutRtDisplay';
 import { N1ContingencyMap } from '@/components/resilience/N1ContingencyMap';
 
 // Types
-import type { OverallStatus, CircuitState } from '@/types/resilience';
+import type { CircuitState } from '@/types/resilience';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+// Use string literal union instead of enum for simpler type checking
+type StatusString = 'healthy' | 'warning' | 'degraded' | 'critical' | 'emergency';
 
 type ResilienceTab = 'overview' | 'circuit-breakers' | 'fairness' | 'compliance';
 
@@ -92,7 +95,7 @@ const TABS: TabConfig[] = [
   },
 ];
 
-const STATUS_COLORS: Record<OverallStatus, string> = {
+const STATUS_COLORS: Record<StatusString, string> = {
   healthy: 'text-green-500 bg-green-500/10 border-green-500/30',
   warning: 'text-amber-500 bg-amber-500/10 border-amber-500/30',
   degraded: 'text-orange-500 bg-orange-500/10 border-orange-500/30',
@@ -110,7 +113,7 @@ const CIRCUIT_STATE_COLORS: Record<CircuitState, string> = {
 // Helper Components
 // ============================================================================
 
-function StatusBadge({ status, size = 'md' }: { status: OverallStatus; size?: 'sm' | 'md' | 'lg' }) {
+function StatusBadge({ status, size = 'md' }: { status: StatusString; size?: 'sm' | 'md' | 'lg' }) {
   const sizeClasses = {
     sm: 'px-2 py-0.5 text-xs',
     md: 'px-3 py-1 text-sm',
@@ -140,7 +143,7 @@ function MetricCard({
   subValue?: string;
   icon: React.ElementType;
   trend?: 'up' | 'down' | 'stable';
-  status?: OverallStatus;
+  status?: StatusString;
 }) {
   const trendColor = trend === 'up' ? 'text-green-400' : trend === 'down' ? 'text-red-400' : 'text-gray-400';
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : null;
@@ -326,7 +329,7 @@ function CircuitBreakersTab() {
             </div>
             <div>
               <div className="text-sm text-slate-400">Severity</div>
-              <StatusBadge status={health.severity as OverallStatus || 'healthy'} size="sm" />
+              <StatusBadge status={(health.severity as StatusString) || 'healthy'} size="sm" />
             </div>
             <div>
               <div className="text-sm text-slate-400">Needs Attention</div>

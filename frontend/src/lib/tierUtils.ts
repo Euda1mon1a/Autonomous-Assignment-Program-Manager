@@ -87,6 +87,24 @@ export function canViewOthers(tier: RiskTier): boolean {
   return tier >= 1
 }
 
+/** Alias for canViewOthers - used in tests */
+export const canViewOtherSchedules = canViewOthers
+
+/** Check if user can export other schedules (tier 1+) */
+export function canExportOtherSchedules(tier: RiskTier): boolean {
+  return tier >= 1
+}
+
+/** Check if user can make schedule changes (tier 1+) */
+export function canMakeScheduleChanges(tier: RiskTier): boolean {
+  return tier >= 1
+}
+
+/** Check if user can perform destructive operations (admin only) */
+export function canPerformDestructiveOperations(tier: RiskTier): boolean {
+  return tier >= 2
+}
+
 /**
  * Check if user can perform admin operations
  */
