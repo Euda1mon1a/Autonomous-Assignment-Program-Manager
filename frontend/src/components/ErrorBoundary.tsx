@@ -27,6 +27,7 @@ interface ErrorBoundaryState {
   errorInfo: ErrorInfo | null;
   retryCount: number;
   errorCategory: ErrorCategory;
+  errorReported: boolean;
 }
 
 interface ErrorCategoryConfig {
@@ -53,6 +54,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       errorInfo: null,
       retryCount: 0,
       errorCategory: ErrorCategory.Unknown,
+      errorReported: false,
     };
   }
 
@@ -277,6 +279,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       error: null,
       errorInfo: null,
       retryCount: retryCount + 1,
+      errorReported: false,
     });
   };
 
@@ -322,7 +325,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     console.log('URL:', window.location.href);
     console.groupEnd();
 
-    alert('Error details have been logged to the console. In production, this would be sent to an error reporting service.');
+    // In production, this would be sent to an error reporting service (e.g., Sentry, LogRocket)
+    console.info('Error report logged. In production, this would be sent to an error reporting service.');
+
+    // Update state to show confirmation in UI
+    this.setState({ errorReported: true });
   };
 
   render(): ReactNode {
@@ -433,9 +440,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 </button>
                 <button
                   onClick={this.handleReportError}
-                  className="flex-1 px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-sm"
+                  disabled={this.state.errorReported}
+                  className={`flex-1 px-3 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-sm ${
+                    this.state.errorReported
+                      ? 'bg-green-50 text-green-700 border-green-300 cursor-default'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
                 >
-                  Report Error
+                  {this.state.errorReported ? 'Error Reported' : 'Report Error'}
                 </button>
               </div>
             </div>

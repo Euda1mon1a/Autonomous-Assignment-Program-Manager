@@ -7,6 +7,7 @@
  * empirically testing scheduling and resilience configurations.
  */
 import { useState } from 'react';
+import { useToast } from '@/contexts/ToastContext';
 import {
   useStrategies,
   useTournaments,
@@ -28,8 +29,9 @@ import type { ConfigStrategy, TournamentCreate, EvolutionCreate, GameTheorySumma
 export default function GameTheoryPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'strategies' | 'tournaments' | 'evolution' | 'analysis'>('overview');
   const [selectedStrategies, setSelectedStrategies] = useState<string[]>([]);
-  // const [showTournamentModal, setShowTournamentModal] = useState(false);
-  // const [showEvolutionModal, setShowEvolutionModal] = useState(false);
+  const [showTournamentModal, setShowTournamentModal] = useState(false);
+  const [showEvolutionModal, setShowEvolutionModal] = useState(false);
+  const { toast } = useToast();
 
   const { data: summary, isLoading: summaryLoading } = useGameTheorySummary();
   const { data: strategies, isLoading: strategiesLoading } = useStrategies();
@@ -48,7 +50,7 @@ export default function GameTheoryPage() {
 
   const handleCreateTournament = (): void => {
     if (selectedStrategies.length < 2) {
-      alert('Select at least 2 strategies');
+      toast.warning('Select at least 2 strategies');
       return;
     }
 
@@ -62,14 +64,14 @@ export default function GameTheoryPage() {
     createTournament.mutate(tournamentData, {
       onSuccess: (): void => {
         setSelectedStrategies([]);
-        // setShowTournamentModal(false);
+        setShowTournamentModal(false);
       },
     });
   };
 
   const handleCreateEvolution = (): void => {
     if (selectedStrategies.length < 2) {
-      alert('Select at least 2 strategies');
+      toast.warning('Select at least 2 strategies');
       return;
     }
 
@@ -90,7 +92,7 @@ export default function GameTheoryPage() {
     createEvolution.mutate(evolutionData, {
       onSuccess: (): void => {
         setSelectedStrategies([]);
-        // setShowEvolutionModal(false);
+        setShowEvolutionModal(false);
       },
     });
   };

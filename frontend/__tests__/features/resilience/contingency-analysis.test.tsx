@@ -2,15 +2,27 @@
  * Tests for Contingency Analysis Display Component
  *
  * Tests the contingency analysis component which displays:
- * - N-1 and N-2 vulnerability analysis
- * - Critical faculty identification
- * - Centrality scores
- * - Fatal pair detection
+ * - N-1 and N-2 vulnerability analysis status
+ * - Phase transition risk assessment
  * - Recommended mitigation actions
  *
- * NOTE: These tests are skipped because the ContingencyAnalysis component
- * is currently a stub. When the full component is implemented, these tests
- * should be unskipped and may need adjustments based on the final implementation.
+ * NOTE: These tests are skipped because they were written for a more feature-complete
+ * component that includes scenario simulation. The current component displays
+ * vulnerability data from useVulnerabilityReport but scenario simulation is not
+ * yet wired to a REST API (available via MCP tools only).
+ *
+ * Tests to keep enabled when scenario simulation is implemented:
+ * - Initial Rendering: basic component display
+ * - N-1/N-2 Summary: status badges and pass/fail indicators
+ * - Recommended Actions: action display
+ *
+ * Tests that require scenario simulation API:
+ * - User Interactions (run simulation, date range)
+ * - N-1 Vulnerabilities Display (detailed vulnerability list)
+ * - N-2 Fatal Pairs Display (detailed pair display)
+ * - Critical Faculty Display (centrality details)
+ * - Filtering and Sorting
+ * - Visual Indicators (heatmap, network graph)
  */
 
 import { render, screen, waitFor } from '@/test-utils';
@@ -28,8 +40,9 @@ jest.mock('@/lib/api', () => ({
 
 const mockedApi = api as jest.Mocked<typeof api>;
 
-// Skip all tests - component is a stub placeholder
-// TODO: Unskip when ContingencyAnalysis is fully implemented
+// Skip tests - component displays vulnerability data but scenario simulation
+// requires backend REST API endpoint (not yet implemented, available via MCP only)
+// TODO: When POST /resilience/scenario-simulation is added, unskip and update tests
 describe.skip('ContingencyAnalysis', () => {
   beforeEach(() => {
     jest.clearAllMocks();

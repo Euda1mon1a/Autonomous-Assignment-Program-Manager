@@ -18,6 +18,9 @@ import * as THREE from 'three';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { RiskTier } from '@/components/ui/RiskBar';
+import { Modal } from '@/components/Modal';
+import { canMakeScheduleChanges } from '@/lib/tierUtils';
+import { AlertTriangle, Calendar, User, Activity, ExternalLink } from 'lucide-react';
 
 // ============================================================================
 // Types
@@ -303,6 +306,147 @@ const VoxelTooltip = ({
   </Html>
 );
 
+// ============================================================================
+// Voxel Details Modal
+// ============================================================================
+
+interface VoxelDetailsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  voxel: VoxelData | null;
+  userTier: RiskTier;
+  axisLabels: typeof AXIS_LABELS;
+}
+
+const VoxelDetailsModal: React.FC<VoxelDetailsModalProps> = ({
+  isOpen,
+  onClose,
+  voxel,
+  userTier,
+  axisLabels,
+}) => {
+  if (!voxel) return null;
+
+  const canEdit = canMakeScheduleChanges(userTier);
+  const dayLabel = axisLabels.x[voxel.position.x] || 'Unknown';
+  const activityLabel = axisLabels.z[voxel.position.z] || voxel.activity;
+
+  // Format date if available
+  const formattedDate = voxel.blockDate
+    ? new Date(voxel.blockDate).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : dayLabel;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Assignment Details" dark>
+      <div className="space-y-4">
+        {/* Conflict/Violation Warning */}
+        {(voxel.isConflict || voxel.isViolation) && (
+          <div className="flex items-center gap-2 p-3 bg-red-900/50 border border-red-700 rounded-lg">
+            <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-red-300">
+                {voxel.isViolation ? 'ACGME Violation Detected' : 'Scheduling Conflict'}
+              </p>
+              <p className="text-xs text-red-400 mt-0.5">
+                {voxel.isViolation
+                  ? 'This assignment may violate work hour regulations.'
+                  : 'This person has overlapping assignments.'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Person Info */}
+        <div className="flex items-center gap-3 p-3 bg-slate-700/50 rounded-lg">
+          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+            <User className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-white">{voxel.person}</p>
+            {voxel.personId && (
+              <p className="text-xs text-slate-400">ID: {voxel.personId.slice(0, 8)}...</p>
+            )}
+          </div>
+        </div>
+
+        {/* Assignment Details */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="p-3 bg-slate-700/50 rounded-lg">
+            <div className="flex items-center gap-2 text-slate-400 mb-1">
+              <Activity className="w-4 h-4" />
+              <span className="text-xs uppercase tracking-wide">Activity</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: voxel.color }}
+              />
+              <span className="text-sm text-white font-medium">{activityLabel}</span>
+            </div>
+          </div>
+
+          <div className="p-3 bg-slate-700/50 rounded-lg">
+            <div className="flex items-center gap-2 text-slate-400 mb-1">
+              <Calendar className="w-4 h-4" />
+              <span className="text-xs uppercase tracking-wide">Date</span>
+            </div>
+            <p className="text-sm text-white font-medium">{formattedDate}</p>
+          </div>
+        </div>
+
+        {/* Activity Type (if available) */}
+        {voxel.activityType && (
+          <div className="p-3 bg-slate-700/50 rounded-lg">
+            <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">Activity Type</p>
+            <p className="text-sm text-white">{voxel.activityType}</p>
+          </div>
+        )}
+
+        {/* Tier-based Actions */}
+        <div className="border-t border-slate-700 pt-4 mt-4">
+          {canEdit ? (
+            <div className="space-y-2">
+              <p className="text-xs text-slate-400 mb-2">
+                Tier {userTier} Access - {userTier === 2 ? 'Admin' : 'Coordinator'}
+              </p>
+              {voxel.assignmentId && (
+                <a
+                  href={`/admin/scheduling?assignment_id=${voxel.assignmentId}`}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Edit in Schedule Admin
+                </a>
+              )}
+              {voxel.personId && (
+                <a
+                  href={`/hub?person_id=${voxel.personId}`}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 rounded-lg hover:bg-slate-600 transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  View Person Schedule
+                </a>
+              )}
+            </div>
+          ) : (
+            <div className="text-center">
+              <p className="text-xs text-slate-400 mb-2">Tier 0 - View Only</p>
+              <p className="text-sm text-slate-500">
+                Contact a coordinator or admin to modify this assignment.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 const AnimatedCamera = ({ is3D }: { is3D: boolean }) => {
   const { camera } = useThree();
 
@@ -329,6 +473,7 @@ export default function VoxelScheduleView3D({ userTier, startDate, endDate }: Vo
   const [is3D, setIs3D] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [modalVoxel, setModalVoxel] = useState<VoxelData | null>(null);
 
   // Default to current week if no dates provided
   const defaultStartDate = useMemo(() => {
@@ -405,8 +550,12 @@ export default function VoxelScheduleView3D({ userTier, startDate, endDate }: Vo
 
   const handleVoxelClick = (voxel: VoxelData) => {
     setSelectedId(voxel.id);
-    // TODO: Open context menu or details modal based on userTier
-    console.log('Voxel clicked:', voxel, 'User tier:', userTier);
+    // Open details modal - tier-based actions are handled within the modal
+    setModalVoxel(voxel);
+  };
+
+  const handleModalClose = () => {
+    setModalVoxel(null);
   };
 
   return (
@@ -527,6 +676,15 @@ export default function VoxelScheduleView3D({ userTier, startDate, endDate }: Vo
           dampingFactor={0.05}
         />
       </Canvas>
+
+      {/* Voxel Details Modal - rendered outside Canvas for proper DOM layering */}
+      <VoxelDetailsModal
+        isOpen={modalVoxel !== null}
+        onClose={handleModalClose}
+        voxel={modalVoxel}
+        userTier={userTier}
+        axisLabels={axisLabels}
+      />
     </div>
   );
 }

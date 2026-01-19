@@ -6,12 +6,14 @@ import {
   useRollbackBatch,
   useStageImport,
 } from "@/hooks/useImport";
+import { useToast } from "@/contexts/ToastContext";
 import { FileText, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 // import { ProtectedRoute } from '@/components/ProtectedRoute'; // Assumed to exist or will be added
 
 export default function ImportPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const { data, isLoading } = useImportBatches();
   const stageImportMutation = useStageImport();
   const rollbackMutation = useRollbackBatch();
@@ -29,7 +31,7 @@ export default function ImportPage() {
       router.push(`/import/${result.batchId}`);
     } catch (error) {
       console.error("Failed to stage file:", error);
-      alert("Failed to upload file. Please try again.");
+      toast.error("Failed to upload file. Please try again.");
     }
   };
 

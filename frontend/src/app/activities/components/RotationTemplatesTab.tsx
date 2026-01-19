@@ -8,6 +8,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { EmptyState } from '@/components/EmptyState'
 import { EditTemplateModal } from '@/components/EditTemplateModal'
+import { CreateTemplateModal } from '@/components/CreateTemplateModal'
 import type { RotationTemplate } from '@/types/api'
 
 interface RotationTemplatesTabProps {
@@ -35,6 +36,7 @@ export function RotationTemplatesTab({
   const [activityTypeFilter, setActivityTypeFilter] = useState<string | null>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<RotationTemplate | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   // Handle template card click to open edit modal
   const handleEditTemplate = (template: RotationTemplate) => {
@@ -141,10 +143,7 @@ export function RotationTemplatesTab({
         {canEdit && (
           <button
             type="button"
-            onClick={() => {
-              // TODO: Implement create template modal
-              alert('Create template feature coming soon')
-            }}
+            onClick={() => setIsCreateModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <Plus className="h-4 w-4" />
@@ -221,6 +220,12 @@ export function RotationTemplatesTab({
         isOpen={isEditModalOpen}
         onClose={handleCloseModal}
         template={selectedTemplate}
+      />
+
+      {/* Create Template Modal */}
+      <CreateTemplateModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
       />
     </div>
   )
