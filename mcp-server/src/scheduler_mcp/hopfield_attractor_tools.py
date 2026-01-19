@@ -345,10 +345,52 @@ async def calculate_schedule_energy(
     start = date.fromisoformat(start_date) if start_date else today
     end = date.fromisoformat(end_date) if end_date else (today + timedelta(days=30))
 
+    # Try backend API first
     try:
-        # In production, would import actual Hopfield implementation
-        # from app.resilience.hopfield.energy import calculate_hopfield_energy
+        from .api_client import get_api_client
 
+        client = get_api_client()
+
+        result = await client.post(
+            "/api/v1/resilience/exotic/hopfield/energy",
+            json={
+                "start_date": start.isoformat(),
+                "end_date": end.isoformat(),
+                "schedule_id": schedule_id,
+            },
+        )
+
+        if result is not None:
+            # Build response from backend data
+            metrics = result.get("metrics", {})
+            return ScheduleEnergyResponse(
+                analyzed_at=result.get("analyzed_at", datetime.now().isoformat()),
+                schedule_id=result.get("schedule_id"),
+                period_start=result.get("period_start", start.isoformat()),
+                period_end=result.get("period_end", end.isoformat()),
+                assignments_analyzed=result.get("assignments_analyzed", 0),
+                state_dimension=result.get("assignments_analyzed", 0),  # Approx
+                metrics=ScheduleEnergyMetrics(
+                    total_energy=metrics.get("total_energy", 0.0),
+                    normalized_energy=metrics.get("normalized_energy", 0.0),
+                    energy_density=metrics.get("energy_density", 0.0),
+                    interaction_energy=metrics.get("interaction_energy", 0.0),
+                    stability_score=metrics.get("stability_score", 0.0),
+                    gradient_magnitude=metrics.get("gradient_magnitude", 0.0),
+                    is_local_minimum=metrics.get("is_local_minimum", False),
+                    distance_to_minimum=metrics.get("distance_to_minimum", 0),
+                    computed_at=datetime.now().isoformat(),
+                ),
+                interpretation=result.get("interpretation", ""),
+                stability_level=StabilityLevelEnum(result.get("stability_level", "unstable")),
+                recommendations=result.get("recommendations", []),
+                severity=result.get("stability_level", "unstable"),
+            )
+
+    except Exception as e:
+        logger.warning(f"Hopfield energy API call failed, using placeholder: {e}")
+
+    try:
         logger.warning("Hopfield energy using placeholder data")
 
         # Mock energy calculation showing realistic values
@@ -532,6 +574,52 @@ async def find_nearby_attractors(
     start = date.fromisoformat(start_date) if start_date else today
     end = date.fromisoformat(end_date) if end_date else (today + timedelta(days=30))
 
+    # Try backend API first
+    try:
+        from .api_client import get_api_client
+
+        client = get_api_client()
+
+        result = await client.post(
+            "/api/v1/resilience/exotic/hopfield/attractors",
+            json={
+                "start_date": start.isoformat(),
+                "end_date": end.isoformat(),
+                "max_distance": max_distance,
+            },
+        )
+
+        if result is not None:
+            # Build attractors from backend data
+            attractors = [
+                AttractorInfo(
+                    attractor_id=a.get("attractor_id", ""),
+                    attractor_type=AttractorTypeEnum(a.get("attractor_type", "local_minimum")),
+                    energy_level=a.get("energy_level", 0.0),
+                    basin_depth=a.get("basin_depth", 0.0),
+                    basin_volume=a.get("basin_volume", 0),
+                    hamming_distance=a.get("hamming_distance", 0),
+                    pattern_description=a.get("pattern_description", ""),
+                    is_current_state=False,
+                    confidence=a.get("confidence", 0.0),
+                )
+                for a in result.get("attractors", [])
+            ]
+            return NearbyAttractorsResponse(
+                analyzed_at=result.get("analyzed_at", datetime.now().isoformat()),
+                current_state_energy=result.get("current_state_energy", 0.0),
+                attractors_found=result.get("attractors_found", 0),
+                attractors=attractors,
+                global_minimum_identified=result.get("global_minimum_identified", False),
+                current_basin_id=result.get("current_basin_id"),
+                interpretation=result.get("interpretation", ""),
+                recommendations=result.get("recommendations", []),
+                severity="good" if result.get("global_minimum_identified") else "suboptimal",
+            )
+
+    except Exception as e:
+        logger.warning(f"Hopfield attractors API call failed, using placeholder: {e}")
+
     try:
         logger.warning("Attractor search using placeholder data")
 
@@ -684,7 +772,56 @@ async def measure_basin_depth(
         else:
             print("WARNING: Schedule is fragile")
     """
+    from datetime import date, timedelta
+
     logger.info(f"Measuring basin depth (perturbations={num_perturbations})")
+
+    # Use default date range
+    today = date.today()
+    start = today
+    end = today + timedelta(days=30)
+
+    # Try backend API first
+    try:
+        from .api_client import get_api_client
+
+        client = get_api_client()
+
+        result = await client.post(
+            "/api/v1/resilience/exotic/hopfield/basin-depth",
+            json={
+                "start_date": start.isoformat(),
+                "end_date": end.isoformat(),
+                "num_perturbations": num_perturbations,
+            },
+        )
+
+        if result is not None:
+            metrics = result.get("metrics", {})
+            return BasinDepthResponse(
+                analyzed_at=result.get("analyzed_at", datetime.now().isoformat()),
+                schedule_id=result.get("schedule_id"),
+                attractor_id=result.get("attractor_id", attractor_id or "attr_current"),
+                metrics=BasinDepthMetrics(
+                    min_escape_energy=metrics.get("min_escape_energy", 0.0),
+                    avg_escape_energy=metrics.get("avg_escape_energy", 0.0),
+                    max_escape_energy=metrics.get("max_escape_energy", 0.0),
+                    basin_stability_index=metrics.get("basin_stability_index", 0.0),
+                    num_escape_paths=metrics.get("num_escape_paths", 0),
+                    nearest_saddle_distance=metrics.get("nearest_saddle_distance", 0),
+                    basin_radius=metrics.get("basin_radius", 0),
+                    critical_perturbation_size=metrics.get("critical_perturbation_size", 0),
+                ),
+                stability_level=StabilityLevelEnum(result.get("stability_level", "unstable")),
+                is_robust=result.get("is_robust", False),
+                robustness_threshold=result.get("robustness_threshold", 0),
+                interpretation=result.get("interpretation", ""),
+                recommendations=result.get("recommendations", []),
+                severity=result.get("stability_level", "unstable"),
+            )
+
+    except Exception as e:
+        logger.warning(f"Hopfield basin depth API call failed, using placeholder: {e}")
 
     try:
         logger.warning("Basin depth measurement using placeholder data")
@@ -871,7 +1008,60 @@ async def detect_spurious_attractors(
                 print(f"Critical anti-pattern: {spurious.description}")
                 print(f"Mitigation: {spurious.mitigation_strategy}")
     """
+    from datetime import date, timedelta
+
     logger.info(f"Detecting spurious attractors (radius={search_radius})")
+
+    # Use default date range
+    today = date.today()
+    start = today
+    end = today + timedelta(days=30)
+
+    # Try backend API first
+    try:
+        from .api_client import get_api_client
+
+        client = get_api_client()
+
+        result = await client.post(
+            "/api/v1/resilience/exotic/hopfield/spurious",
+            json={
+                "start_date": start.isoformat(),
+                "end_date": end.isoformat(),
+                "search_radius": search_radius,
+            },
+        )
+
+        if result is not None:
+            # Build spurious attractors from backend data
+            spurious_list = [
+                SpuriousAttractorInfo(
+                    attractor_id=s.get("attractor_id", ""),
+                    energy_level=s.get("energy_level", 0.0),
+                    basin_size=s.get("basin_size", 0),
+                    anti_pattern_type=s.get("anti_pattern_type", ""),
+                    description=s.get("description", ""),
+                    risk_level=s.get("risk_level", "low"),
+                    distance_from_valid=s.get("distance_from_valid", 0),
+                    probability_of_capture=s.get("probability_of_capture", 0.0),
+                    mitigation_strategy=s.get("mitigation_strategy", ""),
+                )
+                for s in result.get("spurious_attractors", [])
+            ]
+            return SpuriousAttractorsResponse(
+                analyzed_at=result.get("analyzed_at", datetime.now().isoformat()),
+                spurious_attractors_found=result.get("spurious_attractors_found", 0),
+                spurious_attractors=spurious_list,
+                total_basin_coverage=result.get("total_basin_coverage", 0.0),
+                highest_risk_attractor=result.get("highest_risk_attractor"),
+                is_current_state_spurious=result.get("is_current_state_spurious", False),
+                interpretation=result.get("interpretation", ""),
+                recommendations=result.get("recommendations", []),
+                severity="clean" if not spurious_list else "minor_risk",
+            )
+
+    except Exception as e:
+        logger.warning(f"Hopfield spurious attractors API call failed, using placeholder: {e}")
 
     try:
         logger.warning("Spurious attractor detection using placeholder data")

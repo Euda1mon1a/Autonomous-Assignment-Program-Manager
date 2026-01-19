@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-18T22:01:33Z
+ * Generated at: 2026-01-19T00:48:21Z
  * Generator: openapi-typescript
  *
  * To regenerate:
@@ -8305,6 +8305,103 @@ export interface paths {
          *     weight based on context (like holiday coverage, crisis mode).
          */
         post: operations["analyze_transcription_factors_api_v1_resilience_exotic_composite_transcription_factors_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/exotic/hopfield/energy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calculate Hopfield Energy
+         * @description Calculate Hopfield energy of schedule configuration.
+         *
+         *     The energy function E = -0.5 * sum(w_ij * s_i * s_j) measures how well
+         *     the current schedule matches learned stable patterns.
+         *
+         *     Returns energy metrics, stability assessment, and recommendations.
+         */
+        post: operations["calculate_hopfield_energy_api_v1_resilience_exotic_hopfield_energy_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/exotic/hopfield/attractors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Find Hopfield Attractors
+         * @description Find stable attractors near the current schedule state.
+         *
+         *     Attractors are stable states (energy minima) that the system naturally
+         *     evolves toward. Finding nearby attractors shows alternative stable
+         *     configurations.
+         */
+        post: operations["find_hopfield_attractors_api_v1_resilience_exotic_hopfield_attractors_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/exotic/hopfield/basin-depth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Measure Hopfield Basin Depth
+         * @description Measure the depth of the basin of attraction for current state.
+         *
+         *     Basin depth is the energy barrier that must be overcome to escape.
+         *     Deeper basins = more stable attractors = more robust schedules.
+         */
+        post: operations["measure_hopfield_basin_depth_api_v1_resilience_exotic_hopfield_basin_depth_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/exotic/hopfield/spurious": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Detect Hopfield Spurious Attractors
+         * @description Detect spurious attractors (scheduling anti-patterns) in energy landscape.
+         *
+         *     Spurious attractors are unintended stable states like:
+         *     - Concentrated overload on subset of faculty
+         *     - Systematic underutilization
+         *     - Clustering violations
+         */
+        post: operations["detect_hopfield_spurious_attractors_api_v1_resilience_exotic_hopfield_spurious_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -20917,6 +21014,55 @@ export interface components {
             pm?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
         };
         /**
+         * AttractorInfoResponse
+         * @description Information about a detected attractor.
+         */
+        AttractorInfoResponse: {
+            /**
+             * Attractor Id
+             * @description Unique attractor identifier
+             */
+            attractor_id: string;
+            /** @description Type of attractor */
+            attractor_type: components["schemas"]["AttractorType"];
+            /**
+             * Energy Level
+             * @description Energy at attractor state
+             */
+            energy_level: number;
+            /**
+             * Basin Depth
+             * @description Energy barrier to escape
+             */
+            basin_depth: number;
+            /**
+             * Basin Volume
+             * @description Estimated states in basin
+             */
+            basin_volume: number;
+            /**
+             * Hamming Distance
+             * @description Distance from current state
+             */
+            hamming_distance: number;
+            /**
+             * Pattern Description
+             * @description Pattern description
+             */
+            pattern_description: string;
+            /**
+             * Confidence
+             * @description Detection confidence
+             */
+            confidence: number;
+        };
+        /**
+         * AttractorType
+         * @description Types of attractors in the energy landscape.
+         * @enum {string}
+         */
+        AttractorType: "global_minimum" | "local_minimum" | "spurious" | "metastable" | "saddle_point";
+        /**
          * AudienceListResponse
          * @description Response listing all available audiences.
          * @example {
@@ -21473,6 +21619,122 @@ export interface components {
          */
         BarrierTypeEnum: "kinetic" | "thermodynamic" | "steric" | "electronic" | "regulatory";
         /**
+         * BasinDepthRequest
+         * @description Request for basin depth measurement.
+         */
+        BasinDepthRequest: {
+            /**
+             * Start Date
+             * @description Start date (YYYY-MM-DD)
+             */
+            start_date: string;
+            /**
+             * End Date
+             * @description End date (YYYY-MM-DD)
+             */
+            end_date: string;
+            /**
+             * Num Perturbations
+             * @description Number of perturbations to test
+             * @default 100
+             */
+            num_perturbations: number;
+        };
+        /**
+         * BasinDepthResponse
+         * @description Response from basin depth measurement.
+         */
+        BasinDepthResponse: {
+            /**
+             * Analyzed At
+             * @description ISO timestamp of analysis
+             */
+            analyzed_at: string;
+            /**
+             * Schedule Id
+             * @description Schedule ID if provided
+             */
+            schedule_id?: string | null;
+            /**
+             * Attractor Id
+             * @description ID of measured attractor
+             */
+            attractor_id: string;
+            /** @description Basin metrics */
+            metrics: components["schemas"]["BasinMetricsResponse"];
+            /** @description Stability classification */
+            stability_level: components["schemas"]["StabilityLevel"];
+            /**
+             * Is Robust
+             * @description Whether schedule is robust
+             */
+            is_robust: boolean;
+            /**
+             * Robustness Threshold
+             * @description Max simultaneous changes tolerated
+             */
+            robustness_threshold: number;
+            /**
+             * Interpretation
+             * @description Human-readable interpretation
+             */
+            interpretation: string;
+            /** Recommendations */
+            recommendations?: string[];
+            /**
+             * Source
+             * @description Data source
+             * @default backend
+             */
+            source: string;
+        };
+        /**
+         * BasinMetricsResponse
+         * @description Metrics quantifying basin of attraction stability.
+         */
+        BasinMetricsResponse: {
+            /**
+             * Min Escape Energy
+             * @description Minimum escape barrier
+             */
+            min_escape_energy: number;
+            /**
+             * Avg Escape Energy
+             * @description Average escape barrier
+             */
+            avg_escape_energy: number;
+            /**
+             * Max Escape Energy
+             * @description Maximum escape barrier
+             */
+            max_escape_energy: number;
+            /**
+             * Basin Stability Index
+             * @description Basin stability index [0, 1]
+             */
+            basin_stability_index: number;
+            /**
+             * Num Escape Paths
+             * @description Number of escape paths
+             */
+            num_escape_paths: number;
+            /**
+             * Nearest Saddle Distance
+             * @description Distance to nearest saddle point
+             */
+            nearest_saddle_distance: number;
+            /**
+             * Basin Radius
+             * @description Maximum distance within basin
+             */
+            basin_radius: number;
+            /**
+             * Critical Perturbation Size
+             * @description Changes needed to escape basin
+             */
+            critical_perturbation_size: number;
+        };
+        /**
          * BatchArchiveRequest
          * @description Request schema for batch archive of rotation templates.
          */
@@ -21622,8 +21884,11 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
-            /** Person Id */
-            person_id?: string | null;
+            /**
+             * Template Id
+             * Format: uuid
+             */
+            template_id: string;
             /** Success */
             success: boolean;
             /** Error */
@@ -21863,7 +22128,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__person__BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -22172,7 +22437,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -22809,24 +23074,19 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Response for listing academic blocks.
+         * @description Schema for list of blocks.
          */
         BlockListResponse: {
             /**
-             * Blocks
-             * @description List of academic blocks
+             * Items
+             * @description List of block responses
              */
-            blocks: components["schemas"]["BlockSummary"][];
+            items: components["schemas"]["BlockResponse"][];
             /**
-             * Academic Year
-             * @description Academic year
-             */
-            academic_year: string;
-            /**
-             * Total Blocks
+             * Total
              * @description Total number of blocks
              */
-            total_blocks: number;
+            total: number;
         };
         /**
          * BlockMatrixResponse
@@ -23065,7 +23325,7 @@ export interface components {
             /** Residents With Leave */
             residents_with_leave: number;
             /** Coverage Gaps */
-            coverage_gaps: components["schemas"]["CoverageGap"][];
+            coverage_gaps: components["schemas"]["app__schemas__block_assignment__CoverageGap"][];
             /** Leave Conflicts */
             leave_conflicts: components["schemas"]["LeaveConflict"][];
             /** Rotation Capacities */
@@ -24948,15 +25208,29 @@ export interface components {
         };
         /**
          * ConflictCheckResponse
-         * @description Response for conflict check.
+         * @description Response for conflict checking before assignment.
          */
         ConflictCheckResponse: {
-            /** Has Conflicts */
-            has_conflicts: boolean;
-            /** Conflicts */
-            conflicts: components["schemas"]["TemplateConflict"][];
-            /** Can Proceed */
-            can_proceed: boolean;
+            /**
+             * Can Assign
+             * @description Whether assignment can proceed
+             */
+            can_assign: boolean;
+            /**
+             * Conflicts
+             * @description Detected conflicts
+             */
+            conflicts?: components["schemas"]["ConflictDetail"][];
+            /**
+             * Warnings
+             * @description Warnings
+             */
+            warnings?: string[];
+            /**
+             * Suggestions
+             * @description Alternative suggestions
+             */
+            suggestions?: string[];
         };
         /**
          * ConflictDetail
@@ -25103,93 +25377,15 @@ export interface components {
         };
         /**
          * ConflictSummary
-         * @description Summary statistics for a set of conflicts.
-         *
-         *     Used for dashboard displays and reporting.
-         * @example {
-         *       "affected_people_count": 8,
-         *       "auto_resolvable_count": 6,
-         *       "average_impact_score": 0.65,
-         *       "critical_count": 3,
-         *       "high_count": 5,
-         *       "low_count": 3,
-         *       "medium_count": 4,
-         *       "total_conflicts": 15
-         *     }
+         * @description Summary of conflicts found.
          */
         ConflictSummary: {
-            /**
-             * Total Conflicts
-             * @default 0
-             */
+            /** Total Conflicts */
             total_conflicts: number;
-            /**
-             * Critical Count
-             * @default 0
-             */
-            critical_count: number;
-            /**
-             * High Count
-             * @default 0
-             */
-            high_count: number;
-            /**
-             * Medium Count
-             * @default 0
-             */
-            medium_count: number;
-            /**
-             * Low Count
-             * @default 0
-             */
-            low_count: number;
-            /** By Category */
-            by_category?: {
-                [key: string]: number | undefined;
-            };
-            /** By Type */
-            by_type?: {
-                [key: string]: number | undefined;
-            };
-            /**
-             * Affected People Count
-             * @default 0
-             */
-            affected_people_count: number;
-            /**
-             * Affected Blocks Count
-             * @default 0
-             */
-            affected_blocks_count: number;
-            /**
-             * Auto Resolvable Count
-             * @default 0
-             */
-            auto_resolvable_count: number;
-            /**
-             * Requires Manual Count
-             * @default 0
-             */
-            requires_manual_count: number;
-            /**
-             * Average Impact Score
-             * @default 0
-             */
-            average_impact_score: number;
-            /**
-             * Average Urgency Score
-             * @default 0
-             */
-            average_urgency_score: number;
-            /**
-             * Average Complexity Score
-             * @default 0
-             */
-            average_complexity_score: number;
-            /** Earliest Date */
-            earliest_date?: string | null;
-            /** Latest Date */
-            latest_date?: string | null;
+            /** Errors */
+            errors: number;
+            /** Warnings */
+            warnings: number;
         };
         /**
          * ConflictType
@@ -25413,24 +25609,34 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Identified coverage gap.
+         * @description Represents a coverage gap with details.
          */
         CoverageGap: {
+            /** Gap Id */
+            gap_id: string;
             /**
-             * Rotation Template Id
-             * Format: uuid
+             * Date
+             * Format: date
              */
-            rotation_template_id: string;
-            /** Rotation Name */
-            rotation_name: string;
-            /** Required Coverage */
-            required_coverage: number;
-            /** Assigned Coverage */
-            assigned_coverage: number;
-            /** Gap */
-            gap: number;
+            date: string;
+            /** Time Of Day */
+            time_of_day: string;
+            /** Block Id */
+            block_id: string;
             /** Severity */
             severity: string;
+            /** Days Until */
+            days_until: number;
+            /** Affected Area */
+            affected_area: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            current_assignments: number;
+            /** Required Assignments */
+            required_assignments: number;
+            /** Gap Size */
+            gap_size: number;
         };
         /**
          * CoverageGapsResponse
@@ -25457,7 +25663,7 @@ export interface components {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
+            gaps: components["schemas"]["CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
@@ -27035,6 +27241,52 @@ export interface components {
              * @default []
              */
             minima: components["schemas"]["EnergyLandscapePointSchema"][];
+        };
+        /**
+         * EnergyMetricsResponse
+         * @description Energy metrics for a schedule configuration.
+         */
+        EnergyMetricsResponse: {
+            /**
+             * Total Energy
+             * @description Total Hopfield energy
+             */
+            total_energy: number;
+            /**
+             * Normalized Energy
+             * @description Normalized energy [-1, 1]
+             */
+            normalized_energy: number;
+            /**
+             * Energy Density
+             * @description Energy per assignment
+             */
+            energy_density: number;
+            /**
+             * Interaction Energy
+             * @description Pairwise interaction energy
+             */
+            interaction_energy: number;
+            /**
+             * Stability Score
+             * @description Stability score [0, 1]
+             */
+            stability_score: number;
+            /**
+             * Gradient Magnitude
+             * @description Energy gradient magnitude
+             */
+            gradient_magnitude: number;
+            /**
+             * Is Local Minimum
+             * @description Whether state is at local minimum
+             */
+            is_local_minimum: boolean;
+            /**
+             * Distance To Minimum
+             * @description Hamming distance to nearest minimum
+             */
+            distance_to_minimum: number;
         };
         /**
          * EntropyAnalysisRequest
@@ -30900,6 +31152,75 @@ export interface components {
             academic_year?: number | null;
         };
         /**
+         * HopfieldEnergyRequest
+         * @description Request for Hopfield energy calculation.
+         */
+        HopfieldEnergyRequest: {
+            /**
+             * Start Date
+             * @description Start date (YYYY-MM-DD)
+             */
+            start_date: string;
+            /**
+             * End Date
+             * @description End date (YYYY-MM-DD)
+             */
+            end_date: string;
+            /**
+             * Schedule Id
+             * @description Optional schedule ID
+             */
+            schedule_id?: string | null;
+        };
+        /**
+         * HopfieldEnergyResponse
+         * @description Response from Hopfield energy calculation.
+         */
+        HopfieldEnergyResponse: {
+            /**
+             * Analyzed At
+             * @description ISO timestamp of analysis
+             */
+            analyzed_at: string;
+            /**
+             * Schedule Id
+             * @description Schedule ID if provided
+             */
+            schedule_id?: string | null;
+            /**
+             * Period Start
+             * @description Analysis period start
+             */
+            period_start: string;
+            /**
+             * Period End
+             * @description Analysis period end
+             */
+            period_end: string;
+            /**
+             * Assignments Analyzed
+             * @description Number of assignments
+             */
+            assignments_analyzed: number;
+            /** @description Energy metrics */
+            metrics: components["schemas"]["EnergyMetricsResponse"];
+            /** @description Stability classification */
+            stability_level: components["schemas"]["StabilityLevel"];
+            /**
+             * Interpretation
+             * @description Human-readable interpretation
+             */
+            interpretation: string;
+            /** Recommendations */
+            recommendations?: string[];
+            /**
+             * Source
+             * @description Data source
+             * @default backend
+             */
+            source: string;
+        };
+        /**
          * HopfieldPositionCreate
          * @description Schema for submitting a Hopfield landscape position.
          */
@@ -31346,7 +31667,7 @@ export interface components {
              * @default []
              */
             recommendations: components["schemas"]["Recommendation"][];
-            summary?: components["schemas"]["app__schemas__schedule__ConflictSummary"] | null;
+            summary?: components["schemas"]["ConflictSummary"] | null;
         };
         /**
          * ImportApplyError
@@ -33176,6 +33497,74 @@ export interface components {
              * @default false
              */
             missing_pm_pc: boolean;
+        };
+        /**
+         * NearbyAttractorsRequest
+         * @description Request for nearby attractor search.
+         */
+        NearbyAttractorsRequest: {
+            /**
+             * Start Date
+             * @description Start date (YYYY-MM-DD)
+             */
+            start_date: string;
+            /**
+             * End Date
+             * @description End date (YYYY-MM-DD)
+             */
+            end_date: string;
+            /**
+             * Max Distance
+             * @description Maximum Hamming distance to search
+             * @default 10
+             */
+            max_distance: number;
+        };
+        /**
+         * NearbyAttractorsResponse
+         * @description Response from nearby attractor search.
+         */
+        NearbyAttractorsResponse: {
+            /**
+             * Analyzed At
+             * @description ISO timestamp of analysis
+             */
+            analyzed_at: string;
+            /**
+             * Current State Energy
+             * @description Energy of current state
+             */
+            current_state_energy: number;
+            /**
+             * Attractors Found
+             * @description Number of attractors found
+             */
+            attractors_found: number;
+            /** Attractors */
+            attractors?: components["schemas"]["AttractorInfoResponse"][];
+            /**
+             * Global Minimum Identified
+             * @description Whether global minimum was found
+             */
+            global_minimum_identified: boolean;
+            /**
+             * Current Basin Id
+             * @description ID of basin containing current state
+             */
+            current_basin_id?: string | null;
+            /**
+             * Interpretation
+             * @description Human-readable interpretation
+             */
+            interpretation: string;
+            /** Recommendations */
+            recommendations?: string[];
+            /**
+             * Source
+             * @description Data source
+             * @default backend
+             */
+            source: string;
         };
         /**
          * NightCallInfo
@@ -35383,7 +35772,7 @@ export interface components {
         };
         /**
          * QueuePurgeResponse
-         * @description Response to queue purge request.
+         * @description Response after purging a queue.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -38396,7 +38785,7 @@ export interface components {
             /** Components */
             components: components["schemas"]["ScoreComponentResponse"][];
             /** Suggestions */
-            suggestions?: components["schemas"]["SuggestionResponse"][];
+            suggestions?: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -39623,6 +40012,131 @@ export interface components {
             source: string;
         };
         /**
+         * SpuriousAttractorInfoResponse
+         * @description Information about a detected spurious attractor.
+         */
+        SpuriousAttractorInfoResponse: {
+            /**
+             * Attractor Id
+             * @description Unique identifier
+             */
+            attractor_id: string;
+            /**
+             * Energy Level
+             * @description Energy at spurious attractor
+             */
+            energy_level: number;
+            /**
+             * Basin Size
+             * @description Size of spurious basin
+             */
+            basin_size: number;
+            /**
+             * Anti Pattern Type
+             * @description Type of anti-pattern
+             */
+            anti_pattern_type: string;
+            /**
+             * Description
+             * @description Description of the anti-pattern
+             */
+            description: string;
+            /**
+             * Risk Level
+             * @description Risk level: low, medium, high, critical
+             */
+            risk_level: string;
+            /**
+             * Distance From Valid
+             * @description Distance from valid schedule
+             */
+            distance_from_valid: number;
+            /**
+             * Probability Of Capture
+             * @description Probability of falling into basin
+             */
+            probability_of_capture: number;
+            /**
+             * Mitigation Strategy
+             * @description Recommended mitigation
+             */
+            mitigation_strategy: string;
+        };
+        /**
+         * SpuriousAttractorsRequest
+         * @description Request for spurious attractor detection.
+         */
+        SpuriousAttractorsRequest: {
+            /**
+             * Start Date
+             * @description Start date (YYYY-MM-DD)
+             */
+            start_date: string;
+            /**
+             * End Date
+             * @description End date (YYYY-MM-DD)
+             */
+            end_date: string;
+            /**
+             * Search Radius
+             * @description Hamming distance search radius
+             * @default 20
+             */
+            search_radius: number;
+        };
+        /**
+         * SpuriousAttractorsResponse
+         * @description Response from spurious attractor detection.
+         */
+        SpuriousAttractorsResponse: {
+            /**
+             * Analyzed At
+             * @description ISO timestamp of analysis
+             */
+            analyzed_at: string;
+            /**
+             * Spurious Attractors Found
+             * @description Number of spurious attractors
+             */
+            spurious_attractors_found: number;
+            /** Spurious Attractors */
+            spurious_attractors?: components["schemas"]["SpuriousAttractorInfoResponse"][];
+            /**
+             * Total Basin Coverage
+             * @description Fraction covered by spurious basins
+             */
+            total_basin_coverage: number;
+            /**
+             * Highest Risk Attractor
+             * @description ID of highest risk attractor
+             */
+            highest_risk_attractor?: string | null;
+            /**
+             * Is Current State Spurious
+             * @description Whether current state is in spurious basin
+             */
+            is_current_state_spurious: boolean;
+            /**
+             * Interpretation
+             * @description Human-readable interpretation
+             */
+            interpretation: string;
+            /** Recommendations */
+            recommendations?: string[];
+            /**
+             * Source
+             * @description Data source
+             * @default backend
+             */
+            source: string;
+        };
+        /**
+         * StabilityLevel
+         * @description Stability classification of schedule state.
+         * @enum {string}
+         */
+        StabilityLevel: "very_stable" | "stable" | "marginally_stable" | "unstable" | "highly_unstable";
+        /**
          * StaffRole
          * @enum {string}
          */
@@ -40116,25 +40630,24 @@ export interface components {
         };
         /**
          * SuggestionResponse
-         * @description Response for improvement suggestion.
+         * @description Response schema for autocomplete suggestions.
          */
         SuggestionResponse: {
-            /** Type */
-            type: string;
             /**
-             * Priority
-             * @description high, medium, low
+             * Suggestions
+             * @description List of suggestions
              */
-            priority: string;
-            /** Description */
-            description: string;
+            suggestions: string[];
             /**
-             * Impact
-             * @description Expected improvement
+             * Query
+             * @description Original query string
              */
-            impact: number;
-            /** Affected Items */
-            affected_items?: string[];
+            query: string;
+            /**
+             * Entity Type
+             * @description Entity type
+             */
+            entity_type: string;
         };
         /**
          * SurveyFrequencyEnum
@@ -44147,7 +44660,7 @@ export interface components {
             /** People */
             people: components["schemas"]["PersonWorkloadResponse"][];
             /** Rebalancing Suggestions */
-            rebalancing_suggestions: components["schemas"]["SuggestionResponse"][];
+            rebalancing_suggestions: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
         };
         /**
          * WorkloadSummary
@@ -44502,35 +45015,115 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
-         * CoverageGap
-         * @description Represents a coverage gap with details.
+         * ConflictSummary
+         * @description Summary statistics for a set of conflicts.
+         *
+         *     Used for dashboard displays and reporting.
+         * @example {
+         *       "affected_people_count": 8,
+         *       "auto_resolvable_count": 6,
+         *       "average_impact_score": 0.65,
+         *       "critical_count": 3,
+         *       "high_count": 5,
+         *       "low_count": 3,
+         *       "medium_count": 4,
+         *       "total_conflicts": 15
+         *     }
          */
-        app__api__routes__fmit_health__CoverageGap: {
-            /** Gap Id */
-            gap_id: string;
+        app__scheduling__conflicts__types__ConflictSummary: {
             /**
-             * Date
-             * Format: date
+             * Total Conflicts
+             * @default 0
              */
-            date: string;
-            /** Time Of Day */
-            time_of_day: string;
-            /** Block Id */
-            block_id: string;
-            /** Severity */
-            severity: string;
-            /** Days Until */
-            days_until: number;
-            /** Affected Area */
-            affected_area: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            current_assignments: number;
-            /** Required Assignments */
-            required_assignments: number;
-            /** Gap Size */
-            gap_size: number;
+            total_conflicts: number;
+            /**
+             * Critical Count
+             * @default 0
+             */
+            critical_count: number;
+            /**
+             * High Count
+             * @default 0
+             */
+            high_count: number;
+            /**
+             * Medium Count
+             * @default 0
+             */
+            medium_count: number;
+            /**
+             * Low Count
+             * @default 0
+             */
+            low_count: number;
+            /** By Category */
+            by_category?: {
+                [key: string]: number | undefined;
+            };
+            /** By Type */
+            by_type?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Affected People Count
+             * @default 0
+             */
+            affected_people_count: number;
+            /**
+             * Affected Blocks Count
+             * @default 0
+             */
+            affected_blocks_count: number;
+            /**
+             * Auto Resolvable Count
+             * @default 0
+             */
+            auto_resolvable_count: number;
+            /**
+             * Requires Manual Count
+             * @default 0
+             */
+            requires_manual_count: number;
+            /**
+             * Average Impact Score
+             * @default 0
+             */
+            average_impact_score: number;
+            /**
+             * Average Urgency Score
+             * @default 0
+             */
+            average_urgency_score: number;
+            /**
+             * Average Complexity Score
+             * @default 0
+             */
+            average_complexity_score: number;
+            /** Earliest Date */
+            earliest_date?: string | null;
+            /** Latest Date */
+            latest_date?: string | null;
+        };
+        /**
+         * BlockListResponse
+         * @description Response for listing academic blocks.
+         */
+        app__schemas__academic_blocks__BlockListResponse: {
+            /**
+             * Blocks
+             * @description List of academic blocks
+             */
+            blocks: components["schemas"]["BlockSummary"][];
+            /**
+             * Academic Year
+             * @description Academic year
+             */
+            academic_year: string;
+            /**
+             * Total Blocks
+             * @description Total number of blocks
+             */
+            total_blocks: number;
         };
         /**
          * BatchOperationResult
@@ -44552,20 +45145,25 @@ export interface components {
             warnings?: string[];
         };
         /**
-         * BlockListResponse
-         * @description Schema for list of blocks.
+         * CoverageGap
+         * @description Identified coverage gap.
          */
-        app__schemas__block__BlockListResponse: {
+        app__schemas__block_assignment__CoverageGap: {
             /**
-             * Items
-             * @description List of block responses
+             * Rotation Template Id
+             * Format: uuid
              */
-            items: components["schemas"]["BlockResponse"][];
-            /**
-             * Total
-             * @description Total number of blocks
-             */
-            total: number;
+            rotation_template_id: string;
+            /** Rotation Name */
+            rotation_name: string;
+            /** Required Coverage */
+            required_coverage: number;
+            /** Assigned Coverage */
+            assigned_coverage: number;
+            /** Gap */
+            gap: number;
+            /** Severity */
+            severity: string;
         };
         /**
          * ExportFormat
@@ -44609,32 +45207,6 @@ export interface components {
             pgy_level?: number | null;
         };
         /**
-         * ConflictCheckResponse
-         * @description Response for conflict checking before assignment.
-         */
-        app__schemas__fmit_assignments__ConflictCheckResponse: {
-            /**
-             * Can Assign
-             * @description Whether assignment can proceed
-             */
-            can_assign: boolean;
-            /**
-             * Conflicts
-             * @description Detected conflicts
-             */
-            conflicts?: components["schemas"]["ConflictDetail"][];
-            /**
-             * Warnings
-             * @description Warnings
-             */
-            warnings?: string[];
-            /**
-             * Suggestions
-             * @description Alternative suggestions
-             */
-            suggestions?: string[];
-        };
-        /**
          * QueuePurgeRequest
          * @description Request to purge a queue.
          */
@@ -44649,9 +45221,9 @@ export interface components {
         };
         /**
          * QueuePurgeResponse
-         * @description Response after purging a queue.
+         * @description Response to queue purge request.
          */
-        app__schemas__queue__QueuePurgeResponse: {
+        app__schemas__jobs__QueuePurgeResponse: {
             /** Queuename */
             queueName: string;
             /** Taskspurged */
@@ -44660,57 +45232,55 @@ export interface components {
             timestamp: string;
         };
         /**
+         * SuggestionResponse
+         * @description Response for improvement suggestion.
+         */
+        app__schemas__ml__SuggestionResponse: {
+            /** Type */
+            type: string;
+            /**
+             * Priority
+             * @description high, medium, low
+             */
+            priority: string;
+            /** Description */
+            description: string;
+            /**
+             * Impact
+             * @description Expected improvement
+             */
+            impact: number;
+            /** Affected Items */
+            affected_items?: string[];
+        };
+        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
-        app__schemas__rotation_template__BatchOperationResult: {
+        app__schemas__person__BatchOperationResult: {
             /**
              * Index
              * @description Index of the operation in the batch
              */
             index: number;
-            /**
-             * Template Id
-             * Format: uuid
-             */
-            template_id: string;
+            /** Person Id */
+            person_id?: string | null;
             /** Success */
             success: boolean;
             /** Error */
             error?: string | null;
         };
         /**
-         * ConflictSummary
-         * @description Summary of conflicts found.
+         * ConflictCheckResponse
+         * @description Response for conflict check.
          */
-        app__schemas__schedule__ConflictSummary: {
-            /** Total Conflicts */
-            total_conflicts: number;
-            /** Errors */
-            errors: number;
-            /** Warnings */
-            warnings: number;
-        };
-        /**
-         * SuggestionResponse
-         * @description Response schema for autocomplete suggestions.
-         */
-        app__schemas__search__SuggestionResponse: {
-            /**
-             * Suggestions
-             * @description List of suggestions
-             */
-            suggestions: string[];
-            /**
-             * Query
-             * @description Original query string
-             */
-            query: string;
-            /**
-             * Entity Type
-             * @description Entity type
-             */
-            entity_type: string;
+        app__schemas__rotation_template__ConflictCheckResponse: {
+            /** Has Conflicts */
+            has_conflicts: boolean;
+            /** Conflicts */
+            conflicts: components["schemas"]["TemplateConflict"][];
+            /** Can Proceed */
+            can_proceed: boolean;
         };
         /**
          * CoverageGap
@@ -46790,7 +47360,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -46917,7 +47487,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -46983,7 +47553,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -47411,7 +47981,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictCheckResponse"];
+                    "application/json": components["schemas"]["app__schemas__rotation_template__ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -54999,6 +55569,138 @@ export interface operations {
             };
         };
     };
+    calculate_hopfield_energy_api_v1_resilience_exotic_hopfield_energy_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HopfieldEnergyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HopfieldEnergyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    find_hopfield_attractors_api_v1_resilience_exotic_hopfield_attractors_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NearbyAttractorsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NearbyAttractorsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    measure_hopfield_basin_depth_api_v1_resilience_exotic_hopfield_basin_depth_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BasinDepthRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BasinDepthResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    detect_hopfield_spurious_attractors_api_v1_resilience_exotic_hopfield_spurious_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpuriousAttractorsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpuriousAttractorsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_samn_perelli_levels_api_v1_fatigue_risk_samn_perelli_levels_get: {
         parameters: {
             query?: never;
@@ -57371,7 +58073,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -57404,7 +58106,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -62102,7 +62804,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__fmit_assignments__ConflictCheckResponse"];
+                    "application/json": components["schemas"]["ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -62517,7 +63219,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictSummary"];
+                    "application/json": components["schemas"]["app__scheduling__conflicts__types__ConflictSummary"];
                 };
             };
             /** @description Validation Error */
@@ -63584,7 +64286,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -63951,7 +64653,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */

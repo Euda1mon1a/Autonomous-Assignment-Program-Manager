@@ -75,6 +75,25 @@ from app.resilience.transcription_factors import (
     TFType,
 )
 
+# Import Hopfield network service and schemas
+from app.services.hopfield_service import HopfieldService
+from app.schemas.hopfield_schemas import (
+    AttractorInfoResponse,
+    AttractorType as HopfieldAttractorType,
+    BasinDepthRequest,
+    BasinDepthResponse,
+    BasinMetricsResponse,
+    EnergyMetricsResponse,
+    HopfieldEnergyRequest,
+    HopfieldEnergyResponse,
+    NearbyAttractorsRequest,
+    NearbyAttractorsResponse,
+    SpuriousAttractorInfoResponse,
+    SpuriousAttractorsRequest,
+    SpuriousAttractorsResponse,
+    StabilityLevel as HopfieldStabilityLevel,
+)
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -2147,3 +2166,247 @@ async def analyze_transcription_factors(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error analyzing transcription factors: {str(e)}",
         )
+
+
+# =============================================================================
+# Hopfield Network Endpoints
+# =============================================================================
+
+
+@router.post("/hopfield/energy", response_model=HopfieldEnergyResponse)
+@require_feature_flag("exotic_resilience_enabled")
+async def calculate_hopfield_energy(
+    request: HopfieldEnergyRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> HopfieldEnergyResponse:
+    """
+    Calculate Hopfield energy of schedule configuration.
+
+    The energy function E = -0.5 * sum(w_ij * s_i * s_j) measures how well
+    the current schedule matches learned stable patterns.
+
+    Returns energy metrics, stability assessment, and recommendations.
+    """
+    logger.info(f"Calculating Hopfield energy: {request}")
+
+    from datetime import date as date_type
+
+    start = date_type.fromisoformat(request.start_date)
+    end = date_type.fromisoformat(request.end_date)
+
+    service = HopfieldService()
+    metrics, stability_level, interpretation, recommendations = (
+        service.calculate_energy(db, start, end, request.schedule_id)
+    )
+
+    # Count assignments for response
+    from sqlalchemy import func
+
+    count_query = select(func.count(Assignment.id)).where(
+        Assignment.date >= start,
+        Assignment.date <= end,
+    )
+    result = db.execute(count_query)
+    num_assignments = result.scalar() or 0
+
+    return HopfieldEnergyResponse(
+        analyzed_at=datetime.now().isoformat(),
+        schedule_id=request.schedule_id,
+        period_start=request.start_date,
+        period_end=request.end_date,
+        assignments_analyzed=num_assignments,
+        metrics=EnergyMetricsResponse(
+            total_energy=metrics.total_energy,
+            normalized_energy=metrics.normalized_energy,
+            energy_density=metrics.energy_density,
+            interaction_energy=metrics.interaction_energy,
+            stability_score=metrics.stability_score,
+            gradient_magnitude=metrics.gradient_magnitude,
+            is_local_minimum=metrics.is_local_minimum,
+            distance_to_minimum=metrics.distance_to_minimum,
+        ),
+        stability_level=HopfieldStabilityLevel(stability_level.value),
+        interpretation=interpretation,
+        recommendations=recommendations,
+        source="backend",
+    )
+
+
+@router.post("/hopfield/attractors", response_model=NearbyAttractorsResponse)
+@require_feature_flag("exotic_resilience_enabled")
+async def find_hopfield_attractors(
+    request: NearbyAttractorsRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> NearbyAttractorsResponse:
+    """
+    Find stable attractors near the current schedule state.
+
+    Attractors are stable states (energy minima) that the system naturally
+    evolves toward. Finding nearby attractors shows alternative stable
+    configurations.
+    """
+    logger.info(f"Finding Hopfield attractors: {request}")
+
+    from datetime import date as date_type
+
+    start = date_type.fromisoformat(request.start_date)
+    end = date_type.fromisoformat(request.end_date)
+
+    service = HopfieldService()
+    attractors, current_energy, global_found, interpretation, recommendations = (
+        service.find_nearby_attractors(db, start, end, request.max_distance)
+    )
+
+    # Convert service attractors to response format
+    attractor_responses = [
+        AttractorInfoResponse(
+            attractor_id=a.attractor_id,
+            attractor_type=HopfieldAttractorType(a.attractor_type.value),
+            energy_level=a.energy_level,
+            basin_depth=a.basin_depth,
+            basin_volume=a.basin_volume,
+            hamming_distance=a.hamming_distance,
+            pattern_description=a.pattern_description,
+            confidence=a.confidence,
+        )
+        for a in attractors
+    ]
+
+    # Determine current basin ID (nearest attractor)
+    current_basin_id = attractors[0].attractor_id if attractors else None
+
+    return NearbyAttractorsResponse(
+        analyzed_at=datetime.now().isoformat(),
+        current_state_energy=current_energy,
+        attractors_found=len(attractors),
+        attractors=attractor_responses,
+        global_minimum_identified=global_found,
+        current_basin_id=current_basin_id,
+        interpretation=interpretation,
+        recommendations=recommendations,
+        source="backend",
+    )
+
+
+@router.post("/hopfield/basin-depth", response_model=BasinDepthResponse)
+@require_feature_flag("exotic_resilience_enabled")
+async def measure_hopfield_basin_depth(
+    request: BasinDepthRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> BasinDepthResponse:
+    """
+    Measure the depth of the basin of attraction for current state.
+
+    Basin depth is the energy barrier that must be overcome to escape.
+    Deeper basins = more stable attractors = more robust schedules.
+    """
+    logger.info(f"Measuring Hopfield basin depth: {request}")
+
+    from datetime import date as date_type
+
+    start = date_type.fromisoformat(request.start_date)
+    end = date_type.fromisoformat(request.end_date)
+
+    service = HopfieldService()
+    (
+        metrics,
+        stability_level,
+        is_robust,
+        robustness_threshold,
+        interpretation,
+        recommendations,
+    ) = service.measure_basin_depth(db, start, end, request.num_perturbations)
+
+    return BasinDepthResponse(
+        analyzed_at=datetime.now().isoformat(),
+        schedule_id=None,
+        attractor_id="attr_current",
+        metrics=BasinMetricsResponse(
+            min_escape_energy=metrics.min_escape_energy,
+            avg_escape_energy=metrics.avg_escape_energy,
+            max_escape_energy=metrics.max_escape_energy,
+            basin_stability_index=metrics.basin_stability_index,
+            num_escape_paths=metrics.num_escape_paths,
+            nearest_saddle_distance=metrics.nearest_saddle_distance,
+            basin_radius=metrics.basin_radius,
+            critical_perturbation_size=metrics.critical_perturbation_size,
+        ),
+        stability_level=HopfieldStabilityLevel(stability_level.value),
+        is_robust=is_robust,
+        robustness_threshold=robustness_threshold,
+        interpretation=interpretation,
+        recommendations=recommendations,
+        source="backend",
+    )
+
+
+@router.post("/hopfield/spurious", response_model=SpuriousAttractorsResponse)
+@require_feature_flag("exotic_resilience_enabled")
+async def detect_hopfield_spurious_attractors(
+    request: SpuriousAttractorsRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> SpuriousAttractorsResponse:
+    """
+    Detect spurious attractors (scheduling anti-patterns) in energy landscape.
+
+    Spurious attractors are unintended stable states like:
+    - Concentrated overload on subset of faculty
+    - Systematic underutilization
+    - Clustering violations
+    """
+    logger.info(f"Detecting Hopfield spurious attractors: {request}")
+
+    from datetime import date as date_type
+
+    start = date_type.fromisoformat(request.start_date)
+    end = date_type.fromisoformat(request.end_date)
+
+    service = HopfieldService()
+    (
+        spurious_attractors,
+        basin_coverage,
+        is_current_spurious,
+        interpretation,
+        recommendations,
+    ) = service.detect_spurious_attractors(db, start, end, request.search_radius)
+
+    # Convert service attractors to response format
+    spurious_responses = [
+        SpuriousAttractorInfoResponse(
+            attractor_id=s.attractor_id,
+            energy_level=s.energy_level,
+            basin_size=s.basin_size,
+            anti_pattern_type=s.anti_pattern_type,
+            description=s.description,
+            risk_level=s.risk_level,
+            distance_from_valid=s.distance_from_valid,
+            probability_of_capture=s.probability_of_capture,
+            mitigation_strategy=s.mitigation_strategy,
+        )
+        for s in spurious_attractors
+    ]
+
+    # Find highest risk attractor
+    highest_risk_id = None
+    if spurious_attractors:
+        risk_order = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+        highest_risk = max(
+            spurious_attractors, key=lambda s: risk_order.get(s.risk_level, 0)
+        )
+        highest_risk_id = highest_risk.attractor_id
+
+    return SpuriousAttractorsResponse(
+        analyzed_at=datetime.now().isoformat(),
+        spurious_attractors_found=len(spurious_attractors),
+        spurious_attractors=spurious_responses,
+        total_basin_coverage=basin_coverage,
+        highest_risk_attractor=highest_risk_id,
+        is_current_state_spurious=is_current_spurious,
+        interpretation=interpretation,
+        recommendations=recommendations,
+        source="backend",
+    )
