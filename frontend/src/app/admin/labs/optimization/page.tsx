@@ -20,7 +20,7 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowLeft, Cpu, Layers, Circle, Box, Waves, Zap, GitBranch } from 'lucide-react';
+import { ArrowLeft, Cpu, Layers, Circle, Box, Waves, Zap, GitBranch, Network } from 'lucide-react';
 import type {
   SimulationConfig,
   GeminiAnalysisResult,
@@ -92,7 +92,18 @@ const BridgeSyncVisualizer = dynamic(
   }
 );
 
-type TabId = 'cpsat' | 'brane' | 'foam' | 'stigmergy' | 'hopfield' | 'bridge';
+const BottleneckFlowVisualizer = dynamic(
+  () =>
+    import('@/features/bottleneck-flow').then(
+      (mod) => mod.BottleneckFlowVisualizer
+    ),
+  {
+    ssr: false,
+    loading: () => <LoadingScreen label="Initializing Supervision Cascade..." />,
+  }
+);
+
+type TabId = 'cpsat' | 'brane' | 'foam' | 'stigmergy' | 'hopfield' | 'bridge' | 'bottleneck';
 
 interface Tab {
   id: TabId;
@@ -137,6 +148,12 @@ const TABS: Tab[] = [
     label: 'BridgeSync',
     icon: GitBranch,
     description: 'Real-time Python→Three.js data sync',
+  },
+  {
+    id: 'bottleneck',
+    label: 'Bottleneck Flow',
+    icon: Network,
+    description: 'Supervision cascade visualization',
   },
 ];
 
@@ -338,6 +355,7 @@ export default function OptimizationLabsPage() {
         {activeTab === 'stigmergy' && <StigmergyFlowWrapper />}
         {activeTab === 'hopfield' && <HopfieldVisualizerWrapper />}
         {activeTab === 'bridge' && <BridgeSyncVisualizer />}
+        {activeTab === 'bottleneck' && <BottleneckFlowVisualizer />}
       </div>
     </div>
   );
