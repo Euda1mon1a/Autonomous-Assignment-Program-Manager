@@ -163,7 +163,8 @@ function mapOverallStatus(status: string): SystemStatus {
  */
 function extractFragilityMetrics(health: HealthCheckResponse): FragilityMetrics {
   // Calculate system fragility based on various factors
-  const utilizationFactor = health.utilization.utilizationRate / 100;
+  // Note: utilizationRate is 0-1 from backend, not 0-100
+  const utilizationFactor = health.utilization.utilizationRate;
   const redundancyFactor = health.redundancyStatus.filter((r) => !isAdequate(r)).length /
     Math.max(health.redundancyStatus.length, 1);
   const criticalityFactor = health.crisisMode ? 0.5 : 0;
@@ -244,8 +245,8 @@ function generateFairnessMetrics(health: HealthCheckResponse): FairnessMetrics {
   const baseGini = health.overallStatus === 'GREEN' ? 0.08 :
     health.overallStatus === 'YELLOW' ? 0.15 : 0.25;
 
-  // Add some variation based on utilization
-  const utilizationFactor = (health.utilization.utilizationRate - 50) / 500;
+  // Add some variation based on utilization (0-1 scale from backend)
+  const utilizationFactor = (health.utilization.utilizationRate - 0.5) / 5;
   const giniCoefficient = Math.max(0, Math.min(1, baseGini + utilizationFactor));
 
   // Jain's Index: higher is better (1 = perfect fairness)
