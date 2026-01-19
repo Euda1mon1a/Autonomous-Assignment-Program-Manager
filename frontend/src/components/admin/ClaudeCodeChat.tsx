@@ -66,7 +66,7 @@ const ClaudeCodeChat: React.FC<ClaudeCodeChatProps> = ({
       }
     };
 
-    await sendMessage(userQuery, context, handleStreamUpdate);
+    await sendMessage(userQuery, _context, handleStreamUpdate);
   };
 
   const handleCancelRequest = () => {
