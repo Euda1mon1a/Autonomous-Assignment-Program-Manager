@@ -139,11 +139,12 @@ compare_types() {
         return 0
     fi
 
-    # Compare (ignoring comments and whitespace)
+    # Compare (ignoring comments and empty lines, but preserving structure)
+    # Do NOT sort - structural changes (property moves) must be detected
     local diff_output
     diff_output=$(diff -u \
-        <(grep -v "^//" "$existing" | grep -v "^\s*$" | sort) \
-        <(grep -v "^//" "$generated" | grep -v "^\s*$" | sort) \
+        <(grep -v "^//" "$existing" | grep -v "^\s*$") \
+        <(grep -v "^//" "$generated" | grep -v "^\s*$") \
         2>/dev/null || true)
 
     if [ -n "$diff_output" ]; then
