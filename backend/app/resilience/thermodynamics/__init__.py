@@ -31,6 +31,7 @@ from app.resilience.thermodynamics.entropy import (
 from app.resilience.thermodynamics.free_energy import (
     EnergyLandscapeAnalyzer,
     FreeEnergyMetrics,
+    LandscapeFeatures,
     adaptive_temperature,
     calculate_free_energy,
 )
@@ -50,6 +51,7 @@ __all__ = [
     "entropy_production_rate",
     # Free Energy
     "FreeEnergyMetrics",
+    "LandscapeFeatures",
     "calculate_free_energy",
     "EnergyLandscapeAnalyzer",
     "adaptive_temperature",

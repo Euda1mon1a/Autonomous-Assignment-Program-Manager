@@ -2492,9 +2492,12 @@ async def detect_preference_patterns(
 ):
     """Detect emergent patterns from collective trails."""
     service = get_resilience_service(db)
-    patterns = service.detect_preference_patterns()
+    raw_patterns = service.detect_preference_patterns()
 
-    return patterns
+    return StigmergyPatternsResponse(
+        patterns=[raw_patterns],
+        total=raw_patterns.get("total_patterns", 0),
+    )
 
 
 @router.post("/tier3/stigmergy/evaporate", response_model=TrailEvaporationResponse)

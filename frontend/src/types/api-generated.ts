@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-19T00:48:21Z
+ * Generated at: 2026-01-19T02:18:02Z
  * Generator: openapi-typescript
  *
  * To regenerate:
@@ -7952,6 +7952,63 @@ export interface paths {
          *     These signals appear BEFORE system transitions regardless of mechanism.
          */
         post: operations["detect_phase_transition_api_v1_resilience_exotic_thermodynamics_phase_transition_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/exotic/thermodynamics/free-energy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calculate Free Energy Endpoint
+         * @description Calculate Helmholtz free energy of a schedule.
+         *
+         *     Free energy F = U - TS where:
+         *     - U: Internal energy (constraint violations)
+         *     - T: Temperature parameter
+         *     - S: Configuration entropy
+         *
+         *     Lower free energy indicates more stable configurations.
+         *     At high temperatures, entropy dominates (exploration).
+         *     At low temperatures, internal energy dominates (exploitation).
+         */
+        post: operations["calculate_free_energy_endpoint_api_v1_resilience_exotic_thermodynamics_free_energy_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/exotic/thermodynamics/energy-landscape": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Analyze Energy Landscape Endpoint
+         * @description Analyze the energy landscape around the current schedule configuration.
+         *
+         *     Energy landscape analysis helps understand:
+         *     - Local minima: Stable schedule configurations
+         *     - Basins: Regions that flow to the same minimum
+         *     - Barriers: Energy required to escape a basin
+         *     - Ruggedness: Complexity of the landscape
+         *
+         *     Useful for choosing optimization strategies and understanding stability.
+         */
+        post: operations["analyze_energy_landscape_endpoint_api_v1_resilience_exotic_thermodynamics_energy_landscape_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -19311,7 +19368,7 @@ export interface components {
          *     Shows who is absent and why (vacation, sick, deployment, etc.)
          */
         AbsenceInfo: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Absence Type
              * @description Type of absence (vacation, sick, deployment)
@@ -20873,7 +20930,7 @@ export interface components {
          * @description Summary of an assignment for manifest display.
          */
         AssignmentSummary: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Role
              * @description primary, supervising, or backup
@@ -21009,9 +21066,9 @@ export interface components {
          */
         AttendingInfo: {
             /** @description AM attending */
-            am?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            am?: components["schemas"]["PersonSummary"] | null;
             /** @description PM attending */
-            pm?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            pm?: components["schemas"]["PersonSummary"] | null;
         };
         /**
          * AttractorInfoResponse
@@ -21884,11 +21941,8 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
-            /**
-             * Template Id
-             * Format: uuid
-             */
-            template_id: string;
+            /** Person Id */
+            person_id?: string | null;
             /** Success */
             success: boolean;
             /** Error */
@@ -22128,7 +22182,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__person__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -22437,7 +22491,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -22656,7 +22710,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["app__schemas__block_assignment_import__ExportFormat"];
+            format: components["schemas"]["ExportFormat"];
             /**
              * Academic Year
              * @description Academic year to export
@@ -23074,19 +23128,24 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Schema for list of blocks.
+         * @description Response for listing academic blocks.
          */
         BlockListResponse: {
             /**
-             * Items
-             * @description List of block responses
+             * Blocks
+             * @description List of academic blocks
              */
-            items: components["schemas"]["BlockResponse"][];
+            blocks: components["schemas"]["BlockSummary"][];
             /**
-             * Total
+             * Academic Year
+             * @description Academic year
+             */
+            academic_year: string;
+            /**
+             * Total Blocks
              * @description Total number of blocks
              */
-            total: number;
+            total_blocks: number;
         };
         /**
          * BlockMatrixResponse
@@ -23325,7 +23384,7 @@ export interface components {
             /** Residents With Leave */
             residents_with_leave: number;
             /** Coverage Gaps */
-            coverage_gaps: components["schemas"]["app__schemas__block_assignment__CoverageGap"][];
+            coverage_gaps: components["schemas"]["CoverageGap"][];
             /** Leave Conflicts */
             leave_conflicts: components["schemas"]["LeaveConflict"][];
             /** Rotation Capacities */
@@ -25609,34 +25668,24 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap with details.
+         * @description Identified coverage gap.
          */
         CoverageGap: {
-            /** Gap Id */
-            gap_id: string;
             /**
-             * Date
-             * Format: date
+             * Rotation Template Id
+             * Format: uuid
              */
-            date: string;
-            /** Time Of Day */
-            time_of_day: string;
-            /** Block Id */
-            block_id: string;
+            rotation_template_id: string;
+            /** Rotation Name */
+            rotation_name: string;
+            /** Required Coverage */
+            required_coverage: number;
+            /** Assigned Coverage */
+            assigned_coverage: number;
+            /** Gap */
+            gap: number;
             /** Severity */
             severity: string;
-            /** Days Until */
-            days_until: number;
-            /** Affected Area */
-            affected_area: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            current_assignments: number;
-            /** Required Assignments */
-            required_assignments: number;
-            /** Gap Size */
-            gap_size: number;
         };
         /**
          * CoverageGapsResponse
@@ -25663,7 +25712,7 @@ export interface components {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["CoverageGap"][];
+            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
@@ -27203,6 +27252,91 @@ export interface components {
             };
         };
         /**
+         * EnergyLandscapeRequest
+         * @description Request for energy landscape analysis.
+         */
+        EnergyLandscapeRequest: {
+            /**
+             * Schedule Id
+             * @description Schedule ID to analyze
+             */
+            schedule_id?: string | null;
+            /**
+             * Sample Size
+             * @description Number of perturbations to sample
+             * @default 100
+             */
+            sample_size: number;
+            /**
+             * Temperature
+             * @description Temperature parameter for energy calculation
+             * @default 1
+             */
+            temperature: number;
+        };
+        /**
+         * EnergyLandscapeResponse
+         * @description Energy landscape analysis results.
+         */
+        EnergyLandscapeResponse: {
+            /**
+             * Current Energy
+             * @description Free energy of current configuration
+             */
+            current_energy: number;
+            /**
+             * Is Local Minimum
+             * @description Whether current state is a local minimum
+             */
+            is_local_minimum: boolean;
+            /**
+             * Estimated Basin Size
+             * @description Estimated size of current energy basin
+             */
+            estimated_basin_size: number;
+            /**
+             * Mean Barrier Height
+             * @description Average energy barrier to escape current state
+             */
+            mean_barrier_height: number;
+            /**
+             * Mean Gradient
+             * @description Average energy gradient magnitude
+             */
+            mean_gradient: number;
+            /**
+             * Landscape Ruggedness
+             * @description Ruggedness of the energy landscape (std of energies)
+             */
+            landscape_ruggedness: number;
+            /**
+             * Num Local Minima
+             * @description Number of local minima detected in sample
+             */
+            num_local_minima: number;
+            /**
+             * Interpretation
+             * @description Human-readable interpretation
+             */
+            interpretation: string;
+            /**
+             * Recommendations
+             * @description Optimization recommendations
+             */
+            recommendations?: string[];
+            /**
+             * Computed At
+             * @description Timestamp of analysis (ISO format)
+             */
+            computed_at: string;
+            /**
+             * Source
+             * @description Data source
+             * @default backend
+             */
+            source: string;
+        };
+        /**
          * EnergyLandscapeSchema
          * @description Schema for energy landscape visualization data.
          */
@@ -28219,10 +28353,10 @@ export interface components {
         ExportDeliveryMethod: "email" | "s3" | "both";
         /**
          * ExportFormat
-         * @description Export file formats.
+         * @description Supported export formats.
          * @enum {string}
          */
-        ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        ExportFormat: "csv" | "xlsx";
         /**
          * ExportFormat
          * @description Export file formats.
@@ -28250,7 +28384,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["ExportFormat"];
+            format: components["schemas"]["app__models__export_job__ExportFormat"];
             /**
              * @description Delivery method
              * @default email
@@ -28549,7 +28683,7 @@ export interface components {
             /** Description */
             description?: string | null;
             template?: components["schemas"]["ExportTemplate"] | null;
-            format?: components["schemas"]["ExportFormat"] | null;
+            format?: components["schemas"]["app__models__export_job__ExportFormat"] | null;
             delivery_method?: components["schemas"]["ExportDeliveryMethod"] | null;
             /** Email Recipients */
             email_recipients?: string[] | null;
@@ -29040,12 +29174,12 @@ export interface components {
          */
         FMITSection: {
             /** @description Attending physician for inpatient */
-            attending?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            attending?: components["schemas"]["PersonSummary"] | null;
             /**
              * Residents
              * @description Residents on FMIT
              */
-            residents?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"][];
+            residents?: components["schemas"]["PersonSummary"][];
         };
         /**
          * FMITWeekInfo
@@ -30410,6 +30544,86 @@ export interface components {
              * @description Warnings generated during execution
              */
             warnings?: string[];
+        };
+        /**
+         * FreeEnergyRequest
+         * @description Request for free energy calculation.
+         */
+        FreeEnergyRequest: {
+            /**
+             * Schedule Id
+             * @description Schedule ID to analyze
+             */
+            schedule_id?: string | null;
+            /**
+             * Temperature
+             * @description Temperature parameter for free energy calculation
+             * @default 1
+             */
+            temperature: number;
+            /**
+             * Max Iterations
+             * @description Maximum iterations for optimization
+             * @default 100
+             */
+            max_iterations: number;
+        };
+        /**
+         * FreeEnergyResponse
+         * @description Free energy calculation results.
+         */
+        FreeEnergyResponse: {
+            /**
+             * Free Energy
+             * @description Helmholtz free energy F = U - TS
+             */
+            free_energy: number;
+            /**
+             * Internal Energy
+             * @description Internal energy U (constraint violations)
+             */
+            internal_energy: number;
+            /**
+             * Entropy Term
+             * @description Entropy contribution T*S
+             */
+            entropy_term: number;
+            /**
+             * Temperature
+             * @description Temperature parameter used
+             */
+            temperature: number;
+            /**
+             * Constraint Violations
+             * @description Number of constraint violations
+             */
+            constraint_violations: number;
+            /**
+             * Configuration Entropy
+             * @description Configuration entropy S
+             */
+            configuration_entropy: number;
+            /**
+             * Interpretation
+             * @description Human-readable interpretation
+             */
+            interpretation: string;
+            /**
+             * Recommendations
+             * @description Optimization recommendations
+             */
+            recommendations?: string[];
+            /**
+             * Computed At
+             * @description Timestamp of analysis (ISO format)
+             */
+            computed_at: string;
+            /**
+             * Source
+             * @description Data source
+             * @default backend
+             */
+            source: string;
         };
         /**
          * GanttDataResponse
@@ -33573,7 +33787,7 @@ export interface components {
          *     Shows who is on night call so staff know they're unavailable during day.
          */
         NightCallInfo: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Call Type
              * @description Type of call (night, backup)
@@ -34283,7 +34497,7 @@ export interface components {
          *     Shows person with their AM and PM assignments (if any).
          */
         PersonClinicCoverage: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /** @description AM assignment */
             am?: components["schemas"]["AssignmentInfo"] | null;
             /** @description PM assignment */
@@ -34573,7 +34787,7 @@ export interface components {
         };
         /**
          * PersonSummary
-         * @description Minimal person info for embedding in credential responses.
+         * @description Summary of person for manifest display.
          */
         PersonSummary: {
             /**
@@ -34583,8 +34797,11 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /** Type */
-            type: string;
+            /**
+             * Pgy Level
+             * @description PGY level for residents
+             */
+            pgy_level?: number | null;
         };
         /**
          * PersonType
@@ -35649,7 +35866,7 @@ export interface components {
             /** Procedure Name */
             procedure_name: string;
             /** Qualified Faculty */
-            qualified_faculty: components["schemas"]["PersonSummary"][];
+            qualified_faculty: components["schemas"]["app__schemas__procedure_credential__PersonSummary"][];
             /** Total */
             total: number;
         };
@@ -35772,7 +35989,7 @@ export interface components {
         };
         /**
          * QueuePurgeResponse
-         * @description Response after purging a queue.
+         * @description Response to queue purge request.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -36633,14 +36850,14 @@ export interface components {
          *     Shows who is away at a remote site and their local surrogate/proxy.
          */
         RemoteAssignment: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Location
              * @description Remote location name
              */
             location: string;
             /** @description Local proxy/surrogate if assigned */
-            surrogate?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            surrogate?: components["schemas"]["PersonSummary"] | null;
         };
         /**
          * RenewalRequest
@@ -45015,6 +45232,43 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
+         * CoverageGap
+         * @description Represents a coverage gap with details.
+         */
+        app__api__routes__fmit_health__CoverageGap: {
+            /** Gap Id */
+            gap_id: string;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Time Of Day */
+            time_of_day: string;
+            /** Block Id */
+            block_id: string;
+            /** Severity */
+            severity: string;
+            /** Days Until */
+            days_until: number;
+            /** Affected Area */
+            affected_area: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            current_assignments: number;
+            /** Required Assignments */
+            required_assignments: number;
+            /** Gap Size */
+            gap_size: number;
+        };
+        /**
+         * ExportFormat
+         * @description Export file formats.
+         * @enum {string}
+         */
+        app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        /**
          * ConflictSummary
          * @description Summary statistics for a set of conflicts.
          *
@@ -45105,27 +45359,6 @@ export interface components {
             latest_date?: string | null;
         };
         /**
-         * BlockListResponse
-         * @description Response for listing academic blocks.
-         */
-        app__schemas__academic_blocks__BlockListResponse: {
-            /**
-             * Blocks
-             * @description List of academic blocks
-             */
-            blocks: components["schemas"]["BlockSummary"][];
-            /**
-             * Academic Year
-             * @description Academic year
-             */
-            academic_year: string;
-            /**
-             * Total Blocks
-             * @description Total number of blocks
-             */
-            total_blocks: number;
-        };
-        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
@@ -45145,32 +45378,21 @@ export interface components {
             warnings?: string[];
         };
         /**
-         * CoverageGap
-         * @description Identified coverage gap.
+         * BlockListResponse
+         * @description Schema for list of blocks.
          */
-        app__schemas__block_assignment__CoverageGap: {
+        app__schemas__block__BlockListResponse: {
             /**
-             * Rotation Template Id
-             * Format: uuid
+             * Items
+             * @description List of block responses
              */
-            rotation_template_id: string;
-            /** Rotation Name */
-            rotation_name: string;
-            /** Required Coverage */
-            required_coverage: number;
-            /** Assigned Coverage */
-            assigned_coverage: number;
-            /** Gap */
-            gap: number;
-            /** Severity */
-            severity: string;
+            items: components["schemas"]["BlockResponse"][];
+            /**
+             * Total
+             * @description Total number of blocks
+             */
+            total: number;
         };
-        /**
-         * ExportFormat
-         * @description Supported export formats.
-         * @enum {string}
-         */
-        app__schemas__block_assignment_import__ExportFormat: "csv" | "xlsx";
         /**
          * PersonSummary
          * @description Minimal person info for certification reports.
@@ -45189,24 +45411,6 @@ export interface components {
             email?: string | null;
         };
         /**
-         * PersonSummary
-         * @description Summary of person for manifest display.
-         */
-        app__schemas__daily_manifest__PersonSummary: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /**
-             * Pgy Level
-             * @description PGY level for residents
-             */
-            pgy_level?: number | null;
-        };
-        /**
          * QueuePurgeRequest
          * @description Request to purge a queue.
          */
@@ -45218,18 +45422,6 @@ export interface components {
              * @default false
              */
             confirm: boolean;
-        };
-        /**
-         * QueuePurgeResponse
-         * @description Response to queue purge request.
-         */
-        app__schemas__jobs__QueuePurgeResponse: {
-            /** Queuename */
-            queueName: string;
-            /** Taskspurged */
-            tasksPurged: number;
-            /** Timestamp */
-            timestamp: string;
         };
         /**
          * SuggestionResponse
@@ -45254,17 +45446,47 @@ export interface components {
             affected_items?: string[];
         };
         /**
+         * PersonSummary
+         * @description Minimal person info for embedding in credential responses.
+         */
+        app__schemas__procedure_credential__PersonSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+        };
+        /**
+         * QueuePurgeResponse
+         * @description Response after purging a queue.
+         */
+        app__schemas__queue__QueuePurgeResponse: {
+            /** Queuename */
+            queueName: string;
+            /** Taskspurged */
+            tasksPurged: number;
+            /** Timestamp */
+            timestamp: string;
+        };
+        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
-        app__schemas__person__BatchOperationResult: {
+        app__schemas__rotation_template__BatchOperationResult: {
             /**
              * Index
              * @description Index of the operation in the batch
              */
             index: number;
-            /** Person Id */
-            person_id?: string | null;
+            /**
+             * Template Id
+             * Format: uuid
+             */
+            template_id: string;
             /** Success */
             success: boolean;
             /** Error */
@@ -47360,7 +47582,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -47487,7 +47709,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -47553,7 +47775,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -55109,6 +55331,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PhaseTransitionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calculate_free_energy_endpoint_api_v1_resilience_exotic_thermodynamics_free_energy_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FreeEnergyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FreeEnergyResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyze_energy_landscape_endpoint_api_v1_resilience_exotic_thermodynamics_energy_landscape_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnergyLandscapeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnergyLandscapeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -64286,7 +64574,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -64653,7 +64941,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */

@@ -1,7 +1,11 @@
 /**
  * Sovereign Portal Constants
  *
- * Mock data and utilities for the command dashboard.
+ * Panel configurations, status colors, and utility functions
+ * for the command dashboard.
+ *
+ * Note: The dashboard now fetches real data from backend APIs via hooks.ts.
+ * Mock data functions are retained for testing/development fallback.
  */
 
 import type {
@@ -79,6 +83,9 @@ export const SYSTEM_STATUS_COLORS: Record<SystemStatus, string> = {
 
 /**
  * Generate mock dashboard state
+ *
+ * @deprecated Use useSovereignDashboard() hook from ./hooks.ts for real data.
+ * This function is retained for testing and development fallback only.
  */
 export function generateMockDashboardState(): DashboardState {
   const alerts: SystemAlert[] = [

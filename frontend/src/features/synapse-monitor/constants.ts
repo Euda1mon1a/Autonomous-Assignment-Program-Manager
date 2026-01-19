@@ -1,6 +1,13 @@
 import { Personnel } from "./types";
 
-export const MOCK_PERSONNEL: Personnel[] = [
+/**
+ * Fallback personnel data for use when the API is unavailable.
+ * In production, data should come from useSynapseData() hook which
+ * fetches from the /resilience/health API endpoint.
+ *
+ * @deprecated Use useSynapseData() hook for real data
+ */
+export const FALLBACK_PERSONNEL: Personnel[] = [
   {
     name: "MAJ Montgomery",
     debt: 14.2,

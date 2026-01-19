@@ -35,10 +35,21 @@ import {
   ManifoldPoint,
   HolographicDataRequest,
   HolographicDataResponse,
+  ConstraintDataPoint,
+  SessionDataExport,
 } from "./types";
 import {
   generateMockHolographicData,
+  buildHolographicDataset,
 } from "./data-pipeline";
+import {
+  fetchAllExoticData,
+  type ExoticResilienceData,
+  type EntropyMetricsResponse,
+  type ImmuneAssessmentResponse,
+  type HopfieldEnergyResponse,
+  type MetastabilityResponse,
+} from "@/api/exotic-resilience";
 
 // ============================================================================
 // Default States
@@ -181,6 +192,431 @@ export function useHolographicData(options: UseHolographicDataOptions = {}) {
     gcTime: 300000, // 5 minutes
     refetchInterval,
   });
+}
+
+// ============================================================================
+// useHolographicRealData - Real data from exotic resilience endpoints
+// ============================================================================
+
+/**
+ * Convert exotic resilience data to SessionDataExport for a specific layer.
+ * Each exotic endpoint maps to a spectral layer in the holographic visualization.
+ */
+function createSessionFromExoticData(
+  layer: SpectralLayer,
+  sessionId: number,
+  data: EntropyMetricsResponse | ImmuneAssessmentResponse | HopfieldEnergyResponse | MetastabilityResponse | null,
+  timestamp: string
+): SessionDataExport | null {
+  if (!data) return null;
+
+  const constraints: ConstraintDataPoint[] = [];
+
+  // Map each exotic endpoint's data to constraint data points
+  switch (layer) {
+    case "thermodynamic": {
+      const entropy = data as EntropyMetricsResponse;
+      // Create constraints from entropy metrics
+      const dimensions = [
+        entropy.personEntropy,
+        entropy.rotationEntropy,
+        entropy.timeEntropy,
+        entropy.jointEntropy,
+        entropy.mutualInformation,
+        entropy.normalizedEntropy,
+        entropy.entropyProductionRate,
+        0, // padding
+      ];
+
+      // Main entropy constraint
+      constraints.push({
+        id: `thermodynamic-entropy-main`,
+        type: "coverage",
+        layer: "thermodynamic",
+        dimensions,
+        severity: 1 - entropy.normalizedEntropy, // High entropy = good distribution
+        weight: 0.8,
+        entities: {},
+        label: `Entropy: ${entropy.interpretation}`,
+        metadata: { apiSource: "thermodynamics/entropy", entropyData: entropy },
+        timestamp,
+      });
+
+      // Add recommendations as additional constraint points
+      entropy.recommendations?.forEach((rec, i) => {
+        constraints.push({
+          id: `thermodynamic-rec-${i}`,
+          type: "preference",
+          layer: "thermodynamic",
+          dimensions: dimensions.map((d) => d + (Math.random() - 0.5) * 0.2),
+          severity: 0.3 + Math.random() * 0.3,
+          weight: 0.4,
+          entities: {},
+          label: rec,
+          metadata: { source: "recommendation", index: i },
+          timestamp,
+        });
+      });
+      break;
+    }
+
+    case "evolutionary": {
+      const immune = data as ImmuneAssessmentResponse;
+      // Create constraints from immune system assessment
+      const dimensions = [
+        immune.anomalyScore,
+        immune.matchingDetectors / Math.max(1, immune.totalDetectors),
+        immune.closestDetectorDistance,
+        immune.isAnomaly ? 1 : 0,
+        0, 0, 0, 0, // padding
+      ];
+
+      constraints.push({
+        id: `evolutionary-immune-main`,
+        type: immune.isAnomaly ? "acgme" : "fairness",
+        layer: "evolutionary",
+        dimensions,
+        severity: immune.anomalyScore,
+        weight: 0.9,
+        entities: {},
+        label: `Immune Status: ${immune.immuneHealth}`,
+        metadata: { apiSource: "immune/assess", immuneData: immune },
+        timestamp,
+      });
+
+      // Add suggested repairs as constraint points
+      immune.suggestedRepairs?.forEach((repair, i) => {
+        constraints.push({
+          id: `evolutionary-repair-${i}`,
+          type: "skill",
+          layer: "evolutionary",
+          dimensions: dimensions.map((d) => d + (Math.random() - 0.5) * 0.3),
+          severity: 0.2 + Math.random() * 0.2,
+          weight: 0.5,
+          entities: {},
+          label: `${repair.repairType}: ${repair.description}`,
+          metadata: { source: "repair", ...repair },
+          timestamp,
+        });
+      });
+      break;
+    }
+
+    case "gravitational": {
+      const hopfield = data as HopfieldEnergyResponse;
+      const metrics = hopfield.metrics;
+      // Create constraints from Hopfield energy landscape
+      const dimensions = [
+        metrics.totalEnergy,
+        metrics.normalizedEnergy,
+        metrics.energyDensity,
+        metrics.interactionEnergy,
+        metrics.stabilityScore,
+        metrics.gradientMagnitude,
+        metrics.isLocalMinimum ? 1 : 0,
+        metrics.distanceToMinimum / 10, // Normalize
+      ];
+
+      constraints.push({
+        id: `gravitational-hopfield-main`,
+        type: "fatigue",
+        layer: "gravitational",
+        dimensions,
+        severity: 1 - metrics.stabilityScore,
+        weight: 0.85,
+        entities: {},
+        label: `Energy Landscape: ${hopfield.interpretation}`,
+        metadata: { apiSource: "hopfield/energy", hopfieldData: hopfield },
+        timestamp,
+      });
+
+      // Stability level as a constraint
+      // These keys match backend StabilityLevel enum values (snake_case)
+      const stabilityMap: Record<string, number> = {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        "very_stable": 0.1,
+        "stable": 0.3,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        "marginally_stable": 0.5,
+        "unstable": 0.7,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        "highly_unstable": 0.9,
+      };
+      constraints.push({
+        id: `gravitational-stability`,
+        type: "temporal",
+        layer: "gravitational",
+        dimensions: dimensions.map((d) => d * 0.9),
+        severity: stabilityMap[hopfield.stabilityLevel] ?? 0.5,
+        weight: 0.7,
+        entities: {},
+        label: `Stability: ${hopfield.stabilityLevel.replace(/_/g, " ")}`,
+        metadata: { stabilityLevel: hopfield.stabilityLevel },
+        timestamp,
+      });
+
+      // Recommendations
+      hopfield.recommendations?.forEach((rec, i) => {
+        constraints.push({
+          id: `gravitational-rec-${i}`,
+          type: "preference",
+          layer: "gravitational",
+          dimensions: dimensions.map((d) => d + (Math.random() - 0.5) * 0.15),
+          severity: 0.25 + Math.random() * 0.25,
+          weight: 0.4,
+          entities: {},
+          label: rec,
+          metadata: { source: "recommendation", index: i },
+          timestamp,
+        });
+      });
+      break;
+    }
+
+    case "phase": {
+      const meta = data as MetastabilityResponse;
+      // Create constraints from metastability analysis
+      const dimensions = [
+        meta.energy,
+        meta.barrierHeight,
+        meta.escapeRate,
+        meta.lifetime / 100, // Normalize
+        meta.isMetastable ? 1 : 0,
+        meta.stabilityScore,
+        meta.nearestStableState ?? 0,
+        0, // padding
+      ];
+
+      const riskMap: Record<string, number> = {
+        low: 0.2,
+        moderate: 0.4,
+        high: 0.7,
+        critical: 0.95,
+      };
+
+      constraints.push({
+        id: `phase-metastability-main`,
+        type: meta.isMetastable ? "acgme" : "coverage",
+        layer: "phase",
+        dimensions,
+        severity: riskMap[meta.riskLevel] ?? 0.5,
+        weight: 0.9,
+        entities: {},
+        label: `Metastability: ${meta.riskLevel} risk`,
+        metadata: { apiSource: "exotic/metastability", metastabilityData: meta },
+        timestamp,
+      });
+
+      // Energy barrier constraint
+      constraints.push({
+        id: `phase-barrier`,
+        type: "fatigue",
+        layer: "phase",
+        dimensions: dimensions.map((d, i) => i === 1 ? d * 1.2 : d * 0.8),
+        severity: Math.min(1, meta.barrierHeight),
+        weight: 0.6,
+        entities: {},
+        label: `Energy Barrier: ${meta.barrierHeight.toFixed(2)}`,
+        metadata: { barrierHeight: meta.barrierHeight },
+        timestamp,
+      });
+
+      // Recommendations
+      meta.recommendations?.forEach((rec, i) => {
+        constraints.push({
+          id: `phase-rec-${i}`,
+          type: "preference",
+          layer: "phase",
+          dimensions: dimensions.map((d) => d + (Math.random() - 0.5) * 0.2),
+          severity: 0.3 + Math.random() * 0.2,
+          weight: 0.35,
+          entities: {},
+          label: rec,
+          metadata: { source: "recommendation", index: i },
+          timestamp,
+        });
+      });
+      break;
+    }
+
+    default:
+      return null;
+  }
+
+  if (constraints.length === 0) return null;
+
+  const satisfiedCount = constraints.filter((c) => c.severity === 0).length;
+  const violatedCount = constraints.filter((c) => c.severity > 0 && c.severity <= 0.8).length;
+  const criticalCount = constraints.filter((c) => c.severity > 0.8).length;
+
+  return {
+    sessionId,
+    sessionName: layer,
+    timestamp,
+    version: "1.0.0",
+    constraints,
+    metrics: {
+      totalConstraints: constraints.length,
+      satisfiedCount,
+      violatedCount,
+      criticalCount,
+      averageSeverity: constraints.reduce((s, c) => s + c.severity, 0) / constraints.length,
+      averageTension: constraints.reduce((s, c) => s + c.weight * c.severity, 0) / constraints.length,
+    },
+  };
+}
+
+/**
+ * Aggregate exotic resilience data into HolographicDataset format.
+ */
+function aggregateToHolographic(
+  exoticData: ExoticResilienceData,
+  projectionMethod: "pca" | "umap" | "tsne" = "pca"
+): HolographicDataset {
+  const timestamp = exoticData.fetchedAt;
+  const sessions: SessionDataExport[] = [];
+
+  // Map exotic endpoints to spectral layers
+  const entropySession = createSessionFromExoticData(
+    "thermodynamic",
+    8,
+    exoticData.entropy,
+    timestamp
+  );
+  if (entropySession) sessions.push(entropySession);
+
+  const immuneSession = createSessionFromExoticData(
+    "evolutionary",
+    5,
+    exoticData.immune,
+    timestamp
+  );
+  if (immuneSession) sessions.push(immuneSession);
+
+  const hopfieldSession = createSessionFromExoticData(
+    "gravitational",
+    6,
+    exoticData.hopfield,
+    timestamp
+  );
+  if (hopfieldSession) sessions.push(hopfieldSession);
+
+  const metastabilitySession = createSessionFromExoticData(
+    "phase",
+    7,
+    exoticData.metastability,
+    timestamp
+  );
+  if (metastabilitySession) sessions.push(metastabilitySession);
+
+  // Use the existing buildHolographicDataset to handle projection
+  return buildHolographicDataset(sessions, { method: projectionMethod });
+}
+
+interface UseHolographicRealDataOptions {
+  startDate?: string;
+  endDate?: string;
+  projectionMethod?: "pca" | "umap" | "tsne";
+  refetchInterval?: number;
+  fallbackToMock?: boolean;
+}
+
+/**
+ * Hook to fetch real holographic data from exotic resilience endpoints.
+ *
+ * Aggregates data from:
+ * - /api/v1/resilience/exotic/thermodynamics/entropy -> thermodynamic layer
+ * - /api/v1/resilience/exotic/immune/assess -> evolutionary layer
+ * - /api/v1/resilience/exotic/hopfield/energy -> gravitational layer
+ * - /api/v1/resilience/exotic/exotic/metastability -> phase layer
+ *
+ * Falls back to mock data if APIs fail and fallbackToMock is enabled.
+ */
+export function useHolographicRealData(options: UseHolographicRealDataOptions = {}) {
+  const {
+    startDate = new Date().toISOString().split("T")[0],
+    endDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    projectionMethod = "pca",
+    refetchInterval,
+    fallbackToMock = true,
+  } = options;
+
+  // Fetch all exotic endpoints in parallel
+  const exoticQuery = useQuery<ExoticResilienceData>({
+    queryKey: ["exotic-resilience-data", startDate, endDate],
+    queryFn: () => fetchAllExoticData(startDate, endDate),
+    staleTime: 60000, // 1 minute
+    gcTime: 300000, // 5 minutes
+    refetchInterval,
+    retry: 2,
+  });
+
+  // Aggregate exotic data into holographic format
+  const dataset = useMemo<HolographicDataset | undefined>(() => {
+    if (exoticQuery.data) {
+      // Check if we have at least some valid data
+      const hasData = exoticQuery.data.entropy ||
+        exoticQuery.data.immune ||
+        exoticQuery.data.hopfield ||
+        exoticQuery.data.metastability;
+
+      if (hasData) {
+        return aggregateToHolographic(exoticQuery.data, projectionMethod);
+      }
+
+      // All endpoints failed - use mock if enabled
+      if (fallbackToMock && exoticQuery.data.errors.length > 0) {
+        console.warn(
+          "[HolographicHub] Exotic endpoints failed, falling back to mock:",
+          exoticQuery.data.errors
+        );
+        return generateMockHolographicData([
+          "thermodynamic",
+          "evolutionary",
+          "gravitational",
+          "phase",
+        ]);
+      }
+    }
+
+    // If loading or no data yet, return undefined
+    if (exoticQuery.isLoading) return undefined;
+
+    // Fallback to mock on error
+    if (exoticQuery.isError && fallbackToMock) {
+      console.warn(
+        "[HolographicHub] Query failed, falling back to mock:",
+        exoticQuery.error
+      );
+      return generateMockHolographicData([
+        "thermodynamic",
+        "evolutionary",
+        "gravitational",
+        "phase",
+      ]);
+    }
+
+    return undefined;
+  }, [exoticQuery.data, exoticQuery.isLoading, exoticQuery.isError, exoticQuery.error, projectionMethod, fallbackToMock]);
+
+  return {
+    data: dataset,
+    isLoading: exoticQuery.isLoading,
+    isError: exoticQuery.isError,
+    error: exoticQuery.error,
+    refetch: exoticQuery.refetch,
+    // Expose exotic data errors for debugging
+    exoticErrors: exoticQuery.data?.errors ?? [],
+    // Expose which endpoints succeeded
+    endpoints: {
+      entropy: !!exoticQuery.data?.entropy,
+      immune: !!exoticQuery.data?.immune,
+      hopfield: !!exoticQuery.data?.hopfield,
+      metastability: !!exoticQuery.data?.metastability,
+    },
+  };
 }
 
 // ============================================================================

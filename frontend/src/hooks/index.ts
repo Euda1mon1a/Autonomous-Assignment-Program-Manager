@@ -115,6 +115,18 @@ export {
 } from "./useResilience";
 
 // ============================================================================
+// Thermodynamics Hooks
+// ============================================================================
+export {
+  useFreeEnergy,
+  useEnergyLandscape,
+  type FreeEnergyRequest,
+  type FreeEnergyResponse,
+  type EnergyLandscapeRequest,
+  type EnergyLandscapeResponse,
+} from "./useThermodynamics";
+
+// ============================================================================
 // Health Hooks
 // ============================================================================
 export {

@@ -17,16 +17,16 @@
  * @route /admin/labs/optimization
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { ArrowLeft, Cpu, Layers, Circle, Box, Waves, Zap, GitBranch } from 'lucide-react';
 import type {
-  ScheduleNode,
   SimulationConfig,
   GeminiAnalysisResult,
 } from '@/app/admin/visualizations/stigmergy-flow/types';
-import { generateMockData } from '@/app/admin/visualizations/stigmergy-flow/constants';
+import { transformPatternsToNodes } from '@/app/admin/visualizations/stigmergy-flow/constants';
+import { useStigmergyPatterns } from '@/hooks/useResilience';
 
 // Dynamic imports for 3D visualizations - only load when tab is active
 const CpsatSimulator = dynamic(
@@ -153,11 +153,19 @@ function LoadingScreen({ label }: { label: string }) {
 }
 
 /**
- * Wrapper component for Stigmergy Flow with all required state
+ * Wrapper component for Stigmergy Flow with all required state.
+ * Fetches real stigmergy patterns from the backend API and transforms
+ * them into ScheduleNode format for 3D visualization.
  */
 function StigmergyFlowWrapper() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState<ScheduleNode[]>([]);
+  // Fetch stigmergy patterns from the API
+  const { data: patternsData, isLoading, error } = useStigmergyPatterns();
+
+  // Transform API patterns to visualization nodes
+  const data = useMemo(() => {
+    return transformPatternsToNodes(patternsData);
+  }, [patternsData]);
+
   const [config, setConfig] = useState<SimulationConfig>({
     speed: 1,
     bloomStrength: 1.5,
@@ -168,19 +176,6 @@ function StigmergyFlowWrapper() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const mountedRef = useRef(true);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    const mockData = generateMockData();
-    setData(mockData);
-    const timer = setTimeout(() => {
-      if (mountedRef.current) setIsLoading(false);
-    }, 1000);
-    return () => {
-      mountedRef.current = false;
-      clearTimeout(timer);
-    };
-  }, []);
-
   const handleAnalyze = useCallback(async () => {
     if (!mountedRef.current) return;
     setIsAnalyzing(true);
@@ -189,28 +184,47 @@ function StigmergyFlowWrapper() {
 
     const conflictCount = data.filter((d) => d.type === 'CONFLICT').length;
     const callCount = data.filter((d) => d.type === 'CALL').length;
+    const popularCount = data.filter((d) => d.type === 'FMIT').length;
+
+    // Include pattern-specific analysis when using real API data
+    const patternTotal = patternsData?.total ?? 0;
+    const isRealData = patternTotal > 0;
 
     setAnalysis({
-      summary: `Flow analysis complete. Detected ${data.length} assignment nodes across the spacetime manifold. ${conflictCount} conflict vortices require attention. Call distribution shows ${callCount} night-side trajectories.`,
+      summary: isRealData
+        ? `Flow analysis complete. Detected ${patternTotal} preference patterns from stigmergy trails. ${popularCount} popular slots (green), ${conflictCount} unpopular slots (red). Total ${data.length} visualization nodes.`
+        : `Flow analysis complete. Detected ${data.length} assignment nodes across the spacetime manifold. ${conflictCount} conflict vortices require attention. Call distribution shows ${callCount} night-side trajectories.`,
       hotspots:
         conflictCount > 0
           ? [
-              `${conflictCount} conflict vortices detected in the flow`,
-              'Potential duty hour clustering on day 3-4',
-              'Supervision gap risk in NIGHT sector',
+              `${conflictCount} unpopular/conflict patterns detected`,
+              'Potential preference clustering detected',
+              isRealData ? 'Review avoided slot types for workload balance' : 'Supervision gap risk in NIGHT sector',
             ]
           : [],
       recommendations: [
-        'Consider redistributing CALL assignments to reduce clustering',
+        isRealData ? 'Consider swap pair suggestions from high-affinity connections' : 'Consider redistributing CALL assignments to reduce clustering',
         'Strengthen magnetic field lines (supervision connections) in sparse regions',
         'Pre-compute fallback trajectories for N-1 contingency',
       ],
     });
     setIsAnalyzing(false);
-  }, [data]);
+  }, [data, patternsData]);
 
   if (isLoading) {
-    return <LoadingScreen label="Initializing Spacetime Flow..." />;
+    return <LoadingScreen label="Loading Stigmergy Patterns..." />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-black">
+        <div className="text-center">
+          <p className="text-red-400 text-sm mb-2">Failed to load patterns</p>
+          <p className="text-slate-500 text-xs">{error.message}</p>
+          <p className="text-slate-600 text-xs mt-2">Falling back to demo data...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

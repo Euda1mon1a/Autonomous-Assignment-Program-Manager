@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { MOCK_PERSONNEL } from "./constants";
+import React, { useState, useEffect, useMemo } from "react";
+import { FALLBACK_PERSONNEL } from "./constants";
 import { Personnel, SynapseMonitorProps } from "./types";
+import { useSynapseData } from "./useSynapseData";
 import {
   BrainIcon,
   MoonIcon,
@@ -14,12 +15,33 @@ import CircadianMap from "./components/CircadianMap";
 import PersonnelList from "./components/PersonnelList";
 
 const SynapseMonitor: React.FC<SynapseMonitorProps> = ({
-  personnel = MOCK_PERSONNEL,
+  personnel: propPersonnel,
   onPersonSelect,
   className = "",
 }) => {
-  const [selected, setSelected] = useState<Personnel>(personnel[0]);
+  // Fetch real data from the resilience health API
+  const { personnel: apiPersonnel, isLoading, isError, systemMetrics } = useSynapseData();
+
+  // Use API data, fall back to props, then to fallback data
+  const personnel = useMemo(() => {
+    if (propPersonnel && propPersonnel.length > 0) {
+      return propPersonnel; // Props take precedence (for testing/storybook)
+    }
+    if (apiPersonnel && apiPersonnel.length > 0) {
+      return apiPersonnel;
+    }
+    return FALLBACK_PERSONNEL;
+  }, [propPersonnel, apiPersonnel]);
+
+  const [selected, setSelected] = useState<Personnel | null>(null);
   const [time, setTime] = useState(new Date());
+
+  // Update selected when personnel changes
+  useEffect(() => {
+    if (personnel.length > 0 && !selected) {
+      setSelected(personnel[0]);
+    }
+  }, [personnel, selected]);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -30,6 +52,43 @@ const SynapseMonitor: React.FC<SynapseMonitorProps> = ({
     setSelected(p);
     onPersonSelect?.(p);
   };
+
+  // Show loading state
+  if (isLoading && !selected) {
+    return (
+      <div className={`min-h-screen bg-[#020202] text-slate-400 p-4 md:p-8 font-mono ${className}`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-center min-h-[60vh]">
+          <div className="text-center space-y-4">
+            <div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest">
+              Syncing Cognitive Metrics...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (isError && !selected) {
+    return (
+      <div className={`min-h-screen bg-[#020202] text-slate-400 p-4 md:p-8 font-mono ${className}`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-center min-h-[60vh]">
+          <div className="text-center space-y-4">
+            <AlertIcon className="w-8 h-8 text-red-500 mx-auto" />
+            <p className="text-[10px] text-red-400 uppercase tracking-widest">
+              Neural Link Interrupted - Using Cached Data
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Guard against null selected (shouldn't happen with fallback data)
+  if (!selected) {
+    return null;
+  }
 
   const isCritical = selected.reserve < 40;
   const accentColor = isCritical ? "text-red-500" : "text-cyan-400";
@@ -53,8 +112,20 @@ const SynapseMonitor: React.FC<SynapseMonitorProps> = ({
                 Synapse Monitor
               </h1>
             </div>
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest pl-1">
-              Cognitive Fatigue & Bio-Metric Load Triage // 2026.v1
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest pl-1 flex items-center gap-2">
+              <span>Cognitive Fatigue & Bio-Metric Load Triage // 2026.v1</span>
+              {apiPersonnel && apiPersonnel.length > 0 && (
+                <span className="flex items-center gap-1 text-emerald-500">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  LIVE
+                </span>
+              )}
+              {isError && (
+                <span className="flex items-center gap-1 text-amber-500">
+                  <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" />
+                  CACHED
+                </span>
+              )}
             </p>
           </div>
           <div className="text-left md:text-right font-mono w-full md:w-auto flex flex-row md:flex-col justify-between md:justify-start items-end md:items-end">
@@ -224,12 +295,27 @@ const SynapseMonitor: React.FC<SynapseMonitorProps> = ({
         </main>
 
         {/* Footer */}
-        <footer className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center opacity-40 gap-2">
-          <div className="text-[9px] font-mono tracking-widest uppercase text-center md:text-left">
-            <span className="text-red-500/50 mr-2">WARNING:</span> Circadian
-            flip-flops in N-1 units are non-recoverable without 48h reset.
-          </div>
-          <div className="text-[9px] font-mono italic text-slate-600">
+        <footer className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-2">
+          {systemMetrics?.crisisMode ? (
+            <div className="text-[9px] font-mono tracking-widest uppercase text-center md:text-left animate-pulse">
+              <span className="text-red-500 mr-2 font-bold">CRISIS MODE ACTIVE</span>
+              Defense Level: {systemMetrics.defenseLevel} | Load Shedding: {systemMetrics.loadSheddingLevel}
+            </div>
+          ) : systemMetrics ? (
+            <div className="text-[9px] font-mono tracking-widest uppercase text-center md:text-left opacity-60">
+              <span className="text-slate-400 mr-2">STATUS:</span>
+              {systemMetrics.overallStatus.toUpperCase()} |
+              N-1: {systemMetrics.n1Pass ? "PASS" : "FAIL"} |
+              N-2: {systemMetrics.n2Pass ? "PASS" : "FAIL"} |
+              Util: {Math.round(systemMetrics.utilizationRate * 100)}%
+            </div>
+          ) : (
+            <div className="text-[9px] font-mono tracking-widest uppercase text-center md:text-left opacity-40">
+              <span className="text-red-500/50 mr-2">WARNING:</span> Circadian
+              flip-flops in N-1 units are non-recoverable without 48h reset.
+            </div>
+          )}
+          <div className="text-[9px] font-mono italic text-slate-600 opacity-40">
             &quot;The meat-ware is the ultimate bottleneck.&quot;
           </div>
         </footer>

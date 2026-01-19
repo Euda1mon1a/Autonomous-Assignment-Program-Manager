@@ -16,15 +16,17 @@
  * @route /admin/labs/resilience
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Skull, Activity, ArrowLeft, Shield, Users } from 'lucide-react';
+import { Skull, Activity, ArrowLeft, Shield, Users, AlertTriangle } from 'lucide-react';
 import {
   FragilityGrid,
   AnalysisPanel,
   SimulationControl,
   generateMockDays,
+  useFragilityData,
+  useVulnerabilityReport,
 } from '@/features/fragility-triage';
 import type { DayData, Scenario, AnalysisResponse } from '@/features/fragility-triage';
 
@@ -99,21 +101,67 @@ export default function ResilienceLabsPage() {
   const [days, setDays] = useState<DayData[]>([]);
   const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
   const [redundancy, setRedundancy] = useState(72);
+  const [useRealData, setUseRealData] = useState(true);
 
   // AI Analysis State (mock for now)
   const [aiAnalysis, setAiAnalysis] = useState<Record<number, AnalysisResponse>>({});
   const [isLoadingAI, setIsLoadingAI] = useState(false);
 
+  // Calculate date range for API query (28-day cycle starting today)
+  const dateRange = useMemo(() => {
+    const start = new Date();
+    const end = new Date();
+    end.setDate(end.getDate() + 27); // 28 days total
+    return {
+      startDate: start.toISOString().split('T')[0],
+      endDate: end.toISOString().split('T')[0],
+    };
+  }, []);
+
+  // Fetch real vulnerability data from API
+  const {
+    data: apiDays,
+    isLoading: isLoadingApi,
+    error: apiError,
+    refetch: refetchApi,
+  } = useFragilityData(dateRange.startDate, dateRange.endDate, useRealData);
+
+  // Fetch raw vulnerability report for metrics
+  const { data: vulnerabilityReport } = useVulnerabilityReport(
+    dateRange.startDate,
+    dateRange.endDate,
+    useRealData
+  );
+
   const handleTabChange = useCallback((tabId: TabId) => {
     setActiveTab(tabId);
   }, []);
 
-  // Initialize on mount
+  // Initialize with API data or fall back to mock data
   useEffect(() => {
-    const initialDays = generateMockDays();
-    setDays(initialDays);
-    setSelectedDay(initialDays[0]);
-  }, []);
+    if (apiDays && apiDays.length > 0) {
+      setDays(apiDays);
+      if (!selectedDay || !apiDays.find(d => d.day === selectedDay.day)) {
+        setSelectedDay(apiDays[0]);
+      }
+      // Calculate redundancy from vulnerability data
+      if (vulnerabilityReport) {
+        const baseRedundancy = vulnerabilityReport.n1Pass ? 72 : 45;
+        const n2Penalty = vulnerabilityReport.n2Pass ? 0 : 15;
+        const riskPenalty =
+          vulnerabilityReport.phaseTransitionRisk === 'critical' ? 20 :
+          vulnerabilityReport.phaseTransitionRisk === 'high' ? 10 : 0;
+        setRedundancy(Math.max(0, baseRedundancy - n2Penalty - riskPenalty));
+      }
+    } else if (!isLoadingApi && (apiError || !useRealData)) {
+      // Fall back to mock data if API fails or real data disabled
+      const initialDays = generateMockDays();
+      setDays(initialDays);
+      if (!selectedDay) {
+        setSelectedDay(initialDays[0]);
+      }
+    }
+  }, [apiDays, apiError, isLoadingApi, useRealData, vulnerabilityReport, selectedDay]);
 
   const handleInject = useCallback((scenario: Scenario) => {
     setRedundancy((prev) => Math.max(0, prev - scenario.impact));
@@ -135,12 +183,18 @@ export default function ResilienceLabsPage() {
   }, []);
 
   const handleReset = useCallback(() => {
-    setRedundancy(72);
-    const newDays = generateMockDays();
-    setDays(newDays);
-    setSelectedDay(newDays[0]);
     setAiAnalysis({});
-  }, []);
+    if (useRealData) {
+      // Refetch API data
+      refetchApi();
+    } else {
+      // Reset to mock data
+      setRedundancy(72);
+      const newDays = generateMockDays();
+      setDays(newDays);
+      setSelectedDay(newDays[0]);
+    }
+  }, [useRealData, refetchApi]);
 
   const handleRunAI = useCallback(async () => {
     if (!selectedDay) return;
@@ -180,12 +234,44 @@ export default function ResilienceLabsPage() {
   }, [selectedDay]);
 
   // Loading state for Fragility tab
-  if (activeTab === 'fragility' && !selectedDay) {
+  if (activeTab === 'fragility' && (isLoadingApi || !selectedDay)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-slate-400">
-          <Activity className="w-5 h-5 animate-pulse" />
-          <span>Initializing Fragility Core...</span>
+        <div className="flex flex-col items-center gap-4 text-slate-400">
+          <Activity className="w-8 h-8 animate-pulse text-amber-500" />
+          <div className="text-center">
+            <p className="text-lg font-medium">
+              {isLoadingApi ? 'Analyzing Vulnerability Data...' : 'Initializing Fragility Core...'}
+            </p>
+            {isLoadingApi && (
+              <p className="text-sm text-slate-500 mt-2">
+                Running N-1/N-2 contingency analysis
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state with fallback option
+  if (activeTab === 'fragility' && apiError && days.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-slate-400 max-w-md text-center">
+          <AlertTriangle className="w-8 h-8 text-amber-500" />
+          <div>
+            <p className="text-lg font-medium text-white">Unable to Load Vulnerability Data</p>
+            <p className="text-sm text-slate-500 mt-2">
+              The resilience API is unavailable. You can continue with simulated data.
+            </p>
+          </div>
+          <button
+            onClick={() => setUseRealData(false)}
+            className="mt-4 px-4 py-2 bg-amber-500/20 text-amber-400 border border-amber-500/50 rounded-lg hover:bg-amber-500/30 transition-colors"
+          >
+            Use Simulated Data
+          </button>
         </div>
       </div>
     );
@@ -225,6 +311,19 @@ export default function ResilienceLabsPage() {
             {/* Status Indicators - only show for Fragility tab */}
             {activeTab === 'fragility' && (
               <div className="flex items-center gap-6">
+                {/* Data Source Indicator */}
+                <button
+                  onClick={() => setUseRealData(!useRealData)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    useRealData
+                      ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 hover:bg-cyan-500/30'
+                      : 'bg-slate-700/50 text-slate-400 border border-slate-600 hover:bg-slate-700'
+                  }`}
+                  title={useRealData ? 'Using live API data' : 'Using simulated data'}
+                >
+                  <span className={`w-2 h-2 rounded-full ${useRealData ? 'bg-cyan-400 animate-pulse' : 'bg-slate-500'}`} />
+                  {useRealData ? 'LIVE DATA' : 'SIMULATED'}
+                </button>
                 <div className="text-right">
                   <div className="text-xs text-slate-400 uppercase tracking-wide">
                     System Status

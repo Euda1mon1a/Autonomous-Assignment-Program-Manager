@@ -32,8 +32,10 @@ from app.models.user import User
 
 # Import thermodynamics modules
 from app.resilience.thermodynamics import (
+    EnergyLandscapeAnalyzer,
     PhaseTransitionDetector,
     ScheduleEntropyMonitor,
+    calculate_free_energy,
     calculate_schedule_entropy,
     detect_critical_slowing,
     estimate_time_to_transition,
@@ -188,6 +190,88 @@ class PhaseTransitionResponse(BaseModel):
     recommendations: list[str] = Field(
         default_factory=list, description="Suggested interventions"
     )
+    source: str = Field("backend", description="Data source")
+
+
+# --- Thermodynamics: Free Energy ---
+class FreeEnergyRequest(BaseModel):
+    """Request for free energy calculation."""
+
+    schedule_id: UUID | None = Field(None, description="Schedule ID to analyze")
+    temperature: float = Field(
+        default=1.0,
+        ge=0.0,
+        description="Temperature parameter for free energy calculation",
+    )
+    max_iterations: int = Field(
+        default=100, ge=1, le=1000, description="Maximum iterations for optimization"
+    )
+
+
+class FreeEnergyResponse(BaseModel):
+    """Free energy calculation results."""
+
+    free_energy: float = Field(..., description="Helmholtz free energy F = U - TS")
+    internal_energy: float = Field(
+        ..., description="Internal energy U (constraint violations)"
+    )
+    entropy_term: float = Field(..., description="Entropy contribution T*S")
+    temperature: float = Field(..., description="Temperature parameter used")
+    constraint_violations: int = Field(
+        ..., description="Number of constraint violations"
+    )
+    configuration_entropy: float = Field(..., description="Configuration entropy S")
+    interpretation: str = Field(..., description="Human-readable interpretation")
+    recommendations: list[str] = Field(
+        default_factory=list, description="Optimization recommendations"
+    )
+    computed_at: str = Field(..., description="Timestamp of analysis (ISO format)")
+    source: str = Field("backend", description="Data source")
+
+
+# --- Thermodynamics: Energy Landscape ---
+class EnergyLandscapeRequest(BaseModel):
+    """Request for energy landscape analysis."""
+
+    schedule_id: UUID | None = Field(None, description="Schedule ID to analyze")
+    sample_size: int = Field(
+        default=100, ge=10, le=500, description="Number of perturbations to sample"
+    )
+    temperature: float = Field(
+        default=1.0,
+        gt=0,
+        le=10.0,
+        description="Temperature parameter for energy calculation",
+    )
+
+
+class EnergyLandscapeResponse(BaseModel):
+    """Energy landscape analysis results."""
+
+    current_energy: float = Field(
+        ..., description="Free energy of current configuration"
+    )
+    is_local_minimum: bool = Field(
+        ..., description="Whether current state is a local minimum"
+    )
+    estimated_basin_size: int = Field(
+        ..., description="Estimated size of current energy basin"
+    )
+    mean_barrier_height: float = Field(
+        ..., description="Average energy barrier to escape current state"
+    )
+    mean_gradient: float = Field(..., description="Average energy gradient magnitude")
+    landscape_ruggedness: float = Field(
+        ..., description="Ruggedness of the energy landscape (std of energies)"
+    )
+    num_local_minima: int = Field(
+        ..., description="Number of local minima detected in sample"
+    )
+    interpretation: str = Field(..., description="Human-readable interpretation")
+    recommendations: list[str] = Field(
+        default_factory=list, description="Optimization recommendations"
+    )
+    computed_at: str = Field(..., description="Timestamp of analysis (ISO format)")
     source: str = Field("backend", description="Data source")
 
 
@@ -697,6 +781,119 @@ async def detect_phase_transition(
     )
 
 
+@router.post("/thermodynamics/free-energy", response_model=FreeEnergyResponse)
+@require_feature_flag("exotic_resilience_enabled")
+async def calculate_free_energy_endpoint(
+    request: FreeEnergyRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> FreeEnergyResponse:
+    """
+    Calculate Helmholtz free energy of a schedule.
+
+    Free energy F = U - TS where:
+    - U: Internal energy (constraint violations)
+    - T: Temperature parameter
+    - S: Configuration entropy
+
+    Lower free energy indicates more stable configurations.
+    At high temperatures, entropy dominates (exploration).
+    At low temperatures, internal energy dominates (exploitation).
+    """
+    logger.info(f"Calculating free energy: {request}")
+
+    # Fetch assignments from database
+    query = select(Assignment)
+    if request.schedule_id:
+        query = query.where(Assignment.schedule_id == request.schedule_id)
+
+    result = db.execute(query)
+    assignments = list(result.scalars().all())
+
+    if not assignments:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No assignments found for free energy calculation",
+        )
+
+    # Calculate free energy metrics
+    metrics = calculate_free_energy(assignments, request.temperature)
+
+    # Interpret results
+    interpretation = _interpret_free_energy(metrics)
+    recommendations = _get_free_energy_recommendations(metrics)
+
+    return FreeEnergyResponse(
+        free_energy=metrics.free_energy,
+        internal_energy=metrics.internal_energy,
+        entropy_term=metrics.entropy_term,
+        temperature=metrics.temperature,
+        constraint_violations=metrics.constraint_violations,
+        configuration_entropy=metrics.configuration_entropy,
+        interpretation=interpretation,
+        recommendations=recommendations,
+        computed_at=datetime.utcnow().isoformat(),
+        source="backend",
+    )
+
+
+@router.post("/thermodynamics/energy-landscape", response_model=EnergyLandscapeResponse)
+@require_feature_flag("exotic_resilience_enabled")
+async def analyze_energy_landscape_endpoint(
+    request: EnergyLandscapeRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> EnergyLandscapeResponse:
+    """
+    Analyze the energy landscape around the current schedule configuration.
+
+    Energy landscape analysis helps understand:
+    - Local minima: Stable schedule configurations
+    - Basins: Regions that flow to the same minimum
+    - Barriers: Energy required to escape a basin
+    - Ruggedness: Complexity of the landscape
+
+    Useful for choosing optimization strategies and understanding stability.
+    """
+    logger.info(f"Analyzing energy landscape: {request}")
+
+    # Fetch assignments from database
+    query = select(Assignment)
+    if request.schedule_id:
+        query = query.where(Assignment.schedule_id == request.schedule_id)
+
+    result = db.execute(query)
+    assignments = list(result.scalars().all())
+
+    if not assignments:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No assignments found for energy landscape analysis",
+        )
+
+    # Create analyzer and analyze landscape
+    analyzer = EnergyLandscapeAnalyzer(sample_size=request.sample_size)
+    landscape_result = analyzer.analyze_landscape(assignments, request.temperature)
+
+    # Interpret results
+    interpretation = _interpret_energy_landscape(landscape_result)
+    recommendations = _get_energy_landscape_recommendations(landscape_result)
+
+    return EnergyLandscapeResponse(
+        current_energy=landscape_result["current_energy"],
+        is_local_minimum=landscape_result["is_local_minimum"],
+        estimated_basin_size=landscape_result["estimated_basin_size"],
+        mean_barrier_height=landscape_result["mean_barrier_height"],
+        mean_gradient=landscape_result["mean_gradient"],
+        landscape_ruggedness=landscape_result["landscape_ruggedness"],
+        num_local_minima=landscape_result["features"].num_local_minima,
+        interpretation=interpretation,
+        recommendations=recommendations,
+        computed_at=datetime.utcnow().isoformat(),
+        source="backend",
+    )
+
+
 # =============================================================================
 # Immune System Endpoints
 # =============================================================================
@@ -1088,6 +1285,118 @@ def _get_entropy_recommendations(metrics) -> list[str]:
     if metrics.entropy_production_rate > 0.1:
         recs.append(
             "Schedule disorder is increasing over time. Consider stabilization."
+        )
+
+    return recs
+
+
+def _interpret_free_energy(metrics) -> str:
+    """Generate human-readable interpretation of free energy metrics."""
+    if metrics.free_energy < -1.0:
+        return (
+            "Very stable configuration: Low free energy indicates the schedule is in a "
+            "deep energy well with strong stability. Good resistance to perturbations."
+        )
+    elif metrics.free_energy < 0.0:
+        return (
+            "Stable configuration: Negative free energy indicates entropy dominates, "
+            "providing flexibility while maintaining reasonable constraint satisfaction."
+        )
+    elif metrics.free_energy < 1.0:
+        return (
+            "Marginal configuration: Near-zero free energy indicates balance between "
+            "constraint costs and configuration flexibility. Monitor for changes."
+        )
+    else:
+        return (
+            "Unstable configuration: Positive free energy indicates constraint violations "
+            "dominate. Schedule may be fragile and prone to failure modes."
+        )
+
+
+def _get_free_energy_recommendations(metrics) -> list[str]:
+    """Generate optimization recommendations based on free energy analysis."""
+    recs = []
+
+    if metrics.constraint_violations > 0:
+        recs.append(
+            f"Address {metrics.constraint_violations} constraint violation(s) "
+            "to reduce internal energy"
+        )
+
+    if metrics.configuration_entropy < 1.0:
+        recs.append(
+            "Low configuration entropy suggests rigid schedule. "
+            "Consider increasing diversity in assignments."
+        )
+
+    if metrics.internal_energy > 2.0:
+        recs.append(
+            "High internal energy indicates significant workload imbalance. "
+            "Review assignment distribution across faculty."
+        )
+
+    if metrics.free_energy > 1.0:
+        recs.append(
+            "Consider simulated annealing or other optimization to find "
+            "lower energy configurations."
+        )
+
+    return recs
+
+
+def _interpret_energy_landscape(result: dict) -> str:
+    """Generate human-readable interpretation of energy landscape analysis."""
+    if result["is_local_minimum"]:
+        if result["landscape_ruggedness"] < 0.5:
+            return (
+                "Smooth energy landscape: Schedule is at a local minimum in a "
+                "relatively smooth landscape. Easy to optimize further if needed."
+            )
+        else:
+            return (
+                "Rugged energy landscape: Schedule is at a local minimum, but "
+                "the landscape is complex with many nearby configurations."
+            )
+    else:
+        if result["mean_gradient"] > 0.5:
+            return (
+                "Schedule is not at a local minimum. Strong gradient suggests "
+                "optimization can easily improve the configuration."
+            )
+        else:
+            return (
+                "Schedule is near but not at a local minimum. "
+                "Small adjustments may improve stability."
+            )
+
+
+def _get_energy_landscape_recommendations(result: dict) -> list[str]:
+    """Generate optimization recommendations based on energy landscape analysis."""
+    recs = []
+
+    if not result["is_local_minimum"]:
+        recs.append(
+            "Schedule is not at a local minimum. Consider running optimization "
+            "to find a more stable configuration."
+        )
+
+    if result["landscape_ruggedness"] > 1.0:
+        recs.append(
+            "Highly rugged landscape indicates many local minima. "
+            "Consider simulated annealing with high initial temperature."
+        )
+
+    if result["mean_barrier_height"] < 0.1:
+        recs.append(
+            "Low escape barriers suggest the schedule may be easily perturbed. "
+            "Consider finding a deeper energy basin."
+        )
+
+    if result["estimated_basin_size"] < 5:
+        recs.append(
+            "Small basin size indicates limited stability region. "
+            "Small changes may push the schedule out of the current configuration."
         )
 
     return recs
