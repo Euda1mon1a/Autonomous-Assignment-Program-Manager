@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-18 (PR #750: Codex fixes + resilience visualizers wired)
+> **Last Updated:** 2026-01-18 (PR #753: Hopfield API wiring + Bottleneck Flow visualization)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -161,6 +161,8 @@ Issue identified in code review was based on commit `66a14461`, but PR #743 fixe
 | Keystone Species | ✗ | ✗ | Not implemented | - |
 | Quantum Zeno | ✗ | ✗ | Not implemented | - |
 | Stigmergy | ✓ | ✗ | `app/admin/visualizations/stigmergy-flow/` | API ✅ (PR #750) |
+| Bottleneck Flow | ✓ | ✗ | `features/bottleneck-flow/` | Mock ✅ (PR #753) |
+| Bridge Sync | ✓ | ✗ | `features/bridge-sync/` | Mock ✅ (PR #753) |
 | Static Stability | ✓ | ✗ | `features/sovereign-portal/` | API ✅ |
 | Le Chatelier | ✗ | ✓ | MCP tool analysis | API |
 
