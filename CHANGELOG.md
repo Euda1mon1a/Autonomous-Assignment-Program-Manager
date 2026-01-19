@@ -9,6 +9,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### ADK Integration Analysis (2026-01-19)
+
+**Comprehensive Analysis Document:**
+- `docs/research/ADK_INTEGRATION_ANALYSIS.md` - 476-line disposition matrix
+- 10 PLAN_PARTY probes analyzed Google ADK TypeScript exploration
+- Three-tier priority classification (Immediate/Review/Skip)
+
+**Key Finding:** ADK evaluation patterns are additive; ADK tools redundant (MCP covers).
+
+**Tier 1 - Incorporate Immediately (7-10 days):**
+- Tool trajectory scoring (from ADK evaluation/criteria.ts)
+- Response match scoring (ROUGE-based quality metrics)
+- Test case framework (10 test case patterns)
+- Zod schema patterns for TypeScript skills
+- Evaluation criteria YAML for skill metadata
+
+**New Skills Recommended:**
+- `agent-evaluation` (P1) - Tool trajectory + response match scoring
+- `trajectory-analyzer` (P2) - Tool call sequence validation
+- `response-matcher` (P3) - Semantic equivalence checking
+
+**Gemini Post-Production Learning:**
+- Sanctioned uses: Code review, documentation, test generation (no PHI)
+- Prohibited uses: Schedule generation, ACGME validation (PHI risk)
+
+#### PAI² Governance Revision (2026-01-19)
+
+**7 Governance Gaps Addressed:**
+- **Gap 1**: Standardized handoff template (`.claude/templates/HANDOFF_KIT_v1.md`)
+- **Gap 2**: Exception catalog (`.claude/Governance/EXCEPTIONS.md`) - 3 tiers of override authority
+- **Gap 3**: ORCHESTRATOR in agents.yaml with `spawnable: false` flag
+- **Gap 4**: Standing orders index (`.claude/Governance/STANDING_ORDERS_INDEX.md`) + generation script
+- **Gap 5**: Audit log locations documented in `CLAUDE.md`
+- **Gap 6**: RAG health check (`rag_health()`) added to `/force-multiplier` skill
+- **Gap 7**: Offline SOP (`.claude/SOPs/OFFLINE_SOP.md`) with 12 HARD BLOCKs
+
+**MCP Discovery:**
+- All new governance files include MCP Discovery sections
+- RAG queries and related MCP tools documented per file
+- 7 chunks ingested into RAG for discoverability
+
+**Key Files:**
+- `.claude/Identities/ORCHESTRATOR.identity.md` - Commander identity card
+- `scripts/generate-standing-orders-index.sh` - Automation for index generation
+
 #### Session 049 - Rotation Template Bulk Editing (2026-01-04)
 
 **Rotation Template Batch Operations (Backend):**
@@ -1430,4 +1475,3 @@ For issues or questions:
 - Environment-specific settings
 - Comprehensive metrics tracking
 - Automated regression detection
-

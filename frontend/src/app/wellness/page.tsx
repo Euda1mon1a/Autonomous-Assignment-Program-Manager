@@ -29,6 +29,8 @@ import {
   type AchievementInfo,
   type SurveyListItem,
   type LeaderboardEntry,
+  type SurveyResponseSummary,
+  type SurveyType,
 } from '@/features/wellness/types';
 
 type TabId = 'surveys' | 'achievements' | 'leaderboard' | 'history';
@@ -467,7 +469,7 @@ function LeaderboardTab({
       </div>
 
       <div className="bg-gray-800 rounded-lg overflow-hidden">
-        {leaderboard?.entries.map((entry, index) => (
+        {leaderboard?.entries.map((entry: LeaderboardEntry, index: number) => (
           <LeaderboardRow key={index} entry={entry} />
         ))}
       </div>
@@ -559,8 +561,8 @@ function HistoryTab({
       </h2>
 
       <div className="bg-gray-800 rounded-lg overflow-hidden">
-        {history.responses.map((response) => {
-          const typeInfo = SURVEY_TYPE_DISPLAY[response.surveyType] || {
+        {history.responses.map((response: SurveyResponseSummary) => {
+          const typeInfo = SURVEY_TYPE_DISPLAY[response.surveyType as SurveyType] || {
             label: response.surveyType,
             color: 'gray',
           };

@@ -114,7 +114,8 @@ class Absence(Base):
         CheckConstraint("end_date >= start_date", name="check_absence_dates"),
         CheckConstraint(
             "absence_type IN ('vacation', 'deployment', 'tdy', 'medical', 'family_emergency', "
-            "'conference', 'bereavement', 'emergency_leave', 'sick', 'convalescent', 'maternity_paternity')",
+            "'conference', 'bereavement', 'emergency_leave', 'sick', 'convalescent', 'maternity_paternity', "
+            "'training', 'military_duty')",
             name="check_absence_type",
         ),
     )
@@ -125,7 +126,7 @@ class Absence(Base):
     @property
     def is_military(self) -> bool:
         """Check if this is a military-related absence."""
-        return self.absence_type in ("deployment", "tdy")
+        return self.absence_type in ("deployment", "tdy", "training", "military_duty")
 
     @property
     def duration_days(self) -> int:

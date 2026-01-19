@@ -3,6 +3,40 @@
 ## Toggle
 Governance enforcement controlled by `config.json`. Set `governance_enabled: false` to disable.
 
+## MCP Discovery
+
+### RAG Queries
+```
+rag_search("PAI agent hierarchy chain of command")
+rag_search("Auftragstaktik command philosophy delegation")
+rag_search("spawn authority matrix agent tier")
+rag_search("escalation triggers deputy coordinator")
+rag_search("99/1 rule ORCHESTRATOR delegation")
+```
+
+### Core MCP Tools for Hierarchy Operations
+| Tool | Purpose | Used By |
+|------|---------|---------|
+| `rag_search` | Discover governance context | All agents |
+| `rag_health` | Verify RAG before queries | All agents |
+| `spawn_agent_tool` | Spawn with identity + context | Deputies, Coordinators |
+| `get_defense_level_tool` | Pre-spawn health check | ORCHESTRATOR, Deputies |
+| `check_circuit_breakers_tool` | Service availability | All agents before operations |
+
+### Agent Spawning via MCP
+```python
+# Preferred method for PAI agent spawning
+spec = spawn_agent_tool(
+    agent_name="SCHEDULER",
+    mission="Generate Block 10 schedule",
+    inject_rag=True,
+    parent_agent="COORD_ENGINE"
+)
+# Returns: identity + strategic RAG + validated spawn chain
+```
+
+See [force-multiplier skill](../.claude/skills/force-multiplier/SKILL.md) for full MCP workflow.
+
 ## Command Philosophy: Auftragstaktik (Mission-Type Orders)
 
 This hierarchy operates on the German military doctrine of **directive control** (Auftragstaktik), not detailed command (Befehlstaktik). Every level thinks, decides, and owns their domain.
@@ -38,7 +72,7 @@ Use the existing ACGMEValidator. Timeout after 30 seconds..."
 
 GOOD (Intent):
 "Enable automatic rollback of swaps that violate ACGME rules within 1 minute.
-Residents must be notified. Audit trail required. You decide implementation."
+Notifications required. Audit trail required. Implementation details at discretion."
 ```
 
 ### Specialist Autonomy
@@ -87,6 +121,35 @@ Some constraints are legitimate boundaries, not micromanagement:
 
 **If ORCHESTRATOR is about to Read, Edit, Write, or Bash directly → STOP.**
 Ask: "Which Deputy handles this domain?" Then spawn them.
+
+## ORCHESTRATOR: Unique Status
+
+ORCHESTRATOR occupies a unique position in the PAI hierarchy:
+
+| Property | Value | Rationale |
+|----------|-------|-----------|
+| **Spawnable** | `false` | User-instantiated only |
+| **Reports To** | Human | No PAI superior |
+| **Override Authority** | Yes | Final arbiter within PAI |
+| **agents.yaml Entry** | Yes | With `spawnable: false` flag |
+
+### Why ORCHESTRATOR Cannot Be Spawned
+
+1. **Human Accountability** - All autonomous actions must trace back to a user decision
+2. **Loop Prevention** - Delegation chains must terminate at a user-controlled point
+3. **Session Continuity** - Commander identity must persist across context boundaries
+4. **Governance Enforcement** - Session-end governance requires stable commander
+
+### ORCHESTRATOR vs Deputies
+
+| Aspect | ORCHESTRATOR | Deputies |
+|--------|--------------|----------|
+| Spawned by | User only | ORCHESTRATOR |
+| Executes code | Never (99/1 rule) | Delegates to Coordinators |
+| Domain scope | All domains | ARCHITECT=Systems, SYNTHESIZER=Operations |
+| Override authority | All agents | Subordinates only |
+
+See [ORCHESTRATOR.identity.md](../Identities/ORCHESTRATOR.identity.md) for full identity card.
 
 ## Chain of Command
 

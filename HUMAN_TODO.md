@@ -1337,3 +1337,75 @@ total_assignments: int = Field(alias="total_blocks_assigned")
 - `backend/app/scheduling/engine.py` - Assignment
 - `mcp-server/src/scheduler_mcp/scheduling_tools.py` - MCP tool
 - Tests and docs (20+ files)
+
+---
+
+## Hooks and Scripts Consolidation (2026-01-19)
+
+**Priority:** MEDIUM
+**Added:** 2026-01-19 (PLAN_PARTY analysis - 10 probes, 8.5/10 convergence)
+**Status:** Roadmap complete, implementation pending
+**Roadmap:** `docs/planning/HOOKS_AND_SCRIPTS_ROADMAP.md`
+
+### Summary
+
+Comprehensive hooks and scripts consolidation addressing:
+- Pre-push hook addition (missing safety layer)
+- Parallel pre-commit execution (15-30s -> <10s target)
+- Backup script consolidation (3 scripts -> 1)
+- Claude Code hooks enhancement (RAG injection, metrics alerting)
+- PII scanner config externalization
+- Graduate advisory hooks (MyPy, Bandit) to blocking
+
+### Current State
+
+| Category | Count | Status |
+|----------|-------|--------|
+| Git hooks (active) | 3 | pre-commit, commit-msg, post-merge |
+| Pre-commit phases | 24 | Comprehensive but sequential (slow) |
+| Claude Code hooks | 6 scripts | Partial coverage |
+| Shell scripts | 45 | Needs consolidation |
+| CI workflows | 17 | Well-integrated |
+
+### Phase Overview
+
+| Phase | Focus | Effort | Owner | Status |
+|-------|-------|--------|-------|--------|
+| 1 | Quick Wins (parallelize, consolidate, externalize) | 2-3 sessions | COORD_OPS | TODO |
+| 2 | Hook Hardening (pre-push, strict MyPy/Bandit) | 2-3 sessions | COORD_TOOLING | TODO |
+| 3 | AI Workflow Enhancement (RAG injection, metrics) | 3-4 sessions | COORD_TOOLING | TODO |
+| 4 | Compliance Hardening (GPG evaluation, Gitleaks history) | 2-3 sessions | COORD_OPS | TODO |
+
+### Human Actions Required
+
+- [ ] Review and approve roadmap before implementation begins
+- [ ] Decide on GPG signing enforcement policy (Phase 4)
+- [ ] Confirm parallel pre-commit approach is safe (Phase 1)
+- [ ] Review personnel name externalization approach (Phase 1)
+
+### Key Files
+
+| Category | Files |
+|----------|-------|
+| Pre-commit config | `.pre-commit-config.yaml` |
+| PII scanner | `scripts/pii-scan.sh` |
+| Backup scripts | `scripts/backup_full_stack.sh`, `scripts/full-stack-backup.sh`, `scripts/stack-backup.sh` |
+| Claude Code hooks | `.claude/hooks/*.sh` |
+| CI workflows | `.github/workflows/security.yml`, `.github/workflows/quality-gates.yml` |
+
+### Gap Summary (from PLAN_PARTY Analysis)
+
+| Gap | Priority | Risk |
+|-----|----------|------|
+| No pre-push hook | P1 | Dangerous ops reach remote |
+| 24 sequential phases | P2 | 15-30s commit times |
+| MyPy advisory (`|| true`) | P3 | Type bugs slip through |
+| Bandit advisory (`|| true`) | P3 | Security issues slip |
+| 3 overlapping backup scripts | P4 | Developer confusion |
+| Claude Code hooks incomplete | P4 | No RAG injection |
+
+### Related Documents
+
+- `docs/planning/HOOKS_AND_SCRIPTS_ROADMAP.md` - Full implementation roadmap
+- `.claude/hooks/README.md` - Hooks ecosystem documentation
+- `.pre-commit-config.yaml` - Pre-commit configuration (24 phases)

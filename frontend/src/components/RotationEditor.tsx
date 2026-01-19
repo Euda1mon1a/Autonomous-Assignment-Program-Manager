@@ -294,7 +294,7 @@ function PatternGrid({
   pattern,
   activities,
   selectedWeek,
-  _selectedActivityId,
+  selectedActivityId: _selectedActivityId,  // Unused but required by caller
   readOnly,
   onSlotClick,
   onToggleProtected,
@@ -302,7 +302,7 @@ function PatternGrid({
   pattern: WeeklyPatternGrid;
   activities: Activity[];
   selectedWeek: WeekNumber;
-  _selectedActivityId: string | null;
+  selectedActivityId: string | null;
   readOnly?: boolean;
   onSlotClick: (day: DayOfWeek, time: WeeklyPatternTimeOfDay) => void;
   onToggleProtected: (day: DayOfWeek, time: WeeklyPatternTimeOfDay) => void;
@@ -677,7 +677,7 @@ function RequirementsPanel({
 // ============================================================================
 
 export function RotationEditor({
-  _templateId,
+  templateId: _templateId,  // Unused but required by interface
   pattern,
   activities,
   requirements,
