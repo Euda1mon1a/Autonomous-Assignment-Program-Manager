@@ -103,6 +103,35 @@ cd frontend && npm run lint
 
 **Skill:** Use `/check-camelcase` to scan for violations.
 
+### URL Query Parameters (Couatl Killer)
+
+**URL query params MUST use snake_case**, even in frontend code:
+```typescript
+// ✓ CORRECT
+const params = new URLSearchParams({ block_id: '123', include_inactive: 'true' });
+router.push(`/schedule?person_id=${id}`);
+
+// ✗ WRONG (backend expects snake_case)
+const params = new URLSearchParams({ blockId: '123', includeInactive: 'true' });
+router.push(`/schedule?personId=${id}`);
+```
+
+**Why:** Query params go directly to the API. The axios interceptor only converts request/response bodies, not URL parameters.
+
+### SQLAlchemy Boolean Negation (Beholder Bane)
+
+**Use `~column` not `not column`** for SQLAlchemy boolean filters:
+```python
+# ✓ CORRECT
+query.filter(~Person.is_active)
+query.filter(Person.is_deleted == False)  # noqa: E712
+
+# ✗ WRONG (returns Python bool, not SQL expression)
+query.filter(not Person.is_active)
+```
+
+**Why:** `not` is Python's boolean operator and returns `True`/`False`. `~` invokes SQLAlchemy's `__invert__` to generate proper SQL `NOT` clause.
+
 > RAG: `rag_search('code style examples')` for detailed patterns
 
 ---
@@ -192,6 +221,49 @@ python -c 'import secrets; print(secrets.token_urlsafe(32))'
 - `backend/app/scheduling/engine.py`
 - `backend/app/api/routes/auth.py`
 - `backend/app/resilience/*.py`
+
+### Database Safety Rules
+
+#### Lich's Phylactery (Schema Snapshots)
+
+When models or migrations change, the pre-commit hook auto-generates `backend/schema.sql`:
+- Contains schema only (no data) - safe to commit
+- Enables schema resurrection without running all migrations
+- Auto-staged on commit when DB files change
+
+**If you modify `backend/app/models/*.py` or add migrations:**
+1. Ensure DB container is running: `docker compose up -d db`
+2. The hook will auto-dump schema on commit
+3. If skipped (DB not running), manually run: `./scripts/lichs-phylactery.sh`
+
+#### Backup Before Destructive Operations
+
+**MUST create backup before:**
+- Schedule generation (bulk writes)
+- Swap execution (multi-table updates)
+- Migration rollbacks
+- Any `DELETE` or `TRUNCATE` operations
+
+**MCP backup tools:**
+```python
+# Before destructive operation
+mcp__residency-scheduler__create_backup_tool(reason="Pre-generation backup")
+
+# Verify backup exists
+mcp__residency-scheduler__get_backup_status_tool()
+
+# If something goes wrong
+mcp__residency-scheduler__restore_backup_tool(backup_id="...")
+```
+
+**Skill:** Use `/safe-schedule-generation` which enforces backup-first workflow.
+
+#### Migration Safety
+
+- **Never edit existing migrations** - create new ones to fix issues
+- **Revision IDs ≤ 64 chars** - format: `YYYYMMDD_short_desc`
+- **Test rollback** before merging: `alembic downgrade -1` then `alembic upgrade head`
+- **No data migrations in schema migrations** - separate concerns
 
 ---
 
