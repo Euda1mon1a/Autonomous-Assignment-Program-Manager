@@ -59,6 +59,8 @@ from app.scheduling.validator import ACGMEValidator
 from app.services.block_assignment_expansion_service import (
     BlockAssignmentExpansionService,
 )
+from app.services.sync_preload_service import SyncPreloadService
+from app.scheduling.activity_solver import CPSATActivitySolver
 from app.services.schedule_draft_service import ScheduleDraftService
 from app.models.schedule_draft import DraftSourceType
 from app.utils.academic_blocks import get_block_number_for_date
@@ -262,11 +264,39 @@ class SchedulingEngine:
                     schedule_run_id=run.id,
                     created_by="engine_expansion",
                     apply_one_in_seven=True,
+                    persist_half_day=True,  # Persist to HalfDayAssignment table
                 )
                 if expanded_assignments:
                     logger.info(
                         f"Expanded {len(expanded_assignments)} assignments from "
                         f"block_assignments for Block {block_number}"
+                    )
+
+            # Step 1.5h: Load preloads (FMIT, call, absences) into half_day_assignments
+            # This MUST run after expansion and BEFORE solver to lock slots
+            if expand_block_assignments and block_number and academic_year:
+                preload_service = SyncPreloadService(self.db)
+                preload_count = preload_service.load_all_preloads(
+                    block_number, academic_year
+                )
+                logger.info(f"Loaded {preload_count} preload assignments")
+
+            # Step 1.5i: Run activity solver to assign C, LEC, ADV to half-day slots
+            # This assigns activities to slots that aren't locked by preload
+            if expand_block_assignments and block_number and academic_year:
+                activity_solver = CPSATActivitySolver(
+                    self.db,
+                    timeout_seconds=min(timeout_seconds, 30.0),  # Cap at 30s
+                )
+                activity_result = activity_solver.solve(block_number, academic_year)
+                if activity_result.get("success"):
+                    logger.info(
+                        f"Activity solver assigned {activity_result.get('assignments_updated', 0)} "
+                        f"activities ({activity_result.get('status', 'unknown')})"
+                    )
+                else:
+                    logger.warning(
+                        f"Activity solver failed: {activity_result.get('message', 'unknown error')}"
                     )
 
             # NOTE: Deletion deferred until after successful solve (see Step 5.5)
@@ -375,19 +405,38 @@ class SchedulingEngine:
 
             # Step 5.6: Add expanded assignments from block_assignments
             # These are NEW records generated from the master rotation schedule
-            for assignment in expanded_assignments:
-                self.db.add(assignment)
-                self.assignments.append(assignment)
-            if expanded_assignments:
+            # NOTE: When expand_block_assignments=True with persist_half_day=True,
+            # HalfDayAssignment records are already created by the expansion service.
+            # We DO NOT add to self.assignments since that list gets persisted to
+            # the old Assignment table in Step 8, causing constraint violations.
+            if not expand_block_assignments:
+                # Legacy path: persist Assignment objects to old table
+                for assignment in expanded_assignments:
+                    self.db.add(assignment)
+                    self.assignments.append(assignment)
+                if expanded_assignments:
+                    logger.info(
+                        f"Added {len(expanded_assignments)} expanded assignments to session"
+                    )
+            else:
+                # New path: HalfDayAssignment already persisted by expansion service
+                # Skip adding to self.assignments to avoid duplicate persistence
                 logger.info(
-                    f"Added {len(expanded_assignments)} expanded assignments to session"
+                    f"Skipped {len(expanded_assignments)} expanded assignments "
+                    f"(already persisted as HalfDayAssignment)"
                 )
 
             # Step 6: Convert solver results to assignments
-            # Pass preserved_assignments to filter out conflicts with immutable slots
-            self._create_assignments_from_result(
-                solver_result, residents, templates, run.id, preserved_assignments
-            )
+            # In half-day mode, resident assignments come from expansion, not solver
+            if not expand_block_assignments:
+                self._create_assignments_from_result(
+                    solver_result, residents, templates, run.id, preserved_assignments
+                )
+            else:
+                logger.info(
+                    "Skipping solver assignment conversion in half-day mode "
+                    "(residents already assigned via expansion)"
+                )
 
             # Step 6.5: Create call assignments from solver results
             # Creates CallAssignment records for overnight call (Sun-Thurs)
@@ -396,8 +445,14 @@ class SchedulingEngine:
             )
 
             # Step 7: Assign faculty supervision
-            # Pass preserved_assignments so faculty with FMIT/absences are excluded
-            self._assign_faculty(faculty, blocks, run.id, preserved_assignments)
+            # In half-day mode, faculty assignments handled separately
+            if not expand_block_assignments:
+                self._assign_faculty(faculty, blocks, run.id, preserved_assignments)
+            else:
+                logger.info(
+                    "Skipping faculty supervision in half-day mode "
+                    "(handled by FacultyAssignmentExpansionService)"
+                )
 
             # Step 8: Handle draft vs live assignment persistence
             draft_id = None
@@ -1063,11 +1118,12 @@ class SchedulingEngine:
                 continue
 
             # Map solver call types to database-allowed values
-            # Constraint allows: 'sunday', 'weekday', 'holiday', 'backup'
+            # Constraint allows: 'overnight', 'weekend', 'backup'
             # Solver uses: 'overnight' (generic)
             is_sunday = block.date.weekday() == 6
             if call_type == "overnight":
-                mapped_call_type = "sunday" if is_sunday else "weekday"
+                # Weekend (Sunday) vs overnight (Mon-Thu)
+                mapped_call_type = "weekend" if is_sunday else "overnight"
             else:
                 mapped_call_type = call_type
 

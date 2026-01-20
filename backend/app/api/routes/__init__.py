@@ -42,6 +42,7 @@ from app.api.routes import (
     fmit_health,
     fmit_timeline,
     game_theory,
+    half_day_assignments,
     health,
     impersonation,
     import_staging,
@@ -127,6 +128,11 @@ api_router.include_router(
 api_router.include_router(batch.router, prefix="/batch", tags=["batch"])
 api_router.include_router(absences.router, prefix="/absences", tags=["absences"])
 api_router.include_router(schedule.router, prefix="/schedule", tags=["schedule"])
+api_router.include_router(
+    half_day_assignments.router,
+    prefix="/half-day-assignments",
+    tags=["half-day-assignments"],
+)
 # Aliases for frontend hardcoded paths
 api_router.include_router(
     constraints.router, prefix="/schedule/constraints", tags=["schedule"]
