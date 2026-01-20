@@ -22,6 +22,7 @@ class HalfDayAssignmentRead(BaseModel):
     activity_id: UUID | None = None
     activity_code: str | None = None
     activity_name: str | None = None
+    display_abbreviation: str | None = None
     source: str  # "preload", "manual", "solver", "template"
     is_locked: bool = False
     created_at: datetime

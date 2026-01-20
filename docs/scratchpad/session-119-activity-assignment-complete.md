@@ -172,29 +172,24 @@ GROUP BY source, activity_id IS NULL;
 | Last Wed ADV | ✅ PASS | Shows `lec/advising` pattern |
 | No blank cells | ✅ PASS | All cells populated |
 
-### Bug Found: Display Abbreviation Not in API
+### Bug Fixed: Display Abbreviation Now in API ✅
 
-**Issue:** GUI shows `fm_clinic` instead of `C`, `lec` instead of `LEC`
+**Issue (Resolved):** GUI was showing `fm_clinic` instead of `C`, `lec` instead of `LEC`
 
-**Root Cause:** `HalfDayAssignmentRead` schema returns `activity_code` but not `display_abbreviation`:
+**Fix Applied (Session 119 continued):**
 
-```python
-# backend/app/schemas/half_day_assignment.py
-class HalfDayAssignmentRead(BaseModel):
-    activity_id: UUID | None = None
-    activity_code: str | None = None      # Returns "fm_clinic"
-    activity_name: str | None = None
-    # MISSING: display_abbreviation        # Should return "C"
-```
+1. Added `display_abbreviation` to `HalfDayAssignmentRead` schema
+2. Updated API route to include `display_abbreviation` in response
+3. Updated frontend TypeScript interface
+4. Updated `ScheduleGrid.tsx` to prefer `displayAbbreviation` over `activityCode`
 
-**Database has correct values:**
-| code | display_abbreviation |
-|------|---------------------|
-| fm_clinic | C |
-| lec | LEC |
-| advising | ADV |
+**Files Modified:**
+- `backend/app/schemas/half_day_assignment.py` - Added field
+- `backend/app/api/routes/half_day_assignments.py` - Include in response
+- `frontend/src/hooks/useHalfDayAssignments.ts` - TypeScript interface
+- `frontend/src/components/schedule/ScheduleGrid.tsx` - Display logic
 
-**Fix Required:** Add `display_abbreviation: str | None = None` to schema and populate in API response.
+**Verification:** GUI now shows `C`, `LEC`, `ADV` correctly instead of `fm_clinic`, `lec`, `advising`
 
 ---
 
@@ -257,5 +252,5 @@ class Block(Base):
 1. Fork greedy, pulp, hybrid solvers for activity assignment
 2. Add rotation_activity_requirements constraints to activity solver
 3. Add comprehensive tests for activity solver
-4. **Add `display_abbreviation` to HalfDayAssignmentRead schema**
+4. ~~**Add `display_abbreviation` to HalfDayAssignmentRead schema**~~ ✅ DONE
 5. **Consider creating `blocks` table with UUIDs**

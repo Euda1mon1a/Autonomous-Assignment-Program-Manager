@@ -186,7 +186,8 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
       if (!hda.activityCode) return
 
       const processed: ProcessedAssignment = {
-        abbreviation: hda.activityCode,
+        // Prefer displayAbbreviation (e.g., "C") over activityCode (e.g., "fm_clinic")
+        abbreviation: hda.displayAbbreviation || hda.activityCode,
         activityType: 'default', // Could map from activity if needed
         templateName: hda.activityName || undefined,
         // Note: half-day assignments don't have colors yet, could be added

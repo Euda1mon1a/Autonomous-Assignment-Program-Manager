@@ -95,6 +95,9 @@ async def list_half_day_assignments(
                 activity_id=a.activity_id,
                 activity_code=a.activity.code if a.activity else None,
                 activity_name=a.activity.name if a.activity else None,
+                display_abbreviation=a.activity.display_abbreviation
+                if a.activity
+                else None,
                 source=a.source,
                 is_locked=a.is_locked,
                 created_at=a.created_at,

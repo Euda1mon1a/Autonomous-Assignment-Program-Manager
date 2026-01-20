@@ -23,6 +23,7 @@ export interface HalfDayAssignment {
   activityId: string | null
   activityCode: string | null
   activityName: string | null
+  displayAbbreviation: string | null
   source: 'preload' | 'manual' | 'solver' | 'template'
   isLocked: boolean
   createdAt: string
