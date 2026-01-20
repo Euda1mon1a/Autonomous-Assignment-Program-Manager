@@ -121,7 +121,9 @@ class CPSATActivitySolver:
         clinic_activity = self._get_activity_by_code("fm_clinic")
 
         if not clinic_activity:
-            logger.warning("Missing fm_clinic activity, using first activity as default")
+            logger.warning(
+                "Missing fm_clinic activity, using first activity as default"
+            )
             clinic_activity = activities[0]
 
         # Load unlocked half-day slots
@@ -170,9 +172,7 @@ class CPSATActivitySolver:
 
         # Constraint 1: Exactly one activity per slot
         for s_i in range(len(slots)):
-            model.Add(
-                sum(a[s_i, act_i] for act_i in range(len(activities))) == 1
-            )
+            model.Add(sum(a[s_i, act_i] for act_i in range(len(activities))) == 1)
 
         # Constraint 2: Wednesday PM = LEC (weeks 1-3)
         # Constraint 3: Last Wednesday AM = LEC, PM = ADV
@@ -210,9 +210,7 @@ class CPSATActivitySolver:
         if clinic_activity:
             clinic_idx = activity_idx.get(clinic_activity.id)
             if clinic_idx is not None:
-                clinic_count = sum(
-                    a[s_i, clinic_idx] for s_i in range(len(slots))
-                )
+                clinic_count = sum(a[s_i, clinic_idx] for s_i in range(len(slots)))
                 model.Maximize(clinic_count)
 
         # ==================================================
@@ -286,10 +284,12 @@ class CPSATActivitySolver:
             HalfDayAssignment.date >= start_date,
             HalfDayAssignment.date <= end_date,
             # Only slots without locked source
-            HalfDayAssignment.source.in_([
-                AssignmentSource.SOLVER.value,
-                AssignmentSource.TEMPLATE.value,
-            ]),
+            HalfDayAssignment.source.in_(
+                [
+                    AssignmentSource.SOLVER.value,
+                    AssignmentSource.TEMPLATE.value,
+                ]
+            ),
         )
         result = self.session.execute(stmt)
         return list(result.scalars().all())

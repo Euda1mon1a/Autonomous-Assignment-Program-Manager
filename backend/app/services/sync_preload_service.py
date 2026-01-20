@@ -116,14 +116,10 @@ class SyncPreloadService:
 
             while current <= end:
                 # AM slot
-                if self._create_preload(
-                    absence.person_id, current, "AM", lv_am_id
-                ):
+                if self._create_preload(absence.person_id, current, "AM", lv_am_id):
                     count += 1
                 # PM slot
-                if self._create_preload(
-                    absence.person_id, current, "PM", lv_pm_id
-                ):
+                if self._create_preload(absence.person_id, current, "PM", lv_pm_id):
                     count += 1
                 current += timedelta(days=1)
 
@@ -143,14 +139,18 @@ class SyncPreloadService:
 
         # Mapping for rotation types to activity codes
         rotation_to_activity = {
-            "FMC": "fm_clinic",   # FM Clinic -> C
-            "HILO": "TDY",       # Hilo rotation -> TDY
+            "FMC": "fm_clinic",  # FM Clinic -> C
+            "HILO": "TDY",  # Hilo rotation -> TDY
         }
 
         for preload in preloads:
             rotation_type = preload.rotation_type
             # Handle both enum and string rotation types
-            activity_code = rotation_type.value if hasattr(rotation_type, 'value') else (rotation_type or "FMIT")
+            activity_code = (
+                rotation_type.value
+                if hasattr(rotation_type, "value")
+                else (rotation_type or "FMIT")
+            )
             # Apply mapping if needed
             activity_code = rotation_to_activity.get(activity_code, activity_code)
 
@@ -208,7 +208,7 @@ class SyncPreloadService:
         dow = current_date.weekday()  # 0=Mon, 6=Sun
 
         # Get string code for comparison
-        code = rotation_type.value if hasattr(rotation_type, 'value') else rotation_type
+        code = rotation_type.value if hasattr(rotation_type, "value") else rotation_type
 
         # KAP (Kapiolani L&D - off-site)
         if code == "KAP":
@@ -257,18 +257,14 @@ class SyncPreloadService:
             while current <= end:
                 # Fri=4, Sat=5
                 if current.weekday() in (4, 5):
-                    if self._create_preload(
-                        preload.person_id, current, "PM", call_id
-                    ):
+                    if self._create_preload(preload.person_id, current, "PM", call_id):
                         count += 1
                 current += timedelta(days=1)
 
         logger.info(f"Loaded {count} FMIT call preloads")
         return count
 
-    def _load_inpatient_clinic(
-        self, block_number: int, academic_year: int
-    ) -> int:
+    def _load_inpatient_clinic(self, block_number: int, academic_year: int) -> int:
         """Load inpatient clinic (C-I) based on PGY level.
 
         PGY-1: Wednesday AM
