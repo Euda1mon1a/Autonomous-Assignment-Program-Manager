@@ -518,24 +518,20 @@ class SchedulingEngine:
                             # Fail generation - PCAT/DO is critical for AT coverage
                             # ROLLBACK all schedule changes to avoid partial state
                             # (CallAssignments, HalfDayAssignments written so far)
+                            # Note: run record was committed in _create_initial_run,
+                            # so it survives rollback - we just need to update it.
                             run_id = run.id  # Save before rollback
                             elapsed = time.time() - start_time
                             self.db.rollback()
 
-                            # Re-create run record with failed status (rollback cleared it)
-                            from app.models.schedule_run import ScheduleRun
-
-                            failed_run = ScheduleRun(
-                                id=run_id,
-                                start_date=self.start_date,
-                                end_date=self.end_date,
-                                algorithm=algorithm,
-                                status="failed",
-                                total_assignments=0,
-                                processing_time=elapsed,
-                            )
-                            self.db.add(failed_run)
-                            self.db.commit()
+                            # Re-fetch run record (detached after rollback) and update status
+                            # The run was committed separately in _create_initial_run
+                            existing_run = self.db.get(ScheduleRun, run_id)
+                            if existing_run:
+                                self._update_run_status(
+                                    existing_run, "failed", 0, 0, elapsed
+                                )
+                                self.db.commit()
 
                             return {
                                 "status": "failed",
