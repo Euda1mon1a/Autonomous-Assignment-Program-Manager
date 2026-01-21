@@ -220,21 +220,26 @@ class FacultyAssignmentExpansionService:
         )
 
     def _preload_holidays(self, start_date: date, end_date: date) -> None:
-        """Pre-load federal holidays in the date range."""
-        # Check if there's a Holiday model, otherwise use known federal holidays
-        try:
-            from app.models.holiday import Holiday
+        """Pre-load federal holidays and non-operational days from Block table.
 
-            stmt = select(Holiday.date).where(
-                Holiday.date >= start_date,
-                Holiday.date <= end_date,
-            )
-            for row in self.db.execute(stmt):
-                self._holiday_dates.add(row[0])
-            logger.info(f"Pre-loaded {len(self._holiday_dates)} holidays")
-        except ImportError:
-            # No Holiday model - use empty set (holidays handled elsewhere)
-            logger.debug("No Holiday model found, skipping holiday preload")
+        Uses Block.is_holiday and Block.operational_intent to identify
+        dates that should get HOL activity instead of admin time.
+        """
+        from app.models.block import Block
+        from app.models.day_type import OperationalIntent
+
+        # Query blocks that are holidays or non-operational (DONSA, EO closure)
+        stmt = select(Block.date).where(
+            Block.date >= start_date,
+            Block.date <= end_date,
+            # Match holidays OR non-operational days
+            (Block.is_holiday == True) | (Block.operational_intent == OperationalIntent.NON_OPERATIONAL),  # noqa: E712
+        ).distinct()
+
+        for row in self.db.execute(stmt):
+            self._holiday_dates.add(row[0])
+
+        logger.info(f"Pre-loaded {len(self._holiday_dates)} holiday/non-operational dates from blocks")
 
     def _get_activity(self, code: str) -> Activity | None:
         """Get activity by code (cached)."""

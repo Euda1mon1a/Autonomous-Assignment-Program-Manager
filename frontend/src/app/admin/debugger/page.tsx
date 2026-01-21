@@ -451,7 +451,7 @@ function ScheduleMirrorView({
       dateList.push(d.toISOString().split('T')[0]);
     }
     setDates(dateList);
-  }, [blockRanges, selectedBlock]);
+  }, [blockRanges, selectedBlockKey]);
 
   // Fetch data when block changes or dates are ready
   useEffect(() => {

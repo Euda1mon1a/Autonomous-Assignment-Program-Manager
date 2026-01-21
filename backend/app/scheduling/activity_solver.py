@@ -279,17 +279,30 @@ class CPSATActivitySolver:
     def _load_unlocked_slots(
         self, start_date: date, end_date: date
     ) -> list[HalfDayAssignment]:
-        """Load half-day slots that can be assigned activities."""
-        stmt = select(HalfDayAssignment).where(
-            HalfDayAssignment.date >= start_date,
-            HalfDayAssignment.date <= end_date,
-            # Only slots without locked source
-            HalfDayAssignment.source.in_(
-                [
-                    AssignmentSource.SOLVER.value,
-                    AssignmentSource.TEMPLATE.value,
-                ]
-            ),
+        """Load half-day slots that can be assigned activities.
+
+        IMPORTANT: Excludes faculty slots. Faculty assignments are handled by
+        FacultyAssignmentExpansionService and should NOT be overwritten by
+        the activity solver. Faculty get admin time (GME/DFM), not solver activities.
+        """
+        from app.models.person import Person
+
+        stmt = (
+            select(HalfDayAssignment)
+            .join(Person, HalfDayAssignment.person_id == Person.id)
+            .where(
+                HalfDayAssignment.date >= start_date,
+                HalfDayAssignment.date <= end_date,
+                # Only slots without locked source
+                HalfDayAssignment.source.in_(
+                    [
+                        AssignmentSource.SOLVER.value,
+                        AssignmentSource.TEMPLATE.value,
+                    ]
+                ),
+                # Exclude faculty - their slots are managed separately
+                Person.type != "faculty",
+            )
         )
         result = self.session.execute(stmt)
         return list(result.scalars().all())
