@@ -130,6 +130,7 @@ class SchedulingEngine:
         academic_year: int | None = None,
         create_draft: bool = False,
         created_by_id: UUID | None = None,
+        validate_pcat_do: bool = True,
     ) -> dict:
         """
         Generate a complete schedule.
@@ -155,6 +156,8 @@ class SchedulingEngine:
             create_draft: If True, stage assignments in a draft instead of committing
                          directly to live assignments. Draft must be published separately.
             created_by_id: UUID of user creating the schedule (for audit trail).
+            validate_pcat_do: Run PCAT/DO integrity check after sync (default True).
+                             Set to False once pipeline is proven stable.
 
         Returns:
             Dictionary with status, assignments, validation results, and resilience info.
@@ -496,6 +499,41 @@ class SchedulingEngine:
                 # NOW we have baseline AT coverage for ratio calculations.
                 if call_assignments and expand_block_assignments:
                     self._sync_call_pcat_do_to_half_day(call_assignments)
+
+                    # Step 6.6.1: Validate PCAT/DO integrity (catches sync bugs)
+                    # This runs automatically after PCAT/DO sync to ensure correctness.
+                    # Can be disabled via validate_pcat_do=False once pipeline is stable.
+                    if validate_pcat_do:
+                        pcat_do_issues = self._validate_pcat_do_integrity(
+                            call_assignments
+                        )
+                        if pcat_do_issues:
+                            logger.error(
+                                f"PCAT/DO integrity check FAILED: "
+                                f"{len(pcat_do_issues)} issues detected"
+                            )
+                            for issue in pcat_do_issues:
+                                logger.error(f"  - {issue}")
+
+                            # Fail generation - PCAT/DO is critical for AT coverage
+                            self._update_run_status(
+                                run, "failed", 0, 0, time.time() - start_time
+                            )
+                            self.db.commit()
+                            return {
+                                "status": "failed",
+                                "message": f"PCAT/DO integrity check failed: {len(pcat_do_issues)} issues",
+                                "total_assigned": 0,
+                                "total_blocks": len(blocks),
+                                "validation": self._empty_validation(),
+                                "run_id": run.id,
+                                "pcat_do_issues": pcat_do_issues,
+                            }
+                        else:
+                            logger.info(
+                                f"PCAT/DO integrity check passed "
+                                f"({len(call_assignments)} calls verified)"
+                            )
             elif solver_result.call_assignments:
                 logger.info(
                     f"Skipping {len(solver_result.call_assignments)} call assignments "
@@ -1372,6 +1410,131 @@ class SchedulingEngine:
             logger.info(f"Synced {count} PCAT/DO slots to match new call assignments")
 
         return count
+
+    def _validate_pcat_do_integrity(
+        self,
+        call_assignments: list,
+    ) -> list[str]:
+        """
+        Validate PCAT/DO were created for each call assignment.
+
+        This is a post-generation integrity check that runs after PCAT/DO sync.
+        It catches bugs where PCAT/DO creation silently fails.
+
+        Args:
+            call_assignments: List of CallAssignment objects to validate
+
+        Returns:
+            List of issues (empty = valid). Each issue is a string describing
+            the missing PCAT or DO.
+
+        Note:
+            This validation can be disabled via validate_pcat_do=False in generate()
+            once the pipeline is proven stable.
+        """
+        from app.models.half_day_assignment import HalfDayAssignment
+        from app.models.inpatient_preload import InpatientPreload, InpatientRotationType
+        from app.models.activity import Activity
+        from sqlalchemy import select
+
+        if not call_assignments:
+            return []
+
+        issues: list[str] = []
+
+        # Get PCAT and DO activity IDs
+        pcat_activity = (
+            self.db.execute(select(Activity).where(Activity.code == "pcat"))
+            .scalars()
+            .first()
+        )
+        do_activity = (
+            self.db.execute(select(Activity).where(Activity.code == "do"))
+            .scalars()
+            .first()
+        )
+
+        if not pcat_activity or not do_activity:
+            issues.append("PCAT or DO activity not found in database")
+            return issues
+
+        for call in call_assignments:
+            next_day = call.date + timedelta(days=1)
+
+            # Skip if next day is outside our date range
+            if next_day > self.end_date:
+                continue
+
+            # Check if person is on FMIT next day (no PCAT/DO for FMIT)
+            fmit_check = (
+                self.db.execute(
+                    select(InpatientPreload).where(
+                        InpatientPreload.person_id == call.person_id,
+                        InpatientPreload.rotation_type == InpatientRotationType.FMIT,
+                        InpatientPreload.start_date <= next_day,
+                        InpatientPreload.end_date >= next_day,
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if fmit_check:
+                continue  # FMIT faculty don't get PCAT/DO - this is correct
+
+            # Check PCAT (AM)
+            pcat = (
+                self.db.execute(
+                    select(HalfDayAssignment).where(
+                        HalfDayAssignment.person_id == call.person_id,
+                        HalfDayAssignment.date == next_day,
+                        HalfDayAssignment.time_of_day == "AM",
+                        HalfDayAssignment.activity_id == pcat_activity.id,
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if not pcat:
+                issues.append(
+                    f"Missing PCAT: call {call.date} -> expected PCAT on {next_day} AM"
+                )
+
+            # Check DO (PM) - may be overwritten by another preload
+            do = (
+                self.db.execute(
+                    select(HalfDayAssignment).where(
+                        HalfDayAssignment.person_id == call.person_id,
+                        HalfDayAssignment.date == next_day,
+                        HalfDayAssignment.time_of_day == "PM",
+                        HalfDayAssignment.activity_id == do_activity.id,
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if not do:
+                # Check if there's another preload that took precedence (e.g., call)
+                other_preload = (
+                    self.db.execute(
+                        select(HalfDayAssignment).where(
+                            HalfDayAssignment.person_id == call.person_id,
+                            HalfDayAssignment.date == next_day,
+                            HalfDayAssignment.time_of_day == "PM",
+                            HalfDayAssignment.source == "preload",
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
+                if not other_preload:
+                    issues.append(
+                        f"Missing DO: call {call.date} -> expected DO on {next_day} PM"
+                    )
+
+        return issues
 
     def _ensure_blocks_exist(self, commit: bool = True) -> list[Block]:
         """Ensure half-day blocks exist for the date range.

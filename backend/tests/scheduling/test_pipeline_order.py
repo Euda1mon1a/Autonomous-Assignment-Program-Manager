@@ -296,11 +296,14 @@ class TestPipelineOrderEnforcement:
                                                 engine.validator.validate_all.return_value = mock_post_validation
 
                                                 # Run generate - NO exception swallowing
+                                                # validate_pcat_do=False because mock DB
+                                                # doesn't have Activity records
                                                 engine.generate(
                                                     block_number=10,
                                                     academic_year=2025,
                                                     expand_block_assignments=True,
                                                     algorithm="greedy",
+                                                    validate_pcat_do=False,
                                                 )
 
         # HARD-FAIL ASSERTIONS: All required steps MUST be present
