@@ -1290,13 +1290,14 @@ class SchedulingEngine:
             return 0
 
         # Get PCAT and DO activity IDs
+        # Note: Activity codes are lowercase in database (pcat, do)
         pcat_activity = (
-            self.db.execute(select(Activity).where(Activity.code == "PCAT"))
+            self.db.execute(select(Activity).where(Activity.code == "pcat"))
             .scalars()
             .first()
         )
         do_activity = (
-            self.db.execute(select(Activity).where(Activity.code == "DO"))
+            self.db.execute(select(Activity).where(Activity.code == "do"))
             .scalars()
             .first()
         )
