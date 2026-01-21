@@ -437,16 +437,21 @@ class SchedulingEngine:
                             "greedy", context, timeout_seconds
                         )
             else:
-                # Half-day mode: skip legacy solver, use stub result
+                # Half-day mode: Run greedy solver ONLY for call assignments (Sun-Thu)
+                # Rotation assignments come from expansion service, but call equity
+                # logic is in the greedy solver. We discard rotation assignments but
+                # keep call_assignments from the result.
                 logger.info(
-                    "Skipping legacy rotation solver in half-day mode "
-                    "(CPSATActivitySolver handles activity assignment)"
+                    "Running greedy solver for Sun-Thu call assignments only "
+                    "(rotation assignments handled by expansion service)"
                 )
-                solver_result = SolverResult(
-                    success=True,
-                    assignments=[],
-                    status="skipped",
-                    solver_status="half-day mode - using CPSATActivitySolver",
+                solver_result = self._run_solver("greedy", context, timeout_seconds)
+                # Clear rotation assignments (we don't need them in half-day mode)
+                # but preserve call_assignments for Step 6.5
+                solver_result.assignments = []
+                logger.info(
+                    f"Greedy solver generated {len(solver_result.call_assignments)} "
+                    f"Sun-Thu call assignments"
                 )
 
             # Step 5.5: Delete existing assignments (except preserved ones)
