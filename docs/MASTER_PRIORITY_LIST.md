@@ -274,6 +274,8 @@ Major fixes to half-day assignment pipeline:
 | PCAT/DO not created after call | Pipeline order wrong | Restructured to run PCAT/DO sync after call solver |
 | PCAT/DO validation missing | Silent failures | Added `_validate_pcat_do_integrity()` hook with rollback |
 | Cross-block PCAT/DO missing | `next_day > end_date` check skipped | Removed block boundary check - use actual dates |
+| Mid-block day 14 vs 11 | Inconsistent transition point | Fixed to day 11 (Excel col 28, Monday week 2) |
+| Suffix fallback too broad | Any `-AM/-PM` code would fallback | Whitelisted to known absence codes only |
 | Weekends showing C instead of W | `source=solver` allowed overwrite | `time_off` activities now get `source=preload` |
 | W-AM template lookup failed | Activity code is "W" not "W-AM" | Added suffix-stripping fallback in `_lookup_activity_by_abbreviation()` |
 | NF/PedNF missing weekend patterns | SyncPreloadService returned rotation code | Added explicit `("W", "W")` for weekends |
