@@ -322,15 +322,26 @@ class BlockAssignmentExpansionService:
             activity = result.scalars().first()
 
             # Fallback: strip -AM/-PM suffix for absence templates
-            # (e.g., "W-AM" -> "W", "LV-PM" -> "LV", "HOL-AM" -> "HOL")
+            # Only apply to known absence codes to avoid silent mismatches
+            KNOWN_ABSENCE_BASES = {"W", "LV", "HOL", "OFF", "DEP", "TDY"}
             if activity is None and abbreviation.endswith(("-AM", "-PM")):
                 base_code = abbreviation.rsplit("-", 1)[0]
-                stmt = select(Activity).where(
-                    (Activity.display_abbreviation == base_code)
-                    | (Activity.code == base_code)
-                )
-                result = self.db.execute(stmt)
-                activity = result.scalars().first()
+                if base_code in KNOWN_ABSENCE_BASES:
+                    stmt = select(Activity).where(
+                        (Activity.display_abbreviation == base_code)
+                        | (Activity.code == base_code)
+                    )
+                    result = self.db.execute(stmt)
+                    activity = result.scalars().first()
+                    if activity:
+                        logger.debug(
+                            f"Activity lookup fallback: '{abbreviation}' -> '{base_code}'"
+                        )
+                else:
+                    logger.warning(
+                        f"Activity '{abbreviation}' not found and base '{base_code}' "
+                        f"not in known absence codes {KNOWN_ABSENCE_BASES}"
+                    )
 
             self._activity_cache[abbreviation] = activity
         return self._activity_cache.get(abbreviation)
