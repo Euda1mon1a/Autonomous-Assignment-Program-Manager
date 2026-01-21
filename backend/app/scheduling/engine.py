@@ -516,17 +516,34 @@ class SchedulingEngine:
                                 logger.error(f"  - {issue}")
 
                             # Fail generation - PCAT/DO is critical for AT coverage
-                            self._update_run_status(
-                                run, "failed", 0, 0, time.time() - start_time
+                            # ROLLBACK all schedule changes to avoid partial state
+                            # (CallAssignments, HalfDayAssignments written so far)
+                            run_id = run.id  # Save before rollback
+                            elapsed = time.time() - start_time
+                            self.db.rollback()
+
+                            # Re-create run record with failed status (rollback cleared it)
+                            from app.models.schedule_run import ScheduleRun
+
+                            failed_run = ScheduleRun(
+                                id=run_id,
+                                start_date=self.start_date,
+                                end_date=self.end_date,
+                                algorithm=algorithm,
+                                status="failed",
+                                total_assignments=0,
+                                processing_time=elapsed,
                             )
+                            self.db.add(failed_run)
                             self.db.commit()
+
                             return {
                                 "status": "failed",
-                                "message": f"PCAT/DO integrity check failed: {len(pcat_do_issues)} issues",
+                                "message": f"PCAT/DO integrity check failed: {len(pcat_do_issues)} issues (rolled back)",
                                 "total_assigned": 0,
                                 "total_blocks": len(blocks),
                                 "validation": self._empty_validation(),
-                                "run_id": run.id,
+                                "run_id": run_id,
                                 "pcat_do_issues": pcat_do_issues,
                             }
                         else:
@@ -1482,7 +1499,7 @@ class SchedulingEngine:
             if fmit_check:
                 continue  # FMIT faculty don't get PCAT/DO - this is correct
 
-            # Check PCAT (AM)
+            # Check PCAT (AM) - may be overwritten by another preload (holiday, leave, etc.)
             pcat = (
                 self.db.execute(
                     select(HalfDayAssignment).where(
@@ -1497,9 +1514,23 @@ class SchedulingEngine:
             )
 
             if not pcat:
-                issues.append(
-                    f"Missing PCAT: call {call.date} -> expected PCAT on {next_day} AM"
+                # Check if there's another preload that took precedence (e.g., holiday, leave)
+                other_preload_am = (
+                    self.db.execute(
+                        select(HalfDayAssignment).where(
+                            HalfDayAssignment.person_id == call.person_id,
+                            HalfDayAssignment.date == next_day,
+                            HalfDayAssignment.time_of_day == "AM",
+                            HalfDayAssignment.source == "preload",
+                        )
+                    )
+                    .scalars()
+                    .first()
                 )
+                if not other_preload_am:
+                    issues.append(
+                        f"Missing PCAT: call {call.date} -> expected PCAT on {next_day} AM"
+                    )
 
             # Check DO (PM) - may be overwritten by another preload
             do = (
