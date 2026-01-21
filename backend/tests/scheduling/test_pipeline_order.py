@@ -17,13 +17,24 @@ CORRECT Order (Session 125):
 6. Fill faculty half-days (NOW knows resident demand)
 
 These tests verify the order is maintained and detect regressions.
+
+Test Categories:
+- TestPreloadServiceSkipFacultyCall: Unit tests for skip_faculty_call parameter
+- TestPipelineOrderEnforcement: Mock/patch tests that verify call order (TRIPWIRE)
+- TestPipelineIntegration: Integration tests that verify correctness (DATABASE)
 """
 
-from datetime import date
-from unittest.mock import MagicMock, patch, call
+from datetime import date, timedelta
+from unittest.mock import MagicMock, patch, PropertyMock
 from uuid import uuid4
+from typing import Any
 
 import pytest
+
+
+# ============================================================================
+# Unit Tests: SyncPreloadService skip_faculty_call parameter
+# ============================================================================
 
 
 class TestPreloadServiceSkipFacultyCall:
@@ -43,8 +54,12 @@ class TestPreloadServiceSkipFacultyCall:
         with patch.object(service, "_load_absences", return_value=0):
             with patch.object(service, "_load_inpatient_preloads", return_value=0):
                 with patch.object(service, "_load_fmit_call", return_value=0):
-                    with patch.object(service, "_load_inpatient_clinic", return_value=0):
-                        with patch.object(service, "_load_resident_call", return_value=0):
+                    with patch.object(
+                        service, "_load_inpatient_clinic", return_value=0
+                    ):
+                        with patch.object(
+                            service, "_load_resident_call", return_value=0
+                        ):
                             with patch.object(
                                 service, "_load_faculty_call", return_value=0
                             ) as mock_faculty_call:
@@ -72,8 +87,12 @@ class TestPreloadServiceSkipFacultyCall:
         with patch.object(service, "_load_absences", return_value=0):
             with patch.object(service, "_load_inpatient_preloads", return_value=0):
                 with patch.object(service, "_load_fmit_call", return_value=0):
-                    with patch.object(service, "_load_inpatient_clinic", return_value=0):
-                        with patch.object(service, "_load_resident_call", return_value=0):
+                    with patch.object(
+                        service, "_load_inpatient_clinic", return_value=0
+                    ):
+                        with patch.object(
+                            service, "_load_resident_call", return_value=0
+                        ):
                             with patch.object(
                                 service, "_load_faculty_call", return_value=0
                             ) as mock_faculty_call:
@@ -90,196 +109,541 @@ class TestPreloadServiceSkipFacultyCall:
         mock_faculty_call.assert_called_once()
 
 
+# ============================================================================
+# Mock/Patch Enforcement Tests (TRIPWIRE - catches code structure changes)
+# ============================================================================
+
+
 class TestPipelineOrderEnforcement:
-    """Test that the engine enforces correct pipeline order."""
+    """
+    Mock/patch tests that verify the engine calls methods in correct order.
 
-    def test_activity_solver_runs_after_call_assignments(self) -> None:
-        """
-        Verify activity solver runs AFTER call assignments and PCAT/DO sync.
+    These are TRIPWIRE tests - they catch if someone reorders the pipeline.
+    They test the CODE STRUCTURE, not the behavior.
+    """
 
-        This is critical because:
-        - PCAT counts toward AT coverage
-        - Activity solver needs to know AT coverage for resident scheduling
+    def test_engine_calls_pipeline_steps_in_correct_order(self) -> None:
         """
-        # Track call order
+        ENFORCEMENT TEST: Verify engine.generate() calls pipeline steps in order.
+
+        This test patches key pipeline components and tracks call order.
+        If someone reorders the pipeline in engine.py, this test WILL FAIL.
+
+        Expected order:
+        1. preload (with skip_faculty_call=True)
+        2. expansion
+        3. solver (greedy for call)
+        4. pcat_do_sync (after call_create)
+        5. activity_solver
+        6. faculty_expansion
+        """
+        # Track call order via module-level patches
         call_order: list[str] = []
 
-        def track_preload(*args, **kwargs) -> int:
+        # Patch at module level to track calls
+        original_preload_init = None
+        original_expansion_init = None
+        original_activity_init = None
+        original_faculty_init = None
+
+        def track_preload_call(*args: Any, **kwargs: Any) -> int:
             if kwargs.get("skip_faculty_call"):
-                call_order.append("preload_non_call")
+                call_order.append("preload_skip_faculty")
             else:
                 call_order.append("preload_all")
             return 0
 
-        def track_expansion(*args, **kwargs) -> list:
+        def track_expansion_call(*args: Any, **kwargs: Any) -> list:
             call_order.append("expansion")
             return []
 
-        def track_call_solver(*args, **kwargs) -> MagicMock:
-            call_order.append("call_solver")
-            result = MagicMock()
-            result.success = True
-            result.assignments = []
-            result.call_assignments = []
-            result.solver_status = "OPTIMAL"
-            return result
-
-        def track_pcat_do_sync(*args, **kwargs) -> int:
-            call_order.append("pcat_do_sync")
-            return 0
-
-        def track_activity_solver(*args, **kwargs) -> dict:
+        def track_activity_call(*args: Any, **kwargs: Any) -> dict:
             call_order.append("activity_solver")
-            return {"success": True, "assignments_updated": 0}
+            return {"success": True, "assignments_updated": 0, "status": "OPTIMAL"}
 
-        def track_faculty_expansion(*args, **kwargs) -> int:
+        def track_faculty_call(*args: Any, **kwargs: Any) -> int:
             call_order.append("faculty_expansion")
             return 0
 
-        # Verify order: preload → expansion → call → pcat_do → activity → faculty
-        expected_order = [
-            "preload_non_call",  # Step 3.5
-            "expansion",  # Step 3.6
-            "call_solver",  # Step 5
-            "pcat_do_sync",  # Step 6.6
-            "activity_solver",  # Step 6.7
-            "faculty_expansion",  # Step 6.8
-        ]
+        def track_pcat_sync(*args: Any, **kwargs: Any) -> int:
+            call_order.append("pcat_do_sync")
+            return 0
 
-        # This test documents the expected order
-        # Full integration test would require running the engine
-        # For now, verify the order is documented
-        assert len(expected_order) == 6
-        assert expected_order[0] == "preload_non_call"
-        assert expected_order[3] == "pcat_do_sync"
-        assert expected_order[4] == "activity_solver"
-        assert expected_order[5] == "faculty_expansion"
+        # Patch the services at module level
+        with patch("app.scheduling.engine.SyncPreloadService") as mock_preload_cls:
+            mock_preload_instance = MagicMock()
+            mock_preload_instance.load_all_preloads.side_effect = track_preload_call
+            mock_preload_cls.return_value = mock_preload_instance
 
-    def test_pcat_do_created_before_activity_solver(self) -> None:
-        """
-        Verify PCAT/DO is created BEFORE activity solver runs.
+            with patch(
+                "app.scheduling.engine.BlockAssignmentExpansionService"
+            ) as mock_expansion_cls:
+                mock_expansion_instance = MagicMock()
+                mock_expansion_instance.expand_block_assignments.side_effect = (
+                    track_expansion_call
+                )
+                mock_expansion_cls.return_value = mock_expansion_instance
 
-        The dependency chain is:
-        Call → PCAT/DO → AT Coverage → Activity Solver
+                with patch(
+                    "app.scheduling.engine.CPSATActivitySolver"
+                ) as mock_activity_cls:
+                    mock_activity_instance = MagicMock()
+                    mock_activity_instance.solve.side_effect = track_activity_call
+                    mock_activity_cls.return_value = mock_activity_instance
 
-        If PCAT/DO is created AFTER activity solver, AT coverage calculations
-        will be wrong and ACGME supervision ratios may be violated.
-        """
-        # Document the constraint
-        pcat_do_step = 6.6
-        activity_solver_step = 6.7
+                    with patch(
+                        "app.scheduling.engine.FacultyAssignmentExpansionService"
+                    ) as mock_faculty_cls:
+                        mock_faculty_instance = MagicMock()
+                        mock_faculty_instance.fill_faculty_assignments.side_effect = (
+                            track_faculty_call
+                        )
+                        mock_faculty_cls.return_value = mock_faculty_instance
 
-        assert (
-            pcat_do_step < activity_solver_step
-        ), "PCAT/DO must be created before activity solver runs"
+                        # Import after patching
+                        from app.scheduling.engine import SchedulingEngine
 
-    def test_faculty_expansion_after_activity_solver(self) -> None:
-        """
-        Verify faculty expansion runs AFTER activity solver.
+                        # Create mock DB
+                        mock_db = MagicMock()
+                        mock_db.execute.return_value.scalars.return_value.all.return_value = []  # noqa: E501
+                        mock_db.execute.return_value.scalars.return_value.first.return_value = None  # noqa: E501
+                        mock_db.execute.return_value.scalar.return_value = 0
+                        mock_db.query.return_value.filter.return_value.all.return_value = []  # noqa: E501
 
-        The dependency chain is:
-        Activity Solver → Resident Clinic Demand → Faculty Expansion
+                        start_date = date(2026, 3, 12)
+                        end_date = date(2026, 4, 8)
 
-        Faculty expansion fills remaining slots with admin time (GME/DFM).
-        It needs to know resident clinic demand to calculate AT coverage.
-        """
-        activity_solver_step = 6.7
-        faculty_expansion_step = 6.8
+                        # Patch engine methods
+                        with patch.object(SchedulingEngine, "_ensure_blocks_exist"):
+                            with patch.object(
+                                SchedulingEngine, "_check_pre_generation_resilience"
+                            ):
+                                with patch.object(
+                                    SchedulingEngine,
+                                    "_check_post_generation_resilience",
+                                ):
+                                    engine = SchedulingEngine(
+                                        mock_db, start_date, end_date
+                                    )
 
-        assert (
-            activity_solver_step < faculty_expansion_step
-        ), "Activity solver must run before faculty expansion"
+                        # Patch instance methods
+                        engine._sync_call_pcat_do_to_half_day = track_pcat_sync
 
+                        # Mock solver result
+                        mock_result = MagicMock()
+                        mock_result.success = True
+                        mock_result.assignments = []
+                        mock_result.call_assignments = [MagicMock()]
+                        mock_result.solver_status = "OPTIMAL"
+                        mock_result.validation_issues = []
 
-class TestPCATDOFromNewCall:
-    """Test that PCAT/DO is created from NEW call assignments, not stale records."""
+                        with patch.object(
+                            engine, "_run_solver", return_value=mock_result
+                        ):
+                            with patch.object(
+                                engine,
+                                "_create_call_assignments_from_result",
+                                return_value=[MagicMock()],
+                            ):
+                                with patch.object(engine, "_build_availability_matrix"):
+                                    with patch.object(
+                                        engine,
+                                        "_get_residents",
+                                        return_value=[MagicMock()],
+                                    ):
+                                        with patch.object(
+                                            engine,
+                                            "_get_rotation_templates",
+                                            return_value=[],
+                                        ):
+                                            with patch.object(
+                                                engine, "_get_faculty", return_value=[]
+                                            ):
+                                                # Run generate - may fail but we track order
+                                                try:
+                                                    engine.generate(
+                                                        block_number=10,
+                                                        academic_year=2025,
+                                                        expand_block_assignments=True,
+                                                        algorithm="greedy",
+                                                    )
+                                                except Exception:
+                                                    pass  # We only care about call order
 
-    def test_pcat_do_sync_uses_new_call_assignments(self) -> None:
-        """
-        Verify _sync_call_pcat_do_to_half_day uses NEW call assignments.
+        # CRITICAL ASSERTIONS: Verify order
+        # These assertions will FAIL if pipeline is reordered
 
-        The old bug: Preloads loaded PCAT/DO from existing CallAssignment table,
-        but those were stale (from previous generation). The solver then created
-        NEW CallAssignment records, but PCAT/DO didn't match.
+        # Verify preload was called with skip_faculty_call=True
+        assert "preload_skip_faculty" in call_order, (
+            f"Preload must be called with skip_faculty_call=True. Got: {call_order}"
+        )
 
-        The fix: Skip faculty call in preloads, create PCAT/DO directly from
-        NEW call assignments after solver runs.
-        """
-        # This is a documentation test
-        # The actual implementation is in _sync_call_pcat_do_to_half_day
-        # which creates PCAT (AM) and DO (PM) for the day after each call
+        # Verify relative order of steps that were called
+        def assert_order(first: str, second: str) -> None:
+            if first in call_order and second in call_order:
+                assert call_order.index(first) < call_order.index(second), (
+                    f"{first} must come before {second}. Order: {call_order}"
+                )
 
-        # Verify the method signature exists
-        from app.scheduling.engine import SchedulingEngine
+        # Check order: preload → expansion → pcat_do_sync → activity → faculty
+        assert_order("preload_skip_faculty", "expansion")
+        assert_order("expansion", "pcat_do_sync")
+        assert_order("pcat_do_sync", "activity_solver")
+        assert_order("activity_solver", "faculty_expansion")
 
-        assert hasattr(
-            SchedulingEngine, "_sync_call_pcat_do_to_half_day"
-        ), "Engine must have _sync_call_pcat_do_to_half_day method"
+    def test_preload_called_with_skip_faculty_call_true(self) -> None:
+        """Verify preload is called with skip_faculty_call=True in half-day mode."""
+        from app.services.sync_preload_service import SyncPreloadService
 
+        mock_session = MagicMock()
+        mock_session.execute.return_value.scalars.return_value.all.return_value = []
 
-class TestDependencyChainDocumentation:
-    """Document the dependency chain for future reference."""
+        service = SyncPreloadService(mock_session)
 
-    def test_dependency_chain_is_documented(self) -> None:
-        """
-        Document the correct dependency chain.
+        with patch.object(service, "_load_absences", return_value=0):
+            with patch.object(service, "_load_inpatient_preloads", return_value=0):
+                with patch.object(service, "_load_fmit_call", return_value=0):
+                    with patch.object(
+                        service, "_load_inpatient_clinic", return_value=0
+                    ):
+                        with patch.object(
+                            service, "_load_resident_call", return_value=0
+                        ):
+                            with patch.object(
+                                service, "_load_faculty_call", return_value=0
+                            ) as mock_faculty:
+                                with patch.object(
+                                    service, "_load_sm_preloads", return_value=0
+                                ):
+                                    # Call with skip_faculty_call=True (as engine does)
+                                    service.load_all_preloads(
+                                        block_number=10,
+                                        academic_year=2025,
+                                        skip_faculty_call=True,
+                                    )
 
-        Call → PCAT/DO → AT Coverage → Resident Clinic Load → Faculty Admin
-
-        This test exists to document the chain and ensure it's visible in tests.
-        """
-        dependency_chain = [
-            "Call assignments (Sun-Thu)",
-            "PCAT/DO (created immediately after call, LOCKED)",
-            "AT Coverage (PCAT counts as AT)",
-            "Resident Clinic Load (activity solver, knows PCAT)",
-            "Faculty Admin (expansion, knows resident demand)",
-        ]
-
-        assert len(dependency_chain) == 5
-        assert "PCAT/DO" in dependency_chain[1]
-        assert "LOCKED" in dependency_chain[1]
-        assert "AT" in dependency_chain[2]
-
-    def test_pipeline_order_constants(self) -> None:
-        """Document pipeline step numbers for reference."""
-        pipeline_steps = {
-            "preload_non_call": "Step 3.5",
-            "expansion": "Step 3.6",
-            "call_solver": "Step 5",
-            "call_assignments": "Step 6.5",
-            "pcat_do_sync": "Step 6.6",
-            "activity_solver": "Step 6.7",
-            "faculty_expansion": "Step 6.8",
-        }
-
-        # Verify order
-        step_numbers = [
-            float(v.replace("Step ", "")) for v in pipeline_steps.values()
-        ]
-        assert step_numbers == sorted(
-            step_numbers
-        ), "Pipeline steps should be in ascending order"
+        # Faculty call should NOT be loaded
+        mock_faculty.assert_not_called()
 
 
 # ============================================================================
-# Integration Test (requires database)
+# Integration Tests (DATABASE - verifies actual correctness)
 # ============================================================================
 
 
-@pytest.mark.skip(reason="Requires database connection - run manually")
 class TestPipelineIntegration:
-    """Integration tests that verify the full pipeline order with a database."""
+    """
+    Integration tests that verify the pipeline produces correct results.
 
-    def test_block_10_regeneration_creates_pcat_do(self) -> None:
-        """
-        Verify Block 10 regeneration creates correct PCAT/DO assignments.
+    These tests require a database connection and verify:
+    - PCAT/DO is created for each call assignment
+    - PCAT/DO has source='preload' (locked)
+    - FMIT faculty don't get PCAT/DO
+    - End-of-block calls don't create out-of-range PCAT/DO
+    """
 
-        This test:
-        1. Clears existing Block 10 half_day_assignments
-        2. Runs generation with corrected pipeline
-        3. Verifies PCAT/DO matches CallAssignment records
+    @pytest.fixture
+    def db_session(self):
+        """Get database session for integration tests."""
+        from app.db.session import SessionLocal
+
+        session = SessionLocal()
+        yield session
+        session.rollback()
+        session.close()
+
+    @pytest.mark.integration
+    def test_pcat_do_created_for_each_call(self, db_session) -> None:
         """
-        # This would be a full integration test
-        # Left as documentation for manual verification
-        pass
+        INTEGRATION TEST: Verify each call assignment has PCAT/DO.
+
+        For each CallAssignment in Block 10:
+        - Next day AM should have PCAT (unless FMIT)
+        - Next day PM should have DO (unless FMIT)
+        - Both should have source='preload'
+        """
+        from app.models.call_assignment import CallAssignment
+        from app.models.half_day_assignment import HalfDayAssignment
+        from app.models.activity import Activity
+        from app.models.inpatient_preload import InpatientPreload
+        from sqlalchemy import select, and_
+
+        # Block 10 dates
+        start_date = date(2026, 3, 12)
+        end_date = date(2026, 4, 8)
+
+        # Get all call assignments in Block 10
+        call_query = select(CallAssignment).where(
+            and_(
+                CallAssignment.date >= start_date,
+                CallAssignment.date <= end_date,
+            )
+        )
+        call_assignments = db_session.execute(call_query).scalars().all()
+
+        if not call_assignments:
+            pytest.skip("No call assignments in Block 10 - run generation first")
+
+        # Get PCAT and DO activities
+        pcat_activity = (
+            db_session.execute(select(Activity).where(Activity.code == "pcat"))
+            .scalars()
+            .first()
+        )
+        do_activity = (
+            db_session.execute(select(Activity).where(Activity.code == "do"))
+            .scalars()
+            .first()
+        )
+
+        assert pcat_activity, "PCAT activity must exist"
+        assert do_activity, "DO activity must exist"
+
+        # Check each call assignment
+        missing_pcat = []
+        missing_do = []
+        wrong_source = []
+
+        for call in call_assignments:
+            next_day = call.date + timedelta(days=1)
+
+            # Skip if next day is outside block
+            if next_day > end_date:
+                continue
+
+            # Check if person is on FMIT next day (should skip PCAT/DO)
+            fmit_check = (
+                db_session.execute(
+                    select(InpatientPreload).where(
+                        and_(
+                            InpatientPreload.person_id == call.person_id,
+                            InpatientPreload.start_date <= next_day,
+                            InpatientPreload.end_date >= next_day,
+                            InpatientPreload.rotation_type == "FMIT",
+                        )
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if fmit_check:
+                # FMIT faculty should NOT have PCAT/DO
+                continue
+
+            # Check PCAT (AM)
+            pcat = (
+                db_session.execute(
+                    select(HalfDayAssignment).where(
+                        and_(
+                            HalfDayAssignment.person_id == call.person_id,
+                            HalfDayAssignment.date == next_day,
+                            HalfDayAssignment.time_of_day == "AM",
+                            HalfDayAssignment.activity_id == pcat_activity.id,
+                        )
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if not pcat:
+                missing_pcat.append(f"{call.date} -> {next_day} AM")
+            elif pcat.source != "preload":
+                wrong_source.append(f"PCAT {next_day} has source={pcat.source}")
+
+            # Check DO (PM)
+            # Note: DO may be overwritten by another preload (e.g., call on same day)
+            do = (
+                db_session.execute(
+                    select(HalfDayAssignment).where(
+                        and_(
+                            HalfDayAssignment.person_id == call.person_id,
+                            HalfDayAssignment.date == next_day,
+                            HalfDayAssignment.time_of_day == "PM",
+                            HalfDayAssignment.activity_id == do_activity.id,
+                        )
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if not do:
+                # Check if there's another preload that took precedence
+                other_preload = (
+                    db_session.execute(
+                        select(HalfDayAssignment).where(
+                            and_(
+                                HalfDayAssignment.person_id == call.person_id,
+                                HalfDayAssignment.date == next_day,
+                                HalfDayAssignment.time_of_day == "PM",
+                                HalfDayAssignment.source == "preload",
+                            )
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
+                if not other_preload:
+                    # Only flag as missing if no other preload took precedence
+                    missing_do.append(f"{call.date} -> {next_day} PM")
+            elif do.source != "preload":
+                wrong_source.append(f"DO {next_day} has source={do.source}")
+
+        # Assert no issues
+        assert not missing_pcat, f"Missing PCAT for calls: {missing_pcat}"
+        assert not missing_do, f"Missing DO for calls: {missing_do}"
+        assert not wrong_source, f"Wrong source (should be 'preload'): {wrong_source}"
+
+    @pytest.mark.integration
+    def test_pcat_do_count_matches_call_count(self, db_session) -> None:
+        """
+        INTEGRATION TEST: Verify PCAT/DO count roughly matches call count.
+
+        Each call should generate 1 PCAT and 1 DO (except FMIT and end-of-block).
+        """
+        from app.models.call_assignment import CallAssignment
+        from app.models.half_day_assignment import HalfDayAssignment
+        from app.models.activity import Activity
+        from sqlalchemy import select, and_, func
+
+        start_date = date(2026, 3, 12)
+        end_date = date(2026, 4, 8)
+
+        # Count call assignments
+        call_count = db_session.execute(
+            select(func.count(CallAssignment.id)).where(
+                and_(
+                    CallAssignment.date >= start_date,
+                    CallAssignment.date <= end_date,
+                )
+            )
+        ).scalar()
+
+        if call_count == 0:
+            pytest.skip("No call assignments - run generation first")
+
+        # Get activity IDs
+        pcat_activity = (
+            db_session.execute(select(Activity).where(Activity.code == "pcat"))
+            .scalars()
+            .first()
+        )
+        do_activity = (
+            db_session.execute(select(Activity).where(Activity.code == "do"))
+            .scalars()
+            .first()
+        )
+
+        # Count PCAT assignments
+        pcat_count = db_session.execute(
+            select(func.count(HalfDayAssignment.id)).where(
+                and_(
+                    HalfDayAssignment.date >= start_date,
+                    HalfDayAssignment.date <= end_date + timedelta(days=1),
+                    HalfDayAssignment.activity_id == pcat_activity.id,
+                )
+            )
+        ).scalar()
+
+        # Count DO assignments
+        do_count = db_session.execute(
+            select(func.count(HalfDayAssignment.id)).where(
+                and_(
+                    HalfDayAssignment.date >= start_date,
+                    HalfDayAssignment.date <= end_date + timedelta(days=1),
+                    HalfDayAssignment.activity_id == do_activity.id,
+                )
+            )
+        ).scalar()
+
+        # PCAT/DO should be close to call count (some may be skipped for FMIT)
+        # Allow 20% variance for FMIT skips and end-of-block
+        min_expected = int(call_count * 0.8)
+
+        assert pcat_count >= min_expected, (
+            f"PCAT count ({pcat_count}) too low for {call_count} calls"
+        )
+        assert do_count >= min_expected, (
+            f"DO count ({do_count}) too low for {call_count} calls"
+        )
+
+    @pytest.mark.integration
+    def test_fmit_faculty_no_pcat_do(self, db_session) -> None:
+        """
+        INTEGRATION TEST: FMIT faculty should NOT have PCAT/DO.
+
+        When a faculty member is on FMIT, they continue coverage the next day
+        instead of getting post-call time off.
+        """
+        from app.models.call_assignment import CallAssignment
+        from app.models.half_day_assignment import HalfDayAssignment
+        from app.models.activity import Activity
+        from app.models.inpatient_preload import InpatientPreload
+        from sqlalchemy import select, and_
+
+        start_date = date(2026, 3, 12)
+        end_date = date(2026, 4, 8)
+
+        # Find call assignments where faculty is on FMIT the next day
+        call_query = select(CallAssignment).where(
+            and_(
+                CallAssignment.date >= start_date,
+                CallAssignment.date <= end_date,
+            )
+        )
+        call_assignments = db_session.execute(call_query).scalars().all()
+
+        pcat_activity = (
+            db_session.execute(select(Activity).where(Activity.code == "pcat"))
+            .scalars()
+            .first()
+        )
+
+        incorrect_pcat = []
+
+        for call in call_assignments:
+            next_day = call.date + timedelta(days=1)
+
+            # Check if on FMIT
+            fmit = (
+                db_session.execute(
+                    select(InpatientPreload).where(
+                        and_(
+                            InpatientPreload.person_id == call.person_id,
+                            InpatientPreload.start_date <= next_day,
+                            InpatientPreload.end_date >= next_day,
+                            InpatientPreload.rotation_type == "FMIT",
+                        )
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if fmit:
+                # Should NOT have PCAT
+                pcat = (
+                    db_session.execute(
+                        select(HalfDayAssignment).where(
+                            and_(
+                                HalfDayAssignment.person_id == call.person_id,
+                                HalfDayAssignment.date == next_day,
+                                HalfDayAssignment.time_of_day == "AM",
+                                HalfDayAssignment.activity_id == pcat_activity.id,
+                            )
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
+
+                if pcat:
+                    incorrect_pcat.append(
+                        f"FMIT faculty has PCAT on {next_day} (call was {call.date})"
+                    )
+
+        assert not incorrect_pcat, (
+            f"FMIT faculty should not have PCAT: {incorrect_pcat}"
+        )
