@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-19 (Added: Block 10 GUI Fixes - PR #758)
+> **Last Updated:** 2026-01-21 (Session 126: Half-day pipeline fixes, BlockAnnualView wiring)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -54,6 +54,17 @@ Comprehensive disposition matrix for Google ADK integration:
 **Total Effort:** 7-10 days for Tier 1 implementation
 
 **Action:** Review analysis, approve Phase 1 (evaluation framework).
+
+### GUI + Wiring Review (PR 756 Verification)
+**File:** [`docs/reports/GUI_WIRING_REVIEW_PR756.md`](reports/GUI_WIRING_REVIEW_PR756.md)
+**Date:** 2026-01-20
+**Source:** Codex audit of GUI/wiring changes
+
+Verified GUI fixes (Auth timeout, DefenseLevel guard, Claude chat WS rewrite, etc.) and
+identified remaining wiring gaps (resilience endpoint mismatches, query param casing drift,
+Claude WS base URL fragility, absence enum drift).
+
+**Action:** Decide endpoint strategy for resilience hooks, fix query param casing, harden WS base, sync absence enums.
 
 ---
 
@@ -251,6 +262,47 @@ Call duty and performance profiling have edge cases:
 **Action:** Merge call_assignments into shift validation (pending MEDCOM ruling on ACGME interpretation).
 **Ref:** `docs/reviews/2026-01-17-current-changes-review.md`
 
+### 10.1 Half-Day Pipeline & Weekend Fixes ✅ RESOLVED (Sessions 125-126)
+
+**Branch:** `feature/activity-assignment-session-119` (19 commits)
+**Scratchpads:** `session-125-pcat-do-validation.md`, `future-backfill-utility.md`
+
+Major fixes to half-day assignment pipeline:
+
+| Issue | Root Cause | Fix |
+|-------|------------|-----|
+| PCAT/DO not created after call | Pipeline order wrong | Restructured to run PCAT/DO sync after call solver |
+| PCAT/DO validation missing | Silent failures | Added `_validate_pcat_do_integrity()` hook with rollback |
+| Weekends showing C instead of W | `source=solver` allowed overwrite | `time_off` activities now get `source=preload` |
+| W-AM template lookup failed | Activity code is "W" not "W-AM" | Added suffix-stripping fallback in `_lookup_activity_by_abbreviation()` |
+| NF/PedNF missing weekend patterns | SyncPreloadService returned rotation code | Added explicit `("W", "W")` for weekends |
+| Compound rotations (NEURO-1ST-NF-2ND) | Global `includes_weekend_work` flag | New `_load_compound_rotation_weekends()` method |
+| BlockAnnualView empty cells | snake_case vs camelCase mismatch | Fixed TypeScript interface to use camelCase |
+
+**Verification:** Block 10 now shows correct rotations for all 19 residents in Block Annual View.
+
+**Files Modified:**
+- `backend/app/scheduling/engine.py` - PCAT/DO validation hook
+- `backend/app/services/block_assignment_expansion_service.py` - Activity lookup, source detection
+- `backend/app/services/sync_preload_service.py` - NF/PedNF weekends, compound rotations
+- `frontend/src/components/schedule/BlockAnnualView.tsx` - camelCase fix
+
+### 10.2 Faculty Scheduling Pipeline Gaps (Remaining)
+
+**Doc:** [`docs/reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md`](reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md)
+
+Remaining faculty-specific gaps:
+- 2 faculty have zero Block 10 legacy assignments (Anne Lamoureux, Kyle Samblanet)
+- Weekly min/max clinic parameters exist but are not enforced in constraints
+- 4 faculty have no weekly templates; overrides are effectively empty
+- Faculty expansion service exists but is not wired to half-day mode
+
+**Action:**
+1. Decide canonical schedule table for faculty (prefer half_day_assignments).
+2. Wire faculty expansion into half-day pipeline before CP-SAT activity solver.
+3. Enforce or normalize weekly clinic min/max limits and fix template coverage gaps.
+4. Align export and UI to the canonical table to avoid mixed sources.
+
 ---
 
 ## MEDIUM (Plan for Sprint)
@@ -305,7 +357,44 @@ Repository automation consolidation addressing performance, reliability, and mai
 
 **Key Files:** `.pre-commit-config.yaml`, `scripts/pii-scan.sh`, `.claude/hooks/*.sh`
 
-### 15. ~~Block 10 GUI Navigation~~ ✅ RESOLVED (PR #758)
+### 15. Admin Debugger - ScheduleMirrorView Data Display
+**Priority:** MEDIUM
+**Added:** 2026-01-20 (Session 122)
+**Branch:** `feature/activity-assignment-session-119`
+**Scratchpad:** [`docs/scratchpad/session-122-debugger-wiring.md`](scratchpad/session-122-debugger-wiring.md)
+
+Side-by-side debugger for frontend vs DB comparison not displaying assignment data despite API returning valid data.
+
+| Issue | Root Cause | Status |
+|-------|------------|--------|
+| Grid shows all dashes | Unknown - API confirmed 702 assignments for Block 10 | 🔄 In Progress |
+| Wrong date range | Was hardcoded "today + 14 days" | ✅ Fixed - uses `useBlockRanges()` |
+| MCP auth failure | Server bound to 0.0.0.0 triggers auth | ✅ Fixed - added API key |
+| API requires date filter | Missing `start_date` and `end_date` params | ✅ Fixed |
+| Wrong field mappings | `time_of_day` vs `period`, `display_abbreviation` vs `activity_code` | ✅ Fixed |
+
+**Chrome Extension Debugging Confirmed:**
+- Block 10 (Mar 12 - Apr 8): **702 assignments**, 124 residents with activity codes
+- Person IDs match between `/people` and `/half-day-assignments`
+- Sample: Christian Hernandez has "OFF" on Mar 12 AM
+
+**Likely Cause:** Hot reload not picking up TypeScript changes. Needs hard refresh (Cmd+Shift+R).
+
+**Files Changed:**
+| File | Change |
+|------|--------|
+| `frontend/src/app/admin/debugger/page.tsx` | Block selector, API fixes, field mappings |
+| `docker-compose.dev.yml` | Added `MCP_API_KEY: dev-mcp-key-2026` |
+| `.mcp.json` | Added Authorization header |
+
+**Next Steps:**
+1. Hard refresh debugger page
+2. Check browser console for errors
+3. If still failing, add console.log to trace data flow
+
+**Related:** MCP needs Claude Code restart to pick up new `.mcp.json` headers.
+
+### 16. ~~Block 10 GUI Navigation~~ ✅ RESOLVED (PR #758)
 **Priority:** MEDIUM
 **Added:** 2026-01-19 (Chrome Extension exploration)
 **Branch:** `feat/block10-gui-human-corrections`
@@ -677,8 +766,8 @@ Added `psutil>=5.9.0` to `requirements.txt` for system profiling capabilities.
 | Priority | Issues | Scope |
 |----------|--------|-------|
 | **CRITICAL** | 1 open, 4 resolved | ~~orphan routes~~✅, PII, ~~doc contradictions~~✅, ~~API mismatches~~✅, ~~rollback data loss~~✅ |
-| **HIGH** | 2 open, 3 resolved | frameworks, ~~feature flags~~✅, ~~MCP stubs~~✅ (16/16 wired), mock GUI, ACGME compliance |
-| **MEDIUM** | 2 open, 7 resolved | ~~activity logging~~✅, ~~emails~~✅, pagination, hooks/scripts, ~~Block 10 GUI~~✅, ~~docs~~✅, ~~CLI/security cleanup~~✅, ~~VaR endpoints~~✅, ~~seed script~~✅ |
+| **HIGH** | 1 open, 4 resolved | frameworks, ~~feature flags~~✅, ~~MCP stubs~~✅ (16/16 wired), mock GUI, ~~half-day pipeline~~✅, ACGME compliance |
+| **MEDIUM** | 3 open, 7 resolved | ~~activity logging~~✅, ~~emails~~✅, pagination, hooks/scripts, debugger ScheduleMirrorView, ~~Block 10 GUI~~✅, ~~docs~~✅, ~~CLI/security cleanup~~✅, ~~VaR endpoints~~✅, ~~seed script~~✅ |
 | **LOW** | 12 | A/B testing, ML, time crystal, spreadsheet editor, experimental analytics, CLI guide, string theory, optional modules, GUI guide, cooperative evolution, foam topology, ORCH spec handoff |
 | **INFRA** | 3 resolved | ~~bind mounts~~✅, ~~academic year fix~~✅, ~~psutil dep~~✅ |
 
