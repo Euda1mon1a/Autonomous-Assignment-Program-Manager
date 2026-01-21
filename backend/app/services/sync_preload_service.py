@@ -100,6 +100,11 @@ class SyncPreloadService:
         # total += self._load_conferences(start_date, end_date)
         # total += self._load_protected_time(start_date, end_date)
 
+        # Load weekend preloads for compound rotations (NEURO-1ST-NF-2ND, etc.)
+        total += self._load_compound_rotation_weekends(
+            block_number, academic_year, start_date, end_date
+        )
+
         # Don't commit here - let the engine handle transaction
         self.session.flush()
         logger.info(f"Loaded {total} preload assignments")
@@ -189,10 +194,14 @@ class SyncPreloadService:
                 pm_activity_id = self._get_activity_id(pm_code) or activity_id
 
                 # Skip weekends for non-24/7 rotations
+                # Note: NF-type rotations still need weekend preloads (with W activity)
                 is_weekend = current.weekday() >= 5
                 if is_weekend and rotation_type not in (
                     InpatientRotationType.FMIT,
                     InpatientRotationType.NF,
+                    InpatientRotationType.PEDNF,  # Peds Night Float - creates W on weekends
+                    InpatientRotationType.LDNF,  # L&D Night Float - creates W on weekends
+                    InpatientRotationType.KAP,  # Kapiolani - works Thu-Sun
                     InpatientRotationType.IM,
                     InpatientRotationType.PEDW,
                 ):
@@ -247,6 +256,22 @@ class SyncPreloadService:
             else:  # Mon-Thu
                 return ("OFF", "LDNF")
 
+        # NF (Night Float) - off AM (sleeping), NF PM (working), weekends off
+        if code == "NF":
+            if dow >= 5:  # Weekend (Sat=5, Sun=6)
+                return ("W", "W")
+            else:  # Mon-Fri
+                return ("OFF", "NF")
+
+        # PedNF (Peds Night Float) - same pattern as NF
+        if code == "PedNF":
+            if dow >= 5:  # Weekend
+                return ("W", "W")
+            else:  # Mon-Fri
+                return ("OFF", "PedNF")
+
+        # Rotations that work all days including weekends:
+        # FMIT, PedW, IM - just use rotation code for both slots
         # Default: use rotation type for both slots
         return (code, code)
 
@@ -441,6 +466,102 @@ class SyncPreloadService:
         logger.info(f"Loaded {count} SM preloads")
         return count
 
+    def _load_compound_rotation_weekends(
+        self,
+        block_number: int,
+        academic_year: int,
+        start_date: date,
+        end_date: date,
+    ) -> int:
+        """Load weekend preloads for compound rotations.
+
+        Compound rotations like NEURO-1ST-NF-2ND have different weekend rules
+        for each half:
+        - NEURO (first half): No weekend work → needs W preloads
+        - NF (second half): Weekend work handled by inpatient_preloads
+
+        Similarly for NF-1ST-ENDO-2ND:
+        - NF (first half): Weekend work handled by inpatient_preloads
+        - ENDO (second half): No weekend work → needs W preloads
+        """
+        count = 0
+        w_id = self._get_activity_id("W")
+        if not w_id:
+            logger.warning("Missing W activity, skipping compound rotation weekends")
+            return 0
+
+        # Find block assignments with compound rotations
+        from app.models.rotation_template import RotationTemplate
+
+        stmt = (
+            select(BlockAssignment)
+            .options(selectinload(BlockAssignment.rotation_template))
+            .where(
+                BlockAssignment.block_number == block_number,
+                BlockAssignment.academic_year == academic_year,
+            )
+        )
+        result = self.session.execute(stmt)
+        assignments = result.scalars().all()
+
+        # Mid-block transition point (day 14 = start of week 3)
+        mid_block_date = start_date + timedelta(days=14)
+
+        for assignment in assignments:
+            if not assignment.rotation_template:
+                continue
+
+            abbrev = assignment.rotation_template.abbreviation or ""
+
+            # Detect compound rotation patterns
+            # Pattern: *-1ST-NF-2ND → first half is elective (no weekends)
+            # Pattern: NF-1ST-*-2ND → second half is elective (no weekends)
+            first_half_no_weekend = False
+            second_half_no_weekend = False
+
+            if "-1ST-NF-2ND" in abbrev or "-1ST-PEDNF-2ND" in abbrev:
+                # First half is elective (NEURO, etc.) - no weekend work
+                first_half_no_weekend = True
+            elif abbrev.startswith("NF-1ST-") or abbrev.startswith("PEDNF-1ST-"):
+                # Second half is elective (ENDO, etc.) - no weekend work
+                second_half_no_weekend = True
+
+            if not first_half_no_weekend and not second_half_no_weekend:
+                continue
+
+            # Create W preloads for appropriate weekends
+            current = start_date
+            while current <= end_date:
+                is_weekend = current.weekday() >= 5  # Sat=5, Sun=6
+                if not is_weekend:
+                    current += timedelta(days=1)
+                    continue
+
+                # Determine which half this weekend falls in
+                is_first_half = current < mid_block_date
+
+                # Create W preload if this half doesn't work weekends
+                should_create_w = (
+                    (is_first_half and first_half_no_weekend)
+                    or (not is_first_half and second_half_no_weekend)
+                )
+
+                if should_create_w:
+                    if self._create_preload(
+                        assignment.resident_id, current, "AM", w_id
+                    ):
+                        count += 1
+                    if self._create_preload(
+                        assignment.resident_id, current, "PM", w_id
+                    ):
+                        count += 1
+
+                current += timedelta(days=1)
+
+        if count > 0:
+            logger.info(f"Loaded {count} compound rotation weekend preloads")
+        return count
+
     def _get_activity_id(self, code: str) -> UUID | None:
         """Get activity ID by code (cached)."""
         if code in self._activity_cache:
@@ -498,6 +619,13 @@ class SyncPreloadService:
             ):
                 existing.activity_id = activity_id
                 existing.source = AssignmentSource.PRELOAD.value
+                return True
+            if (
+                existing.source == AssignmentSource.PRELOAD.value
+                and existing.activity_id is None
+                and activity_id
+            ):
+                existing.activity_id = activity_id
                 return True
             return False
 
