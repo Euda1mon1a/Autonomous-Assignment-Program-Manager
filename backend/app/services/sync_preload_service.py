@@ -419,8 +419,10 @@ class SyncPreloadService:
                 count += 1
 
             # Next day: PCAT AM, DO PM (if not on FMIT)
+            # Note: Create PCAT/DO even if next_day is in the next block - we use actual
+            # dates, and preload source is locked so next block won't overwrite it
             next_day = call.date + timedelta(days=1)
-            if next_day <= end_date and not self._is_on_fmit(call.person_id, next_day):
+            if not self._is_on_fmit(call.person_id, next_day):
                 if pcat_id and self._create_preload(
                     call.person_id, next_day, "AM", pcat_id
                 ):

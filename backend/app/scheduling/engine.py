@@ -1361,9 +1361,8 @@ class SchedulingEngine:
         for call in call_assignments:
             next_day = call.date + timedelta(days=1)
 
-            # Skip if next day is outside our date range
-            if next_day > self.end_date:
-                continue
+            # Note: Don't skip cross-block PCAT/DO - we use actual dates and preload
+            # source is locked, so next block generation won't overwrite it
 
             # Check if person is on FMIT next day (no PCAT/DO for FMIT)
             fmit_check = (
@@ -1474,9 +1473,8 @@ class SchedulingEngine:
         for call in call_assignments:
             next_day = call.date + timedelta(days=1)
 
-            # Skip if next day is outside our date range
-            if next_day > self.end_date:
-                continue
+            # Note: Don't skip cross-block validation - PCAT/DO should exist even if
+            # next_day is in the next block (created during this block's generation)
 
             # Check if person is on FMIT next day (no PCAT/DO for FMIT)
             fmit_check = (
