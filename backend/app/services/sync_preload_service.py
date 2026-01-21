@@ -122,14 +122,21 @@ class SyncPreloadService:
             logger.warning("Missing LV-AM or LV-PM activity, skipping absences")
             return 0
 
-        # Query absences that block assignments
+        # Query all absences in date range, then filter in Python
+        # NOTE: should_block_assignment is a @property, not a SQL column,
+        # so we cannot filter on it in SQL - must load and filter in Python
         stmt = select(Absence).where(
             Absence.start_date <= end_date,
             Absence.end_date >= start_date,
-            Absence.should_block_assignment == True,  # noqa: E712
         )
         result = self.session.execute(stmt)
-        absences = result.scalars().all()
+        all_absences = result.scalars().all()
+
+        # Filter for blocking absences in Python (uses @property logic)
+        absences = [a for a in all_absences if a.should_block_assignment]
+        logger.debug(
+            f"Found {len(all_absences)} absences, {len(absences)} are blocking"
+        )
 
         for absence in absences:
             # Create preloads for each day of the absence
@@ -196,14 +203,18 @@ class SyncPreloadService:
                 # Skip weekends for non-24/7 rotations
                 # Note: NF-type rotations still need weekend preloads (with W activity)
                 is_weekend = current.weekday() >= 5
-                if is_weekend and rotation_type not in (
-                    InpatientRotationType.FMIT,
-                    InpatientRotationType.NF,
-                    InpatientRotationType.PEDNF,  # Peds Night Float - creates W on weekends
-                    InpatientRotationType.LDNF,  # L&D Night Float - creates W on weekends
-                    InpatientRotationType.KAP,  # Kapiolani - works Thu-Sun
-                    InpatientRotationType.IM,
-                    InpatientRotationType.PEDW,
+                if (
+                    is_weekend
+                    and rotation_type
+                    not in (
+                        InpatientRotationType.FMIT,
+                        InpatientRotationType.NF,
+                        InpatientRotationType.PEDNF,  # Peds Night Float - creates W on weekends
+                        InpatientRotationType.LDNF,  # L&D Night Float - creates W on weekends
+                        InpatientRotationType.KAP,  # Kapiolani - works Thu-Sun
+                        InpatientRotationType.IM,
+                        InpatientRotationType.PEDW,
+                    )
                 ):
                     current += timedelta(days=1)
                     continue
@@ -544,9 +555,8 @@ class SyncPreloadService:
                 is_first_half = current < mid_block_date
 
                 # Create W preload if this half doesn't work weekends
-                should_create_w = (
-                    (is_first_half and first_half_no_weekend)
-                    or (not is_first_half and second_half_no_weekend)
+                should_create_w = (is_first_half and first_half_no_weekend) or (
+                    not is_first_half and second_half_no_weekend
                 )
 
                 if should_create_w:
