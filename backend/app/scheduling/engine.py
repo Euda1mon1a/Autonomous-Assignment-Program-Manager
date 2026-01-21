@@ -244,9 +244,18 @@ class SchedulingEngine:
                     "education assignments (FMO/GME/Lectures)"
                 )
 
-            # Step 1.5g: Expand block_assignments into daily slots
-            # This generates Assignment records from the master rotation schedule
-            expanded_assignments: list[Assignment] = []
+            # =================================================================
+            # CORRECTED ORDER OF OPERATIONS (per TAMC skill)
+            # =================================================================
+            # The dependency chain is:
+            #   Call → PCAT/DO → AT Coverage → Resident Clinic Load → Faculty Admin
+            #
+            # PCAT (Post-Call Attending Time) counts toward AT coverage.
+            # Residents must know PCAT availability BEFORE scheduling clinic.
+            # Faculty admin fills AFTER knowing resident clinic demand.
+            # =================================================================
+
+            # Step 1.5g: Infer block/year if not provided
             if expand_block_assignments:
                 if block_number is None or academic_year is None:
                     # Try to infer from date range
@@ -260,6 +269,43 @@ class SchedulingEngine:
                         f"Inferred block {block_number} AY {academic_year} from dates"
                     )
 
+            # Step 2: Load absences and build availability matrix (moved earlier)
+            self._build_availability_matrix()
+
+            # Step 3: Get residents, faculty, and templates (moved earlier)
+            residents = self._get_residents(pgy_levels)
+            templates = self._get_rotation_templates(rotation_template_ids)
+            faculty = self._get_faculty()
+
+            # NOTE: Context is built in Step 4 (unchanged location)
+            # Call solving happens in Step 5 (half-day mode)
+            # The key change is preloads now skip stale faculty call PCAT/DO
+
+            # Step 3.5: Load NON-CALL preloads (FMIT, absences, C-I, NF, aSM)
+            # SKIP faculty call PCAT/DO - those will come from NEW call in Step 6.5
+            # This prevents loading stale PCAT/DO from old CallAssignment records
+            # SKIP in draft mode - preloads write to live half_day_assignments
+            if (
+                expand_block_assignments
+                and block_number
+                and academic_year
+                and not create_draft
+            ):
+                preload_service = SyncPreloadService(self.db)
+                preload_count = preload_service.load_all_preloads(
+                    block_number, academic_year, skip_faculty_call=True
+                )
+                logger.info(f"Loaded {preload_count} non-call preload assignments")
+            elif create_draft:
+                logger.info(
+                    "Skipping preload sync in draft mode (would modify live data)"
+                )
+
+            # Step 3.6: Expand block_assignments into daily slots
+            # This generates HalfDayAssignment records from the master rotation schedule
+            # Now runs AFTER preloads are loaded (absences, FMIT, etc.)
+            expanded_assignments: list[Assignment] = []
+            if expand_block_assignments and block_number and academic_year:
                 expansion_service = BlockAssignmentExpansionService(self.db)
                 expanded_assignments = expansion_service.expand_block_assignments(
                     block_number=block_number,
@@ -275,74 +321,15 @@ class SchedulingEngine:
                         f"block_assignments for Block {block_number}"
                     )
 
-            # Step 1.5h: Load preloads (FMIT, call, absences) into half_day_assignments
-            # This MUST run after expansion and BEFORE solver to lock slots
-            # SKIP in draft mode - preloads write to live half_day_assignments
-            if (
-                expand_block_assignments
-                and block_number
-                and academic_year
-                and not create_draft
-            ):
-                preload_service = SyncPreloadService(self.db)
-                preload_count = preload_service.load_all_preloads(
-                    block_number, academic_year
-                )
-                logger.info(f"Loaded {preload_count} preload assignments")
-            elif create_draft:
-                logger.info(
-                    "Skipping preload sync in draft mode (would modify live data)"
-                )
-
-            # Step 1.5h.5: Fill faculty half-day assignments
-            # Creates HalfDayAssignment records for faculty with source='template'
-            # This ensures all faculty have 56 slots filled (weekends=W, absences=LV, else=GME/DFM)
-            # Runs AFTER preloads so FMIT/call faculty slots are preserved
-            # SKIP in draft mode - faculty expansion writes to live half_day_assignments
-            if (
-                expand_block_assignments
-                and block_number
-                and academic_year
-                and not create_draft
-            ):
-                faculty_expansion_service = FacultyAssignmentExpansionService(self.db)
-                faculty_count = faculty_expansion_service.fill_faculty_assignments(
-                    block_number, academic_year, exclude_adjuncts=True
-                )
-                logger.info(f"Created {faculty_count} faculty half-day assignments")
-            elif create_draft:
-                logger.info(
-                    "Skipping faculty expansion in draft mode (would modify live data)"
-                )
-
-            # Step 1.5i: Run activity solver to assign C, LEC, ADV to half-day slots
-            # This assigns activities to slots that aren't locked by preload
-            if expand_block_assignments and block_number and academic_year:
-                activity_solver = CPSATActivitySolver(
-                    self.db,
-                    timeout_seconds=min(timeout_seconds, 30.0),  # Cap at 30s
-                )
-                activity_result = activity_solver.solve(block_number, academic_year)
-                if activity_result.get("success"):
-                    logger.info(
-                        f"Activity solver assigned {activity_result.get('assignments_updated', 0)} "
-                        f"activities ({activity_result.get('status', 'unknown')})"
-                    )
-                else:
-                    logger.warning(
-                        f"Activity solver failed: {activity_result.get('message', 'unknown error')}"
-                    )
+            # NOTE: Faculty expansion and activity solver are moved to AFTER
+            # call assignments are created (see Steps 6.7 and 6.8)
+            # This ensures:
+            # 1. PCAT/DO from NEW call is locked before activity solver runs
+            # 2. Activity solver knows PCAT coverage for AT ratio calculations
+            # 3. Faculty fills remaining slots AFTER knowing resident demand
 
             # NOTE: Deletion deferred until after successful solve (see Step 5.5)
             # This prevents data loss if the solver fails
-
-            # Step 2: Load absences and build availability matrix
-            self._build_availability_matrix()
-
-            # Step 3: Get residents, faculty, and templates
-            residents = self._get_residents(pgy_levels)
-            templates = self._get_rotation_templates(rotation_template_ids)
-            faculty = self._get_faculty()
 
             if not residents:
                 self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
@@ -505,8 +492,8 @@ class SchedulingEngine:
                 )
 
                 # Step 6.6: Sync PCAT/DO to half_day_assignments based on NEW call
-                # The preload service ran before solver, so PCAT/DO may be stale.
-                # This updates half_day_assignments to match the new CallAssignment records.
+                # Creates PCAT (AM) and DO (PM) for day after call, locked as preload.
+                # NOW we have baseline AT coverage for ratio calculations.
                 if call_assignments and expand_block_assignments:
                     self._sync_call_pcat_do_to_half_day(call_assignments)
             elif solver_result.call_assignments:
@@ -515,15 +502,73 @@ class SchedulingEngine:
                     f"in draft mode (would modify live CallAssignment table)"
                 )
 
-            # Step 7: Assign faculty supervision
-            # In half-day mode, faculty assignments already created by Step 1.5h.5
+            # =================================================================
+            # CORRECTED: Activity solver and faculty expansion run AFTER call
+            # =================================================================
+            # NOW that PCAT/DO is locked, the activity solver knows AT coverage.
+            # Residents can be scheduled knowing which slots have supervision.
+            # Faculty expansion fills remaining slots AFTER knowing resident demand.
+
+            # Step 6.7: Run activity solver to assign C, LEC, ADV to half-day slots
+            # This assigns activities to resident slots that aren't locked by preload.
+            # NOW runs AFTER PCAT/DO is created, so AT coverage is known.
+            # SKIP in draft mode - activity solver writes to live half_day_assignments
+            if (
+                expand_block_assignments
+                and block_number
+                and academic_year
+                and not create_draft
+            ):
+                activity_solver = CPSATActivitySolver(
+                    self.db,
+                    timeout_seconds=min(timeout_seconds, 30.0),  # Cap at 30s
+                )
+                activity_result = activity_solver.solve(block_number, academic_year)
+                if activity_result.get("success"):
+                    logger.info(
+                        f"Activity solver assigned {activity_result.get('assignments_updated', 0)} "
+                        f"activities ({activity_result.get('status', 'unknown')})"
+                    )
+                else:
+                    logger.warning(
+                        f"Activity solver failed: {activity_result.get('message', 'unknown error')}"
+                    )
+            elif create_draft and expand_block_assignments:
+                logger.info(
+                    "Skipping activity solver in draft mode (would modify live data)"
+                )
+
+            # Step 6.8: Fill faculty half-day assignments
+            # Creates HalfDayAssignment records for faculty with source='template'.
+            # Ensures all faculty have 56 slots filled (weekends=W, absences=LV, else=GME/DFM).
+            # NOW runs AFTER activity solver, so we know resident clinic demand.
+            # PCAT/DO from Step 6.6 is preserved (source='preload' > 'template').
+            # SKIP in draft mode - faculty expansion writes to live half_day_assignments
+            if (
+                expand_block_assignments
+                and block_number
+                and academic_year
+                and not create_draft
+            ):
+                faculty_expansion_service = FacultyAssignmentExpansionService(self.db)
+                faculty_count = faculty_expansion_service.fill_faculty_assignments(
+                    block_number, academic_year, exclude_adjuncts=True
+                )
+                logger.info(f"Created {faculty_count} faculty half-day assignments")
+            elif create_draft and expand_block_assignments:
+                logger.info(
+                    "Skipping faculty expansion in draft mode (would modify live data)"
+                )
+
+            # Step 7: Assign faculty supervision (legacy mode only)
+            # In half-day mode, faculty assignments already created by Step 6.8
             # (FacultyAssignmentExpansionService fills all 56 slots per faculty)
             if not expand_block_assignments:
                 self._assign_faculty(faculty, blocks, run.id, preserved_assignments)
             else:
                 logger.info(
                     "Skipping legacy faculty supervision - already handled by "
-                    "FacultyAssignmentExpansionService in Step 1.5h.5"
+                    "FacultyAssignmentExpansionService in Step 6.8"
                 )
 
             # Step 8: Handle draft vs live assignment persistence

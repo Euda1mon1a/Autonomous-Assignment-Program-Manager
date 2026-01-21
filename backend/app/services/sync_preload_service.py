@@ -53,9 +53,18 @@ class SyncPreloadService:
         self,
         block_number: int,
         academic_year: int,
+        skip_faculty_call: bool = False,
     ) -> int:
         """
         Load all preloads for a block into half_day_assignments.
+
+        Args:
+            block_number: Academic block number (1-13)
+            academic_year: Academic year (e.g., 2025 for AY 2025-2026)
+            skip_faculty_call: If True, skip loading faculty call PCAT/DO from
+                              existing CallAssignment table. Use this when the
+                              engine will generate NEW call assignments and create
+                              PCAT/DO directly (correct order of operations).
 
         Returns:
             Number of assignments created
@@ -77,7 +86,15 @@ class SyncPreloadService:
         total += self._load_fmit_call(start_date, end_date)
         total += self._load_inpatient_clinic(block_number, academic_year)
         total += self._load_resident_call(start_date, end_date)
-        total += self._load_faculty_call(start_date, end_date)
+
+        # Faculty call PCAT/DO - skip if engine will create from NEW call
+        # Old behavior: Load PCAT/DO from existing CallAssignment (STALE!)
+        # New behavior: Engine runs call solver first, creates PCAT/DO directly
+        if not skip_faculty_call:
+            total += self._load_faculty_call(start_date, end_date)
+        else:
+            logger.info("Skipping faculty call PCAT/DO (engine creates from NEW call)")
+
         total += self._load_sm_preloads(start_date, end_date)
         # Conferences and protected time are stubbed out in async version
         # total += self._load_conferences(start_date, end_date)

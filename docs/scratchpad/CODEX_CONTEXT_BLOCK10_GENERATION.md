@@ -17,12 +17,18 @@ Every person (resident or faculty) must have **exactly 56 half-day assignments p
 
 ---
 
-## Pipeline Overview (Order of Operations)
+## Pipeline Overview (CORRECTED Order of Operations)
+
+> **CRITICAL:** The dependency chain is: Call → PCAT/DO → AT Coverage → Resident Clinic → Faculty Admin
+>
+> PCAT (Post-Call Attending Time) counts toward AT (supervision) coverage.
+> Residents MUST know PCAT availability BEFORE scheduling clinic slots.
+> Faculty admin time fills AFTER knowing resident clinic demand.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  PHASE 1: PRELOAD (Locked slots - NEVER overwritten by solver)              │
-│  Source: SyncPreloadService                                                  │
+│  PHASE 1: NON-CALL PRELOADS (Locked slots - NEVER overwritten by solver)    │
+│  Source: SyncPreloadService (with skip_faculty_call=True)                    │
 │  Priority: HIGHEST (source='preload')                                        │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  1. Absences (LV-AM, LV-PM) - vacation, sick, conference                     │
@@ -30,10 +36,10 @@ Every person (resident or faculty) must have **exactly 56 half-day assignments p
 │  3. FMIT Fri/Sat call - auto-assigned during FMIT week                       │
 │  4. C-I (inpatient clinic): PGY-1 Wed AM, PGY-2 Tue PM, PGY-3 Mon PM        │
 │  5. Resident call preloads                                                   │
-│  6. Faculty call → generates PCAT (AM) + DO (PM) next day                   │
-│  7. aSM (Sports Med Wed AM for SM faculty)                                   │
-│  8. Conferences (HAFP, USAFP, LEC) [stubbed]                                 │
-│  9. Protected time (SIM, PI, MM) [stubbed]                                   │
+│  6. aSM (Sports Med Wed AM for SM faculty)                                   │
+│  7. Conferences (HAFP, USAFP, LEC) [stubbed]                                 │
+│  8. Protected time (SIM, PI, MM) [stubbed]                                   │
+│  ⚠️ Faculty call PCAT/DO SKIPPED - comes from NEW call in Phase 3            │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
@@ -57,21 +63,23 @@ Every person (resident or faculty) must have **exactly 56 half-day assignments p
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  PHASE 3: FACULTY EXPANSION                                                  │
-│  Source: FacultyAssignmentExpansionService                                   │
-│  Priority: LOW (source='template')                                           │
+│  PHASE 3: CALL SOLVER (Sun-Thu) + PCAT/DO Generation                         │
+│  Source: GreedySolver → _sync_call_pcat_do_to_half_day()                     │
+│  Priority: PRELOAD (LOCKED after creation)                                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  Ensures faculty have 56 half-day records with admin time placeholders       │
+│  ★ CRITICAL: Call MUST be solved BEFORE activity solver runs ★               │
 │                                                                              │
-│  Activity Assignment Priority:                                               │
-│  1. Deployed (DEP) - tdy, training, military_duty, deployment                │
-│  2. Absent (LV-AM/LV-PM) - blocking absences                                 │
-│  3. Weekend (W)                                                              │
-│  4. Holiday (HOL) - from Block.is_holiday or NON_OPERATIONAL intent          │
-│  5. Admin time (gme/dfm/sm_clinic) - based on faculty.admin_type             │
+│  Sun-Thu call uses equity algorithm (min-gap decay)                          │
+│  FMIT Fri/Sat call comes from preloads (Phase 1)                             │
 │                                                                              │
-│  CRITICAL: SM admin_type maps to 'sm_clinic' activity (not 'sm')             │
-│  CRITICAL: Exclude adjuncts (faculty_role='adjunct' OR NULL → included)      │
+│  IMMEDIATELY after creating CallAssignment records:                          │
+│  → Creates PCAT (AM) + DO (PM) for next day (source='preload', LOCKED)       │
+│  → NOW we have baseline AT coverage for ratio calculations                   │
+│                                                                              │
+│  Key rules:                                                                  │
+│  - FMIT faculty don't get PCAT/DO (continue coverage)                        │
+│  - No back-to-back call (need gap days)                                      │
+│  - Sunday tracked separately for equity                                      │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
@@ -80,6 +88,8 @@ Every person (resident or faculty) must have **exactly 56 half-day assignments p
 │  Source: CPSATActivitySolver                                                 │
 │  Priority: MEDIUM (source='solver')                                          │
 ├─────────────────────────────────────────────────────────────────────────────┤
+│  ★ NOW knows PCAT availability from Phase 3 for AT coverage calculations ★   │
+│                                                                              │
 │  Assigns C/LEC/ADV activities to RESIDENT slots with source='solver/template'│
 │                                                                              │
 │  CRITICAL: Excludes faculty (Person.type != 'faculty')                       │
@@ -94,19 +104,48 @@ Every person (resident or faculty) must have **exactly 56 half-day assignments p
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  PHASE 5: CALL SOLVER (Sun-Thu)                                              │
-│  Source: GreedySolver (call_assignments only)                                │
-│  Priority: MEDIUM                                                            │
+│  PHASE 5: FACULTY EXPANSION                                                  │
+│  Source: FacultyAssignmentExpansionService                                   │
+│  Priority: LOW (source='template')                                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  Sun-Thu call uses equity algorithm (min-gap decay)                          │
-│  FMIT Fri/Sat call comes from preloads (Phase 1)                             │
+│  ★ NOW knows resident clinic demand from Phase 4 ★                           │
+│  ★ PCAT/DO from Phase 3 preserved (source='preload' > 'template') ★          │
 │                                                                              │
-│  Key rules:                                                                  │
-│  - Call generates PCAT (AM) + DO (PM) next day                               │
-│  - FMIT faculty don't get PCAT/DO (continue coverage)                        │
-│  - No back-to-back call (need gap days)                                      │
-│  - Sunday tracked separately for equity                                      │
+│  Ensures faculty have 56 half-day records with admin time placeholders       │
+│                                                                              │
+│  Activity Assignment Priority:                                               │
+│  1. Deployed (DEP) - tdy, training, military_duty, deployment                │
+│  2. Absent (LV-AM/LV-PM) - blocking absences                                 │
+│  3. Weekend (W)                                                              │
+│  4. Holiday (HOL) - from Block.is_holiday or NON_OPERATIONAL intent          │
+│  5. Admin time (gme/dfm/sm_clinic) - based on faculty.admin_type             │
+│                                                                              │
+│  CRITICAL: SM admin_type maps to 'sm_clinic' activity (not 'sm')             │
+│  CRITICAL: Exclude adjuncts (faculty_role='adjunct' OR NULL → included)      │
 └─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Why This Order Matters
+
+**Example: March 16 (Monday after Sunday call)**
+
+```
+Faculty A took call Sunday night
+→ Monday AM = PCAT (can precept, counts as 1.0 AT coverage)
+→ Monday PM = DO (day off)
+
+Resident AT demand Monday AM:
+- 2 PGY-1 in clinic = 1.0 AT needed
+- 2 PGY-2 in clinic = 0.5 AT needed
+- Total = 1.5 AT needed
+
+AT coverage Monday AM:
+- Faculty A: PCAT (1.0 AT) ← From call schedule
+- Faculty B: C (1.0 AT)
+- Total = 2.0 AT available ✓
+
+If call changes AFTER residents scheduled → PCAT disappears →
+Only 1.0 AT available but 1.5 needed → ACGME violation!
 ```
 
 ---
@@ -129,7 +168,7 @@ def generate(
 ) -> dict:
 ```
 
-**Business Logic:**
+**Business Logic (CORRECTED Order - Session 125):**
 
 1. **Create schedule run record** for audit trail
 2. **Check pre-generation resilience** (utilization thresholds, N-1 coverage)
@@ -138,15 +177,19 @@ def generate(
    - FMIT faculty assignments
    - Resident inpatient assignments
    - Absence assignments
-5. **If `expand_block_assignments=True` and NOT draft mode:**
-   - Run `SyncPreloadService.load_all_preloads()` → FMIT, call, absences
-   - Run `BlockAssignmentExpansionService.expand_block_assignments()` → resident slots
-   - Run `FacultyAssignmentExpansionService.fill_faculty_assignments()` → faculty admin
-   - Run `CPSATActivitySolver.solve()` → C/LEC/ADV for residents
-   - Run `GreedySolver` (call_assignments only) → Sun-Thu call
-6. **Validate ACGME compliance** (80-hour rule, 1-in-7, supervision ratios)
-7. **Check post-generation resilience**
-8. **Return results** with assignments, validation, resilience info
+5. **Build availability matrix** from absences
+6. **Get residents, faculty, templates**
+7. **If `expand_block_assignments=True` and NOT draft mode:**
+   - **Step 3.5:** Load NON-CALL preloads (`skip_faculty_call=True`) → FMIT, absences, C-I, NF, aSM
+   - **Step 3.6:** Expand resident block assignments → HalfDayAssignment
+   - **Step 5:** Run `GreedySolver` (call_assignments only) → Sun-Thu call
+   - **Step 6.5:** Create CallAssignment records
+   - **Step 6.6:** Generate PCAT/DO (`_sync_call_pcat_do_to_half_day()`) → LOCKED
+   - **Step 6.7:** Run `CPSATActivitySolver.solve()` → C/LEC/ADV for residents (NOW knows PCAT)
+   - **Step 6.8:** Run `FacultyAssignmentExpansionService` → faculty admin (NOW knows resident demand)
+8. **Validate ACGME compliance** (80-hour rule, 1-in-7, supervision ratios)
+9. **Check post-generation resilience**
+10. **Return results** with assignments, validation, resilience info
 
 **Critical Guard (Session 124 Fix):**
 ```python
@@ -453,17 +496,18 @@ class HalfDayAssignment:
 | Activity solver overwrites faculty | No person type filter | `Person.type != 'faculty'` |
 | Call assignments empty | Assumed all from preload | Run greedy for Sun-Thu |
 
-### Addressed in Session 125 (Codex Round 4)
+### Addressed in Session 125 (Codex Round 4 + Order Fix)
 
 | Issue | Root Cause | Fix |
 |-------|-----------|-----|
 | Draft mode mutates live CallAssignment | No guard on `_create_call_assignments_from_result` | Added `if not create_draft` guard |
 | Call preload/solver sequence divergence | Preloads run before solver; PCAT/DO based on OLD call | Added `_sync_call_pcat_do_to_half_day()` after step 6.5 |
 | Holiday detection per-date not per-slot | Query used `Block.date` only | Changed to `(date, time_of_day)` tuples |
+| **CRITICAL: Wrong order of operations** | Activity solver ran before PCAT/DO created; faculty expansion ran before knowing resident demand | **Restructured entire pipeline** (see below) |
 
 **Detailed Fixes:**
 
-1. **Draft Mode CallAssignment Guard (engine.py:500)**
+1. **Draft Mode CallAssignment Guard (engine.py:489)**
    ```python
    if not create_draft:
        call_assignments = self._create_call_assignments_from_result(...)
@@ -471,16 +515,51 @@ class HalfDayAssignment:
            self._sync_call_pcat_do_to_half_day(call_assignments)
    ```
 
-2. **PCAT/DO Sync After Call Generation (engine.py:1211)**
-   - New method `_sync_call_pcat_do_to_half_day()` runs AFTER solver creates CallAssignment records
-   - Updates/creates PCAT (AM) and DO (PM) in half_day_assignments for next day
+2. **PCAT/DO Sync After Call Generation (engine.py:497)**
+   - `_sync_call_pcat_do_to_half_day()` runs AFTER solver creates CallAssignment records
+   - Creates PCAT (AM) and DO (PM) in half_day_assignments for next day
    - Skips if person is on FMIT (they don't get PCAT/DO)
-   - Uses `source='preload'` to lock slots
+   - Uses `source='preload'` to LOCK slots
 
 3. **Per-Slot Holiday Detection (faculty_assignment_expansion_service.py)**
    - Changed `_holiday_dates: set[date]` → `_holiday_slots: set[tuple[date, str]]`
    - Query now includes `Block.time_of_day`
    - Each slot checked independently: `(current_date, "AM") in self._holiday_slots`
+
+4. **CRITICAL: Restructured Order of Operations (engine.py)**
+
+   **Old (WRONG) Order:**
+   ```
+   1. Expand resident block assignments
+   2. Load preloads (PCAT/DO from OLD call - STALE!)
+   3. Fill faculty half-days (before knowing resident demand)
+   4. Activity solver (doesn't know PCAT coverage)
+   5. Call solver → NEW CallAssignment
+   6. Sync PCAT/DO (TOO LATE - residents already scheduled)
+   ```
+
+   **New (CORRECT) Order:**
+   ```
+   1. Load NON-CALL preloads (skip_faculty_call=True)
+   2. Expand resident block assignments
+   3. Call solver → NEW CallAssignment
+   4. Create PCAT/DO immediately (LOCKED as preload)
+   5. Activity solver (NOW knows PCAT for AT coverage)
+   6. Fill faculty half-days (NOW knows resident demand)
+   ```
+
+5. **SyncPreloadService.load_all_preloads() - New Parameter**
+   ```python
+   def load_all_preloads(
+       self,
+       block_number: int,
+       academic_year: int,
+       skip_faculty_call: bool = False,  # NEW - skip stale PCAT/DO
+   ) -> int:
+   ```
+
+   When `skip_faculty_call=True`, skips loading PCAT/DO from existing CallAssignment records.
+   Engine creates fresh PCAT/DO from NEW call in Step 6.6.
 
 ### Potential Remaining Gaps
 

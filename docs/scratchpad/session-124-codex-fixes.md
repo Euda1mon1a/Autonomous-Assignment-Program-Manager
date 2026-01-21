@@ -42,11 +42,48 @@ Address Codex IDE findings for faculty expansion service, engine, and debugger.
 
 | Priority | Finding | Fix |
 |----------|---------|-----|
-| HIGH | Draft mode mutates live CallAssignment | Added `if not create_draft` guard at engine.py:500 |
+| HIGH | Draft mode mutates live CallAssignment | Added `if not create_draft` guard at engine.py:489 |
 | HIGH | Call preload/solver divergence (PCAT/DO stale) | Added `_sync_call_pcat_do_to_half_day()` after step 6.5 |
 | MEDIUM | Holiday detection per-date (not per-slot) | Changed to `(date, time_of_day)` tuples in faculty_expansion |
+| **CRITICAL** | **Wrong order of operations** | **Restructured entire pipeline** (see below) |
 
 **Key Insight:** Preloads run BEFORE solver generates new call assignments. This caused PCAT/DO in half_day_assignments to be based on OLD CallAssignment records while the solver created NEW ones. Fixed by adding a sync step after call generation.
+
+### Round 5 Fixes (Session 125 - Order Restructure)
+
+**CRITICAL BUG:** The entire pipeline order was wrong!
+
+The dependency chain is: **Call → PCAT/DO → AT Coverage → Resident Clinic → Faculty Admin**
+
+| Priority | Finding | Fix |
+|----------|---------|-----|
+| CRITICAL | Activity solver ran before PCAT/DO created | Moved activity solver to Step 6.7 (after PCAT/DO sync) |
+| CRITICAL | Faculty expansion ran before resident demand known | Moved faculty expansion to Step 6.8 (after activity solver) |
+| CRITICAL | Preloads loaded stale PCAT/DO from old call | Added `skip_faculty_call=True` to preload loading |
+
+**Old (WRONG) Order:**
+```
+1. Expand resident block assignments
+2. Load preloads (PCAT/DO from OLD call - STALE!)
+3. Fill faculty half-days (before knowing resident demand)
+4. Activity solver (doesn't know PCAT coverage)
+5. Call solver → NEW CallAssignment
+6. Sync PCAT/DO (TOO LATE - residents already scheduled)
+```
+
+**New (CORRECT) Order:**
+```
+1. Load NON-CALL preloads (skip_faculty_call=True)
+2. Expand resident block assignments
+3. Call solver → NEW CallAssignment
+4. Create PCAT/DO immediately (LOCKED as preload)
+5. Activity solver (NOW knows PCAT for AT coverage)
+6. Fill faculty half-days (NOW knows resident demand)
+```
+
+**Files Modified:**
+- `backend/app/scheduling/engine.py` - Restructured generate() method
+- `backend/app/services/sync_preload_service.py` - Added `skip_faculty_call` parameter
 
 ## Key Design Decisions
 
@@ -54,15 +91,17 @@ Address Codex IDE findings for faculty expansion service, engine, and debugger.
 - **`CPSATSolver`** (solvers.py) - Legacy rotation-level solver
 - **`CPSATActivitySolver`** (activity_solver.py) - Half-day activity solver
 
-### Half-Day Mode Pipeline
+### Half-Day Mode Pipeline (CORRECTED - Session 125)
 ```
-1. BlockAssignmentExpansionService → HalfDayAssignment (residents)
-2. SyncPreloadService → Lock FMIT/call/absences (PCAT/DO from OLD call)
-3. FacultyAssignmentExpansionService → HalfDayAssignment (faculty admin time)
-4. CPSATActivitySolver → Assign C/LEC/ADV to unlocked resident slots
-5. GreedySolver (call only) → Sun-Thu call equity → CallAssignment records
-6. _sync_call_pcat_do_to_half_day → Update PCAT/DO to match NEW call
+1. SyncPreloadService → Lock FMIT/absences/C-I/NF/aSM (skip_faculty_call=True)
+2. BlockAssignmentExpansionService → HalfDayAssignment (residents)
+3. GreedySolver (call only) → Sun-Thu call equity → CallAssignment records
+4. _sync_call_pcat_do_to_half_day → Create PCAT/DO from NEW call (LOCKED)
+5. CPSATActivitySolver → Assign C/LEC/ADV (NOW knows PCAT for AT coverage)
+6. FacultyAssignmentExpansionService → HalfDayAssignment (NOW knows resident demand)
 ```
+
+**Dependency Chain:** Call → PCAT/DO → AT Coverage → Resident Clinic → Faculty Admin
 
 ### Call Assignment Sources
 | Call Type | Source |
