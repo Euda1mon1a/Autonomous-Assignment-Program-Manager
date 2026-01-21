@@ -147,6 +147,32 @@ mcp__residency-scheduler__get_defense_level_tool(coverage_rate=0.95)
 
 Include defense level in session output. If ORANGE or RED, flag as blocker.
 
+### 7. Check API Type Staleness (Hydra's Heads)
+
+**Generated types must match backend schemas.** Check for drift:
+
+```bash
+# Quick staleness check (compares timestamps)
+BACKEND_SCHEMA_TIME=$(stat -f %m backend/app/schemas/*.py 2>/dev/null | sort -rn | head -1 || echo "0")
+GENERATED_TYPES_TIME=$(stat -f %m frontend/src/types/api-generated.ts 2>/dev/null || echo "0")
+
+if [ "$BACKEND_SCHEMA_TIME" -gt "$GENERATED_TYPES_TIME" ]; then
+  echo "⚠️  WARNING: API types may be stale"
+  echo "   Backend schemas modified after types were generated"
+  echo "   Run: cd frontend && npm run generate:types"
+fi
+```
+
+**If backend is running, do full drift check:**
+```bash
+cd frontend && npm run generate:types:check
+```
+
+**Include in session output:**
+- **Types:** In sync / ⚠️ Stale (regenerate needed)
+
+**Why this matters:** Schema drift caused 47+ wiring disconnects. See CLAUDE.md "OpenAPI Type Contract" section.
+
 ---
 
 ## Output Format
@@ -184,8 +210,10 @@ Provide a concise summary in this format:
 - Database: X assignments in Block Y
 - MCP: healthy/unhealthy/not running
 - RAG: X documents indexed / unavailable
+- Types: In sync / ⚠️ Stale (run `cd frontend && npm run generate:types`)
 
 **⚠️ If MCP unavailable:** Run `./scripts/start-local.sh`
+**⚠️ If Types stale:** Run `cd frontend && npm run generate:types`
 
 Ready to work. What's the task?
 ```

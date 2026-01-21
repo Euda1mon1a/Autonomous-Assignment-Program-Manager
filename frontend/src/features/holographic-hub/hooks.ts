@@ -111,8 +111,8 @@ async function fetchHolographicData(
   request: HolographicDataRequest
 ): Promise<HolographicDataResponse> {
   const params = new URLSearchParams();
-  params.append("startDate", request.startDate);
-  params.append("endDate", request.endDate);
+  params.append("start_date", request.startDate);
+  params.append("end_date", request.endDate);
 
   if (request.layers) {
     request.layers.forEach((layer) => params.append("layers", layer));

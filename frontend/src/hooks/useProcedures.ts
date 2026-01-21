@@ -277,8 +277,8 @@ export function useProcedures(
   const params = new URLSearchParams();
   if (filters?.specialty) params.set('specialty', filters.specialty);
   if (filters?.category) params.set('category', filters.category);
-  if (filters?.isActive !== undefined) params.set('isActive', String(filters.isActive));
-  if (filters?.complexityLevel) params.set('complexityLevel', filters.complexityLevel);
+  if (filters?.isActive !== undefined) params.set('is_active', String(filters.isActive));
+  if (filters?.complexityLevel) params.set('complexity_level', filters.complexityLevel);
   const queryString = params.toString();
 
   return useQuery<ListResponse<Procedure>, ApiError>({
@@ -379,7 +379,7 @@ export function useCredentials(
   }
 
   if (filters?.status) params.set('status', filters.status);
-  if (filters?.includeExpired !== undefined) params.set('includeExpired', String(filters.includeExpired));
+  if (filters?.includeExpired !== undefined) params.set('include_expired', String(filters.includeExpired));
   const queryString = params.toString();
 
   return useQuery<ListResponse<Credential>, ApiError>({
@@ -474,7 +474,7 @@ export function useFacultyCredentials(
 ): UseQueryResult<ListResponse<Credential>, ApiError> {
   const params = new URLSearchParams();
   if (filterOptions?.status) params.set('status', filterOptions.status);
-  if (filterOptions?.includeExpired !== undefined) params.set('includeExpired', String(filterOptions.includeExpired));
+  if (filterOptions?.includeExpired !== undefined) params.set('include_expired', String(filterOptions.includeExpired));
   const queryString = params.toString();
 
   return useQuery<ListResponse<Credential>, ApiError>({

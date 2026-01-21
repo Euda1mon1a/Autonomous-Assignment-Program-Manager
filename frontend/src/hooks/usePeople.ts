@@ -196,7 +196,7 @@ export function usePeople(
 ) {
   const params = new URLSearchParams()
   if (filters?.role) params.set('type', filters.role)
-  if (filters?.pgyLevel !== undefined) params.set('pgyLevel', String(filters.pgyLevel))
+  if (filters?.pgyLevel !== undefined) params.set('pgy_level', String(filters.pgyLevel))
   const queryString = params.toString()
 
   return useQuery<ListResponse<Person>, ApiError>({

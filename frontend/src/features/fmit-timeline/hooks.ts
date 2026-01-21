@@ -58,25 +58,25 @@ function buildQueryString(filters?: TimelineFilters): string {
   const params = new URLSearchParams();
 
   if (filters.startDate) {
-    params.set('startDate', filters.startDate);
+    params.set('start_date', filters.startDate);
   }
   if (filters.endDate) {
-    params.set('endDate', filters.endDate);
+    params.set('end_date', filters.endDate);
   }
   if (filters.facultyIds?.length) {
-    params.set('facultyIds', filters.facultyIds.join(','));
+    params.set('faculty_ids', filters.facultyIds.join(','));
   }
   if (filters.rotationIds?.length) {
-    params.set('rotationIds', filters.rotationIds.join(','));
+    params.set('rotation_ids', filters.rotationIds.join(','));
   }
   if (filters.specialty) {
     params.set('specialty', filters.specialty);
   }
   if (filters.workloadStatus?.length) {
-    params.set('workloadStatus', filters.workloadStatus.join(','));
+    params.set('workload_status', filters.workloadStatus.join(','));
   }
   if (filters.viewMode) {
-    params.set('viewMode', filters.viewMode);
+    params.set('view_mode', filters.viewMode);
   }
 
   return params.toString();
@@ -137,10 +137,10 @@ export function useFacultyTimeline(
 ) {
   const params = new URLSearchParams();
   if (dateRange?.start) {
-    params.set('startDate', dateRange.start);
+    params.set('start_date', dateRange.start);
   }
   if (dateRange?.end) {
-    params.set('endDate', dateRange.end);
+    params.set('end_date', dateRange.end);
   }
   const queryString = params.toString();
 
@@ -176,10 +176,10 @@ export function useTimelineMetrics(
 ) {
   const params = new URLSearchParams();
   if (dateRange?.start) {
-    params.set('startDate', dateRange.start);
+    params.set('start_date', dateRange.start);
   }
   if (dateRange?.end) {
-    params.set('endDate', dateRange.end);
+    params.set('end_date', dateRange.end);
   }
   const queryString = params.toString();
 

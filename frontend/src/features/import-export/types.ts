@@ -181,7 +181,7 @@ export interface AbsenceImportRow {
   personId?: string;
   startDate: string;
   endDate: string;
-  absenceType: 'vacation' | 'deployment' | 'tdy' | 'medical' | 'familyEmergency' | 'conference';
+  absenceType: 'vacation' | 'deployment' | 'tdy' | 'medical' | 'family_emergency' | 'conference' | 'sick' | 'bereavement' | 'emergency_leave' | 'convalescent' | 'maternity_paternity' | 'personal' | 'training' | 'military_duty';
   deploymentOrders?: boolean;
   tdyLocation?: string;
   replacementActivity?: string;

@@ -73,7 +73,7 @@ export function useAdminTemplates(
     queryKey: adminTemplatesQueryKeys.list(filters),
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (activityType) params.append('activityType', activityType);
+      if (activityType) params.append('activity_type', activityType);
       if (includeArchived) params.append('include_archived', 'true');
       const queryString = params.toString();
       return get<RotationTemplateListResponse>(`/rotation-templates${queryString ? `?${queryString}` : ''}`);

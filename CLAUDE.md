@@ -132,6 +132,41 @@ query.filter(not Person.is_active)
 
 **Why:** `not` is Python's boolean operator and returns `True`/`False`. `~` invokes SQLAlchemy's `__invert__` to generate proper SQL `NOT` clause.
 
+### OpenAPI Type Contract (Hydra's Heads)
+
+**Generated types ARE the source of truth.** Schema drift is a critical bug.
+
+```
+backend/app/schemas/*.py (Pydantic)
+         ↓ OpenAPI spec
+frontend/src/types/api-generated.ts (auto-generated, camelCase)
+         ↓ re-exported
+frontend/src/types/api.ts (barrel export + utilities)
+```
+
+**Standing Orders:**
+
+1. **Before frontend API work:** Run `cd frontend && npm run generate:types:check`
+2. **After backend schema changes:** Run `cd frontend && npm run generate:types` and commit both
+3. **Never manually edit `api-generated.ts`** - it's auto-generated
+4. **Pre-commit hook enforces** - commits fail if types drift from backend
+
+**Why this matters:** Manual types caused 47+ wiring disconnects (query params, enums, endpoints). Generated types eliminate drift at the source.
+
+**Enforcement Layers (Belt & Suspenders):**
+| Layer | Hook | When |
+|-------|------|------|
+| Pre-commit | `modron-march.sh` | Every commit |
+| CI | `npm run generate:types:check` | Every PR |
+| Startup | Type staleness check | Every session |
+| This doc | Standing order | Every AI task |
+
+**If types are stale:**
+```bash
+cd frontend && npm run generate:types
+git add src/types/api-generated.ts
+```
+
 > RAG: `rag_search('code style examples')` for detailed patterns
 
 ---

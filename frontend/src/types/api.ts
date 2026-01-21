@@ -98,7 +98,7 @@ export enum AbsenceType {
   /** Medical leave */
   MEDICAL = 'medical',
   /** Family emergency leave */
-  FAMILY_EMERGENCY = 'familyEmergency',
+  FAMILY_EMERGENCY = 'family_emergency',
   /** Conference attendance */
   CONFERENCE = 'conference',
   /** Sick leave */
@@ -106,13 +106,17 @@ export enum AbsenceType {
   /** Bereavement leave */
   BEREAVEMENT = 'bereavement',
   /** Emergency leave */
-  EMERGENCY_LEAVE = 'emergencyLeave',
+  EMERGENCY_LEAVE = 'emergency_leave',
   /** Convalescent leave */
   CONVALESCENT = 'convalescent',
   /** Maternity or paternity leave */
-  MATERNITY_PATERNITY = 'maternityPaternity',
+  MATERNITY_PATERNITY = 'maternity_paternity',
   /** Personal leave */
-  PERSONAL = 'personal'
+  PERSONAL = 'personal',
+  /** Training (military) */
+  TRAINING = 'training',
+  /** Military duty */
+  MILITARY_DUTY = 'military_duty'
 }
 
 /**

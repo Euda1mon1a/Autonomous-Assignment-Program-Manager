@@ -23,7 +23,7 @@ import {
 // ============================================================================
 
 const PERSON_TYPES = ['resident', 'faculty'];
-const ABSENCE_TYPES = ['vacation', 'deployment', 'tdy', 'medical', 'familyEmergency', 'conference'];
+const ABSENCE_TYPES = ['vacation', 'deployment', 'tdy', 'medical', 'family_emergency', 'conference', 'sick', 'bereavement', 'emergency_leave', 'convalescent', 'maternity_paternity', 'personal', 'training', 'military_duty'];
 const ASSIGNMENT_ROLES = ['primary', 'supervising', 'backup'];
 const TIME_OF_DAY = ['AM', 'PM'];
 

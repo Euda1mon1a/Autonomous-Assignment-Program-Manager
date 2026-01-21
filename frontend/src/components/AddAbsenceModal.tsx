@@ -33,14 +33,16 @@ const absenceTypeOptions = [
   { value: 'sick', label: 'Sick' },
   { value: 'medical', label: 'Medical Leave' },
   { value: 'convalescent', label: 'Convalescent' },
-  { value: 'maternityPaternity', label: 'Parental Leave' },
+  { value: 'maternity_paternity', label: 'Parental Leave' },
   // Emergency (blocking - Hawaii reality: 7+ days travel)
-  { value: 'familyEmergency', label: 'Family Emergency' },
-  { value: 'emergencyLeave', label: 'Emergency Leave' },
+  { value: 'family_emergency', label: 'Family Emergency' },
+  { value: 'emergency_leave', label: 'Emergency Leave' },
   { value: 'bereavement', label: 'Bereavement' },
   // Military
   { value: 'deployment', label: 'Deployment' },
   { value: 'tdy', label: 'TDY' },
+  { value: 'training', label: 'Training' },
+  { value: 'military_duty', label: 'Military Duty' },
 ];
 
 export function AddAbsenceModal({

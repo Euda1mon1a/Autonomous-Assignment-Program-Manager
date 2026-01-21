@@ -42,22 +42,22 @@ function buildQueryString(filters?: HeatmapFilters): string {
   const params = new URLSearchParams();
 
   if (filters.startDate) {
-    params.set('startDate', filters.startDate);
+    params.set('start_date', filters.startDate);
   }
   if (filters.endDate) {
-    params.set('endDate', filters.endDate);
+    params.set('end_date', filters.endDate);
   }
   if (filters.personIds?.length) {
-    params.set('personIds', filters.personIds.join(','));
+    params.set('person_ids', filters.personIds.join(','));
   }
   if (filters.rotationIds?.length) {
-    params.set('rotationIds', filters.rotationIds.join(','));
+    params.set('rotation_ids', filters.rotationIds.join(','));
   }
   if (filters.includeFmit !== undefined) {
-    params.set('includeFmit', String(filters.includeFmit));
+    params.set('include_fmit', String(filters.includeFmit));
   }
   if (filters.groupBy) {
-    params.set('groupBy', filters.groupBy);
+    params.set('group_by', filters.groupBy);
   }
 
   return params.toString();
@@ -94,8 +94,8 @@ export function useCoverageHeatmap(
   options?: Omit<UseQueryOptions<CoverageHeatmapResponse, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams();
-  params.set('startDate', dateRange.start);
-  params.set('endDate', dateRange.end);
+  params.set('start_date', dateRange.start);
+  params.set('end_date', dateRange.end);
 
   return useQuery<CoverageHeatmapResponse, ApiError>({
     queryKey: heatmapQueryKeys.coverage(dateRange),
@@ -115,10 +115,10 @@ export function useWorkloadHeatmap(
   options?: Omit<UseQueryOptions<WorkloadHeatmapResponse, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams();
-  params.set('startDate', dateRange.start);
-  params.set('endDate', dateRange.end);
+  params.set('start_date', dateRange.start);
+  params.set('end_date', dateRange.end);
   if (personIds.length > 0) {
-    params.set('personIds', personIds.join(','));
+    params.set('person_ids', personIds.join(','));
   }
 
   return useQuery<WorkloadHeatmapResponse, ApiError>({
@@ -140,10 +140,10 @@ export function useRotationCoverageComparison(
   options?: Omit<UseQueryOptions<HeatmapResponse, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams();
-  params.set('startDate', dateRange.start);
-  params.set('endDate', dateRange.end);
+  params.set('start_date', dateRange.start);
+  params.set('end_date', dateRange.end);
   if (rotationIds && rotationIds.length > 0) {
-    params.set('rotationIds', rotationIds.join(','));
+    params.set('rotation_ids', rotationIds.join(','));
   }
 
   return useQuery<HeatmapResponse, ApiError>({
