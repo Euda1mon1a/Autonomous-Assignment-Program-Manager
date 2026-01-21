@@ -17,9 +17,9 @@ interface BlockAssignmentResponse {
   academicYear: number
   residentId: string
   rotationTemplateId: string | null
-  has_leave: boolean
-  leave_days: number
-  assignment_reason: string
+  hasLeave: boolean
+  leaveDays: number
+  assignmentReason: string
   notes: string | null
   resident: {
     id: string
@@ -30,16 +30,16 @@ interface BlockAssignmentResponse {
     id: string
     name: string
     activityType: string
-    leave_eligible: boolean
+    leaveEligible: boolean
   } | null
 }
 
 interface BlockSchedulerDashboard {
   blockNumber: number
   academicYear: number
-  block_startDate: string | null
-  block_endDate: string | null
-  current_assignments: BlockAssignmentResponse[]
+  blockStartDate: string | null
+  blockEndDate: string | null
+  currentAssignments: BlockAssignmentResponse[]
   totalResidents: number
   unassignedResidents: number
 }
@@ -160,9 +160,9 @@ export function BlockAnnualView({
     const map = new Map<string, Map<number, BlockAssignmentResponse>>()
 
     dashboardQueries.forEach((query, idx) => {
-      if (query.data?.current_assignments) {
+      if (query.data?.currentAssignments) {
         const blockNum = blockNumbers[idx]
-        query.data.current_assignments.forEach((assignment) => {
+        query.data.currentAssignments.forEach((assignment) => {
           if (!map.has(assignment.residentId)) {
             map.set(assignment.residentId, new Map())
           }
@@ -230,11 +230,11 @@ export function BlockAnnualView({
     const colors = getActivityColor(activityType)
 
     // Show leave indicator
-    if (assignment.has_leave) {
+    if (assignment.hasLeave) {
       return (
         <div
           className={`h-full w-full flex items-center justify-center px-1 py-0.5 rounded text-xs font-medium ${colors.bg} ${colors.text} border ${colors.border}`}
-          title={`${assignment.rotationTemplate?.name || 'Unknown'} (${assignment.leave_days} leave days)`}
+          title={`${assignment.rotationTemplate?.name || 'Unknown'} (${assignment.leaveDays} leave days)`}
         >
           <span className="truncate">{abbreviation}</span>
           <span className="ml-0.5 text-amber-500">★</span>
