@@ -25,8 +25,7 @@ Test Categories:
 """
 
 from datetime import date, timedelta
-from unittest.mock import MagicMock, patch, PropertyMock
-from uuid import uuid4
+from unittest.mock import MagicMock, patch
 from typing import Any
 
 import pytest
@@ -132,19 +131,25 @@ class TestPipelineOrderEnforcement:
         Expected order:
         1. preload (with skip_faculty_call=True)
         2. expansion
-        3. solver (greedy for call)
+        3. call_solver (greedy for call generation)
         4. pcat_do_sync (after call_create)
         5. activity_solver
         6. faculty_expansion
+
+        HARD-FAIL: Test fails if ANY required step is missing (no exception swallowing).
         """
         # Track call order via module-level patches
         call_order: list[str] = []
 
-        # Patch at module level to track calls
-        original_preload_init = None
-        original_expansion_init = None
-        original_activity_init = None
-        original_faculty_init = None
+        # Required steps that MUST be called (in order)
+        REQUIRED_STEPS = [
+            "preload_skip_faculty",
+            "expansion",
+            "call_solver",
+            "pcat_do_sync",
+            "activity_solver",
+            "faculty_expansion",
+        ]
 
         def track_preload_call(*args: Any, **kwargs: Any) -> int:
             if kwargs.get("skip_faculty_call"):
@@ -156,6 +161,17 @@ class TestPipelineOrderEnforcement:
         def track_expansion_call(*args: Any, **kwargs: Any) -> list:
             call_order.append("expansion")
             return []
+
+        def track_call_solver(*args: Any, **kwargs: Any) -> MagicMock:
+            """Track _run_solver for call generation."""
+            call_order.append("call_solver")
+            mock_result = MagicMock()
+            mock_result.success = True
+            mock_result.assignments = []
+            mock_result.call_assignments = [MagicMock()]
+            mock_result.solver_status = "OPTIMAL"
+            mock_result.validation_issues = []
+            return mock_result
 
         def track_activity_call(*args: Any, **kwargs: Any) -> dict:
             call_order.append("activity_solver")
@@ -226,20 +242,31 @@ class TestPipelineOrderEnforcement:
                                         mock_db, start_date, end_date
                                     )
 
-                        # Patch instance methods
+                        # Patch instance methods - track _run_solver for call generation
+                        engine._run_solver = track_call_solver
                         engine._sync_call_pcat_do_to_half_day = track_pcat_sync
 
-                        # Mock solver result
-                        mock_result = MagicMock()
-                        mock_result.success = True
-                        mock_result.assignments = []
-                        mock_result.call_assignments = [MagicMock()]
-                        mock_result.solver_status = "OPTIMAL"
-                        mock_result.validation_issues = []
+                        # Mock PreSolverValidator to pass validation
+                        mock_validation_result = MagicMock()
+                        mock_validation_result.feasible = True
+                        mock_validation_result.issues = []
+                        mock_validation_result.warnings = []
+                        mock_validation_result.recommendations = []
+                        mock_validation_result.statistics = {
+                            "complexity_level": "LOW",
+                            "num_variables": 100,
+                            "estimated_runtime": "1s",
+                        }
 
-                        with patch.object(
-                            engine, "_run_solver", return_value=mock_result
-                        ):
+                        with patch(
+                            "app.scheduling.engine.PreSolverValidator"
+                        ) as mock_validator_cls:
+                            mock_validator = MagicMock()
+                            mock_validator.validate_saturation.return_value = (
+                                mock_validation_result
+                            )
+                            mock_validator_cls.return_value = mock_validator
+
                             with patch.object(
                                 engine,
                                 "_create_call_assignments_from_result",
@@ -254,42 +281,50 @@ class TestPipelineOrderEnforcement:
                                         with patch.object(
                                             engine,
                                             "_get_rotation_templates",
-                                            return_value=[],
+                                            return_value=[MagicMock()],
                                         ):
                                             with patch.object(
                                                 engine, "_get_faculty", return_value=[]
                                             ):
-                                                # Run generate - may fail but we track order
-                                                try:
-                                                    engine.generate(
-                                                        block_number=10,
-                                                        academic_year=2025,
-                                                        expand_block_assignments=True,
-                                                        algorithm="greedy",
-                                                    )
-                                                except Exception:
-                                                    pass  # We only care about call order
+                                                # Mock post-generation validator
+                                                mock_post_validation = MagicMock()
+                                                mock_post_validation.valid = True
+                                                mock_post_validation.violations = []
+                                                mock_post_validation.warnings = []
+                                                mock_post_validation.coverage_rate = 1.0
+                                                engine.validator = MagicMock()
+                                                engine.validator.validate_all.return_value = mock_post_validation
 
-        # CRITICAL ASSERTIONS: Verify order
-        # These assertions will FAIL if pipeline is reordered
+                                                # Run generate - NO exception swallowing
+                                                engine.generate(
+                                                    block_number=10,
+                                                    academic_year=2025,
+                                                    expand_block_assignments=True,
+                                                    algorithm="greedy",
+                                                )
 
-        # Verify preload was called with skip_faculty_call=True
+        # HARD-FAIL ASSERTIONS: All required steps MUST be present
+        missing_steps = [step for step in REQUIRED_STEPS if step not in call_order]
+        assert not missing_steps, (
+            f"HARD-FAIL: Missing required pipeline steps: {missing_steps}. "
+            f"Actual call order: {call_order}"
+        )
+
+        # Verify preload was called with skip_faculty_call=True (not skip_faculty_call=False)
         assert "preload_skip_faculty" in call_order, (
             f"Preload must be called with skip_faculty_call=True. Got: {call_order}"
         )
+        assert "preload_all" not in call_order, (
+            f"Preload should NOT be called with skip_faculty_call=False. Got: {call_order}"
+        )
 
-        # Verify relative order of steps that were called
-        def assert_order(first: str, second: str) -> None:
-            if first in call_order and second in call_order:
-                assert call_order.index(first) < call_order.index(second), (
-                    f"{first} must come before {second}. Order: {call_order}"
-                )
-
-        # Check order: preload → expansion → pcat_do_sync → activity → faculty
-        assert_order("preload_skip_faculty", "expansion")
-        assert_order("expansion", "pcat_do_sync")
-        assert_order("pcat_do_sync", "activity_solver")
-        assert_order("activity_solver", "faculty_expansion")
+        # Verify correct ordering of ALL required steps
+        for i, step in enumerate(REQUIRED_STEPS[:-1]):
+            next_step = REQUIRED_STEPS[i + 1]
+            assert call_order.index(step) < call_order.index(next_step), (
+                f"Order violation: {step} must come before {next_step}. "
+                f"Actual order: {call_order}"
+            )
 
     def test_preload_called_with_skip_faculty_call_true(self) -> None:
         """Verify preload is called with skip_faculty_call=True in half-day mode."""
