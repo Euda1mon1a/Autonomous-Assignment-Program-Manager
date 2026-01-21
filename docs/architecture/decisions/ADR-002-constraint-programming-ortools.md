@@ -126,8 +126,9 @@ elif status == cp_model.INFEASIBLE:
 
 **Date:** 2026-01-19
 **Requirement:** `ortools>=9.8,<9.9` (backend/requirements.txt)
+**Latest Available:** v9.15 (Jan 12, 2026) - Python 3.14 support
 
-OR-Tools v9.9 (late 2024) introduced a **breaking API change** from PascalCase to snake_case:
+OR-Tools v9.9 (March 2024) introduced a **breaking API change** from PascalCase to snake_case:
 
 ```python
 # Current codebase (PascalCase - OR-Tools 9.8)
