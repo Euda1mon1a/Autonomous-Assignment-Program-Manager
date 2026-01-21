@@ -2,7 +2,10 @@
   "mcpServers": {
     "residency-scheduler": {
       "url": "http://127.0.0.1:8081/mcp",
-      "type": "http"
+      "type": "http",
+      "headers": {
+        "Authorization": "Bearer dev-mcp-key-2026"
+      }
     }
   }
 }
