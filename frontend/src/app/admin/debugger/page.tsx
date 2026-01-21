@@ -13,7 +13,8 @@
  * @see docs/development/SIDE_BY_SIDE_DEBUGGER.md
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useBlockRanges } from '@/hooks';
 import {
   Bug,
   Database,
@@ -27,12 +28,9 @@ import {
   Copy,
   Check,
   AlertTriangle,
-  Play,
-  X,
   ChevronDown,
   ChevronRight,
   Eye,
-  EyeOff,
   Sparkles,
   Terminal,
 } from 'lucide-react';
@@ -47,18 +45,6 @@ interface PanelConfig {
   type: 'app' | 'nocodb' | 'custom';
 }
 
-interface ApiCall {
-  id: string;
-  timestamp: Date;
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  url: string;
-  status: number;
-  duration: number;
-  requestBody?: unknown;
-  responseBody?: unknown;
-  error?: string;
-}
-
 type SplitRatio = 25 | 50 | 75;
 
 // ============================================================================
@@ -66,7 +52,9 @@ type SplitRatio = 25 | 50 | 75;
 // ============================================================================
 
 const DEFAULT_LEFT_URL = '/schedule';
-const DEFAULT_NOCODB_URL = 'http://localhost:8085';
+
+// Use environment variable for API base URL, fallback to localhost for dev
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const PRESET_URLS: { label: string; url: string; type: PanelConfig['type'] }[] = [
   { label: 'Schedule', url: '/schedule', type: 'app' },
@@ -74,7 +62,6 @@ const PRESET_URLS: { label: string; url: string; type: PanelConfig['type'] }[] =
   { label: 'Call Hub', url: '/call-hub', type: 'app' },
   { label: 'Block Explorer', url: '/admin/block-explorer', type: 'app' },
   { label: 'Compliance', url: '/compliance', type: 'app' },
-  { label: 'NocoDB', url: DEFAULT_NOCODB_URL, type: 'nocodb' },
 ];
 
 const DIAGNOSIS_MATRIX = [
@@ -221,6 +208,10 @@ function IframePanel({
   useEffect(() => {
     setLoading(true);
     setError(null);
+    // Fallback: hide loading after 3s even if onLoad doesn't fire
+    // (Next.js iframes sometimes don't trigger onLoad properly)
+    const timeout = setTimeout(() => setLoading(false), 3000);
+    return () => clearTimeout(timeout);
   }, [url, refreshKey]);
 
   const handleLoad = () => {
@@ -236,6 +227,8 @@ function IframePanel({
 
   // Check if URL is external (for CORS/X-Frame-Options warnings)
   const isExternal = url.startsWith('http') && !url.includes('localhost');
+  // Only sandbox external URLs - same-origin content doesn't need restrictions
+  const isSameOrigin = url.startsWith('/') || url.includes('localhost:3000');
 
   return (
     <div className="relative h-full bg-slate-900">
@@ -268,7 +261,7 @@ function IframePanel({
         className="w-full h-full border-0"
         onLoad={handleLoad}
         onError={handleError}
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+        {...(!isSameOrigin && { sandbox: "allow-same-origin allow-scripts allow-forms allow-popups" })}
         title="Debug panel"
       />
     </div>
@@ -371,6 +364,344 @@ function ChromeExtensionHint() {
   );
 }
 
+type DataSource = 'api' | 'db' | 'diff';
+
+interface Assignment {
+  id: string;
+  personId: string;
+  date: string;
+  period: 'AM' | 'PM';
+  activityCode: string;
+  source?: string;
+}
+
+interface Person {
+  id: string;
+  name: string;
+  type: string;
+  pgyLevel?: number;
+}
+
+function ScheduleMirrorView({
+  refreshKey,
+  onScroll,
+  scrollTop = 0,
+}: {
+  refreshKey: number;
+  onScroll?: (scrollTop: number) => void;
+  scrollTop?: number;
+}) {
+  const [dataSource, setDataSource] = useState<DataSource>('api');
+  const [people, setPeople] = useState<Person[]>([]);
+  const [apiAssignments, setApiAssignments] = useState<Assignment[]>([]);
+  const [dbAssignments, setDbAssignments] = useState<Assignment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [dates, setDates] = useState<string[]>([]);
+  // Track both block number AND academic year to handle multi-year data
+  const [selectedBlockKey, setSelectedBlockKey] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isScrolling = useRef(false);
+
+  // Fetch block ranges
+  const { data: blockRanges } = useBlockRanges();
+
+  // Create a unique key for each block (handles multiple academic years)
+  const getBlockKey = (blockNumber: number, academicYear: number) =>
+    `${academicYear}-${blockNumber}`;
+
+  // Parse block key back to components
+  const parseBlockKey = (key: string): { blockNumber: number; academicYear: number } | null => {
+    const [yearStr, numStr] = key.split('-');
+    const academicYear = parseInt(yearStr, 10);
+    const blockNumber = parseInt(numStr, 10);
+    if (isNaN(academicYear) || isNaN(blockNumber)) return null;
+    return { blockNumber, academicYear };
+  };
+
+  // Auto-select current block on load
+  useEffect(() => {
+    if (blockRanges?.length && selectedBlockKey === null) {
+      const today = new Date().toISOString().split('T')[0];
+      const currentBlock = blockRanges.find(
+        b => b.startDate <= today && b.endDate >= today
+      );
+      // Default to first block if today isn't in any block
+      const block = currentBlock ?? blockRanges[0];
+      if (block) {
+        setSelectedBlockKey(getBlockKey(block.blockNumber, block.academicYear));
+      }
+    }
+  }, [blockRanges, selectedBlockKey]);
+
+  // Generate dates from selected block
+  useEffect(() => {
+    if (!blockRanges || selectedBlockKey === null) return;
+    const parsed = parseBlockKey(selectedBlockKey);
+    if (!parsed) return;
+    const block = blockRanges.find(
+      b => b.blockNumber === parsed.blockNumber && b.academicYear === parsed.academicYear
+    );
+    if (!block) return;
+
+    const dateList: string[] = [];
+    const start = new Date(block.startDate);
+    const end = new Date(block.endDate);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      dateList.push(d.toISOString().split('T')[0]);
+    }
+    setDates(dateList);
+  }, [blockRanges, selectedBlock]);
+
+  // Fetch data when block changes or dates are ready
+  useEffect(() => {
+    const fetchData = async () => {
+      // Wait for dates to be generated from selected block
+      if (dates.length === 0) return;
+
+      const startDate = dates[0];
+      const endDate = dates[dates.length - 1];
+
+      setLoading(true);
+      setError(null);
+      try {
+        // Fetch people using configurable API base URL
+        const peopleRes = await fetch(`${API_BASE_URL}/api/v1/people?limit=100`, {
+          credentials: 'include',
+        });
+        if (!peopleRes.ok) throw new Error(`People: HTTP ${peopleRes.status}`);
+        const peopleJson = await peopleRes.json();
+        const peopleList = Array.isArray(peopleJson) ? peopleJson : peopleJson.items || [];
+        setPeople(peopleList.filter((p: Person) => p.type === 'resident').slice(0, 20));
+
+        // Fetch assignments from API with date range filter using configurable base URL
+        const assignUrl = `${API_BASE_URL}/api/v1/half-day-assignments?start_date=${startDate}&end_date=${endDate}&limit=2000`;
+        const assignRes = await fetch(assignUrl, {
+          credentials: 'include',
+        });
+        if (assignRes.ok) {
+          const assignJson = await assignRes.json();
+          // API returns { assignments: [...] } or { items: [...] } or array directly
+          const assignments = assignJson.assignments || assignJson.items || (Array.isArray(assignJson) ? assignJson : []);
+          const mappedAssignments = assignments.map((a: Record<string, unknown>) => ({
+            id: a.id as string,
+            personId: a.person_id as string || a.personId as string,
+            date: a.date as string,
+            // API uses time_of_day, frontend expects period
+            period: (a.time_of_day as string || a.period as string || 'AM') as 'AM' | 'PM',
+            // Use display_abbreviation, activity_code, or activity_name - fallback to '—'
+            activityCode: (a.display_abbreviation as string) || (a.activity_code as string) || (a.activity_name as string) || '—',
+            source: 'api',
+          }));
+          setApiAssignments(mappedAssignments);
+          // For DB view, we'd call a raw endpoint - for now simulate with same data
+          // TODO: Add /api/v1/debug/raw-assignments endpoint
+          setDbAssignments(mappedAssignments.map((a: Assignment) => ({ ...a, source: 'db' })));
+        }
+
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [refreshKey, dates]);
+
+  // Sync scroll from parent
+  useEffect(() => {
+    if (scrollRef.current && !isScrolling.current) {
+      scrollRef.current.scrollTop = scrollTop;
+    }
+  }, [scrollTop]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    isScrolling.current = true;
+    onScroll?.(e.currentTarget.scrollTop);
+    setTimeout(() => { isScrolling.current = false; }, 100);
+  };
+
+  // Get assignment for a person/date/period
+  const getAssignment = (personId: string, date: string, period: 'AM' | 'PM', source: DataSource): string => {
+    const assignments = source === 'db' ? dbAssignments : apiAssignments;
+    const match = assignments.find(a =>
+      a.personId === personId && a.date === date && a.period === period
+    );
+    return match?.activityCode || '—';
+  };
+
+  // Check if there's a mismatch between API and DB
+  const hasMismatch = (personId: string, date: string, period: 'AM' | 'PM'): boolean => {
+    const apiVal = getAssignment(personId, date, period, 'api');
+    const dbVal = getAssignment(personId, date, period, 'db');
+    return apiVal !== dbVal;
+  };
+
+  // Get cell display value and style
+  const getCellContent = (personId: string, date: string, period: 'AM' | 'PM') => {
+    const apiVal = getAssignment(personId, date, period, 'api');
+    const dbVal = getAssignment(personId, date, period, 'db');
+    const mismatch = hasMismatch(personId, date, period);
+
+    if (dataSource === 'diff') {
+      if (mismatch) {
+        return {
+          value: `${apiVal}≠${dbVal}`,
+          className: 'bg-red-900/50 text-red-300 border border-red-500/50',
+        };
+      }
+      return { value: apiVal, className: 'text-slate-400' };
+    }
+
+    const value = dataSource === 'db' ? dbVal : apiVal;
+
+    // Color by activity type
+    let className = 'text-slate-300';
+    if (value === 'C' || value === 'CV') className = 'text-emerald-400';
+    else if (value === 'FMIT') className = 'text-amber-400';
+    else if (value === 'OFF' || value === 'LV') className = 'text-slate-500';
+    else if (value === 'NF') className = 'text-violet-400';
+    else if (value === 'LEC') className = 'text-cyan-400';
+    else if (value === '—') className = 'text-slate-600';
+
+    return { value, className };
+  };
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-slate-900">
+      {/* Header with block selector and source toggle */}
+      <div className="flex items-center justify-between px-3 py-2 bg-slate-800/50 border-b border-slate-700/50">
+        <div className="flex items-center gap-2">
+          <Database className="w-4 h-4 text-cyan-400" />
+          {/* Block selector - year-aware to handle multiple academic years */}
+          <select
+            value={selectedBlockKey ?? ''}
+            onChange={(e) => setSelectedBlockKey(e.target.value)}
+            className="px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+          >
+            {blockRanges?.map(b => (
+              <option
+                key={getBlockKey(b.blockNumber, b.academicYear)}
+                value={getBlockKey(b.blockNumber, b.academicYear)}
+              >
+                Block {b.blockNumber} (AY {b.academicYear})
+              </option>
+            ))}
+          </select>
+          <div className="w-px h-5 bg-slate-600" />
+          {(['api', 'db', 'diff'] as const).map(source => (
+            <button
+              key={source}
+              onClick={() => setDataSource(source)}
+              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                dataSource === source
+                  ? source === 'diff'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-cyan-600 text-white'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+              }`}
+            >
+              {source === 'api' ? 'API' : source === 'db' ? 'Raw DB' : '⚡ Diff'}
+            </button>
+          ))}
+        </div>
+        <span className="text-xs text-slate-500">
+          {dataSource === 'diff' && '🔴 Red = mismatch'}
+        </span>
+      </div>
+
+      {/* Grid */}
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-auto"
+        onScroll={handleScroll}
+      >
+        {loading && (
+          <div className="flex items-center justify-center h-32">
+            <RefreshCw className="w-6 h-6 text-cyan-400 animate-spin" />
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 p-4 m-3 bg-red-900/20 border border-red-700/50 rounded-lg">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+            <span className="text-red-400">{error}</span>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <table className="w-full text-xs border-collapse">
+            <thead className="sticky top-0 bg-slate-800 z-10">
+              <tr>
+                <th className="text-left py-2 px-2 text-slate-400 font-medium border-b border-slate-700 sticky left-0 bg-slate-800 min-w-[120px]">
+                  Person
+                </th>
+                {dates.map(date => (
+                  <th key={date} colSpan={2} className="text-center py-1 px-1 text-slate-400 font-medium border-b border-l border-slate-700">
+                    {formatDate(date)}
+                  </th>
+                ))}
+              </tr>
+              <tr>
+                <th className="border-b border-slate-700 sticky left-0 bg-slate-800"></th>
+                {dates.map(date => (
+                  <React.Fragment key={`${date}-periods`}>
+                    <th className="text-center py-1 px-1 text-slate-500 text-[10px] border-b border-l border-slate-700 w-10">AM</th>
+                    <th className="text-center py-1 px-1 text-slate-500 text-[10px] border-b border-slate-700 w-10">PM</th>
+                  </React.Fragment>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {people.map((person, idx) => (
+                <tr key={person.id} className={idx % 2 === 0 ? 'bg-slate-800/20' : ''}>
+                  <td className="py-1.5 px-2 text-slate-300 font-medium border-b border-slate-700/50 sticky left-0 bg-slate-900 whitespace-nowrap">
+                    <span className="text-slate-300">{person.name}</span>
+                    {person.pgyLevel && (
+                      <span className={`ml-1 text-[10px] ${
+                        person.pgyLevel === 1 ? 'text-emerald-400' :
+                        person.pgyLevel === 2 ? 'text-amber-400' : 'text-violet-400'
+                      }`}>
+                        PGY-{person.pgyLevel}
+                      </span>
+                    )}
+                  </td>
+                  {dates.map(date => (
+                    <React.Fragment key={`${person.id}-${date}`}>
+                      {(['AM', 'PM'] as const).map(period => {
+                        const { value, className } = getCellContent(person.id, date, period);
+                        return (
+                          <td
+                            key={`${person.id}-${date}-${period}`}
+                            className={`text-center py-1 px-1 border-b border-l border-slate-700/30 font-mono ${className}`}
+                          >
+                            {value}
+                          </td>
+                        );
+                      })}
+                    </React.Fragment>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="px-3 py-2 bg-slate-800/30 border-t border-slate-700/50 text-xs text-slate-500 flex justify-between">
+        <span>{people.length} people × {dates.length} days</span>
+        <span>Source: {dataSource.toUpperCase()}</span>
+      </div>
+    </div>
+  );
+}
+
 // ============================================================================
 // Main Component
 // ============================================================================
@@ -378,7 +709,6 @@ function ChromeExtensionHint() {
 export default function DebuggerPage() {
   // Panel state
   const [leftUrl, setLeftUrl] = useState(DEFAULT_LEFT_URL);
-  const [rightUrl, setRightUrl] = useState(DEFAULT_NOCODB_URL);
   const [splitRatio, setSplitRatio] = useState<SplitRatio>(50);
   const [leftRefreshKey, setLeftRefreshKey] = useState(0);
   const [rightRefreshKey, setRightRefreshKey] = useState(0);
@@ -413,10 +743,9 @@ export default function DebuggerPage() {
   }, [handleRefreshLeft, handleRefreshRight]);
 
   const handleSwapPanels = useCallback(() => {
-    const tempUrl = leftUrl;
-    setLeftUrl(rightUrl);
-    setRightUrl(tempUrl);
-  }, [leftUrl, rightUrl]);
+    // Swap split ratio (e.g., 25/75 becomes 75/25)
+    setSplitRatio(prev => (100 - prev) as SplitRatio);
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -568,29 +897,34 @@ export default function DebuggerPage() {
           </div>
         )}
 
-        {/* Right Panel */}
+        {/* Right Panel - Database Inspector */}
         {rightWidth > 0 && (
           <div className="flex flex-col" style={{ width: `${rightWidth}%` }}>
-            <UrlBar
-              value={rightUrl}
-              onChange={setRightUrl}
-              onRefresh={handleRefreshRight}
-              label="Database"
-              presets={PRESET_URLS.filter((p) => p.type === 'nocodb' || p.type === 'custom')}
-            />
-            <div className="relative flex-1">
-              <IframePanel url={rightUrl} refreshKey={rightRefreshKey} />
-              <button
-                onClick={() => setFullscreenPanel(fullscreenPanel === 'right' ? null : 'right')}
-                className="absolute top-2 right-2 p-1.5 bg-slate-800/80 text-slate-400 hover:text-white rounded"
-                title="Fullscreen"
-              >
-                {fullscreenPanel === 'right' ? (
-                  <Minimize2 className="w-4 h-4" />
-                ) : (
-                  <Maximize2 className="w-4 h-4" />
-                )}
-              </button>
+            <div className="flex items-center justify-between px-3 py-2 bg-slate-800/50 border-b border-slate-700/50">
+              <span className="text-xs font-medium text-slate-400">Database Inspector</span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleRefreshRight}
+                  className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded"
+                  title="Refresh"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setFullscreenPanel(fullscreenPanel === 'right' ? null : 'right')}
+                  className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded"
+                  title="Fullscreen"
+                >
+                  {fullscreenPanel === 'right' ? (
+                    <Minimize2 className="w-4 h-4" />
+                  ) : (
+                    <Maximize2 className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <ScheduleMirrorView refreshKey={rightRefreshKey} />
             </div>
           </div>
         )}
@@ -599,9 +933,9 @@ export default function DebuggerPage() {
       {/* Footer status */}
       <footer className="bg-slate-800/50 border-t border-slate-700/50 px-4 py-2 flex items-center justify-between text-xs text-slate-400">
         <div className="flex items-center gap-4">
-          <span>Left: <span className="text-white font-mono">{leftUrl}</span></span>
+          <span>Frontend: <span className="text-white font-mono">{leftUrl}</span></span>
           <span className="text-slate-600">|</span>
-          <span>Right: <span className="text-white font-mono">{rightUrl}</span></span>
+          <span>Database: <span className="text-cyan-400">API Inspector</span></span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-slate-500">Shortcuts:</span>

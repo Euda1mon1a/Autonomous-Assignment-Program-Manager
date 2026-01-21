@@ -60,6 +60,9 @@ from app.services.block_assignment_expansion_service import (
     BlockAssignmentExpansionService,
 )
 from app.services.sync_preload_service import SyncPreloadService
+from app.services.faculty_assignment_expansion_service import (
+    FacultyAssignmentExpansionService,
+)
 from app.scheduling.activity_solver import CPSATActivitySolver
 from app.services.schedule_draft_service import ScheduleDraftService
 from app.models.schedule_draft import DraftSourceType
@@ -274,12 +277,43 @@ class SchedulingEngine:
 
             # Step 1.5h: Load preloads (FMIT, call, absences) into half_day_assignments
             # This MUST run after expansion and BEFORE solver to lock slots
-            if expand_block_assignments and block_number and academic_year:
+            # SKIP in draft mode - preloads write to live half_day_assignments
+            if (
+                expand_block_assignments
+                and block_number
+                and academic_year
+                and not create_draft
+            ):
                 preload_service = SyncPreloadService(self.db)
                 preload_count = preload_service.load_all_preloads(
                     block_number, academic_year
                 )
                 logger.info(f"Loaded {preload_count} preload assignments")
+            elif create_draft:
+                logger.info(
+                    "Skipping preload sync in draft mode (would modify live data)"
+                )
+
+            # Step 1.5h.5: Fill faculty half-day assignments
+            # Creates HalfDayAssignment records for faculty with source='template'
+            # This ensures all faculty have 56 slots filled (weekends=W, absences=LV, else=GME/DFM)
+            # Runs AFTER preloads so FMIT/call faculty slots are preserved
+            # SKIP in draft mode - faculty expansion writes to live half_day_assignments
+            if (
+                expand_block_assignments
+                and block_number
+                and academic_year
+                and not create_draft
+            ):
+                faculty_expansion_service = FacultyAssignmentExpansionService(self.db)
+                faculty_count = faculty_expansion_service.fill_faculty_assignments(
+                    block_number, academic_year, exclude_adjuncts=True
+                )
+                logger.info(f"Created {faculty_count} faculty half-day assignments")
+            elif create_draft:
+                logger.info(
+                    "Skipping faculty expansion in draft mode (would modify live data)"
+                )
 
             # Step 1.5i: Run activity solver to assign C, LEC, ADV to half-day slots
             # This assigns activities to slots that aren't locked by preload
@@ -388,14 +422,32 @@ class SchedulingEngine:
                     logger.warning(f"Pre-solver warning: {warning}")
 
             # Step 5: Run solver
-            solver_result = self._run_solver(algorithm, context, timeout_seconds)
+            # NOTE: In half-day mode (expand_block_assignments=True), the activity solver
+            # (CPSATActivitySolver in Step 1.5i) handles activity assignment to HalfDayAssignment.
+            # The legacy rotation solver is skipped because its results are discarded anyway.
+            if not expand_block_assignments:
+                solver_result = self._run_solver(algorithm, context, timeout_seconds)
 
-            if not solver_result.success:
-                logger.warning(f"Solver failed: {solver_result.solver_status}")
-                # Fallback to greedy if advanced solver fails
-                if algorithm != "greedy":
-                    logger.info("Falling back to greedy solver")
-                    solver_result = self._run_solver("greedy", context, timeout_seconds)
+                if not solver_result.success:
+                    logger.warning(f"Solver failed: {solver_result.solver_status}")
+                    # Fallback to greedy if advanced solver fails
+                    if algorithm != "greedy":
+                        logger.info("Falling back to greedy solver")
+                        solver_result = self._run_solver(
+                            "greedy", context, timeout_seconds
+                        )
+            else:
+                # Half-day mode: skip legacy solver, use stub result
+                logger.info(
+                    "Skipping legacy rotation solver in half-day mode "
+                    "(CPSATActivitySolver handles activity assignment)"
+                )
+                solver_result = SolverResult(
+                    success=True,
+                    assignments=[],
+                    status="skipped",
+                    solver_status="half-day mode - using CPSATActivitySolver",
+                )
 
             # Step 5.5: Delete existing assignments (except preserved ones)
             # This happens AFTER successful solve to prevent data loss on solver failure
@@ -445,13 +497,14 @@ class SchedulingEngine:
             )
 
             # Step 7: Assign faculty supervision
-            # In half-day mode, faculty assignments handled separately
+            # In half-day mode, faculty assignments already created by Step 1.5h.5
+            # (FacultyAssignmentExpansionService fills all 56 slots per faculty)
             if not expand_block_assignments:
                 self._assign_faculty(faculty, blocks, run.id, preserved_assignments)
             else:
                 logger.info(
-                    "Skipping faculty supervision in half-day mode "
-                    "(handled by FacultyAssignmentExpansionService)"
+                    "Skipping legacy faculty supervision - already handled by "
+                    "FacultyAssignmentExpansionService in Step 1.5h.5"
                 )
 
             # Step 8: Handle draft vs live assignment persistence
