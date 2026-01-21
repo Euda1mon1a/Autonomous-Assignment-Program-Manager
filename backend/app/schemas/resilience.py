@@ -1746,3 +1746,148 @@ class HubStatusResponse(BaseModel):
     active_protection_plans: int
     pending_cross_training: int
     recommendations: list[str] = Field(default_factory=list)
+
+
+# =============================================================================
+# Defense Level, Utilization, Burnout Rt, Circuit Breaker Schemas
+# =============================================================================
+
+
+class DefenseLevelRequest(BaseModel):
+    """Request for defense level calculation."""
+
+    coverage_rate: float = Field(..., ge=0.0, le=1.0, description="Current coverage rate (0.0 to 1.0)")
+
+
+class DefenseLevelResponse(BaseModel):
+    """Response from defense level calculation."""
+
+    level: DefenseLevel
+    level_number: int = Field(..., ge=1, le=5, description="Numeric level (1=PREVENTION to 5=EMERGENCY)")
+    description: str
+    recommended_actions: list[str]
+    escalation_threshold: float = Field(..., description="Coverage rate that would trigger escalation")
+
+
+class UtilizationThresholdRequest(BaseModel):
+    """Request for utilization threshold check."""
+
+    available_faculty: int = Field(..., ge=0)
+    required_blocks: int = Field(..., ge=0)
+    blocks_per_faculty_per_day: float = Field(default=2.0, ge=0.1)
+    days_in_period: int = Field(default=1, ge=1)
+
+
+class UtilizationThresholdResponse(BaseModel):
+    """Response from utilization threshold check."""
+
+    utilization_rate: float
+    level: UtilizationLevel
+    above_threshold: bool
+    buffer_remaining: float
+    wait_time_multiplier: float
+    message: str
+    recommendations: list[str]
+
+
+class BurnoutRtRequest(BaseModel):
+    """Request for burnout Rt calculation."""
+
+    burned_out_provider_ids: list[UUID] = Field(default_factory=list)
+    time_window_days: int = Field(default=28, ge=7, le=90)
+
+
+class BurnoutRtResponse(BaseModel):
+    """Response from burnout Rt calculation."""
+
+    rt: float = Field(..., description="Effective reproduction number")
+    status: str = Field(..., description="declining, stable, growing, or crisis")
+    secondary_cases: int
+    time_window_days: int
+    confidence_interval: dict | None = Field(default=None, description="Lower and upper bounds if available")
+    interventions: list[str]
+
+
+class CircuitBreakerState(str, Enum):
+    """Circuit breaker state (Netflix Hystrix pattern)."""
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Circuit tripped, fail-fast
+    HALF_OPEN = "half_open"  # Testing recovery
+
+
+class BreakerSeverity(str, Enum):
+    """Circuit breaker health severity."""
+
+    HEALTHY = "healthy"
+    WARNING = "warning"
+    CRITICAL = "critical"
+    EMERGENCY = "emergency"
+
+
+class StateTransitionInfo(BaseModel):
+    """Information about a state transition."""
+
+    from_state: str
+    to_state: str
+    timestamp: datetime
+    reason: str
+
+
+class CircuitBreakerInfo(BaseModel):
+    """Status information for a single circuit breaker."""
+
+    name: str
+    state: CircuitBreakerState
+    failure_rate: float
+    success_rate: float
+    total_requests: int
+    successful_requests: int
+    failed_requests: int
+    rejected_requests: int
+    consecutive_failures: int
+    consecutive_successes: int
+    opened_at: datetime | None = None
+    last_failure_time: datetime | None = None
+    last_success_time: datetime | None = None
+    recent_transitions: list[StateTransitionInfo] = Field(default_factory=list)
+
+
+class AllBreakersStatusResponse(BaseModel):
+    """Status of all circuit breakers."""
+
+    total_breakers: int
+    closed_breakers: int
+    open_breakers: int
+    half_open_breakers: int
+    open_breaker_names: list[str]
+    half_open_breaker_names: list[str]
+    breakers: list[CircuitBreakerInfo]
+    overall_health: str
+    recommendations: list[str]
+    checked_at: datetime
+
+
+class BreakerHealthMetrics(BaseModel):
+    """Aggregated health metrics for all circuit breakers."""
+
+    total_requests: int
+    total_failures: int
+    total_rejections: int
+    overall_failure_rate: float
+    breakers_above_threshold: int
+    average_failure_rate: float
+    max_failure_rate: float
+    unhealthiest_breaker: str | None = None
+
+
+class BreakerHealthResponse(BaseModel):
+    """Aggregated health assessment for all circuit breakers."""
+
+    total_breakers: int
+    metrics: BreakerHealthMetrics
+    breakers_needing_attention: list[str]
+    trend_analysis: str
+    severity: BreakerSeverity
+    recommendations: list[str]
+    analyzed_at: datetime

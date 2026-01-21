@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-21T04:34:26Z
+ * Generated at: 2026-01-21T04:57:01Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -7932,6 +7932,143 @@ export interface paths {
          *     Returns summary of cognitive load, stigmergy, and hub analysis.
          */
         get: operations["get_tier3_status_api_v1_resilience_tier3_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/defense-level": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calculate Defense Level
+         * @description Calculate defense level based on coverage rate.
+         *
+         *     Implements the 5-level defense-in-depth strategy from nuclear reactor safety:
+         *     - Level 1: PREVENTION - Normal operations (coverage >= 95%)
+         *     - Level 2: CONTROL - Minor degradation (coverage 85-95%)
+         *     - Level 3: SAFETY_SYSTEMS - Active mitigation (coverage 75-85%)
+         *     - Level 4: CONTAINMENT - Crisis containment (coverage 65-75%)
+         *     - Level 5: EMERGENCY - Full emergency response (coverage < 65%)
+         */
+        post: operations["calculate_defense_level_api_v1_resilience_defense_level_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/utilization-threshold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check Utilization Threshold
+         * @description Check utilization against the 80% threshold from queuing theory.
+         *
+         *     Above 80% utilization, wait times increase exponentially and cascade
+         *     failures become likely (M/M/c queuing theory).
+         *
+         *     Wait Time ~ rho / (1 - rho):
+         *     - At 50% utilization: 1x wait
+         *     - At 80% utilization: 4x wait
+         *     - At 90% utilization: 9x wait
+         *     - At 95% utilization: 19x wait
+         */
+        post: operations["check_utilization_threshold_api_v1_resilience_utilization_threshold_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/burnout/rt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calculate Burnout Rt
+         * @description Calculate burnout reproduction number (Rt) using epidemiological modeling.
+         *
+         *     Applies SIR epidemiological modeling to understand burnout transmission:
+         *     - Rt < 1: Epidemic declining
+         *     - Rt = 1: Endemic state (stable)
+         *     - Rt > 1: Epidemic growing
+         *     - Rt > 2: Aggressive intervention needed
+         *     - Rt > 3: Crisis level
+         *
+         *     Note: This is a simplified calculation. Full implementation would
+         *     require actual network data and burnout case history.
+         */
+        post: operations["calculate_burnout_rt_api_v1_resilience_burnout_rt_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/circuit-breakers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Circuit Breakers Status
+         * @description Get status of all circuit breakers (Netflix Hystrix pattern).
+         *
+         *     Circuit breakers provide failure isolation:
+         *     - CLOSED: Normal operation, requests pass through
+         *     - OPEN: Circuit tripped due to failures, requests fail fast
+         *     - HALF_OPEN: Testing recovery, limited requests allowed
+         */
+        get: operations["get_circuit_breakers_status_api_v1_resilience_circuit_breakers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/circuit-breakers/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Circuit Breakers Health
+         * @description Get aggregated health metrics for all circuit breakers.
+         *
+         *     Provides a high-level health assessment across all circuit breakers:
+         *     - Aggregated metrics (failure rates, rejections)
+         *     - Trend analysis (improving, stable, degrading)
+         *     - Severity assessment (healthy, warning, critical, emergency)
+         *     - Breakers needing immediate attention
+         */
+        get: operations["get_circuit_breakers_health_api_v1_resilience_circuit_breakers_health_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -19410,7 +19547,7 @@ export interface components {
          *     Shows who is absent and why (vacation, sick, deployment, etc.)
          */
         AbsenceInfo: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Absence Type
              * @description Type of absence (vacation, sick, deployment)
@@ -20346,6 +20483,35 @@ export interface components {
             recommendations: string[];
         };
         /**
+         * AllBreakersStatusResponse
+         * @description Status of all circuit breakers.
+         */
+        AllBreakersStatusResponse: {
+            /** Total Breakers */
+            totalBreakers: number;
+            /** Closed Breakers */
+            closedBreakers: number;
+            /** Open Breakers */
+            openBreakers: number;
+            /** Half Open Breakers */
+            halfOpenBreakers: number;
+            /** Open Breaker Names */
+            openBreakerNames: string[];
+            /** Half Open Breaker Names */
+            halfOpenBreakerNames: string[];
+            /** Breakers */
+            breakers: components["schemas"]["CircuitBreakerInfo"][];
+            /** Overall Health */
+            overallHealth: string;
+            /** Recommendations */
+            recommendations: string[];
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checkedAt: string;
+        };
+        /**
          * AllPoliciesResponse
          * @description Response listing all quota policies.
          */
@@ -20972,7 +21138,7 @@ export interface components {
          * @description Summary of an assignment for manifest display.
          */
         AssignmentSummary: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Role
              * @description primary, supervising, or backup
@@ -21108,9 +21274,9 @@ export interface components {
          */
         AttendingInfo: {
             /** @description AM attending */
-            am?: components["schemas"]["PersonSummary"] | null;
+            am?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
             /** @description PM attending */
-            pm?: components["schemas"]["PersonSummary"] | null;
+            pm?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
         };
         /**
          * AttractorInfoResponse
@@ -21983,14 +22149,12 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
+            /** Person Id */
+            personId?: string | null;
             /** Success */
             success: boolean;
-            /** Assignment Id */
-            assignmentId?: string | null;
             /** Error */
             error?: string | null;
-            /** Warnings */
-            warnings?: string[];
         };
         /**
          * BatchOperationStatus
@@ -22226,7 +22390,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__person__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -22388,7 +22552,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__batch__BatchOperationResult"][];
             /**
              * Errors
              * @description Global errors
@@ -23172,19 +23336,24 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Schema for list of blocks.
+         * @description Response for listing academic blocks.
          */
         BlockListResponse: {
             /**
-             * Items
-             * @description List of block responses
+             * Blocks
+             * @description List of academic blocks
              */
-            items: components["schemas"]["BlockResponse"][];
+            blocks: components["schemas"]["BlockSummary"][];
             /**
-             * Total
+             * Academic Year
+             * @description Academic year
+             */
+            academicYear: string;
+            /**
+             * Total Blocks
              * @description Total number of blocks
              */
-            total: number;
+            totalBlocks: number;
         };
         /**
          * BlockMatrixResponse
@@ -23786,6 +23955,55 @@ export interface components {
             relatedEntityType?: string | null;
         };
         /**
+         * BreakerHealthMetrics
+         * @description Aggregated health metrics for all circuit breakers.
+         */
+        BreakerHealthMetrics: {
+            /** Total Requests */
+            totalRequests: number;
+            /** Total Failures */
+            totalFailures: number;
+            /** Total Rejections */
+            totalRejections: number;
+            /** Overall Failure Rate */
+            overallFailureRate: number;
+            /** Breakers Above Threshold */
+            breakersAboveThreshold: number;
+            /** Average Failure Rate */
+            averageFailureRate: number;
+            /** Max Failure Rate */
+            maxFailureRate: number;
+            /** Unhealthiest Breaker */
+            unhealthiestBreaker?: string | null;
+        };
+        /**
+         * BreakerHealthResponse
+         * @description Aggregated health assessment for all circuit breakers.
+         */
+        BreakerHealthResponse: {
+            /** Total Breakers */
+            totalBreakers: number;
+            metrics: components["schemas"]["BreakerHealthMetrics"];
+            /** Breakers Needing Attention */
+            breakersNeedingAttention: string[];
+            /** Trend Analysis */
+            trendAnalysis: string;
+            severity: components["schemas"]["BreakerSeverity"];
+            /** Recommendations */
+            recommendations: string[];
+            /**
+             * Analyzed At
+             * Format: date-time
+             */
+            analyzedAt: string;
+        };
+        /**
+         * BreakerSeverity
+         * @description Circuit breaker health severity.
+         * @enum {string}
+         */
+        BreakerSeverity: "healthy" | "warning" | "critical" | "emergency";
+        /**
          * BulkAction
          * @description Available bulk actions.
          * @enum {string}
@@ -23927,6 +24145,48 @@ export interface components {
             errors?: string[];
             /** Message */
             message: string;
+        };
+        /**
+         * BurnoutRtRequest
+         * @description Request for burnout Rt calculation.
+         */
+        BurnoutRtRequest: {
+            /** Burned Out Provider Ids */
+            burnedOutProviderIds?: string[];
+            /**
+             * Time Window Days
+             * @default 28
+             */
+            timeWindowDays: number;
+        };
+        /**
+         * BurnoutRtResponse
+         * @description Response from burnout Rt calculation.
+         */
+        BurnoutRtResponse: {
+            /**
+             * Rt
+             * @description Effective reproduction number
+             */
+            rt: number;
+            /**
+             * Status
+             * @description declining, stable, growing, or crisis
+             */
+            status: string;
+            /** Secondary Cases */
+            secondaryCases: number;
+            /** Time Window Days */
+            timeWindowDays: number;
+            /**
+             * Confidence Interval
+             * @description Lower and upper bounds if available
+             */
+            confidenceInterval?: {
+                [key: string]: unknown;
+            } | null;
+            /** Interventions */
+            interventions: string[];
         };
         /**
          * BurstStatus
@@ -24808,6 +25068,45 @@ export interface components {
             source: string;
         };
         /**
+         * CircuitBreakerInfo
+         * @description Status information for a single circuit breaker.
+         */
+        CircuitBreakerInfo: {
+            /** Name */
+            name: string;
+            state: components["schemas"]["CircuitBreakerState"];
+            /** Failure Rate */
+            failureRate: number;
+            /** Success Rate */
+            successRate: number;
+            /** Total Requests */
+            totalRequests: number;
+            /** Successful Requests */
+            successfulRequests: number;
+            /** Failed Requests */
+            failedRequests: number;
+            /** Rejected Requests */
+            rejectedRequests: number;
+            /** Consecutive Failures */
+            consecutiveFailures: number;
+            /** Consecutive Successes */
+            consecutiveSuccesses: number;
+            /** Opened At */
+            openedAt?: string | null;
+            /** Last Failure Time */
+            lastFailureTime?: string | null;
+            /** Last Success Time */
+            lastSuccessTime?: string | null;
+            /** Recent Transitions */
+            recentTransitions?: components["schemas"]["StateTransitionInfo"][];
+        };
+        /**
+         * CircuitBreakerState
+         * @description Circuit breaker state (Netflix Hystrix pattern).
+         * @enum {string}
+         */
+        CircuitBreakerState: "closed" | "open" | "half_open";
+        /**
          * CognitiveLoadAnalysis
          * @description Analysis of cognitive load for a schedule.
          */
@@ -25306,15 +25605,29 @@ export interface components {
         };
         /**
          * ConflictCheckResponse
-         * @description Response for conflict check.
+         * @description Response for conflict checking before assignment.
          */
         ConflictCheckResponse: {
-            /** Has Conflicts */
-            hasConflicts: boolean;
-            /** Conflicts */
-            conflicts: components["schemas"]["TemplateConflict"][];
-            /** Can Proceed */
-            canProceed: boolean;
+            /**
+             * Can Assign
+             * @description Whether assignment can proceed
+             */
+            canAssign: boolean;
+            /**
+             * Conflicts
+             * @description Detected conflicts
+             */
+            conflicts?: components["schemas"]["ConflictDetail"][];
+            /**
+             * Warnings
+             * @description Warnings
+             */
+            warnings?: string[];
+            /**
+             * Suggestions
+             * @description Alternative suggestions
+             */
+            suggestions?: string[];
         };
         /**
          * ConflictDetail
@@ -26828,6 +27141,38 @@ export interface components {
          * @enum {string}
          */
         DefenseLevel: "PREVENTION" | "CONTROL" | "SAFETY_SYSTEMS" | "CONTAINMENT" | "EMERGENCY";
+        /**
+         * DefenseLevelRequest
+         * @description Request for defense level calculation.
+         */
+        DefenseLevelRequest: {
+            /**
+             * Coverage Rate
+             * @description Current coverage rate (0.0 to 1.0)
+             */
+            coverageRate: number;
+        };
+        /**
+         * DefenseLevelResponse
+         * @description Response from defense level calculation.
+         */
+        DefenseLevelResponse: {
+            level: components["schemas"]["DefenseLevel"];
+            /**
+             * Level Number
+             * @description Numeric level (1=PREVENTION to 5=EMERGENCY)
+             */
+            levelNumber: number;
+            /** Description */
+            description: string;
+            /** Recommended Actions */
+            recommendedActions: string[];
+            /**
+             * Escalation Threshold
+             * @description Coverage rate that would trigger escalation
+             */
+            escalationThreshold: number;
+        };
         /**
          * DeleteFileResponse
          * @description Response for file deletion.
@@ -29287,12 +29632,12 @@ export interface components {
          */
         FMITSection: {
             /** @description Attending physician for inpatient */
-            attending?: components["schemas"]["PersonSummary"] | null;
+            attending?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
             /**
              * Residents
              * @description Residents on FMIT
              */
-            residents?: components["schemas"]["PersonSummary"][];
+            residents?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"][];
         };
         /**
          * FMITWeekInfo
@@ -33972,7 +34317,7 @@ export interface components {
          *     Shows who is on night call so staff know they're unavailable during day.
          */
         NightCallInfo: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Call Type
              * @description Type of call (night, backup)
@@ -34682,7 +35027,7 @@ export interface components {
          *     Shows person with their AM and PM assignments (if any).
          */
         PersonClinicCoverage: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /** @description AM assignment */
             am?: components["schemas"]["AssignmentInfo"] | null;
             /** @description PM assignment */
@@ -34972,7 +35317,7 @@ export interface components {
         };
         /**
          * PersonSummary
-         * @description Summary of person for manifest display.
+         * @description Minimal person info for embedding in credential responses.
          */
         PersonSummary: {
             /**
@@ -34982,11 +35327,8 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /**
-             * Pgy Level
-             * @description PGY level for residents
-             */
-            pgyLevel?: number | null;
+            /** Type */
+            type: string;
         };
         /**
          * PersonType
@@ -36051,7 +36393,7 @@ export interface components {
             /** Procedure Name */
             procedureName: string;
             /** Qualified Faculty */
-            qualifiedFaculty: components["schemas"]["app__schemas__procedure_credential__PersonSummary"][];
+            qualifiedFaculty: components["schemas"]["PersonSummary"][];
             /** Total */
             total: number;
         };
@@ -36167,7 +36509,6 @@ export interface components {
             queueName: string;
             /**
              * Confirm
-             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
@@ -37035,14 +37376,14 @@ export interface components {
          *     Shows who is away at a remote site and their local surrogate/proxy.
          */
         RemoteAssignment: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Location
              * @description Remote location name
              */
             location: string;
             /** @description Local proxy/surrogate if assigned */
-            surrogate?: components["schemas"]["PersonSummary"] | null;
+            surrogate?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
         };
         /**
          * RenewalRequest
@@ -40646,6 +40987,23 @@ export interface components {
          */
         StagedAssignmentStatus: "pending" | "approved" | "skipped" | "applied" | "failed";
         /**
+         * StateTransitionInfo
+         * @description Information about a state transition.
+         */
+        StateTransitionInfo: {
+            /** From State */
+            fromState: string;
+            /** To State */
+            toState: string;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp: string;
+            /** Reason */
+            reason: string;
+        };
+        /**
          * StigmergyPatternsResponse
          * @description Response for stigmergy patterns.
          */
@@ -43474,6 +43832,45 @@ export interface components {
             theoreticalCapacity: number;
         };
         /**
+         * UtilizationThresholdRequest
+         * @description Request for utilization threshold check.
+         */
+        UtilizationThresholdRequest: {
+            /** Available Faculty */
+            availableFaculty: number;
+            /** Required Blocks */
+            requiredBlocks: number;
+            /**
+             * Blocks Per Faculty Per Day
+             * @default 2
+             */
+            blocksPerFacultyPerDay: number;
+            /**
+             * Days In Period
+             * @default 1
+             */
+            daysInPeriod: number;
+        };
+        /**
+         * UtilizationThresholdResponse
+         * @description Response from utilization threshold check.
+         */
+        UtilizationThresholdResponse: {
+            /** Utilization Rate */
+            utilizationRate: number;
+            level: components["schemas"]["UtilizationLevel"];
+            /** Above Threshold */
+            aboveThreshold: boolean;
+            /** Buffer Remaining */
+            bufferRemaining: number;
+            /** Wait Time Multiplier */
+            waitTimeMultiplier: number;
+            /** Message */
+            message: string;
+            /** Recommendations */
+            recommendations: string[];
+        };
+        /**
          * VaRMetric
          * @description Single VaR metric at a specific confidence level.
          */
@@ -45423,25 +45820,39 @@ export interface components {
          */
         app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
         /**
-         * BlockListResponse
-         * @description Response for listing academic blocks.
+         * BatchOperationResult
+         * @description Result for a single operation in a batch.
          */
-        app__schemas__academic_blocks__BlockListResponse: {
+        app__schemas__batch__BatchOperationResult: {
             /**
-             * Blocks
-             * @description List of academic blocks
+             * Index
+             * @description Index of the operation in the batch
              */
-            blocks: components["schemas"]["BlockSummary"][];
+            index: number;
+            /** Success */
+            success: boolean;
+            /** Assignment Id */
+            assignmentId?: string | null;
+            /** Error */
+            error?: string | null;
+            /** Warnings */
+            warnings?: string[];
+        };
+        /**
+         * BlockListResponse
+         * @description Schema for list of blocks.
+         */
+        app__schemas__block__BlockListResponse: {
             /**
-             * Academic Year
-             * @description Academic year
+             * Items
+             * @description List of block responses
              */
-            academicYear: string;
+            items: components["schemas"]["BlockResponse"][];
             /**
-             * Total Blocks
+             * Total
              * @description Total number of blocks
              */
-            totalBlocks: number;
+            total: number;
         };
         /**
          * CoverageGap
@@ -45482,43 +45893,22 @@ export interface components {
             email?: string | null;
         };
         /**
-         * ConflictCheckResponse
-         * @description Response for conflict checking before assignment.
+         * PersonSummary
+         * @description Summary of person for manifest display.
          */
-        app__schemas__fmit_assignments__ConflictCheckResponse: {
+        app__schemas__daily_manifest__PersonSummary: {
             /**
-             * Can Assign
-             * @description Whether assignment can proceed
+             * Id
+             * Format: uuid
              */
-            canAssign: boolean;
+            id: string;
+            /** Name */
+            name: string;
             /**
-             * Conflicts
-             * @description Detected conflicts
+             * Pgy Level
+             * @description PGY level for residents
              */
-            conflicts?: components["schemas"]["ConflictDetail"][];
-            /**
-             * Warnings
-             * @description Warnings
-             */
-            warnings?: string[];
-            /**
-             * Suggestions
-             * @description Alternative suggestions
-             */
-            suggestions?: string[];
-        };
-        /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
-         */
-        app__schemas__jobs__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
-            /**
-             * Confirm
-             * @default false
-             */
-            confirm: boolean;
+            pgyLevel?: number | null;
         };
         /**
          * QueuePurgeResponse
@@ -45555,36 +45945,18 @@ export interface components {
             affectedItems?: string[];
         };
         /**
-         * BatchOperationResult
-         * @description Result for a single operation in a batch.
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
          */
-        app__schemas__person__BatchOperationResult: {
+        app__schemas__queue__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
             /**
-             * Index
-             * @description Index of the operation in the batch
+             * Confirm
+             * @description Must be true to confirm purge
+             * @default false
              */
-            index: number;
-            /** Person Id */
-            personId?: string | null;
-            /** Success */
-            success: boolean;
-            /** Error */
-            error?: string | null;
-        };
-        /**
-         * PersonSummary
-         * @description Minimal person info for embedding in credential responses.
-         */
-        app__schemas__procedure_credential__PersonSummary: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /** Type */
-            type: string;
+            confirm: boolean;
         };
         /**
          * BatchOperationResult
@@ -45605,6 +45977,18 @@ export interface components {
             success: boolean;
             /** Error */
             error?: string | null;
+        };
+        /**
+         * ConflictCheckResponse
+         * @description Response for conflict check.
+         */
+        app__schemas__rotation_template__ConflictCheckResponse: {
+            /** Has Conflicts */
+            hasConflicts: boolean;
+            /** Conflicts */
+            conflicts: components["schemas"]["TemplateConflict"][];
+            /** Can Proceed */
+            canProceed: boolean;
         };
         /**
          * ConflictSummary
@@ -47696,7 +48080,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -47823,7 +48207,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -47889,7 +48273,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -48317,7 +48701,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictCheckResponse"];
+                    "application/json": components["schemas"]["app__schemas__rotation_template__ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -55428,6 +55812,145 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Tier3StatusResponse"];
+                };
+            };
+        };
+    };
+    calculate_defense_level_api_v1_resilience_defense_level_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DefenseLevelRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DefenseLevelResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_utilization_threshold_api_v1_resilience_utilization_threshold_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UtilizationThresholdRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UtilizationThresholdResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calculate_burnout_rt_api_v1_resilience_burnout_rt_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BurnoutRtRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BurnoutRtResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_circuit_breakers_status_api_v1_resilience_circuit_breakers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllBreakersStatusResponse"];
+                };
+            };
+        };
+    };
+    get_circuit_breakers_health_api_v1_resilience_circuit_breakers_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BreakerHealthResponse"];
                 };
             };
         };
@@ -63246,7 +63769,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__fmit_assignments__ConflictCheckResponse"];
+                    "application/json": components["schemas"]["ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -64718,7 +65241,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -65085,7 +65608,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
             };
         };
         responses: {
