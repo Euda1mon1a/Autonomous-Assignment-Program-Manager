@@ -506,8 +506,9 @@ class SyncPreloadService:
         result = self.session.execute(stmt)
         assignments = result.scalars().all()
 
-        # Mid-block transition point (day 14 = start of week 3)
-        mid_block_date = start_date + timedelta(days=14)
+        # Mid-block transition point (day 11 = Excel column 28 = Monday of week 2)
+        # This matches TAMC Excel format where column 28 is the transition point
+        mid_block_date = start_date + timedelta(days=11)
 
         for assignment in assignments:
             if not assignment.rotation_template:
