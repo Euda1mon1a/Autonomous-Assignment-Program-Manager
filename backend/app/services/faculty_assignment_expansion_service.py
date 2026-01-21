@@ -62,7 +62,7 @@ class FacultyAssignmentExpansionService:
         self.db = db
         self._absence_cache: dict[UUID, list[Absence]] = {}
         self._existing_slots: set[str] = set()  # Keys: "person_id_date_time"
-        self._holiday_dates: set[date] = set()
+        self._holiday_slots: set[tuple[date, str]] = set()  # Keys: (date, time_of_day)
 
     def fill_faculty_assignments(
         self,
@@ -223,23 +223,31 @@ class FacultyAssignmentExpansionService:
         """Pre-load federal holidays and non-operational days from Block table.
 
         Uses Block.is_holiday and Block.operational_intent to identify
-        dates that should get HOL activity instead of admin time.
+        slots that should get HOL activity instead of admin time.
+
+        NOTE: Holidays are tracked per-slot (date + time_of_day), not per-date.
+        This supports partial-day holidays if ever needed (rare but possible).
         """
         from app.models.block import Block
         from app.models.day_type import OperationalIntent
 
         # Query blocks that are holidays or non-operational (DONSA, EO closure)
-        stmt = select(Block.date).where(
+        # Include time_of_day for per-slot holiday detection
+        stmt = select(Block.date, Block.time_of_day).where(
             Block.date >= start_date,
             Block.date <= end_date,
             # Match holidays OR non-operational days
-            (Block.is_holiday == True) | (Block.operational_intent == OperationalIntent.NON_OPERATIONAL),  # noqa: E712
-        ).distinct()
+            (Block.is_holiday == True)
+            | (Block.operational_intent == OperationalIntent.NON_OPERATIONAL),  # noqa: E712
+        )
 
         for row in self.db.execute(stmt):
-            self._holiday_dates.add(row[0])
+            # Store as (date, time_of_day) tuple for per-slot detection
+            self._holiday_slots.add((row[0], row[1]))
 
-        logger.info(f"Pre-loaded {len(self._holiday_dates)} holiday/non-operational dates from blocks")
+        logger.info(
+            f"Pre-loaded {len(self._holiday_slots)} holiday/non-operational slots from blocks"
+        )
 
     def _get_activity(self, code: str) -> Activity | None:
         """Get activity by code (cached)."""
@@ -268,10 +276,8 @@ class FacultyAssignmentExpansionService:
             # Check if deployed
             is_deployed = self._is_person_deployed(person.id, current_date)
 
-            # Check if holiday
-            is_holiday = current_date in self._holiday_dates
-
-            # Process AM slot
+            # Process AM slot (check holiday per-slot)
+            is_holiday_am = (current_date, "AM") in self._holiday_slots
             am_created = self._fill_slot(
                 person,
                 current_date,
@@ -279,13 +285,14 @@ class FacultyAssignmentExpansionService:
                 is_weekend,
                 is_absent,
                 is_deployed,
-                is_holiday,
+                is_holiday_am,
                 admin_type,
             )
             if am_created:
                 created_count += 1
 
-            # Process PM slot
+            # Process PM slot (check holiday per-slot)
+            is_holiday_pm = (current_date, "PM") in self._holiday_slots
             pm_created = self._fill_slot(
                 person,
                 current_date,
@@ -293,7 +300,7 @@ class FacultyAssignmentExpansionService:
                 is_weekend,
                 is_absent,
                 is_deployed,
-                is_holiday,
+                is_holiday_pm,
                 admin_type,
             )
             if pm_created:

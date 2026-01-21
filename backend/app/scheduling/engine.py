@@ -497,9 +497,23 @@ class SchedulingEngine:
 
             # Step 6.5: Create call assignments from solver results
             # Creates CallAssignment records for overnight call (Sun-Thurs)
-            call_assignments = self._create_call_assignments_from_result(
-                solver_result, context
-            )
+            # SKIP in draft mode - draft staging should not modify live CallAssignment table
+            call_assignments = []
+            if not create_draft:
+                call_assignments = self._create_call_assignments_from_result(
+                    solver_result, context
+                )
+
+                # Step 6.6: Sync PCAT/DO to half_day_assignments based on NEW call
+                # The preload service ran before solver, so PCAT/DO may be stale.
+                # This updates half_day_assignments to match the new CallAssignment records.
+                if call_assignments and expand_block_assignments:
+                    self._sync_call_pcat_do_to_half_day(call_assignments)
+            elif solver_result.call_assignments:
+                logger.info(
+                    f"Skipping {len(solver_result.call_assignments)} call assignments "
+                    f"in draft mode (would modify live CallAssignment table)"
+                )
 
             # Step 7: Assign faculty supervision
             # In half-day mode, faculty assignments already created by Step 1.5h.5
@@ -1199,6 +1213,119 @@ class SchedulingEngine:
             logger.info(f"Created {len(call_assignments)} overnight call assignments")
 
         return call_assignments
+
+    def _sync_call_pcat_do_to_half_day(
+        self,
+        call_assignments: list[CallAssignment],
+    ) -> int:
+        """
+        Sync PCAT/DO slots in half_day_assignments to match new CallAssignment records.
+
+        The preload service runs BEFORE the solver generates new call assignments.
+        This creates a divergence: half_day_assignments has PCAT/DO from OLD call records,
+        but CallAssignment now has NEW call records from the solver.
+
+        This method runs AFTER call assignments are created to sync PCAT/DO:
+        - For each new CallAssignment, create PCAT (AM) and DO (PM) for the next day
+        - Updates or inserts with source='preload' to lock these slots
+        - Skips if person is on FMIT the next day
+
+        Args:
+            call_assignments: List of newly created CallAssignment records
+
+        Returns:
+            Number of PCAT/DO slots created/updated
+        """
+        from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
+        from app.models.inpatient_preload import InpatientPreload, InpatientRotationType
+        from app.models.activity import Activity
+        from sqlalchemy import select
+
+        if not call_assignments:
+            return 0
+
+        # Get PCAT and DO activity IDs
+        pcat_activity = (
+            self.db.execute(select(Activity).where(Activity.code == "PCAT"))
+            .scalars()
+            .first()
+        )
+        do_activity = (
+            self.db.execute(select(Activity).where(Activity.code == "DO"))
+            .scalars()
+            .first()
+        )
+
+        if not pcat_activity or not do_activity:
+            logger.warning("Missing PCAT or DO activity, skipping PCAT/DO sync")
+            return 0
+
+        count = 0
+        for call in call_assignments:
+            next_day = call.date + timedelta(days=1)
+
+            # Skip if next day is outside our date range
+            if next_day > self.end_date:
+                continue
+
+            # Check if person is on FMIT next day (no PCAT/DO for FMIT)
+            fmit_check = (
+                self.db.execute(
+                    select(InpatientPreload).where(
+                        InpatientPreload.person_id == call.person_id,
+                        InpatientPreload.rotation_type == InpatientRotationType.FMIT,
+                        InpatientPreload.start_date <= next_day,
+                        InpatientPreload.end_date >= next_day,
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if fmit_check:
+                continue  # FMIT faculty don't get PCAT/DO
+
+            # Create/update PCAT (AM) and DO (PM) for next day
+            for time_of_day, activity in [("AM", pcat_activity), ("PM", do_activity)]:
+                existing = (
+                    self.db.execute(
+                        select(HalfDayAssignment).where(
+                            HalfDayAssignment.person_id == call.person_id,
+                            HalfDayAssignment.date == next_day,
+                            HalfDayAssignment.time_of_day == time_of_day,
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
+
+                if existing:
+                    # Update if lower priority source
+                    if existing.source in (
+                        AssignmentSource.TEMPLATE.value,
+                        AssignmentSource.SOLVER.value,
+                    ):
+                        existing.activity_id = activity.id
+                        existing.source = AssignmentSource.PRELOAD.value
+                        count += 1
+                else:
+                    # Insert new
+                    self.db.add(
+                        HalfDayAssignment(
+                            person_id=call.person_id,
+                            date=next_day,
+                            time_of_day=time_of_day,
+                            activity_id=activity.id,
+                            source=AssignmentSource.PRELOAD.value,
+                        )
+                    )
+                    count += 1
+
+        if count:
+            self.db.flush()
+            logger.info(f"Synced {count} PCAT/DO slots to match new call assignments")
+
+        return count
 
     def _ensure_blocks_exist(self, commit: bool = True) -> list[Block]:
         """Ensure half-day blocks exist for the date range.
