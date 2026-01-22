@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-21 (Session 128: WebSocket fixes, convention audit added)
+> **Last Updated:** 2026-01-22 (Session 129: Docker proxy fix, wiring standardization)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -355,6 +355,40 @@ Remaining faculty-specific gaps:
 2. Wire faculty expansion into half-day pipeline before CP-SAT activity solver.
 3. Enforce or normalize weekly clinic min/max limits and fix template coverage gaps.
 4. Align export and UI to the canonical table to avoid mixed sources.
+
+### 10.5 Wiring Standardization Gaps (Session 129 - Codex Findings)
+
+**Branch:** `feature/debugger-multi-inspector` (9 commits, pending fixes before merge)
+**Scratchpad:** `session-129-docker-proxy-wiring.md`
+
+| Issue | Severity | Root Cause | Fix Status |
+|-------|----------|------------|------------|
+| WS enum values still snake_case | HIGH | `snakeToCamel()` converts keys not values | **TODO** |
+| DefenseLevel mapping mismatch | MEDIUM | Backend: PREVENTION/CONTROL, UI: GREEN/YELLOW | **TODO** |
+| Burnout Rt hardcoded | LOW | Dashboard shows 0.85 instead of real data | **TODO** |
+| Docker proxy routing | HIGH | localhost:8000 unreachable inside container | ✅ Fixed |
+| Suspense boundaries | MEDIUM | useSearchParams without Suspense | ✅ Fixed |
+
+**WS Enum Values (HIGH):**
+Backend sends `"swapType": "one_to_one"` but frontend types expect `"oneToOne"`.
+- Files: `backend/app/websocket/events.py:88,109,122`
+- Fix: Change enum values to camelCase in backend
+
+**DefenseLevel Mapping (MEDIUM):**
+Backend returns domain terms (PREVENTION/CONTROL/MITIGATION/RECOVERY/SURVIVAL).
+UI expects colors (GREEN/YELLOW/ORANGE/RED/BLACK).
+- Files: `frontend/src/app/admin/resilience-hub/page.tsx:231`, `frontend/src/components/resilience/DefenseLevel.tsx:11`
+- Fix: Add mapping function in frontend (keep separation of concerns)
+
+**Burnout Rt (LOW):**
+- File: `frontend/src/app/admin/resilience-hub/page.tsx:243`
+- Fix: Wire to actual resilience API or mark as placeholder
+
+**Action (Before PR Merge):**
+1. [ ] Fix WS enum values to camelCase in `backend/app/websocket/events.py`
+2. [ ] Add DefenseLevel mapping function in frontend
+3. [ ] Verify `docker-compose.local.yml` proxy works
+4. [ ] Wire Burnout Rt or document as placeholder
 
 ---
 
