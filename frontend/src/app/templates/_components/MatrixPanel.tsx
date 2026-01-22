@@ -3,33 +3,87 @@
 /**
  * MatrixPanel - All-faculty schedule overview (Tier 1+)
  *
- * TODO:
- * - Wrap FacultyMatrixView component
- * - Pass canEdit prop to control click behavior
- * - Week navigator integration
+ * Shows the FacultyMatrixView for at-a-glance overview of all
+ * faculty schedules. Click behavior depends on edit permissions.
  */
 
-import { Users } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { FacultyMatrixView } from '@/components/FacultyMatrixView';
+import { FacultyWeeklyEditor } from '@/components/FacultyWeeklyEditor';
+import { useFaculty } from '@/hooks/usePeople';
+import type { FacultyRole } from '@/types/faculty-activity';
 
 interface MatrixPanelProps {
   canEdit: boolean;
 }
 
 export function MatrixPanel({ canEdit }: MatrixPanelProps) {
+  const [selectedFacultyId, setSelectedFacultyId] = useState<string | null>(null);
+
+  // Fetch faculty for lookup when opening editor
+  const { data: facultyData } = useFaculty();
+
+  // Get selected faculty details
+  const selectedFaculty = facultyData?.items?.find((f) => f.id === selectedFacultyId) ?? null;
+
+  // Handle faculty selection from matrix click
+  const handleFacultySelect = useCallback(
+    (personId: string) => {
+      if (canEdit) {
+        setSelectedFacultyId(personId);
+      }
+    },
+    [canEdit]
+  );
+
+  // Close editor
+  const handleCloseEditor = useCallback(() => {
+    setSelectedFacultyId(null);
+  }, []);
+
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-      <div className="text-center">
-        <Users className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-        <h2 className="text-lg font-medium text-gray-900 mb-2">Faculty Matrix View</h2>
-        <p className="text-gray-500 mb-4">
-          {canEdit
-            ? 'Overview of all faculty schedules. Click any cell to edit.'
-            : 'Overview of all faculty schedules.'}
-        </p>
-        <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-amber-100 text-amber-700">
-          Component stub - wire up FacultyMatrixView
+    <div className="space-y-4">
+      {/* Matrix View */}
+      <FacultyMatrixView
+        showAdjunctToggle={true}
+        showWorkloadBadges={canEdit}
+        onFacultySelect={canEdit ? handleFacultySelect : undefined}
+      />
+
+      {/* Editor Modal */}
+      {selectedFaculty && canEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Edit Template: {selectedFaculty.name}
+              </h2>
+              <button
+                onClick={handleCloseEditor}
+                className="text-gray-400 hover:text-gray-600 p-1"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6">
+              <FacultyWeeklyEditor
+                personId={selectedFaculty.id}
+                personName={selectedFaculty.name}
+                facultyRole={(selectedFaculty.facultyRole as FacultyRole) ?? null}
+                readOnly={false}
+                onClose={handleCloseEditor}
+              />
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

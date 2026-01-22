@@ -2,7 +2,7 @@
 
 **Date:** 2026-01-22
 **Branch:** `feature/rotation-faculty-templates`
-**Status:** IN PROGRESS - Main page created, component stubs needed
+**Status:** COMPLETE - All panels wired up
 
 ---
 
@@ -32,27 +32,22 @@
 - Tab structure: Rotations | My Schedule | Faculty Templates | Matrix View | Bulk Operations
 - Follows Swaps Hub pattern exactly
 
----
+### 4. All Panels Wired Up (Session 131 Continuation)
 
-## What's Remaining
+| Component | Status | Description |
+|-----------|--------|-------------|
+| `RotationsPanel.tsx` | COMPLETE | TemplateTable with search/filter, inline editing for Tier 1+ |
+| `MySchedulePanel.tsx` | COMPLETE | FacultyWeeklyEditor (readOnly) with user lookup |
+| `FacultyPanel.tsx` | COMPLETE | Faculty selector dropdown + FacultyWeeklyEditor |
+| `MatrixPanel.tsx` | COMPLETE | FacultyMatrixView with click-to-edit modal |
 
-### Component Stubs Needed (Imports will fail until created)
-
-| File | Purpose | Priority |
-|------|---------|----------|
-| `_components/RotationsPanel.tsx` | Rotation templates list with view/edit modes | HIGH |
-| `_components/MySchedulePanel.tsx` | User's own schedule (read-only FacultyWeeklyEditor) | HIGH |
-| `_components/FacultyPanel.tsx` | Faculty selector + FacultyWeeklyEditor | MEDIUM |
-| `_components/MatrixPanel.tsx` | FacultyMatrixView wrapper | MEDIUM |
-
-### Existing Components to Reuse
-
-| Component | Location | Notes |
-|-----------|----------|-------|
-| `FacultyWeeklyEditor` | `components/FacultyWeeklyEditor.tsx` | May need `readOnly` prop |
-| `FacultyMatrixView` | `components/FacultyMatrixView.tsx` | Ready to use |
-| `TemplateTable` | `app/admin/rotations/` | Extract for reuse |
-| `RotationEditor` | `components/RotationEditor.tsx` | For detail view |
+**Hooks/Components Integrated:**
+- `useAdminTemplates` + `useInlineUpdateTemplate` for rotation templates
+- `usePeople` + `useAuth` for user-to-person lookup
+- `useFaculty` for faculty dropdown
+- `FacultyWeeklyEditor` with `readOnly` prop support
+- `FacultyMatrixView` with `onFacultySelect` callback
+- `TemplateTable` with conditional `enableInlineEdit`
 
 ---
 
@@ -67,24 +62,39 @@
 
 ---
 
+## Git State
+
+- Branch: `feature/rotation-faculty-templates`
+- Based on: `origin/main` (commit `5ec9fba7` - PR #761 squash merge)
+- Initial commit: `e3793fd4` - feat(templates): Create Templates Hub page structure
+- Panel wiring commit: (pending)
+
+---
+
+## Testing Needed
+
+1. **Tier 0 (Resident/Faculty):**
+   - Can view rotation templates (read-only)
+   - Can view own schedule (read-only)
+   - Cannot see Faculty Templates or Matrix tabs
+
+2. **Tier 1 (Coordinator):**
+   - Can inline-edit rotation templates
+   - Can select any faculty and edit their template
+   - Matrix view click opens editor modal
+
+3. **Tier 2 (Admin):**
+   - Same as Tier 1 plus Bulk Operations tab
+
+---
+
 ## Resume Command
 
 ```
 Continue session 131. Branch: feature/rotation-faculty-templates
 Read docs/scratchpad/session-131-templates-hub.md for context.
-Create the component stubs in frontend/src/app/templates/_components/
-Start with RotationsPanel.tsx and MySchedulePanel.tsx
+Test the Templates Hub at /templates with different user tiers.
 ```
-
----
-
-## Git State
-
-- Branch: `feature/rotation-faculty-templates`
-- Based on: `origin/main` (commit `5ec9fba7` - PR #761 squash merge)
-- Files created: `frontend/src/app/templates/page.tsx`
-- Files pending: 4 component stubs
-- Commits: None yet (page created but not committed)
 
 ---
 
@@ -93,3 +103,4 @@ Start with RotationsPanel.tsx and MySchedulePanel.tsx
 - Local `main` branch is divergent from `origin/main` - not a problem, just cosmetic
 - To fix: `git checkout main && git reset --hard origin/main` (needs hook bypass)
 - The `/admin/rotations` page will eventually redirect to `/templates?tab=rotations`
+- Build and lint pass with no errors
