@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-21 (Session 126: Half-day pipeline fixes, BlockAnnualView wiring)
+> **Last Updated:** 2026-01-21 (Session 127: Debugger API fix, future enhancement noted)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -396,6 +396,10 @@ Side-by-side debugger for frontend vs DB comparison not displaying assignment da
 3. If still failing, add console.log to trace data flow
 
 **Related:** MCP needs Claude Code restart to pick up new `.mcp.json` headers.
+
+**Future Enhancement:**
+- Extend Database Inspector to support other data types beyond schedule (absences, activities, rotation templates, people details)
+- Currently the right panel is schedule-specific (ScheduleMirrorView); add view mode selector for different data comparisons
 
 ### 16. ~~Block 10 GUI Navigation~~ ✅ RESOLVED (PR #758)
 **Priority:** MEDIUM
