@@ -53,8 +53,10 @@ type SplitRatio = 25 | 50 | 75;
 
 const DEFAULT_LEFT_URL = '/schedule';
 
-// Use environment variable for API base URL, fallback to localhost for dev
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Use environment variable for API base URL, fallback to relative path
+// IMPORTANT: Use /api/v1 (relative) to go through Next.js proxy for proper auth
+// Do NOT use http://localhost:8000 directly - it bypasses auth cookie handling
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
 const PRESET_URLS: { label: string; url: string; type: PanelConfig['type'] }[] = [
   { label: 'Schedule', url: '/schedule', type: 'app' },
@@ -466,7 +468,8 @@ function ScheduleMirrorView({
       setError(null);
       try {
         // Fetch people using configurable API base URL
-        const peopleRes = await fetch(`${API_BASE_URL}/api/v1/people?limit=100`, {
+        // API_BASE_URL already includes /api/v1, so just append endpoint path
+        const peopleRes = await fetch(`${API_BASE_URL}/people?limit=100`, {
           credentials: 'include',
         });
         if (!peopleRes.ok) throw new Error(`People: HTTP ${peopleRes.status}`);
@@ -475,7 +478,8 @@ function ScheduleMirrorView({
         setPeople(peopleList.filter((p: Person) => p.type === 'resident').slice(0, 20));
 
         // Fetch assignments from API with date range filter using configurable base URL
-        const assignUrl = `${API_BASE_URL}/api/v1/half-day-assignments?start_date=${startDate}&end_date=${endDate}&limit=2000`;
+        // API_BASE_URL already includes /api/v1, so just append endpoint path
+        const assignUrl = `${API_BASE_URL}/half-day-assignments?start_date=${startDate}&end_date=${endDate}&limit=2000`;
         const assignRes = await fetch(assignUrl, {
           credentials: 'include',
         });
