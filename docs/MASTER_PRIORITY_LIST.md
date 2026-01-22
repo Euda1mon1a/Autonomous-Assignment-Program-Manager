@@ -319,7 +319,28 @@ WebSocket debugging revealed 4 distinct convention violations that were blocking
 
 **Action:** Create comprehensive audit task for all API conventions per CLAUDE.md rules.
 
-### 10.3 Faculty Scheduling Pipeline Gaps (Remaining)
+### 10.3 Pre-commit Hook Failures (Session 128)
+
+Pre-commit hooks blocking commits due to pre-existing issues in unmodified files:
+
+| Hook | Issue | Scope |
+|------|-------|-------|
+| **mypy** | 100+ type errors | periodic_tasks.py, tensegrity_solver.py, rigidity_analysis.py, catastrophe.py, main.py, etc. |
+| **bandit** | `command not found` | Tool not installed in environment |
+| **Modron March** | FairnessAuditResponse location | Type is in `useFairness.ts`, not `resilience.ts` where Modron expects it |
+
+**Common mypy error patterns:**
+- Missing return type annotations (`[no-untyped-def]`)
+- Missing type annotations for function arguments
+- `None` attribute access without guards (`[union-attr]`)
+- Incompatible types in assignments
+
+**Action:**
+1. Fix mypy errors systematically (group by file/pattern)
+2. Install bandit: `pip install bandit`
+3. Update Modron March to check correct type locations or move types
+
+### 10.4 Faculty Scheduling Pipeline Gaps (Remaining)
 
 **Doc:** [`docs/reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md`](reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md)
 
