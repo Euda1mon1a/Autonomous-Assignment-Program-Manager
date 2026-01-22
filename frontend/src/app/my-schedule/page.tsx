@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { format, startOfWeek, addWeeks, addDays, subWeeks, startOfMonth, endOfMonth } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
@@ -44,7 +44,7 @@ import type { Assignment, Block, Person, RotationTemplate } from '@/types/api'
 
 type ViewRange = 'week' | '2weeks' | 'month'
 
-export default function MySchedulePage() {
+function MyScheduleContent() {
   const { user } = useAuth()
   const searchParams = useSearchParams()
   const [viewRange, setViewRange] = useState<ViewRange>('2weeks')
@@ -435,5 +435,13 @@ export default function MySchedulePage() {
         )}
       </div>
     </ProtectedRoute>
+  )
+}
+
+export default function MySchedulePage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>}>
+      <MyScheduleContent />
+    </Suspense>
   )
 }

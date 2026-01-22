@@ -24,6 +24,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# Backend URL for server-side proxy (rewrites in next.config.js)
+# In Docker, use service name 'backend' for container-to-container communication
+ARG BACKEND_URL=http://backend:8000
+ENV BACKEND_URL=$BACKEND_URL
+
 # Build the application
 RUN npm run build
 

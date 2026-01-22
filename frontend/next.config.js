@@ -8,9 +8,9 @@ const nextConfig = {
   // Docker: uses 'backend' hostname (service name on Docker network)
   // Local: falls back to localhost:8000
   async rewrites() {
-    // Check if running in Docker by looking for Docker-specific env or default to localhost
-    const isDocker = process.env.NODE_ENV === 'development' && process.env.BACKEND_INTERNAL_URL
-    const backendUrl = isDocker ? 'http://backend:8000' : 'http://localhost:8000'
+    // BACKEND_URL can be set at build time (via ARG in Dockerfile) or runtime
+    // Defaults to localhost for local development outside Docker
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000'
     console.log(`[next.config] Rewrites using backend: ${backendUrl}`)
     return [
       {

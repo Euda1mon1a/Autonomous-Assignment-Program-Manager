@@ -9,7 +9,7 @@
  *
  * Both tabs are read-only (Tier 0), making this a green-risk page.
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 import {
@@ -627,7 +627,7 @@ function AwayFromProgramResidentRow({ summary, personName, pgyLevel, isExpanded,
 // Main Component
 // ============================================================================
 
-export default function ComplianceHubPage() {
+function ComplianceHubContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   const defaultTab: TabId = tabParam === 'away-from-program' ? 'away-from-program' : 'acgme';
@@ -638,7 +638,7 @@ export default function ComplianceHubPage() {
   ];
 
   return (
-    <ProtectedRoute>
+    <>
       <RiskBar tier={0} label="Read-only" tooltip="Compliance data is view-only. No modifications can be made from this page." />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6">
@@ -647,6 +647,16 @@ export default function ComplianceHubPage() {
         </div>
         <Tabs tabs={tabs} defaultTab={defaultTab} />
       </div>
+    </>
+  );
+}
+
+export default function ComplianceHubPage() {
+  return (
+    <ProtectedRoute>
+      <Suspense fallback={<div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>}>
+        <ComplianceHubContent />
+      </Suspense>
     </ProtectedRoute>
   );
 }
