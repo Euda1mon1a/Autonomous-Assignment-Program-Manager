@@ -47,7 +47,7 @@ interface BlockSchedulerDashboard {
 interface BlockAnnualViewProps {
   academicYear?: number
   personFilter?: Set<string>
-  onBlockClick?: (blockNumber: number) => void
+  onBlockClick?: (blockNumber: number, academicYear: number) => void
 }
 
 // ============================================================================
@@ -379,7 +379,7 @@ export function BlockAnnualView({
                   className={`border border-gray-200 px-2 py-2 text-xs font-medium text-gray-600 min-w-[80px] ${
                     blockNum === 0 ? 'bg-amber-50' : 'bg-gray-50'
                   } ${onBlockClick ? 'cursor-pointer hover:bg-blue-50' : ''}`}
-                  onClick={() => onBlockClick?.(blockNum)}
+                  onClick={() => onBlockClick?.(blockNum, academicYear)}
                 >
                   {formatBlockHeader(blockNum)}
                 </th>

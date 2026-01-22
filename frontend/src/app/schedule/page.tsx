@@ -343,10 +343,14 @@ export default function SchedulePage() {
           {currentView === 'block-annual' && (
             <BlockAnnualView
               personFilter={selectedPersonIds}
-              onBlockClick={(blockNumber) => {
+              onBlockClick={(blockNumber, academicYear) => {
                 // Navigate to block view for the clicked block
+                // IMPORTANT: Filter by BOTH blockNumber AND academicYear to avoid
+                // showing the wrong year's data (e.g., AY 2024 Block 10 vs AY 2025 Block 10)
                 if (blockRanges) {
-                  const range = blockRanges.find((r) => r.blockNumber === blockNumber)
+                  const range = blockRanges.find(
+                    (r) => r.blockNumber === blockNumber && r.academicYear === academicYear
+                  )
                   if (range) {
                     setDateRange({
                       start: parseISO(range.startDate),
