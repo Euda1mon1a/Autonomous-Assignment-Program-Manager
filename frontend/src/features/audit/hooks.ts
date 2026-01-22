@@ -180,8 +180,8 @@ export function useAuditStatistics(
   options?: Omit<UseQueryOptions<AuditStatistics, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams();
-  if (dateRange?.start) params.set('startDate', dateRange.start);
-  if (dateRange?.end) params.set('endDate', dateRange.end);
+  if (dateRange?.start) params.set('start_date', dateRange.start);
+  if (dateRange?.end) params.set('end_date', dateRange.end);
   const queryString = params.toString();
 
   return useQuery<AuditStatistics, ApiError>({
@@ -251,9 +251,9 @@ export function useUserAuditActivity(
   options?: Omit<UseQueryOptions<AuditLogEntry[], ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams();
-  params.set('userIds', userId);
-  if (dateRange?.start) params.set('startDate', dateRange.start);
-  if (dateRange?.end) params.set('endDate', dateRange.end);
+  params.set('user_ids', userId);
+  if (dateRange?.start) params.set('start_date', dateRange.start);
+  if (dateRange?.end) params.set('end_date', dateRange.end);
   params.set('sort_by', 'timestamp');
   params.set('sort_direction', 'desc');
 

@@ -2,25 +2,28 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-19T02:18:02Z
- * Generator: openapi-typescript
+ * Generated at: 2026-01-21T04:57:01Z
+ * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
- *   npm run generate:types
+ *   cd frontend && npm run generate:types
  *
- * This file contains TypeScript types matching the backend Pydantic schemas.
- * The axios interceptor converts snake_case <-> camelCase automatically,
- * but these types reflect the WIRE format (snake_case).
+ * PARADIGM: This file IS the source of truth for API types.
  *
- * For application code, prefer using the manually-maintained types in:
- *   src/types/admin-scheduling.ts
- *   src/types/schedule.ts
- *   etc.
+ * Property Naming:
+ * - Schema properties (components.schemas.*): camelCase
+ *   → Matches axios interceptor output for response bodies
+ * - Query parameters: snake_case
+ *   → Must match URL format (axios doesn't convert URLs)
+ * - Path parameters: snake_case
+ *   → Must match URL format
  *
- * Use these generated types for:
- *   - Validating manual types match backend
- *   - Reference when updating manual types
- *   - Direct API usage where manual types don't exist
+ * DO NOT manually edit this file. To change types:
+ * 1. Modify backend Pydantic schemas
+ * 2. Run: npm run generate:types
+ * 3. Commit both backend and frontend changes together
+ *
+ * See CLAUDE.md 'OpenAPI Type Contract' section for details.
  */
 
 
@@ -4915,6 +4918,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/half-day-assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Half Day Assignments
+         * @description List half-day assignments for a block or date range.
+         *
+         *     Either provide (block_number + academic_year) OR (start_date + end_date).
+         *
+         *     This endpoint returns the expanded half-day schedule data,
+         *     which includes day-specific patterns like:
+         *     - LEC on Wednesday PM
+         *     - Intern continuity on Wednesday AM
+         *     - Kapiolani rotation patterns
+         *     - Mid-block transitions
+         *
+         *     Args:
+         *         block_number: Block number (1-13)
+         *         academic_year: Academic year (e.g., 2025 for AY 2025-2026)
+         *         start_date: Start date for date range query
+         *         end_date: End date for date range query
+         *         person_type: Optional filter ('resident' or 'faculty')
+         *
+         *     Returns:
+         *         HalfDayAssignmentListResponse with assignments
+         */
+        get: operations["list_half_day_assignments_api_v1_half_day_assignments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/schedule/constraints": {
         parameters: {
             query?: never;
@@ -7890,6 +7932,143 @@ export interface paths {
          *     Returns summary of cognitive load, stigmergy, and hub analysis.
          */
         get: operations["get_tier3_status_api_v1_resilience_tier3_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/defense-level": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calculate Defense Level
+         * @description Calculate defense level based on coverage rate.
+         *
+         *     Implements the 5-level defense-in-depth strategy from nuclear reactor safety:
+         *     - Level 1: PREVENTION - Normal operations (coverage >= 95%)
+         *     - Level 2: CONTROL - Minor degradation (coverage 85-95%)
+         *     - Level 3: SAFETY_SYSTEMS - Active mitigation (coverage 75-85%)
+         *     - Level 4: CONTAINMENT - Crisis containment (coverage 65-75%)
+         *     - Level 5: EMERGENCY - Full emergency response (coverage < 65%)
+         */
+        post: operations["calculate_defense_level_api_v1_resilience_defense_level_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/utilization-threshold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check Utilization Threshold
+         * @description Check utilization against the 80% threshold from queuing theory.
+         *
+         *     Above 80% utilization, wait times increase exponentially and cascade
+         *     failures become likely (M/M/c queuing theory).
+         *
+         *     Wait Time ~ rho / (1 - rho):
+         *     - At 50% utilization: 1x wait
+         *     - At 80% utilization: 4x wait
+         *     - At 90% utilization: 9x wait
+         *     - At 95% utilization: 19x wait
+         */
+        post: operations["check_utilization_threshold_api_v1_resilience_utilization_threshold_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/burnout/rt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calculate Burnout Rt
+         * @description Calculate burnout reproduction number (Rt) using epidemiological modeling.
+         *
+         *     Applies SIR epidemiological modeling to understand burnout transmission:
+         *     - Rt < 1: Epidemic declining
+         *     - Rt = 1: Endemic state (stable)
+         *     - Rt > 1: Epidemic growing
+         *     - Rt > 2: Aggressive intervention needed
+         *     - Rt > 3: Crisis level
+         *
+         *     Note: This is a simplified calculation. Full implementation would
+         *     require actual network data and burnout case history.
+         */
+        post: operations["calculate_burnout_rt_api_v1_resilience_burnout_rt_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/circuit-breakers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Circuit Breakers Status
+         * @description Get status of all circuit breakers (Netflix Hystrix pattern).
+         *
+         *     Circuit breakers provide failure isolation:
+         *     - CLOSED: Normal operation, requests pass through
+         *     - OPEN: Circuit tripped due to failures, requests fail fast
+         *     - HALF_OPEN: Testing recovery, limited requests allowed
+         */
+        get: operations["get_circuit_breakers_status_api_v1_resilience_circuit_breakers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/resilience/circuit-breakers/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Circuit Breakers Health
+         * @description Get aggregated health metrics for all circuit breakers.
+         *
+         *     Provides a high-level health assessment across all circuit breakers:
+         *     - Aggregated metrics (failure rates, rejections)
+         *     - Trend analysis (improving, stable, degrading)
+         *     - Severity assessment (healthy, warning, critical, emergency)
+         *     - Breakers needing immediate attention
+         */
+        get: operations["get_circuit_breakers_health_api_v1_resilience_circuit_breakers_health_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -19044,17 +19223,17 @@ export interface components {
              * Resident Id
              * Format: uuid
              */
-            resident_id: string;
+            residentId: string;
             /**
              * Schedule Start
              * Format: date
              */
-            schedule_start: string;
+            scheduleStart: string;
             /**
              * Schedule End
              * Format: date
              */
-            schedule_end: string;
+            scheduleEnd: string;
         };
         /**
          * ACGMEFatigueValidationResponse
@@ -19062,27 +19241,27 @@ export interface components {
          */
         ACGMEFatigueValidationResponse: {
             /** Resident Id */
-            resident_id: string;
+            residentId: string;
             /** Schedule Period */
-            schedule_period: {
+            schedulePeriod: {
                 [key: string]: unknown;
             };
             /** Acgme Compliant */
-            acgme_compliant: boolean;
+            acgmeCompliant: boolean;
             /** Fatigue Compliant */
-            fatigue_compliant: boolean;
+            fatigueCompliant: boolean;
             /** Hours Summary */
-            hours_summary: {
+            hoursSummary: {
                 [key: string]: unknown;
             };
             /** Fatigue Risk Periods */
-            fatigue_risk_periods: {
+            fatigueRiskPeriods: {
                 [key: string]: unknown;
             }[];
             /** Recommendations */
             recommendations: string[];
             /** Validation Details */
-            validation_details: {
+            validationDetails: {
                 [key: string]: unknown;
             };
         };
@@ -19095,7 +19274,7 @@ export interface components {
              * Is Compliant
              * @description Whether the cell is ACGME compliant
              */
-            is_compliant: boolean;
+            isCompliant: boolean;
             /**
              * Warnings
              * @description List of ACGME warnings
@@ -19110,13 +19289,13 @@ export interface components {
              * Hours Worked
              * @description Total hours worked in this block
              */
-            hours_worked: number;
+            hoursWorked: number;
             /**
              * Max Hours Allowed
              * @description Maximum hours allowed by ACGME
              * @default 80
              */
-            max_hours_allowed: number;
+            maxHoursAllowed: number;
         };
         /**
          * APIChangeDetail
@@ -19152,17 +19331,17 @@ export interface components {
              * Old Value
              * @description Previous value
              */
-            old_value?: unknown;
+            oldValue?: unknown;
             /**
              * New Value
              * @description New value
              */
-            new_value?: unknown;
+            newValue?: unknown;
             /**
              * Migration Guide
              * @description Migration instructions
              */
-            migration_guide?: string | null;
+            migrationGuide?: string | null;
         };
         /**
          * APIDiffResponse
@@ -19173,22 +19352,22 @@ export interface components {
              * Old Version
              * @description Previous version
              */
-            old_version: string;
+            oldVersion: string;
             /**
              * New Version
              * @description New version
              */
-            new_version: string;
+            newVersion: string;
             /**
              * Suggested Version
              * @description Suggested next version (semantic versioning)
              */
-            suggested_version: string;
+            suggestedVersion: string;
             /**
              * Generated At
              * @description ISO timestamp when generated
              */
-            generated_at: string;
+            generatedAt: string;
             /** @description Summary statistics */
             summary: components["schemas"]["APIDiffSummary"];
             /**
@@ -19206,22 +19385,22 @@ export interface components {
              * Total Changes
              * @description Total number of changes
              */
-            total_changes: number;
+            totalChanges: number;
             /**
              * Breaking Changes
              * @description Number of breaking changes
              */
-            breaking_changes: number;
+            breakingChanges: number;
             /**
              * Non Breaking Changes
              * @description Number of non-breaking changes
              */
-            non_breaking_changes: number;
+            nonBreakingChanges: number;
             /**
              * Has Breaking Changes
              * @description Whether any breaking changes exist
              */
-            has_breaking_changes: boolean;
+            hasBreakingChanges: boolean;
         };
         /**
          * AbsenceBulkApply
@@ -19306,60 +19485,60 @@ export interface components {
              * Format: uuid
              * @description Person UUID
              */
-            person_id: string;
+            personId: string;
             /**
              * Start Date
              * Format: date
              * @description Absence start date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description Absence end date
              */
-            end_date: string;
+            endDate: string;
             /**
              * Absence Type
              * @description Type of absence
              */
-            absence_type: string;
+            absenceType: string;
             /**
              * Deployment Orders
              * @description Whether deployment orders exist
              * @default false
              */
-            deployment_orders: boolean | null;
+            deploymentOrders: boolean | null;
             /**
              * Tdy Location
              * @description TDY location (if applicable)
              */
-            tdy_location?: string | null;
+            tdyLocation?: string | null;
             /**
              * Replacement Activity
              * @description Replacement activity (if applicable)
              */
-            replacement_activity?: string | null;
+            replacementActivity?: string | null;
             /**
              * Notes
              * @description Absence notes
              */
             notes?: string | null;
             /** Is Blocking */
-            is_blocking?: boolean | null;
+            isBlocking?: boolean | null;
             /**
              * Return Date Tentative
              * @default false
              */
-            return_date_tentative: boolean;
+            returnDateTentative: boolean;
             /** Created By Id */
-            created_by_id?: string | null;
+            createdById?: string | null;
             /**
              * Is Away From Program
              * @description Whether this absence counts toward away-from-program limit (28 days/year for residents)
              * @default true
              */
-            is_away_from_program: boolean;
+            isAwayFromProgram: boolean;
         };
         /**
          * AbsenceInfo
@@ -19368,12 +19547,12 @@ export interface components {
          *     Shows who is absent and why (vacation, sick, deployment, etc.)
          */
         AbsenceInfo: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Absence Type
              * @description Type of absence (vacation, sick, deployment)
              */
-            absence_type: string;
+            absenceType: string;
         };
         /**
          * AbsenceListResponse
@@ -19387,7 +19566,7 @@ export interface components {
             /** Page */
             page?: number | null;
             /** Page Size */
-            page_size?: number | null;
+            pageSize?: number | null;
         };
         /**
          * AbsenceResponse
@@ -19399,40 +19578,40 @@ export interface components {
              * Format: uuid
              * @description Person UUID
              */
-            person_id: string;
+            personId: string;
             /**
              * Start Date
              * Format: date
              * @description Absence start date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description Absence end date
              */
-            end_date: string;
+            endDate: string;
             /**
              * Absence Type
              * @description Type of absence
              */
-            absence_type: string;
+            absenceType: string;
             /**
              * Deployment Orders
              * @description Whether deployment orders exist
              * @default false
              */
-            deployment_orders: boolean | null;
+            deploymentOrders: boolean | null;
             /**
              * Tdy Location
              * @description TDY location (if applicable)
              */
-            tdy_location?: string | null;
+            tdyLocation?: string | null;
             /**
              * Replacement Activity
              * @description Replacement activity (if applicable)
              */
-            replacement_activity?: string | null;
+            replacementActivity?: string | null;
             /**
              * Notes
              * @description Absence notes
@@ -19444,21 +19623,21 @@ export interface components {
              */
             id: string;
             /** Is Blocking */
-            is_blocking: boolean | null;
+            isBlocking: boolean | null;
             /** Return Date Tentative */
-            return_date_tentative: boolean;
+            returnDateTentative: boolean;
             /**
              * Is Away From Program
              * @description Whether this counts toward away-from-program limit (28 days/year)
              */
-            is_away_from_program: boolean;
+            isAwayFromProgram: boolean;
             /** Created By Id */
-            created_by_id: string | null;
+            createdById: string | null;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
         };
         /**
          * AbsenceUpdate
@@ -19469,47 +19648,47 @@ export interface components {
              * Start Date
              * @description Absence start date
              */
-            start_date?: string | null;
+            startDate?: string | null;
             /**
              * End Date
              * @description Absence end date
              */
-            end_date?: string | null;
+            endDate?: string | null;
             /**
              * Absence Type
              * @description Type of absence
              */
-            absence_type?: string | null;
+            absenceType?: string | null;
             /**
              * Is Blocking
              * @description Whether absence is blocking
              */
-            is_blocking?: boolean | null;
+            isBlocking?: boolean | null;
             /**
              * Return Date Tentative
              * @description Whether return date is tentative
              */
-            return_date_tentative?: boolean | null;
+            returnDateTentative?: boolean | null;
             /**
              * Is Away From Program
              * @description Whether this counts toward away-from-program limit
              */
-            is_away_from_program?: boolean | null;
+            isAwayFromProgram?: boolean | null;
             /**
              * Deployment Orders
              * @description Whether deployment orders exist
              */
-            deployment_orders?: boolean | null;
+            deploymentOrders?: boolean | null;
             /**
              * Tdy Location
              * @description TDY location (if applicable)
              */
-            tdy_location?: string | null;
+            tdyLocation?: string | null;
             /**
              * Replacement Activity
              * @description Replacement activity (if applicable)
              */
-            replacement_activity?: string | null;
+            replacementActivity?: string | null;
             /**
              * Notes
              * @description Absence notes
@@ -19540,7 +19719,7 @@ export interface components {
              * Absence Data
              * @description Original absence data
              */
-            absence_data?: {
+            absenceData?: {
                 [key: string]: unknown;
             } | null;
         };
@@ -19555,19 +19734,19 @@ export interface components {
              * Block Number
              * @description Academic block number (1-13)
              */
-            block_number: number;
+            blockNumber: number;
             /**
              * Start Date
              * Format: date
              * @description First date of the block
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description Last date of the block
              */
-            end_date: string;
+            endDate: string;
             /**
              * Name
              * @description Block name (e.g., 'Block 1', 'Block 2')
@@ -19630,7 +19809,7 @@ export interface components {
              */
             earned: boolean;
             /** Earned At */
-            earned_at?: string | null;
+            earnedAt?: string | null;
             /** Progress */
             progress?: number | null;
             /** Criteria */
@@ -19657,28 +19836,28 @@ export interface components {
              * Catalyzed Value
              * @description Energy after catalyst application
              */
-            catalyzed_value?: number | null;
+            catalyzedValue?: number | null;
             /**
              * Catalyst Effect
              * @description Reduction achieved by catalysts
              * @default 0
              */
-            catalyst_effect: number;
+            catalystEffect: number;
             /**
              * Is Feasible
              * @description Whether the change is feasible
              */
-            is_feasible: boolean;
+            isFeasible: boolean;
             /**
              * Effective Energy
              * @description Effective energy after catalysis
              */
-            effective_energy: number;
+            effectiveEnergy: number;
             /**
              * Reduction Percentage
              * @description Percentage reduction from catalysis
              */
-            reduction_percentage: number;
+            reductionPercentage: number;
         };
         /**
          * ActiveSolversResponse
@@ -19689,7 +19868,7 @@ export interface components {
              * Active Runs
              * @description Currently running solver jobs
              */
-            active_runs?: components["schemas"]["SolverProgressResponse"][];
+            activeRuns?: components["schemas"]["SolverProgressResponse"][];
             /**
              * Count
              * @description Number of active runs
@@ -19726,46 +19905,46 @@ export interface components {
              * Display Abbreviation
              * @description Short code for UI grid (e.g., 'C', 'LEC')
              */
-            display_abbreviation?: string | null;
+            displayAbbreviation?: string | null;
             /**
              * Activity Category
              * @description Category: clinical, educational, administrative, time_off
              */
-            activity_category: string;
+            activityCategory: string;
             /**
              * Font Color
              * @description Tailwind color class for text
              */
-            font_color?: string | null;
+            fontColor?: string | null;
             /**
              * Background Color
              * @description Tailwind color class for background
              */
-            background_color?: string | null;
+            backgroundColor?: string | null;
             /**
              * Requires Supervision
              * @description ACGME supervision requirement
              * @default true
              */
-            requires_supervision: boolean;
+            requiresSupervision: boolean;
             /**
              * Is Protected
              * @description True for locked slots (e.g., LEC)
              * @default false
              */
-            is_protected: boolean;
+            isProtected: boolean;
             /**
              * Counts Toward Clinical Hours
              * @description ACGME clinical hour limit
              * @default true
              */
-            counts_toward_clinical_hours: boolean;
+            countsTowardClinicalHours: boolean;
             /**
              * Display Order
              * @description Sort order for UI
              * @default 0
              */
-            display_order: number;
+            displayOrder: number;
         };
         /**
          * ActivityListResponse
@@ -19837,45 +20016,45 @@ export interface components {
              * Format: uuid
              * @description The activity this requirement is for
              */
-            activity_id: string;
+            activityId: string;
             /**
              * Min Halfdays
              * @description Minimum half-days required
              * @default 0
              */
-            min_halfdays: number;
+            minHalfdays: number;
             /**
              * Max Halfdays
              * @description Maximum half-days allowed
              * @default 14
              */
-            max_halfdays: number;
+            maxHalfdays: number;
             /**
              * Target Halfdays
              * @description Preferred count
              */
-            target_halfdays?: number | null;
+            targetHalfdays?: number | null;
             /**
              * Applicable Weeks
              * @description Week numbers [1,2,3,4] or null for all weeks
              */
-            applicable_weeks?: number[] | null;
+            applicableWeeks?: number[] | null;
             /**
              * Prefer Full Days
              * @description Prefer AM+PM together
              * @default true
              */
-            prefer_full_days: boolean;
+            preferFullDays: boolean;
             /**
              * Preferred Days
              * @description Preferred day numbers [1-5 for Mon-Fri]
              */
-            preferred_days?: number[] | null;
+            preferredDays?: number[] | null;
             /**
              * Avoid Days
              * @description Days to avoid [0,6 for Sun,Sat]
              */
-            avoid_days?: number[] | null;
+            avoidDays?: number[] | null;
             /**
              * Priority
              * @description 0-100, higher = more important
@@ -19893,45 +20072,45 @@ export interface components {
              * Format: uuid
              * @description The activity this requirement is for
              */
-            activity_id: string;
+            activityId: string;
             /**
              * Min Halfdays
              * @description Minimum half-days required
              * @default 0
              */
-            min_halfdays: number;
+            minHalfdays: number;
             /**
              * Max Halfdays
              * @description Maximum half-days allowed
              * @default 14
              */
-            max_halfdays: number;
+            maxHalfdays: number;
             /**
              * Target Halfdays
              * @description Preferred count
              */
-            target_halfdays?: number | null;
+            targetHalfdays?: number | null;
             /**
              * Applicable Weeks
              * @description Week numbers [1,2,3,4] or null for all weeks
              */
-            applicable_weeks?: number[] | null;
+            applicableWeeks?: number[] | null;
             /**
              * Prefer Full Days
              * @description Prefer AM+PM together
              * @default true
              */
-            prefer_full_days: boolean;
+            preferFullDays: boolean;
             /**
              * Preferred Days
              * @description Preferred day numbers [1-5 for Mon-Fri]
              */
-            preferred_days?: number[] | null;
+            preferredDays?: number[] | null;
             /**
              * Avoid Days
              * @description Days to avoid [0,6 for Sun,Sat]
              */
-            avoid_days?: number[] | null;
+            avoidDays?: number[] | null;
             /**
              * Priority
              * @description 0-100, higher = more important
@@ -19947,18 +20126,18 @@ export interface components {
              * Rotation Template Id
              * Format: uuid
              */
-            rotation_template_id: string;
+            rotationTemplateId: string;
             activity: components["schemas"]["ActivityResponse"];
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
         };
         /**
          * ActivityResponse
@@ -19979,46 +20158,46 @@ export interface components {
              * Display Abbreviation
              * @description Short code for UI grid (e.g., 'C', 'LEC')
              */
-            display_abbreviation?: string | null;
+            displayAbbreviation?: string | null;
             /**
              * Activity Category
              * @description Category: clinical, educational, administrative, time_off
              */
-            activity_category: string;
+            activityCategory: string;
             /**
              * Font Color
              * @description Tailwind color class for text
              */
-            font_color?: string | null;
+            fontColor?: string | null;
             /**
              * Background Color
              * @description Tailwind color class for background
              */
-            background_color?: string | null;
+            backgroundColor?: string | null;
             /**
              * Requires Supervision
              * @description ACGME supervision requirement
              * @default true
              */
-            requires_supervision: boolean;
+            requiresSupervision: boolean;
             /**
              * Is Protected
              * @description True for locked slots (e.g., LEC)
              * @default false
              */
-            is_protected: boolean;
+            isProtected: boolean;
             /**
              * Counts Toward Clinical Hours
              * @description ACGME clinical hour limit
              * @default true
              */
-            counts_toward_clinical_hours: boolean;
+            countsTowardClinicalHours: boolean;
             /**
              * Display Order
              * @description Sort order for UI
              * @default 0
              */
-            display_order: number;
+            displayOrder: number;
             /**
              * Id
              * Format: uuid
@@ -20028,19 +20207,19 @@ export interface components {
              * Is Archived
              * @default false
              */
-            is_archived: boolean;
+            isArchived: boolean;
             /** Archived At */
-            archived_at?: string | null;
+            archivedAt?: string | null;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
         };
         /**
          * ActivityUpdate
@@ -20052,21 +20231,21 @@ export interface components {
             /** Code */
             code?: string | null;
             /** Display Abbreviation */
-            display_abbreviation?: string | null;
+            displayAbbreviation?: string | null;
             /** Activity Category */
-            activity_category?: string | null;
+            activityCategory?: string | null;
             /** Font Color */
-            font_color?: string | null;
+            fontColor?: string | null;
             /** Background Color */
-            background_color?: string | null;
+            backgroundColor?: string | null;
             /** Requires Supervision */
-            requires_supervision?: boolean | null;
+            requiresSupervision?: boolean | null;
             /** Is Protected */
-            is_protected?: boolean | null;
+            isProtected?: boolean | null;
             /** Counts Toward Clinical Hours */
-            counts_toward_clinical_hours?: boolean | null;
+            countsTowardClinicalHours?: boolean | null;
             /** Display Order */
-            display_order?: number | null;
+            displayOrder?: number | null;
         };
         /**
          * AdminUserCreate
@@ -20079,9 +20258,9 @@ export interface components {
              */
             email: string;
             /** First Name */
-            first_name: string;
+            firstName: string;
             /** Last Name */
-            last_name: string;
+            lastName: string;
             /** @default coordinator */
             role: components["schemas"]["UserRole"];
             /** Username */
@@ -20091,7 +20270,7 @@ export interface components {
              * @description Send invitation email to user
              * @default true
              */
-            send_invite: boolean;
+            sendInvite: boolean;
         };
         /**
          * AdminUserListResponse
@@ -20124,30 +20303,30 @@ export interface components {
             /** Email */
             email: string;
             /** First Name */
-            first_name?: string | null;
+            firstName?: string | null;
             /** Last Name */
-            last_name?: string | null;
+            lastName?: string | null;
             /** Role */
             role: string;
             /** Is Active */
-            is_active: boolean;
+            isActive: boolean;
             /**
              * Is Locked
              * @default false
              */
-            is_locked: boolean;
+            isLocked: boolean;
             /** Lock Reason */
-            lock_reason?: string | null;
+            lockReason?: string | null;
             /** Created At */
-            created_at?: string | null;
+            createdAt?: string | null;
             /** Updated At */
-            updated_at?: string | null;
+            updatedAt?: string | null;
             /** Last Login */
-            last_login?: string | null;
+            lastLogin?: string | null;
             /** Invite Sent At */
-            invite_sent_at?: string | null;
+            inviteSentAt?: string | null;
             /** Invite Accepted At */
-            invite_accepted_at?: string | null;
+            inviteAcceptedAt?: string | null;
         };
         /**
          * AdminUserUpdate
@@ -20157,12 +20336,12 @@ export interface components {
             /** Email */
             email?: string | null;
             /** First Name */
-            first_name?: string | null;
+            firstName?: string | null;
             /** Last Name */
-            last_name?: string | null;
+            lastName?: string | null;
             role?: components["schemas"]["UserRole"] | null;
             /** Is Active */
-            is_active?: boolean | null;
+            isActive?: boolean | null;
         };
         /**
          * AffectedTask
@@ -20170,18 +20349,18 @@ export interface components {
          */
         AffectedTask: {
             /** Task Id */
-            task_id: string;
+            taskId: string;
             /** Task Name */
-            task_name: string;
-            previous_status: components["schemas"]["TaskStatus"];
-            new_status: components["schemas"]["TaskStatus"];
+            taskName: string;
+            previousStatus: components["schemas"]["TaskStatus"];
+            newStatus: components["schemas"]["TaskStatus"];
             /** Action Taken */
-            action_taken: string;
+            actionTaken: string;
             /**
              * Retry Count
              * @default 0
              */
-            retry_count: number;
+            retryCount: number;
         };
         /**
          * AggregateMetrics
@@ -20193,27 +20372,27 @@ export interface components {
              * @description Jain's fairness index (0-1, higher is better)
              * @default 0
              */
-            fairness_index: number;
+            fairnessIndex: number;
             /** @description Statistical distribution */
-            load_distribution: components["schemas"]["LoadDistribution"];
+            loadDistribution: components["schemas"]["LoadDistribution"];
             /**
              * Total Faculty
              * @description Total faculty members
              * @default 0
              */
-            total_faculty: number;
+            totalFaculty: number;
             /**
              * Total Weeks Scheduled
              * @description Total weeks scheduled across all faculty
              * @default 0
              */
-            total_weeks_scheduled: number;
+            totalWeeksScheduled: number;
             /**
              * Coverage Percentage
              * @description Percentage of required coverage achieved
              * @default 0
              */
-            coverage_percentage: number;
+            coveragePercentage: number;
         };
         /**
          * AggregatedHealthResult
@@ -20248,25 +20427,25 @@ export interface components {
              */
             timestamp: string;
             /** Critical Count */
-            critical_count: number;
+            criticalCount: number;
             /** Warning Count */
-            warning_count: number;
+            warningCount: number;
             /** Info Count */
-            info_count: number;
+            infoCount: number;
             /** Total Count */
-            total_count: number;
+            totalCount: number;
             /** By Type */
-            by_type: {
+            byType: {
                 [key: string]: number | undefined;
             };
             /** By Status */
-            by_status: {
+            byStatus: {
                 [key: string]: number | undefined;
             };
             /** Oldest Unresolved */
-            oldest_unresolved: string | null;
+            oldestUnresolved: string | null;
             /** Average Resolution Time Hours */
-            average_resolution_time_hours: number | null;
+            averageResolutionTimeHours: number | null;
         };
         /**
          * AlertnessPredictionResponse
@@ -20274,34 +20453,63 @@ export interface components {
          */
         AlertnessPredictionResponse: {
             /** Resident Id */
-            resident_id: string;
+            residentId: string;
             /**
              * Prediction Time
              * Format: date-time
              */
-            prediction_time: string;
+            predictionTime: string;
             /** Alertness Score */
-            alertness_score: number;
+            alertnessScore: number;
             /** Alertness Percent */
-            alertness_percent: number;
+            alertnessPercent: number;
             /** Samn Perelli */
-            samn_perelli: {
+            samnPerelli: {
                 [key: string]: unknown;
             };
             /** Circadian Phase */
-            circadian_phase: string;
+            circadianPhase: string;
             /** Hours Awake */
-            hours_awake: number;
+            hoursAwake: number;
             /** Sleep Debt */
-            sleep_debt: number;
+            sleepDebt: number;
             /** Performance Capacity */
-            performance_capacity: number;
+            performanceCapacity: number;
             /** Risk Level */
-            risk_level: string;
+            riskLevel: string;
             /** Contributing Factors */
-            contributing_factors: string[];
+            contributingFactors: string[];
             /** Recommendations */
             recommendations: string[];
+        };
+        /**
+         * AllBreakersStatusResponse
+         * @description Status of all circuit breakers.
+         */
+        AllBreakersStatusResponse: {
+            /** Total Breakers */
+            totalBreakers: number;
+            /** Closed Breakers */
+            closedBreakers: number;
+            /** Open Breakers */
+            openBreakers: number;
+            /** Half Open Breakers */
+            halfOpenBreakers: number;
+            /** Open Breaker Names */
+            openBreakerNames: string[];
+            /** Half Open Breaker Names */
+            halfOpenBreakerNames: string[];
+            /** Breakers */
+            breakers: components["schemas"]["CircuitBreakerInfo"][];
+            /** Overall Health */
+            overallHealth: string;
+            /** Recommendations */
+            recommendations: string[];
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checkedAt: string;
         };
         /**
          * AllPoliciesResponse
@@ -20320,7 +20528,7 @@ export interface components {
          */
         AllResidentsAwayStatus: {
             /** Academic Year */
-            academic_year: string;
+            academicYear: string;
             /** Residents */
             residents: components["schemas"]["AwayFromProgramSummary"][];
             /**
@@ -20351,37 +20559,37 @@ export interface components {
              * Entity Id
              * Format: uuid
              */
-            entity_id: string;
+            entityId: string;
             /** Entity Type */
-            entity_type: string;
+            entityType: string;
             /**
              * Calculated At
              * Format: date-time
              */
-            calculated_at: string;
+            calculatedAt: string;
             /** Consecutive Weekend Calls */
-            consecutive_weekend_calls: number;
+            consecutiveWeekendCalls: number;
             /** Nights Past Month */
-            nights_past_month: number;
+            nightsPastMonth: number;
             /** Schedule Changes Absorbed */
-            schedule_changes_absorbed: number;
+            scheduleChangesAbsorbed: number;
             /** Holidays Worked This Year */
-            holidays_worked_this_year: number;
+            holidaysWorkedThisYear: number;
             /** Overtime Hours Month */
-            overtime_hours_month: number;
+            overtimeHoursMonth: number;
             /** Coverage Gap Responses */
-            coverage_gap_responses: number;
+            coverageGapResponses: number;
             /** Cross Coverage Events */
-            cross_coverage_events: number;
+            crossCoverageEvents: number;
             /** Acute Stress Score */
-            acute_stress_score: number;
+            acuteStressScore: number;
             /** Chronic Stress Score */
-            chronic_stress_score: number;
+            chronicStressScore: number;
             /** Total Allostatic Load */
-            total_allostatic_load: number;
+            totalAllostaticLoad: number;
             state: components["schemas"]["AllostasisState"];
             /** Risk Level */
-            risk_level: string;
+            riskLevel: string;
         };
         /**
          * AllostasisState
@@ -20397,9 +20605,9 @@ export interface components {
             /** Faculty */
             faculty: string;
             /** Cycle Count */
-            cycle_count: number;
+            cycleCount: number;
             /** Fmit Weeks */
-            fmit_weeks: string[];
+            fmitWeeks: string[];
             /** Recommendation */
             recommendation: string;
         };
@@ -20407,28 +20615,28 @@ export interface components {
          * AnalyticsReportRequest
          * @description Request schema for workload analytics report.
          * @example {
-         *       "end_date": "2025-01-31",
+         *       "endDate": "2025-01-31",
          *       "format": "pdf",
-         *       "include_logo": true,
-         *       "include_page_numbers": true,
-         *       "include_toc": true,
-         *       "report_type": "schedule",
-         *       "start_date": "2025-01-01"
+         *       "includeLogo": true,
+         *       "includePageNumbers": true,
+         *       "includeToc": true,
+         *       "reportType": "schedule",
+         *       "startDate": "2025-01-01"
          *     }
          */
         AnalyticsReportRequest: {
             /** @default analytics */
-            report_type: components["schemas"]["ReportType"];
+            reportType: components["schemas"]["ReportType"];
             /**
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /** @default pdf */
             format: components["schemas"]["ReportFormat"];
             /**
@@ -20436,37 +20644,37 @@ export interface components {
              * @description Include organization logo
              * @default true
              */
-            include_logo: boolean;
+            includeLogo: boolean;
             /**
              * Include Toc
              * @description Include table of contents
              * @default true
              */
-            include_toc: boolean;
+            includeToc: boolean;
             /**
              * Include Page Numbers
              * @description Include page numbers
              * @default true
              */
-            include_page_numbers: boolean;
+            includePageNumbers: boolean;
             /**
              * Include Charts
              * @description Include charts and visualizations
              * @default true
              */
-            include_charts: boolean;
+            includeCharts: boolean;
             /**
              * Include Fairness Metrics
              * @description Include fairness and equity metrics
              * @default true
              */
-            include_fairness_metrics: boolean;
+            includeFairnessMetrics: boolean;
             /**
              * Include Trends
              * @description Include trend analysis
              * @default true
              */
-            include_trends: boolean;
+            includeTrends: boolean;
         };
         /**
          * AnalyzeRequest
@@ -20478,31 +20686,31 @@ export interface components {
              * @description CPU usage threshold
              * @default 80
              */
-            cpu_threshold_percent: number | null;
+            cpuThresholdPercent: number | null;
             /**
              * Memory Threshold Mb
              * @description Memory usage threshold
              * @default 1000
              */
-            memory_threshold_mb: number | null;
+            memoryThresholdMb: number | null;
             /**
              * Duration Threshold Ms
              * @description Duration threshold
              * @default 1000
              */
-            duration_threshold_ms: number | null;
+            durationThresholdMs: number | null;
             /**
              * Sql Slow Threshold Ms
              * @description SQL slow query threshold
              * @default 100
              */
-            sql_slow_threshold_ms: number | null;
+            sqlSlowThresholdMs: number | null;
             /**
              * Request Slow Threshold Ms
              * @description Request slow threshold
              * @default 1000
              */
-            request_slow_threshold_ms: number | null;
+            requestSlowThresholdMs: number | null;
         };
         /**
          * AntibodyAnalysisRequest
@@ -20513,13 +20721,13 @@ export interface components {
              * Anomaly Signature
              * @description Feature vector of detected anomaly
              */
-            anomaly_signature?: number[] | null;
+            anomalySignature?: number[] | null;
             /**
              * Top K
              * @description Number of top antibodies to return
              * @default 5
              */
-            top_k: number;
+            topK: number;
         };
         /**
          * AntibodyAnalysisResponse
@@ -20530,19 +20738,19 @@ export interface components {
              * Total Antibodies
              * @description Total available repair strategies
              */
-            total_antibodies: number;
+            totalAntibodies: number;
             /**
              * Matching Antibodies
              * @description Best matching antibodies
              */
-            matching_antibodies?: components["schemas"]["AntibodyResponse"][];
+            matchingAntibodies?: components["schemas"]["AntibodyResponse"][];
             /** @description Best overall repair strategy */
-            recommended_repair?: components["schemas"]["AntibodyResponse"] | null;
+            recommendedRepair?: components["schemas"]["AntibodyResponse"] | null;
             /**
              * Coverage Score
              * @description How well antibodies cover anomaly types
              */
-            coverage_score: number;
+            coverageScore: number;
             /**
              * Source
              * @description Data source
@@ -20556,15 +20764,15 @@ export interface components {
          */
         AntibodyResponse: {
             /** Antibody Id */
-            antibody_id: string;
+            antibodyId: string;
             /** Repair Type */
-            repair_type: string;
+            repairType: string;
             /** Affinity */
             affinity: number;
             /** Success Rate */
-            success_rate: number;
+            successRate: number;
             /** Avg Repair Time Minutes */
-            avg_repair_time_minutes: number;
+            avgRepairTimeMinutes: number;
             /** Description */
             description: string;
         };
@@ -20588,7 +20796,7 @@ export interface components {
              * Task Id
              * @description Specific task ID (None = all pending for token)
              */
-            task_id?: string | null;
+            taskId?: string | null;
             /**
              * @description Approve or deny
              * @default approve
@@ -20598,12 +20806,12 @@ export interface components {
              * Approved By
              * @description User who approved/denied
              */
-            approved_by: string;
+            approvedBy: string;
             /**
              * Approved By Id
              * @description User ID who approved/denied
              */
-            approved_by_id?: string | null;
+            approvedById?: string | null;
             /**
              * Notes
              * @description Optional approval notes
@@ -20625,31 +20833,31 @@ export interface components {
              * Task Id
              * @description Task ID (or 'multiple' if batch approval)
              */
-            task_id?: string | null;
+            taskId?: string | null;
             /**
              * Approved Tasks
              * @description Number of tasks approved
              * @default 0
              */
-            approved_tasks: number;
+            approvedTasks: number;
             /**
              * Denied Tasks
              * @description Number of tasks denied
              * @default 0
              */
-            denied_tasks: number;
+            deniedTasks: number;
             /**
              * Task Details
              * @description Details of approved/denied tasks
              */
-            task_details?: components["schemas"]["ApprovedTaskInfo"][];
+            taskDetails?: components["schemas"]["ApprovedTaskInfo"][];
             /** Approved By */
-            approved_by: string;
+            approvedBy: string;
             /**
              * Approved At
              * Format: date-time
              */
-            approved_at?: string;
+            approvedAt?: string;
             /**
              * Message
              * @description Human-readable result message
@@ -20667,18 +20875,18 @@ export interface components {
          */
         ApprovedTaskInfo: {
             /** Task Id */
-            task_id: string;
+            taskId: string;
             /** Task Name */
-            task_name: string;
+            taskName: string;
             /** Task Type */
-            task_type: string;
-            previous_status: components["schemas"]["TaskStatus"];
-            new_status: components["schemas"]["TaskStatus"];
+            taskType: string;
+            previousStatus: components["schemas"]["TaskStatus"];
+            newStatus: components["schemas"]["TaskStatus"];
             /**
              * Approved At
              * Format: date-time
              */
-            approved_at: string;
+            approvedAt: string;
         };
         /**
          * AssignmentChange
@@ -20712,25 +20920,25 @@ export interface components {
              * Format: uuid
              * @description Block UUID for this assignment
              */
-            block_id: string;
+            blockId: string;
             /**
              * Person Id
              * Format: uuid
              * @description Person UUID for this assignment
              */
-            person_id: string;
+            personId: string;
             /**
              * Rotation Template Id
              * @description Rotation template UUID (optional)
              */
-            rotation_template_id?: string | null;
+            rotationTemplateId?: string | null;
             /** @description Assignment role type */
             role: components["schemas"]["AssignmentRole"];
             /**
              * Activity Override
              * @description Override activity type (optional)
              */
-            activity_override?: string | null;
+            activityOverride?: string | null;
             /**
              * Notes
              * @description Assignment notes
@@ -20740,12 +20948,12 @@ export interface components {
              * Override Reason
              * @description Reason for acknowledging ACGME violations
              */
-            override_reason?: string | null;
+            overrideReason?: string | null;
             /**
              * Created By
              * @description User who created this assignment
              */
-            created_by?: string | null;
+            createdBy?: string | null;
         };
         /**
          * AssignmentInfo
@@ -20780,7 +20988,7 @@ export interface components {
             /** Page */
             page?: number | null;
             /** Page Size */
-            page_size?: number | null;
+            pageSize?: number | null;
         };
         /**
          * AssignmentPreview
@@ -20791,23 +20999,23 @@ export interface components {
              * Resident Id
              * Format: uuid
              */
-            resident_id: string;
+            residentId: string;
             /** Resident Name */
-            resident_name: string;
+            residentName: string;
             /** Pgy Level */
-            pgy_level: number | null;
+            pgyLevel: number | null;
             /** Rotation Template Id */
-            rotation_template_id: string | null;
+            rotationTemplateId: string | null;
             /** Rotation Name */
-            rotation_name: string | null;
+            rotationName: string | null;
             /** Has Leave */
-            has_leave: boolean;
+            hasLeave: boolean;
             /** Leave Days */
-            leave_days: number;
+            leaveDays: number;
             /** Assignment Reason */
-            assignment_reason: string;
+            assignmentReason: string;
             /** Is Leave Eligible Rotation */
-            is_leave_eligible_rotation: boolean;
+            isLeaveEligibleRotation: boolean;
         };
         /**
          * AssignmentResponse
@@ -20819,25 +21027,25 @@ export interface components {
              * Format: uuid
              * @description Block UUID for this assignment
              */
-            block_id: string;
+            blockId: string;
             /**
              * Person Id
              * Format: uuid
              * @description Person UUID for this assignment
              */
-            person_id: string;
+            personId: string;
             /**
              * Rotation Template Id
              * @description Rotation template UUID (optional)
              */
-            rotation_template_id?: string | null;
+            rotationTemplateId?: string | null;
             /** @description Assignment role type */
             role: components["schemas"]["AssignmentRole"];
             /**
              * Activity Override
              * @description Override activity type (optional)
              */
-            activity_override?: string | null;
+            activityOverride?: string | null;
             /**
              * Notes
              * @description Assignment notes
@@ -20847,26 +21055,26 @@ export interface components {
              * Override Reason
              * @description Reason for acknowledging ACGME violations
              */
-            override_reason?: string | null;
+            overrideReason?: string | null;
             /**
              * Id
              * Format: uuid
              */
             id: string;
             /** Created By */
-            created_by?: string | null;
+            createdBy?: string | null;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
             /** Override Acknowledged At */
-            override_acknowledged_at?: string | null;
+            overrideAcknowledgedAt?: string | null;
             /**
              * Confidence
              * @description Confidence score 0-1 for this assignment
@@ -20894,18 +21102,18 @@ export interface components {
              * Format: uuid
              * @description Resident ID
              */
-            person_id: string;
+            personId: string;
             /**
              * Block Id
              * Format: uuid
              * @description Block ID
              */
-            block_id: string;
+            blockId: string;
             /**
              * Template Id
              * @description Template ID
              */
-            template_id?: string | null;
+            templateId?: string | null;
         };
         /**
          * AssignmentStatus
@@ -20930,7 +21138,7 @@ export interface components {
          * @description Summary of an assignment for manifest display.
          */
         AssignmentSummary: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Role
              * @description primary, supervising, or backup
@@ -20951,14 +21159,14 @@ export interface components {
              * Rotation Template Id
              * @description Rotation template UUID (optional)
              */
-            rotation_template_id?: string | null;
+            rotationTemplateId?: string | null;
             /** @description Assignment role type */
             role?: components["schemas"]["AssignmentRole"] | null;
             /**
              * Activity Override
              * @description Override activity type (optional)
              */
-            activity_override?: string | null;
+            activityOverride?: string | null;
             /**
              * Notes
              * @description Assignment notes
@@ -20968,18 +21176,18 @@ export interface components {
              * Override Reason
              * @description Reason for acknowledging ACGME violations
              */
-            override_reason?: string | null;
+            overrideReason?: string | null;
             /**
              * Acknowledge Override
              * @description Set to True to timestamp override_acknowledged_at
              */
-            acknowledge_override?: boolean | null;
+            acknowledgeOverride?: boolean | null;
             /**
              * Updated At
              * Format: date-time
              * @description Current timestamp for optimistic locking
              */
-            updated_at: string;
+            updatedAt: string;
         };
         /**
          * AssignmentWithWarnings
@@ -20991,25 +21199,25 @@ export interface components {
              * Format: uuid
              * @description Block UUID for this assignment
              */
-            block_id: string;
+            blockId: string;
             /**
              * Person Id
              * Format: uuid
              * @description Person UUID for this assignment
              */
-            person_id: string;
+            personId: string;
             /**
              * Rotation Template Id
              * @description Rotation template UUID (optional)
              */
-            rotation_template_id?: string | null;
+            rotationTemplateId?: string | null;
             /** @description Assignment role type */
             role: components["schemas"]["AssignmentRole"];
             /**
              * Activity Override
              * @description Override activity type (optional)
              */
-            activity_override?: string | null;
+            activityOverride?: string | null;
             /**
              * Notes
              * @description Assignment notes
@@ -21019,26 +21227,26 @@ export interface components {
              * Override Reason
              * @description Reason for acknowledging ACGME violations
              */
-            override_reason?: string | null;
+            overrideReason?: string | null;
             /**
              * Id
              * Format: uuid
              */
             id: string;
             /** Created By */
-            created_by?: string | null;
+            createdBy?: string | null;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
             /** Override Acknowledged At */
-            override_acknowledged_at?: string | null;
+            overrideAcknowledgedAt?: string | null;
             /**
              * Confidence
              * @description Confidence score 0-1 for this assignment
@@ -21053,12 +21261,12 @@ export interface components {
              * Acgme Warnings
              * @default []
              */
-            acgme_warnings: string[];
+            acgmeWarnings: string[];
             /**
              * Is Compliant
              * @default true
              */
-            is_compliant: boolean;
+            isCompliant: boolean;
         };
         /**
          * AttendingInfo
@@ -21066,9 +21274,9 @@ export interface components {
          */
         AttendingInfo: {
             /** @description AM attending */
-            am?: components["schemas"]["PersonSummary"] | null;
+            am?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
             /** @description PM attending */
-            pm?: components["schemas"]["PersonSummary"] | null;
+            pm?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
         };
         /**
          * AttractorInfoResponse
@@ -21079,34 +21287,34 @@ export interface components {
              * Attractor Id
              * @description Unique attractor identifier
              */
-            attractor_id: string;
+            attractorId: string;
             /** @description Type of attractor */
-            attractor_type: components["schemas"]["AttractorType"];
+            attractorType: components["schemas"]["AttractorType"];
             /**
              * Energy Level
              * @description Energy at attractor state
              */
-            energy_level: number;
+            energyLevel: number;
             /**
              * Basin Depth
              * @description Energy barrier to escape
              */
-            basin_depth: number;
+            basinDepth: number;
             /**
              * Basin Volume
              * @description Estimated states in basin
              */
-            basin_volume: number;
+            basinVolume: number;
             /**
              * Hamming Distance
              * @description Distance from current state
              */
-            hamming_distance: number;
+            hammingDistance: number;
             /**
              * Pattern Description
              * @description Pattern description
              */
-            pattern_description: string;
+            patternDescription: string;
             /**
              * Confidence
              * @description Detection confidence
@@ -21154,16 +21362,16 @@ export interface components {
              * @description Time-to-live in seconds (30-600, default: 120)
              * @default 120
              */
-            ttl_seconds: number;
+            ttlSeconds: number;
         };
         /**
          * AudienceTokenResponse
          * @description Response when creating an audience-scoped token.
          * @example {
          *       "audience": "jobs.abort",
-         *       "expires_at": "2025-12-29T15:30:00Z",
+         *       "expiresAt": "2025-12-29T15:30:00Z",
          *       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-         *       "ttl_seconds": 120
+         *       "ttlSeconds": 120
          *     }
          */
         AudienceTokenResponse: {
@@ -21182,12 +21390,12 @@ export interface components {
              * Format: date-time
              * @description Token expiration timestamp (UTC)
              */
-            expires_at: string;
+            expiresAt: string;
             /**
              * Ttl Seconds
              * @description Time-to-live in seconds
              */
-            ttl_seconds: number;
+            ttlSeconds: number;
         };
         /**
          * AuditExportConfig
@@ -21409,11 +21617,11 @@ export interface components {
              * @default code
              * @constant
              */
-            response_type: "code";
+            responseType: "code";
             /** Client Id */
-            client_id: string;
+            clientId: string;
             /** Redirect Uri */
-            redirect_uri: string;
+            redirectUri: string;
             /** Scope */
             scope?: string | null;
             /** State */
@@ -21421,13 +21629,13 @@ export interface components {
             /** Nonce */
             nonce?: string | null;
             /** Code Challenge */
-            code_challenge: string;
+            codeChallenge: string;
             /**
              * Code Challenge Method
              * @default S256
              * @enum {string}
              */
-            code_challenge_method: "S256" | "plain";
+            codeChallengeMethod: "S256" | "plain";
         };
         /**
          * AuthorizationResponse
@@ -21447,11 +21655,11 @@ export interface components {
             /** Id */
             id: string;
             /** Start Date */
-            start_date: string;
+            startDate: string;
             /** End Date */
-            end_date: string;
+            endDate: string;
             /** Absence Type */
-            absence_type: string;
+            absenceType: string;
             /**
              * Days
              * @description Days counted toward away-from-program
@@ -21467,25 +21675,25 @@ export interface components {
              * Current Days
              * @description Current days used
              */
-            current_days: number;
+            currentDays: number;
             /**
              * Projected Days
              * @description Days if new absence is added
              */
-            projected_days: number;
-            threshold_status: components["schemas"]["ThresholdStatus"];
+            projectedDays: number;
+            thresholdStatus: components["schemas"]["ThresholdStatus"];
             /** Days Remaining */
-            days_remaining: number;
+            daysRemaining: number;
             /**
              * Max Days
              * @default 28
              */
-            max_days: number;
+            maxDays: number;
             /**
              * Warning Days
              * @default 21
              */
-            warning_days: number;
+            warningDays: number;
         };
         /**
          * AwayFromProgramSummary
@@ -21496,36 +21704,36 @@ export interface components {
          */
         AwayFromProgramSummary: {
             /** Person Id */
-            person_id: string;
+            personId: string;
             /**
              * Academic Year
              * @description Academic year (e.g., '2025-2026')
              */
-            academic_year: string;
+            academicYear: string;
             /**
              * Days Used
              * @description Total days away from program this year
              */
-            days_used: number;
+            daysUsed: number;
             /**
              * Days Remaining
              * @description Days remaining before limit (max 0)
              */
-            days_remaining: number;
+            daysRemaining: number;
             /** @description Current status: ok, warning, critical, exceeded */
-            threshold_status: components["schemas"]["ThresholdStatus"];
+            thresholdStatus: components["schemas"]["ThresholdStatus"];
             /**
              * Max Days
              * @description Maximum allowed days per year
              * @default 28
              */
-            max_days: number;
+            maxDays: number;
             /**
              * Warning Days
              * @description Warning threshold (75%)
              * @default 21
              */
-            warning_days: number;
+            warningDays: number;
             /**
              * Absences
              * @description Absences contributing to count
@@ -21540,9 +21748,9 @@ export interface components {
             /** Backups */
             backups: components["schemas"]["BackupResult"][];
             /** Total Count */
-            total_count: number;
+            totalCount: number;
             /** Storage Used Mb */
-            storage_used_mb: number;
+            storageUsedMb: number;
         };
         /**
          * BackupResult
@@ -21553,18 +21761,18 @@ export interface components {
              * Backup Id
              * @description Unique backup identifier
              */
-            backup_id: string;
+            backupId: string;
             /**
              * Created At
              * Format: date-time
              * @description Backup creation timestamp
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Size Mb
              * @description Backup file size in MB
              */
-            size_mb: number;
+            sizeMb: number;
             /**
              * Strategy
              * @description Backup strategy used
@@ -21579,12 +21787,12 @@ export interface components {
              * File Path
              * @description Path to backup file
              */
-            file_path: string;
+            filePath: string;
             /**
              * Schema Version
              * @description Alembic schema version
              */
-            schema_version?: string | null;
+            schemaVersion?: string | null;
         };
         /**
          * BackupStatusResponse
@@ -21594,15 +21802,15 @@ export interface components {
             /** Healthy */
             healthy: boolean;
             /** Latest Backup Age Hours */
-            latest_backup_age_hours: number | null;
+            latestBackupAgeHours: number | null;
             /** Latest Backup Id */
-            latest_backup_id: string | null;
+            latestBackupId: string | null;
             /** Total Backups */
-            total_backups: number;
+            totalBackups: number;
             /** Storage Used Mb */
-            storage_used_mb: number;
+            storageUsedMb: number;
             /** Backup Directory */
-            backup_directory: string;
+            backupDirectory: string;
             /** Warnings */
             warnings: string[];
         };
@@ -21618,15 +21826,15 @@ export interface components {
          */
         BackupVerifyResult: {
             /** Backup Id */
-            backup_id: string;
+            backupId: string;
             /** Valid */
             valid: boolean;
             /** Checksum */
             checksum: string | null;
             /** File Exists */
-            file_exists: boolean;
+            fileExists: boolean;
             /** Size Mb */
-            size_mb: number;
+            sizeMb: number;
             /** Error */
             error?: string | null;
         };
@@ -21636,12 +21844,12 @@ export interface components {
          */
         BarrierAnalysisResponse: {
             /** Total Barriers */
-            total_barriers: number;
+            totalBarriers: number;
             /** Barriers */
             barriers: components["schemas"]["EnergyBarrierResponse"][];
-            activation_energy: components["schemas"]["ActivationEnergyResponse"];
+            activationEnergy: components["schemas"]["ActivationEnergyResponse"];
             /** Has Absolute Barriers */
-            has_absolute_barriers: boolean;
+            hasAbsoluteBarriers: boolean;
             /** Summary */
             summary: string;
         };
@@ -21655,19 +21863,19 @@ export interface components {
              * Format: uuid
              * @description ID of the assignment to analyze
              */
-            assignment_id: string;
+            assignmentId: string;
             /**
              * Proposed Change
              * @description Description of the proposed change
              */
-            proposed_change: {
+            proposedChange: {
                 [key: string]: unknown;
             };
             /**
              * Reference Date
              * @description Reference date for calculations (defaults to today)
              */
-            reference_date?: string | null;
+            referenceDate?: string | null;
         };
         /**
          * BarrierTypeEnum
@@ -21684,18 +21892,18 @@ export interface components {
              * Start Date
              * @description Start date (YYYY-MM-DD)
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * @description End date (YYYY-MM-DD)
              */
-            end_date: string;
+            endDate: string;
             /**
              * Num Perturbations
              * @description Number of perturbations to test
              * @default 100
              */
-            num_perturbations: number;
+            numPerturbations: number;
         };
         /**
          * BasinDepthResponse
@@ -21706,31 +21914,31 @@ export interface components {
              * Analyzed At
              * @description ISO timestamp of analysis
              */
-            analyzed_at: string;
+            analyzedAt: string;
             /**
              * Schedule Id
              * @description Schedule ID if provided
              */
-            schedule_id?: string | null;
+            scheduleId?: string | null;
             /**
              * Attractor Id
              * @description ID of measured attractor
              */
-            attractor_id: string;
+            attractorId: string;
             /** @description Basin metrics */
             metrics: components["schemas"]["BasinMetricsResponse"];
             /** @description Stability classification */
-            stability_level: components["schemas"]["StabilityLevel"];
+            stabilityLevel: components["schemas"]["StabilityLevel"];
             /**
              * Is Robust
              * @description Whether schedule is robust
              */
-            is_robust: boolean;
+            isRobust: boolean;
             /**
              * Robustness Threshold
              * @description Max simultaneous changes tolerated
              */
-            robustness_threshold: number;
+            robustnessThreshold: number;
             /**
              * Interpretation
              * @description Human-readable interpretation
@@ -21754,42 +21962,42 @@ export interface components {
              * Min Escape Energy
              * @description Minimum escape barrier
              */
-            min_escape_energy: number;
+            minEscapeEnergy: number;
             /**
              * Avg Escape Energy
              * @description Average escape barrier
              */
-            avg_escape_energy: number;
+            avgEscapeEnergy: number;
             /**
              * Max Escape Energy
              * @description Maximum escape barrier
              */
-            max_escape_energy: number;
+            maxEscapeEnergy: number;
             /**
              * Basin Stability Index
              * @description Basin stability index [0, 1]
              */
-            basin_stability_index: number;
+            basinStabilityIndex: number;
             /**
              * Num Escape Paths
              * @description Number of escape paths
              */
-            num_escape_paths: number;
+            numEscapePaths: number;
             /**
              * Nearest Saddle Distance
              * @description Distance to nearest saddle point
              */
-            nearest_saddle_distance: number;
+            nearestSaddleDistance: number;
             /**
              * Basin Radius
              * @description Maximum distance within basin
              */
-            basin_radius: number;
+            basinRadius: number;
             /**
              * Critical Perturbation Size
              * @description Changes needed to escape basin
              */
-            critical_perturbation_size: number;
+            criticalPerturbationSize: number;
         };
         /**
          * BatchArchiveRequest
@@ -21800,13 +22008,13 @@ export interface components {
              * Template Ids
              * @description List of template IDs to archive (max 100)
              */
-            template_ids: string[];
+            templateIds: string[];
             /**
              * Dry Run
              * @description If True, validate only without archiving
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * BatchAssignmentCreate
@@ -21817,22 +22025,22 @@ export interface components {
              * Block Id
              * Format: uuid
              */
-            block_id: string;
+            blockId: string;
             /**
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /** Rotation Template Id */
-            rotation_template_id?: string | null;
+            rotationTemplateId?: string | null;
             /** Role */
             role: string;
             /** Activity Override */
-            activity_override?: string | null;
+            activityOverride?: string | null;
             /** Notes */
             notes?: string | null;
             /** Override Reason */
-            override_reason?: string | null;
+            overrideReason?: string | null;
         };
         /**
          * BatchAssignmentDelete
@@ -21843,13 +22051,13 @@ export interface components {
              * Assignment Id
              * Format: uuid
              */
-            assignment_id: string;
+            assignmentId: string;
             /**
              * Soft Delete
              * @description If True, mark as deleted but don't remove from database
              * @default false
              */
-            soft_delete: boolean;
+            softDelete: boolean;
         };
         /**
          * BatchAssignmentUpdate
@@ -21860,22 +22068,22 @@ export interface components {
              * Assignment Id
              * Format: uuid
              */
-            assignment_id: string;
+            assignmentId: string;
             /** Rotation Template Id */
-            rotation_template_id?: string | null;
+            rotationTemplateId?: string | null;
             /** Role */
             role?: string | null;
             /** Activity Override */
-            activity_override?: string | null;
+            activityOverride?: string | null;
             /** Notes */
             notes?: string | null;
             /** Override Reason */
-            override_reason?: string | null;
+            overrideReason?: string | null;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
         };
         /**
          * BatchCreateRequest
@@ -21892,21 +22100,21 @@ export interface components {
              * @description If True, validate only without creating
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
             /**
              * Rollback On Error
              * @description If True, rollback all changes if any operation fails
              * @default true
              */
-            rollback_on_error: boolean;
+            rollbackOnError: boolean;
             /** Created By */
-            created_by?: string | null;
+            createdBy?: string | null;
             /**
              * Validate Acgme
              * @description If True, validate ACGME compliance for all assignments
              * @default true
              */
-            validate_acgme: boolean;
+            validateAcgme: boolean;
         };
         /**
          * BatchDeleteRequest
@@ -21923,13 +22131,13 @@ export interface components {
              * @description If True, validate only without deleting
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
             /**
              * Rollback On Error
              * @description If True, rollback all changes if any operation fails
              * @default true
              */
-            rollback_on_error: boolean;
+            rollbackOnError: boolean;
         };
         /**
          * BatchOperationResult
@@ -21942,7 +22150,7 @@ export interface components {
              */
             index: number;
             /** Person Id */
-            person_id?: string | null;
+            personId?: string | null;
             /** Success */
             success: boolean;
             /** Error */
@@ -21975,7 +22183,7 @@ export interface components {
              * @description Find optimal execution order
              * @default true
              */
-            find_optimal_order: boolean;
+            findOptimalOrder: boolean;
         };
         /**
          * BatchOptimizationResponse
@@ -21983,23 +22191,23 @@ export interface components {
          */
         BatchOptimizationResponse: {
             /** Total Changes */
-            total_changes: number;
+            totalChanges: number;
             /** Successful Pathways */
-            successful_pathways: number;
+            successfulPathways: number;
             /**
              * Optimal Order
              * @description Optimal execution order (0-indexed)
              */
-            optimal_order?: number[];
+            optimalOrder?: number[];
             /** Results */
             results: components["schemas"]["PathwayResultResponse"][];
             /** Aggregate Energy */
-            aggregate_energy: number;
+            aggregateEnergy: number;
             /**
              * Catalyst Conflicts
              * @description Conflicts between catalyst usage
              */
-            catalyst_conflicts?: string[];
+            catalystConflicts?: string[];
         };
         /**
          * BatchPatternSlot
@@ -22010,27 +22218,27 @@ export interface components {
              * Day Of Week
              * @description 0=Sunday, 6=Saturday
              */
-            day_of_week: number;
+            dayOfWeek: number;
             /**
              * Time Of Day
              * @enum {string}
              */
-            time_of_day: "AM" | "PM";
+            timeOfDay: "AM" | "PM";
             /**
              * Linked Template Id
              * @description Template to assign to this slot (null to clear)
              */
-            linked_template_id?: string | null;
+            linkedTemplateId?: string | null;
             /**
              * Activity Type
              * @description Activity type override (optional)
              */
-            activity_type?: string | null;
+            activityType?: string | null;
             /**
              * Is Protected
              * @description Protected status (optional)
              */
-            is_protected?: boolean | null;
+            isProtected?: boolean | null;
             /**
              * Notes
              * @description Slot notes (optional)
@@ -22052,7 +22260,7 @@ export interface components {
              * Template Ids
              * @description Template IDs to update
              */
-            template_ids: string[];
+            templateIds: string[];
             /**
              * Mode
              * @description overlay=merge with existing, replace=overwrite all
@@ -22069,13 +22277,13 @@ export interface components {
              * Week Numbers
              * @description Weeks to apply to (1-4). Null = all weeks / same pattern all weeks
              */
-            week_numbers?: number[] | null;
+            weekNumbers?: number[] | null;
             /**
              * Dry Run
              * @description Preview changes without applying
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * BatchPatternUpdateResponse
@@ -22083,7 +22291,7 @@ export interface components {
          */
         BatchPatternUpdateResponse: {
             /** Total Templates */
-            total_templates: number;
+            totalTemplates: number;
             /** Successful */
             successful: number;
             /** Failed */
@@ -22094,7 +22302,7 @@ export interface components {
              * Dry Run
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * BatchPatternUpdateResult
@@ -22105,16 +22313,16 @@ export interface components {
              * Template Id
              * Format: uuid
              */
-            template_id: string;
+            templateId: string;
             /** Template Name */
-            template_name: string;
+            templateName: string;
             /** Success */
             success: boolean;
             /**
              * Slots Modified
              * @default 0
              */
-            slots_modified: number;
+            slotsModified: number;
             /** Error */
             error?: string | null;
         };
@@ -22135,7 +22343,7 @@ export interface components {
              * @description If True, validate only without creating
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * BatchPersonDeleteRequest
@@ -22148,13 +22356,13 @@ export interface components {
              * Person Ids
              * @description List of person IDs to delete (max 100)
              */
-            person_ids: string[];
+            personIds: string[];
             /**
              * Dry Run
              * @description If True, validate only without deleting
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * BatchPersonResponse
@@ -22162,7 +22370,7 @@ export interface components {
          */
         BatchPersonResponse: {
             /** Operation Type */
-            operation_type: string;
+            operationType: string;
             /**
              * Total
              * @description Total number of operations requested
@@ -22188,12 +22396,12 @@ export interface components {
              * @description Whether this was a dry run
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
             /**
              * Created Ids
              * @description IDs of created people (for create operations)
              */
-            created_ids?: string[] | null;
+            createdIds?: string[] | null;
         };
         /**
          * BatchPersonUpdateItem
@@ -22204,7 +22412,7 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             updates: components["schemas"]["PersonUpdate"];
         };
         /**
@@ -22224,7 +22432,7 @@ export interface components {
              * @description If True, validate only without updating
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * BatchResolutionReport
@@ -22232,83 +22440,83 @@ export interface components {
          */
         BatchResolutionReport: {
             /** Total Conflicts */
-            total_conflicts: number;
+            totalConflicts: number;
             /** Conflicts Analyzed */
-            conflicts_analyzed: number;
+            conflictsAnalyzed: number;
             /**
              * Resolutions Proposed
              * @default 0
              */
-            resolutions_proposed: number;
+            resolutionsProposed: number;
             /**
              * Resolutions Applied
              * @default 0
              */
-            resolutions_applied: number;
+            resolutionsApplied: number;
             /**
              * Resolutions Failed
              * @default 0
              */
-            resolutions_failed: number;
+            resolutionsFailed: number;
             /**
              * Resolutions Deferred
              * @default 0
              */
-            resolutions_deferred: number;
+            resolutionsDeferred: number;
             /** Results */
             results?: components["schemas"]["ResolutionResult"][];
             /** Pending Approvals */
-            pending_approvals?: components["schemas"]["ResolutionOption"][];
+            pendingApprovals?: components["schemas"]["ResolutionOption"][];
             /** Failed Conflicts */
-            failed_conflicts?: string[];
+            failedConflicts?: string[];
             /**
              * Total Faculty Affected
              * @default 0
              */
-            total_faculty_affected: number;
+            totalFacultyAffected: number;
             /**
              * Total Changes Made
              * @default 0
              */
-            total_changes_made: number;
+            totalChangesMade: number;
             /**
              * New Conflicts Created
              * @default 0
              */
-            new_conflicts_created: number;
+            newConflictsCreated: number;
             /**
              * Safety Checks Performed
              * @default 0
              */
-            safety_checks_performed: number;
+            safetyChecksPerformed: number;
             /**
              * Safety Checks Passed
              * @default 0
              */
-            safety_checks_passed: number;
+            safetyChecksPassed: number;
             /**
              * Safety Checks Failed
              * @default 0
              */
-            safety_checks_failed: number;
+            safetyChecksFailed: number;
             /** Processing Time Seconds */
-            processing_time_seconds: number;
+            processingTimeSeconds: number;
             /**
              * Started At
              * Format: date-time
              */
-            started_at: string;
+            startedAt: string;
             /**
              * Completed At
              * Format: date-time
              */
-            completed_at?: string;
+            completedAt?: string;
             /** Success Rate */
-            success_rate: number;
+            successRate: number;
             /** Overall Status */
-            overall_status: string;
+            overallStatus: string;
             /** Summary Message */
-            summary_message: string;
+            summaryMessage: string;
             /** Recommendations */
             recommendations?: string[];
         };
@@ -22322,8 +22530,8 @@ export interface components {
              * Format: uuid
              * @description Unique ID for this batch operation
              */
-            operation_id: string;
-            operation_type: components["schemas"]["BatchOperationType"];
+            operationId: string;
+            operationType: components["schemas"]["BatchOperationType"];
             status: components["schemas"]["BatchOperationStatus"];
             /**
              * Total
@@ -22360,19 +22568,19 @@ export interface components {
              * @description Whether this was a dry run
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /** Completed At */
-            completed_at?: string | null;
+            completedAt?: string | null;
             /**
              * Processing Time Ms
              * @description Time taken to process the batch in milliseconds
              */
-            processing_time_ms?: number | null;
+            processingTimeMs?: number | null;
         };
         /**
          * BatchRestoreRequest
@@ -22383,13 +22591,13 @@ export interface components {
              * Template Ids
              * @description List of template IDs to restore (max 100)
              */
-            template_ids: string[];
+            templateIds: string[];
             /**
              * Dry Run
              * @description If True, validate only without restoring
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * BatchStatusResponse
@@ -22400,8 +22608,8 @@ export interface components {
              * Operation Id
              * Format: uuid
              */
-            operation_id: string;
-            operation_type: components["schemas"]["BatchOperationType"];
+            operationId: string;
+            operationType: components["schemas"]["BatchOperationType"];
             status: components["schemas"]["BatchOperationStatus"];
             /** Total */
             total: number;
@@ -22413,19 +22621,19 @@ export interface components {
              * Progress Percentage
              * @description Percentage of operations completed (0-100)
              */
-            progress_percentage: number;
+            progressPercentage: number;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /** Completed At */
-            completed_at?: string | null;
+            completedAt?: string | null;
             /**
              * Estimated Completion
              * @description Estimated completion time (only for in-progress operations)
              */
-            estimated_completion?: string | null;
+            estimatedCompletion?: string | null;
         };
         /**
          * BatchTemplateCreateRequest
@@ -22444,7 +22652,7 @@ export interface components {
              * @description If True, validate only without creating
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * BatchTemplateDeleteRequest
@@ -22457,13 +22665,13 @@ export interface components {
              * Template Ids
              * @description List of template IDs to delete (max 100)
              */
-            template_ids: string[];
+            templateIds: string[];
             /**
              * Dry Run
              * @description If True, validate only without deleting
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * BatchTemplateResponse
@@ -22471,7 +22679,7 @@ export interface components {
          */
         BatchTemplateResponse: {
             /** Operation Type */
-            operation_type: string;
+            operationType: string;
             /**
              * Total
              * @description Total number of operations requested
@@ -22497,12 +22705,12 @@ export interface components {
              * @description Whether this was a dry run
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
             /**
              * Created Ids
              * @description IDs of created templates (for create operations)
              */
-            created_ids?: string[] | null;
+            createdIds?: string[] | null;
         };
         /**
          * BatchTemplateUpdateItem
@@ -22513,7 +22721,7 @@ export interface components {
              * Template Id
              * Format: uuid
              */
-            template_id: string;
+            templateId: string;
             updates: components["schemas"]["RotationTemplateUpdate"];
         };
         /**
@@ -22533,7 +22741,7 @@ export interface components {
              * @description If True, validate only without updating
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * BatchUpdateRequest
@@ -22550,19 +22758,19 @@ export interface components {
              * @description If True, validate only without updating
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
             /**
              * Rollback On Error
              * @description If True, rollback all changes if any operation fails
              * @default true
              */
-            rollback_on_error: boolean;
+            rollbackOnError: boolean;
             /**
              * Validate Acgme
              * @description If True, validate ACGME compliance for all assignments
              * @default true
              */
-            validate_acgme: boolean;
+            validateAcgme: boolean;
         };
         /**
          * BehavioralSignalResponse
@@ -22572,9 +22780,9 @@ export interface components {
             /** Success */
             success: boolean;
             /** Signal Type */
-            signal_type: string;
+            signalType: string;
             /** Faculty Id */
-            faculty_id: string;
+            facultyId: string;
         };
         /**
          * BenchmarkComparisonSchema
@@ -22588,12 +22796,12 @@ export interface components {
              * Qubo Vs Greedy Improvement
              * @description Percentage improvement of QUBO over greedy
              */
-            qubo_vs_greedy_improvement: number;
+            quboVsGreedyImprovement: number;
             /**
              * Qubo Vs Random Improvement
              * @description Percentage improvement of QUBO over random
              */
-            qubo_vs_random_improvement: number;
+            quboVsRandomImprovement: number;
         };
         /**
          * BenchmarkResultSchema
@@ -22614,17 +22822,17 @@ export interface components {
              * Num Assignments
              * @description Number of assignments produced
              */
-            num_assignments: number;
+            numAssignments: number;
             /**
              * Runtime Seconds
              * @description Execution time
              */
-            runtime_seconds: number;
+            runtimeSeconds: number;
             /**
              * Objective Value
              * @description Final objective value
              */
-            objective_value?: number | null;
+            objectiveValue?: number | null;
         };
         /**
          * BlastRadiusReportResponse
@@ -22635,26 +22843,26 @@ export interface components {
              * Generated At
              * Format: date-time
              */
-            generated_at: string;
+            generatedAt: string;
             /** Total Zones */
-            total_zones: number;
+            totalZones: number;
             /** Zones Healthy */
-            zones_healthy: number;
+            zonesHealthy: number;
             /** Zones Degraded */
-            zones_degraded: number;
+            zonesDegraded: number;
             /** Zones Critical */
-            zones_critical: number;
+            zonesCritical: number;
             /** Containment Active */
-            containment_active: boolean;
-            containment_level: components["schemas"]["ContainmentLevel"];
+            containmentActive: boolean;
+            containmentLevel: components["schemas"]["ContainmentLevel"];
             /** Zones Isolated */
-            zones_isolated: number;
+            zonesIsolated: number;
             /** Active Borrowing Requests */
-            active_borrowing_requests: number;
+            activeBorrowingRequests: number;
             /** Pending Borrowing Requests */
-            pending_borrowing_requests: number;
+            pendingBorrowingRequests: number;
             /** Zone Reports */
-            zone_reports: components["schemas"]["ZoneHealthReport"][];
+            zoneReports: components["schemas"]["ZoneHealthReport"][];
             /** Recommendations */
             recommendations: string[];
         };
@@ -22667,39 +22875,39 @@ export interface components {
              * Block Number
              * @description Academic block (0-13)
              */
-            block_number: number;
+            blockNumber: number;
             /**
              * Academic Year
              * @description Academic year
              */
-            academic_year: number;
+            academicYear: number;
             /**
              * Resident Id
              * Format: uuid
              */
-            resident_id: string;
+            residentId: string;
             /** Rotation Template Id */
-            rotation_template_id?: string | null;
+            rotationTemplateId?: string | null;
             /**
              * Has Leave
              * @default false
              */
-            has_leave: boolean;
+            hasLeave: boolean;
             /**
              * Leave Days
              * @description Number of leave days
              * @default 0
              */
-            leave_days: number;
+            leaveDays: number;
             /**
              * Assignment Reason
              * @default balanced
              */
-            assignment_reason: string;
+            assignmentReason: string;
             /** Notes */
             notes?: string | null;
             /** Created By */
-            created_by?: string | null;
+            createdBy?: string | null;
         };
         /**
          * BlockAssignmentExportRequest
@@ -22715,39 +22923,39 @@ export interface components {
              * Academic Year
              * @description Academic year to export
              */
-            academic_year: number;
+            academicYear: number;
             /**
              * Block Numbers
              * @description Specific blocks to export (None = all)
              */
-            block_numbers?: number[] | null;
+            blockNumbers?: number[] | null;
             /**
              * Rotation Ids
              * @description Filter by rotation IDs
              */
-            rotation_ids?: string[] | null;
+            rotationIds?: string[] | null;
             /**
              * Resident Ids
              * @description Filter by resident IDs
              */
-            resident_ids?: string[] | null;
+            residentIds?: string[] | null;
             /**
              * Include Pgy Level
              * @description Include PGY level column
              * @default true
              */
-            include_pgy_level: boolean;
+            includePgyLevel: boolean;
             /**
              * Include Leave Status
              * @description Include leave status column
              * @default false
              */
-            include_leave_status: boolean;
+            includeLeaveStatus: boolean;
             /**
              * Group By
              * @description Group results by field
              */
-            group_by?: ("block" | "resident" | "rotation") | null;
+            groupBy?: ("block" | "resident" | "rotation") | null;
         };
         /**
          * BlockAssignmentImportRequest
@@ -22758,35 +22966,35 @@ export interface components {
              * Preview Id
              * @description Preview ID from preview response
              */
-            preview_id: string;
+            previewId: string;
             /**
              * Academic Year
              * @description Academic year for assignments
              */
-            academic_year: number;
+            academicYear: number;
             /**
              * Skip Duplicates
              * @description Skip duplicate assignments
              * @default true
              */
-            skip_duplicates: boolean;
+            skipDuplicates: boolean;
             /**
              * Update Duplicates
              * @description Update existing duplicates (overrides skip_duplicates)
              * @default false
              */
-            update_duplicates: boolean;
+            updateDuplicates: boolean;
             /**
              * Import Unmatched
              * @description Import rows with warnings (low confidence matches)
              * @default false
              */
-            import_unmatched: boolean;
+            importUnmatched: boolean;
             /**
              * Row Overrides
              * @description Per-row duplicate action overrides
              */
-            row_overrides?: {
+            rowOverrides?: {
                 [key: string]: components["schemas"]["DuplicateAction"] | undefined;
             };
         };
@@ -22804,57 +23012,57 @@ export interface components {
              * Academic Year
              * @description Academic year imported
              */
-            academic_year: number;
+            academicYear: number;
             /**
              * Total Rows
              * @description Total rows processed
              * @default 0
              */
-            total_rows: number;
+            totalRows: number;
             /**
              * Imported Count
              * @description Successfully imported
              * @default 0
              */
-            imported_count: number;
+            importedCount: number;
             /**
              * Updated Count
              * @description Updated existing
              * @default 0
              */
-            updated_count: number;
+            updatedCount: number;
             /**
              * Skipped Count
              * @description Skipped (duplicates/errors)
              * @default 0
              */
-            skipped_count: number;
+            skippedCount: number;
             /**
              * Failed Count
              * @description Failed to import
              * @default 0
              */
-            failed_count: number;
+            failedCount: number;
             /**
              * Failed Rows
              * @description Row numbers that failed
              */
-            failed_rows?: number[];
+            failedRows?: number[];
             /**
              * Error Messages
              * @description Error messages (no PII)
              */
-            error_messages?: string[];
+            errorMessages?: string[];
             /**
              * Started At
              * Format: date-time
              */
-            started_at?: string;
+            startedAt?: string;
             /**
              * Completed At
              * Format: date-time
              */
-            completed_at?: string;
+            completedAt?: string;
         };
         /**
          * BlockAssignmentPreviewItem
@@ -22865,88 +23073,88 @@ export interface components {
              * Row Number
              * @description Row number in source file (1-indexed)
              */
-            row_number: number;
+            rowNumber: number;
             /**
              * Block Number
              * @description Block number (0-13)
              */
-            block_number: number;
+            blockNumber: number;
             /**
              * Rotation Input
              * @description Rotation as entered in source
              */
-            rotation_input: string;
+            rotationInput: string;
             /**
              * Resident Display
              * @description Anonymized resident display (e.g., 'S*****, J***')
              */
-            resident_display: string;
+            residentDisplay: string;
             /** @description Overall match status */
-            match_status: components["schemas"]["MatchStatus"];
+            matchStatus: components["schemas"]["MatchStatus"];
             /**
              * Matched Rotation Id
              * @description Matched rotation template ID
              */
-            matched_rotation_id?: string | null;
+            matchedRotationId?: string | null;
             /**
              * Matched Rotation Name
              * @description Matched rotation display name
              */
-            matched_rotation_name?: string | null;
+            matchedRotationName?: string | null;
             /**
              * Rotation Confidence
              * @description Rotation match confidence
              * @default 1
              */
-            rotation_confidence: number;
+            rotationConfidence: number;
             /**
              * Matched Resident Id
              * @description Matched resident ID
              */
-            matched_resident_id?: string | null;
+            matchedResidentId?: string | null;
             /**
              * Resident Confidence
              * @description Resident match confidence
              * @default 1
              */
-            resident_confidence: number;
+            residentConfidence: number;
             /**
              * Secondary Rotation Input
              * @description Secondary rotation as entered in source (column B)
              */
-            secondary_rotation_input?: string | null;
+            secondaryRotationInput?: string | null;
             /**
              * Matched Secondary Rotation Id
              * @description Matched secondary rotation template ID
              */
-            matched_secondary_rotation_id?: string | null;
+            matchedSecondaryRotationId?: string | null;
             /**
              * Matched Secondary Rotation Name
              * @description Matched secondary rotation display name
              */
-            matched_secondary_rotation_name?: string | null;
+            matchedSecondaryRotationName?: string | null;
             /**
              * Secondary Rotation Confidence
              * @description Secondary rotation match confidence
              * @default 0
              */
-            secondary_rotation_confidence: number;
+            secondaryRotationConfidence: number;
             /**
              * Is Duplicate
              * @description True if assignment already exists
              * @default false
              */
-            is_duplicate: boolean;
+            isDuplicate: boolean;
             /**
              * Existing Assignment Id
              * @description ID of existing assignment if duplicate
              */
-            existing_assignment_id?: string | null;
+            existingAssignmentId?: string | null;
             /**
              * @description Action for duplicates
              * @default skip
              */
-            duplicate_action: components["schemas"]["DuplicateAction"];
+            duplicateAction: components["schemas"]["DuplicateAction"];
             /**
              * Errors
              * @description Validation errors
@@ -22967,14 +23175,14 @@ export interface components {
              * Preview Id
              * @description Unique ID for this preview session
              */
-            preview_id: string;
+            previewId: string;
             /**
              * Academic Year
              * @description Auto-calculated or specified academic year
              */
-            academic_year: number;
+            academicYear: number;
             /** @description Detected import format */
-            format_detected: components["schemas"]["ImportFormat"];
+            formatDetected: components["schemas"]["ImportFormat"];
             /**
              * Items
              * @description Preview items
@@ -22985,42 +23193,42 @@ export interface components {
              * @description Total rows parsed
              * @default 0
              */
-            total_rows: number;
+            totalRows: number;
             /**
              * Matched Count
              * @description Fully matched rows
              * @default 0
              */
-            matched_count: number;
+            matchedCount: number;
             /**
              * Unknown Rotation Count
              * @description Rows with unknown rotation
              * @default 0
              */
-            unknown_rotation_count: number;
+            unknownRotationCount: number;
             /**
              * Unknown Resident Count
              * @description Rows with unknown resident
              * @default 0
              */
-            unknown_resident_count: number;
+            unknownResidentCount: number;
             /**
              * Duplicate Count
              * @description Duplicate rows
              * @default 0
              */
-            duplicate_count: number;
+            duplicateCount: number;
             /**
              * Invalid Count
              * @description Invalid rows
              * @default 0
              */
-            invalid_count: number;
+            invalidCount: number;
             /**
              * Unknown Rotations
              * @description Unknown rotations for template creation
              */
-            unknown_rotations?: components["schemas"]["UnknownRotationItem"][];
+            unknownRotations?: components["schemas"]["UnknownRotationItem"][];
             /**
              * Warnings
              * @description Parsing warnings
@@ -23038,38 +23246,38 @@ export interface components {
              */
             id: string;
             /** Block Number */
-            block_number: number;
+            blockNumber: number;
             /** Academic Year */
-            academic_year: number;
+            academicYear: number;
             /**
              * Resident Id
              * Format: uuid
              */
-            resident_id: string;
+            residentId: string;
             /** Rotation Template Id */
-            rotation_template_id: string | null;
+            rotationTemplateId: string | null;
             /** Has Leave */
-            has_leave: boolean;
+            hasLeave: boolean;
             /** Leave Days */
-            leave_days: number;
+            leaveDays: number;
             /** Assignment Reason */
-            assignment_reason: string;
+            assignmentReason: string;
             /** Notes */
             notes: string | null;
             /** Created By */
-            created_by: string | null;
+            createdBy: string | null;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
             resident?: components["schemas"]["ResidentInfo"] | null;
-            rotation_template?: components["schemas"]["RotationTemplateInfo"] | null;
+            rotationTemplate?: components["schemas"]["RotationTemplateInfo"] | null;
         };
         /**
          * BlockAssignmentUpdate
@@ -23077,13 +23285,13 @@ export interface components {
          */
         BlockAssignmentUpdate: {
             /** Rotation Template Id */
-            rotation_template_id?: string | null;
+            rotationTemplateId?: string | null;
             /** Has Leave */
-            has_leave?: boolean | null;
+            hasLeave?: boolean | null;
             /** Leave Days */
-            leave_days?: number | null;
+            leaveDays?: number | null;
             /** Assignment Reason */
-            assignment_reason?: string | null;
+            assignmentReason?: string | null;
             /** Notes */
             notes?: string | null;
         };
@@ -23102,29 +23310,29 @@ export interface components {
              * Time Of Day
              * @description Time of day: AM or PM
              */
-            time_of_day: string;
+            timeOfDay: string;
             /**
              * Block Number
              * @description Academic block number (0-14)
              */
-            block_number: number;
+            blockNumber: number;
             /**
              * Is Weekend
              * @description Whether this block falls on a weekend
              * @default false
              */
-            is_weekend: boolean;
+            isWeekend: boolean;
             /**
              * Is Holiday
              * @description Whether this block is a holiday
              * @default false
              */
-            is_holiday: boolean;
+            isHoliday: boolean;
             /**
              * Holiday Name
              * @description Name of the holiday if applicable
              */
-            holiday_name?: string | null;
+            holidayName?: string | null;
         };
         /**
          * BlockListResponse
@@ -23140,12 +23348,12 @@ export interface components {
              * Academic Year
              * @description Academic year
              */
-            academic_year: string;
+            academicYear: string;
             /**
              * Total Blocks
              * @description Total number of blocks
              */
-            total_blocks: number;
+            totalBlocks: number;
         };
         /**
          * BlockMatrixResponse
@@ -23174,7 +23382,7 @@ export interface components {
              * Academic Year
              * @description Academic year (e.g., '2024-2025')
              */
-            academic_year: string;
+            academicYear: string;
             /**
              * Summary
              * @description Summary statistics (total residents, blocks, compliance rate)
@@ -23187,24 +23395,24 @@ export interface components {
          * BlockParseResponse
          * @description Full response from block schedule parsing.
          * @example {
-         *       "block_number": 10,
-         *       "end_date": "2025-04-08",
+         *       "blockNumber": 10,
+         *       "endDate": "2025-04-08",
          *       "errors": [],
-         *       "fmit_schedule": [
+         *       "fmitSchedule": [
          *         {
-         *           "block_number": 10,
-         *           "faculty_name": "Chu",
-         *           "is_holiday_call": false,
-         *           "week_number": 1
+         *           "blockNumber": 10,
+         *           "facultyName": "Chu",
+         *           "isHolidayCall": false,
+         *           "weekNumber": 1
          *         },
          *         {
-         *           "block_number": 10,
-         *           "faculty_name": "Bevis",
-         *           "is_holiday_call": false,
-         *           "week_number": 2
+         *           "blockNumber": 10,
+         *           "facultyName": "Bevis",
+         *           "isHolidayCall": false,
+         *           "weekNumber": 2
          *         }
          *       ],
-         *       "residents_by_template": {
+         *       "residentsByTemplate": {
          *         "R2": [
          *           {
          *             "confidence": 1,
@@ -23224,9 +23432,9 @@ export interface components {
          *           }
          *         ]
          *       },
-         *       "start_date": "2025-03-12",
+         *       "startDate": "2025-03-12",
          *       "success": true,
-         *       "total_residents": 25,
+         *       "totalResidents": 25,
          *       "warnings": []
          *     }
          */
@@ -23240,17 +23448,17 @@ export interface components {
              * Block Number
              * @description Block number parsed
              */
-            block_number: number;
+            blockNumber: number;
             /**
              * Start Date
              * @description Block start date (ISO format)
              */
-            start_date?: string | null;
+            startDate?: string | null;
             /**
              * End Date
              * @description Block end date (ISO format)
              */
-            end_date?: string | null;
+            endDate?: string | null;
             /**
              * Residents
              * @description All parsed residents
@@ -23260,14 +23468,14 @@ export interface components {
              * Residents By Template
              * @description Residents grouped by template
              */
-            residents_by_template?: {
+            residentsByTemplate?: {
                 [key: string]: components["schemas"]["ResidentRosterItem"][] | undefined;
             };
             /**
              * Fmit Schedule
              * @description FMIT weekly assignments
              */
-            fmit_schedule?: components["schemas"]["ParsedFMITWeekSchema"][];
+            fmitSchedule?: components["schemas"]["ParsedFMITWeekSchema"][];
             /**
              * Assignments
              * @description Daily assignments (AM/PM slots)
@@ -23288,13 +23496,13 @@ export interface components {
              * @description Total resident count
              * @default 0
              */
-            total_residents: number;
+            totalResidents: number;
             /**
              * Total Assignments
              * @description Total assignment count
              * @default 0
              */
-            total_assignments: number;
+            totalAssignments: number;
         };
         /**
          * BlockResponse
@@ -23311,29 +23519,29 @@ export interface components {
              * Time Of Day
              * @description Time of day: AM or PM
              */
-            time_of_day: string;
+            timeOfDay: string;
             /**
              * Block Number
              * @description Academic block number (0-14)
              */
-            block_number: number;
+            blockNumber: number;
             /**
              * Is Weekend
              * @description Whether this block falls on a weekend
              * @default false
              */
-            is_weekend: boolean;
+            isWeekend: boolean;
             /**
              * Is Holiday
              * @description Whether this block is a holiday
              * @default false
              */
-            is_holiday: boolean;
+            isHoliday: boolean;
             /**
              * Holiday Name
              * @description Name of the holiday if applicable
              */
-            holiday_name?: string | null;
+            holidayName?: string | null;
             /**
              * Id
              * Format: uuid
@@ -23346,21 +23554,21 @@ export interface components {
          */
         BlockScheduleRequest: {
             /** Block Number */
-            block_number: number;
+            blockNumber: number;
             /** Academic Year */
-            academic_year: number;
+            academicYear: number;
             /**
              * Dry Run
              * @description If True, preview assignments without saving
              * @default true
              */
-            dry_run: boolean;
+            dryRun: boolean;
             /**
              * Include All Residents
              * @description If True, schedule all residents. If False, only those with leave.
              * @default true
              */
-            include_all_residents: boolean;
+            includeAllResidents: boolean;
         };
         /**
          * BlockScheduleResponse
@@ -23368,11 +23576,11 @@ export interface components {
          */
         BlockScheduleResponse: {
             /** Block Number */
-            block_number: number;
+            blockNumber: number;
             /** Academic Year */
-            academic_year: number;
+            academicYear: number;
             /** Dry Run */
-            dry_run: boolean;
+            dryRun: boolean;
             /** Success */
             success: boolean;
             /** Message */
@@ -23380,15 +23588,15 @@ export interface components {
             /** Assignments */
             assignments: components["schemas"]["AssignmentPreview"][];
             /** Total Residents */
-            total_residents: number;
+            totalResidents: number;
             /** Residents With Leave */
-            residents_with_leave: number;
+            residentsWithLeave: number;
             /** Coverage Gaps */
-            coverage_gaps: components["schemas"]["CoverageGap"][];
+            coverageGaps: components["schemas"]["app__schemas__block_assignment__CoverageGap"][];
             /** Leave Conflicts */
-            leave_conflicts: components["schemas"]["LeaveConflict"][];
+            leaveConflicts: components["schemas"]["LeaveConflict"][];
             /** Rotation Capacities */
-            rotation_capacities: components["schemas"]["RotationCapacity"][];
+            rotationCapacities: components["schemas"]["RotationCapacity"][];
         };
         /**
          * BlockSchedulerDashboard
@@ -23396,27 +23604,27 @@ export interface components {
          */
         BlockSchedulerDashboard: {
             /** Block Number */
-            block_number: number;
+            blockNumber: number;
             /** Academic Year */
-            academic_year: number;
+            academicYear: number;
             /** Block Start Date */
-            block_start_date: string | null;
+            blockStartDate: string | null;
             /** Block End Date */
-            block_end_date: string | null;
+            blockEndDate: string | null;
             /** Total Residents */
-            total_residents: number;
+            totalResidents: number;
             /** Residents With Leave */
-            residents_with_leave: components["schemas"]["ResidentLeaveInfo"][];
+            residentsWithLeave: components["schemas"]["ResidentLeaveInfo"][];
             /** Rotation Capacities */
-            rotation_capacities: components["schemas"]["RotationCapacity"][];
+            rotationCapacities: components["schemas"]["RotationCapacity"][];
             /** Leave Eligible Rotations */
-            leave_eligible_rotations: number;
+            leaveEligibleRotations: number;
             /** Non Leave Eligible Rotations */
-            non_leave_eligible_rotations: number;
+            nonLeaveEligibleRotations: number;
             /** Current Assignments */
-            current_assignments: components["schemas"]["BlockAssignmentResponse"][];
+            currentAssignments: components["schemas"]["BlockAssignmentResponse"][];
             /** Unassigned Residents */
-            unassigned_residents: number;
+            unassignedResidents: number;
         };
         /**
          * BlockSummary
@@ -23427,7 +23635,7 @@ export interface components {
              * Block Number
              * @description Academic block number (1-13)
              */
-            block_number: number;
+            blockNumber: number;
             /**
              * Name
              * @description Block name
@@ -23438,33 +23646,33 @@ export interface components {
              * Format: date
              * @description First date of the block
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description Last date of the block
              */
-            end_date: string;
+            endDate: string;
             /**
              * Total Assignments
              * @description Total assignments in this block
              */
-            total_assignments: number;
+            totalAssignments: number;
             /**
              * Total Residents
              * @description Number of residents assigned
              */
-            total_residents: number;
+            totalResidents: number;
             /**
              * Compliance Rate
              * @description Percentage of compliant assignments (0-100)
              */
-            compliance_rate: number;
+            complianceRate: number;
             /**
              * Average Hours
              * @description Average hours per resident
              */
-            average_hours: number;
+            averageHours: number;
         };
         /** Body_analyze_imported_schedules_api_v1_schedule_import_analyze_post */
         Body_analyze_imported_schedules_api_v1_schedule_import_analyze_post: {
@@ -23473,17 +23681,17 @@ export interface components {
              * Format: binary
              * @description FMIT rotation schedule Excel file
              */
-            fmit_file: string;
+            fmitFile: string;
             /**
              * Clinic File
              * @description Clinic schedule Excel file (optional)
              */
-            clinic_file?: string | null;
+            clinicFile?: string | null;
             /**
              * Specialty Providers
              * @description JSON mapping of specialty to providers, e.g., {"Sports Medicine": ["FAC-SPORTS"]}
              */
-            specialty_providers?: string | null;
+            specialtyProviders?: string | null;
         };
         /** Body_analyze_single_file_api_v1_schedule_import_analyze_file_post */
         Body_analyze_single_file_api_v1_schedule_import_analyze_file_post: {
@@ -23498,12 +23706,12 @@ export interface components {
              * @description File type: 'fmit', 'clinic', or 'auto' to detect
              * @default auto
              */
-            file_type: string;
+            fileType: string;
             /**
              * Specialty Providers
              * @description JSON mapping of specialty to providers
              */
-            specialty_providers?: string | null;
+            specialtyProviders?: string | null;
         };
         /** Body_find_swap_candidates_api_v1_schedule_swaps_find_post */
         Body_find_swap_candidates_api_v1_schedule_swaps_find_post: {
@@ -23512,12 +23720,12 @@ export interface components {
              * Format: binary
              * @description FMIT rotation schedule Excel file
              */
-            fmit_file: string;
+            fmitFile: string;
             /**
              * Request Json
              * @description SwapFinderRequest as JSON string
              */
-            request_json: string;
+            requestJson: string;
         };
         /** Body_list_xlsx_sheets_api_v1_imports_parse_xlsx_sheets_post */
         Body_list_xlsx_sheets_api_v1_imports_parse_xlsx_sheets_post: {
@@ -23531,7 +23739,7 @@ export interface components {
         /** Body_login_api_v1_auth_login_post */
         Body_login_api_v1_auth_login_post: {
             /** Grant Type */
-            grant_type?: string | null;
+            grantType?: string | null;
             /** Username */
             username: string;
             /**
@@ -23545,12 +23753,12 @@ export interface components {
              */
             scope: string;
             /** Client Id */
-            client_id?: string | null;
+            clientId?: string | null;
             /**
              * Client Secret
              * Format: password
              */
-            client_secret?: string | null;
+            clientSecret?: string | null;
         };
         /** Body_parse_block_schedule_endpoint_api_v1_schedule_import_block_post */
         Body_parse_block_schedule_endpoint_api_v1_schedule_import_block_post: {
@@ -23564,18 +23772,18 @@ export interface components {
              * Block Number
              * @description Block number to parse (1-13)
              */
-            block_number: number;
+            blockNumber: number;
             /**
              * Known People
              * @description JSON array of known person names for fuzzy matching
              */
-            known_people?: string | null;
+            knownPeople?: string | null;
             /**
              * Include Fmit
              * @description Include FMIT attending schedule
              * @default true
              */
-            include_fmit: boolean;
+            includeFmit: boolean;
         };
         /** Body_parse_block_sheet_api_v1_admin_block_assignments_parse_block_sheet_post */
         Body_parse_block_sheet_api_v1_admin_block_assignments_parse_block_sheet_post: {
@@ -23598,25 +23806,25 @@ export interface components {
              * Sheet Name
              * @description Specific sheet name to parse (default: first sheet)
              */
-            sheet_name?: string | null;
+            sheetName?: string | null;
             /**
              * Header Row
              * @description Row number containing headers (1-indexed, default: 1)
              * @default 1
              */
-            header_row: number;
+            headerRow: number;
             /**
              * Max Rows
              * @description Maximum rows to parse (default: 10000)
              * @default 10000
              */
-            max_rows: number;
+            maxRows: number;
             /**
              * Skip Empty Rows
              * @description Skip rows where all cells are empty
              * @default true
              */
-            skip_empty_rows: boolean;
+            skipEmptyRows: boolean;
         };
         /** Body_preview_block_assignment_import_api_v1_admin_block_assignments_preview_post */
         Body_preview_block_assignment_import_api_v1_admin_block_assignments_preview_post: {
@@ -23624,7 +23832,7 @@ export interface components {
              * Csv Content
              * @description CSV content (paste)
              */
-            csv_content?: string | null;
+            csvContent?: string | null;
             /**
              * File
              * @description CSV file upload
@@ -23634,7 +23842,7 @@ export interface components {
              * Academic Year
              * @description Academic year (auto-detected if not provided)
              */
-            academic_year?: number | null;
+            academicYear?: number | null;
         };
         /** Body_preview_xlsx_import_api_v1_admin_block_assignments_upload_xlsx_post */
         Body_preview_xlsx_import_api_v1_admin_block_assignments_upload_xlsx_post: {
@@ -23645,14 +23853,14 @@ export interface components {
              */
             file: string;
             /** Academic Year */
-            academic_year?: number | null;
+            academicYear?: number | null;
         };
         /** Body_record_zone_incident_api_v1_resilience_tier2_zones_incident_post */
         Body_record_zone_incident_api_v1_resilience_tier2_zones_incident_post: {
             /** Faculty Affected */
-            faculty_affected?: string[];
+            facultyAffected?: string[];
             /** Services Affected */
-            services_affected?: string[];
+            servicesAffected?: string[];
         };
         /** Body_stage_import_api_v1_import_stage_post */
         Body_stage_import_api_v1_import_stage_post: {
@@ -23666,23 +23874,23 @@ export interface components {
              * Target Block
              * @description Target academic block number (1-26)
              */
-            target_block?: number | null;
+            targetBlock?: number | null;
             /**
              * Target Start Date
              * @description Target start date (YYYY-MM-DD)
              */
-            target_start_date?: string | null;
+            targetStartDate?: string | null;
             /**
              * Target End Date
              * @description Target end date (YYYY-MM-DD)
              */
-            target_end_date?: string | null;
+            targetEndDate?: string | null;
             /**
              * Conflict Resolution
              * @description Conflict resolution mode: replace, merge, or upsert
              * @default upsert
              */
-            conflict_resolution: string;
+            conflictResolution: string;
             /**
              * Notes
              * @description Import notes
@@ -23692,7 +23900,7 @@ export interface components {
              * Sheet Name
              * @description Specific sheet name to parse (default: first sheet)
              */
-            sheet_name?: string | null;
+            sheetName?: string | null;
         };
         /** Body_upload_file_api_v1_uploads_post */
         Body_upload_file_api_v1_uploads_post: {
@@ -23707,19 +23915,19 @@ export interface components {
              * @description Process images (resize, optimize)
              * @default true
              */
-            process_images: boolean;
+            processImages: boolean;
             /**
              * Generate Thumbnails
              * @description Generate thumbnails
              * @default true
              */
-            generate_thumbnails: boolean;
+            generateThumbnails: boolean;
             /**
              * Thumbnail Sizes
              * @description Comma-separated thumbnail sizes
              * @default thumbnail,medium
              */
-            thumbnail_sizes: string;
+            thumbnailSizes: string;
             /**
              * Description
              * @description File description
@@ -23739,13 +23947,62 @@ export interface components {
              * Related Entity Id
              * @description Related entity ID
              */
-            related_entity_id?: string | null;
+            relatedEntityId?: string | null;
             /**
              * Related Entity Type
              * @description Related entity type
              */
-            related_entity_type?: string | null;
+            relatedEntityType?: string | null;
         };
+        /**
+         * BreakerHealthMetrics
+         * @description Aggregated health metrics for all circuit breakers.
+         */
+        BreakerHealthMetrics: {
+            /** Total Requests */
+            totalRequests: number;
+            /** Total Failures */
+            totalFailures: number;
+            /** Total Rejections */
+            totalRejections: number;
+            /** Overall Failure Rate */
+            overallFailureRate: number;
+            /** Breakers Above Threshold */
+            breakersAboveThreshold: number;
+            /** Average Failure Rate */
+            averageFailureRate: number;
+            /** Max Failure Rate */
+            maxFailureRate: number;
+            /** Unhealthiest Breaker */
+            unhealthiestBreaker?: string | null;
+        };
+        /**
+         * BreakerHealthResponse
+         * @description Aggregated health assessment for all circuit breakers.
+         */
+        BreakerHealthResponse: {
+            /** Total Breakers */
+            totalBreakers: number;
+            metrics: components["schemas"]["BreakerHealthMetrics"];
+            /** Breakers Needing Attention */
+            breakersNeedingAttention: string[];
+            /** Trend Analysis */
+            trendAnalysis: string;
+            severity: components["schemas"]["BreakerSeverity"];
+            /** Recommendations */
+            recommendations: string[];
+            /**
+             * Analyzed At
+             * Format: date-time
+             */
+            analyzedAt: string;
+        };
+        /**
+         * BreakerSeverity
+         * @description Circuit breaker health severity.
+         * @enum {string}
+         */
+        BreakerSeverity: "healthy" | "warning" | "critical" | "emergency";
         /**
          * BulkAction
          * @description Available bulk actions.
@@ -23767,7 +24024,7 @@ export interface components {
              * @description If true, delete existing assignments in the date range first
              * @default false
              */
-            replace_existing: boolean;
+            replaceExisting: boolean;
         };
         /**
          * BulkCallAssignmentResponse
@@ -23794,7 +24051,7 @@ export interface components {
              * Person Id
              * @description New person ID to reassign to
              */
-            person_id?: string | null;
+            personId?: string | null;
         };
         /**
          * BulkCallAssignmentUpdateRequest
@@ -23805,7 +24062,7 @@ export interface components {
              * Assignment Ids
              * @description List of call assignment IDs to update
              */
-            assignment_ids: string[];
+            assignmentIds: string[];
             /** @description Fields to update on all selected assignments */
             updates: components["schemas"]["BulkCallAssignmentUpdateInput"];
         };
@@ -23841,7 +24098,7 @@ export interface components {
              * Skip Duplicates
              * @default true
              */
-            skip_duplicates: boolean;
+            skipDuplicates: boolean;
         };
         /**
          * BulkLeaveImportResponse
@@ -23851,11 +24108,11 @@ export interface components {
             /** Success */
             success: boolean;
             /** Imported Count */
-            imported_count: number;
+            importedCount: number;
             /** Skipped Count */
-            skipped_count: number;
+            skippedCount: number;
             /** Error Count */
-            error_count: number;
+            errorCount: number;
             /**
              * Errors
              * @default []
@@ -23890,6 +24147,48 @@ export interface components {
             message: string;
         };
         /**
+         * BurnoutRtRequest
+         * @description Request for burnout Rt calculation.
+         */
+        BurnoutRtRequest: {
+            /** Burned Out Provider Ids */
+            burnedOutProviderIds?: string[];
+            /**
+             * Time Window Days
+             * @default 28
+             */
+            timeWindowDays: number;
+        };
+        /**
+         * BurnoutRtResponse
+         * @description Response from burnout Rt calculation.
+         */
+        BurnoutRtResponse: {
+            /**
+             * Rt
+             * @description Effective reproduction number
+             */
+            rt: number;
+            /**
+             * Status
+             * @description declining, stable, growing, or crisis
+             */
+            status: string;
+            /** Secondary Cases */
+            secondaryCases: number;
+            /** Time Window Days */
+            timeWindowDays: number;
+            /**
+             * Confidence Interval
+             * @description Lower and upper bounds if available
+             */
+            confidenceInterval?: {
+                [key: string]: unknown;
+            } | null;
+            /** Interventions */
+            interventions: string[];
+        };
+        /**
          * BurstStatus
          * @description Token bucket burst status.
          */
@@ -23908,7 +24207,7 @@ export interface components {
              * Refill Rate
              * @description Tokens added per second
              */
-            refill_rate: number;
+            refillRate: number;
         };
         /**
          * CalendarSubscriptionCreate
@@ -23919,7 +24218,7 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /**
              * Label
              * @description Optional label for the subscription
@@ -23929,7 +24228,7 @@ export interface components {
              * Expires Days
              * @description Days until expiration (1-365, None = never)
              */
-            expires_days?: number | null;
+            expiresDays?: number | null;
         };
         /**
          * CalendarSubscriptionListResponse
@@ -23949,27 +24248,27 @@ export interface components {
             /** Token */
             token: string;
             /** Subscription Url */
-            subscription_url: string;
+            subscriptionUrl: string;
             /** Webcal Url */
-            webcal_url: string;
+            webcalUrl: string;
             /**
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /** Label */
             label?: string | null;
             /** Created At */
-            created_at?: string | null;
+            createdAt?: string | null;
             /** Expires At */
-            expires_at?: string | null;
+            expiresAt?: string | null;
             /** Last Accessed At */
-            last_accessed_at?: string | null;
+            lastAccessedAt?: string | null;
             /**
              * Is Active
              * @default true
              */
-            is_active: boolean;
+            isActive: boolean;
         };
         /**
          * CallAssignmentCreate
@@ -23981,31 +24280,31 @@ export interface components {
              * Format: date
              * @description Date of the call assignment
              */
-            call_date: string;
+            callDate: string;
             /**
              * Person Id
              * Format: uuid
              * @description Faculty member assigned to call
              */
-            person_id: string;
+            personId: string;
             /**
              * Call Type
              * @description Type of call: sunday, weekday, holiday, or backup
              * @default weekday
              */
-            call_type: string;
+            callType: string;
             /**
              * Is Weekend
              * @description Whether this is a weekend call
              * @default false
              */
-            is_weekend: boolean;
+            isWeekend: boolean;
             /**
              * Is Holiday
              * @description Whether this is a holiday call
              * @default false
              */
-            is_holiday: boolean;
+            isHoliday: boolean;
         };
         /**
          * CallAssignmentListResponse
@@ -24047,13 +24346,13 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /** Call Type */
-            call_type: string;
+            callType: string;
             /** Is Weekend */
-            is_weekend: boolean;
+            isWeekend: boolean;
             /** Is Holiday */
-            is_holiday: boolean;
+            isHoliday: boolean;
             person?: components["schemas"]["PersonBrief"] | null;
         };
         /**
@@ -24062,15 +24361,15 @@ export interface components {
          */
         CallAssignmentUpdate: {
             /** Call Date */
-            call_date?: string | null;
+            callDate?: string | null;
             /** Person Id */
-            person_id?: string | null;
+            personId?: string | null;
             /** Call Type */
-            call_type?: string | null;
+            callType?: string | null;
             /** Is Weekend */
-            is_weekend?: boolean | null;
+            isWeekend?: boolean | null;
             /** Is Holiday */
-            is_holiday?: boolean | null;
+            isHoliday?: boolean | null;
         };
         /**
          * CallCoverageReport
@@ -24081,27 +24380,27 @@ export interface components {
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /**
              * Total Expected Nights
              * @description Total nights requiring coverage (Sun-Thu)
              */
-            total_expected_nights: number;
+            totalExpectedNights: number;
             /**
              * Covered Nights
              * @description Nights with call assignments
              */
-            covered_nights: number;
+            coveredNights: number;
             /**
              * Coverage Percentage
              * @description Percentage of nights covered (0-100)
              */
-            coverage_percentage: number;
+            coveragePercentage: number;
             /**
              * Gaps
              * @description Dates without call coverage
@@ -24117,34 +24416,34 @@ export interface components {
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /**
              * Faculty Count
              * @description Number of faculty with call assignments
              */
-            faculty_count: number;
+            facultyCount: number;
             /**
              * Total Overnight Calls
              * @description Total overnight call assignments
              */
-            total_overnight_calls: number;
+            totalOvernightCalls: number;
             /**
              * Sunday Call Stats
              * @description Statistics for Sunday calls (min, max, mean, stdev)
              */
-            sunday_call_stats: {
+            sundayCallStats: {
                 [key: string]: unknown;
             };
             /**
              * Weekday Call Stats
              * @description Statistics for Mon-Thu calls (min, max, mean, stdev)
              */
-            weekday_call_stats: {
+            weekdayCallStats: {
                 [key: string]: unknown;
             };
             /**
@@ -24161,19 +24460,19 @@ export interface components {
          */
         CatalystCapacityResponse: {
             /** Person Catalysts Available */
-            person_catalysts_available: number;
+            personCatalystsAvailable: number;
             /** Mechanism Catalysts Available */
-            mechanism_catalysts_available: number;
+            mechanismCatalystsAvailable: number;
             /**
              * Total Capacity
              * @description Total remaining capacity
              */
-            total_capacity: number;
+            totalCapacity: number;
             /**
              * Bottleneck Catalysts
              * @description Catalysts near capacity
              */
-            bottleneck_catalysts?: string[];
+            bottleneckCatalysts?: string[];
             /** Recommendations */
             recommendations?: string[];
         };
@@ -24183,21 +24482,21 @@ export interface components {
          */
         CatalystMechanismResponse: {
             /** Mechanism Id */
-            mechanism_id: string;
+            mechanismId: string;
             /** Name */
             name: string;
-            catalyst_type: components["schemas"]["CatalystTypeEnum"];
+            catalystType: components["schemas"]["CatalystTypeEnum"];
             /** Target Barriers */
-            target_barriers: components["schemas"]["BarrierTypeEnum"][];
+            targetBarriers: components["schemas"]["BarrierTypeEnum"][];
             /** Reduction Factor */
-            reduction_factor: number;
+            reductionFactor: number;
             /**
              * Auto Applicable
              * @description Whether can be applied automatically
              */
-            auto_applicable: boolean;
+            autoApplicable: boolean;
             /** Requires Authorization */
-            requires_authorization: boolean;
+            requiresAuthorization: boolean;
         };
         /**
          * CatalystPersonResponse
@@ -24208,10 +24507,10 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /** Name */
             name: string;
-            catalyst_type: components["schemas"]["CatalystTypeEnum"];
+            catalystType: components["schemas"]["CatalystTypeEnum"];
             /**
              * Effectiveness
              * @description Effectiveness per barrier type
@@ -24237,14 +24536,14 @@ export interface components {
         CatalystRecommendationResponse: {
             barrier: components["schemas"]["EnergyBarrierResponse"];
             /** Person Catalysts */
-            person_catalysts: components["schemas"]["CatalystPersonResponse"][];
+            personCatalysts: components["schemas"]["CatalystPersonResponse"][];
             /** Mechanism Catalysts */
-            mechanism_catalysts: components["schemas"]["CatalystMechanismResponse"][];
+            mechanismCatalysts: components["schemas"]["CatalystMechanismResponse"][];
             /**
              * Recommended Catalyst
              * @description Most recommended catalyst
              */
-            recommended_catalyst: string;
+            recommendedCatalyst: string;
             /**
              * Confidence
              * @description Confidence in recommendation
@@ -24266,32 +24565,32 @@ export interface components {
              * A Critical
              * @description Critical asymmetry value
              */
-            a_critical: number;
+            aCritical: number;
             /**
              * B Critical
              * @description Critical bias value
              */
-            b_critical: number;
+            bCritical: number;
             /**
              * X Before
              * @description State before jump
              */
-            x_before: number;
+            xBefore: number;
             /**
              * X After
              * @description State after jump
              */
-            x_after: number;
+            xAfter: number;
             /**
              * Jump Magnitude
              * @description Size of discontinuous jump
              */
-            jump_magnitude: number;
+            jumpMagnitude: number;
             /**
              * Hysteresis Width
              * @description Width of hysteresis region
              */
-            hysteresis_width: number;
+            hysteresisWidth: number;
         };
         /**
          * CatastropheRequest
@@ -24302,12 +24601,12 @@ export interface components {
              * Current A
              * @description Current asymmetry parameter
              */
-            current_a: number;
+            currentA: number;
             /**
              * Current B
              * @description Current bias parameter
              */
-            current_b: number;
+            currentB: number;
             /**
              * Da
              * @description Change in asymmetry
@@ -24323,7 +24622,7 @@ export interface components {
              * @description Number of simulation steps
              * @default 100
              */
-            num_steps: number;
+            numSteps: number;
         };
         /**
          * CatastropheResponse
@@ -24334,14 +24633,14 @@ export interface components {
              * Catastrophe Detected
              * @description Whether catastrophe is predicted
              */
-            catastrophe_detected: boolean;
+            catastropheDetected: boolean;
             /** @description Detected catastrophe point */
-            catastrophe_point?: components["schemas"]["CatastrophePointResponse"] | null;
+            catastrophePoint?: components["schemas"]["CatastrophePointResponse"] | null;
             /**
              * Resilience Score
              * @description Resilience score
              */
-            resilience_score: number;
+            resilienceScore: number;
             /**
              * Status
              * @description Status: robust, stable, vulnerable, critical
@@ -24351,17 +24650,17 @@ export interface components {
              * Is Safe
              * @description Whether system is safe from catastrophe
              */
-            is_safe: boolean;
+            isSafe: boolean;
             /**
              * Distance To Catastrophe
              * @description Distance to catastrophe boundary
              */
-            distance_to_catastrophe: number;
+            distanceToCatastrophe: number;
             /**
              * Current Distance To Bifurcation
              * @description Current distance to bifurcation set
              */
-            current_distance_to_bifurcation: number;
+            currentDistanceToBifurcation: number;
             /**
              * Warning
              * @description Warning message
@@ -24388,19 +24687,19 @@ export interface components {
              * Faculty Id
              * Format: uuid
              */
-            faculty_id: string;
+            facultyId: string;
             /** Faculty Name */
-            faculty_name: string;
+            facultyName: string;
             /** Centrality Score */
-            centrality_score: number;
+            centralityScore: number;
             /** Services Covered */
-            services_covered: number;
+            servicesCovered: number;
             /** Unique Coverage Slots */
-            unique_coverage_slots: number;
+            uniqueCoverageSlots: number;
             /** Replacement Difficulty */
-            replacement_difficulty: number;
+            replacementDifficulty: number;
             /** Risk Level */
-            risk_level: string;
+            riskLevel: string;
         };
         /**
          * CertificationTypeCreate
@@ -24416,7 +24715,7 @@ export interface components {
              * Full Name
              * @description Full certification name
              */
-            full_name?: string | null;
+            fullName?: string | null;
             /**
              * Description
              * @description Certification description
@@ -24427,60 +24726,60 @@ export interface components {
              * @description Renewal period in months (1-120)
              * @default 24
              */
-            renewal_period_months: number;
+            renewalPeriodMonths: number;
             /**
              * Required For Residents
              * @description Whether required for residents
              * @default true
              */
-            required_for_residents: boolean;
+            requiredForResidents: boolean;
             /**
              * Required For Faculty
              * @description Whether required for faculty
              * @default true
              */
-            required_for_faculty: boolean;
+            requiredForFaculty: boolean;
             /**
              * Required For Specialties
              * @description Comma-separated specialty list
              */
-            required_for_specialties?: string | null;
+            requiredForSpecialties?: string | null;
             /**
              * Reminder Days 180
              * @description Send reminder at 180 days
              * @default true
              */
-            reminder_days_180: boolean;
+            reminderDays180: boolean;
             /**
              * Reminder Days 90
              * @description Send reminder at 90 days
              * @default true
              */
-            reminder_days_90: boolean;
+            reminderDays90: boolean;
             /**
              * Reminder Days 30
              * @description Send reminder at 30 days
              * @default true
              */
-            reminder_days_30: boolean;
+            reminderDays30: boolean;
             /**
              * Reminder Days 14
              * @description Send reminder at 14 days
              * @default true
              */
-            reminder_days_14: boolean;
+            reminderDays14: boolean;
             /**
              * Reminder Days 7
              * @description Send reminder at 7 days
              * @default true
              */
-            reminder_days_7: boolean;
+            reminderDays7: boolean;
             /**
              * Is Active
              * @description Whether certification type is active
              * @default true
              */
-            is_active: boolean;
+            isActive: boolean;
         };
         /**
          * CertificationTypeListResponse
@@ -24506,7 +24805,7 @@ export interface components {
              * Full Name
              * @description Full certification name
              */
-            full_name?: string | null;
+            fullName?: string | null;
             /**
              * Description
              * @description Certification description
@@ -24517,60 +24816,60 @@ export interface components {
              * @description Renewal period in months (1-120)
              * @default 24
              */
-            renewal_period_months: number;
+            renewalPeriodMonths: number;
             /**
              * Required For Residents
              * @description Whether required for residents
              * @default true
              */
-            required_for_residents: boolean;
+            requiredForResidents: boolean;
             /**
              * Required For Faculty
              * @description Whether required for faculty
              * @default true
              */
-            required_for_faculty: boolean;
+            requiredForFaculty: boolean;
             /**
              * Required For Specialties
              * @description Comma-separated specialty list
              */
-            required_for_specialties?: string | null;
+            requiredForSpecialties?: string | null;
             /**
              * Reminder Days 180
              * @description Send reminder at 180 days
              * @default true
              */
-            reminder_days_180: boolean;
+            reminderDays180: boolean;
             /**
              * Reminder Days 90
              * @description Send reminder at 90 days
              * @default true
              */
-            reminder_days_90: boolean;
+            reminderDays90: boolean;
             /**
              * Reminder Days 30
              * @description Send reminder at 30 days
              * @default true
              */
-            reminder_days_30: boolean;
+            reminderDays30: boolean;
             /**
              * Reminder Days 14
              * @description Send reminder at 14 days
              * @default true
              */
-            reminder_days_14: boolean;
+            reminderDays14: boolean;
             /**
              * Reminder Days 7
              * @description Send reminder at 7 days
              * @default true
              */
-            reminder_days_7: boolean;
+            reminderDays7: boolean;
             /**
              * Is Active
              * @description Whether certification type is active
              * @default true
              */
-            is_active: boolean;
+            isActive: boolean;
             /**
              * Id
              * Format: uuid
@@ -24580,12 +24879,12 @@ export interface components {
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
         };
         /**
          * CertificationTypeSummary
@@ -24600,7 +24899,7 @@ export interface components {
             /** Name */
             name: string;
             /** Full Name */
-            full_name?: string | null;
+            fullName?: string | null;
         };
         /**
          * CertificationTypeUpdate
@@ -24610,29 +24909,29 @@ export interface components {
             /** Name */
             name?: string | null;
             /** Full Name */
-            full_name?: string | null;
+            fullName?: string | null;
             /** Description */
             description?: string | null;
             /** Renewal Period Months */
-            renewal_period_months?: number | null;
+            renewalPeriodMonths?: number | null;
             /** Required For Residents */
-            required_for_residents?: boolean | null;
+            requiredForResidents?: boolean | null;
             /** Required For Faculty */
-            required_for_faculty?: boolean | null;
+            requiredForFaculty?: boolean | null;
             /** Required For Specialties */
-            required_for_specialties?: string | null;
+            requiredForSpecialties?: string | null;
             /** Reminder Days 180 */
-            reminder_days_180?: boolean | null;
+            reminderDays180?: boolean | null;
             /** Reminder Days 90 */
-            reminder_days_90?: boolean | null;
+            reminderDays90?: boolean | null;
             /** Reminder Days 30 */
-            reminder_days_30?: boolean | null;
+            reminderDays30?: boolean | null;
             /** Reminder Days 14 */
-            reminder_days_14?: boolean | null;
+            reminderDays14?: boolean | null;
             /** Reminder Days 7 */
-            reminder_days_7?: boolean | null;
+            reminderDays7?: boolean | null;
             /** Is Active */
-            is_active?: boolean | null;
+            isActive?: boolean | null;
         };
         /**
          * ChangelogRequest
@@ -24643,24 +24942,24 @@ export interface components {
              * Old Version
              * @description Previous version identifier
              */
-            old_version: string;
+            oldVersion: string;
             /**
              * New Version
              * @description New version identifier
              */
-            new_version: string;
+            newVersion: string;
             /**
              * Output Format
              * @description Output format: markdown, json, or html
              * @default markdown
              */
-            output_format: string;
+            outputFormat: string;
             /**
              * Include Migration Guide
              * @description Include migration guide for breaking changes
              * @default true
              */
-            include_migration_guide: boolean;
+            includeMigrationGuide: boolean;
         };
         /**
          * ChangelogResponse
@@ -24681,17 +24980,17 @@ export interface components {
              * Old Version
              * @description Previous version
              */
-            old_version: string;
+            oldVersion: string;
             /**
              * New Version
              * @description New version
              */
-            new_version: string;
+            newVersion: string;
             /**
              * Generated At
              * @description ISO timestamp when generated
              */
-            generated_at: string;
+            generatedAt: string;
         };
         /**
          * ChangelogSchemaRequest
@@ -24702,14 +25001,14 @@ export interface components {
              * Old Schema
              * @description Previous OpenAPI schema
              */
-            old_schema: {
+            oldSchema: {
                 [key: string]: unknown;
             };
             /**
              * New Schema
              * @description New OpenAPI schema
              */
-            new_schema: {
+            newSchema: {
                 [key: string]: unknown;
             };
             /**
@@ -24717,13 +25016,13 @@ export interface components {
              * @description Output format: markdown, json, or html
              * @default markdown
              */
-            output_format: string;
+            outputFormat: string;
             /**
              * Include Migration Guide
              * @description Include migration guide for breaking changes
              * @default true
              */
-            include_migration_guide: boolean;
+            includeMigrationGuide: boolean;
         };
         /**
          * CheckpointResponse
@@ -24734,33 +25033,33 @@ export interface components {
              * Total Checkpoints
              * @description Total checkpoints in schedule period
              */
-            total_checkpoints: number;
+            totalCheckpoints: number;
             /**
              * Next Checkpoint
              * @description Next checkpoint timestamp
              */
-            next_checkpoint?: string | null;
+            nextCheckpoint?: string | null;
             /**
              * Last Checkpoint
              * @description Last checkpoint timestamp
              */
-            last_checkpoint?: string | null;
+            lastCheckpoint?: string | null;
             /**
              * Checkpoint Interval Days
              * @description Days between checkpoints
              * @default 7
              */
-            checkpoint_interval_days: number;
+            checkpointIntervalDays: number;
             /**
              * State Changes Since Last
              * @description Assignments changed since last checkpoint
              */
-            state_changes_since_last: number;
+            stateChangesSinceLast: number;
             /**
              * Stability Since Last
              * @description Stability score since last checkpoint
              */
-            stability_since_last: number;
+            stabilitySinceLast: number;
             /**
              * Source
              * @description Data source
@@ -24769,16 +25068,55 @@ export interface components {
             source: string;
         };
         /**
+         * CircuitBreakerInfo
+         * @description Status information for a single circuit breaker.
+         */
+        CircuitBreakerInfo: {
+            /** Name */
+            name: string;
+            state: components["schemas"]["CircuitBreakerState"];
+            /** Failure Rate */
+            failureRate: number;
+            /** Success Rate */
+            successRate: number;
+            /** Total Requests */
+            totalRequests: number;
+            /** Successful Requests */
+            successfulRequests: number;
+            /** Failed Requests */
+            failedRequests: number;
+            /** Rejected Requests */
+            rejectedRequests: number;
+            /** Consecutive Failures */
+            consecutiveFailures: number;
+            /** Consecutive Successes */
+            consecutiveSuccesses: number;
+            /** Opened At */
+            openedAt?: string | null;
+            /** Last Failure Time */
+            lastFailureTime?: string | null;
+            /** Last Success Time */
+            lastSuccessTime?: string | null;
+            /** Recent Transitions */
+            recentTransitions?: components["schemas"]["StateTransitionInfo"][];
+        };
+        /**
+         * CircuitBreakerState
+         * @description Circuit breaker state (Netflix Hystrix pattern).
+         * @enum {string}
+         */
+        CircuitBreakerState: "closed" | "open" | "half_open";
+        /**
          * CognitiveLoadAnalysis
          * @description Analysis of cognitive load for a schedule.
          */
         CognitiveLoadAnalysis: {
             /** Total Score */
-            total_score: number;
+            totalScore: number;
             /** Grade */
             grade: string;
             /** Grade Description */
-            grade_description: string;
+            gradeDescription: string;
             /** Factors */
             factors: {
                 [key: string]: unknown;
@@ -24794,7 +25132,7 @@ export interface components {
             /** Success */
             success: boolean;
             /** Session Id */
-            session_id: string;
+            sessionId: string;
             /** Message */
             message: string;
         };
@@ -24807,15 +25145,15 @@ export interface components {
              * Session Id
              * Format: uuid
              */
-            session_id: string;
+            sessionId: string;
             /** User Id */
-            user_id: string;
+            userId: string;
             /** Started At */
-            started_at: string;
+            startedAt: string;
             /** Max Decisions Before Break */
-            max_decisions_before_break: number;
+            maxDecisionsBeforeBreak: number;
             /** Current State */
-            current_state: string;
+            currentState: string;
         };
         /**
          * CognitiveSessionStatusResponse
@@ -24823,23 +25161,23 @@ export interface components {
          */
         CognitiveSessionStatusResponse: {
             /** Session Id */
-            session_id: string;
+            sessionId: string;
             /** User Id */
-            user_id: string;
+            userId: string;
             /** Current State */
-            current_state: string;
+            currentState: string;
             /** Decisions This Session */
-            decisions_this_session: number;
+            decisionsThisSession: number;
             /** Cognitive Cost This Session */
-            cognitive_cost_this_session: number;
+            cognitiveCostThisSession: number;
             /** Remaining Capacity */
-            remaining_capacity: number;
+            remainingCapacity: number;
             /** Decisions Until Break */
-            decisions_until_break: number;
+            decisionsUntilBreak: number;
             /** Should Take Break */
-            should_take_break: boolean;
+            shouldTakeBreak: boolean;
             /** Average Decision Time */
-            average_decision_time: number;
+            averageDecisionTime: number;
             /** Recommendations */
             recommendations: string[];
         };
@@ -24851,21 +25189,21 @@ export interface components {
             /** Found */
             found: boolean;
             /** Slot Type */
-            slot_type: string | null;
+            slotType: string | null;
             /** Total Preference Strength */
-            total_preference_strength: number | null;
+            totalPreferenceStrength: number | null;
             /** Total Avoidance Strength */
-            total_avoidance_strength: number | null;
+            totalAvoidanceStrength: number | null;
             /** Net Preference */
-            net_preference: number | null;
+            netPreference: number | null;
             /** Faculty Count */
-            faculty_count: number | null;
+            facultyCount: number | null;
             /** Confidence */
             confidence: number | null;
             /** Is Popular */
-            is_popular: boolean | null;
+            isPopular: boolean | null;
             /** Is Unpopular */
-            is_unpopular: boolean | null;
+            isUnpopular: boolean | null;
         };
         /**
          * CompensationResponse
@@ -24881,21 +25219,21 @@ export interface components {
              * Stress Id
              * Format: uuid
              */
-            stress_id: string;
-            compensation_type: components["schemas"]["CompensationType"];
+            stressId: string;
+            compensationType: components["schemas"]["CompensationType"];
             /** Description */
             description: string;
             /** Compensation Magnitude */
-            compensation_magnitude: number;
+            compensationMagnitude: number;
             /** Effectiveness */
             effectiveness: number;
             /**
              * Initiated At
              * Format: date-time
              */
-            initiated_at: string;
+            initiatedAt: string;
             /** Is Active */
-            is_active: boolean;
+            isActive: boolean;
         };
         /**
          * CompensationType
@@ -24929,28 +25267,28 @@ export interface components {
          * ComplianceReportRequest
          * @description Request schema for ACGME compliance report.
          * @example {
-         *       "end_date": "2025-01-31",
+         *       "endDate": "2025-01-31",
          *       "format": "pdf",
-         *       "include_logo": true,
-         *       "include_page_numbers": true,
-         *       "include_toc": true,
-         *       "report_type": "schedule",
-         *       "start_date": "2025-01-01"
+         *       "includeLogo": true,
+         *       "includePageNumbers": true,
+         *       "includeToc": true,
+         *       "reportType": "schedule",
+         *       "startDate": "2025-01-01"
          *     }
          */
         ComplianceReportRequest: {
             /** @default compliance */
-            report_type: components["schemas"]["ReportType"];
+            reportType: components["schemas"]["ReportType"];
             /**
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /** @default pdf */
             format: components["schemas"]["ReportFormat"];
             /**
@@ -24958,35 +25296,35 @@ export interface components {
              * @description Include organization logo
              * @default true
              */
-            include_logo: boolean;
+            includeLogo: boolean;
             /**
              * Include Toc
              * @description Include table of contents
              * @default true
              */
-            include_toc: boolean;
+            includeToc: boolean;
             /**
              * Include Page Numbers
              * @description Include page numbers
              * @default true
              */
-            include_page_numbers: boolean;
+            includePageNumbers: boolean;
             /**
              * Resident Ids
              * @description Filter by specific residents
              */
-            resident_ids?: string[] | null;
+            residentIds?: string[] | null;
             /**
              * Pgy Levels
              * @description Filter by PGY level (1, 2, 3)
              */
-            pgy_levels?: number[] | null;
+            pgyLevels?: number[] | null;
             /**
              * Include Violations Only
              * @description Only include residents with violations
              * @default false
              */
-            include_violations_only: boolean;
+            includeViolationsOnly: boolean;
         };
         /**
          * ComplianceSummaryResponse
@@ -24998,11 +25336,11 @@ export interface components {
             /** Current */
             current: number;
             /** Expiring Soon */
-            expiring_soon: number;
+            expiringSoon: number;
             /** Expired */
             expired: number;
             /** Compliance Rate */
-            compliance_rate: number;
+            complianceRate: number;
         };
         /**
          * ComprehensiveReportResponse
@@ -25013,16 +25351,16 @@ export interface components {
              * Generated At
              * Format: date-time
              */
-            generated_at: string;
-            overall_status: components["schemas"]["OverallStatus"];
+            generatedAt: string;
+            overallStatus: components["schemas"]["OverallStatus"];
             /** Summary */
             summary: {
                 [key: string]: unknown;
             };
             /** Immediate Actions */
-            immediate_actions: string[];
+            immediateActions: string[];
             /** Watch Items */
-            watch_items: string[];
+            watchItems: string[];
             /** Components */
             components: {
                 [key: string]: unknown;
@@ -25037,7 +25375,7 @@ export interface components {
              * Winning Variant
              * @description The winning variant key
              */
-            winning_variant: string;
+            winningVariant: string;
             /**
              * Notes
              * @description Conclusion notes
@@ -25055,25 +25393,25 @@ export interface components {
              * Format: date
              * @description Start date for analysis
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description End date for analysis
              */
-            end_date: string;
+            endDate: string;
             /**
              * Confidence Level
              * @description Confidence level for CVaR
              * @default 0.95
              */
-            confidence_level: number;
+            confidenceLevel: number;
             /**
              * Loss Metric
              * @description Loss metric: coverage_drop, workload_spike, acgme_violations
              * @default coverage_drop
              */
-            loss_metric: string;
+            lossMetric: string;
         };
         /**
          * ConditionalVaRResponse
@@ -25085,39 +25423,39 @@ export interface components {
              * Format: date-time
              * @description Timestamp of analysis
              */
-            analyzed_at: string;
+            analyzedAt: string;
             /**
              * Period Start
              * Format: date
              * @description Analysis period start
              */
-            period_start: string;
+            periodStart: string;
             /**
              * Period End
              * Format: date
              * @description Analysis period end
              */
-            period_end: string;
+            periodEnd: string;
             /**
              * Confidence Level
              * @description Confidence level used
              */
-            confidence_level: number;
+            confidenceLevel: number;
             /**
              * Loss Metric
              * @description Loss metric analyzed
              */
-            loss_metric: string;
+            lossMetric: string;
             /**
              * Var Value
              * @description VaR at specified confidence level
              */
-            var_value: number;
+            varValue: number;
             /**
              * Cvar Value
              * @description CVaR (expected shortfall) value
              */
-            cvar_value: number;
+            cvarValue: number;
             /**
              * Interpretation
              * @description Human-readable interpretation
@@ -25127,17 +25465,17 @@ export interface components {
              * Tail Scenarios Count
              * @description Number of scenarios in tail
              */
-            tail_scenarios_count: number;
+            tailScenariosCount: number;
             /**
              * Tail Mean
              * @description Mean loss in tail
              */
-            tail_mean: number;
+            tailMean: number;
             /**
              * Tail Std
              * @description Standard deviation in tail
              */
-            tail_std: number;
+            tailStd: number;
             /** Recommendations */
             recommendations?: string[];
             /** @description Overall risk severity */
@@ -25156,22 +25494,22 @@ export interface components {
              * Utilization Target
              * @default 0.8
              */
-            utilization_target: number;
+            utilizationTarget: number;
             /**
              * Cross Zone Borrowing
              * @default true
              */
-            cross_zone_borrowing: boolean;
+            crossZoneBorrowing: boolean;
             /**
              * Sacrifice Willingness
              * @default medium
              */
-            sacrifice_willingness: string;
+            sacrificeWillingness: string;
             /**
              * Defense Activation Threshold
              * @default 3
              */
-            defense_activation_threshold: number;
+            defenseActivationThreshold: number;
         };
         /**
          * ConfigAnalysisResponse
@@ -25179,20 +25517,20 @@ export interface components {
          */
         ConfigAnalysisResponse: {
             /** Config Name */
-            config_name: string;
+            configName: string;
             /** Matchup Results */
-            matchup_results: {
+            matchupResults: {
                 [key: string]: {
                     [key: string]: unknown;
                 } | undefined;
             };
             /** Average Score */
-            average_score: number;
+            averageScore: number;
             /** Cooperation Rate */
-            cooperation_rate: number;
+            cooperationRate: number;
             /** Recommendation */
             recommendation: string;
-            strategy_classification: components["schemas"]["StrategyType"];
+            strategyClassification: components["schemas"]["StrategyType"];
         };
         /**
          * ConflictAnalysis
@@ -25203,51 +25541,51 @@ export interface components {
              * Conflict Id
              * Format: uuid
              */
-            conflict_id: string;
+            conflictId: string;
             /** Conflict Type */
-            conflict_type: string;
+            conflictType: string;
             /** Severity */
             severity: string;
             /** Root Cause */
-            root_cause: string;
+            rootCause: string;
             /** Affected Faculty */
-            affected_faculty: string[];
+            affectedFaculty: string[];
             /** Affected Dates */
-            affected_dates: string[];
+            affectedDates: string[];
             /**
              * Complexity Score
              * @description 0=simple, 1=complex
              */
-            complexity_score: number;
+            complexityScore: number;
             /** Safety Checks */
-            safety_checks?: components["schemas"]["SafetyCheckResult"][];
+            safetyChecks?: components["schemas"]["SafetyCheckResult"][];
             /**
              * All Checks Passed
              * @default true
              */
-            all_checks_passed: boolean;
+            allChecksPassed: boolean;
             /**
              * Auto Resolution Safe
              * @default true
              */
-            auto_resolution_safe: boolean;
+            autoResolutionSafe: boolean;
             /** Constraints */
             constraints?: string[];
             /** Blockers */
             blockers?: string[];
             /** Recommended Strategies */
-            recommended_strategies?: components["schemas"]["ResolutionStrategyEnum"][];
+            recommendedStrategies?: components["schemas"]["ResolutionStrategyEnum"][];
             /**
              * Estimated Resolution Time
              * @description Estimated minutes to resolve
              * @default 0
              */
-            estimated_resolution_time: number;
+            estimatedResolutionTime: number;
             /**
              * Analyzed At
              * Format: date-time
              */
-            analyzed_at?: string;
+            analyzedAt?: string;
         };
         /**
          * ConflictCheckRequest
@@ -25258,7 +25596,7 @@ export interface components {
              * Template Ids
              * @description Template IDs to check for conflicts
              */
-            template_ids: string[];
+            templateIds: string[];
             /**
              * Operation
              * @description Operation type: 'delete', 'archive', 'update'
@@ -25274,7 +25612,7 @@ export interface components {
              * Can Assign
              * @description Whether assignment can proceed
              */
-            can_assign: boolean;
+            canAssign: boolean;
             /**
              * Conflicts
              * @description Detected conflicts
@@ -25296,7 +25634,7 @@ export interface components {
          * @description Details about a scheduling conflict.
          */
         ConflictDetail: {
-            conflict_type: components["schemas"]["ConflictType"];
+            conflictType: components["schemas"]["ConflictType"];
             /**
              * Severity
              * @description critical, warning, or info
@@ -25305,15 +25643,15 @@ export interface components {
             /** Description */
             description: string;
             /** Faculty Id */
-            faculty_id?: string | null;
+            facultyId?: string | null;
             /** Faculty Name */
-            faculty_name?: string | null;
+            facultyName?: string | null;
             /** Week Date */
-            week_date?: string | null;
+            weekDate?: string | null;
             /** Blocking Absence Id */
-            blocking_absence_id?: string | null;
+            blockingAbsenceId?: string | null;
             /** Blocking Absence Type */
-            blocking_absence_type?: string | null;
+            blockingAbsenceType?: string | null;
         };
         /**
          * ConflictItem
@@ -25333,9 +25671,9 @@ export interface components {
             /** Message */
             message: string;
             /** Fmit Assignment */
-            fmit_assignment?: string | null;
+            fmitAssignment?: string | null;
             /** Clinic Assignment */
-            clinic_assignment?: string | null;
+            clinicAssignment?: string | null;
         };
         /**
          * ConflictListResponse
@@ -25349,7 +25687,7 @@ export interface components {
             /** Page */
             page: number;
             /** Page Size */
-            page_size: number;
+            pageSize: number;
             /** Pages */
             pages: number;
         };
@@ -25359,14 +25697,14 @@ export interface components {
          */
         ConflictPredictionResponse: {
             /** Conflict Probability */
-            conflict_probability: number;
+            conflictProbability: number;
             /**
              * Risk Level
              * @description CRITICAL, HIGH, MEDIUM, LOW, MINIMAL
              */
-            risk_level: string;
+            riskLevel: string;
             /** Risk Factors */
-            risk_factors: string[];
+            riskFactors: string[];
             /** Recommendation */
             recommendation: string;
         };
@@ -25397,38 +25735,38 @@ export interface components {
             /** Description */
             description: string;
             /** Affected Person Ids */
-            affected_person_ids?: string[];
+            affectedPersonIds?: string[];
             /** Affected Assignment Ids */
-            affected_assignment_ids?: string[];
+            affectedAssignmentIds?: string[];
             /** Affected Block Ids */
-            affected_block_ids?: string[];
+            affectedBlockIds?: string[];
             /**
              * Conflict Date
              * Format: date
              */
-            conflict_date: string;
+            conflictDate: string;
             /** Conflict Session */
-            conflict_session?: string | null;
+            conflictSession?: string | null;
             /**
              * Detected At
              * Format: date-time
              */
-            detected_at: string;
+            detectedAt: string;
             /**
              * Detected By
              * @default system
              */
-            detected_by: string;
+            detectedBy: string;
             /** Rule Id */
-            rule_id?: string | null;
+            ruleId?: string | null;
             /** Resolved At */
-            resolved_at?: string | null;
+            resolvedAt?: string | null;
             /** Resolved By */
-            resolved_by?: string | null;
+            resolvedBy?: string | null;
             /** Resolution Method */
-            resolution_method?: string | null;
+            resolutionMethod?: string | null;
             /** Resolution Notes */
-            resolution_notes?: string | null;
+            resolutionNotes?: string | null;
             /** Details */
             details?: {
                 [key: string]: unknown;
@@ -25436,15 +25774,93 @@ export interface components {
         };
         /**
          * ConflictSummary
-         * @description Summary of conflicts found.
+         * @description Summary statistics for a set of conflicts.
+         *
+         *     Used for dashboard displays and reporting.
+         * @example {
+         *       "affectedPeopleCount": 8,
+         *       "autoResolvableCount": 6,
+         *       "averageImpactScore": 0.65,
+         *       "criticalCount": 3,
+         *       "highCount": 5,
+         *       "lowCount": 3,
+         *       "mediumCount": 4,
+         *       "totalConflicts": 15
+         *     }
          */
         ConflictSummary: {
-            /** Total Conflicts */
-            total_conflicts: number;
-            /** Errors */
-            errors: number;
-            /** Warnings */
-            warnings: number;
+            /**
+             * Total Conflicts
+             * @default 0
+             */
+            totalConflicts: number;
+            /**
+             * Critical Count
+             * @default 0
+             */
+            criticalCount: number;
+            /**
+             * High Count
+             * @default 0
+             */
+            highCount: number;
+            /**
+             * Medium Count
+             * @default 0
+             */
+            mediumCount: number;
+            /**
+             * Low Count
+             * @default 0
+             */
+            lowCount: number;
+            /** By Category */
+            byCategory?: {
+                [key: string]: number | undefined;
+            };
+            /** By Type */
+            byType?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Affected People Count
+             * @default 0
+             */
+            affectedPeopleCount: number;
+            /**
+             * Affected Blocks Count
+             * @default 0
+             */
+            affectedBlocksCount: number;
+            /**
+             * Auto Resolvable Count
+             * @default 0
+             */
+            autoResolvableCount: number;
+            /**
+             * Requires Manual Count
+             * @default 0
+             */
+            requiresManualCount: number;
+            /**
+             * Average Impact Score
+             * @default 0
+             */
+            averageImpactScore: number;
+            /**
+             * Average Urgency Score
+             * @default 0
+             */
+            averageUrgencyScore: number;
+            /**
+             * Average Complexity Score
+             * @default 0
+             */
+            averageComplexityScore: number;
+            /** Earliest Date */
+            earliestDate?: string | null;
+            /** Latest Date */
+            latestDate?: string | null;
         };
         /**
          * ConflictType
@@ -25461,17 +25877,17 @@ export interface components {
              * Pool Size
              * @description Configured pool size
              */
-            pool_size: number;
+            poolSize: number;
             /**
              * Max Overflow
              * @description Maximum overflow connections
              */
-            max_overflow: number;
+            maxOverflow: number;
             /**
              * Checked Out
              * @description Currently checked out connections
              */
-            checked_out: number;
+            checkedOut: number;
             /**
              * Overflow
              * @description Current overflow connections
@@ -25481,12 +25897,12 @@ export interface components {
              * Total Connections
              * @description Total connections
              */
-            total_connections: number;
+            totalConnections: number;
             /**
              * Utilization Percent
              * @description Pool utilization percentage
              */
-            utilization_percent: number;
+            utilizationPercent: number;
         };
         /**
          * ConsentRequest
@@ -25499,7 +25915,7 @@ export interface components {
              * Consent Version
              * @default 1.0
              */
-            consent_version: string;
+            consentVersion: string;
         };
         /**
          * ConstraintEnableResponse
@@ -25532,9 +25948,9 @@ export interface components {
             /** Dependencies */
             dependencies: string[];
             /** Enable Condition */
-            enable_condition: string | null;
+            enableCondition: string | null;
             /** Disable Reason */
-            disable_reason: string | null;
+            disableReason: string | null;
         };
         /**
          * ContainmentLevel
@@ -25550,7 +25966,7 @@ export interface components {
             /** Success */
             success: boolean;
             /** Containment Level */
-            containment_level: string;
+            containmentLevel: string;
             /** Reason */
             reason: string;
         };
@@ -25569,18 +25985,18 @@ export interface components {
              * @description Maximum tokens in context string
              * @default 2000
              */
-            max_tokens: number;
+            maxTokens: number;
             /**
              * Doc Type
              * @description Filter by document type (optional)
              */
-            doc_type?: string | null;
+            docType?: string | null;
             /**
              * Include Metadata
              * @description Include metadata in context string
              * @default true
              */
-            include_metadata: boolean;
+            includeMetadata: boolean;
         };
         /**
          * CoverageCountByType
@@ -25591,32 +26007,32 @@ export interface components {
              * Remote Surrogate
              * @default 0
              */
-            remote_surrogate: number;
+            remoteSurrogate: number;
             /**
              * Swap Absorb
              * @default 0
              */
-            swap_absorb: number;
+            swapAbsorb: number;
             /**
              * Swap Exchange
              * @default 0
              */
-            swap_exchange: number;
+            swapExchange: number;
             /**
              * Backup Call
              * @default 0
              */
-            backup_call: number;
+            backupCall: number;
             /**
              * Absence Coverage
              * @default 0
              */
-            absence_coverage: number;
+            absenceCoverage: number;
             /**
              * Temporary Proxy
              * @default 0
              */
-            temporary_proxy: number;
+            temporaryProxy: number;
         };
         /**
          * CoverageForecast
@@ -25627,17 +26043,17 @@ export interface components {
              * Forecast Date
              * Format: date
              */
-            forecast_date: string;
+            forecastDate: string;
             /** Predicted Coverage Percentage */
-            predicted_coverage_percentage: number;
+            predictedCoveragePercentage: number;
             /** Predicted Gaps */
-            predicted_gaps: number;
+            predictedGaps: number;
             /** Confidence Level */
-            confidence_level: number;
+            confidenceLevel: number;
             /** Trend */
             trend: string;
             /** Risk Factors */
-            risk_factors: string[];
+            riskFactors: string[];
         };
         /**
          * CoverageForecastResponse
@@ -25653,39 +26069,49 @@ export interface components {
              * Forecast Start Date
              * Format: date
              */
-            forecast_start_date: string;
+            forecastStartDate: string;
             /**
              * Forecast End Date
              * Format: date
              */
-            forecast_end_date: string;
+            forecastEndDate: string;
             /** Overall Trend */
-            overall_trend: string;
+            overallTrend: string;
             /** Average Predicted Coverage */
-            average_predicted_coverage: number;
+            averagePredictedCoverage: number;
             /** Forecasts */
             forecasts: components["schemas"]["CoverageForecast"][];
         };
         /**
          * CoverageGap
-         * @description Identified coverage gap.
+         * @description Represents a coverage gap with details.
          */
         CoverageGap: {
+            /** Gap Id */
+            gapId: string;
             /**
-             * Rotation Template Id
-             * Format: uuid
+             * Date
+             * Format: date
              */
-            rotation_template_id: string;
-            /** Rotation Name */
-            rotation_name: string;
-            /** Required Coverage */
-            required_coverage: number;
-            /** Assigned Coverage */
-            assigned_coverage: number;
-            /** Gap */
-            gap: number;
+            date: string;
+            /** Time Of Day */
+            timeOfDay: string;
+            /** Block Id */
+            blockId: string;
             /** Severity */
             severity: string;
+            /** Days Until */
+            daysUntil: number;
+            /** Affected Area */
+            affectedArea: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            currentAssignments: number;
+            /** Required Assignments */
+            requiredAssignments: number;
+            /** Gap Size */
+            gapSize: number;
         };
         /**
          * CoverageGapsResponse
@@ -25698,38 +26124,38 @@ export interface components {
              */
             timestamp: string;
             /** Total Gaps */
-            total_gaps: number;
+            totalGaps: number;
             /** Critical Gaps */
-            critical_gaps: number;
+            criticalGaps: number;
             /** High Priority Gaps */
-            high_priority_gaps: number;
+            highPriorityGaps: number;
             /** Medium Priority Gaps */
-            medium_priority_gaps: number;
+            mediumPriorityGaps: number;
             /** Low Priority Gaps */
-            low_priority_gaps: number;
+            lowPriorityGaps: number;
             /** Gaps By Period */
-            gaps_by_period: {
+            gapsByPeriod: {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
+            gaps: components["schemas"]["CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
          * @description Response schema for coverage heatmap.
          * @example {
-         *       "coverage_percentage": 87.5,
+         *       "coveragePercentage": 87.5,
          *       "data": {
-         *         "color_scale": "RdYlGn",
-         *         "x_labels": [
+         *         "colorScale": "RdYlGn",
+         *         "xLabels": [
          *           "2024-01-01",
          *           "2024-01-02"
          *         ],
-         *         "y_labels": [
+         *         "yLabels": [
          *           "FMIT",
          *           "Clinic"
          *         ],
-         *         "z_values": [
+         *         "zValues": [
          *           [
          *             1,
          *             0.5
@@ -25745,10 +26171,10 @@ export interface components {
          *           "date": "2024-01-01",
          *           "rotation": "Clinic",
          *           "severity": "medium",
-         *           "time_of_day": "PM"
+         *           "timeOfDay": "PM"
          *         }
          *       ],
-         *       "generated_at": "2024-01-15T10:00:00",
+         *       "generatedAt": "2024-01-15T10:00:00",
          *       "title": "Coverage Heatmap"
          *     }
          */
@@ -25759,7 +26185,7 @@ export interface components {
              * Coverage Percentage
              * @description Overall coverage percentage
              */
-            coverage_percentage: number;
+            coveragePercentage: number;
             /**
              * Gaps
              * @description List of coverage gaps
@@ -25774,7 +26200,7 @@ export interface components {
              * Generated At
              * Format: date-time
              */
-            generated_at?: string;
+            generatedAt?: string;
         };
         /**
          * CoverageMetrics
@@ -25785,28 +26211,28 @@ export interface components {
              * Coverage Rate
              * @description Overall coverage rate
              */
-            coverage_rate: number;
+            coverageRate: number;
             /**
              * Blocks Covered
              * @description Number of blocks with assignments
              */
-            blocks_covered: number;
+            blocksCovered: number;
             /**
              * Blocks Total
              * @description Total number of blocks
              */
-            blocks_total: number;
+            blocksTotal: number;
             /**
              * Critical Gaps
              * @description Number of critical coverage gaps
              * @default 0
              */
-            critical_gaps: number;
+            criticalGaps: number;
             /**
              * Faculty Utilization
              * @description Faculty utilization rate
              */
-            faculty_utilization: number;
+            facultyUtilization: number;
         };
         /**
          * CoverageRelationship
@@ -25819,21 +26245,21 @@ export interface components {
              */
             id: string;
             /** @description Person providing coverage */
-            covering_person: components["schemas"]["PersonRef"];
+            coveringPerson: components["schemas"]["PersonRef"];
             /** @description Person being covered for */
-            covered_person: components["schemas"]["PersonRef"];
-            coverage_type: components["schemas"]["CoverageType"];
+            coveredPerson: components["schemas"]["PersonRef"];
+            coverageType: components["schemas"]["CoverageType"];
             status: components["schemas"]["CoverageStatus"];
             /**
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * @description End date, null if ongoing
              */
-            end_date?: string | null;
+            endDate?: string | null;
             /**
              * Location
              * @description Location context if applicable
@@ -25848,7 +26274,7 @@ export interface components {
              * Swap Id
              * @description Related swap record ID
              */
-            swap_id?: string | null;
+            swapId?: string | null;
         };
         /**
          * CoverageReport
@@ -25859,16 +26285,16 @@ export interface components {
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /** Total Weeks */
-            total_weeks: number;
+            totalWeeks: number;
             /** Overall Coverage Percentage */
-            overall_coverage_percentage: number;
+            overallCoveragePercentage: number;
             /** Weeks */
             weeks: components["schemas"]["CoverageReportItem"][];
         };
@@ -25881,17 +26307,17 @@ export interface components {
              * Week Start
              * Format: date
              */
-            week_start: string;
+            weekStart: string;
             /** Total Fmit Slots */
-            total_fmit_slots: number;
+            totalFmitSlots: number;
             /** Covered Slots */
-            covered_slots: number;
+            coveredSlots: number;
             /** Uncovered Slots */
-            uncovered_slots: number;
+            uncoveredSlots: number;
             /** Coverage Percentage */
-            coverage_percentage: number;
+            coveragePercentage: number;
             /** Faculty Assigned */
-            faculty_assigned: string[];
+            facultyAssigned: string[];
         };
         /**
          * CoverageStats
@@ -25903,24 +26329,24 @@ export interface components {
              * @description Total active coverage relationships
              * @default 0
              */
-            total_active: number;
+            totalActive: number;
             /**
              * Total Scheduled
              * @description Total scheduled for upcoming period
              * @default 0
              */
-            total_scheduled: number;
-            by_type?: components["schemas"]["CoverageCountByType"];
+            totalScheduled: number;
+            byType?: components["schemas"]["CoverageCountByType"];
             /**
              * Top Coverers
              * @description People providing most coverage
              */
-            top_coverers?: components["schemas"]["TopCoverer"][];
+            topCoverers?: components["schemas"]["TopCoverer"][];
             /**
              * Most Covered
              * @description People being covered most
              */
-            most_covered?: components["schemas"]["TopCoverer"][];
+            mostCovered?: components["schemas"]["TopCoverer"][];
         };
         /**
          * CoverageStatus
@@ -25934,19 +26360,19 @@ export interface components {
          */
         CoverageSuggestion: {
             /** Gap Id */
-            gap_id: string;
+            gapId: string;
             /** Suggestion Type */
-            suggestion_type: string;
+            suggestionType: string;
             /** Priority */
             priority: number;
             /** Faculty Candidates */
-            faculty_candidates: string[];
+            facultyCandidates: string[];
             /** Estimated Conflict Score */
-            estimated_conflict_score: number;
+            estimatedConflictScore: number;
             /** Reasoning */
             reasoning: string;
             /** Alternative Dates */
-            alternative_dates: string[] | null;
+            alternativeDates: string[] | null;
         };
         /**
          * CoverageSuggestionsResponse
@@ -25959,9 +26385,9 @@ export interface components {
              */
             timestamp: string;
             /** Total Suggestions */
-            total_suggestions: number;
+            totalSuggestions: number;
             /** Gaps Addressed */
-            gaps_addressed: number;
+            gapsAddressed: number;
             /** Suggestions */
             suggestions: components["schemas"]["CoverageSuggestion"][];
         };
@@ -25981,13 +26407,13 @@ export interface components {
              * Format: date
              * @description Start date for analysis
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description End date for analysis
              */
-            end_date: string;
+            endDate: string;
             /**
              * Confidence Levels
              * @description Confidence levels for VaR (e.g., [0.90, 0.95, 0.99])
@@ -25997,18 +26423,18 @@ export interface components {
              *       0.99
              *     ]
              */
-            confidence_levels: number[];
+            confidenceLevels: number[];
             /**
              * Rotation Types
              * @description Specific rotation types to analyze (None = all)
              */
-            rotation_types?: string[] | null;
+            rotationTypes?: string[] | null;
             /**
              * Historical Days
              * @description Days of historical data to use
              * @default 90
              */
-            historical_days: number;
+            historicalDays: number;
         };
         /**
          * CoverageVaRResponse
@@ -26020,44 +26446,44 @@ export interface components {
              * Format: date-time
              * @description Timestamp of analysis
              */
-            analyzed_at: string;
+            analyzedAt: string;
             /**
              * Period Start
              * Format: date
              * @description Analysis period start
              */
-            period_start: string;
+            periodStart: string;
             /**
              * Period End
              * Format: date
              * @description Analysis period end
              */
-            period_end: string;
+            periodEnd: string;
             /**
              * Historical Days
              * @description Days of historical data used
              */
-            historical_days: number;
+            historicalDays: number;
             /**
              * Scenarios Analyzed
              * @description Number of scenarios analyzed
              */
-            scenarios_analyzed: number;
+            scenariosAnalyzed: number;
             /**
              * Var Metrics
              * @description VaR at each confidence level
              */
-            var_metrics: components["schemas"]["VaRMetric"][];
+            varMetrics: components["schemas"]["VaRMetric"][];
             /**
              * Baseline Coverage
              * @description Baseline coverage rate (0-1)
              */
-            baseline_coverage: number;
+            baselineCoverage: number;
             /**
              * Worst Case Coverage
              * @description Worst historical coverage (0-1)
              */
-            worst_case_coverage: number;
+            worstCaseCoverage: number;
             /** Recommendations */
             recommendations?: string[];
             /** @description Overall risk severity */
@@ -26098,31 +26524,31 @@ export interface components {
              * Competency Level
              * @default qualified
              */
-            competency_level: string;
+            competencyLevel: string;
             /** Issued Date */
-            issued_date?: string | null;
+            issuedDate?: string | null;
             /** Expiration Date */
-            expiration_date?: string | null;
+            expirationDate?: string | null;
             /** Last Verified Date */
-            last_verified_date?: string | null;
+            lastVerifiedDate?: string | null;
             /** Max Concurrent Residents */
-            max_concurrent_residents?: number | null;
+            maxConcurrentResidents?: number | null;
             /** Max Per Week */
-            max_per_week?: number | null;
+            maxPerWeek?: number | null;
             /** Max Per Academic Year */
-            max_per_academic_year?: number | null;
+            maxPerAcademicYear?: number | null;
             /** Notes */
             notes?: string | null;
             /**
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /**
              * Procedure Id
              * Format: uuid
              */
-            procedure_id: string;
+            procedureId: string;
         };
         /**
          * CredentialListResponse
@@ -26148,19 +26574,19 @@ export interface components {
              * Competency Level
              * @default qualified
              */
-            competency_level: string;
+            competencyLevel: string;
             /** Issued Date */
-            issued_date?: string | null;
+            issuedDate?: string | null;
             /** Expiration Date */
-            expiration_date?: string | null;
+            expirationDate?: string | null;
             /** Last Verified Date */
-            last_verified_date?: string | null;
+            lastVerifiedDate?: string | null;
             /** Max Concurrent Residents */
-            max_concurrent_residents?: number | null;
+            maxConcurrentResidents?: number | null;
             /** Max Per Week */
-            max_per_week?: number | null;
+            maxPerWeek?: number | null;
             /** Max Per Academic Year */
-            max_per_academic_year?: number | null;
+            maxPerAcademicYear?: number | null;
             /** Notes */
             notes?: string | null;
             /**
@@ -26172,24 +26598,24 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /**
              * Procedure Id
              * Format: uuid
              */
-            procedure_id: string;
+            procedureId: string;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
             /** Is Valid */
-            is_valid: boolean;
+            isValid: boolean;
         };
         /**
          * CredentialUpdate
@@ -26199,17 +26625,17 @@ export interface components {
             /** Status */
             status?: string | null;
             /** Competency Level */
-            competency_level?: string | null;
+            competencyLevel?: string | null;
             /** Expiration Date */
-            expiration_date?: string | null;
+            expirationDate?: string | null;
             /** Last Verified Date */
-            last_verified_date?: string | null;
+            lastVerifiedDate?: string | null;
             /** Max Concurrent Residents */
-            max_concurrent_residents?: number | null;
+            maxConcurrentResidents?: number | null;
             /** Max Per Week */
-            max_per_week?: number | null;
+            maxPerWeek?: number | null;
             /** Max Per Academic Year */
-            max_per_academic_year?: number | null;
+            maxPerAcademicYear?: number | null;
             /** Notes */
             notes?: string | null;
         };
@@ -26222,13 +26648,13 @@ export interface components {
              * Faculty Ids
              * @description Faculty IDs to analyze
              */
-            faculty_ids?: string[] | null;
+            facultyIds?: string[] | null;
             /**
              * Lookback Days
              * @description Historical window
              * @default 90
              */
-            lookback_days: number;
+            lookbackDays: number;
         };
         /**
          * CreepFatigueResponse
@@ -26236,19 +26662,19 @@ export interface components {
          */
         CreepFatigueResponse: {
             /** Analyzed At */
-            analyzed_at: string;
+            analyzedAt: string;
             /** Total Analyzed */
-            total_analyzed: number;
+            totalAnalyzed: number;
             /** Primary Count */
-            primary_count: number;
+            primaryCount: number;
             /** Secondary Count */
-            secondary_count: number;
+            secondaryCount: number;
             /** Tertiary Count */
-            tertiary_count: number;
+            tertiaryCount: number;
             /** Average Damage */
-            average_damage: number;
+            averageDamage: number;
             /** High Risk Faculty */
-            high_risk_faculty: string[];
+            highRiskFaculty: string[];
             /** Interpretation */
             interpretation: string;
             /** Recommendations */
@@ -26282,13 +26708,13 @@ export interface components {
          */
         CrisisResponse: {
             /** Crisis Mode */
-            crisis_mode: boolean;
+            crisisMode: boolean;
             severity?: components["schemas"]["CrisisSeverity"] | null;
             /** Actions Taken */
-            actions_taken: string[];
-            load_shedding_level: components["schemas"]["LoadSheddingLevel"];
+            actionsTaken: string[];
+            loadSheddingLevel: components["schemas"]["LoadSheddingLevel"];
             /** Recovery Plan */
-            recovery_plan?: string[] | null;
+            recoveryPlan?: string[] | null;
         };
         /**
          * CrisisSeverity
@@ -26302,9 +26728,9 @@ export interface components {
          */
         CriticalSignalResponse: {
             /** Signal Type */
-            signal_type: string;
+            signalType: string;
             /** Metric Name */
-            metric_name: string;
+            metricName: string;
             /** Severity */
             severity: string;
             /** Value */
@@ -26314,7 +26740,7 @@ export interface components {
             /** Description */
             description: string;
             /** Detected At */
-            detected_at: string;
+            detectedAt: string;
         };
         /**
          * CrossTrainingRecommendationsResponse
@@ -26339,7 +26765,7 @@ export interface components {
              * User Id
              * @description User ID to apply custom limit
              */
-            user_id: string;
+            userId: string;
             /** @description Custom rate limit configuration */
             config: components["schemas"]["RateLimitConfig"];
             /**
@@ -26347,7 +26773,7 @@ export interface components {
              * @description Time-to-live for custom limit in seconds (default: 24 hours)
              * @default 86400
              */
-            ttl_seconds: number;
+            ttlSeconds: number;
         };
         /**
          * CustomLimitResponse
@@ -26368,14 +26794,14 @@ export interface components {
              * User Id
              * @description User ID affected
              */
-            user_id: string;
+            userId: string;
             /** @description Applied configuration */
             config: components["schemas"]["RateLimitConfig"];
             /**
              * Expires At
              * @description Unix timestamp when custom limit expires
              */
-            expires_at: number;
+            expiresAt: number;
         };
         /**
          * DailyManifestResponse
@@ -26391,7 +26817,7 @@ export interface components {
              * Time Of Day
              * @description AM or PM, or None for all day
              */
-            time_of_day?: string | null;
+            timeOfDay?: string | null;
             /** Locations */
             locations: components["schemas"]["LocationManifest"][];
             /**
@@ -26399,7 +26825,7 @@ export interface components {
              * Format: date-time
              * @description When this manifest was generated
              */
-            generated_at?: string;
+            generatedAt?: string;
         };
         /**
          * DailyManifestResponseV2
@@ -26417,19 +26843,19 @@ export interface components {
              * Format: date
              */
             date: string;
-            situational_awareness?: components["schemas"]["SituationalAwareness"];
+            situationalAwareness?: components["schemas"]["SituationalAwareness"];
             attending?: components["schemas"]["AttendingInfo"];
             /**
              * Clinic Coverage
              * @description Clinic staffing by person (DayView style)
              */
-            clinic_coverage?: components["schemas"]["PersonClinicCoverage"][];
+            clinicCoverage?: components["schemas"]["PersonClinicCoverage"][];
             /**
              * Generated At
              * Format: date-time
              * @description When this manifest was generated
              */
-            generated_at?: string;
+            generatedAt?: string;
         };
         /**
          * DashboardAbsenceItem
@@ -26440,19 +26866,19 @@ export interface components {
              * Absence Id
              * Format: uuid
              */
-            absence_id: string;
+            absenceId: string;
             /**
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /** Absence Type */
-            absence_type: string;
+            absenceType: string;
             /** Notes */
             notes?: string | null;
         };
@@ -26467,7 +26893,7 @@ export interface components {
              */
             id: string;
             /** Alert Type */
-            alert_type: string;
+            alertType: string;
             /** Severity */
             severity: string;
             /** Message */
@@ -26476,9 +26902,9 @@ export interface components {
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /** Action Url */
-            action_url?: string | null;
+            actionUrl?: string | null;
         };
         /**
          * DashboardResponse
@@ -26489,16 +26915,16 @@ export interface components {
              * Faculty Id
              * Format: uuid
              */
-            faculty_id: string;
+            facultyId: string;
             /** Faculty Name */
-            faculty_name: string;
+            facultyName: string;
             stats: components["schemas"]["DashboardStats"];
             /** Upcoming Weeks */
-            upcoming_weeks: components["schemas"]["FMITWeekInfo"][];
+            upcomingWeeks: components["schemas"]["FMITWeekInfo"][];
             /** Recent Alerts */
-            recent_alerts: components["schemas"]["DashboardAlert"][];
+            recentAlerts: components["schemas"]["DashboardAlert"][];
             /** Pending Swap Decisions */
-            pending_swap_decisions: components["schemas"]["SwapRequestSummary"][];
+            pendingSwapDecisions: components["schemas"]["SwapRequestSummary"][];
         };
         /**
          * DashboardScheduleItem
@@ -26511,7 +26937,7 @@ export interface components {
              */
             date: string;
             /** Time Of Day */
-            time_of_day: string;
+            timeOfDay: string;
             /** Activity */
             activity: string;
             /** Location */
@@ -26520,11 +26946,11 @@ export interface components {
              * Can Trade
              * @default true
              */
-            can_trade: boolean;
+            canTrade: boolean;
             /** Role */
             role?: string | null;
             /** Assignment Id */
-            assignment_id?: string | null;
+            assignmentId?: string | null;
         };
         /**
          * DashboardStats
@@ -26532,17 +26958,17 @@ export interface components {
          */
         DashboardStats: {
             /** Weeks Assigned */
-            weeks_assigned: number;
+            weeksAssigned: number;
             /** Weeks Completed */
-            weeks_completed: number;
+            weeksCompleted: number;
             /** Weeks Remaining */
-            weeks_remaining: number;
+            weeksRemaining: number;
             /** Target Weeks */
-            target_weeks: number;
+            targetWeeks: number;
             /** Pending Swap Requests */
-            pending_swap_requests: number;
+            pendingSwapRequests: number;
             /** Unread Alerts */
-            unread_alerts: number;
+            unreadAlerts: number;
         };
         /**
          * DashboardSummary
@@ -26550,22 +26976,22 @@ export interface components {
          */
         DashboardSummary: {
             /** Next Assignment */
-            next_assignment?: string | null;
+            nextAssignment?: string | null;
             /**
              * Workload Next 4 Weeks
              * @default 0
              */
-            workload_next_4_weeks: number;
+            workloadNext4Weeks: number;
             /**
              * Pending Swap Count
              * @default 0
              */
-            pending_swap_count: number;
+            pendingSwapCount: number;
             /**
              * Upcoming Absences Count
              * @default 0
              */
-            upcoming_absences_count: number;
+            upcomingAbsencesCount: number;
         };
         /**
          * DashboardSwapItem
@@ -26576,25 +27002,25 @@ export interface components {
              * Swap Id
              * Format: uuid
              */
-            swap_id: string;
+            swapId: string;
             /** Swap Type */
-            swap_type: string;
+            swapType: string;
             /** Status */
             status: string;
             /**
              * Source Week
              * Format: date
              */
-            source_week: string;
+            sourceWeek: string;
             /** Target Week */
-            target_week: string | null;
+            targetWeek: string | null;
             /** Other Party Name */
-            other_party_name: string;
+            otherPartyName: string;
             /**
              * Requested At
              * Format: date-time
              */
-            requested_at: string;
+            requestedAt: string;
         };
         /**
          * DashboardUserInfo
@@ -26613,7 +27039,7 @@ export interface components {
             /** Email */
             email?: string | null;
             /** Pgy Level */
-            pgy_level?: number | null;
+            pgyLevel?: number | null;
         };
         /**
          * DatabaseHealthResponse
@@ -26622,15 +27048,15 @@ export interface components {
         DatabaseHealthResponse: {
             /** Status */
             status: string;
-            connection_pool: components["schemas"]["ConnectionPoolStats"];
+            connectionPool: components["schemas"]["ConnectionPoolStats"];
             /** Database Size Mb */
-            database_size_mb: number;
+            databaseSizeMb: number;
             /** Active Connections */
-            active_connections: number;
+            activeConnections: number;
             /** Total Tables */
-            total_tables: number;
+            totalTables: number;
             /** Total Indexes */
-            total_indexes: number;
+            totalIndexes: number;
             /** Recommendations */
             recommendations: string[];
         };
@@ -26653,7 +27079,7 @@ export interface components {
              * Decision Id
              * Format: uuid
              */
-            decision_id: string;
+            decisionId: string;
             /** Category */
             category: string;
             /** Complexity */
@@ -26663,13 +27089,13 @@ export interface components {
             /** Options */
             options: string[];
             /** Recommended Option */
-            recommended_option: string | null;
+            recommendedOption: string | null;
             /** Has Safe Default */
-            has_safe_default: boolean;
+            hasSafeDefault: boolean;
             /** Is Urgent */
-            is_urgent: boolean;
+            isUrgent: boolean;
             /** Estimated Cognitive Cost */
-            estimated_cognitive_cost: number;
+            estimatedCognitiveCost: number;
         };
         /**
          * DecisionQueueResponse
@@ -26677,23 +27103,23 @@ export interface components {
          */
         DecisionQueueResponse: {
             /** Total Pending */
-            total_pending: number;
+            totalPending: number;
             /** By Complexity */
-            by_complexity: {
+            byComplexity: {
                 [key: string]: unknown;
             };
             /** By Category */
-            by_category: {
+            byCategory: {
                 [key: string]: unknown;
             };
             /** Urgent Count */
-            urgent_count: number;
+            urgentCount: number;
             /** Can Auto Decide */
-            can_auto_decide: number;
+            canAutoDecide: number;
             /** Oldest Pending */
-            oldest_pending: string | null;
+            oldestPending: string | null;
             /** Estimated Cognitive Cost */
-            estimated_cognitive_cost: number;
+            estimatedCognitiveCost: number;
             /** Recommendations */
             recommendations: string[];
         };
@@ -26705,9 +27131,9 @@ export interface components {
             /** Success */
             success: boolean;
             /** Decision Id */
-            decision_id: string;
+            decisionId: string;
             /** Chosen Option */
-            chosen_option: string;
+            chosenOption: string;
         };
         /**
          * DefenseLevel
@@ -26716,10 +27142,42 @@ export interface components {
          */
         DefenseLevel: "PREVENTION" | "CONTROL" | "SAFETY_SYSTEMS" | "CONTAINMENT" | "EMERGENCY";
         /**
+         * DefenseLevelRequest
+         * @description Request for defense level calculation.
+         */
+        DefenseLevelRequest: {
+            /**
+             * Coverage Rate
+             * @description Current coverage rate (0.0 to 1.0)
+             */
+            coverageRate: number;
+        };
+        /**
+         * DefenseLevelResponse
+         * @description Response from defense level calculation.
+         */
+        DefenseLevelResponse: {
+            level: components["schemas"]["DefenseLevel"];
+            /**
+             * Level Number
+             * @description Numeric level (1=PREVENTION to 5=EMERGENCY)
+             */
+            levelNumber: number;
+            /** Description */
+            description: string;
+            /** Recommended Actions */
+            recommendedActions: string[];
+            /**
+             * Escalation Threshold
+             * @description Coverage rate that would trigger escalation
+             */
+            escalationThreshold: number;
+        };
+        /**
          * DeleteFileResponse
          * @description Response for file deletion.
          * @example {
-         *       "file_id": "660e8400-e29b-41d4-a716-446655440001",
+         *       "fileId": "660e8400-e29b-41d4-a716-446655440001",
          *       "message": "File deleted successfully",
          *       "success": true
          *     }
@@ -26734,7 +27192,7 @@ export interface components {
              * File Id
              * @description File identifier
              */
-            file_id: string;
+            fileId: string;
             /**
              * Message
              * @description Status message
@@ -26756,11 +27214,11 @@ export interface components {
          */
         DeviceInfo: {
             /** @default unknown */
-            device_type: components["schemas"]["DeviceType"];
+            deviceType: components["schemas"]["DeviceType"];
             /** User Agent */
-            user_agent?: string | null;
+            userAgent?: string | null;
             /** Ip Address */
-            ip_address?: string | null;
+            ipAddress?: string | null;
             /** Platform */
             platform?: string | null;
             /** Browser */
@@ -26788,7 +27246,7 @@ export interface components {
              * Doc Type
              * @description Document type: acgme_rules, scheduling_policy, user_guide, etc.
              */
-            doc_type: string;
+            docType: string;
             /**
              * Metadata
              * @description Additional metadata: source_file, page_number, section, author, etc.
@@ -26801,13 +27259,13 @@ export interface components {
              * @description Target chunk size in tokens
              * @default 500
              */
-            chunk_size: number;
+            chunkSize: number;
             /**
              * Chunk Overlap
              * @description Overlap between chunks in tokens
              * @default 50
              */
-            chunk_overlap: number;
+            chunkOverlap: number;
         };
         /**
          * DraftAssignmentChangeType
@@ -26825,38 +27283,38 @@ export interface components {
              * Format: uuid
              * @description UUID of the person
              */
-            person_id: string;
+            personId: string;
             /**
              * Assignment Date
              * Format: date
              * @description Date of the assignment
              */
-            assignment_date: string;
+            assignmentDate: string;
             /**
              * Time Of Day
              * @description AM/PM or None for full day
              */
-            time_of_day?: string | null;
+            timeOfDay?: string | null;
             /**
              * Activity Code
              * @description Activity code
              */
-            activity_code?: string | null;
+            activityCode?: string | null;
             /**
              * Rotation Id
              * @description Rotation template ID
              */
-            rotation_id?: string | null;
+            rotationId?: string | null;
             /**
              * @description Type of change
              * @default add
              */
-            change_type: components["schemas"]["DraftAssignmentChangeType"];
+            changeType: components["schemas"]["DraftAssignmentChangeType"];
             /**
              * Existing Assignment Id
              * @description For modify/delete, the existing assignment ID
              */
-            existing_assignment_id?: string | null;
+            existingAssignmentId?: string | null;
         };
         /**
          * DraftAssignmentResponse
@@ -26872,32 +27330,32 @@ export interface components {
              * Draft Id
              * Format: uuid
              */
-            draft_id: string;
+            draftId: string;
             /**
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /** Person Name */
-            person_name?: string | null;
+            personName?: string | null;
             /**
              * Assignment Date
              * Format: date
              */
-            assignment_date: string;
+            assignmentDate: string;
             /** Time Of Day */
-            time_of_day?: string | null;
+            timeOfDay?: string | null;
             /** Activity Code */
-            activity_code?: string | null;
+            activityCode?: string | null;
             /** Rotation Id */
-            rotation_id?: string | null;
+            rotationId?: string | null;
             /** Rotation Name */
-            rotation_name?: string | null;
-            change_type: components["schemas"]["DraftAssignmentChangeType"];
+            rotationName?: string | null;
+            changeType: components["schemas"]["DraftAssignmentChangeType"];
             /** Existing Assignment Id */
-            existing_assignment_id?: string | null;
+            existingAssignmentId?: string | null;
             /** Created Assignment Id */
-            created_assignment_id?: string | null;
+            createdAssignmentId?: string | null;
         };
         /**
          * DraftFlagAcknowledge
@@ -26908,7 +27366,7 @@ export interface components {
              * Resolution Note
              * @description Optional note about resolution
              */
-            resolution_note?: string | null;
+            resolutionNote?: string | null;
         };
         /**
          * DraftFlagBulkAcknowledge
@@ -26919,12 +27377,12 @@ export interface components {
              * Flag Ids
              * @description Flag IDs to acknowledge
              */
-            flag_ids: string[];
+            flagIds: string[];
             /**
              * Resolution Note
              * @description Optional note about resolution
              */
-            resolution_note?: string | null;
+            resolutionNote?: string | null;
         };
         /**
          * DraftFlagResponse
@@ -26940,30 +27398,30 @@ export interface components {
              * Draft Id
              * Format: uuid
              */
-            draft_id: string;
-            flag_type: components["schemas"]["DraftFlagType"];
+            draftId: string;
+            flagType: components["schemas"]["DraftFlagType"];
             severity: components["schemas"]["DraftFlagSeverity"];
             /** Message */
             message: string;
             /** Assignment Id */
-            assignment_id?: string | null;
+            assignmentId?: string | null;
             /** Person Id */
-            person_id?: string | null;
+            personId?: string | null;
             /** Person Name */
-            person_name?: string | null;
+            personName?: string | null;
             /** Affected Date */
-            affected_date?: string | null;
+            affectedDate?: string | null;
             /** Acknowledged At */
-            acknowledged_at?: string | null;
+            acknowledgedAt?: string | null;
             /** Acknowledged By Id */
-            acknowledged_by_id?: string | null;
+            acknowledgedById?: string | null;
             /** Resolution Note */
-            resolution_note?: string | null;
+            resolutionNote?: string | null;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
         };
         /**
          * DraftFlagSeverity
@@ -26986,42 +27444,42 @@ export interface components {
              * Draft Id
              * Format: uuid
              */
-            draft_id: string;
+            draftId: string;
             /**
              * Add Count
              * @description New assignments to add
              * @default 0
              */
-            add_count: number;
+            addCount: number;
             /**
              * Modify Count
              * @description Assignments to modify
              * @default 0
              */
-            modify_count: number;
+            modifyCount: number;
             /**
              * Delete Count
              * @description Assignments to delete
              * @default 0
              */
-            delete_count: number;
+            deleteCount: number;
             /**
              * Flags Total
              * @description Total flags
              * @default 0
              */
-            flags_total: number;
+            flagsTotal: number;
             /**
              * Flags Acknowledged
              * @description Acknowledged flags
              * @default 0
              */
-            flags_acknowledged: number;
+            flagsAcknowledged: number;
             /**
              * Acgme Violations
              * @description ACGME violations that would occur after publish
              */
-            acgme_violations?: string[];
+            acgmeViolations?: string[];
             /**
              * Assignments
              * @description Staged assignments
@@ -27051,20 +27509,20 @@ export interface components {
          */
         EffectiveSlot: {
             /** Day Of Week */
-            day_of_week: number;
+            dayOfWeek: number;
             /**
              * Time Of Day
              * @enum {string}
              */
-            time_of_day: "AM" | "PM";
+            timeOfDay: "AM" | "PM";
             /** Activity Id */
-            activity_id?: string | null;
+            activityId?: string | null;
             activity?: components["schemas"]["ActivityResponse"] | null;
             /**
              * Is Locked
              * @default false
              */
-            is_locked: boolean;
+            isLocked: boolean;
             /**
              * Priority
              * @default 50
@@ -27084,18 +27542,18 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /** Person Name */
-            person_name: string;
+            personName: string;
             /** Faculty Role */
-            faculty_role: string | null;
+            facultyRole: string | null;
             /**
              * Week Start
              * Format: date
              */
-            week_start: string;
+            weekStart: string;
             /** Week Number */
-            week_number: number;
+            weekNumber: number;
             /** Slots */
             slots: components["schemas"]["EffectiveSlot"][];
         };
@@ -27108,24 +27566,24 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /**
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /** Reason */
             reason: string;
             /**
              * Is Deployment
              * @default false
              */
-            is_deployment: boolean;
+            isDeployment: boolean;
         };
         /**
          * EmergencyResponse
@@ -27135,11 +27593,11 @@ export interface components {
             /** Status */
             status: string;
             /** Replacements Found */
-            replacements_found: number;
+            replacementsFound: number;
             /** Coverage Gaps */
-            coverage_gaps: number;
+            coverageGaps: number;
             /** Requires Manual Review */
-            requires_manual_review: boolean;
+            requiresManualReview: boolean;
             /** Details */
             details: {
                 [key: string]: unknown;
@@ -27198,15 +27656,15 @@ export interface components {
          * @description Response schema for an energy barrier.
          */
         EnergyBarrierResponse: {
-            barrier_type: components["schemas"]["BarrierTypeEnum"];
+            barrierType: components["schemas"]["BarrierTypeEnum"];
             /** Name */
             name: string;
             /** Description */
             description: string;
             /** Energy Contribution */
-            energy_contribution: number;
+            energyContribution: number;
             /** Is Absolute */
-            is_absolute: boolean;
+            isAbsolute: boolean;
             /** Source */
             source: string;
             /** Metadata */
@@ -27229,19 +27687,19 @@ export interface components {
              * @description Whether this is a local minimum
              * @default false
              */
-            is_local_minimum: boolean;
+            isLocalMinimum: boolean;
             /**
              * Tunneling Probability
              * @description Quantum tunneling probability to global minimum
              * @default 0
              */
-            tunneling_probability: number;
+            tunnelingProbability: number;
             /**
              * Basin Size
              * @description Estimated basin of attraction size
              * @default 1
              */
-            basin_size: number;
+            basinSize: number;
             /**
              * Objectives
              * @description Individual objective values
@@ -27260,13 +27718,13 @@ export interface components {
              * Schedule Id
              * @description Schedule ID to analyze
              */
-            schedule_id?: string | null;
+            scheduleId?: string | null;
             /**
              * Sample Size
              * @description Number of perturbations to sample
              * @default 100
              */
-            sample_size: number;
+            sampleSize: number;
             /**
              * Temperature
              * @description Temperature parameter for energy calculation
@@ -27283,37 +27741,37 @@ export interface components {
              * Current Energy
              * @description Free energy of current configuration
              */
-            current_energy: number;
+            currentEnergy: number;
             /**
              * Is Local Minimum
              * @description Whether current state is a local minimum
              */
-            is_local_minimum: boolean;
+            isLocalMinimum: boolean;
             /**
              * Estimated Basin Size
              * @description Estimated size of current energy basin
              */
-            estimated_basin_size: number;
+            estimatedBasinSize: number;
             /**
              * Mean Barrier Height
              * @description Average energy barrier to escape current state
              */
-            mean_barrier_height: number;
+            meanBarrierHeight: number;
             /**
              * Mean Gradient
              * @description Average energy gradient magnitude
              */
-            mean_gradient: number;
+            meanGradient: number;
             /**
              * Landscape Ruggedness
              * @description Ruggedness of the energy landscape (std of energies)
              */
-            landscape_ruggedness: number;
+            landscapeRuggedness: number;
             /**
              * Num Local Minima
              * @description Number of local minima detected in sample
              */
-            num_local_minima: number;
+            numLocalMinima: number;
             /**
              * Interpretation
              * @description Human-readable interpretation
@@ -27328,7 +27786,7 @@ export interface components {
              * Computed At
              * @description Timestamp of analysis (ISO format)
              */
-            computed_at: string;
+            computedAt: string;
             /**
              * Source
              * @description Data source
@@ -27345,22 +27803,22 @@ export interface components {
              * Num Samples
              * @description Number of sampled points
              */
-            num_samples: number;
+            numSamples: number;
             /**
              * Num Local Minima
              * @description Number of local minima found
              */
-            num_local_minima: number;
+            numLocalMinima: number;
             /**
              * Global Minimum Energy
              * @description Energy of the global minimum
              */
-            global_minimum_energy: number;
+            globalMinimumEnergy: number;
             /**
              * Energy Range
              * @description Min/max energy range
              */
-            energy_range: {
+            energyRange: {
                 [key: string]: number | undefined;
             };
             /**
@@ -27385,42 +27843,42 @@ export interface components {
              * Total Energy
              * @description Total Hopfield energy
              */
-            total_energy: number;
+            totalEnergy: number;
             /**
              * Normalized Energy
              * @description Normalized energy [-1, 1]
              */
-            normalized_energy: number;
+            normalizedEnergy: number;
             /**
              * Energy Density
              * @description Energy per assignment
              */
-            energy_density: number;
+            energyDensity: number;
             /**
              * Interaction Energy
              * @description Pairwise interaction energy
              */
-            interaction_energy: number;
+            interactionEnergy: number;
             /**
              * Stability Score
              * @description Stability score [0, 1]
              */
-            stability_score: number;
+            stabilityScore: number;
             /**
              * Gradient Magnitude
              * @description Energy gradient magnitude
              */
-            gradient_magnitude: number;
+            gradientMagnitude: number;
             /**
              * Is Local Minimum
              * @description Whether state is at local minimum
              */
-            is_local_minimum: boolean;
+            isLocalMinimum: boolean;
             /**
              * Distance To Minimum
              * @description Hamming distance to nearest minimum
              */
-            distance_to_minimum: number;
+            distanceToMinimum: number;
         };
         /**
          * EntropyAnalysisRequest
@@ -27431,17 +27889,17 @@ export interface components {
              * Schedule Id
              * @description Schedule ID to analyze (uses active if not provided)
              */
-            schedule_id?: string | null;
+            scheduleId?: string | null;
             /**
              * Start Date
              * @description Start date (YYYY-MM-DD)
              */
-            start_date?: string | null;
+            startDate?: string | null;
             /**
              * End Date
              * @description End date (YYYY-MM-DD)
              */
-            end_date?: string | null;
+            endDate?: string | null;
         };
         /**
          * EntropyMetricsResponse
@@ -27452,38 +27910,38 @@ export interface components {
              * Person Entropy
              * @description Entropy of assignment distribution across faculty
              */
-            person_entropy: number;
+            personEntropy: number;
             /**
              * Rotation Entropy
              * @description Entropy of rotation assignment distribution
              */
-            rotation_entropy: number;
+            rotationEntropy: number;
             /**
              * Time Entropy
              * @description Entropy of temporal distribution
              */
-            time_entropy: number;
+            timeEntropy: number;
             /**
              * Joint Entropy
              * @description Joint entropy across all dimensions
              */
-            joint_entropy: number;
+            jointEntropy: number;
             /**
              * Mutual Information
              * @description Information shared between dimensions
              */
-            mutual_information: number;
+            mutualInformation: number;
             /**
              * Normalized Entropy
              * @description Entropy relative to maximum possible (0-1)
              */
-            normalized_entropy: number;
+            normalizedEntropy: number;
             /**
              * Entropy Production Rate
              * @description Rate of entropy generation over time
              * @default 0
              */
-            entropy_production_rate: number;
+            entropyProductionRate: number;
             /**
              * Interpretation
              * @description Human-readable interpretation
@@ -27498,7 +27956,7 @@ export interface components {
              * Computed At
              * @description Timestamp of analysis (ISO format)
              */
-            computed_at: string;
+            computedAt: string;
             /**
              * Source
              * @description Data source
@@ -27515,30 +27973,30 @@ export interface components {
              * Generated At
              * Format: date-time
              */
-            generated_at: string;
-            current_equilibrium_state: components["schemas"]["EquilibriumState"];
+            generatedAt: string;
+            currentEquilibriumState: components["schemas"]["EquilibriumState"];
             /** Current Capacity */
-            current_capacity: number;
+            currentCapacity: number;
             /** Current Demand */
-            current_demand: number;
+            currentDemand: number;
             /** Current Coverage Rate */
-            current_coverage_rate: number;
+            currentCoverageRate: number;
             /** Active Stresses */
-            active_stresses: components["schemas"]["StressResponse"][];
+            activeStresses: components["schemas"]["StressResponse"][];
             /** Total Stress Magnitude */
-            total_stress_magnitude: number;
+            totalStressMagnitude: number;
             /** Active Compensations */
-            active_compensations: components["schemas"]["CompensationResponse"][];
+            activeCompensations: components["schemas"]["CompensationResponse"][];
             /** Total Compensation Magnitude */
-            total_compensation_magnitude: number;
+            totalCompensationMagnitude: number;
             /** Compensation Debt */
-            compensation_debt: number;
+            compensationDebt: number;
             /** Sustainability Score */
-            sustainability_score: number;
+            sustainabilityScore: number;
             /** Days Until Equilibrium */
-            days_until_equilibrium: number;
+            daysUntilEquilibrium: number;
             /** Days Until Exhaustion */
-            days_until_exhaustion: number;
+            daysUntilExhaustion: number;
             /** Recommendations */
             recommendations: string[];
         };
@@ -27556,40 +28014,40 @@ export interface components {
              * Calculated At
              * Format: date-time
              */
-            calculated_at: string;
+            calculatedAt: string;
             /** Original Capacity */
-            original_capacity: number;
+            originalCapacity: number;
             /** Original Demand */
-            original_demand: number;
+            originalDemand: number;
             /** Original Coverage Rate */
-            original_coverage_rate: number;
+            originalCoverageRate: number;
             /** Total Capacity Impact */
-            total_capacity_impact: number;
+            totalCapacityImpact: number;
             /** Total Demand Impact */
-            total_demand_impact: number;
+            totalDemandImpact: number;
             /** Total Compensation */
-            total_compensation: number;
+            totalCompensation: number;
             /** Compensation Efficiency */
-            compensation_efficiency: number;
+            compensationEfficiency: number;
             /** New Capacity */
-            new_capacity: number;
+            newCapacity: number;
             /** New Demand */
-            new_demand: number;
+            newDemand: number;
             /** New Coverage Rate */
-            new_coverage_rate: number;
+            newCoverageRate: number;
             /** Sustainable Capacity */
-            sustainable_capacity: number;
+            sustainableCapacity: number;
             /** Compensation Debt */
-            compensation_debt: number;
+            compensationDebt: number;
             /** Daily Debt Rate */
-            daily_debt_rate: number;
+            dailyDebtRate: number;
             /** Burnout Risk */
-            burnout_risk: number;
+            burnoutRisk: number;
             /** Days Until Exhaustion */
-            days_until_exhaustion: number;
-            equilibrium_state: components["schemas"]["EquilibriumState"];
+            daysUntilExhaustion: number;
+            equilibriumState: components["schemas"]["EquilibriumState"];
             /** Is Sustainable */
-            is_sustainable: boolean;
+            isSustainable: boolean;
         };
         /**
          * EquilibriumState
@@ -27606,14 +28064,14 @@ export interface components {
              * Provider Hours
              * @description Mapping of provider ID to total hours worked
              */
-            provider_hours: {
+            providerHours: {
                 [key: string]: number | undefined;
             };
             /**
              * Intensity Weights
              * @description Optional intensity weights per provider (e.g., night shift = 1.5x)
              */
-            intensity_weights?: {
+            intensityWeights?: {
                 [key: string]: number | undefined;
             } | null;
         };
@@ -27626,42 +28084,42 @@ export interface components {
              * Gini Coefficient
              * @description Gini coefficient (0 = perfect equality, 1 = perfect inequality)
              */
-            gini_coefficient: number;
+            giniCoefficient: number;
             /**
              * Is Equitable
              * @description Whether workload distribution is equitable (Gini < 0.15)
              */
-            is_equitable: boolean;
+            isEquitable: boolean;
             /**
              * Mean Workload
              * @description Mean workload across all providers
              */
-            mean_workload: number;
+            meanWorkload: number;
             /**
              * Std Workload
              * @description Standard deviation of workload
              */
-            std_workload: number;
+            stdWorkload: number;
             /**
              * Most Overloaded Provider
              * @description Provider ID with highest workload
              */
-            most_overloaded_provider?: string | null;
+            mostOverloadedProvider?: string | null;
             /**
              * Most Underloaded Provider
              * @description Provider ID with lowest workload
              */
-            most_underloaded_provider?: string | null;
+            mostUnderloadedProvider?: string | null;
             /**
              * Max Workload
              * @description Maximum workload value
              */
-            max_workload: number;
+            maxWorkload: number;
             /**
              * Min Workload
              * @description Minimum workload value
              */
-            min_workload: number;
+            minWorkload: number;
             /**
              * Recommendations
              * @description Recommended rebalancing actions
@@ -27683,18 +28141,18 @@ export interface components {
              * Format: date
              * @description Start date for analysis
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description End date for analysis
              */
-            end_date: string;
+            endDate: string;
             /**
              * Simulated Changes
              * @description Simulated changes to preview
              */
-            simulated_changes?: components["schemas"]["SimulatedChange"][];
+            simulatedChanges?: components["schemas"]["SimulatedChange"][];
         };
         /**
          * EquityPreviewResponse
@@ -27705,26 +28163,26 @@ export interface components {
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /** @description Current equity distribution */
-            current_equity: components["schemas"]["CallEquityReport"];
+            currentEquity: components["schemas"]["CallEquityReport"];
             /** @description Projected equity after simulated changes */
-            projected_equity: components["schemas"]["CallEquityReport"];
+            projectedEquity: components["schemas"]["CallEquityReport"];
             /**
              * Faculty Details
              * @description Per-faculty current vs projected
              */
-            faculty_details?: components["schemas"]["FacultyEquityDetail"][];
+            facultyDetails?: components["schemas"]["FacultyEquityDetail"][];
             /**
              * Improvement Score
              * @description Score indicating equity improvement (-1 to 1, positive is better)
              */
-            improvement_score: number;
+            improvementScore: number;
         };
         /**
          * EventHistoryItem
@@ -27742,13 +28200,13 @@ export interface components {
              */
             timestamp: string;
             /** Event Type */
-            event_type: string;
+            eventType: string;
             /** Severity */
             severity: string | null;
             /** Reason */
             reason: string | null;
             /** Triggered By */
-            triggered_by: string | null;
+            triggeredBy: string | null;
         };
         /**
          * EventHistoryResponse
@@ -27762,7 +28220,7 @@ export interface components {
             /** Page */
             page: number;
             /** Page Size */
-            page_size: number;
+            pageSize: number;
         };
         /**
          * EvolutionCreate
@@ -27774,24 +28232,24 @@ export interface components {
             /** Description */
             description?: string | null;
             /** Initial Composition */
-            initial_composition: {
+            initialComposition: {
                 [key: string]: number | undefined;
             };
             /**
              * Turns Per Interaction
              * @default 100
              */
-            turns_per_interaction: number;
+            turnsPerInteraction: number;
             /**
              * Max Generations
              * @default 1000
              */
-            max_generations: number;
+            maxGenerations: number;
             /**
              * Mutation Rate
              * @default 0.01
              */
-            mutation_rate: number;
+            mutationRate: number;
         };
         /**
          * EvolutionListResponse
@@ -27821,34 +28279,34 @@ export interface components {
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /** Created By */
-            created_by: string | null;
+            createdBy: string | null;
             /** Initial Population Size */
-            initial_population_size: number;
+            initialPopulationSize: number;
             /** Turns Per Interaction */
-            turns_per_interaction: number;
+            turnsPerInteraction: number;
             /** Max Generations */
-            max_generations: number;
+            maxGenerations: number;
             /** Mutation Rate */
-            mutation_rate: number;
+            mutationRate: number;
             status: components["schemas"]["SimulationStatus"];
             /** Started At */
-            started_at: string | null;
+            startedAt: string | null;
             /** Completed At */
-            completed_at: string | null;
+            completedAt: string | null;
             /** Error Message */
-            error_message: string | null;
+            errorMessage: string | null;
             /** Celery Task Id */
-            celery_task_id: string | null;
+            celeryTaskId: string | null;
             /** Generations Completed */
-            generations_completed: number;
+            generationsCompleted: number;
             /** Winner Strategy Id */
-            winner_strategy_id: string | null;
+            winnerStrategyId: string | null;
             /** Winner Strategy Name */
-            winner_strategy_name: string | null;
+            winnerStrategyName: string | null;
             /** Is Evolutionarily Stable */
-            is_evolutionarily_stable: boolean | null;
+            isEvolutionarilyStable: boolean | null;
         };
         /**
          * EvolutionResultsResponse
@@ -27864,17 +28322,17 @@ export interface components {
             name: string;
             status: components["schemas"]["SimulationStatus"];
             /** Completed At */
-            completed_at: string | null;
+            completedAt: string | null;
             /** Generations Completed */
-            generations_completed: number;
+            generationsCompleted: number;
             /** Winner Strategy Name */
-            winner_strategy_name: string | null;
+            winnerStrategyName: string | null;
             /** Is Evolutionarily Stable */
-            is_evolutionarily_stable: boolean | null;
+            isEvolutionarilyStable: boolean | null;
             /** Population History */
-            population_history: components["schemas"]["PopulationSnapshot"][];
+            populationHistory: components["schemas"]["PopulationSnapshot"][];
             /** Final Population */
-            final_population: {
+            finalPopulation: {
                 [key: string]: number | undefined;
             };
         };
@@ -27890,31 +28348,31 @@ export interface components {
              * @description Keep users in same variant across sessions
              * @default true
              */
-            sticky_bucketing: boolean;
+            stickyBucketing: boolean;
             /**
              * Override Enabled
              * @description Allow manual variant assignment overrides
              * @default true
              */
-            override_enabled: boolean;
+            overrideEnabled: boolean;
             /**
              * Track Anonymous
              * @description Track metrics for anonymous users
              * @default false
              */
-            track_anonymous: boolean;
+            trackAnonymous: boolean;
             /**
              * Min Sample Size
              * @description Minimum users per variant for valid results
              * @default 100
              */
-            min_sample_size: number;
+            minSampleSize: number;
             /**
              * Confidence Level
              * @description Statistical confidence level (e.g., 0.95 = 95%)
              * @default 0.95
              */
-            confidence_level: number;
+            confidenceLevel: number;
         };
         /**
          * ExperimentCreateRequest
@@ -27956,12 +28414,12 @@ export interface components {
              * Start Date
              * @description Scheduled start date
              */
-            start_date?: string | null;
+            startDate?: string | null;
             /**
              * End Date
              * @description Scheduled end date
              */
-            end_date?: string | null;
+            endDate?: string | null;
         };
         /**
          * ExperimentLifecycleListResponse
@@ -27979,13 +28437,13 @@ export interface components {
          */
         ExperimentLifecycleResponse: {
             /** Experiment Key */
-            experiment_key: string;
+            experimentKey: string;
             /** Event Type */
-            event_type: string;
-            previous_status: components["schemas"]["ExperimentStatus"] | null;
-            new_status: components["schemas"]["ExperimentStatus"];
+            eventType: string;
+            previousStatus: components["schemas"]["ExperimentStatus"] | null;
+            newStatus: components["schemas"]["ExperimentStatus"];
             /** Triggered By */
-            triggered_by: string;
+            triggeredBy: string;
             /**
              * Timestamp
              * Format: date-time
@@ -28010,9 +28468,9 @@ export interface components {
             /** Page */
             page: number;
             /** Page Size */
-            page_size: number;
+            pageSize: number;
             /** Total Pages */
-            total_pages: number;
+            totalPages: number;
         };
         /**
          * ExperimentResponse
@@ -28033,21 +28491,21 @@ export interface components {
             config: components["schemas"]["ExperimentConfig"];
             status: components["schemas"]["ExperimentStatus"];
             /** Start Date */
-            start_date: string | null;
+            startDate: string | null;
             /** End Date */
-            end_date: string | null;
+            endDate: string | null;
             /** Created By */
-            created_by: string;
+            createdBy: string;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
         };
         /**
          * ExperimentResultsResponse
@@ -28055,30 +28513,30 @@ export interface components {
          */
         ExperimentResultsResponse: {
             /** Experiment Key */
-            experiment_key: string;
+            experimentKey: string;
             status: components["schemas"]["ExperimentStatus"];
             /** Start Date */
-            start_date: string | null;
+            startDate: string | null;
             /** End Date */
-            end_date: string | null;
+            endDate: string | null;
             /** Duration Days */
-            duration_days: number;
+            durationDays: number;
             /** Total Users */
-            total_users: number;
+            totalUsers: number;
             /** Variant Metrics */
-            variant_metrics: components["schemas"]["VariantMetricsResponse"][];
+            variantMetrics: components["schemas"]["VariantMetricsResponse"][];
             /** Is Significant */
-            is_significant: boolean;
+            isSignificant: boolean;
             /** Confidence Level */
-            confidence_level: number;
+            confidenceLevel: number;
             /** P Value */
-            p_value: number | null;
+            pValue: number | null;
             /** Winning Variant */
-            winning_variant: string | null;
+            winningVariant: string | null;
             /** Recommendation */
             recommendation: string;
             /** Statistical Power */
-            statistical_power: number | null;
+            statisticalPower: number | null;
         };
         /**
          * ExperimentRunConfiguration
@@ -28191,21 +28649,21 @@ export interface components {
          */
         ExperimentStatsResponse: {
             /** Total Experiments */
-            total_experiments: number;
+            totalExperiments: number;
             /** Running Experiments */
-            running_experiments: number;
+            runningExperiments: number;
             /** Completed Experiments */
-            completed_experiments: number;
+            completedExperiments: number;
             /** Draft Experiments */
-            draft_experiments: number;
+            draftExperiments: number;
             /** Paused Experiments */
-            paused_experiments: number;
+            pausedExperiments: number;
             /** Cancelled Experiments */
-            cancelled_experiments: number;
+            cancelledExperiments: number;
             /** Total Users Assigned */
-            total_users_assigned: number;
+            totalUsersAssigned: number;
             /** Total Metrics Tracked */
-            total_metrics_tracked: number;
+            totalMetricsTracked: number;
         };
         /**
          * ExperimentStatus
@@ -28229,7 +28687,7 @@ export interface components {
              * User Ids
              * @description Target specific user IDs
              */
-            user_ids?: string[];
+            userIds?: string[];
             /**
              * Percentage
              * @description Percentage of eligible users to include
@@ -28263,7 +28721,7 @@ export interface components {
              * User Ids
              * @description Target specific user IDs
              */
-            user_ids?: string[];
+            userIds?: string[];
             /**
              * Percentage
              * @description Percentage of eligible users to include
@@ -28309,7 +28767,7 @@ export interface components {
              * End Date
              * @description Scheduled end date
              */
-            end_date?: string | null;
+            endDate?: string | null;
         };
         /**
          * ExpiringCertificationResponse
@@ -28322,14 +28780,14 @@ export interface components {
              */
             id: string;
             person: components["schemas"]["app__schemas__certification__PersonSummary"];
-            certification_type: components["schemas"]["CertificationTypeSummary"];
+            certificationType: components["schemas"]["CertificationTypeSummary"];
             /**
              * Expiration Date
              * Format: date
              */
-            expiration_date: string;
+            expirationDate: string;
             /** Days Until Expiration */
-            days_until_expiration: number;
+            daysUntilExpiration: number;
             /** Status */
             status: string;
         };
@@ -28343,7 +28801,7 @@ export interface components {
             /** Total */
             total: number;
             /** Days Threshold */
-            days_threshold: number;
+            daysThreshold: number;
         };
         /**
          * ExportDeliveryMethod
@@ -28389,49 +28847,49 @@ export interface components {
              * @description Delivery method
              * @default email
              */
-            delivery_method: components["schemas"]["ExportDeliveryMethod"];
+            deliveryMethod: components["schemas"]["ExportDeliveryMethod"];
             /**
              * Email Recipients
              * @description Email recipients
              */
-            email_recipients?: string[] | null;
+            emailRecipients?: string[] | null;
             /**
              * Email Subject Template
              * @description Email subject template
              */
-            email_subject_template?: string | null;
+            emailSubjectTemplate?: string | null;
             /**
              * Email Body Template
              * @description Email body template
              */
-            email_body_template?: string | null;
+            emailBodyTemplate?: string | null;
             /**
              * S3 Bucket
              * @description S3 bucket name
              */
-            s3_bucket?: string | null;
+            s3Bucket?: string | null;
             /**
              * S3 Key Prefix
              * @description S3 key prefix
              */
-            s3_key_prefix?: string | null;
+            s3KeyPrefix?: string | null;
             /**
              * S3 Region
              * @description S3 region
              * @default us-east-1
              */
-            s3_region: string | null;
+            s3Region: string | null;
             /**
              * Schedule Cron
              * @description Cron expression (e.g., '0 8 * * 1')
              */
-            schedule_cron?: string | null;
+            scheduleCron?: string | null;
             /**
              * Schedule Enabled
              * @description Enable scheduled execution
              * @default false
              */
-            schedule_enabled: boolean;
+            scheduleEnabled: boolean;
             /**
              * Filters
              * @description Export filters
@@ -28449,7 +28907,7 @@ export interface components {
              * @description Include column headers
              * @default true
              */
-            include_headers: boolean;
+            includeHeaders: boolean;
             /**
              * Enabled
              * @description Job enabled
@@ -28469,9 +28927,9 @@ export interface components {
             /** Page */
             page: number;
             /** Page Size */
-            page_size: number;
+            pageSize: number;
             /** Total Pages */
-            total_pages: number;
+            totalPages: number;
         };
         /**
          * ExportJobExecutionResponse
@@ -28481,39 +28939,39 @@ export interface components {
             /** Id */
             id: string;
             /** Job Id */
-            job_id: string;
+            jobId: string;
             /** Job Name */
-            job_name: string;
+            jobName: string;
             /**
              * Started At
              * Format: date-time
              */
-            started_at: string;
+            startedAt: string;
             /** Finished At */
-            finished_at?: string | null;
+            finishedAt?: string | null;
             /** Runtime Seconds */
-            runtime_seconds?: number | null;
+            runtimeSeconds?: number | null;
             /** Scheduled Run Time */
-            scheduled_run_time?: string | null;
+            scheduledRunTime?: string | null;
             status: components["schemas"]["ExportJobStatus"];
             /** Row Count */
-            row_count?: number | null;
+            rowCount?: number | null;
             /** File Size Bytes */
-            file_size_bytes?: number | null;
+            fileSizeBytes?: number | null;
             /** File Path */
-            file_path?: string | null;
+            filePath?: string | null;
             /** S3 Url */
-            s3_url?: string | null;
+            s3Url?: string | null;
             /** Email Sent */
-            email_sent: boolean;
+            emailSent: boolean;
             /** Email Recipients */
-            email_recipients?: string[] | null;
+            emailRecipients?: string[] | null;
             /** Error Message */
-            error_message?: string | null;
+            errorMessage?: string | null;
             /** Triggered By */
-            triggered_by?: string | null;
+            triggeredBy?: string | null;
             /** Execution Metadata */
-            execution_metadata?: {
+            executionMetadata?: {
                 [key: string]: unknown;
             } | null;
         };
@@ -28529,9 +28987,9 @@ export interface components {
             /** Page */
             page: number;
             /** Page Size */
-            page_size: number;
+            pageSize: number;
             /** Total Pages */
-            total_pages: number;
+            totalPages: number;
         };
         /**
          * ExportJobResponse
@@ -28559,25 +29017,25 @@ export interface components {
              * @description Delivery method
              * @default email
              */
-            delivery_method: components["schemas"]["ExportDeliveryMethod"];
+            deliveryMethod: components["schemas"]["ExportDeliveryMethod"];
             /** Id */
             id: string;
             /** Email Recipients */
-            email_recipients?: string[] | null;
+            emailRecipients?: string[] | null;
             /** Email Subject Template */
-            email_subject_template?: string | null;
+            emailSubjectTemplate?: string | null;
             /** Email Body Template */
-            email_body_template?: string | null;
+            emailBodyTemplate?: string | null;
             /** S3 Bucket */
-            s3_bucket?: string | null;
+            s3Bucket?: string | null;
             /** S3 Key Prefix */
-            s3_key_prefix?: string | null;
+            s3KeyPrefix?: string | null;
             /** S3 Region */
-            s3_region?: string | null;
+            s3Region?: string | null;
             /** Schedule Cron */
-            schedule_cron?: string | null;
+            scheduleCron?: string | null;
             /** Schedule Enabled */
-            schedule_enabled: boolean;
+            scheduleEnabled: boolean;
             /** Filters */
             filters?: {
                 [key: string]: unknown;
@@ -28585,27 +29043,27 @@ export interface components {
             /** Columns */
             columns?: string[] | null;
             /** Include Headers */
-            include_headers: boolean;
+            includeHeaders: boolean;
             /** Last Run At */
-            last_run_at?: string | null;
+            lastRunAt?: string | null;
             /** Next Run At */
-            next_run_at?: string | null;
+            nextRunAt?: string | null;
             /** Run Count */
-            run_count: number;
+            runCount: number;
             /** Enabled */
             enabled: boolean;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
             /** Created By */
-            created_by?: string | null;
+            createdBy?: string | null;
         };
         /**
          * ExportJobRunRequest
@@ -28613,19 +29071,19 @@ export interface components {
          */
         ExportJobRunRequest: {
             /** Job Id */
-            job_id: string;
+            jobId: string;
             /**
              * Override Filters
              * @description Temporary filter overrides for this execution
              */
-            override_filters?: {
+            overrideFilters?: {
                 [key: string]: unknown;
             } | null;
             /**
              * Override Recipients
              * @description Temporary recipient overrides for this execution
              */
-            override_recipients?: string[] | null;
+            overrideRecipients?: string[] | null;
         };
         /**
          * ExportJobRunResponse
@@ -28633,11 +29091,11 @@ export interface components {
          */
         ExportJobRunResponse: {
             /** Execution Id */
-            execution_id: string;
+            executionId: string;
             /** Job Id */
-            job_id: string;
+            jobId: string;
             /** Job Name */
-            job_name: string;
+            jobName: string;
             /** Status */
             status: string;
             /** Message */
@@ -28684,23 +29142,23 @@ export interface components {
             description?: string | null;
             template?: components["schemas"]["ExportTemplate"] | null;
             format?: components["schemas"]["app__models__export_job__ExportFormat"] | null;
-            delivery_method?: components["schemas"]["ExportDeliveryMethod"] | null;
+            deliveryMethod?: components["schemas"]["ExportDeliveryMethod"] | null;
             /** Email Recipients */
-            email_recipients?: string[] | null;
+            emailRecipients?: string[] | null;
             /** Email Subject Template */
-            email_subject_template?: string | null;
+            emailSubjectTemplate?: string | null;
             /** Email Body Template */
-            email_body_template?: string | null;
+            emailBodyTemplate?: string | null;
             /** S3 Bucket */
-            s3_bucket?: string | null;
+            s3Bucket?: string | null;
             /** S3 Key Prefix */
-            s3_key_prefix?: string | null;
+            s3KeyPrefix?: string | null;
             /** S3 Region */
-            s3_region?: string | null;
+            s3Region?: string | null;
             /** Schedule Cron */
-            schedule_cron?: string | null;
+            scheduleCron?: string | null;
             /** Schedule Enabled */
-            schedule_enabled?: boolean | null;
+            scheduleEnabled?: boolean | null;
             /** Filters */
             filters?: {
                 [key: string]: unknown;
@@ -28708,7 +29166,7 @@ export interface components {
             /** Columns */
             columns?: string[] | null;
             /** Include Headers */
-            include_headers?: boolean | null;
+            includeHeaders?: boolean | null;
             /** Enabled */
             enabled?: boolean | null;
         };
@@ -28717,13 +29175,13 @@ export interface components {
          * @description Request schema for exporting heatmap as image.
          * @example {
          *       "format": "png",
-         *       "heatmap_type": "unified",
+         *       "heatmapType": "unified",
          *       "height": 800,
-         *       "request_params": {
-         *         "end_date": "2024-03-31",
-         *         "group_by": "person",
-         *         "include_fmit": true,
-         *         "start_date": "2024-01-01"
+         *       "requestParams": {
+         *         "endDate": "2024-03-31",
+         *         "groupBy": "person",
+         *         "includeFmit": true,
+         *         "startDate": "2024-01-01"
          *       },
          *       "width": 1200
          *     }
@@ -28733,7 +29191,7 @@ export interface components {
              * Heatmap Type
              * @description Type: 'unified', 'coverage', or 'workload'
              */
-            heatmap_type: string;
+            heatmapType: string;
             /**
              * Format
              * @description Export format: 'png', 'pdf', 'svg'
@@ -28756,7 +29214,7 @@ export interface components {
              * Request Params
              * @description Parameters for heatmap generation
              */
-            request_params: {
+            requestParams: {
                 [key: string]: unknown;
             };
         };
@@ -28777,13 +29235,13 @@ export interface components {
             /** Description */
             description: string;
             /** Supported Formats */
-            supported_formats: components["schemas"]["ExportFormat-Output"][];
+            supportedFormats: components["schemas"]["ExportFormat-Output"][];
             /** Default Filters */
-            default_filters?: {
+            defaultFilters?: {
                 [key: string]: unknown;
             } | null;
             /** Available Columns */
-            available_columns: string[];
+            availableColumns: string[];
         };
         /**
          * ExportTemplateListResponse
@@ -28803,19 +29261,19 @@ export interface components {
              * Format: uuid
              * @description UUID of the faculty member to assign
              */
-            faculty_id: string;
+            facultyId: string;
             /**
              * Week Date
              * Format: date
              * @description Any date within the target week (normalized to Friday)
              */
-            week_date: string;
+            weekDate: string;
             /**
              * Created By
              * @description User creating the assignment
              * @default system
              */
-            created_by: string;
+            createdBy: string;
             /**
              * Notes
              * @description Optional notes
@@ -28841,13 +29299,13 @@ export interface components {
              * Deleted Assignment Ids
              * @description IDs of deleted block assignments
              */
-            deleted_assignment_ids?: string[];
+            deletedAssignmentIds?: string[];
             /**
              * Deleted Count
              * @description Number of block assignments deleted
              * @default 0
              */
-            deleted_count: number;
+            deletedCount: number;
         };
         /**
          * FMITAssignmentResponse
@@ -28859,46 +29317,46 @@ export interface components {
              * Format: uuid
              * @description Faculty member UUID
              */
-            faculty_id: string;
+            facultyId: string;
             /**
              * Faculty Name
              * @description Faculty member name
              */
-            faculty_name: string;
+            facultyName: string;
             /**
              * Week Start
              * Format: date
              * @description Week start date (Friday)
              */
-            week_start: string;
+            weekStart: string;
             /**
              * Week End
              * Format: date
              * @description Week end date (Thursday)
              */
-            week_end: string;
+            weekEnd: string;
             /**
              * Assignment Ids
              * @description Individual block assignment IDs
              */
-            assignment_ids?: string[];
+            assignmentIds?: string[];
             /**
              * Rotation Template Id
              * @description FMIT rotation template ID
              */
-            rotation_template_id?: string | null;
+            rotationTemplateId?: string | null;
             /**
              * Is Complete
              * @description Whether all 14 blocks are assigned for the week
              * @default false
              */
-            is_complete: boolean;
+            isComplete: boolean;
             /**
              * Block Count
              * @description Number of blocks assigned
              * @default 0
              */
-            block_count: number;
+            blockCount: number;
             /**
              * @description Assignment status
              * @default confirmed
@@ -28913,12 +29371,12 @@ export interface components {
              * Created At
              * @description When assignment was created
              */
-            created_at?: string | null;
+            createdAt?: string | null;
             /**
              * Created By
              * @description Who created the assignment
              */
-            created_by?: string | null;
+            createdBy?: string | null;
         };
         /**
          * FMITAssignmentUpdate
@@ -28929,7 +29387,7 @@ export interface components {
              * Faculty Id
              * @description New faculty member (for reassignment)
              */
-            faculty_id?: string | null;
+            facultyId?: string | null;
             /**
              * Notes
              * @description Updated notes
@@ -28948,13 +29406,13 @@ export interface components {
              * Format: uuid
              * @description Faculty member UUID
              */
-            faculty_id: string;
+            facultyId: string;
             /**
              * Week Date
              * Format: date
              * @description Target week date
              */
-            week_date: string;
+            weekDate: string;
             /**
              * Notes
              * @description Optional notes
@@ -28976,19 +29434,19 @@ export interface components {
              * @description User creating assignments
              * @default system
              */
-            created_by: string;
+            createdBy: string;
             /**
              * Skip Conflicts
              * @description Skip assignments that conflict instead of failing
              * @default false
              */
-            skip_conflicts: boolean;
+            skipConflicts: boolean;
             /**
              * Dry Run
              * @description Validate only, don't create assignments
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * FMITBulkAssignmentResponse
@@ -28999,25 +29457,25 @@ export interface components {
              * Total Requested
              * @description Total assignments requested
              */
-            total_requested: number;
+            totalRequested: number;
             /**
              * Successful Count
              * @description Successfully created
              * @default 0
              */
-            successful_count: number;
+            successfulCount: number;
             /**
              * Failed Count
              * @description Failed to create
              * @default 0
              */
-            failed_count: number;
+            failedCount: number;
             /**
              * Skipped Count
              * @description Skipped due to conflicts
              * @default 0
              */
-            skipped_count: number;
+            skippedCount: number;
             /**
              * Results
              * @description Per-item results
@@ -29028,7 +29486,7 @@ export interface components {
              * @description Was this a dry run?
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
             /**
              * Warnings
              * @description Warnings
@@ -29044,20 +29502,20 @@ export interface components {
              * Faculty Id
              * Format: uuid
              */
-            faculty_id: string;
+            facultyId: string;
             /**
              * Week Date
              * Format: date
              */
-            week_date: string;
+            weekDate: string;
             /** Success */
             success: boolean;
             /** Message */
             message: string;
             /** Assignment Ids */
-            assignment_ids?: string[];
+            assignmentIds?: string[];
             /** Error Code */
-            error_code?: string | null;
+            errorCode?: string | null;
         };
         /**
          * FMITDetailedStatus
@@ -29070,37 +29528,37 @@ export interface components {
              */
             timestamp: string;
             /** Pending Swaps */
-            pending_swaps: number;
+            pendingSwaps: number;
             /** Approved Swaps */
-            approved_swaps: number;
+            approvedSwaps: number;
             /** Executed Swaps */
-            executed_swaps: number;
+            executedSwaps: number;
             /** Rejected Swaps */
-            rejected_swaps: number;
+            rejectedSwaps: number;
             /** Cancelled Swaps */
-            cancelled_swaps: number;
+            cancelledSwaps: number;
             /** Rolled Back Swaps */
-            rolled_back_swaps: number;
+            rolledBackSwaps: number;
             /** Active Alerts */
-            active_alerts: number;
+            activeAlerts: number;
             /** New Alerts */
-            new_alerts: number;
+            newAlerts: number;
             /** Acknowledged Alerts */
-            acknowledged_alerts: number;
+            acknowledgedAlerts: number;
             /** Resolved Alerts */
-            resolved_alerts: number;
+            resolvedAlerts: number;
             /** Critical Alerts */
-            critical_alerts: number;
+            criticalAlerts: number;
             /** Warning Alerts */
-            warning_alerts: number;
+            warningAlerts: number;
             /** Info Alerts */
-            info_alerts: number;
+            infoAlerts: number;
             /** Recent Swap Activity */
-            recent_swap_activity: {
+            recentSwapActivity: {
                 [key: string]: unknown;
             }[];
             /** Recent Alerts */
-            recent_alerts: {
+            recentAlerts: {
                 [key: string]: unknown;
             }[];
         };
@@ -29117,13 +29575,13 @@ export interface components {
             /** Status */
             status: string;
             /** Total Swaps This Month */
-            total_swaps_this_month: number;
+            totalSwapsThisMonth: number;
             /** Pending Swap Requests */
-            pending_swap_requests: number;
+            pendingSwapRequests: number;
             /** Active Conflict Alerts */
-            active_conflict_alerts: number;
+            activeConflictAlerts: number;
             /** Coverage Percentage */
-            coverage_percentage: number;
+            coveragePercentage: number;
             /**
              * Issues
              * @default []
@@ -29146,25 +29604,25 @@ export interface components {
              */
             timestamp: string;
             /** Total Swaps This Month */
-            total_swaps_this_month: number;
+            totalSwapsThisMonth: number;
             /** Pending Swap Requests */
-            pending_swap_requests: number;
+            pendingSwapRequests: number;
             /** Active Conflict Alerts */
-            active_conflict_alerts: number;
+            activeConflictAlerts: number;
             /** Coverage Percentage */
-            coverage_percentage: number;
+            coveragePercentage: number;
             /** Swap Approval Rate */
-            swap_approval_rate: number;
+            swapApprovalRate: number;
             /** Average Swap Processing Time Hours */
-            average_swap_processing_time_hours: number | null;
+            averageSwapProcessingTimeHours: number | null;
             /** Alert Resolution Rate */
-            alert_resolution_rate: number;
+            alertResolutionRate: number;
             /** Critical Alerts Count */
-            critical_alerts_count: number;
+            criticalAlertsCount: number;
             /** One To One Swaps Count */
-            one_to_one_swaps_count: number;
+            oneToOneSwapsCount: number;
             /** Absorb Swaps Count */
-            absorb_swaps_count: number;
+            absorbSwapsCount: number;
         };
         /**
          * FMITSection
@@ -29174,12 +29632,12 @@ export interface components {
          */
         FMITSection: {
             /** @description Attending physician for inpatient */
-            attending?: components["schemas"]["PersonSummary"] | null;
+            attending?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
             /**
              * Residents
              * @description Residents on FMIT
              */
-            residents?: components["schemas"]["PersonSummary"][];
+            residents?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"][];
         };
         /**
          * FMITWeekInfo
@@ -29190,34 +29648,34 @@ export interface components {
              * Week Start
              * Format: date
              */
-            week_start: string;
+            weekStart: string;
             /**
              * Week End
              * Format: date
              */
-            week_end: string;
+            weekEnd: string;
             /**
              * Is Past
              * @default false
              */
-            is_past: boolean;
+            isPast: boolean;
             /**
              * Has Conflict
              * @default false
              */
-            has_conflict: boolean;
+            hasConflict: boolean;
             /** Conflict Description */
-            conflict_description?: string | null;
+            conflictDescription?: string | null;
             /**
              * Can Request Swap
              * @default true
              */
-            can_request_swap: boolean;
+            canRequestSwap: boolean;
             /**
              * Pending Swap Request
              * @default false
              */
-            pending_swap_request: boolean;
+            pendingSwapRequest: boolean;
         };
         /**
          * FacultyCredentialSummary
@@ -29228,15 +29686,15 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /** Person Name */
-            person_name: string;
+            personName: string;
             /** Total Credentials */
-            total_credentials: number;
+            totalCredentials: number;
             /** Active Credentials */
-            active_credentials: number;
+            activeCredentials: number;
             /** Expiring Soon */
-            expiring_soon: number;
+            expiringSoon: number;
             /** Procedures */
             procedures: components["schemas"]["ProcedureSummary"][];
         };
@@ -29250,7 +29708,7 @@ export interface components {
              * Format: uuid
              * @description Faculty person ID
              */
-            person_id: string;
+            personId: string;
             /**
              * Name
              * @description Faculty name
@@ -29260,32 +29718,32 @@ export interface components {
              * Current Sunday Calls
              * @description Current Sunday call count
              */
-            current_sunday_calls: number;
+            currentSundayCalls: number;
             /**
              * Current Weekday Calls
              * @description Current weekday call count
              */
-            current_weekday_calls: number;
+            currentWeekdayCalls: number;
             /**
              * Current Total Calls
              * @description Current total call count
              */
-            current_total_calls: number;
+            currentTotalCalls: number;
             /**
              * Projected Sunday Calls
              * @description Projected Sunday calls after changes
              */
-            projected_sunday_calls: number;
+            projectedSundayCalls: number;
             /**
              * Projected Weekday Calls
              * @description Projected weekday calls after changes
              */
-            projected_weekday_calls: number;
+            projectedWeekdayCalls: number;
             /**
              * Projected Total Calls
              * @description Projected total calls after changes
              */
-            projected_total_calls: number;
+            projectedTotalCalls: number;
             /**
              * Delta
              * @description Change in total calls
@@ -29301,16 +29759,16 @@ export interface components {
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /** Faculty */
             faculty: components["schemas"]["FacultyMatrixRow"][];
             /** Total Faculty */
-            total_faculty: number;
+            totalFaculty: number;
         };
         /**
          * FacultyMatrixRow
@@ -29321,11 +29779,11 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /** Name */
             name: string;
             /** Faculty Role */
-            faculty_role: string | null;
+            facultyRole: string | null;
             /** Weeks */
             weeks: components["schemas"]["FacultyWeekSlots"][];
         };
@@ -29339,34 +29797,34 @@ export interface components {
              * Format: date
              * @description Monday of the week
              */
-            effective_date: string;
+            effectiveDate: string;
             /**
              * Day Of Week
              * @description 0=Sunday, 6=Saturday
              */
-            day_of_week: number;
+            dayOfWeek: number;
             /**
              * Time Of Day
              * @description AM or PM
              * @enum {string}
              */
-            time_of_day: "AM" | "PM";
+            timeOfDay: "AM" | "PM";
             /**
              * Activity Id
              * @description Activity UUID or null to clear
              */
-            activity_id?: string | null;
+            activityId?: string | null;
             /**
              * Is Locked
              * @description HARD constraint for this week
              * @default false
              */
-            is_locked: boolean;
+            isLocked: boolean;
             /**
              * Override Reason
              * @description Why this override exists
              */
-            override_reason?: string | null;
+            overrideReason?: string | null;
         };
         /**
          * FacultyOverrideResponse
@@ -29378,34 +29836,34 @@ export interface components {
              * Format: date
              * @description Monday of the week
              */
-            effective_date: string;
+            effectiveDate: string;
             /**
              * Day Of Week
              * @description 0=Sunday, 6=Saturday
              */
-            day_of_week: number;
+            dayOfWeek: number;
             /**
              * Time Of Day
              * @description AM or PM
              * @enum {string}
              */
-            time_of_day: "AM" | "PM";
+            timeOfDay: "AM" | "PM";
             /**
              * Activity Id
              * @description Activity UUID or null to clear
              */
-            activity_id?: string | null;
+            activityId?: string | null;
             /**
              * Is Locked
              * @description HARD constraint for this week
              * @default false
              */
-            is_locked: boolean;
+            isLocked: boolean;
             /**
              * Override Reason
              * @description Why this override exists
              */
-            override_reason?: string | null;
+            overrideReason?: string | null;
             /**
              * Id
              * Format: uuid
@@ -29415,15 +29873,15 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             activity?: components["schemas"]["ActivityResponse"] | null;
             /** Created By */
-            created_by?: string | null;
+            createdBy?: string | null;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
         };
         /**
          * FacultyOverridesListResponse
@@ -29434,12 +29892,12 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /**
              * Week Start
              * Format: date
              */
-            week_start: string;
+            weekStart: string;
             /** Overrides */
             overrides: components["schemas"]["FacultyOverrideResponse"][];
             /** Total */
@@ -29451,7 +29909,7 @@ export interface components {
          */
         FacultyPreferencesResponse: {
             /** Faculty Id */
-            faculty_id: string;
+            facultyId: string;
             /** Trails */
             trails: {
                 [key: string]: unknown;
@@ -29469,28 +29927,28 @@ export interface components {
          * FacultySummaryReportRequest
          * @description Request schema for faculty summary report.
          * @example {
-         *       "end_date": "2025-01-31",
+         *       "endDate": "2025-01-31",
          *       "format": "pdf",
-         *       "include_logo": true,
-         *       "include_page_numbers": true,
-         *       "include_toc": true,
-         *       "report_type": "schedule",
-         *       "start_date": "2025-01-01"
+         *       "includeLogo": true,
+         *       "includePageNumbers": true,
+         *       "includeToc": true,
+         *       "reportType": "schedule",
+         *       "startDate": "2025-01-01"
          *     }
          */
         FacultySummaryReportRequest: {
             /** @default faculty_summary */
-            report_type: components["schemas"]["ReportType"];
+            reportType: components["schemas"]["ReportType"];
             /**
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /** @default pdf */
             format: components["schemas"]["ReportFormat"];
             /**
@@ -29498,36 +29956,36 @@ export interface components {
              * @description Include organization logo
              * @default true
              */
-            include_logo: boolean;
+            includeLogo: boolean;
             /**
              * Include Toc
              * @description Include table of contents
              * @default true
              */
-            include_toc: boolean;
+            includeToc: boolean;
             /**
              * Include Page Numbers
              * @description Include page numbers
              * @default true
              */
-            include_page_numbers: boolean;
+            includePageNumbers: boolean;
             /**
              * Faculty Ids
              * @description Filter by specific faculty members
              */
-            faculty_ids?: string[] | null;
+            facultyIds?: string[] | null;
             /**
              * Include Workload
              * @description Include workload statistics
              * @default true
              */
-            include_workload: boolean;
+            includeWorkload: boolean;
             /**
              * Include Supervision
              * @description Include supervision metrics
              * @default true
              */
-            include_supervision: boolean;
+            includeSupervision: boolean;
         };
         /**
          * FacultyTemplateResponse
@@ -29538,15 +29996,15 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /** Person Name */
-            person_name: string;
+            personName: string;
             /** Faculty Role */
-            faculty_role: string | null;
+            facultyRole: string | null;
             /** Slots */
             slots: components["schemas"]["FacultyTemplateSlotResponse"][];
             /** Total Slots */
-            total_slots: number;
+            totalSlots: number;
         };
         /**
          * FacultyTemplateSlotCreate
@@ -29557,29 +30015,29 @@ export interface components {
              * Day Of Week
              * @description 0=Sunday, 6=Saturday
              */
-            day_of_week: number;
+            dayOfWeek: number;
             /**
              * Time Of Day
              * @description AM or PM
              * @enum {string}
              */
-            time_of_day: "AM" | "PM";
+            timeOfDay: "AM" | "PM";
             /**
              * Week Number
              * @description Week 1-4, or null for all weeks
              */
-            week_number?: number | null;
+            weekNumber?: number | null;
             /**
              * Activity Id
              * @description Activity UUID or null
              */
-            activity_id?: string | null;
+            activityId?: string | null;
             /**
              * Is Locked
              * @description HARD constraint - solver cannot change
              * @default false
              */
-            is_locked: boolean;
+            isLocked: boolean;
             /**
              * Priority
              * @description Soft preference 0-100
@@ -29601,29 +30059,29 @@ export interface components {
              * Day Of Week
              * @description 0=Sunday, 6=Saturday
              */
-            day_of_week: number;
+            dayOfWeek: number;
             /**
              * Time Of Day
              * @description AM or PM
              * @enum {string}
              */
-            time_of_day: "AM" | "PM";
+            timeOfDay: "AM" | "PM";
             /**
              * Week Number
              * @description Week 1-4, or null for all weeks
              */
-            week_number?: number | null;
+            weekNumber?: number | null;
             /**
              * Activity Id
              * @description Activity UUID or null
              */
-            activity_id?: string | null;
+            activityId?: string | null;
             /**
              * Is Locked
              * @description HARD constraint - solver cannot change
              * @default false
              */
-            is_locked: boolean;
+            isLocked: boolean;
             /**
              * Priority
              * @description Soft preference 0-100
@@ -29644,18 +30102,18 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             activity?: components["schemas"]["ActivityResponse"] | null;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
         };
         /**
          * FacultyTemplateUpdateRequest
@@ -29672,7 +30130,7 @@ export interface components {
              * @description Delete all existing slots before applying
              * @default false
              */
-            clear_existing: boolean;
+            clearExisting: boolean;
         };
         /**
          * FacultyTimeline
@@ -29684,17 +30142,17 @@ export interface components {
              * Format: uuid
              * @description Faculty member UUID
              */
-            faculty_id: string;
+            facultyId: string;
             /**
              * Faculty Name
              * @description Faculty member full name
              */
-            faculty_name: string;
+            facultyName: string;
             /**
              * Weeks Assigned
              * @description Weekly assignments
              */
-            weeks_assigned?: components["schemas"]["WeekAssignment"][];
+            weeksAssigned?: components["schemas"]["WeekAssignment"][];
             /** @description Workload metrics */
             workload: components["schemas"]["WorkloadSummary"];
             /**
@@ -29717,7 +30175,7 @@ export interface components {
              * Week Start
              * Format: date
              */
-            week_start: string;
+            weekStart: string;
             /** Slots */
             slots: components["schemas"]["EffectiveSlot"][];
         };
@@ -29730,33 +30188,33 @@ export interface components {
              * Faculty Id
              * Format: uuid
              */
-            faculty_id: string;
+            facultyId: string;
             /** Faculty Name */
-            faculty_name: string;
+            facultyName: string;
             /**
              * Total Weeks
              * @description Total weeks assigned this year
              * @default 0
              */
-            total_weeks: number;
+            totalWeeks: number;
             /**
              * Completed Weeks
              * @description Weeks already completed
              * @default 0
              */
-            completed_weeks: number;
+            completedWeeks: number;
             /**
              * Upcoming Weeks
              * @description Future weeks scheduled
              * @default 0
              */
-            upcoming_weeks: number;
+            upcomingWeeks: number;
             /**
              * Target Weeks
              * @description Fair share target
              * @default 0
              */
-            target_weeks: number;
+            targetWeeks: number;
             /**
              * Variance
              * @description Deviation from target
@@ -29768,12 +30226,12 @@ export interface components {
              * @description Within acceptable range
              * @default true
              */
-            is_balanced: boolean;
+            isBalanced: boolean;
             /**
              * Week Dates
              * @description All assigned week start dates
              */
-            week_dates?: string[];
+            weekDates?: string[];
         };
         /**
          * FailureRecord
@@ -29861,11 +30319,11 @@ export interface components {
             success: boolean;
             scenario: components["schemas"]["FallbackScenario"];
             /** Assignments Count */
-            assignments_count: number;
+            assignmentsCount: number;
             /** Coverage Rate */
-            coverage_rate: number;
+            coverageRate: number;
             /** Services Reduced */
-            services_reduced: string[];
+            servicesReduced: string[];
             /** Message */
             message: string;
         };
@@ -29897,19 +30355,19 @@ export interface components {
             /** Description */
             description: string;
             /** Is Active */
-            is_active: boolean;
+            isActive: boolean;
             /** Is Precomputed */
-            is_precomputed: boolean;
+            isPrecomputed: boolean;
             /** Assignments Count */
-            assignments_count?: number | null;
+            assignmentsCount?: number | null;
             /** Coverage Rate */
-            coverage_rate?: number | null;
+            coverageRate?: number | null;
             /** Services Reduced */
-            services_reduced: string[];
+            servicesReduced: string[];
             /** Assumptions */
             assumptions: string[];
             /** Activation Count */
-            activation_count: number;
+            activationCount: number;
         };
         /**
          * FallbackListResponse
@@ -29919,7 +30377,7 @@ export interface components {
             /** Fallbacks */
             fallbacks: components["schemas"]["FallbackInfo"][];
             /** Active Count */
-            active_count: number;
+            activeCount: number;
         };
         /**
          * FallbackScenario
@@ -29933,18 +30391,18 @@ export interface components {
          */
         FatigueProfileResponse: {
             /** Resident Id */
-            resident_id: string;
+            residentId: string;
             /** Resident Name */
-            resident_name: string;
+            residentName: string;
             /** Pgy Level */
-            pgy_level: number;
+            pgyLevel: number;
             /**
              * Generated At
              * Format: date-time
              */
-            generated_at: string;
+            generatedAt: string;
             /** Current State */
-            current_state: {
+            currentState: {
                 [key: string]: unknown;
             };
             /** Hazard */
@@ -29952,7 +30410,7 @@ export interface components {
                 [key: string]: unknown;
             };
             /** Work History */
-            work_history: {
+            workHistory: {
                 [key: string]: unknown;
             };
             /** Predictions */
@@ -29973,30 +30431,30 @@ export interface components {
              * Hours Awake
              * @description Hours since last sleep (0-72)
              */
-            hours_awake: number;
+            hoursAwake: number;
             /**
              * Hours Worked 24H
              * @description Hours worked in last 24 hours (0-24)
              */
-            hours_worked_24h: number;
+            hoursWorked24h: number;
             /**
              * Consecutive Night Shifts
              * @description Number of consecutive night shifts
              * @default 0
              */
-            consecutive_night_shifts: number;
+            consecutiveNightShifts: number;
             /**
              * Time Of Day Hour
              * @description Current hour of day (0-23)
              * @default 12
              */
-            time_of_day_hour: number;
+            timeOfDayHour: number;
             /**
              * Prior Sleep Hours
              * @description Hours of sleep in prior rest period (0-24)
              * @default 7
              */
-            prior_sleep_hours: number;
+            priorSleepHours: number;
         };
         /**
          * FatigueScoreResponse
@@ -30004,13 +30462,13 @@ export interface components {
          */
         FatigueScoreResponse: {
             /** Samn Perelli Level */
-            samn_perelli_level: number;
+            samnPerelliLevel: number;
             /** Samn Perelli Name */
-            samn_perelli_name: string;
+            samnPerelliName: string;
             /** Alertness Score */
-            alertness_score: number;
+            alertnessScore: number;
             /** Circadian Phase */
-            circadian_phase: string;
+            circadianPhase: string;
             /** Factors */
             factors: {
                 [key: string]: unknown;
@@ -30025,17 +30483,17 @@ export interface components {
              * Flag Keys
              * @description List of feature flag keys to evaluate
              */
-            flag_keys: string[];
+            flagKeys: string[];
             /**
              * User Id
              * @description User ID for targeting
              */
-            user_id?: string | null;
+            userId?: string | null;
             /**
              * User Role
              * @description User role for targeting
              */
-            user_role?: string | null;
+            userRole?: string | null;
             /**
              * Environment
              * @description Environment
@@ -30087,7 +30545,7 @@ export interface components {
              * @description Flag type: boolean, percentage, or variant
              * @default boolean
              */
-            flag_type: string;
+            flagType: string;
             /**
              * Enabled
              * @description Whether the flag is enabled
@@ -30098,7 +30556,7 @@ export interface components {
              * Rollout Percentage
              * @description Percentage rollout (0.0-1.0)
              */
-            rollout_percentage?: number | null;
+            rolloutPercentage?: number | null;
             /**
              * Environments
              * @description Target environments (null = all)
@@ -30108,12 +30566,12 @@ export interface components {
              * Target User Ids
              * @description Target user IDs (null = all)
              */
-            target_user_ids?: string[] | null;
+            targetUserIds?: string[] | null;
             /**
              * Target Roles
              * @description Target roles (null = all)
              */
-            target_roles?: string[] | null;
+            targetRoles?: string[] | null;
             /**
              * Variants
              * @description A/B test variants with weights
@@ -30130,7 +30588,7 @@ export interface components {
              * Custom Attributes
              * @description Custom targeting attributes
              */
-            custom_attributes?: {
+            customAttributes?: {
                 [key: string]: unknown;
             } | null;
         };
@@ -30143,17 +30601,17 @@ export interface components {
              * Flag Key
              * @description Feature flag key to evaluate
              */
-            flag_key: string;
+            flagKey: string;
             /**
              * User Id
              * @description User ID for targeting
              */
-            user_id?: string | null;
+            userId?: string | null;
             /**
              * User Role
              * @description User role for targeting
              */
-            user_role?: string | null;
+            userRole?: string | null;
             /**
              * Environment
              * @description Environment (dev, staging, production)
@@ -30186,7 +30644,7 @@ export interface components {
              * Flag Type
              * @description Type of flag
              */
-            flag_type: string;
+            flagType: string;
             /**
              * Reason
              * @description Reason for the evaluation result
@@ -30205,9 +30663,9 @@ export interface components {
             /** Page */
             page: number;
             /** Page Size */
-            page_size: number;
+            pageSize: number;
             /** Total Pages */
-            total_pages: number;
+            totalPages: number;
         };
         /**
          * FeatureFlagResponse
@@ -30234,7 +30692,7 @@ export interface components {
              * @description Flag type: boolean, percentage, or variant
              * @default boolean
              */
-            flag_type: string;
+            flagType: string;
             /**
              * Enabled
              * @description Whether the flag is enabled
@@ -30245,7 +30703,7 @@ export interface components {
              * Rollout Percentage
              * @description Percentage rollout (0.0-1.0)
              */
-            rollout_percentage?: number | null;
+            rolloutPercentage?: number | null;
             /**
              * Environments
              * @description Target environments (null = all)
@@ -30255,12 +30713,12 @@ export interface components {
              * Target User Ids
              * @description Target user IDs (null = all)
              */
-            target_user_ids?: string[] | null;
+            targetUserIds?: string[] | null;
             /**
              * Target Roles
              * @description Target roles (null = all)
              */
-            target_roles?: string[] | null;
+            targetRoles?: string[] | null;
             /**
              * Variants
              * @description A/B test variants with weights
@@ -30277,7 +30735,7 @@ export interface components {
              * Custom Attributes
              * @description Custom targeting attributes
              */
-            custom_attributes?: {
+            customAttributes?: {
                 [key: string]: unknown;
             } | null;
             /**
@@ -30286,17 +30744,17 @@ export interface components {
              */
             id: string;
             /** Created By */
-            created_by: string | null;
+            createdBy: string | null;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
         };
         /**
          * FeatureFlagStatsResponse
@@ -30304,23 +30762,23 @@ export interface components {
          */
         FeatureFlagStatsResponse: {
             /** Total Flags */
-            total_flags: number;
+            totalFlags: number;
             /** Enabled Flags */
-            enabled_flags: number;
+            enabledFlags: number;
             /** Disabled Flags */
-            disabled_flags: number;
+            disabledFlags: number;
             /** Percentage Rollout Flags */
-            percentage_rollout_flags: number;
+            percentageRolloutFlags: number;
             /** Variant Flags */
-            variant_flags: number;
+            variantFlags: number;
             /** Flags By Environment */
-            flags_by_environment: {
+            flagsByEnvironment: {
                 [key: string]: number | undefined;
             };
             /** Recent Evaluations */
-            recent_evaluations: number;
+            recentEvaluations: number;
             /** Unique Users */
-            unique_users: number;
+            uniqueUsers: number;
         };
         /**
          * FeatureFlagUpdate
@@ -30332,17 +30790,17 @@ export interface components {
             /** Description */
             description?: string | null;
             /** Flag Type */
-            flag_type?: string | null;
+            flagType?: string | null;
             /** Enabled */
             enabled?: boolean | null;
             /** Rollout Percentage */
-            rollout_percentage?: number | null;
+            rolloutPercentage?: number | null;
             /** Environments */
             environments?: string[] | null;
             /** Target User Ids */
-            target_user_ids?: string[] | null;
+            targetUserIds?: string[] | null;
             /** Target Roles */
-            target_roles?: string[] | null;
+            targetRoles?: string[] | null;
             /** Variants */
             variants?: {
                 [key: string]: number | undefined;
@@ -30350,7 +30808,7 @@ export interface components {
             /** Dependencies */
             dependencies?: string[] | null;
             /** Custom Attributes */
-            custom_attributes?: {
+            customAttributes?: {
                 [key: string]: unknown;
             } | null;
         };
@@ -30360,23 +30818,23 @@ export interface components {
          */
         FeedbackLoopStatus: {
             /** Loop Name */
-            loop_name: string;
+            loopName: string;
             setpoint: components["schemas"]["SetpointInfo"];
             /** Current Value */
-            current_value: number | null;
+            currentValue: number | null;
             /** Deviation */
             deviation: number | null;
-            deviation_severity: components["schemas"]["DeviationSeverity"];
+            deviationSeverity: components["schemas"]["DeviationSeverity"];
             /** Consecutive Deviations */
-            consecutive_deviations: number;
+            consecutiveDeviations: number;
             /** Trend Direction */
-            trend_direction: string;
+            trendDirection: string;
             /** Is Improving */
-            is_improving: boolean;
+            isImproving: boolean;
             /** Last Checked */
-            last_checked: string | null;
+            lastChecked: string | null;
             /** Total Corrections */
-            total_corrections: number;
+            totalCorrections: number;
         };
         /**
          * FieldChange
@@ -30408,8 +30866,8 @@ export interface components {
          * FileUrlResponse
          * @description Response for file URL request.
          * @example {
-         *       "expires_at": "2025-12-20T11:30:00Z",
-         *       "file_id": "660e8400-e29b-41d4-a716-446655440001",
+         *       "expiresAt": "2025-12-20T11:30:00Z",
+         *       "fileId": "660e8400-e29b-41d4-a716-446655440001",
          *       "url": "https://s3.amazonaws.com/bucket/file?signature=..."
          *     }
          */
@@ -30418,7 +30876,7 @@ export interface components {
              * File Id
              * @description File identifier
              */
-            file_id: string;
+            fileId: string;
             /**
              * Url
              * @description URL to access the file
@@ -30428,7 +30886,7 @@ export interface components {
              * Expires At
              * @description URL expiration timestamp (for pre-signed URLs)
              */
-            expires_at?: string | null;
+            expiresAt?: string | null;
         };
         /**
          * FixItMode
@@ -30451,29 +30909,29 @@ export interface components {
              * @description Maximum retry attempts per task
              * @default 3
              */
-            max_retries: number;
+            maxRetries: number;
             /**
              * Auto Approve
              * @description Automatically approve changes
              * @default false
              */
-            auto_approve: boolean;
+            autoApprove: boolean;
             /**
              * Initiated By
              * @description User who initiated fix-it
              */
-            initiated_by: string;
+            initiatedBy: string;
             /**
              * Target Task Ids
              * @description Specific tasks to fix (None = all failed)
              */
-            target_task_ids?: string[] | null;
+            targetTaskIds?: string[] | null;
             /**
              * Dry Run
              * @description Preview changes without executing
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * FixItResponse
@@ -30489,51 +30947,51 @@ export interface components {
              * Execution Id
              * @description Unique execution identifier
              */
-            execution_id: string;
+            executionId: string;
             mode: components["schemas"]["FixItMode"];
             /**
              * Tasks Fixed
              * @description Number of tasks successfully fixed
              * @default 0
              */
-            tasks_fixed: number;
+            tasksFixed: number;
             /**
              * Tasks Retried
              * @description Number of tasks retried
              * @default 0
              */
-            tasks_retried: number;
+            tasksRetried: number;
             /**
              * Tasks Skipped
              * @description Number of tasks skipped
              * @default 0
              */
-            tasks_skipped: number;
+            tasksSkipped: number;
             /**
              * Tasks Failed
              * @description Number of tasks that failed to fix
              * @default 0
              */
-            tasks_failed: number;
+            tasksFailed: number;
             /**
              * Affected Tasks
              * @description Tasks affected by fix-it
              */
-            affected_tasks?: components["schemas"]["AffectedTask"][];
+            affectedTasks?: components["schemas"]["AffectedTask"][];
             /**
              * Estimated Completion
              * @description Estimated completion time
              */
-            estimated_completion?: string | null;
+            estimatedCompletion?: string | null;
             /** Initiated By */
-            initiated_by: string;
+            initiatedBy: string;
             /**
              * Initiated At
              * Format: date-time
              */
-            initiated_at?: string;
+            initiatedAt?: string;
             /** Completed At */
-            completed_at?: string | null;
+            completedAt?: string | null;
             /**
              * Message
              * @description Human-readable status message
@@ -30554,7 +31012,7 @@ export interface components {
              * Schedule Id
              * @description Schedule ID to analyze
              */
-            schedule_id?: string | null;
+            scheduleId?: string | null;
             /**
              * Temperature
              * @description Temperature parameter for free energy calculation
@@ -30566,7 +31024,7 @@ export interface components {
              * @description Maximum iterations for optimization
              * @default 100
              */
-            max_iterations: number;
+            maxIterations: number;
         };
         /**
          * FreeEnergyResponse
@@ -30577,17 +31035,17 @@ export interface components {
              * Free Energy
              * @description Helmholtz free energy F = U - TS
              */
-            free_energy: number;
+            freeEnergy: number;
             /**
              * Internal Energy
              * @description Internal energy U (constraint violations)
              */
-            internal_energy: number;
+            internalEnergy: number;
             /**
              * Entropy Term
              * @description Entropy contribution T*S
              */
-            entropy_term: number;
+            entropyTerm: number;
             /**
              * Temperature
              * @description Temperature parameter used
@@ -30597,12 +31055,12 @@ export interface components {
              * Constraint Violations
              * @description Number of constraint violations
              */
-            constraint_violations: number;
+            constraintViolations: number;
             /**
              * Configuration Entropy
              * @description Configuration entropy S
              */
-            configuration_entropy: number;
+            configurationEntropy: number;
             /**
              * Interpretation
              * @description Human-readable interpretation
@@ -30617,7 +31075,7 @@ export interface components {
              * Computed At
              * @description Timestamp of analysis (ISO format)
              */
-            computed_at: string;
+            computedAt: string;
             /**
              * Source
              * @description Data source
@@ -30639,12 +31097,12 @@ export interface components {
              * All Tasks
              * @description All tasks flattened
              */
-            all_tasks?: components["schemas"]["GanttTask"][];
+            allTasks?: components["schemas"]["GanttTask"][];
             /**
              * Date Range
              * @description Overall date range (start, end)
              */
-            date_range: {
+            dateRange: {
                 [key: string]: unknown;
             };
             /**
@@ -30659,7 +31117,7 @@ export interface components {
              * Format: date-time
              * @description Generation timestamp
              */
-            generated_at: string;
+            generatedAt: string;
         };
         /**
          * GanttGroup
@@ -30745,6 +31203,78 @@ export interface components {
             detail?: components["schemas"]["ValidationError"][];
         };
         /**
+         * HalfDayAssignmentListResponse
+         * @description Response for listing half-day assignments.
+         */
+        HalfDayAssignmentListResponse: {
+            /** Assignments */
+            assignments: components["schemas"]["HalfDayAssignmentRead"][];
+            /** Total */
+            total: number;
+            /** Block Number */
+            blockNumber?: number | null;
+            /** Academic Year */
+            academicYear?: number | null;
+            /** Start Date */
+            startDate?: string | null;
+            /** End Date */
+            endDate?: string | null;
+        };
+        /**
+         * HalfDayAssignmentRead
+         * @description Schema for reading a half-day assignment.
+         */
+        HalfDayAssignmentRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            personId: string;
+            /** Person Name */
+            personName?: string | null;
+            /** Person Type */
+            personType?: string | null;
+            /** Pgy Level */
+            pgyLevel?: number | null;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Time Of Day */
+            timeOfDay: string;
+            /** Activity Id */
+            activityId?: string | null;
+            /** Activity Code */
+            activityCode?: string | null;
+            /** Activity Name */
+            activityName?: string | null;
+            /** Display Abbreviation */
+            displayAbbreviation?: string | null;
+            /** Source */
+            source: string;
+            /**
+             * Is Locked
+             * @default false
+             */
+            isLocked: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            createdAt: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updatedAt: string;
+        };
+        /**
          * HalfDayRequirementCreate
          * @description Schema for creating half-day requirements.
          */
@@ -30754,42 +31284,42 @@ export interface components {
              * @description Number of FM clinic half-days per block
              * @default 4
              */
-            fm_clinic_halfdays: number;
+            fmClinicHalfdays: number;
             /**
              * Specialty Halfdays
              * @description Number of specialty half-days per block
              * @default 5
              */
-            specialty_halfdays: number;
+            specialtyHalfdays: number;
             /**
              * Specialty Name
              * @description Name of the specialty (e.g., 'Neurology', 'Dermatology')
              */
-            specialty_name?: string | null;
+            specialtyName?: string | null;
             /**
              * Academics Halfdays
              * @description Number of academic/lecture half-days per block
              * @default 1
              */
-            academics_halfdays: number;
+            academicsHalfdays: number;
             /**
              * Elective Halfdays
              * @description Number of elective/buffer half-days per block
              * @default 0
              */
-            elective_halfdays: number;
+            electiveHalfdays: number;
             /**
              * Min Consecutive Specialty
              * @description Minimum consecutive specialty days to batch together
              * @default 1
              */
-            min_consecutive_specialty: number;
+            minConsecutiveSpecialty: number;
             /**
              * Prefer Combined Clinic Days
              * @description Prefer FM + specialty on same day when possible
              * @default true
              */
-            prefer_combined_clinic_days: boolean;
+            preferCombinedClinicDays: boolean;
         };
         /**
          * HalfDayRequirementResponse
@@ -30801,42 +31331,42 @@ export interface components {
              * @description Number of FM clinic half-days per block
              * @default 4
              */
-            fm_clinic_halfdays: number;
+            fmClinicHalfdays: number;
             /**
              * Specialty Halfdays
              * @description Number of specialty half-days per block
              * @default 5
              */
-            specialty_halfdays: number;
+            specialtyHalfdays: number;
             /**
              * Specialty Name
              * @description Name of the specialty (e.g., 'Neurology', 'Dermatology')
              */
-            specialty_name?: string | null;
+            specialtyName?: string | null;
             /**
              * Academics Halfdays
              * @description Number of academic/lecture half-days per block
              * @default 1
              */
-            academics_halfdays: number;
+            academicsHalfdays: number;
             /**
              * Elective Halfdays
              * @description Number of elective/buffer half-days per block
              * @default 0
              */
-            elective_halfdays: number;
+            electiveHalfdays: number;
             /**
              * Min Consecutive Specialty
              * @description Minimum consecutive specialty days to batch together
              * @default 1
              */
-            min_consecutive_specialty: number;
+            minConsecutiveSpecialty: number;
             /**
              * Prefer Combined Clinic Days
              * @description Prefer FM + specialty on same day when possible
              * @default true
              */
-            prefer_combined_clinic_days: boolean;
+            preferCombinedClinicDays: boolean;
             /**
              * Id
              * Format: uuid
@@ -30846,17 +31376,17 @@ export interface components {
              * Rotation Template Id
              * Format: uuid
              */
-            rotation_template_id: string;
+            rotationTemplateId: string;
             /**
              * Total Halfdays
              * @description Calculated total half-days
              */
-            total_halfdays: number;
+            totalHalfdays: number;
             /**
              * Is Balanced
              * @description True if total equals standard block (10 half-days)
              */
-            is_balanced: boolean;
+            isBalanced: boolean;
         };
         /**
          * HazardAlertResponse
@@ -30864,34 +31394,34 @@ export interface components {
          */
         HazardAlertResponse: {
             /** Resident Id */
-            resident_id: string;
+            residentId: string;
             /** Hazard Level */
-            hazard_level: string;
+            hazardLevel: string;
             /** Hazard Level Name */
-            hazard_level_name: string;
+            hazardLevelName: string;
             /**
              * Detected At
              * Format: date-time
              */
-            detected_at: string;
+            detectedAt: string;
             /** Triggers */
             triggers: string[];
             /** Alertness Score */
-            alertness_score?: number | null;
+            alertnessScore?: number | null;
             /** Sleep Debt */
-            sleep_debt?: number | null;
+            sleepDebt?: number | null;
             /** Hours Awake */
-            hours_awake?: number | null;
+            hoursAwake?: number | null;
             /** Samn Perelli */
-            samn_perelli?: number | null;
+            samnPerelli?: number | null;
             /** Required Mitigations */
-            required_mitigations: string[];
+            requiredMitigations: string[];
             /** Recommended Mitigations */
-            recommended_mitigations: string[];
+            recommendedMitigations: string[];
             /** Acgme Risk */
-            acgme_risk: boolean;
+            acgmeRisk: boolean;
             /** Escalation Time */
-            escalation_time?: string | null;
+            escalationTime?: string | null;
             /** Notes */
             notes?: string | null;
         };
@@ -30904,19 +31434,19 @@ export interface components {
              * Scanned At
              * Format: date-time
              */
-            scanned_at: string;
+            scannedAt: string;
             /** Total Residents */
-            total_residents: number;
+            totalResidents: number;
             /** Hazards Found */
-            hazards_found: number;
+            hazardsFound: number;
             /** By Level */
-            by_level: {
+            byLevel: {
                 [key: string]: unknown;
             };
             /** Critical Count */
-            critical_count: number;
+            criticalCount: number;
             /** Acgme Risk Count */
-            acgme_risk_count: number;
+            acgmeRiskCount: number;
             /** Residents */
             residents: {
                 [key: string]: unknown;
@@ -30937,17 +31467,17 @@ export interface components {
              * Format: date-time
              */
             timestamp: string;
-            overall_status: components["schemas"]["OverallStatus"];
+            overallStatus: components["schemas"]["OverallStatus"];
             /** Utilization Rate */
-            utilization_rate: number;
-            utilization_level: components["schemas"]["UtilizationLevel"];
-            defense_level: components["schemas"]["DefenseLevel"] | null;
+            utilizationRate: number;
+            utilizationLevel: components["schemas"]["UtilizationLevel"];
+            defenseLevel: components["schemas"]["DefenseLevel"] | null;
             /** N1 Pass */
-            n1_pass: boolean;
+            n1Pass: boolean;
             /** N2 Pass */
-            n2_pass: boolean;
+            n2Pass: boolean;
             /** Crisis Mode */
-            crisis_mode: boolean;
+            crisisMode: boolean;
         };
         /**
          * HealthCheckHistoryResponse
@@ -30961,7 +31491,7 @@ export interface components {
             /** Page */
             page: number;
             /** Page Size */
-            page_size: number;
+            pageSize: number;
         };
         /**
          * HealthCheckResponse
@@ -30973,26 +31503,26 @@ export interface components {
              * Format: date-time
              */
             timestamp: string;
-            overall_status: components["schemas"]["OverallStatus"];
+            overallStatus: components["schemas"]["OverallStatus"];
             utilization: components["schemas"]["UtilizationMetrics"];
-            defense_level: components["schemas"]["DefenseLevel"];
+            defenseLevel: components["schemas"]["DefenseLevel"];
             /** Redundancy Status */
-            redundancy_status: components["schemas"]["RedundancyStatus"][];
-            load_shedding_level: components["schemas"]["LoadSheddingLevel"];
+            redundancyStatus: components["schemas"]["RedundancyStatus"][];
+            loadSheddingLevel: components["schemas"]["LoadSheddingLevel"];
             /** Active Fallbacks */
-            active_fallbacks: string[];
+            activeFallbacks: string[];
             /** Crisis Mode */
-            crisis_mode: boolean;
+            crisisMode: boolean;
             /** N1 Pass */
-            n1_pass: boolean;
+            n1Pass: boolean;
             /** N2 Pass */
-            n2_pass: boolean;
+            n2Pass: boolean;
             /** Phase Transition Risk */
-            phase_transition_risk: string;
+            phaseTransitionRisk: string;
             /** Immediate Actions */
-            immediate_actions: string[];
+            immediateActions: string[];
             /** Watch Items */
-            watch_items: string[];
+            watchItems: string[];
         };
         /**
          * HealthCheckResult
@@ -31005,7 +31535,7 @@ export interface components {
             service: string;
             status: components["schemas"]["HealthStatus"];
             /** Response Time Ms */
-            response_time_ms: number;
+            responseTimeMs: number;
             /**
              * Timestamp
              * Format: date-time
@@ -31033,18 +31563,18 @@ export interface components {
          * HeatmapData
          * @description Heatmap data structure.
          * @example {
-         *       "color_scale": "Viridis",
-         *       "x_labels": [
+         *       "colorScale": "Viridis",
+         *       "xLabels": [
          *         "2024-01-01",
          *         "2024-01-02",
          *         "2024-01-03"
          *       ],
-         *       "y_labels": [
+         *       "yLabels": [
          *         "Dr. Smith",
          *         "Dr. Johnson",
          *         "Dr. Williams"
          *       ],
-         *       "z_values": [
+         *       "zValues": [
          *         [
          *           1,
          *           0,
@@ -31068,23 +31598,23 @@ export interface components {
              * X Labels
              * @description X-axis labels (dates)
              */
-            x_labels: string[];
+            xLabels: string[];
             /**
              * Y Labels
              * @description Y-axis labels (people or rotations)
              */
-            y_labels: string[];
+            yLabels: string[];
             /**
              * Z Values
              * @description Matrix of values for heatmap
              */
-            z_values: number[][];
+            zValues: number[][];
             /**
              * Color Scale
              * @description Plotly color scale name
              * @default Viridis
              */
-            color_scale: string;
+            colorScale: string;
             /**
              * Annotations
              * @description Annotations for heatmap cells
@@ -31097,12 +31627,12 @@ export interface components {
          * HeatmapExportRequest
          * @description Request schema for exporting heatmap as image.
          * @example {
-         *       "end_date": "2024-03-31",
+         *       "endDate": "2024-03-31",
          *       "format": "png",
          *       "height": 800,
-         *       "include_fmit": true,
-         *       "include_residency": true,
-         *       "start_date": "2024-01-01",
+         *       "includeFmit": true,
+         *       "includeResidency": true,
+         *       "startDate": "2024-01-01",
          *       "width": 1200
          *     }
          */
@@ -31112,13 +31642,13 @@ export interface components {
              * Format: date
              * @description Start date for heatmap
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description End date for heatmap
              */
-            end_date: string;
+            endDate: string;
             /**
              * Format
              * @description Export format: 'png', 'svg', or 'pdf'
@@ -31130,13 +31660,13 @@ export interface components {
              * @description Include FMIT assignments
              * @default true
              */
-            include_fmit: boolean;
+            includeFmit: boolean;
             /**
              * Include Residency
              * @description Include residency assignments
              * @default true
              */
-            include_residency: boolean;
+            includeResidency: boolean;
             /**
              * Width
              * @description Image width in pixels
@@ -31154,10 +31684,10 @@ export interface components {
          * HeatmapRenderRequest
          * @description Request schema for rendering heatmap as HTML.
          * @example {
-         *       "end_date": "2024-03-31",
-         *       "include_fmit": true,
-         *       "include_residency": true,
-         *       "start_date": "2024-01-01"
+         *       "endDate": "2024-03-31",
+         *       "includeFmit": true,
+         *       "includeResidency": true,
+         *       "startDate": "2024-01-01"
          *     }
          */
         HeatmapRenderRequest: {
@@ -31166,41 +31696,41 @@ export interface components {
              * Format: date
              * @description Start date for heatmap
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description End date for heatmap
              */
-            end_date: string;
+            endDate: string;
             /**
              * Include Fmit
              * @description Include FMIT assignments
              * @default true
              */
-            include_fmit: boolean;
+            includeFmit: boolean;
             /**
              * Include Residency
              * @description Include residency assignments
              * @default true
              */
-            include_residency: boolean;
+            includeResidency: boolean;
         };
         /**
          * HeatmapResponse
          * @description Response schema for heatmap.
          * @example {
          *       "data": {
-         *         "color_scale": "Viridis",
-         *         "x_labels": [
+         *         "colorScale": "Viridis",
+         *         "xLabels": [
          *           "2024-01-01",
          *           "2024-01-02"
          *         ],
-         *         "y_labels": [
+         *         "yLabels": [
          *           "Dr. Smith",
          *           "Dr. Johnson"
          *         ],
-         *         "z_values": [
+         *         "zValues": [
          *           [
          *             1,
          *             0
@@ -31211,9 +31741,9 @@ export interface components {
          *           ]
          *         ]
          *       },
-         *       "generated_at": "2024-01-15T10:00:00",
+         *       "generatedAt": "2024-01-15T10:00:00",
          *       "metadata": {
-         *         "total_assignments": 4
+         *         "totalAssignments": 4
          *       },
          *       "title": "Residency Schedule Heatmap"
          *     }
@@ -31231,7 +31761,7 @@ export interface components {
              * Format: date-time
              * @description Timestamp of generation
              */
-            generated_at?: string;
+            generatedAt?: string;
             /**
              * Metadata
              * @description Additional metadata
@@ -31261,12 +31791,12 @@ export interface components {
          *     check_homeostasis method. It provides a summary of feedback loop
          *     states and system health.
          * @example {
-         *       "active_corrections": 0,
-         *       "average_allostatic_load": 25.5,
-         *       "feedback_loops_deviating": 1,
-         *       "feedback_loops_healthy": 4,
-         *       "overall_state": "homeostasis",
-         *       "positive_feedback_risks": 0,
+         *       "activeCorrections": 0,
+         *       "averageAllostaticLoad": 25.5,
+         *       "feedbackLoopsDeviating": 1,
+         *       "feedbackLoopsHealthy": 4,
+         *       "overallState": "homeostasis",
+         *       "positiveFeedbackRisks": 0,
          *       "recommendations": [
          *         "Monitor coverage rate - approaching threshold"
          *       ],
@@ -31281,32 +31811,32 @@ export interface components {
              */
             timestamp: string;
             /** @description Overall allostatic state of the system */
-            overall_state: components["schemas"]["AllostasisState"];
+            overallState: components["schemas"]["AllostasisState"];
             /**
              * Feedback Loops Healthy
              * @description Number of feedback loops within tolerance
              */
-            feedback_loops_healthy: number;
+            feedbackLoopsHealthy: number;
             /**
              * Feedback Loops Deviating
              * @description Number of feedback loops with deviations
              */
-            feedback_loops_deviating: number;
+            feedbackLoopsDeviating: number;
             /**
              * Active Corrections
              * @description Number of corrective actions currently in progress
              */
-            active_corrections: number;
+            activeCorrections: number;
             /**
              * Positive Feedback Risks
              * @description Number of detected positive feedback loop risks
              */
-            positive_feedback_risks: number;
+            positiveFeedbackRisks: number;
             /**
              * Average Allostatic Load
              * @description Average allostatic load across monitored entities
              */
-            average_allostatic_load: number;
+            averageAllostaticLoad: number;
             /**
              * Recommendations
              * @description List of recommended actions based on current state
@@ -31323,23 +31853,23 @@ export interface components {
              * Format: date-time
              */
             timestamp: string;
-            overall_state: components["schemas"]["AllostasisState"];
+            overallState: components["schemas"]["AllostasisState"];
             /** Feedback Loops Healthy */
-            feedback_loops_healthy: number;
+            feedbackLoopsHealthy: number;
             /** Feedback Loops Deviating */
-            feedback_loops_deviating: number;
+            feedbackLoopsDeviating: number;
             /** Active Corrections */
-            active_corrections: number;
+            activeCorrections: number;
             /** Positive Feedback Risks */
-            positive_feedback_risks: number;
+            positiveFeedbackRisks: number;
             /** Average Allostatic Load */
-            average_allostatic_load: number;
+            averageAllostaticLoad: number;
             /** Recommendations */
             recommendations: string[];
             /** Feedback Loops */
-            feedback_loops: components["schemas"]["FeedbackLoopStatus"][];
+            feedbackLoops: components["schemas"]["FeedbackLoopStatus"][];
             /** Positive Risks */
-            positive_risks: components["schemas"]["PositiveFeedbackRiskInfo"][];
+            positiveRisks: components["schemas"]["PositiveFeedbackRiskInfo"][];
         };
         /**
          * HopfieldAggregatesResponse
@@ -31347,23 +31877,23 @@ export interface components {
          */
         HopfieldAggregatesResponse: {
             /** Total Positions */
-            total_positions: number;
+            totalPositions: number;
             /** Average X */
-            average_x?: number | null;
+            averageX?: number | null;
             /** Average Y */
-            average_y?: number | null;
+            averageY?: number | null;
             /** Average Basin Depth */
-            average_basin_depth?: number | null;
+            averageBasinDepth?: number | null;
             /** Average Energy */
-            average_energy?: number | null;
+            averageEnergy?: number | null;
             /** Computed Basin Depth */
-            computed_basin_depth?: number | null;
+            computedBasinDepth?: number | null;
             /** Agreement Score */
-            agreement_score?: number | null;
+            agreementScore?: number | null;
             /** Block Number */
-            block_number?: number | null;
+            blockNumber?: number | null;
             /** Academic Year */
-            academic_year?: number | null;
+            academicYear?: number | null;
         };
         /**
          * HopfieldEnergyRequest
@@ -31374,17 +31904,17 @@ export interface components {
              * Start Date
              * @description Start date (YYYY-MM-DD)
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * @description End date (YYYY-MM-DD)
              */
-            end_date: string;
+            endDate: string;
             /**
              * Schedule Id
              * @description Optional schedule ID
              */
-            schedule_id?: string | null;
+            scheduleId?: string | null;
         };
         /**
          * HopfieldEnergyResponse
@@ -31395,31 +31925,31 @@ export interface components {
              * Analyzed At
              * @description ISO timestamp of analysis
              */
-            analyzed_at: string;
+            analyzedAt: string;
             /**
              * Schedule Id
              * @description Schedule ID if provided
              */
-            schedule_id?: string | null;
+            scheduleId?: string | null;
             /**
              * Period Start
              * @description Analysis period start
              */
-            period_start: string;
+            periodStart: string;
             /**
              * Period End
              * @description Analysis period end
              */
-            period_end: string;
+            periodEnd: string;
             /**
              * Assignments Analyzed
              * @description Number of assignments
              */
-            assignments_analyzed: number;
+            assignmentsAnalyzed: number;
             /** @description Energy metrics */
             metrics: components["schemas"]["EnergyMetricsResponse"];
             /** @description Stability classification */
-            stability_level: components["schemas"]["StabilityLevel"];
+            stabilityLevel: components["schemas"]["StabilityLevel"];
             /**
              * Interpretation
              * @description Human-readable interpretation
@@ -31440,19 +31970,19 @@ export interface components {
          */
         HopfieldPositionCreate: {
             /** X Position */
-            x_position: number;
+            xPosition: number;
             /** Y Position */
-            y_position: number;
+            yPosition: number;
             /** Z Position */
-            z_position?: number | null;
+            zPosition?: number | null;
             /** Confidence */
             confidence?: number | null;
             /** Notes */
             notes?: string | null;
             /** Block Number */
-            block_number?: number | null;
+            blockNumber?: number | null;
             /** Academic Year */
-            academic_year?: number | null;
+            academicYear?: number | null;
         };
         /**
          * HopfieldPositionResult
@@ -31462,20 +31992,20 @@ export interface components {
             /** Success */
             success: boolean;
             /** Position Id */
-            position_id?: string | null;
+            positionId?: string | null;
             /** Basin Depth */
-            basin_depth?: number | null;
+            basinDepth?: number | null;
             /** Energy Value */
-            energy_value?: number | null;
+            energyValue?: number | null;
             /** Stability Score */
-            stability_score?: number | null;
+            stabilityScore?: number | null;
             /** Nearest Attractor Type */
-            nearest_attractor_type?: string | null;
+            nearestAttractorType?: string | null;
             /**
              * Points Earned
              * @default 0
              */
-            points_earned: number;
+            pointsEarned: number;
             /**
              * Message
              * @default
@@ -31488,11 +32018,11 @@ export interface components {
          */
         HubAnalysisResponse: {
             /** Analyzed At */
-            analyzed_at: string;
+            analyzedAt: string;
             /** Total Faculty */
-            total_faculty: number;
+            totalFaculty: number;
             /** Total Hubs */
-            total_hubs: number;
+            totalHubs: number;
             /** Hubs */
             hubs: {
                 [key: string]: unknown;
@@ -31504,29 +32034,29 @@ export interface components {
          */
         HubDistributionReportResponse: {
             /** Generated At */
-            generated_at: string;
+            generatedAt: string;
             /** Total Faculty */
-            total_faculty: number;
+            totalFaculty: number;
             /** Total Hubs */
-            total_hubs: number;
+            totalHubs: number;
             /** Catastrophic Hubs */
-            catastrophic_hubs: number;
+            catastrophicHubs: number;
             /** Critical Hubs */
-            critical_hubs: number;
+            criticalHubs: number;
             /** High Risk Hubs */
-            high_risk_hubs: number;
+            highRiskHubs: number;
             /** Hub Concentration */
-            hub_concentration: number;
+            hubConcentration: number;
             /** Single Points Of Failure */
-            single_points_of_failure: number;
+            singlePointsOfFailure: number;
             /** Average Hub Score */
-            average_hub_score: number;
+            averageHubScore: number;
             /** Services With Single Provider */
-            services_with_single_provider: string[];
+            servicesWithSingleProvider: string[];
             /** Services With Dual Coverage */
-            services_with_dual_coverage: string[];
+            servicesWithDualCoverage: string[];
             /** Well Covered Services */
-            well_covered_services: string[];
+            wellCoveredServices: string[];
             /** Recommendations */
             recommendations: string[];
         };
@@ -31536,25 +32066,25 @@ export interface components {
          */
         HubProfileDetailResponse: {
             /** Faculty Id */
-            faculty_id: string;
+            facultyId: string;
             /** Faculty Name */
-            faculty_name: string;
+            facultyName: string;
             /** Risk Level */
-            risk_level: string;
+            riskLevel: string;
             /** Unique Skills */
-            unique_skills: string[];
+            uniqueSkills: string[];
             /** High Demand Skills */
-            high_demand_skills: string[];
+            highDemandSkills: string[];
             /** Protection Status */
-            protection_status: string;
+            protectionStatus: string;
             /** Protection Measures */
-            protection_measures: string[];
+            protectionMeasures: string[];
             /** Backup Faculty */
-            backup_faculty: string[];
+            backupFaculty: string[];
             /** Risk Factors */
-            risk_factors: string[];
+            riskFactors: string[];
             /** Mitigation Actions */
-            mitigation_actions: string[];
+            mitigationActions: string[];
         };
         /**
          * HubProtectionPlanCreateResponse
@@ -31562,23 +32092,23 @@ export interface components {
          */
         HubProtectionPlanCreateResponse: {
             /** Plan Id */
-            plan_id: string;
+            planId: string;
             /** Hub Faculty Id */
-            hub_faculty_id: string;
+            hubFacultyId: string;
             /** Hub Faculty Name */
-            hub_faculty_name: string;
+            hubFacultyName: string;
             /** Period Start */
-            period_start: string;
+            periodStart: string;
             /** Period End */
-            period_end: string;
+            periodEnd: string;
             /** Reason */
             reason: string;
             /** Workload Reduction */
-            workload_reduction: number;
+            workloadReduction: number;
             /** Backup Assigned */
-            backup_assigned: boolean;
+            backupAssigned: boolean;
             /** Backup Faculty Ids */
-            backup_faculty_ids: string[];
+            backupFacultyIds: string[];
             /** Status */
             status: string;
         };
@@ -31588,17 +32118,17 @@ export interface components {
          */
         HubStatusResponse: {
             /** Total Hubs */
-            total_hubs: number;
+            totalHubs: number;
             /** Catastrophic Count */
-            catastrophic_count: number;
+            catastrophicCount: number;
             /** Critical Count */
-            critical_count: number;
+            criticalCount: number;
             /** High Risk Count */
-            high_risk_count: number;
+            highRiskCount: number;
             /** Active Protection Plans */
-            active_protection_plans: number;
+            activeProtectionPlans: number;
             /** Pending Cross Training */
-            pending_cross_training: number;
+            pendingCrossTraining: number;
             /** Recommendations */
             recommendations?: string[];
         };
@@ -31639,7 +32169,7 @@ export interface components {
              * File Id
              * @description Unique file identifier for this version
              */
-            file_id: string;
+            fileId: string;
             /**
              * Url
              * @description URL to access this version
@@ -31649,7 +32179,7 @@ export interface components {
              * Size Bytes
              * @description File size in bytes
              */
-            size_bytes: number;
+            sizeBytes: number;
             /**
              * Width
              * @description Image width in pixels
@@ -31670,12 +32200,12 @@ export interface components {
              * Schedule Id
              * @description Schedule ID to assess
              */
-            schedule_id?: string | null;
+            scheduleId?: string | null;
             /**
              * Feature Vector
              * @description Schedule feature vector (if precomputed)
              */
-            feature_vector?: number[] | null;
+            featureVector?: number[] | null;
         };
         /**
          * ImmuneAssessmentResponse
@@ -31686,39 +32216,39 @@ export interface components {
              * Is Anomaly
              * @description Whether schedule is anomalous
              */
-            is_anomaly: boolean;
+            isAnomaly: boolean;
             /**
              * Anomaly Score
              * @description Anomaly severity (0=normal, 1=severe)
              */
-            anomaly_score: number;
+            anomalyScore: number;
             /**
              * Matching Detectors
              * @description Number of detectors that triggered
              */
-            matching_detectors: number;
+            matchingDetectors: number;
             /**
              * Total Detectors
              * @description Total number of active detectors
              */
-            total_detectors: number;
+            totalDetectors: number;
             /**
              * Closest Detector Distance
              * @description Distance to nearest detector
              */
-            closest_detector_distance: number;
+            closestDetectorDistance: number;
             /**
              * Suggested Repairs
              * @description Suggested repair strategies
              */
-            suggested_repairs?: {
+            suggestedRepairs?: {
                 [key: string]: unknown;
             }[];
             /**
              * Immune Health
              * @description Overall immune system status: healthy, degraded, compromised
              */
-            immune_health: string;
+            immuneHealth: string;
             /**
              * Source
              * @description Data source
@@ -31735,62 +32265,62 @@ export interface components {
              * Affected Faculty Count
              * @default 0
              */
-            affected_faculty_count: number;
+            affectedFacultyCount: number;
             /**
              * Affected Weeks Count
              * @default 0
              */
-            affected_weeks_count: number;
+            affectedWeeksCount: number;
             /**
              * Affected Blocks Count
              * @default 0
              */
-            affected_blocks_count: number;
+            affectedBlocksCount: number;
             /**
              * New Conflicts Created
              * @default 0
              */
-            new_conflicts_created: number;
+            newConflictsCreated: number;
             /**
              * Conflicts Resolved
              * @default 1
              */
-            conflicts_resolved: number;
+            conflictsResolved: number;
             /**
              * Cascading Changes Required
              * @default 0
              */
-            cascading_changes_required: number;
+            cascadingChangesRequired: number;
             /**
              * Workload Balance Score
              * @description 0=poor, 1=excellent
              */
-            workload_balance_score: number;
+            workloadBalanceScore: number;
             /**
              * Fairness Score
              * @description 0=unfair, 1=fair
              */
-            fairness_score: number;
+            fairnessScore: number;
             /**
              * Disruption Score
              * @description 0=minimal, 1=severe
              */
-            disruption_score: number;
+            disruptionScore: number;
             /**
              * Feasibility Score
              * @description 0=infeasible, 1=highly feasible
              */
-            feasibility_score: number;
+            feasibilityScore: number;
             /**
              * Confidence Level
              * @description Model confidence in assessment
              */
-            confidence_level: number;
+            confidenceLevel: number;
             /**
              * Overall Score
              * @description Overall resolution quality score
              */
-            overall_score: number;
+            overallScore: number;
             /** Recommendation */
             recommendation: string;
         };
@@ -31807,7 +32337,7 @@ export interface components {
              * Format: uuid
              * @description UUID of the user to impersonate
              */
-            target_user_id: string;
+            targetUserId: string;
         };
         /**
          * ImpersonateResponse
@@ -31823,15 +32353,15 @@ export interface components {
              * Impersonation Token
              * @description JWT token for the impersonation session
              */
-            impersonation_token: string;
+            impersonationToken: string;
             /** @description The user being impersonated */
-            target_user: components["schemas"]["UserResponse"];
+            targetUser: components["schemas"]["UserResponse"];
             /**
              * Expires At
              * Format: date-time
              * @description When the impersonation session expires
              */
-            expires_at: string;
+            expiresAt: string;
         };
         /**
          * ImpersonationStatus
@@ -31849,16 +32379,16 @@ export interface components {
              * @description Whether an impersonation session is active
              * @default false
              */
-            is_impersonating: boolean;
+            isImpersonating: boolean;
             /** @description The user being impersonated */
-            target_user?: components["schemas"]["UserResponse"] | null;
+            targetUser?: components["schemas"]["UserResponse"] | null;
             /** @description The admin who initiated impersonation */
-            original_user?: components["schemas"]["UserResponse"] | null;
+            originalUser?: components["schemas"]["UserResponse"] | null;
             /**
              * Expires At
              * @description When the impersonation session expires
              */
-            expires_at?: string | null;
+            expiresAt?: string | null;
         };
         /**
          * ImportAnalysisResponse
@@ -31869,8 +32399,8 @@ export interface components {
             success: boolean;
             /** Error */
             error?: string | null;
-            fmit_schedule?: components["schemas"]["ScheduleSummary"] | null;
-            clinic_schedule?: components["schemas"]["ScheduleSummary"] | null;
+            fmitSchedule?: components["schemas"]["ScheduleSummary"] | null;
+            clinicSchedule?: components["schemas"]["ScheduleSummary"] | null;
             /**
              * Conflicts
              * @default []
@@ -31881,7 +32411,7 @@ export interface components {
              * @default []
              */
             recommendations: components["schemas"]["Recommendation"][];
-            summary?: components["schemas"]["ConflictSummary"] | null;
+            summary?: components["schemas"]["app__schemas__schedule__ConflictSummary"] | null;
         };
         /**
          * ImportApplyError
@@ -31892,20 +32422,20 @@ export interface components {
              * Staged Assignment Id
              * Format: uuid
              */
-            staged_assignment_id: string;
+            stagedAssignmentId: string;
             /** Row Number */
-            row_number?: number | null;
+            rowNumber?: number | null;
             /** Person Name */
-            person_name: string;
+            personName: string;
             /**
              * Assignment Date
              * Format: date
              */
-            assignment_date: string;
+            assignmentDate: string;
             /** Error Message */
-            error_message: string;
+            errorMessage: string;
             /** Error Code */
-            error_code?: string | null;
+            errorCode?: string | null;
         };
         /**
          * ImportApplyRequest
@@ -31913,19 +32443,19 @@ export interface components {
          */
         ImportApplyRequest: {
             /** @description Override conflict resolution mode (optional) */
-            conflict_resolution?: components["schemas"]["ConflictResolutionMode"] | null;
+            conflictResolution?: components["schemas"]["ConflictResolutionMode"] | null;
             /**
              * Dry Run
              * @description If True, validate only without applying
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
             /**
              * Validate Acgme
              * @description If True, validate ACGME compliance before apply
              * @default true
              */
-            validate_acgme: boolean;
+            validateAcgme: boolean;
         };
         /**
          * ImportApplyResponse
@@ -31936,35 +32466,35 @@ export interface components {
              * Batch Id
              * Format: uuid
              */
-            batch_id: string;
+            batchId: string;
             status: components["schemas"]["ImportBatchStatus"];
             /**
              * Applied Count
              * @description Successfully applied assignments
              * @default 0
              */
-            applied_count: number;
+            appliedCount: number;
             /**
              * Skipped Count
              * @description Skipped assignments (user choice)
              * @default 0
              */
-            skipped_count: number;
+            skippedCount: number;
             /**
              * Error Count
              * @description Failed to apply
              * @default 0
              */
-            error_count: number;
+            errorCount: number;
             /**
              * Started At
              * Format: date-time
              */
-            started_at: string;
+            startedAt: string;
             /** Completed At */
-            completed_at?: string | null;
+            completedAt?: string | null;
             /** Processing Time Ms */
-            processing_time_ms?: number | null;
+            processingTimeMs?: number | null;
             /**
              * Errors
              * @description Detailed error information
@@ -31974,19 +32504,19 @@ export interface components {
              * Acgme Warnings
              * @description ACGME warnings after apply
              */
-            acgme_warnings?: string[];
+            acgmeWarnings?: string[];
             /**
              * Rollback Available
              * @default true
              */
-            rollback_available: boolean;
+            rollbackAvailable: boolean;
             /** Rollback Expires At */
-            rollback_expires_at?: string | null;
+            rollbackExpiresAt?: string | null;
             /**
              * Dry Run
              * @default false
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * ImportBatchCounts
@@ -32056,17 +32586,17 @@ export interface components {
              * @description Items per page
              * @default 50
              */
-            page_size: number;
+            pageSize: number;
             /**
              * Has Next
              * @description Has next page
              */
-            has_next: boolean;
+            hasNext: boolean;
             /**
              * Has Previous
              * @description Has previous page
              */
-            has_previous: boolean;
+            hasPrevious: boolean;
         };
         /**
          * ImportBatchListItem
@@ -32082,23 +32612,23 @@ export interface components {
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /** Filename */
             filename?: string | null;
             status: components["schemas"]["ImportBatchStatus"];
             /** Target Block */
-            target_block?: number | null;
+            targetBlock?: number | null;
             /** Target Start Date */
-            target_start_date?: string | null;
+            targetStartDate?: string | null;
             /** Target End Date */
-            target_end_date?: string | null;
+            targetEndDate?: string | null;
             /** Row Count */
-            row_count?: number | null;
+            rowCount?: number | null;
             /**
              * Error Count
              * @default 0
              */
-            error_count: number;
+            errorCount: number;
             counts?: components["schemas"]["ImportBatchCounts"];
         };
         /**
@@ -32115,52 +32645,52 @@ export interface components {
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /** Created By Id */
-            created_by_id?: string | null;
+            createdById?: string | null;
             /** Filename */
             filename?: string | null;
             /** File Hash */
-            file_hash?: string | null;
+            fileHash?: string | null;
             /** File Size Bytes */
-            file_size_bytes?: number | null;
+            fileSizeBytes?: number | null;
             status: components["schemas"]["ImportBatchStatus"];
-            conflict_resolution: components["schemas"]["ConflictResolutionMode"];
+            conflictResolution: components["schemas"]["ConflictResolutionMode"];
             /** Target Block */
-            target_block?: number | null;
+            targetBlock?: number | null;
             /** Target Start Date */
-            target_start_date?: string | null;
+            targetStartDate?: string | null;
             /** Target End Date */
-            target_end_date?: string | null;
+            targetEndDate?: string | null;
             /** Notes */
             notes?: string | null;
             /** Row Count */
-            row_count?: number | null;
+            rowCount?: number | null;
             /**
              * Error Count
              * @default 0
              */
-            error_count: number;
+            errorCount: number;
             /**
              * Warning Count
              * @default 0
              */
-            warning_count: number;
+            warningCount: number;
             /** Applied At */
-            applied_at?: string | null;
+            appliedAt?: string | null;
             /** Applied By Id */
-            applied_by_id?: string | null;
+            appliedById?: string | null;
             /**
              * Rollback Available
              * @default true
              */
-            rollback_available: boolean;
+            rollbackAvailable: boolean;
             /** Rollback Expires At */
-            rollback_expires_at?: string | null;
+            rollbackExpiresAt?: string | null;
             /** Rolled Back At */
-            rolled_back_at?: string | null;
+            rolledBackAt?: string | null;
             /** Rolled Back By Id */
-            rolled_back_by_id?: string | null;
+            rolledBackById?: string | null;
             /** @description Aggregated assignment counts by status */
             counts?: components["schemas"]["ImportBatchCounts"];
         };
@@ -32179,30 +32709,30 @@ export interface components {
              * Staged Assignment Id
              * Format: uuid
              */
-            staged_assignment_id: string;
+            stagedAssignmentId: string;
             /**
              * Existing Assignment Id
              * Format: uuid
              */
-            existing_assignment_id: string;
+            existingAssignmentId: string;
             /** Person Name */
-            person_name: string;
+            personName: string;
             /**
              * Assignment Date
              * Format: date
              */
-            assignment_date: string;
+            assignmentDate: string;
             /** Slot */
             slot?: string | null;
             /** Staged Rotation */
-            staged_rotation?: string | null;
+            stagedRotation?: string | null;
             /** Existing Rotation */
-            existing_rotation?: string | null;
+            existingRotation?: string | null;
             /**
              * Conflict Type
              * @description duplicate or overwrite
              */
-            conflict_type: string;
+            conflictType: string;
         };
         /**
          * ImportFormat
@@ -32219,41 +32749,41 @@ export interface components {
              * Batch Id
              * Format: uuid
              */
-            batch_id: string;
+            batchId: string;
             /**
              * New Count
              * @description New assignments to create
              * @default 0
              */
-            new_count: number;
+            newCount: number;
             /**
              * Update Count
              * @description Existing assignments to update
              * @default 0
              */
-            update_count: number;
+            updateCount: number;
             /**
              * Conflict Count
              * @description Conflicts requiring review
              * @default 0
              */
-            conflict_count: number;
+            conflictCount: number;
             /**
              * Skip Count
              * @description Assignments marked as skip
              * @default 0
              */
-            skip_count: number;
+            skipCount: number;
             /**
              * Acgme Violations
              * @description ACGME violations that would occur after apply
              */
-            acgme_violations?: string[];
+            acgmeViolations?: string[];
             /**
              * Staged Assignments
              * @description Staged assignments (paginated)
              */
-            staged_assignments?: components["schemas"]["StagedAssignmentResponse"][];
+            stagedAssignments?: components["schemas"]["StagedAssignmentResponse"][];
             /**
              * Conflicts
              * @description Detailed conflict information
@@ -32264,7 +32794,7 @@ export interface components {
              * @description Total staged assignments
              * @default 0
              */
-            total_staged: number;
+            totalStaged: number;
             /**
              * Page
              * @default 1
@@ -32274,7 +32804,7 @@ export interface components {
              * Page Size
              * @default 50
              */
-            page_size: number;
+            pageSize: number;
         };
         /**
          * ImportRollbackRequest
@@ -32296,27 +32826,27 @@ export interface components {
              * Batch Id
              * Format: uuid
              */
-            batch_id: string;
+            batchId: string;
             status: components["schemas"]["ImportBatchStatus"];
             /**
              * Rolled Back Count
              * @description Assignments rolled back
              * @default 0
              */
-            rolled_back_count: number;
+            rolledBackCount: number;
             /**
              * Failed Count
              * @description Failed to rollback
              * @default 0
              */
-            failed_count: number;
+            failedCount: number;
             /**
              * Rolled Back At
              * Format: date-time
              */
-            rolled_back_at: string;
+            rolledBackAt: string;
             /** Rolled Back By Id */
-            rolled_back_by_id?: string | null;
+            rolledBackById?: string | null;
             /** Errors */
             errors?: string[];
         };
@@ -32326,19 +32856,19 @@ export interface components {
          */
         IndexRecommendationResponse: {
             /** Table Name */
-            table_name: string;
+            tableName: string;
             /** Columns */
             columns: string[];
             /** Index Type */
-            index_type: string;
+            indexType: string;
             /** Priority */
             priority: string;
             /** Reason */
             reason: string;
             /** Estimated Benefit */
-            estimated_benefit: string;
+            estimatedBenefit: string;
             /** Create Statement */
-            create_statement: string;
+            createStatement: string;
         };
         /**
          * IndexUsageStatsResponse
@@ -32346,21 +32876,21 @@ export interface components {
          */
         IndexUsageStatsResponse: {
             /** Schema Name */
-            schema_name: string;
+            schemaName: string;
             /** Table Name */
-            table_name: string;
+            tableName: string;
             /** Index Name */
-            index_name: string;
+            indexName: string;
             /** Index Size Mb */
-            index_size_mb: number;
+            indexSizeMb: number;
             /** Scans */
             scans: number;
             /** Tuples Read */
-            tuples_read: number;
+            tuplesRead: number;
             /** Tuples Fetched */
-            tuples_fetched: number;
+            tuplesFetched: number;
             /** Is Unique */
-            is_unique: boolean;
+            isUnique: boolean;
             /** Definition */
             definition: string;
         };
@@ -32378,11 +32908,11 @@ export interface components {
              * Chunks Created
              * @description Number of chunks created
              */
-            chunks_created: number;
+            chunksCreated: number;
             /** Chunk Ids */
-            chunk_ids?: string[];
+            chunkIds?: string[];
             /** Doc Type */
-            doc_type: string;
+            docType: string;
             /**
              * Message
              * @default
@@ -32404,7 +32934,7 @@ export interface components {
             /** Message */
             message: string;
             /** Job Id */
-            job_id?: string | null;
+            jobId?: string | null;
         };
         /**
          * JobCreateSchema
@@ -32426,11 +32956,11 @@ export interface components {
             /** Name */
             name: string;
             /** Job Func */
-            job_func: string;
+            jobFunc: string;
             /** Trigger Type */
-            trigger_type: string;
+            triggerType: string;
             /** Trigger Config */
-            trigger_config: {
+            triggerConfig: {
                 [key: string]: unknown;
             };
             /** Args */
@@ -32443,9 +32973,9 @@ export interface components {
              * Max Instances
              * @default 1
              */
-            max_instances: number;
+            maxInstances: number;
             /** Misfire Grace Time */
-            misfire_grace_time?: number | null;
+            misfireGraceTime?: number | null;
             /**
              * Coalesce
              * @default true
@@ -32500,16 +33030,16 @@ export interface components {
              * Job Id
              * Format: uuid
              */
-            job_id: string;
+            jobId: string;
             /** Job Name */
-            job_name: string;
+            jobName: string;
             /**
              * Started At
              * Format: date-time
              */
-            started_at: string;
+            startedAt: string;
             /** Finished At */
-            finished_at: string | null;
+            finishedAt: string | null;
             /** Status */
             status: string;
             /** Result */
@@ -32517,12 +33047,12 @@ export interface components {
             /** Error */
             error: string | null;
             /** Runtime Seconds */
-            runtime_seconds: number | null;
+            runtimeSeconds: number | null;
             /**
              * Scheduled Run Time
              * Format: date-time
              */
-            scheduled_run_time: string;
+            scheduledRunTime: string;
         };
         /**
          * JobListResponseSchema
@@ -32571,11 +33101,11 @@ export interface components {
             /** Name */
             name: string;
             /** Job Func */
-            job_func: string;
+            jobFunc: string;
             /** Trigger Type */
-            trigger_type: string;
+            triggerType: string;
             /** Trigger Config */
-            trigger_config: {
+            triggerConfig: {
                 [key: string]: unknown;
             };
             /** Args */
@@ -32585,15 +33115,15 @@ export interface components {
                 [key: string]: unknown;
             };
             /** Next Run Time */
-            next_run_time: string | null;
+            nextRunTime: string | null;
             /** Last Run Time */
-            last_run_time: string | null;
+            lastRunTime: string | null;
             /** Run Count */
-            run_count: number;
+            runCount: number;
             /** Max Instances */
-            max_instances: number;
+            maxInstances: number;
             /** Misfire Grace Time */
-            misfire_grace_time: number | null;
+            misfireGraceTime: number | null;
             /** Coalesce */
             coalesce: boolean;
             /** Enabled */
@@ -32604,14 +33134,14 @@ export interface components {
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
             /** Created By */
-            created_by: string | null;
+            createdBy: string | null;
         };
         /**
          * JobStatisticsSchema
@@ -32630,23 +33160,23 @@ export interface components {
          */
         JobStatisticsSchema: {
             /** Job Id */
-            job_id: string;
+            jobId: string;
             /** Job Name */
-            job_name: string;
+            jobName: string;
             /** Total Runs */
-            total_runs: number;
+            totalRuns: number;
             /** Success Count */
-            success_count: number;
+            successCount: number;
             /** Failure Count */
-            failure_count: number;
+            failureCount: number;
             /** Missed Count */
-            missed_count: number;
+            missedCount: number;
             /** Average Runtime Seconds */
-            average_runtime_seconds: number;
+            averageRuntimeSeconds: number;
             /** Last Run Time */
-            last_run_time: string | null;
+            lastRunTime: string | null;
             /** Next Run Time */
-            next_run_time: string | null;
+            nextRunTime: string | null;
         };
         /**
          * JobUpdateSchema
@@ -32664,7 +33194,7 @@ export interface components {
          */
         JobUpdateSchema: {
             /** Trigger Config */
-            trigger_config?: {
+            triggerConfig?: {
                 [key: string]: unknown;
             } | null;
             /** Args */
@@ -32674,9 +33204,9 @@ export interface components {
                 [key: string]: unknown;
             } | null;
             /** Max Instances */
-            max_instances?: number | null;
+            maxInstances?: number | null;
             /** Misfire Grace Time */
-            misfire_grace_time?: number | null;
+            misfireGraceTime?: number | null;
             /** Coalesce */
             coalesce?: boolean | null;
             /** Enabled */
@@ -32716,7 +33246,7 @@ export interface components {
             /** Rank */
             rank: number;
             /** Display Name */
-            display_name: string;
+            displayName: string;
             /** Points */
             points: number;
             /** Streak */
@@ -32725,7 +33255,7 @@ export interface components {
              * Is You
              * @default false
              */
-            is_you: boolean;
+            isYou: boolean;
         };
         /**
          * LeaderboardOptInRequest
@@ -32733,9 +33263,9 @@ export interface components {
          */
         LeaderboardOptInRequest: {
             /** Opt In */
-            opt_in: boolean;
+            optIn: boolean;
             /** Display Name */
-            display_name?: string | null;
+            displayName?: string | null;
         };
         /**
          * LeaderboardResponse
@@ -32745,13 +33275,13 @@ export interface components {
             /** Entries */
             entries: components["schemas"]["LeaderboardEntry"][];
             /** Total Participants */
-            total_participants: number;
+            totalParticipants: number;
             /** Your Rank */
-            your_rank?: number | null;
+            yourRank?: number | null;
             /** Your Points */
-            your_points?: number | null;
+            yourPoints?: number | null;
             /** Snapshot Date */
-            snapshot_date?: string | null;
+            snapshotDate?: string | null;
         };
         /**
          * LeaveCalendarEntry
@@ -32762,27 +33292,27 @@ export interface components {
              * Faculty Id
              * Format: uuid
              */
-            faculty_id: string;
+            facultyId: string;
             /** Faculty Name */
-            faculty_name: string;
-            leave_type: components["schemas"]["LeaveType"];
+            facultyName: string;
+            leaveType: components["schemas"]["LeaveType"];
             /**
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /** Is Blocking */
-            is_blocking: boolean;
+            isBlocking: boolean;
             /**
              * Has Fmit Conflict
              * @default false
              */
-            has_fmit_conflict: boolean;
+            hasFmitConflict: boolean;
         };
         /**
          * LeaveCalendarResponse
@@ -32793,19 +33323,19 @@ export interface components {
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /** Entries */
             entries: components["schemas"]["LeaveCalendarEntry"][];
             /**
              * Conflict Count
              * @default 0
              */
-            conflict_count: number;
+            conflictCount: number;
         };
         /**
          * LeaveConflict
@@ -32816,15 +33346,15 @@ export interface components {
              * Resident Id
              * Format: uuid
              */
-            resident_id: string;
+            residentId: string;
             /** Resident Name */
-            resident_name: string;
+            residentName: string;
             /** Rotation Name */
-            rotation_name: string;
+            rotationName: string;
             /** Leave Days */
-            leave_days: number;
+            leaveDays: number;
             /** Conflict Reason */
-            conflict_reason: string;
+            conflictReason: string;
         };
         /**
          * LeaveCreateRequest
@@ -32835,23 +33365,23 @@ export interface components {
              * Faculty Id
              * Format: uuid
              */
-            faculty_id: string;
+            facultyId: string;
             /**
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
-            leave_type: components["schemas"]["LeaveType"];
+            endDate: string;
+            leaveType: components["schemas"]["LeaveType"];
             /**
              * Is Blocking
              * @default true
              */
-            is_blocking: boolean;
+            isBlocking: boolean;
             /** Description */
             description?: string | null;
         };
@@ -32867,7 +33397,7 @@ export interface components {
             /** Page */
             page: number;
             /** Page Size */
-            page_size: number;
+            pageSize: number;
         };
         /**
          * LeaveResponse
@@ -32883,31 +33413,31 @@ export interface components {
              * Faculty Id
              * Format: uuid
              */
-            faculty_id: string;
+            facultyId: string;
             /** Faculty Name */
-            faculty_name: string;
+            facultyName: string;
             /**
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
-            leave_type: components["schemas"]["LeaveType"];
+            endDate: string;
+            leaveType: components["schemas"]["LeaveType"];
             /** Is Blocking */
-            is_blocking: boolean;
+            isBlocking: boolean;
             /** Description */
             description: string | null;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /** Updated At */
-            updated_at: string | null;
+            updatedAt: string | null;
         };
         /**
          * LeaveType
@@ -32931,12 +33461,12 @@ export interface components {
          */
         LeaveUpdateRequest: {
             /** Start Date */
-            start_date?: string | null;
+            startDate?: string | null;
             /** End Date */
-            end_date?: string | null;
-            leave_type?: components["schemas"]["LeaveType"] | null;
+            endDate?: string | null;
+            leaveType?: components["schemas"]["LeaveType"] | null;
             /** Is Blocking */
-            is_blocking?: boolean | null;
+            isBlocking?: boolean | null;
             /** Description */
             description?: string | null;
         };
@@ -32946,32 +33476,32 @@ export interface components {
          */
         LeaveWebhookPayload: {
             /** Event Type */
-            event_type: string;
+            eventType: string;
             /**
              * Faculty Id
              * Format: uuid
              */
-            faculty_id: string;
+            facultyId: string;
             /** Faculty Name */
-            faculty_name: string;
+            facultyName: string;
             /** Leave Id */
-            leave_id?: string | null;
+            leaveId?: string | null;
             /**
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
-            leave_type: components["schemas"]["LeaveType"];
+            endDate: string;
+            leaveType: components["schemas"]["LeaveType"];
             /**
              * Is Blocking
              * @default true
              */
-            is_blocking: boolean;
+            isBlocking: boolean;
             /** Description */
             description?: string | null;
             /**
@@ -33038,13 +33568,13 @@ export interface components {
         LoadSheddingStatus: {
             level: components["schemas"]["LoadSheddingLevel"];
             /** Activities Suspended */
-            activities_suspended: string[];
+            activitiesSuspended: string[];
             /** Activities Protected */
-            activities_protected: string[];
+            activitiesProtected: string[];
             /** Capacity Available */
-            capacity_available: number;
+            capacityAvailable: number;
             /** Capacity Demand */
-            capacity_demand: number;
+            capacityDemand: number;
         };
         /**
          * LocationManifest
@@ -33055,15 +33585,15 @@ export interface components {
              * Clinic Location
              * @description Clinic location name
              */
-            clinic_location?: string | null;
+            clinicLocation?: string | null;
             /**
              * Time Slots
              * @description Time slots (AM/PM) with assignments
              */
-            time_slots: {
+            timeSlots: {
                 [key: string]: components["schemas"]["AssignmentSummary"][] | undefined;
             };
-            staffing_summary: components["schemas"]["StaffingSummary"];
+            staffingSummary: components["schemas"]["StaffingSummary"];
         };
         /**
          * LorenzCurveRequest
@@ -33085,22 +33615,22 @@ export interface components {
              * Population Shares
              * @description Cumulative population share (x-axis)
              */
-            population_shares: number[];
+            populationShares: number[];
             /**
              * Value Shares
              * @description Cumulative value share (y-axis)
              */
-            value_shares: number[];
+            valueShares: number[];
             /**
              * Equality Line
              * @description 45-degree equality line for comparison
              */
-            equality_line: number[];
+            equalityLine: number[];
             /**
              * Gini Coefficient
              * @description Gini coefficient calculated from curve
              */
-            gini_coefficient: number;
+            giniCoefficient: number;
         };
         /**
          * MTFComplianceResponse
@@ -33111,51 +33641,51 @@ export interface components {
              * Drrs Category
              * @description DRRS C-rating (C1-C5)
              */
-            drrs_category: string;
+            drrsCategory: string;
             /**
              * Mission Capability
              * @description Mission capability assessment
              */
-            mission_capability: string;
+            missionCapability: string;
             /**
              * Personnel Rating
              * @description Personnel P-rating (P1-P4)
              */
-            personnel_rating: string;
+            personnelRating: string;
             /**
              * Capability Rating
              * @description Capability S-rating (S1-S4)
              */
-            capability_rating: string;
+            capabilityRating: string;
             /**
              * Circuit Breaker
              * @description Circuit breaker status if checked
              */
-            circuit_breaker?: {
+            circuitBreaker?: {
                 [key: string]: unknown;
             } | null;
             /**
              * Executive Summary
              * @description Executive summary
              */
-            executive_summary: string;
+            executiveSummary: string;
             /** Deficiencies */
             deficiencies?: string[];
             /**
              * Mfrs Generated
              * @default 0
              */
-            mfrs_generated: number;
+            mfrsGenerated: number;
             /**
              * Rffs Generated
              * @default 0
              */
-            rffs_generated: number;
+            rffsGenerated: number;
             /**
              * Iron Dome Status
              * @description green/yellow/red status
              */
-            iron_dome_status: string;
+            ironDomeStatus: string;
             /**
              * Severity
              * @description healthy/warning/critical/emergency
@@ -33192,25 +33722,25 @@ export interface components {
              * Request Id
              * Format: uuid
              */
-            request_id: string;
+            requestId: string;
             /** Requesting Faculty Name */
-            requesting_faculty_name: string;
+            requestingFacultyName: string;
             /**
              * Week Available
              * Format: date
              */
-            week_available: string;
+            weekAvailable: string;
             /** Reason */
             reason: string | null;
             /**
              * Posted At
              * Format: date-time
              */
-            posted_at: string;
+            postedAt: string;
             /** Expires At */
-            expires_at: string | null;
+            expiresAt: string | null;
             /** Is Compatible */
-            is_compatible: boolean;
+            isCompatible: boolean;
         };
         /**
          * MarketplaceResponse
@@ -33222,7 +33752,7 @@ export interface components {
             /** Total */
             total: number;
             /** My Postings */
-            my_postings: number;
+            myPostings: number;
         };
         /**
          * MatchStatus
@@ -33242,12 +33772,12 @@ export interface components {
              * Row Index
              * @description Row index (resident)
              */
-            row_index: number;
+            rowIndex: number;
             /**
              * Column Index
              * @description Column index (block)
              */
-            column_index: number;
+            columnIndex: number;
             /**
              * Rotation
              * @description Rotation name or abbreviation
@@ -33257,14 +33787,14 @@ export interface components {
              * Rotation Full Name
              * @description Full rotation name
              */
-            rotation_full_name?: string | null;
+            rotationFullName?: string | null;
             /**
              * Hours
              * @description Total hours in this block
              */
             hours: number;
             /** @description ACGME compliance status */
-            acgme_status: components["schemas"]["ACGMEStatus"];
+            acgmeStatus: components["schemas"]["ACGMEStatus"];
         };
         /**
          * MeDashboardResponse
@@ -33276,19 +33806,19 @@ export interface components {
              * Upcoming Schedule
              * @default []
              */
-            upcoming_schedule: components["schemas"]["DashboardScheduleItem"][];
+            upcomingSchedule: components["schemas"]["DashboardScheduleItem"][];
             /**
              * Pending Swaps
              * @default []
              */
-            pending_swaps: components["schemas"]["DashboardSwapItem"][];
+            pendingSwaps: components["schemas"]["DashboardSwapItem"][];
             /**
              * Absences
              * @default []
              */
             absences: components["schemas"]["DashboardAbsenceItem"][];
             /** Calendar Sync Url */
-            calendar_sync_url?: string | null;
+            calendarSyncUrl?: string | null;
             summary: components["schemas"]["DashboardSummary"];
         };
         /**
@@ -33300,29 +33830,29 @@ export interface components {
              * Total Memory Cells
              * @description Total stored anomaly patterns
              */
-            total_memory_cells: number;
+            totalMemoryCells: number;
             /**
              * Recent Activations
              * @description Activations in last 30 days
              */
-            recent_activations: number;
+            recentActivations: number;
             /**
              * Pattern Categories
              * @description Count by pattern category
              */
-            pattern_categories?: {
+            patternCategories?: {
                 [key: string]: number | undefined;
             };
             /**
              * Oldest Pattern Age Days
              * @description Age of oldest stored pattern
              */
-            oldest_pattern_age_days: number;
+            oldestPatternAgeDays: number;
             /**
              * Memory Utilization
              * @description Memory capacity used
              */
-            memory_utilization: number;
+            memoryUtilization: number;
             /**
              * Source
              * @description Data source
@@ -33339,17 +33869,17 @@ export interface components {
              * Current Energy
              * @description Current state energy level
              */
-            current_energy: number;
+            currentEnergy: number;
             /**
              * Energy Landscape
              * @description Energies of nearby states
              */
-            energy_landscape?: number[];
+            energyLandscape?: number[];
             /**
              * Barrier Samples
              * @description Energy barriers to nearby states
              */
-            barrier_samples?: number[];
+            barrierSamples?: number[];
             /**
              * Temperature
              * @description System temperature
@@ -33371,12 +33901,12 @@ export interface components {
              * Barrier Height
              * @description Energy barrier to nearest stable state
              */
-            barrier_height: number;
+            barrierHeight: number;
             /**
              * Escape Rate
              * @description Probability of spontaneous escape per time unit
              */
-            escape_rate: number;
+            escapeRate: number;
             /**
              * Lifetime
              * @description Expected lifetime in current state
@@ -33386,22 +33916,22 @@ export interface components {
              * Is Metastable
              * @description True if trapped in local minimum
              */
-            is_metastable: boolean;
+            isMetastable: boolean;
             /**
              * Stability Score
              * @description Stability score (0-1)
              */
-            stability_score: number;
+            stabilityScore: number;
             /**
              * Nearest Stable State
              * @description Energy of nearest true minimum
              */
-            nearest_stable_state?: number | null;
+            nearestStableState?: number | null;
             /**
              * Risk Level
              * @description Risk level: low, moderate, high, critical
              */
-            risk_level: string;
+            riskLevel: string;
             /**
              * Recommendations
              * @description Recommendations
@@ -33434,14 +33964,14 @@ export interface components {
          */
         MetricDataResponse: {
             /** Experiment Key */
-            experiment_key: string;
+            experimentKey: string;
             /** User Id */
-            user_id: string;
+            userId: string;
             /** Variant Key */
-            variant_key: string;
+            variantKey: string;
             /** Metric Name */
-            metric_name: string;
-            metric_type: components["schemas"]["MetricType"];
+            metricName: string;
+            metricType: components["schemas"]["MetricType"];
             /** Value */
             value: number;
             /**
@@ -33479,17 +34009,17 @@ export interface components {
              * User Id
              * @description User identifier
              */
-            user_id: string;
+            userId: string;
             /**
              * Variant Key
              * @description Variant identifier
              */
-            variant_key: string;
+            variantKey: string;
             /**
              * Metric Name
              * @description Metric name
              */
-            metric_name: string;
+            metricName: string;
             /**
              * Value
              * @description Metric value
@@ -33499,7 +34029,7 @@ export interface components {
              * @description Type of metric
              * @default numeric
              */
-            metric_type: components["schemas"]["MetricType"];
+            metricType: components["schemas"]["MetricType"];
             /**
              * Metadata
              * @description Additional metadata
@@ -33571,12 +34101,12 @@ export interface components {
              * Old Version
              * @description Previous version identifier
              */
-            old_version: string;
+            oldVersion: string;
             /**
              * New Version
              * @description New version identifier
              */
-            new_version: string;
+            newVersion: string;
         };
         /**
          * MigrationGuideResponse
@@ -33587,27 +34117,27 @@ export interface components {
              * Migration Guide
              * @description Markdown-formatted migration guide
              */
-            migration_guide: string;
+            migrationGuide: string;
             /**
              * Old Version
              * @description Previous version
              */
-            old_version: string;
+            oldVersion: string;
             /**
              * New Version
              * @description New version
              */
-            new_version: string;
+            newVersion: string;
             /**
              * Breaking Changes Count
              * @description Number of breaking changes
              */
-            breaking_changes_count: number;
+            breakingChangesCount: number;
             /**
              * Generated At
              * @description ISO timestamp when generated
              */
-            generated_at: string;
+            generatedAt: string;
         };
         /**
          * ModelHealthResponse
@@ -33615,9 +34145,9 @@ export interface components {
          */
         ModelHealthResponse: {
             /** Ml Enabled */
-            ml_enabled: boolean;
+            mlEnabled: boolean;
             /** Models Available */
-            models_available: string;
+            modelsAvailable: string;
             /** Models */
             models: components["schemas"]["ModelStatusResponse"][];
             /** Recommendations */
@@ -33633,9 +34163,9 @@ export interface components {
             /** Available */
             available: boolean;
             /** Last Trained */
-            last_trained: string | null;
+            lastTrained: string | null;
             /** Age Days */
-            age_days: number | null;
+            ageDays: number | null;
             /** Metrics */
             metrics?: {
                 [key: string]: number | undefined;
@@ -33650,17 +34180,17 @@ export interface components {
              * Faculty Id
              * Format: uuid
              */
-            faculty_id: string;
+            facultyId: string;
             /** Faculty Name */
-            faculty_name: string;
+            facultyName: string;
             /** Fmit Weeks */
-            fmit_weeks: components["schemas"]["FMITWeekInfo"][];
+            fmitWeeks: components["schemas"]["FMITWeekInfo"][];
             /** Total Weeks Assigned */
-            total_weeks_assigned: number;
+            totalWeeksAssigned: number;
             /** Target Weeks */
-            target_weeks: number;
+            targetWeeks: number;
             /** Weeks Remaining */
-            weeks_remaining: number;
+            weeksRemaining: number;
         };
         /**
          * MySwapsResponse
@@ -33668,11 +34198,11 @@ export interface components {
          */
         MySwapsResponse: {
             /** Incoming Requests */
-            incoming_requests: components["schemas"]["SwapRequestSummary"][];
+            incomingRequests: components["schemas"]["SwapRequestSummary"][];
             /** Outgoing Requests */
-            outgoing_requests: components["schemas"]["SwapRequestSummary"][];
+            outgoingRequests: components["schemas"]["SwapRequestSummary"][];
             /** Recent Swaps */
-            recent_swaps: components["schemas"]["SwapRequestSummary"][];
+            recentSwaps: components["schemas"]["SwapRequestSummary"][];
         };
         /**
          * NFPCAudit
@@ -33682,7 +34212,7 @@ export interface components {
             /** Compliant */
             compliant: boolean;
             /** Total Nf Transitions */
-            total_nf_transitions: number;
+            totalNfTransitions: number;
             /** Violations */
             violations: components["schemas"]["NFPCAuditViolation"][];
             /** Message */
@@ -33694,23 +34224,23 @@ export interface components {
          */
         NFPCAuditViolation: {
             /** Person Id */
-            person_id?: string | null;
+            personId?: string | null;
             /** Person Name */
-            person_name?: string | null;
+            personName?: string | null;
             /** Nf Date */
-            nf_date?: string | null;
+            nfDate?: string | null;
             /** Pc Required Date */
-            pc_required_date?: string | null;
+            pcRequiredDate?: string | null;
             /**
              * Missing Am Pc
              * @default false
              */
-            missing_am_pc: boolean;
+            missingAmPc: boolean;
             /**
              * Missing Pm Pc
              * @default false
              */
-            missing_pm_pc: boolean;
+            missingPmPc: boolean;
         };
         /**
          * NearbyAttractorsRequest
@@ -33721,18 +34251,18 @@ export interface components {
              * Start Date
              * @description Start date (YYYY-MM-DD)
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * @description End date (YYYY-MM-DD)
              */
-            end_date: string;
+            endDate: string;
             /**
              * Max Distance
              * @description Maximum Hamming distance to search
              * @default 10
              */
-            max_distance: number;
+            maxDistance: number;
         };
         /**
          * NearbyAttractorsResponse
@@ -33743,29 +34273,29 @@ export interface components {
              * Analyzed At
              * @description ISO timestamp of analysis
              */
-            analyzed_at: string;
+            analyzedAt: string;
             /**
              * Current State Energy
              * @description Energy of current state
              */
-            current_state_energy: number;
+            currentStateEnergy: number;
             /**
              * Attractors Found
              * @description Number of attractors found
              */
-            attractors_found: number;
+            attractorsFound: number;
             /** Attractors */
             attractors?: components["schemas"]["AttractorInfoResponse"][];
             /**
              * Global Minimum Identified
              * @description Whether global minimum was found
              */
-            global_minimum_identified: boolean;
+            globalMinimumIdentified: boolean;
             /**
              * Current Basin Id
              * @description ID of basin containing current state
              */
-            current_basin_id?: string | null;
+            currentBasinId?: string | null;
             /**
              * Interpretation
              * @description Human-readable interpretation
@@ -33787,13 +34317,13 @@ export interface components {
          *     Shows who is on night call so staff know they're unavailable during day.
          */
         NightCallInfo: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Call Type
              * @description Type of call (night, backup)
              * @default night
              */
-            call_type: string;
+            callType: string;
         };
         /**
          * OAuth2ClientCreate
@@ -33801,11 +34331,11 @@ export interface components {
          */
         OAuth2ClientCreate: {
             /** Client Name */
-            client_name: string;
+            clientName: string;
             /** Client Uri */
-            client_uri?: string | null;
+            clientUri?: string | null;
             /** Redirect Uris */
-            redirect_uris: string[];
+            redirectUris: string[];
             /** Scope */
             scope?: string | null;
         };
@@ -33820,23 +34350,23 @@ export interface components {
              */
             id: string;
             /** Client Id */
-            client_id: string;
+            clientId: string;
             /** Client Name */
-            client_name: string;
+            clientName: string;
             /** Client Uri */
-            client_uri: string | null;
+            clientUri: string | null;
             /** Redirect Uris */
-            redirect_uris: string[];
+            redirectUris: string[];
             /** Grant Types */
-            grant_types: string[];
+            grantTypes: string[];
             /** Response Types */
-            response_types: string[];
+            responseTypes: string[];
             /** Scope */
             scope: string | null;
             /** Is Public */
-            is_public: boolean;
+            isPublic: boolean;
             /** Is Active */
-            is_active: boolean;
+            isActive: boolean;
         };
         /**
          * OverallStatus
@@ -33854,46 +34384,46 @@ export interface components {
              * Format: uuid
              * @description Original call assignment ID
              */
-            call_assignment_id: string;
+            callAssignmentId: string;
             /**
              * Call Date
              * Format: date
              * @description Date of the call
              */
-            call_date: string;
+            callDate: string;
             /**
              * Person Id
              * Format: uuid
              * @description Person ID
              */
-            person_id: string;
+            personId: string;
             /**
              * Person Name
              * @description Person name
              */
-            person_name?: string | null;
+            personName?: string | null;
             /**
              * Pcat Created
              * @description Whether PCAT assignment was created
              * @default false
              */
-            pcat_created: boolean;
+            pcatCreated: boolean;
             /**
              * Do Created
              * @description Whether DO assignment was created
              * @default false
              */
-            do_created: boolean;
+            doCreated: boolean;
             /**
              * Pcat Assignment Id
              * @description Created PCAT assignment ID
              */
-            pcat_assignment_id?: string | null;
+            pcatAssignmentId?: string | null;
             /**
              * Do Assignment Id
              * @description Created DO assignment ID
              */
-            do_assignment_id?: string | null;
+            doAssignmentId?: string | null;
             /**
              * Error
              * @description Error message if failed
@@ -33909,7 +34439,7 @@ export interface components {
              * Assignment Ids
              * @description Call assignment IDs to generate PCAT/DO for
              */
-            assignment_ids: string[];
+            assignmentIds: string[];
         };
         /**
          * PCATGenerationResponse
@@ -33925,12 +34455,12 @@ export interface components {
              * Pcat Created
              * @description Number of PCAT assignments created
              */
-            pcat_created: number;
+            pcatCreated: number;
             /**
              * Do Created
              * @description Number of DO assignments created
              */
-            do_created: number;
+            doCreated: number;
             /**
              * Errors
              * @description Error messages for failed operations
@@ -33951,7 +34481,7 @@ export interface components {
              * Solution Id
              * @description Unique solution identifier
              */
-            solution_id: number;
+            solutionId: number;
             /**
              * Objectives
              * @description Objective values for this solution
@@ -33970,12 +34500,12 @@ export interface components {
              * @description Crowding distance for diversity
              * @default 0
              */
-            crowding_distance: number;
+            crowdingDistance: number;
             /**
              * Num Assignments
              * @description Number of assignments in this solution
              */
-            num_assignments: number;
+            numAssignments: number;
         };
         /**
          * ParsedBlockAssignmentSchema
@@ -33986,7 +34516,7 @@ export interface components {
              * Person Name
              * @description Person name
              */
-            person_name: string;
+            personName: string;
             /**
              * Date
              * @description Assignment date (ISO format)
@@ -34006,18 +34536,18 @@ export interface components {
              * Slot Am
              * @description AM slot value
              */
-            slot_am?: string | null;
+            slotAm?: string | null;
             /**
              * Slot Pm
              * @description PM slot value
              */
-            slot_pm?: string | null;
+            slotPm?: string | null;
             /**
              * Row Idx
              * @description Source row in spreadsheet
              * @default 0
              */
-            row_idx: number;
+            rowIdx: number;
             /**
              * Confidence
              * @description Name match confidence
@@ -34034,34 +34564,34 @@ export interface components {
              * Block Number
              * @description Block number (1-13)
              */
-            block_number: number;
+            blockNumber: number;
             /**
              * Week Number
              * @description Week within block (1-4)
              */
-            week_number: number;
+            weekNumber: number;
             /**
              * Start Date
              * @description Week start date (ISO format)
              */
-            start_date?: string | null;
+            startDate?: string | null;
             /**
              * End Date
              * @description Week end date (ISO format)
              */
-            end_date?: string | null;
+            endDate?: string | null;
             /**
              * Faculty Name
              * @description Assigned faculty name
              * @default
              */
-            faculty_name: string;
+            facultyName: string;
             /**
              * Is Holiday Call
              * @description True if holiday call week
              * @default false
              */
-            is_holiday_call: boolean;
+            isHolidayCall: boolean;
         };
         /**
          * ParsedXlsxResponse
@@ -34077,9 +34607,9 @@ export interface components {
             /** Columns */
             columns: string[];
             /** Total Rows */
-            total_rows: number;
+            totalRows: number;
             /** Sheet Name */
-            sheet_name: string;
+            sheetName: string;
             /**
              * Warnings
              * @default []
@@ -34096,12 +34626,12 @@ export interface components {
              * Format: uuid
              * @description ID of the assignment to change
              */
-            assignment_id: string;
+            assignmentId: string;
             /**
              * Proposed Change
              * @description Description of the proposed change
              */
-            proposed_change: {
+            proposedChange: {
                 [key: string]: unknown;
             };
             /**
@@ -34109,19 +34639,19 @@ export interface components {
              * @description Maximum acceptable activation energy
              * @default 0.8
              */
-            energy_threshold: number;
+            energyThreshold: number;
             /**
              * Prefer Mechanisms
              * @description Prefer automated mechanisms over personnel
              * @default true
              */
-            prefer_mechanisms: boolean;
+            preferMechanisms: boolean;
             /**
              * Allow Multi Step
              * @description Allow multi-step pathways
              * @default true
              */
-            allow_multi_step: boolean;
+            allowMultiStep: boolean;
         };
         /**
          * PathwayResultResponse
@@ -34132,9 +34662,9 @@ export interface components {
             success: boolean;
             pathway?: components["schemas"]["ReactionPathwayResponse"] | null;
             /** Alternative Pathways */
-            alternative_pathways?: components["schemas"]["ReactionPathwayResponse"][];
+            alternativePathways?: components["schemas"]["ReactionPathwayResponse"][];
             /** Blocking Barriers */
-            blocking_barriers?: components["schemas"]["EnergyBarrierResponse"][];
+            blockingBarriers?: components["schemas"]["EnergyBarrierResponse"][];
             /** Recommendations */
             recommendations?: string[];
         };
@@ -34157,12 +34687,12 @@ export interface components {
              * Pgy Level
              * @description Filter by PGY level
              */
-            pgy_level?: number | null;
+            pgyLevel?: number | null;
             /**
              * Faculty Role
              * @description Filter by faculty role
              */
-            faculty_role?: string | null;
+            facultyRole?: string | null;
             /**
              * Page
              * @description Page number
@@ -34174,7 +34704,7 @@ export interface components {
              * @description Results per page
              * @default 20
              */
-            page_size: number;
+            pageSize: number;
         };
         /**
          * PerformanceMetrics
@@ -34298,11 +34828,11 @@ export interface components {
          */
         PermittedActivitiesResponse: {
             /** Faculty Role */
-            faculty_role: string;
+            facultyRole: string;
             /** Activities */
             activities: components["schemas"]["ActivityResponse"][];
             /** Default Activities */
-            default_activities: components["schemas"]["ActivityResponse"][];
+            defaultActivities: components["schemas"]["ActivityResponse"][];
         };
         /**
          * PersonBrief
@@ -34317,7 +34847,7 @@ export interface components {
             /** Name */
             name: string;
             /** Faculty Role */
-            faculty_role?: string | null;
+            facultyRole?: string | null;
         };
         /**
          * PersonCertificationCreate
@@ -34328,19 +34858,19 @@ export interface components {
              * Certification Number
              * @description Certification number or ID
              */
-            certification_number?: string | null;
+            certificationNumber?: string | null;
             /**
              * Issued Date
              * Format: date
              * @description Date certification was issued
              */
-            issued_date: string;
+            issuedDate: string;
             /**
              * Expiration Date
              * Format: date
              * @description Date certification expires
              */
-            expiration_date: string;
+            expirationDate: string;
             /**
              * Status
              * @description Certification status
@@ -34351,17 +34881,17 @@ export interface components {
              * Verified By
              * @description Person who verified certification
              */
-            verified_by?: string | null;
+            verifiedBy?: string | null;
             /**
              * Verified Date
              * @description Date certification was verified
              */
-            verified_date?: string | null;
+            verifiedDate?: string | null;
             /**
              * Document Url
              * @description URL to certification document
              */
-            document_url?: string | null;
+            documentUrl?: string | null;
             /**
              * Notes
              * @description Additional notes
@@ -34371,12 +34901,12 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /**
              * Certification Type Id
              * Format: uuid
              */
-            certification_type_id: string;
+            certificationTypeId: string;
         };
         /**
          * PersonCertificationListResponse
@@ -34397,19 +34927,19 @@ export interface components {
              * Certification Number
              * @description Certification number or ID
              */
-            certification_number?: string | null;
+            certificationNumber?: string | null;
             /**
              * Issued Date
              * Format: date
              * @description Date certification was issued
              */
-            issued_date: string;
+            issuedDate: string;
             /**
              * Expiration Date
              * Format: date
              * @description Date certification expires
              */
-            expiration_date: string;
+            expirationDate: string;
             /**
              * Status
              * @description Certification status
@@ -34420,17 +34950,17 @@ export interface components {
              * Verified By
              * @description Person who verified certification
              */
-            verified_by?: string | null;
+            verifiedBy?: string | null;
             /**
              * Verified Date
              * @description Date certification was verified
              */
-            verified_date?: string | null;
+            verifiedDate?: string | null;
             /**
              * Document Url
              * @description URL to certification document
              */
-            document_url?: string | null;
+            documentUrl?: string | null;
             /**
              * Notes
              * @description Additional notes
@@ -34445,28 +34975,28 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /**
              * Certification Type Id
              * Format: uuid
              */
-            certification_type_id: string;
+            certificationTypeId: string;
             /** Days Until Expiration */
-            days_until_expiration: number;
+            daysUntilExpiration: number;
             /** Is Expired */
-            is_expired: boolean;
+            isExpired: boolean;
             /** Is Expiring Soon */
-            is_expiring_soon: boolean;
+            isExpiringSoon: boolean;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
         };
         /**
          * PersonCertificationUpdate
@@ -34474,19 +35004,19 @@ export interface components {
          */
         PersonCertificationUpdate: {
             /** Certification Number */
-            certification_number?: string | null;
+            certificationNumber?: string | null;
             /** Issued Date */
-            issued_date?: string | null;
+            issuedDate?: string | null;
             /** Expiration Date */
-            expiration_date?: string | null;
+            expirationDate?: string | null;
             /** Status */
             status?: string | null;
             /** Verified By */
-            verified_by?: string | null;
+            verifiedBy?: string | null;
             /** Verified Date */
-            verified_date?: string | null;
+            verifiedDate?: string | null;
             /** Document Url */
-            document_url?: string | null;
+            documentUrl?: string | null;
             /** Notes */
             notes?: string | null;
         };
@@ -34497,7 +35027,7 @@ export interface components {
          *     Shows person with their AM and PM assignments (if any).
          */
         PersonClinicCoverage: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /** @description AM assignment */
             am?: components["schemas"]["AssignmentInfo"] | null;
             /** @description PM assignment */
@@ -34510,25 +35040,25 @@ export interface components {
         PersonComplianceResponse: {
             person: components["schemas"]["app__schemas__certification__PersonSummary"];
             /** Total Required */
-            total_required: number;
+            totalRequired: number;
             /** Total Current */
-            total_current: number;
+            totalCurrent: number;
             /** Expired */
             expired: number;
             /** Expiring Soon */
-            expiring_soon: number;
+            expiringSoon: number;
             /** Missing */
             missing: components["schemas"]["CertificationTypeSummary"][];
             /** Is Compliant */
-            is_compliant: boolean;
+            isCompliant: boolean;
         };
         /**
          * PersonCoverageRequest
          * @description Request schema for person-level coverage heatmap.
          * @example {
-         *       "end_date": "2024-01-31",
-         *       "include_call": false,
-         *       "start_date": "2024-01-01"
+         *       "endDate": "2024-01-31",
+         *       "includeCall": false,
+         *       "startDate": "2024-01-01"
          *     }
          */
         PersonCoverageRequest: {
@@ -34537,46 +35067,46 @@ export interface components {
              * Format: date
              * @description Start date for heatmap
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description End date for heatmap
              */
-            end_date: string;
+            endDate: string;
             /**
              * Person Ids
              * @description Optional filter by person IDs
              */
-            person_ids?: string[] | null;
+            personIds?: string[] | null;
             /**
              * Include Call
              * @description Include call assignments in coverage
              * @default false
              */
-            include_call: boolean;
+            includeCall: boolean;
         };
         /**
          * PersonCoverageResponse
          * @description Response schema for person-level coverage heatmap.
          * @example {
-         *       "color_scale": "Blues",
-         *       "generated_at": "2024-01-15T10:00:00",
+         *       "colorScale": "Blues",
+         *       "generatedAt": "2024-01-15T10:00:00",
          *       "metadata": {
-         *         "date_range_days": 2,
-         *         "include_call": false,
-         *         "people_count": 2,
-         *         "total_assignments": 6
+         *         "dateRangeDays": 2,
+         *         "includeCall": false,
+         *         "peopleCount": 2,
+         *         "totalAssignments": 6
          *       },
-         *       "x_labels": [
+         *       "xLabels": [
          *         "2024-01-01",
          *         "2024-01-02"
          *       ],
-         *       "y_labels": [
+         *       "yLabels": [
          *         "Dr. Smith",
          *         "Dr. Johnson"
          *       ],
-         *       "z_values": [
+         *       "zValues": [
          *         [
          *           2,
          *           1
@@ -34593,22 +35123,22 @@ export interface components {
              * X Labels
              * @description X-axis labels (dates)
              */
-            x_labels: string[];
+            xLabels: string[];
             /**
              * Y Labels
              * @description Y-axis labels (person names)
              */
-            y_labels: string[];
+            yLabels: string[];
             /**
              * Z Values
              * @description Matrix of assignment counts per person per day
              */
-            z_values: number[][];
+            zValues: number[][];
             /**
              * Color Scale
              * @description Plotly color scale name
              */
-            color_scale: string;
+            colorScale: string;
             /**
              * Metadata
              * @description Additional metadata
@@ -34621,7 +35151,7 @@ export interface components {
              * Format: date-time
              * @description Timestamp of generation
              */
-            generated_at?: string;
+            generatedAt?: string;
         };
         /**
          * PersonCoverageSummary
@@ -34661,13 +35191,13 @@ export interface components {
              * Pgy Level
              * @description PGY level (1-3) for residents
              */
-            pgy_level?: number | null;
+            pgyLevel?: number | null;
             /**
              * Performs Procedures
              * @description Whether person performs procedures
              * @default false
              */
-            performs_procedures: boolean;
+            performsProcedures: boolean;
             /**
              * Specialties
              * @description List of specialties (max 10)
@@ -34677,9 +35207,9 @@ export interface components {
              * Primary Duty
              * @description Primary duty or role
              */
-            primary_duty?: string | null;
+            primaryDuty?: string | null;
             /** @description Faculty role type */
-            faculty_role?: components["schemas"]["FacultyRoleSchema"] | null;
+            facultyRole?: components["schemas"]["FacultyRoleSchema"] | null;
         };
         /**
          * PersonListResponse
@@ -34707,12 +35237,12 @@ export interface components {
              * Pgy Level
              * @description PGY level for residents
              */
-            pgy_level?: number | null;
+            pgyLevel?: number | null;
             /**
              * Role Type
              * @description Role type: resident, faculty, fellow
              */
-            role_type?: string | null;
+            roleType?: string | null;
         };
         /**
          * PersonResponse
@@ -34735,13 +35265,13 @@ export interface components {
              * Pgy Level
              * @description PGY level (1-3) for residents
              */
-            pgy_level?: number | null;
+            pgyLevel?: number | null;
             /**
              * Performs Procedures
              * @description Whether person performs procedures
              * @default false
              */
-            performs_procedures: boolean;
+            performsProcedures: boolean;
             /**
              * Specialties
              * @description List of specialties (max 10)
@@ -34751,9 +35281,9 @@ export interface components {
              * Primary Duty
              * @description Primary duty or role
              */
-            primary_duty?: string | null;
+            primaryDuty?: string | null;
             /** @description Faculty role type */
-            faculty_role?: components["schemas"]["FacultyRoleSchema"] | null;
+            facultyRole?: components["schemas"]["FacultyRoleSchema"] | null;
             /**
              * Id
              * Format: uuid
@@ -34763,31 +35293,31 @@ export interface components {
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
             /**
              * Sunday Call Count
              * @default 0
              */
-            sunday_call_count: number;
+            sundayCallCount: number;
             /**
              * Weekday Call Count
              * @default 0
              */
-            weekday_call_count: number;
+            weekdayCallCount: number;
             /**
              * Fmit Weeks Count
              * @default 0
              */
-            fmit_weeks_count: number;
+            fmitWeeksCount: number;
         };
         /**
          * PersonSummary
-         * @description Summary of person for manifest display.
+         * @description Minimal person info for embedding in credential responses.
          */
         PersonSummary: {
             /**
@@ -34797,11 +35327,8 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /**
-             * Pgy Level
-             * @description PGY level for residents
-             */
-            pgy_level?: number | null;
+            /** Type */
+            type: string;
         };
         /**
          * PersonType
@@ -34828,12 +35355,12 @@ export interface components {
              * Pgy Level
              * @description PGY level (1-3) for residents
              */
-            pgy_level?: number | null;
+            pgyLevel?: number | null;
             /**
              * Performs Procedures
              * @description Whether person performs procedures
              */
-            performs_procedures?: boolean | null;
+            performsProcedures?: boolean | null;
             /**
              * Specialties
              * @description List of specialties (max 10)
@@ -34843,9 +35370,9 @@ export interface components {
              * Primary Duty
              * @description Primary duty or role
              */
-            primary_duty?: string | null;
+            primaryDuty?: string | null;
             /** @description Faculty role type */
-            faculty_role?: components["schemas"]["FacultyRoleSchema"] | null;
+            facultyRole?: components["schemas"]["FacultyRoleSchema"] | null;
         };
         /**
          * PersonWorkloadResponse
@@ -34853,17 +35380,17 @@ export interface components {
          */
         PersonWorkloadResponse: {
             /** Person Id */
-            person_id: string;
+            personId: string;
             /** Person Name */
-            person_name: string;
+            personName: string;
             /** Current Utilization */
-            current_utilization: number;
+            currentUtilization: number;
             /** Optimal Utilization */
-            optimal_utilization: number;
+            optimalUtilization: number;
             /** Is Overloaded */
-            is_overloaded: boolean;
+            isOverloaded: boolean;
             /** Workload Cluster */
-            workload_cluster?: number | null;
+            workloadCluster?: number | null;
         };
         /**
          * PhaseTransitionRequest
@@ -34874,13 +35401,13 @@ export interface components {
              * Schedule Id
              * @description Schedule ID to analyze
              */
-            schedule_id?: string | null;
+            scheduleId?: string | null;
             /**
              * Lookback Days
              * @description Days of history to analyze
              * @default 30
              */
-            lookback_days: number;
+            lookbackDays: number;
             /**
              * Sensitivity
              * @description Detection sensitivity multiplier
@@ -34897,7 +35424,7 @@ export interface components {
              * Overall Severity
              * @description Overall risk level: normal, elevated, high, critical, imminent
              */
-            overall_severity: string;
+            overallSeverity: string;
             /**
              * Signals
              * @description Detected early warning signals
@@ -34907,7 +35434,7 @@ export interface components {
              * Time To Transition
              * @description Estimated time until transition (hours)
              */
-            time_to_transition?: number | null;
+            timeToTransition?: number | null;
             /**
              * Confidence
              * @description Prediction confidence
@@ -34937,9 +35464,9 @@ export interface components {
             /** Page */
             page: number;
             /** Page Size */
-            page_size: number;
+            pageSize: number;
             /** Current Balance */
-            current_balance: number;
+            currentBalance: number;
         };
         /**
          * PointTransactionResponse
@@ -34954,15 +35481,15 @@ export interface components {
             /** Points */
             points: number;
             /** Balance After */
-            balance_after: number;
-            transaction_type: components["schemas"]["TransactionTypeEnum"];
+            balanceAfter: number;
+            transactionType: components["schemas"]["TransactionTypeEnum"];
             /** Source */
             source: string;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
         };
         /**
          * PopulationSnapshot
@@ -34994,7 +35521,7 @@ export interface components {
              * Detected At
              * Format: date-time
              */
-            detected_at: string;
+            detectedAt: string;
             /** Trigger */
             trigger: string;
             /** Amplification */
@@ -35020,22 +35547,22 @@ export interface components {
              * Person Id
              * @description Person ID
              */
-            person_id: string;
+            personId: string;
             /**
              * Block Id
              * @description Block ID
              */
-            block_id: string;
+            blockId: string;
             /**
              * Rotation Id
              * @description Rotation template ID
              */
-            rotation_id?: string | null;
+            rotationId?: string | null;
             /**
              * Existing Assignments
              * @description Existing assignments for context.
              */
-            existing_assignments?: {
+            existingAssignments?: {
                 [key: string]: unknown;
             }[];
         };
@@ -35048,17 +35575,17 @@ export interface components {
              * Person Id
              * @description Person ID
              */
-            person_id: string;
+            personId: string;
             /**
              * Rotation Id
              * @description Rotation template ID
              */
-            rotation_id: string;
+            rotationId: string;
             /**
              * Block Id
              * @description Block ID
              */
-            block_id: string;
+            blockId: string;
         };
         /**
          * PreferencePredictionResponse
@@ -35066,11 +35593,11 @@ export interface components {
          */
         PreferencePredictionResponse: {
             /** Preference Score */
-            preference_score: number;
+            preferenceScore: number;
             /** Interpretation */
             interpretation: string;
             /** Contributing Factors */
-            contributing_factors: {
+            contributingFactors: {
                 [key: string]: unknown;
             }[];
         };
@@ -35083,15 +35610,15 @@ export interface components {
              * Trail Id
              * Format: uuid
              */
-            trail_id: string;
+            trailId: string;
             /** Faculty Id */
-            faculty_id: string;
+            facultyId: string;
             /** Trail Type */
-            trail_type: string;
+            trailType: string;
             /** Strength */
             strength: number;
             /** Strength Category */
-            strength_category: string;
+            strengthCategory: string;
         };
         /**
          * PreferencesResponse
@@ -35102,34 +35629,34 @@ export interface components {
              * Faculty Id
              * Format: uuid
              */
-            faculty_id: string;
+            facultyId: string;
             /** Preferred Weeks */
-            preferred_weeks: string[];
+            preferredWeeks: string[];
             /** Blocked Weeks */
-            blocked_weeks: string[];
+            blockedWeeks: string[];
             /** Max Weeks Per Month */
-            max_weeks_per_month: number;
+            maxWeeksPerMonth: number;
             /** Max Consecutive Weeks */
-            max_consecutive_weeks: number;
+            maxConsecutiveWeeks: number;
             /** Min Gap Between Weeks */
-            min_gap_between_weeks: number;
+            minGapBetweenWeeks: number;
             /** Target Weeks Per Year */
-            target_weeks_per_year: number;
+            targetWeeksPerYear: number;
             /** Notify Swap Requests */
-            notify_swap_requests: boolean;
+            notifySwapRequests: boolean;
             /** Notify Schedule Changes */
-            notify_schedule_changes: boolean;
+            notifyScheduleChanges: boolean;
             /** Notify Conflict Alerts */
-            notify_conflict_alerts: boolean;
+            notifyConflictAlerts: boolean;
             /** Notify Reminder Days */
-            notify_reminder_days: number;
+            notifyReminderDays: number;
             /** Notes */
             notes: string | null;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
         };
         /**
          * PreferencesUpdate
@@ -35137,23 +35664,23 @@ export interface components {
          */
         PreferencesUpdate: {
             /** Preferred Weeks */
-            preferred_weeks?: string[] | null;
+            preferredWeeks?: string[] | null;
             /** Blocked Weeks */
-            blocked_weeks?: string[] | null;
+            blockedWeeks?: string[] | null;
             /** Max Weeks Per Month */
-            max_weeks_per_month?: number | null;
+            maxWeeksPerMonth?: number | null;
             /** Max Consecutive Weeks */
-            max_consecutive_weeks?: number | null;
+            maxConsecutiveWeeks?: number | null;
             /** Min Gap Between Weeks */
-            min_gap_between_weeks?: number | null;
+            minGapBetweenWeeks?: number | null;
             /** Notify Swap Requests */
-            notify_swap_requests?: boolean | null;
+            notifySwapRequests?: boolean | null;
             /** Notify Schedule Changes */
-            notify_schedule_changes?: boolean | null;
+            notifyScheduleChanges?: boolean | null;
             /** Notify Conflict Alerts */
-            notify_conflict_alerts?: boolean | null;
+            notifyConflictAlerts?: boolean | null;
             /** Notify Reminder Days */
-            notify_reminder_days?: number | null;
+            notifyReminderDays?: number | null;
             /** Notes */
             notes?: string | null;
         };
@@ -35167,9 +35694,9 @@ export interface components {
             /** Message */
             message: string;
             /** Enabled Constraints */
-            enabled_constraints: string[];
+            enabledConstraints: string[];
             /** Disabled Constraints */
-            disabled_constraints: string[];
+            disabledConstraints: string[];
         };
         /**
          * PrioritizedDecisionsResponse
@@ -35200,27 +35727,27 @@ export interface components {
              * Supervision Ratio
              * @default 1
              */
-            supervision_ratio: number;
+            supervisionRatio: number;
             /**
              * Requires Certification
              * @default true
              */
-            requires_certification: boolean;
+            requiresCertification: boolean;
             /**
              * Complexity Level
              * @default standard
              */
-            complexity_level: string;
+            complexityLevel: string;
             /**
              * Min Pgy Level
              * @default 1
              */
-            min_pgy_level: number;
+            minPgyLevel: number;
             /**
              * Is Active
              * @default true
              */
-            is_active: boolean;
+            isActive: boolean;
         };
         /**
          * ProcedureListResponse
@@ -35249,27 +35776,27 @@ export interface components {
              * Supervision Ratio
              * @default 1
              */
-            supervision_ratio: number;
+            supervisionRatio: number;
             /**
              * Requires Certification
              * @default true
              */
-            requires_certification: boolean;
+            requiresCertification: boolean;
             /**
              * Complexity Level
              * @default standard
              */
-            complexity_level: string;
+            complexityLevel: string;
             /**
              * Min Pgy Level
              * @default 1
              */
-            min_pgy_level: number;
+            minPgyLevel: number;
             /**
              * Is Active
              * @default true
              */
-            is_active: boolean;
+            isActive: boolean;
             /**
              * Id
              * Format: uuid
@@ -35279,12 +35806,12 @@ export interface components {
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
         };
         /**
          * ProcedureSearchRequest
@@ -35307,7 +35834,7 @@ export interface components {
              * @description Results per page
              * @default 20
              */
-            page_size: number;
+            pageSize: number;
         };
         /**
          * ProcedureSummary
@@ -35340,15 +35867,15 @@ export interface components {
             /** Specialty */
             specialty?: string | null;
             /** Supervision Ratio */
-            supervision_ratio?: number | null;
+            supervisionRatio?: number | null;
             /** Requires Certification */
-            requires_certification?: boolean | null;
+            requiresCertification?: boolean | null;
             /** Complexity Level */
-            complexity_level?: string | null;
+            complexityLevel?: string | null;
             /** Min Pgy Level */
-            min_pgy_level?: number | null;
+            minPgyLevel?: number | null;
             /** Is Active */
-            is_active?: boolean | null;
+            isActive?: boolean | null;
         };
         /**
          * ProfilingSessionRequest
@@ -35400,27 +35927,27 @@ export interface components {
              * Cpu Profiling
              * @description CPU profiling status
              */
-            cpu_profiling: boolean;
+            cpuProfiling: boolean;
             /**
              * Memory Profiling
              * @description Memory profiling status
              */
-            memory_profiling: boolean;
+            memoryProfiling: boolean;
             /**
              * Sql Collection
              * @description SQL query collection status
              */
-            sql_collection: boolean;
+            sqlCollection: boolean;
             /**
              * Request Collection
              * @description Request collection status
              */
-            request_collection: boolean;
+            requestCollection: boolean;
             /**
              * Trace Collection
              * @description Trace collection status
              */
-            trace_collection: boolean;
+            traceCollection: boolean;
             /**
              * Stats
              * @description Current profiling statistics
@@ -35439,29 +35966,29 @@ export interface components {
              * Format: date
              * @description Date for which coverage is shown
              */
-            coverage_date: string;
+            coverageDate: string;
             /**
              * Active Coverage
              * @description All active coverage for the date
              */
-            active_coverage?: components["schemas"]["CoverageRelationship"][];
+            activeCoverage?: components["schemas"]["CoverageRelationship"][];
             /**
              * Upcoming Coverage
              * @description Upcoming scheduled coverage (next 7 days)
              */
-            upcoming_coverage?: components["schemas"]["CoverageRelationship"][];
+            upcomingCoverage?: components["schemas"]["CoverageRelationship"][];
             /**
              * By Coverer
              * @description Coverage grouped by person
              */
-            by_coverer?: components["schemas"]["PersonCoverageSummary"][];
+            byCoverer?: components["schemas"]["PersonCoverageSummary"][];
             stats?: components["schemas"]["CoverageStats"];
             /**
              * Generated At
              * Format: date-time
              * @description When data was generated
              */
-            generated_at?: string;
+            generatedAt?: string;
         };
         /**
          * PublishError
@@ -35472,19 +35999,19 @@ export interface components {
              * Draft Assignment Id
              * Format: uuid
              */
-            draft_assignment_id: string;
+            draftAssignmentId: string;
             /**
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /**
              * Assignment Date
              * Format: date
              */
-            assignment_date: string;
+            assignmentDate: string;
             /** Error Message */
-            error_message: string;
+            errorMessage: string;
         };
         /**
          * PublishRequest
@@ -35495,13 +36022,13 @@ export interface components {
              * Override Comment
              * @description Required for Tier 1 if unacknowledged flags exist
              */
-            override_comment?: string | null;
+            overrideComment?: string | null;
             /**
              * Validate Acgme
              * @description If True, validate ACGME compliance after publish
              * @default true
              */
-            validate_acgme: boolean;
+            validateAcgme: boolean;
         };
         /**
          * PublishResponse
@@ -35512,20 +36039,20 @@ export interface components {
              * Draft Id
              * Format: uuid
              */
-            draft_id: string;
+            draftId: string;
             status: components["schemas"]["ScheduleDraftStatus"];
             /**
              * Published Count
              * @description Successfully published assignments
              * @default 0
              */
-            published_count: number;
+            publishedCount: number;
             /**
              * Error Count
              * @description Failed to publish
              * @default 0
              */
-            error_count: number;
+            errorCount: number;
             /**
              * Errors
              * @description Detailed error information
@@ -35535,14 +36062,14 @@ export interface components {
              * Acgme Warnings
              * @description ACGME warnings after publish
              */
-            acgme_warnings?: string[];
+            acgmeWarnings?: string[];
             /**
              * Rollback Available
              * @default true
              */
-            rollback_available: boolean;
+            rollbackAvailable: boolean;
             /** Rollback Expires At */
-            rollback_expires_at?: string | null;
+            rollbackExpiresAt?: string | null;
             /**
              * Message
              * @default
@@ -35559,31 +36086,31 @@ export interface components {
              * @description Number of independent annealing runs
              * @default 100
              */
-            num_reads: number;
+            numReads: number;
             /**
              * Num Sweeps
              * @description Number of sweeps per run
              * @default 1000
              */
-            num_sweeps: number;
+            numSweeps: number;
             /**
              * Beta Start
              * @description Initial inverse temperature (low = high temperature)
              * @default 0.1
              */
-            beta_start: number;
+            betaStart: number;
             /**
              * Beta End
              * @description Final inverse temperature (high = low temperature)
              * @default 4.2
              */
-            beta_end: number;
+            betaEnd: number;
             /**
              * Use Adaptive Temperature
              * @description Enable adaptive temperature with automatic reheat
              * @default true
              */
-            use_adaptive_temperature: boolean;
+            useAdaptiveTemperature: boolean;
         };
         /**
          * QUBOObjectiveWeight
@@ -35631,7 +36158,7 @@ export interface components {
              * @description Population size for multi-objective optimization
              * @default 50
              */
-            population_size: number;
+            populationSize: number;
             /**
              * Generations
              * @description Number of generations for Pareto exploration
@@ -35658,27 +36185,27 @@ export interface components {
              * Num Variables
              * @description Number of QUBO binary variables
              */
-            num_variables: number;
+            numVariables: number;
             /**
              * Num Qubo Terms
              * @description Non-zero terms in QUBO matrix
              */
-            num_qubo_terms: number;
+            numQuboTerms: number;
             /**
              * Qubo Energy
              * @description Initial QUBO energy
              */
-            qubo_energy: number;
+            quboEnergy: number;
             /**
              * Refined Energy
              * @description Energy after classical refinement
              */
-            refined_energy: number;
+            refinedEnergy: number;
             /**
              * Final Energy
              * @description Final energy after constraint repair
              */
-            final_energy: number;
+            finalEnergy: number;
             /**
              * Improvement
              * @description Total energy improvement
@@ -35688,7 +36215,7 @@ export interface components {
              * Num Assignments
              * @description Number of final assignments
              */
-            num_assignments: number;
+            numAssignments: number;
             /**
              * Objectives
              * @description Individual objective values
@@ -35702,13 +36229,13 @@ export interface components {
              * @description Number of Pareto frontier solutions
              * @default 0
              */
-            pareto_frontier_size: number;
+            paretoFrontierSize: number;
             /**
              * Num Local Minima
              * @description Number of local minima found
              * @default 0
              */
-            num_local_minima: number;
+            numLocalMinima: number;
         };
         /**
          * QUBOStatusResponse
@@ -35731,14 +36258,14 @@ export interface components {
              * Recommended Problem Size
              * @description Recommended problem size ranges
              */
-            recommended_problem_size: {
+            recommendedProblemSize: {
                 [key: string]: number | undefined;
             };
             /**
              * Quantum Libraries
              * @description Status of quantum libraries
              */
-            quantum_libraries: {
+            quantumLibraries: {
                 [key: string]: boolean | undefined;
             };
         };
@@ -35752,34 +36279,34 @@ export interface components {
              * Format: date
              * @description Start date for schedule optimization
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description End date for schedule optimization
              */
-            end_date: string;
+            endDate: string;
             /**
              * Person Ids
              * @description Filter to specific residents (None = all residents)
              */
-            person_ids?: string[] | null;
+            personIds?: string[] | null;
             /**
              * Template Ids
              * @description Filter to specific templates (None = all templates)
              */
-            template_ids?: string[] | null;
+            templateIds?: string[] | null;
             /** @description Weights for optimization objectives */
-            objective_weights?: components["schemas"]["QUBOObjectiveWeight"];
+            objectiveWeights?: components["schemas"]["QUBOObjectiveWeight"];
             /** @description Simulated annealing parameters */
-            annealing_config?: components["schemas"]["QUBOAnnealingConfig"];
+            annealingConfig?: components["schemas"]["QUBOAnnealingConfig"];
             /** @description Pareto front exploration parameters */
-            pareto_config?: components["schemas"]["QUBOParetoConfig"];
+            paretoConfig?: components["schemas"]["QUBOParetoConfig"];
             /**
              * Desirability Mappings
              * @description Custom template desirability classifications
              */
-            desirability_mappings?: components["schemas"]["TemplateDesirabilityMapping"][] | null;
+            desirabilityMappings?: components["schemas"]["TemplateDesirabilityMapping"][] | null;
             /**
              * Seed
              * @description Random seed for reproducibility
@@ -35790,19 +36317,19 @@ export interface components {
              * @description Maximum optimization time in seconds
              * @default 120
              */
-            timeout_seconds: number;
+            timeoutSeconds: number;
             /**
              * Include Energy Landscape
              * @description Include energy landscape data for visualization
              * @default true
              */
-            include_energy_landscape: boolean;
+            includeEnergyLandscape: boolean;
             /**
              * Include Benchmarks
              * @description Run and include benchmark comparisons
              * @default false
              */
-            include_benchmarks: boolean;
+            includeBenchmarks: boolean;
         };
         /**
          * QUBOTemplateOptimizeResponse
@@ -35832,26 +36359,26 @@ export interface components {
              * @description Pareto frontier solutions
              * @default []
              */
-            pareto_frontier: components["schemas"]["ParetoSolutionSchema"][];
+            paretoFrontier: components["schemas"]["ParetoSolutionSchema"][];
             /**
              * Recommended Solution Id
              * @description ID of recommended solution from Pareto front
              */
-            recommended_solution_id?: number | null;
+            recommendedSolutionId?: number | null;
             /** @description Energy landscape data for visualization */
-            energy_landscape?: components["schemas"]["EnergyLandscapeSchema"] | null;
+            energyLandscape?: components["schemas"]["EnergyLandscapeSchema"] | null;
             /** @description Benchmark comparison results */
             benchmarks?: components["schemas"]["BenchmarkComparisonSchema"] | null;
             /**
              * Runtime Seconds
              * @description Total optimization time
              */
-            runtime_seconds: number;
+            runtimeSeconds: number;
             /**
              * Quantum Advantage Estimate
              * @description Estimated quantum advantage ratio (>1 means QUBO better)
              */
-            quantum_advantage_estimate?: number | null;
+            quantumAdvantageEstimate?: number | null;
         };
         /**
          * QualifiedFacultyResponse
@@ -35862,11 +36389,11 @@ export interface components {
              * Procedure Id
              * Format: uuid
              */
-            procedure_id: string;
+            procedureId: string;
             /** Procedure Name */
-            procedure_name: string;
+            procedureName: string;
             /** Qualified Faculty */
-            qualified_faculty: components["schemas"]["app__schemas__procedure_credential__PersonSummary"][];
+            qualifiedFaculty: components["schemas"]["PersonSummary"][];
             /** Total */
             total: number;
         };
@@ -35889,7 +36416,7 @@ export interface components {
              * Current Limitations
              * @description Current limitations of quantum approaches
              */
-            current_limitations: string[];
+            currentLimitations: string[];
             /**
              * Recommendations
              * @description Recommendations for when to use QUBO
@@ -35905,7 +36432,7 @@ export interface components {
              * Scenario Name
              * @description Name of the scenario
              */
-            scenario_name: string;
+            scenarioName: string;
             /**
              * Description
              * @description Detailed description
@@ -35915,12 +36442,12 @@ export interface components {
              * Problem Characteristics
              * @description Characteristics that enable advantage
              */
-            problem_characteristics: string[];
+            problemCharacteristics: string[];
             /**
              * Expected Speedup
              * @description Expected speedup over classical (e.g., '2-10x')
              */
-            expected_speedup: string;
+            expectedSpeedup: string;
             /**
              * Conditions
              * @description Conditions required for advantage
@@ -35933,19 +36460,19 @@ export interface components {
          */
         QueryStatsResponse: {
             /** Request Id */
-            request_id: string;
+            requestId: string;
             /** Total Queries */
-            total_queries: number;
+            totalQueries: number;
             /** Total Duration Ms */
-            total_duration_ms: number;
+            totalDurationMs: number;
             /** Avg Duration Ms */
-            avg_duration_ms: number;
+            avgDurationMs: number;
             /** Slow Queries */
-            slow_queries: number;
+            slowQueries: number;
             /** N Plus One Warnings */
-            n_plus_one_warnings: number;
+            nPlusOneWarnings: number;
             /** Query Types */
-            query_types: {
+            queryTypes: {
                 [key: string]: number | undefined;
             };
             /** Recommendations */
@@ -35982,14 +36509,13 @@ export interface components {
             queueName: string;
             /**
              * Confirm
-             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
         };
         /**
          * QueuePurgeResponse
-         * @description Response to queue purge request.
+         * @description Response after purging a queue.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -36038,12 +36564,12 @@ export interface components {
              * Points Earned
              * @default 0
              */
-            points_earned: number;
+            pointsEarned: number;
             /**
              * Current Streak
              * @default 0
              */
-            current_streak: number;
+            currentStreak: number;
             /**
              * Message
              * @default
@@ -36071,23 +36597,23 @@ export interface components {
              * Can Submit
              * @default true
              */
-            can_submit: boolean;
+            canSubmit: boolean;
             /** Last Submitted At */
-            last_submitted_at?: string | null;
+            lastSubmittedAt?: string | null;
             /**
              * Current Streak
              * @default 0
              */
-            current_streak: number;
+            currentStreak: number;
             /**
              * Points Balance
              * @default 0
              */
-            points_balance: number;
+            pointsBalance: number;
             /** Available Surveys */
-            available_surveys?: components["schemas"]["SurveyListItem"][];
+            availableSurveys?: components["schemas"]["SurveyListItem"][];
             /** Recent Achievements */
-            recent_achievements?: components["schemas"]["AchievementInfo"][];
+            recentAchievements?: components["schemas"]["AchievementInfo"][];
         };
         /**
          * QuickSearchResponse
@@ -36108,7 +36634,7 @@ export interface components {
              * Entity Type
              * @description Entity type searched
              */
-            entity_type: string;
+            entityType: string;
         };
         /**
          * QuickTemplateCreateRequest
@@ -36130,13 +36656,13 @@ export interface components {
              * @description Activity type (clinic, inpatient, procedures, etc.)
              * @default outpatient
              */
-            activity_type: string;
+            activityType: string;
             /**
              * Leave Eligible
              * @description Whether rotation is leave-eligible
              * @default true
              */
-            leave_eligible: boolean;
+            leaveEligible: boolean;
         };
         /**
          * QuickTemplateCreateResponse
@@ -36163,7 +36689,7 @@ export interface components {
              * Activity Type
              * @description Activity type
              */
-            activity_type: string;
+            activityType: string;
         };
         /**
          * QuotaAlert
@@ -36174,7 +36700,7 @@ export interface components {
              * Resource Type
              * @description Resource type
              */
-            resource_type: string;
+            resourceType: string;
             /**
              * Timestamp
              * @description Alert timestamp (ISO format)
@@ -36184,17 +36710,17 @@ export interface components {
              * Alert Level
              * @description Alert level (warning/critical)
              */
-            alert_level: string;
+            alertLevel: string;
             /**
              * Daily Percentage
              * @description Daily usage percentage
              */
-            daily_percentage: number;
+            dailyPercentage: number;
             /**
              * Monthly Percentage
              * @description Monthly usage percentage
              */
-            monthly_percentage: number;
+            monthlyPercentage: number;
         };
         /**
          * QuotaAlertsResponse
@@ -36205,7 +36731,7 @@ export interface components {
              * User Id
              * @description User ID
              */
-            user_id: string;
+            userId: string;
             /**
              * Alerts
              * @description Active alerts
@@ -36253,54 +36779,54 @@ export interface components {
              * Daily Limit
              * @description Daily API call limit
              */
-            daily_limit: number;
+            dailyLimit: number;
             /**
              * Monthly Limit
              * @description Monthly API call limit
              */
-            monthly_limit: number;
+            monthlyLimit: number;
             /**
              * Schedule Generation Daily
              * @description Daily schedule generation limit
              */
-            schedule_generation_daily: number;
+            scheduleGenerationDaily: number;
             /**
              * Schedule Generation Monthly
              * @description Monthly schedule generation limit
              */
-            schedule_generation_monthly: number;
+            scheduleGenerationMonthly: number;
             /**
              * Export Daily
              * @description Daily export limit
              */
-            export_daily: number;
+            exportDaily: number;
             /**
              * Export Monthly
              * @description Monthly export limit
              */
-            export_monthly: number;
+            exportMonthly: number;
             /**
              * Report Daily
              * @description Daily report generation limit
              */
-            report_daily: number;
+            reportDaily: number;
             /**
              * Report Monthly
              * @description Monthly report generation limit
              */
-            report_monthly: number;
+            reportMonthly: number;
             /**
              * Allow Overage
              * @description Allow quota overage
              * @default false
              */
-            allow_overage: boolean;
+            allowOverage: boolean;
             /**
              * Overage Percentage
              * @description Overage percentage allowed (0.0-1.0)
              * @default 0
              */
-            overage_percentage: number;
+            overagePercentage: number;
         };
         /**
          * QuotaPolicyInfo
@@ -36311,7 +36837,7 @@ export interface components {
              * Policy Type
              * @description Policy type
              */
-            policy_type: string;
+            policyType: string;
             /**
              * Roles
              * @description Roles using this policy
@@ -36363,14 +36889,14 @@ export interface components {
              * User Id
              * @description User ID
              */
-            user_id: string;
+            userId: string;
             /**
              * Policy Type
              * @description Quota policy type
              */
-            policy_type: string;
+            policyType: string;
             /** @description Reset times */
-            reset_times: components["schemas"]["QuotaResetTimes"];
+            resetTimes: components["schemas"]["QuotaResetTimes"];
             /**
              * Resources
              * @description Quota status by resource type (api, schedule, export, report)
@@ -36404,12 +36930,12 @@ export interface components {
              * User Id
              * @description User ID
              */
-            user_id: string;
+            userId: string;
             /**
              * Policy Type
              * @description Current policy type
              */
-            policy_type: string;
+            policyType: string;
             /**
              * Period
              * @description Report period (daily/monthly)
@@ -36426,22 +36952,22 @@ export interface components {
              * Total Usage
              * @description Total API calls
              */
-            total_usage: number;
+            totalUsage: number;
             /**
              * Total Limit
              * @description Total limit
              */
-            total_limit: number;
+            totalLimit: number;
             /**
              * Usage Percentage
              * @description Overall usage percentage
              */
-            usage_percentage: number;
+            usagePercentage: number;
             /**
              * Generated At
              * @description Report generation time (ISO format)
              */
-            generated_at: string;
+            generatedAt: string;
         };
         /**
          * RAGContext
@@ -36464,7 +36990,7 @@ export interface components {
              * Token Count
              * @description Approximate token count of context string
              */
-            token_count: number;
+            tokenCount: number;
             /**
              * Metadata
              * @description Additional metadata about context generation
@@ -36484,20 +37010,20 @@ export interface components {
              */
             status: string;
             /** Total Documents */
-            total_documents: number;
+            totalDocuments: number;
             /** Documents By Type */
-            documents_by_type: {
+            documentsByType: {
                 [key: string]: number | undefined;
             };
             /** Embedding Model */
-            embedding_model: string;
+            embeddingModel: string;
             /** Embedding Dimensions */
-            embedding_dimensions: number;
+            embeddingDimensions: number;
             /**
              * Vector Index Status
              * @description Status of vector indexes (ready, building, missing)
              */
-            vector_index_status: string;
+            vectorIndexStatus: string;
             /** Recommendations */
             recommendations?: string[];
         };
@@ -36516,23 +37042,23 @@ export interface components {
              * @description Number of top results to return
              * @default 5
              */
-            top_k: number;
+            topK: number;
             /**
              * Doc Type
              * @description Filter by document type (optional)
              */
-            doc_type?: string | null;
+            docType?: string | null;
             /**
              * Min Similarity
              * @description Minimum cosine similarity threshold (0-1)
              * @default 0.5
              */
-            min_similarity: number;
+            minSimilarity: number;
             /**
              * Metadata Filters
              * @description Additional metadata filters
              */
-            metadata_filters?: {
+            metadataFilters?: {
                 [key: string]: unknown;
             };
         };
@@ -36547,22 +37073,22 @@ export interface components {
              * Requests Per Minute
              * @description Requests per minute limit
              */
-            requests_per_minute: number;
+            requestsPerMinute: number;
             /**
              * Requests Per Hour
              * @description Requests per hour limit
              */
-            requests_per_hour: number;
+            requestsPerHour: number;
             /**
              * Burst Size
              * @description Token bucket capacity
              */
-            burst_size: number;
+            burstSize: number;
             /**
              * Burst Refill Rate
              * @description Tokens per second refill rate
              */
-            burst_refill_rate: number;
+            burstRefillRate: number;
         };
         /**
          * RateLimitLimits
@@ -36573,17 +37099,17 @@ export interface components {
              * Per Minute
              * @description Maximum requests per minute
              */
-            per_minute: number;
+            perMinute: number;
             /**
              * Per Hour
              * @description Maximum requests per hour
              */
-            per_hour: number;
+            perHour: number;
             /**
              * Burst Size
              * @description Maximum burst requests
              */
-            burst_size: number;
+            burstSize: number;
         };
         /**
          * RateLimitRemaining
@@ -36594,12 +37120,12 @@ export interface components {
              * Per Minute
              * @description Remaining requests this minute
              */
-            per_minute: number;
+            perMinute: number;
             /**
              * Per Hour
              * @description Remaining requests this hour
              */
-            per_hour: number;
+            perHour: number;
             /**
              * Burst
              * @description Remaining burst tokens
@@ -36649,19 +37175,19 @@ export interface components {
          */
         ReactionPathwayResponse: {
             /** Pathway Id */
-            pathway_id: string;
+            pathwayId: string;
             /** Total Energy */
-            total_energy: number;
+            totalEnergy: number;
             /** Catalyzed Energy */
-            catalyzed_energy: number;
+            catalyzedEnergy: number;
             /** Transition States */
-            transition_states: components["schemas"]["TransitionStateResponse"][];
+            transitionStates: components["schemas"]["TransitionStateResponse"][];
             /** Catalysts Used */
-            catalysts_used: string[];
+            catalystsUsed: string[];
             /** Estimated Duration Hours */
-            estimated_duration_hours?: number | null;
+            estimatedDurationHours?: number | null;
             /** Success Probability */
-            success_probability: number;
+            successProbability: number;
         };
         /**
          * RecentTaskInfo
@@ -36672,7 +37198,7 @@ export interface components {
              * Task Id
              * @description Task identifier
              */
-            task_id: string;
+            taskId: string;
             /**
              * Name
              * @description Task name
@@ -36688,22 +37214,22 @@ export interface components {
              * Started At
              * @description Task start time
              */
-            started_at?: string | null;
+            startedAt?: string | null;
             /**
              * Completed At
              * @description Task completion time
              */
-            completed_at?: string | null;
+            completedAt?: string | null;
             /**
              * Duration Seconds
              * @description Task duration in seconds
              */
-            duration_seconds?: number | null;
+            durationSeconds?: number | null;
             /**
              * Error Message
              * @description Error message if failed
              */
-            error_message?: string | null;
+            errorMessage?: string | null;
         };
         /**
          * Recommendation
@@ -36728,13 +37254,13 @@ export interface components {
              * User Id
              * @description User ID
              */
-            user_id: string;
+            userId: string;
             /**
              * Resource Type
              * @description Resource type
              * @default api
              */
-            resource_type: string;
+            resourceType: string;
             /**
              * Amount
              * @description Amount to record
@@ -36756,22 +37282,22 @@ export interface components {
              * User Id
              * @description User ID
              */
-            user_id: string;
+            userId: string;
             /**
              * Resource Type
              * @description Resource type
              */
-            resource_type: string;
+            resourceType: string;
             /**
              * Daily Usage
              * @description Daily usage after recording
              */
-            daily_usage: number;
+            dailyUsage: number;
             /**
              * Monthly Usage
              * @description Monthly usage after recording
              */
-            monthly_usage: number;
+            monthlyUsage: number;
         };
         /**
          * RecoveryDistanceRequest
@@ -36782,13 +37308,13 @@ export interface components {
              * Schedule Id
              * @description Schedule ID to analyze
              */
-            schedule_id?: string | null;
+            scheduleId?: string | null;
             /**
              * Max Depth
              * @description Maximum edit depth to search
              * @default 5
              */
-            max_depth: number;
+            maxDepth: number;
         };
         /**
          * RecoveryDistanceResponse
@@ -36796,19 +37322,19 @@ export interface components {
          */
         RecoveryDistanceResponse: {
             /** Analyzed At */
-            analyzed_at: string;
+            analyzedAt: string;
             /** Rd Mean */
-            rd_mean: number;
+            rdMean: number;
             /** Rd P95 */
-            rd_p95: number;
+            rdP95: number;
             /** Rd Max */
-            rd_max: number;
+            rdMax: number;
             /** Events Tested */
-            events_tested: number;
+            eventsTested: number;
             /** Feasible Count */
-            feasible_count: number;
+            feasibleCount: number;
             /** Infeasible Count */
-            infeasible_count: number;
+            infeasibleCount: number;
             /** Interpretation */
             interpretation: string;
             /** Recommendations */
@@ -36831,7 +37357,7 @@ export interface components {
             /** Available */
             available: number;
             /** Minimum Required */
-            minimum_required: number;
+            minimumRequired: number;
             /** Buffer */
             buffer: number;
         };
@@ -36841,7 +37367,7 @@ export interface components {
          */
         RefreshTokenRequest: {
             /** Refresh Token */
-            refresh_token: string;
+            refreshToken: string;
         };
         /**
          * RemoteAssignment
@@ -36850,14 +37376,14 @@ export interface components {
          *     Shows who is away at a remote site and their local surrogate/proxy.
          */
         RemoteAssignment: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Location
              * @description Remote location name
              */
             location: string;
             /** @description Local proxy/surrogate if assigned */
-            surrogate?: components["schemas"]["PersonSummary"] | null;
+            surrogate?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
         };
         /**
          * RenewalRequest
@@ -36868,14 +37394,14 @@ export interface components {
              * New Issued Date
              * Format: date
              */
-            new_issued_date: string;
+            newIssuedDate: string;
             /**
              * New Expiration Date
              * Format: date
              */
-            new_expiration_date: string;
+            newExpirationDate: string;
             /** New Certification Number */
-            new_certification_number?: string | null;
+            newCertificationNumber?: string | null;
         };
         /**
          * ReorganizationRiskRequest
@@ -36886,18 +37412,18 @@ export interface components {
              * Current Stability
              * @description Current stability score
              */
-            current_stability: number;
+            currentStability: number;
             /**
              * External Perturbation
              * @description Magnitude of external stress
              */
-            external_perturbation: number;
+            externalPerturbation: number;
             /**
              * System Temperature
              * @description System agitation level
              * @default 1
              */
-            system_temperature: number;
+            systemTemperature: number;
         };
         /**
          * ReorganizationRiskResponse
@@ -36908,12 +37434,12 @@ export interface components {
              * Risk Level
              * @description Risk level: low, moderate, high, critical
              */
-            risk_level: string;
+            riskLevel: string;
             /**
              * Risk Score
              * @description Risk score (0-1)
              */
-            risk_score: number;
+            riskScore: number;
             /**
              * Interpretation
              * @description Human-readable interpretation
@@ -36923,12 +37449,12 @@ export interface components {
              * Effective Barrier
              * @description Effective energy barrier
              */
-            effective_barrier: number;
+            effectiveBarrier: number;
             /**
              * Estimated Time To Reorganization
              * @description Estimated time units until reorganization
              */
-            estimated_time_to_reorganization: number;
+            estimatedTimeToReorganization: number;
             /**
              * Recommendations
              * @description Recommendations
@@ -36956,43 +37482,43 @@ export interface components {
              * Report Id
              * Format: uuid
              */
-            report_id: string;
-            report_type: components["schemas"]["ReportType"];
+            reportId: string;
+            reportType: components["schemas"]["ReportType"];
             /** Generated At */
-            generated_at: string;
+            generatedAt: string;
             /** Generated By */
-            generated_by: string;
+            generatedBy: string;
             /**
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /** Page Count */
-            page_count: number;
+            pageCount: number;
             /** File Size Bytes */
-            file_size_bytes: number;
+            fileSizeBytes: number;
         };
         /**
          * ReportResponse
          * @description Response schema for report generation.
          * @example {
-         *       "download_url": "/api/reports/download/123e4567-e89b-12d3-a456-426614174000",
+         *       "downloadUrl": "/api/reports/download/123e4567-e89b-12d3-a456-426614174000",
          *       "filename": "schedule_report_2025-01-01_to_2025-01-31.pdf",
          *       "message": "Report generated successfully",
          *       "metadata": {
-         *         "end_date": "2025-01-31",
-         *         "file_size_bytes": 245678,
-         *         "generated_at": "2025-01-15T10:30:00Z",
-         *         "generated_by": "user@example.com",
-         *         "page_count": 15,
-         *         "report_id": "123e4567-e89b-12d3-a456-426614174000",
-         *         "report_type": "schedule",
-         *         "start_date": "2025-01-01"
+         *         "endDate": "2025-01-31",
+         *         "fileSizeBytes": 245678,
+         *         "generatedAt": "2025-01-15T10:30:00Z",
+         *         "generatedBy": "user@example.com",
+         *         "pageCount": 15,
+         *         "reportId": "123e4567-e89b-12d3-a456-426614174000",
+         *         "reportType": "schedule",
+         *         "startDate": "2025-01-01"
          *       },
          *       "success": true
          *     }
@@ -37004,7 +37530,7 @@ export interface components {
             message: string;
             metadata?: components["schemas"]["ReportMetadata"] | null;
             /** Download Url */
-            download_url?: string | null;
+            downloadUrl?: string | null;
             /** Filename */
             filename?: string | null;
         };
@@ -37124,24 +37650,24 @@ export interface components {
              * User Id
              * @description User ID
              */
-            user_id: string;
+            userId: string;
             /**
              * Resource Type
              * @description Resource type to reset (None = all)
              */
-            resource_type?: string | null;
+            resourceType?: string | null;
             /**
              * Reset Daily
              * @description Reset daily quota
              * @default true
              */
-            reset_daily: boolean;
+            resetDaily: boolean;
             /**
              * Reset Monthly
              * @description Reset monthly quota
              * @default false
              */
-            reset_monthly: boolean;
+            resetMonthly: boolean;
         };
         /**
          * ResetQuotaResponse
@@ -37162,7 +37688,7 @@ export interface components {
              * User Id
              * @description User ID affected
              */
-            user_id: string;
+            userId: string;
         };
         /**
          * ResidentInfo
@@ -37177,7 +37703,7 @@ export interface components {
             /** Name */
             name: string;
             /** Pgy Level */
-            pgy_level: number | null;
+            pgyLevel: number | null;
         };
         /**
          * ResidentLeaveInfo
@@ -37188,15 +37714,15 @@ export interface components {
              * Resident Id
              * Format: uuid
              */
-            resident_id: string;
+            residentId: string;
             /** Resident Name */
-            resident_name: string;
+            residentName: string;
             /** Pgy Level */
-            pgy_level: number | null;
+            pgyLevel: number | null;
             /** Leave Days */
-            leave_days: number;
+            leaveDays: number;
             /** Leave Types */
-            leave_types: string[];
+            leaveTypes: string[];
         };
         /**
          * ResidentRosterItem
@@ -37240,7 +37766,7 @@ export interface components {
              * Format: uuid
              * @description Resident UUID
              */
-            resident_id: string;
+            residentId: string;
             /**
              * Name
              * @description Resident name
@@ -37250,7 +37776,7 @@ export interface components {
              * Pgy Level
              * @description PGY level (1-3)
              */
-            pgy_level: number;
+            pgyLevel: number;
         };
         /**
          * ResidentWeeklyRequirementCreate
@@ -37262,48 +37788,48 @@ export interface components {
              * @description Minimum FM clinic half-days per week (ACGME: 2 for outpatient)
              * @default 2
              */
-            fm_clinic_min_per_week: number;
+            fmClinicMinPerWeek: number;
             /**
              * Fm Clinic Max Per Week
              * @description Maximum FM clinic half-days per week
              * @default 3
              */
-            fm_clinic_max_per_week: number;
+            fmClinicMaxPerWeek: number;
             /**
              * Specialty Min Per Week
              * @description Minimum specialty half-days per week
              * @default 0
              */
-            specialty_min_per_week: number;
+            specialtyMinPerWeek: number;
             /**
              * Specialty Max Per Week
              * @description Maximum specialty half-days per week
              * @default 10
              */
-            specialty_max_per_week: number;
+            specialtyMaxPerWeek: number;
             /**
              * Academics Required
              * @description Whether academic time (Wed AM) is required
              * @default true
              */
-            academics_required: boolean;
+            academicsRequired: boolean;
             /**
              * Protected Slots
              * @description Protected slots mapping (e.g., {'wed_am': 'conference'})
              */
-            protected_slots?: {
+            protectedSlots?: {
                 [key: string]: string | undefined;
             };
             /**
              * Allowed Clinic Days
              * @description Allowed clinic days (0=Mon, 4=Fri). Empty = all weekdays allowed
              */
-            allowed_clinic_days?: number[];
+            allowedClinicDays?: number[];
             /**
              * Specialty Name
              * @description Specialty name (e.g., 'Neurology')
              */
-            specialty_name?: string | null;
+            specialtyName?: string | null;
             /**
              * Description
              * @description Optional notes about requirements
@@ -37314,7 +37840,7 @@ export interface components {
              * Format: uuid
              * @description UUID of the rotation template this applies to
              */
-            rotation_template_id: string;
+            rotationTemplateId: string;
         };
         /**
          * ResidentWeeklyRequirementListResponse
@@ -37336,48 +37862,48 @@ export interface components {
              * @description Minimum FM clinic half-days per week (ACGME: 2 for outpatient)
              * @default 2
              */
-            fm_clinic_min_per_week: number;
+            fmClinicMinPerWeek: number;
             /**
              * Fm Clinic Max Per Week
              * @description Maximum FM clinic half-days per week
              * @default 3
              */
-            fm_clinic_max_per_week: number;
+            fmClinicMaxPerWeek: number;
             /**
              * Specialty Min Per Week
              * @description Minimum specialty half-days per week
              * @default 0
              */
-            specialty_min_per_week: number;
+            specialtyMinPerWeek: number;
             /**
              * Specialty Max Per Week
              * @description Maximum specialty half-days per week
              * @default 10
              */
-            specialty_max_per_week: number;
+            specialtyMaxPerWeek: number;
             /**
              * Academics Required
              * @description Whether academic time (Wed AM) is required
              * @default true
              */
-            academics_required: boolean;
+            academicsRequired: boolean;
             /**
              * Protected Slots
              * @description Protected slots mapping (e.g., {'wed_am': 'conference'})
              */
-            protected_slots?: {
+            protectedSlots?: {
                 [key: string]: string | undefined;
             };
             /**
              * Allowed Clinic Days
              * @description Allowed clinic days (0=Mon, 4=Fri). Empty = all weekdays allowed
              */
-            allowed_clinic_days?: number[];
+            allowedClinicDays?: number[];
             /**
              * Specialty Name
              * @description Specialty name (e.g., 'Neurology')
              */
-            specialty_name?: string | null;
+            specialtyName?: string | null;
             /**
              * Description
              * @description Optional notes about requirements
@@ -37392,32 +37918,32 @@ export interface components {
              * Rotation Template Id
              * Format: uuid
              */
-            rotation_template_id: string;
+            rotationTemplateId: string;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
             /**
              * Total Min Halfdays
              * @description Minimum half-days required per week
              */
-            total_min_halfdays: number;
+            totalMinHalfdays: number;
             /**
              * Total Max Halfdays
              * @description Maximum half-days allowed per week
              */
-            total_max_halfdays: number;
+            totalMaxHalfdays: number;
             /**
              * Is Valid Range
              * @description Whether min/max ranges are valid
              */
-            is_valid_range: boolean;
+            isValidRange: boolean;
         };
         /**
          * ResidentWeeklyRequirementUpdate
@@ -37428,44 +37954,44 @@ export interface components {
              * Fm Clinic Min Per Week
              * @description Minimum FM clinic half-days per week
              */
-            fm_clinic_min_per_week?: number | null;
+            fmClinicMinPerWeek?: number | null;
             /**
              * Fm Clinic Max Per Week
              * @description Maximum FM clinic half-days per week
              */
-            fm_clinic_max_per_week?: number | null;
+            fmClinicMaxPerWeek?: number | null;
             /**
              * Specialty Min Per Week
              * @description Minimum specialty half-days per week
              */
-            specialty_min_per_week?: number | null;
+            specialtyMinPerWeek?: number | null;
             /**
              * Specialty Max Per Week
              * @description Maximum specialty half-days per week
              */
-            specialty_max_per_week?: number | null;
+            specialtyMaxPerWeek?: number | null;
             /**
              * Academics Required
              * @description Whether academic time is required
              */
-            academics_required?: boolean | null;
+            academicsRequired?: boolean | null;
             /**
              * Protected Slots
              * @description Protected slots mapping
              */
-            protected_slots?: {
+            protectedSlots?: {
                 [key: string]: string | undefined;
             } | null;
             /**
              * Allowed Clinic Days
              * @description Allowed clinic days
              */
-            allowed_clinic_days?: number[] | null;
+            allowedClinicDays?: number[] | null;
             /**
              * Specialty Name
              * @description Specialty name
              */
-            specialty_name?: string | null;
+            specialtyName?: string | null;
             /**
              * Description
              * @description Optional notes
@@ -37482,48 +38008,48 @@ export interface components {
              * @description Minimum FM clinic half-days per week (ACGME: 2 for outpatient)
              * @default 2
              */
-            fm_clinic_min_per_week: number;
+            fmClinicMinPerWeek: number;
             /**
              * Fm Clinic Max Per Week
              * @description Maximum FM clinic half-days per week
              * @default 3
              */
-            fm_clinic_max_per_week: number;
+            fmClinicMaxPerWeek: number;
             /**
              * Specialty Min Per Week
              * @description Minimum specialty half-days per week
              * @default 0
              */
-            specialty_min_per_week: number;
+            specialtyMinPerWeek: number;
             /**
              * Specialty Max Per Week
              * @description Maximum specialty half-days per week
              * @default 10
              */
-            specialty_max_per_week: number;
+            specialtyMaxPerWeek: number;
             /**
              * Academics Required
              * @description Whether academic time (Wed AM) is required
              * @default true
              */
-            academics_required: boolean;
+            academicsRequired: boolean;
             /**
              * Protected Slots
              * @description Protected slots mapping (e.g., {'wed_am': 'conference'})
              */
-            protected_slots?: {
+            protectedSlots?: {
                 [key: string]: string | undefined;
             };
             /**
              * Allowed Clinic Days
              * @description Allowed clinic days (0=Mon, 4=Fri). Empty = all weekdays allowed
              */
-            allowed_clinic_days?: number[];
+            allowedClinicDays?: number[];
             /**
              * Specialty Name
              * @description Specialty name (e.g., 'Neurology')
              */
-            specialty_name?: string | null;
+            specialtyName?: string | null;
             /**
              * Description
              * @description Optional notes about requirements
@@ -37538,42 +38064,42 @@ export interface components {
              * Rotation Template Id
              * Format: uuid
              */
-            rotation_template_id: string;
+            rotationTemplateId: string;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
             /**
              * Total Min Halfdays
              * @description Minimum half-days required per week
              */
-            total_min_halfdays: number;
+            totalMinHalfdays: number;
             /**
              * Total Max Halfdays
              * @description Maximum half-days allowed per week
              */
-            total_max_halfdays: number;
+            totalMaxHalfdays: number;
             /**
              * Is Valid Range
              * @description Whether min/max ranges are valid
              */
-            is_valid_range: boolean;
+            isValidRange: boolean;
             /**
              * Template Name
              * @description Name of the associated rotation template
              */
-            template_name: string;
+            templateName: string;
             /**
              * Template Activity Type
              * @description Activity type of the rotation template
              */
-            template_activity_type: string;
+            templateActivityType: string;
         };
         /**
          * ResidentWorkloadData
@@ -37610,14 +38136,14 @@ export interface components {
              * Conflict Id
              * Format: uuid
              */
-            conflict_id: string;
+            conflictId: string;
             strategy: components["schemas"]["ResolutionStrategyEnum"];
             /** Title */
             title: string;
             /** Description */
             description: string;
             /** Detailed Steps */
-            detailed_steps?: string[];
+            detailedSteps?: string[];
             /**
              * Changes
              * @description Specific changes to make
@@ -37632,38 +38158,38 @@ export interface components {
              * Safety Validated
              * @default false
              */
-            safety_validated: boolean;
+            safetyValidated: boolean;
             /** Safety Issues */
-            safety_issues?: string[];
+            safetyIssues?: string[];
             /** @default proposed */
             status: components["schemas"]["ResolutionStatusEnum"];
             /**
              * Can Auto Apply
              * @default false
              */
-            can_auto_apply: boolean;
+            canAutoApply: boolean;
             /**
              * Requires Approval
              * @default true
              */
-            requires_approval: boolean;
+            requiresApproval: boolean;
             /**
              * Created At
              * Format: date-time
              */
-            created_at?: string;
+            createdAt?: string;
             /**
              * Estimated Duration
              * @description Estimated minutes to apply
              * @default 0
              */
-            estimated_duration: number;
+            estimatedDuration: number;
             /**
              * Risk Level
              * @description low, medium, high
              * @default medium
              */
-            risk_level: string;
+            riskLevel: string;
         };
         /**
          * ResolutionResult
@@ -37671,12 +38197,12 @@ export interface components {
          */
         ResolutionResult: {
             /** Resolution Option Id */
-            resolution_option_id: string;
+            resolutionOptionId: string;
             /**
              * Conflict Id
              * Format: uuid
              */
-            conflict_id: string;
+            conflictId: string;
             strategy: components["schemas"]["ResolutionStrategyEnum"];
             /** Success */
             success: boolean;
@@ -37684,52 +38210,52 @@ export interface components {
             /** Message */
             message: string;
             /** Changes Applied */
-            changes_applied?: string[];
+            changesApplied?: string[];
             /**
              * Entities Modified
              * @description Map of entity type to list of IDs modified
              */
-            entities_modified?: {
+            entitiesModified?: {
                 [key: string]: unknown;
             };
             /**
              * Conflict Resolved
              * @default false
              */
-            conflict_resolved: boolean;
+            conflictResolved: boolean;
             /** New Conflicts Created */
-            new_conflicts_created?: string[];
+            newConflictsCreated?: string[];
             /** Warnings */
             warnings?: string[];
             /**
              * Applied At
              * Format: date-time
              */
-            applied_at?: string;
+            appliedAt?: string;
             /** Applied By Id */
-            applied_by_id?: string | null;
+            appliedById?: string | null;
             /** Duration Seconds */
-            duration_seconds?: number | null;
+            durationSeconds?: number | null;
             /**
              * Can Rollback
              * @default false
              */
-            can_rollback: boolean;
+            canRollback: boolean;
             /** Rollback Instructions */
-            rollback_instructions?: string | null;
+            rollbackInstructions?: string | null;
             /** Error Code */
-            error_code?: string | null;
+            errorCode?: string | null;
             /** Error Details */
-            error_details?: {
+            errorDetails?: {
                 [key: string]: unknown;
             };
             /**
              * Follow Up Required
              * @default false
              */
-            follow_up_required: boolean;
+            followUpRequired: boolean;
             /** Follow Up Actions */
-            follow_up_actions?: string[];
+            followUpActions?: string[];
         };
         /**
          * ResolutionStatusEnum
@@ -37767,7 +38293,7 @@ export interface components {
              * @description Preview restore without applying
              * @default true
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * RestoreRequest
@@ -37778,13 +38304,13 @@ export interface components {
              * Snapshot Id
              * @description Snapshot ID to restore
              */
-            snapshot_id: string;
+            snapshotId: string;
             /**
              * Dry Run
              * @description Preview restore without applying
              * @default true
              */
-            dry_run: boolean;
+            dryRun: boolean;
         };
         /**
          * RestoreResponse
@@ -37792,13 +38318,13 @@ export interface components {
          */
         RestoreResponse: {
             /** Snapshot Id */
-            snapshot_id: string;
+            snapshotId: string;
             /** Table */
             table: string;
             /** Rows Restored */
-            rows_restored: number;
+            rowsRestored: number;
             /** Dry Run */
-            dry_run: boolean;
+            dryRun: boolean;
             /** Message */
             message: string;
         };
@@ -37812,12 +38338,12 @@ export interface components {
             /** Documents */
             documents: components["schemas"]["RetrievedDocument"][];
             /** Total Results */
-            total_results: number;
+            totalResults: number;
             /**
              * Execution Time Ms
              * @description Query execution time in milliseconds
              */
-            execution_time_ms: number;
+            executionTimeMs: number;
         };
         /**
          * RetrievedDocument
@@ -37832,7 +38358,7 @@ export interface components {
             /** Content */
             content: string;
             /** Doc Type */
-            doc_type: string;
+            docType: string;
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -37841,12 +38367,12 @@ export interface components {
              * Similarity Score
              * @description Cosine similarity score (0-1, higher is more similar)
              */
-            similarity_score: number;
+            similarityScore: number;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
         };
         /**
          * RetryStatistics
@@ -37927,24 +38453,24 @@ export interface components {
              * Current Schedule Id
              * @description Current schedule ID
              */
-            current_schedule_id?: string | null;
+            currentScheduleId?: string | null;
             /**
              * Proposed Schedule Id
              * @description Proposed schedule ID to compare
              */
-            proposed_schedule_id?: string | null;
+            proposedScheduleId?: string | null;
             /**
              * Current Assignments
              * @description Current assignments as list of dicts
              */
-            current_assignments?: {
+            currentAssignments?: {
                 [key: string]: string | undefined;
             }[] | null;
             /**
              * Proposed Assignments
              * @description Proposed assignments as list of dicts
              */
-            proposed_assignments?: {
+            proposedAssignments?: {
                 [key: string]: string | undefined;
             }[] | null;
         };
@@ -37957,39 +38483,39 @@ export interface components {
              * Rigidity Score
              * @description Schedule rigidity (1.0 = no changes, 0.0 = complete overhaul)
              */
-            rigidity_score: number;
+            rigidityScore: number;
             /**
              * Changed Assignments
              * @description Number of assignments changed
              */
-            changed_assignments: number;
+            changedAssignments: number;
             /**
              * Total Assignments
              * @description Total assignments compared
              */
-            total_assignments: number;
+            totalAssignments: number;
             /**
              * Change Rate
              * @description Fraction of assignments changed
              */
-            change_rate: number;
+            changeRate: number;
             /**
              * Affected Faculty
              * @description Faculty with changed assignments
              */
-            affected_faculty?: string[];
+            affectedFaculty?: string[];
             /**
              * Churn Analysis
              * @description Detailed churn breakdown
              */
-            churn_analysis?: {
+            churnAnalysis?: {
                 [key: string]: unknown;
             };
             /**
              * Stability Grade
              * @description Stability rating: excellent, good, fair, poor, unstable
              */
-            stability_grade: string;
+            stabilityGrade: string;
             /**
              * Source
              * @description Data source
@@ -38022,20 +38548,20 @@ export interface components {
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /** Created By */
-            created_by?: string | null;
+            createdBy?: string | null;
             /** Description */
             description: string;
             /** Run Id */
-            run_id?: string | null;
+            runId?: string | null;
             /** Assignment Count */
-            assignment_count: number;
+            assignmentCount: number;
             /**
              * Can Revert
              * @default true
              */
-            can_revert: boolean;
+            canRevert: boolean;
         };
         /**
          * RollbackRequest
@@ -38057,27 +38583,27 @@ export interface components {
              * Draft Id
              * Format: uuid
              */
-            draft_id: string;
+            draftId: string;
             status: components["schemas"]["ScheduleDraftStatus"];
             /**
              * Rolled Back Count
              * @description Assignments rolled back
              * @default 0
              */
-            rolled_back_count: number;
+            rolledBackCount: number;
             /**
              * Failed Count
              * @description Failed to rollback
              * @default 0
              */
-            failed_count: number;
+            failedCount: number;
             /**
              * Rolled Back At
              * Format: date-time
              */
-            rolled_back_at: string;
+            rolledBackAt: string;
             /** Rolled Back By Id */
-            rolled_back_by_id?: string | null;
+            rolledBackById?: string | null;
             /** Errors */
             errors?: string[];
             /**
@@ -38095,17 +38621,17 @@ export interface components {
              * Rotation Template Id
              * Format: uuid
              */
-            rotation_template_id: string;
+            rotationTemplateId: string;
             /** Rotation Name */
-            rotation_name: string;
+            rotationName: string;
             /** Leave Eligible */
-            leave_eligible: boolean;
+            leaveEligible: boolean;
             /** Max Residents */
-            max_residents: number | null;
+            maxResidents: number | null;
             /** Current Assigned */
-            current_assigned: number;
+            currentAssigned: number;
             /** Available Slots */
-            available_slots: number | null;
+            availableSlots: number | null;
         };
         /**
          * RotationCoverageData
@@ -38134,7 +38660,7 @@ export interface components {
              * Preference Type
              * @description full_day_grouping, consecutive_specialty, avoid_isolated, preferred_days, avoid_friday_pm, balance_weekly
              */
-            preference_type: string;
+            preferenceType: string;
             /**
              * Weight
              * @default medium
@@ -38142,14 +38668,14 @@ export interface components {
              */
             weight: "low" | "medium" | "high" | "required";
             /** Config Json */
-            config_json?: {
+            configJson?: {
                 [key: string]: unknown;
             };
             /**
              * Is Active
              * @default true
              */
-            is_active: boolean;
+            isActive: boolean;
             /** Description */
             description?: string | null;
         };
@@ -38162,7 +38688,7 @@ export interface components {
              * Preference Type
              * @description full_day_grouping, consecutive_specialty, avoid_isolated, preferred_days, avoid_friday_pm, balance_weekly
              */
-            preference_type: string;
+            preferenceType: string;
             /**
              * Weight
              * @default medium
@@ -38170,14 +38696,14 @@ export interface components {
              */
             weight: "low" | "medium" | "high" | "required";
             /** Config Json */
-            config_json?: {
+            configJson?: {
                 [key: string]: unknown;
             };
             /**
              * Is Active
              * @default true
              */
-            is_active: boolean;
+            isActive: boolean;
             /** Description */
             description?: string | null;
             /**
@@ -38189,17 +38715,17 @@ export interface components {
              * Rotation Template Id
              * Format: uuid
              */
-            rotation_template_id: string;
+            rotationTemplateId: string;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
         };
         /**
          * RotationSearchRequest
@@ -38227,7 +38753,7 @@ export interface components {
              * @description Results per page
              * @default 20
              */
-            page_size: number;
+            pageSize: number;
         };
         /**
          * RotationTemplateCreate
@@ -38237,42 +38763,42 @@ export interface components {
             /** Name */
             name: string;
             /** Activity Type */
-            activity_type: string;
+            activityType: string;
             /**
              * Template Category
              * @description Category for UI grouping: rotation, time_off, absence, educational
              * @default rotation
              */
-            template_category: string;
+            templateCategory: string;
             /** Abbreviation */
             abbreviation?: string | null;
             /** Display Abbreviation */
-            display_abbreviation?: string | null;
+            displayAbbreviation?: string | null;
             /** Font Color */
-            font_color?: string | null;
+            fontColor?: string | null;
             /** Background Color */
-            background_color?: string | null;
+            backgroundColor?: string | null;
             /** Clinic Location */
-            clinic_location?: string | null;
+            clinicLocation?: string | null;
             /** Max Residents */
-            max_residents?: number | null;
+            maxResidents?: number | null;
             /** Requires Specialty */
-            requires_specialty?: string | null;
+            requiresSpecialty?: string | null;
             /**
              * Requires Procedure Credential
              * @default false
              */
-            requires_procedure_credential: boolean | null;
+            requiresProcedureCredential: boolean | null;
             /**
              * Supervision Required
              * @default true
              */
-            supervision_required: boolean | null;
+            supervisionRequired: boolean | null;
             /**
              * Max Supervision Ratio
              * @default 4
              */
-            max_supervision_ratio: number | null;
+            maxSupervisionRatio: number | null;
         };
         /**
          * RotationTemplateInfo
@@ -38287,9 +38813,9 @@ export interface components {
             /** Name */
             name: string;
             /** Activity Type */
-            activity_type: string;
+            activityType: string;
             /** Leave Eligible */
-            leave_eligible: boolean;
+            leaveEligible: boolean;
         };
         /**
          * RotationTemplateListResponse
@@ -38309,42 +38835,42 @@ export interface components {
             /** Name */
             name: string;
             /** Activity Type */
-            activity_type: string;
+            activityType: string;
             /**
              * Template Category
              * @description Category for UI grouping: rotation, time_off, absence, educational
              * @default rotation
              */
-            template_category: string;
+            templateCategory: string;
             /** Abbreviation */
             abbreviation?: string | null;
             /** Display Abbreviation */
-            display_abbreviation?: string | null;
+            displayAbbreviation?: string | null;
             /** Font Color */
-            font_color?: string | null;
+            fontColor?: string | null;
             /** Background Color */
-            background_color?: string | null;
+            backgroundColor?: string | null;
             /** Clinic Location */
-            clinic_location?: string | null;
+            clinicLocation?: string | null;
             /** Max Residents */
-            max_residents?: number | null;
+            maxResidents?: number | null;
             /** Requires Specialty */
-            requires_specialty?: string | null;
+            requiresSpecialty?: string | null;
             /**
              * Requires Procedure Credential
              * @default false
              */
-            requires_procedure_credential: boolean | null;
+            requiresProcedureCredential: boolean | null;
             /**
              * Supervision Required
              * @default true
              */
-            supervision_required: boolean | null;
+            supervisionRequired: boolean | null;
             /**
              * Max Supervision Ratio
              * @default 4
              */
-            max_supervision_ratio: number | null;
+            maxSupervisionRatio: number | null;
             /**
              * Id
              * Format: uuid
@@ -38354,16 +38880,16 @@ export interface components {
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Is Archived
              * @default false
              */
-            is_archived: boolean;
+            isArchived: boolean;
             /** Archived At */
-            archived_at?: string | null;
+            archivedAt?: string | null;
             /** Archived By */
-            archived_by?: string | null;
+            archivedBy?: string | null;
         };
         /**
          * RotationTemplateUpdate
@@ -38373,29 +38899,29 @@ export interface components {
             /** Name */
             name?: string | null;
             /** Activity Type */
-            activity_type?: string | null;
+            activityType?: string | null;
             /** Template Category */
-            template_category?: string | null;
+            templateCategory?: string | null;
             /** Abbreviation */
             abbreviation?: string | null;
             /** Display Abbreviation */
-            display_abbreviation?: string | null;
+            displayAbbreviation?: string | null;
             /** Font Color */
-            font_color?: string | null;
+            fontColor?: string | null;
             /** Background Color */
-            background_color?: string | null;
+            backgroundColor?: string | null;
             /** Clinic Location */
-            clinic_location?: string | null;
+            clinicLocation?: string | null;
             /** Max Residents */
-            max_residents?: number | null;
+            maxResidents?: number | null;
             /** Requires Specialty */
-            requires_specialty?: string | null;
+            requiresSpecialty?: string | null;
             /** Requires Procedure Credential */
-            requires_procedure_credential?: boolean | null;
+            requiresProcedureCredential?: boolean | null;
             /** Supervision Required */
-            supervision_required?: boolean | null;
+            supervisionRequired?: boolean | null;
             /** Max Supervision Ratio */
-            max_supervision_ratio?: number | null;
+            maxSupervisionRatio?: number | null;
         };
         /**
          * RunQueueResponse
@@ -38420,7 +38946,7 @@ export interface components {
          * @description Result of a safety check.
          */
         SafetyCheckResult: {
-            check_type: components["schemas"]["SafetyCheckType"];
+            checkType: components["schemas"]["SafetyCheckType"];
             /** Passed */
             passed: boolean;
             /** Message */
@@ -38458,26 +38984,26 @@ export interface components {
          */
         SamnPerelliAssessmentResponse: {
             /** Resident Id */
-            resident_id: string;
+            residentId: string;
             /** Level */
             level: number;
             /** Level Name */
-            level_name: string;
+            levelName: string;
             /** Description */
             description: string;
             /**
              * Assessed At
              * Format: date-time
              */
-            assessed_at: string;
+            assessedAt: string;
             /** Is Self Reported */
-            is_self_reported: boolean;
+            isSelfReported: boolean;
             /** Safe For Duty */
-            safe_for_duty: boolean;
+            safeForDuty: boolean;
             /** Duty Restrictions */
-            duty_restrictions?: string[] | null;
+            dutyRestrictions?: string[] | null;
             /** Recommended Rest Hours */
-            recommended_rest_hours?: number | null;
+            recommendedRestHours?: number | null;
             /** Notes */
             notes?: string | null;
         };
@@ -38491,7 +39017,7 @@ export interface components {
              * @description Total staged assignments
              * @default 0
              */
-            assignments_total: number;
+            assignmentsTotal: number;
             /**
              * Added
              * @description New assignments to add
@@ -38515,19 +39041,19 @@ export interface components {
              * @description Total flags
              * @default 0
              */
-            flags_total: number;
+            flagsTotal: number;
             /**
              * Flags Acknowledged
              * @description Acknowledged flags
              * @default 0
              */
-            flags_acknowledged: number;
+            flagsAcknowledged: number;
             /**
              * Flags Unacknowledged
              * @description Unacknowledged flags
              * @default 0
              */
-            flags_unacknowledged: number;
+            flagsUnacknowledged: number;
         };
         /**
          * ScheduleDraftCreate
@@ -38535,29 +39061,29 @@ export interface components {
          */
         ScheduleDraftCreate: {
             /** @description Source of the draft (solver, manual, swap, import) */
-            source_type: components["schemas"]["DraftSourceType"];
+            sourceType: components["schemas"]["DraftSourceType"];
             /**
              * Target Block
              * @description Target block number (1-26)
              */
-            target_block?: number | null;
+            targetBlock?: number | null;
             /**
              * Target Start Date
              * Format: date
              * @description Start date of draft scope
              */
-            target_start_date: string;
+            targetStartDate: string;
             /**
              * Target End Date
              * Format: date
              * @description End date of draft scope
              */
-            target_end_date: string;
+            targetEndDate: string;
             /**
              * Schedule Run Id
              * @description Optional link to schedule_runs for solver drafts
              */
-            schedule_run_id?: string | null;
+            scheduleRunId?: string | null;
             /**
              * Notes
              * @description Optional notes
@@ -38590,17 +39116,17 @@ export interface components {
              * @description Items per page
              * @default 50
              */
-            page_size: number;
+            pageSize: number;
             /**
              * Has Next
              * @description Has next page
              */
-            has_next: boolean;
+            hasNext: boolean;
             /**
              * Has Previous
              * @description Has previous page
              */
-            has_previous: boolean;
+            hasPrevious: boolean;
         };
         /**
          * ScheduleDraftListItem
@@ -38616,31 +39142,31 @@ export interface components {
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             status: components["schemas"]["ScheduleDraftStatus"];
-            source_type: components["schemas"]["DraftSourceType"];
+            sourceType: components["schemas"]["DraftSourceType"];
             /** Target Block */
-            target_block?: number | null;
+            targetBlock?: number | null;
             /**
              * Target Start Date
              * Format: date
              */
-            target_start_date: string;
+            targetStartDate: string;
             /**
              * Target End Date
              * Format: date
              */
-            target_end_date: string;
+            targetEndDate: string;
             /**
              * Flags Total
              * @default 0
              */
-            flags_total: number;
+            flagsTotal: number;
             /**
              * Flags Acknowledged
              * @default 0
              */
-            flags_acknowledged: number;
+            flagsAcknowledged: number;
             counts?: components["schemas"]["ScheduleDraftCounts"];
         };
         /**
@@ -38657,60 +39183,60 @@ export interface components {
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /** Created By Id */
-            created_by_id?: string | null;
+            createdById?: string | null;
             /** Target Block */
-            target_block?: number | null;
+            targetBlock?: number | null;
             /**
              * Target Start Date
              * Format: date
              */
-            target_start_date: string;
+            targetStartDate: string;
             /**
              * Target End Date
              * Format: date
              */
-            target_end_date: string;
+            targetEndDate: string;
             status: components["schemas"]["ScheduleDraftStatus"];
-            source_type: components["schemas"]["DraftSourceType"];
+            sourceType: components["schemas"]["DraftSourceType"];
             /** Source Schedule Run Id */
-            source_schedule_run_id?: string | null;
+            sourceScheduleRunId?: string | null;
             /** Published At */
-            published_at?: string | null;
+            publishedAt?: string | null;
             /** Published By Id */
-            published_by_id?: string | null;
+            publishedById?: string | null;
             /**
              * Rollback Available
              * @default true
              */
-            rollback_available: boolean;
+            rollbackAvailable: boolean;
             /** Rollback Expires At */
-            rollback_expires_at?: string | null;
+            rollbackExpiresAt?: string | null;
             /** Rolled Back At */
-            rolled_back_at?: string | null;
+            rolledBackAt?: string | null;
             /** Rolled Back By Id */
-            rolled_back_by_id?: string | null;
+            rolledBackById?: string | null;
             /** Notes */
             notes?: string | null;
             /** Change Summary */
-            change_summary?: {
+            changeSummary?: {
                 [key: string]: unknown;
             } | null;
             /**
              * Flags Total
              * @default 0
              */
-            flags_total: number;
+            flagsTotal: number;
             /**
              * Flags Acknowledged
              * @default 0
              */
-            flags_acknowledged: number;
+            flagsAcknowledged: number;
             /** Override Comment */
-            override_comment?: string | null;
+            overrideComment?: string | null;
             /** Override By Id */
-            override_by_id?: string | null;
+            overrideById?: string | null;
             counts?: components["schemas"]["ScheduleDraftCounts"];
         };
         /**
@@ -38725,7 +39251,7 @@ export interface components {
          */
         ScheduleFatigueAssessmentRequest: {
             /** Proposed Shifts */
-            proposed_shifts: components["schemas"]["ShiftPatternInput"][];
+            proposedShifts: components["schemas"]["ShiftPatternInput"][];
         };
         /**
          * ScheduleFatigueAssessmentResponse
@@ -38733,21 +39259,21 @@ export interface components {
          */
         ScheduleFatigueAssessmentResponse: {
             /** Resident Id */
-            resident_id: string;
+            residentId: string;
             /** Shifts Evaluated */
-            shifts_evaluated: number;
+            shiftsEvaluated: number;
             /** Overall Risk */
-            overall_risk: string;
+            overallRisk: string;
             /** Metrics */
             metrics: {
                 [key: string]: unknown;
             };
             /** Hazard Distribution */
-            hazard_distribution: {
+            hazardDistribution: {
                 [key: string]: unknown;
             };
             /** High Risk Windows */
-            high_risk_windows: {
+            highRiskWindows: {
                 [key: string]: unknown;
             }[];
             /** Trajectory */
@@ -38816,28 +39342,28 @@ export interface components {
          * ScheduleReportRequest
          * @description Request schema for schedule overview report.
          * @example {
-         *       "end_date": "2025-01-31",
+         *       "endDate": "2025-01-31",
          *       "format": "pdf",
-         *       "include_logo": true,
-         *       "include_page_numbers": true,
-         *       "include_toc": true,
-         *       "report_type": "schedule",
-         *       "start_date": "2025-01-01"
+         *       "includeLogo": true,
+         *       "includePageNumbers": true,
+         *       "includeToc": true,
+         *       "reportType": "schedule",
+         *       "startDate": "2025-01-01"
          *     }
          */
         ScheduleReportRequest: {
             /** @default schedule */
-            report_type: components["schemas"]["ReportType"];
+            reportType: components["schemas"]["ReportType"];
             /**
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /** @default pdf */
             format: components["schemas"]["ReportFormat"];
             /**
@@ -38845,35 +39371,35 @@ export interface components {
              * @description Include organization logo
              * @default true
              */
-            include_logo: boolean;
+            includeLogo: boolean;
             /**
              * Include Toc
              * @description Include table of contents
              * @default true
              */
-            include_toc: boolean;
+            includeToc: boolean;
             /**
              * Include Page Numbers
              * @description Include page numbers
              * @default true
              */
-            include_page_numbers: boolean;
+            includePageNumbers: boolean;
             /**
              * Person Ids
              * @description Filter by specific people (residents/faculty)
              */
-            person_ids?: string[] | null;
+            personIds?: string[] | null;
             /**
              * Rotation Template Ids
              * @description Filter by specific rotation templates
              */
-            rotation_template_ids?: string[] | null;
+            rotationTemplateIds?: string[] | null;
             /**
              * Include Details
              * @description Include detailed assignment information
              * @default true
              */
-            include_details: boolean;
+            includeDetails: boolean;
         };
         /**
          * ScheduleRequest
@@ -38884,16 +39410,16 @@ export interface components {
              * Start Date
              * Format: date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              */
-            end_date: string;
+            endDate: string;
             /** Pgy Levels */
-            pgy_levels?: number[] | null;
+            pgyLevels?: number[] | null;
             /** Rotation Template Ids */
-            rotation_template_ids?: string[] | null;
+            rotationTemplateIds?: string[] | null;
             /** @default greedy */
             algorithm: components["schemas"]["SchedulingAlgorithm"];
             /**
@@ -38901,23 +39427,23 @@ export interface components {
              * @description Maximum solver runtime in seconds (5-300)
              * @default 60
              */
-            timeout_seconds: number;
+            timeoutSeconds: number;
             /**
              * Expand Block Assignments
              * @description Expand block_assignments table into daily slots before solving
              * @default false
              */
-            expand_block_assignments: boolean;
+            expandBlockAssignments: boolean;
             /**
              * Block Number
              * @description Academic block number (0-13) for block_assignment expansion
              */
-            block_number?: number | null;
+            blockNumber?: number | null;
             /**
              * Academic Year
              * @description Academic year for block_assignment expansion (e.g., 2025 for AY 2025-2026)
              */
-            academic_year?: number | null;
+            academicYear?: number | null;
         };
         /**
          * ScheduleResponse
@@ -38929,19 +39455,19 @@ export interface components {
             /** Message */
             message: string;
             /** Total Assignments */
-            total_assignments: number;
+            totalAssignments: number;
             /** Total Blocks */
-            total_blocks: number;
+            totalBlocks: number;
             validation: components["schemas"]["ValidationResult"];
             /** Run Id */
-            run_id?: string | null;
-            solver_stats?: components["schemas"]["SolverStatistics"] | null;
-            nf_pc_audit?: components["schemas"]["NFPCAudit"] | null;
+            runId?: string | null;
+            solverStats?: components["schemas"]["SolverStatistics"] | null;
+            nfPcAudit?: components["schemas"]["NFPCAudit"] | null;
             /**
              * Acgme Override Count
              * @default 0
              */
-            acgme_override_count: number;
+            acgmeOverrideCount: number;
         };
         /**
          * ScheduleRunRead
@@ -38993,7 +39519,7 @@ export interface components {
          */
         ScheduleScoreResponse: {
             /** Overall Score */
-            overall_score: number;
+            overallScore: number;
             /**
              * Grade
              * @description Letter grade A+ to F
@@ -39016,19 +39542,19 @@ export interface components {
             /** Providers */
             providers: string[];
             /** Date Range */
-            date_range: (string | null)[];
+            dateRange: (string | null)[];
             /** Total Slots */
-            total_slots: number;
+            totalSlots: number;
             /**
              * Fmit Slots
              * @default 0
              */
-            fmit_slots: number;
+            fmitSlots: number;
             /**
              * Clinic Slots
              * @default 0
              */
-            clinic_slots: number;
+            clinicSlots: number;
         };
         /**
          * ScheduleTaskRequest
@@ -39204,12 +39730,12 @@ export interface components {
              * Schedule Id
              * @description ID of existing schedule to score.
              */
-            schedule_id?: string | null;
+            scheduleId?: string | null;
             /**
              * Schedule Data
              * @description Schedule data to score (if not using schedule_id).
              */
-            schedule_data?: {
+            scheduleData?: {
                 [key: string]: unknown;
             } | null;
             /**
@@ -39217,7 +39743,7 @@ export interface components {
              * @description Include improvement suggestions in response.
              * @default true
              */
-            include_suggestions: boolean;
+            includeSuggestions: boolean;
         };
         /**
          * SearchRequest
@@ -39236,7 +39762,7 @@ export interface components {
              *       "person"
              *     ]
              */
-            entity_types: string[];
+            entityTypes: string[];
             /**
              * Filters
              * @description Additional filters (type, pgy_level, status, etc.)
@@ -39255,19 +39781,19 @@ export interface components {
              * @description Results per page
              * @default 20
              */
-            page_size: number;
+            pageSize: number;
             /**
              * Sort By
              * @description Field to sort by
              * @default relevance
              */
-            sort_by: string;
+            sortBy: string;
             /**
              * Sort Order
              * @description Sort order: asc or desc
              * @default desc
              */
-            sort_order: string;
+            sortOrder: string;
             /**
              * Highlight
              * @description Enable result highlighting
@@ -39305,12 +39831,12 @@ export interface components {
              * Page Size
              * @description Results per page
              */
-            page_size: number;
+            pageSize: number;
             /**
              * Total Pages
              * @description Total number of pages
              */
-            total_pages: number;
+            totalPages: number;
             /**
              * Facets
              * @description Facet counts for filtering
@@ -39383,7 +39909,7 @@ export interface components {
             /** Total */
             total: number;
             /** Active Count */
-            active_count: number;
+            activeCount: number;
         };
         /**
          * SessionResponse
@@ -39391,27 +39917,27 @@ export interface components {
          */
         SessionResponse: {
             /** Session Id */
-            session_id: string;
+            sessionId: string;
             /** User Id */
-            user_id: string;
+            userId: string;
             /** Username */
             username: string;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Last Activity
              * Format: date-time
              */
-            last_activity: string;
+            lastActivity: string;
             /** Expires At */
-            expires_at: string | null;
+            expiresAt: string | null;
             status: components["schemas"]["SessionStatus"];
-            device_info: components["schemas"]["DeviceInfo"];
+            deviceInfo: components["schemas"]["DeviceInfo"];
             /** Request Count */
-            request_count: number;
+            requestCount: number;
         };
         /**
          * SessionStats
@@ -39425,31 +39951,31 @@ export interface components {
              * Total Active Sessions
              * @default 0
              */
-            total_active_sessions: number;
+            totalActiveSessions: number;
             /**
              * Unique Active Users
              * @default 0
              */
-            unique_active_users: number;
+            uniqueActiveUsers: number;
             /** Sessions By Device */
-            sessions_by_device?: {
+            sessionsByDevice?: {
                 [key: string]: number | undefined;
             };
             /**
              * Sessions Created Today
              * @default 0
              */
-            sessions_created_today: number;
+            sessionsCreatedToday: number;
             /**
              * Sessions Expired Today
              * @default 0
              */
-            sessions_expired_today: number;
+            sessionsExpiredToday: number;
             /**
              * Average Session Duration Minutes
              * @default 0
              */
-            average_session_duration_minutes: number;
+            averageSessionDurationMinutes: number;
         };
         /**
          * SessionStatus
@@ -39468,14 +39994,14 @@ export interface components {
              * User Id
              * @description User ID to apply custom quota
              */
-            user_id: string;
+            userId: string;
             /** @description Custom quota policy */
             policy: components["schemas"]["QuotaPolicyConfig"];
             /**
              * Ttl Seconds
              * @description Time-to-live in seconds (None = permanent)
              */
-            ttl_seconds?: number | null;
+            ttlSeconds?: number | null;
         };
         /**
          * SetCustomQuotaResponse
@@ -39496,14 +40022,14 @@ export interface components {
              * User Id
              * @description User ID affected
              */
-            user_id: string;
+            userId: string;
             /** @description Applied policy */
             policy: components["schemas"]["QuotaPolicyConfig"];
             /**
              * Expires At
              * @description Expiration time (ISO format)
              */
-            expires_at?: string | null;
+            expiresAt?: string | null;
         };
         /**
          * SetpointInfo
@@ -39515,13 +40041,13 @@ export interface components {
             /** Description */
             description: string;
             /** Target Value */
-            target_value: number;
+            targetValue: number;
             /** Tolerance */
             tolerance: number;
             /** Unit */
             unit: string;
             /** Is Critical */
-            is_critical: boolean;
+            isCritical: boolean;
         };
         /** SettingsBase */
         SettingsBase: {
@@ -39530,52 +40056,52 @@ export interface components {
              * @description Algorithm: greedy, min_conflicts, cp_sat
              * @default greedy
              */
-            scheduling_algorithm: string;
+            schedulingAlgorithm: string;
             /**
              * Work Hours Per Week
              * @default 80
              */
-            work_hours_per_week: number;
+            workHoursPerWeek: number;
             /**
              * Max Consecutive Days
              * @default 6
              */
-            max_consecutive_days: number;
+            maxConsecutiveDays: number;
             /**
              * Min Days Off Per Week
              * @default 1
              */
-            min_days_off_per_week: number;
+            minDaysOffPerWeek: number;
             /**
              * Pgy1 Supervision Ratio
              * @default 1:2
              */
-            pgy1_supervision_ratio: string;
+            pgy1SupervisionRatio: string;
             /**
              * Pgy2 Supervision Ratio
              * @default 1:4
              */
-            pgy2_supervision_ratio: string;
+            pgy2SupervisionRatio: string;
             /**
              * Pgy3 Supervision Ratio
              * @default 1:4
              */
-            pgy3_supervision_ratio: string;
+            pgy3SupervisionRatio: string;
             /**
              * Enable Weekend Scheduling
              * @default true
              */
-            enable_weekend_scheduling: boolean;
+            enableWeekendScheduling: boolean;
             /**
              * Enable Holiday Scheduling
              * @default false
              */
-            enable_holiday_scheduling: boolean;
+            enableHolidayScheduling: boolean;
             /**
              * Default Block Duration Hours
              * @default 4
              */
-            default_block_duration_hours: number;
+            defaultBlockDurationHours: number;
         };
         /** SettingsResponse */
         SettingsResponse: {
@@ -39584,75 +40110,75 @@ export interface components {
              * @description Algorithm: greedy, min_conflicts, cp_sat
              * @default greedy
              */
-            scheduling_algorithm: string;
+            schedulingAlgorithm: string;
             /**
              * Work Hours Per Week
              * @default 80
              */
-            work_hours_per_week: number;
+            workHoursPerWeek: number;
             /**
              * Max Consecutive Days
              * @default 6
              */
-            max_consecutive_days: number;
+            maxConsecutiveDays: number;
             /**
              * Min Days Off Per Week
              * @default 1
              */
-            min_days_off_per_week: number;
+            minDaysOffPerWeek: number;
             /**
              * Pgy1 Supervision Ratio
              * @default 1:2
              */
-            pgy1_supervision_ratio: string;
+            pgy1SupervisionRatio: string;
             /**
              * Pgy2 Supervision Ratio
              * @default 1:4
              */
-            pgy2_supervision_ratio: string;
+            pgy2SupervisionRatio: string;
             /**
              * Pgy3 Supervision Ratio
              * @default 1:4
              */
-            pgy3_supervision_ratio: string;
+            pgy3SupervisionRatio: string;
             /**
              * Enable Weekend Scheduling
              * @default true
              */
-            enable_weekend_scheduling: boolean;
+            enableWeekendScheduling: boolean;
             /**
              * Enable Holiday Scheduling
              * @default false
              */
-            enable_holiday_scheduling: boolean;
+            enableHolidayScheduling: boolean;
             /**
              * Default Block Duration Hours
              * @default 4
              */
-            default_block_duration_hours: number;
+            defaultBlockDurationHours: number;
         };
         /** SettingsUpdate */
         SettingsUpdate: {
             /** Scheduling Algorithm */
-            scheduling_algorithm?: string | null;
+            schedulingAlgorithm?: string | null;
             /** Work Hours Per Week */
-            work_hours_per_week?: number | null;
+            workHoursPerWeek?: number | null;
             /** Max Consecutive Days */
-            max_consecutive_days?: number | null;
+            maxConsecutiveDays?: number | null;
             /** Min Days Off Per Week */
-            min_days_off_per_week?: number | null;
+            minDaysOffPerWeek?: number | null;
             /** Pgy1 Supervision Ratio */
-            pgy1_supervision_ratio?: string | null;
+            pgy1SupervisionRatio?: string | null;
             /** Pgy2 Supervision Ratio */
-            pgy2_supervision_ratio?: string | null;
+            pgy2SupervisionRatio?: string | null;
             /** Pgy3 Supervision Ratio */
-            pgy3_supervision_ratio?: string | null;
+            pgy3SupervisionRatio?: string | null;
             /** Enable Weekend Scheduling */
-            enable_weekend_scheduling?: boolean | null;
+            enableWeekendScheduling?: boolean | null;
             /** Enable Holiday Scheduling */
-            enable_holiday_scheduling?: boolean | null;
+            enableHolidayScheduling?: boolean | null;
             /** Default Block Duration Hours */
-            default_block_duration_hours?: number | null;
+            defaultBlockDurationHours?: number | null;
         };
         /**
          * ShapleyFacultyResult
@@ -39660,19 +40186,19 @@ export interface components {
          */
         ShapleyFacultyResult: {
             /** Faculty Id */
-            faculty_id: string;
+            facultyId: string;
             /** Faculty Name */
-            faculty_name: string;
+            facultyName: string;
             /** Shapley Value */
-            shapley_value: number;
+            shapleyValue: number;
             /** Marginal Contribution */
-            marginal_contribution: number;
+            marginalContribution: number;
             /** Fair Workload Target */
-            fair_workload_target: number;
+            fairWorkloadTarget: number;
             /** Current Workload */
-            current_workload: number;
+            currentWorkload: number;
             /** Equity Gap */
-            equity_gap: number;
+            equityGap: number;
         };
         /**
          * ShapleyMetricsResponse
@@ -39680,21 +40206,21 @@ export interface components {
          */
         ShapleyMetricsResponse: {
             /** Faculty Results */
-            faculty_results: components["schemas"]["ShapleyFacultyResult"][];
+            facultyResults: components["schemas"]["ShapleyFacultyResult"][];
             /** Total Workload */
-            total_workload: number;
+            totalWorkload: number;
             /** Total Fair Target */
-            total_fair_target: number;
+            totalFairTarget: number;
             /** Equity Gap Std Dev */
-            equity_gap_std_dev: number;
+            equityGapStdDev: number;
             /** Overworked Count */
-            overworked_count: number;
+            overworkedCount: number;
             /** Underworked Count */
-            underworked_count: number;
+            underworkedCount: number;
             /** Most Overworked Faculty Id */
-            most_overworked_faculty_id?: string | null;
+            mostOverworkedFacultyId?: string | null;
             /** Most Underworked Faculty Id */
-            most_underworked_faculty_id?: string | null;
+            mostUnderworkedFacultyId?: string | null;
         };
         /**
          * ShapleyWorkloadRequest
@@ -39705,23 +40231,23 @@ export interface components {
              * Faculty Ids
              * @description Faculty member IDs to analyze (minimum 2)
              */
-            faculty_ids: string[];
+            facultyIds: string[];
             /**
              * Start Date
              * @description Start date in YYYY-MM-DD format
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * @description End date in YYYY-MM-DD format
              */
-            end_date: string;
+            endDate: string;
             /**
              * Num Samples
              * @description Monte Carlo samples (more = better accuracy)
              * @default 1000
              */
-            num_samples: number;
+            numSamples: number;
         };
         /**
          * ShiftPatternInput
@@ -39747,7 +40273,7 @@ export interface components {
              * Prior Sleep
              * @default 7
              */
-            prior_sleep: number;
+            priorSleep: number;
         };
         /**
          * SimulatedChange
@@ -39758,29 +40284,29 @@ export interface components {
              * Assignment Id
              * @description Existing assignment to modify (None for new)
              */
-            assignment_id?: string | null;
+            assignmentId?: string | null;
             /**
              * Call Date
              * @description Date of call (for new)
              */
-            call_date?: string | null;
+            callDate?: string | null;
             /**
              * Old Person Id
              * @description Current person (for swap)
              */
-            old_person_id?: string | null;
+            oldPersonId?: string | null;
             /**
              * New Person Id
              * Format: uuid
              * @description New person to assign
              */
-            new_person_id: string;
+            newPersonId: string;
             /**
              * Call Type
              * @description Type of call
              * @default overnight
              */
-            call_type: string;
+            callType: string;
         };
         /**
          * SimulationStatus
@@ -39799,46 +40325,46 @@ export interface components {
              * @description Report timestamp
              */
             timestamp?: string;
-            task_metrics: components["schemas"]["TaskMetrics"];
+            taskMetrics: components["schemas"]["TaskMetrics"];
             /**
              * Health Status
              * @description Overall health: healthy, degraded, critical
              */
-            health_status: string;
+            healthStatus: string;
             /**
              * Defense Level
              * @description Current defense level
              */
-            defense_level?: string | null;
+            defenseLevel?: string | null;
             /**
              * Recent Tasks
              * @description Recent tasks
              */
-            recent_tasks?: components["schemas"]["RecentTaskInfo"][];
+            recentTasks?: components["schemas"]["RecentTaskInfo"][];
             /** @description Schedule coverage metrics */
-            coverage_metrics?: components["schemas"]["CoverageMetrics"] | null;
+            coverageMetrics?: components["schemas"]["CoverageMetrics"] | null;
             /**
              * Immediate Actions
              * @description Required immediate actions
              */
-            immediate_actions?: string[];
+            immediateActions?: string[];
             /**
              * Watch Items
              * @description Items to monitor
              */
-            watch_items?: string[];
+            watchItems?: string[];
             /**
              * Last Update
              * Format: date-time
              * @description Last system update
              */
-            last_update?: string;
+            lastUpdate?: string;
             /**
              * Crisis Mode
              * @description Whether system is in crisis mode
              * @default false
              */
-            crisis_mode: boolean;
+            crisisMode: boolean;
         };
         /**
          * SituationalAwareness
@@ -39848,17 +40374,17 @@ export interface components {
          */
         SituationalAwareness: {
             /** @description Inpatient team */
-            fmit_team?: components["schemas"]["FMITSection"];
+            fmitTeam?: components["schemas"]["FMITSection"];
             /**
              * Night Rotation
              * @description People on night call
              */
-            night_rotation?: components["schemas"]["NightCallInfo"][];
+            nightRotation?: components["schemas"]["NightCallInfo"][];
             /**
              * Remote Assignments
              * @description People at remote sites
              */
-            remote_assignments?: components["schemas"]["RemoteAssignment"][];
+            remoteAssignments?: components["schemas"]["RemoteAssignment"][];
             /**
              * Absences
              * @description People with absences (vacation, sick, etc.)
@@ -39871,24 +40397,24 @@ export interface components {
          */
         SleepDebtStateResponse: {
             /** Resident Id */
-            resident_id: string;
+            residentId: string;
             /** Current Debt Hours */
-            current_debt_hours: number;
+            currentDebtHours: number;
             /**
              * Last Updated
              * Format: date-time
              */
-            last_updated: string;
+            lastUpdated: string;
             /** Consecutive Deficit Days */
-            consecutive_deficit_days: number;
+            consecutiveDeficitDays: number;
             /** Recovery Sleep Needed */
-            recovery_sleep_needed: number;
+            recoverySleepNeeded: number;
             /** Chronic Debt */
-            chronic_debt: boolean;
+            chronicDebt: boolean;
             /** Debt Severity */
-            debt_severity: string;
+            debtSeverity: string;
             /** Impairment Equivalent Bac */
-            impairment_equivalent_bac: number;
+            impairmentEquivalentBac: number;
         };
         /**
          * SleepDebtTrajectoryRequest
@@ -39899,9 +40425,9 @@ export interface components {
              * Planned Sleep Hours
              * @description Planned sleep hours for each upcoming day
              */
-            planned_sleep_hours: number[];
+            plannedSleepHours: number[];
             /** Start Debt */
-            start_debt?: number | null;
+            startDebt?: number | null;
         };
         /**
          * SleepDebtTrajectoryResponse
@@ -39909,15 +40435,15 @@ export interface components {
          */
         SleepDebtTrajectoryResponse: {
             /** Resident Id */
-            resident_id: string;
+            residentId: string;
             /** Days Predicted */
-            days_predicted: number;
+            daysPredicted: number;
             /** Trajectory */
             trajectory: {
                 [key: string]: unknown;
             }[];
             /** Recovery Estimate Nights */
-            recovery_estimate_nights: number;
+            recoveryEstimateNights: number;
         };
         /**
          * SlowTaskRecord
@@ -39976,7 +40502,7 @@ export interface components {
              * Snapshot Id
              * @description Unique snapshot identifier
              */
-            snapshot_id: string;
+            snapshotId: string;
             /**
              * Table
              * @description Table that was snapshotted
@@ -39986,23 +40512,23 @@ export interface components {
              * Row Count
              * @description Number of rows captured
              */
-            row_count: number;
+            rowCount: number;
             /**
              * File Path
              * @description Path to snapshot file
              */
-            file_path: string;
+            filePath: string;
             /**
              * Created At
              * Format: date-time
              * @description Snapshot creation time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Created By
              * @description User who created snapshot
              */
-            created_by: string;
+            createdBy: string;
             /**
              * Reason
              * @description Reason for snapshot
@@ -40024,7 +40550,7 @@ export interface components {
              * Requested By
              * @description User requesting abort
              */
-            requested_by: string;
+            requestedBy: string;
         };
         /**
          * SolverAbortResponse
@@ -40040,7 +40566,7 @@ export interface components {
              * Run Id
              * @description Schedule run ID
              */
-            run_id: string;
+            runId: string;
             /**
              * Reason
              * @description Abort reason
@@ -40050,12 +40576,12 @@ export interface components {
              * Requested By
              * @description User who requested abort
              */
-            requested_by: string;
+            requestedBy: string;
             /**
              * Requested At
              * Format: date-time
              */
-            requested_at?: string;
+            requestedAt?: string;
             /**
              * Message
              * @description Human-readable status message
@@ -40071,7 +40597,7 @@ export interface components {
              * Run Id
              * @description Schedule run ID
              */
-            run_id: string;
+            runId: string;
             /**
              * Iteration
              * @description Current solver iteration
@@ -40081,17 +40607,17 @@ export interface components {
              * Best Score
              * @description Best objective score found
              */
-            best_score: number;
+            bestScore: number;
             /**
              * Assignments Count
              * @description Assignments in best solution
              */
-            assignments_count: number;
+            assignmentsCount: number;
             /**
              * Violations Count
              * @description Constraint violations
              */
-            violations_count: number;
+            violationsCount: number;
             /**
              * Status
              * @description Solver status: running, completing, aborted
@@ -40101,7 +40627,7 @@ export interface components {
              * Updated At
              * @description Last update timestamp
              */
-            updated_at?: string | null;
+            updatedAt?: string | null;
         };
         /**
          * SolverStatistics
@@ -40109,11 +40635,11 @@ export interface components {
          */
         SolverStatistics: {
             /** Total Blocks */
-            total_blocks?: number | null;
+            totalBlocks?: number | null;
             /** Total Residents */
-            total_residents?: number | null;
+            totalResidents?: number | null;
             /** Coverage Rate */
-            coverage_rate?: number | null;
+            coverageRate?: number | null;
             /** Branches */
             branches?: number | null;
             /** Conflicts */
@@ -40155,13 +40681,13 @@ export interface components {
              * @description Number of binary variables
              * @default 100
              */
-            num_spins: number;
+            numSpins: number;
             /**
              * Num Replicas
              * @description Number of diverse replicas to generate
              * @default 5
              */
-            num_replicas: number;
+            numReplicas: number;
             /**
              * Temperature
              * @description System temperature for sampling
@@ -40173,13 +40699,13 @@ export interface components {
              * @description Degree of conflicting constraints
              * @default 0.3
              */
-            frustration_level: number;
+            frustrationLevel: number;
             /**
              * Num Iterations
              * @description Monte Carlo iterations per replica
              * @default 1000
              */
-            num_iterations: number;
+            numIterations: number;
         };
         /**
          * SpinGlassResponse
@@ -40195,27 +40721,27 @@ export interface components {
              * Mean Energy
              * @description Average energy across replicas
              */
-            mean_energy: number;
+            meanEnergy: number;
             /**
              * Energy Std
              * @description Energy standard deviation
              */
-            energy_std: number;
+            energyStd: number;
             /**
              * Mean Overlap
              * @description Average pairwise overlap
              */
-            mean_overlap: number;
+            meanOverlap: number;
             /**
              * Diversity Score
              * @description Diversity score (1 - mean_overlap)
              */
-            diversity_score: number;
+            diversityScore: number;
             /**
              * Landscape Ruggedness
              * @description Energy landscape ruggedness
              */
-            landscape_ruggedness: number;
+            landscapeRuggedness: number;
             /**
              * Difficulty
              * @description Optimization difficulty: easy, moderate, hard, very_hard
@@ -40237,22 +40763,22 @@ export interface components {
              * Attractor Id
              * @description Unique identifier
              */
-            attractor_id: string;
+            attractorId: string;
             /**
              * Energy Level
              * @description Energy at spurious attractor
              */
-            energy_level: number;
+            energyLevel: number;
             /**
              * Basin Size
              * @description Size of spurious basin
              */
-            basin_size: number;
+            basinSize: number;
             /**
              * Anti Pattern Type
              * @description Type of anti-pattern
              */
-            anti_pattern_type: string;
+            antiPatternType: string;
             /**
              * Description
              * @description Description of the anti-pattern
@@ -40262,22 +40788,22 @@ export interface components {
              * Risk Level
              * @description Risk level: low, medium, high, critical
              */
-            risk_level: string;
+            riskLevel: string;
             /**
              * Distance From Valid
              * @description Distance from valid schedule
              */
-            distance_from_valid: number;
+            distanceFromValid: number;
             /**
              * Probability Of Capture
              * @description Probability of falling into basin
              */
-            probability_of_capture: number;
+            probabilityOfCapture: number;
             /**
              * Mitigation Strategy
              * @description Recommended mitigation
              */
-            mitigation_strategy: string;
+            mitigationStrategy: string;
         };
         /**
          * SpuriousAttractorsRequest
@@ -40288,18 +40814,18 @@ export interface components {
              * Start Date
              * @description Start date (YYYY-MM-DD)
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * @description End date (YYYY-MM-DD)
              */
-            end_date: string;
+            endDate: string;
             /**
              * Search Radius
              * @description Hamming distance search radius
              * @default 20
              */
-            search_radius: number;
+            searchRadius: number;
         };
         /**
          * SpuriousAttractorsResponse
@@ -40310,29 +40836,29 @@ export interface components {
              * Analyzed At
              * @description ISO timestamp of analysis
              */
-            analyzed_at: string;
+            analyzedAt: string;
             /**
              * Spurious Attractors Found
              * @description Number of spurious attractors
              */
-            spurious_attractors_found: number;
+            spuriousAttractorsFound: number;
             /** Spurious Attractors */
-            spurious_attractors?: components["schemas"]["SpuriousAttractorInfoResponse"][];
+            spuriousAttractors?: components["schemas"]["SpuriousAttractorInfoResponse"][];
             /**
              * Total Basin Coverage
              * @description Fraction covered by spurious basins
              */
-            total_basin_coverage: number;
+            totalBasinCoverage: number;
             /**
              * Highest Risk Attractor
              * @description ID of highest risk attractor
              */
-            highest_risk_attractor?: string | null;
+            highestRiskAttractor?: string | null;
             /**
              * Is Current State Spurious
              * @description Whether current state is in spurious basin
              */
-            is_current_state_spurious: boolean;
+            isCurrentStateSpurious: boolean;
             /**
              * Interpretation
              * @description Human-readable interpretation
@@ -40393,66 +40919,66 @@ export interface components {
              * Batch Id
              * Format: uuid
              */
-            batch_id: string;
+            batchId: string;
             /** Row Number */
-            row_number?: number | null;
+            rowNumber?: number | null;
             /** Sheet Name */
-            sheet_name?: string | null;
+            sheetName?: string | null;
             /** Person Name */
-            person_name: string;
+            personName: string;
             /**
              * Assignment Date
              * Format: date
              */
-            assignment_date: string;
+            assignmentDate: string;
             /** Slot */
             slot?: string | null;
             /** Rotation Name */
-            rotation_name?: string | null;
+            rotationName?: string | null;
             /** Raw Cell Value */
-            raw_cell_value?: string | null;
+            rawCellValue?: string | null;
             /** Matched Person Id */
-            matched_person_id?: string | null;
+            matchedPersonId?: string | null;
             /**
              * Matched Person Name
              * @description Resolved person name from match
              */
-            matched_person_name?: string | null;
+            matchedPersonName?: string | null;
             /**
              * Person Match Confidence
              * @description Match confidence 0-100
              */
-            person_match_confidence?: number | null;
+            personMatchConfidence?: number | null;
             /** Matched Rotation Id */
-            matched_rotation_id?: string | null;
+            matchedRotationId?: string | null;
             /**
              * Matched Rotation Name
              * @description Resolved rotation name from match
              */
-            matched_rotation_name?: string | null;
+            matchedRotationName?: string | null;
             /**
              * Rotation Match Confidence
              * @description Match confidence 0-100
              */
-            rotation_match_confidence?: number | null;
+            rotationMatchConfidence?: number | null;
             /**
              * Conflict Type
              * @description none/duplicate/overwrite
              */
-            conflict_type?: string | null;
+            conflictType?: string | null;
             /** Existing Assignment Id */
-            existing_assignment_id?: string | null;
+            existingAssignmentId?: string | null;
             status: components["schemas"]["StagedAssignmentStatus"];
             /** Validation Errors */
-            validation_errors?: {
+            validationErrors?: {
                 [key: string]: unknown;
             }[] | null;
             /** Validation Warnings */
-            validation_warnings?: {
+            validationWarnings?: {
                 [key: string]: unknown;
             }[] | null;
             /** Created Assignment Id */
-            created_assignment_id?: string | null;
+            createdAssignmentId?: string | null;
         };
         /**
          * StagedAssignmentStatus
@@ -40460,6 +40986,23 @@ export interface components {
          * @enum {string}
          */
         StagedAssignmentStatus: "pending" | "approved" | "skipped" | "applied" | "failed";
+        /**
+         * StateTransitionInfo
+         * @description Information about a state transition.
+         */
+        StateTransitionInfo: {
+            /** From State */
+            fromState: string;
+            /** To State */
+            toState: string;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp: string;
+            /** Reason */
+            reason: string;
+        };
         /**
          * StigmergyPatternsResponse
          * @description Response for stigmergy patterns.
@@ -40486,25 +41029,25 @@ export interface components {
              */
             timestamp: string;
             /** Total Trails */
-            total_trails: number;
+            totalTrails: number;
             /** Active Trails */
-            active_trails: number;
+            activeTrails: number;
             /** Trails By Type */
-            trails_by_type: {
+            trailsByType: {
                 [key: string]: unknown;
             };
             /** Average Strength */
-            average_strength: number;
+            averageStrength: number;
             /** Average Age Days */
-            average_age_days: number;
+            averageAgeDays: number;
             /** Evaporation Debt Hours */
-            evaporation_debt_hours: number;
+            evaporationDebtHours: number;
             /** Popular Slots */
-            popular_slots: string[];
+            popularSlots: string[];
             /** Unpopular Slots */
-            unpopular_slots: string[];
+            unpopularSlots: string[];
             /** Strong Swap Pairs */
-            strong_swap_pairs: number;
+            strongSwapPairs: number;
             /** Recommendations */
             recommendations: string[];
         };
@@ -40524,59 +41067,59 @@ export interface components {
              */
             description?: string | null;
             /** @description Type of strategy */
-            strategy_type: components["schemas"]["StrategyType"];
+            strategyType: components["schemas"]["StrategyType"];
             /**
              * Utilization Target
              * @description Target utilization rate (0.0-1.0)
              * @default 0.8
              */
-            utilization_target: number;
+            utilizationTarget: number;
             /**
              * Cross Zone Borrowing
              * @description Allow cross-zone resource borrowing
              * @default true
              */
-            cross_zone_borrowing: boolean;
+            crossZoneBorrowing: boolean;
             /**
              * Sacrifice Willingness
              * @description Willingness to sacrifice
              * @default medium
              */
-            sacrifice_willingness: string;
+            sacrificeWillingness: string;
             /**
              * Defense Activation Threshold
              * @description Defense level activation threshold (1-5)
              * @default 3
              */
-            defense_activation_threshold: number;
+            defenseActivationThreshold: number;
             /**
              * Response Timeout Ms
              * @description Response timeout in milliseconds (100-60000)
              * @default 5000
              */
-            response_timeout_ms: number;
+            responseTimeoutMs: number;
             /**
              * Initial Action
              * @default cooperate
              */
-            initial_action: string;
+            initialAction: string;
             /**
              * Forgiveness Probability
              * @default 0
              */
-            forgiveness_probability: number;
+            forgivenessProbability: number;
             /**
              * Retaliation Memory
              * @default 1
              */
-            retaliation_memory: number;
+            retaliationMemory: number;
             /**
              * Is Stochastic
              * @default false
              */
-            is_stochastic: boolean;
+            isStochastic: boolean;
             /** Custom Logic */
-            custom_logic?: {
+            customLogic?: {
                 [key: string]: unknown;
             } | null;
         };
@@ -40604,42 +41147,42 @@ export interface components {
             name: string;
             /** Description */
             description: string | null;
-            strategy_type: components["schemas"]["StrategyType"];
+            strategyType: components["schemas"]["StrategyType"];
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /** Utilization Target */
-            utilization_target: number;
+            utilizationTarget: number;
             /** Cross Zone Borrowing */
-            cross_zone_borrowing: boolean;
+            crossZoneBorrowing: boolean;
             /** Sacrifice Willingness */
-            sacrifice_willingness: string;
+            sacrificeWillingness: string;
             /** Defense Activation Threshold */
-            defense_activation_threshold: number;
+            defenseActivationThreshold: number;
             /** Response Timeout Ms */
-            response_timeout_ms: number;
+            responseTimeoutMs: number;
             /** Initial Action */
-            initial_action: string;
+            initialAction: string;
             /** Forgiveness Probability */
-            forgiveness_probability: number;
+            forgivenessProbability: number;
             /** Retaliation Memory */
-            retaliation_memory: number;
+            retaliationMemory: number;
             /** Is Stochastic */
-            is_stochastic: boolean;
+            isStochastic: boolean;
             /** Tournaments Participated */
-            tournaments_participated: number;
+            tournamentsParticipated: number;
             /** Total Matches */
-            total_matches: number;
+            totalMatches: number;
             /** Total Wins */
-            total_wins: number;
+            totalWins: number;
             /** Average Score */
-            average_score: number | null;
+            averageScore: number | null;
             /** Cooperation Rate */
-            cooperation_rate: number | null;
+            cooperationRate: number | null;
             /** Is Active */
-            is_active: boolean;
+            isActive: boolean;
         };
         /**
          * StrategyType
@@ -40657,19 +41200,19 @@ export interface components {
             /** Description */
             description?: string | null;
             /** Utilization Target */
-            utilization_target?: number | null;
+            utilizationTarget?: number | null;
             /** Cross Zone Borrowing */
-            cross_zone_borrowing?: boolean | null;
+            crossZoneBorrowing?: boolean | null;
             /** Sacrifice Willingness */
-            sacrifice_willingness?: string | null;
+            sacrificeWillingness?: string | null;
             /** Defense Activation Threshold */
-            defense_activation_threshold?: number | null;
+            defenseActivationThreshold?: number | null;
             /** Response Timeout Ms */
-            response_timeout_ms?: number | null;
+            responseTimeoutMs?: number | null;
             /** Forgiveness Probability */
-            forgiveness_probability?: number | null;
+            forgivenessProbability?: number | null;
             /** Is Active */
-            is_active?: boolean | null;
+            isActive?: boolean | null;
         };
         /**
          * StressPredictionResponse
@@ -40685,30 +41228,30 @@ export interface components {
              * Predicted At
              * Format: date-time
              */
-            predicted_at: string;
-            stress_type: components["schemas"]["StressType"];
+            predictedAt: string;
+            stressType: components["schemas"]["StressType"];
             /** Stress Magnitude */
-            stress_magnitude: number;
+            stressMagnitude: number;
             /** Stress Duration Days */
-            stress_duration_days: number;
+            stressDurationDays: number;
             /** Predicted Compensation */
-            predicted_compensation: number;
+            predictedCompensation: number;
             /** Predicted New Capacity */
-            predicted_new_capacity: number;
+            predictedNewCapacity: number;
             /** Predicted Coverage Rate */
-            predicted_coverage_rate: number;
+            predictedCoverageRate: number;
             /** Predicted Daily Cost */
-            predicted_daily_cost: number;
+            predictedDailyCost: number;
             /** Predicted Total Cost */
-            predicted_total_cost: number;
+            predictedTotalCost: number;
             /** Predicted Burnout Increase */
-            predicted_burnout_increase: number;
+            predictedBurnoutIncrease: number;
             /** Additional Intervention Needed */
-            additional_intervention_needed: number;
+            additionalInterventionNeeded: number;
             /** Recommended Actions */
-            recommended_actions: string[];
+            recommendedActions: string[];
             /** Sustainability Assessment */
-            sustainability_assessment: string;
+            sustainabilityAssessment: string;
         };
         /**
          * StressResolveResponse
@@ -40718,7 +41261,7 @@ export interface components {
             /** Success */
             success: boolean;
             /** Stress Id */
-            stress_id: string;
+            stressId: string;
             /** Message */
             message: string;
         };
@@ -40732,24 +41275,24 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            stress_type: components["schemas"]["StressType"];
+            stressType: components["schemas"]["StressType"];
             /** Description */
             description: string;
             /** Magnitude */
             magnitude: number;
             /** Duration Days */
-            duration_days: number;
+            durationDays: number;
             /** Capacity Impact */
-            capacity_impact: number;
+            capacityImpact: number;
             /** Demand Impact */
-            demand_impact: number;
+            demandImpact: number;
             /**
              * Applied At
              * Format: date-time
              */
-            applied_at: string;
+            appliedAt: string;
             /** Is Active */
-            is_active: boolean;
+            isActive: boolean;
         };
         /**
          * StressType
@@ -40766,19 +41309,19 @@ export interface components {
              * Schedule Id
              * @description Schedule ID to analyze
              */
-            schedule_id?: string | null;
+            scheduleId?: string | null;
             /**
              * Lookback Days
              * @description Days of history to analyze
              * @default 90
              */
-            lookback_days: number;
+            lookbackDays: number;
             /**
              * Min Confidence
              * @description Minimum confidence threshold
              * @default 0.7
              */
-            min_confidence: number;
+            minConfidence: number;
         };
         /**
          * SubharmonicResponse
@@ -40789,25 +41332,25 @@ export interface components {
              * Detected Periods
              * @description Detected periodic patterns
              */
-            detected_periods?: {
+            detectedPeriods?: {
                 [key: string]: unknown;
             }[];
             /**
              * Dominant Period Days
              * @description Most prominent period
              */
-            dominant_period_days?: number | null;
+            dominantPeriodDays?: number | null;
             /**
              * Dominant Period Confidence
              * @description Confidence in dominant period
              * @default 0
              */
-            dominant_period_confidence: number;
+            dominantPeriodConfidence: number;
             /**
              * Acgme Alignment
              * @description Alignment with ACGME windows
              */
-            acgme_alignment?: {
+            acgmeAlignment?: {
                 [key: string]: number | undefined;
             };
             /**
@@ -40837,7 +41380,7 @@ export interface components {
              * @description Entity type for suggestions
              * @default person
              */
-            entity_type: string;
+            entityType: string;
             /**
              * Limit
              * @description Maximum suggestions to return
@@ -40864,7 +41407,7 @@ export interface components {
              * Entity Type
              * @description Entity type
              */
-            entity_type: string;
+            entityType: string;
         };
         /**
          * SurveyFrequencyEnum
@@ -40884,7 +41427,7 @@ export interface components {
             /** Page */
             page: number;
             /** Page Size */
-            page_size: number;
+            pageSize: number;
         };
         /**
          * SurveyListItem
@@ -40899,25 +41442,25 @@ export interface components {
             /** Name */
             name: string;
             /** Display Name */
-            display_name: string;
-            survey_type: components["schemas"]["SurveyTypeEnum"];
+            displayName: string;
+            surveyType: components["schemas"]["SurveyTypeEnum"];
             /** Points Value */
-            points_value: number;
+            pointsValue: number;
             /** Estimated Seconds */
-            estimated_seconds: number;
+            estimatedSeconds: number;
             frequency: components["schemas"]["SurveyFrequencyEnum"];
             /**
              * Is Available
              * @default true
              */
-            is_available: boolean;
+            isAvailable: boolean;
             /** Next Available At */
-            next_available_at?: string | null;
+            nextAvailableAt?: string | null;
             /**
              * Completed This Period
              * @default false
              */
-            completed_this_period: boolean;
+            completedThisPeriod: boolean;
         };
         /**
          * SurveyQuestion
@@ -40932,7 +41475,7 @@ export interface components {
              * Question Type
              * @default likert
              */
-            question_type: string;
+            questionType: string;
             /**
              * Required
              * @default true
@@ -40941,13 +41484,13 @@ export interface components {
             /** Options */
             options?: components["schemas"]["QuestionOption"][] | null;
             /** Min Value */
-            min_value?: number | null;
+            minValue?: number | null;
             /** Max Value */
-            max_value?: number | null;
+            maxValue?: number | null;
             /** Min Label */
-            min_label?: string | null;
+            minLabel?: string | null;
             /** Max Label */
-            max_label?: string | null;
+            maxLabel?: string | null;
         };
         /**
          * SurveyResponse
@@ -40957,8 +41500,8 @@ export interface components {
             /** Name */
             name: string;
             /** Display Name */
-            display_name: string;
-            survey_type: components["schemas"]["SurveyTypeEnum"];
+            displayName: string;
+            surveyType: components["schemas"]["SurveyTypeEnum"];
             /** Description */
             description?: string | null;
             /** Instructions */
@@ -40967,12 +41510,12 @@ export interface components {
              * Points Value
              * @default 50
              */
-            points_value: number;
+            pointsValue: number;
             /**
              * Estimated Seconds
              * @default 60
              */
-            estimated_seconds: number;
+            estimatedSeconds: number;
             /** @default weekly */
             frequency: components["schemas"]["SurveyFrequencyEnum"];
             /**
@@ -40983,12 +41526,12 @@ export interface components {
             /** Questions */
             questions: components["schemas"]["SurveyQuestion"][];
             /** Is Active */
-            is_active: boolean;
+            isActive: boolean;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
         };
         /**
          * SurveyResponseCreate
@@ -41000,9 +41543,9 @@ export interface components {
                 [key: string]: (number | string) | undefined;
             };
             /** Block Number */
-            block_number?: number | null;
+            blockNumber?: number | null;
             /** Academic Year */
-            academic_year?: number | null;
+            academicYear?: number | null;
         };
         /**
          * SurveyResponseSummary
@@ -41018,23 +41561,23 @@ export interface components {
              * Survey Id
              * Format: uuid
              */
-            survey_id: string;
+            surveyId: string;
             /** Survey Name */
-            survey_name: string;
-            survey_type: components["schemas"]["SurveyTypeEnum"];
+            surveyName: string;
+            surveyType: components["schemas"]["SurveyTypeEnum"];
             /** Score */
             score: number | null;
             /** Score Interpretation */
-            score_interpretation: string | null;
+            scoreInterpretation: string | null;
             /**
              * Submitted At
              * Format: date-time
              */
-            submitted_at: string;
+            submittedAt: string;
             /** Block Number */
-            block_number: number | null;
+            blockNumber: number | null;
             /** Academic Year */
-            academic_year: number | null;
+            academicYear: number | null;
         };
         /**
          * SurveySubmissionResult
@@ -41044,28 +41587,28 @@ export interface components {
             /** Success */
             success: boolean;
             /** Response Id */
-            response_id?: string | null;
+            responseId?: string | null;
             /** Score */
             score?: number | null;
             /** Score Interpretation */
-            score_interpretation?: string | null;
+            scoreInterpretation?: string | null;
             /**
              * Points Earned
              * @default 0
              */
-            points_earned: number;
+            pointsEarned: number;
             /** New Achievements */
-            new_achievements?: string[];
+            newAchievements?: string[];
             /**
              * Streak Updated
              * @default false
              */
-            streak_updated: boolean;
+            streakUpdated: boolean;
             /**
              * Current Streak
              * @default 0
              */
-            current_streak: number;
+            currentStreak: number;
             /**
              * Message
              * @default
@@ -41088,30 +41631,30 @@ export interface components {
              * Format: uuid
              * @description ID of source faculty
              */
-            source_faculty_id: string;
+            sourceFacultyId: string;
             /**
              * Source Week
              * Format: date
              * @description Source week date
              */
-            source_week: string;
+            sourceWeek: string;
             /**
              * Target Faculty Id
              * Format: uuid
              * @description ID of target faculty
              */
-            target_faculty_id: string;
+            targetFacultyId: string;
             /**
              * Target Week
              * @description Target week date (for 1:1 swaps)
              */
-            target_week?: string | null;
+            targetWeek?: string | null;
             /**
              * Swap Type
              * @description Type of swap
              * @default one_to_one
              */
-            swap_type: string;
+            swapType: string;
         };
         /**
          * SwapBarrierAnalysisResponse
@@ -41119,14 +41662,14 @@ export interface components {
          */
         SwapBarrierAnalysisResponse: {
             /** Swap Feasible */
-            swap_feasible: boolean;
+            swapFeasible: boolean;
             /** Barriers */
             barriers: components["schemas"]["EnergyBarrierResponse"][];
-            activation_energy: components["schemas"]["ActivationEnergyResponse"];
+            activationEnergy: components["schemas"]["ActivationEnergyResponse"];
             /** Catalyst Recommendations */
-            catalyst_recommendations?: components["schemas"]["CatalystRecommendationResponse"][];
+            catalystRecommendations?: components["schemas"]["CatalystRecommendationResponse"][];
             /** Blocking Barriers */
-            blocking_barriers?: components["schemas"]["EnergyBarrierResponse"][];
+            blockingBarriers?: components["schemas"]["EnergyBarrierResponse"][];
             pathway?: components["schemas"]["PathwayResultResponse"] | null;
             /** Recommendations */
             recommendations?: string[];
@@ -41137,35 +41680,35 @@ export interface components {
          */
         SwapCandidateJsonItem: {
             /** Candidate Person Id */
-            candidate_person_id: string;
+            candidatePersonId: string;
             /** Candidate Name */
-            candidate_name: string;
+            candidateName: string;
             /** Candidate Role */
-            candidate_role: string;
+            candidateRole: string;
             /** Assignment Id */
-            assignment_id?: string | null;
+            assignmentId?: string | null;
             /** Block Date */
-            block_date: string;
+            blockDate: string;
             /** Block Session */
-            block_session: string;
+            blockSession: string;
             /** Match Score */
-            match_score: number;
+            matchScore: number;
             /** Rotation Name */
-            rotation_name?: string | null;
+            rotationName?: string | null;
             /** Compatibility Factors */
-            compatibility_factors?: {
+            compatibilityFactors?: {
                 [key: string]: unknown;
             };
             /**
              * Mutual Benefit
              * @default false
              */
-            mutual_benefit: boolean;
+            mutualBenefit: boolean;
             /**
              * Approval Likelihood
              * @default medium
              */
-            approval_likelihood: string;
+            approvalLikelihood: string;
         };
         /**
          * SwapCandidateJsonRequest
@@ -41173,16 +41716,16 @@ export interface components {
          */
         SwapCandidateJsonRequest: {
             /** Person Id */
-            person_id: string;
+            personId: string;
             /** Assignment Id */
-            assignment_id?: string | null;
+            assignmentId?: string | null;
             /** Block Id */
-            block_id?: string | null;
+            blockId?: string | null;
             /**
              * Max Candidates
              * @default 10
              */
-            max_candidates: number;
+            maxCandidates: number;
         };
         /**
          * SwapCandidateJsonResponse
@@ -41192,17 +41735,17 @@ export interface components {
             /** Success */
             success: boolean;
             /** Requester Person Id */
-            requester_person_id: string;
+            requesterPersonId: string;
             /** Requester Name */
-            requester_name?: string | null;
+            requesterName?: string | null;
             /** Original Assignment Id */
-            original_assignment_id?: string | null;
+            originalAssignmentId?: string | null;
             /** Candidates */
             candidates: components["schemas"]["SwapCandidateJsonItem"][];
             /** Total Candidates */
-            total_candidates: number;
+            totalCandidates: number;
             /** Top Candidate Id */
-            top_candidate_id?: string | null;
+            topCandidateId?: string | null;
             /**
              * Message
              * @default
@@ -41217,13 +41760,13 @@ export interface components {
             /** Faculty */
             faculty: string;
             /** Can Take Week */
-            can_take_week: string;
+            canTakeWeek: string;
             /** Gives Week */
-            gives_week?: string | null;
+            givesWeek?: string | null;
             /** Back To Back Ok */
-            back_to_back_ok: boolean;
+            backToBackOk: boolean;
             /** External Conflict */
-            external_conflict?: string | null;
+            externalConflict?: string | null;
             /** Flexibility */
             flexibility: string;
             /**
@@ -41244,26 +41787,26 @@ export interface components {
              * Format: uuid
              * @description ID of faculty member requesting swap
              */
-            source_faculty_id: string;
+            sourceFacultyId: string;
             /**
              * Source Week
              * Format: date
              * @description Week date for source faculty
              */
-            source_week: string;
+            sourceWeek: string;
             /**
              * Target Faculty Id
              * Format: uuid
              * @description ID of faculty member to swap with
              */
-            target_faculty_id: string;
+            targetFacultyId: string;
             /**
              * Target Week
              * @description Week date for target faculty (required for one-to-one swaps)
              */
-            target_week?: string | null;
+            targetWeek?: string | null;
             /** @description Type of swap (one-to-one or absorb) */
-            swap_type: components["schemas"]["SwapTypeSchema"];
+            swapType: components["schemas"]["SwapTypeSchema"];
             /**
              * Reason
              * @description Reason for swap request
@@ -41275,7 +41818,7 @@ export interface components {
             /** Success */
             success: boolean;
             /** Swap Id */
-            swap_id?: string | null;
+            swapId?: string | null;
             /** Message */
             message: string;
             validation: components["schemas"]["SwapValidationResult"];
@@ -41288,20 +41831,20 @@ export interface components {
             /** Success */
             success: boolean;
             /** Target Faculty */
-            target_faculty: string;
+            targetFaculty: string;
             /** Target Week */
-            target_week: string;
+            targetWeek: string;
             /** Candidates */
             candidates: components["schemas"]["SwapCandidateResponse"][];
             /** Total Candidates */
-            total_candidates: number;
+            totalCandidates: number;
             /** Viable Candidates */
-            viable_candidates: number;
+            viableCandidates: number;
             /**
              * Alternating Patterns
              * @default []
              */
-            alternating_patterns: components["schemas"]["AlternatingPatternInfo"][];
+            alternatingPatterns: components["schemas"]["AlternatingPatternInfo"][];
             /**
              * Message
              * @default
@@ -41317,7 +41860,7 @@ export interface components {
             /** Page */
             page: number;
             /** Page Size */
-            page_size: number;
+            pageSize: number;
             /** Pages */
             pages: number;
         };
@@ -41331,7 +41874,7 @@ export interface components {
                 [key: string]: unknown;
             }[];
             /** Total Pairs */
-            total_pairs: number;
+            totalPairs: number;
         };
         /** SwapRecordResponse */
         SwapRecordResponse: {
@@ -41344,24 +41887,24 @@ export interface components {
              * Source Faculty Id
              * Format: uuid
              */
-            source_faculty_id: string;
+            sourceFacultyId: string;
             /** Source Faculty Name */
-            source_faculty_name: string;
+            sourceFacultyName: string;
             /**
              * Source Week
              * Format: date
              */
-            source_week: string;
+            sourceWeek: string;
             /**
              * Target Faculty Id
              * Format: uuid
              */
-            target_faculty_id: string;
+            targetFacultyId: string;
             /** Target Faculty Name */
-            target_faculty_name: string;
+            targetFacultyName: string;
             /** Target Week */
-            target_week: string | null;
-            swap_type: components["schemas"]["SwapTypeSchema"];
+            targetWeek: string | null;
+            swapType: components["schemas"]["SwapTypeSchema"];
             status: components["schemas"]["SwapStatusSchema"];
             /** Reason */
             reason: string | null;
@@ -41369,9 +41912,9 @@ export interface components {
              * Requested At
              * Format: date-time
              */
-            requested_at: string;
+            requestedAt: string;
             /** Executed At */
-            executed_at: string | null;
+            executedAt: string | null;
         };
         /**
          * SwapRequestCreate
@@ -41382,16 +41925,16 @@ export interface components {
              * Week To Offload
              * Format: date
              */
-            week_to_offload: string;
+            weekToOffload: string;
             /** Preferred Target Faculty Id */
-            preferred_target_faculty_id?: string | null;
+            preferredTargetFacultyId?: string | null;
             /** Reason */
             reason?: string | null;
             /**
              * Auto Find Candidates
              * @default true
              */
-            auto_find_candidates: boolean;
+            autoFindCandidates: boolean;
         };
         /**
          * SwapRequestResponse
@@ -41401,14 +41944,14 @@ export interface components {
             /** Success */
             success: boolean;
             /** Request Id */
-            request_id?: string | null;
+            requestId?: string | null;
             /** Message */
             message: string;
             /**
              * Candidates Notified
              * @default 0
              */
-            candidates_notified: number;
+            candidatesNotified: number;
         };
         /**
          * SwapRequestStatus
@@ -41426,19 +41969,19 @@ export interface components {
              */
             id: string;
             /** Other Faculty Name */
-            other_faculty_name: string;
+            otherFacultyName: string;
             /** Week To Give */
-            week_to_give: string | null;
+            weekToGive: string | null;
             /** Week To Receive */
-            week_to_receive: string | null;
+            weekToReceive: string | null;
             status: components["schemas"]["SwapRequestStatus"];
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /** Is Incoming */
-            is_incoming: boolean;
+            isIncoming: boolean;
         };
         /**
          * SwapRespondRequest
@@ -41448,7 +41991,7 @@ export interface components {
             /** Accept */
             accept: boolean;
             /** Counter Offer Week */
-            counter_offer_week?: string | null;
+            counterOfferWeek?: string | null;
             /** Notes */
             notes?: string | null;
         };
@@ -41489,12 +42032,12 @@ export interface components {
              * @description Whether swap creates back-to-back shifts
              * @default false
              */
-            back_to_back_conflict: boolean;
+            backToBackConflict: boolean;
             /**
              * External Conflict
              * @description External conflict description
              */
-            external_conflict?: string | null;
+            externalConflict?: string | null;
         };
         /**
          * SyncMetadata
@@ -41502,16 +42045,16 @@ export interface components {
          */
         SyncMetadata: {
             /** Last Sync Time */
-            last_sync_time?: string | null;
+            lastSyncTime?: string | null;
             /** Sync Status */
-            sync_status: string;
+            syncStatus: string;
             /** Source System */
-            source_system: string;
+            sourceSystem: string;
             /**
              * Records Affected
              * @default 0
              */
-            records_affected: number;
+            recordsAffected: number;
         };
         /**
          * SyncResultSchema
@@ -41546,19 +42089,19 @@ export interface components {
             /** Table */
             table: string;
             /** Total Size */
-            total_size: string;
+            totalSize: string;
             /** Table Size */
-            table_size: string;
+            tableSize: string;
             /** Indexes Size */
-            indexes_size: string;
+            indexesSize: string;
             /** Sequential Scans */
-            sequential_scans: number;
+            sequentialScans: number;
             /** Sequential Tuples Read */
-            sequential_tuples_read: number;
+            sequentialTuplesRead: number;
             /** Index Scans */
-            index_scans: number;
+            indexScans: number;
             /** Index Tuples Fetched */
-            index_tuples_fetched: number;
+            indexTuplesFetched: number;
             /** Inserts */
             inserts: number;
             /** Updates */
@@ -41566,19 +42109,19 @@ export interface components {
             /** Deletes */
             deletes: number;
             /** Live Tuples */
-            live_tuples: number;
+            liveTuples: number;
             /** Dead Tuples */
-            dead_tuples: number;
+            deadTuples: number;
             /** Scan Ratio */
-            scan_ratio: number;
+            scanRatio: number;
             /** Last Vacuum */
-            last_vacuum?: string | null;
+            lastVacuum?: string | null;
             /** Last Autovacuum */
-            last_autovacuum?: string | null;
+            lastAutovacuum?: string | null;
             /** Last Analyze */
-            last_analyze?: string | null;
+            lastAnalyze?: string | null;
             /** Last Autoanalyze */
-            last_autoanalyze?: string | null;
+            lastAutoanalyze?: string | null;
         };
         /**
          * TargetingOperator
@@ -41795,32 +42338,32 @@ export interface components {
              * Total Tasks
              * @description Total number of tasks
              */
-            total_tasks: number;
+            totalTasks: number;
             /**
              * Active Tasks
              * @description Currently running tasks
              */
-            active_tasks: number;
+            activeTasks: number;
             /**
              * Completed Tasks
              * @description Successfully completed tasks
              */
-            completed_tasks: number;
+            completedTasks: number;
             /**
              * Failed Tasks
              * @description Failed tasks
              */
-            failed_tasks: number;
+            failedTasks: number;
             /**
              * Pending Tasks
              * @description Tasks waiting to execute
              */
-            pending_tasks: number;
+            pendingTasks: number;
             /**
              * Success Rate
              * @description Success rate (0.0-1.0)
              */
-            success_rate: number;
+            successRate: number;
         };
         /**
          * TaskRetryRequest
@@ -42004,12 +42547,12 @@ export interface components {
              * Target Date
              * Format: date
              */
-            target_date: string;
+            targetDate: string;
             /**
              * Include Predictions
              * @default true
              */
-            include_predictions: boolean;
+            includePredictions: boolean;
         };
         /**
          * TeamHeatmapResponse
@@ -42022,7 +42565,7 @@ export interface components {
              * Generated At
              * Format: date-time
              */
-            generated_at: string;
+            generatedAt: string;
             /** Residents */
             residents: {
                 [key: string]: unknown;
@@ -42039,11 +42582,11 @@ export interface components {
              * Template Id
              * Format: uuid
              */
-            template_id: string;
+            templateId: string;
             /** Template Name */
-            template_name: string;
+            templateName: string;
             /** Conflict Type */
-            conflict_type: string;
+            conflictType: string;
             /** Description */
             description: string;
             /**
@@ -42072,7 +42615,7 @@ export interface components {
              * Template Name
              * @description Name of the rotation template
              */
-            template_name: string;
+            templateName: string;
             /** @description Desirability classification */
             desirability: components["schemas"]["TemplateDesirabilityLevel"];
         };
@@ -42100,19 +42643,19 @@ export interface components {
              * Template Ids
              * @description List of template IDs to export (max 100)
              */
-            template_ids: string[];
+            templateIds: string[];
             /**
              * Include Patterns
              * @description Include weekly patterns in export
              * @default true
              */
-            include_patterns: boolean;
+            includePatterns: boolean;
             /**
              * Include Preferences
              * @description Include preferences in export
              * @default true
              */
-            include_preferences: boolean;
+            includePreferences: boolean;
         };
         /**
          * TemplateExportResponse
@@ -42125,7 +42668,7 @@ export interface components {
              * Exported At
              * Format: date-time
              */
-            exported_at: string;
+            exportedAt: string;
             /** Total */
             total: number;
         };
@@ -42140,33 +42683,33 @@ export interface components {
              * Generated At
              * Format: date-time
              */
-            generated_at: string;
+            generatedAt: string;
             /** Framework */
             framework: string;
             /** References */
             references: string[];
             /** Circadian Rhythm */
-            circadian_rhythm: {
+            circadianRhythm: {
                 [key: string]: unknown;
             };
             /** Sleep Homeostasis */
-            sleep_homeostasis: {
+            sleepHomeostasis: {
                 [key: string]: unknown;
             };
             /** Samn Perelli Scale */
-            samn_perelli_scale: {
+            samnPerelliScale: {
                 [key: string]: unknown;
             };
             /** Hazard Thresholds */
-            hazard_thresholds: {
+            hazardThresholds: {
                 [key: string]: unknown;
             };
             /** Acgme Integration */
-            acgme_integration: {
+            acgmeIntegration: {
                 [key: string]: unknown;
             };
             /** Scheduling Constraints */
-            scheduling_constraints: {
+            schedulingConstraints: {
                 [key: string]: unknown;
             };
         };
@@ -42209,34 +42752,34 @@ export interface components {
              * Generated At
              * Format: date-time
              */
-            generated_at: string;
-            homeostasis_state: components["schemas"]["AllostasisState"];
+            generatedAt: string;
+            homeostasisState: components["schemas"]["AllostasisState"];
             /** Feedback Loops Healthy */
-            feedback_loops_healthy: number;
+            feedbackLoopsHealthy: number;
             /** Feedback Loops Deviating */
-            feedback_loops_deviating: number;
+            feedbackLoopsDeviating: number;
             /** Average Allostatic Load */
-            average_allostatic_load: number;
+            averageAllostaticLoad: number;
             /** Positive Feedback Risks */
-            positive_feedback_risks: number;
+            positiveFeedbackRisks: number;
             /** Total Zones */
-            total_zones: number;
+            totalZones: number;
             /** Zones Healthy */
-            zones_healthy: number;
+            zonesHealthy: number;
             /** Zones Critical */
-            zones_critical: number;
+            zonesCritical: number;
             /** Containment Active */
-            containment_active: boolean;
-            containment_level: components["schemas"]["ContainmentLevel"];
-            equilibrium_state: components["schemas"]["EquilibriumState"];
+            containmentActive: boolean;
+            containmentLevel: components["schemas"]["ContainmentLevel"];
+            equilibriumState: components["schemas"]["EquilibriumState"];
             /** Current Coverage Rate */
-            current_coverage_rate: number;
+            currentCoverageRate: number;
             /** Compensation Debt */
-            compensation_debt: number;
+            compensationDebt: number;
             /** Sustainability Score */
-            sustainability_score: number;
+            sustainabilityScore: number;
             /** Tier2 Status */
-            tier2_status: string;
+            tier2Status: string;
             /** Recommendations */
             recommendations: string[];
         };
@@ -42249,37 +42792,37 @@ export interface components {
              * Generated At
              * Format: date-time
              */
-            generated_at: string;
+            generatedAt: string;
             /** Pending Decisions */
-            pending_decisions: number;
+            pendingDecisions: number;
             /** Urgent Decisions */
-            urgent_decisions: number;
+            urgentDecisions: number;
             /** Estimated Cognitive Cost */
-            estimated_cognitive_cost: number;
+            estimatedCognitiveCost: number;
             /** Can Auto Decide */
-            can_auto_decide: number;
+            canAutoDecide: number;
             /** Total Trails */
-            total_trails: number;
+            totalTrails: number;
             /** Active Trails */
-            active_trails: number;
+            activeTrails: number;
             /** Average Strength */
-            average_strength: number;
+            averageStrength: number;
             /** Popular Slots */
-            popular_slots: string[];
+            popularSlots: string[];
             /** Unpopular Slots */
-            unpopular_slots: string[];
+            unpopularSlots: string[];
             /** Total Hubs */
-            total_hubs: number;
+            totalHubs: number;
             /** Catastrophic Hubs */
-            catastrophic_hubs: number;
+            catastrophicHubs: number;
             /** Critical Hubs */
-            critical_hubs: number;
+            criticalHubs: number;
             /** Active Protection Plans */
-            active_protection_plans: number;
+            activeProtectionPlans: number;
             /** Pending Cross Training */
-            pending_cross_training: number;
+            pendingCrossTraining: number;
             /** Tier3 Status */
-            tier3_status: string;
+            tier3Status: string;
             /** Issues */
             issues: string[];
             /** Recommendations */
@@ -42309,8 +42852,8 @@ export interface components {
          * TimeRangeType
          * @description Time range specification for heatmap queries.
          * @example {
-         *       "range_type": "month",
-         *       "reference_date": "2024-01-15"
+         *       "rangeType": "month",
+         *       "referenceDate": "2024-01-15"
          *     }
          */
         TimeRangeType: {
@@ -42318,22 +42861,22 @@ export interface components {
              * Range Type
              * @description Type: 'week', 'month', 'quarter', 'custom'
              */
-            range_type: string;
+            rangeType: string;
             /**
              * Reference Date
              * @description Reference date for week/month/quarter (defaults to today)
              */
-            reference_date?: string | null;
+            referenceDate?: string | null;
             /**
              * Start Date
              * @description Custom start date (required for 'custom' range)
              */
-            start_date?: string | null;
+            startDate?: string | null;
             /**
              * End Date
              * @description Custom end date (required for 'custom' range)
              */
-            end_date?: string | null;
+            endDate?: string | null;
         };
         /**
          * TimelineResponse
@@ -42344,27 +42887,27 @@ export interface components {
              * Timeline Data
              * @description Faculty timelines
              */
-            timeline_data?: components["schemas"]["FacultyTimeline"][];
+            timelineData?: components["schemas"]["FacultyTimeline"][];
             /** @description System-wide metrics */
-            aggregate_metrics: components["schemas"]["AggregateMetrics"];
+            aggregateMetrics: components["schemas"]["AggregateMetrics"];
             /**
              * Start Date
              * Format: date
              * @description Timeline start date
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description Timeline end date
              */
-            end_date: string;
+            endDate: string;
             /**
              * Generated At
              * Format: date-time
              * @description Timestamp when data was generated
              */
-            generated_at: string;
+            generatedAt: string;
         };
         /**
          * TokenIntrospectionRequest
@@ -42374,7 +42917,7 @@ export interface components {
             /** Token */
             token: string;
             /** Token Type Hint */
-            token_type_hint?: ("access_token" | "refresh_token") | null;
+            tokenTypeHint?: ("access_token" | "refresh_token") | null;
         };
         /**
          * TokenIntrospectionResponse
@@ -42386,11 +42929,11 @@ export interface components {
             /** Scope */
             scope?: string | null;
             /** Client Id */
-            client_id?: string | null;
+            clientId?: string | null;
             /** Username */
             username?: string | null;
             /** Token Type */
-            token_type?: string | null;
+            tokenType?: string | null;
             /** Exp */
             exp?: number | null;
             /** Iat */
@@ -42414,15 +42957,15 @@ export interface components {
              * @default authorization_code
              * @constant
              */
-            grant_type: "authorization_code";
+            grantType: "authorization_code";
             /** Code */
             code: string;
             /** Redirect Uri */
-            redirect_uri: string;
+            redirectUri: string;
             /** Client Id */
-            client_id: string;
+            clientId: string;
             /** Code Verifier */
-            code_verifier: string;
+            codeVerifier: string;
         };
         /**
          * TokenResponse
@@ -42430,18 +42973,18 @@ export interface components {
          */
         TokenResponse: {
             /** Access Token */
-            access_token: string;
+            accessToken: string;
             /**
              * Token Type
              * @default Bearer
              */
-            token_type: string;
+            tokenType: string;
             /** Expires In */
-            expires_in: number;
+            expiresIn: number;
             /** Scope */
             scope?: string | null;
             /** Refresh Token */
-            refresh_token?: string | null;
+            refreshToken?: string | null;
         };
         /**
          * TokenWithRefresh
@@ -42449,14 +42992,14 @@ export interface components {
          */
         TokenWithRefresh: {
             /** Access Token */
-            access_token: string;
+            accessToken: string;
             /** Refresh Token */
-            refresh_token: string;
+            refreshToken: string;
             /**
              * Token Type
              * @default bearer
              */
-            token_type: string;
+            tokenType: string;
         };
         /**
          * TopCoverer
@@ -42489,12 +43032,12 @@ export interface components {
             /** Description */
             description?: string | null;
             /** Strategy Ids */
-            strategy_ids: string[];
+            strategyIds: string[];
             /**
              * Turns Per Match
              * @default 200
              */
-            turns_per_match: number;
+            turnsPerMatch: number;
             /**
              * Repetitions
              * @default 10
@@ -42510,25 +43053,25 @@ export interface components {
              * @description Both cooperate
              * @default 3
              */
-            payoff_cc: number;
+            payoffCc: number;
             /**
              * Payoff Cd
              * @description I cooperate, they defect
              * @default 0
              */
-            payoff_cd: number;
+            payoffCd: number;
             /**
              * Payoff Dc
              * @description I defect, they cooperate
              * @default 5
              */
-            payoff_dc: number;
+            payoffDc: number;
             /**
              * Payoff Dd
              * @description Both defect
              * @default 1
              */
-            payoff_dd: number;
+            payoffDd: number;
         };
         /**
          * TournamentListResponse
@@ -42551,13 +43094,13 @@ export interface components {
              * Strategy Id
              * Format: uuid
              */
-            strategy_id: string;
+            strategyId: string;
             /** Strategy Name */
-            strategy_name: string;
+            strategyName: string;
             /** Total Score */
-            total_score: number;
+            totalScore: number;
             /** Average Score */
-            average_score: number;
+            averageScore: number;
             /** Wins */
             wins: number;
             /** Losses */
@@ -42565,7 +43108,7 @@ export interface components {
             /** Ties */
             ties: number;
             /** Cooperation Rate */
-            cooperation_rate: number;
+            cooperationRate: number;
         };
         /**
          * TournamentResponse
@@ -42585,32 +43128,32 @@ export interface components {
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /** Created By */
-            created_by: string | null;
+            createdBy: string | null;
             /** Turns Per Match */
-            turns_per_match: number;
+            turnsPerMatch: number;
             /** Repetitions */
             repetitions: number;
             /** Noise */
             noise: number;
             /** Strategy Ids */
-            strategy_ids: string[] | null;
+            strategyIds: string[] | null;
             status: components["schemas"]["SimulationStatus"];
             /** Started At */
-            started_at: string | null;
+            startedAt: string | null;
             /** Completed At */
-            completed_at: string | null;
+            completedAt: string | null;
             /** Error Message */
-            error_message: string | null;
+            errorMessage: string | null;
             /** Celery Task Id */
-            celery_task_id: string | null;
+            celeryTaskId: string | null;
             /** Total Matches */
-            total_matches: number | null;
+            totalMatches: number | null;
             /** Winner Strategy Id */
-            winner_strategy_id: string | null;
+            winnerStrategyId: string | null;
             /** Winner Strategy Name */
-            winner_strategy_name: string | null;
+            winnerStrategyName: string | null;
         };
         /**
          * TournamentResultsResponse
@@ -42626,21 +43169,21 @@ export interface components {
             name: string;
             status: components["schemas"]["SimulationStatus"];
             /** Completed At */
-            completed_at: string | null;
+            completedAt: string | null;
             /** Rankings */
             rankings: components["schemas"]["TournamentRanking"][];
             /** Payoff Matrix */
-            payoff_matrix: {
+            payoffMatrix: {
                 [key: string]: {
                     [key: string]: number | undefined;
                 } | undefined;
             };
             /** Total Matches */
-            total_matches: number;
+            totalMatches: number;
             /** Total Turns */
-            total_turns: number;
+            totalTurns: number;
             /** Average Cooperation Rate */
-            average_cooperation_rate: number;
+            averageCooperationRate: number;
         };
         /**
          * TrailEvaporationResponse
@@ -42661,18 +43204,18 @@ export interface components {
              * Model Types
              * @description Models to train: 'preference', 'conflict', 'workload'. None = all.
              */
-            model_types?: string[] | null;
+            modelTypes?: string[] | null;
             /**
              * Lookback Days
              * @description Days of historical data to use. Defaults to ML_TRAINING_LOOKBACK_DAYS.
              */
-            lookback_days?: number | null;
+            lookbackDays?: number | null;
             /**
              * Force Retrain
              * @description Force retraining even if models exist.
              * @default false
              */
-            force_retrain: boolean;
+            forceRetrain: boolean;
         };
         /**
          * TrainModelsResponse
@@ -42685,15 +43228,15 @@ export interface components {
              */
             timestamp: string;
             /** Lookback Days */
-            lookback_days: number;
+            lookbackDays: number;
             /** Models Trained */
-            models_trained: number;
+            modelsTrained: number;
             /** Results */
             results: {
                 [key: string]: components["schemas"]["TrainingResultResponse"] | undefined;
             };
             /** Task Id */
-            task_id?: string | null;
+            taskId?: string | null;
         };
         /**
          * TrainingResultResponse
@@ -42701,7 +43244,7 @@ export interface components {
          */
         TrainingResultResponse: {
             /** Model Name */
-            model_name: string;
+            modelName: string;
             /** Status */
             status: string;
             /** Samples */
@@ -42730,7 +43273,7 @@ export interface components {
              * Constraint Context
              * @description Context for constraint weighting (e.g., 'holiday', 'crisis')
              */
-            constraint_context?: string | null;
+            constraintContext?: string | null;
         };
         /**
          * TranscriptionFactorsResponse
@@ -42738,17 +43281,17 @@ export interface components {
          */
         TranscriptionFactorsResponse: {
             /** Analyzed At */
-            analyzed_at: string;
+            analyzedAt: string;
             /** Active Factors */
-            active_factors: number;
+            activeFactors: number;
             /** Repressors Active */
-            repressors_active: number;
+            repressorsActive: number;
             /** Activators Active */
-            activators_active: number;
+            activatorsActive: number;
             /** Dominant Factor */
-            dominant_factor: string | null;
+            dominantFactor: string | null;
             /** Constraint Modifications */
-            constraint_modifications: {
+            constraintModifications: {
                 [key: string]: number | undefined;
             };
             /** Interpretation */
@@ -42767,24 +43310,24 @@ export interface components {
          */
         TransitionStateResponse: {
             /** State Id */
-            state_id: string;
+            stateId: string;
             /** Description */
             description: string;
             /** Energy */
             energy: number;
             /** Is Stable */
-            is_stable: boolean;
+            isStable: boolean;
             /** Duration Estimate Hours */
-            duration_estimate_hours?: number | null;
+            durationEstimateHours?: number | null;
         };
         /**
          * UnifiedCoverageRequest
          * @description Request schema for unified coverage heatmap.
          * @example {
-         *       "end_date": "2024-03-31",
-         *       "include_fmit": true,
-         *       "include_residency": true,
-         *       "start_date": "2024-01-01"
+         *       "endDate": "2024-03-31",
+         *       "includeFmit": true,
+         *       "includeResidency": true,
+         *       "startDate": "2024-01-01"
          *     }
          */
         UnifiedCoverageRequest: {
@@ -42793,49 +43336,49 @@ export interface components {
              * Format: date
              * @description Start date for heatmap
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description End date for heatmap
              */
-            end_date: string;
+            endDate: string;
             /**
              * Include Fmit
              * @description Include FMIT assignments in heatmap
              * @default true
              */
-            include_fmit: boolean;
+            includeFmit: boolean;
             /**
              * Include Residency
              * @description Include residency assignments in heatmap
              * @default true
              */
-            include_residency: boolean;
+            includeResidency: boolean;
         };
         /**
          * UnifiedCoverageResponse
          * @description Response schema for unified coverage heatmap.
          * @example {
-         *       "color_scale": "Viridis",
-         *       "generated_at": "2024-01-15T10:00:00",
+         *       "colorScale": "Viridis",
+         *       "generatedAt": "2024-01-15T10:00:00",
          *       "metadata": {
-         *         "date_range_days": 3,
-         *         "max_coverage": 3,
-         *         "rotations_count": 3,
-         *         "total_assignments": 17
+         *         "dateRangeDays": 3,
+         *         "maxCoverage": 3,
+         *         "rotationsCount": 3,
+         *         "totalAssignments": 17
          *       },
-         *       "x_labels": [
+         *       "xLabels": [
          *         "2024-01-01",
          *         "2024-01-02",
          *         "2024-01-03"
          *       ],
-         *       "y_labels": [
+         *       "yLabels": [
          *         "FMIT",
          *         "Clinic",
          *         "Procedures"
          *       ],
-         *       "z_values": [
+         *       "zValues": [
          *         [
          *           2,
          *           1,
@@ -42859,22 +43402,22 @@ export interface components {
              * X Labels
              * @description X-axis labels (dates)
              */
-            x_labels: string[];
+            xLabels: string[];
             /**
              * Y Labels
              * @description Y-axis labels (rotations)
              */
-            y_labels: string[];
+            yLabels: string[];
             /**
              * Z Values
              * @description Matrix of coverage values
              */
-            z_values: number[][];
+            zValues: number[][];
             /**
              * Color Scale
              * @description Plotly color scale name
              */
-            color_scale: string;
+            colorScale: string;
             /**
              * Metadata
              * @description Additional metadata
@@ -42887,7 +43430,7 @@ export interface components {
              * Format: date-time
              * @description Timestamp of generation
              */
-            generated_at?: string;
+            generatedAt?: string;
         };
         /**
          * UnifiedCriticalIndexRequest
@@ -42899,13 +43442,13 @@ export interface components {
              * @description Include individual faculty details
              * @default true
              */
-            include_details: boolean;
+            includeDetails: boolean;
             /**
              * Top N
              * @description Number of top-risk faculty to return
              * @default 5
              */
-            top_n: number;
+            topN: number;
         };
         /**
          * UnifiedCriticalIndexResponse
@@ -42913,23 +43456,23 @@ export interface components {
          */
         UnifiedCriticalIndexResponse: {
             /** Analyzed At */
-            analyzed_at: string;
+            analyzedAt: string;
             /** Total Faculty */
-            total_faculty: number;
+            totalFaculty: number;
             /** Overall Index */
-            overall_index: number;
+            overallIndex: number;
             /** Risk Level */
-            risk_level: string;
+            riskLevel: string;
             /** Critical Count */
-            critical_count: number;
+            criticalCount: number;
             /** Universal Critical Count */
-            universal_critical_count: number;
+            universalCriticalCount: number;
             /** Pattern Distribution */
-            pattern_distribution: {
+            patternDistribution: {
                 [key: string]: number | undefined;
             };
             /** Top Priority */
-            top_priority: string[];
+            topPriority: string[];
             /** Recommendations */
             recommendations: string[];
             /**
@@ -42942,39 +43485,39 @@ export interface components {
          * UnifiedHeatmapRequest
          * @description Request schema for unified heatmap with time range support.
          * @example {
-         *       "group_by": "person",
-         *       "include_fmit": true,
-         *       "time_range": {
-         *         "range_type": "month",
-         *         "reference_date": "2024-01-15"
+         *       "groupBy": "person",
+         *       "includeFmit": true,
+         *       "timeRange": {
+         *         "rangeType": "month",
+         *         "referenceDate": "2024-01-15"
          *       }
          *     }
          */
         UnifiedHeatmapRequest: {
             /** @description Time range specification */
-            time_range: components["schemas"]["TimeRangeType"];
+            timeRange: components["schemas"]["TimeRangeType"];
             /**
              * Person Ids
              * @description Filter by specific people
              */
-            person_ids?: string[] | null;
+            personIds?: string[] | null;
             /**
              * Rotation Ids
              * @description Filter by specific rotation templates
              */
-            rotation_ids?: string[] | null;
+            rotationIds?: string[] | null;
             /**
              * Include Fmit
              * @description Include FMIT swap data in heatmap
              * @default true
              */
-            include_fmit: boolean;
+            includeFmit: boolean;
             /**
              * Group By
              * @description Group heatmap by 'person', 'rotation', 'daily', or 'weekly'
              * @default person
              */
-            group_by: string;
+            groupBy: string;
         };
         /**
          * UnknownRotationItem
@@ -42995,18 +43538,18 @@ export interface components {
              * Suggested Name
              * @description Suggested full name based on abbreviation
              */
-            suggested_name?: string | null;
+            suggestedName?: string | null;
         };
         /**
          * UploadProgressResponse
          * @description Response for upload progress query.
          * @example {
-         *       "progress_percent": 50,
-         *       "started_at": "2025-12-20T10:30:00Z",
+         *       "progressPercent": 50,
+         *       "startedAt": "2025-12-20T10:30:00Z",
          *       "status": "in_progress",
-         *       "total_size": 1024000,
-         *       "upload_id": "550e8400-e29b-41d4-a716-446655440000",
-         *       "uploaded_size": 512000
+         *       "totalSize": 1024000,
+         *       "uploadId": "550e8400-e29b-41d4-a716-446655440000",
+         *       "uploadedSize": 512000
          *     }
          */
         UploadProgressResponse: {
@@ -43014,22 +43557,22 @@ export interface components {
              * Upload Id
              * @description Upload identifier
              */
-            upload_id: string;
+            uploadId: string;
             /**
              * Total Size
              * @description Total file size in bytes
              */
-            total_size: number;
+            totalSize: number;
             /**
              * Uploaded Size
              * @description Bytes uploaded so far
              */
-            uploaded_size: number;
+            uploadedSize: number;
             /**
              * Progress Percent
              * @description Upload progress percentage
              */
-            progress_percent: number;
+            progressPercent: number;
             /**
              * Status
              * @description Upload status (in_progress, completed, failed)
@@ -43039,12 +43582,12 @@ export interface components {
              * Started At
              * @description Upload start timestamp
              */
-            started_at: string;
+            startedAt: string;
             /**
              * Completed At
              * @description Upload completion timestamp
              */
-            completed_at?: string | null;
+            completedAt?: string | null;
         };
         /**
          * UploadResponse
@@ -43052,27 +43595,27 @@ export interface components {
          * @example {
          *       "category": "image",
          *       "checksum": "abc123...",
-         *       "file_id": "660e8400-e29b-41d4-a716-446655440001",
+         *       "fileId": "660e8400-e29b-41d4-a716-446655440001",
          *       "filename": "profile_picture.jpg",
-         *       "image_data": {
+         *       "imageData": {
          *         "exif": {},
          *         "format": "JPEG",
          *         "height": 1536,
          *         "width": 2048
          *       },
          *       "metadata": {},
-         *       "mime_type": "image/jpeg",
-         *       "original_filename": "profile picture.jpg",
-         *       "size_bytes": 1024000,
-         *       "storage_backend": "local",
-         *       "upload_id": "550e8400-e29b-41d4-a716-446655440000",
-         *       "uploaded_at": "2025-12-20T10:30:00Z",
+         *       "mimeType": "image/jpeg",
+         *       "originalFilename": "profile picture.jpg",
+         *       "sizeBytes": 1024000,
+         *       "storageBackend": "local",
+         *       "uploadId": "550e8400-e29b-41d4-a716-446655440000",
+         *       "uploadedAt": "2025-12-20T10:30:00Z",
          *       "url": "/api/v1/uploads/660e8400-e29b-41d4-a716-446655440001",
          *       "versions": {
          *         "thumbnail": {
-         *           "file_id": "660e8400-e29b-41d4-a716-446655440002",
+         *           "fileId": "660e8400-e29b-41d4-a716-446655440002",
          *           "height": 150,
-         *           "size_bytes": 15000,
+         *           "sizeBytes": 15000,
          *           "url": "/api/v1/uploads/660e8400-e29b-41d4-a716-446655440002",
          *           "width": 150
          *         }
@@ -43084,12 +43627,12 @@ export interface components {
              * Upload Id
              * @description Unique upload identifier
              */
-            upload_id: string;
+            uploadId: string;
             /**
              * File Id
              * @description Unique file identifier
              */
-            file_id: string;
+            fileId: string;
             /**
              * Filename
              * @description Sanitized filename
@@ -43099,7 +43642,7 @@ export interface components {
              * Original Filename
              * @description Original filename from upload
              */
-            original_filename: string;
+            originalFilename: string;
             /**
              * Url
              * @description URL to access the file
@@ -43109,12 +43652,12 @@ export interface components {
              * Mime Type
              * @description File MIME type
              */
-            mime_type: string;
+            mimeType: string;
             /**
              * Size Bytes
              * @description File size in bytes
              */
-            size_bytes: number;
+            sizeBytes: number;
             /**
              * Checksum
              * @description SHA-256 checksum
@@ -43129,12 +43672,12 @@ export interface components {
              * Uploaded At
              * @description Upload timestamp (ISO format)
              */
-            uploaded_at: string;
+            uploadedAt: string;
             /**
              * Storage Backend
              * @description Storage backend used
              */
-            storage_backend: string;
+            storageBackend: string;
             /**
              * Versions
              * @description Processed image versions (for images only)
@@ -43143,7 +43686,7 @@ export interface components {
                 [key: string]: components["schemas"]["ImageVersionInfo"] | undefined;
             } | null;
             /** @description Image-specific data (for images only) */
-            image_data?: components["schemas"]["ImageData"] | null;
+            imageData?: components["schemas"]["ImageData"] | null;
             /**
              * Metadata
              * @description Upload metadata
@@ -43161,19 +43704,19 @@ export interface components {
              * User Id
              * @description User identifier
              */
-            user_id: string;
+            userId: string;
             /**
              * User Attributes
              * @description User attributes for targeting evaluation
              */
-            user_attributes?: {
+            userAttributes?: {
                 [key: string]: unknown;
             };
             /**
              * Force Variant
              * @description Force assignment to specific variant (override)
              */
-            force_variant?: string | null;
+            forceVariant?: string | null;
         };
         /**
          * UserCreate
@@ -43249,7 +43792,7 @@ export interface components {
              * Is Active
              * @default true
              */
-            is_active: boolean;
+            isActive: boolean;
         };
         /**
          * UserRole
@@ -43275,18 +43818,57 @@ export interface components {
          */
         UtilizationMetrics: {
             /** Utilization Rate */
-            utilization_rate: number;
+            utilizationRate: number;
             level: components["schemas"]["UtilizationLevel"];
             /** Buffer Remaining */
-            buffer_remaining: number;
+            bufferRemaining: number;
             /** Wait Time Multiplier */
-            wait_time_multiplier: number;
+            waitTimeMultiplier: number;
             /** Safe Capacity */
-            safe_capacity: number;
+            safeCapacity: number;
             /** Current Demand */
-            current_demand: number;
+            currentDemand: number;
             /** Theoretical Capacity */
-            theoretical_capacity: number;
+            theoreticalCapacity: number;
+        };
+        /**
+         * UtilizationThresholdRequest
+         * @description Request for utilization threshold check.
+         */
+        UtilizationThresholdRequest: {
+            /** Available Faculty */
+            availableFaculty: number;
+            /** Required Blocks */
+            requiredBlocks: number;
+            /**
+             * Blocks Per Faculty Per Day
+             * @default 2
+             */
+            blocksPerFacultyPerDay: number;
+            /**
+             * Days In Period
+             * @default 1
+             */
+            daysInPeriod: number;
+        };
+        /**
+         * UtilizationThresholdResponse
+         * @description Response from utilization threshold check.
+         */
+        UtilizationThresholdResponse: {
+            /** Utilization Rate */
+            utilizationRate: number;
+            level: components["schemas"]["UtilizationLevel"];
+            /** Above Threshold */
+            aboveThreshold: boolean;
+            /** Buffer Remaining */
+            bufferRemaining: number;
+            /** Wait Time Multiplier */
+            waitTimeMultiplier: number;
+            /** Message */
+            message: string;
+            /** Recommendations */
+            recommendations: string[];
         };
         /**
          * VaRMetric
@@ -43297,12 +43879,12 @@ export interface components {
              * Confidence Level
              * @description Confidence level (0-1)
              */
-            confidence_level: number;
+            confidenceLevel: number;
             /**
              * Var Value
              * @description VaR threshold value
              */
-            var_value: number;
+            varValue: number;
             /**
              * Interpretation
              * @description Human-readable interpretation (e.g., 'With 95% confidence, loss <= X')
@@ -43342,7 +43924,7 @@ export interface components {
              * Strategy Id
              * Format: uuid
              */
-            strategy_id: string;
+            strategyId: string;
             /**
              * Turns
              * @default 100
@@ -43357,7 +43939,7 @@ export interface components {
              * Pass Threshold
              * @default 2.5
              */
-            pass_threshold: number;
+            passThreshold: number;
         };
         /**
          * ValidationResponse
@@ -43373,14 +43955,14 @@ export interface components {
              * Strategy Id
              * Format: uuid
              */
-            strategy_id: string;
+            strategyId: string;
             /** Strategy Name */
-            strategy_name: string;
+            strategyName: string;
             /**
              * Validated At
              * Format: date-time
              */
-            validated_at: string;
+            validatedAt: string;
             /** Turns */
             turns: number;
             /** Repetitions */
@@ -43388,11 +43970,11 @@ export interface components {
             /** Passed */
             passed: boolean;
             /** Average Score */
-            average_score: number;
+            averageScore: number;
             /** Cooperation Rate */
-            cooperation_rate: number;
+            cooperationRate: number;
             /** Pass Threshold */
-            pass_threshold: number;
+            passThreshold: number;
             /** Assessment */
             assessment: string;
             /** Recommendation */
@@ -43406,11 +43988,11 @@ export interface components {
             /** Valid */
             valid: boolean;
             /** Total Violations */
-            total_violations: number;
+            totalViolations: number;
             /** Violations */
             violations: components["schemas"]["Violation"][];
             /** Coverage Rate */
-            coverage_rate: number;
+            coverageRate: number;
             /** Statistics */
             statistics?: {
                 [key: string]: unknown;
@@ -43450,7 +44032,7 @@ export interface components {
              * @description Whether this is the control variant
              * @default false
              */
-            is_control: boolean;
+            isControl: boolean;
             /**
              * Config
              * @description Variant-specific configuration
@@ -43465,18 +44047,18 @@ export interface components {
          */
         VariantAssignmentResponse: {
             /** Experiment Key */
-            experiment_key: string;
+            experimentKey: string;
             /** User Id */
-            user_id: string;
+            userId: string;
             /** Variant Key */
-            variant_key: string;
+            variantKey: string;
             /**
              * Assigned At
              * Format: date-time
              */
-            assigned_at: string;
+            assignedAt: string;
             /** Is Override */
-            is_override: boolean;
+            isOverride: boolean;
         };
         /**
          * VariantMetricsResponse
@@ -43484,9 +44066,9 @@ export interface components {
          */
         VariantMetricsResponse: {
             /** Variant Key */
-            variant_key: string;
+            variantKey: string;
             /** User Count */
-            user_count: number;
+            userCount: number;
             /** Metrics */
             metrics: {
                 [key: string]: {
@@ -43508,7 +44090,7 @@ export interface components {
             /** Allocation */
             allocation: number;
             /** Is Control */
-            is_control: boolean;
+            isControl: boolean;
             /** Config */
             config: {
                 [key: string]: unknown;
@@ -43560,7 +44142,7 @@ export interface components {
              * Saved At
              * @description ISO timestamp when version was saved
              */
-            saved_at: string;
+            savedAt: string;
             /**
              * Metadata
              * @description Additional metadata
@@ -43647,7 +44229,7 @@ export interface components {
              * Saved At
              * @description ISO timestamp when saved
              */
-            saved_at: string;
+            savedAt: string;
         };
         /**
          * VersionSuggestionRequest
@@ -43658,12 +44240,12 @@ export interface components {
              * Old Version
              * @description Previous version identifier
              */
-            old_version: string;
+            oldVersion: string;
             /**
              * New Version
              * @description New version identifier
              */
-            new_version: string;
+            newVersion: string;
         };
         /**
          * VersionSuggestionResponse
@@ -43674,12 +44256,12 @@ export interface components {
              * Current Version
              * @description Current version
              */
-            current_version: string;
+            currentVersion: string;
             /**
              * Suggested Version
              * @description Suggested next version (semantic versioning)
              */
-            suggested_version: string;
+            suggestedVersion: string;
             /**
              * Reason
              * @description Reason for suggestion
@@ -43689,17 +44271,17 @@ export interface components {
              * Breaking Changes
              * @description Number of breaking changes
              */
-            breaking_changes: number;
+            breakingChanges: number;
             /**
              * New Features
              * @description Number of new features
              */
-            new_features: number;
+            newFeatures: number;
             /**
              * Patch Changes
              * @description Number of patch-level changes
              */
-            patch_changes: number;
+            patchChanges: number;
         };
         /** ViewPermissions */
         ViewPermissions: {
@@ -43707,42 +44289,42 @@ export interface components {
              * Can View All Schedules
              * @default false
              */
-            can_view_all_schedules: boolean;
+            canViewAllSchedules: boolean;
             /**
              * Can View Own Schedule
              * @default true
              */
-            can_view_own_schedule: boolean;
+            canViewOwnSchedule: boolean;
             /**
              * Can View Manifest
              * @default true
              */
-            can_view_manifest: boolean;
+            canViewManifest: boolean;
             /**
              * Can View Call Roster
              * @default true
              */
-            can_view_call_roster: boolean;
+            canViewCallRoster: boolean;
             /**
              * Can View Academic Blocks
              * @default false
              */
-            can_view_academic_blocks: boolean;
+            canViewAcademicBlocks: boolean;
             /**
              * Can View Compliance
              * @default false
              */
-            can_view_compliance: boolean;
+            canViewCompliance: boolean;
             /**
              * Can View Conflicts
              * @default false
              */
-            can_view_conflicts: boolean;
+            canViewConflicts: boolean;
             /**
              * Can Manage Swaps
              * @default false
              */
-            can_manage_swaps: boolean;
+            canManageSwaps: boolean;
         };
         /**
          * Violation
@@ -43754,11 +44336,11 @@ export interface components {
             /** Severity */
             severity: string;
             /** Person Id */
-            person_id?: string | null;
+            personId?: string | null;
             /** Person Name */
-            person_name?: string | null;
+            personName?: string | null;
             /** Block Id */
-            block_id?: string | null;
+            blockId?: string | null;
             /** Message */
             message: string;
             /** Details */
@@ -43775,35 +44357,35 @@ export interface components {
              * Analyzed At
              * Format: date-time
              */
-            analyzed_at: string;
+            analyzedAt: string;
             /**
              * Period Start
              * Format: date
              */
-            period_start: string;
+            periodStart: string;
             /**
              * Period End
              * Format: date
              */
-            period_end: string;
+            periodEnd: string;
             /** N1 Pass */
-            n1_pass: boolean;
+            n1Pass: boolean;
             /** N2 Pass */
-            n2_pass: boolean;
+            n2Pass: boolean;
             /** Phase Transition Risk */
-            phase_transition_risk: string;
+            phaseTransitionRisk: string;
             /** N1 Vulnerabilities */
-            n1_vulnerabilities: {
+            n1Vulnerabilities: {
                 [key: string]: unknown;
             }[];
             /** N2 Fatal Pairs */
-            n2_fatal_pairs: {
+            n2FatalPairs: {
                 [key: string]: unknown;
             }[];
             /** Most Critical Faculty */
-            most_critical_faculty: components["schemas"]["CentralityScore"][];
+            mostCriticalFaculty: components["schemas"]["CentralityScore"][];
             /** Recommended Actions */
-            recommended_actions: string[];
+            recommendedActions: string[];
         };
         /**
          * WebhookCreate
@@ -43830,7 +44412,7 @@ export interface components {
              * Event Types
              * @description Event types to subscribe to
              */
-            event_types: string[];
+            eventTypes: string[];
             /**
              * Secret
              * @description Shared secret (auto-generated if not provided)
@@ -43840,7 +44422,7 @@ export interface components {
              * Custom Headers
              * @description Custom headers for requests
              */
-            custom_headers?: {
+            customHeaders?: {
                 [key: string]: string | undefined;
             } | null;
             /**
@@ -43848,13 +44430,13 @@ export interface components {
              * @description Request timeout in seconds
              * @default 30
              */
-            timeout_seconds: number;
+            timeoutSeconds: number;
             /**
              * Max Retries
              * @description Maximum retry attempts
              * @default 5
              */
-            max_retries: number;
+            maxRetries: number;
             /**
              * Metadata
              * @description Optional metadata
@@ -43869,7 +44451,7 @@ export interface components {
          */
         WebhookDeadLetterListResponse: {
             /** Dead Letters */
-            dead_letters: components["schemas"]["WebhookDeadLetterResponse"][];
+            deadLetters: components["schemas"]["WebhookDeadLetterResponse"][];
             /** Total */
             total: number;
             /** Skip */
@@ -43908,37 +44490,37 @@ export interface components {
              * Delivery Id
              * Format: uuid
              */
-            delivery_id: string;
+            deliveryId: string;
             /**
              * Webhook Id
              * Format: uuid
              */
-            webhook_id: string;
+            webhookId: string;
             /** Event Type */
-            event_type: string;
+            eventType: string;
             /** Payload */
             payload: {
                 [key: string]: unknown;
             };
             /** Total Attempts */
-            total_attempts: number;
+            totalAttempts: number;
             /** Last Error Message */
-            last_error_message: string | null;
+            lastErrorMessage: string | null;
             /** Last Http Status */
-            last_http_status: number | null;
+            lastHttpStatus: number | null;
             /** Resolved */
             resolved: boolean;
             /** Resolved At */
-            resolved_at: string | null;
+            resolvedAt: string | null;
             /** Resolved By */
-            resolved_by: string | null;
+            resolvedBy: string | null;
             /** Resolution Notes */
-            resolution_notes: string | null;
+            resolutionNotes: string | null;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
         };
         /**
          * WebhookDeliveryListResponse
@@ -43968,11 +44550,11 @@ export interface components {
              * Webhook Id
              * Format: uuid
              */
-            webhook_id: string;
+            webhookId: string;
             /** Event Type */
-            event_type: string;
+            eventType: string;
             /** Event Id */
-            event_id: string | null;
+            eventId: string | null;
             /** Payload */
             payload: {
                 [key: string]: unknown;
@@ -43980,30 +44562,30 @@ export interface components {
             /** Status */
             status: string;
             /** Attempt Count */
-            attempt_count: number;
+            attemptCount: number;
             /** Max Attempts */
-            max_attempts: number;
+            maxAttempts: number;
             /** Next Retry At */
-            next_retry_at: string | null;
+            nextRetryAt: string | null;
             /** Http Status Code */
-            http_status_code: number | null;
+            httpStatusCode: number | null;
             /** Response Body */
-            response_body: string | null;
+            responseBody: string | null;
             /** Response Time Ms */
-            response_time_ms: number | null;
+            responseTimeMs: number | null;
             /** Error Message */
-            error_message: string | null;
+            errorMessage: string | null;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /** First Attempted At */
-            first_attempted_at: string | null;
+            firstAttemptedAt: string | null;
             /** Last Attempted At */
-            last_attempted_at: string | null;
+            lastAttemptedAt: string | null;
             /** Completed At */
-            completed_at: string | null;
+            completedAt: string | null;
         };
         /**
          * WebhookDeliveryRetryRequest
@@ -44015,7 +44597,7 @@ export interface components {
              * Format: uuid
              * @description Delivery ID to retry
              */
-            delivery_id: string;
+            deliveryId: string;
         };
         /**
          * WebhookDeliveryStatus
@@ -44032,7 +44614,7 @@ export interface components {
              * Event Type
              * @description Event type to trigger
              */
-            event_type: string;
+            eventType: string;
             /**
              * Payload
              * @description Event payload
@@ -44044,7 +44626,7 @@ export interface components {
              * Event Id
              * @description Optional event identifier
              */
-            event_id?: string | null;
+            eventId?: string | null;
             /**
              * Immediate
              * @description Attempt immediate delivery
@@ -44058,9 +44640,9 @@ export interface components {
          */
         WebhookEventTriggerResponse: {
             /** Event Type */
-            event_type: string;
+            eventType: string;
             /** Webhooks Triggered */
-            webhooks_triggered: number;
+            webhooksTriggered: number;
             /** Message */
             message: string;
         };
@@ -44095,17 +44677,17 @@ export interface components {
             /** Description */
             description: string | null;
             /** Event Types */
-            event_types: string[];
+            eventTypes: string[];
             /** Status */
             status: string;
             /** Retry Enabled */
-            retry_enabled: boolean;
+            retryEnabled: boolean;
             /** Max Retries */
-            max_retries: number;
+            maxRetries: number;
             /** Timeout Seconds */
-            timeout_seconds: number;
+            timeoutSeconds: number;
             /** Custom Headers */
-            custom_headers: {
+            customHeaders: {
                 [key: string]: string | undefined;
             };
             /** Metadata */
@@ -44113,19 +44695,19 @@ export interface components {
                 [key: string]: unknown;
             };
             /** Owner Id */
-            owner_id: string | null;
+            ownerId: string | null;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
             /** Last Triggered At */
-            last_triggered_at: string | null;
+            lastTriggeredAt: string | null;
         };
         /**
          * WebhookStatus
@@ -44145,17 +44727,17 @@ export interface components {
             /** Description */
             description?: string | null;
             /** Event Types */
-            event_types?: string[] | null;
+            eventTypes?: string[] | null;
             /** Secret */
             secret?: string | null;
             /** Custom Headers */
-            custom_headers?: {
+            customHeaders?: {
                 [key: string]: string | undefined;
             } | null;
             /** Timeout Seconds */
-            timeout_seconds?: number | null;
+            timeoutSeconds?: number | null;
             /** Max Retries */
-            max_retries?: number | null;
+            maxRetries?: number | null;
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -44171,13 +44753,13 @@ export interface components {
              * Format: date
              * @description Start date of the week (Monday)
              */
-            week_start: string;
+            weekStart: string;
             /**
              * Week End
              * Format: date
              * @description End date of the week (Sunday)
              */
-            week_end: string;
+            weekEnd: string;
             /**
              * Status
              * @description Status: completed, scheduled, tentative
@@ -44188,13 +44770,13 @@ export interface components {
              * @description Number of assignments in this week
              * @default 0
              */
-            assignment_count: number;
+            assignmentCount: number;
             /**
              * Total Blocks
              * @description Total blocks assigned in this week
              * @default 0
              */
-            total_blocks: number;
+            totalBlocks: number;
         };
         /**
          * WeekSlot
@@ -44205,65 +44787,65 @@ export interface components {
              * Week Number
              * @description Week number (1-53)
              */
-            week_number: number;
+            weekNumber: number;
             /**
              * Week Start
              * Format: date
              * @description Week start date (Friday)
              */
-            week_start: string;
+            weekStart: string;
             /**
              * Week End
              * Format: date
              * @description Week end date (Thursday)
              */
-            week_end: string;
+            weekEnd: string;
             /**
              * Is Current Week
              * @description Is this the current week
              * @default false
              */
-            is_current_week: boolean;
+            isCurrentWeek: boolean;
             /**
              * Is Past
              * @description Is this week in the past
              * @default false
              */
-            is_past: boolean;
+            isPast: boolean;
             /**
              * Faculty Id
              * @description Assigned faculty ID
              */
-            faculty_id?: string | null;
+            facultyId?: string | null;
             /**
              * Faculty Name
              * @description Assigned faculty name
              */
-            faculty_name?: string | null;
+            facultyName?: string | null;
             /**
              * Is Complete
              * @description All blocks assigned
              * @default false
              */
-            is_complete: boolean;
+            isComplete: boolean;
             /**
              * Has Conflict
              * @description Has scheduling conflict
              * @default false
              */
-            has_conflict: boolean;
+            hasConflict: boolean;
             /**
              * Conflict Reason
              * @description Conflict description
              */
-            conflict_reason?: string | null;
+            conflictReason?: string | null;
         };
         /**
          * WeeklyFMITRequest
          * @description Request schema for weekly FMIT assignment heatmap.
          * @example {
-         *       "end_date": "2024-12-31",
-         *       "start_date": "2024-01-01"
+         *       "endDate": "2024-12-31",
+         *       "startDate": "2024-01-01"
          *     }
          */
         WeeklyFMITRequest: {
@@ -44272,36 +44854,36 @@ export interface components {
              * Format: date
              * @description Start date for heatmap
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description End date for heatmap
              */
-            end_date: string;
+            endDate: string;
         };
         /**
          * WeeklyFMITResponse
          * @description Response schema for weekly FMIT assignment heatmap.
          * @example {
-         *       "color_scale": "RdYlGn",
-         *       "generated_at": "2024-01-15T10:00:00",
+         *       "colorScale": "RdYlGn",
+         *       "generatedAt": "2024-01-15T10:00:00",
          *       "metadata": {
-         *         "faculty_count": 3,
-         *         "total_weeks": 3,
-         *         "total_weeks_assigned": 3
+         *         "facultyCount": 3,
+         *         "totalWeeks": 3,
+         *         "totalWeeksAssigned": 3
          *       },
-         *       "x_labels": [
+         *       "xLabels": [
          *         "2024-01-01",
          *         "2024-01-08",
          *         "2024-01-15"
          *       ],
-         *       "y_labels": [
+         *       "yLabels": [
          *         "Dr. Adams",
          *         "Dr. Brown",
          *         "Dr. Chen"
          *       ],
-         *       "z_values": [
+         *       "zValues": [
          *         [
          *           1,
          *           0,
@@ -44325,22 +44907,22 @@ export interface components {
              * X Labels
              * @description X-axis labels (week start dates)
              */
-            x_labels: string[];
+            xLabels: string[];
             /**
              * Y Labels
              * @description Y-axis labels (faculty names)
              */
-            y_labels: string[];
+            yLabels: string[];
             /**
              * Z Values
              * @description Matrix showing FMIT assignments (1=assigned, 0=not assigned)
              */
-            z_values: number[][];
+            zValues: number[][];
             /**
              * Color Scale
              * @description Plotly color scale name
              */
-            color_scale: string;
+            colorScale: string;
             /**
              * Metadata
              * @description Additional metadata
@@ -44353,7 +44935,7 @@ export interface components {
              * Format: date-time
              * @description Timestamp of generation
              */
-            generated_at?: string;
+            generatedAt?: string;
         };
         /**
          * WeeklyGridUpdate
@@ -44374,7 +44956,7 @@ export interface components {
              * @description If true, week_number is ignored and all weeks use same pattern
              * @default true
              */
-            same_pattern_all_weeks: boolean;
+            samePatternAllWeeks: boolean;
         };
         /**
          * WeeklyPatternCreate
@@ -44385,29 +44967,29 @@ export interface components {
              * Day Of Week
              * @description 0=Sunday, 6=Saturday
              */
-            day_of_week: number;
+            dayOfWeek: number;
             /**
              * Time Of Day
              * @enum {string}
              */
-            time_of_day: "AM" | "PM";
+            timeOfDay: "AM" | "PM";
             /**
              * Activity Type
              * @description fm_clinic, specialty, elective, conference, inpatient, call, procedure, off
              */
-            activity_type: string;
+            activityType: string;
             /**
              * Week Number
              * @description Week 1-4 within block. NULL = same pattern all weeks
              */
-            week_number?: number | null;
+            weekNumber?: number | null;
             /** Linked Template Id */
-            linked_template_id?: string | null;
+            linkedTemplateId?: string | null;
             /**
              * Is Protected
              * @default false
              */
-            is_protected: boolean;
+            isProtected: boolean;
             /** Notes */
             notes?: string | null;
         };
@@ -44420,29 +45002,29 @@ export interface components {
              * Day Of Week
              * @description 0=Sunday, 6=Saturday
              */
-            day_of_week: number;
+            dayOfWeek: number;
             /**
              * Time Of Day
              * @enum {string}
              */
-            time_of_day: "AM" | "PM";
+            timeOfDay: "AM" | "PM";
             /**
              * Activity Type
              * @description fm_clinic, specialty, elective, conference, inpatient, call, procedure, off
              */
-            activity_type: string;
+            activityType: string;
             /**
              * Week Number
              * @description Week 1-4 within block. NULL = same pattern all weeks
              */
-            week_number?: number | null;
+            weekNumber?: number | null;
             /** Linked Template Id */
-            linked_template_id?: string | null;
+            linkedTemplateId?: string | null;
             /**
              * Is Protected
              * @default false
              */
-            is_protected: boolean;
+            isProtected: boolean;
             /** Notes */
             notes?: string | null;
             /**
@@ -44454,17 +45036,17 @@ export interface components {
              * Rotation Template Id
              * Format: uuid
              */
-            rotation_template_id: string;
+            rotationTemplateId: string;
             /**
              * Created At
              * Format: date-time
              */
-            created_at: string;
+            createdAt: string;
             /**
              * Updated At
              * Format: date-time
              */
-            updated_at: string;
+            updatedAt: string;
         };
         /**
          * WeeklyView
@@ -44476,18 +45058,18 @@ export interface components {
              * Format: date
              * @description Week start date (Monday)
              */
-            week_start: string;
+            weekStart: string;
             /**
              * Week End
              * Format: date
              * @description Week end date (Sunday)
              */
-            week_end: string;
+            weekEnd: string;
             /**
              * Faculty Assignments
              * @description Faculty assignments this week
              */
-            faculty_assignments?: {
+            facultyAssignments?: {
                 [key: string]: unknown;
             }[];
             /**
@@ -44495,19 +45077,19 @@ export interface components {
              * @description Total FMIT slots this week
              * @default 0
              */
-            total_slots: number;
+            totalSlots: number;
             /**
              * Filled Slots
              * @description Filled slots this week
              * @default 0
              */
-            filled_slots: number;
+            filledSlots: number;
             /**
              * Coverage Percentage
              * @description Coverage percentage
              * @default 0
              */
-            coverage_percentage: number;
+            coveragePercentage: number;
         };
         /**
          * WeeklyViewResponse
@@ -44515,12 +45097,12 @@ export interface components {
          */
         WeeklyViewResponse: {
             /** @description Week data */
-            week_data: components["schemas"]["WeeklyView"];
+            weekData: components["schemas"]["WeeklyView"];
             /**
              * Adjacent Weeks
              * @description Previous and next week summaries
              */
-            adjacent_weeks?: {
+            adjacentWeeks?: {
                 [key: string]: unknown;
             };
             /**
@@ -44528,7 +45110,7 @@ export interface components {
              * Format: date-time
              * @description Generation timestamp
              */
-            generated_at: string;
+            generatedAt: string;
         };
         /**
          * WellnessAccountResponse
@@ -44539,37 +45121,37 @@ export interface components {
              * Person Id
              * Format: uuid
              */
-            person_id: string;
+            personId: string;
             /** Points Balance */
-            points_balance: number;
+            pointsBalance: number;
             /** Points Lifetime */
-            points_lifetime: number;
+            pointsLifetime: number;
             /** Current Streak Weeks */
-            current_streak_weeks: number;
+            currentStreakWeeks: number;
             /** Longest Streak Weeks */
-            longest_streak_weeks: number;
+            longestStreakWeeks: number;
             /** Last Activity Date */
-            last_activity_date: string | null;
+            lastActivityDate: string | null;
             /** Streak Start Date */
-            streak_start_date: string | null;
+            streakStartDate: string | null;
             /** Leaderboard Opt In */
-            leaderboard_opt_in: boolean;
+            leaderboardOptIn: boolean;
             /** Display Name */
-            display_name: string | null;
+            displayName: string | null;
             /** Research Consent */
-            research_consent: boolean;
+            researchConsent: boolean;
             /** Achievements */
             achievements: components["schemas"]["AchievementInfo"][];
             /**
              * Surveys Completed This Week
              * @default 0
              */
-            surveys_completed_this_week: number;
+            surveysCompletedThisWeek: number;
             /**
              * Surveys Available
              * @default 0
              */
-            surveys_available: number;
+            surveysAvailable: number;
         };
         /**
          * WellnessAccountUpdate
@@ -44577,11 +45159,11 @@ export interface components {
          */
         WellnessAccountUpdate: {
             /** Leaderboard Opt In */
-            leaderboard_opt_in?: boolean | null;
+            leaderboardOptIn?: boolean | null;
             /** Display Name */
-            display_name?: string | null;
+            displayName?: string | null;
             /** Research Consent */
-            research_consent?: boolean | null;
+            researchConsent?: boolean | null;
         };
         /**
          * WellnessAnalyticsSummary
@@ -44589,35 +45171,35 @@ export interface components {
          */
         WellnessAnalyticsSummary: {
             /** Total Participants */
-            total_participants: number;
+            totalParticipants: number;
             /** Active This Week */
-            active_this_week: number;
+            activeThisWeek: number;
             /** Active This Block */
-            active_this_block: number;
+            activeThisBlock: number;
             /** Participation Rate */
-            participation_rate: number;
+            participationRate: number;
             /** Total Responses This Week */
-            total_responses_this_week: number;
+            totalResponsesThisWeek: number;
             /** Total Responses This Block */
-            total_responses_this_block: number;
+            totalResponsesThisBlock: number;
             /** Average Responses Per Person */
-            average_responses_per_person: number;
+            averageResponsesPerPerson: number;
             /** Average Burnout Score */
-            average_burnout_score?: number | null;
+            averageBurnoutScore?: number | null;
             /** Average Stress Score */
-            average_stress_score?: number | null;
+            averageStressScore?: number | null;
             /** Average Sleep Score */
-            average_sleep_score?: number | null;
+            averageSleepScore?: number | null;
             /** Average Streak */
-            average_streak: number;
+            averageStreak: number;
             /** Longest Streak */
-            longest_streak: number;
+            longestStreak: number;
             /** Total Points Earned This Week */
-            total_points_earned_this_week: number;
+            totalPointsEarnedThisWeek: number;
             /** Hopfield Positions This Week */
-            hopfield_positions_this_week: number;
+            hopfieldPositionsThisWeek: number;
             /** Average Basin Depth */
-            average_basin_depth?: number | null;
+            averageBasinDepth?: number | null;
         };
         /**
          * WhatIfMetricImpact
@@ -44847,17 +45429,17 @@ export interface components {
              * Person Ids
              * @description Person IDs to analyze. None = all.
              */
-            person_ids?: string[] | null;
+            personIds?: string[] | null;
             /**
              * Start Date
              * @description Start date (ISO format).
              */
-            start_date?: string | null;
+            startDate?: string | null;
             /**
              * End Date
              * @description End date (ISO format).
              */
-            end_date?: string | null;
+            endDate?: string | null;
         };
         /**
          * WorkloadAnalysisResponse
@@ -44865,19 +45447,19 @@ export interface components {
          */
         WorkloadAnalysisResponse: {
             /** Total People */
-            total_people: number;
+            totalPeople: number;
             /** Overloaded Count */
-            overloaded_count: number;
+            overloadedCount: number;
             /** Underutilized Count */
-            underutilized_count: number;
+            underutilizedCount: number;
             /** Fairness Score */
-            fairness_score: number;
+            fairnessScore: number;
             /** Gini Coefficient */
-            gini_coefficient: number;
+            giniCoefficient: number;
             /** People */
             people: components["schemas"]["PersonWorkloadResponse"][];
             /** Rebalancing Suggestions */
-            rebalancing_suggestions: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
+            rebalancingSuggestions: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
         };
         /**
          * WorkloadSummary
@@ -44889,31 +45471,31 @@ export interface components {
              * @description Total weeks assigned
              * @default 0
              */
-            total_weeks: number;
+            totalWeeks: number;
             /**
              * Target Weeks
              * @description Target weeks for this faculty member
              * @default 0
              */
-            target_weeks: number;
+            targetWeeks: number;
             /**
              * Utilization Percent
              * @description Percentage of target achieved
              * @default 0
              */
-            utilization_percent: number;
+            utilizationPercent: number;
             /**
              * Is Balanced
              * @description Whether workload is within acceptable range
              * @default true
              */
-            is_balanced: boolean;
+            isBalanced: boolean;
             /**
              * Variance From Target
              * @description Weeks above/below target (positive = over)
              * @default 0
              */
-            variance_from_target: number;
+            varianceFromTarget: number;
         };
         /**
          * WorkloadVaRRequest
@@ -44925,13 +45507,13 @@ export interface components {
              * Format: date
              * @description Start date for analysis
              */
-            start_date: string;
+            startDate: string;
             /**
              * End Date
              * Format: date
              * @description End date for analysis
              */
-            end_date: string;
+            endDate: string;
             /**
              * Confidence Levels
              * @description Confidence levels for VaR
@@ -44941,7 +45523,7 @@ export interface components {
              *       0.99
              *     ]
              */
-            confidence_levels: number[];
+            confidenceLevels: number[];
             /**
              * Metric
              * @description Workload metric: gini_coefficient, max_hours, variance
@@ -44959,19 +45541,19 @@ export interface components {
              * Format: date-time
              * @description Timestamp of analysis
              */
-            analyzed_at: string;
+            analyzedAt: string;
             /**
              * Period Start
              * Format: date
              * @description Analysis period start
              */
-            period_start: string;
+            periodStart: string;
             /**
              * Period End
              * Format: date
              * @description Analysis period end
              */
-            period_end: string;
+            periodEnd: string;
             /**
              * Metric
              * @description Workload metric analyzed
@@ -44981,17 +45563,17 @@ export interface components {
              * Var Metrics
              * @description VaR at each confidence level
              */
-            var_metrics: components["schemas"]["VaRMetric"][];
+            varMetrics: components["schemas"]["VaRMetric"][];
             /**
              * Baseline Value
              * @description Baseline metric value
              */
-            baseline_value: number;
+            baselineValue: number;
             /**
              * Worst Case Value
              * @description Worst historical value
              */
-            worst_case_value: number;
+            worstCaseValue: number;
             /** Recommendations */
             recommendations?: string[];
             /** @description Overall risk severity */
@@ -45014,7 +45596,7 @@ export interface components {
             /** Error */
             error: string;
             /** Error Code */
-            error_code: string;
+            errorCode: string;
         };
         /**
          * YearGridResponse
@@ -45031,13 +45613,13 @@ export interface components {
              * Format: date
              * @description Academic year start (July 1)
              */
-            academic_year_start: string;
+            academicYearStart: string;
             /**
              * Academic Year End
              * Format: date
              * @description Academic year end (June 30)
              */
-            academic_year_end: string;
+            academicYearEnd: string;
             /**
              * Weeks
              * @description All weeks in the year
@@ -45047,43 +45629,43 @@ export interface components {
              * Faculty Summaries
              * @description Per-faculty load summaries
              */
-            faculty_summaries?: components["schemas"]["FacultyYearSummary"][];
+            facultySummaries?: components["schemas"]["FacultyYearSummary"][];
             /**
              * Total Weeks
              * @description Total weeks in year
              * @default 52
              */
-            total_weeks: number;
+            totalWeeks: number;
             /**
              * Assigned Weeks
              * @description Weeks with assignments
              * @default 0
              */
-            assigned_weeks: number;
+            assignedWeeks: number;
             /**
              * Unassigned Weeks
              * @description Weeks without assignments
              * @default 0
              */
-            unassigned_weeks: number;
+            unassignedWeeks: number;
             /**
              * Coverage Percentage
              * @description Coverage rate
              * @default 0
              */
-            coverage_percentage: number;
+            coveragePercentage: number;
             /**
              * Fairness Index
              * @description Jain's fairness index (0-1, higher is better)
              * @default 0
              */
-            fairness_index: number;
+            fairnessIndex: number;
             /**
              * Generated At
              * Format: date-time
              * @description Generation timestamp
              */
-            generated_at: string;
+            generatedAt: string;
         };
         /**
          * ZoneAssignmentResponse
@@ -45104,39 +45686,39 @@ export interface components {
              * Zone Id
              * Format: uuid
              */
-            zone_id: string;
+            zoneId: string;
             /** Zone Name */
-            zone_name: string;
-            zone_type: components["schemas"]["ZoneType"];
+            zoneName: string;
+            zoneType: components["schemas"]["ZoneType"];
             /**
              * Checked At
              * Format: date-time
              */
-            checked_at: string;
+            checkedAt: string;
             status: components["schemas"]["ZoneStatus"];
-            containment_level: components["schemas"]["ContainmentLevel"];
+            containmentLevel: components["schemas"]["ContainmentLevel"];
             /** Is Self Sufficient */
-            is_self_sufficient: boolean;
+            isSelfSufficient: boolean;
             /** Has Surplus */
-            has_surplus: boolean;
+            hasSurplus: boolean;
             /** Available Faculty */
-            available_faculty: number;
+            availableFaculty: number;
             /** Minimum Required */
-            minimum_required: number;
+            minimumRequired: number;
             /** Optimal Required */
-            optimal_required: number;
+            optimalRequired: number;
             /** Capacity Ratio */
-            capacity_ratio: number;
+            capacityRatio: number;
             /** Faculty Borrowed */
-            faculty_borrowed: number;
+            facultyBorrowed: number;
             /** Faculty Lent */
-            faculty_lent: number;
+            facultyLent: number;
             /** Net Borrowing */
-            net_borrowing: number;
+            netBorrowing: number;
             /** Active Incidents */
-            active_incidents: number;
+            activeIncidents: number;
             /** Services Affected */
-            services_affected: string[];
+            servicesAffected: string[];
             /** Recommendations */
             recommendations: string[];
         };
@@ -45154,9 +45736,9 @@ export interface components {
              * Zone Id
              * Format: uuid
              */
-            zone_id: string;
+            zoneId: string;
             /** Incident Type */
-            incident_type: string;
+            incidentType: string;
             /** Description */
             description: string;
             /** Severity */
@@ -45165,17 +45747,17 @@ export interface components {
              * Started At
              * Format: date-time
              */
-            started_at: string;
+            startedAt: string;
             /** Faculty Affected */
-            faculty_affected: string[];
+            facultyAffected: string[];
             /** Services Affected */
-            services_affected: string[];
+            servicesAffected: string[];
             /** Capacity Lost */
-            capacity_lost: number;
+            capacityLost: number;
             /** Resolved At */
-            resolved_at: string | null;
+            resolvedAt: string | null;
             /** Containment Successful */
-            containment_successful: boolean;
+            containmentSuccessful: boolean;
         };
         /**
          * ZoneListResponse
@@ -45199,25 +45781,25 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            zone_type: components["schemas"]["ZoneType"];
+            zoneType: components["schemas"]["ZoneType"];
             /** Description */
             description: string;
             /** Services */
             services: string[];
             /** Minimum Coverage */
-            minimum_coverage: number;
+            minimumCoverage: number;
             /** Optimal Coverage */
-            optimal_coverage: number;
+            optimalCoverage: number;
             /** Priority */
             priority: number;
             status: components["schemas"]["ZoneStatus"];
-            containment_level: components["schemas"]["ContainmentLevel"];
+            containmentLevel: components["schemas"]["ContainmentLevel"];
             /** Borrowing Limit */
-            borrowing_limit: number;
+            borrowingLimit: number;
             /** Lending Limit */
-            lending_limit: number;
+            lendingLimit: number;
             /** Is Active */
-            is_active: boolean;
+            isActive: boolean;
         };
         /**
          * ZoneStatus
@@ -45232,132 +45814,11 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
-         * CoverageGap
-         * @description Represents a coverage gap with details.
-         */
-        app__api__routes__fmit_health__CoverageGap: {
-            /** Gap Id */
-            gap_id: string;
-            /**
-             * Date
-             * Format: date
-             */
-            date: string;
-            /** Time Of Day */
-            time_of_day: string;
-            /** Block Id */
-            block_id: string;
-            /** Severity */
-            severity: string;
-            /** Days Until */
-            days_until: number;
-            /** Affected Area */
-            affected_area: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            current_assignments: number;
-            /** Required Assignments */
-            required_assignments: number;
-            /** Gap Size */
-            gap_size: number;
-        };
-        /**
          * ExportFormat
          * @description Export file formats.
          * @enum {string}
          */
         app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
-        /**
-         * ConflictSummary
-         * @description Summary statistics for a set of conflicts.
-         *
-         *     Used for dashboard displays and reporting.
-         * @example {
-         *       "affected_people_count": 8,
-         *       "auto_resolvable_count": 6,
-         *       "average_impact_score": 0.65,
-         *       "critical_count": 3,
-         *       "high_count": 5,
-         *       "low_count": 3,
-         *       "medium_count": 4,
-         *       "total_conflicts": 15
-         *     }
-         */
-        app__scheduling__conflicts__types__ConflictSummary: {
-            /**
-             * Total Conflicts
-             * @default 0
-             */
-            total_conflicts: number;
-            /**
-             * Critical Count
-             * @default 0
-             */
-            critical_count: number;
-            /**
-             * High Count
-             * @default 0
-             */
-            high_count: number;
-            /**
-             * Medium Count
-             * @default 0
-             */
-            medium_count: number;
-            /**
-             * Low Count
-             * @default 0
-             */
-            low_count: number;
-            /** By Category */
-            by_category?: {
-                [key: string]: number | undefined;
-            };
-            /** By Type */
-            by_type?: {
-                [key: string]: number | undefined;
-            };
-            /**
-             * Affected People Count
-             * @default 0
-             */
-            affected_people_count: number;
-            /**
-             * Affected Blocks Count
-             * @default 0
-             */
-            affected_blocks_count: number;
-            /**
-             * Auto Resolvable Count
-             * @default 0
-             */
-            auto_resolvable_count: number;
-            /**
-             * Requires Manual Count
-             * @default 0
-             */
-            requires_manual_count: number;
-            /**
-             * Average Impact Score
-             * @default 0
-             */
-            average_impact_score: number;
-            /**
-             * Average Urgency Score
-             * @default 0
-             */
-            average_urgency_score: number;
-            /**
-             * Average Complexity Score
-             * @default 0
-             */
-            average_complexity_score: number;
-            /** Earliest Date */
-            earliest_date?: string | null;
-            /** Latest Date */
-            latest_date?: string | null;
-        };
         /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
@@ -45371,7 +45832,7 @@ export interface components {
             /** Success */
             success: boolean;
             /** Assignment Id */
-            assignment_id?: string | null;
+            assignmentId?: string | null;
             /** Error */
             error?: string | null;
             /** Warnings */
@@ -45394,6 +45855,27 @@ export interface components {
             total: number;
         };
         /**
+         * CoverageGap
+         * @description Identified coverage gap.
+         */
+        app__schemas__block_assignment__CoverageGap: {
+            /**
+             * Rotation Template Id
+             * Format: uuid
+             */
+            rotationTemplateId: string;
+            /** Rotation Name */
+            rotationName: string;
+            /** Required Coverage */
+            requiredCoverage: number;
+            /** Assigned Coverage */
+            assignedCoverage: number;
+            /** Gap */
+            gap: number;
+            /** Severity */
+            severity: string;
+        };
+        /**
          * PersonSummary
          * @description Minimal person info for certification reports.
          */
@@ -45411,17 +45893,34 @@ export interface components {
             email?: string | null;
         };
         /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
+         * PersonSummary
+         * @description Summary of person for manifest display.
          */
-        app__schemas__jobs__QueuePurgeRequest: {
+        app__schemas__daily_manifest__PersonSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Pgy Level
+             * @description PGY level for residents
+             */
+            pgyLevel?: number | null;
+        };
+        /**
+         * QueuePurgeResponse
+         * @description Response to queue purge request.
+         */
+        app__schemas__jobs__QueuePurgeResponse: {
             /** Queuename */
             queueName: string;
-            /**
-             * Confirm
-             * @default false
-             */
-            confirm: boolean;
+            /** Taskspurged */
+            tasksPurged: number;
+            /** Timestamp */
+            timestamp: string;
         };
         /**
          * SuggestionResponse
@@ -45443,34 +45942,21 @@ export interface components {
              */
             impact: number;
             /** Affected Items */
-            affected_items?: string[];
+            affectedItems?: string[];
         };
         /**
-         * PersonSummary
-         * @description Minimal person info for embedding in credential responses.
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
          */
-        app__schemas__procedure_credential__PersonSummary: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /** Type */
-            type: string;
-        };
-        /**
-         * QueuePurgeResponse
-         * @description Response after purging a queue.
-         */
-        app__schemas__queue__QueuePurgeResponse: {
+        app__schemas__queue__QueuePurgeRequest: {
             /** Queuename */
             queueName: string;
-            /** Taskspurged */
-            tasksPurged: number;
-            /** Timestamp */
-            timestamp: string;
+            /**
+             * Confirm
+             * @description Must be true to confirm purge
+             * @default false
+             */
+            confirm: boolean;
         };
         /**
          * BatchOperationResult
@@ -45486,7 +45972,7 @@ export interface components {
              * Template Id
              * Format: uuid
              */
-            template_id: string;
+            templateId: string;
             /** Success */
             success: boolean;
             /** Error */
@@ -45498,11 +45984,23 @@ export interface components {
          */
         app__schemas__rotation_template__ConflictCheckResponse: {
             /** Has Conflicts */
-            has_conflicts: boolean;
+            hasConflicts: boolean;
             /** Conflicts */
             conflicts: components["schemas"]["TemplateConflict"][];
             /** Can Proceed */
-            can_proceed: boolean;
+            canProceed: boolean;
+        };
+        /**
+         * ConflictSummary
+         * @description Summary of conflicts found.
+         */
+        app__schemas__schedule__ConflictSummary: {
+            /** Total Conflicts */
+            totalConflicts: number;
+            /** Errors */
+            errors: number;
+            /** Warnings */
+            warnings: number;
         };
         /**
          * CoverageGap
@@ -45511,7 +46009,7 @@ export interface components {
          *       "date": "2024-01-15",
          *       "rotation": "FMIT Inpatient",
          *       "severity": "high",
-         *       "time_of_day": "PM"
+         *       "timeOfDay": "PM"
          *     }
          */
         app__schemas__visualization__CoverageGap: {
@@ -45525,7 +46023,7 @@ export interface components {
              * Time Of Day
              * @description AM or PM
              */
-            time_of_day: string;
+            timeOfDay: string;
             /**
              * Rotation
              * @description Rotation with gap
@@ -51558,6 +52056,46 @@ export interface operations {
             };
         };
     };
+    list_half_day_assignments_api_v1_half_day_assignments_get: {
+        parameters: {
+            query?: {
+                /** @description Block number */
+                block_number?: number | null;
+                /** @description Academic year (e.g., 2025) */
+                academic_year?: number | null;
+                /** @description Start date */
+                start_date?: string | null;
+                /** @description End date */
+                end_date?: string | null;
+                /** @description Filter by person type */
+                person_type?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HalfDayAssignmentListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_constraints_api_v1_schedule_constraints_get: {
         parameters: {
             query?: never;
@@ -55274,6 +55812,145 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Tier3StatusResponse"];
+                };
+            };
+        };
+    };
+    calculate_defense_level_api_v1_resilience_defense_level_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DefenseLevelRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DefenseLevelResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_utilization_threshold_api_v1_resilience_utilization_threshold_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UtilizationThresholdRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UtilizationThresholdResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calculate_burnout_rt_api_v1_resilience_burnout_rt_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BurnoutRtRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BurnoutRtResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_circuit_breakers_status_api_v1_resilience_circuit_breakers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AllBreakersStatusResponse"];
+                };
+            };
+        };
+    };
+    get_circuit_breakers_health_api_v1_resilience_circuit_breakers_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BreakerHealthResponse"];
                 };
             };
         };
@@ -63507,7 +64184,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__scheduling__conflicts__types__ConflictSummary"];
+                    "application/json": components["schemas"]["ConflictSummary"];
                 };
             };
             /** @description Validation Error */
@@ -64564,7 +65241,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -64574,7 +65251,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -64931,7 +65608,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -64941,7 +65618,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */

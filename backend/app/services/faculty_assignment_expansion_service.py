@@ -1,19 +1,23 @@
 """
 Faculty Assignment Expansion Service.
 
-Ensures every faculty member has exactly 56 assignments per block (28 days × 2 half-days).
-Unlike residents who have BlockAssignments expanded, faculty assignments are created post-hoc
-based on ACGME supervision ratios. This service fills remaining empty slots with placeholders.
+Ensures every faculty member has exactly 56 half-day assignments per block (28 days × 2).
+Creates HalfDayAssignment records with source='template' (lowest priority) for empty slots.
 
 Key differences from resident expansion:
 - No BlockAssignment source - uses Person.type='faculty'
 - No 1-in-7 day-off rule (ACGME requirement for residents only)
-- Existing assignments (FMIT, clinic, supervision) are preserved
-- Empty slots get GME (admin time) placeholder, not rotation activity
-- Weekends always get W-AM/W-PM (faculty don't work weekends)
-- Holidays always get HOL-AM/HOL-PM (faculty don't work holidays)
-- Non-operational days (DONSA, EO closure) get HOL-AM/HOL-PM
-- Absences get LV-AM/LV-PM
+- Existing assignments (preload, manual) are preserved
+- Empty slots get admin placeholder (GME/DFM based on faculty.admin_type)
+- Weekends always get W activity
+- Holidays always get HOL activity
+- Absences get LV activity
+
+Source priority (respected):
+1. preload - FMIT, call, absences - NEVER overwritten
+2. manual - Human override
+3. solver - Computed by optimizer
+4. template - Default from this service (lowest priority)
 
 PERSEC-compliant logging (no PII).
 """
@@ -23,14 +27,13 @@ from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import select, and_
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
 from app.models.absence import Absence
-from app.models.assignment import Assignment
-from app.models.block import Block
+from app.models.activity import Activity
+from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
 from app.models.person import Person
-from app.models.rotation_template import RotationTemplate
 from app.utils.academic_blocks import get_block_dates
 
 logger = get_logger(__name__)
@@ -38,48 +41,48 @@ logger = get_logger(__name__)
 
 class FacultyAssignmentExpansionService:
     """
-    Service to ensure all faculty have 56 assignments per block.
+    Service to ensure all faculty have 56 half-day assignments per block.
 
     Workflow:
-    1. Load all faculty members
-    2. Load existing assignments for the block
+    1. Load all active faculty members (excluding adjuncts if specified)
+    2. Load existing HalfDayAssignment records for the block
     3. For each faculty, for each of 56 slots:
-       - If existing assignment → skip
-       - If blocking absence → LV-AM/LV-PM
-       - If weekend → W-AM/W-PM
-       - If holiday or non-operational → HOL-AM/HOL-PM
-       - Else → GME-AM/GME-PM (admin placeholder)
-    4. Return list of new Assignment objects (not committed)
+       - If existing assignment → skip (preserve source priority)
+       - If blocking absence → LV activity
+       - If weekend → W activity
+       - If holiday → HOL activity
+       - Else → GME or DFM activity (based on faculty.admin_type)
+    4. Return count of new HalfDayAssignment records created
     """
+
+    # Activities cache (loaded once)
+    _activity_cache: dict[str, Activity] = {}
 
     def __init__(self, db: Session):
         self.db = db
         self._absence_cache: dict[UUID, list[Absence]] = {}
-        self._block_cache: dict[tuple[date, str], Block] = {}
-        self._existing_assignments: dict[tuple[UUID, UUID], Assignment] = {}
-        self._placeholder_templates: dict[str, RotationTemplate] = {}
+        self._existing_slots: set[str] = set()  # Keys: "person_id_date_time"
+        self._holiday_slots: set[tuple[date, str]] = set()  # Keys: (date, time_of_day)
 
     def fill_faculty_assignments(
         self,
         block_number: int,
         academic_year: int,
-        schedule_run_id: UUID | None = None,
-        created_by: str = "faculty_expansion_service",
-    ) -> list[Assignment]:
+        exclude_adjuncts: bool = True,
+    ) -> int:
         """
-        Fill all 56 slots for each faculty member.
+        Fill all 56 slots for each faculty member with HalfDayAssignment records.
 
         Args:
             block_number: Academic block number (1-13)
             academic_year: Academic year (e.g., 2025 for AY 2025-2026)
-            schedule_run_id: Optional provenance tracking ID
-            created_by: Audit field for who created assignments
+            exclude_adjuncts: If True, skip adjunct faculty (default True)
 
         Returns:
-            List of new Assignment objects to fill gaps (not yet committed to DB)
+            Count of new HalfDayAssignment records created
         """
         logger.info(
-            f"Filling faculty assignments for block {block_number} AY {academic_year}"
+            f"Filling faculty half-day assignments for block {block_number} AY {academic_year}"
         )
 
         # Get block date range
@@ -88,50 +91,85 @@ class FacultyAssignmentExpansionService:
         logger.info(f"Block {block_number} dates: {start_date} to {end_date}")
 
         # Load all faculty
-        faculty = self._load_faculty()
+        faculty = self._load_faculty(exclude_adjuncts)
         logger.info(f"Found {len(faculty)} faculty members")
 
         if not faculty:
-            return []
+            return 0
 
         # Pre-load data
         faculty_ids = [f.id for f in faculty]
-        self._preload_blocks(start_date, end_date)
+        self._preload_activities()
         self._preload_absences(faculty_ids, start_date, end_date)
         self._preload_existing_assignments(faculty_ids, start_date, end_date)
-        self._preload_placeholder_templates()
+        self._preload_holidays(start_date, end_date)
 
         # Fill assignments for each faculty
-        all_new_assignments: list[Assignment] = []
+        total_created = 0
         for person in faculty:
-            new_assignments = self._fill_single_faculty(
+            created = self._fill_single_faculty(
                 person,
                 start_date,
                 end_date,
-                schedule_run_id,
-                created_by,
             )
-            all_new_assignments.extend(new_assignments)
+            total_created += created
 
-        logger.info(f"Created {len(all_new_assignments)} new faculty assignments")
-        return all_new_assignments
+        logger.info(f"Created {total_created} new faculty half-day assignments")
+        return total_created
 
-    def _load_faculty(self) -> list[Person]:
-        """Load all faculty members."""
+    def _load_faculty(self, exclude_adjuncts: bool) -> list[Person]:
+        """Load all faculty members.
+
+        Note: faculty_role can be NULL for some faculty. The filter
+        `!= 'adjunct'` in SQLAlchemy returns False for NULL values,
+        so we use an explicit OR condition to include NULL rows.
+        """
         stmt = select(Person).where(Person.type == "faculty")
+        if exclude_adjuncts:
+            # Adjuncts have faculty_role='adjunct'
+            # Include NULL faculty_role (most faculty) - they are NOT adjuncts
+            from sqlalchemy import or_
+
+            stmt = stmt.where(
+                or_(Person.faculty_role != "adjunct", Person.faculty_role.is_(None))
+            )
         result = self.db.execute(stmt)
         return list(result.scalars().all())
 
-    def _preload_blocks(self, start_date: date, end_date: date) -> None:
-        """Pre-load all Block records for the date range."""
-        stmt = select(Block).where(
-            Block.date >= start_date,
-            Block.date <= end_date,
+    def _preload_activities(self) -> None:
+        """Pre-load activity records for faculty assignments."""
+        if FacultyAssignmentExpansionService._activity_cache:
+            return  # Already loaded (class-level cache)
+
+        # Activities needed for faculty gap filling
+        # Note: W, HOL, DEP are uppercase (from 20260120 migration)
+        # LV-AM, LV-PM for leave (matches SyncPreloadService)
+        # gme, dfm, sm_clinic are lowercase (from 20260109 migration)
+        # sm_clinic is for Sports Medicine faculty (Tagawa has admin_type='SM')
+        activity_codes = [
+            "W",
+            "HOL",
+            "LV-AM",
+            "LV-PM",
+            "DEP",
+            "gme",
+            "dfm",
+            "sm_clinic",
+        ]
+
+        stmt = select(Activity).where(Activity.code.in_(activity_codes))
+        for activity in self.db.execute(stmt).scalars():
+            FacultyAssignmentExpansionService._activity_cache[activity.code] = activity
+
+        logger.info(
+            f"Pre-loaded {len(FacultyAssignmentExpansionService._activity_cache)} "
+            f"faculty activities"
         )
-        result = self.db.execute(stmt)
-        for block in result.scalars().all():
-            self._block_cache[(block.date, block.time_of_day)] = block
-        logger.info(f"Pre-loaded {len(self._block_cache)} blocks")
+
+        # Warn if any activities missing
+        for code in activity_codes:
+            if code not in FacultyAssignmentExpansionService._activity_cache:
+                logger.warning(f"Missing activity: {code}")
 
     def _preload_absences(
         self,
@@ -162,111 +200,115 @@ class FacultyAssignmentExpansionService:
         start_date: date,
         end_date: date,
     ) -> None:
-        """Pre-load existing assignments for all faculty in the date range."""
+        """Pre-load existing HalfDayAssignment records for all faculty."""
         if not person_ids:
             return
 
         stmt = (
-            select(Assignment)
-            .join(Block)
-            .where(Assignment.person_id.in_(person_ids))
-            .where(Block.date >= start_date)
-            .where(Block.date <= end_date)
-            .options(selectinload(Assignment.block))
+            select(HalfDayAssignment)
+            .where(HalfDayAssignment.person_id.in_(person_ids))
+            .where(HalfDayAssignment.date >= start_date)
+            .where(HalfDayAssignment.date <= end_date)
         )
         result = self.db.execute(stmt)
-        for assignment in result.scalars().all():
-            # Key by (person_id, block_id) for O(1) lookup
-            key = (assignment.person_id, assignment.block_id)
-            self._existing_assignments[key] = assignment
+        for hda in result.scalars().all():
+            # Key by (person_id, date, time_of_day) for O(1) lookup
+            key = f"{hda.person_id}_{hda.date.isoformat()}_{hda.time_of_day}"
+            self._existing_slots.add(key)
         logger.info(
-            f"Pre-loaded {len(self._existing_assignments)} existing faculty assignments"
+            f"Pre-loaded {len(self._existing_slots)} existing faculty half-day assignments"
         )
 
-    def _preload_placeholder_templates(self) -> None:
-        """Pre-load placeholder rotation templates (W, LV, HOL, GME)."""
-        if self._placeholder_templates:
-            return  # Already loaded
+    def _preload_holidays(self, start_date: date, end_date: date) -> None:
+        """Pre-load federal holidays and non-operational days from Block table.
 
-        # Templates needed for faculty gap filling
-        template_abbrevs = [
-            "W-AM",
-            "W-PM",  # Weekend
-            "LV-AM",
-            "LV-PM",  # Leave/absence
-            "HOL-AM",
-            "HOL-PM",  # Federal holiday
-            "GME-AM",
-            "GME-PM",  # Admin time (default for empty slots)
-        ]
+        Uses Block.is_holiday and Block.operational_intent to identify
+        slots that should get HOL activity instead of admin time.
 
-        stmt = select(RotationTemplate).where(
-            RotationTemplate.abbreviation.in_(template_abbrevs)
+        NOTE: Holidays are tracked per-slot (date + time_of_day), not per-date.
+        This supports partial-day holidays if ever needed (rare but possible).
+        """
+        from app.models.block import Block
+        from app.models.day_type import OperationalIntent
+
+        # Query blocks that are holidays or non-operational (DONSA, EO closure)
+        # Include time_of_day for per-slot holiday detection
+        stmt = select(Block.date, Block.time_of_day).where(
+            Block.date >= start_date,
+            Block.date <= end_date,
+            # Match holidays OR non-operational days
+            (Block.is_holiday == True)
+            | (Block.operational_intent == OperationalIntent.NON_OPERATIONAL),  # noqa: E712
         )
-        for rt in self.db.execute(stmt).scalars():
-            self._placeholder_templates[rt.abbreviation] = rt
+
+        for row in self.db.execute(stmt):
+            # Store as (date, time_of_day) tuple for per-slot detection
+            self._holiday_slots.add((row[0], row[1]))
 
         logger.info(
-            f"Pre-loaded {len(self._placeholder_templates)} placeholder templates"
+            f"Pre-loaded {len(self._holiday_slots)} holiday/non-operational slots from blocks"
         )
 
-        # Warn if any templates missing
-        for abbrev in template_abbrevs:
-            if abbrev not in self._placeholder_templates:
-                logger.warning(f"Missing placeholder template: {abbrev}")
-
-    def _get_placeholder_template(self, abbrev: str) -> RotationTemplate | None:
-        """Get placeholder rotation template by abbreviation (cached)."""
-        return self._placeholder_templates.get(abbrev)
+    def _get_activity(self, code: str) -> Activity | None:
+        """Get activity by code (cached)."""
+        return FacultyAssignmentExpansionService._activity_cache.get(code)
 
     def _fill_single_faculty(
         self,
         person: Person,
         start_date: date,
         end_date: date,
-        schedule_run_id: UUID | None,
-        created_by: str,
-    ) -> list[Assignment]:
+    ) -> int:
         """Fill all 56 slots for a single faculty member."""
-        new_assignments: list[Assignment] = []
+        created_count = 0
         current_date = start_date
 
+        # Get faculty's admin type (GME or DFM)
+        admin_type = getattr(person, "admin_type", "GME") or "GME"
+
         while current_date <= end_date:
-            day_of_week = current_date.isoweekday() % 7  # 0=Sun, 1=Mon, ..., 6=Sat
-            is_weekend = day_of_week in (0, 6)  # Sunday or Saturday
+            day_of_week = current_date.isoweekday()  # 1=Mon, 7=Sun
+            is_weekend = day_of_week in (6, 7)  # Saturday or Sunday
 
             # Check if person has blocking absence
             is_absent = self._is_person_absent(person.id, current_date)
 
-            # Process AM slot
-            am_assignment = self._fill_slot(
+            # Check if deployed
+            is_deployed = self._is_person_deployed(person.id, current_date)
+
+            # Process AM slot (check holiday per-slot)
+            is_holiday_am = (current_date, "AM") in self._holiday_slots
+            am_created = self._fill_slot(
                 person,
                 current_date,
                 "AM",
                 is_weekend,
                 is_absent,
-                schedule_run_id,
-                created_by,
+                is_deployed,
+                is_holiday_am,
+                admin_type,
             )
-            if am_assignment:
-                new_assignments.append(am_assignment)
+            if am_created:
+                created_count += 1
 
-            # Process PM slot
-            pm_assignment = self._fill_slot(
+            # Process PM slot (check holiday per-slot)
+            is_holiday_pm = (current_date, "PM") in self._holiday_slots
+            pm_created = self._fill_slot(
                 person,
                 current_date,
                 "PM",
                 is_weekend,
                 is_absent,
-                schedule_run_id,
-                created_by,
+                is_deployed,
+                is_holiday_pm,
+                admin_type,
             )
-            if pm_assignment:
-                new_assignments.append(pm_assignment)
+            if pm_created:
+                created_count += 1
 
             current_date += timedelta(days=1)
 
-        return new_assignments
+        return created_count
 
     def _fill_slot(
         self,
@@ -275,80 +317,95 @@ class FacultyAssignmentExpansionService:
         time_of_day: str,
         is_weekend: bool,
         is_absent: bool,
-        schedule_run_id: UUID | None,
-        created_by: str,
-    ) -> Assignment | None:
+        is_deployed: bool,
+        is_holiday: bool,
+        admin_type: str,
+    ) -> bool:
         """
         Fill a single slot for a faculty member if empty.
 
-        Returns None if slot already has an assignment.
+        Returns True if a new HalfDayAssignment was created.
         """
-        block = self._block_cache.get((slot_date, time_of_day))
-        if not block:
-            return None
+        # Check if slot already has an assignment (any source)
+        key = f"{person.id}_{slot_date.isoformat()}_{time_of_day}"
+        if key in self._existing_slots:
+            return False  # Already assigned, don't overwrite
 
-        # Check if slot already has an assignment
-        key = (person.id, block.id)
-        if key in self._existing_assignments:
-            return None  # Already assigned, don't overwrite
-
-        # Check for slot-specific absence (partial day)
-        slot_absent = self._is_person_absent_slot(person.id, slot_date, time_of_day)
-
-        # Check if holiday (faculty don't work holidays)
-        is_holiday = getattr(block, "is_holiday", False) is True
-
-        # Check if non-operational day (DONSA, EO closure - faculty don't work)
-        is_non_operational = getattr(block, "is_non_operational", False) is True
-
-        # Determine which template to use (priority order)
-        if is_absent or slot_absent:
-            template_abbrev = f"LV-{time_of_day}"
+        # Determine which activity to use (priority order)
+        if is_deployed:
+            activity_code = "DEP"
+        elif is_absent:
+            # LV-AM or LV-PM based on time of day
+            activity_code = f"LV-{time_of_day}"
         elif is_weekend:
-            template_abbrev = f"W-{time_of_day}"
-        elif is_holiday or is_non_operational:
-            # Use HOL template for both holidays and non-operational days
-            template_abbrev = f"HOL-{time_of_day}"
+            activity_code = "W"
+        elif is_holiday:
+            activity_code = "HOL"
         else:
-            template_abbrev = f"GME-{time_of_day}"
+            # Default to admin time (gme, dfm, or sm_clinic based on faculty)
+            # admin_type is stored uppercase ("GME", "DFM", "SM")
+            # Activity codes: gme, dfm, sm_clinic (SM maps to sm_clinic)
+            if admin_type and admin_type.upper() == "SM":
+                activity_code = "sm_clinic"
+            else:
+                activity_code = admin_type.lower() if admin_type else "gme"
 
-        template = self._get_placeholder_template(template_abbrev)
-        if not template:
-            logger.warning(f"Missing template {template_abbrev}, skipping slot")
-            return None
+        activity = self._get_activity(activity_code)
+        if not activity:
+            logger.warning(f"Missing activity {activity_code}, skipping slot")
+            return False
 
-        return Assignment(
-            block_id=block.id,
+        # Create HalfDayAssignment with source='template' (lowest priority)
+        half_day = HalfDayAssignment(
             person_id=person.id,
-            rotation_template_id=template.id,
-            role="primary",
-            schedule_run_id=schedule_run_id,
-            created_by=created_by,
+            date=slot_date,
+            time_of_day=time_of_day,
+            activity_id=activity.id,
+            source=AssignmentSource.TEMPLATE.value,
         )
+        self.db.add(half_day)
+
+        # Add to existing slots to avoid duplicates
+        self._existing_slots.add(key)
+
+        return True
 
     def _is_person_absent(self, person_id: UUID, check_date: date) -> bool:
-        """Check if person has a blocking absence for the entire day."""
+        """Check if person has a blocking absence for the date.
+
+        Returns True for leave-type absences (vacation, sick, conference).
+        Returns False for deployment-type absences (handled by _is_person_deployed).
+        """
+        # Deployment-type absences are handled separately (use DEP, not LV)
+        deployed_absence_types = {"deployment", "tdy", "training", "military_duty"}
+
         absences = self._absence_cache.get(person_id, [])
         for absence in absences:
             if absence.start_date <= check_date <= absence.end_date:
-                if absence.should_block_assignment:
+                # Check if this is a deployment-type (handled separately)
+                absence_type = getattr(absence, "absence_type", None)
+                if absence_type in deployed_absence_types:
+                    continue  # Handle in _is_person_deployed
+                if getattr(absence, "should_block_assignment", True):
                     return True
         return False
 
-    def _is_person_absent_slot(
-        self,
-        person_id: UUID,
-        check_date: date,
-        time_of_day: str,
-    ) -> bool:
-        """Check if person is absent for a specific slot (partial absence)."""
+    def _is_person_deployed(self, person_id: UUID, check_date: date) -> bool:
+        """Check if person is deployed on the date.
+
+        Deployment-like absences that should use DEP activity instead of LV:
+        - deployment: Actual deployment (e.g., Colgan)
+        - tdy: Temporary duty (off-site, e.g., Hilo)
+        - training: Training duty
+        - military_duty: Other military obligations
+        """
+        # Absence types that count as "deployed" (use DEP activity)
+        deployed_absence_types = {"deployment", "tdy", "training", "military_duty"}
+
         absences = self._absence_cache.get(person_id, [])
         for absence in absences:
             if absence.start_date <= check_date <= absence.end_date:
-                # Check for partial absence (AM only or PM only)
-                if hasattr(absence, "time_of_day") and absence.time_of_day:
-                    if absence.time_of_day == time_of_day:
-                        return True
-                elif absence.should_block_assignment:
+                absence_type = getattr(absence, "absence_type", None)
+                if absence_type in deployed_absence_types:
                     return True
         return False

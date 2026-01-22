@@ -303,8 +303,11 @@ class BlockAssignmentExpansionService:
     def _lookup_activity_by_abbreviation(self, abbreviation: str) -> Activity | None:
         """Lookup Activity by display_abbreviation or code (cached).
 
+        Handles absence template suffixes (-AM/-PM) by stripping them for lookup.
+        E.g., "W-AM" -> looks up "W-AM" first, then "W" as fallback.
+
         Args:
-            abbreviation: Activity display_abbreviation (e.g., 'C', 'LEC', 'FMIT')
+            abbreviation: Activity display_abbreviation (e.g., 'C', 'LEC', 'FMIT', 'W-AM')
 
         Returns:
             Activity if found, None otherwise
@@ -316,7 +319,31 @@ class BlockAssignmentExpansionService:
                 | (Activity.code == abbreviation)
             )
             result = self.db.execute(stmt)
-            self._activity_cache[abbreviation] = result.scalars().first()
+            activity = result.scalars().first()
+
+            # Fallback: strip -AM/-PM suffix for absence templates
+            # Only apply to known absence codes to avoid silent mismatches
+            KNOWN_ABSENCE_BASES = {"W", "LV", "HOL", "OFF", "DEP", "TDY"}
+            if activity is None and abbreviation.endswith(("-AM", "-PM")):
+                base_code = abbreviation.rsplit("-", 1)[0]
+                if base_code in KNOWN_ABSENCE_BASES:
+                    stmt = select(Activity).where(
+                        (Activity.display_abbreviation == base_code)
+                        | (Activity.code == base_code)
+                    )
+                    result = self.db.execute(stmt)
+                    activity = result.scalars().first()
+                    if activity:
+                        logger.debug(
+                            f"Activity lookup fallback: '{abbreviation}' -> '{base_code}'"
+                        )
+                else:
+                    logger.warning(
+                        f"Activity '{abbreviation}' not found and base '{base_code}' "
+                        f"not in known absence codes {KNOWN_ABSENCE_BASES}"
+                    )
+
+            self._activity_cache[abbreviation] = activity
         return self._activity_cache.get(abbreviation)
 
     def _get_active_rotation(
@@ -1384,6 +1411,15 @@ class BlockAssignmentExpansionService:
                 if abbrev:
                     activity = self._lookup_activity_by_abbreviation(abbrev)
 
+            # Determine source: time_off activities (W, LV, HOL, OFF) should be preload
+            # so activity solver won't overwrite them
+            is_time_off = activity and activity.activity_category == "time_off"
+            source = (
+                AssignmentSource.PRELOAD.value
+                if is_time_off
+                else AssignmentSource.SOLVER.value
+            )
+
             # Check if slot already has an assignment (source priority check)
             existing_stmt = select(HalfDayAssignment).where(
                 HalfDayAssignment.person_id == assignment.person_id,
@@ -1406,14 +1442,15 @@ class BlockAssignmentExpansionService:
                 if existing.source == AssignmentSource.TEMPLATE.value:
                     # Update existing record
                     existing.activity_id = activity.id if activity else None
-                    existing.source = AssignmentSource.SOLVER.value
+                    existing.source = source
                     existing.block_assignment_id = block_assignment.id
                     half_day_records.append(existing)
                     continue
 
-                # Existing is also solver - update it
+                # Existing is also solver - can update (but not if new source is preload)
                 if existing.source == AssignmentSource.SOLVER.value:
                     existing.activity_id = activity.id if activity else None
+                    existing.source = source  # Upgrade to preload if time_off
                     existing.block_assignment_id = block_assignment.id
                     half_day_records.append(existing)
                     continue
@@ -1424,7 +1461,7 @@ class BlockAssignmentExpansionService:
                 date=block.date,
                 time_of_day=block.time_of_day,
                 activity_id=activity.id if activity else None,
-                source=AssignmentSource.SOLVER.value,
+                source=source,
                 block_assignment_id=block_assignment.id,
             )
             self.db.add(half_day)

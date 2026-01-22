@@ -89,7 +89,7 @@ export function useFacultyTemplate(
     queryKey: facultyActivityQueryKeys.template(personId, weekNumber),
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (weekNumber) params.append('weekNumber', weekNumber.toString());
+      if (weekNumber) params.append('week_number', weekNumber.toString());
       const queryString = params.toString();
       return get<FacultyTemplateResponse>(
         `/faculty/${personId}/weekly-template${queryString ? `?${queryString}` : ''}`
@@ -200,9 +200,9 @@ export function useDeleteTemplateSlot() {
   >({
     mutationFn: async ({ personId, dayOfWeek, timeOfDay, weekNumber }) => {
       const params = new URLSearchParams();
-      params.append('dayOfWeek', dayOfWeek.toString());
-      params.append('timeOfDay', timeOfDay);
-      if (weekNumber) params.append('weekNumber', weekNumber.toString());
+      params.append('day_of_week', dayOfWeek.toString());
+      params.append('time_of_day', timeOfDay);
+      if (weekNumber) params.append('week_number', weekNumber.toString());
       await del(`/faculty/${personId}/weekly-template/slots?${params.toString()}`);
     },
     onSuccess: (_, variables) => {
@@ -412,8 +412,8 @@ export function useFacultyMatrix(
     queryKey: facultyActivityQueryKeys.matrixRange(startDate, endDate, includeAdjunct),
     queryFn: async () => {
       const params = new URLSearchParams();
-      params.append('startDate', startDate);
-      params.append('endDate', endDate);
+      params.append('start_date', startDate);
+      params.append('end_date', endDate);
       if (includeAdjunct) params.append('include_adjunct', 'true');
       return get<FacultyMatrixResponse>(`/faculty/activities/matrix?${params.toString()}`);
     },

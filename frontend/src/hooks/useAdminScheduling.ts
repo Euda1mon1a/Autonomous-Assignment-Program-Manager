@@ -61,8 +61,8 @@ export function useScheduleRuns(filters?: RunLogFilters) {
       const params = new URLSearchParams();
       if (filters?.runId) params.set('run_id', filters.runId);
       if (filters?.algorithms?.length) params.set('algorithms', filters.algorithms.join(','));
-      if (filters?.dateRange?.start) params.set('startDate', filters.dateRange.start);
-      if (filters?.dateRange?.end) params.set('endDate', filters.dateRange.end);
+      if (filters?.dateRange?.start) params.set('start_date', filters.dateRange.start);
+      if (filters?.dateRange?.end) params.set('end_date', filters.dateRange.end);
       if (filters?.status?.length) params.set('status', filters.status.join(','));
       if (filters?.tags?.length) params.set('tags', filters.tags.join(','));
 
@@ -221,8 +221,8 @@ export function useScheduleMetrics(dateRange?: { start: string; end: string }) {
     queryKey: adminSchedulingKeys.metrics(dateRange),
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (dateRange?.start) params.set('startDate', dateRange.start);
-      if (dateRange?.end) params.set('endDate', dateRange.end);
+      if (dateRange?.start) params.set('start_date', dateRange.start);
+      if (dateRange?.end) params.set('end_date', dateRange.end);
       const queryString = params.toString();
       return get<RunResult>(`/schedule/metrics${queryString ? `?${queryString}` : ''}`);
     },

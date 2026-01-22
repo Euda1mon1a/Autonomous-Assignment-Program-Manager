@@ -27,7 +27,7 @@ const absenceExportColumns = [
 ]
 
 type ViewMode = 'calendar' | 'list' | 'grid'
-type AbsenceTypeFilter = 'all' | 'vacation' | 'sick' | 'conference' | 'personal' | 'medical' | 'deployment' | 'tdy' | 'familyEmergency' | 'bereavement' | 'emergencyLeave' | 'convalescent' | 'maternityPaternity'
+type AbsenceTypeFilter = 'all' | 'vacation' | 'sick' | 'conference' | 'personal' | 'medical' | 'deployment' | 'tdy' | 'family_emergency' | 'bereavement' | 'emergency_leave' | 'convalescent' | 'maternity_paternity' | 'training' | 'military_duty'
 
 const absenceTypeOptions = [
   // Planned leave
@@ -37,14 +37,16 @@ const absenceTypeOptions = [
   { value: 'sick', label: 'Sick' },
   { value: 'medical', label: 'Medical Leave' },
   { value: 'convalescent', label: 'Convalescent' },
-  { value: 'maternityPaternity', label: 'Parental Leave' },
+  { value: 'maternity_paternity', label: 'Parental Leave' },
   // Emergency (blocking - Hawaii reality: 7+ days travel)
-  { value: 'familyEmergency', label: 'Family Emergency' },
-  { value: 'emergencyLeave', label: 'Emergency Leave' },
+  { value: 'family_emergency', label: 'Family Emergency' },
+  { value: 'emergency_leave', label: 'Emergency Leave' },
   { value: 'bereavement', label: 'Bereavement' },
   // Military
   { value: 'deployment', label: 'Deployment' },
   { value: 'tdy', label: 'TDY' },
+  { value: 'training', label: 'Training' },
+  { value: 'military_duty', label: 'Military Duty' },
 ]
 
 // Get initial date range (today + 27 days for a block period)
@@ -226,7 +228,7 @@ export default function AbsencesPage() {
             <option value="vacation">Vacation</option>
             <option value="medical">Sick / Medical</option>
             <option value="conference">Conference</option>
-            <option value="familyEmergency">Personal / Family Emergency</option>
+            <option value="family_emergency">Personal / Family Emergency</option>
             <option value="deployment">Deployment</option>
             <option value="tdy">TDY</option>
           </select>

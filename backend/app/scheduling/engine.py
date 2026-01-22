@@ -59,6 +59,11 @@ from app.scheduling.validator import ACGMEValidator
 from app.services.block_assignment_expansion_service import (
     BlockAssignmentExpansionService,
 )
+from app.services.sync_preload_service import SyncPreloadService
+from app.services.faculty_assignment_expansion_service import (
+    FacultyAssignmentExpansionService,
+)
+from app.scheduling.activity_solver import CPSATActivitySolver
 from app.services.schedule_draft_service import ScheduleDraftService
 from app.models.schedule_draft import DraftSourceType
 from app.utils.academic_blocks import get_block_number_for_date
@@ -125,6 +130,7 @@ class SchedulingEngine:
         academic_year: int | None = None,
         create_draft: bool = False,
         created_by_id: UUID | None = None,
+        validate_pcat_do: bool = True,
     ) -> dict:
         """
         Generate a complete schedule.
@@ -150,6 +156,8 @@ class SchedulingEngine:
             create_draft: If True, stage assignments in a draft instead of committing
                          directly to live assignments. Draft must be published separately.
             created_by_id: UUID of user creating the schedule (for audit trail).
+            validate_pcat_do: Run PCAT/DO integrity check after sync (default True).
+                             Set to False once pipeline is proven stable.
 
         Returns:
             Dictionary with status, assignments, validation results, and resilience info.
@@ -239,9 +247,18 @@ class SchedulingEngine:
                     "education assignments (FMO/GME/Lectures)"
                 )
 
-            # Step 1.5g: Expand block_assignments into daily slots
-            # This generates Assignment records from the master rotation schedule
-            expanded_assignments: list[Assignment] = []
+            # =================================================================
+            # CORRECTED ORDER OF OPERATIONS (per TAMC skill)
+            # =================================================================
+            # The dependency chain is:
+            #   Call → PCAT/DO → AT Coverage → Resident Clinic Load → Faculty Admin
+            #
+            # PCAT (Post-Call Attending Time) counts toward AT coverage.
+            # Residents must know PCAT availability BEFORE scheduling clinic.
+            # Faculty admin fills AFTER knowing resident clinic demand.
+            # =================================================================
+
+            # Step 1.5g: Infer block/year if not provided
             if expand_block_assignments:
                 if block_number is None or academic_year is None:
                     # Try to infer from date range
@@ -255,6 +272,43 @@ class SchedulingEngine:
                         f"Inferred block {block_number} AY {academic_year} from dates"
                     )
 
+            # Step 2: Load absences and build availability matrix (moved earlier)
+            self._build_availability_matrix()
+
+            # Step 3: Get residents, faculty, and templates (moved earlier)
+            residents = self._get_residents(pgy_levels)
+            templates = self._get_rotation_templates(rotation_template_ids)
+            faculty = self._get_faculty()
+
+            # NOTE: Context is built in Step 4 (unchanged location)
+            # Call solving happens in Step 5 (half-day mode)
+            # The key change is preloads now skip stale faculty call PCAT/DO
+
+            # Step 3.5: Load NON-CALL preloads (FMIT, absences, C-I, NF, aSM)
+            # SKIP faculty call PCAT/DO - those will come from NEW call in Step 6.5
+            # This prevents loading stale PCAT/DO from old CallAssignment records
+            # SKIP in draft mode - preloads write to live half_day_assignments
+            if (
+                expand_block_assignments
+                and block_number
+                and academic_year
+                and not create_draft
+            ):
+                preload_service = SyncPreloadService(self.db)
+                preload_count = preload_service.load_all_preloads(
+                    block_number, academic_year, skip_faculty_call=True
+                )
+                logger.info(f"Loaded {preload_count} non-call preload assignments")
+            elif create_draft:
+                logger.info(
+                    "Skipping preload sync in draft mode (would modify live data)"
+                )
+
+            # Step 3.6: Expand block_assignments into daily slots
+            # This generates HalfDayAssignment records from the master rotation schedule
+            # Now runs AFTER preloads are loaded (absences, FMIT, etc.)
+            expanded_assignments: list[Assignment] = []
+            if expand_block_assignments and block_number and academic_year:
                 expansion_service = BlockAssignmentExpansionService(self.db)
                 expanded_assignments = expansion_service.expand_block_assignments(
                     block_number=block_number,
@@ -262,6 +316,7 @@ class SchedulingEngine:
                     schedule_run_id=run.id,
                     created_by="engine_expansion",
                     apply_one_in_seven=True,
+                    persist_half_day=True,  # Persist to HalfDayAssignment table
                 )
                 if expanded_assignments:
                     logger.info(
@@ -269,16 +324,15 @@ class SchedulingEngine:
                         f"block_assignments for Block {block_number}"
                     )
 
+            # NOTE: Faculty expansion and activity solver are moved to AFTER
+            # call assignments are created (see Steps 6.7 and 6.8)
+            # This ensures:
+            # 1. PCAT/DO from NEW call is locked before activity solver runs
+            # 2. Activity solver knows PCAT coverage for AT ratio calculations
+            # 3. Faculty fills remaining slots AFTER knowing resident demand
+
             # NOTE: Deletion deferred until after successful solve (see Step 5.5)
             # This prevents data loss if the solver fails
-
-            # Step 2: Load absences and build availability matrix
-            self._build_availability_matrix()
-
-            # Step 3: Get residents, faculty, and templates
-            residents = self._get_residents(pgy_levels)
-            templates = self._get_rotation_templates(rotation_template_ids)
-            faculty = self._get_faculty()
 
             if not residents:
                 self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
@@ -358,14 +412,37 @@ class SchedulingEngine:
                     logger.warning(f"Pre-solver warning: {warning}")
 
             # Step 5: Run solver
-            solver_result = self._run_solver(algorithm, context, timeout_seconds)
+            # NOTE: In half-day mode (expand_block_assignments=True), the activity solver
+            # (CPSATActivitySolver in Step 1.5i) handles activity assignment to HalfDayAssignment.
+            # The legacy rotation solver is skipped because its results are discarded anyway.
+            if not expand_block_assignments:
+                solver_result = self._run_solver(algorithm, context, timeout_seconds)
 
-            if not solver_result.success:
-                logger.warning(f"Solver failed: {solver_result.solver_status}")
-                # Fallback to greedy if advanced solver fails
-                if algorithm != "greedy":
-                    logger.info("Falling back to greedy solver")
-                    solver_result = self._run_solver("greedy", context, timeout_seconds)
+                if not solver_result.success:
+                    logger.warning(f"Solver failed: {solver_result.solver_status}")
+                    # Fallback to greedy if advanced solver fails
+                    if algorithm != "greedy":
+                        logger.info("Falling back to greedy solver")
+                        solver_result = self._run_solver(
+                            "greedy", context, timeout_seconds
+                        )
+            else:
+                # Half-day mode: Run greedy solver ONLY for call assignments (Sun-Thu)
+                # Rotation assignments come from expansion service, but call equity
+                # logic is in the greedy solver. We discard rotation assignments but
+                # keep call_assignments from the result.
+                logger.info(
+                    "Running greedy solver for Sun-Thu call assignments only "
+                    "(rotation assignments handled by expansion service)"
+                )
+                solver_result = self._run_solver("greedy", context, timeout_seconds)
+                # Clear rotation assignments (we don't need them in half-day mode)
+                # but preserve call_assignments for Step 6.5
+                solver_result.assignments = []
+                logger.info(
+                    f"Greedy solver generated {len(solver_result.call_assignments)} "
+                    f"Sun-Thu call assignments"
+                )
 
             # Step 5.5: Delete existing assignments (except preserved ones)
             # This happens AFTER successful solve to prevent data loss on solver failure
@@ -375,29 +452,175 @@ class SchedulingEngine:
 
             # Step 5.6: Add expanded assignments from block_assignments
             # These are NEW records generated from the master rotation schedule
-            for assignment in expanded_assignments:
-                self.db.add(assignment)
-                self.assignments.append(assignment)
-            if expanded_assignments:
+            # NOTE: When expand_block_assignments=True with persist_half_day=True,
+            # HalfDayAssignment records are already created by the expansion service.
+            # We DO NOT add to self.assignments since that list gets persisted to
+            # the old Assignment table in Step 8, causing constraint violations.
+            if not expand_block_assignments:
+                # Legacy path: persist Assignment objects to old table
+                for assignment in expanded_assignments:
+                    self.db.add(assignment)
+                    self.assignments.append(assignment)
+                if expanded_assignments:
+                    logger.info(
+                        f"Added {len(expanded_assignments)} expanded assignments to session"
+                    )
+            else:
+                # New path: HalfDayAssignment already persisted by expansion service
+                # Skip adding to self.assignments to avoid duplicate persistence
                 logger.info(
-                    f"Added {len(expanded_assignments)} expanded assignments to session"
+                    f"Skipped {len(expanded_assignments)} expanded assignments "
+                    f"(already persisted as HalfDayAssignment)"
                 )
 
             # Step 6: Convert solver results to assignments
-            # Pass preserved_assignments to filter out conflicts with immutable slots
-            self._create_assignments_from_result(
-                solver_result, residents, templates, run.id, preserved_assignments
-            )
+            # In half-day mode, resident assignments come from expansion, not solver
+            if not expand_block_assignments:
+                self._create_assignments_from_result(
+                    solver_result, residents, templates, run.id, preserved_assignments
+                )
+            else:
+                logger.info(
+                    "Skipping solver assignment conversion in half-day mode "
+                    "(residents already assigned via expansion)"
+                )
 
             # Step 6.5: Create call assignments from solver results
             # Creates CallAssignment records for overnight call (Sun-Thurs)
-            call_assignments = self._create_call_assignments_from_result(
-                solver_result, context
-            )
+            # SKIP in draft mode - draft staging should not modify live CallAssignment table
+            call_assignments = []
+            if not create_draft:
+                call_assignments = self._create_call_assignments_from_result(
+                    solver_result, context
+                )
 
-            # Step 7: Assign faculty supervision
-            # Pass preserved_assignments so faculty with FMIT/absences are excluded
-            self._assign_faculty(faculty, blocks, run.id, preserved_assignments)
+                # Step 6.6: Sync PCAT/DO to half_day_assignments based on NEW call
+                # Creates PCAT (AM) and DO (PM) for day after call, locked as preload.
+                # NOW we have baseline AT coverage for ratio calculations.
+                if call_assignments and expand_block_assignments:
+                    self._sync_call_pcat_do_to_half_day(call_assignments)
+
+                    # Step 6.6.1: Validate PCAT/DO integrity (catches sync bugs)
+                    # This runs automatically after PCAT/DO sync to ensure correctness.
+                    # Can be disabled via validate_pcat_do=False once pipeline is stable.
+                    if validate_pcat_do:
+                        pcat_do_issues = self._validate_pcat_do_integrity(
+                            call_assignments
+                        )
+                        if pcat_do_issues:
+                            logger.error(
+                                f"PCAT/DO integrity check FAILED: "
+                                f"{len(pcat_do_issues)} issues detected"
+                            )
+                            for issue in pcat_do_issues:
+                                logger.error(f"  - {issue}")
+
+                            # Fail generation - PCAT/DO is critical for AT coverage
+                            # ROLLBACK all schedule changes to avoid partial state
+                            # (CallAssignments, HalfDayAssignments written so far)
+                            # Note: run record was committed in _create_initial_run,
+                            # so it survives rollback - we just need to update it.
+                            run_id = run.id  # Save before rollback
+                            elapsed = time.time() - start_time
+                            self.db.rollback()
+
+                            # Re-fetch run record (detached after rollback) and update status
+                            # The run was committed separately in _create_initial_run
+                            existing_run = self.db.get(ScheduleRun, run_id)
+                            if existing_run:
+                                self._update_run_status(
+                                    existing_run, "failed", 0, 0, elapsed
+                                )
+                                self.db.commit()
+
+                            return {
+                                "status": "failed",
+                                "message": f"PCAT/DO integrity check failed: {len(pcat_do_issues)} issues (rolled back)",
+                                "total_assigned": 0,
+                                "total_blocks": len(blocks),
+                                "validation": self._empty_validation(),
+                                "run_id": run_id,
+                                "pcat_do_issues": pcat_do_issues,
+                            }
+                        else:
+                            logger.info(
+                                f"PCAT/DO integrity check passed "
+                                f"({len(call_assignments)} calls verified)"
+                            )
+            elif solver_result.call_assignments:
+                logger.info(
+                    f"Skipping {len(solver_result.call_assignments)} call assignments "
+                    f"in draft mode (would modify live CallAssignment table)"
+                )
+
+            # =================================================================
+            # CORRECTED: Activity solver and faculty expansion run AFTER call
+            # =================================================================
+            # NOW that PCAT/DO is locked, the activity solver knows AT coverage.
+            # Residents can be scheduled knowing which slots have supervision.
+            # Faculty expansion fills remaining slots AFTER knowing resident demand.
+
+            # Step 6.7: Run activity solver to assign C, LEC, ADV to half-day slots
+            # This assigns activities to resident slots that aren't locked by preload.
+            # NOW runs AFTER PCAT/DO is created, so AT coverage is known.
+            # SKIP in draft mode - activity solver writes to live half_day_assignments
+            if (
+                expand_block_assignments
+                and block_number
+                and academic_year
+                and not create_draft
+            ):
+                activity_solver = CPSATActivitySolver(
+                    self.db,
+                    timeout_seconds=min(timeout_seconds, 30.0),  # Cap at 30s
+                )
+                activity_result = activity_solver.solve(block_number, academic_year)
+                if activity_result.get("success"):
+                    logger.info(
+                        f"Activity solver assigned {activity_result.get('assignments_updated', 0)} "
+                        f"activities ({activity_result.get('status', 'unknown')})"
+                    )
+                else:
+                    logger.warning(
+                        f"Activity solver failed: {activity_result.get('message', 'unknown error')}"
+                    )
+            elif create_draft and expand_block_assignments:
+                logger.info(
+                    "Skipping activity solver in draft mode (would modify live data)"
+                )
+
+            # Step 6.8: Fill faculty half-day assignments
+            # Creates HalfDayAssignment records for faculty with source='template'.
+            # Ensures all faculty have 56 slots filled (weekends=W, absences=LV, else=GME/DFM).
+            # NOW runs AFTER activity solver, so we know resident clinic demand.
+            # PCAT/DO from Step 6.6 is preserved (source='preload' > 'template').
+            # SKIP in draft mode - faculty expansion writes to live half_day_assignments
+            if (
+                expand_block_assignments
+                and block_number
+                and academic_year
+                and not create_draft
+            ):
+                faculty_expansion_service = FacultyAssignmentExpansionService(self.db)
+                faculty_count = faculty_expansion_service.fill_faculty_assignments(
+                    block_number, academic_year, exclude_adjuncts=True
+                )
+                logger.info(f"Created {faculty_count} faculty half-day assignments")
+            elif create_draft and expand_block_assignments:
+                logger.info(
+                    "Skipping faculty expansion in draft mode (would modify live data)"
+                )
+
+            # Step 7: Assign faculty supervision (legacy mode only)
+            # In half-day mode, faculty assignments already created by Step 6.8
+            # (FacultyAssignmentExpansionService fills all 56 slots per faculty)
+            if not expand_block_assignments:
+                self._assign_faculty(faculty, blocks, run.id, preserved_assignments)
+            else:
+                logger.info(
+                    "Skipping legacy faculty supervision - already handled by "
+                    "FacultyAssignmentExpansionService in Step 6.8"
+                )
 
             # Step 8: Handle draft vs live assignment persistence
             draft_id = None
@@ -1063,11 +1286,12 @@ class SchedulingEngine:
                 continue
 
             # Map solver call types to database-allowed values
-            # Constraint allows: 'sunday', 'weekday', 'holiday', 'backup'
+            # Constraint allows: 'overnight', 'weekend', 'backup'
             # Solver uses: 'overnight' (generic)
             is_sunday = block.date.weekday() == 6
             if call_type == "overnight":
-                mapped_call_type = "sunday" if is_sunday else "weekday"
+                # Weekend (Sunday) vs overnight (Mon-Thu)
+                mapped_call_type = "weekend" if is_sunday else "overnight"
             else:
                 mapped_call_type = call_type
 
@@ -1085,6 +1309,257 @@ class SchedulingEngine:
             logger.info(f"Created {len(call_assignments)} overnight call assignments")
 
         return call_assignments
+
+    def _sync_call_pcat_do_to_half_day(
+        self,
+        call_assignments: list[CallAssignment],
+    ) -> int:
+        """
+        Sync PCAT/DO slots in half_day_assignments to match new CallAssignment records.
+
+        The preload service runs BEFORE the solver generates new call assignments.
+        This creates a divergence: half_day_assignments has PCAT/DO from OLD call records,
+        but CallAssignment now has NEW call records from the solver.
+
+        This method runs AFTER call assignments are created to sync PCAT/DO:
+        - For each new CallAssignment, create PCAT (AM) and DO (PM) for the next day
+        - Updates or inserts with source='preload' to lock these slots
+        - Skips if person is on FMIT the next day
+
+        Args:
+            call_assignments: List of newly created CallAssignment records
+
+        Returns:
+            Number of PCAT/DO slots created/updated
+        """
+        from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
+        from app.models.inpatient_preload import InpatientPreload, InpatientRotationType
+        from app.models.activity import Activity
+        from sqlalchemy import select
+
+        if not call_assignments:
+            return 0
+
+        # Get PCAT and DO activity IDs
+        # Note: Activity codes are lowercase in database (pcat, do)
+        pcat_activity = (
+            self.db.execute(select(Activity).where(Activity.code == "pcat"))
+            .scalars()
+            .first()
+        )
+        do_activity = (
+            self.db.execute(select(Activity).where(Activity.code == "do"))
+            .scalars()
+            .first()
+        )
+
+        if not pcat_activity or not do_activity:
+            logger.warning("Missing PCAT or DO activity, skipping PCAT/DO sync")
+            return 0
+
+        count = 0
+        for call in call_assignments:
+            next_day = call.date + timedelta(days=1)
+
+            # Note: Don't skip cross-block PCAT/DO - we use actual dates and preload
+            # source is locked, so next block generation won't overwrite it
+
+            # Check if person is on FMIT next day (no PCAT/DO for FMIT)
+            fmit_check = (
+                self.db.execute(
+                    select(InpatientPreload).where(
+                        InpatientPreload.person_id == call.person_id,
+                        InpatientPreload.rotation_type == InpatientRotationType.FMIT,
+                        InpatientPreload.start_date <= next_day,
+                        InpatientPreload.end_date >= next_day,
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if fmit_check:
+                continue  # FMIT faculty don't get PCAT/DO
+
+            # Create/update PCAT (AM) and DO (PM) for next day
+            for time_of_day, activity in [("AM", pcat_activity), ("PM", do_activity)]:
+                existing = (
+                    self.db.execute(
+                        select(HalfDayAssignment).where(
+                            HalfDayAssignment.person_id == call.person_id,
+                            HalfDayAssignment.date == next_day,
+                            HalfDayAssignment.time_of_day == time_of_day,
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
+
+                if existing:
+                    # Update if lower priority source
+                    if existing.source in (
+                        AssignmentSource.TEMPLATE.value,
+                        AssignmentSource.SOLVER.value,
+                    ):
+                        existing.activity_id = activity.id
+                        existing.source = AssignmentSource.PRELOAD.value
+                        count += 1
+                else:
+                    # Insert new
+                    self.db.add(
+                        HalfDayAssignment(
+                            person_id=call.person_id,
+                            date=next_day,
+                            time_of_day=time_of_day,
+                            activity_id=activity.id,
+                            source=AssignmentSource.PRELOAD.value,
+                        )
+                    )
+                    count += 1
+
+        if count:
+            self.db.flush()
+            logger.info(f"Synced {count} PCAT/DO slots to match new call assignments")
+
+        return count
+
+    def _validate_pcat_do_integrity(
+        self,
+        call_assignments: list,
+    ) -> list[str]:
+        """
+        Validate PCAT/DO were created for each call assignment.
+
+        This is a post-generation integrity check that runs after PCAT/DO sync.
+        It catches bugs where PCAT/DO creation silently fails.
+
+        Args:
+            call_assignments: List of CallAssignment objects to validate
+
+        Returns:
+            List of issues (empty = valid). Each issue is a string describing
+            the missing PCAT or DO.
+
+        Note:
+            This validation can be disabled via validate_pcat_do=False in generate()
+            once the pipeline is proven stable.
+        """
+        from app.models.half_day_assignment import HalfDayAssignment
+        from app.models.inpatient_preload import InpatientPreload, InpatientRotationType
+        from app.models.activity import Activity
+        from sqlalchemy import select
+
+        if not call_assignments:
+            return []
+
+        issues: list[str] = []
+
+        # Get PCAT and DO activity IDs
+        pcat_activity = (
+            self.db.execute(select(Activity).where(Activity.code == "pcat"))
+            .scalars()
+            .first()
+        )
+        do_activity = (
+            self.db.execute(select(Activity).where(Activity.code == "do"))
+            .scalars()
+            .first()
+        )
+
+        if not pcat_activity or not do_activity:
+            issues.append("PCAT or DO activity not found in database")
+            return issues
+
+        for call in call_assignments:
+            next_day = call.date + timedelta(days=1)
+
+            # Note: Don't skip cross-block validation - PCAT/DO should exist even if
+            # next_day is in the next block (created during this block's generation)
+
+            # Check if person is on FMIT next day (no PCAT/DO for FMIT)
+            fmit_check = (
+                self.db.execute(
+                    select(InpatientPreload).where(
+                        InpatientPreload.person_id == call.person_id,
+                        InpatientPreload.rotation_type == InpatientRotationType.FMIT,
+                        InpatientPreload.start_date <= next_day,
+                        InpatientPreload.end_date >= next_day,
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if fmit_check:
+                continue  # FMIT faculty don't get PCAT/DO - this is correct
+
+            # Check PCAT (AM) - may be overwritten by another preload (holiday, leave, etc.)
+            pcat = (
+                self.db.execute(
+                    select(HalfDayAssignment).where(
+                        HalfDayAssignment.person_id == call.person_id,
+                        HalfDayAssignment.date == next_day,
+                        HalfDayAssignment.time_of_day == "AM",
+                        HalfDayAssignment.activity_id == pcat_activity.id,
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if not pcat:
+                # Check if there's another preload that took precedence (e.g., holiday, leave)
+                other_preload_am = (
+                    self.db.execute(
+                        select(HalfDayAssignment).where(
+                            HalfDayAssignment.person_id == call.person_id,
+                            HalfDayAssignment.date == next_day,
+                            HalfDayAssignment.time_of_day == "AM",
+                            HalfDayAssignment.source == "preload",
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
+                if not other_preload_am:
+                    issues.append(
+                        f"Missing PCAT: call {call.date} -> expected PCAT on {next_day} AM"
+                    )
+
+            # Check DO (PM) - may be overwritten by another preload
+            do = (
+                self.db.execute(
+                    select(HalfDayAssignment).where(
+                        HalfDayAssignment.person_id == call.person_id,
+                        HalfDayAssignment.date == next_day,
+                        HalfDayAssignment.time_of_day == "PM",
+                        HalfDayAssignment.activity_id == do_activity.id,
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if not do:
+                # Check if there's another preload that took precedence (e.g., call)
+                other_preload = (
+                    self.db.execute(
+                        select(HalfDayAssignment).where(
+                            HalfDayAssignment.person_id == call.person_id,
+                            HalfDayAssignment.date == next_day,
+                            HalfDayAssignment.time_of_day == "PM",
+                            HalfDayAssignment.source == "preload",
+                        )
+                    )
+                    .scalars()
+                    .first()
+                )
+                if not other_preload:
+                    issues.append(
+                        f"Missing DO: call {call.date} -> expected DO on {next_day} PM"
+                    )
+
+        return issues
 
     def _ensure_blocks_exist(self, commit: bool = True) -> list[Block]:
         """Ensure half-day blocks exist for the date range.

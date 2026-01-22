@@ -45,11 +45,19 @@ from app.models.resilience import (
 )
 from app.models.user import User
 from app.schemas.resilience import (
+    AllBreakersStatusResponse,
     AllostasisMetricsResponse,
     AssignmentSuggestionsResponse,
     BehavioralSignalResponse,
     BlastRadiusReportResponse,
+    BreakerHealthMetrics,
+    BreakerHealthResponse,
+    BreakerSeverity,
+    BurnoutRtRequest,
+    BurnoutRtResponse,
     CentralityScore,
+    CircuitBreakerInfo,
+    CircuitBreakerState,
     CognitiveLoadAnalysis,
     CognitiveSessionEndResponse,
     CognitiveSessionStartResponse,
@@ -67,6 +75,8 @@ from app.schemas.resilience import (
     DecisionQueueResponse,
     DecisionResolveResponse,
     DefenseLevel,
+    DefenseLevelRequest,
+    DefenseLevelResponse,
     EquilibriumReportResponse,
     EquilibriumShiftResponse,
     EventHistoryItem,
@@ -98,6 +108,8 @@ from app.schemas.resilience import (
     PreferenceRecordResponse,
     PrioritizedDecisionsResponse,
     RedundancyStatus,
+    UtilizationThresholdRequest,
+    UtilizationThresholdResponse,
     StigmergyPatternsResponse,
     StigmergyStatusResponse,
     StressPredictionResponse,
@@ -2800,3 +2812,469 @@ async def get_tier3_status(
     status = service.get_tier3_status()
 
     return status
+
+
+# =============================================================================
+# Defense Level, Utilization, Burnout Rt, Circuit Breaker Endpoints
+# =============================================================================
+
+
+@router.post("/defense-level", response_model=DefenseLevelResponse)
+async def calculate_defense_level(
+    request: DefenseLevelRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Calculate defense level based on coverage rate.
+
+    Implements the 5-level defense-in-depth strategy from nuclear reactor safety:
+    - Level 1: PREVENTION - Normal operations (coverage >= 95%)
+    - Level 2: CONTROL - Minor degradation (coverage 85-95%)
+    - Level 3: SAFETY_SYSTEMS - Active mitigation (coverage 75-85%)
+    - Level 4: CONTAINMENT - Crisis containment (coverage 65-75%)
+    - Level 5: EMERGENCY - Full emergency response (coverage < 65%)
+    """
+    from app.resilience.defense_in_depth import get_defense_level_from_coverage
+
+    coverage_rate = request.coverage_rate
+
+    # Map coverage rate to defense level
+    if coverage_rate >= 0.95:
+        level = DefenseLevel.PREVENTION
+        level_number = 1
+        description = "Normal operations - system healthy with adequate buffer"
+        escalation_threshold = 0.95
+        recommended_actions = [
+            "Continue normal operations",
+            "Monitor for emerging issues",
+        ]
+    elif coverage_rate >= 0.85:
+        level = DefenseLevel.CONTROL
+        level_number = 2
+        description = "Minor degradation - early warning state"
+        escalation_threshold = 0.85
+        recommended_actions = [
+            "Increase monitoring frequency",
+            "Review upcoming absences",
+            "Prepare contingency plans",
+        ]
+    elif coverage_rate >= 0.75:
+        level = DefenseLevel.SAFETY_SYSTEMS
+        level_number = 3
+        description = "Active mitigation required - system degraded"
+        escalation_threshold = 0.75
+        recommended_actions = [
+            "Activate contingency protocols",
+            "Fill coverage gaps immediately",
+            "Consider activating backup staff",
+            "Notify leadership of degraded state",
+        ]
+    elif coverage_rate >= 0.65:
+        level = DefenseLevel.CONTAINMENT
+        level_number = 4
+        description = "Crisis containment - critical operational state"
+        escalation_threshold = 0.65
+        recommended_actions = [
+            "CRITICAL: Implement emergency protocols",
+            "Activate all backup coverage",
+            "Implement blast radius isolation",
+            "Initiate sacrifice hierarchy (shed non-critical activities)",
+            "Notify program leadership immediately",
+        ]
+    else:
+        level = DefenseLevel.EMERGENCY
+        level_number = 5
+        description = "Emergency response - system failure imminent"
+        escalation_threshold = 0.0
+        recommended_actions = [
+            "EMERGENCY: Execute emergency response plan",
+            "Activate static stability fallbacks",
+            "Request external assistance",
+            "Document all actions for compliance review",
+            "Consider temporary service closure if patient safety at risk",
+        ]
+
+    return DefenseLevelResponse(
+        level=level,
+        level_number=level_number,
+        description=description,
+        recommended_actions=recommended_actions,
+        escalation_threshold=escalation_threshold,
+    )
+
+
+@router.post("/utilization-threshold", response_model=UtilizationThresholdResponse)
+async def check_utilization_threshold(
+    request: UtilizationThresholdRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Check utilization against the 80% threshold from queuing theory.
+
+    Above 80% utilization, wait times increase exponentially and cascade
+    failures become likely (M/M/c queuing theory).
+
+    Wait Time ~ rho / (1 - rho):
+    - At 50% utilization: 1x wait
+    - At 80% utilization: 4x wait
+    - At 90% utilization: 9x wait
+    - At 95% utilization: 19x wait
+    """
+    from app.resilience.utilization import UtilizationMonitor, UtilizationLevel
+
+    monitor = UtilizationMonitor()
+
+    # Create dummy faculty list of correct length
+    faculty_list = list(range(request.available_faculty))
+
+    metrics = monitor.calculate_utilization(
+        available_faculty=faculty_list,
+        required_blocks=request.required_blocks,
+        blocks_per_faculty_per_day=request.blocks_per_faculty_per_day,
+        days_in_period=request.days_in_period,
+    )
+
+    # Map internal level to schema level
+    level_map = {
+        UtilizationLevel.GREEN: "GREEN",
+        UtilizationLevel.YELLOW: "YELLOW",
+        UtilizationLevel.ORANGE: "ORANGE",
+        UtilizationLevel.RED: "RED",
+        UtilizationLevel.BLACK: "BLACK",
+    }
+
+    # Generate message based on level
+    messages = {
+        UtilizationLevel.GREEN: "System healthy with adequate buffer",
+        UtilizationLevel.YELLOW: "Approaching utilization threshold - monitor closely",
+        UtilizationLevel.ORANGE: "Above optimal threshold - degraded operations likely",
+        UtilizationLevel.RED: "Critical utilization - cascade failure risk high",
+        UtilizationLevel.BLACK: "Emergency - immediate intervention required",
+    }
+
+    # Generate recommendations based on level
+    recommendations_map = {
+        UtilizationLevel.GREEN: [
+            "Continue normal operations",
+            "Good time for training or improvement initiatives",
+        ],
+        UtilizationLevel.YELLOW: [
+            "Review upcoming commitments",
+            "Ensure backup coverage is confirmed",
+            "Consider deferring new initiatives",
+        ],
+        UtilizationLevel.ORANGE: [
+            "Cancel optional meetings and education",
+            "Defer non-urgent research activities",
+            "Prepare for possible escalation",
+        ],
+        UtilizationLevel.RED: [
+            "Activate load shedding protocol",
+            "Cancel all non-clinical activities",
+            "Consolidate services where possible",
+            "Notify leadership immediately",
+        ],
+        UtilizationLevel.BLACK: [
+            "Emergency staffing measures required",
+            "Consider temporary service closure",
+            "Escalate to external authority",
+            "Document all decisions",
+        ],
+    }
+
+    wait_time_multiplier = monitor.calculate_wait_time_multiplier(
+        metrics.utilization_rate
+    )
+
+    return UtilizationThresholdResponse(
+        utilization_rate=metrics.utilization_rate,
+        level=level_map.get(metrics.level, "GREEN"),
+        above_threshold=metrics.utilization_rate > 0.80,
+        buffer_remaining=metrics.buffer_remaining,
+        wait_time_multiplier=wait_time_multiplier if wait_time_multiplier < 100 else 100.0,
+        message=messages.get(metrics.level, "Unknown state"),
+        recommendations=recommendations_map.get(metrics.level, []),
+    )
+
+
+@router.post("/burnout/rt", response_model=BurnoutRtResponse)
+async def calculate_burnout_rt(
+    request: BurnoutRtRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Calculate burnout reproduction number (Rt) using epidemiological modeling.
+
+    Applies SIR epidemiological modeling to understand burnout transmission:
+    - Rt < 1: Epidemic declining
+    - Rt = 1: Endemic state (stable)
+    - Rt > 1: Epidemic growing
+    - Rt > 2: Aggressive intervention needed
+    - Rt > 3: Crisis level
+
+    Note: This is a simplified calculation. Full implementation would
+    require actual network data and burnout case history.
+    """
+    burned_out_count = len(request.burned_out_provider_ids)
+
+    # Simplified Rt calculation based on burnout count
+    # In a real implementation, this would use the BurnoutEpidemiologist
+    # with actual network data and case history
+
+    if burned_out_count == 0:
+        rt = 0.0
+        status = "declining"
+        interventions = ["No active burnout cases - continue wellness monitoring"]
+    elif burned_out_count <= 2:
+        rt = 0.5 + (burned_out_count * 0.2)
+        status = "stable" if rt < 1.0 else "growing"
+        interventions = [
+            "Monitor affected individuals",
+            "Ensure adequate support resources",
+            "Review workload distribution",
+        ]
+    elif burned_out_count <= 5:
+        rt = 1.0 + (burned_out_count - 2) * 0.3
+        status = "growing"
+        interventions = [
+            "Implement workload reduction for high-risk individuals",
+            "Increase wellness check-ins",
+            "Consider temporary schedule adjustments",
+            "Review team dynamics and stress points",
+        ]
+    elif burned_out_count <= 10:
+        rt = 2.0 + (burned_out_count - 5) * 0.2
+        status = "growing" if rt < 3.0 else "crisis"
+        interventions = [
+            "URGENT: Implement organization-wide stress reduction",
+            "Mandatory wellness assessments",
+            "Temporary reduction in non-essential activities",
+            "Consider bringing in additional staff support",
+            "Leadership engagement required",
+        ]
+    else:
+        rt = 3.0 + (burned_out_count - 10) * 0.1
+        status = "crisis"
+        interventions = [
+            "CRISIS: Immediate intervention required",
+            "Halt non-essential operations",
+            "External support and resources needed",
+            "Consider operational stand-down for recovery",
+            "Leadership must take direct action",
+            "Document all decisions for review",
+        ]
+
+    # Cap Rt at reasonable maximum
+    rt = min(rt, 5.0)
+
+    return BurnoutRtResponse(
+        rt=round(rt, 2),
+        status=status,
+        secondary_cases=burned_out_count,
+        time_window_days=request.time_window_days,
+        confidence_interval=None,  # Would require actual statistical calculation
+        interventions=interventions,
+    )
+
+
+@router.get("/circuit-breakers", response_model=AllBreakersStatusResponse)
+async def get_circuit_breakers_status(
+    db: Session = Depends(get_db),
+):
+    """
+    Get status of all circuit breakers (Netflix Hystrix pattern).
+
+    Circuit breakers provide failure isolation:
+    - CLOSED: Normal operation, requests pass through
+    - OPEN: Circuit tripped due to failures, requests fail fast
+    - HALF_OPEN: Testing recovery, limited requests allowed
+    """
+    from app.resilience.circuit_breaker.registry import get_registry
+
+    try:
+        registry = get_registry()
+        health = registry.health_check()
+        all_statuses = registry.get_all_statuses()
+
+        breakers = []
+        for name, status in all_statuses.items():
+            breakers.append(
+                CircuitBreakerInfo(
+                    name=name,
+                    state=CircuitBreakerState(status.get("state", "closed")),
+                    failure_rate=status.get("failure_rate", 0.0),
+                    success_rate=1.0 - status.get("failure_rate", 0.0),
+                    total_requests=status.get("total_requests", 0),
+                    successful_requests=status.get("successful_requests", 0),
+                    failed_requests=status.get("failed_requests", 0),
+                    rejected_requests=status.get("rejected_requests", 0),
+                    consecutive_failures=status.get("consecutive_failures", 0),
+                    consecutive_successes=status.get("consecutive_successes", 0),
+                    opened_at=status.get("opened_at"),
+                    last_failure_time=status.get("last_failure_time"),
+                    last_success_time=status.get("last_success_time"),
+                    recent_transitions=[],  # Would need transition history
+                )
+            )
+
+        # Determine overall health
+        open_count = health.get("open_breakers", 0)
+        total = health.get("total_breakers", 0)
+        if total == 0:
+            overall_health = "healthy"
+        elif open_count == 0:
+            overall_health = "healthy"
+        elif open_count <= total * 0.25:
+            overall_health = "warning"
+        elif open_count <= total * 0.5:
+            overall_health = "degraded"
+        else:
+            overall_health = "critical"
+
+        recommendations = []
+        if open_count > 0:
+            recommendations.append(f"Investigate {open_count} open circuit breaker(s)")
+        if health.get("half_open_breakers", 0) > 0:
+            recommendations.append("Monitor half-open breakers for recovery")
+        if health.get("overall_failure_rate", 0) > 0.1:
+            recommendations.append("High overall failure rate - investigate root cause")
+
+        return AllBreakersStatusResponse(
+            total_breakers=health.get("total_breakers", 0),
+            closed_breakers=health.get("closed_breakers", 0),
+            open_breakers=health.get("open_breakers", 0),
+            half_open_breakers=health.get("half_open_breakers", 0),
+            open_breaker_names=health.get("open_breaker_names", []),
+            half_open_breaker_names=health.get("half_open_breaker_names", []),
+            breakers=breakers,
+            overall_health=overall_health,
+            recommendations=recommendations,
+            checked_at=datetime.utcnow(),
+        )
+    except Exception as e:
+        logger.error(f"Error getting circuit breaker status: {e}")
+        return AllBreakersStatusResponse(
+            total_breakers=0,
+            closed_breakers=0,
+            open_breakers=0,
+            half_open_breakers=0,
+            open_breaker_names=[],
+            half_open_breaker_names=[],
+            breakers=[],
+            overall_health="unknown",
+            recommendations=["Circuit breaker registry not initialized"],
+            checked_at=datetime.utcnow(),
+        )
+
+
+@router.get("/circuit-breakers/health", response_model=BreakerHealthResponse)
+async def get_circuit_breakers_health(
+    db: Session = Depends(get_db),
+):
+    """
+    Get aggregated health metrics for all circuit breakers.
+
+    Provides a high-level health assessment across all circuit breakers:
+    - Aggregated metrics (failure rates, rejections)
+    - Trend analysis (improving, stable, degrading)
+    - Severity assessment (healthy, warning, critical, emergency)
+    - Breakers needing immediate attention
+    """
+    from app.resilience.circuit_breaker.registry import get_registry
+
+    try:
+        registry = get_registry()
+        health = registry.health_check()
+        all_statuses = registry.get_all_statuses()
+
+        # Calculate metrics
+        total_requests = sum(s.get("total_requests", 0) for s in all_statuses.values())
+        total_failures = sum(s.get("failed_requests", 0) for s in all_statuses.values())
+        total_rejections = sum(s.get("rejected_requests", 0) for s in all_statuses.values())
+
+        failure_rates = [s.get("failure_rate", 0) for s in all_statuses.values()]
+        avg_failure_rate = sum(failure_rates) / len(failure_rates) if failure_rates else 0.0
+        max_failure_rate = max(failure_rates) if failure_rates else 0.0
+
+        # Find unhealthiest breaker
+        unhealthiest = None
+        unhealthiest_rate = 0.0
+        for name, status in all_statuses.items():
+            rate = status.get("failure_rate", 0)
+            if rate > unhealthiest_rate:
+                unhealthiest_rate = rate
+                unhealthiest = name
+
+        # Breakers above 10% failure threshold
+        breakers_above_threshold = sum(1 for r in failure_rates if r > 0.1)
+
+        # Breakers needing attention (> 20% failure rate or open)
+        breakers_needing_attention = [
+            name
+            for name, status in all_statuses.items()
+            if status.get("failure_rate", 0) > 0.2 or status.get("state") == "open"
+        ]
+
+        # Determine severity
+        open_ratio = health.get("open_breakers", 0) / max(health.get("total_breakers", 1), 1)
+        if open_ratio > 0.5 or avg_failure_rate > 0.5:
+            severity = BreakerSeverity.EMERGENCY
+        elif open_ratio > 0.25 or avg_failure_rate > 0.3:
+            severity = BreakerSeverity.CRITICAL
+        elif open_ratio > 0.1 or avg_failure_rate > 0.1:
+            severity = BreakerSeverity.WARNING
+        else:
+            severity = BreakerSeverity.HEALTHY
+
+        # Generate recommendations
+        recommendations = []
+        if severity == BreakerSeverity.EMERGENCY:
+            recommendations.append("EMERGENCY: Multiple breakers in critical state")
+            recommendations.append("Investigate systemic issues immediately")
+        elif severity == BreakerSeverity.CRITICAL:
+            recommendations.append("High failure rates detected - investigate root cause")
+        if breakers_needing_attention:
+            recommendations.append(
+                f"Review breakers: {', '.join(breakers_needing_attention[:3])}"
+            )
+        if not recommendations:
+            recommendations.append("All circuit breakers operating normally")
+
+        return BreakerHealthResponse(
+            total_breakers=health.get("total_breakers", 0),
+            metrics=BreakerHealthMetrics(
+                total_requests=total_requests,
+                total_failures=total_failures,
+                total_rejections=total_rejections,
+                overall_failure_rate=total_failures / max(total_requests, 1),
+                breakers_above_threshold=breakers_above_threshold,
+                average_failure_rate=avg_failure_rate,
+                max_failure_rate=max_failure_rate,
+                unhealthiest_breaker=unhealthiest,
+            ),
+            breakers_needing_attention=breakers_needing_attention,
+            trend_analysis="stable",  # Would need historical data for real trend
+            severity=severity,
+            recommendations=recommendations,
+            analyzed_at=datetime.utcnow(),
+        )
+    except Exception as e:
+        logger.error(f"Error getting circuit breaker health: {e}")
+        return BreakerHealthResponse(
+            total_breakers=0,
+            metrics=BreakerHealthMetrics(
+                total_requests=0,
+                total_failures=0,
+                total_rejections=0,
+                overall_failure_rate=0.0,
+                breakers_above_threshold=0,
+                average_failure_rate=0.0,
+                max_failure_rate=0.0,
+                unhealthiest_breaker=None,
+            ),
+            breakers_needing_attention=[],
+            trend_analysis="unknown",
+            severity=BreakerSeverity.HEALTHY,
+            recommendations=["Circuit breaker registry not initialized"],
+            analyzed_at=datetime.utcnow(),
+        )

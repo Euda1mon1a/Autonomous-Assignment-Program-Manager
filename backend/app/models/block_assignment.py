@@ -47,9 +47,17 @@ class BlockAssignment(Base):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
 
-    # Block identification
+    # Block identification (denormalized for convenience - canonical reference is academic_block_id)
     block_number = Column(Integer, nullable=False)  # 1-13
     academic_year = Column(Integer, nullable=False)  # e.g., 2025 (starts July 1)
+
+    # FK to academic_blocks table (nullable for backwards compatibility)
+    academic_block_id = Column(
+        GUID(),
+        ForeignKey("academic_blocks.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     # Assignment links
     resident_id = Column(
@@ -92,6 +100,11 @@ class BlockAssignment(Base):
         "RotationTemplate",
         foreign_keys=[secondary_rotation_template_id],
         backref="secondary_block_assignments",
+    )
+    academic_block = relationship(
+        "AcademicBlock",
+        back_populates="assignments",
+        foreign_keys=[academic_block_id],
     )
 
     __table_args__ = (

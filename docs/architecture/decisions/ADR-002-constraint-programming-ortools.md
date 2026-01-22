@@ -120,6 +120,58 @@ elif status == cp_model.INFEASIBLE:
     pass
 ```
 
+## Version Management
+
+### Pinned Version: `>=9.8,<9.9`
+
+**Date:** 2026-01-19
+**Requirement:** `ortools>=9.8,<9.9` (backend/requirements.txt)
+**Latest Available:** v9.15 (Jan 12, 2026) - Python 3.14 support
+
+OR-Tools v9.9 (March 2024) introduced a **breaking API change** from PascalCase to snake_case:
+
+```python
+# Current codebase (PascalCase - OR-Tools 9.8)
+model.NewBoolVar("x")
+model.AddExactlyOne([vars])
+solver.Solve(model)
+
+# OR-Tools 9.9+ (snake_case - BREAKS existing code)
+model.new_bool_var("x")
+model.add_exactly_one([vars])
+solver.solve(model)
+```
+
+**Impact:** 29 files, ~131 API calls would break on upgrade.
+
+### Decision: Do Not Upgrade
+
+| Factor | Assessment |
+|--------|------------|
+| Migration effort | 33-49 hours (~1 week) |
+| Functional benefit | None - same CP-SAT features |
+| Performance benefit | None - solver is C++ |
+| Python 3.12 support | Until October 2028 |
+| Risk | High effort, zero user-visible improvement |
+
+**Revisit when:** Python 3.14 becomes required (earliest 2027), or a critical CP-SAT bug fix ships only in 9.9+.
+
+### Debunked: Python 3.13/3.14 "Performance Unlock"
+
+Claims that upgrading Python + OR-Tools will "unlock parallelism" or "cut solve time in half" are **false**:
+
+| Claim | Reality |
+|-------|---------|
+| "GIL removal enables true parallelism" | OR-Tools **already releases the GIL** during C++ computation. The solver's heavy lifting happens in native code. |
+| "Subinterpreters enable parallel constraints" | OR-Tools has built-in `num_workers` parallelism. Subinterpreters add overhead, not speed. |
+| "30% speedup from tail-call interpreter" | Benchmarks show 5-15%. Irrelevant anyway—solver time is in C++, not Python. |
+| "snake_case helps AI code generation" | API style has zero effect on LLM code quality. |
+
+**The truth:** OR-Tools performance ceiling is in C++, not Python. Python version upgrades do not improve solver speed. Optimization gains come from:
+- Tuning `num_workers` parameter (already available)
+- Better constraint modeling
+- Problem decomposition
+
 ## References
 
 - [OR-Tools CP-SAT Documentation](https://developers.google.com/optimization/cp/cp_solver)

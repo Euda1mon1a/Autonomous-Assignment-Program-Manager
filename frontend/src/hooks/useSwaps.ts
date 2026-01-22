@@ -289,19 +289,19 @@ export function useSwapList(
     filters.status.forEach((s) => params.append("status", s));
   }
   if (filters?.swapType) {
-    filters.swapType.forEach((t) => params.append("swapType", t));
+    filters.swapType.forEach((t) => params.append("swap_type", t));
   }
   if (filters?.sourceFacultyId) {
-    params.set("sourceFacultyId", filters.sourceFacultyId);
+    params.set("source_faculty_id", filters.sourceFacultyId);
   }
   if (filters?.targetFacultyId) {
-    params.set("targetFacultyId", filters.targetFacultyId);
+    params.set("target_faculty_id", filters.targetFacultyId);
   }
   if (filters?.startDate) {
-    params.set("startDate", filters.startDate);
+    params.set("start_date", filters.startDate);
   }
   if (filters?.endDate) {
-    params.set("endDate", filters.endDate);
+    params.set("end_date", filters.endDate);
   }
 
   const queryString = params.toString();

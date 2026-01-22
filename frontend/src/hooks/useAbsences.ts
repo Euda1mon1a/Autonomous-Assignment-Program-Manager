@@ -280,10 +280,10 @@ export function useAbsenceList(
   options?: Omit<UseQueryOptions<ListResponse<Absence>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams()
-  if (filters?.personId) params.set('personId', filters.personId)
-  if (filters?.startDate) params.set('startDate', filters.startDate)
-  if (filters?.endDate) params.set('endDate', filters.endDate)
-  if (filters?.absenceType) params.set('absenceType', filters.absenceType.toString())
+  if (filters?.personId) params.set('person_id', filters.personId)
+  if (filters?.startDate) params.set('start_date', filters.startDate)
+  if (filters?.endDate) params.set('end_date', filters.endDate)
+  if (filters?.absenceType) params.set('absence_type', filters.absenceType.toString())
   const queryString = params.toString()
 
   return useQuery<ListResponse<Absence>, ApiError>({
@@ -430,7 +430,7 @@ export function useMilitaryLeave(
   options?: Omit<UseQueryOptions<ListResponse<Absence>, ApiError>, 'queryKey' | 'queryFn'>
 ) {
   const params = new URLSearchParams()
-  if (personId) params.set('personId', personId)
+  if (personId) params.set('person_id', personId)
   // Filter for military-specific absence types
   // Note: Backend should support comma-separated values or we fetch and filter client-side
   const queryString = params.toString()
@@ -969,7 +969,7 @@ export function useAwayThresholdCheck(
 ) {
   const params = new URLSearchParams()
   if (additionalDays) params.set('additional_days', additionalDays.toString())
-  if (academicYear) params.set('academicYear', academicYear.toString())
+  if (academicYear) params.set('academic_year', academicYear.toString())
   const queryString = params.toString()
 
   return useQuery<AwayFromProgramCheck, ApiError>({

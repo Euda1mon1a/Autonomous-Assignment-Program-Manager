@@ -33,10 +33,10 @@ export function useDailyManifest(
   timeOfDay: 'AM' | 'PM' | 'ALL' = 'AM',
   options?: Omit<UseQueryOptions<DailyManifestData, ApiError>, 'queryKey' | 'queryFn'>
 ) {
-  // Only include timeOfDay param for AM/PM, omit for ALL (backend returns all if not specified)
+  // Only include time_of_day param for AM/PM, omit for ALL (backend returns all if not specified)
   const params = new URLSearchParams({ date });
   if (timeOfDay !== 'ALL') {
-    params.set('timeOfDay', timeOfDay);
+    params.set('time_of_day', timeOfDay);
   }
   return useQuery<DailyManifestData, ApiError>({
     queryKey: manifestQueryKeys.byDate(date, timeOfDay),

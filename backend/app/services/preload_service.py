@@ -159,14 +159,13 @@ class PreloadService:
         preloads = result.scalars().all()
 
         count = 0
+        skipped = 0
         for preload in preloads:
-            activity_id = await self._get_activity_id(preload.rotation_type)
-
             current = max(preload.start_date, start_date)
             end = min(preload.end_date, end_date)
 
             while current <= end:
-                # Get AM/PM codes based on rotation type and day of week
+                # Get AM/PM activity codes based on rotation type and day of week
                 am_code, pm_code = self._get_rotation_codes(
                     preload.rotation_type, current.weekday()
                 )
@@ -174,19 +173,39 @@ class PreloadService:
                 am_activity = await self._get_activity_id(am_code)
                 pm_activity = await self._get_activity_id(pm_code)
 
-                await self._create_preload(
-                    person_id=preload.person_id,
-                    date_val=current,
-                    time_of_day="AM",
-                    activity_id=am_activity,
-                )
-                await self._create_preload(
-                    person_id=preload.person_id,
-                    date_val=current,
-                    time_of_day="PM",
-                    activity_id=pm_activity,
-                )
-                count += 2
+                # Validate activity lookup succeeded - CRITICAL for GUI display
+                if am_activity is None:
+                    logger.error(
+                        f"Activity lookup FAILED for AM code '{am_code}' "
+                        f"(rotation={preload.rotation_type}, date={current}). "
+                        f"Skipping preload - GUI will not display correctly!"
+                    )
+                    skipped += 1
+                else:
+                    await self._create_preload(
+                        person_id=preload.person_id,
+                        date_val=current,
+                        time_of_day="AM",
+                        activity_id=am_activity,
+                    )
+                    count += 1
+
+                if pm_activity is None:
+                    logger.error(
+                        f"Activity lookup FAILED for PM code '{pm_code}' "
+                        f"(rotation={preload.rotation_type}, date={current}). "
+                        f"Skipping preload - GUI will not display correctly!"
+                    )
+                    skipped += 1
+                else:
+                    await self._create_preload(
+                        person_id=preload.person_id,
+                        date_val=current,
+                        time_of_day="PM",
+                        activity_id=pm_activity,
+                    )
+                    count += 1
+
                 current += timedelta(days=1)
 
             # Handle post-call if applicable
@@ -194,21 +213,35 @@ class PreloadService:
                 pc_date = preload.end_date + timedelta(days=1)
                 if pc_date <= end_date:
                     pc_activity = await self._get_activity_id("PC")
-                    await self._create_preload(
-                        person_id=preload.person_id,
-                        date_val=pc_date,
-                        time_of_day="AM",
-                        activity_id=pc_activity,
-                    )
-                    await self._create_preload(
-                        person_id=preload.person_id,
-                        date_val=pc_date,
-                        time_of_day="PM",
-                        activity_id=pc_activity,
-                    )
-                    count += 2
+                    if pc_activity is None:
+                        logger.error(
+                            "Activity lookup FAILED for PC "
+                            f"(rotation={preload.rotation_type}, date={pc_date}). "
+                            "Skipping post-call preload - GUI will not display correctly!"
+                        )
+                        skipped += 2
+                    else:
+                        await self._create_preload(
+                            person_id=preload.person_id,
+                            date_val=pc_date,
+                            time_of_day="AM",
+                            activity_id=pc_activity,
+                        )
+                        await self._create_preload(
+                            person_id=preload.person_id,
+                            date_val=pc_date,
+                            time_of_day="PM",
+                            activity_id=pc_activity,
+                        )
+                        count += 2
 
-        logger.info(f"Loaded {count} inpatient preloads")
+        if skipped > 0:
+            logger.warning(
+                f"Loaded {count} inpatient preloads, SKIPPED {skipped} due to "
+                f"missing activity codes (check rotation mappings!)"
+            )
+        else:
+            logger.info(f"Loaded {count} inpatient preloads")
         return count
 
     async def _load_fmit_call(self, start_date: date, end_date: date) -> int:
@@ -300,7 +333,12 @@ class PreloadService:
         result = await self.session.execute(stmt)
         assignments = result.scalars().all()
 
-        ci_activity = await self._get_activity_id("C-I")
+        ci_activity = await self._get_activity_id("C-I") or await self._get_activity_id(
+            "C"
+        )
+        if not ci_activity:
+            logger.warning("Missing C-I or C activity, skipping C-I preloads")
+            return 0
         count = 0
 
         for assignment in assignments:
@@ -360,6 +398,9 @@ class PreloadService:
         preloads = result.scalars().all()
 
         call_activity = await self._get_activity_id("CALL")
+        if not call_activity:
+            logger.warning("CALL activity not found, skipping resident call preloads")
+            return 0
         count = 0
 
         for preload in preloads:
@@ -398,6 +439,9 @@ class PreloadService:
 
         pcat_activity = await self._get_activity_id("PCAT")
         do_activity = await self._get_activity_id("DO")
+        if not pcat_activity and not do_activity:
+            logger.warning("Missing PCAT and DO activities, skipping faculty call")
+            return 0
         count = 0
 
         for ca in call_assignments:
@@ -415,22 +459,24 @@ class PreloadService:
                 continue
 
             # PCAT in AM
-            await self._create_preload(
-                person_id=ca.person_id,
-                date_val=post_call_date,
-                time_of_day="AM",
-                activity_id=pcat_activity,
-            )
-            count += 1
+            if pcat_activity:
+                await self._create_preload(
+                    person_id=ca.person_id,
+                    date_val=post_call_date,
+                    time_of_day="AM",
+                    activity_id=pcat_activity,
+                )
+                count += 1
 
             # DO in PM
-            await self._create_preload(
-                person_id=ca.person_id,
-                date_val=post_call_date,
-                time_of_day="PM",
-                activity_id=do_activity,
-            )
-            count += 1
+            if do_activity:
+                await self._create_preload(
+                    person_id=ca.person_id,
+                    date_val=post_call_date,
+                    time_of_day="PM",
+                    activity_id=do_activity,
+                )
+                count += 1
 
         logger.info(f"Loaded {count} faculty call preloads (PCAT/DO)")
         return count
@@ -448,6 +494,8 @@ class PreloadService:
         sm_faculty = result.scalars().all()
 
         asm_activity = await self._get_activity_id("aSM")
+        if not asm_activity:
+            return 0
         count = 0
 
         for faculty in sm_faculty:
@@ -478,6 +526,13 @@ class PreloadService:
         # Protected time is typically assigned manually or from templates
         return 0
 
+    # Mapping from rotation types to activity codes
+    # Some rotation types don't match activity codes (e.g., HILO → TDY)
+    ROTATION_TO_ACTIVITY = {
+        "HILO": "TDY",  # Hilo off-island rotation → Temporary Duty
+        "FMC": "fm_clinic",  # FM Clinic rotation → fm_clinic activity
+    }
+
     def _get_rotation_codes(
         self, rotation_type: str, day_of_week: int
     ) -> tuple[str, str]:
@@ -492,17 +547,17 @@ class PreloadService:
             day_of_week: 0=Mon, 1=Tue, ..., 6=Sun
 
         Returns:
-            Tuple of (AM_code, PM_code)
+            Tuple of (AM_code, PM_code) - activity codes, not rotation types
         """
         # Day-specific patterns for KAP (Kapiolani L&D)
         # Mon PM=OFF (travel), Tue=OFF/OFF (recovery), Wed AM=C (continuity)
         if rotation_type == "KAP":
             if day_of_week == 0:  # Monday
-                return ("KAP", "OFF")  # Travel back from Kapiolani
+                return ("KAP", "off")  # Travel back from Kapiolani
             elif day_of_week == 1:  # Tuesday
-                return ("OFF", "OFF")  # Recovery day
+                return ("off", "off")  # Recovery day
             elif day_of_week == 2:  # Wednesday
-                return ("C", "LEC")  # Continuity clinic + lecture
+                return ("fm_clinic", "lec")  # Continuity clinic + lecture
             else:  # Thu-Sun
                 return ("KAP", "KAP")  # On-site at Kapiolani
 
@@ -510,21 +565,39 @@ class PreloadService:
         # CRITICAL: Friday clinic, NOT Wednesday!
         if rotation_type == "LDNF":
             if day_of_week == 4:  # Friday
-                return ("C", "OFF")  # Friday morning clinic!
+                return ("fm_clinic", "off")  # Friday morning clinic!
             elif day_of_week in (5, 6):  # Weekend
                 return ("W", "W")
             else:  # Mon-Thu
-                return ("OFF", "LDNF")  # Working nights, sleeping days
+                return ("off", "LDNF")  # Working nights, sleeping days
+
+        # Day-specific patterns for NF (Night Float)
+        # AM = off (sleeping), PM = NF (working nights)
+        if rotation_type == "NF":
+            if day_of_week in (5, 6):  # Weekend
+                return ("W", "W")
+            else:
+                return ("off", "NF")
+
+        # Day-specific patterns for PedNF (Peds Night Float)
+        if rotation_type == "PedNF":
+            if day_of_week in (5, 6):  # Weekend
+                return ("W", "W")
+            else:
+                return ("off", "PedNF")
 
         # Fixed patterns for other rotations (no day-specific rules)
         codes = {
             "FMIT": ("FMIT", "FMIT"),
-            "NF": ("OFF", "NF"),
             "PedW": ("PedW", "PedW"),
-            "PedNF": ("OFF", "PedNF"),
             "IM": ("IM", "IM"),
+            "HILO": ("TDY", "TDY"),  # Hilo = TDY activity
+            "FMC": ("fm_clinic", "fm_clinic"),  # FMC = fm_clinic activity
         }
-        return codes.get(rotation_type, (rotation_type, rotation_type))
+
+        # Fall back to rotation type as activity code (works for most)
+        default = self.ROTATION_TO_ACTIVITY.get(rotation_type, rotation_type)
+        return codes.get(rotation_type, (default, default))
 
     async def _get_activity_id(self, code: str) -> UUID | None:
         """Get activity ID by code (cached).
@@ -576,6 +649,8 @@ class PreloadService:
         Race condition safe: uses check-then-insert with IntegrityError handling
         for the unique constraint on (person_id, date, time_of_day).
         """
+        if not activity_id:
+            return None
         # Build query for checking existence (reused after IntegrityError)
         stmt = select(HalfDayAssignment).where(
             and_(

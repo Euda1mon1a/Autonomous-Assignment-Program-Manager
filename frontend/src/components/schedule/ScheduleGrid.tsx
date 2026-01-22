@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { get } from '@/lib/api'
 import { usePeople, useRotationTemplates, ListResponse } from '@/lib/hooks'
 import { useAssignmentsForRange } from '@/hooks/useAssignmentsForRange'
+import { useHalfDayAssignments } from '@/hooks/useHalfDayAssignments'
 import type { Person, RotationTemplate, Block } from '@/types/api'
 import {
   ABBREVIATION_LENGTH,
@@ -49,6 +50,24 @@ interface PersonGroup {
 }
 
 /**
+ * Format faculty role for display in schedule grid
+ */
+function formatFacultyRole(role: string): string {
+  const roleMap: Record<string, string> = {
+    pd: 'PD',
+    apd: 'APD',
+    oic: 'OIC',
+    dept_chief: 'Chief',
+    deptChief: 'Chief', // Handle both snake_case and camelCase
+    sports_med: 'SM',
+    sportsMed: 'SM',
+    core: 'Core',
+    adjunct: 'Adj',
+  }
+  return roleMap[role] || role.toUpperCase()
+}
+
+/**
  * Custom hook to fetch blocks for a date range
  */
 function useBlocks(startDate: string, endDate: string) {
@@ -75,6 +94,13 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
   const { data: peopleData, isLoading: peopleLoading, error: peopleError } = usePeople()
   const { data: templatesData, isLoading: templatesLoading, error: templatesError } = useRotationTemplates()
 
+  // Fetch half-day assignments (expanded schedule with day-specific patterns)
+  // Note: halfDayLoading/halfDayError intentionally unused - we fall back gracefully to block-level data
+  const { data: halfDayData } = useHalfDayAssignments({
+    startDate: startDateStr,
+    endDate: endDateStr,
+  })
+
   // Generate array of days in the range
   const days = useMemo(() => {
     return eachDayOfInterval({ start: startDate, end: endDate })
@@ -97,10 +123,21 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
     return map
   }, [templatesData])
 
+  // Create person lookup for role/template fallback
+  const personMap = useMemo(() => {
+    const map = new Map<string, Person>()
+    peopleData?.items?.forEach((person) => {
+      map.set(person.id, person)
+    })
+    return map
+  }, [peopleData])
+
   // Create assignment lookup: personId -> date -> timeOfDay -> assignment
+  // PRIORITY: half-day assignments (expanded) > block-level assignments (raw)
   const assignmentLookup = useMemo(() => {
     const lookup = new Map<string, Map<string, Map<string, ProcessedAssignment>>>()
 
+    // First, populate from block-level assignments (fallback data)
     assignmentsData?.items?.forEach((assignment) => {
       const block = blockMap.get(assignment.blockId)
       if (!block) return
@@ -141,8 +178,73 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
       dateMap.set(block.timeOfDay, processed)
     })
 
+    // THEN, override with half-day assignments ONLY when they have an activity
+    // This ensures day-specific patterns (LEC, intern continuity, KAP patterns) are shown
+    // but we fall back to block-level rotation templates for slots without specific activities
+    halfDayData?.assignments?.forEach((hda) => {
+      // Only override if half-day has an actual activity code
+      if (!hda.activityCode) return
+
+      const processed: ProcessedAssignment = {
+        // Prefer displayAbbreviation (e.g., "C") over activityCode (e.g., "fm_clinic")
+        abbreviation: hda.displayAbbreviation || hda.activityCode,
+        activityType: 'default', // Could map from activity if needed
+        templateName: hda.activityName || undefined,
+        // Note: half-day assignments don't have colors yet, could be added
+      }
+
+      // Get or create person map
+      if (!lookup.has(hda.personId)) {
+        lookup.set(hda.personId, new Map())
+      }
+      const personMap = lookup.get(hda.personId)!
+
+      // Get or create date map
+      if (!personMap.has(hda.date)) {
+        personMap.set(hda.date, new Map())
+      }
+      const dateMap = personMap.get(hda.date)!
+
+      // Override with half-day data
+      dateMap.set(hda.timeOfDay, processed)
+    })
+
+    // FINALLY, fill in faculty role fallback for empty slots
+    // Faculty without specific activities show their role (PD, Core, Adj, etc.)
+    personMap.forEach((person, personId) => {
+      if (person.type !== 'faculty' || !person.facultyRole) return
+
+      days.forEach((day) => {
+        const dateStr = format(day, 'yyyy-MM-dd')
+        const timesOfDay: Array<'AM' | 'PM'> = ['AM', 'PM']
+
+        timesOfDay.forEach((timeOfDay) => {
+          // Skip if already has an assignment
+          if (lookup.get(personId)?.get(dateStr)?.get(timeOfDay)) return
+
+          // Get or create person lookup map
+          if (!lookup.has(personId)) {
+            lookup.set(personId, new Map())
+          }
+          const personLookup = lookup.get(personId)!
+
+          // Get or create date map
+          if (!personLookup.has(dateStr)) {
+            personLookup.set(dateStr, new Map())
+          }
+          const dateMap = personLookup.get(dateStr)!
+
+          // Faculty: show role as fallback
+          dateMap.set(timeOfDay, {
+            abbreviation: formatFacultyRole(person.facultyRole!),
+            activityType: 'admin',
+          })
+        })
+      })
+    })
+
     return lookup
-  }, [assignmentsData, blockMap, templateMap])
+  }, [assignmentsData, blockMap, templateMap, halfDayData, personMap, days])
 
   // Group people by PGY level (with optional filtering)
   const personGroups = useMemo((): PersonGroup[] => {
@@ -192,7 +294,7 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
     return groups
   }, [peopleData, personFilter])
 
-  // Loading state
+  // Loading state (half-day data is optional - don't block on it)
   const isLoading = blocksLoading || assignmentsLoading || peopleLoading || templatesLoading
   if (isLoading) {
     return (
@@ -203,7 +305,7 @@ export function ScheduleGrid({ startDate, endDate, personFilter }: ScheduleGridP
     )
   }
 
-  // Error state
+  // Error state (half-day error is non-fatal - fall back to block-level data)
   const error = blocksError || assignmentsError || peopleError || templatesError
   if (error) {
     return (

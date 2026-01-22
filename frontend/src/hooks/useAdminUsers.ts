@@ -148,7 +148,7 @@ async function fetchUsers(filters?: AdminUserFilters): Promise<UsersResponse> {
     params.set("page", String(filters.page));
   }
   if (filters?.pageSize !== undefined) {
-    params.set("pageSize", String(filters.pageSize));
+    params.set("page_size", String(filters.pageSize));
   }
 
   const queryString = params.toString();
@@ -174,13 +174,13 @@ async function fetchActivityLog(
 ): Promise<ActivityLogResponse> {
   const params = new URLSearchParams();
 
-  if (filters?.userId) params.set("userId", filters.userId);
+  if (filters?.userId) params.set("user_id", filters.userId);
   if (filters?.action) params.set("action", filters.action);
-  if (filters?.dateFrom) params.set("dateFrom", filters.dateFrom);
-  if (filters?.dateTo) params.set("dateTo", filters.dateTo);
+  if (filters?.dateFrom) params.set("date_from", filters.dateFrom);
+  if (filters?.dateTo) params.set("date_to", filters.dateTo);
   if (filters?.page !== undefined) params.set("page", String(filters.page));
   if (filters?.pageSize !== undefined)
-    params.set("pageSize", String(filters.pageSize));
+    params.set("page_size", String(filters.pageSize));
 
   const queryString = params.toString();
   return get<ActivityLogResponse>(

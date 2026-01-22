@@ -76,11 +76,11 @@ export function useConflicts(
     params.set('statuses', filters.statuses.join(','));
   }
   if (filters?.personIds?.length) {
-    params.set('personIds', filters.personIds.join(','));
+    params.set('person_ids', filters.personIds.join(','));
   }
   if (filters?.dateRange) {
-    params.set('startDate', filters.dateRange.start);
-    params.set('endDate', filters.dateRange.end);
+    params.set('start_date', filters.dateRange.start);
+    params.set('end_date', filters.dateRange.end);
   }
   if (filters?.search) {
     params.set('search', filters.search);
@@ -129,7 +129,7 @@ export function useConflictsByPerson(
 ) {
   return useQuery<ConflictListResponse, ApiError>({
     queryKey: conflictQueryKeys.byPerson(personId),
-    queryFn: () => get<ConflictListResponse>(`/conflicts?personIds=${personId}`),
+    queryFn: () => get<ConflictListResponse>(`/conflicts?person_ids=${personId}`),
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     enabled: !!personId,
@@ -374,8 +374,8 @@ export function useConflictStatistics(
 ) {
   const params = new URLSearchParams();
   if (dateRange) {
-    params.set('startDate', dateRange.start);
-    params.set('endDate', dateRange.end);
+    params.set('start_date', dateRange.start);
+    params.set('end_date', dateRange.end);
   }
   const queryString = params.toString();
 
