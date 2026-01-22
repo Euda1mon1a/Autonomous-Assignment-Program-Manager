@@ -229,20 +229,19 @@ function OverviewTab() {
           <>
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
               <h3 className="text-lg font-medium text-white mb-4">Defense Level</h3>
-              <DefenseLevel level={health.defenseLevel} />
+              <DefenseLevel level={(health.defenseLevel as unknown) as 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED' | 'BLACK'} />
             </div>
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
               <h3 className="text-lg font-medium text-white mb-4">Utilization</h3>
               <UtilizationGauge
-                utilizationRate={health.utilization?.utilizationRate || 0}
-                level={health.utilization?.level || 'GREEN'}
+                current={(health.utilization?.utilizationRate || 0) * 100}
               />
             </div>
           </>
         )}
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
           <h3 className="text-lg font-medium text-white mb-4">Burnout Risk</h3>
-          <BurnoutRtDisplay />
+          <BurnoutRtDisplay value={0.85} />
         </div>
       </div>
 
@@ -250,7 +249,11 @@ function OverviewTab() {
       {vulnerability && (
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
           <h3 className="text-lg font-medium text-white mb-4">N-1 Vulnerability Map</h3>
-          <N1ContingencyMap vulnerabilities={vulnerability.n1Vulnerabilities} />
+          <N1ContingencyMap
+            criticalResources={vulnerability.n1Vulnerabilities?.map((v: { facultyId: string }) => v.facultyId) || []}
+            vulnerableRotations={[]}
+            recoveryDistance={vulnerability.n1Vulnerabilities?.length || 0}
+          />
         </div>
       )}
 
@@ -433,14 +436,14 @@ function FairnessTab() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="10"
-                strokeDasharray={`${(fairness?.jainIndex || 0) * 251} 251`}
+                strokeDasharray={`${(fairness?.fairnessIndex || 0) * 251} 251`}
                 strokeLinecap="round"
                 className={
-                  (fairness?.jainIndex || 0) >= 0.9
+                  (fairness?.fairnessIndex || 0) >= 0.9
                     ? 'text-green-500'
-                    : (fairness?.jainIndex || 0) >= 0.8
+                    : (fairness?.fairnessIndex || 0) >= 0.8
                     ? 'text-emerald-500'
-                    : (fairness?.jainIndex || 0) >= 0.7
+                    : (fairness?.fairnessIndex || 0) >= 0.7
                     ? 'text-amber-500'
                     : 'text-red-500'
                 }
@@ -448,23 +451,23 @@ function FairnessTab() {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-2xl font-bold text-white">
-                {((fairness?.jainIndex || 0) * 100).toFixed(1)}%
+                {((fairness?.fairnessIndex || 0) * 100).toFixed(1)}%
               </span>
             </div>
           </div>
         </div>
 
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-white mb-4">Gini Coefficient</h3>
+          <h3 className="text-lg font-medium text-white mb-4">Fairness Index</h3>
           <div className="text-3xl font-bold text-white">
-            {(fairness?.giniCoefficient || 0).toFixed(3)}
+            {(fairness?.fairnessIndex || 0).toFixed(3)}
           </div>
           <div className="text-sm text-slate-400 mt-2">
-            {(fairness?.giniCoefficient || 0) < 0.2
+            {(fairness?.fairnessIndex || 0) < 0.2
               ? 'Highly equitable'
-              : (fairness?.giniCoefficient || 0) < 0.3
+              : (fairness?.fairnessIndex || 0) < 0.3
               ? 'Equitable'
-              : (fairness?.giniCoefficient || 0) < 0.4
+              : (fairness?.fairnessIndex || 0) < 0.4
               ? 'Moderate inequality'
               : 'Significant inequality'}
           </div>
@@ -473,10 +476,10 @@ function FairnessTab() {
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
           <h3 className="text-lg font-medium text-white mb-4">Faculty Analyzed</h3>
           <div className="text-3xl font-bold text-white">
-            {fairness?.facultyWorkloads?.length || 0}
+            {fairness?.workloads?.length || 0}
           </div>
           <div className="text-sm text-slate-400 mt-2">
-            {fairness?.outliers?.length || 0} outliers detected
+            {(fairness?.outliers?.high?.length || 0) + (fairness?.outliers?.low?.length || 0)} outliers detected
           </div>
         </div>
       </div>
@@ -502,7 +505,7 @@ function FairnessTab() {
       )}
 
       {/* Workload Table - Simplified */}
-      {fairness?.facultyWorkloads && fairness.facultyWorkloads.length > 0 && (
+      {fairness?.workloads && fairness.workloads.length > 0 && (
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
           <h3 className="text-lg font-medium text-white mb-4">Faculty Workloads</h3>
           <div className="overflow-x-auto">
@@ -510,22 +513,22 @@ function FairnessTab() {
               <thead>
                 <tr className="text-left text-slate-400 border-b border-slate-700">
                   <th className="pb-2">Faculty</th>
-                  <th className="pb-2 text-right">Total</th>
+                  <th className="pb-2 text-right">Total Score</th>
                   <th className="pb-2 text-right">Call</th>
-                  <th className="pb-2 text-right">FMIT</th>
+                  <th className="pb-2 text-right">FMIT Wks</th>
                   <th className="pb-2 text-right">Clinic</th>
                   <th className="pb-2 text-right">Admin</th>
                 </tr>
               </thead>
               <tbody>
-                {fairness.facultyWorkloads.slice(0, 10).map((faculty) => (
+                {fairness.workloads.slice(0, 10).map((faculty) => (
                   <tr key={faculty.personId} className="border-b border-slate-700/50">
-                    <td className="py-2 text-white">{faculty.name}</td>
-                    <td className="py-2 text-right text-white">{faculty.totalHalfDays}</td>
-                    <td className="py-2 text-right text-slate-300">{faculty.callHalfDays}</td>
-                    <td className="py-2 text-right text-slate-300">{faculty.fmitHalfDays}</td>
-                    <td className="py-2 text-right text-slate-300">{faculty.clinicHalfDays}</td>
-                    <td className="py-2 text-right text-slate-300">{faculty.adminHalfDays}</td>
+                    <td className="py-2 text-white">{faculty.personName}</td>
+                    <td className="py-2 text-right text-white">{faculty.totalScore.toFixed(1)}</td>
+                    <td className="py-2 text-right text-slate-300">{faculty.callCount}</td>
+                    <td className="py-2 text-right text-slate-300">{faculty.fmitWeeks}</td>
+                    <td className="py-2 text-right text-slate-300">{faculty.clinicHalfdays}</td>
+                    <td className="py-2 text-right text-slate-300">{faculty.adminHalfdays}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-21 (Session 127: Debugger API fix, future enhancement noted)
+> **Last Updated:** 2026-01-21 (Session 128: WebSocket fixes, convention audit added)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -290,7 +290,36 @@ Major fixes to half-day assignment pipeline:
 - `backend/app/services/sync_preload_service.py` - NF/PedNF weekends, compound rotations
 - `frontend/src/components/schedule/BlockAnnualView.tsx` - camelCase fix
 
-### 10.2 Faculty Scheduling Pipeline Gaps (Remaining)
+### 10.2 API/WS Convention Audit Required (Session 128)
+
+WebSocket debugging revealed 4 distinct convention violations that were blocking all real-time functionality:
+
+| Issue | Root Cause | Fix Applied |
+|-------|------------|-------------|
+| Cookie auth fails | Didn't strip `Bearer ` prefix from cookie token | Added prefix stripping in `ws.py` |
+| Event schema mismatch | Backend emitted `event_type`, frontend expected `eventType` | Added `serialization_alias` + `by_alias=True` |
+| Subscribe payload mismatch | Frontend sent `scheduleId`, backend expected `schedule_id` | Accept both in `ws.py` |
+| URL path mismatch | WS URL missing `/api/v1` prefix | Ensure `/api/v1` in `getWebSocketUrl()` |
+
+**Systematic Problem:** These are all Couatl Killer violations documented in CLAUDE.md but not followed consistently:
+- Backend snake_case → Frontend camelCase (axios interceptor handles REST, but WS bypassed it)
+- Query params must stay snake_case (not being enforced everywhere)
+
+**Audit Needed:**
+1. **Full WS audit** - All WebSocket messages and handlers for case consistency
+2. **REST endpoint audit** - Query params, request bodies, response bodies
+3. **Hook/useX audit** - All frontend hooks for snake_case query param violations
+4. **Add WS smoke test** - `GET /api/v1/ws/health` + wscat connect to verify WS subsystem
+
+**Files Fixed (Session 128):**
+- `backend/app/api/routes/ws.py` - Bearer prefix, dual-case accept
+- `backend/app/websocket/events.py` - All event classes get `serialization_alias="eventType"`
+- `backend/app/websocket/manager.py` - `by_alias=True` in `send_event()`
+- `frontend/src/hooks/useWebSocket.ts` - `/api/v1` path fix, dual-case parse
+
+**Action:** Create comprehensive audit task for all API conventions per CLAUDE.md rules.
+
+### 10.3 Faculty Scheduling Pipeline Gaps (Remaining)
 
 **Doc:** [`docs/reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md`](reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md)
 

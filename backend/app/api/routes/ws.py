@@ -44,6 +44,11 @@ async def get_websocket_user(
                 logger.debug("WebSocket auth: token extracted from cookie")
                 break
 
+    # Strip "Bearer " prefix if present (cookies may store full auth header value)
+    if token and token.startswith("Bearer "):
+        token = token[7:]
+        logger.debug("WebSocket auth: stripped Bearer prefix from token")
+
     if not token:
         logger.warning(
             "WebSocket connection attempt without token (no query param or cookie)"
@@ -132,7 +137,8 @@ async def websocket_endpoint(
             action = data.get("action")
 
             if action == "subscribe_schedule":
-                schedule_id = data.get("schedule_id")
+                # Accept both snake_case (schedule_id) and camelCase (scheduleId)
+                schedule_id = data.get("schedule_id") or data.get("scheduleId")
                 if schedule_id:
                     try:
                         schedule_uuid = UUID(schedule_id)
@@ -144,7 +150,8 @@ async def websocket_endpoint(
                         logger.warning(f"Invalid schedule_id: {schedule_id}")
 
             elif action == "subscribe_person":
-                person_id = data.get("person_id")
+                # Accept both snake_case (person_id) and camelCase (personId)
+                person_id = data.get("person_id") or data.get("personId")
                 if person_id:
                     try:
                         person_uuid = UUID(person_id)
@@ -156,7 +163,8 @@ async def websocket_endpoint(
                         logger.warning(f"Invalid person_id: {person_id}")
 
             elif action == "unsubscribe_schedule":
-                schedule_id = data.get("schedule_id")
+                # Accept both snake_case (schedule_id) and camelCase (scheduleId)
+                schedule_id = data.get("schedule_id") or data.get("scheduleId")
                 if schedule_id:
                     try:
                         schedule_uuid = UUID(schedule_id)
@@ -168,7 +176,8 @@ async def websocket_endpoint(
                         logger.warning(f"Invalid schedule_id: {schedule_id}")
 
             elif action == "unsubscribe_person":
-                person_id = data.get("person_id")
+                # Accept both snake_case (person_id) and camelCase (personId)
+                person_id = data.get("person_id") or data.get("personId")
                 if person_id:
                     try:
                         person_uuid = UUID(person_id)
