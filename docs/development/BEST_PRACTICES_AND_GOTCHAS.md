@@ -582,6 +582,44 @@ function snakeToCamel(obj: unknown): unknown {
 - Frontend transforms defensively (handles legacy/edge cases)
 - TypeScript interfaces use camelCase (matches runtime)
 
+### Enum Values Stay snake_case (Keys Convert, Values Don't)
+
+**Critical distinction:** The axios interceptor and WebSocket transformer convert **keys** only, NOT **values**.
+
+```json
+// API Response (wire format)
+{ "swap_type": "one_to_one", "status": "pending" }
+
+// After axios interceptor (what frontend receives)
+{ "swapType": "one_to_one", "status": "pending" }
+//   ↑ key converted        ↑ value unchanged!
+```
+
+**Frontend TypeScript types MUST use snake_case for enum values:**
+```typescript
+// ✅ CORRECT
+type SwapType = 'one_to_one' | 'absorb';
+type ConflictType = 'leave_fmit_overlap' | 'back_to_back' | 'acgme_violation';
+
+// ❌ WRONG (will never match API responses)
+type SwapType = 'oneToOne' | 'absorb';
+type ConflictType = 'leaveFmitOverlap' | 'backToBack' | 'acgmeViolation';
+```
+
+**Why not convert enum values?**
+1. Database stores snake_case values (`swap_records.swap_type = 'one_to_one'`)
+2. Changing would require database migration to update existing data
+3. Enum values are stable identifiers, not display strings
+4. Converting values would be error-prone (breaks round-trip)
+
+**Summary Table:**
+
+| Data Type | Wire Format | Frontend Receives | Frontend Type |
+|-----------|-------------|-------------------|---------------|
+| Object keys | snake_case | camelCase | camelCase |
+| Enum values | snake_case | snake_case | snake_case |
+| URL params | snake_case | N/A | snake_case |
+
 **WebSocket URL must include `/api/v1`:**
 ```typescript
 // ✅ CORRECT - goes through Next.js proxy, gets auth cookie

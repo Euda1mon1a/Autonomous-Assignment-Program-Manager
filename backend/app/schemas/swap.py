@@ -19,6 +19,15 @@ class SwapStatusSchema(str, Enum):
 
 
 class SwapTypeSchema(str, Enum):
+    """Swap type enum.
+
+    Note: Values are snake_case to match database storage and model enums.
+    The frontend TypeScript types should also use snake_case for enum values,
+    or handle the conversion in the frontend's response interceptor.
+
+    See: docs/development/BEST_PRACTICES_AND_GOTCHAS.md for enum value conventions.
+    """
+
     ONE_TO_ONE = "one_to_one"
     ABSORB = "absorb"
 

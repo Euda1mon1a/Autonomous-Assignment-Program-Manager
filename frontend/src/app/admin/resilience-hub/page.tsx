@@ -40,7 +40,7 @@ import {
 import { useFairnessAudit } from '@/hooks/useFairness';
 
 // Existing resilience components
-import { DefenseLevel } from '@/components/resilience/DefenseLevel';
+import { DefenseLevel, mapBackendDefenseLevel } from '@/components/resilience/DefenseLevel';
 import { UtilizationGauge } from '@/components/resilience/UtilizationGauge';
 import { BurnoutRtDisplay } from '@/components/resilience/BurnoutRtDisplay';
 import { N1ContingencyMap } from '@/components/resilience/N1ContingencyMap';
@@ -229,7 +229,7 @@ function OverviewTab() {
           <>
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
               <h3 className="text-lg font-medium text-white mb-4">Defense Level</h3>
-              <DefenseLevel level={(health.defenseLevel as unknown) as 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED' | 'BLACK'} />
+              <DefenseLevel level={mapBackendDefenseLevel(health.defenseLevel)} />
             </div>
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
               <h3 className="text-lg font-medium text-white mb-4">Utilization</h3>
@@ -241,7 +241,14 @@ function OverviewTab() {
         )}
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
           <h3 className="text-lg font-medium text-white mb-4">Burnout Risk</h3>
+          {/* TODO: Wire to useBurnoutRt() hook once provider tracking is available.
+              The /resilience/burnout/rt API requires burned_out_provider_ids which
+              must come from a separate burnout detection system (not yet implemented).
+              Current value is a placeholder for UI development. */}
           <BurnoutRtDisplay value={0.85} />
+          <p className="text-xs text-slate-500 mt-2 italic">
+            Placeholder value - pending burnout tracking integration
+          </p>
         </div>
       </div>
 
