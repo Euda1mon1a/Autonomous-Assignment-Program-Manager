@@ -54,10 +54,10 @@ type SplitRatio = 25 | 50 | 75;
 
 const DEFAULT_LEFT_URL = '/schedule';
 
-// Use environment variable for API base URL, fallback to relative path
-// IMPORTANT: Use /api/v1 (relative) to go through Next.js proxy for proper auth
+// IMPORTANT: Always use /api/v1 (relative) to go through Next.js proxy for proper auth
 // Do NOT use http://localhost:8000 directly - it bypasses auth cookie handling
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+// This is intentionally hard-coded to ensure proxy+cookie behavior regardless of env vars
+const API_BASE_URL = '/api/v1';
 
 const PRESET_URLS: { label: string; url: string; type: PanelConfig['type'] }[] = [
   { label: 'Schedule', url: '/schedule', type: 'app' },
