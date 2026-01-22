@@ -561,25 +561,55 @@ PR #743 fixed this - now uses `os.environ.get("ADMIN_PASSWORD", "admin123")` mat
 **Resolved:** 2026-01-18 in PR #743
 **Ref:** `docs/reviews/2026-01-18-commit-66a1446-review.md`
 
+### 19. Templates Hub - Unified Template Management
+**Priority:** MEDIUM
+**Status:** IN PROGRESS (Session 131)
+**Branch:** `feature/rotation-faculty-templates`
+
+Unified hub at `/templates` combining rotation templates and faculty weekly schedules with tier-based access control.
+
+| Component | Status | Description |
+|-----------|--------|-------------|
+| Main page structure | ✅ Complete | Tier-based tabs, RiskBar integration |
+| RotationsPanel | ✅ Complete | TemplateTable with search/filter, inline editing (Tier 1+) |
+| MySchedulePanel | ✅ Complete | FacultyWeeklyEditor (readOnly) with user lookup |
+| FacultyPanel | ✅ Complete | Faculty selector + FacultyWeeklyEditor |
+| MatrixPanel | ✅ Complete | FacultyMatrixView with click-to-edit modal |
+| BulkOperationsPanel | Pending | Tier 2 admin tools |
+
+**Tier Access Model:**
+| Tier | Tabs | Capabilities |
+|------|------|--------------|
+| 0 (Green) | Rotations, My Schedule | View-only |
+| 1 (Amber) | + Faculty, Matrix | Edit templates |
+| 2 (Red) | + Bulk Operations | Admin tools |
+
+**Files:**
+- `frontend/src/app/templates/page.tsx` - Main hub page
+- `frontend/src/app/templates/_components/*.tsx` - Panel components
+- `docs/user-guide/templates.md` - User documentation
+
+**Ref:** `docs/scratchpad/session-131-templates-hub.md`, Plan: `keen-tumbling-bentley.md`
+
 ---
 
 ## LOW (Backlog)
 
-### 19. A/B Testing Infrastructure
+### 20. A/B Testing Infrastructure
 - **Location:** `backend/app/experiments/`
 - Infrastructure exists, route registered
 - Minimal production usage - consider for Labs rollout
 
-### 20. ML Workload Analysis
+### 21. ML Workload Analysis
 - `ml.py` returns "placeholder response"
 - Low priority unless ML features requested
 
-### 21. Time Crystal DB Loading
+### 22. Time Crystal DB Loading
 - `time_crystal_tools.py:281, 417`
 - Acceptable fallback to empty schedules
 - Fix if `schedule_id` parameter becomes primary use case
 
-### 22. Spreadsheet Editor for Tier 1 Users (PR #740)
+### 23. Spreadsheet Editor for Tier 1 Users (PR #740)
 Excel-like grid editor for schedule verification - eases transition for "normie" users comfortable with Excel.
 
 | Feature | Status | Spec |
@@ -594,7 +624,7 @@ Excel-like grid editor for schedule verification - eases transition for "normie"
 **Benefit:** Eliminates export→edit→reimport friction; keeps data in-app.
 **Ref:** PR #740, `docs/design/SPREADSHEET_EDITOR_SPEC.md`
 
-### 23. Experimental Analytics Platform (PR #752)
+### 24. Experimental Analytics Platform (PR #752)
 **Priority:** LOW (Future Enhancement)
 **Added:** 2026-01-19 (from Claude web session)
 **Roadmap:** [`docs/roadmaps/EXPERIMENTAL_ANALYTICS_ROADMAP.md`](roadmaps/EXPERIMENTAL_ANALYTICS_ROADMAP.md)
@@ -629,7 +659,7 @@ Comprehensive statistical analytics platform extending `/admin/scheduling` with 
 
 **Ref:** PR #752, `docs/roadmaps/EXPERIMENTAL_ANALYTICS_ROADMAP.md`
 
-### 24. Claude Code CLI Guide & Vercel Agent Skills (PR #754)
+### 25. Claude Code CLI Guide & Vercel Agent Skills (PR #754)
 **Priority:** LOW (Reference/Enhancement)
 **Added:** 2026-01-19 (from Claude web session)
 **Guide:** [`docs/guides/CLAUDE_CODE_CLI_GUIDE.md`](guides/CLAUDE_CODE_CLI_GUIDE.md)
@@ -658,7 +688,7 @@ npx add-skill vercel-labs/agent-skills --skill web-design-guidelines -g -a claud
 
 **Ref:** PR #754, `docs/guides/CLAUDE_CODE_CLI_GUIDE.md`
 
-### 25. String Theory Scheduling (PR #737)
+### 26. String Theory Scheduling (PR #737)
 **Priority:** LOW (Research/Exploration)
 **Added:** 2026-01-18 (from Claude web session)
 **Design:** [`docs/exotic/STRING_THEORY_SCHEDULING.md`](exotic/STRING_THEORY_SCHEDULING.md)
@@ -679,7 +709,7 @@ Exploratory design document applying string theory mathematics to scheduling:
 
 **Ref:** PR #737, `docs/exotic/STRING_THEORY_SCHEDULING.md`
 
-### 26. Optional Modules Assessment
+### 27. Optional Modules Assessment
 **Priority:** LOW (Reference)
 **Added:** 2026-01-18
 **Document:** [`docs/planning/OPTIONAL_MODULES_ASSESSMENT.md`](planning/OPTIONAL_MODULES_ASSESSMENT.md)
@@ -708,7 +738,7 @@ Comprehensive inventory of optional modules with gap analysis:
 
 **Ref:** `docs/planning/OPTIONAL_MODULES_ASSESSMENT.md`
 
-### 27. GUI Considerations (PR #739)
+### 28. GUI Considerations (PR #739)
 **Priority:** LOW (Reference)
 **Added:** 2026-01-18 (from Claude web session)
 **Document:** [`docs/development/GUI_CONSIDERATIONS.md`](development/GUI_CONSIDERATIONS.md)
@@ -738,7 +768,7 @@ Comprehensive guide for frontend GUI development covering icon libraries, 3D int
 
 **Ref:** PR #739, `docs/development/GUI_CONSIDERATIONS.md`
 
-### 28. Cooperative Evolution Research (PR #718)
+### 29. Cooperative Evolution Research (PR #718)
 **Priority:** LOW (Research/Exploration)
 **Added:** 2026-01-15 (from Claude web session)
 **Document:** [`docs/research/cooperative_evolution_design.md`](research/cooperative_evolution_design.md)
@@ -760,7 +790,7 @@ Theoretical foundation for cooperative cell selection in genetic algorithm sched
 **Prerequisites:** `networkx` (already installed), existing GA framework
 **Ref:** PR #718, `docs/research/cooperative_evolution_design.md`
 
-### 29. Foam Topology Scheduler (PR #730)
+### 30. Foam Topology Scheduler (PR #730)
 **Priority:** LOW (Research/Exploration)
 **Added:** 2026-01-17 (from Claude web session)
 **Document:** [`docs/exotic/FOAM_TOPOLOGY_SCHEDULER.md`](exotic/FOAM_TOPOLOGY_SCHEDULER.md)
