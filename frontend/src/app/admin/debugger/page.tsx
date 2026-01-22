@@ -6,7 +6,8 @@
  * Developer experience tool for comparing frontend views with raw database data.
  * Supports:
  * - Dual iframe layout (app + NocoDB)
- * - API request inspector
+ * - Multi-mode Database Inspector (Schedule, Absences, People, Rotations, Activities)
+ * - API request inspector with diff mode
  * - Direct database queries via MCP
  * - Claude Chrome extension integration hints
  *
@@ -367,6 +368,15 @@ function ChromeExtensionHint() {
 }
 
 type DataSource = 'api' | 'db' | 'diff';
+type InspectorMode = 'schedule' | 'absences' | 'people' | 'rotations' | 'activities';
+
+const INSPECTOR_MODES: { value: InspectorMode; label: string; icon: string }[] = [
+  { value: 'schedule', label: 'Schedule', icon: '📅' },
+  { value: 'absences', label: 'Absences', icon: '🏖️' },
+  { value: 'people', label: 'People', icon: '👥' },
+  { value: 'rotations', label: 'Rotations', icon: '🔄' },
+  { value: 'activities', label: 'Activities', icon: '📋' },
+];
 
 interface Assignment {
   id: string;
@@ -707,6 +717,532 @@ function ScheduleMirrorView({
 }
 
 // ============================================================================
+// Absence Inspector Component
+// ============================================================================
+
+interface Absence {
+  id: string;
+  personId: string;
+  personName?: string;
+  absenceType: string;
+  startDate: string;
+  endDate: string;
+  notes?: string;
+}
+
+function AbsenceInspector({ refreshKey }: { refreshKey: number }) {
+  const [absences, setAbsences] = useState<Absence[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<string>('all');
+
+  useEffect(() => {
+    const fetchAbsences = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_BASE_URL}/absences?limit=500`, {
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const items = data.items || data.absences || (Array.isArray(data) ? data : []);
+        setAbsences(items.map((a: Record<string, unknown>) => ({
+          id: a.id as string,
+          personId: a.person_id as string || a.personId as string,
+          personName: a.person_name as string || a.personName as string || (a.person as Record<string, unknown>)?.name as string,
+          absenceType: a.absence_type as string || a.absenceType as string || a.type as string,
+          startDate: a.start_date as string || a.startDate as string,
+          endDate: a.end_date as string || a.endDate as string,
+          notes: a.notes as string,
+        })));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch absences');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAbsences();
+  }, [refreshKey]);
+
+  const absenceTypes = ['all', ...new Set(absences.map(a => a.absenceType).filter(Boolean))];
+  const filteredAbsences = filterType === 'all'
+    ? absences
+    : absences.filter(a => a.absenceType === filterType);
+
+  const getTypeColor = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case 'vacation': case 'lv': return 'text-emerald-400 bg-emerald-900/30';
+      case 'sick': return 'text-red-400 bg-red-900/30';
+      case 'conference': case 'hafp': case 'usafp': return 'text-cyan-400 bg-cyan-900/30';
+      case 'tdy': case 'deployment': case 'dep': return 'text-amber-400 bg-amber-900/30';
+      case 'holiday': case 'hol': return 'text-violet-400 bg-violet-900/30';
+      default: return 'text-slate-400 bg-slate-700/50';
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-slate-900">
+      <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 border-b border-slate-700/50">
+        <span className="text-xs text-slate-400">Filter:</span>
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600"
+        >
+          {absenceTypes.map(type => (
+            <option key={type} value={type}>{type === 'all' ? 'All Types' : type}</option>
+          ))}
+        </select>
+        <span className="ml-auto text-xs text-slate-500">{filteredAbsences.length} absences</span>
+      </div>
+
+      <div className="flex-1 overflow-auto p-3">
+        {loading && (
+          <div className="flex items-center justify-center h-32">
+            <RefreshCw className="w-6 h-6 text-cyan-400 animate-spin" />
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 p-4 bg-red-900/20 border border-red-700/50 rounded-lg">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+            <span className="text-red-400">{error}</span>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="space-y-2">
+            {filteredAbsences.map(absence => (
+              <div key={absence.id} className="p-3 bg-slate-800/50 border border-slate-700/50 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-white font-medium">{absence.personName || absence.personId}</span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeColor(absence.absenceType)}`}>
+                    {absence.absenceType}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-400">
+                  <span>{absence.startDate}</span>
+                  <span className="mx-2">→</span>
+                  <span>{absence.endDate}</span>
+                </div>
+                {absence.notes && (
+                  <p className="text-xs text-slate-500 mt-1">{absence.notes}</p>
+                )}
+              </div>
+            ))}
+            {filteredAbsences.length === 0 && (
+              <div className="text-center py-8 text-slate-500">No absences found</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// People Inspector Component
+// ============================================================================
+
+interface PersonDetail {
+  id: string;
+  name: string;
+  type: string;
+  pgyLevel?: number;
+  email?: string;
+  facultyRole?: string;
+  isActive?: boolean;
+}
+
+function PeopleInspector({ refreshKey }: { refreshKey: number }) {
+  const [people, setPeople] = useState<PersonDetail[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const fetchPeople = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_BASE_URL}/people?limit=200`, {
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const items = data.items || data.people || (Array.isArray(data) ? data : []);
+        setPeople(items.map((p: Record<string, unknown>) => ({
+          id: p.id as string,
+          name: p.name as string,
+          type: p.type as string,
+          pgyLevel: p.pgy_level as number || p.pgyLevel as number,
+          email: p.email as string,
+          facultyRole: p.faculty_role as string || p.facultyRole as string,
+          isActive: p.is_active as boolean ?? p.isActive as boolean ?? true,
+        })));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch people');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPeople();
+  }, [refreshKey]);
+
+  const personTypes = ['all', ...new Set(people.map(p => p.type).filter(Boolean))];
+  const filteredPeople = people
+    .filter(p => filterType === 'all' || p.type === filterType)
+    .filter(p => !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const getTypeColor = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case 'resident': return 'text-emerald-400 bg-emerald-900/30';
+      case 'faculty': return 'text-amber-400 bg-amber-900/30';
+      case 'staff': return 'text-cyan-400 bg-cyan-900/30';
+      default: return 'text-slate-400 bg-slate-700/50';
+    }
+  };
+
+  const getPgyColor = (pgy?: number) => {
+    switch (pgy) {
+      case 1: return 'text-emerald-400';
+      case 2: return 'text-amber-400';
+      case 3: return 'text-violet-400';
+      default: return 'text-slate-400';
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-slate-900">
+      <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 border-b border-slate-700/50">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600 w-32"
+        />
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600"
+        >
+          {personTypes.map(type => (
+            <option key={type} value={type}>{type === 'all' ? 'All Types' : type}</option>
+          ))}
+        </select>
+        <span className="ml-auto text-xs text-slate-500">{filteredPeople.length} people</span>
+      </div>
+
+      <div className="flex-1 overflow-auto">
+        {loading && (
+          <div className="flex items-center justify-center h-32">
+            <RefreshCw className="w-6 h-6 text-cyan-400 animate-spin" />
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 p-4 m-3 bg-red-900/20 border border-red-700/50 rounded-lg">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+            <span className="text-red-400">{error}</span>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <table className="w-full text-xs">
+            <thead className="sticky top-0 bg-slate-800">
+              <tr>
+                <th className="text-left py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Name</th>
+                <th className="text-left py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Type</th>
+                <th className="text-left py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Level/Role</th>
+                <th className="text-left py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPeople.map((person, idx) => (
+                <tr key={person.id} className={idx % 2 === 0 ? 'bg-slate-800/20' : ''}>
+                  <td className="py-2 px-3 text-white font-medium border-b border-slate-700/30">{person.name}</td>
+                  <td className="py-2 px-3 border-b border-slate-700/30">
+                    <span className={`px-2 py-0.5 rounded text-xs ${getTypeColor(person.type)}`}>
+                      {person.type}
+                    </span>
+                  </td>
+                  <td className="py-2 px-3 border-b border-slate-700/30">
+                    {person.pgyLevel && (
+                      <span className={`${getPgyColor(person.pgyLevel)}`}>PGY-{person.pgyLevel}</span>
+                    )}
+                    {person.facultyRole && (
+                      <span className="text-slate-400">{person.facultyRole}</span>
+                    )}
+                  </td>
+                  <td className="py-2 px-3 border-b border-slate-700/30">
+                    <span className={person.isActive ? 'text-emerald-400' : 'text-red-400'}>
+                      {person.isActive ? '● Active' : '○ Inactive'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Rotation Template Inspector Component
+// ============================================================================
+
+interface RotationTemplate {
+  id: string;
+  name: string;
+  abbreviation?: string;
+  activityType?: string;
+  durationWeeks?: number;
+  pgyLevels?: number[];
+  isActive?: boolean;
+}
+
+function RotationTemplateInspector({ refreshKey }: { refreshKey: number }) {
+  const [templates, setTemplates] = useState<RotationTemplate[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_BASE_URL}/rotation-templates?limit=200`, {
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const items = data.items || data.templates || (Array.isArray(data) ? data : []);
+        setTemplates(items.map((t: Record<string, unknown>) => ({
+          id: t.id as string,
+          name: t.name as string,
+          abbreviation: t.abbreviation as string || t.display_abbreviation as string || t.displayAbbreviation as string,
+          activityType: t.activity_type as string || t.activityType as string,
+          durationWeeks: t.duration_weeks as number || t.durationWeeks as number,
+          pgyLevels: t.pgy_levels as number[] || t.pgyLevels as number[],
+          isActive: t.is_active as boolean ?? t.isActive as boolean ?? true,
+        })));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch rotation templates');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTemplates();
+  }, [refreshKey]);
+
+  const getActivityColor = (type?: string) => {
+    switch (type?.toLowerCase()) {
+      case 'clinic': case 'fmclinic': return 'text-emerald-400 bg-emerald-900/30';
+      case 'inpatient': case 'fmit': return 'text-amber-400 bg-amber-900/30';
+      case 'elective': return 'text-cyan-400 bg-cyan-900/30';
+      case 'call': return 'text-red-400 bg-red-900/30';
+      case 'conference': case 'didactics': return 'text-violet-400 bg-violet-900/30';
+      default: return 'text-slate-400 bg-slate-700/50';
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-slate-900">
+      <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 border-b border-slate-700/50">
+        <span className="text-xs text-slate-400">{templates.length} rotation templates</span>
+      </div>
+
+      <div className="flex-1 overflow-auto p-3">
+        {loading && (
+          <div className="flex items-center justify-center h-32">
+            <RefreshCw className="w-6 h-6 text-cyan-400 animate-spin" />
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 p-4 bg-red-900/20 border border-red-700/50 rounded-lg">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+            <span className="text-red-400">{error}</span>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {templates.map(template => (
+              <div key={template.id} className="p-3 bg-slate-800/50 border border-slate-700/50 rounded-lg">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-white font-medium">{template.name}</span>
+                  {template.abbreviation && (
+                    <code className="px-2 py-0.5 bg-slate-700 rounded text-xs text-cyan-300">
+                      {template.abbreviation}
+                    </code>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  {template.activityType && (
+                    <span className={`px-2 py-0.5 rounded ${getActivityColor(template.activityType)}`}>
+                      {template.activityType}
+                    </span>
+                  )}
+                  {template.durationWeeks && (
+                    <span className="text-slate-400">{template.durationWeeks} weeks</span>
+                  )}
+                  {template.pgyLevels && template.pgyLevels.length > 0 && (
+                    <span className="text-slate-400">
+                      PGY: {template.pgyLevels.join(', ')}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Activity Inspector Component
+// ============================================================================
+
+interface Activity {
+  id: string;
+  code: string;
+  name: string;
+  category?: string;
+  countsTowardClinic?: boolean;
+  requiresSupervision?: boolean;
+  isActive?: boolean;
+}
+
+function ActivityInspector({ refreshKey }: { refreshKey: number }) {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  useEffect(() => {
+    const fetchActivities = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Note: /activities endpoint doesn't support limit param
+        const res = await fetch(`${API_BASE_URL}/activities`, {
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const items = data.items || data.activities || (Array.isArray(data) ? data : []);
+        setActivities(items.map((a: Record<string, unknown>) => ({
+          id: a.id as string,
+          code: a.display_abbreviation as string || a.displayAbbreviation as string || a.code as string,
+          name: a.name as string,
+          category: a.activity_category as string || a.activityCategory as string || a.category as string,
+          countsTowardClinic: a.counts_toward_clinical_hours as boolean ?? a.countsTowardClinicalHours as boolean,
+          requiresSupervision: a.requires_supervision as boolean ?? a.requiresSupervision as boolean,
+          isActive: !(a.is_archived as boolean ?? a.isArchived as boolean ?? false),
+        })));
+      } catch (err) {
+        console.error('ActivityInspector fetch error:', err);
+        setError(err instanceof Error ? `${err.name}: ${err.message}` : 'Failed to fetch activities');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchActivities();
+  }, [refreshKey]);
+
+  const categories = ['all', ...new Set(activities.map(a => a.category).filter(Boolean))];
+  const filteredActivities = filterCategory === 'all'
+    ? activities
+    : activities.filter(a => a.category === filterCategory);
+
+  const getCategoryColor = (category?: string) => {
+    switch (category?.toLowerCase()) {
+      case 'clinic': return 'text-emerald-400 bg-emerald-900/30';
+      case 'inpatient': return 'text-amber-400 bg-amber-900/30';
+      case 'administrative': case 'admin': return 'text-slate-400 bg-slate-700/50';
+      case 'educational': case 'conference': return 'text-violet-400 bg-violet-900/30';
+      case 'leave': case 'off': return 'text-cyan-400 bg-cyan-900/30';
+      default: return 'text-slate-400 bg-slate-700/50';
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-slate-900">
+      <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 border-b border-slate-700/50">
+        <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600"
+        >
+          {categories.map(cat => (
+            <option key={cat} value={cat}>{cat === 'all' ? 'All Categories' : cat}</option>
+          ))}
+        </select>
+        <span className="ml-auto text-xs text-slate-500">{filteredActivities.length} activities</span>
+      </div>
+
+      <div className="flex-1 overflow-auto">
+        {loading && (
+          <div className="flex items-center justify-center h-32">
+            <RefreshCw className="w-6 h-6 text-cyan-400 animate-spin" />
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 p-4 m-3 bg-red-900/20 border border-red-700/50 rounded-lg">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+            <span className="text-red-400">{error}</span>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <table className="w-full text-xs">
+            <thead className="sticky top-0 bg-slate-800">
+              <tr>
+                <th className="text-left py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Code</th>
+                <th className="text-left py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Name</th>
+                <th className="text-left py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Category</th>
+                <th className="text-center py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Clinic</th>
+                <th className="text-center py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Supervision</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredActivities.map((activity, idx) => (
+                <tr key={activity.id} className={idx % 2 === 0 ? 'bg-slate-800/20' : ''}>
+                  <td className="py-2 px-3 border-b border-slate-700/30">
+                    <code className="px-2 py-0.5 bg-slate-700 rounded text-cyan-300">{activity.code}</code>
+                  </td>
+                  <td className="py-2 px-3 text-white border-b border-slate-700/30">{activity.name}</td>
+                  <td className="py-2 px-3 border-b border-slate-700/30">
+                    <span className={`px-2 py-0.5 rounded ${getCategoryColor(activity.category)}`}>
+                      {activity.category || '—'}
+                    </span>
+                  </td>
+                  <td className="py-2 px-3 text-center border-b border-slate-700/30">
+                    {activity.countsTowardClinic ? '✓' : '—'}
+                  </td>
+                  <td className="py-2 px-3 text-center border-b border-slate-700/30">
+                    {activity.requiresSupervision ? '✓' : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
 // Main Component
 // ============================================================================
 
@@ -716,6 +1252,9 @@ export default function DebuggerPage() {
   const [splitRatio, setSplitRatio] = useState<SplitRatio>(50);
   const [leftRefreshKey, setLeftRefreshKey] = useState(0);
   const [rightRefreshKey, setRightRefreshKey] = useState(0);
+
+  // Inspector mode state
+  const [inspectorMode, setInspectorMode] = useState<InspectorMode>('schedule');
 
   // UI state
   const [showDiagnosis, setShowDiagnosis] = useState(true);
@@ -905,7 +1444,20 @@ export default function DebuggerPage() {
         {rightWidth > 0 && (
           <div className="flex flex-col" style={{ width: `${rightWidth}%` }}>
             <div className="flex items-center justify-between px-3 py-2 bg-slate-800/50 border-b border-slate-700/50">
-              <span className="text-xs font-medium text-slate-400">Database Inspector</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-slate-400">Database Inspector</span>
+                <select
+                  value={inspectorMode}
+                  onChange={(e) => setInspectorMode(e.target.value as InspectorMode)}
+                  className="px-2 py-1 bg-slate-700 text-white rounded text-xs border border-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                >
+                  {INSPECTOR_MODES.map(mode => (
+                    <option key={mode.value} value={mode.value}>
+                      {mode.icon} {mode.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="flex items-center gap-1">
                 <button
                   onClick={handleRefreshRight}
@@ -928,7 +1480,11 @@ export default function DebuggerPage() {
               </div>
             </div>
             <div className="flex-1 overflow-hidden">
-              <ScheduleMirrorView refreshKey={rightRefreshKey} />
+              {inspectorMode === 'schedule' && <ScheduleMirrorView refreshKey={rightRefreshKey} />}
+              {inspectorMode === 'absences' && <AbsenceInspector refreshKey={rightRefreshKey} />}
+              {inspectorMode === 'people' && <PeopleInspector refreshKey={rightRefreshKey} />}
+              {inspectorMode === 'rotations' && <RotationTemplateInspector refreshKey={rightRefreshKey} />}
+              {inspectorMode === 'activities' && <ActivityInspector refreshKey={rightRefreshKey} />}
             </div>
           </div>
         )}
@@ -939,7 +1495,7 @@ export default function DebuggerPage() {
         <div className="flex items-center gap-4">
           <span>Frontend: <span className="text-white font-mono">{leftUrl}</span></span>
           <span className="text-slate-600">|</span>
-          <span>Database: <span className="text-cyan-400">API Inspector</span></span>
+          <span>Inspector: <span className="text-cyan-400">{INSPECTOR_MODES.find(m => m.value === inspectorMode)?.label}</span></span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-slate-500">Shortcuts:</span>

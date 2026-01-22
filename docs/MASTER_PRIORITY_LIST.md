@@ -295,7 +295,7 @@ Major fixes to half-day assignment pipeline:
 **Doc:** [`docs/reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md`](reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md)
 
 Remaining faculty-specific gaps:
-- 2 faculty have zero Block 10 legacy assignments (Anne Lamoureux, Kyle Samblanet)
+- 2 adjunct faculty have zero Block 10 legacy assignments
 - Weekly min/max clinic parameters exist but are not enforced in constraints
 - 4 faculty have no weekly templates; overrides are effectively empty
 - Faculty expansion service exists but is not wired to half-day mode
@@ -379,7 +379,7 @@ Side-by-side debugger for frontend vs DB comparison not displaying assignment da
 **Chrome Extension Debugging Confirmed:**
 - Block 10 (Mar 12 - Apr 8): **702 assignments**, 124 residents with activity codes
 - Person IDs match between `/people` and `/half-day-assignments`
-- Sample: Christian Hernandez has "OFF" on Mar 12 AM
+- Sample: Resident shows "OFF" on Mar 12 AM
 
 **Likely Cause:** Hot reload not picking up TypeScript changes. Needs hard refresh (Cmd+Shift+R).
 
@@ -397,9 +397,14 @@ Side-by-side debugger for frontend vs DB comparison not displaying assignment da
 
 **Related:** MCP needs Claude Code restart to pick up new `.mcp.json` headers.
 
-**Future Enhancement:**
-- Extend Database Inspector to support other data types beyond schedule (absences, activities, rotation templates, people details)
-- Currently the right panel is schedule-specific (ScheduleMirrorView); add view mode selector for different data comparisons
+**Enhancement Implemented (Session 128):**
+- ✅ Extended Database Inspector to support multiple data types:
+  - Schedule (existing)
+  - Absences (new) - 100 absences with type filtering
+  - People (new) - 33 people with search, type filter, PGY levels
+  - Rotations (new) - 87 templates in grid layout
+  - Activities (new) - has upstream API issue (code validator too strict for 'LV-PM')
+- View mode selector dropdown in Database Inspector header
 
 ### 16. ~~Block 10 GUI Navigation~~ ✅ RESOLVED (PR #758)
 **Priority:** MEDIUM
