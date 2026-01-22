@@ -5,7 +5,8 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 
 class EventType(str, Enum):
@@ -25,24 +26,34 @@ class EventType(str, Enum):
     SOLVER_COMPLETE = "solver_complete"
 
 
-class WebSocketEvent(BaseModel):
-    """Base class for all WebSocket events."""
+class WebSocketEventBase(BaseModel):
+    """
+    Base class for all WebSocket events.
+
+    Automatically serializes all fields to camelCase for frontend compatibility.
+    This ensures WS messages follow the same convention as REST API responses
+    (which use axios interceptor for snake_case -> camelCase conversion).
+    """
+
+    model_config = ConfigDict(
+        # Automatically generate camelCase aliases for all fields
+        alias_generator=to_camel,
+        # Allow both snake_case and camelCase on input
+        populate_by_name=True,
+        # Use enum values (not enum names) in serialization
+        use_enum_values=True,
+    )
+
+
+class WebSocketEvent(WebSocketEventBase):
+    """Generic WebSocket event with data payload."""
 
     event_type: EventType
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     data: dict[str, Any] = Field(default_factory=dict)
 
-    class Config:
-        """Pydantic config."""
 
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }
-
-
-class ScheduleUpdatedEvent(BaseModel):
+class ScheduleUpdatedEvent(WebSocketEventBase):
     """Event for schedule updates."""
 
     event_type: EventType = EventType.SCHEDULE_UPDATED
@@ -54,17 +65,8 @@ class ScheduleUpdatedEvent(BaseModel):
     affected_blocks_count: int = 0
     message: str = ""
 
-    class Config:
-        """Pydantic config."""
 
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }
-
-
-class AssignmentChangedEvent(BaseModel):
+class AssignmentChangedEvent(WebSocketEventBase):
     """Event for assignment changes."""
 
     event_type: EventType = EventType.ASSIGNMENT_CHANGED
@@ -77,17 +79,8 @@ class AssignmentChangedEvent(BaseModel):
     changed_by: UUID | None = None
     message: str = ""
 
-    class Config:
-        """Pydantic config."""
 
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }
-
-
-class SwapRequestedEvent(BaseModel):
+class SwapRequestedEvent(WebSocketEventBase):
     """Event for swap requests."""
 
     event_type: EventType = EventType.SWAP_REQUESTED
@@ -99,17 +92,8 @@ class SwapRequestedEvent(BaseModel):
     affected_assignments: list[UUID] = Field(default_factory=list)
     message: str = ""
 
-    class Config:
-        """Pydantic config."""
 
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }
-
-
-class SwapApprovedEvent(BaseModel):
+class SwapApprovedEvent(WebSocketEventBase):
     """Event for swap approvals."""
 
     event_type: EventType = EventType.SWAP_APPROVED
@@ -121,17 +105,8 @@ class SwapApprovedEvent(BaseModel):
     affected_assignments: list[UUID] = Field(default_factory=list)
     message: str = ""
 
-    class Config:
-        """Pydantic config."""
 
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }
-
-
-class ConflictDetectedEvent(BaseModel):
+class ConflictDetectedEvent(WebSocketEventBase):
     """Event for conflict detection."""
 
     event_type: EventType = EventType.CONFLICT_DETECTED
@@ -143,17 +118,8 @@ class ConflictDetectedEvent(BaseModel):
     affected_blocks: list[UUID] = Field(default_factory=list)
     message: str = ""
 
-    class Config:
-        """Pydantic config."""
 
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }
-
-
-class ResilienceAlertEvent(BaseModel):
+class ResilienceAlertEvent(WebSocketEventBase):
     """Event for resilience system alerts."""
 
     event_type: EventType = EventType.RESILIENCE_ALERT
@@ -168,17 +134,8 @@ class ResilienceAlertEvent(BaseModel):
     message: str = ""
     recommendations: list[str] = Field(default_factory=list)
 
-    class Config:
-        """Pydantic config."""
 
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }
-
-
-class ConnectionAckEvent(BaseModel):
+class ConnectionAckEvent(WebSocketEventBase):
     """Event acknowledging successful connection."""
 
     event_type: EventType = EventType.CONNECTION_ACK
@@ -186,46 +143,19 @@ class ConnectionAckEvent(BaseModel):
     user_id: UUID
     message: str = "Connection established"
 
-    class Config:
-        """Pydantic config."""
 
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }
-
-
-class PingEvent(BaseModel):
+class PingEvent(WebSocketEventBase):
     """Ping event for keepalive."""
 
     event_type: EventType = EventType.PING
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        """Pydantic config."""
 
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }
-
-
-class PongEvent(BaseModel):
+class PongEvent(WebSocketEventBase):
     """Pong event response to ping."""
 
     event_type: EventType = EventType.PONG
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-
-    class Config:
-        """Pydantic config."""
-
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }
 
 
 # =============================================================================
@@ -233,7 +163,7 @@ class PongEvent(BaseModel):
 # =============================================================================
 
 
-class SolverAssignment(BaseModel):
+class SolverAssignment(WebSocketEventBase):
     """Single assignment from solver."""
 
     person_id: str
@@ -244,15 +174,17 @@ class SolverAssignment(BaseModel):
     t_idx: int | None = None  # Template index for layer calculation
 
 
-class SolverDelta(BaseModel):
+class SolverDelta(WebSocketEventBase):
     """Delta between consecutive solver solutions."""
 
     added: list[SolverAssignment] = Field(default_factory=list)
     removed: list[SolverAssignment] = Field(default_factory=list)
-    moved: list[dict[str, str]] = Field(default_factory=list)  # {person_id, block_id, old_template_id, new_template_id}
+    moved: list[dict[str, str]] = Field(
+        default_factory=list
+    )  # {person_id, block_id, old_template_id, new_template_id}
 
 
-class SolverSolutionEvent(BaseModel):
+class SolverSolutionEvent(WebSocketEventBase):
     """
     Event fired when CP-SAT solver finds a new feasible solution.
 
@@ -285,17 +217,8 @@ class SolverSolutionEvent(BaseModel):
     is_optimal: bool = False
     elapsed_seconds: float
 
-    class Config:
-        """Pydantic config."""
 
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }
-
-
-class SolverCompleteEvent(BaseModel):
+class SolverCompleteEvent(WebSocketEventBase):
     """
     Event fired when solver completes (optimal, timeout, or error).
 
@@ -314,12 +237,3 @@ class SolverCompleteEvent(BaseModel):
     final_assignment_count: int
     total_elapsed_seconds: float
     message: str = ""
-
-    class Config:
-        """Pydantic config."""
-
-        use_enum_values = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            UUID: lambda v: str(v),
-        }

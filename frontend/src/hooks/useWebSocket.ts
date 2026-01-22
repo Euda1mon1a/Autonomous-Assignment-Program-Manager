@@ -58,10 +58,10 @@ export interface WebSocketEvent<T = unknown> {
 export interface ScheduleUpdatedEvent extends WebSocketEvent {
   eventType: 'schedule_updated'
   scheduleId: string | null
-  academicYear_id: string | null
+  academicYearId: string | null
   userId: string | null
-  update_type: 'generated' | 'modified' | 'regenerated'
-  affected_blocks_count: number
+  updateType: 'generated' | 'modified' | 'regenerated'
+  affectedBlocksCount: number
   message: string
 }
 
@@ -74,8 +74,8 @@ export interface AssignmentChangedEvent extends WebSocketEvent {
   personId: string
   blockId: string
   rotationTemplateId: string | null
-  change_type: 'created' | 'updated' | 'deleted'
-  changed_by: string | null
+  changeType: 'created' | 'updated' | 'deleted'
+  changedBy: string | null
   message: string
 }
 
@@ -85,10 +85,10 @@ export interface AssignmentChangedEvent extends WebSocketEvent {
 export interface SwapRequestedEvent extends WebSocketEvent {
   eventType: 'swap_requested'
   swapId: string
-  requester_id: string
-  target_personId: string | null
+  requesterId: string
+  targetPersonId: string | null
   swapType: 'oneToOne' | 'absorb'
-  affected_assignments: string[]
+  affectedAssignments: string[]
   message: string
 }
 
@@ -98,10 +98,10 @@ export interface SwapRequestedEvent extends WebSocketEvent {
 export interface SwapApprovedEvent extends WebSocketEvent {
   eventType: 'swap_approved'
   swapId: string
-  requester_id: string
-  target_personId: string | null
-  approved_by: string
-  affected_assignments: string[]
+  requesterId: string
+  targetPersonId: string | null
+  approvedBy: string
+  affectedAssignments: string[]
   message: string
 }
 
@@ -112,9 +112,9 @@ export interface ConflictDetectedEvent extends WebSocketEvent {
   eventType: 'conflict_detected'
   conflictId: string | null
   personId: string
-  conflict_type: 'double_booking' | 'acgmeViolation' | 'absence_overlap'
+  conflictType: 'doubleBooking' | 'acgmeViolation' | 'absenceOverlap'
   severity: 'low' | 'medium' | 'high' | 'critical'
-  affected_blocks: string[]
+  affectedBlocks: string[]
   message: string
 }
 
@@ -123,11 +123,11 @@ export interface ConflictDetectedEvent extends WebSocketEvent {
  */
 export interface ResilienceAlertEvent extends WebSocketEvent {
   eventType: 'resilience_alert'
-  alert_type: 'utilization_high' | 'n1_failure' | 'n2_failure' | 'defenseLevel_change'
+  alertType: 'utilizationHigh' | 'n1Failure' | 'n2Failure' | 'defenseLevelChange'
   severity: 'green' | 'yellow' | 'orange' | 'red' | 'black'
-  current_utilization: number | null
+  currentUtilization: number | null
   defenseLevel: string | null
-  affected_persons: string[]
+  affectedPersons: string[]
   message: string
   recommendations: string[]
 }
@@ -313,6 +313,35 @@ export interface UseWebSocketReturn {
 // ============================================================================
 
 /**
+ * Recursively converts all snake_case keys to camelCase.
+ * This ensures WS messages match REST API convention (axios interceptor does this for REST).
+ *
+ * @param obj - Object with potentially snake_case keys
+ * @returns Object with camelCase keys
+ */
+function snakeToCamel(obj: unknown): unknown {
+  if (obj === null || obj === undefined) {
+    return obj
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(snakeToCamel)
+  }
+
+  if (typeof obj === 'object') {
+    const result: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      // Convert snake_case to camelCase
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
+      result[camelKey] = snakeToCamel(value)
+    }
+    return result
+  }
+
+  return obj
+}
+
+/**
  * Constructs the WebSocket URL from the API base URL.
  *
  * @param apiUrl - The HTTP API base URL
@@ -341,6 +370,14 @@ function getWebSocketUrl(apiUrl?: string): string {
     baseUrl = `http://localhost:8000${baseUrl}`
   }
 
+  // Ensure /api/v1 is in the path (backend mounts WS at /api/v1/ws)
+  // This handles the case where NEXT_PUBLIC_API_URL is just "http://localhost:8000"
+  if (!baseUrl.includes('/api/v1')) {
+    // Remove trailing slash if present
+    baseUrl = baseUrl.replace(/\/$/, '')
+    baseUrl = `${baseUrl}/api/v1`
+  }
+
   // Convert http(s) to ws(s)
   const wsUrl = baseUrl.replace(/^http/, 'ws')
 
@@ -354,12 +391,17 @@ function getWebSocketUrl(apiUrl?: string): string {
 /**
  * Parses a WebSocket message into a typed event.
  *
+ * Automatically converts all snake_case keys to camelCase for frontend consistency.
+ * This mirrors what axios does for REST API responses.
+ *
  * @param data - The raw message data
  * @returns Parsed event or null if parsing fails
  */
 function parseMessage(data: string): AnyWebSocketEvent | null {
   try {
-    const parsed = JSON.parse(data) as AnyWebSocketEvent
+    const raw = JSON.parse(data) as Record<string, unknown>
+    // Convert all keys from snake_case to camelCase (defensive - backend should send camelCase)
+    const parsed = snakeToCamel(raw) as AnyWebSocketEvent
     if (!parsed.eventType) {
       // Invalid message format
       return null

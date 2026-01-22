@@ -68,7 +68,8 @@ class Connection:
         Returns:
             True if successful, False if connection closed
         """
-        return await self.send_json(event.model_dump(mode="json"))
+        # Use by_alias=True to emit camelCase keys (e.g., eventType not event_type)
+        return await self.send_json(event.model_dump(mode="json", by_alias=True))
 
 
 class ConnectionManager:

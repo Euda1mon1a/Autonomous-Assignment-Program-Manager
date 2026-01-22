@@ -7,7 +7,9 @@ import { get } from '@/lib/api'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { EmptyState } from '@/components/EmptyState'
+import { FacultyWeeklyEditor } from '@/components/FacultyWeeklyEditor'
 import type { Person } from '@/types/api'
+import type { FacultyRole } from '@/types/faculty-activity'
 
 interface FacultyActivityTemplatesTabProps {
   canEdit: boolean
@@ -122,62 +124,12 @@ export function FacultyActivityTemplatesTab({
           description="Choose a faculty member to view and edit their weekly activity template"
         />
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            {selectedFaculty.name}&apos;s Weekly Template
-          </h3>
-
-          {/* Weekly grid placeholder */}
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">
-                    Slot
-                  </th>
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(
-                    (day) => (
-                      <th
-                        key={day}
-                        className="px-4 py-2 text-center text-sm font-medium text-gray-600"
-                      >
-                        {day}
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {['AM', 'PM'].map((slot) => (
-                  <tr key={slot} className="border-t border-gray-200">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-600">
-                      {slot}
-                    </td>
-                    {Array.from({ length: 7 }).map((_, dayIndex) => (
-                      <td
-                        key={dayIndex}
-                        className="px-4 py-3 text-center border-l border-gray-200"
-                      >
-                        <button
-                          type="button"
-                          disabled={!canEdit}
-                          className="w-full px-2 py-1 text-sm text-gray-500 bg-gray-50 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {canEdit ? 'Click to set' : '—'}
-                        </button>
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <p className="mt-4 text-sm text-gray-500">
-            Note: Full template editing is available in the Faculty Weekly
-            Editor component.
-          </p>
-        </div>
+        <FacultyWeeklyEditor
+          personId={selectedFaculty.id}
+          personName={selectedFaculty.name}
+          facultyRole={selectedFaculty.facultyRole as FacultyRole | null}
+          readOnly={!canEdit}
+        />
       )}
     </div>
   )

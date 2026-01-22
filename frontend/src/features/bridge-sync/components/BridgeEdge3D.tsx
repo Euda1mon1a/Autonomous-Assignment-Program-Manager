@@ -17,7 +17,8 @@ interface BridgeEdge3DProps {
 }
 
 export function BridgeEdge3D({ edge, nodes }: BridgeEdge3DProps) {
-  const lineRef = useRef<THREE.Line>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lineRef = useRef<any>(null);
   const dashOffsetRef = useRef(0);
 
   const sourceNode = nodes.find((n) => n.id === edge.source);
@@ -52,20 +53,24 @@ export function BridgeEdge3D({ edge, nodes }: BridgeEdge3DProps) {
     }
   }, [geometry]);
 
-  useFrame((state, delta) => {
+  useFrame((_state, delta) => {
     if (!lineRef.current?.material) return;
 
     // Animate dash offset for flow effect
     if (edge.active) {
       dashOffsetRef.current -= delta * 2;
-      (lineRef.current.material as THREE.LineDashedMaterial).dashOffset =
-        dashOffsetRef.current;
+      // dashOffset exists on LineDashedMaterial at runtime
+      const material = lineRef.current.material as THREE.LineDashedMaterial & { dashOffset: number };
+      material.dashOffset = dashOffsetRef.current;
     }
   });
 
   if (!geometry || points.length < 2) return null;
 
+  // R3F uses lowercase JSX elements that map to Three.js classes
+  // TypeScript incorrectly infers these as SVG elements
   return (
+    // @ts-expect-error - R3F line element, not SVG
     <line ref={lineRef} geometry={geometry}>
       <lineDashedMaterial
         color={edge.active ? '#06b6d4' : '#475569'}

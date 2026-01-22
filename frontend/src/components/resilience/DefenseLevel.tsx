@@ -2,11 +2,53 @@
  * DefenseLevel Component
  *
  * Visual indicator for 5-tier defense in depth level (GREEN → YELLOW → ORANGE → RED → BLACK)
+ *
+ * The backend returns defense levels using nuclear safety terminology:
+ * - PREVENTION, CONTROL, SAFETY_SYSTEMS, CONTAINMENT, EMERGENCY
+ *
+ * This component maps those to color-coded levels for visual display.
  */
 
 import React from 'react';
 
 export type DefenseLevelType = 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED' | 'BLACK';
+
+/**
+ * Backend defense level values (nuclear safety paradigm).
+ * These come from the resilience API's DefenseLevel enum.
+ */
+export type BackendDefenseLevel =
+  | 'PREVENTION'
+  | 'CONTROL'
+  | 'SAFETY_SYSTEMS'
+  | 'CONTAINMENT'
+  | 'EMERGENCY';
+
+/**
+ * Maps backend defense level to frontend color-coded level.
+ *
+ * Backend (Nuclear Safety)  →  Frontend (Color)
+ * ─────────────────────────────────────────────
+ * PREVENTION                →  GREEN   (Normal operations)
+ * CONTROL                   →  YELLOW  (Minor degradation)
+ * SAFETY_SYSTEMS            →  ORANGE  (Active mitigation)
+ * CONTAINMENT               →  RED     (Crisis containment)
+ * EMERGENCY                 →  BLACK   (Full emergency)
+ */
+export const mapBackendDefenseLevel = (
+  backendLevel: BackendDefenseLevel | string | undefined
+): DefenseLevelType => {
+  const mapping: Record<BackendDefenseLevel, DefenseLevelType> = {
+    PREVENTION: 'GREEN',
+    CONTROL: 'YELLOW',
+    SAFETY_SYSTEMS: 'ORANGE',
+    CONTAINMENT: 'RED',
+    EMERGENCY: 'BLACK',
+  };
+
+  if (!backendLevel) return 'GREEN';
+  return mapping[backendLevel as BackendDefenseLevel] || 'GREEN';
+};
 
 export interface DefenseLevelProps {
   level: DefenseLevelType;

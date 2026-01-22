@@ -1,7 +1,7 @@
 # Best Practices & Gotchas
 
 > **Purpose:** Prevent common bugs and headaches. Read this before starting work.
-> **Last Updated:** 2026-01-09
+> **Last Updated:** 2026-01-22
 
 ---
 
@@ -74,6 +74,37 @@ console.log(person.pgyLevel);  // Works!
 - When adding new API fields, add them as camelCase in frontend types
 - Mock data in tests should use camelCase (matches post-axios transformation)
 
+### URL Query Parameters (Couatl Killer)
+
+**Exception to the rule:** URL query params MUST use snake_case, even in frontend code.
+
+```typescript
+// ✅ CORRECT - backend expects snake_case
+const params = new URLSearchParams({ block_id: '123', include_inactive: 'true' });
+router.push(`/schedule?person_id=${id}`);
+
+// ❌ WRONG - backend won't recognize these
+const params = new URLSearchParams({ blockId: '123', includeInactive: 'true' });
+router.push(`/schedule?personId=${id}`);
+```
+
+**Why:** Query params go directly to the API. The axios interceptor only converts request/response **bodies**, not URL parameters.
+
+### SQLAlchemy Boolean Negation (Beholder Bane)
+
+**Use `~column` not `not column`** for SQLAlchemy boolean filters:
+
+```python
+# ✅ CORRECT - SQLAlchemy __invert__ generates SQL NOT
+query.filter(~Person.is_active)
+query.filter(Person.is_deleted == False)  # noqa: E712
+
+# ❌ WRONG - Python bool, returns True/False, not SQL expression
+query.filter(not Person.is_active)  # Always True or False!
+```
+
+**Why:** `not` is Python's boolean operator and returns `True`/`False`. `~` invokes SQLAlchemy's `__invert__` to generate proper SQL `NOT` clause.
+
 ---
 
 ## 2. Docker Environment Differences
@@ -132,6 +163,60 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build b
 | Redis | 6379 | Cache/Celery broker |
 | MCP | 8081 | AI tools (not 8080 to avoid Claude Code conflict) |
 
+### Docker Networking: localhost vs Service Names
+
+**The Problem:** Inside a Docker container, `localhost` refers to the container itself, NOT the host machine or other containers.
+
+```
+❌ WRONG (from inside frontend container):
+   fetch('http://localhost:8000/api/...')
+   → Tries to connect to frontend container's port 8000
+   → Connection refused!
+
+✅ CORRECT (from inside frontend container):
+   fetch('http://backend:8000/api/...')
+   → Docker DNS resolves 'backend' to the backend container
+   → Works!
+```
+
+**Where This Bites You:**
+
+| Scenario | Host Machine | Inside Container |
+|----------|--------------|------------------|
+| Browser → Backend | `localhost:8000` ✅ | N/A |
+| Frontend SSR → Backend | N/A | `backend:8000` ✅ |
+| Next.js Rewrites | `localhost:8000` ✅ (local dev) | `backend:8000` ✅ (Docker) |
+
+**The Fix Pattern (next.config.js):**
+
+```javascript
+// Use env var with sensible default
+const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
+
+// Then in rewrites:
+{ source: '/api/:path*', destination: `${backendUrl}/api/:path*` }
+```
+
+**In Dockerfile (set at build time):**
+```dockerfile
+ARG BACKEND_URL=http://backend:8000
+ENV BACKEND_URL=$BACKEND_URL
+```
+
+**Symptoms of This Bug:**
+- `ECONNREFUSED 127.0.0.1:8000` in frontend container logs
+- API calls work in browser but fail in SSR/rewrites
+- "Works on my machine" but fails in Docker
+
+**Quick Diagnosis:**
+```bash
+# Check what URL the frontend is using
+docker compose logs frontend | grep -i "backend\|rewrite"
+
+# Test connectivity from inside container
+docker exec residency-scheduler-frontend wget -qO- http://backend:8000/api/v1/health
+```
+
 ### Data Persistence: Bind Mounts vs Named Volumes
 
 **Current Setup (Local Dev):** Bind mounts for postgres/redis
@@ -175,6 +260,28 @@ du -sh data/postgres/   # ~80MB typical
 ---
 
 ## 3. Database & Migrations
+
+### Backup Before Destructive Operations (Lich's Phylactery)
+
+**MUST create backup before:**
+- Schedule generation (bulk writes)
+- Swap execution (multi-table updates)
+- Migration rollbacks
+- Any `DELETE` or `TRUNCATE` operations
+
+**MCP backup tools:**
+```bash
+# Before destructive operation
+mcp__residency-scheduler__create_backup_tool(reason="Pre-generation backup")
+
+# Verify backup exists
+mcp__residency-scheduler__get_backup_status_tool()
+
+# If something goes wrong
+mcp__residency-scheduler__restore_backup_tool(backup_id="...")
+```
+
+**Skill shortcut:** Use `/safe-schedule-generation` which enforces backup-first workflow.
 
 ### Migration Naming Convention
 
@@ -446,6 +553,116 @@ try {
 - API requests go through Next.js proxy (`/api/*` → backend)
 - This makes requests same-origin, avoiding CORS issues
 - SameSite=lax cookies work because of same-origin
+
+### WebSocket Conventions
+
+**Backend sends camelCase, frontend accepts both (belt + suspenders):**
+
+**Backend (Pydantic):**
+```python
+from pydantic.alias_generators import to_camel
+
+class WebSocketEventBase(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+    )
+```
+
+**Frontend (defensive transform):**
+```typescript
+function snakeToCamel(obj: unknown): unknown {
+  // Recursively converts snake_case keys to camelCase
+  // Applied to all incoming WebSocket messages
+}
+```
+
+**Why both?**
+- Backend guarantees camelCase output
+- Frontend transforms defensively (handles legacy/edge cases)
+- TypeScript interfaces use camelCase (matches runtime)
+
+### Enum Values Stay snake_case (Keys Convert, Values Don't)
+
+**Critical distinction:** The axios interceptor and WebSocket transformer convert **keys** only, NOT **values**.
+
+```json
+// API Response (wire format)
+{ "swap_type": "one_to_one", "status": "pending" }
+
+// After axios interceptor (what frontend receives)
+{ "swapType": "one_to_one", "status": "pending" }
+//   ↑ key converted        ↑ value unchanged!
+```
+
+**Frontend TypeScript types MUST use snake_case for enum values:**
+```typescript
+// ✅ CORRECT
+type SwapType = 'one_to_one' | 'absorb';
+type ConflictType = 'leave_fmit_overlap' | 'back_to_back' | 'acgme_violation';
+
+// ❌ WRONG (will never match API responses)
+type SwapType = 'oneToOne' | 'absorb';
+type ConflictType = 'leaveFmitOverlap' | 'backToBack' | 'acgmeViolation';
+```
+
+**Why not convert enum values?**
+1. Database stores snake_case values (`swap_records.swap_type = 'one_to_one'`)
+2. Changing would require database migration to update existing data
+3. Enum values are stable identifiers, not display strings
+4. Converting values would be error-prone (breaks round-trip)
+
+**Summary Table:**
+
+| Data Type | Wire Format | Frontend Receives | Frontend Type |
+|-----------|-------------|-------------------|---------------|
+| Object keys | snake_case | camelCase | camelCase |
+| Enum values | snake_case | snake_case | snake_case |
+| URL params | snake_case | N/A | snake_case |
+
+**WebSocket URL must include `/api/v1`:**
+```typescript
+// ✅ CORRECT - goes through Next.js proxy, gets auth cookie
+const wsUrl = `${window.location.origin}/api/v1/ws`
+
+// ❌ WRONG - bypasses proxy, loses auth cookie
+const wsUrl = `ws://localhost:8000/ws`
+```
+
+### OpenAPI Type Contract (Hydra's Heads)
+
+**Generated types ARE the source of truth.** Schema drift is a critical bug.
+
+```
+backend/app/schemas/*.py (Pydantic)
+         ↓ OpenAPI spec
+frontend/src/types/api-generated.ts (auto-generated, camelCase)
+         ↓ re-exported
+frontend/src/types/api.ts (barrel export + utilities)
+```
+
+**Standing Orders:**
+
+1. **Before frontend API work:** Run `cd frontend && npm run generate:types:check`
+2. **After backend schema changes:** Run `cd frontend && npm run generate:types` and commit both
+3. **Never manually edit `api-generated.ts`** - it's auto-generated
+4. **Pre-commit hook enforces** - commits fail if types drift from backend
+
+**Why this matters:** Manual types caused 47+ wiring disconnects (query params, enums, endpoints). Generated types eliminate drift at the source.
+
+**Enforcement Layers (Belt & Suspenders):**
+
+| Layer | Hook | When |
+|-------|------|------|
+| Pre-commit | `modron-march.sh` | Every commit |
+| CI | `npm run generate:types:check` | Every PR |
+| Startup | Type staleness check | Every session |
+
+**If types are stale:**
+```bash
+cd frontend && npm run generate:types
+git add src/types/api-generated.ts
+```
 
 ---
 

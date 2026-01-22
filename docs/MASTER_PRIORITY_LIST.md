@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-21 (Session 126: Half-day pipeline fixes, BlockAnnualView wiring)
+> **Last Updated:** 2026-01-22 (Session 130: Resolved Codex findings - DefenseLevel mapping, enum conventions)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -290,12 +290,62 @@ Major fixes to half-day assignment pipeline:
 - `backend/app/services/sync_preload_service.py` - NF/PedNF weekends, compound rotations
 - `frontend/src/components/schedule/BlockAnnualView.tsx` - camelCase fix
 
-### 10.2 Faculty Scheduling Pipeline Gaps (Remaining)
+### 10.2 API/WS Convention Audit Required (Session 128)
+
+WebSocket debugging revealed 4 distinct convention violations that were blocking all real-time functionality:
+
+| Issue | Root Cause | Fix Applied |
+|-------|------------|-------------|
+| Cookie auth fails | Didn't strip `Bearer ` prefix from cookie token | Added prefix stripping in `ws.py` |
+| Event schema mismatch | Backend emitted `event_type`, frontend expected `eventType` | Added `serialization_alias` + `by_alias=True` |
+| Subscribe payload mismatch | Frontend sent `scheduleId`, backend expected `schedule_id` | Accept both in `ws.py` |
+| URL path mismatch | WS URL missing `/api/v1` prefix | Ensure `/api/v1` in `getWebSocketUrl()` |
+
+**Systematic Problem:** These are all Couatl Killer violations documented in CLAUDE.md but not followed consistently:
+- Backend snake_case → Frontend camelCase (axios interceptor handles REST, but WS bypassed it)
+- Query params must stay snake_case (not being enforced everywhere)
+
+**Audit Needed:**
+1. **Full WS audit** - All WebSocket messages and handlers for case consistency
+2. **REST endpoint audit** - Query params, request bodies, response bodies
+3. **Hook/useX audit** - All frontend hooks for snake_case query param violations
+4. **Add WS smoke test** - `GET /api/v1/ws/health` + wscat connect to verify WS subsystem
+
+**Files Fixed (Session 128):**
+- `backend/app/api/routes/ws.py` - Bearer prefix, dual-case accept
+- `backend/app/websocket/events.py` - All event classes get `serialization_alias="eventType"`
+- `backend/app/websocket/manager.py` - `by_alias=True` in `send_event()`
+- `frontend/src/hooks/useWebSocket.ts` - `/api/v1` path fix, dual-case parse
+
+**Action:** Create comprehensive audit task for all API conventions per CLAUDE.md rules.
+
+### 10.3 Pre-commit Hook Failures (Session 128)
+
+Pre-commit hooks blocking commits due to pre-existing issues in unmodified files:
+
+| Hook | Issue | Scope |
+|------|-------|-------|
+| **mypy** | 100+ type errors | periodic_tasks.py, tensegrity_solver.py, rigidity_analysis.py, catastrophe.py, main.py, etc. |
+| **bandit** | `command not found` | Tool not installed in environment |
+| **Modron March** | FairnessAuditResponse location | Type is in `useFairness.ts`, not `resilience.ts` where Modron expects it |
+
+**Common mypy error patterns:**
+- Missing return type annotations (`[no-untyped-def]`)
+- Missing type annotations for function arguments
+- `None` attribute access without guards (`[union-attr]`)
+- Incompatible types in assignments
+
+**Action:**
+1. Fix mypy errors systematically (group by file/pattern)
+2. Install bandit: `pip install bandit`
+3. Update Modron March to check correct type locations or move types
+
+### 10.4 Faculty Scheduling Pipeline Gaps (Remaining)
 
 **Doc:** [`docs/reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md`](reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md)
 
 Remaining faculty-specific gaps:
-- 2 faculty have zero Block 10 legacy assignments (Anne Lamoureux, Kyle Samblanet)
+- 2 adjunct faculty have zero Block 10 legacy assignments
 - Weekly min/max clinic parameters exist but are not enforced in constraints
 - 4 faculty have no weekly templates; overrides are effectively empty
 - Faculty expansion service exists but is not wired to half-day mode
@@ -305,6 +355,38 @@ Remaining faculty-specific gaps:
 2. Wire faculty expansion into half-day pipeline before CP-SAT activity solver.
 3. Enforce or normalize weekly clinic min/max limits and fix template coverage gaps.
 4. Align export and UI to the canonical table to avoid mixed sources.
+
+### 10.5 ~~Wiring Standardization Gaps (Session 129/130 - Codex Findings)~~ ✅ RESOLVED
+
+**Branch:** `feature/debugger-multi-inspector` (11 commits, ready for PR merge)
+**Scratchpad:** `session-129-docker-proxy-wiring.md`
+
+| Issue | Severity | Root Cause | Fix Status |
+|-------|----------|------------|------------|
+| WS enum values still snake_case | HIGH | Keys convert, values don't (by design) | ✅ Documented |
+| DefenseLevel mapping mismatch | MEDIUM | Backend: PREVENTION/CONTROL, UI: GREEN/YELLOW | ✅ Fixed |
+| Burnout Rt hardcoded | LOW | API requires burnout tracking (not implemented) | ✅ Documented |
+| Docker proxy routing | HIGH | localhost:8000 unreachable inside container | ✅ Fixed |
+| Suspense boundaries | MEDIUM | useSearchParams without Suspense | ✅ Fixed |
+
+**WS Enum Values → DOCUMENTED AS CONVENTION:**
+Enum values MUST stay snake_case because database stores `swap_type = 'one_to_one'`.
+Changing would require database migration and break 50+ tests.
+- **Resolution:** Documented in `BEST_PRACTICES_AND_GOTCHAS.md` section 8
+- **Frontend types should use:** `type SwapType = 'one_to_one' | 'absorb'` (NOT camelCase)
+
+**DefenseLevel Mapping → FIXED:**
+- Added `mapBackendDefenseLevel()` in `DefenseLevel.tsx`
+- Maps PREVENTION→GREEN, CONTROL→YELLOW, SAFETY_SYSTEMS→ORANGE, CONTAINMENT→RED, EMERGENCY→BLACK
+- Updated `resilience-hub/page.tsx` to use mapping function
+
+**Burnout Rt → DOCUMENTED AS PLACEHOLDER:**
+The `/resilience/burnout/rt` API requires `burned_out_provider_ids` from a burnout tracking system (not yet implemented).
+- Added TODO comment explaining the dependency
+- Added "Placeholder value" UI indicator
+- Future work: Implement burnout detection system
+
+**Resolved:** 2026-01-22 in `feature/debugger-multi-inspector` (commit `90c3c817`)
 
 ---
 
@@ -379,7 +461,7 @@ Side-by-side debugger for frontend vs DB comparison not displaying assignment da
 **Chrome Extension Debugging Confirmed:**
 - Block 10 (Mar 12 - Apr 8): **702 assignments**, 124 residents with activity codes
 - Person IDs match between `/people` and `/half-day-assignments`
-- Sample: Christian Hernandez has "OFF" on Mar 12 AM
+- Sample: Resident shows "OFF" on Mar 12 AM
 
 **Likely Cause:** Hot reload not picking up TypeScript changes. Needs hard refresh (Cmd+Shift+R).
 
@@ -396,6 +478,15 @@ Side-by-side debugger for frontend vs DB comparison not displaying assignment da
 3. If still failing, add console.log to trace data flow
 
 **Related:** MCP needs Claude Code restart to pick up new `.mcp.json` headers.
+
+**Enhancement Implemented (Session 128):**
+- ✅ Extended Database Inspector to support multiple data types:
+  - Schedule (existing)
+  - Absences (new) - 100 absences with type filtering
+  - People (new) - 33 people with search, type filter, PGY levels
+  - Rotations (new) - 87 templates in grid layout
+  - Activities (new) - has upstream API issue (code validator too strict for 'LV-PM')
+- View mode selector dropdown in Database Inspector header
 
 ### 16. ~~Block 10 GUI Navigation~~ ✅ RESOLVED (PR #758)
 **Priority:** MEDIUM

@@ -118,6 +118,39 @@ router.push(`/schedule?personId=${id}`);
 
 **Why:** Query params go directly to the API. The axios interceptor only converts request/response bodies, not URL parameters.
 
+### Enum Values Stay snake_case (Gorgon's Gaze)
+
+**Critical:** Axios/WebSocket interceptors convert KEYS only, not VALUES.
+
+```typescript
+// API Response (wire format)
+{ "swap_type": "one_to_one", "status": "pending" }
+
+// After axios interceptor (what frontend receives)
+{ "swapType": "one_to_one", "status": "pending" }
+//   ↑ key converted        ↑ value unchanged!
+```
+
+**Frontend enum types MUST use snake_case:**
+```typescript
+// ✓ CORRECT
+type SwapType = 'one_to_one' | 'absorb';
+type ConflictType = 'leave_fmit_overlap' | 'back_to_back';
+
+// ✗ WRONG (will never match API responses)
+type SwapType = 'oneToOne' | 'absorb';
+```
+
+**Why:** Database stores snake_case values (`swap_records.swap_type = 'one_to_one'`). Changing would require database migration + breaking 50+ tests.
+
+**Summary Table:**
+
+| Data Type | Wire Format | Frontend Receives | TypeScript Type |
+|-----------|-------------|-------------------|-----------------|
+| Object keys | snake_case | camelCase | camelCase |
+| Enum values | snake_case | snake_case | snake_case |
+| URL params | snake_case | N/A | snake_case |
+
 ### SQLAlchemy Boolean Negation (Beholder Bane)
 
 **Use `~column` not `not column`** for SQLAlchemy boolean filters:

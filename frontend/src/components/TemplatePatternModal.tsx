@@ -213,7 +213,6 @@ export function TemplatePatternModal({
           {/* Editor */}
           {!isLoading && !patternError && localPattern && saveStatus !== 'success' && (
             <WeeklyGridEditor
-              templateId={templateId}
               pattern={localPattern}
               templates={templates}
               isLoading={false}
