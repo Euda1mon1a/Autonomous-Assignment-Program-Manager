@@ -741,7 +741,8 @@ function AbsenceInspector({ refreshKey }: { refreshKey: number }) {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE_URL}/absences?limit=500`, {
+        // Use page_size (not limit) per API schema
+        const res = await fetch(`${API_BASE_URL}/absences?page_size=500`, {
           credentials: 'include',
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -852,7 +853,7 @@ interface PersonDetail {
   pgyLevel?: number;
   email?: string;
   facultyRole?: string;
-  isActive?: boolean;
+  // Note: Person model doesn't have is_active field
 }
 
 function PeopleInspector({ refreshKey }: { refreshKey: number }) {
@@ -880,7 +881,7 @@ function PeopleInspector({ refreshKey }: { refreshKey: number }) {
           pgyLevel: p.pgy_level as number || p.pgyLevel as number,
           email: p.email as string,
           facultyRole: p.faculty_role as string || p.facultyRole as string,
-          isActive: p.is_active as boolean ?? p.isActive as boolean ?? true,
+          // Note: Person model doesn't have is_active field - removed from UI
         })));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch people');
@@ -957,7 +958,7 @@ function PeopleInspector({ refreshKey }: { refreshKey: number }) {
                 <th className="text-left py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Name</th>
                 <th className="text-left py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Type</th>
                 <th className="text-left py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Level/Role</th>
-                <th className="text-left py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Status</th>
+                <th className="text-left py-2 px-3 text-slate-400 font-medium border-b border-slate-700">Email</th>
               </tr>
             </thead>
             <tbody>
@@ -977,10 +978,8 @@ function PeopleInspector({ refreshKey }: { refreshKey: number }) {
                       <span className="text-slate-400">{person.facultyRole}</span>
                     )}
                   </td>
-                  <td className="py-2 px-3 border-b border-slate-700/30">
-                    <span className={person.isActive ? 'text-emerald-400' : 'text-red-400'}>
-                      {person.isActive ? '● Active' : '○ Inactive'}
-                    </span>
+                  <td className="py-2 px-3 border-b border-slate-700/30 text-slate-400 text-[10px]">
+                    {person.email || '—'}
                   </td>
                 </tr>
               ))}
@@ -1141,7 +1140,8 @@ function ActivityInspector({ refreshKey }: { refreshKey: number }) {
         const items = data.items || data.activities || (Array.isArray(data) ? data : []);
         setActivities(items.map((a: Record<string, unknown>) => ({
           id: a.id as string,
-          code: a.display_abbreviation as string || a.displayAbbreviation as string || a.code as string,
+          // Show raw code first for debugging accuracy (display_abbreviation can collapse distinct entries)
+          code: a.code as string || a.display_abbreviation as string || a.displayAbbreviation as string,
           name: a.name as string,
           category: a.activity_category as string || a.activityCategory as string || a.category as string,
           countsTowardClinic: a.counts_toward_clinical_hours as boolean ?? a.countsTowardClinicalHours as boolean,
