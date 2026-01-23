@@ -16,7 +16,7 @@
  * @see docs/plans/keen-tumbling-bentley.md
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   LayoutTemplate,
   Calendar,
@@ -166,7 +166,8 @@ export default function TemplatesHubPage() {
   }, [canEdit, currentRiskTier]);
 
   // Reset to rotations if user doesn't have access to current tab
-  useMemo(() => {
+  // Note: useEffect (not useMemo) because setActiveTab is a side effect
+  useEffect(() => {
     const currentTab = TABS.find((t) => t.id === activeTab);
     if (currentTab && currentTab.requiredTier > userTier) {
       setActiveTab('rotations');

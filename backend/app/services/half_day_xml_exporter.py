@@ -343,7 +343,9 @@ def export_block_schedule(
     """
     from app.utils.academic_blocks import get_block_dates
 
-    block_start, block_end = get_block_dates(block_number, academic_year)
+    block_dates = get_block_dates(block_number, academic_year)
 
     exporter = HalfDayXMLExporter(db)
-    return exporter.export(block_start, block_end, include_faculty=include_faculty)
+    return exporter.export(
+        block_dates.start_date, block_dates.end_date, include_faculty=include_faculty
+    )
