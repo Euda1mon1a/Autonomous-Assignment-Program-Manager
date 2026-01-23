@@ -292,7 +292,7 @@ describe('useGenerateSchedule', () => {
     result.current.mutate({
       startDate: '2024-01-01',
       endDate: '2024-01-31',
-      algorithm: 'cpSat',
+      algorithm: 'cp_sat',
       timeout_seconds: 60,
     })
 
@@ -345,7 +345,7 @@ describe('useGenerateSchedule', () => {
     result.current.mutate({
       startDate: '2024-01-01',
       endDate: '2024-01-31',
-      algorithm: 'cpSat',
+      algorithm: 'cp_sat',
       rotationTemplateIds: ['template-1', 'template-2'],
     })
 
@@ -354,7 +354,7 @@ describe('useGenerateSchedule', () => {
     })
 
     expect(mockedApi.post).toHaveBeenCalledWith('/schedule/generate', expect.objectContaining({
-      algorithm: 'cpSat',
+      algorithm: 'cp_sat',
       rotationTemplateIds: ['template-1', 'template-2'],
     }))
   })

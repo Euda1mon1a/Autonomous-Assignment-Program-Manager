@@ -34,10 +34,10 @@ export interface CoverageTrendChartProps {
 export const MOCK_COVERAGE_DATA: CoverageDataPoint[] = [
   { timestamp: '2024-12-01', coverage: 92.5, algorithm: 'greedy' },
   { timestamp: '2024-12-05', coverage: 94.2, algorithm: 'hybrid' },
-  { timestamp: '2024-12-08', coverage: 93.8, algorithm: 'cpSat' },
+  { timestamp: '2024-12-08', coverage: 93.8, algorithm: 'cp_sat' },
   { timestamp: '2024-12-12', coverage: 95.1, algorithm: 'hybrid' },
   { timestamp: '2024-12-15', coverage: 96.3, algorithm: 'hybrid' },
-  { timestamp: '2024-12-18', coverage: 95.8, algorithm: 'cpSat' },
+  { timestamp: '2024-12-18', coverage: 95.8, algorithm: 'cp_sat' },
   { timestamp: '2024-12-20', coverage: 97.2, algorithm: 'hybrid' },
   { timestamp: '2024-12-22', coverage: 96.8, algorithm: 'hybrid' },
 ];

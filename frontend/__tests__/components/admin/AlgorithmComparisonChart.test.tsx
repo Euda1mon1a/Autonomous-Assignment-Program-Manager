@@ -278,7 +278,7 @@ describe('AlgorithmComparisonChart', () => {
           runCount: 1,
         },
         {
-          algorithm: 'cpSat',
+          algorithm: 'cp_sat',
           coverage: 100,
           violations: 0,
           fairness: 0,
@@ -393,7 +393,7 @@ describe('AlgorithmComparisonChart', () => {
           runCount: 1,
         },
         {
-          algorithm: 'cpSat',
+          algorithm: 'cp_sat',
           coverage: 90,
           violations: 0,
           fairness: 0,

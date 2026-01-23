@@ -15,7 +15,7 @@ import type { UUID } from './api';
 /**
  * Categories for activities to enable filtering and business logic.
  */
-export type ActivityCategory = 'clinical' | 'educational' | 'administrative' | 'timeOff';
+export type ActivityCategory = 'clinical' | 'educational' | 'administrative' | 'time_off';
 
 /**
  * All valid activity categories.
@@ -24,7 +24,7 @@ export const ACTIVITY_CATEGORIES: ActivityCategory[] = [
   'clinical',
   'educational',
   'administrative',
-  'timeOff',
+  'time_off',
 ];
 
 /**
@@ -34,7 +34,7 @@ export const ACTIVITY_CATEGORY_LABELS: Record<ActivityCategory, string> = {
   clinical: 'Clinical',
   educational: 'Educational',
   administrative: 'Administrative',
-  timeOff: 'Time Off',
+  time_off: 'Time Off',
 };
 
 // ============================================================================
@@ -49,7 +49,7 @@ export const ACTIVITY_CATEGORY_LABELS: Record<ActivityCategory, string> = {
  * const fmClinic: Activity = {
  *   id: 'uuid',
  *   name: 'FM Clinic',
- *   code: 'fmClinic',
+ *   code: 'fm_clinic',
  *   displayAbbreviation: 'C',
  *   activityCategory: 'clinical',
  *   isProtected: false,
@@ -62,7 +62,7 @@ export interface Activity {
   id: UUID;
   /** Human-readable name (e.g., 'FM Clinic', 'Lecture') */
   name: string;
-  /** Stable identifier for solver (e.g., 'fmClinic') */
+  /** Stable identifier for solver (e.g., 'fm_clinic') */
   code: string;
   /** Short code for UI grid (e.g., 'C', 'LEC') */
   displayAbbreviation: string | null;

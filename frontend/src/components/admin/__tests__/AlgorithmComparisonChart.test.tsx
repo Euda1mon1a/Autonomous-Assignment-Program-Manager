@@ -20,7 +20,7 @@ describe('AlgorithmComparisonChart', () => {
       runCount: 10,
     },
     {
-      algorithm: 'cpSat',
+      algorithm: 'cp_sat',
       coverage: 98,
       violations: 0,
       fairness: 92,

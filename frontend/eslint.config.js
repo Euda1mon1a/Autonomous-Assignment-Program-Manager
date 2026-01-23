@@ -26,7 +26,7 @@ const eslintConfig = [
       // interfaces MUST use camelCase or runtime access returns undefined.
       // See: Session 079, 080 which fixed 180+ violations across 41 files.
       "@typescript-eslint/naming-convention": [
-        "warn",
+        "error",
         {
           selector: "typeProperty",
           format: ["camelCase"],

@@ -66,7 +66,7 @@ function getCurrentAcademicYear(): number {
 function getActivityColor(activityType: string | undefined): { bg: string; text: string; border: string } {
   switch (activityType) {
     case 'clinic':
-    case 'fmClinic':
+    case 'fm_clinic':
       return { bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-200' }
     case 'inpatient':
       return { bg: 'bg-purple-50', text: 'text-purple-800', border: 'border-purple-200' }

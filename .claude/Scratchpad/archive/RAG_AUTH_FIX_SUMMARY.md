@@ -328,4 +328,3 @@ python3 -m pytest
 **Status:** READY FOR MERGE
 **Testing:** All tests passing (manual verification required in Docker)
 **Documentation:** Updated with new endpoint details
-

@@ -9,7 +9,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 // Backend schema - matches backend/app/schemas/settings.py and SchedulingAlgorithm enum
 // Available algorithms: greedy, cpSat, pulp, hybrid (NOT min_conflicts - no implementation exists)
 interface Settings {
-  schedulingAlgorithm: 'greedy' | 'cpSat' | 'pulp' | 'hybrid'
+  schedulingAlgorithm: 'greedy' | 'cp_sat' | 'pulp' | 'hybrid'
   workHoursPerWeek: number
   maxConsecutiveDays: number
   minDaysOffPerWeek: number
@@ -282,12 +282,12 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     updateSetting(
                       'schedulingAlgorithm',
-                      e.target.value as 'greedy' | 'cpSat' | 'pulp' | 'hybrid'
+                      e.target.value as 'greedy' | 'cp_sat' | 'pulp' | 'hybrid'
                     )
                   }
                 >
                   <option value="greedy">Greedy (Fast)</option>
-                  <option value="cpSat">CP-SAT (Optimal, OR-Tools)</option>
+                  <option value="cp_sat">CP-SAT (Optimal, OR-Tools)</option>
                   <option value="pulp">PuLP (Linear Programming)</option>
                   <option value="hybrid">Hybrid (CP-SAT + PuLP)</option>
                 </select>

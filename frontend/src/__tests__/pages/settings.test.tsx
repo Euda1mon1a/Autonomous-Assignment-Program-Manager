@@ -431,9 +431,9 @@ describe('SettingsPage', () => {
       })
 
       const algorithmSelect = findSelectByLabelText(container, /default algorithm/i)!
-      await user.selectOptions(algorithmSelect, 'cpSat')
+      await user.selectOptions(algorithmSelect, 'cp_sat')
 
-      expect(algorithmSelect.value).toBe('cpSat')
+      expect(algorithmSelect.value).toBe('cp_sat')
     })
 
     it('should toggle weekend scheduling checkbox', async () => {

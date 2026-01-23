@@ -31,7 +31,7 @@ const mockPatterns = [
     rotationTemplateId: 'template-1',
     dayOfWeek: 1,
     timeOfDay: 'AM' as const,
-    activityType: 'fmClinic',
+    activityType: 'fm_clinic',
     linkedTemplateId: 'clinic-1',
     isProtected: false,
     notes: null,

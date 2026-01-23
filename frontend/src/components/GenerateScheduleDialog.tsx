@@ -22,7 +22,7 @@ interface FormErrors {
 
 const algorithmOptions = [
   { value: 'greedy', label: 'Greedy (Fast)', description: 'Quick heuristic, good for initial solutions' },
-  { value: 'cpSat', label: 'CP-SAT (Optimal)', description: 'OR-Tools constraint solver, guarantees ACGME compliance' },
+  { value: 'cp_sat', label: 'CP-SAT (Optimal)', description: 'OR-Tools constraint solver, guarantees ACGME compliance' },
   { value: 'pulp', label: 'PuLP (Large Scale)', description: 'Linear programming, efficient for large problems' },
   { value: 'hybrid', label: 'Hybrid (Best Quality)', description: 'Combines solvers for optimal results' },
 ];
