@@ -8,12 +8,12 @@
 export type StrategyType =
   | 'cooperative'
   | 'aggressive'
-  | 'titForTat'
+  | 'tit_for_tat'
   | 'grudger'
   | 'pavlov'
   | 'random'
-  | 'suspiciousTft'
-  | 'forgivingTft'
+  | 'suspicious_tft'
+  | 'forgiving_tft'
   | 'custom';
 
 export type SimulationStatus =
@@ -264,12 +264,12 @@ export interface GameTheorySummary {
 export const STRATEGY_COLORS: Record<StrategyType, string> = {
   cooperative: '#22c55e',    // green
   aggressive: '#ef4444',     // red
-  titForTat: '#3b82f6',    // blue
+  tit_for_tat: '#3b82f6',    // blue
   grudger: '#f97316',        // orange
   pavlov: '#8b5cf6',         // purple
   random: '#6b7280',         // gray
-  suspiciousTft: '#eab308', // yellow
-  forgivingTft: '#06b6d4',  // cyan
+  suspicious_tft: '#eab308', // yellow
+  forgiving_tft: '#06b6d4',  // cyan
   custom: '#ec4899',         // pink
 };
 
@@ -277,12 +277,12 @@ export const STRATEGY_COLORS: Record<StrategyType, string> = {
 export const STRATEGY_LABELS: Record<StrategyType, string> = {
   cooperative: 'Cooperative',
   aggressive: 'Aggressive',
-  titForTat: 'Tit for Tat',
+  tit_for_tat: 'Tit for Tat',
   grudger: 'Grudger',
   pavlov: 'Pavlov',
   random: 'Random',
-  suspiciousTft: 'Suspicious TFT',
-  forgivingTft: 'Forgiving TFT',
+  suspicious_tft: 'Suspicious TFT',
+  forgiving_tft: 'Forgiving TFT',
   custom: 'Custom',
 };
 

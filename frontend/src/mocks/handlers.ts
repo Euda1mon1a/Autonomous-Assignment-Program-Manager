@@ -546,7 +546,7 @@ export const handlers = [
         rotationTemplateId: params.id,
         dayOfWeek: 1, // Monday
         timeOfDay: 'AM',
-        activityType: 'fmClinic',
+        activityType: 'fm_clinic',
         linkedTemplateId: 'template-2',
         isProtected: false,
         notes: null,
@@ -558,7 +558,7 @@ export const handlers = [
         rotationTemplateId: params.id,
         dayOfWeek: 1, // Monday
         timeOfDay: 'PM',
-        activityType: 'fmClinic',
+        activityType: 'fm_clinic',
         linkedTemplateId: 'template-2',
         isProtected: false,
         notes: null,

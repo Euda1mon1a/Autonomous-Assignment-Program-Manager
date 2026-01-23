@@ -127,7 +127,7 @@ function SettingsPanel({ onSave }: SettingsPanelProps) {
             onChange={(e) => handleChange('scheduling', 'defaultAlgorithm', e.target.value)}
           >
             <option value="greedy">Greedy (Fast)</option>
-            <option value="cpSat">CP-SAT (Optimal, OR-Tools)</option>
+            <option value="cp_sat">CP-SAT (Optimal, OR-Tools)</option>
             <option value="pulp">PuLP (Linear Programming)</option>
             <option value="hybrid">Hybrid (CP-SAT + PuLP)</option>
           </select>
@@ -293,9 +293,9 @@ describe('SettingsPanel', () => {
       renderWithProviders(<SettingsPanel />)
 
       const algorithmSelect = screen.getByLabelText(/default algorithm/i) as HTMLSelectElement
-      await user.selectOptions(algorithmSelect, 'cpSat')
+      await user.selectOptions(algorithmSelect, 'cp_sat')
 
-      expect(algorithmSelect.value).toBe('cpSat')
+      expect(algorithmSelect.value).toBe('cp_sat')
     })
   })
 
@@ -456,7 +456,7 @@ describe('SettingsPanel', () => {
       await user.type(maxHoursInput, '75')
 
       const algorithmSelect = screen.getByLabelText(/default algorithm/i)
-      await user.selectOptions(algorithmSelect, 'cpSat')
+      await user.selectOptions(algorithmSelect, 'cp_sat')
 
       // Submit
       await user.click(screen.getByRole('button', { name: /save settings/i }))
@@ -465,7 +465,7 @@ describe('SettingsPanel', () => {
         expect(mockedApi.put).toHaveBeenCalledWith('/settings', expect.objectContaining({
           academicYear: expect.objectContaining({ blockDuration: 30 }),
           acgme: expect.objectContaining({ maxWeeklyHours: 75 }),
-          scheduling: expect.objectContaining({ defaultAlgorithm: 'cpSat' }),
+          scheduling: expect.objectContaining({ defaultAlgorithm: 'cp_sat' }),
         }))
       })
     })

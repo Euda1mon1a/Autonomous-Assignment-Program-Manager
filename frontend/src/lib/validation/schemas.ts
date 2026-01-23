@@ -19,8 +19,8 @@ export const facultyRoleSchema = z.enum([
   "pd",
   "apd",
   "oic",
-  "deptChief",
-  "sportsMed",
+  "dept_chief",
+  "sports_med",
   "core",
   "adjunct",
 ]);

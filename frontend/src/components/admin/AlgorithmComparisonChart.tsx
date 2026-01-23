@@ -35,7 +35,7 @@ export interface AlgorithmComparisonChartProps {
 
 export const MOCK_ALGORITHM_DATA: AlgorithmMetrics[] = [
   { algorithm: 'greedy', coverage: 89.5, violations: 12, fairness: 72.3, runtime: 2.5, stability: 78.2, runCount: 45 },
-  { algorithm: 'cpSat', coverage: 96.2, violations: 2, fairness: 88.7, runtime: 45.3, stability: 92.1, runCount: 38 },
+  { algorithm: 'cp_sat', coverage: 96.2, violations: 2, fairness: 88.7, runtime: 45.3, stability: 92.1, runCount: 38 },
   { algorithm: 'pulp', coverage: 91.8, violations: 5, fairness: 81.2, runtime: 8.2, stability: 85.6, runCount: 22 },
   { algorithm: 'hybrid', coverage: 97.5, violations: 1, fairness: 91.5, runtime: 28.7, stability: 94.8, runCount: 67 },
 ];
@@ -46,14 +46,14 @@ export const MOCK_ALGORITHM_DATA: AlgorithmMetrics[] = [
 
 const ALGORITHM_LABELS: Record<Algorithm, string> = {
   greedy: 'Greedy',
-  cpSat: 'CP-SAT',
+  cp_sat: 'CP-SAT',
   pulp: 'PuLP',
   hybrid: 'Hybrid',
 };
 
 const ALGORITHM_COLORS: Record<Algorithm, string> = {
   greedy: 'bg-orange-500',
-  cpSat: 'bg-blue-500',
+  cp_sat: 'bg-blue-500',
   pulp: 'bg-green-500',
   hybrid: 'bg-violet-500',
 };

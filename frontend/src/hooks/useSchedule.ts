@@ -43,7 +43,7 @@ export interface ScheduleGenerateRequest {
   endDate: string;
   pgyLevels?: number[];
   rotationTemplateIds?: string[];
-  algorithm?: "greedy" | "cpSat" | "pulp" | "hybrid";
+  algorithm?: "greedy" | "cp_sat" | "pulp" | "hybrid";
   timeout_seconds?: number;
 }
 

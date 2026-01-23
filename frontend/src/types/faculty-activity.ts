@@ -17,7 +17,7 @@ import type { Activity } from './activity';
 /**
  * Faculty role types with specific scheduling constraints.
  */
-export type FacultyRole = 'pd' | 'apd' | 'oic' | 'deptChief' | 'sportsMed' | 'core' | 'adjunct';
+export type FacultyRole = 'pd' | 'apd' | 'oic' | 'dept_chief' | 'sports_med' | 'core' | 'adjunct';
 
 /**
  * Human-readable labels for faculty roles.
@@ -26,8 +26,8 @@ export const FACULTY_ROLE_LABELS: Record<FacultyRole, string> = {
   pd: 'Program Director',
   apd: 'Associate Program Director',
   oic: 'Officer in Charge',
-  deptChief: 'Department Chief',
-  sportsMed: 'Sports Medicine',
+  dept_chief: 'Department Chief',
+  sports_med: 'Sports Medicine',
   core: 'Core Faculty',
   adjunct: 'Adjunct Faculty',
 };
@@ -39,8 +39,8 @@ export const FACULTY_ROLES: FacultyRole[] = [
   'pd',
   'apd',
   'oic',
-  'deptChief',
-  'sportsMed',
+  'dept_chief',
+  'sports_med',
   'core',
   'adjunct',
 ];

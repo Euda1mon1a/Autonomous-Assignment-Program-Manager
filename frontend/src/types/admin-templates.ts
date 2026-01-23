@@ -30,7 +30,7 @@ export type ActivityType =
  * - absence: Days away from program (absence activity type) - counts toward 28-day limit
  * - educational: Structured learning (conference, education, lecture)
  */
-export type TemplateCategory = 'rotation' | 'timeOff' | 'absence' | 'educational';
+export type TemplateCategory = 'rotation' | 'time_off' | 'absence' | 'educational';
 
 export interface TemplateCategoryConfig {
   value: TemplateCategory;
@@ -49,7 +49,7 @@ export const TEMPLATE_CATEGORY_CONFIGS: TemplateCategoryConfig[] = [
     activityTypes: ['clinic', 'inpatient', 'outpatient', 'procedure', 'procedures'],
   },
   {
-    value: 'timeOff',
+    value: 'time_off',
     label: 'Time Off',
     description: 'ACGME-protected rest (does NOT count toward away-from-program)',
     icon: 'Moon',

@@ -31,7 +31,7 @@ const mockStrategy = {
   id: 'strategy-123',
   name: 'Tit for Tat',
   description: 'Cooperate first, then mimic opponent',
-  config: { type: 'titForTat' },
+  config: { type: 'tit_for_tat' },
   isActive: true,
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
@@ -155,7 +155,7 @@ describe('useCreateStrategy', () => {
       result.current.mutate({
         name: 'New Strategy',
         description: 'Test strategy',
-        strategyType: 'titForTat',
+        strategyType: 'tit_for_tat',
       });
     });
 

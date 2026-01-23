@@ -54,9 +54,9 @@ export enum FacultyRole {
   /** Officer in Charge: 2/week */
   OIC = 'oic',
   /** Department Chief: 1/week, prefers Wed call */
-  DEPT_CHIEF = 'deptChief',
+  DEPT_CHIEF = 'dept_chief',
   /** Sports Medicine: 0 regular clinic, 4 SM clinic/week */
-  SPORTS_MED = 'sportsMed',
+  SPORTS_MED = 'sports_med',
   /** Core Faculty: max 4/week */
   CORE = 'core',
   /** Adjunct Faculty: not auto-scheduled, can be pre-loaded to FMIT */
@@ -140,7 +140,7 @@ export enum SchedulingAlgorithm {
   /** Greedy algorithm - fast but may not find optimal solution */
   GREEDY = 'greedy',
   /** Google OR-Tools CP-SAT solver - optimal but slower */
-  CP_SAT = 'cpSat',
+  CP_SAT = 'cp_sat',
   /** PuLP linear programming solver */
   PULP = 'pulp',
   /** Hybrid approach combining multiple algorithms */

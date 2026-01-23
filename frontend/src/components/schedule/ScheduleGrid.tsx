@@ -58,9 +58,7 @@ function formatFacultyRole(role: string): string {
     apd: 'APD',
     oic: 'OIC',
     dept_chief: 'Chief',
-    deptChief: 'Chief', // Handle both snake_case and camelCase
     sports_med: 'SM',
-    sportsMed: 'SM',
     core: 'Core',
     adjunct: 'Adj',
   }
