@@ -160,9 +160,9 @@ validate_critical_types() {
 
     local errors=0
 
-    # Check FairnessAuditResponse (the type that caused today's issues)
-    if ! validate_type_exists "FairnessAuditResponse" "frontend/src/types/resilience.ts"; then
-        log_error "FairnessAuditResponse not found in resilience.ts"
+    # Check FairnessAuditResponse (lives in useFairness.ts with related types)
+    if ! validate_type_exists "FairnessAuditResponse" "frontend/src/hooks/useFairness.ts"; then
+        log_error "FairnessAuditResponse not found in useFairness.ts"
         ((errors++))
     fi
 

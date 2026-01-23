@@ -1,0 +1,17 @@
+# Development Dockerfile for Next.js with hot reload
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies first (cached layer)
+COPY package*.json ./
+RUN npm ci
+
+# Copy source (will be overridden by volume mount)
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Run dev server with hot reload
+CMD ["npm", "run", "dev"]

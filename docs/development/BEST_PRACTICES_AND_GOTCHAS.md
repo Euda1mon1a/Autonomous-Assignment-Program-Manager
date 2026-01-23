@@ -1,7 +1,7 @@
 # Best Practices & Gotchas
 
 > **Purpose:** Prevent common bugs and headaches. Read this before starting work.
-> **Last Updated:** 2026-01-22
+> **Last Updated:** 2026-01-23
 
 ---
 
@@ -17,6 +17,7 @@
 8. [Frontend-Backend Integration](#8-frontend-backend-integration)
 9. [Common CLI Tool Locations](#9-common-cli-tool-locations)
 10. [Debugging Flowcharts](#10-debugging-flowcharts)
+11. [Antipatterns - Things NOT to Do](#11-antipatterns---things-not-to-do)
 
 ---
 
@@ -790,6 +791,58 @@ cd frontend && npm test
 4. Force resync (last resort)
    └─> Run: docker exec scheduler-local-backend alembic stamp head
 ```
+
+---
+
+## 11. Antipatterns - Things NOT to Do
+
+> **These patterns have caused real bugs or wasted time. Learn from our pain.**
+
+### Docker & Containers
+
+| ❌ Antipattern | Why It's Bad | ✅ Do This Instead |
+|----------------|--------------|-------------------|
+| `command: python -m module --args` when Dockerfile has ENTRYPOINT | Redundant, overrides ENTRYPOINT entirely | Use `command: ["--arg1", "--arg2"]` to pass args to ENTRYPOINT |
+| `git reset --hard` without target | Resets to current HEAD (no change) | `git reset --hard origin/main` to reset to specific ref |
+| Checking container name with `docker inspect scheduler-local-mcp` | Container might be named differently | Use `docker ps --filter name=mcp` or check actual names |
+
+### React/Frontend
+
+| ❌ Antipattern | Why It's Bad | ✅ Do This Instead |
+|----------------|--------------|-------------------|
+| `useMemo(() => { setState(...) })` | Side effects in render cause warnings/loops | Use `useEffect` for side effects |
+| `router.push(\`/page?blockId=\${id}\`)` | Query params bypass axios, backend expects snake_case | Use `block_id` in URL params |
+| Manual types matching api-generated.ts | Types drift, runtime undefined errors | Import from `api-generated.ts`, run `generate:types` |
+
+### Python/Backend
+
+| ❌ Antipattern | Why It's Bad | ✅ Do This Instead |
+|----------------|--------------|-------------------|
+| `start, end = get_block_dates(...)` | Returns dataclass, not tuple - TypeError | `dates = get_block_dates(...); dates.start_date` |
+| `not column` in SQLAlchemy filter | Returns Python bool, not SQL expression | Use `~column` for SQLAlchemy NOT |
+| `db.query(Model).filter(...)` | SQLAlchemy 1.x sync pattern | `await db.execute(select(Model).where(...))` |
+
+### Git Workflow
+
+| ❌ Antipattern | Why It's Bad | ✅ Do This Instead |
+|----------------|--------------|-------------------|
+| Committing directly to local `main` | Local main diverges from origin/main | Always work on feature branches |
+| `git commit --amend` after hook failure | Amends PREVIOUS commit, not failed one | Create NEW commit after fixing |
+| Committing scratchpads with real names | PII hook blocks, OPSEC violation | Sanitize or gitignore PII files |
+
+### MCP/API
+
+| ❌ Antipattern | Why It's Bad | ✅ Do This Instead |
+|----------------|--------------|-------------------|
+| Checking `host == "0.0.0.0"` for localhost | 0.0.0.0 is bind address, not client address | Check client IP from request scope |
+| Hardcoding `localhost:8000` in containers | Containers use internal DNS | Use service name (`backend:8000`) |
+
+### Documentation
+
+| ❌ Antipattern | Why It's Bad | ✅ Do This Instead |
+|----------------|--------------|-------------------|
+| Multiple TODO/priority files | Contradictions, unclear source of truth | Single MASTER_PRIORITY_LIST.md |
+| Session scratchpads referencing other scratchpads | Broken links when files move/delete | Reference committed docs or inline the info |
 
 ---
 

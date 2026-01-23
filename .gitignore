@@ -200,6 +200,12 @@ frontend/src/api/schedule-drafts.ts
 frontend/src/app/admin/schedule-drafts/
 frontend/src/hooks/useScheduleDrafts.ts
 
+# Auto-generated type check files (temp validation)
+frontend/src/types/api-generated-check.ts
+
+# Session scratchpads with PII (real resident names - local only)
+docs/scratchpad/session-132-rotation-template-import.md
+
 # Misc local work (root-level only)
 FACULTY_CONSTRAINTS_PROPOSAL.md
 /skills/

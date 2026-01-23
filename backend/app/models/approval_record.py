@@ -96,9 +96,7 @@ class ApprovalRecord(Base):
 
     # Hash chain links
     prev_record_id = Column(GUID(), ForeignKey("approval_record.id"), nullable=True)
-    prev_hash = Column(
-        String(64), nullable=True
-    )  # SHA-256 hex, null only for genesis
+    prev_hash = Column(String(64), nullable=True)  # SHA-256 hex, null only for genesis
     record_hash = Column(String(64), nullable=False)  # SHA-256 hex
 
     # Action and payload
@@ -124,9 +122,7 @@ class ApprovalRecord(Base):
     target_entity_id = Column(String(100), nullable=True)
 
     # Immutable timestamp (no updated_at - records never change)
-    created_at = Column(
-        DateTime, default=datetime.utcnow, nullable=False, index=True
-    )
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
     # Request metadata
     ip_address = Column(String(45), nullable=True)  # IPv6 compatible

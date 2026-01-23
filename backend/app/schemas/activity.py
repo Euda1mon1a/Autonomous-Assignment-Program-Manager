@@ -73,10 +73,11 @@ class ActivityBase(BaseModel):
         if not v or not v.strip():
             raise ValueError("code cannot be empty")
         v = v.strip().lower()
-        # Code should be lowercase alphanumeric with underscores
-        if not all(c.isalnum() or c == "_" for c in v):
+        # Code should be lowercase alphanumeric with underscores or hyphens
+        # Hyphens needed for codes like LV-PM, C-AM, W-AM, FMIT-R
+        if not all(c.isalnum() or c in "_-" for c in v):
             raise ValueError(
-                "code must be lowercase alphanumeric with underscores only"
+                "code must be lowercase alphanumeric with underscores or hyphens only"
             )
         return v
 
@@ -118,9 +119,10 @@ class ActivityUpdate(BaseModel):
         if v is None:
             return v
         v = v.strip().lower()
-        if not all(c.isalnum() or c == "_" for c in v):
+        # Hyphens needed for codes like LV-PM, C-AM, W-AM, FMIT-R
+        if not all(c.isalnum() or c in "_-" for c in v):
             raise ValueError(
-                "code must be lowercase alphanumeric with underscores only"
+                "code must be lowercase alphanumeric with underscores or hyphens only"
             )
         return v
 

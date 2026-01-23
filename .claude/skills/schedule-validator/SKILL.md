@@ -260,4 +260,3 @@ python -m app.scheduling.validator --schedule_id=current --export=pdf
 - ACGME Common Program Requirements
 - See PROMPT_LIBRARY.md for validation templates
 - Schedule verification checklist in schedule-verification skill
-

@@ -458,7 +458,9 @@ class ApprovalChainService:
         """
         seal_date = seal_date or datetime.utcnow()
         start_of_day = seal_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_of_day = seal_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+        end_of_day = seal_date.replace(
+            hour=23, minute=59, second=59, microsecond=999999
+        )
 
         # Get all records from the day
         day_records = (
@@ -614,7 +616,9 @@ def record_assignment_change(
     )
 
 
-def verify_chain(db: Session, chain_id: str = DEFAULT_CHAIN_ID) -> ChainVerificationResult:
+def verify_chain(
+    db: Session, chain_id: str = DEFAULT_CHAIN_ID
+) -> ChainVerificationResult:
     """
     Convenience function to verify a chain.
 

@@ -33,17 +33,20 @@ services:
   #   docker compose build frontend && docker compose up -d frontend
 
   # MCP Server with hot reload and HTTP transport for testing
-  # NOTE: Using port 8081 to avoid conflict with Claude Code MCP on 8080
+  # NOTE: Port 8081 exposed for direct testing (8080 is primary via base compose)
   mcp-server:
     volumes:
       - ./mcp-server/src:/app/src
       - ./mcp-server/tests:/app/tests
-    # HTTP transport for testing with curl/httpie
-    command: python -m scheduler_mcp.server --host 0.0.0.0 --port 8081 --log-level DEBUG
+    # Override ENTRYPOINT args for dev (base image ENTRYPOINT is python -m scheduler_mcp.server)
+    # Port 8081 for dev to allow both 8080 (prod) and 8081 (dev) access
+    command: ["--host", "0.0.0.0", "--port", "8081", "--log-level", "DEBUG"]
     ports:
       - "8081:8081"
     environment:
       LOG_LEVEL: DEBUG
+      # Allow unauthenticated local dev access (bypasses MCP_API_KEY requirement)
+      MCP_ALLOW_LOCAL_DEV: "true"
       # Relaxed resource limits for development
     deploy:
       resources:
