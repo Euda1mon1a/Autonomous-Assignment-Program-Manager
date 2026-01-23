@@ -20,7 +20,9 @@ class ApprovalRecordBase(BaseModel):
 
     action: str = Field(..., max_length=50, description="Type of approval action")
     payload: dict[str, Any] = Field(..., description="Schedule change payload")
-    reason: str | None = Field(None, max_length=2000, description="Justification for action")
+    reason: str | None = Field(
+        None, max_length=2000, description="Justification for action"
+    )
     target_entity_type: str | None = Field(
         None,
         max_length=50,
@@ -112,7 +114,9 @@ class ChainVerificationResponse(BaseModel):
 
     valid: bool = Field(..., description="Whether chain is valid")
     chain_id: str = Field(..., alias="chainId", description="Chain identifier")
-    total_records: int = Field(..., alias="totalRecords", description="Total records in chain")
+    total_records: int = Field(
+        ..., alias="totalRecords", description="Total records in chain"
+    )
     verified_count: int = Field(
         ...,
         alias="verifiedCount",

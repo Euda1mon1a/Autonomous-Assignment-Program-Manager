@@ -2991,7 +2991,9 @@ async def check_utilization_threshold(
         level=level_map.get(metrics.level, "GREEN"),
         above_threshold=metrics.utilization_rate > 0.80,
         buffer_remaining=metrics.buffer_remaining,
-        wait_time_multiplier=wait_time_multiplier if wait_time_multiplier < 100 else 100.0,
+        wait_time_multiplier=wait_time_multiplier
+        if wait_time_multiplier < 100
+        else 100.0,
         message=messages.get(metrics.level, "Unknown state"),
         recommendations=recommendations_map.get(metrics.level, []),
     )
@@ -3120,9 +3122,7 @@ async def get_circuit_breakers_status(
         # Determine overall health
         open_count = health.get("open_breakers", 0)
         total = health.get("total_breakers", 0)
-        if total == 0:
-            overall_health = "healthy"
-        elif open_count == 0:
+        if total == 0 or open_count == 0:
             overall_health = "healthy"
         elif open_count <= total * 0.25:
             overall_health = "warning"
@@ -3190,10 +3190,14 @@ async def get_circuit_breakers_health(
         # Calculate metrics
         total_requests = sum(s.get("total_requests", 0) for s in all_statuses.values())
         total_failures = sum(s.get("failed_requests", 0) for s in all_statuses.values())
-        total_rejections = sum(s.get("rejected_requests", 0) for s in all_statuses.values())
+        total_rejections = sum(
+            s.get("rejected_requests", 0) for s in all_statuses.values()
+        )
 
         failure_rates = [s.get("failure_rate", 0) for s in all_statuses.values()]
-        avg_failure_rate = sum(failure_rates) / len(failure_rates) if failure_rates else 0.0
+        avg_failure_rate = (
+            sum(failure_rates) / len(failure_rates) if failure_rates else 0.0
+        )
         max_failure_rate = max(failure_rates) if failure_rates else 0.0
 
         # Find unhealthiest breaker
@@ -3216,7 +3220,9 @@ async def get_circuit_breakers_health(
         ]
 
         # Determine severity
-        open_ratio = health.get("open_breakers", 0) / max(health.get("total_breakers", 1), 1)
+        open_ratio = health.get("open_breakers", 0) / max(
+            health.get("total_breakers", 1), 1
+        )
         if open_ratio > 0.5 or avg_failure_rate > 0.5:
             severity = BreakerSeverity.EMERGENCY
         elif open_ratio > 0.25 or avg_failure_rate > 0.3:
@@ -3232,7 +3238,9 @@ async def get_circuit_breakers_health(
             recommendations.append("EMERGENCY: Multiple breakers in critical state")
             recommendations.append("Investigate systemic issues immediately")
         elif severity == BreakerSeverity.CRITICAL:
-            recommendations.append("High failure rates detected - investigate root cause")
+            recommendations.append(
+                "High failure rates detected - investigate root cause"
+            )
         if breakers_needing_attention:
             recommendations.append(
                 f"Review breakers: {', '.join(breakers_needing_attention[:3])}"

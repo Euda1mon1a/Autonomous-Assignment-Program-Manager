@@ -5403,12 +5403,31 @@ class APIKeyAuthMiddleware:
         self.api_key = api_key or os.environ.get("MCP_API_KEY")
         # SECURITY: Only health endpoints are exempt, NOT the root path
         self.exempt_paths = {"/health", "/health/"}
-        # Check if we're in a production-like environment
-        # SECURITY: 0.0.0.0 is a bind address (listen on all interfaces), NOT a client address.
-        # Treating it as localhost would bypass auth when the server binds to all interfaces.
-        host = os.environ.get("MCP_HOST", "127.0.0.1")
-        self.is_localhost = host in ("127.0.0.1", "localhost")
+        # Allow unauthenticated access for local development (Docker networks)
+        # SECURITY: In production, always set MCP_API_KEY
+        self.allow_local_dev = os.environ.get("MCP_ALLOW_LOCAL_DEV", "").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
         self._auth_warning_logged = False
+
+    def _is_local_request(self, scope) -> bool:
+        """Check if request is from localhost or Docker internal network."""
+        client = scope.get("client")
+        if not client:
+            return False
+        client_ip = client[0]
+        # Localhost addresses
+        if client_ip in ("127.0.0.1", "::1", "localhost"):
+            return True
+        # Docker bridge network (172.16.0.0/12)
+        if client_ip.startswith("172.") and 16 <= int(client_ip.split(".")[1]) <= 31:
+            return True
+        # Docker default bridge (commonly 172.17.x.x or 172.18.x.x)
+        if client_ip.startswith("172.17.") or client_ip.startswith("172.18."):
+            return True
+        return False
 
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
@@ -5422,11 +5441,15 @@ class APIKeyAuthMiddleware:
             await self.app(scope, receive, send)
             return
 
-        # SECURITY: If no API key configured, only allow on localhost
+        # SECURITY: If no API key configured, only allow local requests
         if not self.api_key:
-            if not self.is_localhost:
-                # Fail closed on non-localhost without API key
-                logger.error("MCP_API_KEY not set on non-localhost - rejecting request")
+            is_local = self._is_local_request(scope)
+            if not is_local and not self.allow_local_dev:
+                # Fail closed on non-local requests without API key
+                client = scope.get("client", ("unknown", 0))
+                logger.error(
+                    f"MCP_API_KEY not set - rejecting non-local request from {client[0]}"
+                )
                 response = JSONResponse(
                     {
                         "error": "Configuration Error",
@@ -5438,7 +5461,10 @@ class APIKeyAuthMiddleware:
                 return
             # Only log warning once to avoid spam
             if not self._auth_warning_logged:
-                logger.warning("MCP_API_KEY not set - allowing unauthenticated localhost access")
+                client = scope.get("client", ("unknown", 0))
+                logger.warning(
+                    f"MCP_API_KEY not set - allowing unauthenticated local access from {client[0]}"
+                )
                 self._auth_warning_logged = True
             await self.app(scope, receive, send)
             return
