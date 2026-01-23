@@ -123,7 +123,12 @@ class HalfDayXMLExporter:
         block_end: date,
         person_ids: list[UUID] | None,
     ) -> list[HalfDayAssignment]:
-        """Fetch half_day_assignments with joined activity codes."""
+        """Fetch half_day_assignments with joined activity codes.
+
+        Note: Only fetches residents (Person.type == 'resident').
+        Faculty schedules use a different export path via ScheduleXMLExporter.
+        If person_ids contains faculty IDs, they will be silently excluded.
+        """
         stmt = (
             select(HalfDayAssignment)
             .options(selectinload(HalfDayAssignment.activity))
@@ -166,11 +171,20 @@ class HalfDayXMLExporter:
         block_start: date,
         block_end: date,
     ) -> dict[UUID, dict[str, Any]]:
-        """Fetch rotation info from block_assignments for the date range."""
+        """Fetch rotation info from block_assignments for the date range.
+
+        Uses denormalized block_number/academic_year fields (always populated)
+        rather than the nullable academic_block_id FK for reliability.
+        """
         if not person_ids:
             return {}
 
-        # Find block assignments that overlap with this date range
+        from app.utils.academic_blocks import get_block_number_for_date
+
+        # Get block number and academic year for the requested date range
+        block_num, acad_year = get_block_number_for_date(block_start)
+
+        # Filter by block_number and academic_year (denormalized, always populated)
         stmt = (
             select(BlockAssignment)
             .options(
@@ -179,6 +193,8 @@ class HalfDayXMLExporter:
             )
             .where(
                 BlockAssignment.person_id.in_(person_ids),
+                BlockAssignment.block_number == block_num,
+                BlockAssignment.academic_year == acad_year,
             )
         )
 
@@ -187,8 +203,6 @@ class HalfDayXMLExporter:
 
         rotation_map: dict[UUID, dict[str, Any]] = {}
         for ba in block_assignments:
-            # Check if this block_assignment is relevant to the date range
-            # by looking at the associated block dates
             rotation1 = ""
             rotation2 = ""
 
@@ -250,11 +264,11 @@ class HalfDayXMLExporter:
         """Get activity code from assignment.
 
         This reads the actual activity code from the database,
-        not from pattern constants. If no assignment exists,
-        returns "?" to indicate missing data.
+        not from pattern constants. Returns empty string for missing
+        slots to maintain ROSETTA XML compatibility.
         """
         if assignment is None:
-            return "?"  # Missing slot - should investigate
+            return ""  # Missing slot - empty for ROSETTA compatibility
 
         if assignment.activity is None:
             # NULL activity_id - data integrity issue (EC-4)
@@ -264,11 +278,11 @@ class HalfDayXMLExporter:
                 f"date={assignment.date}, "
                 f"time_of_day={assignment.time_of_day}"
             )
-            return "???"  # Distinct from "?" to indicate NULL activity
+            return ""  # NULL activity - empty for ROSETTA compatibility
 
         # Use display_abbreviation if available, else code
         activity = assignment.activity
-        return activity.display_abbreviation or activity.code or "???"
+        return activity.display_abbreviation or activity.code or ""
 
 
 def export_block_schedule(

@@ -657,17 +657,19 @@ class SyncPreloadService:
             return True
         except IntegrityError as e:
             self.session.rollback()
-            error_msg = str(e.orig) if e.orig else str(e)
-            # Duplicate preload for same person/date/time is expected - skip silently
-            if "uq_half_day_assignment_person_date_time" in error_msg:
+            # Use SQLSTATE for reliable duplicate detection across drivers/locales
+            # 23505 = unique_violation in PostgreSQL
+            is_duplicate = hasattr(e.orig, "pgcode") and e.orig.pgcode == "23505"
+            if is_duplicate:
                 logger.debug(
                     f"Preload already exists for person_id={person_id}, "
                     f"date={date_val}, time_of_day={time_of_day}"
                 )
                 return False
             # FK violation or other constraint error - fail loudly
+            pgcode = getattr(e.orig, "pgcode", "unknown")
             logger.error(
-                f"Unexpected IntegrityError creating preload: {error_msg}. "
+                f"Unexpected IntegrityError (pgcode={pgcode}): {e.orig}. "
                 f"person_id={person_id}, date={date_val}, time_of_day={time_of_day}, "
                 f"activity_id={activity_id}"
             )
