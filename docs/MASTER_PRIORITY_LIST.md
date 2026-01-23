@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-22 (Session 130: Resolved Codex findings - DefenseLevel mapping, enum conventions)
+> **Last Updated:** 2026-01-22 (Session 132: Rotation template import analysis CONSOLIDATED)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents
@@ -563,7 +563,7 @@ PR #743 fixed this - now uses `os.environ.get("ADMIN_PASSWORD", "admin123")` mat
 
 ### 19. Templates Hub - Unified Template Management
 **Priority:** MEDIUM
-**Status:** IN PROGRESS (Session 131)
+**Status:** UI COMPLETE - DB population pending (Session 131-132)
 **Branch:** `feature/rotation-faculty-templates`
 
 Unified hub at `/templates` combining rotation templates and faculty weekly schedules with tier-based access control.
@@ -590,6 +590,49 @@ Unified hub at `/templates` combining rotation templates and faculty weekly sche
 - `docs/user-guide/templates.md` - User documentation
 
 **Ref:** `docs/scratchpad/session-131-templates-hub.md`, Plan: `keen-tumbling-bentley.md`
+
+### 19.1 Block 10-13 Rotation Template Population
+**Priority:** HIGH (Next DB work)
+**Status:** ANALYSIS COMPLETE - Awaiting approval for DB changes (Session 132)
+**Branch:** `feature/rotation-faculty-templates`
+**Backup:** `backups/20260122_102856_Pre-Codex half-day rotation template values/`
+
+**Master Reference:** `docs/scratchpad/session-132-rotation-template-import.md` (CONSOLIDATED)
+
+**Architecture - Belt & Suspenders Model:**
+| Layer | What it does | Examples |
+|-------|--------------|----------|
+| **Rotation Templates** | Define expected patterns (preloaded) | LEC, ADV, W, OFF, Inpatient duty |
+| **Constraints** | Validate/enforce patterns | `WednesdayPMLecConstraint` |
+| **Solver** | Optimize variable slots | C (Clinic), SM, POCUS |
+
+**Block 10 Breakdown (17 residents, 952 half-days):**
+| Metric | Slots | % |
+|--------|-------|---|
+| Preloaded (Fixed) | 756 | 79.4% |
+| Solved (Variable) | 196 | 20.6% |
+
+**Solved activities:** C (Clinic), SM (Sports Med), POCUS
+
+**Classification Summary:**
+| Class | Count | Description |
+|-------|-------|-------------|
+| A | 4 | 100% Fixed (Absence, SERE, Ultrasound, FMIT Pre-Attending) |
+| B | 41 | Partial Fixed (LEC+ADV+specialty fixed, C variable) |
+| Skip | 2 | Incomplete (<56 slots) |
+
+**✅ SCHEMA PREP COMPLETE (2026-01-22):**
+1. ✅ DB backup: `backups/backup_pre_generation_20260122_131703.dump`
+2. ✅ Cleared `half_day_assignments`: 1,524 → 0 rows
+3. ✅ Added 32 new activity codes: 51 → 83 total
+4. ✅ Renamed VAS: "Vascular" → "Vasectomy Procedure"
+5. ✅ Verified Block 10 rotations (17 residents)
+6. ✅ Verified faculty weekly templates (10 faculty)
+
+**Next:** Run schedule generation (preload + solver)
+
+**Files:**
+- `docs/scratchpad/session-132-rotation-template-import.md` - **MASTER** consolidated analysis
 
 ---
 

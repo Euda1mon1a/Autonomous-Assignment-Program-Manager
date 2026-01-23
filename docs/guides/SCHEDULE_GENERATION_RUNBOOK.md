@@ -631,6 +631,12 @@ docker-compose logs --tail=50 mcp-server
 
 Before running schedule generation, verify:
 
+- [ ] Run Block 10 preflight gate (fails fast on missing data):
+  ```bash
+  ./scripts/preflight-block10.sh
+  # Override if needed:
+  # BLOCK_NUMBER=10 ACADEMIC_YEAR=2025 ./scripts/preflight-block10.sh
+  ```
 - [ ] All containers are running (`docker-compose ps`)
 - [ ] Database has people loaded (`persons` table not empty)
 - [ ] Database has blocks defined (`blocks` table not empty)
