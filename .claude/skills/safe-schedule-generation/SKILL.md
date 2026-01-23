@@ -24,6 +24,32 @@ escalation_triggers:
 
 **HARD GATE:** No schedule generation, bulk assignment, or destructive operation without verified backup.
 
+## Two Truths: Generation Writes Descriptive Truth
+
+**CRITICAL CONTEXT:**
+
+| Truth Type | Tables | Role in Generation |
+|------------|--------|-------------------|
+| **Prescriptive** | `rotation_templates`, `weekly_patterns` | INPUT - read to determine patterns |
+| **Descriptive** | `half_day_assignments` | OUTPUT - where results are written |
+
+**Generation transforms prescriptive truth INTO descriptive truth:**
+```
+rotation_templates + block_assignments → expansion_service → half_day_assignments
+     (prescriptive)                                            (descriptive)
+```
+
+**Why backup is critical:** Generation WRITES to `half_day_assignments`. This is the canonical record of what got scheduled. If generation produces bad results:
+- Manual overrides (`source='manual'`) could be lost
+- Preloads (`source='preload'`) could be corrupted
+- Historical audit trail could be damaged
+
+**The `source` column tracks how each slot was determined:**
+- `preload` = locked (absences, FMIT, call) - NEVER overwritten by generation
+- `solver` = computed by optimizer during generation
+- `manual` = human override (should survive regeneration)
+- `template` = default from weekly pattern
+
 ## When This Skill Activates
 
 - Generating new schedules via API or MCP

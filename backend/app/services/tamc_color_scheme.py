@@ -15,13 +15,28 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# Default path to color scheme XML
-DEFAULT_COLOR_SCHEME_PATH = (
-    Path(__file__).parent.parent.parent.parent
-    / "docs"
-    / "scheduling"
-    / "TAMC_Color_Scheme_Reference.xml"
-)
+
+# Default path to color scheme XML - check multiple locations
+def _find_color_scheme_path() -> Path:
+    """Find color scheme XML in either Docker or host directory structure."""
+    relative_path = Path("docs/scheduling/TAMC_Color_Scheme_Reference.xml")
+    base = Path(__file__).parent.parent.parent  # backend/ or /app
+
+    # Try 3 parents first (Docker: /app)
+    docker_path = base / relative_path
+    if docker_path.exists():
+        return docker_path
+
+    # Try 4 parents (host: project root)
+    host_path = base.parent / relative_path
+    if host_path.exists():
+        return host_path
+
+    # Fallback to Docker path (will log warning if not found)
+    return docker_path
+
+
+DEFAULT_COLOR_SCHEME_PATH = _find_color_scheme_path()
 
 
 class TAMCColorScheme:

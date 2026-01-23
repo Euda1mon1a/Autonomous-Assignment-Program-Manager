@@ -24,6 +24,31 @@ escalation_triggers:
 
 Systematic checklist for human verification of generated schedules. Ensures the schedule makes operational sense before deployment.
 
+## Two Truths: What You're Verifying
+
+| Truth Type | Tables | Your Focus |
+|------------|--------|------------|
+| **Prescriptive** | `rotation_templates`, `weekly_patterns` | Rules the schedule SHOULD follow |
+| **Descriptive** | `half_day_assignments` | What ACTUALLY got scheduled |
+
+**You verify the descriptive truth (`half_day_assignments`)** - that's what gets deployed. But check that divergence from prescriptive truth (templates) is intentional.
+
+### Source Column Audit (CRITICAL)
+
+The `source` column explains WHY each slot has its value:
+
+| Source | Meaning | Verification |
+|--------|---------|--------------|
+| `preload` | Fixed before solver (absences, FMIT, call) | Should match absences table, FMIT schedule |
+| `solver` | Computed by optimizer | Should follow rotation patterns |
+| `manual` | Human override | Intentional - don't question |
+| `template` | Default from weekly pattern | Lowest priority, filled gaps |
+
+**Spot Check Protocol:**
+1. Pick 3 slots that diverge from template expectation
+2. Check `source` column - does it explain the divergence?
+3. If `source='solver'` but slot doesn't match template → investigate bug
+
 ## MANDATORY: Generate Visible Report
 
 **CRITICAL:** Every time this skill runs, you MUST:
@@ -115,7 +140,32 @@ Week 4: FAC-CORE-03 (FMIT) → Fri/Sat call → Sun blocked
 | [ ] Weekend assignments | Weekend blocks show appropriate coverage | Inpatient only |
 | [ ] Holiday handling | Federal holidays have inpatient coverage | FMIT defaults |
 
-### 5. Coverage Metrics
+### 5. Source Column Audit (NEW)
+
+| Check | What to Verify | Expected |
+|-------|----------------|----------|
+| [ ] Preloads preserved | `source='preload'` rows match absences/FMIT tables | 100% match |
+| [ ] Manual overrides | `source='manual'` rows are intentional edits | Should have audit trail |
+| [ ] Solver decisions | `source='solver'` rows follow rotation patterns | Template-aligned |
+| [ ] Template gaps | `source='template'` only for truly empty slots | Minimal usage |
+
+**Query to audit source distribution:**
+```sql
+SELECT source, COUNT(*) as count
+FROM half_day_assignments
+WHERE date BETWEEN '2026-03-12' AND '2026-04-08'
+GROUP BY source;
+```
+
+**Expected distribution (Block 10):**
+```
+preload   ~400  (absences, FMIT, call, conferences)
+solver    ~800  (computed clinic, rotation activities)
+manual    ~10   (human overrides, if any)
+template  ~100  (gap-fill for empty slots)
+```
+
+### 6. Coverage Metrics
 
 | Metric | Target | Warning | Violation |
 |--------|--------|---------|-----------|

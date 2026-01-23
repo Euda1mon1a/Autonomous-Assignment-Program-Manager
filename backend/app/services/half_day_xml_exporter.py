@@ -65,6 +65,7 @@ class HalfDayXMLExporter:
         block_start: date,
         block_end: date,
         person_ids: list[UUID] | None = None,
+        include_faculty: bool = False,
     ) -> str:
         """Export schedule for date range to XML.
 
@@ -72,6 +73,7 @@ class HalfDayXMLExporter:
             block_start: First day of schedule block
             block_end: Last day of schedule block
             person_ids: Optional list of person IDs to export (default: all residents)
+            include_faculty: If True, include faculty in export (default: False)
 
         Returns:
             XML string in ROSETTA-compatible format
@@ -83,7 +85,9 @@ class HalfDayXMLExporter:
         root.set("source", "half_day_assignments")
 
         # Get all half_day_assignments for date range with activity codes
-        assignments = self._fetch_assignments(block_start, block_end, person_ids)
+        assignments = self._fetch_assignments(
+            block_start, block_end, person_ids, include_faculty
+        )
 
         # Group by person
         by_person: dict[UUID, list[HalfDayAssignment]] = {}
@@ -124,13 +128,27 @@ class HalfDayXMLExporter:
         block_start: date,
         block_end: date,
         person_ids: list[UUID] | None,
+        include_faculty: bool = False,
     ) -> list[HalfDayAssignment]:
         """Fetch half_day_assignments with joined activity codes.
 
-        Note: Only fetches residents (Person.type == 'resident').
-        Faculty schedules use a different export path via ScheduleXMLExporter.
-        If person_ids contains faculty IDs, they will be silently excluded.
+        Args:
+            block_start: First day of schedule block
+            block_end: Last day of schedule block
+            person_ids: Optional list of person IDs to filter
+            include_faculty: If True, include faculty (default: residents only)
+
+        Note: By default only fetches residents (Person.type == 'resident').
+        Set include_faculty=True to also include faculty schedules.
         """
+        from sqlalchemy import or_
+
+        # Build person type filter
+        if include_faculty:
+            type_filter = or_(Person.type == "resident", Person.type == "faculty")
+        else:
+            type_filter = Person.type == "resident"
+
         stmt = (
             select(HalfDayAssignment)
             .options(selectinload(HalfDayAssignment.activity))
@@ -138,7 +156,7 @@ class HalfDayXMLExporter:
             .where(
                 HalfDayAssignment.date >= block_start,
                 HalfDayAssignment.date <= block_end,
-                Person.type == "resident",  # Default to residents only
+                type_filter,
             )
             .order_by(
                 HalfDayAssignment.person_id,
@@ -165,7 +183,7 @@ class HalfDayXMLExporter:
         return {
             p.id: {
                 "name": p.name,
-                "pgy": p.pgy_level or 1,
+                "pgy": p.pgy_level if p.type == "resident" else None,
                 "type": p.type,
             }
             for p in people
@@ -242,14 +260,21 @@ class HalfDayXMLExporter:
         block_start: date,
         block_end: date,
     ) -> None:
-        """Add a person element with their daily schedule from DB."""
+        """Add a person element with their daily schedule from DB.
+
+        Uses <resident> for residents and <faculty> for faculty members.
+        Faculty don't have rotation info (rotation1/rotation2 will be empty).
+        """
         from datetime import timedelta
 
-        res_elem = SubElement(parent, "resident")
-        res_elem.set("name", person_info.get("name", ""))
-        res_elem.set("pgy", str(person_info.get("pgy", 1)))
-        res_elem.set("rotation1", rotation_info.get("rotation1", ""))
-        res_elem.set("rotation2", rotation_info.get("rotation2", "") or "")
+        person_type = person_info.get("type", "resident")
+        element_name = "faculty" if person_type == "faculty" else "resident"
+
+        person_elem = SubElement(parent, element_name)
+        person_elem.set("name", person_info.get("name", ""))
+        person_elem.set("pgy", str(person_info.get("pgy", "") or ""))
+        person_elem.set("rotation1", rotation_info.get("rotation1", ""))
+        person_elem.set("rotation2", rotation_info.get("rotation2", "") or "")
 
         # Index assignments by (date, time_of_day) for O(1) lookup
         assignment_index: dict[tuple[date, str], HalfDayAssignment] = {}
@@ -266,7 +291,7 @@ class HalfDayXMLExporter:
             am_code = self._get_activity_code(am_assignment)
             pm_code = self._get_activity_code(pm_assignment)
 
-            day_elem = SubElement(res_elem, "day")
+            day_elem = SubElement(person_elem, "day")
             day_elem.set("date", current.isoformat())
             day_elem.set("weekday", current.strftime("%a"))
             day_elem.set("am", am_code)
@@ -303,6 +328,7 @@ def export_block_schedule(
     db: Session,
     block_number: int,
     academic_year: int,
+    include_faculty: bool = False,
 ) -> str:
     """Convenience function to export a block schedule.
 
@@ -310,6 +336,7 @@ def export_block_schedule(
         db: Database session
         block_number: Block number (1-13)
         academic_year: Academic year start (e.g., 2025 for AY 2025-2026)
+        include_faculty: If True, include faculty in export (default: False)
 
     Returns:
         XML string with schedule data
@@ -319,4 +346,4 @@ def export_block_schedule(
     block_start, block_end = get_block_dates(block_number, academic_year)
 
     exporter = HalfDayXMLExporter(db)
-    return exporter.export(block_start, block_end)
+    return exporter.export(block_start, block_end, include_faculty=include_faculty)
