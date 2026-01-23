@@ -66,6 +66,39 @@ Claude WS base URL fragility, absence enum drift).
 
 **Action:** Decide endpoint strategy for resilience hooks, fix query param casing, harden WS base, sync absence enums.
 
+### Skills → MCP Tool Wrapping Decision
+**File:** [`docs/architecture/SKILLS_RAG_MCP_ARCHITECTURE.md`](architecture/SKILLS_RAG_MCP_ARCHITECTURE.md)
+**Date:** 2026-01-22
+**Source:** Session 136 architecture analysis
+
+We have three overlapping knowledge mechanisms (Skills, RAG, MCP Tools) with redundancy:
+
+| Mechanism | Context Cost | Reliability | Use Case |
+|-----------|--------------|-------------|----------|
+| **Skills** | HIGH (5-50K tokens) | 100% complete | Complex workflows, teaching |
+| **RAG** | LOW (500-2K tokens) | May miss things | Fact lookups |
+| **MCP Tools** | MINIMAL | Deterministic | Validation, execution |
+
+**Tier 1 Candidates (Wrap Soon):**
+| Skill | Size | MCP Tool Candidate | Rationale |
+|-------|------|-------------------|-----------|
+| `/acgme-compliance` | 15KB | `validate_acgme_rules` | Deterministic rule checking |
+| `/schedule-validator` | 8KB | `validate_schedule_comprehensive` | Structured validation |
+| `/constraint-preflight` | 12KB | `verify_constraint_registration` | Checklist automatable |
+| `/swap-analyzer` | 6KB | `analyze_swap_safety` | Compatibility computable |
+
+**Tier 3 (Keep as Skill):**
+- `/tamc-excel-scheduling` (43KB) - Complex workflows, many examples
+- `/SCHEDULING` (10KB) - Multi-phase orchestration
+- `/schedule-optimization` (25KB) - Solver debugging needs full context
+
+**Decision Required:**
+1. Approve Tier 1 wrapping candidates
+2. Estimate implementation effort
+3. Decide layered approach (MCP first → RAG fallback → Skill for complex)
+
+**Benefit:** Reduce context usage by ~50KB/session while maintaining reliability.
+
 ---
 
 ## CRITICAL (Fix Immediately)
