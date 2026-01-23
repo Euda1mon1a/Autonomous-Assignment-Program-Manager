@@ -45,6 +45,8 @@ services:
       - "8081:8081"
     environment:
       LOG_LEVEL: DEBUG
+      # Allow unauthenticated local dev access (bypasses MCP_API_KEY requirement)
+      MCP_ALLOW_LOCAL_DEV: "true"
       # Relaxed resource limits for development
     deploy:
       resources:

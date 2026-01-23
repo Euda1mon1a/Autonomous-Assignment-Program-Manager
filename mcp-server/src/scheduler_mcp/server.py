@@ -5442,12 +5442,11 @@ class APIKeyAuthMiddleware:
             return
 
         # SECURITY: If no API key configured, only allow local requests
-        # NOTE: allow_local_dev only suppresses the warning, does NOT bypass locality check
+        # MCP_ALLOW_LOCAL_DEV=true bypasses locality check for dev environments
         if not self.api_key:
             is_local = self._is_local_request(scope)
-            if not is_local:
-                # Fail closed on non-local requests without API key
-                # (allow_local_dev does NOT bypass this - it only affects logging)
+            if not is_local and not self.allow_local_dev:
+                # Fail closed on non-local requests without API key or explicit dev mode
                 client = scope.get("client", ("unknown", 0))
                 logger.error(
                     f"MCP_API_KEY not set - rejecting non-local request from {client[0]}"
