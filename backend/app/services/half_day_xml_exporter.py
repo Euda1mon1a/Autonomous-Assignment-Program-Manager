@@ -95,7 +95,9 @@ class HalfDayXMLExporter:
 
         # Get person details and block assignments for rotation info
         person_map = self._fetch_people(list(by_person.keys()))
-        rotation_map = self._fetch_rotations(list(by_person.keys()), block_start, block_end)
+        rotation_map = self._fetch_rotations(
+            list(by_person.keys()), block_start, block_end
+        )
 
         # Add each person's schedule
         for pid, person_assignments in sorted(
@@ -138,7 +140,11 @@ class HalfDayXMLExporter:
                 HalfDayAssignment.date <= block_end,
                 Person.type == "resident",  # Default to residents only
             )
-            .order_by(HalfDayAssignment.person_id, HalfDayAssignment.date, HalfDayAssignment.time_of_day)
+            .order_by(
+                HalfDayAssignment.person_id,
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+            )
         )
 
         if person_ids:
@@ -192,7 +198,7 @@ class HalfDayXMLExporter:
                 selectinload(BlockAssignment.secondary_rotation_template),
             )
             .where(
-                BlockAssignment.person_id.in_(person_ids),
+                BlockAssignment.resident_id.in_(person_ids),
                 BlockAssignment.block_number == block_num,
                 BlockAssignment.academic_year == acad_year,
             )
@@ -207,12 +213,20 @@ class HalfDayXMLExporter:
             rotation2 = ""
 
             if ba.rotation_template:
-                rotation1 = ba.rotation_template.display_abbreviation or ba.rotation_template.abbreviation or ""
+                rotation1 = (
+                    ba.rotation_template.display_abbreviation
+                    or ba.rotation_template.abbreviation
+                    or ""
+                )
 
             if ba.secondary_rotation_template:
-                rotation2 = ba.secondary_rotation_template.display_abbreviation or ba.secondary_rotation_template.abbreviation or ""
+                rotation2 = (
+                    ba.secondary_rotation_template.display_abbreviation
+                    or ba.secondary_rotation_template.abbreviation
+                    or ""
+                )
 
-            rotation_map[ba.person_id] = {
+            rotation_map[ba.resident_id] = {
                 "rotation1": rotation1,
                 "rotation2": rotation2,
             }

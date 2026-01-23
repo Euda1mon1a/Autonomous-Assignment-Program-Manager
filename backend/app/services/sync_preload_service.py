@@ -659,7 +659,13 @@ class SyncPreloadService:
             self.session.rollback()
             # Use SQLSTATE for reliable duplicate detection across drivers/locales
             # 23505 = unique_violation in PostgreSQL
-            is_duplicate = hasattr(e.orig, "pgcode") and e.orig.pgcode == "23505"
+            # Fallback to string matching for sqlite (used in tests)
+            error_str = str(e.orig).lower() if e.orig else str(e).lower()
+            is_duplicate = (
+                (hasattr(e.orig, "pgcode") and e.orig.pgcode == "23505")
+                or "unique constraint" in error_str
+                or "uq_half_day_assignment_person_date_time" in error_str
+            )
             if is_duplicate:
                 logger.debug(
                     f"Preload already exists for person_id={person_id}, "
