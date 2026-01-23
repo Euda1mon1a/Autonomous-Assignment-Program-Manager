@@ -128,11 +128,28 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 
 **Ref:** `docs/TODO_INVENTORY.md` line 6
 
+### 3. MCP Production Security (PRODUCTION GATE)
+**Status:** Dev bypass implemented - production MUST configure auth
+
+**Requirement:** Production deployments MUST set `MCP_API_KEY` environment variable.
+
+**Context:** `MCP_ALLOW_LOCAL_DEV=true` in `docker-compose.dev.yml` bypasses all auth checks for dev convenience. This is intentional - Docker network detection is fragile and dev environments shouldn't require auth debugging.
+
+**Production Checklist:**
+- [ ] `MCP_API_KEY` set in production .env (32+ chars, use `python -c 'import secrets; print(secrets.token_urlsafe(32))'`)
+- [ ] `MCP_ALLOW_LOCAL_DEV` NOT set (or explicitly `false`)
+- [ ] Ports 8080/8081 not exposed to public internet
+- [ ] If using reverse proxy, ensure API key header forwarded
+
+**Without `MCP_API_KEY`:** Server fails closed for non-local requests (returns 500).
+
+**Ref:** PR #764, Session 136
+
 ---
 
 ## HIGH (Address Soon)
 
-### 3. Block 10 Schedule Generation - WORKING but Export Blocked
+### 4. Block 10 Schedule Generation - WORKING but Export Blocked
 **Status:** Generation ✅ | Export ⚠️ BLOCKED (see #1)
 
 **What's Working:**
@@ -148,7 +165,7 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 
 **Workaround (Plan B):** Manual export via Claude for macOS using XML → Excel transformation
 
-### 4. ACGME Compliance Validation Gaps
+### 5. ACGME Compliance Validation Gaps
 Call duty and performance profiling have edge cases:
 
 | Issue | Location | Status |
@@ -157,7 +174,7 @@ Call duty and performance profiling have edge cases:
 
 **Action:** Merge call_assignments into shift validation (pending MEDCOM ruling on ACGME interpretation).
 
-### 5. Faculty Scheduling Pipeline Gaps
+### 6. Faculty Scheduling Pipeline Gaps
 
 **Doc:** [`docs/reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md`](reports/FACULTY_ASSIGNMENT_PIPELINE_AUDIT_20260120.md)
 
@@ -171,7 +188,7 @@ Remaining faculty-specific gaps:
 2. Wire faculty expansion into half-day pipeline before CP-SAT activity solver
 3. Enforce or normalize weekly clinic min/max limits and fix template coverage gaps
 
-### 6. API/WS Convention Audit Required (Session 128)
+### 7. API/WS Convention Audit Required (Session 128)
 
 WebSocket debugging revealed convention violations. Systematic audit needed:
 
@@ -182,7 +199,7 @@ WebSocket debugging revealed convention violations. Systematic audit needed:
 | Hook/useX audit | Frontend hooks for snake_case violations | TODO |
 | WS smoke test | `GET /api/v1/ws/health` + wscat connect | TODO |
 
-### 7. Pre-commit Hook Failures (Session 128)
+### 8. Pre-commit Hook Failures (Session 128)
 
 Pre-commit hooks blocking commits due to pre-existing issues:
 
@@ -197,7 +214,7 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 2. Install bandit: `pip install bandit`
 3. Update Modron March to check correct type locations
 
-### 8. Orphan Framework Code (12K+ LOC) - ANALYSIS COMPLETE
+### 9. Orphan Framework Code (12K+ LOC) - ANALYSIS COMPLETE
 Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
 | Module | LOC | Quality | Recommendation |
@@ -214,11 +231,11 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
 ## MEDIUM (Plan for Sprint)
 
-### 9. Service Layer Pagination
+### 10. Service Layer Pagination
 - `absence_controller.py:45` - Pagination applied at controller level
 - **Need:** Push to service/repository for SQL LIMIT/OFFSET efficiency
 
-### 10. Hooks and Scripts Consolidation
+### 11. Hooks and Scripts Consolidation
 **Priority:** MEDIUM
 **Roadmap:** [`docs/planning/HOOKS_AND_SCRIPTS_ROADMAP.md`](planning/HOOKS_AND_SCRIPTS_ROADMAP.md)
 
@@ -232,7 +249,7 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 - [ ] Approve parallel pre-commit approach (Phase 1)
 - [ ] Decide GPG signing policy (Phase 4)
 
-### 11. Admin Debugger - Database Inspector Enhancement
+### 12. Admin Debugger - Database Inspector Enhancement
 **Priority:** MEDIUM
 **Branch:** `feature/activity-assignment-session-119`
 
@@ -246,7 +263,7 @@ Database Inspector now supports multiple data types but Activities view has upst
 | Rotations | ✅ Working | 87 templates in grid layout |
 | Activities | ⚠️ API Issue | Code validator too strict for 'LV-PM' |
 
-### 12. Templates Hub - Unified Template Management
+### 13. Templates Hub - Unified Template Management
 **Status:** UI COMPLETE - DB population pending (Session 131-132)
 **Branch:** `feature/rotation-faculty-templates`
 
@@ -259,7 +276,7 @@ Database Inspector now supports multiple data types but Activities view has upst
 | MatrixPanel | ✅ Complete |
 | BulkOperationsPanel | Pending |
 
-### 13. Block 10-13 Rotation Template Population
+### 14. Block 10-13 Rotation Template Population
 **Priority:** HIGH (Next DB work)
 **Status:** SCHEMA PREP COMPLETE - Awaiting schedule generation
 **Backup:** `backups/20260122_102856_Pre-Codex half-day rotation template values/`
@@ -273,24 +290,39 @@ Database Inspector now supports multiple data types but Activities view has upst
 
 **Next:** Run schedule generation (preload + solver)
 
+### 15. Missing Dependencies in requirements.txt
+**Priority:** LOW (Quick Fix)
+**Added:** 2026-01-23 (Session 136)
+
+Pre-commit hooks fail due to missing dependencies:
+
+| Package | Issue | Fix |
+|---------|-------|-----|
+| `bandit` | Pre-commit `command not found` | Add `bandit>=1.7.0` |
+| `types-PyYAML` | mypy missing stubs error | Add `types-PyYAML>=6.0.0` |
+
+**Also consider:**
+- Split into `requirements.txt` (core) + `requirements-dev.txt` (testing/linting)
+- Heavy ML deps (`sentence-transformers`, `transformers`) could be optional
+
 ---
 
 ## LOW (Backlog)
 
-### 14. A/B Testing Infrastructure
+### 16. A/B Testing Infrastructure
 - **Location:** `backend/app/experiments/`
 - Infrastructure exists, route registered
 - Minimal production usage - consider for Labs rollout
 
-### 15. ML Workload Analysis
+### 17. ML Workload Analysis
 - `ml.py` returns "placeholder response"
 - Low priority unless ML features requested
 
-### 16. Time Crystal DB Loading
+### 18. Time Crystal DB Loading
 - `time_crystal_tools.py:281, 417`
 - Acceptable fallback to empty schedules
 
-### 17. Spreadsheet Editor for Tier 1 Users (PR #740)
+### 19. Spreadsheet Editor for Tier 1 Users (PR #740)
 Excel-like grid editor for schedule verification.
 
 | Feature | Status |
@@ -301,7 +333,7 @@ Excel-like grid editor for schedule verification.
 | ACGME validation | Specified |
 | Keyboard nav | ~3-4 days implementation |
 
-### 18. Experimental Analytics Platform (PR #752)
+### 20. Experimental Analytics Platform (PR #752)
 **Roadmap:** [`docs/roadmaps/EXPERIMENTAL_ANALYTICS_ROADMAP.md`](roadmaps/EXPERIMENTAL_ANALYTICS_ROADMAP.md)
 
 | Phase | Focus |
@@ -312,34 +344,34 @@ Excel-like grid editor for schedule verification.
 | 4 | Dashboard Tabs |
 | 5 | Factorial Design |
 
-### 19. Claude Code CLI Guide & Vercel Agent Skills (PR #754)
+### 21. Claude Code CLI Guide & Vercel Agent Skills (PR #754)
 **Guide:** [`docs/guides/CLAUDE_CODE_CLI_GUIDE.md`](guides/CLAUDE_CODE_CLI_GUIDE.md)
 - 140+ Vercel Agent Skills rules documented
 - React/Next.js performance patterns
 
-### 20. String Theory Scheduling (PR #737)
+### 22. String Theory Scheduling (PR #737)
 **Design:** [`docs/exotic/STRING_THEORY_SCHEDULING.md`](exotic/STRING_THEORY_SCHEDULING.md)
 - Minimal surface optimization for scheduling
 - Research/exploration priority
 
-### 21. Optional Modules Assessment
+### 23. Optional Modules Assessment
 **Document:** [`docs/planning/OPTIONAL_MODULES_ASSESSMENT.md`](planning/OPTIONAL_MODULES_ASSESSMENT.md)
 - 18+ optional modules already implemented
 - 4 modules identified as missing
 
-### 22. GUI Considerations (PR #739)
+### 24. GUI Considerations (PR #739)
 **Document:** [`docs/development/GUI_CONSIDERATIONS.md`](development/GUI_CONSIDERATIONS.md)
 - Icon libraries, 3D integration, animation patterns
 
-### 23. Cooperative Evolution Research (PR #718)
+### 25. Cooperative Evolution Research (PR #718)
 **Document:** [`docs/research/cooperative_evolution_design.md`](research/cooperative_evolution_design.md)
 - Genetic algorithm scheduling with cooperative fitness
 
-### 24. Foam Topology Scheduler (PR #730)
+### 26. Foam Topology Scheduler (PR #730)
 **Document:** [`docs/exotic/FOAM_TOPOLOGY_SCHEDULER.md`](exotic/FOAM_TOPOLOGY_SCHEDULER.md)
 - Foam dynamics for perpetual soft reorganization
 
-### 25. Jupyter IDE Integration for Empirical Evaluation
+### 27. Jupyter IDE Integration for Empirical Evaluation
 **Status:** Not started
 
 Set up Jupyter notebook integration via Claude Code IDE tools for empirical data analysis.
@@ -351,7 +383,7 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 | Constraint debugging | Interactive traces |
 | Algorithm parameter tuning | Iterate without rerunning solver |
 
-### 26. ORCHESTRATOR Spec Handoff Pattern
+### 28. ORCHESTRATOR Spec Handoff Pattern
 **Document:** [`docs/ORCHESTRATOR_SPEC_HANDOFF.md`](ORCHESTRATOR_SPEC_HANDOFF.md)
 - Seamless subagent launch via prepared AgentSpec
 
@@ -454,11 +486,11 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 
 | Priority | Open | Resolved |
 |----------|------|----------|
-| **CRITICAL** | 2 | 4 |
+| **CRITICAL** | 3 | 4 |
 | **HIGH** | 6 | 5 |
-| **MEDIUM** | 5 | 9 |
+| **MEDIUM** | 6 | 9 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **26** | **21** |
+| **TOTAL** | **28** | **21** |
 
 ### Top 5 Actions for Next Session
 
