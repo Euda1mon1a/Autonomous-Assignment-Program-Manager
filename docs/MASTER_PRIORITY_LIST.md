@@ -126,7 +126,7 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 - Requires `git filter-repo` + force push to main
 - All collaborators must re-clone after
 
-**Ref:** `docs/TODO_INVENTORY.md` line 6
+**Ref:** `docs/archived/superseded/TODO_INVENTORY.md` line 6 (archived)
 
 ### 3. MCP Production Security (PRODUCTION GATE)
 **Status:** Dev bypass implemented - production MUST configure auth
