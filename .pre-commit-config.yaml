@@ -427,11 +427,12 @@ repos:
   # Combined D&D-themed hooks running in parallel:
   #   - Couatl Killer: snake_case query params (frontend)
   #   - Beholder Bane: SQLAlchemy anti-magic (backend)
+  #   - Gorgon's Gaze: snake_case enum values (frontend)
   # These specialized checks catch issues normal linters miss.
   - repo: local
     hooks:
       - id: dnd-hooks
-        name: D&D Hooks (Couatl Killer + Beholder Bane)
+        name: D&D Hooks (Couatl Killer + Beholder Bane + Gorgon's Gaze)
         entry: scripts/dnd-hooks-parallel.sh
         language: script
         pass_filenames: false

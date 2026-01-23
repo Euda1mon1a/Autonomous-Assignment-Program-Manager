@@ -151,6 +151,8 @@ type SwapType = 'oneToOne' | 'absorb';
 | Enum values | snake_case | snake_case | snake_case |
 | URL params | snake_case | N/A | snake_case |
 
+**Enforcement:** Pre-commit hook `scripts/gorgons-gaze.sh` blocks commits with camelCase enum values. Suppress false positives with `// @enum-ok` or `// @gorgon-ok` comment.
+
 ### SQLAlchemy Boolean Negation (Beholder Bane)
 
 **Use `~column` not `not column`** for SQLAlchemy boolean filters:
