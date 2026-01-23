@@ -7,6 +7,39 @@ description: Pre-flight verification for scheduling constraint development. Use 
 
 Prevents the "implemented but not registered" bug where constraints are created, tested, and exported but never added to the ConstraintManager factory methods.
 
+## Two Truths: Constraints Affect Prescriptive Layer
+
+**CRITICAL CONTEXT:**
+
+| Truth Type | Tables | Constraint Role |
+|------------|--------|-----------------|
+| **Prescriptive** | `rotation_templates`, `weekly_patterns`, constraints | Define what SHOULD happen |
+| **Descriptive** | `half_day_assignments` | Record what DID happen |
+
+**Constraints are part of the prescriptive layer.** They define rules that the solver uses to transform templates into assignments.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                   PRESCRIPTIVE LAYER                            │
+│  rotation_templates + weekly_patterns + CONSTRAINTS             │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ expansion_service + solver
+┌─────────────────────────────────────────────────────────────────┐
+│                   DESCRIPTIVE LAYER                             │
+│                   half_day_assignments                          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Impact of constraint changes:**
+- Adding/modifying constraints changes prescriptive truth
+- Changes only take effect after RE-GENERATING the schedule
+- Existing `half_day_assignments` won't auto-update - you must regenerate
+
+**Testing implication:**
+- Test constraints against template expectations (prescriptive)
+- Verify generated assignments reflect constraint behavior (descriptive)
+
 ## When This Skill Activates
 
 - When creating new scheduling constraints

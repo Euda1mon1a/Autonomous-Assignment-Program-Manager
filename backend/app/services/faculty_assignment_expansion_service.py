@@ -2,7 +2,7 @@
 Faculty Assignment Expansion Service.
 
 Ensures every faculty member has exactly 56 half-day assignments per block (28 days × 2).
-Creates HalfDayAssignment records with source='template' (lowest priority) for empty slots.
+Creates HalfDayAssignment records with source='solver' for empty slots.
 
 Key differences from resident expansion:
 - No BlockAssignment source - uses Person.type='faculty'
@@ -355,13 +355,13 @@ class FacultyAssignmentExpansionService:
             logger.warning(f"Missing activity {activity_code}, skipping slot")
             return False
 
-        # Create HalfDayAssignment with source='template' (lowest priority)
+        # Create HalfDayAssignment with source='solver'
         half_day = HalfDayAssignment(
             person_id=person.id,
             date=slot_date,
             time_of_day=time_of_day,
             activity_id=activity.id,
-            source=AssignmentSource.TEMPLATE.value,
+            source=AssignmentSource.SOLVER.value,
         )
         self.db.add(half_day)
 

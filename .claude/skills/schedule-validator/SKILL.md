@@ -22,6 +22,29 @@ escalation_triggers:
 
 Comprehensive validation of residency schedules for compliance, coverage, and operational feasibility.
 
+## Two Truths: Prescriptive vs Descriptive
+
+**CRITICAL CONTEXT: Understand which truth you're validating.**
+
+| Truth Type | Tables | What It Represents |
+|------------|--------|-------------------|
+| **Prescriptive** | `rotation_templates`, `weekly_patterns` | What SHOULD happen (rules) |
+| **Descriptive** | `half_day_assignments` | What DID happen (actual schedule) |
+
+**Validation should check `half_day_assignments` (descriptive truth)** because that's what will actually be deployed. However, unexpected divergence from templates may indicate bugs.
+
+### Alignment Check (NEW)
+
+When prescriptive and descriptive diverge, verify it's intentional:
+
+| Divergence | Expected Reason | Red Flag If Missing |
+|------------|-----------------|---------------------|
+| Template says `OFF`, assignment says `C` | `source='manual'` override | Missing manual source |
+| Template says `LDNF`, assignment says `LEC` | Wednesday PM LEC rule | Missing preload |
+| Template says `C`, assignment says `LV` | Absence preloaded | Missing absence record |
+
+**If divergence exists without valid `source` explanation → investigate as potential bug.**
+
 ## When This Skill Activates
 
 - After schedule generation completes
@@ -209,6 +232,8 @@ python -m app.scheduling.validator --schedule_id=current --export=pdf
 - [ ] Rotation continuity acceptable
 - [ ] Work load reasonably balanced
 - [ ] Schedule is operable in practice
+- [ ] **`source` column audit**: Verify preloads preserved, manual overrides have `source='manual'`
+- [ ] **Prescriptive/descriptive alignment**: Unexpected divergence from templates explained by valid `source`
 
 ## Error Handling
 

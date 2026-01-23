@@ -83,3 +83,31 @@ class ForbiddenError(AppException):
             message: User-friendly authorization error message
         """
         super().__init__(message, status_code=403)
+
+
+class ActivityNotFoundError(AppException):
+    """Activity code not found in database (HTTP 422).
+
+    Raised during schedule generation when an activity code (e.g., 'LEC', 'C', 'FMIT')
+    cannot be resolved to an Activity record. This prevents silent failures that
+    would result in NULL activity_id in half_day_assignments.
+
+    Recovery:
+        Run preflight check: ./scripts/preflight-block10.sh
+        This verifies all required activity codes exist before generation.
+    """
+
+    def __init__(self, code: str, context: str = ""):
+        """Initialize activity not found error.
+
+        Args:
+            code: The activity code that was not found (e.g., 'LEC', 'C', 'FMIT')
+            context: Optional context about where the lookup occurred
+        """
+        self.code = code
+        self.context = context
+        message = f"Activity code '{code}' not found in database."
+        if context:
+            message += f" Context: {context}"
+        message += " Run preflight check: ./scripts/preflight-block10.sh"
+        super().__init__(message, status_code=422)

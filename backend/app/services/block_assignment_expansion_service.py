@@ -21,6 +21,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.exceptions import ActivityNotFoundError
 from app.core.logging import get_logger
 from app.models.absence import Absence
 from app.models.activity import Activity
@@ -300,7 +301,12 @@ class BlockAssignmentExpansionService:
             self._preload_absence_templates()
         return self._absence_templates.get(abbrev)
 
-    def _lookup_activity_by_abbreviation(self, abbreviation: str) -> Activity | None:
+    def _lookup_activity_by_abbreviation(
+        self,
+        abbreviation: str,
+        strict: bool = False,
+        context: str = "",
+    ) -> Activity | None:
         """Lookup Activity by display_abbreviation or code (cached).
 
         Handles absence template suffixes (-AM/-PM) by stripping them for lookup.
@@ -308,9 +314,16 @@ class BlockAssignmentExpansionService:
 
         Args:
             abbreviation: Activity display_abbreviation (e.g., 'C', 'LEC', 'FMIT', 'W-AM')
+            strict: If True, raise ActivityNotFoundError when activity not found.
+                    Default False for backwards compatibility. Set True during
+                    schedule generation to catch missing activities early.
+            context: Optional context string for error messages (e.g., "Block 10 expansion")
 
         Returns:
-            Activity if found, None otherwise
+            Activity if found, None if not found and strict=False
+
+        Raises:
+            ActivityNotFoundError: If strict=True and activity not found in database
         """
         if abbreviation not in self._activity_cache:
             # Try display_abbreviation first, then code
@@ -344,7 +357,14 @@ class BlockAssignmentExpansionService:
                     )
 
             self._activity_cache[abbreviation] = activity
-        return self._activity_cache.get(abbreviation)
+
+        activity = self._activity_cache.get(abbreviation)
+
+        # Strict mode: raise exception if activity not found
+        if activity is None and strict:
+            raise ActivityNotFoundError(abbreviation, context=context)
+
+        return activity
 
     def _get_active_rotation(
         self,
@@ -1405,11 +1425,16 @@ class BlockAssignmentExpansionService:
             rotation = rotation_cache.get(rotation_id)
 
             # Lookup activity by rotation abbreviation
+            # Use strict=True to fail fast on missing activity codes
             activity = None
             if rotation:
                 abbrev = rotation.display_abbreviation or rotation.abbreviation
                 if abbrev:
-                    activity = self._lookup_activity_by_abbreviation(abbrev)
+                    activity = self._lookup_activity_by_abbreviation(
+                        abbrev,
+                        strict=True,
+                        context=f"Block {block_number} solver assignment",
+                    )
 
             # Determine source: time_off activities (W, LV, HOL, OFF) should be preload
             # so activity solver won't overwrite them

@@ -218,3 +218,6 @@ workspace/
 
 # PDF files (research papers, personal docs - keep local)
 *.pdf
+
+# Schedule exports with PII (real names)
+docs/priorities/*

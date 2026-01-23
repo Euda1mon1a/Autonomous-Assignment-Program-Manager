@@ -99,12 +99,12 @@ class WeeklyPattern(Base):
         comment="DEPRECATED: Use activity_id. Legacy: fm_clinic, specialty, elective, conference, inpatient, call, procedure, off",
     )
 
-    # Foreign key to Activity table (new normalized relationship)
-    # Initially nullable for migration, will be made NOT NULL after backfill
+    # Foreign key to Activity table (required - every pattern slot needs an activity)
+    # NOT NULL enforced by migration 20260122_wp_act_notnull (EC-4 fix)
     activity_id = Column(
         GUID(),
         ForeignKey("activities.id", ondelete="RESTRICT"),
-        nullable=True,
+        nullable=False,
         index=True,
         comment="FK to activities table - the activity assigned to this slot",
     )

@@ -655,9 +655,31 @@ class SyncPreloadService:
         try:
             self.session.flush()
             return True
-        except IntegrityError:
+        except IntegrityError as e:
             self.session.rollback()
-            return False
+            # Use SQLSTATE for reliable duplicate detection across drivers/locales
+            # 23505 = unique_violation in PostgreSQL
+            # Fallback to string matching for sqlite (used in tests)
+            error_str = str(e.orig).lower() if e.orig else str(e).lower()
+            is_duplicate = (
+                (hasattr(e.orig, "pgcode") and e.orig.pgcode == "23505")
+                or "unique constraint" in error_str
+                or "uq_half_day_assignment_person_date_time" in error_str
+            )
+            if is_duplicate:
+                logger.debug(
+                    f"Preload already exists for person_id={person_id}, "
+                    f"date={date_val}, time_of_day={time_of_day}"
+                )
+                return False
+            # FK violation or other constraint error - fail loudly
+            pgcode = getattr(e.orig, "pgcode", "unknown")
+            logger.error(
+                f"Unexpected IntegrityError (pgcode={pgcode}): {e.orig}. "
+                f"person_id={person_id}, date={date_val}, time_of_day={time_of_day}, "
+                f"activity_id={activity_id}"
+            )
+            raise
 
     def _is_on_fmit(self, person_id: UUID, date_val: date) -> bool:
         """Check if person is on FMIT on the given date."""

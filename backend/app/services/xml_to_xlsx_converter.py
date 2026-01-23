@@ -1,13 +1,14 @@
 """
 XML to XLSX Converter.
 
-Converts ScheduleXMLExporter output to Excel format matching ROSETTA ground truth.
+Converts HalfDayXMLExporter output to Excel format.
+
+Supports two formats:
+1. ROSETTA format (validation): Simple layout for testing
+2. Block Template2 format (production): Full TAMC layout with all rows/columns
 
 This is the final step in the central dogma pipeline:
-    DB → ScheduleXMLExporter → XML → XMLToXlsxConverter → xlsx
-
-The XML serves as the validation checkpoint - if XML matches ROSETTA patterns,
-the xlsx output will be correct.
+    DB → HalfDayXMLExporter → XML → XMLToXlsxConverter → xlsx
 """
 
 from datetime import date, datetime, timedelta
@@ -27,39 +28,60 @@ logger = get_logger(__name__)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# ROSETTA FORMAT STRUCTURE (validation-focused xlsx)
-# This matches the Block10_ROSETTA_CORRECT.xlsx format for validation
+# ROSETTA FORMAT (validation-focused, simple layout)
 # ═══════════════════════════════════════════════════════════════════════════════
+# Column Layout: Name, PGY, Rotation1, Rotation2, Notes, Schedule...
+ROSETTA_COL_NAME = 1
+ROSETTA_COL_PGY = 2
+ROSETTA_COL_ROTATION1 = 3
+ROSETTA_COL_ROTATION2 = 4
+ROSETTA_COL_NOTES = 5
+ROSETTA_COL_SCHEDULE_START = 6
 
-# Row Layout (ROSETTA validation format)
-ROW_HEADERS = 1  # Column headers
+# ═══════════════════════════════════════════════════════════════════════════════
+# BLOCK TEMPLATE2 FORMAT (production, full TAMC layout)
+# ═══════════════════════════════════════════════════════════════════════════════
+# Column Layout: Rotation1, Rotation2, Template, Role, Name, Schedule...
+BT2_COL_ROTATION1 = 1  # First-half rotation (e.g., "Hilo", "FMC")
+BT2_COL_ROTATION2 = 2  # Second-half rotation (if mid-block switch)
+BT2_COL_TEMPLATE = 3  # Template code (R1, R2, R3, C19, ADJ)
+BT2_COL_ROLE = 4  # Role (PGY 1, PGY 2, PGY 3, FAC)
+BT2_COL_NAME = 5  # Name ("Last, First")
+BT2_COL_SCHEDULE_START = 6  # First schedule column
 
-# Column Layout (ROSETTA format)
-COL_RESIDENT_NAME = 1  # Resident name ("Last, First")
-COL_PGY = 2  # PGY level
-COL_ROTATION1 = 3  # First-half rotation
-COL_ROTATION2 = 4  # Second-half rotation (if mid-block switch)
-COL_NOTES = 5  # Notes
-COL_SCHEDULE_START = 6  # First schedule column (AM slot)
+# Special rows in Block Template2
+BT2_ROW_STAFF_CALL = 4
+BT2_ROW_RESIDENT_CALL = 5
 
-# Date-to-column calculation
+# Date-to-column calculation (same for both formats)
 # Each date uses 2 columns: AM (even col), PM (odd col+1)
 # Block 10: Mar 12-Apr 8 = 28 days = 56 columns (6-61)
 COLS_PER_DAY = 2
 TOTAL_DAYS = 28
+
+# Legacy aliases for backward compatibility
+ROW_HEADERS = 1
+COL_RESIDENT_NAME = ROSETTA_COL_NAME
+COL_PGY = ROSETTA_COL_PGY
+COL_ROTATION1 = ROSETTA_COL_ROTATION1
+COL_ROTATION2 = ROSETTA_COL_ROTATION2
+COL_NOTES = ROSETTA_COL_NOTES
+COL_SCHEDULE_START = ROSETTA_COL_SCHEDULE_START
 COL_SCHEDULE_END = COL_SCHEDULE_START + (TOTAL_DAYS * COLS_PER_DAY) - 1  # 61
 
 
 class XMLToXlsxConverter:
     """
-    Convert ScheduleXMLExporter XML to Excel xlsx format.
+    Convert HalfDayXMLExporter XML to Excel xlsx format.
 
-    Supports two modes:
-    1. ROSETTA format (validation): Row 1 headers, Row 2+ residents
-    2. Block Template2 format (production): Uses template row mappings
+    Supports two formats:
+    1. ROSETTA format (validation): Simple layout - Name, PGY, Rotation, Schedule
+    2. Block Template2 format (production): Full TAMC layout with correct columns
 
-    When structure_xml_path is provided, uses Block Template2 layout with
-    exact row positions for residents/faculty/call.
+    Block Template2 format uses:
+    - Column layout: Rotation1, Rotation2, Template, Role, Name, Schedule...
+    - Row mappings from structure XML for exact positioning
+    - Name format: "Last, First"
     """
 
     def __init__(
@@ -67,6 +89,7 @@ class XMLToXlsxConverter:
         template_path: Path | str | None = None,
         apply_colors: bool = True,
         structure_xml_path: Path | str | None = None,
+        use_block_template2: bool = True,
     ):
         """
         Initialize converter with optional template.
@@ -77,14 +100,19 @@ class XMLToXlsxConverter:
             apply_colors: Whether to apply TAMC color scheme to cells.
             structure_xml_path: Path to BlockTemplate2_Structure.xml for row mappings.
                                If provided, uses name → row lookup instead of sequential.
+            use_block_template2: If True, use Block Template2 column layout (production).
+                                If False, use ROSETTA layout (validation).
         """
         self.template_path = Path(template_path) if template_path else None
         self.apply_colors = apply_colors
         self.color_scheme = get_color_scheme() if apply_colors else None
+        self.use_block_template2 = use_block_template2
 
         # Load row mappings from structure XML if provided
         self.row_mappings: dict[str, int] = {}
-        self.call_row: int = 4  # Default
+        self.pgy_mappings: dict[str, int] = {}  # name → pgy level
+        self.template_mappings: dict[str, str] = {}  # name → template code
+        self.call_row: int = BT2_ROW_STAFF_CALL
         if structure_xml_path:
             self._load_structure_xml(Path(structure_xml_path))
 
@@ -104,22 +132,29 @@ class XMLToXlsxConverter:
             if call_row_elem is not None:
                 self.call_row = int(call_row_elem.get("row", "4"))
 
-        # Load resident row mappings (name → row)
+        # Load resident row mappings (name → row, pgy, template)
         for resident in root.findall(".//resident"):
             name = resident.get("name", "")
             row = resident.get("row", "")
+            pgy = resident.get("pgy", "")
             if name and row:
                 # Normalize name (remove asterisks, extra spaces)
                 normalized = name.replace("*", "").strip()
                 self.row_mappings[normalized] = int(row)
+                if pgy:
+                    self.pgy_mappings[normalized] = int(pgy)
+                    # Template code from PGY: R1, R2, R3
+                    self.template_mappings[normalized] = f"R{pgy}"
 
         # Load faculty row mappings
         for person in root.findall(".//faculty/person"):
             name = person.get("name", "")
             row = person.get("row", "")
+            template = person.get("template", "C19")
             if name and row:
                 normalized = name.replace("*", "").strip()
                 self.row_mappings[normalized] = int(row)
+                self.template_mappings[normalized] = template
 
         logger.info(f"Loaded {len(self.row_mappings)} row mappings from {xml_path}")
 
@@ -159,13 +194,16 @@ class XMLToXlsxConverter:
             wb = self._create_new_workbook(block_start, block_end)
             sheet = wb.active
 
-        # Fill header row (skip if using template with row mappings)
-        if not self.row_mappings:
-            self._fill_header_row(sheet, block_start, block_end)
+        # Fill header row (always - helps with readability)
+        self._fill_header_row(sheet, block_start, block_end)
 
-        # Fill residents from XML
+        # Fill residents and faculty from XML
         residents = root.findall(".//resident")
+        faculty = root.findall(".//faculty")
         self._fill_residents(sheet, residents, block_start)
+        self._fill_residents(
+            sheet, faculty, block_start
+        )  # Same logic works for faculty
 
         # Fill call row (Row 4) - single cells for user to merge
         call_section = root.find(".//call")
@@ -259,17 +297,32 @@ class XMLToXlsxConverter:
         block_start: date,
         block_end: date,
     ) -> None:
-        """Fill header row matching ROSETTA format."""
-        # Metadata headers
-        sheet.cell(row=ROW_HEADERS, column=COL_RESIDENT_NAME).value = "Resident"
-        sheet.cell(row=ROW_HEADERS, column=COL_PGY).value = "PGY"
-        sheet.cell(row=ROW_HEADERS, column=COL_ROTATION1).value = "Rotation 1"
-        sheet.cell(row=ROW_HEADERS, column=COL_ROTATION2).value = "Rotation 2"
-        sheet.cell(row=ROW_HEADERS, column=COL_NOTES).value = "Notes"
+        """Fill header row based on format (Block Template2 or ROSETTA)."""
+        if self.use_block_template2:
+            # Block Template2 format headers (Row 6 in actual template, Row 1 here)
+            # The actual template has complex multi-row headers, we simplify
+            sheet.cell(row=ROW_HEADERS, column=BT2_COL_ROTATION1).value = ""
+            sheet.cell(row=ROW_HEADERS, column=BT2_COL_ROTATION2).value = ""
+            sheet.cell(row=ROW_HEADERS, column=BT2_COL_TEMPLATE).value = "TEMPLATE"
+            sheet.cell(row=ROW_HEADERS, column=BT2_COL_ROLE).value = "ROLE"
+            sheet.cell(row=ROW_HEADERS, column=BT2_COL_NAME).value = "PROVIDER"
+            col_schedule_start = BT2_COL_SCHEDULE_START
+        else:
+            # ROSETTA format headers
+            sheet.cell(row=ROW_HEADERS, column=ROSETTA_COL_NAME).value = "Resident"
+            sheet.cell(row=ROW_HEADERS, column=ROSETTA_COL_PGY).value = "PGY"
+            sheet.cell(
+                row=ROW_HEADERS, column=ROSETTA_COL_ROTATION1
+            ).value = "Rotation 1"
+            sheet.cell(
+                row=ROW_HEADERS, column=ROSETTA_COL_ROTATION2
+            ).value = "Rotation 2"
+            sheet.cell(row=ROW_HEADERS, column=ROSETTA_COL_NOTES).value = "Notes"
+            col_schedule_start = ROSETTA_COL_SCHEDULE_START
 
         # Schedule column headers (e.g., "Thu Mar 12 AM", "Thu Mar 12 PM")
         current = block_start
-        col = COL_SCHEDULE_START
+        col = col_schedule_start
         while current <= block_end:
             day_str = current.strftime("%a %b %d").replace(" 0", " ")  # "Thu Mar 12"
 
@@ -286,46 +339,62 @@ class XMLToXlsxConverter:
             current += timedelta(days=1)
             col += 2
 
+    def _to_last_first(self, name: str) -> str:
+        """Convert 'First Last' to 'Last, First' format."""
+        if not name or "," in name:
+            return name  # Already in Last, First format or empty
+        parts = name.strip().split()
+        if len(parts) >= 2:
+            return f"{parts[-1]}, {' '.join(parts[:-1])}"
+        return name
+
+    def _get_role(self, pgy: str, is_faculty: bool) -> str:
+        """Get role string for Block Template2 format."""
+        if is_faculty:
+            return "FAC"
+        if pgy:
+            return f"PGY {pgy}"
+        return ""
+
     def _fill_residents(
         self,
         sheet,
         residents: list,
         block_start: date,
     ) -> None:
-        """Fill resident rows from XML elements.
+        """Fill resident/faculty rows from XML elements.
 
         If row_mappings loaded from structure XML, uses name → row lookup.
         Otherwise, uses sequential rows starting at row 2 (ROSETTA format).
+
+        Column layout depends on use_block_template2 flag:
+        - Block Template2: Rotation1, Rotation2, Template, Role, Name, Schedule...
+        - ROSETTA: Name, PGY, Rotation1, Rotation2, Notes, Schedule...
         """
-        # Sort residents by name to match ROSETTA order (when no mappings)
+        # Sort by name when no mappings (ROSETTA order)
         sorted_residents = sorted(residents, key=lambda r: r.get("name", ""))
 
         for i, resident in enumerate(sorted_residents):
             name = resident.get("name", "")
+            is_faculty = resident.tag == "faculty"
 
             # Use row mapping if available, else sequential
             if self.row_mappings:
-                # Normalize name for lookup (remove asterisks, extra spaces)
+                # Normalize name for lookup
                 normalized = name.replace("*", "").strip()
                 row = self.row_mappings.get(normalized)
 
-                # Try fuzzy match by last name if exact match fails
+                # Try fuzzy match by first name (DB uses "First Last")
                 if not row:
-                    last_name = (
-                        normalized.split(",")[0].strip()
-                        if "," in normalized
-                        else normalized
-                    )
+                    first_name = normalized.split()[0] if normalized else ""
                     for mapping_name, mapping_row in self.row_mappings.items():
-                        if mapping_name.startswith(last_name + ","):
+                        # Check if first name matches start of mapping
+                        if mapping_name.startswith(first_name):
                             row = mapping_row
-                            logger.info(
-                                f"Fuzzy matched '{name}' to '{mapping_name}' (row {row})"
-                            )
                             break
 
                 if not row:
-                    logger.warning(f"No row mapping for resident: {name}")
+                    logger.warning(f"No row mapping for: {name}")
                     continue
             else:
                 row = i + 2  # Start at row 2 (row 1 is headers)
@@ -334,21 +403,43 @@ class XMLToXlsxConverter:
             rotation1 = resident.get("rotation1", "")
             rotation2 = resident.get("rotation2", "")
 
-            # Fill metadata columns (skip if using template - already has names)
-            if not self.row_mappings:
-                sheet.cell(row=row, column=COL_RESIDENT_NAME).value = name
-                sheet.cell(row=row, column=COL_PGY).value = pgy
+            if self.use_block_template2:
+                # Block Template2 format: Rotation1, Rotation2, Template, Role, Name
+                normalized = name.replace("*", "").strip()
+                template_code = self.template_mappings.get(normalized, "")
+                if not template_code and pgy:
+                    template_code = f"R{pgy}"
+                elif not template_code and is_faculty:
+                    template_code = "C19"
 
-                rot1_cell = sheet.cell(row=row, column=COL_ROTATION1)
+                role = self._get_role(pgy, is_faculty)
+                display_name = self._to_last_first(name)
+
+                rot1_cell = sheet.cell(row=row, column=BT2_COL_ROTATION1)
                 rot1_cell.value = rotation1
                 self._apply_rotation_color(rot1_cell, rotation1)
 
-                rot2_cell = sheet.cell(row=row, column=COL_ROTATION2)
+                rot2_cell = sheet.cell(row=row, column=BT2_COL_ROTATION2)
                 rot2_cell.value = rotation2 or ""
                 if rotation2:
                     self._apply_rotation_color(rot2_cell, rotation2)
 
-                sheet.cell(row=row, column=COL_NOTES).value = ""
+                sheet.cell(row=row, column=BT2_COL_TEMPLATE).value = template_code
+                sheet.cell(row=row, column=BT2_COL_ROLE).value = role
+                sheet.cell(row=row, column=BT2_COL_NAME).value = display_name
+            else:
+                # ROSETTA format: Name, PGY, Rotation1, Rotation2, Notes
+                sheet.cell(row=row, column=ROSETTA_COL_NAME).value = name
+                sheet.cell(row=row, column=ROSETTA_COL_PGY).value = pgy
+
+                rot1_cell = sheet.cell(row=row, column=ROSETTA_COL_ROTATION1)
+                rot1_cell.value = rotation1
+                self._apply_rotation_color(rot1_cell, rotation1)
+
+                rot2_cell = sheet.cell(row=row, column=ROSETTA_COL_ROTATION2)
+                rot2_cell.value = rotation2 or ""
+                if rotation2:
+                    self._apply_rotation_color(rot2_cell, rotation2)
 
             # Fill schedule columns from day elements
             for day in resident.findall("day"):
