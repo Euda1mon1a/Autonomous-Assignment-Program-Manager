@@ -1,10 +1,18 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-23 (Session 136: Full re-examination, Excel export investigation)
+> **Last Updated:** 2026-01-23 (Session 136: Full re-examination, Excel export, 6 audit reports)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
+>
+> **Session 136 Audit Reports:**
+> - [API Coverage Matrix](reports/API_COVERAGE_MATRIX_2026-01-23.md) - 84 routes, 752+ endpoints, 53% tested
+> - [Security Posture](reports/SECURITY_POSTURE_2026-01-23.md) - 1 Critical, 4 High, 3 Medium
+> - [DB-Schema Alignment](reports/DB_SCHEMA_ALIGNMENT_AUDIT_2026-01-23.md) - 87 models, 12 missing, 7 orphaned
+> - [Skills Audit](reports/SKILLS_AUDIT_2026-01-23.md) - 92 skills, 7.6/10 average
+> - [MCP Tools Audit](reports/MCP_TOOLS_AUDIT_2026-01-23.md) - 137 tools, 10 placeholders
+> - [Skills-Tools Rationalization](reports/SKILLS_TOOLS_RATIONALIZATION_2026-01-23.md) - Consolidation plan
 
 ---
 
@@ -145,6 +153,22 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 
 **Ref:** PR #764, Session 136
 
+### 4. PII Exposure in Resilience/Burnout Tools (NEW - Session 136)
+**Added:** 2026-01-23
+**Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
+**Severity:** CRITICAL - HIPAA/OPSEC Violation
+
+Real faculty/provider names exposed in burnout and vulnerability API responses:
+
+| Location | Class | Exposed Field |
+|----------|-------|---------------|
+| `contagion_model.py:107-130` | `SuperspreaderProfile` | `provider_name` |
+| `resilience_integration.py:114-124` | `VulnerabilityInfo` | `faculty_name` |
+| `resilience_integration.py:126-135` | `FatalPairInfo` | `faculty_1_name`, `faculty_2_name` |
+
+**Fix:** Apply existing `_anonymize_id()` function at `resilience_integration.py:27-45`.
+**Effort:** 1.5 hours (3 classes × 30 min)
+
 ---
 
 ## HIGH (Address Soon)
@@ -227,6 +251,81 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
 **Decision:** Keep all modules on roadmap. Integrate as features require.
 
+### 10. DoS Vulnerabilities - Unbounded Queries (NEW - Session 136)
+**Added:** 2026-01-23
+**Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
+
+| Endpoint | File:Line | Issue |
+|----------|-----------|-------|
+| `GET /analytics/export/research` | `analytics.py:769` | No max date range, full table scan |
+| `GET /analytics/metrics/history` | `analytics.py:185` | No limit clause |
+| `GET /schedule/runs` | `schedule.py:1369` | `.all()` loads entire table for count |
+
+**Attacks:**
+- `?start_date=1900-01-01&end_date=2100-12-31` forces full table scan
+- Count query fetches all rows instead of using `func.count()`
+
+**Fixes:**
+1. Add `MAX_RANGE = timedelta(days=365)` validation
+2. Use `db.query(func.count(ScheduleRun.id)).scalar()`
+
+**Effort:** 2 hours
+
+### 11. Missing Rate Limits on Expensive Endpoints (NEW - Session 136)
+**Added:** 2026-01-23
+**Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
+
+| Endpoint | Impact |
+|----------|--------|
+| `POST /schedule/generate` | CPU exhaustion |
+| `POST /import/analyze` | File processing exhaustion |
+| `POST /exports/{job_id}/run` | Celery queue exhaustion |
+| `POST /upload` | Storage exhaustion |
+
+**Fix:** Add `@limiter.limit("2/minute")` decorator from `app.core.slowapi_limiter`.
+**Effort:** 1 hour
+
+### 12. No DB-Schema Drift Detection (NEW - Session 136)
+**Added:** 2026-01-23
+**Source:** [DB-Schema Alignment Audit](reports/DB_SCHEMA_ALIGNMENT_AUDIT_2026-01-23.md)
+
+Critical infrastructure gaps:
+
+| Gap | Impact |
+|-----|--------|
+| No `naming_convention` on SQLAlchemy Base | Constraint names are gibberish (`fk_1a2b3c4d`) |
+| No model-database drift tests | 12 models exist without tables |
+| No schema-model alignment tests | ActivityResponse missing 2 fields |
+
+**Existing Drift:**
+- 12 models missing from database (webhooks, OAuth2, workflow engine)
+- 7 orphaned tables in database
+- ActivityResponse missing `provides_supervision`, `counts_toward_physical_capacity`
+
+**Fixes:**
+1. Add `MetaData(naming_convention=...)` to `backend/app/db/base.py`
+2. Create `test_model_database_sync.py`
+3. Create `test_schema_model_sync.py`
+
+**Effort:** 4 hours
+
+### 13. API Test Coverage Gap - 366 Untested Endpoints (NEW - Session 136)
+**Added:** 2026-01-23
+**Source:** [API Coverage Matrix](reports/API_COVERAGE_MATRIX_2026-01-23.md)
+
+53% test coverage (45/84 routes tested). Safety-critical gaps:
+
+| Route | Endpoints | Priority |
+|-------|-----------|----------|
+| `resilience.py` | 59 | **P0 - Crisis management** |
+| `fatigue_risk.py` | 16 | **P0 - Medical safety** |
+| `call_assignments.py` | 13 | P1 - PCAT equity |
+| `webhooks.py` | 13 | P1 - Event delivery |
+| `swap.py` | 5 | P1 - FMIT swaps |
+| `wellness.py` | 15 | P1 - Resident health |
+
+**Note:** Resilience endpoints also missing from OpenAPI spec (59 endpoints not generating frontend types).
+
 ---
 
 ## MEDIUM (Plan for Sprint)
@@ -304,6 +403,35 @@ Pre-commit hooks fail due to missing dependencies:
 **Also consider:**
 - Split into `requirements.txt` (core) + `requirements-dev.txt` (testing/linting)
 - Heavy ML deps (`sentence-transformers`, `transformers`) could be optional
+
+### 20. Skills-Tools Rationalization (NEW - Session 136)
+**Added:** 2026-01-23
+**Source:** [Skills-Tools Rationalization](reports/SKILLS_TOOLS_RATIONALIZATION_2026-01-23.md)
+
+| Category | Count | Action |
+|----------|-------|--------|
+| Skills → MCP Tools | 3 | `coverage-reporter`, `changelog-generator`, `check-camelcase` |
+| Skills → Call MCP Tools | 4 | `SWAP_EXECUTION`, `COMPLIANCE_VALIDATION`, etc. |
+| Skills → RAG | 5 | `hierarchy`, `parties`, `python-testing-patterns` |
+| Redundancies | 4 | `startupO-legacy`, `deep-research`+`devcom` |
+
+**Missing Skill:** `check-camelcase` referenced in CLAUDE.md but skill doesn't exist.
+
+### 21. MCP Placeholder Tools (NEW - Session 136)
+**Added:** 2026-01-23
+**Source:** [MCP Tools Audit](reports/MCP_TOOLS_AUDIT_2026-01-23.md)
+
+10 MCP tools return mock data instead of real backend integration:
+
+| Tool | Backend Service Needed |
+|------|----------------------|
+| `analyze_homeostasis_tool` | `HomeostasisService.check_homeostasis()` |
+| `get_static_fallbacks_tool` | `ResilienceService.get_fallback_schedules()` |
+| `execute_sacrifice_hierarchy_tool` | `ResilienceService.execute_sacrifice()` |
+| `calculate_blast_radius_tool` | `BlastRadiusService.calculate()` |
+| (6 more) | See PLACEHOLDER_IMPLEMENTATIONS.md |
+
+**Action:** Add `[MOCK]` prefix to tool descriptions until backend services exist.
 
 ---
 
@@ -486,20 +614,28 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 
 | Priority | Open | Resolved |
 |----------|------|----------|
-| **CRITICAL** | 3 | 4 |
-| **HIGH** | 6 | 5 |
-| **MEDIUM** | 6 | 9 |
+| **CRITICAL** | 4 | 4 |
+| **HIGH** | 10 | 5 |
+| **MEDIUM** | 8 | 9 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **28** | **21** |
+| **TOTAL** | **35** | **21** |
 
 ### Top 5 Actions for Next Session
 
-1. **Fix Excel Export Silent Failures** (CRITICAL #1) - Blocking production use
-2. **Fix Frontend Export Auth** - `export.ts` using raw fetch instead of axios
-3. **Add Faculty to XML Export** - Currently filtered out
-4. **Run Block 10-13 Schedule Generation** - Schema prep done, ready for solver
-5. **Complete API/WS Convention Audit** - Prevent future wiring issues
+1. **Fix PII Exposure** (CRITICAL #4) - 3 classes exposing faculty names in burnout APIs
+2. **Fix Excel Export Silent Failures** (CRITICAL #1) - Blocking production use
+3. **Add Rate Limits** (HIGH #11) - DoS protection on expensive endpoints
+4. **Add DB-Schema Drift Tests** (HIGH #12) - Prevent 12+ more models drifting
+5. **Add Resilience Route Tests** (HIGH #13) - 59 untested safety-critical endpoints
+
+### Session 136 Net New Items
+
+| Priority | New | Source Report |
+|----------|-----|---------------|
+| CRITICAL | +1 | Security Posture (PII exposure) |
+| HIGH | +4 | Security Posture (DoS), DB-Schema, API Coverage |
+| MEDIUM | +2 | Skills-Tools, MCP Tools |
 
 ---
 
-*This document consolidates findings from TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, and ARCHITECTURAL_DISCONNECTS.md. Keep this as the authoritative source.*
+*This document consolidates findings from TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md, and Session 136 audit reports. Keep this as the authoritative source.*
