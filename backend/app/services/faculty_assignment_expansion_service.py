@@ -25,11 +25,11 @@ PERSEC-compliant logging (no PII).
 import math
 from collections import defaultdict
 from datetime import date, timedelta
-from typing import Optional
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select, and_, func
-from sqlalchemy.orm import Session
+from sqlalchemy import select, and_
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
 from app.models.absence import Absence
@@ -53,7 +53,7 @@ FACULTY_CLINIC_CAPS: dict[str, tuple[int, int]] = {
     "McGuire": (1, 1),
     "Tagawa": (0, 0),  # SM only
     "Bevis": (0, 0),
-    "Dahl": (0, 0),
+    "Dahl": (1, 2),
     "Chu": (0, 0),
     "Napierala": (0, 0),
     "Van Brunt": (0, 0),
@@ -70,11 +70,6 @@ AT_DEMAND_BY_PGY: dict[int, float] = {
 # Physical capacity: max people in clinic per slot
 # AT doesn't count - supervision doesn't take exam room space
 MAX_PHYSICAL_CAPACITY = 6
-
-# Activity codes that count against physical capacity
-# fm_clinic, C, C-N = taking up exam rooms
-# AT, pcat, do = supervision only, no room needed
-PHYSICAL_CAPACITY_CODES = ["fm_clinic", "C", "C-N", "CV"]
 
 
 class FacultyAssignmentExpansionService:
@@ -143,18 +138,17 @@ class FacultyAssignmentExpansionService:
         self._preload_holidays(start_date, end_date)
 
         # =====================================================================
-        # ACGME-Aware Faculty Assignment (Session 136)
+        # ACGME-Aware Faculty Assignment (CP-SAT)
         # =====================================================================
         # Step 1: Calculate AT demand from resident clinic assignments
         at_demand = self._calculate_at_demand(start_date, end_date)
 
-        # Step 2: Assign AT slots to meet ACGME supervision ratios
-        at_created = self._assign_at_slots(faculty, at_demand, start_date, end_date)
+        # Step 2: Solve AT + Clinic assignments via CP-SAT
+        at_created, clinic_created = self._solve_faculty_clinic_and_at(
+            faculty, at_demand, start_date, end_date
+        )
 
-        # Step 3: Assign clinic (C) slots to faculty with caps
-        clinic_created = self._assign_clinic_slots(faculty, start_date, end_date)
-
-        # Step 4: Fill remaining slots with GME/DFM (original behavior)
+        # Step 3: Fill remaining slots with GME/DFM (original behavior)
         total_created = 0
         for person in faculty:
             created = self._fill_single_faculty(
@@ -489,40 +483,39 @@ class FacultyAssignmentExpansionService:
             Dict mapping (date, time_of_day) -> required_faculty_count
         """
         # Query resident clinic assignments
-        clinic_codes = ["fm_clinic", "C", "C-N", "CV"]
-
         stmt = (
-            select(
-                HalfDayAssignment.date,
-                HalfDayAssignment.time_of_day,
-                Person.pgy_level,
-                func.count().label("count"),
-            )
+            select(HalfDayAssignment)
             .join(Person, HalfDayAssignment.person_id == Person.id)
             .join(Activity, HalfDayAssignment.activity_id == Activity.id)
+            .options(
+                selectinload(HalfDayAssignment.person),
+                selectinload(HalfDayAssignment.activity),
+            )
             .where(Person.type == "resident")
-            .where(Activity.code.in_(clinic_codes))
             .where(HalfDayAssignment.date >= start_date)
             .where(HalfDayAssignment.date <= end_date)
-            .group_by(
-                HalfDayAssignment.date,
-                HalfDayAssignment.time_of_day,
-                Person.pgy_level,
-            )
         )
 
         # Calculate demand per slot
         demand_by_slot: dict[tuple[date, str], float] = defaultdict(float)
 
-        for row in self.db.execute(stmt):
-            slot_date = row[0]
-            time_of_day = row[1]
-            pgy_level = row[2] or 2  # Default to PGY-2 if unknown
-            count = row[3]
+        for assignment in self.db.execute(stmt).scalars():
+            activity = assignment.activity
+            if not activity:
+                continue
 
-            key = (slot_date, time_of_day)
-            demand_factor = AT_DEMAND_BY_PGY.get(pgy_level, 0.25)
-            demand_by_slot[key] += count * demand_factor
+            slot_key = (assignment.date, assignment.time_of_day)
+
+            # PROC/VAS = +1.0 AT demand each
+            if self._is_proc_or_vas(activity):
+                demand_by_slot[slot_key] += 1.0
+                continue
+
+            # Regular clinic demand based on PGY
+            if self._counts_toward_capacity(activity):
+                pgy_level = assignment.person.pgy_level or 2
+                demand_factor = AT_DEMAND_BY_PGY.get(pgy_level, 0.25)
+                demand_by_slot[slot_key] += demand_factor
 
         # Round up each slot's demand
         result = {k: math.ceil(v) for k, v in demand_by_slot.items()}
@@ -535,16 +528,325 @@ class FacultyAssignmentExpansionService:
 
         return result
 
-    def _get_faculty_clinic_cap(self, faculty_name: str) -> tuple[int, int]:
-        """Get (MIN, MAX) clinic cap for faculty by name."""
-        # Extract last name
-        if "," in faculty_name:
-            last_name = faculty_name.split(",")[0].strip()
-        else:
-            parts = faculty_name.split()
-            last_name = parts[-1] if parts else faculty_name
+    def _get_faculty_clinic_cap(self, faculty: Person) -> tuple[int, int]:
+        """Get (MIN, MAX) clinic cap for faculty.
 
-        return FACULTY_CLINIC_CAPS.get(last_name, (0, 4))
+        Prefer per-person DB fields; fall back to roster defaults by last name
+        when the DB still has global defaults.
+        """
+        min_c = faculty.min_clinic_halfdays_per_week or 0
+        max_c = faculty.max_clinic_halfdays_per_week or 4
+
+        # If DB looks unconfigured (default 0-4), use roster caps when available
+        if (min_c, max_c) == (0, 4):
+            faculty_name = getattr(faculty, "name", "")
+            if "," in faculty_name:
+                last_name = faculty_name.split(",")[0].strip()
+            else:
+                parts = faculty_name.split()
+                last_name = parts[-1] if parts else faculty_name
+            return FACULTY_CLINIC_CAPS.get(last_name, (min_c, max_c))
+
+        return (min_c, max_c)
+
+    @staticmethod
+    def _normalize_code(code: str | None) -> str:
+        return (code or "").strip().lower()
+
+    @staticmethod
+    def _normalize_abbrev(abbrev: str | None) -> str:
+        return (abbrev or "").strip().upper()
+
+    def _counts_toward_capacity(self, activity: Activity | None) -> bool:
+        if not activity:
+            return False
+        if activity.counts_toward_physical_capacity:
+            return True
+        code = self._normalize_code(activity.code)
+        abbrev = self._normalize_abbrev(activity.display_abbreviation)
+        return code in {"fm_clinic", "c", "c-n", "cv", "pr", "vas"} or abbrev in {
+            "C",
+            "C-N",
+            "CV",
+            "PR",
+            "VAS",
+        }
+
+    def _provides_supervision(self, activity: Activity | None) -> bool:
+        if not activity:
+            return False
+        if activity.provides_supervision:
+            return True
+        code = self._normalize_code(activity.code)
+        abbrev = self._normalize_abbrev(activity.display_abbreviation)
+        return code in {"at", "pcat", "fm_clinic", "cv"} or abbrev in {
+            "AT",
+            "PCAT",
+            "C",
+            "CV",
+        }
+
+    def _is_proc_or_vas(self, activity: Activity | None) -> bool:
+        if not activity:
+            return False
+        code = self._normalize_code(activity.code)
+        abbrev = self._normalize_abbrev(activity.display_abbreviation)
+        return code in {"pr", "vas"} or abbrev in {"PR", "VAS"}
+
+    def _week_index_by_date(self, start_date: date, end_date: date) -> dict[date, int]:
+        """Map each date to a 0-based week index anchored at start_date."""
+        week_map: dict[date, int] = {}
+        current = start_date
+        week_idx = 0
+        while current <= end_date:
+            week_end = min(current + timedelta(days=6), end_date)
+            day = current
+            while day <= week_end:
+                week_map[day] = week_idx
+                day += timedelta(days=1)
+            week_idx += 1
+            current = week_end + timedelta(days=1)
+        return week_map
+
+    def _calculate_existing_capacity(
+        self, start_date: date, end_date: date
+    ) -> dict[tuple[date, str], int]:
+        """Count existing clinical occupancy per slot (all people)."""
+        stmt = (
+            select(HalfDayAssignment)
+            .options(selectinload(HalfDayAssignment.activity))
+            .where(HalfDayAssignment.date >= start_date)
+            .where(HalfDayAssignment.date <= end_date)
+        )
+        capacity_by_slot: dict[tuple[date, str], int] = defaultdict(int)
+        for assignment in self.db.execute(stmt).scalars():
+            if self._counts_toward_capacity(assignment.activity):
+                capacity_by_slot[(assignment.date, assignment.time_of_day)] += 1
+        return capacity_by_slot
+
+    def _calculate_existing_supervision(
+        self, start_date: date, end_date: date
+    ) -> dict[tuple[date, str], int]:
+        """Count existing supervision coverage per slot (faculty only)."""
+        stmt = (
+            select(HalfDayAssignment)
+            .join(Person, HalfDayAssignment.person_id == Person.id)
+            .options(selectinload(HalfDayAssignment.activity))
+            .where(Person.type == "faculty")
+            .where(HalfDayAssignment.date >= start_date)
+            .where(HalfDayAssignment.date <= end_date)
+        )
+        coverage_by_slot: dict[tuple[date, str], int] = defaultdict(int)
+        for assignment in self.db.execute(stmt).scalars():
+            if self._provides_supervision(assignment.activity):
+                coverage_by_slot[(assignment.date, assignment.time_of_day)] += 1
+        return coverage_by_slot
+
+    def _solve_faculty_clinic_and_at(
+        self,
+        faculty: list[Person],
+        at_demand: dict[tuple[date, str], int],
+        start_date: date,
+        end_date: date,
+    ) -> tuple[int, int]:
+        """
+        Solve faculty clinic (C) and AT assignments via CP-SAT.
+
+        Returns:
+            (at_created, clinic_created)
+        """
+        try:
+            from ortools.sat.python import cp_model
+        except ImportError:
+            logger.error(
+                "OR-Tools not installed; CP-SAT is required for faculty AT/C assignment"
+            )
+            raise RuntimeError(
+                "OR-Tools not installed; CP-SAT is required for faculty assignment"
+            )
+
+        if not faculty:
+            return 0, 0
+
+        clinic_activity = self._get_activity("fm_clinic")
+        at_activity = self._get_activity("at")
+        if not clinic_activity or not at_activity:
+            logger.warning("Missing 'fm_clinic' or 'at' activity, skipping AT/C solve")
+            return 0, 0
+
+        # Build candidate slots (weekdays, not locked, not absent/deployed/holiday)
+        slots_by_faculty: dict[UUID, list[tuple[date, str]]] = defaultdict(list)
+        slots_by_datetime: dict[tuple[date, str], list[UUID]] = defaultdict(list)
+
+        current = start_date
+        while current <= end_date:
+            if current.weekday() >= 5:
+                current += timedelta(days=1)
+                continue
+
+            for time_of_day in ["AM", "PM"]:
+                if (current, time_of_day) in self._holiday_slots:
+                    continue
+
+                for person in faculty:
+                    slot_key = f"{person.id}_{current.isoformat()}_{time_of_day}"
+                    if slot_key in self._existing_slots:
+                        continue
+
+                    if self._is_person_absent(person.id, current):
+                        continue
+                    if self._is_person_deployed(person.id, current):
+                        continue
+
+                    slots_by_faculty[person.id].append((current, time_of_day))
+                    slots_by_datetime[(current, time_of_day)].append(person.id)
+
+            current += timedelta(days=1)
+
+        if not slots_by_faculty:
+            return 0, 0
+
+        model = cp_model.CpModel()
+        clinic_vars: dict[tuple[UUID, date, str], Any] = {}
+        at_vars: dict[tuple[UUID, date, str], Any] = {}
+
+        for person in faculty:
+            for slot_date, time_of_day in slots_by_faculty.get(person.id, []):
+                key = (person.id, slot_date, time_of_day)
+                c_var = model.NewBoolVar(
+                    f"c_{person.id}_{slot_date.isoformat()}_{time_of_day}"
+                )
+                a_var = model.NewBoolVar(
+                    f"at_{person.id}_{slot_date.isoformat()}_{time_of_day}"
+                )
+                clinic_vars[key] = c_var
+                at_vars[key] = a_var
+                model.Add(c_var + a_var <= 1)
+
+        # Weekly clinic caps (Thu-Wed anchored to block start)
+        week_map = self._week_index_by_date(start_date, end_date)
+        max_week_idx = max(week_map.values()) if week_map else 0
+        shortfalls: list[Any] = []
+
+        for person in faculty:
+            min_c, max_c = self._get_faculty_clinic_cap(person)
+            for week_idx in range(max_week_idx + 1):
+                week_vars = [
+                    clinic_vars[(person.id, d, t)]
+                    for (d, t) in slots_by_faculty.get(person.id, [])
+                    if week_map.get(d) == week_idx
+                ]
+                if not week_vars:
+                    continue
+
+                clinic_sum = sum(week_vars)
+
+                if max_c == 0:
+                    model.Add(clinic_sum == 0)
+                elif max_c > 0:
+                    model.Add(clinic_sum <= max_c)
+
+                if min_c > 0:
+                    shortfall = model.NewIntVar(
+                        0, min_c, f"shortfall_{person.id}_{week_idx}"
+                    )
+                    model.Add(clinic_sum + shortfall >= min_c)
+                    shortfalls.append(shortfall)
+
+        # Existing capacity and supervision coverage
+        existing_capacity = self._calculate_existing_capacity(start_date, end_date)
+        existing_coverage = self._calculate_existing_supervision(start_date, end_date)
+
+        # Physical capacity constraints
+        for (slot_date, time_of_day), faculty_ids in slots_by_datetime.items():
+            capacity_remaining = MAX_PHYSICAL_CAPACITY - existing_capacity.get(
+                (slot_date, time_of_day), 0
+            )
+            capacity_remaining = max(0, capacity_remaining)
+
+            clinic_sum = sum(
+                clinic_vars[(fid, slot_date, time_of_day)] for fid in faculty_ids
+            )
+            model.Add(clinic_sum <= capacity_remaining)
+
+        # AT coverage constraints
+        for (slot_date, time_of_day), required in at_demand.items():
+            coverage_vars = []
+            for fid in slots_by_datetime.get((slot_date, time_of_day), []):
+                coverage_vars.append(at_vars[(fid, slot_date, time_of_day)])
+                coverage_vars.append(clinic_vars[(fid, slot_date, time_of_day)])
+
+            existing = existing_coverage.get((slot_date, time_of_day), 0)
+            if coverage_vars:
+                model.Add(sum(coverage_vars) + existing >= required)
+            elif existing < required:
+                logger.warning(
+                    f"Insufficient faculty availability for AT coverage on "
+                    f"{slot_date} {time_of_day}: required={required}, existing={existing}"
+                )
+
+        # Objective: prioritize meeting MIN clinic caps, then minimize AT/C usage
+        objective_terms = []
+        if shortfalls:
+            objective_terms.append(sum(shortfalls) * 1000)
+        if at_vars:
+            objective_terms.append(sum(at_vars.values()))
+        if clinic_vars:
+            objective_terms.append(sum(clinic_vars.values()))
+
+        if objective_terms:
+            model.Minimize(sum(objective_terms))
+
+        solver = cp_model.CpSolver()
+        solver.parameters.max_time_in_seconds = 20.0
+        solver.parameters.num_search_workers = 4
+
+        status = solver.Solve(model)
+        if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            logger.warning(
+                f"Faculty AT/C solver infeasible: {solver.StatusName(status)}"
+            )
+            return 0, 0
+
+        at_created = 0
+        clinic_created = 0
+
+        for (fid, slot_date, time_of_day), var in clinic_vars.items():
+            if solver.Value(var) == 1:
+                half_day = HalfDayAssignment(
+                    person_id=fid,
+                    date=slot_date,
+                    time_of_day=time_of_day,
+                    activity_id=clinic_activity.id,
+                    source=AssignmentSource.SOLVER.value,
+                )
+                self.db.add(half_day)
+                self._existing_slots.add(f"{fid}_{slot_date.isoformat()}_{time_of_day}")
+                clinic_created += 1
+
+        for (fid, slot_date, time_of_day), var in at_vars.items():
+            if solver.Value(var) == 1:
+                half_day = HalfDayAssignment(
+                    person_id=fid,
+                    date=slot_date,
+                    time_of_day=time_of_day,
+                    activity_id=at_activity.id,
+                    source=AssignmentSource.SOLVER.value,
+                )
+                self.db.add(half_day)
+                self._existing_slots.add(f"{fid}_{slot_date.isoformat()}_{time_of_day}")
+                at_created += 1
+
+        # Report shortfalls (if any)
+        if shortfalls and solver.Value(sum(shortfalls)) > 0:
+            logger.warning(
+                f"Faculty clinic MIN shortfalls: {solver.Value(sum(shortfalls))}"
+            )
+
+        logger.info(
+            f"CP-SAT faculty solve created {clinic_created} clinic and {at_created} AT"
+        )
+        return at_created, clinic_created
 
     def _assign_at_slots(
         self,
@@ -566,31 +868,7 @@ class FacultyAssignmentExpansionService:
         at_created = 0
 
         # Track existing AT coverage per slot (from PCAT, etc.)
-        at_coverage: dict[tuple[date, str], int] = defaultdict(int)
-
-        # Query existing AT-type assignments
-        at_codes = ["at", "pcat", "do"]
-        stmt = (
-            select(
-                HalfDayAssignment.date,
-                HalfDayAssignment.time_of_day,
-                func.count().label("count"),
-            )
-            .join(Activity, HalfDayAssignment.activity_id == Activity.id)
-            .join(Person, HalfDayAssignment.person_id == Person.id)
-            .where(Person.type == "faculty")
-            .where(Activity.code.in_(at_codes))
-            .where(HalfDayAssignment.date >= start_date)
-            .where(HalfDayAssignment.date <= end_date)
-            .group_by(
-                HalfDayAssignment.date,
-                HalfDayAssignment.time_of_day,
-            )
-        )
-
-        for row in self.db.execute(stmt):
-            key = (row[0], row[1])
-            at_coverage[key] = row[2]
+        at_coverage = self._calculate_existing_supervision(start_date, end_date)
 
         # For each slot with demand, assign AT to available faculty
         for (slot_date, time_of_day), required in at_demand.items():
@@ -652,25 +930,16 @@ class FacultyAssignmentExpansionService:
             Dict mapping (date, time_of_day) -> current_occupancy
         """
         stmt = (
-            select(
-                HalfDayAssignment.date,
-                HalfDayAssignment.time_of_day,
-                func.count().label("count"),
-            )
-            .join(Activity, HalfDayAssignment.activity_id == Activity.id)
-            .where(Activity.code.in_(PHYSICAL_CAPACITY_CODES))
+            select(HalfDayAssignment)
+            .options(selectinload(HalfDayAssignment.activity))
             .where(HalfDayAssignment.date >= start_date)
             .where(HalfDayAssignment.date <= end_date)
-            .group_by(
-                HalfDayAssignment.date,
-                HalfDayAssignment.time_of_day,
-            )
         )
 
         capacity_by_slot: dict[tuple[date, str], int] = defaultdict(int)
-        for row in self.db.execute(stmt):
-            key = (row[0], row[1])
-            capacity_by_slot[key] = row[2]
+        for assignment in self.db.execute(stmt).scalars():
+            if self._counts_toward_capacity(assignment.activity):
+                capacity_by_slot[(assignment.date, assignment.time_of_day)] += 1
 
         return capacity_by_slot
 
@@ -699,30 +968,20 @@ class FacultyAssignmentExpansionService:
         # Get current physical capacity usage per slot
         slot_capacity = self._calculate_physical_capacity(start_date, end_date)
 
-        # Group dates by week (Mon-Sun)
-        weeks: list[list[date]] = []
-        current_week: list[date] = []
-        current = start_date
-
-        while current <= end_date:
-            if current.weekday() == 0 and current_week:
-                weeks.append(current_week)
-                current_week = []
-            current_week.append(current)
-            current += timedelta(days=1)
-
-        if current_week:
-            weeks.append(current_week)
+        # Group dates by week (7-day blocks anchored to start_date)
+        week_map = self._week_index_by_date(start_date, end_date)
+        dates_by_week: dict[int, list[date]] = defaultdict(list)
+        for day, idx in week_map.items():
+            dates_by_week[idx].append(day)
 
         # For each faculty with clinic caps, assign C slots
         for person in faculty:
-            faculty_name = getattr(person, "name", "")
-            min_c, max_c = self._get_faculty_clinic_cap(faculty_name)
+            min_c, max_c = self._get_faculty_clinic_cap(person)
 
             if max_c == 0:
                 continue  # No clinic for this faculty
 
-            for week_dates in weeks:
+            for week_dates in dates_by_week.values():
                 # Count existing clinic in this week
                 existing_c = 0
                 available_slots: list[tuple[date, str]] = []

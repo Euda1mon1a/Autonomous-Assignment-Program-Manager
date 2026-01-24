@@ -90,6 +90,7 @@ from .overnight_call import OvernightCallGenerationConstraint
 # Post-call and faculty constraints
 from .post_call import PostCallAutoAssignmentConstraint
 from .faculty import PreferenceConstraint
+from .faculty_clinic import FacultyClinicCapConstraint, FacultySupervisionConstraint
 from .faculty_role import FacultyRoleClinicConstraint, SMFacultyClinicConstraint
 
 # Sports Medicine constraints
@@ -326,12 +327,16 @@ class ConstraintManager:
         manager.add(EightyHourRuleConstraint())
         manager.add(OneInSevenRuleConstraint())
         manager.add(SupervisionRatioConstraint())
+        # Faculty supervision at half-day level (ACGME AT coverage)
+        manager.add(FacultySupervisionConstraint())
         manager.add(ClinicCapacityConstraint())
         manager.add(MaxPhysiciansInClinicConstraint())
         manager.add(WednesdayAMInternOnlyConstraint())
         manager.add(WednesdayPMSingleFacultyConstraint())
         manager.add(InvertedWednesdayConstraint())
         manager.add(NightFloatPostCallConstraint())
+        # Faculty clinic caps (C only) - soft min, hard max in validation
+        manager.add(FacultyClinicCapConstraint())
 
         # Block 10 hard constraints - inpatient headcount and post-FMIT blocking
         manager.add(ResidentInpatientHeadcountConstraint())
@@ -345,6 +350,11 @@ class ConstraintManager:
 
         # Faculty role-based constraints
         manager.add(FacultyRoleClinicConstraint())
+
+        # Overnight call coverage constraints (CP-SAT canonical call assignments)
+        manager.add(OvernightCallCoverageConstraint())
+        manager.add(AdjunctCallExclusionConstraint())
+        manager.add(CallAvailabilityConstraint())
 
         # Overnight call generation - opt-in via factory method
         manager.add(OvernightCallGenerationConstraint())
@@ -450,12 +460,16 @@ class ConstraintManager:
         manager.add(EightyHourRuleConstraint())
         manager.add(OneInSevenRuleConstraint())
         manager.add(SupervisionRatioConstraint())
+        # Faculty supervision at half-day level (ACGME AT coverage)
+        manager.add(FacultySupervisionConstraint())
         manager.add(ClinicCapacityConstraint())
         manager.add(MaxPhysiciansInClinicConstraint())
         manager.add(WednesdayAMInternOnlyConstraint())
         manager.add(WednesdayPMSingleFacultyConstraint())
         manager.add(InvertedWednesdayConstraint())
         manager.add(NightFloatPostCallConstraint())
+        # Faculty clinic caps (C only) - soft min, hard max in validation
+        manager.add(FacultyClinicCapConstraint())
 
         # Block 10 hard constraints - inpatient headcount and post-FMIT blocking
         manager.add(ResidentInpatientHeadcountConstraint())
@@ -468,6 +482,11 @@ class ConstraintManager:
 
         # Faculty role-based constraints
         manager.add(FacultyRoleClinicConstraint())
+
+        # Overnight call coverage constraints (CP-SAT canonical call assignments)
+        manager.add(OvernightCallCoverageConstraint())
+        manager.add(AdjunctCallExclusionConstraint())
+        manager.add(CallAvailabilityConstraint())
 
         # Overnight call generation - opt-in via factory method
         manager.add(OvernightCallGenerationConstraint())

@@ -35,6 +35,7 @@ from app.models.block_assignment import BlockAssignment
 from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
 from app.models.rotation_activity_requirement import RotationActivityRequirement
 from app.utils.academic_blocks import get_block_dates
+from app.utils.activity_locking import is_activity_preloaded
 
 logger = get_logger(__name__)
 
@@ -107,13 +108,23 @@ class CPSATActivitySolver:
         )
 
         # Load activities
-        activities = self._load_activities()
-        if not activities:
+        all_activities = self._load_activities()
+        if not all_activities:
             return {
                 "success": False,
                 "assignments_updated": 0,
                 "status": "error",
                 "message": "No activities found",
+            }
+
+        # Candidate activities for solver: exclude preloaded/protected/time_off
+        activities = [a for a in all_activities if not is_activity_preloaded(a)]
+        if not activities:
+            return {
+                "success": False,
+                "assignments_updated": 0,
+                "status": "error",
+                "message": "No assignable activities (all locked/preloaded)",
             }
 
         # Get key activities
@@ -207,6 +218,7 @@ class CPSATActivitySolver:
         # ==================================================
         # CONSTRAINT: Physical Capacity (Max 6 per slot)
         # Session 136: Clinic has limited exam rooms
+        # Includes baseline occupancy from locked/preloaded slots.
         # ==================================================
         MAX_PHYSICAL_CAPACITY = 6
 
@@ -216,25 +228,48 @@ class CPSATActivitySolver:
             key = (slot.date, slot.time_of_day)
             slot_groups[key].append(s_i)
 
-        # For each time slot, sum(fm_clinic) <= MAX_PHYSICAL_CAPACITY
-        if clinic_activity:
-            clinic_idx = activity_idx.get(clinic_activity.id)
-            if clinic_idx is not None:
-                for (slot_date, time_of_day), slot_indices in slot_groups.items():
-                    # Skip weekends
-                    if slot_date.weekday() >= 5:
-                        continue
+        # Baseline occupancy from locked/preloaded slots not in solver
+        slot_ids = {slot.id for slot in slots}
+        baseline_capacity: dict[tuple[date, str], int] = defaultdict(int)
+        baseline_stmt = (
+            select(HalfDayAssignment)
+            .join(Activity, HalfDayAssignment.activity_id == Activity.id)
+            .where(
+                HalfDayAssignment.date >= start_date,
+                HalfDayAssignment.date <= end_date,
+                Activity.counts_toward_physical_capacity == True,  # noqa: E712
+            )
+        )
+        for assignment in self.session.execute(baseline_stmt).scalars():
+            if assignment.id in slot_ids:
+                continue  # handled by solver
+            baseline_capacity[(assignment.date, assignment.time_of_day)] += 1
 
-                    # Sum of fm_clinic assignments for this slot
-                    slot_clinic_sum = sum(a[s_i, clinic_idx] for s_i in slot_indices)
+        # For each time slot, sum(clinical activities) + baseline <= MAX
+        clinical_indices = [
+            act_i
+            for act_i, activity in enumerate(activities)
+            if activity.counts_toward_physical_capacity
+        ]
+        if clinical_indices:
+            for (slot_date, time_of_day), slot_indices in slot_groups.items():
+                # Skip weekends
+                if slot_date.weekday() >= 5:
+                    continue
 
-                    # Hard constraint: at most 6 in clinic per slot
-                    model.Add(slot_clinic_sum <= MAX_PHYSICAL_CAPACITY)
-
-                logger.info(
-                    f"Added physical capacity constraint (max {MAX_PHYSICAL_CAPACITY}) "
-                    f"for {len(slot_groups)} time slots"
+                # Sum of clinical assignments for this slot
+                slot_clinic_sum = sum(
+                    a[s_i, act_i] for s_i in slot_indices for act_i in clinical_indices
                 )
+
+                baseline = baseline_capacity.get((slot_date, time_of_day), 0)
+                # Hard constraint: at most 6 in clinic per slot
+                model.Add(slot_clinic_sum + baseline <= MAX_PHYSICAL_CAPACITY)
+
+            logger.info(
+                f"Added physical capacity constraint (max {MAX_PHYSICAL_CAPACITY}) "
+                f"for {len(slot_groups)} time slots with baseline occupancy"
+            )
 
         # ==================================================
         # OBJECTIVE: Maximize clinic (C) assignments

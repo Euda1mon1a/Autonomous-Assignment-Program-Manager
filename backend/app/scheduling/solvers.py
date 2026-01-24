@@ -1041,23 +1041,18 @@ class CPSATSolver(BaseSolver):
 
         # Build objective with all penalties
         equity_penalty = variables.get("equity_penalty")
-        if equity_penalty is not None and template_balance_penalty is not None:
-            model.Maximize(
-                coverage * COVERAGE_WEIGHT
-                - equity_penalty * EQUITY_PENALTY_WEIGHT
-                - template_balance_penalty * TEMPLATE_BALANCE_WEIGHT
-            )
-        elif equity_penalty is not None:
-            model.Maximize(
-                coverage * COVERAGE_WEIGHT - equity_penalty * EQUITY_PENALTY_WEIGHT
-            )
-        elif template_balance_penalty is not None:
-            model.Maximize(
-                coverage * COVERAGE_WEIGHT
-                - template_balance_penalty * TEMPLATE_BALANCE_WEIGHT
-            )
-        else:
-            model.Maximize(coverage)
+        objective_terms = variables.get("objective_terms", [])
+
+        objective_expr = coverage * COVERAGE_WEIGHT
+        if equity_penalty is not None:
+            objective_expr -= equity_penalty * EQUITY_PENALTY_WEIGHT
+        if template_balance_penalty is not None:
+            objective_expr -= template_balance_penalty * TEMPLATE_BALANCE_WEIGHT
+        if objective_terms:
+            for term_var, weight in objective_terms:
+                objective_expr -= term_var * int(weight)
+
+        model.Maximize(objective_expr)
 
         # ==================================================
         # SOLVE

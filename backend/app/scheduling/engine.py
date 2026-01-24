@@ -167,8 +167,15 @@ class SchedulingEngine:
 
         # Validate algorithm
         if algorithm not in self.ALGORITHMS:
-            logger.warning(f"Unknown algorithm '{algorithm}', using 'greedy'")
-            algorithm = "greedy"
+            logger.warning(f"Unknown algorithm '{algorithm}', using canonical CP-SAT")
+            algorithm = "cp_sat"
+
+        # Canonical solver path: CP-SAT only
+        if algorithm != "cp_sat":
+            logger.info(
+                f"Overriding algorithm '{algorithm}' -> 'cp_sat' (canonical pathway)"
+            )
+            algorithm = "cp_sat"
 
         # Issue #3: Transaction boundaries - wrap everything in a single transaction
         # Create an "in_progress" run record first
@@ -421,23 +428,45 @@ class SchedulingEngine:
                 solver_result = self._run_solver(algorithm, context, timeout_seconds)
 
                 if not solver_result.success:
-                    logger.warning(f"Solver failed: {solver_result.solver_status}")
-                    # Fallback to greedy if advanced solver fails
-                    if algorithm != "greedy":
-                        logger.info("Falling back to greedy solver")
-                        solver_result = self._run_solver(
-                            "greedy", context, timeout_seconds
-                        )
+                    logger.error(f"CP-SAT solver failed: {solver_result.solver_status}")
+                    self._update_run_status(
+                        run, "failed", 0, 0, time.time() - start_time
+                    )
+                    self.db.commit()
+                    return {
+                        "status": "failed",
+                        "message": f"CP-SAT solver failed: {solver_result.solver_status}",
+                        "total_assigned": 0,
+                        "total_blocks": len(blocks),
+                        "validation": self._empty_validation(),
+                        "run_id": run.id,
+                    }
             else:
-                # Half-day mode: Run greedy solver ONLY for call assignments (Sun-Thu)
+                # Half-day mode: Run CP-SAT solver ONLY for call assignments (Sun-Thu)
                 # Rotation assignments come from expansion service, but call equity
-                # logic is in the greedy solver. We discard rotation assignments but
+                # logic is in CP-SAT constraints. We discard rotation assignments but
                 # keep call_assignments from the result.
                 logger.info(
-                    "Running greedy solver for Sun-Thu call assignments only "
+                    "Running CP-SAT solver for Sun-Thu call assignments only "
                     "(rotation assignments handled by expansion service)"
                 )
-                solver_result = self._run_solver("greedy", context, timeout_seconds)
+                solver_result = self._run_solver("cp_sat", context, timeout_seconds)
+                if not solver_result.success:
+                    logger.error(
+                        f"CP-SAT call solver failed: {solver_result.solver_status}"
+                    )
+                    self._update_run_status(
+                        run, "failed", 0, 0, time.time() - start_time
+                    )
+                    self.db.commit()
+                    return {
+                        "status": "failed",
+                        "message": f"CP-SAT call solver failed: {solver_result.solver_status}",
+                        "total_assigned": 0,
+                        "total_blocks": len(blocks),
+                        "validation": self._empty_validation(),
+                        "run_id": run.id,
+                    }
                 # Clear rotation assignments (we don't need them in half-day mode)
                 # but preserve call_assignments for Step 6.5
                 solver_result.assignments = []
@@ -1185,6 +1214,17 @@ class SchedulingEngine:
     ) -> SolverResult:
         """Run the selected solver algorithm."""
         try:
+            if algorithm not in self.ALGORITHMS:
+                logger.warning(
+                    f"Unknown solver '{algorithm}', forcing canonical CP-SAT"
+                )
+                algorithm = "cp_sat"
+            if algorithm != "cp_sat":
+                logger.info(
+                    f"Overriding solver '{algorithm}' -> 'cp_sat' (canonical pathway)"
+                )
+                algorithm = "cp_sat"
+
             solver = SolverFactory.create(
                 algorithm,
                 constraint_manager=self.constraint_manager,

@@ -48,7 +48,7 @@ FACULTY_CLINIC_CAPS: dict[str, tuple[int, int]] = {
     "Tagawa": (0, 0),  # SM only
     # FMIT-focused faculty (no outpatient clinic)
     "Bevis": (0, 0),
-    "Dahl": (0, 0),
+    "Dahl": (1, 2),
     "Chu": (0, 0),
     "Napierala": (0, 0),
     "Van Brunt": (0, 0),
@@ -97,23 +97,13 @@ class FacultyClinicCapConstraint(SoftConstraint):
         weeks = []
         current = start_date
 
-        # Find first Monday (or start_date if it's Monday)
-        days_to_monday = (7 - current.weekday()) % 7
-        if days_to_monday > 0:
-            # Partial first week
-            week_end = current + timedelta(days=days_to_monday - 1)
-            if week_end > end_date:
-                week_end = end_date
-            weeks.append((current, week_end))
-            current = current + timedelta(days=days_to_monday)
-
-        # Full weeks
+        # Use 7-day windows anchored to start_date (block-aligned weeks)
         while current <= end_date:
             week_end = current + timedelta(days=6)
             if week_end > end_date:
                 week_end = end_date
             weeks.append((current, week_end))
-            current = current + timedelta(days=7)
+            current = week_end + timedelta(days=1)
 
         return weeks
 
@@ -295,7 +285,7 @@ class FacultySupervisionConstraint(HardConstraint):
     }
 
     # Activity codes that count as AT coverage
-    AT_COVERAGE_CODES = {"at", "pcat", "fm_clinic", "C", "CV", "do"}
+    AT_COVERAGE_CODES = {"at", "pcat", "fm_clinic", "C", "CV"}
 
     def __init__(self) -> None:
         super().__init__(
