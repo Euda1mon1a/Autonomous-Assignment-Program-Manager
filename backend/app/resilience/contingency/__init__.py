@@ -8,9 +8,12 @@ from pathlib import Path
 # We need to use importlib to load the module file directly
 _contingency_file = Path(__file__).parent.parent / "contingency.py"
 _spec = importlib.util.spec_from_file_location("contingency_base", _contingency_file)
-_contingency_base = importlib.util.module_from_spec(_spec)
-sys.modules["contingency_base"] = _contingency_base
-_spec.loader.exec_module(_contingency_base)
+if _spec is not None and _spec.loader is not None:
+    _contingency_base = importlib.util.module_from_spec(_spec)
+    sys.modules["contingency_base"] = _contingency_base
+    _spec.loader.exec_module(_contingency_base)
+else:
+    raise ImportError("Could not load contingency_base module")
 
 # Re-export classes from contingency.py (the original module file)
 CascadeSimulation = _contingency_base.CascadeSimulation

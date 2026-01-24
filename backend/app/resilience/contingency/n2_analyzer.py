@@ -48,7 +48,7 @@ class N2Analyzer:
     - Calculates cascade probabilities
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize N-2 analyzer."""
         self.scenarios: list[N2FailureScenario] = []
 
@@ -176,7 +176,7 @@ class N2Analyzer:
         Returns:
             List of N2 failure scenarios, sorted by criticality
         """
-        scenarios = []
+        scenarios: list[N2FailureScenario] = []
 
         # Generate all 2-combinations
         for person1, person2 in combinations(personnel, 2):

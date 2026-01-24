@@ -94,7 +94,7 @@ class FallbackScheduler:
     4. Graceful degradation built-in
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.fallback_schedules: dict[FallbackScenario, FallbackSchedule] = {}
         self.zones: dict[UUID, SchedulingZone] = {}
         self._schedule_generator: Callable | None = None
@@ -102,7 +102,7 @@ class FallbackScheduler:
     def register_schedule_generator(
         self,
         generator: Callable[[FallbackScenario, date, date], list[dict]],
-    ):
+    ) -> None:
         """
         Register a function that can generate schedules for scenarios.
 
@@ -145,8 +145,8 @@ class FallbackScheduler:
         scenario: FallbackScenario,
         start_date: date,
         end_date: date,
-        assumptions: list[str] = None,
-        custom_assignments: list[dict] = None,
+        assumptions: list[str] | None = None,
+        custom_assignments: list[dict] | None = None,
     ) -> FallbackSchedule:
         """
         Pre-compute and store a fallback schedule for a scenario.
@@ -293,7 +293,7 @@ class FallbackScheduler:
 
         return fallback
 
-    def deactivate_fallback(self, scenario: FallbackScenario):
+    def deactivate_fallback(self, scenario: FallbackScenario) -> None:
         """Deactivate a fallback and return to normal operations."""
         fallback = self.fallback_schedules.get(scenario)
         if fallback:

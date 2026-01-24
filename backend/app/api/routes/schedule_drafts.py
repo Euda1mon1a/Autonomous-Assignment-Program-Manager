@@ -18,6 +18,7 @@ from datetime import date, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
 from app.core.security import get_current_active_user

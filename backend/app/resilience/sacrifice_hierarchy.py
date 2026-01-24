@@ -125,14 +125,14 @@ class SacrificeHierarchy:
         # PATIENT_SAFETY is never in sacrifice order
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.current_level = LoadSheddingLevel.NORMAL
         self.level_activated_at: datetime | None = None
         self.activities: dict[UUID, Activity] = {}
         self.decisions_log: list[SacrificeDecision] = []
         self._suspended_activities: set[UUID] = set()
 
-    def register_activity(self, activity: Activity):
+    def register_activity(self, activity: Activity) -> None:
         """Register an activity for load shedding consideration."""
         self.activities[activity.id] = activity
 
@@ -311,7 +311,7 @@ class SacrificeHierarchy:
         level: LoadSheddingLevel,
         reason: str = "",
         approved_by: str | None = None,
-    ):
+    ) -> SacrificeDecision:
         """
         Activate a specific load shedding level.
 
@@ -365,7 +365,7 @@ class SacrificeHierarchy:
             f"Reason: {reason}"
         )
 
-    def deactivate_level(self, to_level: LoadSheddingLevel = LoadSheddingLevel.NORMAL):
+    def deactivate_level(self, to_level: LoadSheddingLevel = LoadSheddingLevel.NORMAL) -> None:
         """
         Reduce load shedding level (restore services).
 

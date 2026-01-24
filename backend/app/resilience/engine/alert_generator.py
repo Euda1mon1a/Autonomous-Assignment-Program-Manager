@@ -58,7 +58,7 @@ class AlertGenerator:
     - Smart escalation
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize alert generator."""
         self.active_alerts: list[Alert] = []
         self.alert_history: list[Alert] = []

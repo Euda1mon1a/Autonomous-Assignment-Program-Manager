@@ -243,7 +243,7 @@ class SchedulingProfiler:
             import os
 
             process = self._psutil.Process(os.getpid())
-            return process.memory_info().rss
+            return float(process.memory_info().rss)
         except Exception as e:
             logger.warning(f"Failed to get memory usage: {e}")
             return 0.0

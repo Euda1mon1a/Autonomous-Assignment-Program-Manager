@@ -67,6 +67,15 @@ AT_DEMAND_BY_PGY: dict[int, float] = {
     3: 0.25,
 }
 
+# Physical capacity: max people in clinic per slot
+# AT doesn't count - supervision doesn't take exam room space
+MAX_PHYSICAL_CAPACITY = 6
+
+# Activity codes that count against physical capacity
+# fm_clinic, C, C-N = taking up exam rooms
+# AT, pcat, do = supervision only, no room needed
+PHYSICAL_CAPACITY_CODES = ["fm_clinic", "C", "C-N", "CV"]
+
 
 class FacultyAssignmentExpansionService:
     """
@@ -628,6 +637,43 @@ class FacultyAssignmentExpansionService:
         logger.info(f"Created {at_created} AT assignments for ACGME coverage")
         return at_created
 
+    def _calculate_physical_capacity(
+        self,
+        start_date: date,
+        end_date: date,
+    ) -> dict[tuple[date, str], int]:
+        """
+        Calculate current physical capacity usage per slot.
+
+        Physical capacity = residents + faculty with C/fm_clinic activity.
+        AT, pcat, do don't count (supervision doesn't take exam rooms).
+
+        Returns:
+            Dict mapping (date, time_of_day) -> current_occupancy
+        """
+        stmt = (
+            select(
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+                func.count().label("count"),
+            )
+            .join(Activity, HalfDayAssignment.activity_id == Activity.id)
+            .where(Activity.code.in_(PHYSICAL_CAPACITY_CODES))
+            .where(HalfDayAssignment.date >= start_date)
+            .where(HalfDayAssignment.date <= end_date)
+            .group_by(
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+            )
+        )
+
+        capacity_by_slot: dict[tuple[date, str], int] = defaultdict(int)
+        for row in self.db.execute(stmt):
+            key = (row[0], row[1])
+            capacity_by_slot[key] = row[2]
+
+        return capacity_by_slot
+
     def _assign_clinic_slots(
         self,
         faculty: list[Person],
@@ -637,6 +683,9 @@ class FacultyAssignmentExpansionService:
         """
         Assign fm_clinic (C) to faculty based on their weekly caps.
 
+        Respects physical capacity limit (MAX_PHYSICAL_CAPACITY per slot).
+        AT doesn't count against physical capacity.
+
         Returns count of clinic assignments created.
         """
         clinic_activity = self._get_activity("fm_clinic")
@@ -645,6 +694,10 @@ class FacultyAssignmentExpansionService:
             return 0
 
         clinic_created = 0
+        capacity_blocked = 0
+
+        # Get current physical capacity usage per slot
+        slot_capacity = self._calculate_physical_capacity(start_date, end_date)
 
         # Group dates by week (Mon-Sun)
         weeks: list[list[date]] = []
@@ -685,6 +738,13 @@ class FacultyAssignmentExpansionService:
                             # (we'd need to query, simplified: just skip)
                             continue
 
+                        # Check physical capacity - skip if at limit
+                        capacity_key = (day, slot)
+                        current_occupancy = slot_capacity.get(capacity_key, 0)
+                        if current_occupancy >= MAX_PHYSICAL_CAPACITY:
+                            capacity_blocked += 1
+                            continue
+
                         # Check availability
                         is_absent = self._is_person_absent(person.id, day)
                         is_deployed = self._is_person_deployed(person.id, day)
@@ -704,6 +764,12 @@ class FacultyAssignmentExpansionService:
                     if key in self._existing_slots:
                         continue
 
+                    # Double-check capacity before assignment
+                    capacity_key = (day, slot)
+                    if slot_capacity.get(capacity_key, 0) >= MAX_PHYSICAL_CAPACITY:
+                        capacity_blocked += 1
+                        continue
+
                     half_day = HalfDayAssignment(
                         person_id=person.id,
                         date=day,
@@ -713,7 +779,14 @@ class FacultyAssignmentExpansionService:
                     )
                     self.db.add(half_day)
                     self._existing_slots.add(key)
+                    # Update capacity tracking
+                    slot_capacity[capacity_key] = slot_capacity.get(capacity_key, 0) + 1
                     clinic_created += 1
 
+        if capacity_blocked > 0:
+            logger.warning(
+                f"Blocked {capacity_blocked} faculty clinic assignments due to "
+                f"physical capacity limit ({MAX_PHYSICAL_CAPACITY} per slot)"
+            )
         logger.info(f"Created {clinic_created} faculty clinic (C) assignments")
         return clinic_created

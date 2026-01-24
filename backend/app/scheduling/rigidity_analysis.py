@@ -202,6 +202,8 @@ class ConstraintRigidityAnalyzer:
             connected_nodes.add(node)
 
             # Explore neighbors through independent edges
+            if self.graph is None:
+                continue
             for neighbor in self.graph.neighbors(node):
                 edge_key = (min(node, neighbor), max(node, neighbor))
                 if (
@@ -309,6 +311,8 @@ class ConstraintRigidityAnalyzer:
                 return True
 
             # Explore neighbors through independent edges only
+            if self.graph is None:
+                return False
             for neighbor in self.graph.neighbors(node):
                 if neighbor not in visited:
                     # Create normalized edge key (always smaller node first)
@@ -353,6 +357,8 @@ class ConstraintRigidityAnalyzer:
                 return True
 
             # Explore neighbors
+            if self.graph is None:
+                return False
             for neighbor in self.graph.neighbors(current):
                 if neighbor not in visited:
                     visited.add(neighbor)

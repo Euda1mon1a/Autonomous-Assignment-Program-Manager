@@ -13,7 +13,7 @@ import functools
 import logging
 import time
 from contextlib import contextmanager
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Generator, TypeVar
 
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.orm import Session
@@ -48,7 +48,7 @@ def transactional(
     use_savepoint: bool = False,
     timeout_seconds: float | None = None,
     readonly: bool = False,
-):
+) -> Generator[Session, None, None]:
     """
     Context manager for safe transactional operations.
 
@@ -137,7 +137,7 @@ def transactional_with_retry(
     initial_backoff: float = 0.1,
     max_backoff: float = 2.0,
     timeout_seconds: float | None = None,
-):
+) -> Generator[Session, None, None]:
     """
     Context manager for transactional operations with automatic retry.
 
@@ -200,7 +200,7 @@ def transactional_decorator(
     timeout_seconds: float | None = None,
     readonly: bool = False,
     max_retries: int = 0,
-):
+) -> Callable[[F], F]:
     """
     Decorator for transactional functions.
 
@@ -228,7 +228,7 @@ def transactional_decorator(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Extract session from args or kwargs
             session = None
             if "session" in kwargs:
@@ -274,7 +274,7 @@ def optimistic_lock_retry(
     session: Session,
     max_retries: int = 5,
     initial_backoff: float = 0.05,
-):
+) -> Generator[Session, None, None]:
     """
     Context manager for optimistic locking with version column.
 

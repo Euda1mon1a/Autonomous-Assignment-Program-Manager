@@ -11,6 +11,7 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
 
 from app.core.security import get_current_active_user
 from app.db.session import get_db

@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, status
 from fastapi.exceptions import HTTPException
+from sqlalchemy.orm import Session
 
 from app.core.security import get_current_active_user, get_current_user, verify_token
 from app.db.session import get_db

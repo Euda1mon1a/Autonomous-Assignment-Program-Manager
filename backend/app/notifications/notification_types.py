@@ -267,7 +267,7 @@ def get_template(notification_type: NotificationType) -> NotificationTemplate | 
 
 def render_notification(
     notification_type: NotificationType, data: dict
-) -> dict[str, str] | None:
+) -> dict[str, str | list[str]] | None:
     """
     Render a notification with provided data.
 

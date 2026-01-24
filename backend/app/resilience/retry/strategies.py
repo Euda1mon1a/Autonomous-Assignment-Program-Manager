@@ -236,7 +236,7 @@ def get_retry_strategy(
     strategy: BackoffStrategy,
     base_delay: float = 1.0,
     max_delay: float | None = None,
-    **kwargs,
+    **kwargs: float,
 ) -> RetryStrategy:
     """
     Get a retry strategy instance.

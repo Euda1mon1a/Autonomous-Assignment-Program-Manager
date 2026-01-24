@@ -79,6 +79,7 @@ class TemplateEngine:
         self._translation_cache: dict[str, dict] = {}
 
         # Create Jinja2 environment
+        self.env: Environment
         if enable_sandbox:
             # Use sandboxed environment for security
             self.env = SandboxedEnvironment(
@@ -354,7 +355,7 @@ class TemplateEngine:
     def _register_custom_functions(self) -> None:
         """Register custom Jinja2 global functions."""
 
-        def localize(key: str, **kwargs) -> str:
+        def localize(key: str, **kwargs: Any) -> str:
             """
             Localize a string using i18n lookup.
 
@@ -388,14 +389,16 @@ class TemplateEngine:
 
         # Navigate nested keys (e.g., "notification.swap.approved")
         parts = key.split(".")
-        current = translations
+        current: Any = translations
 
         try:
             for part in parts:
                 current = current[part]
 
             # Substitute variables in the translated text
-            result = current
+            if not isinstance(current, str):
+                current = str(current)
+            result: str = current
             for k, v in kwargs.items():
                 result = result.replace(f"{{{k}}}", str(v))
             return result
@@ -411,7 +414,7 @@ class TemplateEngine:
                 result = result.replace(f"{{{k}}}", str(v))
             return result
 
-    def _load_translations(self, locale: str) -> dict:
+    def _load_translations(self, locale: str) -> dict[str, Any]:
         """
         Load translations for a locale with caching.
 

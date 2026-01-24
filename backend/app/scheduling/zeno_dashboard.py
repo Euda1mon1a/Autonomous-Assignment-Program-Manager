@@ -304,7 +304,11 @@ class ZenoDashboard:
             "block_rate": blocked / total if total > 0 else 0.0,
             "evolution_prevented": self.governor.compute_evolution_prevented(),
             "last_successful_evolution": (
-                self.governor.solver_attempts[-1].get("timestamp").isoformat()
+                (
+                    timestamp.isoformat()
+                    if (timestamp := self.governor.solver_attempts[-1].get("timestamp")) is not None
+                    else None
+                )
                 if self.governor.solver_attempts
                 and self.governor.solver_attempts[-1].get("successful")
                 else None

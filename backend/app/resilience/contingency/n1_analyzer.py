@@ -46,7 +46,7 @@ class N1Analyzer:
     4. Backup availability
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize N-1 analyzer."""
         self.scenarios: list[N1FailureScenario] = []
 

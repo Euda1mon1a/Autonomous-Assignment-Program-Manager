@@ -83,7 +83,7 @@ class WorkHourValidator:
         self,
         person_id: UUID,
         hours_by_date: dict[date, float],
-        moonlighting_hours: dict[date, float] = None,
+        moonlighting_hours: dict[date, float] | None = None,
     ) -> tuple[list[WorkHourViolation], list[WorkHourWarning]]:
         """
         Validate 80-hour rolling average across all 28-day windows.
@@ -96,8 +96,8 @@ class WorkHourValidator:
         Returns:
             (violations, warnings) tuples
         """
-        violations = []
-        warnings = []
+        violations: list[WorkHourViolation] = []
+        warnings: list[WorkHourWarning] = []
 
         if not hours_by_date:
             return violations, warnings
@@ -189,8 +189,8 @@ class WorkHourValidator:
         Returns:
             (violations, warnings) tuples
         """
-        violations = []
-        warnings = []
+        violations: list[WorkHourViolation] = []
+        warnings: list[WorkHourWarning] = []
 
         # Group shifts by approximate continuous period
         if not shift_data:
@@ -221,20 +221,22 @@ class WorkHourValidator:
                         )
                 else:
                     # Exceeds 24+4 rule
-                    violations.append(
-                        WorkHourViolation(
-                            person_id=person_id,
-                            violation_type="24_plus_4",
-                            severity="CRITICAL",
-                            message=(
-                                f"24+4 rule violation on {shift.get('date', 'Unknown')}: "
-                                f"{duration:.1f} hours (limit: 28h)"
-                            ),
-                            date_range=(shift.get("date"), shift.get("date")),
-                            hours=duration,
-                            limit=MAX_TOTAL_SHIFT_HOURS,
+                    shift_date = shift.get("date")
+                    if shift_date is not None:
+                        violations.append(
+                            WorkHourViolation(
+                                person_id=person_id,
+                                violation_type="24_plus_4",
+                                severity="CRITICAL",
+                                message=(
+                                    f"24+4 rule violation on {shift_date}: "
+                                    f"{duration:.1f} hours (limit: 28h)"
+                                ),
+                                date_range=(shift_date, shift_date),
+                                hours=duration,
+                                limit=MAX_TOTAL_SHIFT_HOURS,
+                            )
                         )
-                    )
 
         return violations, warnings
 
@@ -257,8 +259,8 @@ class WorkHourValidator:
         Returns:
             (violations, warnings) tuples
         """
-        violations = []
-        warnings = []
+        violations: list[WorkHourViolation] = []
+        warnings: list[WorkHourWarning] = []
 
         if len(shift_data) < 2:
             return violations, warnings

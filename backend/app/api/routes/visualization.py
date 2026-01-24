@@ -11,6 +11,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
 
 from app.core.security import get_current_active_user
 from app.db.session import get_db

@@ -6,6 +6,7 @@ Provides endpoints for managing medical procedures that require credentialed sup
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
 
 from app.controllers.procedure_controller import ProcedureController
 from app.core.security import get_current_active_user

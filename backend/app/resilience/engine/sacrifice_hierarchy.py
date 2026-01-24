@@ -64,7 +64,7 @@ class SacrificeHierarchy:
     5. DISCRETIONARY: Research, electives, optional activities
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize sacrifice hierarchy."""
         self.priority_order = [
             AssignmentPriority.DISCRETIONARY,
