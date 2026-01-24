@@ -24,6 +24,7 @@ def calculate_fairness_index(assignments: list[dict[str, Any]]) -> MetricResult:
             "benchmark": 0.9,
             "status": "good",
             "description": "Perfect fairness (no assignments)",
+            "details": {},
         }
 
     # Count assignments per person
@@ -38,6 +39,7 @@ def calculate_fairness_index(assignments: list[dict[str, Any]]) -> MetricResult:
             "benchmark": 0.9,
             "status": "good",
             "description": "Perfect fairness (no people)",
+            "details": {},
         }
 
     # Calculate Gini coefficient
@@ -94,6 +96,7 @@ def calculate_coverage_rate(
             "benchmark": 95.0,
             "status": "good",
             "description": "No blocks to cover",
+            "details": {},
         }
 
     total_blocks = len(blocks)
@@ -140,6 +143,7 @@ def calculate_acgme_compliance_rate(violations: int, total_checks: int) -> Metri
             "benchmark": 100.0,
             "status": "good",
             "description": "No compliance checks performed",
+            "details": {},
         }
 
     compliance_rate = ((total_checks - violations) / total_checks) * 100
@@ -186,6 +190,7 @@ def calculate_preference_satisfaction(
             "benchmark": 80.0,
             "status": "good",
             "description": "No preferences specified",
+            "details": {},
         }
 
     # Build preference map: person_id -> set of preferred rotation_template_ids
@@ -261,6 +266,7 @@ def calculate_consecutive_duty_stats(
             "average_rest_days": 0,
             "status": "good",
             "description": "No assignments found",
+            "details": {},
         }
 
     # Sort by date

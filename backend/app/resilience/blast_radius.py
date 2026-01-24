@@ -298,7 +298,7 @@ class BlastRadiusManager:
     controls cross-zone resource sharing.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.zones: dict[UUID, SchedulingZone] = {}
         self.borrowing_requests: list[BorrowingRequest] = []
         self.global_containment: ContainmentLevel = ContainmentLevel.NONE
@@ -575,7 +575,7 @@ class BlastRadiusManager:
 
         return request
 
-    def _approve_borrowing(self, request: BorrowingRequest, approved_by: str):
+    def _approve_borrowing(self, request: BorrowingRequest, approved_by: str) -> None:
         """Approve and execute a borrowing request."""
         request.status = "approved"
         request.approved_by = approved_by
@@ -597,7 +597,7 @@ class BlastRadiusManager:
         self,
         request_id: UUID,
         was_effective: bool = True,
-    ):
+    ) -> None:
         """Mark a borrowing request as completed."""
         for request in self.borrowing_requests:
             if request.id == request_id:
@@ -626,8 +626,8 @@ class BlastRadiusManager:
         incident_type: str,
         description: str,
         severity: str,
-        faculty_affected: list[UUID] = None,
-        services_affected: list[str] = None,
+        faculty_affected: list[UUID] | None = None,
+        services_affected: list[str] | None = None,
     ) -> ZoneIncident | None:
         """
         Record an incident affecting a zone.
@@ -683,7 +683,7 @@ class BlastRadiusManager:
 
         return incident
 
-    def _update_zone_status(self, zone: SchedulingZone):
+    def _update_zone_status(self, zone: SchedulingZone) -> None:
         """Update zone status based on current capacity."""
         previous_status = zone.status
         zone.status = zone.calculate_status()
@@ -701,7 +701,9 @@ class BlastRadiusManager:
                 except Exception as e:
                     logger.error(f"Zone status handler error: {e}")
 
-    def _activate_containment(self, zone: SchedulingZone, incident: ZoneIncident):
+    def _activate_containment(
+        self, zone: SchedulingZone, incident: ZoneIncident
+    ) -> None:
         """Activate containment for a zone based on incident."""
         if incident.severity == "critical":
             zone.containment_level = ContainmentLevel.STRICT
@@ -718,7 +720,7 @@ class BlastRadiusManager:
         self,
         level: ContainmentLevel,
         reason: str,
-    ):
+    ) -> None:
         """Set system-wide containment level."""
         previous = self.global_containment
         self.global_containment = level
@@ -890,14 +892,14 @@ class BlastRadiusManager:
     def register_status_handler(
         self,
         handler: Callable[[SchedulingZone, ZoneStatus, ZoneStatus], None],
-    ):
+    ) -> None:
         """Register handler for zone status changes."""
         self._on_zone_status_change.append(handler)
 
     def register_containment_handler(
         self,
         handler: Callable[[ContainmentLevel, ContainmentLevel, str], None],
-    ):
+    ) -> None:
         """Register handler for containment level changes."""
         self._on_containment_change.append(handler)
 
@@ -906,7 +908,7 @@ class BlastRadiusManager:
         incident_id: UUID,
         resolution_notes: str,
         containment_successful: bool = True,
-    ):
+    ) -> None:
         """Resolve an incident."""
         for zone in self.zones.values():
             for incident in zone.incidents:

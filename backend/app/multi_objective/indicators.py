@@ -172,7 +172,8 @@ class HypervolumeIndicator(QualityIndicator):
 
         # Use nadir point + small offset
         nadir = np.max(points, axis=0)
-        return nadir + 0.1 * np.abs(nadir)
+        result: np.ndarray = nadir + 0.1 * np.abs(nadir)
+        return result
 
     def _calculate_hv(self, points: np.ndarray, ref_point: np.ndarray) -> float:
         """
@@ -314,14 +315,14 @@ class GenerationalDistance(QualityIndicator):
         # Calculate distances to nearest reference point
         distances = []
         for point in approx_points:
-            min_dist = float("inf")
+            min_dist: float = float("inf")
             for ref in ref_points:
-                dist = np.linalg.norm(point - ref, ord=self.p)
+                dist = float(np.linalg.norm(point - ref, ord=self.p))
                 min_dist = min(min_dist, dist)
             distances.append(min_dist**self.p)
 
         # Average distance
-        return (sum(distances) / len(distances)) ** (1.0 / self.p)
+        return float((sum(distances) / len(distances)) ** (1.0 / self.p))
 
     def _get_normalized_points(self, front: ParetoFrontier) -> np.ndarray:
         """Get normalized objective values."""
@@ -393,13 +394,13 @@ class InvertedGenerationalDistance(QualityIndicator):
         # Calculate distances from reference to nearest approximation
         distances = []
         for ref in ref_points:
-            min_dist = float("inf")
+            min_dist: float = float("inf")
             for point in approx_points:
-                dist = np.linalg.norm(ref - point, ord=self.p)
+                dist = float(np.linalg.norm(ref - point, ord=self.p))
                 min_dist = min(min_dist, dist)
             distances.append(min_dist**self.p)
 
-        return (sum(distances) / len(distances)) ** (1.0 / self.p)
+        return float((sum(distances) / len(distances)) ** (1.0 / self.p))
 
     def _get_normalized_points(self, front: ParetoFrontier) -> np.ndarray:
         """Get normalized objective values."""
@@ -497,10 +498,10 @@ class SpreadIndicator(QualityIndicator):
         # Calculate all pairwise distances
         distances_to_nearest = []
         for i in range(n):
-            min_dist = float("inf")
+            min_dist: float = float("inf")
             for j in range(n):
                 if i != j:
-                    dist = np.linalg.norm(points[i] - points[j])
+                    dist = float(np.linalg.norm(points[i] - points[j]))
                     min_dist = min(min_dist, dist)
             distances_to_nearest.append(min_dist)
 
@@ -511,7 +512,7 @@ class SpreadIndicator(QualityIndicator):
 
         # Calculate spread
         variance = sum((d - d_mean) ** 2 for d in distances_to_nearest)
-        return np.sqrt(variance / n) / d_mean
+        return float(np.sqrt(variance / n) / d_mean)
 
     def _get_normalized_points(self, front: ParetoFrontier) -> np.ndarray:
         """Get normalized objective values."""
@@ -665,7 +666,7 @@ class Spacing(QualityIndicator):
         d_mean = np.mean(d)
 
         # Spacing = standard deviation of distances
-        return np.sqrt(sum((di - d_mean) ** 2 for di in d) / n)
+        return float(np.sqrt(sum((di - d_mean) ** 2 for di in d) / n))
 
     def _get_normalized_points(self, front: ParetoFrontier) -> np.ndarray:
         """Get normalized objective values."""
@@ -726,7 +727,7 @@ class MaximumSpread(QualityIndicator):
             extents.append(extent)
 
         # Maximum spread is the Euclidean norm of extents
-        return np.sqrt(sum(e**2 for e in extents))
+        return float(np.sqrt(sum(e**2 for e in extents)))
 
     def _get_normalized_points(self, front: ParetoFrontier) -> np.ndarray:
         """Get normalized objective values."""

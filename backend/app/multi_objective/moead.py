@@ -35,7 +35,7 @@ Classes:
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any, Callable, cast
 from uuid import UUID
 
 import numpy as np
@@ -83,7 +83,7 @@ class WeightVector:
     current_solution: Solution | None = None
     subproblem_value: float = float("inf")
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Normalize weights to sum to 1."""
         total = np.sum(self.weights)
         if total > 0:
@@ -324,7 +324,7 @@ def _simplex_lattice_design(n_objectives: int, H: int) -> list[np.ndarray]:
     """
     weights = []
 
-    def generate_recursive(current: list[float], remaining: int, depth: int):
+    def generate_recursive(current: list[float], remaining: int, depth: int) -> None:
         if depth == n_objectives - 1:
             current.append(remaining / H)
             weights.append(np.array(current.copy()))
@@ -594,7 +594,9 @@ class MOEADAlgorithm:
         if evaluated:
             for wv in self.weight_vectors:
                 if wv.current_solution is None:
-                    wv.current_solution = np.random.choice(evaluated).copy()
+                    wv.current_solution = cast(
+                        Solution, np.random.choice(evaluated)
+                    ).copy()
                     obj_vec = self._get_normalized_objectives(wv.current_solution)
                     wv.subproblem_value = self.config.decomposition.scalarize(
                         obj_vec, wv.weights, self.reference_point

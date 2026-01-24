@@ -17,6 +17,7 @@ from typing import Any, Callable, Generator, TypeVar
 
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import StaleDataError
 
 logger = logging.getLogger(__name__)
 
@@ -300,7 +301,7 @@ def optimistic_lock_retry(
                 yield session
                 return
 
-        except sa_exc.StaleDataError as e:
+        except StaleDataError as e:
             if retries >= max_retries:
                 logger.error(
                     f"Optimistic lock retry exhausted after {retries} attempts"
@@ -347,14 +348,14 @@ def lock_ordering_key(model_class: type, entity_id: Any) -> tuple[str, Any]:
         for model, id in locks_sorted:
             obj = session.query(model).with_for_update().filter_by(id=id).one()
     """
-    table_name = model_class.__tablename__
+    table_name = getattr(model_class, "__tablename__", model_class.__name__)
     return (table_name, entity_id)
 
 
 class TransactionMetrics:
     """Track transaction performance metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.total_transactions = 0
         self.successful_transactions = 0
         self.failed_transactions = 0
@@ -362,7 +363,7 @@ class TransactionMetrics:
         self.max_duration = 0.0
         self.min_duration = float("inf")
 
-    def record_success(self, duration: float):
+    def record_success(self, duration: float) -> None:
         """Record a successful transaction."""
         self.total_transactions += 1
         self.successful_transactions += 1
@@ -370,7 +371,7 @@ class TransactionMetrics:
         self.max_duration = max(self.max_duration, duration)
         self.min_duration = min(self.min_duration, duration)
 
-    def record_failure(self, duration: float):
+    def record_failure(self, duration: float) -> None:
         """Record a failed transaction."""
         self.total_transactions += 1
         self.failed_transactions += 1
@@ -407,7 +408,9 @@ transaction_metrics = TransactionMetrics()
 
 
 @contextmanager
-def tracked_transaction(session: Session, **kwargs):
+def tracked_transaction(
+    session: Session, **kwargs: Any
+) -> Generator[Session, None, None]:
     """
     Context manager that tracks transaction metrics.
 

@@ -85,7 +85,7 @@ class RetryContext:
         success: bool = False,
         delay_before: float = 0.0,
         duration: float = 0.0,
-    ):
+    ) -> None:
         """
         Record a retry attempt.
 
@@ -112,7 +112,7 @@ class RetryContext:
             f"{'success' if success else f'failed ({type(exception).__name__})'}"
         )
 
-    def trigger_retry_callback(self, exception: Exception, next_delay: float):
+    def trigger_retry_callback(self, exception: Exception, next_delay: float) -> None:
         """
         Trigger the on_retry callback if configured.
 
@@ -122,11 +122,11 @@ class RetryContext:
         """
         if self.on_retry:
             try:
-                self.on_retry(self, exception, next_delay)
+                self.on_retry(self, exception, int(next_delay))
             except Exception as e:
                 logger.error(f"Error in retry callback: {e}", exc_info=True)
 
-    def trigger_success_callback(self, result: Any):
+    def trigger_success_callback(self, result: Any) -> None:
         """
         Trigger the on_success callback if configured.
 
@@ -139,7 +139,7 @@ class RetryContext:
             except Exception as e:
                 logger.error(f"Error in success callback: {e}", exc_info=True)
 
-    def trigger_failure_callback(self, exception: Exception):
+    def trigger_failure_callback(self, exception: Exception) -> None:
         """
         Trigger the on_failure callback if configured.
 

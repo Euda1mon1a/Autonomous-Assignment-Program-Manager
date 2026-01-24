@@ -156,7 +156,8 @@ class MaterializedViewManager:
         if last_refresh is None:
             return True
 
-        return datetime.utcnow() - last_refresh > refresh_interval
+        result: bool = datetime.utcnow() - last_refresh > refresh_interval
+        return result
 
     async def auto_refresh_all(self) -> list[str]:
         """Refresh all views that need refreshing.
@@ -177,7 +178,7 @@ class MaterializedViewManager:
 # Pre-defined materialized views for common queries
 
 
-async def create_schedule_summary_view(manager: MaterializedViewManager):
+async def create_schedule_summary_view(manager: MaterializedViewManager) -> None:
     """Create materialized view for schedule summary statistics."""
     query = """
         SELECT
@@ -208,7 +209,7 @@ async def create_schedule_summary_view(manager: MaterializedViewManager):
     )
 
 
-async def create_person_workload_view(manager: MaterializedViewManager):
+async def create_person_workload_view(manager: MaterializedViewManager) -> None:
     """Create materialized view for person workload statistics."""
     query = """
         SELECT
@@ -241,7 +242,7 @@ async def create_person_workload_view(manager: MaterializedViewManager):
     )
 
 
-async def create_rotation_coverage_view(manager: MaterializedViewManager):
+async def create_rotation_coverage_view(manager: MaterializedViewManager) -> None:
     """Create materialized view for rotation coverage analysis."""
     query = """
         SELECT

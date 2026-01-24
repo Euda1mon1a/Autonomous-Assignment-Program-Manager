@@ -31,7 +31,7 @@ async def list_half_day_assignments(
     end_date: date | None = Query(None, description="End date"),
     person_type: str | None = Query(None, description="Filter by person type"),
     db: AsyncSession = Depends(get_async_db),
-):
+) -> HalfDayAssignmentListResponse:
     """
     List half-day assignments for a block or date range.
 

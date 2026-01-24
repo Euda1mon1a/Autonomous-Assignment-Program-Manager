@@ -9,7 +9,7 @@ Validates regulatory and policy compliance:
 """
 
 from datetime import date, timedelta
-from typing import Optional
+from typing import Any, Optional, cast
 from uuid import UUID
 
 from sqlalchemy import and_, func, select
@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.assignment import Assignment
 from app.models.block import Block
-from app.models.certification import Certification
+from app.models.certification import CertificationType, PersonCertification
 from app.models.procedure_credential import ProcedureCredential
 from app.validators.common import ValidationError
 
@@ -47,7 +47,7 @@ async def validate_acgme_compliance(
     Returns:
         dict: Compliance result with violations and warnings
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
     warnings = []
 
     # Check 80-hour weekly limit
@@ -97,7 +97,7 @@ async def validate_institutional_policy(
         dict: Policy compliance result
     """
     # Define institutional policies
-    policies = {
+    policies: dict[str, dict[str, Any]] = {
         "max_consecutive_days": {
             "limit": 6,
             "description": "Maximum 6 consecutive days without a day off",
@@ -116,15 +116,19 @@ async def validate_institutional_policy(
         raise ValidationError(f"Unknown institutional policy: '{policy_name}'")
 
     policy = policies[policy_name]
-    violations = []
+    violations: list[dict[str, Any]] = []
 
     # Validate based on policy type
     if policy_name == "max_consecutive_days":
-        violations = await _check_max_consecutive_days(db, context, policy["limit"])
+        violations = await _check_max_consecutive_days(
+            db, context, cast(int, policy["limit"])
+        )
     elif policy_name == "min_shift_gap":
-        violations = await _check_min_shift_gap(db, context, policy["hours"])
+        violations = await _check_min_shift_gap(db, context, cast(int, policy["hours"]))
     elif policy_name == "annual_training":
-        violations = await _check_annual_training(db, context, policy["required"])
+        violations = await _check_annual_training(
+            db, context, cast(list[str], policy["required"])
+        )
 
     return {
         "is_compliant": len(violations) == 0,
@@ -190,7 +194,7 @@ async def validate_professional_standards(
 
     # Check certifications from Certification model
     cert_result = await db.execute(
-        select(Certification).where(Certification.person_id == person_id)
+        select(PersonCertification).where(PersonCertification.person_id == person_id)
     )
     certifications = cert_result.scalars().all()
 
@@ -284,7 +288,7 @@ async def check_acgme_compliance(
         bool: True if compliant, False otherwise
     """
     result = await validate_acgme_compliance(db, person_id, start_date, end_date)
-    return result["is_compliant"]
+    return cast(bool, result["is_compliant"])
 
 
 # =============================================================================
@@ -310,7 +314,7 @@ async def _check_80_hour_rule(
     Returns:
         List of violation dictionaries
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
     hours_per_block = 6  # 6 hours per half-day block
     max_weekly_hours = 80
     rolling_weeks = 4
@@ -370,7 +374,7 @@ async def _check_day_off_rule(
     Returns:
         List of violation dictionaries
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
 
     # Get all assignment dates in the period
     result = await db.execute(
@@ -396,7 +400,7 @@ async def _check_day_off_rule(
     for i in range(1, len(work_dates)):
         if (work_dates[i] - work_dates[i - 1]).days == 1:
             consecutive_count += 1
-            if consecutive_count >= 7:
+            if consecutive_count >= 7 and consecutive_start is not None:
                 violations.append(
                     {
                         "rule": "1_in_7_day_off",
@@ -492,7 +496,7 @@ async def _check_max_consecutive_days(
     Returns:
         List of violation dictionaries
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
     person_id = context.get("person_id")
     start_date = context.get("start_date", date.today() - timedelta(days=30))
     end_date = context.get("end_date", date.today())
@@ -524,7 +528,7 @@ async def _check_max_consecutive_days(
     for i in range(1, len(work_dates)):
         if (work_dates[i] - work_dates[i - 1]).days == 1:
             consecutive_count += 1
-            if consecutive_count > limit:
+            if consecutive_count > limit and consecutive_start is not None:
                 violations.append(
                     {
                         "policy": "max_consecutive_days",
@@ -558,7 +562,7 @@ async def _check_min_shift_gap(
     Returns:
         List of violation dictionaries
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
     person_id = context.get("person_id")
     target_date = context.get("target_date", date.today())
 
@@ -611,7 +615,7 @@ async def _check_annual_training(
     Returns:
         List of violation dictionaries
     """
-    violations = []
+    violations: list[dict[str, Any]] = []
     person_id = context.get("person_id")
 
     if not person_id:
@@ -622,7 +626,7 @@ async def _check_annual_training(
 
     # Check certifications for required trainings
     result = await db.execute(
-        select(Certification).where(Certification.person_id == person_id)
+        select(PersonCertification).where(PersonCertification.person_id == person_id)
     )
     certifications = result.scalars().all()
 

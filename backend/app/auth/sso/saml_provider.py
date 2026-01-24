@@ -81,7 +81,7 @@ class SAMLProvider:
 
     def parse_saml_response(
         self, saml_response: str, validate_signature: bool = True
-    ) -> dict[str, any]:
+    ) -> dict[str, Any]:
         """
         Parse and validate SAML response.
 
@@ -260,12 +260,16 @@ class SAMLProvider:
             ".//md:IDPSSODescriptor/md:KeyDescriptor/ds:KeyInfo/ds:X509Data/ds:X509Certificate",
             ns,
         )
-        x509_cert = cert_element.text.strip() if cert_element is not None else ""
+        x509_cert = (
+            cert_element.text.strip()
+            if cert_element is not None and cert_element.text is not None
+            else ""
+        )
 
         return {
             "entity_id": entity_id,
-            "sso_url": sso_url,
-            "slo_url": slo_url,
+            "sso_url": sso_url if sso_url else "",
+            "slo_url": slo_url if slo_url else "",
             "x509_cert": x509_cert,
         }
 
@@ -414,7 +418,7 @@ class SAMLProvider:
             Dict of mapped user attributes
         """
         ns = {"saml": self.SAML_NS}
-        attributes = {}
+        attributes: dict[str, Any] = {}
 
         attribute_statement = assertion.find(".//saml:AttributeStatement", ns)
         if attribute_statement is None:

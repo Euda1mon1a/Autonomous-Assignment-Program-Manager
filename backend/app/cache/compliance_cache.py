@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class ComplianceCache:
     """Cache for ACGME compliance calculations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize compliance cache."""
         self.cache = get_cache_manager()
         self.ttl = 1800  # 30 minutes
@@ -39,7 +39,8 @@ class ComplianceCache:
         key = f"work_hours:{person_id}:{week_start}"
         cached = await self.cache.get(key)
         if cached:
-            return json.loads(cached)
+            result: dict = json.loads(cached)
+            return result
         return None
 
     async def set_work_hours(
@@ -75,7 +76,8 @@ class ComplianceCache:
         key = f"rolling_4week:{person_id}:{end_date}"
         cached = await self.cache.get(key)
         if cached:
-            return json.loads(cached)
+            result: dict = json.loads(cached)
+            return result
         return None
 
     async def set_rolling_4week_hours(
@@ -111,7 +113,8 @@ class ComplianceCache:
         key = f"one_in_seven:{person_id}:{period_start}"
         cached = await self.cache.get(key)
         if cached:
-            return json.loads(cached)
+            result: dict = json.loads(cached)
+            return result
         return None
 
     async def set_one_in_seven(

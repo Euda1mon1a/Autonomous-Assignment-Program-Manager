@@ -458,7 +458,7 @@ class NichingOperator:
 
             dist += (val_a - val_b) ** 2
 
-        return np.sqrt(dist)
+        return float(np.sqrt(dist))
 
     def _sharing_function(self, distance: float) -> float:
         """
@@ -469,7 +469,7 @@ class NichingOperator:
         if distance >= self.niche_radius:
             return 0.0
 
-        return 1.0 - (distance / self.niche_radius) ** self.alpha
+        return float(1.0 - (distance / self.niche_radius) ** self.alpha)
 
     def shared_fitness(
         self,
@@ -596,7 +596,7 @@ class ReferencePointAssociation:
         # Reference line goes from origin through reference point
         ref_norm = np.linalg.norm(reference)
         if ref_norm == 0:
-            return np.linalg.norm(point)
+            return float(np.linalg.norm(point))
 
         unit_ref = reference / ref_norm
 
@@ -825,8 +825,8 @@ class DiversityMechanism:
             distances = [0.0]
 
         # Calculate uniformity (inverse of distance variance)
-        mean_dist = np.mean(distances)
-        std_dist = np.std(distances)
+        mean_dist = float(np.mean(distances))
+        std_dist = float(np.std(distances))
         uniformity = 1.0 / (1.0 + std_dist / max(mean_dist, 1e-10))
 
         # Estimate coverage using grid cells

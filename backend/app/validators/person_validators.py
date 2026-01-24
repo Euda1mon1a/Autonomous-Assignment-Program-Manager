@@ -9,7 +9,7 @@ Validates person data including:
 - Supervision ratio validation
 """
 
-from typing import Optional
+from typing import Any, Optional
 
 from app.validators.common import (
     ValidationError,
@@ -328,7 +328,7 @@ def validate_target_clinical_blocks(
 
 def validate_supervision_requirements(
     person_type: str, pgy_level: int | None, performs_procedures: bool = False
-) -> dict[str, any]:
+) -> dict[str, Any]:
     """
     Validate and return supervision requirements for a person.
 

@@ -5,7 +5,10 @@ Configuration settings for enterprise SSO integration including
 SAML 2.0 Service Provider settings and OAuth2/OIDC provider settings.
 """
 
+from typing import Any
+
 from pydantic import BaseModel, Field, field_validator
+from pydantic_core.core_schema import ValidationInfo
 
 
 class SAMLConfig(BaseModel):
@@ -80,7 +83,7 @@ class SAMLConfig(BaseModel):
 
     @field_validator("acs_url", "slo_url", "idp_sso_url", "idp_slo_url")
     @classmethod
-    def validate_url(cls, v: str, info) -> str:
+    def validate_url(cls, v: str, info: ValidationInfo) -> str:
         """Validate URL fields when SAML is enabled."""
         if v and not v.startswith(("http://", "https://")):
             raise ValueError(f"{info.field_name} must be a valid HTTP(S) URL")
@@ -153,7 +156,7 @@ class OAuth2Config(BaseModel):
         "redirect_uri",
     )
     @classmethod
-    def validate_url(cls, v: str, info) -> str:
+    def validate_url(cls, v: str, info: ValidationInfo) -> str:
         """Validate URL fields when OAuth2 is enabled."""
         if v and not v.startswith(("http://", "https://")):
             raise ValueError(f"{info.field_name} must be a valid HTTP(S) URL")
@@ -235,7 +238,8 @@ def load_sso_config() -> SSOConfig:
         value = os.getenv(key)
         if value:
             try:
-                return json.loads(value)
+                result: dict[str, str] = json.loads(value)
+                return result
             except json.JSONDecodeError:
                 return default
         return default

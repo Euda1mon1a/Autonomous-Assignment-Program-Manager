@@ -6,7 +6,7 @@ to automatically filter data based on the current user's role.
 
 from collections.abc import Callable
 from functools import wraps
-from typing import Any
+from typing import Any, cast
 
 from fastapi import Depends
 
@@ -15,7 +15,7 @@ from app.models.user import User
 from app.services.role_filter_service import ResourceType, RoleFilterService
 
 
-def get_role_filter_service() -> RoleFilterService:
+def get_role_filter_service() -> type[RoleFilterService]:
     """Dependency to get RoleFilterService instance.
 
     Returns:
@@ -24,7 +24,7 @@ def get_role_filter_service() -> RoleFilterService:
     return RoleFilterService
 
 
-def require_resource_access(resource: ResourceType):
+def require_resource_access(resource: ResourceType) -> Callable:
     """Dependency to require access to a specific resource type.
 
     Args:
@@ -51,7 +51,7 @@ def require_resource_access(resource: ResourceType):
         """
         from fastapi import HTTPException, status
 
-        if not RoleFilterService.can_access(resource, current_user.role):
+        if not RoleFilterService.can_access(resource, cast(str, current_user.role)):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied: Your role '{current_user.role}' cannot access {resource.value}",
@@ -60,7 +60,7 @@ def require_resource_access(resource: ResourceType):
     return check_access
 
 
-def require_admin():
+def require_admin() -> Callable:
     """Dependency to require admin role.
 
     Returns:
@@ -84,7 +84,7 @@ def require_admin():
         """
         from fastapi import HTTPException, status
 
-        if not RoleFilterService.is_admin(current_user.role):
+        if not RoleFilterService.is_admin(cast(str, current_user.role)):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied: Admin role required",
@@ -124,11 +124,11 @@ def apply_role_filter(
             )
     """
     return RoleFilterService.filter_for_role(
-        data, current_user.role, str(current_user.id)
+        data, cast(str, current_user.role), str(current_user.id)
     )
 
 
-def filter_response(filter_func: Callable = None):
+def filter_response(filter_func: Callable | None = None) -> Callable:
     """Decorator to automatically filter route responses based on user role.
 
     This decorator wraps a route handler and filters its response data
@@ -155,9 +155,9 @@ def filter_response(filter_func: Callable = None):
             }
     """
 
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Get current user from kwargs
             current_user = kwargs.get("current_user")
             if not current_user:
@@ -173,10 +173,12 @@ def filter_response(filter_func: Callable = None):
             # If result is a dict and we have a user, filter it
             if isinstance(result, dict) and current_user:
                 if filter_func:
-                    return filter_func(result, current_user.role, str(current_user.id))
+                    return filter_func(
+                        result, cast(str, current_user.role), str(current_user.id)
+                    )
                 else:
                     return RoleFilterService.filter_for_role(
-                        result, current_user.role, str(current_user.id)
+                        result, cast(str, current_user.role), str(current_user.id)
                     )
 
             return result
@@ -205,10 +207,10 @@ def get_current_user_role(current_user: User = Depends(get_current_active_user))
                 "permissions": RoleFilterService.get_accessible_resources(role)
             }
     """
-    return current_user.role
+    return cast(str, current_user.role)
 
 
-def check_endpoint_access(endpoint_category: str):
+def check_endpoint_access(endpoint_category: str) -> Callable:
     """Dependency to check if user can access an endpoint category.
 
     Args:
@@ -235,7 +237,7 @@ def check_endpoint_access(endpoint_category: str):
         from fastapi import HTTPException, status
 
         if not RoleFilterService.can_access_endpoint(
-            current_user.role, endpoint_category
+            cast(str, current_user.role), endpoint_category
         ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

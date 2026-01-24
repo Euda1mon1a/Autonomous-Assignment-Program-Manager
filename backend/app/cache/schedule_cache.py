@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class ScheduleCache:
     """Specialized cache for schedule data."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize schedule cache."""
         self.cache = get_cache_manager()
         self.default_ttl = 3600  # 1 hour
@@ -80,7 +80,8 @@ class ScheduleCache:
         key = f"person_schedule:{person_id}:{start_date}:{end_date}"
         cached = await self.cache.get(key)
         if cached:
-            return json.loads(cached)
+            result: dict = json.loads(cached)
+            return result
         return None
 
     async def set_person_schedule(
@@ -120,7 +121,8 @@ class ScheduleCache:
         key = f"rotation_coverage:{rotation_id}:{target_date}"
         cached = await self.cache.get(key)
         if cached:
-            return json.loads(cached)
+            result: dict = json.loads(cached)
+            return result
         return None
 
     async def set_rotation_coverage(

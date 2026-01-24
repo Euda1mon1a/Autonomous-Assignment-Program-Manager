@@ -9,7 +9,7 @@ Validates scheduling constraints:
 """
 
 from datetime import date, timedelta
-from typing import Optional
+from typing import Any, Optional, TypedDict, cast
 from uuid import UUID
 
 from sqlalchemy import and_, func, select
@@ -125,7 +125,7 @@ async def validate_soft_constraint(
     Returns:
         dict: Validation result with penalty score
     """
-    soft_constraints = {
+    soft_constraints: dict[str, dict[str, Any]] = {
         "rotation_preference": {
             "description": "Person prefers certain rotations",
             "penalty_base": 10,
@@ -207,7 +207,7 @@ async def validate_constraint_priority(
     )
 
     # Check for conflicts
-    conflicts = []
+    conflicts: list[dict[str, Any]] = []
     for i, c1 in enumerate(sorted_constraints):
         for c2 in sorted_constraints[i + 1 :]:
             # Would check if constraints conflict
@@ -272,7 +272,7 @@ async def check_hard_constraint(
     """
     try:
         result = await validate_hard_constraint(db, constraint_name, context)
-        return result["is_satisfied"]
+        return cast(bool, result["is_satisfied"])
     except ConstraintViolation:
         return False
 

@@ -102,7 +102,7 @@ class FacultyPreferenceCache:
         """
         key = f"{self.KEY_PREFIX}{faculty_id}"
         # Cache a dictionary representation, not the ORM object
-        pref_data = {
+        pref_data: dict[str, Any] = {
             "id": str(preferences.id),
             "faculty_id": str(preferences.faculty_id),
             "preferred_weeks": preferences.preferred_weeks or [],

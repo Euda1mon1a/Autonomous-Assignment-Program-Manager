@@ -55,7 +55,7 @@ class AlertRuleBuilder:
     Creates alert rules for various monitoring systems.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize alert rule builder."""
         self.rules: list[AlertRule] = []
 
@@ -334,8 +334,8 @@ def to_prometheus_rules(rules: list[AlertRule]) -> dict[str, Any]:
     Returns:
         dict: Prometheus rules file format
     """
-    groups = []
-    rules_by_severity = {}
+    groups: list[dict[str, Any]] = []
+    rules_by_severity: dict[str, list[AlertRule]] = {}
 
     # Group by severity
     for rule in rules:

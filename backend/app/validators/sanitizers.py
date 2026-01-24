@@ -13,7 +13,7 @@ import html
 import re
 import unicodedata
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 
 class SanitizationError(Exception):
@@ -194,7 +194,9 @@ def sanitize_filename(filename: str) -> str:
     return sanitized
 
 
-def normalize_unicode(text: str, form: str = "NFKC") -> str:
+def normalize_unicode(
+    text: str, form: Literal["NFC", "NFD", "NFKC", "NFKD"] = "NFKC"
+) -> str:
     """
     Normalize Unicode text to prevent unicode-based attacks.
 

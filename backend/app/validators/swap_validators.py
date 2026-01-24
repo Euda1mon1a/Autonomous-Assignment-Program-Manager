@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
-from app.models.swap import Swap, SwapStatus, SwapType
+from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.validators.common import ValidationError, validate_uuid
 from app.validators.date_validators import validate_future_date
 
@@ -184,9 +184,9 @@ async def validate_swap_request(
 
     # Check pending swap limit
     result = await db.execute(
-        select(Swap).where(
-            Swap.requester_id == requester_id,
-            Swap.status == "pending",
+        select(SwapRecord).where(
+            SwapRecord.requester_id == requester_id,
+            SwapRecord.status == "pending",
         )
     )
     pending_swaps = result.scalars().all()
@@ -275,7 +275,7 @@ async def validate_swap_acgme_compliance(
     validate_uuid(swap_id)
 
     # Get swap
-    result = await db.execute(select(Swap).where(Swap.id == swap_id))
+    result = await db.execute(select(SwapRecord).where(SwapRecord.id == swap_id))
     swap = result.scalar_one_or_none()
 
     if not swap:
@@ -401,7 +401,7 @@ async def validate_swap_rollback_eligibility(
     validate_uuid(swap_id)
 
     # Get swap
-    result = await db.execute(select(Swap).where(Swap.id == swap_id))
+    result = await db.execute(select(SwapRecord).where(SwapRecord.id == swap_id))
     swap = result.scalar_one_or_none()
 
     if not swap:

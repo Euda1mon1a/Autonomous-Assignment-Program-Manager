@@ -504,8 +504,8 @@ class FreezeHorizonService:
                 "non_emergency_count": 0,
             }
 
-        by_reason_code = {}
-        by_module = {}
+        by_reason_code: dict[str, int] = {}
+        by_module: dict[str, int] = {}
         emergency_count = 0
         non_emergency_count = 0
 

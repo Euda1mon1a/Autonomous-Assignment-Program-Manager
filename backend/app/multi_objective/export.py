@@ -426,7 +426,7 @@ class HolographicExporter:
 
     def _build_tradeoff_edges(self, frontier: ParetoFrontier) -> list[TradeOffEdge]:
         """Build trade-off edges between solutions."""
-        edges = []
+        edges: list[TradeOffEdge] = []
         n = len(frontier.solutions)
 
         # Only for small fronts (edges grow quadratically)

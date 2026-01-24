@@ -127,7 +127,7 @@ class CircadianOscillator:
     chronotype_offset: float = 0.0  # Hours (-2 to +2)
     entrainment_strength: float = 1.0  # 0-1
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate oscillator parameters."""
         self.phase = self.phase % 24.0  # Keep phase in [0, 24)
         self.amplitude = max(MIN_AMPLITUDE, min(MAX_AMPLITUDE, self.amplitude))
@@ -186,7 +186,7 @@ class CircadianOscillator:
 
         return phase_shift
 
-    def update_phase(self, time_elapsed: timedelta, phase_shift: float = 0.0):
+    def update_phase(self, time_elapsed: timedelta, phase_shift: float = 0.0) -> None:
         """
         Update circadian phase accounting for natural drift and imposed shifts.
 
@@ -215,7 +215,7 @@ class CircadianOscillator:
             f"new_phase={self.phase:.2f}h"
         )
 
-    def update_amplitude(self, schedule_regularity: float):
+    def update_amplitude(self, schedule_regularity: float) -> None:
         """
         Update circadian amplitude based on schedule regularity.
 
@@ -423,7 +423,7 @@ class CircadianScheduleAnalyzer:
     - Optimization recommendations
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize circadian schedule analyzer."""
         # Cache of oscillator states per resident
         self._oscillators: dict[UUID, CircadianOscillator] = {}
@@ -743,7 +743,7 @@ class CircadianScheduleAnalyzer:
 
         return int(math.ceil(total_recovery))
 
-    def reset_oscillator(self, resident_id: UUID):
+    def reset_oscillator(self, resident_id: UUID) -> None:
         """
         Reset oscillator to default state.
 

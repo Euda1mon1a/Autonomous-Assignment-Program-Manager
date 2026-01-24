@@ -16,6 +16,9 @@ Metrics tasks:
 These schedules should be registered in celery_app.py beat_schedule.
 """
 
+from typing import Any
+
+from celery import Celery
 from celery.schedules import crontab
 
 # Celery beat schedule for cleanup tasks (idempotency, token blacklist)
@@ -358,7 +361,7 @@ SCHEDULE_METRICS_TASK_CONFIG = {
 }
 
 
-def configure_celery_for_cleanup(celery_app):
+def configure_celery_for_cleanup(celery_app: Celery) -> None:
     """
     Configure Celery app with cleanup tasks.
 
@@ -390,7 +393,7 @@ def configure_celery_for_cleanup(celery_app):
     celery_app.conf.task_queues.update(CLEANUP_TASK_QUEUES)
 
 
-def configure_celery_for_schedule_metrics(celery_app):
+def configure_celery_for_schedule_metrics(celery_app: Celery) -> None:
     """
     Configure Celery app with schedule metrics tasks.
 
@@ -423,7 +426,7 @@ def configure_celery_for_schedule_metrics(celery_app):
     celery_app.conf.update(SCHEDULE_METRICS_TASK_CONFIG)
 
 
-def configure_celery_for_all_periodic_tasks(celery_app):
+def configure_celery_for_all_periodic_tasks(celery_app: Celery) -> None:
     """
     Configure Celery app with all periodic tasks (metrics + cleanup).
 

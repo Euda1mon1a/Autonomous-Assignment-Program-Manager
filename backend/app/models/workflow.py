@@ -14,6 +14,7 @@ system that supports:
 import uuid
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 from sqlalchemy import (
     Boolean,
@@ -26,7 +27,7 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.types import GUID, JSONType
@@ -81,12 +82,12 @@ class WorkflowTemplate(Base):
 
     __tablename__ = "workflow_templates"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
 
     # Template identification
-    name = Column(String(255), nullable=False, index=True)
-    description = Column(Text, nullable=True)
-    version = Column(Integer, nullable=False, default=1)
+    name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     # Template definition
     # Structure: {
@@ -112,18 +113,24 @@ class WorkflowTemplate(Base):
     #   },
     #   "default_timeout_seconds": 3600
     # }
-    definition = Column(JSONType(), nullable=False)
+    definition: Mapped[dict] = mapped_column(JSONType(), nullable=False)
 
     # Metadata
-    is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    created_by_id = Column(GUID(), ForeignKey("users.id"), nullable=True)
-    updated_at = Column(
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(), ForeignKey("users.id"), nullable=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
     # Tags for categorization
-    tags = Column(JSONType(), nullable=True)  # ["schedule", "acgme", "critical"]
+    tags: Mapped[dict | None] = mapped_column(
+        JSONType(), nullable=True
+    )  # ["schedule", "acgme", "critical"]
 
     # Relationships
     instances = relationship(
@@ -135,7 +142,7 @@ class WorkflowTemplate(Base):
         Index("idx_workflow_template_active", "is_active"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<WorkflowTemplate(name='{self.name}', version={self.version})>"
 
 

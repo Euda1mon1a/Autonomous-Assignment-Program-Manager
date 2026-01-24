@@ -21,6 +21,7 @@ Constraints:
 """
 
 import time
+from collections import defaultdict
 from datetime import date, timedelta
 from typing import Any
 from uuid import UUID
@@ -204,8 +205,41 @@ class CPSATActivitySolver:
                             model.Add(a[s_i, lec_idx] == 1)
 
         # ==================================================
+        # CONSTRAINT: Physical Capacity (Max 6 per slot)
+        # Session 136: Clinic has limited exam rooms
+        # ==================================================
+        MAX_PHYSICAL_CAPACITY = 6
+
+        # Group slots by (date, time_of_day)
+        slot_groups: dict[tuple[date, str], list[int]] = defaultdict(list)
+        for s_i, slot in enumerate(slots):
+            key = (slot.date, slot.time_of_day)
+            slot_groups[key].append(s_i)
+
+        # For each time slot, sum(fm_clinic) <= MAX_PHYSICAL_CAPACITY
+        if clinic_activity:
+            clinic_idx = activity_idx.get(clinic_activity.id)
+            if clinic_idx is not None:
+                for (slot_date, time_of_day), slot_indices in slot_groups.items():
+                    # Skip weekends
+                    if slot_date.weekday() >= 5:
+                        continue
+
+                    # Sum of fm_clinic assignments for this slot
+                    slot_clinic_sum = sum(a[s_i, clinic_idx] for s_i in slot_indices)
+
+                    # Hard constraint: at most 6 in clinic per slot
+                    model.Add(slot_clinic_sum <= MAX_PHYSICAL_CAPACITY)
+
+                logger.info(
+                    f"Added physical capacity constraint (max {MAX_PHYSICAL_CAPACITY}) "
+                    f"for {len(slot_groups)} time slots"
+                )
+
+        # ==================================================
         # OBJECTIVE: Maximize clinic (C) assignments
         # (Most slots should be clinic for outpatient rotations)
+        # Constraint above limits this to respect physical capacity
         # ==================================================
         if clinic_activity:
             clinic_idx = activity_idx.get(clinic_activity.id)

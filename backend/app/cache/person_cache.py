@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class PersonCache:
     """Cache for person data."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize person cache."""
         self.cache = get_cache_manager()
         self.ttl = 7200  # 2 hours - person data changes infrequently
@@ -32,7 +32,8 @@ class PersonCache:
         key = f"person:{person_id}"
         cached = await self.cache.get(key)
         if cached:
-            return json.loads(cached)
+            result: dict = json.loads(cached)
+            return result
         return None
 
     async def set_person(
@@ -63,7 +64,8 @@ class PersonCache:
         key = f"persons_by_type:{person_type}"
         cached = await self.cache.get(key)
         if cached:
-            return json.loads(cached)
+            result: list = json.loads(cached)
+            return result
         return None
 
     async def set_persons_by_type(
@@ -94,7 +96,8 @@ class PersonCache:
         key = f"person_prefs:{person_id}"
         cached = await self.cache.get(key)
         if cached:
-            return json.loads(cached)
+            result: dict = json.loads(cached)
+            return result
         return None
 
     async def set_person_preferences(

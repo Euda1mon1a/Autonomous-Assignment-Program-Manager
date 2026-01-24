@@ -417,7 +417,7 @@ class ParetoFrontier:
 
         # Find solution with maximum distance from the line connecting extremes
         # This is a simplified knee detection using the trade-off curve approach
-        max_distance = 0
+        max_distance = 0.0
         knee_idx = 0
 
         # Calculate centroid

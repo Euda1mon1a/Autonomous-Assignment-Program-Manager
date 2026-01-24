@@ -91,8 +91,11 @@ class ConnectionPoolMonitor:
         """
         pool = self.engine.pool
 
-        total = pool.size() + pool.overflow()
-        checked_out = pool.checkedout()
+        # Type: ignore for pool methods as they are not in type stubs
+        total = (
+            getattr(pool, "size", lambda: 0)() + getattr(pool, "overflow", lambda: 0)()
+        )
+        checked_out = getattr(pool, "checkedout", lambda: 0)()
         available = total - checked_out
         utilization = (checked_out / total * 100) if total > 0 else 0
 
@@ -100,7 +103,7 @@ class ConnectionPoolMonitor:
             total_connections=total,
             checked_out_connections=checked_out,
             available_connections=available,
-            overflow_connections=pool.overflow(),
+            overflow_connections=getattr(pool, "overflow", lambda: 0)(),
             pool_utilization_percent=utilization,
             timestamp=datetime.utcnow(),
         )

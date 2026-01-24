@@ -14,7 +14,8 @@ import re
 import uuid
 from typing import Any
 
-from pydantic import EmailStr, ValidationError, validate_email
+from pydantic import EmailStr, validate_email
+from pydantic import ValidationError as PydanticValidationError
 
 
 class ValidationError(Exception):
@@ -52,7 +53,7 @@ def validate_email_address(email: str) -> str:
         validated = validate_email(email)
         # Return normalized email (lowercase)
         return validated[1].lower()
-    except (ValidationError, ValueError) as e:
+    except (PydanticValidationError, ValueError) as e:
         raise ValidationError(f"Invalid email format: {email}") from e
 
 

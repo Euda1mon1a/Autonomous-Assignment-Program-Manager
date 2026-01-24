@@ -333,7 +333,19 @@ class SacrificeHierarchy:
             ... )
         """
         if level == self.current_level:
-            return
+            # Create a no-op decision for the log
+            decision = SacrificeDecision(
+                timestamp=datetime.now(),
+                level=level,
+                activities_suspended=[],
+                reason=f"Already at {level.name}",
+                coverage_before=0.0,
+                coverage_after=0.0,
+                approved_by=approved_by,
+                notes="No change - already at this level",
+            )
+            self.decisions_log.append(decision)
+            return decision
 
         previous_level = self.current_level
         self.current_level = level
@@ -365,7 +377,11 @@ class SacrificeHierarchy:
             f"Reason: {reason}"
         )
 
-    def deactivate_level(self, to_level: LoadSheddingLevel = LoadSheddingLevel.NORMAL) -> None:
+        return decision
+
+    def deactivate_level(
+        self, to_level: LoadSheddingLevel = LoadSheddingLevel.NORMAL
+    ) -> None:
         """
         Reduce load shedding level (restore services).
 

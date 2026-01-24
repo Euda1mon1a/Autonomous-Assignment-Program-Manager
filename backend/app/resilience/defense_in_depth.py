@@ -102,12 +102,12 @@ class DefenseInDepth:
     - Post-incident review
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.levels: dict[DefenseLevel, DefenseStatus] = {}
         self.redundancy_requirements: dict[str, int] = {}
         self._initialize_levels()
 
-    def _initialize_levels(self):
+    def _initialize_levels(self) -> None:
         """Initialize all defense levels with default actions."""
         self.levels = {
             DefenseLevel.PREVENTION: DefenseStatus(
@@ -475,7 +475,7 @@ class DefenseInDepth:
         level: DefenseLevel,
         action_name: str,
         handler: Callable[[dict], Any],
-    ):
+    ) -> None:
         """Register a handler function for a defense action."""
         level_status = self.levels.get(level)
         if level_status:

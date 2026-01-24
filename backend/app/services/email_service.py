@@ -20,6 +20,7 @@ import smtplib
 from datetime import date
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import cast
 
 from app.core.logging import get_logger
 from app.models.certification import PersonCertification
@@ -272,7 +273,7 @@ If you have already renewed, please update your records in the scheduling system
 This is an automated message from the Residency Scheduling System.
         """
 
-        return self.send_email(person.email, subject, body_html, body_text)
+        return self.send_email(cast(str, person.email), subject, body_html, body_text)
 
     def send_compliance_summary(
         self,

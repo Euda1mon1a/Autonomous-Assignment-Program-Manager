@@ -30,7 +30,7 @@ from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
 from functools import wraps
-from typing import Any
+from typing import Any, cast
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException, status
@@ -710,7 +710,9 @@ class AccessControlMatrix:
                     ResourceType.PERSON,
                 }:
                     # Must be their own resource
-                    return self._context_evaluators["is_own_resource"](context)
+                    return cast(
+                        bool, self._context_evaluators["is_own_resource"](context)
+                    )
 
         return True  # No additional context restrictions
 
@@ -1064,7 +1066,7 @@ def require_permission(
     resource: ResourceType | str,
     action: PermissionAction | str,
     context_builder: Callable | None = None,
-):
+) -> Callable:
     """
     Decorator to require specific permissions for a route.
 
@@ -1081,7 +1083,7 @@ def require_permission(
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs) -> Any:
             # Extract user from kwargs (assuming it's a dependency)
             user = kwargs.get("current_user") or kwargs.get("user")
             if not user:

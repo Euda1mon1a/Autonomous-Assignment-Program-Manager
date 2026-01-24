@@ -84,7 +84,7 @@ def require_permission(
     action: PermissionAction | str,
     resource_id_param: str | None = None,
     use_cache: bool = True,
-):
+) -> Callable:
     """
     Decorator for route handlers to require specific permissions.
 
@@ -165,7 +165,7 @@ def require_permission(
 def require_any_permission(
     *permissions: tuple[ResourceType | str, PermissionAction | str],
     use_cache: bool = True,
-):
+) -> Callable:
     """
     Decorator to require any of the specified permissions.
 
@@ -226,7 +226,7 @@ def require_any_permission(
 def require_all_permissions(
     *permissions: tuple[ResourceType | str, PermissionAction | str],
     use_cache: bool = True,
-):
+) -> Callable:
     """
     Decorator to require all of the specified permissions.
 
@@ -286,7 +286,7 @@ def require_all_permissions(
     return decorator
 
 
-def require_role(roles: list[str] | str, allow_admin: bool = True):
+def require_role(roles: list[str] | str, allow_admin: bool = True) -> Callable:
     """
     Create a FastAPI dependency that checks user roles.
 

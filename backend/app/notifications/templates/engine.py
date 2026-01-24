@@ -136,7 +136,8 @@ class TemplateEngine:
             context_with_locale = {"locale": self.locale, **context}
 
             # Render template
-            return template.render(context_with_locale)
+            result: str = template.render(context_with_locale)
+            return result
 
         except TemplateSyntaxError as e:
             logger.error(
@@ -183,7 +184,8 @@ class TemplateEngine:
         try:
             template = self.env.get_template(template_name)
             context_with_locale = {"locale": self.locale, **context}
-            return template.render(context_with_locale)
+            result: str = template.render(context_with_locale)
+            return result
 
         except TemplateSyntaxError as e:
             logger.error(
@@ -372,7 +374,7 @@ class TemplateEngine:
         self.env.globals["localize"] = localize
         self.env.globals["locale"] = self.locale
 
-    def get_translated_text(self, key: str, locale: str = "en", **kwargs) -> str:
+    def get_translated_text(self, key: str, locale: str = "en", **kwargs: Any) -> str:
         """
         Get translated text for a given key and locale.
 
@@ -435,7 +437,7 @@ class TemplateEngine:
 
             if os.path.exists(filepath):
                 with open(filepath) as f:
-                    translations = json.load(f)
+                    translations: dict[str, Any] = json.load(f)
             else:
                 translations = {}
 

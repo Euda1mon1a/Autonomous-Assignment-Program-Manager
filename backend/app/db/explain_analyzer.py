@@ -153,7 +153,7 @@ class ExplainAnalyzer:
         for child in plan.get("Plans", []):
             total += self._count_scanned_rows(child)
 
-        return total
+        return int(total)
 
     def _identify_missing_indexes(self, plan: dict) -> list[str]:
         """Identify potential missing indexes.

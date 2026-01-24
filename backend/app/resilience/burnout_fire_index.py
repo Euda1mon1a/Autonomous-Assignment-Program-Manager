@@ -235,7 +235,7 @@ class BurnoutDangerRating:
             f"excess={excess:.2f}, ffmc={ffmc:.1f}"
         )
 
-        return min(100.0, ffmc)
+        return float(min(100.0, ffmc))
 
     def calculate_duff_moisture_code(
         self,
@@ -284,7 +284,7 @@ class BurnoutDangerRating:
             f"excess={excess:.2f}, dmc={dmc:.1f}"
         )
 
-        return min(100.0, dmc)
+        return float(min(100.0, dmc))
 
     def calculate_drought_code(
         self,
@@ -338,7 +338,7 @@ class BurnoutDangerRating:
             f"dissatisfaction={dissatisfaction:.2f}, dc={dc:.1f}"
         )
 
-        return dc
+        return float(dc)
 
     def calculate_initial_spread_index(
         self,
@@ -492,7 +492,7 @@ class BurnoutDangerRating:
 
         logger.debug(f"FWI: isi={isi:.1f}, bui={bui:.1f}, fD={fD:.2f}, fwi={fwi:.1f}")
 
-        return fwi
+        return float(fwi)
 
     def classify_danger(self, fwi: float) -> DangerClass:
         """

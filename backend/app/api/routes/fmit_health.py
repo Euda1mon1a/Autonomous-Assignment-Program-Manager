@@ -525,7 +525,7 @@ def analyze_coverage_trend(db: Session, weeks_back: int = 12) -> str:
 @router.get("/health", response_model=FMITHealthStatus)
 async def get_fmit_health(
     db: Session = Depends(get_db),
-):
+) -> FMITHealthStatus:
     """
     Get overall FMIT subsystem health status.
 
@@ -628,7 +628,7 @@ async def get_fmit_health(
 @router.get("/status", response_model=FMITDetailedStatus)
 async def get_fmit_detailed_status(
     db: Session = Depends(get_db),
-):
+) -> FMITDetailedStatus:
     """
     Get detailed FMIT system status.
 
@@ -781,7 +781,7 @@ async def get_fmit_detailed_status(
 @router.get("/metrics", response_model=FMITMetrics)
 async def get_fmit_metrics(
     db: Session = Depends(get_db),
-):
+) -> FMITMetrics:
     """
     Get FMIT-specific metrics.
 
@@ -980,7 +980,7 @@ async def get_coverage_report(
         "weekly", description="Grouping period: daily, weekly, or monthly"
     ),
     db: Session = Depends(get_db),
-):
+) -> CoverageReport:
     """
     Get coverage report for FMIT assignments over a date range.
 
@@ -1122,7 +1122,7 @@ async def get_coverage_gaps(
         None, description="Filter by severity: critical, high, medium, low"
     ),
     db: Session = Depends(get_db),
-):
+) -> CoverageGapsResponse:
     """
     List all coverage gaps with detailed analysis.
 
@@ -1183,7 +1183,7 @@ async def get_coverage_suggestions(
         20, description="Maximum number of suggestions to return"
     ),
     db: Session = Depends(get_db),
-):
+) -> CoverageSuggestionsResponse:
     """
     Auto-suggest coverage solutions for gaps.
 
@@ -1295,7 +1295,7 @@ async def get_coverage_suggestions(
 async def get_coverage_forecast(
     weeks_ahead: int = Query(12, description="Number of weeks to forecast (1-52)"),
     db: Session = Depends(get_db),
-):
+) -> CoverageForecastResponse:
     """
     Predict future coverage gaps based on trends.
 
@@ -1438,7 +1438,7 @@ async def get_coverage_forecast(
 @router.get("/alerts/summary", response_model=AlertSummaryBySeverity)
 async def get_alert_summary(
     db: Session = Depends(get_db),
-):
+) -> AlertSummaryBySeverity:
     """
     Get summary of conflict alerts grouped by severity.
 

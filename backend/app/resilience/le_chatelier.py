@@ -670,7 +670,7 @@ class LeChatelierAnalyzer:
         self,
         stress_id: UUID,
         resolution_notes: str = "",
-    ):
+    ) -> None:
         """Mark a stress as resolved."""
         stress = self.stresses.get(stress_id)
         if stress:
@@ -695,7 +695,7 @@ class LeChatelierAnalyzer:
         self,
         compensation_id: UUID,
         reason: str,
-    ):
+    ) -> None:
         """End a compensation response."""
         comp = self.compensations.get(compensation_id)
         if comp:
@@ -806,12 +806,12 @@ class LeChatelierAnalyzer:
             recommendations=recommendations,
         )
 
-    def set_current_state(self, capacity: float, demand: float):
+    def set_current_state(self, capacity: float, demand: float) -> None:
         """Set current system state for calculations."""
         self._current_capacity = capacity
         self._current_demand = demand
 
-    def reset_compensation_debt(self):
+    def reset_compensation_debt(self) -> None:
         """Reset compensation debt (after recovery period)."""
         self._compensation_debt = 0.0
         logger.info("Compensation debt reset after recovery")

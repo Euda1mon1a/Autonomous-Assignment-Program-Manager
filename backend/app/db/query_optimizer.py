@@ -17,7 +17,7 @@ from functools import wraps
 from typing import Any, Callable, Dict, Optional, List
 from datetime import datetime
 
-from sqlalchemy import inspect, event
+from sqlalchemy import inspect, event, text
 from sqlalchemy.orm import Session, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import select
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class QueryMetrics:
     """Metrics for query execution."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize query metrics."""
         self.start_time: float | None = None
         self.end_time: float | None = None
@@ -79,8 +79,13 @@ class QueryAnalyzer:
 
         @event.listens_for(engine, "before_cursor_execute")
         def receive_before_cursor_execute(
-            conn, cursor, statement, parameters, context, executemany
-        ):
+            conn: Any,
+            cursor: Any,
+            statement: Any,
+            parameters: Any,
+            context: Any,
+            executemany: Any,
+        ) -> None:
             """Log before query execution."""
             conn.info.setdefault("query_start_time", []).append(time.time())
             if verbose:
@@ -88,8 +93,13 @@ class QueryAnalyzer:
 
         @event.listens_for(engine, "after_cursor_execute")
         def receive_after_cursor_execute(
-            conn, cursor, statement, parameters, context, executemany
-        ):
+            conn: Any,
+            cursor: Any,
+            statement: Any,
+            parameters: Any,
+            context: Any,
+            executemany: Any,
+        ) -> None:
             """Log after query execution."""
             total = time.time() - conn.info["query_start_time"].pop(-1)
             duration_ms = total * 1000
@@ -114,8 +124,13 @@ class QueryAnalyzer:
         # Track all queries executed in session
         @event.listens_for(session, "after_cursor_execute")
         def receive_after_cursor_execute(
-            conn, cursor, statement, parameters, context, executemany
-        ):
+            conn: Any,
+            cursor: Any,
+            statement: Any,
+            parameters: Any,
+            context: Any,
+            executemany: Any,
+        ) -> None:
             queries.append(statement)
 
         # Analyze query patterns
@@ -142,7 +157,7 @@ class QueryAnalyzer:
             statement = str(
                 query.statement.compile(compile_kwargs={"literal_binds": True})
             )
-            plan = session.execute(f"EXPLAIN {statement}").fetchall()
+            plan = session.execute(text(f"EXPLAIN {statement}")).fetchall()
 
             return {
                 "query": statement,

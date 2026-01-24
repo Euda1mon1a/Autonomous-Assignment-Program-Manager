@@ -499,7 +499,7 @@ class LightBeamSearch(PreferenceMethod):
         direction = q - z
         dir_norm = np.linalg.norm(direction)
         if dir_norm == 0:
-            return np.linalg.norm(f - z)
+            return float(np.linalg.norm(f - z))
 
         direction = direction / dir_norm
 
@@ -514,7 +514,7 @@ class LightBeamSearch(PreferenceMethod):
         perp_distance = np.linalg.norm(perp)
 
         # Combine: distance along beam + penalty for being off-beam
-        return projection + (perp_distance / self.beam_width) ** 2
+        return float(projection + (perp_distance / self.beam_width) ** 2)
 
 
 @dataclass
@@ -829,7 +829,7 @@ class InteractivePreferenceElicitor:
 
         while len(selected) < n and remaining:
             # Select solution most distant from current selection
-            best_distance = -1
+            best_distance = -1.0
             best_idx = 0
 
             for i, candidate in enumerate(remaining):
@@ -880,7 +880,7 @@ class InteractivePreferenceElicitor:
 
             dist += (val1 - val2) ** 2
 
-        return np.sqrt(dist)
+        return float(np.sqrt(dist))
 
     def get_preference_summary(self) -> dict[str, Any]:
         """Get summary of elicited preferences."""
@@ -986,9 +986,10 @@ class PreferenceArticulator:
         """Select best solutions according to current preferences."""
         if not self.method:
             # Default: return knee and extremes
-            result = (
-                [frontier.get_knee_solution()] if frontier.get_knee_solution() else []
-            )
+            result: list[Solution] = []
+            knee = frontier.get_knee_solution()
+            if knee:
+                result.append(knee)
             result.extend(frontier.get_extreme_solutions())
             return result[:n]
 

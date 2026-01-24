@@ -87,7 +87,7 @@ class OAuth2Provider:
 
     async def exchange_code_for_token(
         self, code: str, code_verifier: str | None = None
-    ) -> dict[str, any]:
+    ) -> dict[str, Any]:
         """
         Exchange authorization code for access token.
 
@@ -132,9 +132,10 @@ class OAuth2Provider:
                 )
                 raise ValueError(f"Token exchange error: {error_desc}")
 
-            return token_response
+            result: dict[str, Any] = token_response
+            return result
 
-    async def validate_id_token(self, id_token: str) -> dict[str, any]:
+    async def validate_id_token(self, id_token: str) -> dict[str, Any]:
         """
         Validate OpenID Connect ID token.
 
@@ -190,9 +191,10 @@ class OAuth2Provider:
             if not email_verified:
                 raise ValueError("Email not verified")
 
-        return claims
+        result: dict[str, Any] = claims
+        return result
 
-    async def get_userinfo(self, access_token: str) -> dict[str, any]:
+    async def get_userinfo(self, access_token: str) -> dict[str, Any]:
         """
         Fetch user information from UserInfo endpoint.
 
@@ -222,9 +224,10 @@ class OAuth2Provider:
             except httpx.HTTPError as e:
                 raise ValueError(f"UserInfo request failed: {e}")
 
-            return response.json()
+            result: dict[str, Any] = response.json()
+            return result
 
-    def map_claims_to_user(self, claims: dict[str, any]) -> dict[str, str]:
+    def map_claims_to_user(self, claims: dict[str, Any]) -> dict[str, str]:
         """
         Map OAuth2/OIDC claims to user attributes.
 
@@ -252,7 +255,7 @@ class OAuth2Provider:
 
         return mapped
 
-    async def refresh_token(self, refresh_token: str) -> dict[str, any]:
+    async def refresh_token(self, refresh_token: str) -> dict[str, Any]:
         """
         Refresh access token using refresh token.
 
@@ -292,7 +295,8 @@ class OAuth2Provider:
                 )
                 raise ValueError(f"Token refresh error: {error_desc}")
 
-            return token_response
+            result: dict[str, Any] = token_response
+            return result
 
     async def revoke_token(
         self, token: str, token_type_hint: str = "access_token"
@@ -377,7 +381,7 @@ class OAuth2Provider:
         # Convert JWK to PEM
         try:
             key_obj = jwk.construct(matching_key)
-            return key_obj
+            return str(key_obj)
         except JWKError as e:
             raise ValueError(f"Failed to construct signing key: {e}")
 
@@ -405,7 +409,8 @@ class OAuth2Provider:
             except httpx.HTTPError as e:
                 raise ValueError(f"JWKS fetch failed: {e}")
 
-            return response.json()
+            result: dict[str, Any] = response.json()
+            return result
 
     def _generate_code_challenge(self, code_verifier: str) -> str:
         """

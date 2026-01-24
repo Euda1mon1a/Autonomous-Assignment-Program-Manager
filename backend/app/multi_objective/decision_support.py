@@ -496,7 +496,7 @@ class SolutionExplorer:
 
             dist += (val1 - val2) ** 2
 
-        return np.sqrt(dist)
+        return float(np.sqrt(dist))
 
     def _count_remaining(
         self,

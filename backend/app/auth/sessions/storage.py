@@ -463,7 +463,7 @@ class InMemorySessionStorage:
     - Limited to single process
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize in-memory storage."""
         self._sessions: dict[str, SessionData] = {}
         self._user_index: dict[str, set[str]] = {}

@@ -527,7 +527,7 @@ class RoleFilterService:
             },
         }
 
-        description = descriptions.get(
+        description: dict[str, Any] = descriptions.get(
             role,
             {
                 "role": str(role),

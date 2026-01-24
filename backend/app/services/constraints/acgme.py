@@ -28,7 +28,7 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -178,16 +178,20 @@ class HardConstraint:
         """Hard constraints have infinite penalty when violated."""
         return float("inf")
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
+    def add_to_cpsat(
+        self, model: Any, variables: dict[str, Any], context: SchedulingContext
+    ) -> None:
         """Add constraint to OR-Tools CP-SAT model."""
         raise NotImplementedError("Subclass must implement add_to_cpsat")
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
+    def add_to_pulp(
+        self, model: Any, variables: dict[str, Any], context: SchedulingContext
+    ) -> None:
         """Add constraint to PuLP model."""
         raise NotImplementedError("Subclass must implement add_to_pulp")
 
     def validate(
-        self, assignments: list, context: SchedulingContext
+        self, assignments: list[Any], context: SchedulingContext
     ) -> ConstraintResult:
         """Validate constraint against assignments."""
         raise NotImplementedError("Subclass must implement validate")
@@ -215,7 +219,9 @@ class AvailabilityConstraint(HardConstraint):
             priority=ConstraintPriority.CRITICAL,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
+    def add_to_cpsat(
+        self, model: Any, variables: dict[str, Any], context: SchedulingContext
+    ) -> None:
         """
         Add availability constraint to OR-Tools CP-SAT model.
 
@@ -240,7 +246,9 @@ class AvailabilityConstraint(HardConstraint):
                             if (r_i, b_i) in x:
                                 model.Add(x[r_i, b_i] == 0)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
+    def add_to_pulp(
+        self, model: Any, variables: dict[str, Any], context: SchedulingContext
+    ) -> None:
         """
         Add availability constraint to PuLP model.
 
@@ -263,7 +271,7 @@ class AvailabilityConstraint(HardConstraint):
                                 model += x[r_i, b_i] == 0, f"avail_{r_i}_{b_i}"
 
     def validate(
-        self, assignments: list, context: SchedulingContext
+        self, assignments: list[Any], context: SchedulingContext
     ) -> ConstraintResult:
         """
         Validate that no assignments occur during absences.
@@ -389,7 +397,9 @@ class EightyHourRuleConstraint(HardConstraint):
 
         return total_hours / self.ROLLING_WEEKS
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
+    def add_to_cpsat(
+        self, model: Any, variables: dict[str, Any], context: SchedulingContext
+    ) -> None:
         """
         Enforce 80-hour rule via block count limits in CP-SAT model.
 
@@ -430,7 +440,9 @@ class EightyHourRuleConstraint(HardConstraint):
                 if window_vars:
                     model.Add(sum(window_vars) <= self.max_blocks_per_window)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
+    def add_to_pulp(
+        self, model: Any, variables: dict[str, Any], context: SchedulingContext
+    ) -> None:
         """
         Enforce 80-hour rule via block count limits in PuLP model.
 
@@ -473,7 +485,7 @@ class EightyHourRuleConstraint(HardConstraint):
             window_count += 1
 
     def validate(
-        self, assignments: list, context: SchedulingContext
+        self, assignments: list[Any], context: SchedulingContext
     ) -> ConstraintResult:
         """
         Check 80-hour rule compliance with strict 4-week rolling average.
@@ -501,7 +513,7 @@ class EightyHourRuleConstraint(HardConstraint):
                 continue
 
             # Get hours per date for this resident
-            hours_by_date = defaultdict(int)
+            hours_by_date: defaultdict[date, int] = defaultdict(int)
             for a in resident_assignments:
                 for b in context.blocks:
                     if b.id == a.block_id:
@@ -570,7 +582,9 @@ class OneInSevenRuleConstraint(HardConstraint):
             priority=ConstraintPriority.CRITICAL,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
+    def add_to_cpsat(
+        self, model: Any, variables: dict[str, Any], context: SchedulingContext
+    ) -> None:
         """
         Enforce max consecutive days in CP-SAT model.
 
@@ -624,7 +638,9 @@ class OneInSevenRuleConstraint(HardConstraint):
                 if len(day_worked_vars) == self.MAX_CONSECUTIVE_DAYS + 1:
                     model.Add(sum(day_worked_vars) <= self.MAX_CONSECUTIVE_DAYS)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
+    def add_to_pulp(
+        self, model: Any, variables: dict[str, Any], context: SchedulingContext
+    ) -> None:
         """
         Enforce max consecutive days in PuLP model (linear approximation).
 
@@ -672,7 +688,7 @@ class OneInSevenRuleConstraint(HardConstraint):
                     constraint_count += 1
 
     def validate(
-        self, assignments: list, context: SchedulingContext
+        self, assignments: list[Any], context: SchedulingContext
     ) -> ConstraintResult:
         """
         Check for consecutive days violations.
@@ -780,17 +796,21 @@ class SupervisionRatioConstraint(HardConstraint):
         from_other = (other_count + self.OTHER_RATIO - 1) // self.OTHER_RATIO
         return max(1, from_pgy1 + from_other) if (pgy1_count + other_count) > 0 else 0
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
+    def add_to_cpsat(
+        self, model: Any, variables: dict[str, Any], context: SchedulingContext
+    ) -> None:
         """Supervision ratio is typically handled post-hoc for residents."""
         # This constraint is usually enforced during faculty assignment phase
         pass
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
+    def add_to_pulp(
+        self, model: Any, variables: dict[str, Any], context: SchedulingContext
+    ) -> None:
         """Supervision ratio is typically handled post-hoc for residents."""
         pass
 
     def validate(
-        self, assignments: list, context: SchedulingContext
+        self, assignments: list[Any], context: SchedulingContext
     ) -> ConstraintResult:
         """
         Check supervision ratios per block.
@@ -814,7 +834,9 @@ class SupervisionRatioConstraint(HardConstraint):
             person_types[f.id] = "faculty"
 
         # Group by block
-        by_block = defaultdict(lambda: {"residents": [], "faculty": []})
+        by_block: defaultdict[Any, dict[str, list[Any]]] = defaultdict(
+            lambda: {"residents": [], "faculty": []}
+        )
         for a in assignments:
             ptype = person_types.get(a.person_id)
             if ptype == "resident":
@@ -892,7 +914,7 @@ class ACGMEConstraintValidator:
         ]
 
     def validate(
-        self, assignments: list, context: SchedulingContext
+        self, assignments: list[Any], context: SchedulingContext
     ) -> ConstraintResult:
         """
         Validate all ACGME constraints.
@@ -909,7 +931,7 @@ class ACGMEConstraintValidator:
         return self.validate_all(assignments, context)
 
     def validate_all(
-        self, assignments: list, context: SchedulingContext
+        self, assignments: list[Any], context: SchedulingContext
     ) -> ConstraintResult:
         """
         Run all ACGME constraint validations.
@@ -942,7 +964,7 @@ class ACGMEConstraintValidator:
         )
 
     def validate_80_hour_rule(
-        self, assignments: list, context: SchedulingContext
+        self, assignments: list[Any], context: SchedulingContext
     ) -> ConstraintResult:
         """
         Validate only the 80-hour rule constraint.
@@ -960,7 +982,7 @@ class ACGMEConstraintValidator:
         return constraint.validate(assignments, context)
 
     def validate_1_in_7_rule(
-        self, assignments: list, context: SchedulingContext
+        self, assignments: list[Any], context: SchedulingContext
     ) -> ConstraintResult:
         """
         Validate only the 1-in-7 rule constraint.
@@ -976,7 +998,7 @@ class ACGMEConstraintValidator:
         return constraint.validate(assignments, context)
 
     def validate_supervision(
-        self, assignments: list, context: SchedulingContext
+        self, assignments: list[Any], context: SchedulingContext
     ) -> ConstraintResult:
         """
         Validate only the supervision ratio constraint.
