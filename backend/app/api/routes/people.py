@@ -7,6 +7,7 @@ All business logic is in the service layer.
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Response
+from sqlalchemy.orm import Session
 
 from app.controllers.credential_controller import CredentialController
 from app.controllers.person_controller import PersonController

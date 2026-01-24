@@ -37,6 +37,21 @@ spec = spawn_agent_tool(
 
 See [force-multiplier skill](../.claude/skills/force-multiplier/SKILL.md) for full MCP workflow.
 
+### Task() Availability Constraint (Session 138)
+
+Agents spawned via `Task()` do NOT have `Task()` available. They have all other tools (Bash, Edit, MCP) but cannot spawn further agents via Task().
+
+| Spawner | Has Task()? | Spawn Method |
+|---------|-------------|--------------|
+| ORCHESTRATOR (main session) | Yes | `Task()` |
+| Agent spawned via Task() | No | CLI only: `claude -p "..."` |
+| Agent spawned via CLI | Yes | `Task()` or CLI |
+
+**For flat parallelism:** ORCHESTRATOR spawns all agents via Task()
+**For hierarchical spawning:** Subagents use CLI: `claude -p "..." --model haiku --max-budget-usd 1.00`
+
+Note: Context isolation applies equally to both methods - full context must always be passed explicitly.
+
 ## Command Philosophy: Auftragstaktik (Mission-Type Orders)
 
 This hierarchy operates on the German military doctrine of **directive control** (Auftragstaktik), not detailed command (Befehlstaktik). Every level thinks, decides, and owns their domain.

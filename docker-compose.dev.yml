@@ -38,6 +38,9 @@ services:
     volumes:
       - ./mcp-server/src:/app/src
       - ./mcp-server/tests:/app/tests
+      # Mount .claude for agent identity cards, registry, and governance files
+      # Note: rw needed for audit trail writes to .claude/History/agent_invocations/
+      - ./.claude:/app/.claude
     # Override ENTRYPOINT args for dev (base image ENTRYPOINT is python -m scheduler_mcp.server)
     # Port 8081 for dev to allow both 8080 (prod) and 8081 (dev) access
     command: ["--host", "0.0.0.0", "--port", "8081", "--log-level", "DEBUG"]
@@ -47,6 +50,8 @@ services:
       LOG_LEVEL: DEBUG
       # Allow unauthenticated local dev access (bypasses MCP_API_KEY requirement)
       MCP_ALLOW_LOCAL_DEV: "true"
+      # Project root for spawn_agent_tool path resolution
+      PROJECT_ROOT: /app
       # Relaxed resource limits for development
     deploy:
       resources:

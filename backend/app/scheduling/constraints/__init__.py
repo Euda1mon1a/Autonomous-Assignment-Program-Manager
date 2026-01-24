@@ -82,6 +82,13 @@ from .equity import ContinuityConstraint, EquityConstraint
 # Faculty and preference constraints
 from .faculty import PreferenceConstraint
 
+# Faculty clinic and AT constraints (Session 136)
+from .faculty_clinic import (
+    FacultyClinicCapConstraint,
+    FacultySupervisionConstraint,
+    FACULTY_CLINIC_CAPS,
+)
+
 # Faculty role-based constraints
 from .faculty_role import (
     FacultyRoleClinicConstraint,
@@ -202,6 +209,10 @@ __all__ = [
     "WednesdayPMLecConstraint",
     # Faculty constraints
     "PreferenceConstraint",
+    # Faculty clinic and AT constraints (Session 136)
+    "FacultyClinicCapConstraint",
+    "FacultySupervisionConstraint",
+    "FACULTY_CLINIC_CAPS",
     # Faculty role constraints
     "FacultyRoleClinicConstraint",
     "SMFacultyClinicConstraint",

@@ -1,0 +1,18 @@
+{
+  "invocation_id": "20260124_064604_G2_RECON",
+  "timestamp": "2026-01-24T06:46:04.741221",
+  "agent_name": "G2_RECON",
+  "tier": "G-Staff",
+  "model": "sonnet",
+  "mission": "Report what tools you have available, specifically whether you have Task()",
+  "context": null,
+  "rag_injected": false,
+  "skills_injected": [],
+  "tools_access": [
+    "rag_search"
+  ],
+  "can_spawn": [],
+  "checkpoint_path": ".claude/Scratchpad/AGENT_G2_RECON_20260124_064604.md",
+  "escalation_target": "ARCHITECT",
+  "prompt_tokens_estimate": 534
+}

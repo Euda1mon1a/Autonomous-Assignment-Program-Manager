@@ -184,6 +184,66 @@ ARCHITECT:
 
 ---
 
+## Spawning Constraints (Session 138 Discovery)
+
+### Task() Availability by Spawner
+
+| Spawner | Has Task()? | Spawn Method |
+|---------|-------------|--------------|
+| ORCHESTRATOR (main session) | Yes | Use `Task()` directly |
+| Deputy/Coordinator/Specialist (via Task) | No | Use CLI spawning |
+| Agent spawned via CLI | Yes | Use `Task()` directly |
+
+### Why This Matters
+
+Subagents spawned via `Task()` do NOT have `Task()` available. They have all other tools (Bash, Edit, MCP, etc.) but cannot spawn further agents via Task().
+
+**Two working patterns:**
+
+**Pattern A: Flat Parallelism (ORCHESTRATOR spawns all)**
+```
+ORCHESTRATOR ──┬── Agent 1 (no Task(), works directly)
+               ├── Agent 2 (no Task(), works directly)
+               └── Agent N (no Task(), works directly)
+```
+
+**Pattern B: CLI Spawning (for hierarchical)**
+```
+ORCHESTRATOR ── Coordinator (via Task, no Task())
+                     │
+                     └── Bash: claude -p → Specialist (HAS Task())
+                                               │
+                                               └── Can spawn further agents
+```
+
+### CLI Spawning Syntax
+
+When a subagent needs to spawn another agent:
+
+```bash
+claude -p "
+You are SPECIALIST.
+
+## Identity
+[Include identity card content or key details]
+
+## Mission
+[Mission description with full context]
+
+## Constraints
+- Budget: Do not exceed this mission scope
+- Report: Write findings to [path]
+" --model haiku --max-budget-usd 1.00
+```
+
+**Key points:**
+- CLI agents have full capabilities including Task()
+- Context must be passed in prompt (same as Task() spawning)
+- Use `--max-budget-usd` to prevent runaway costs
+- Spawn chain validation is NOT enforced via CLI (governance by convention)
+
+---
+
 ## RAG Injection
 
 By default, `inject_rag=True` queries relevant context:

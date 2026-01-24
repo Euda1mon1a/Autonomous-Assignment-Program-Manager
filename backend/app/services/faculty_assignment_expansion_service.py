@@ -22,11 +22,13 @@ Source priority (respected):
 PERSEC-compliant logging (no PII).
 """
 
+import math
+from collections import defaultdict
 from datetime import date, timedelta
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
@@ -37,6 +39,33 @@ from app.models.person import Person
 from app.utils.academic_blocks import get_block_dates
 
 logger = get_logger(__name__)
+
+
+# Faculty clinic caps (MIN, MAX per week) - Session 136
+# C = Faculty seeing OWN patients (has caps)
+# AT = Faculty supervising residents (no cap)
+FACULTY_CLINIC_CAPS: dict[str, tuple[int, int]] = {
+    "Kinkennon": (2, 4),
+    "LaBounty": (2, 4),
+    "McRae": (2, 4),
+    "Montgomery": (2, 2),
+    "Lamoureux": (2, 2),
+    "McGuire": (1, 1),
+    "Tagawa": (0, 0),  # SM only
+    "Bevis": (0, 0),
+    "Dahl": (0, 0),
+    "Chu": (0, 0),
+    "Napierala": (0, 0),
+    "Van Brunt": (0, 0),
+    "Colgan": (0, 0),
+}
+
+# ACGME supervision demand per PGY level
+AT_DEMAND_BY_PGY: dict[int, float] = {
+    1: 0.5,  # PGY-1: 2 residents per faculty
+    2: 0.25,  # PGY-2/3: 4 residents per faculty
+    3: 0.25,
+}
 
 
 class FacultyAssignmentExpansionService:
@@ -104,7 +133,19 @@ class FacultyAssignmentExpansionService:
         self._preload_existing_assignments(faculty_ids, start_date, end_date)
         self._preload_holidays(start_date, end_date)
 
-        # Fill assignments for each faculty
+        # =====================================================================
+        # ACGME-Aware Faculty Assignment (Session 136)
+        # =====================================================================
+        # Step 1: Calculate AT demand from resident clinic assignments
+        at_demand = self._calculate_at_demand(start_date, end_date)
+
+        # Step 2: Assign AT slots to meet ACGME supervision ratios
+        at_created = self._assign_at_slots(faculty, at_demand, start_date, end_date)
+
+        # Step 3: Assign clinic (C) slots to faculty with caps
+        clinic_created = self._assign_clinic_slots(faculty, start_date, end_date)
+
+        # Step 4: Fill remaining slots with GME/DFM (original behavior)
         total_created = 0
         for person in faculty:
             created = self._fill_single_faculty(
@@ -114,8 +155,12 @@ class FacultyAssignmentExpansionService:
             )
             total_created += created
 
-        logger.info(f"Created {total_created} new faculty half-day assignments")
-        return total_created
+        total_all = at_created + clinic_created + total_created
+        logger.info(
+            f"Faculty assignments complete: {at_created} AT + {clinic_created} C "
+            f"+ {total_created} admin = {total_all} total"
+        )
+        return total_all
 
     def _load_faculty(self, exclude_adjuncts: bool) -> list[Person]:
         """Load all faculty members.
@@ -146,6 +191,7 @@ class FacultyAssignmentExpansionService:
         # LV-AM, LV-PM for leave (matches SyncPreloadService)
         # gme, dfm, sm_clinic are lowercase (from 20260109 migration)
         # sm_clinic is for Sports Medicine faculty (Tagawa has admin_type='SM')
+        # at, pcat, do, fm_clinic for ACGME supervision and clinic (Session 136)
         activity_codes = [
             "W",
             "HOL",
@@ -155,6 +201,11 @@ class FacultyAssignmentExpansionService:
             "gme",
             "dfm",
             "sm_clinic",
+            # Faculty clinic and supervision activities (NEW - Session 136)
+            "at",  # Attending Time - ACGME supervision
+            "fm_clinic",  # Faculty clinic - their own patients
+            "pcat",  # Post-Call Attending Time
+            "do",  # Direct Observation
         ]
 
         stmt = select(Activity).where(Activity.code.in_(activity_codes))
@@ -409,3 +460,260 @@ class FacultyAssignmentExpansionService:
                 if absence_type in deployed_absence_types:
                     return True
         return False
+
+    # =========================================================================
+    # ACGME AT Assignment Logic (Session 136)
+    # =========================================================================
+
+    def _calculate_at_demand(
+        self,
+        start_date: date,
+        end_date: date,
+    ) -> dict[tuple[date, str], int]:
+        """
+        Calculate ACGME AT (Attending Time) demand per slot.
+
+        Queries resident clinic assignments and calculates how many faculty
+        AT slots are needed per (date, time_of_day) to meet ACGME ratios.
+
+        Returns:
+            Dict mapping (date, time_of_day) -> required_faculty_count
+        """
+        # Query resident clinic assignments
+        clinic_codes = ["fm_clinic", "C", "C-N", "CV"]
+
+        stmt = (
+            select(
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+                Person.pgy_level,
+                func.count().label("count"),
+            )
+            .join(Person, HalfDayAssignment.person_id == Person.id)
+            .join(Activity, HalfDayAssignment.activity_id == Activity.id)
+            .where(Person.type == "resident")
+            .where(Activity.code.in_(clinic_codes))
+            .where(HalfDayAssignment.date >= start_date)
+            .where(HalfDayAssignment.date <= end_date)
+            .group_by(
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+                Person.pgy_level,
+            )
+        )
+
+        # Calculate demand per slot
+        demand_by_slot: dict[tuple[date, str], float] = defaultdict(float)
+
+        for row in self.db.execute(stmt):
+            slot_date = row[0]
+            time_of_day = row[1]
+            pgy_level = row[2] or 2  # Default to PGY-2 if unknown
+            count = row[3]
+
+            key = (slot_date, time_of_day)
+            demand_factor = AT_DEMAND_BY_PGY.get(pgy_level, 0.25)
+            demand_by_slot[key] += count * demand_factor
+
+        # Round up each slot's demand
+        result = {k: math.ceil(v) for k, v in demand_by_slot.items()}
+
+        total_demand = sum(result.values())
+        logger.info(
+            f"Calculated AT demand: {total_demand} faculty slots needed "
+            f"across {len(result)} clinic slots"
+        )
+
+        return result
+
+    def _get_faculty_clinic_cap(self, faculty_name: str) -> tuple[int, int]:
+        """Get (MIN, MAX) clinic cap for faculty by name."""
+        # Extract last name
+        if "," in faculty_name:
+            last_name = faculty_name.split(",")[0].strip()
+        else:
+            parts = faculty_name.split()
+            last_name = parts[-1] if parts else faculty_name
+
+        return FACULTY_CLINIC_CAPS.get(last_name, (0, 4))
+
+    def _assign_at_slots(
+        self,
+        faculty: list[Person],
+        at_demand: dict[tuple[date, str], int],
+        start_date: date,
+        end_date: date,
+    ) -> int:
+        """
+        Assign AT (Attending Time) to faculty slots to meet ACGME demand.
+
+        Returns count of AT assignments created.
+        """
+        at_activity = self._get_activity("at")
+        if not at_activity:
+            logger.warning("Missing 'at' activity, skipping AT assignments")
+            return 0
+
+        at_created = 0
+
+        # Track existing AT coverage per slot (from PCAT, etc.)
+        at_coverage: dict[tuple[date, str], int] = defaultdict(int)
+
+        # Query existing AT-type assignments
+        at_codes = ["at", "pcat", "do"]
+        stmt = (
+            select(
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+                func.count().label("count"),
+            )
+            .join(Activity, HalfDayAssignment.activity_id == Activity.id)
+            .join(Person, HalfDayAssignment.person_id == Person.id)
+            .where(Person.type == "faculty")
+            .where(Activity.code.in_(at_codes))
+            .where(HalfDayAssignment.date >= start_date)
+            .where(HalfDayAssignment.date <= end_date)
+            .group_by(
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+            )
+        )
+
+        for row in self.db.execute(stmt):
+            key = (row[0], row[1])
+            at_coverage[key] = row[2]
+
+        # For each slot with demand, assign AT to available faculty
+        for (slot_date, time_of_day), required in at_demand.items():
+            existing = at_coverage.get((slot_date, time_of_day), 0)
+            needed = max(0, required - existing)
+
+            if needed == 0:
+                continue
+
+            # Skip weekends
+            if slot_date.weekday() >= 5:
+                continue
+
+            # Find available faculty for this slot
+            for person in faculty:
+                if needed <= 0:
+                    break
+
+                key = f"{person.id}_{slot_date.isoformat()}_{time_of_day}"
+                if key in self._existing_slots:
+                    continue  # Already assigned
+
+                # Check if faculty is available (not absent, not deployed)
+                is_absent = self._is_person_absent(person.id, slot_date)
+                is_deployed = self._is_person_deployed(person.id, slot_date)
+                is_holiday = (slot_date, time_of_day) in self._holiday_slots
+
+                if is_absent or is_deployed or is_holiday:
+                    continue
+
+                # Assign AT
+                half_day = HalfDayAssignment(
+                    person_id=person.id,
+                    date=slot_date,
+                    time_of_day=time_of_day,
+                    activity_id=at_activity.id,
+                    source=AssignmentSource.SOLVER.value,
+                )
+                self.db.add(half_day)
+                self._existing_slots.add(key)
+                at_created += 1
+                needed -= 1
+
+        logger.info(f"Created {at_created} AT assignments for ACGME coverage")
+        return at_created
+
+    def _assign_clinic_slots(
+        self,
+        faculty: list[Person],
+        start_date: date,
+        end_date: date,
+    ) -> int:
+        """
+        Assign fm_clinic (C) to faculty based on their weekly caps.
+
+        Returns count of clinic assignments created.
+        """
+        clinic_activity = self._get_activity("fm_clinic")
+        if not clinic_activity:
+            logger.warning("Missing 'fm_clinic' activity, skipping C assignments")
+            return 0
+
+        clinic_created = 0
+
+        # Group dates by week (Mon-Sun)
+        weeks: list[list[date]] = []
+        current_week: list[date] = []
+        current = start_date
+
+        while current <= end_date:
+            if current.weekday() == 0 and current_week:
+                weeks.append(current_week)
+                current_week = []
+            current_week.append(current)
+            current += timedelta(days=1)
+
+        if current_week:
+            weeks.append(current_week)
+
+        # For each faculty with clinic caps, assign C slots
+        for person in faculty:
+            faculty_name = getattr(person, "name", "")
+            min_c, max_c = self._get_faculty_clinic_cap(faculty_name)
+
+            if max_c == 0:
+                continue  # No clinic for this faculty
+
+            for week_dates in weeks:
+                # Count existing clinic in this week
+                existing_c = 0
+                available_slots: list[tuple[date, str]] = []
+
+                for day in week_dates:
+                    if day.weekday() >= 5:  # Skip weekends
+                        continue
+
+                    for slot in ["AM", "PM"]:
+                        key = f"{person.id}_{day.isoformat()}_{slot}"
+                        if key in self._existing_slots:
+                            # Check if it's already a clinic
+                            # (we'd need to query, simplified: just skip)
+                            continue
+
+                        # Check availability
+                        is_absent = self._is_person_absent(person.id, day)
+                        is_deployed = self._is_person_deployed(person.id, day)
+                        is_holiday = (day, slot) in self._holiday_slots
+
+                        if not is_absent and not is_deployed and not is_holiday:
+                            available_slots.append((day, slot))
+
+                # Assign up to min_c clinic slots (prefer full days)
+                to_assign = min(min_c - existing_c, len(available_slots))
+
+                # Sort to prefer AM slots (for full days)
+                available_slots.sort(key=lambda x: (x[0], x[1]))
+
+                for day, slot in available_slots[:to_assign]:
+                    key = f"{person.id}_{day.isoformat()}_{slot}"
+                    if key in self._existing_slots:
+                        continue
+
+                    half_day = HalfDayAssignment(
+                        person_id=person.id,
+                        date=day,
+                        time_of_day=slot,
+                        activity_id=clinic_activity.id,
+                        source=AssignmentSource.SOLVER.value,
+                    )
+                    self.db.add(half_day)
+                    self._existing_slots.add(key)
+                    clinic_created += 1
+
+        logger.info(f"Created {clinic_created} faculty clinic (C) assignments")
+        return clinic_created

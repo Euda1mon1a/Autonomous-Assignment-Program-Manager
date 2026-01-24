@@ -5112,18 +5112,29 @@ async def spawn_agent_tool(
         # )
     """
     import json
+    import os
     from pathlib import Path
 
     logger.info(f"Preparing agent spawn: {agent_name} for mission: {mission[:50]}...")
 
-    # Load agent registry
-    project_root = Path(__file__).parent.parent.parent.parent
+    # Load agent registry - use PROJECT_ROOT env var if set (Docker), otherwise infer from file path
+    project_root_env = os.environ.get("PROJECT_ROOT")
+    if project_root_env:
+        project_root = Path(project_root_env)
+        logger.debug(f"Using PROJECT_ROOT from env: {project_root}")
+    else:
+        project_root = Path(__file__).parent.parent.parent.parent
+        logger.debug(f"Inferred project_root from __file__: {project_root}")
+
     registry_path = project_root / ".claude" / "agents.yaml"
     identities_path = project_root / ".claude" / "Identities"
     audit_path = project_root / ".claude" / "History" / "agent_invocations"
 
-    # Ensure audit directory exists
-    audit_path.mkdir(parents=True, exist_ok=True)
+    # Ensure audit directory exists (skip if read-only mount)
+    try:
+        audit_path.mkdir(parents=True, exist_ok=True)
+    except PermissionError:
+        logger.warning(f"Cannot create audit directory (read-only mount?): {audit_path}")
 
     # Try to load YAML registry
     agent_spec = None
