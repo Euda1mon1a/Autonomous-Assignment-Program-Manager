@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-23 (Session 136: Full re-examination, Excel export, 6 audit reports)
+> **Last Updated:** 2026-01-24 (Session 139: mypy parallel fixes - 983 errors fixed, 13.2%)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -181,6 +181,7 @@ Real faculty/provider names exposed in burnout and vulnerability API responses:
 - 0 NULL activity_id - all assignments have valid activities
 - HalfDayXMLExporter reads from `half_day_assignments` table correctly
 - XML checkpoint exists for validation
+- CP-SAT canonical path enforced for call/activity/faculty; greedy/hybrid archived (see `docs/scheduling/CP_SAT_SCHEDULE_GENERATION.md`)
 
 **What's Blocked:**
 - xlsx export has silent failures (see CRITICAL #1)
@@ -223,20 +224,41 @@ WebSocket debugging revealed convention violations. Systematic audit needed:
 | Hook/useX audit | Frontend hooks for snake_case violations | TODO |
 | WS smoke test | `GET /api/v1/ws/health` + wscat connect | TODO |
 
-### 8. Pre-commit Hook Failures (Session 128)
+### 8. Pre-commit Hook Failures (Session 128) - MYPY PROGRESS
+**Updated:** 2026-01-24 (Session 139)
 
 Pre-commit hooks blocking commits due to pre-existing issues:
 
-| Hook | Issue | Scope |
-|------|-------|-------|
-| **mypy** | 100+ type errors | periodic_tasks.py, tensegrity_solver.py, etc. |
-| **bandit** | `command not found` | Tool not installed |
-| **Modron March** | FairnessAuditResponse location | Type in wrong file |
+| Hook | Issue | Scope | Progress |
+|------|-------|-------|----------|
+| **mypy** | 6,443 type errors | 742 files | 13.2% fixed (983 errors) |
+| **bandit** | `command not found` | Tool not installed | TODO |
+| **Modron March** | FairnessAuditResponse location | Type in wrong file | TODO |
+
+**mypy Progress (Sessions 137-139):**
+| Session | Start | End | Fixed | % |
+|---------|-------|-----|-------|---|
+| 137 R1 | 7,426 | 6,880 | 546 | 7.3% |
+| 137 R2 | 6,880 | 6,440 | 440 | 6.4% |
+| 139 | 6,678 | 6,443 | 235 | 3.5% |
+| **Total** | 7,426 | 6,443 | **983** | **13.2%** |
+
+**Ref:** [`docs/scratchpad/session-139-mypy-parallel-fixes.md`](scratchpad/session-139-mypy-parallel-fixes.md)
+
+**Top Error Patterns (for bulk fix):**
+| Pattern | Est. Count | Fix |
+|---------|------------|-----|
+| `no-untyped-def` | ~2,000 | Add `-> None` or `-> Type` |
+| `var-annotated` | ~1,500 | Add `: Type` to variables |
+| SQLAlchemy Column | ~1,000 | `cast(Type, model.attr)` |
+
+**Recommended Next Approach:** Bulk sed/awk for common patterns instead of one-by-one fixes.
 
 **Action:**
-1. Fix mypy errors systematically (group by file/pattern)
-2. Install bandit: `pip install bandit`
-3. Update Modron March to check correct type locations
+1. Bulk fix `-> None` patterns with sed
+2. Bulk fix SQLAlchemy Column casts
+3. Install bandit: `pip install bandit`
+4. Update Modron March to check correct type locations
 
 ### 9. Orphan Framework Code (12K+ LOC) - ANALYSIS COMPLETE
 Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
