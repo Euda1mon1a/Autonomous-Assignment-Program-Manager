@@ -149,6 +149,7 @@ class SchedulingEngine:
             expand_block_assignments: Generate daily slots from block_assignments table
                                      (default True). This bridges the gap between
                                      "Resident X on FMIT for Block 10" and daily AM/PM slots.
+                                     Legacy rotation-mode is disabled; this must be True.
             block_number: Academic block number (1-13) for block_assignment expansion.
                          Required if expand_block_assignments=True.
             academic_year: Academic year (e.g., 2025 for AY 2025-2026).
@@ -180,6 +181,25 @@ class SchedulingEngine:
         # Issue #3: Transaction boundaries - wrap everything in a single transaction
         # Create an "in_progress" run record first
         run = self._create_initial_run(algorithm)
+
+        # Legacy rotation-mode is disabled; only half-day pipeline is supported.
+        if not expand_block_assignments:
+            logger.error(
+                "Legacy rotation-mode is disabled. Set expand_block_assignments=True."
+            )
+            self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
+            self.db.commit()
+            return {
+                "status": "failed",
+                "message": (
+                    "Legacy rotation-mode is disabled. "
+                    "Use expand_block_assignments=True for the half-day pipeline."
+                ),
+                "total_assigned": 0,
+                "total_blocks": 0,
+                "validation": self._empty_validation(),
+                "run_id": run.id,
+            }
 
         # Pre-generation resilience check
         # Store as instance attribute for _populate_resilience_data to access
@@ -420,60 +440,35 @@ class SchedulingEngine:
                 for warning in validation_result.warnings:
                     logger.warning(f"Pre-solver warning: {warning}")
 
-            # Step 5: Run solver
-            # NOTE: In half-day mode (expand_block_assignments=True), the activity solver
-            # (CPSATActivitySolver in Step 1.5i) handles activity assignment to HalfDayAssignment.
-            # The legacy rotation solver is skipped because its results are discarded anyway.
-            if not expand_block_assignments:
-                solver_result = self._run_solver(algorithm, context, timeout_seconds)
-
-                if not solver_result.success:
-                    logger.error(f"CP-SAT solver failed: {solver_result.solver_status}")
-                    self._update_run_status(
-                        run, "failed", 0, 0, time.time() - start_time
-                    )
-                    self.db.commit()
-                    return {
-                        "status": "failed",
-                        "message": f"CP-SAT solver failed: {solver_result.solver_status}",
-                        "total_assigned": 0,
-                        "total_blocks": len(blocks),
-                        "validation": self._empty_validation(),
-                        "run_id": run.id,
-                    }
-            else:
-                # Half-day mode: Run CP-SAT solver ONLY for call assignments (Sun-Thu)
-                # Rotation assignments come from expansion service, but call equity
-                # logic is in CP-SAT constraints. We discard rotation assignments but
-                # keep call_assignments from the result.
-                logger.info(
-                    "Running CP-SAT solver for Sun-Thu call assignments only "
-                    "(rotation assignments handled by expansion service)"
+            # Step 5: Run solver (CP-SAT call assignments only)
+            # Rotation assignments come from expansion service. We discard solver
+            # rotation assignments but preserve call_assignments for Step 6.5.
+            logger.info(
+                "Running CP-SAT solver for Sun-Thu call assignments only "
+                "(rotation assignments handled by expansion service)"
+            )
+            solver_result = self._run_solver("cp_sat", context, timeout_seconds)
+            if not solver_result.success:
+                logger.error(
+                    f"CP-SAT call solver failed: {solver_result.solver_status}"
                 )
-                solver_result = self._run_solver("cp_sat", context, timeout_seconds)
-                if not solver_result.success:
-                    logger.error(
-                        f"CP-SAT call solver failed: {solver_result.solver_status}"
-                    )
-                    self._update_run_status(
-                        run, "failed", 0, 0, time.time() - start_time
-                    )
-                    self.db.commit()
-                    return {
-                        "status": "failed",
-                        "message": f"CP-SAT call solver failed: {solver_result.solver_status}",
-                        "total_assigned": 0,
-                        "total_blocks": len(blocks),
-                        "validation": self._empty_validation(),
-                        "run_id": run.id,
-                    }
-                # Clear rotation assignments (we don't need them in half-day mode)
-                # but preserve call_assignments for Step 6.5
-                solver_result.assignments = []
-                logger.info(
-                    f"Greedy solver generated {len(solver_result.call_assignments)} "
-                    f"Sun-Thu call assignments"
-                )
+                self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
+                self.db.commit()
+                return {
+                    "status": "failed",
+                    "message": f"CP-SAT call solver failed: {solver_result.solver_status}",
+                    "total_assigned": 0,
+                    "total_blocks": len(blocks),
+                    "validation": self._empty_validation(),
+                    "run_id": run.id,
+                }
+            # Clear rotation assignments (we don't need them in half-day mode)
+            # but preserve call_assignments for Step 6.5
+            solver_result.assignments = []
+            logger.info(
+                f"CP-SAT solver generated {len(solver_result.call_assignments)} "
+                f"Sun-Thu call assignments"
+            )
 
             # Step 5.5: Delete existing assignments (except preserved ones)
             # This happens AFTER successful solve to prevent data loss on solver failure
@@ -487,38 +482,19 @@ class SchedulingEngine:
             # HalfDayAssignment records are already created by the expansion service.
             # We DO NOT add to self.assignments since that list gets persisted to
             # the old Assignment table in Step 8, causing constraint violations.
-            if not expand_block_assignments:
-                # Legacy path: persist Assignment objects to old table
-                for assignment in expanded_assignments:
-                    self.db.add(assignment)
-                    self.assignments.append(assignment)
-                if expanded_assignments:
-                    logger.info(
-                        f"Added {len(expanded_assignments)} expanded assignments to session"
-                    )
-            else:
-                # New path: HalfDayAssignment already persisted by expansion service
-                # Skip adding to self.assignments to avoid duplicate persistence
-                logger.info(
-                    f"Skipped {len(expanded_assignments)} expanded assignments "
-                    f"(already persisted as HalfDayAssignment)"
-                )
+            # HalfDayAssignment already persisted by expansion service
+            # Skip adding to self.assignments to avoid duplicate persistence
+            logger.info(
+                f"Skipped {len(expanded_assignments)} expanded assignments "
+                f"(already persisted as HalfDayAssignment)"
+            )
 
             # Step 6: Convert solver results to assignments
             # In half-day mode, resident assignments come from expansion, not solver
-            if not expand_block_assignments:
-                self._create_assignments_from_result(
-                    solver_result,
-                    residents,
-                    templates,
-                    cast(UUID, run.id),
-                    preserved_assignments,
-                )
-            else:
-                logger.info(
-                    "Skipping solver assignment conversion in half-day mode "
-                    "(residents already assigned via expansion)"
-                )
+            logger.info(
+                "Skipping solver assignment conversion in half-day mode "
+                "(residents already assigned via expansion)"
+            )
 
             # Step 6.5: Create call assignments from solver results
             # Creates CallAssignment records for overnight call (Sun-Thurs)
@@ -649,15 +625,10 @@ class SchedulingEngine:
             # Step 7: Assign faculty supervision (legacy mode only)
             # In half-day mode, faculty assignments already created by Step 6.8
             # (FacultyAssignmentExpansionService fills all 56 slots per faculty)
-            if not expand_block_assignments:
-                self._assign_faculty(
-                    faculty, blocks, cast(UUID, run.id), preserved_assignments
-                )
-            else:
-                logger.info(
-                    "Skipping legacy faculty supervision - already handled by "
-                    "FacultyAssignmentExpansionService in Step 6.8"
-                )
+            logger.info(
+                "Skipping legacy faculty supervision - already handled by "
+                "FacultyAssignmentExpansionService in Step 6.8"
+            )
 
             # Step 8: Handle draft vs live assignment persistence
             draft_id = None
