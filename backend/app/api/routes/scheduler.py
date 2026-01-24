@@ -49,7 +49,7 @@ async def create_job(
     job_data: JobCreateSchema,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> JobResponseSchema:
     """
     Create a new scheduled job.
 
@@ -113,7 +113,7 @@ async def list_jobs(
     enabled_only: bool = Query(False, description="Only return enabled jobs"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> JobListResponseSchema:
     """
     List all scheduled jobs.
 
@@ -145,7 +145,7 @@ async def get_job(
     job_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> JobResponseSchema:
     """
     Get a specific scheduled job.
 
@@ -176,7 +176,7 @@ async def update_job(
     job_data: JobUpdateSchema,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> JobResponseSchema:
     """
     Update a scheduled job.
 
@@ -234,7 +234,7 @@ async def delete_job(
     job_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> JobActionResponseSchema:
     """
     Delete a scheduled job.
 
@@ -278,7 +278,7 @@ async def delete_job(
 async def pause_job(
     job_id: UUID,
     current_user: User = Depends(get_current_active_user),
-):
+) -> JobActionResponseSchema:
     """
     Pause a scheduled job.
 
@@ -317,7 +317,7 @@ async def pause_job(
 async def resume_job(
     job_id: UUID,
     current_user: User = Depends(get_current_active_user),
-):
+) -> JobActionResponseSchema:
     """
     Resume a paused job.
 
@@ -364,7 +364,7 @@ async def get_job_executions(
     offset: int = Query(0, ge=0, description="Records to skip"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> JobExecutionListSchema:
     """
     Get execution history for a job.
 
@@ -416,7 +416,7 @@ async def get_all_executions(
     offset: int = Query(0, ge=0, description="Records to skip"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> JobExecutionListSchema:
     """
     Get execution history for all jobs.
 
@@ -459,7 +459,7 @@ async def get_job_statistics(
     job_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> JobStatisticsSchema:
     """
     Get statistics for a job.
 
@@ -495,7 +495,7 @@ async def get_job_statistics(
 @router.post("/sync", response_model=SyncResultSchema)
 async def sync_scheduler(
     current_user: User = Depends(get_current_active_user),
-):
+) -> SyncResultSchema:
     """
     Sync scheduler with database.
 

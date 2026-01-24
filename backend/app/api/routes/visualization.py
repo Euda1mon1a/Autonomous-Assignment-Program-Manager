@@ -39,7 +39,7 @@ async def get_unified_heatmap(
     group_by: str = Query(
         "person", description="Group by 'person', 'rotation', 'daily', or 'weekly'"
     ),
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> HeatmapResponse:
     """
@@ -86,7 +86,7 @@ async def get_unified_heatmap(
 @router.post("/heatmap/unified", response_model=HeatmapResponse)
 async def get_unified_heatmap_with_time_range(
     request: UnifiedHeatmapRequest,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> HeatmapResponse:
     """
@@ -158,7 +158,7 @@ async def get_heatmap_image(
     format: str = Query("png", description="Export format: png, pdf, or svg"),
     width: int = Query(1200, description="Width in pixels", gt=0),
     height: int = Query(800, description="Height in pixels", gt=0),
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> Response:
     """
@@ -241,7 +241,7 @@ async def get_heatmap_image(
 async def get_coverage_heatmap(
     start_date: date = Query(..., description="Start date for coverage analysis"),
     end_date: date = Query(..., description="End date for coverage analysis"),
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CoverageHeatmapResponse:
     """
@@ -274,7 +274,7 @@ async def get_workload_heatmap(
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
     include_weekends: bool = Query(False, description="Include weekends in analysis"),
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> HeatmapResponse:
     """
@@ -313,7 +313,7 @@ async def get_workload_heatmap(
 @router.post("/export")
 async def export_heatmap(
     request: ExportRequest,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> Response:
     """
@@ -421,7 +421,7 @@ async def get_3d_voxel_grid(
         None, description="Filter by activity types"
     ),
     include_violations: bool = Query(True, description="Include ACGME violation data"),
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> dict:
     """
@@ -602,7 +602,7 @@ async def get_3d_voxel_grid(
 async def get_3d_conflicts(
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> dict:
     """
@@ -656,7 +656,7 @@ async def get_3d_coverage_gaps(
     required_activity_types: list[str] = Query(
         ["clinic"], description="Activity types that must be covered"
     ),
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> dict:
     """

@@ -40,9 +40,9 @@ async def list_people(
         None, description="Filter by type: 'resident' or 'faculty'"
     ),
     pgy_level: int | None = Query(None, description="Filter residents by PGY level"),
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> PersonListResponse:
     """List all people (residents and faculty) with optional filters.
 
     Args:
@@ -74,9 +74,9 @@ async def list_people(
 async def list_residents(
     response: Response,
     pgy_level: int | None = Query(None, description="Filter by PGY level (1, 2, or 3)"),
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> PersonListResponse:
     """List all residents with optional PGY level filter.
 
     Args:
@@ -107,9 +107,9 @@ async def list_residents(
 async def list_faculty(
     response: Response,
     specialty: str | None = Query(None, description="Filter by specialty"),
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> PersonListResponse:
     """List all faculty with optional specialty filter.
 
     Args:
@@ -140,9 +140,9 @@ async def list_faculty(
 async def get_person(
     person_id: UUID,
     response: Response,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> PersonResponse:
     """Get a person (resident or faculty) by ID.
 
     Args:
@@ -175,9 +175,9 @@ async def get_person(
 @router.post("", response_model=PersonResponse, status_code=201)
 async def create_person(
     person_in: PersonCreate,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> PersonResponse:
     """Create a new person (resident or faculty).
 
     Args:
@@ -207,9 +207,9 @@ async def create_person(
 async def update_person(
     person_id: UUID,
     person_in: PersonUpdate,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> PersonResponse:
     """Update an existing person's information.
 
     Args:
@@ -234,7 +234,7 @@ async def update_person(
 @router.delete("/{person_id}", status_code=204)
 async def delete_person(
     person_id: UUID,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete a person. Requires authentication."""
@@ -252,9 +252,9 @@ async def get_person_credentials(
     person_id: UUID,
     status: str | None = Query(None, description="Filter by status"),
     include_expired: bool = Query(False, description="Include expired credentials"),
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> CredentialListResponse:
     """Get all credentials for a faculty member. Requires authentication."""
     controller = CredentialController(db)
     return controller.list_credentials_for_person(
@@ -267,9 +267,9 @@ async def get_person_credentials(
 @router.get("/{person_id}/credentials/summary", response_model=FacultyCredentialSummary)
 async def get_person_credential_summary(
     person_id: UUID,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> FacultyCredentialSummary:
     """Get a summary of a faculty member's credentials. Requires authentication."""
     controller = CredentialController(db)
     return controller.get_faculty_summary(person_id)
@@ -278,9 +278,9 @@ async def get_person_credential_summary(
 @router.get("/{person_id}/procedures", response_model=ProcedureListResponse)
 async def get_person_procedures(
     person_id: UUID,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> ProcedureListResponse:
     """Get all procedures a faculty member is qualified to supervise. Requires authentication."""
     service = CredentialService(db)
     result = service.list_procedures_for_faculty(person_id)
@@ -296,9 +296,9 @@ async def get_person_procedures(
 async def batch_create_people(
     request: BatchPersonCreateRequest,
     response: Response,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BatchPersonResponse:
     """Batch create multiple people atomically.
 
     Features:
@@ -340,9 +340,9 @@ async def batch_create_people(
 async def batch_update_people(
     request: BatchPersonUpdateRequest,
     response: Response,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BatchPersonResponse:
     """Batch update multiple people atomically.
 
     Features:
@@ -388,9 +388,9 @@ async def batch_update_people(
 @router.post("/batch/delete", response_model=BatchPersonResponse)
 async def batch_delete_people(
     request: BatchPersonDeleteRequest,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BatchPersonResponse:
     """Batch delete multiple people atomically.
 
     Features:

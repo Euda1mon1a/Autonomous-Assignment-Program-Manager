@@ -105,7 +105,7 @@ async def _get_person_for_user(db: AsyncSession, user: User) -> Person:
 async def list_available_surveys(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> list:
     """
     List all surveys available for the current user.
 
@@ -142,7 +142,7 @@ async def get_survey(
     survey_id: UUID,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> SurveyResponse:
     """
     Get a specific survey by ID.
 
@@ -186,7 +186,7 @@ async def submit_survey_response(
     http_request: Request,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> SurveySubmissionResult:
     """
     Submit a response to a survey.
 
@@ -242,7 +242,7 @@ async def get_survey_history(
     page_size: int = Query(default=20, ge=1, le=100),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> SurveyHistoryResponse:
     """
     Get the current user's survey response history.
 
@@ -294,7 +294,7 @@ async def get_survey_history(
 async def get_wellness_account(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> WellnessAccountResponse:
     """
     Get the current user's wellness account.
 
@@ -345,7 +345,7 @@ async def update_wellness_account(
     request: WellnessAccountUpdate,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> WellnessAccountResponse:
     """
     Update wellness account settings.
 
@@ -477,7 +477,7 @@ async def get_points_history(
     page_size: int = Query(default=20, ge=1, le=100),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> PointHistoryResponse:
     """
     Get the current user's points transaction history.
 
@@ -537,7 +537,7 @@ async def get_points_history(
 async def get_leaderboard(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> LeaderboardResponse:
     """
     Get the anonymous wellness leaderboard.
 
@@ -582,7 +582,7 @@ async def submit_hopfield_position(
     request: HopfieldPositionCreate,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> HopfieldPositionResult:
     """
     Submit a position on the Hopfield energy landscape.
 
@@ -633,7 +633,7 @@ async def get_hopfield_aggregates(
     academic_year: int | None = None,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> HopfieldAggregatesResponse:
     """
     Get aggregated Hopfield positions for program-wide view.
 
@@ -674,7 +674,7 @@ async def get_hopfield_aggregates(
 async def get_widget_data(
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> QuickPulseWidgetData:
     """
     Get data for the quick pulse dashboard widget.
 
@@ -742,7 +742,7 @@ async def submit_quick_pulse(
     http_request: Request,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> QuickPulseResult:
     """
     Submit a quick pulse check-in.
 
@@ -803,7 +803,7 @@ async def get_wellness_analytics(
     academic_year: int | None = None,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> WellnessAnalyticsSummary:
     """
     Get wellness analytics summary (admin only).
 

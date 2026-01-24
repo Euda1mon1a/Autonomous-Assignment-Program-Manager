@@ -35,7 +35,7 @@ async def authorize(
     request: AuthorizationRequest,
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Session = Depends(get_db),
-):
+) -> AuthorizationResponse:
     """
     OAuth2 authorization endpoint with PKCE.
 
@@ -66,7 +66,7 @@ async def authorize(
 async def token(
     request: TokenRequest,
     db: Session = Depends(get_db),
-):
+) -> TokenResponse:
     """
     OAuth2 token endpoint - exchange authorization code for access token.
 
@@ -96,7 +96,7 @@ async def token(
 async def token_introspection(
     request: TokenIntrospectionRequest,
     db: Session = Depends(get_db),
-):
+) -> TokenIntrospectionResponse:
     """
     Token introspection endpoint (RFC 7662).
 
@@ -142,7 +142,7 @@ async def create_client(
     request: OAuth2ClientCreate,
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Session = Depends(get_db),
-):
+) -> OAuth2ClientResponse:
     """
     Register a new OAuth2 public client.
 

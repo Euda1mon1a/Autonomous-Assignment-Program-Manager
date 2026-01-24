@@ -94,7 +94,7 @@ def get_quota_manager(
 async def get_quota_status(
     current_user: User = Depends(get_current_active_user),
     quota_manager: QuotaManager = Depends(get_quota_manager),
-):
+) -> QuotaStatus:
     """
     Get current quota status for the authenticated user.
 
@@ -138,7 +138,7 @@ async def get_quota_status(
 async def get_quota_alerts(
     current_user: User = Depends(get_current_active_user),
     quota_manager: QuotaManager = Depends(get_quota_manager),
-):
+) -> QuotaAlertsResponse:
     """
     Get quota usage alerts for the authenticated user.
 
@@ -179,7 +179,7 @@ async def get_quota_report(
     period: str = "monthly",
     current_user: User = Depends(get_current_active_user),
     quota_manager: QuotaManager = Depends(get_quota_manager),
-):
+) -> QuotaUsageReport:
     """
     Get quota usage report for the authenticated user.
 
@@ -245,7 +245,7 @@ async def get_quota_report(
 @router.get("/policies", response_model=AllPoliciesResponse)
 async def get_quota_policies(
     current_user: User = Depends(get_current_active_user),
-):
+) -> AllPoliciesResponse:
     """
     Get all available quota policies.
 
@@ -344,7 +344,7 @@ async def set_custom_quota(
     request: SetCustomQuotaRequest,
     admin_user: User = Depends(get_admin_user),
     quota_manager: QuotaManager = Depends(get_quota_manager),
-):
+) -> SetCustomQuotaResponse:
     """
     Set custom quota for a user (admin only).
 
@@ -470,7 +470,7 @@ async def reset_quota(
     request: ResetQuotaRequest,
     admin_user: User = Depends(get_admin_user),
     quota_manager: QuotaManager = Depends(get_quota_manager),
-):
+) -> ResetQuotaResponse:
     """
     Reset quota for a user (admin only).
 
@@ -528,7 +528,7 @@ async def record_usage(
     request: RecordUsageRequest,
     admin_user: User = Depends(get_admin_user),
     quota_manager: QuotaManager = Depends(get_quota_manager),
-):
+) -> RecordUsageResponse:
     """
     Manually record usage for a user (admin only).
 

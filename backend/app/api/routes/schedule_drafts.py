@@ -63,7 +63,7 @@ logger = get_logger(__name__)
 )
 async def create_draft(
     request: ScheduleDraftCreate,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -112,7 +112,7 @@ async def list_drafts(
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(50, ge=1, le=100, description="Items per page"),
     status: str | None = Query(None, description="Filter by status"),
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -205,7 +205,7 @@ async def list_drafts(
 )
 async def get_draft(
     draft_id: UUID,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Get details of a specific schedule draft."""
@@ -271,7 +271,7 @@ async def get_draft(
 )
 async def preview_draft(
     draft_id: UUID,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -344,7 +344,7 @@ async def preview_draft(
 async def add_assignment(
     draft_id: UUID,
     request: DraftAssignmentCreate,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -388,7 +388,7 @@ async def acknowledge_flag(
     draft_id: UUID,
     flag_id: UUID,
     request: DraftFlagAcknowledge | None = None,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -426,7 +426,7 @@ async def acknowledge_flag(
 async def bulk_acknowledge_flags(
     draft_id: UUID,
     request: DraftFlagBulkAcknowledge,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -466,7 +466,7 @@ async def bulk_acknowledge_flags(
 async def publish_draft(
     draft_id: UUID,
     request: PublishRequest | None = None,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -535,7 +535,7 @@ async def publish_draft(
 async def rollback_draft(
     draft_id: UUID,
     request: RollbackRequest | None = None,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -581,7 +581,7 @@ async def rollback_draft(
 )
 async def discard_draft(
     draft_id: UUID,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """

@@ -62,7 +62,7 @@ async def get_proxy_coverage(
     ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> ProxyCoverageResponse:
     """
     Get proxy coverage dashboard showing who is covering for whom.
 

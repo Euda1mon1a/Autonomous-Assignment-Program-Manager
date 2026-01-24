@@ -54,7 +54,7 @@ async def create_webhook(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
-):
+) -> WebhookResponse:
     """
     Create a new webhook endpoint.
 
@@ -96,7 +96,7 @@ async def list_webhooks(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
-):
+) -> WebhookListResponse:
     """
     List all webhooks.
 
@@ -125,7 +125,7 @@ async def get_webhook(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
-):
+) -> WebhookResponse:
     """
     Get webhook details by ID.
 
@@ -149,7 +149,7 @@ async def update_webhook(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
-):
+) -> WebhookResponse:
     """
     Update a webhook.
 
@@ -200,7 +200,7 @@ async def pause_webhook(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
-):
+) -> WebhookResponse:
     """
     Pause a webhook.
 
@@ -226,7 +226,7 @@ async def resume_webhook(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
-):
+) -> WebhookResponse:
     """
     Resume a paused webhook.
 
@@ -254,7 +254,7 @@ async def trigger_event(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
-):
+) -> WebhookEventTriggerResponse:
     """
     Manually trigger a webhook event.
 
@@ -292,7 +292,7 @@ async def list_deliveries(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
-):
+) -> WebhookDeliveryListResponse:
     """
     List webhook deliveries with optional filtering.
 
@@ -328,7 +328,7 @@ async def get_delivery(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
-):
+) -> WebhookDeliveryResponse:
     """
     Get delivery details by ID.
 
@@ -351,7 +351,7 @@ async def retry_delivery(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
-):
+) -> WebhookDeliveryResponse:
     """
     Manually retry a failed delivery.
 
@@ -384,7 +384,7 @@ async def list_dead_letters(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
-):
+) -> WebhookDeadLetterListResponse:
     """
     List dead letter queue entries.
 

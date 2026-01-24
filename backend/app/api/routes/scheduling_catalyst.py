@@ -134,7 +134,7 @@ async def detect_barriers(
     request: BarrierDetectionRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BarrierAnalysisResponse:
     """
     Detect all barriers for a proposed schedule change.
 
@@ -180,7 +180,7 @@ async def optimize_pathway(
     request: PathwayOptimizationRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> PathwayResultResponse:
     """
     Find the optimal transition pathway for a schedule change.
 
@@ -214,7 +214,7 @@ async def analyze_swap_barriers(
     request: SwapBarrierAnalysisRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> SwapBarrierAnalysisResponse:
     """
     Analyze barriers for a swap operation.
 
@@ -282,7 +282,7 @@ async def analyze_swap_barriers(
 async def get_catalyst_capacity(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
-):
+) -> CatalystCapacityResponse:
     """
     Get current catalyst capacity in the system.
 
@@ -340,7 +340,7 @@ async def optimize_batch(
     request: BatchOptimizationRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
-):
+) -> BatchOptimizationResponse:
     """
     Optimize multiple schedule changes as a batch.
 

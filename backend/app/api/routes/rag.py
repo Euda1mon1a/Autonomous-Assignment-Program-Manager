@@ -34,9 +34,9 @@ router = APIRouter()
 @router.post("/retrieve", response_model=RetrievalResponse)
 async def retrieve_documents(
     request: RAGRetrievalRequest,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> RetrievalResponse:
     """
     Retrieve relevant documents using semantic search.
 
@@ -86,9 +86,9 @@ async def retrieve_documents(
 
 @router.get("/health", response_model=RAGHealthResponse)
 async def get_rag_health(
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> RAGHealthResponse:
     """
     Get health status of the RAG system.
 
@@ -126,9 +126,9 @@ async def get_rag_health(
 @router.post("/ingest", response_model=IngestResponse)
 async def ingest_document(
     request: DocumentIngestRequest,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> IngestResponse:
     """
     Ingest a document into the RAG knowledge base.
 
@@ -174,9 +174,9 @@ async def ingest_document(
 @router.post("/context", response_model=RAGContext)
 async def build_context(
     request: ContextBuildRequest,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> RAGContext:
     """
     Build context string for LLM injection from relevant documents.
 
@@ -220,7 +220,7 @@ async def build_context(
 @router.delete("/documents/{doc_type}")
 async def delete_documents_by_type(
     doc_type: str,
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> dict[str, Any]:
     """
@@ -253,7 +253,7 @@ async def delete_documents_by_type(
 
 @router.get("/stats")
 async def get_rag_stats(
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> dict[str, Any]:
     """

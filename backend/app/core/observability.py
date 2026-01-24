@@ -28,7 +28,7 @@ import uuid
 from collections.abc import Callable
 from contextvars import ContextVar
 from functools import wraps
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -78,15 +78,15 @@ class ObservabilityMetrics:
     """
 
     _instance: Optional["ObservabilityMetrics"] = None
+    _initialized: bool = False
 
-    def __new__(cls):
+    def __new__(cls) -> "ObservabilityMetrics":
         """Singleton pattern to ensure metrics are only registered once."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize metrics (only once due to singleton)."""
         if self._initialized:
             return
@@ -177,44 +177,44 @@ class ObservabilityMetrics:
 
     # === AUTH METHODS ===
 
-    def record_token_issued(self, token_type: str = "access"):
+    def record_token_issued(self, token_type: str = "access") -> None:
         """Record a token being issued."""
         if self._enabled:
             self.tokens_issued.labels(token_type=token_type).inc()
 
-    def record_token_blacklisted(self, reason: str = "logout"):
+    def record_token_blacklisted(self, reason: str = "logout") -> None:
         """Record a token being blacklisted."""
         if self._enabled:
             self.tokens_blacklisted.labels(reason=reason).inc()
 
-    def record_auth_failure(self, reason: str):
+    def record_auth_failure(self, reason: str) -> None:
         """Record an authentication failure."""
         if self._enabled:
             self.auth_failures.labels(reason=reason).inc()
 
     # === IDEMPOTENCY METHODS ===
 
-    def record_idempotency_hit(self):
+    def record_idempotency_hit(self) -> None:
         """Record a cache hit (returning cached response)."""
         if self._enabled:
             self.idempotency_requests.labels(outcome="cache_hit").inc()
 
-    def record_idempotency_miss(self):
+    def record_idempotency_miss(self) -> None:
         """Record a cache miss (processing new request)."""
         if self._enabled:
             self.idempotency_requests.labels(outcome="cache_miss").inc()
 
-    def record_idempotency_conflict(self):
+    def record_idempotency_conflict(self) -> None:
         """Record a key conflict (same key, different body)."""
         if self._enabled:
             self.idempotency_requests.labels(outcome="conflict").inc()
 
-    def record_idempotency_pending(self):
+    def record_idempotency_pending(self) -> None:
         """Record hitting a pending request."""
         if self._enabled:
             self.idempotency_requests.labels(outcome="pending").inc()
 
-    def set_idempotency_cache_size(self, size: int):
+    def set_idempotency_cache_size(self, size: int) -> None:
         """Update the current cache size gauge."""
         if self._enabled:
             self.idempotency_cache_size.set(size)
@@ -225,7 +225,7 @@ class ObservabilityMetrics:
 
     # === SCHEDULING METHODS ===
 
-    def record_schedule_success(self, algorithm: str, assignments: int = 0):
+    def record_schedule_success(self, algorithm: str, assignments: int = 0) -> None:
         """Record successful schedule generation."""
         if self._enabled:
             self.schedule_generations.labels(
@@ -234,14 +234,14 @@ class ObservabilityMetrics:
             if assignments > 0:
                 self.schedule_assignments.labels(algorithm=algorithm).inc(assignments)
 
-    def record_schedule_failure(self, algorithm: str):
+    def record_schedule_failure(self, algorithm: str) -> None:
         """Record failed schedule generation."""
         if self._enabled:
             self.schedule_generations.labels(
                 algorithm=algorithm, outcome="failure"
             ).inc()
 
-    def record_violation(self, violation_type: str):
+    def record_violation(self, violation_type: str) -> None:
         """Record an ACGME violation."""
         if self._enabled:
             self.schedule_violations.labels(violation_type=violation_type).inc()
@@ -256,13 +256,13 @@ class IdempotencyTimer:
 
     def __init__(self, metrics: ObservabilityMetrics):
         self.metrics = metrics
-        self.start_time = None
+        self.start_time: float | None = None
 
-    def __enter__(self):
+    def __enter__(self) -> "IdempotencyTimer":
         self.start_time = time.perf_counter()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> Literal[False]:  # type: ignore[no-untyped-def]
         if self.metrics._enabled and self.start_time:
             duration = time.perf_counter() - self.start_time
             self.metrics.idempotency_lookup_duration.observe(duration)
@@ -275,13 +275,13 @@ class ScheduleTimer:
     def __init__(self, metrics: ObservabilityMetrics, algorithm: str):
         self.metrics = metrics
         self.algorithm = algorithm
-        self.start_time = None
+        self.start_time: float | None = None
 
-    def __enter__(self):
+    def __enter__(self) -> "ScheduleTimer":
         self.start_time = time.perf_counter()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> Literal[False]:  # type: ignore[no-untyped-def]
         if self.metrics._enabled and self.start_time:
             duration = time.perf_counter() - self.start_time
             self.metrics.schedule_duration.labels(algorithm=self.algorithm).observe(
@@ -355,7 +355,7 @@ def with_request_id(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs):  # type: ignore[no-untyped-def]
         request_id = get_request_id()
         if request_id:
             # Set request ID in logging context for this call

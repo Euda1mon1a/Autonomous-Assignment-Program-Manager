@@ -153,7 +153,7 @@ def _check_marketplace_access(db: Session, user: User) -> bool:
 async def get_my_schedule(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> MyScheduleResponse:
     """
     Get the current user's FMIT schedule.
 
@@ -283,7 +283,7 @@ async def get_my_schedule(
 async def get_my_swaps(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> MySwapsResponse:
     """
     Get swap requests related to the current user.
 
@@ -398,7 +398,7 @@ async def create_swap_request(
     request: SwapRequestCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> SwapRequestResponse:
     """
     Create a new swap request to offload an FMIT week.
 
@@ -586,7 +586,7 @@ async def respond_to_swap(
     request: SwapRespondRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> dict[str, Any]:
     """
     Respond to an incoming swap request.
 
@@ -706,7 +706,7 @@ async def respond_to_swap(
 async def get_my_preferences(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> PreferencesResponse:
     """
     Get the current user's FMIT scheduling preferences.
 
@@ -828,7 +828,7 @@ async def update_my_preferences(
     request: PreferencesUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> PreferencesResponse:
     """
     Update the current user's FMIT scheduling preferences.
 
@@ -987,7 +987,7 @@ async def update_my_preferences(
 async def get_my_dashboard(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> DashboardResponse:
     """
     Get the dashboard view for the current user.
 
@@ -1235,7 +1235,7 @@ async def get_my_dashboard(
 async def get_swap_marketplace(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> MarketplaceResponse:
     """
     Get available swap opportunities in the marketplace.
 

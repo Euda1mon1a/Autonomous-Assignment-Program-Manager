@@ -47,7 +47,7 @@ async def list_resident_weekly_requirements(
     ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> ResidentWeeklyRequirementListResponse:
     """List all resident weekly requirements, optionally filtered by activity type.
 
     Args:
@@ -86,7 +86,7 @@ async def create_resident_weekly_requirement(
     requirement_in: ResidentWeeklyRequirementCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> ResidentWeeklyRequirementResponse:
     """Create a new resident weekly requirement for a rotation template.
 
     Args:
@@ -310,7 +310,7 @@ async def get_resident_weekly_requirement(
     requirement_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> ResidentWeeklyRequirementResponse:
     """Get a resident weekly requirement by ID.
 
     Args:
@@ -337,7 +337,7 @@ async def update_resident_weekly_requirement(
     requirement_in: ResidentWeeklyRequirementUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> ResidentWeeklyRequirementResponse:
     """Update an existing resident weekly requirement.
 
     Args:
@@ -413,7 +413,7 @@ async def apply_outpatient_defaults(
     dry_run: bool = Query(False, description="If true, validate only without changes"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> dict:
     """Apply ACGME-compliant defaults to outpatient rotation templates.
 
     If template_ids provided, applies to those templates.

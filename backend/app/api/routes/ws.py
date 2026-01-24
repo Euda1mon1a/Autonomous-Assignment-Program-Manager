@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 async def get_websocket_user(
-    websocket: WebSocket, token: str | None = Query(None), db=Depends(get_db)
+    websocket: WebSocket, token: str | None = Query(None), db: Session = Depends(get_db)
 ) -> User | None:
     """
     Authenticate WebSocket connection via token query parameter or cookie.
@@ -74,7 +74,7 @@ async def get_websocket_user(
 async def websocket_endpoint(
     websocket: WebSocket,
     token: str | None = Query(None),
-    db=Depends(get_db),
+    db: Session = Depends(get_db),
 ) -> None:
     """
     WebSocket endpoint for real-time schedule updates.

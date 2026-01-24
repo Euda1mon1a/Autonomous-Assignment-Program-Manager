@@ -104,7 +104,7 @@ class AuthenticationInterceptor(grpc.ServerInterceptor):
     def _unauthenticated_handler() -> grpc.RpcMethodHandler:
         """Return handler that sends UNAUTHENTICATED status."""
 
-        def abort(ignored_request, context: grpc.ServicerContext):
+        def abort(ignored_request: Any, context: grpc.ServicerContext) -> None:
             context.abort(
                 grpc.StatusCode.UNAUTHENTICATED,
                 "Invalid or missing authentication token",
@@ -153,7 +153,7 @@ class ErrorHandlingInterceptor(grpc.ServerInterceptor):
     ) -> grpc.RpcMethodHandler:
         """Wrap unary-unary handler with error handling."""
 
-        def wrapper(request, context: grpc.ServicerContext):
+        def wrapper(request: Any, context: grpc.ServicerContext) -> Any:
             try:
                 return handler.unary_unary(request, context)
             except Exception as e:
@@ -170,7 +170,7 @@ class ErrorHandlingInterceptor(grpc.ServerInterceptor):
     ) -> grpc.RpcMethodHandler:
         """Wrap unary-stream handler with error handling."""
 
-        def wrapper(request, context: grpc.ServicerContext):
+        def wrapper(request: Any, context: grpc.ServicerContext) -> Any:
             try:
                 for response in handler.unary_stream(request, context):
                     yield response
@@ -188,7 +188,7 @@ class ErrorHandlingInterceptor(grpc.ServerInterceptor):
     ) -> grpc.RpcMethodHandler:
         """Wrap stream-unary handler with error handling."""
 
-        def wrapper(request_iterator, context: grpc.ServicerContext):
+        def wrapper(request_iterator: Any, context: grpc.ServicerContext) -> Any:
             try:
                 return handler.stream_unary(request_iterator, context)
             except Exception as e:
@@ -205,7 +205,7 @@ class ErrorHandlingInterceptor(grpc.ServerInterceptor):
     ) -> grpc.RpcMethodHandler:
         """Wrap stream-stream handler with error handling."""
 
-        def wrapper(request_iterator, context: grpc.ServicerContext):
+        def wrapper(request_iterator: Any, context: grpc.ServicerContext) -> Any:
             try:
                 for response in handler.stream_stream(request_iterator, context):
                     yield response
@@ -297,7 +297,7 @@ class LoggingInterceptor(grpc.ServerInterceptor):
     ) -> grpc.RpcMethodHandler:
         """Wrap unary-unary handler with logging."""
 
-        def wrapper(request, context: grpc.ServicerContext):
+        def wrapper(request: Any, context: grpc.ServicerContext) -> Any:
             try:
                 response = handler.unary_unary(request, context)
                 latency = time.time() - start_time
@@ -323,7 +323,7 @@ class LoggingInterceptor(grpc.ServerInterceptor):
     ) -> grpc.RpcMethodHandler:
         """Wrap unary-stream handler with logging."""
 
-        def wrapper(request, context: grpc.ServicerContext):
+        def wrapper(request: Any, context: grpc.ServicerContext) -> Any:
             try:
                 response_count = 0
                 for response in handler.unary_stream(request, context):
@@ -358,7 +358,7 @@ class MetricsInterceptor(grpc.ServerInterceptor):
     - grpc_requests_in_flight: Gauge of active requests
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Prometheus metrics."""
         try:
             from prometheus_client import Counter, Gauge, Histogram
@@ -399,7 +399,7 @@ class MetricsInterceptor(grpc.ServerInterceptor):
     ) -> grpc.RpcMethodHandler:
         """Wrap unary-unary handler with metrics."""
 
-        def wrapper(request, context: grpc.ServicerContext):
+        def wrapper(request: Any, context: grpc.ServicerContext) -> Any:
             self.requests_in_flight.labels(method=method).inc()
             start_time = time.time()
             status = "success"

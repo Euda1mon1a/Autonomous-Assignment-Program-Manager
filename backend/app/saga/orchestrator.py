@@ -12,7 +12,7 @@ This module provides the core saga orchestration logic including:
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, cast
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
@@ -135,7 +135,7 @@ class SagaOrchestrator:
                 saga_id=saga_exec.id,
                 input_data=saga_exec.input_data,
                 accumulated_data=saga_exec.context_data or {},
-                metadata=saga_exec.metadata or {},
+                metadata=saga_exec.saga_metadata or {},
             )
         else:
             saga_id = uuid4()
@@ -407,13 +407,17 @@ class SagaOrchestrator:
                 # Merge output into context
                 context.merge_step_output(step_def.name, output)
 
+                duration = (
+                    result.completed_at.timestamp() - result.started_at.timestamp()
+                    if result.completed_at and result.started_at
+                    else 0.0
+                )
                 await self._log_event(
                     saga_exec.id,
                     "step_completed",
                     {
                         "step_name": step_def.name,
-                        "duration": result.completed_at.timestamp()
-                        - result.started_at.timestamp(),
+                        "duration": duration,
                         "retries": attempt,
                     },
                     f"Step '{step_def.name}' completed",
@@ -537,7 +541,7 @@ class SagaOrchestrator:
                     )
                 )
             else:
-                final_results.append(result)
+                final_results.append(cast(SagaStepResult, result))
 
         await self._log_event(
             saga_exec.id,
@@ -743,8 +747,9 @@ class SagaOrchestrator:
             Step execution record
         """
         # Check if step already exists (for recovery)
-        existing = next(
-            (s for s in saga_exec.steps if s.step_name == step_def.name), None
+        existing = cast(
+            SagaStepExecution | None,
+            next((s for s in saga_exec.steps if s.step_name == step_def.name), None),
         )
 
         if existing:

@@ -52,6 +52,7 @@ import os
 import signal
 import sys
 from concurrent import futures
+from typing import Any
 
 from app.core.config import get_settings
 from app.grpc.interceptors import (
@@ -98,7 +99,7 @@ GRPC_TLS_CERT_PATH = os.getenv("GRPC_TLS_CERT_PATH", "")
 GRPC_TLS_KEY_PATH = os.getenv("GRPC_TLS_KEY_PATH", "")
 
 
-def _create_server_credentials():
+def _create_server_credentials() -> object | None:
     """
     Create server credentials for TLS.
 
@@ -127,14 +128,14 @@ def _create_server_credentials():
             require_client_auth=False,
         )
         logger.info("TLS credentials loaded successfully")
-        return credentials
+        return credentials  # type: ignore[no-any-return]
 
     except Exception as e:
         logger.error(f"Failed to load TLS credentials: {e}")
         return None
 
 
-def _register_services(server) -> list[str]:
+def _register_services(server: Any) -> list[str]:
     """
     Register all gRPC services with the server.
 
@@ -265,7 +266,7 @@ def start_grpc_server(
         logger.info(f"gRPC server started successfully on port {port}")
 
         # Register signal handlers for graceful shutdown
-        def handle_shutdown(signum, frame):
+        def handle_shutdown(signum: Any, frame: Any) -> None:
             logger.info(f"Received signal {signum}, initiating graceful shutdown...")
             stop_grpc_server(server)
             sys.exit(0)
@@ -278,14 +279,14 @@ def start_grpc_server(
             logger.info("gRPC server waiting for termination...")
             server.wait_for_termination()
 
-        return server
+        return server  # type: ignore[no-any-return]
 
     except Exception as e:
         logger.error(f"Failed to start gRPC server: {e}", exc_info=True)
         raise RuntimeError(f"gRPC server startup failed: {e}")
 
 
-def stop_grpc_server(server, grace_period: float = 5.0) -> None:
+def stop_grpc_server(server: Any, grace_period: float = 5.0) -> None:
     """
     Stop the gRPC server gracefully.
 
@@ -316,7 +317,7 @@ def stop_grpc_server(server, grace_period: float = 5.0) -> None:
         logger.error(f"Error stopping gRPC server: {e}", exc_info=True)
 
 
-def run_server():
+def run_server() -> None:
     """
     Run the gRPC server as a standalone application.
 

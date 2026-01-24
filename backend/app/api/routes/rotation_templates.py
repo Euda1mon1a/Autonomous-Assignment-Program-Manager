@@ -111,7 +111,7 @@ async def create_rotation_template(
     template_in: RotationTemplateCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> RotationTemplate:
     """Create a new rotation template. Requires authentication."""
     template = RotationTemplate(**template_in.model_dump())
     db.add(template)
@@ -131,7 +131,7 @@ async def batch_delete_rotation_templates(
     request: BatchTemplateDeleteRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BatchTemplateResponse:
     """Delete multiple rotation templates atomically.
 
     Features:
@@ -190,7 +190,7 @@ async def batch_update_rotation_templates(
     request: BatchTemplateUpdateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BatchTemplateResponse:
     """Update multiple rotation templates atomically.
 
     Features:
@@ -268,7 +268,7 @@ async def batch_create_rotation_templates(
     request: BatchTemplateCreateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BatchTemplateResponse:
     """Create multiple rotation templates atomically.
 
     Features:
@@ -335,7 +335,7 @@ async def check_batch_conflicts(
     request: ConflictCheckRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> ConflictCheckResponse:
     """Check for conflicts before performing batch operations.
 
     Useful for preview before destructive operations like delete or archive.
@@ -367,7 +367,7 @@ async def export_rotation_templates(
     request: TemplateExportRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> TemplateExportResponse:
     """Export rotation templates with their patterns and preferences.
 
     Creates a JSON export suitable for backup or transfer to another system.
@@ -409,7 +409,7 @@ async def batch_archive_rotation_templates(
     request: BatchArchiveRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BatchTemplateResponse:
     """Archive multiple rotation templates atomically (soft delete).
 
     Features:
@@ -473,7 +473,7 @@ async def batch_restore_rotation_templates(
     request: BatchRestoreRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BatchTemplateResponse:
     """Restore multiple archived rotation templates atomically.
 
     Features:
@@ -525,7 +525,7 @@ async def batch_update_patterns(
     request: BatchPatternUpdateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BatchPatternUpdateResponse:
     """Bulk update weekly patterns across multiple templates.
 
     Supports two modes:
@@ -611,7 +611,7 @@ async def batch_apply_preferences(
     request: dict,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BatchTemplateResponse:
     """Apply the same preferences to multiple templates atomically.
 
     Useful for bulk operations like applying standard preference
@@ -687,7 +687,7 @@ async def get_rotation_template(
     template_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> RotationTemplateResponse:
     """Get a rotation template by ID. Requires authentication."""
     template = (
         db.execute(select(RotationTemplate).where(RotationTemplate.id == template_id))
@@ -702,7 +702,7 @@ async def archive_rotation_template(
     template_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> RotationTemplateResponse:
     """Archive a rotation template (soft delete).
 
     Archived templates are excluded from default queries but can be
@@ -736,7 +736,7 @@ async def restore_rotation_template(
     template_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> RotationTemplateResponse:
     """Restore an archived rotation template.
 
     Restores a previously archived template, making it visible
@@ -843,7 +843,7 @@ async def update_rotation_template(
     template_in: RotationTemplateUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> RotationTemplateResponse:
     """Update an existing rotation template. Requires authentication."""
     template = (
         db.execute(select(RotationTemplate).where(RotationTemplate.id == template_id))
@@ -887,7 +887,7 @@ async def get_weekly_patterns(
     template_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> list:
     """Get all weekly patterns for a rotation template.
 
     Returns the 7x2 weekly grid of AM/PM slots defining the rotation pattern.
@@ -919,7 +919,7 @@ async def replace_weekly_patterns(
     grid_update: WeeklyGridUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> list:
     """Atomically replace all weekly patterns for a rotation template.
 
     This endpoint performs an atomic replacement:

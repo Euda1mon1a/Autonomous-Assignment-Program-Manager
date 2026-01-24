@@ -48,7 +48,7 @@ async def get_or_create_settings(db: Session) -> ApplicationSettings:
 async def get_settings(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> SettingsResponse:
     """Get current application settings."""
     settings = await get_or_create_settings(db)
     return SettingsResponse(**settings.to_dict())
@@ -59,7 +59,7 @@ async def update_settings(
     settings_in: SettingsBase,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
-):
+) -> SettingsResponse:
     """Update application settings (full replacement)."""
     settings = await get_or_create_settings(db)
 
@@ -84,7 +84,7 @@ async def patch_settings(
     settings_in: SettingsUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
-):
+) -> SettingsResponse:
     """Partially update application settings."""
     settings = await get_or_create_settings(db)
 

@@ -122,7 +122,7 @@ def _validate_task_name(task_name: str) -> None:
 @router.get("", response_model=dict)
 async def get_queue_status(
     current_user: User = Depends(get_current_active_user),
-):
+) -> dict:
     """Get overall queue status and statistics."""
     manager = QueueManager()
     return manager.get_queue_stats()
@@ -137,7 +137,7 @@ async def get_queue_status(
 async def submit_task(
     request: TaskSubmitRequest,
     current_user: User = Depends(get_current_active_user),
-):
+) -> TaskSubmitResponse:
     """
     Submit a task to the queue.
 
@@ -208,7 +208,7 @@ async def submit_task(
 async def submit_task_chain(
     request: TaskChainRequest,
     current_user: User = Depends(get_current_active_user),
-):
+) -> TaskSubmitResponse:
     """
     Submit a chain of tasks that execute sequentially.
 
@@ -262,7 +262,7 @@ async def submit_task_chain(
 async def submit_task_group(
     request: TaskGroupRequest,
     current_user: User = Depends(get_current_active_user),
-):
+) -> TaskSubmitResponse:
     """
     Submit a group of tasks that execute in parallel.
 
@@ -314,7 +314,7 @@ async def submit_task_group(
 async def submit_task_with_dependencies(
     request: TaskDependencyRequest,
     current_user: User = Depends(get_current_active_user),
-):
+) -> TaskSubmitResponse:
     """
     Submit a task that depends on other tasks.
 
@@ -369,7 +369,7 @@ async def submit_task_with_dependencies(
 async def get_task_status_endpoint(
     task_id: str,
     current_user: User = Depends(get_current_active_user),
-):
+) -> TaskStatusResponse:
     """
     Get task status and metadata.
 
@@ -425,7 +425,7 @@ async def get_task_progress(
 async def cancel_task(
     request: TaskCancelRequest,
     current_user: User = Depends(get_current_active_user),
-):
+) -> TaskCancelResponse:
     """
     Cancel a task.
 
@@ -460,7 +460,7 @@ async def cancel_task(
 async def retry_task(
     request: TaskRetryRequest,
     current_user: User = Depends(get_current_active_user),
-):
+) -> TaskRetryResponse:
     """
     Retry a failed task.
 
@@ -508,7 +508,7 @@ async def retry_task(
 async def get_queue_stats(
     queue: str | None = Query(None, description="Queue name (None for all)"),
     current_user: User = Depends(get_current_active_user),
-):
+) -> QueueStatsResponse:
     """
     Get queue statistics.
 
@@ -531,7 +531,7 @@ async def get_queue_stats(
 async def purge_queue(
     request: QueuePurgeRequest,
     current_user: User = Depends(get_current_active_user),
-):
+) -> QueuePurgeResponse:
     """
     Purge all tasks from a queue.
 
@@ -574,7 +574,7 @@ async def purge_queue(
 @router.get("/workers/health", response_model=WorkerHealthResponse)
 async def get_worker_health(
     current_user: User = Depends(get_current_active_user),
-):
+) -> WorkerHealthResponse:
     """
     Get worker health status.
 
@@ -597,7 +597,7 @@ async def get_worker_health(
 async def get_worker_stats(
     worker: str | None = Query(None, description="Worker name (None for all)"),
     current_user: User = Depends(get_current_active_user),
-):
+) -> WorkerStatsResponse:
     """
     Get worker statistics.
 
@@ -619,7 +619,7 @@ async def get_worker_stats(
 @router.get("/workers/utilization", response_model=WorkerUtilizationResponse)
 async def get_worker_utilization(
     current_user: User = Depends(get_current_active_user),
-):
+) -> WorkerUtilizationResponse:
     """
     Get worker utilization metrics.
 
@@ -642,7 +642,7 @@ async def get_worker_utilization(
 async def get_worker_tasks(
     worker: str | None = Query(None, description="Worker name (None for all)"),
     current_user: User = Depends(get_current_active_user),
-):
+) -> WorkerTasksResponse:
     """
     Get tasks being processed by workers.
 
@@ -665,7 +665,7 @@ async def get_worker_tasks(
 async def control_worker(
     request: WorkerControlRequest,
     current_user: User = Depends(get_current_active_user),
-):
+) -> WorkerControlResponse:
     """
     Control worker operations.
 
@@ -741,7 +741,7 @@ async def control_worker(
 async def schedule_task(
     request: ScheduleTaskRequest,
     current_user: User = Depends(get_current_active_user),
-):
+) -> ScheduleTaskResponse:
     """
     Schedule a task for future execution.
 
@@ -802,7 +802,7 @@ async def schedule_task(
 async def add_periodic_task(
     request: PeriodicTaskRequest,
     current_user: User = Depends(get_current_active_user),
-):
+) -> PeriodicTaskResponse:
     """
     Add a periodic (recurring) task.
 
@@ -852,7 +852,7 @@ async def add_periodic_task(
 @router.get("/schedule/periodic", response_model=PeriodicTasksListResponse)
 async def get_periodic_tasks(
     current_user: User = Depends(get_current_active_user),
-):
+) -> PeriodicTasksListResponse:
     """
     Get all periodic tasks.
 
@@ -874,7 +874,7 @@ async def get_periodic_tasks(
 @router.get("/schedule/scheduled", response_model=ScheduledTasksListResponse)
 async def get_scheduled_tasks(
     current_user: User = Depends(get_current_active_user),
-):
+) -> ScheduledTasksListResponse:
     """
     Get tasks scheduled for future execution.
 
@@ -897,7 +897,7 @@ async def get_scheduled_tasks(
 async def control_periodic_task(
     request: PeriodicTaskControlRequest,
     current_user: User = Depends(get_current_active_user),
-):
+) -> PeriodicTaskControlResponse:
     """
     Control a periodic task (enable, disable, remove).
 

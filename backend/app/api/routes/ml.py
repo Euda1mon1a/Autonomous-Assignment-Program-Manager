@@ -46,7 +46,7 @@ settings = get_settings()
 async def get_model_health(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
-):
+) -> ModelHealthResponse:
     """
     Check health status of ML models.
 
@@ -106,7 +106,7 @@ async def train_models(
     request: TrainModelsRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
-):
+) -> TrainModelsResponse:
     """
     Train ML models on historical data.
 
@@ -276,7 +276,7 @@ async def score_schedule(
     request: ScoreScheduleRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> ScheduleScoreResponse:
     """
     Score a schedule using ML models.
 
@@ -396,7 +396,7 @@ async def predict_conflict(
     request: PredictConflictRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> ConflictPredictionResponse:
     """
     Predict conflict probability for a proposed assignment.
     """
@@ -473,7 +473,7 @@ async def predict_preference(
     request: PredictPreferenceRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> PreferencePredictionResponse:
     """
     Predict preference score for a proposed assignment.
     """
@@ -536,7 +536,7 @@ async def analyze_workload(
     request: WorkloadAnalysisRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> WorkloadAnalysisResponse:
     """
     Analyze workload distribution across personnel.
     """

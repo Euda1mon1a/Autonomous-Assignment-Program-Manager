@@ -1,6 +1,7 @@
 """GraphQL query resolvers."""
 
 from datetime import date
+from typing import Any
 from uuid import UUID
 
 import strawberry
@@ -33,7 +34,7 @@ class Query:
     """Root query type."""
 
     @strawberry.field
-    def person(self, info, id: strawberry.ID) -> Person | None:
+    def person(self, info: Any, id: strawberry.ID) -> Person | None:
         """Get a single person by ID."""
         db: Session = info.context["db"]
 
@@ -46,7 +47,7 @@ class Query:
     @strawberry.field
     def people(
         self,
-        info,
+        info: Any,
         filter: PersonFilterInput | None = None,
         offset: int = 0,
         limit: int = 50,
@@ -78,7 +79,7 @@ class Query:
         # Convert to GraphQL types
         items = [person_from_db(p) for p in db_people]
 
-        return PersonConnection(
+        return PersonConnection(  # type: ignore[call-arg]
             items=items,
             total=total,
             has_next_page=(offset + limit) < total,
@@ -86,7 +87,7 @@ class Query:
         )
 
     @strawberry.field
-    def assignment(self, info, id: strawberry.ID) -> Assignment | None:
+    def assignment(self, info: Any, id: strawberry.ID) -> Assignment | None:
         """Get a single assignment by ID."""
         db: Session = info.context["db"]
 
@@ -101,7 +102,7 @@ class Query:
     @strawberry.field
     def assignments(
         self,
-        info,
+        info: Any,
         filter: AssignmentFilterInput | None = None,
         offset: int = 0,
         limit: int = 50,
@@ -150,7 +151,7 @@ class Query:
         # Convert to GraphQL types
         items = [assignment_from_db(a) for a in db_assignments]
 
-        return AssignmentConnection(
+        return AssignmentConnection(  # type: ignore[call-arg]
             items=items,
             total=total,
             has_next_page=(offset + limit) < total,
@@ -158,7 +159,7 @@ class Query:
         )
 
     @strawberry.field
-    def block(self, info, id: strawberry.ID) -> Block | None:
+    def block(self, info: Any, id: strawberry.ID) -> Block | None:
         """Get a single block by ID."""
         db: Session = info.context["db"]
 
@@ -171,7 +172,7 @@ class Query:
     @strawberry.field
     def blocks(
         self,
-        info,
+        info: Any,
         filter: BlockFilterInput | None = None,
         offset: int = 0,
         limit: int = 100,
@@ -210,7 +211,7 @@ class Query:
         # Convert to GraphQL types
         items = [block_from_db(b) for b in db_blocks]
 
-        return BlockConnection(
+        return BlockConnection(  # type: ignore[call-arg]
             items=items,
             total=total,
             has_next_page=(offset + limit) < total,
@@ -220,7 +221,7 @@ class Query:
     @strawberry.field
     def schedule_summary(
         self,
-        info,
+        info: Any,
         start_date: date,
         end_date: date,
     ) -> ScheduleSummary:
@@ -275,7 +276,7 @@ class Query:
             or 0.0
         )
 
-        metrics = ScheduleMetrics(
+        metrics = ScheduleMetrics(  # type: ignore[call-arg]
             total_assignments=total_assignments or 0,
             total_blocks=total_blocks or 0,
             coverage_percentage=coverage_percentage,
@@ -283,7 +284,7 @@ class Query:
             average_utilization=coverage_percentage / 100,
         )
 
-        return ScheduleSummary(
+        return ScheduleSummary(  # type: ignore[call-arg]
             start_date=start_date,
             end_date=end_date,
             total_people=total_people or 0,
@@ -295,7 +296,7 @@ class Query:
     @strawberry.field
     def person_assignments(
         self,
-        info,
+        info: Any,
         person_id: strawberry.ID,
         start_date: date | None = None,
         end_date: date | None = None,
@@ -303,9 +304,9 @@ class Query:
         limit: int = 50,
     ) -> AssignmentConnection:
         """Get assignments for a specific person with date filtering."""
-        filter_input = AssignmentFilterInput(
+        filter_input = AssignmentFilterInput(  # type: ignore[call-arg]
             person_id=person_id,
             start_date=start_date,
             end_date=end_date,
         )
-        return self.assignments(info, filter=filter_input, offset=offset, limit=limit)
+        return self.assignments(info, filter=filter_input, offset=offset, limit=limit)  # type: ignore[no-any-return]

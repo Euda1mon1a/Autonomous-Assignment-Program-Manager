@@ -123,7 +123,7 @@ class MockRequest:
     timestamp: datetime = field(default_factory=datetime.utcnow)
     metadata: dict[str, Any] = field(default_factory=dict)
 
-    def get_header(self, name: str, default: str = None) -> str | None:
+    def get_header(self, name: str, default: str | None = None) -> str | None:
         """
         Get header value (case-insensitive).
 
@@ -151,7 +151,8 @@ class MockRequest:
             return self.body
         if isinstance(self.body, str):
             try:
-                return json.loads(self.body)
+                result: dict[str, Any] | None = json.loads(self.body)
+                return result
             except (json.JSONDecodeError, TypeError):
                 return None
         return None
@@ -402,7 +403,7 @@ class ResponseTemplate:
         self,
         status_code: int = 200,
         body_template: Any = None,
-        headers: dict[str, str] = None,
+        headers: dict[str, str] | None = None,
         delay_ms: int = 0,
     ):
         """
@@ -422,7 +423,7 @@ class ResponseTemplate:
     def generate(
         self,
         request: MockRequest,
-        context: dict[str, Any] = None,
+        context: dict[str, Any] | None = None,
     ) -> MockResponse:
         """
         Generate response from template.
@@ -466,9 +467,9 @@ class ResponseTemplate:
 
             pattern = re.compile(r"\$\{([^}]+)\}")
 
-            def replacer(match):
+            def replacer(match: re.Match[str]) -> str:
                 path = match.group(1).split(".")
-                value = context
+                value: Any = context
                 try:
                     for key in path:
                         value = value[key]
@@ -641,8 +642,8 @@ class MockScenario:
     def __init__(
         self,
         name: str,
-        endpoints: list[dict[str, Any]] = None,
-        initial_state: dict[str, Any] = None,
+        endpoints: list[dict[str, Any]] | None = None,
+        initial_state: dict[str, Any] | None = None,
     ):
         """
         Initialize scenario.
@@ -710,17 +711,17 @@ class ErrorInjector:
         ```
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize error injector."""
         self.error_rules: list[dict[str, Any]] = []
 
     def add_error(
         self,
         error: Exception,
-        method: str = None,
-        path_pattern: str = None,
+        method: str | None = None,
+        path_pattern: str | None = None,
         probability: float = 1.0,
-        predicate: RequestPredicate = None,
+        predicate: RequestPredicate | None = None,
     ) -> None:
         """
         Add error injection rule.
@@ -769,7 +770,8 @@ class ErrorInjector:
 
             # Check probability
             if random.random() <= rule["probability"]:
-                return rule["error"]
+                error: Exception = rule["error"]
+                return error
 
         return None
 
@@ -794,16 +796,16 @@ class ResponseDelaySimulator:
         ```
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize delay simulator."""
         self.delay_rules: list[dict[str, Any]] = []
 
     def add_delay(
         self,
         delay_ms: int,
-        method: str = None,
-        path_pattern: str = None,
-        predicate: RequestPredicate = None,
+        method: str | None = None,
+        path_pattern: str | None = None,
+        predicate: RequestPredicate | None = None,
     ) -> None:
         """
         Add delay rule.
@@ -887,10 +889,10 @@ class MockVerifier:
     def assert_called(
         self,
         path: str,
-        method: str = None,
-        times: int = None,
-        at_least: int = None,
-        at_most: int = None,
+        method: str | None = None,
+        times: int | None = None,
+        at_least: int | None = None,
+        at_most: int | None = None,
     ) -> None:
         """
         Assert endpoint was called.
@@ -924,10 +926,10 @@ class MockVerifier:
     def assert_called_with(
         self,
         path: str,
-        method: str = None,
-        headers: dict[str, str] = None,
-        query_params: dict[str, Any] = None,
-        body_contains: dict[str, Any] = None,
+        method: str | None = None,
+        headers: dict[str, str] | None = None,
+        query_params: dict[str, Any] | None = None,
+        body_contains: dict[str, Any] | None = None,
     ) -> None:
         """
         Assert endpoint was called with specific parameters.
@@ -978,7 +980,7 @@ class MockVerifier:
         # No matching request
         raise AssertionError(f"No matching request found for {method} {path}")
 
-    def assert_not_called(self, path: str, method: str = None) -> None:
+    def assert_not_called(self, path: str, method: str | None = None) -> None:
         """
         Assert endpoint was not called.
 
@@ -1037,7 +1039,7 @@ class MockServer:
         ```
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize mock server."""
         self.endpoints: list[MockEndpoint] = []
         self.recorded_requests: list[MockRequest] = []
@@ -1053,18 +1055,18 @@ class MockServer:
     def register(
         self,
         method: str,
-        path: str = None,
-        path_pattern: str = None,
+        path: str | None = None,
+        path_pattern: str | None = None,
         response: Any = None,
-        response_fn: DynamicResponseFn = None,
-        template: ResponseTemplate = None,
+        response_fn: DynamicResponseFn | None = None,
+        template: ResponseTemplate | None = None,
         status_code: int = 200,
-        headers: dict[str, str] = None,
+        headers: dict[str, str] | None = None,
         delay_ms: int = 0,
-        error: Exception = None,
+        error: Exception | None = None,
         stateful: bool = False,
-        responses: list[MockResponse] = None,
-        predicate: RequestPredicate = None,
+        responses: list[MockResponse] | None = None,
+        predicate: RequestPredicate | None = None,
     ) -> MockEndpoint:
         """
         Register a mock endpoint.
@@ -1125,8 +1127,8 @@ class MockServer:
         self,
         method: str,
         path: str,
-        query_params: dict[str, Any] = None,
-        headers: dict[str, str] = None,
+        query_params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
         body: Any = None,
     ) -> MockResponse:
         """
@@ -1188,9 +1190,9 @@ class MockServer:
 
     def get_requests(
         self,
-        method: str = None,
-        path: str = None,
-        path_pattern: str = None,
+        method: str | None = None,
+        path: str | None = None,
+        path_pattern: str | None = None,
     ) -> list[MockRequest]:
         """
         Get recorded requests matching criteria.
@@ -1219,8 +1221,8 @@ class MockServer:
 
     def get_last_request(
         self,
-        method: str = None,
-        path: str = None,
+        method: str | None = None,
+        path: str | None = None,
     ) -> MockRequest | None:
         """
         Get most recent request matching criteria.
@@ -1238,8 +1240,8 @@ class MockServer:
     def verify_request_count(
         self,
         expected: int,
-        method: str = None,
-        path: str = None,
+        method: str | None = None,
+        path: str | None = None,
     ) -> bool:
         """
         Verify number of requests matching criteria.
@@ -1296,8 +1298,8 @@ class MockServer:
     def inject_error(
         self,
         error: Exception,
-        method: str = None,
-        path_pattern: str = None,
+        method: str | None = None,
+        path_pattern: str | None = None,
         probability: float = 1.0,
     ) -> None:
         """
@@ -1319,8 +1321,8 @@ class MockServer:
     def simulate_delay(
         self,
         delay_ms: int,
-        method: str = None,
-        path_pattern: str = None,
+        method: str | None = None,
+        path_pattern: str | None = None,
     ) -> None:
         """
         Simulate response delay for matching requests.
@@ -1361,7 +1363,7 @@ class MockServerContext:
         ```
     """
 
-    def __init__(self, server: MockServer = None):
+    def __init__(self, server: MockServer | None = None) -> None:
         """
         Initialize context.
 
@@ -1374,6 +1376,11 @@ class MockServerContext:
         """Enter context and return server."""
         return self.server
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
         """Exit context and reset server."""
         self.server.reset()

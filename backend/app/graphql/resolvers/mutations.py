@@ -1,6 +1,7 @@
 """GraphQL mutation resolvers."""
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 import strawberry
@@ -26,7 +27,7 @@ WRITE_ROLES = {"admin", "coordinator", "faculty"}
 DELETE_ROLES = {"admin", "coordinator"}
 
 
-def _check_write_permission(info) -> None:
+def _check_write_permission(info: Any) -> None:
     """Check if user has permission to create/update records."""
     user = info.context.get("user")
     role = info.context.get("user_role")
@@ -38,7 +39,7 @@ def _check_write_permission(info) -> None:
         raise Exception(f"Permission denied: Role '{role}' cannot modify records")
 
 
-def _check_delete_permission(info) -> None:
+def _check_delete_permission(info: Any) -> None:
     """Check if user has permission to delete records."""
     user = info.context.get("user")
     role = info.context.get("user_role")
@@ -55,7 +56,7 @@ class Mutation:
     """Root mutation type."""
 
     @strawberry.mutation
-    def create_person(self, info, input: PersonCreateInput) -> Person:
+    def create_person(self, info: Any, input: PersonCreateInput) -> Person:
         """
         Create a new person (resident or faculty).
 
@@ -96,7 +97,7 @@ class Mutation:
     @strawberry.mutation
     def update_person(
         self,
-        info,
+        info: Any,
         id: strawberry.ID,
         input: PersonUpdateInput,
     ) -> Person | None:
@@ -118,25 +119,25 @@ class Mutation:
 
         # Update fields
         if input.name is not None:
-            db_person.name = input.name
+            db_person.name = input.name  # type: ignore[assignment]
         if input.email is not None:
-            db_person.email = input.email
+            db_person.email = input.email  # type: ignore[assignment]
         if input.pgy_level is not None:
             if input.pgy_level < 1 or input.pgy_level > 3:
                 raise ValueError("pgy_level must be between 1 and 3")
-            db_person.pgy_level = input.pgy_level
+            db_person.pgy_level = input.pgy_level  # type: ignore[assignment]
         if input.target_clinical_blocks is not None:
-            db_person.target_clinical_blocks = input.target_clinical_blocks
+            db_person.target_clinical_blocks = input.target_clinical_blocks  # type: ignore[assignment]
         if input.performs_procedures is not None:
-            db_person.performs_procedures = input.performs_procedures
+            db_person.performs_procedures = input.performs_procedures  # type: ignore[assignment]
         if input.specialties is not None:
-            db_person.specialties = input.specialties
+            db_person.specialties = input.specialties  # type: ignore[assignment]
         if input.primary_duty is not None:
-            db_person.primary_duty = input.primary_duty
+            db_person.primary_duty = input.primary_duty  # type: ignore[assignment]
         if input.faculty_role is not None:
-            db_person.faculty_role = input.faculty_role.value
+            db_person.faculty_role = input.faculty_role.value  # type: ignore[assignment]
 
-        db_person.updated_at = datetime.utcnow()
+        db_person.updated_at = datetime.utcnow()  # type: ignore[assignment]
 
         db.commit()
         db.refresh(db_person)
@@ -144,7 +145,7 @@ class Mutation:
         return person_from_db(db_person)
 
     @strawberry.mutation
-    def delete_person(self, info, id: strawberry.ID) -> bool:
+    def delete_person(self, info: Any, id: strawberry.ID) -> bool:
         """
         Delete a person.
 
@@ -170,7 +171,7 @@ class Mutation:
     @strawberry.mutation
     def create_assignment(
         self,
-        info,
+        info: Any,
         input: AssignmentCreateInput,
     ) -> Assignment:
         """
@@ -211,7 +212,7 @@ class Mutation:
     @strawberry.mutation
     def update_assignment(
         self,
-        info,
+        info: Any,
         id: strawberry.ID,
         input: AssignmentUpdateInput,
     ) -> Assignment | None:
@@ -235,19 +236,19 @@ class Mutation:
 
         # Update fields
         if input.rotation_template_id is not None:
-            db_assignment.rotation_template_id = UUID(input.rotation_template_id)
+            db_assignment.rotation_template_id = UUID(input.rotation_template_id)  # type: ignore[assignment]
         if input.role is not None:
-            db_assignment.role = input.role.value
+            db_assignment.role = input.role.value  # type: ignore[assignment]
         if input.activity_override is not None:
-            db_assignment.activity_override = input.activity_override
+            db_assignment.activity_override = input.activity_override  # type: ignore[assignment]
         if input.notes is not None:
-            db_assignment.notes = input.notes
+            db_assignment.notes = input.notes  # type: ignore[assignment]
         if input.override_reason is not None:
-            db_assignment.override_reason = input.override_reason
+            db_assignment.override_reason = input.override_reason  # type: ignore[assignment]
         if input.acknowledge_override:
-            db_assignment.override_acknowledged_at = datetime.utcnow()
+            db_assignment.override_acknowledged_at = datetime.utcnow()  # type: ignore[assignment]
 
-        db_assignment.updated_at = datetime.utcnow()
+        db_assignment.updated_at = datetime.utcnow()  # type: ignore[assignment]
 
         db.commit()
         db.refresh(db_assignment)
@@ -255,7 +256,7 @@ class Mutation:
         return assignment_from_db(db_assignment)
 
     @strawberry.mutation
-    def delete_assignment(self, info, id: strawberry.ID) -> bool:
+    def delete_assignment(self, info: Any, id: strawberry.ID) -> bool:
         """
         Delete an assignment.
 
@@ -282,7 +283,7 @@ class Mutation:
     @strawberry.mutation
     def batch_create_assignments(
         self,
-        info,
+        info: Any,
         inputs: list[AssignmentCreateInput],
     ) -> list[Assignment]:
         """

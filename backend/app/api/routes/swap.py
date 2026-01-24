@@ -75,7 +75,7 @@ async def execute_swap(
     request: SwapExecuteRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> SwapExecuteResponse:
     """
     Execute an FMIT swap between two faculty members.
 
@@ -174,7 +174,7 @@ async def validate_swap(
     request: SwapExecuteRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> SwapValidationResult:
     """
     Validate a proposed swap without executing it.
 
@@ -207,7 +207,7 @@ async def get_swap_history(
     page_size: int = 20,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> SwapHistoryResponse:
     """
     Get swap history with optional filters.
 
@@ -299,7 +299,7 @@ async def get_swap(
     swap_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> SwapRecordResponse:
     """
     Get a specific swap record by ID.
 

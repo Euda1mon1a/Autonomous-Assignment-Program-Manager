@@ -79,7 +79,7 @@ def get_redis_client() -> redis.Redis:
 async def get_rate_limit_status(
     current_user: User = Depends(get_current_active_user),
     redis_client: redis.Redis = Depends(get_redis_client),
-):
+) -> RateLimitStatus:
     """
     Get current rate limit status for the authenticated user.
 
@@ -214,7 +214,7 @@ async def get_rate_limit_status(
 @router.get("/tiers", response_model=AllTiersResponse)
 async def get_all_tiers(
     current_user: User = Depends(get_current_active_user),
-):
+) -> AllTiersResponse:
     """
     Get information about all rate limit tiers.
 
@@ -278,7 +278,7 @@ async def get_all_tiers(
 @router.get("/endpoints", response_model=EndpointLimitsResponse)
 async def get_endpoint_limits(
     current_user: User = Depends(get_current_active_user),
-):
+) -> EndpointLimitsResponse:
     """
     Get endpoint-specific rate limits.
 
@@ -341,7 +341,7 @@ async def set_custom_user_limit(
     request: CustomLimitRequest,
     current_user: User = Depends(get_admin_user),
     redis_client: redis.Redis = Depends(get_redis_client),
-):
+) -> CustomLimitResponse:
     """
     Set custom rate limit for a specific user (admin only).
 

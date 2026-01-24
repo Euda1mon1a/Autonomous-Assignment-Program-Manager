@@ -94,7 +94,7 @@ async def generate_schedule(
         "If the same key is sent with identical parameters, "
         "the cached result will be returned.",
     ),
-):
+) -> ScheduleResponse:
     """
     Generate schedule for a date range. Requires authentication.
 
@@ -367,7 +367,7 @@ async def validate_schedule(
     start_date: str,
     end_date: str,
     db: Session = Depends(get_db),
-):
+) -> ValidationResult:
     """
     Validate current schedule for ACGME compliance.
 
@@ -397,7 +397,7 @@ async def handle_emergency_coverage(
     request: EmergencyRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> EmergencyResponse:
     """
     Handle emergency absence and find replacement coverage. Requires authentication.
 
@@ -506,7 +506,7 @@ async def analyze_imported_schedules(
         description='JSON mapping of specialty to providers, e.g., {"Sports Medicine": ["FAC-SPORTS"]}',
     ),
     db: Session = Depends(get_db),
-):
+) -> ImportAnalysisResponse:
     """
     Import and analyze schedules for conflicts.
 
@@ -737,7 +737,7 @@ async def parse_block_schedule_endpoint(
     include_fmit: bool = Form(True, description="Include FMIT attending schedule"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BlockParseResponse:
     """
     Parse a specific block schedule from an Excel file.
 
@@ -871,7 +871,7 @@ async def find_swap_candidates(
     request_json: str = Form(..., description="SwapFinderRequest as JSON string"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> SwapFinderResponse:
     """
     Find swap candidates for an FMIT week.
 
@@ -1031,7 +1031,7 @@ async def find_swap_candidates_json(
     request: SwapCandidateJsonRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> SwapCandidateJsonResponse:
     """
     Find swap candidates using JSON input (no file upload required).
 
@@ -1355,7 +1355,7 @@ async def list_schedule_runs(
     status: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> ScheduleRunsResponse:
     """List schedule generation runs with pagination."""
     from app.models.schedule_run import ScheduleRun
 
@@ -1387,7 +1387,7 @@ async def get_schedule_run(
     run_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> ScheduleRunRead:
     """Get details of a specific schedule run."""
     from app.models.schedule_run import ScheduleRun
 
@@ -1404,7 +1404,7 @@ async def get_schedule_run(
 async def list_rollback_points(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> list:
     """List available rollback points (applied import batches)."""
     from app.models.import_staging import ImportBatchStatus
     from app.services.import_staging_service import ImportStagingService
@@ -1428,7 +1428,7 @@ async def list_rollback_points(
 @router.get("/sync-metadata", response_model=SyncMetadata)
 async def get_sync_metadata(
     current_user: User = Depends(get_current_active_user),
-):
+) -> SyncMetadata:
     """Get metadata about external system synchronization."""
     from datetime import datetime
 
@@ -1446,7 +1446,7 @@ async def validate_configuration(
     request: ScheduleRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> ValidationResult:
     """Validate a scheduling configuration without generating."""
     validator = ACGMEValidator(db)
     result = validator.validate_all(request.start_date, request.end_date)
@@ -1456,7 +1456,7 @@ async def validate_configuration(
 @router.get("/locks", response_model=list[dict])
 async def list_schedule_locks(
     current_user: User = Depends(get_current_active_user),
-):
+) -> list:
     """List manual assignment locks (stubs for now)."""
     return []
 
@@ -1467,7 +1467,7 @@ async def get_schedule_metrics_summary(
     end_date: str | None = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> dict:
     """Get metrics summary for schedule runs."""
     from datetime import datetime
 
@@ -1484,7 +1484,7 @@ async def get_schedule_metric_trend(
     metric: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> dict:
     """Get trend data for a specific metric."""
     return {"metric": metric, "trends": []}
 
@@ -1492,7 +1492,7 @@ async def get_schedule_metric_trend(
 @router.get("/holidays", response_model=list[dict])
 async def list_emergency_holidays(
     current_user: User = Depends(get_current_active_user),
-):
+) -> list:
     """List emergency holidays/closures (stubs for now)."""
     return []
 
@@ -1506,7 +1506,7 @@ async def list_emergency_holidays(
 async def get_experiment_queue(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> RunQueueResponse:
     """
     Get the current experiment run queue.
 
@@ -1537,7 +1537,7 @@ async def queue_experiment_batch(
     request: QueueBatchRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> list:
     """
     Queue multiple experiment configurations for execution.
 

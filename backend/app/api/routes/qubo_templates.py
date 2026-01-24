@@ -147,7 +147,7 @@ async def optimize_template_selection(
     request: QUBOTemplateOptimizeRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> QUBOTemplateOptimizeResponse:
     """
     Optimize rotation template selection using QUBO.
 
@@ -375,7 +375,7 @@ async def optimize_template_selection(
 @router.get("/status", response_model=QUBOStatusResponse)
 async def get_qubo_status(
     current_user: User = Depends(get_current_active_user),
-):
+) -> QUBOStatusResponse:
     """
     Get status of QUBO template selector.
 
@@ -401,7 +401,7 @@ async def get_qubo_status(
 @router.get("/quantum-advantage", response_model=QuantumAdvantageDocResponse)
 async def get_quantum_advantage_documentation(
     current_user: User = Depends(get_current_active_user),
-):
+) -> QuantumAdvantageDocResponse:
     """
     Get documentation on quantum advantage scenarios.
 

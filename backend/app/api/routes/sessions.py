@@ -30,7 +30,7 @@ router = APIRouter()
 async def get_my_sessions(
     current_user: User = Depends(get_current_active_user),
     session_manager: SessionManager = Depends(get_session_manager),
-):
+) -> SessionListResponse:
     """
     Get all active sessions for the current user.
 
@@ -197,7 +197,7 @@ async def logout_all_my_sessions(
 async def get_session_stats(
     current_user: User = Depends(get_admin_user),
     session_manager: SessionManager = Depends(get_session_manager),
-):
+) -> SessionStats:
     """
     Get session statistics (admin only).
 
@@ -212,7 +212,7 @@ async def get_user_sessions_admin(
     user_id: str,
     current_user: User = Depends(get_admin_user),
     session_manager: SessionManager = Depends(get_session_manager),
-):
+) -> SessionListResponse:
     """
     Get all sessions for a specific user (admin only).
 
