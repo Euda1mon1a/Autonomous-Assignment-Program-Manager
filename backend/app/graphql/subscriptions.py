@@ -189,7 +189,7 @@ class RedisSubscriptionManager:
     - Connection lifecycle
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the subscription manager."""
         self._redis: redis.Redis | None = None
         self._pubsub: redis.client.PubSub | None = None
@@ -295,7 +295,7 @@ class RedisSubscriptionManager:
             logger.error(f"Error publishing message: {e}")
             return 0
 
-    async def close(self):
+    async def close(self) -> None:
         """Close Redis connections."""
         if self._pubsub is not None:
             await self._pubsub.close()
@@ -477,7 +477,7 @@ class Subscription:
     @strawberry.subscription
     async def schedule_updates(
         self,
-        info: Info,
+        info: Info[Any],
         filter: ScheduleSubscriptionFilter | None = None,
     ) -> AsyncGenerator[ScheduleUpdate, None]:
         """
@@ -511,7 +511,7 @@ class Subscription:
             async for message in manager.subscribe(CHANNEL_SCHEDULE_UPDATES):
                 # Apply filters
                 if should_send_schedule_update(message, filter, user_id):
-                    yield ScheduleUpdate(
+                    yield ScheduleUpdate(  # type: ignore[call-arg]
                         schedule_id=(
                             strawberry.ID(message.get("schedule_id"))
                             if message.get("schedule_id")
@@ -545,7 +545,7 @@ class Subscription:
     @strawberry.subscription
     async def assignment_updates(
         self,
-        info: Info,
+        info: Info[Any],
         person_id: strawberry.ID | None = None,
     ) -> AsyncGenerator[AssignmentUpdate, None]:
         """
@@ -580,7 +580,7 @@ class Subscription:
                 if person_id and message.get("person_id") != str(person_id):
                     continue
 
-                yield AssignmentUpdate(
+                yield AssignmentUpdate(  # type: ignore[call-arg]
                     assignment_id=strawberry.ID(message.get("assignment_id", "")),
                     person_id=strawberry.ID(message.get("person_id", "")),
                     block_id=strawberry.ID(message.get("block_id", "")),
@@ -647,7 +647,7 @@ class Subscription:
             async for message in manager.subscribe(CHANNEL_SWAP_REQUESTS):
                 # Apply filters
                 if should_send_swap_notification(message, filter, user_id):
-                    yield SwapNotification(
+                    yield SwapNotification(  # type: ignore[call-arg]
                         swap_id=strawberry.ID(message.get("swap_id", "")),
                         requester_id=strawberry.ID(message.get("requester_id", "")),
                         target_person_id=(
@@ -709,7 +709,7 @@ class Subscription:
             async for message in manager.subscribe(CHANNEL_SWAP_APPROVALS):
                 # Apply filters
                 if should_send_swap_notification(message, filter, user_id):
-                    yield SwapNotification(
+                    yield SwapNotification(  # type: ignore[call-arg]
                         swap_id=strawberry.ID(message.get("swap_id", "")),
                         requester_id=strawberry.ID(message.get("requester_id", "")),
                         target_person_id=(
@@ -778,7 +778,7 @@ class Subscription:
             async for message in manager.subscribe(CHANNEL_CONFLICT_ALERTS):
                 # Apply filters
                 if should_send_conflict_notification(message, filter, user_id):
-                    yield ConflictNotification(
+                    yield ConflictNotification(  # type: ignore[call-arg]
                         conflict_id=(
                             strawberry.ID(message.get("conflict_id"))
                             if message.get("conflict_id")
@@ -837,7 +837,7 @@ class Subscription:
 
         try:
             async for message in manager.subscribe(CHANNEL_RESILIENCE_ALERTS):
-                yield ResilienceNotification(
+                yield ResilienceNotification(  # type: ignore[call-arg]
                     alert_type=message.get("alert_type", ""),
                     severity=message.get("severity", ""),
                     current_utilization=message.get("current_utilization"),
@@ -899,7 +899,7 @@ class Subscription:
 
         try:
             async for message in manager.subscribe(CHANNEL_USER_PRESENCE):
-                yield UserPresenceUpdate(
+                yield UserPresenceUpdate(  # type: ignore[call-arg]
                     user_id=strawberry.ID(message.get("user_id", "")),
                     status=message.get("status", ""),
                     last_seen=datetime.fromisoformat(
@@ -961,7 +961,7 @@ class Subscription:
         try:
             while True:
                 now = datetime.utcnow()
-                yield HeartbeatResponse(
+                yield HeartbeatResponse(  # type: ignore[call-arg]
                     timestamp=now,
                     server_time=now,
                     connection_id=connection_id,
@@ -986,7 +986,7 @@ async def broadcast_schedule_update(
     update_type: str = "",
     affected_blocks_count: int = 0,
     message: str = "",
-):
+) -> None:
     """
     Broadcast a schedule update to all subscribers.
 
@@ -1021,7 +1021,7 @@ async def broadcast_assignment_update(
     change_type: str = "",
     changed_by: UUID | None = None,
     message: str = "",
-):
+) -> None:
     """
     Broadcast an assignment update to all subscribers.
 
@@ -1059,7 +1059,7 @@ async def broadcast_swap_request(
     swap_type: str = "",
     affected_assignments: list[UUID] | None = None,
     message: str = "",
-):
+) -> None:
     """
     Broadcast a swap request notification.
 
@@ -1095,7 +1095,7 @@ async def broadcast_swap_approval(
     approved_by: UUID | None = None,
     affected_assignments: list[UUID] | None = None,
     message: str = "",
-):
+) -> None:
     """
     Broadcast a swap approval notification.
 
@@ -1132,7 +1132,7 @@ async def broadcast_conflict_alert(
     affected_blocks: list[UUID] | None = None,
     conflict_id: UUID | None = None,
     message: str = "",
-):
+) -> None:
     """
     Broadcast a conflict alert notification.
 
@@ -1167,7 +1167,7 @@ async def broadcast_resilience_alert(
     defense_level: str | None = None,
     affected_persons: list[UUID] | None = None,
     recommendations: list[str] | None = None,
-):
+) -> None:
     """
     Broadcast a resilience system alert.
 

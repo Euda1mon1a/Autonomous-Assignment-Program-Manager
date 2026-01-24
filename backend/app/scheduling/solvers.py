@@ -87,12 +87,12 @@ class SolverResult:
         objective_value: float = 0.0,
         runtime_seconds: float = 0.0,
         solver_status: str = "",
-        statistics: dict = None,
-        explanations: dict = None,  # person_id, block_id -> DecisionExplanation
-        random_seed: int = None,
-        call_assignments: list[
-            tuple[UUID, UUID, str]
-        ] = None,  # (person_id, block_id, call_type)
+        statistics: dict[Any, Any] | None = None,
+        explanations: dict[Any, Any]
+        | None = None,  # person_id, block_id -> DecisionExplanation
+        random_seed: int | None = None,
+        call_assignments: list[tuple[UUID, UUID, str]]
+        | None = None,  # (person_id, block_id, call_type)
     ) -> None:
         self.success = success
         self.assignments = assignments
@@ -135,7 +135,7 @@ class BaseSolver(ABC):
     def solve(
         self,
         context: SchedulingContext,
-        existing_assignments: list[Assignment] = None,
+        existing_assignments: list[Assignment] | None = None,
     ) -> SolverResult:
         """
         Solve the scheduling problem.
@@ -209,7 +209,7 @@ class PuLPSolver(BaseSolver):
     def solve(
         self,
         context: SchedulingContext,
-        existing_assignments: list[Assignment] = None,
+        existing_assignments: list[Assignment] | None = None,
     ) -> SolverResult:
         """Solve using PuLP linear programming."""
         try:
@@ -759,7 +759,7 @@ class CPSATSolver(BaseSolver):
     def solve(
         self,
         context: SchedulingContext,
-        existing_assignments: list[Assignment] = None,
+        existing_assignments: list[Assignment] | None = None,
     ) -> SolverResult:
         """
         Solve scheduling problem using Google OR-Tools CP-SAT solver.
@@ -1302,7 +1302,7 @@ class HybridSolver(BaseSolver):
     def solve(
         self,
         context: SchedulingContext,
-        existing_assignments: list[Assignment] = None,
+        existing_assignments: list[Assignment] | None = None,
     ) -> SolverResult:
         """Solve using hybrid approach."""
         start_time = time.time()
@@ -1373,7 +1373,7 @@ class GreedySolver(BaseSolver):
     def solve(
         self,
         context: SchedulingContext,
-        existing_assignments: list[Assignment] = None,
+        existing_assignments: list[Assignment] | None = None,
     ) -> SolverResult:
         """
         Solve scheduling problem using greedy heuristic algorithm with explainability.

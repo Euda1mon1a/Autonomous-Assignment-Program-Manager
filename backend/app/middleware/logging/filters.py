@@ -169,7 +169,7 @@ class SensitiveDataFilter:
         if not isinstance(data, dict):
             return data
 
-        filtered = {}
+        filtered: dict[str, Any] = {}
         for key, value in data.items():
             # Check if field name is sensitive
             is_sensitive = key.lower() in self.sensitive_fields
@@ -198,7 +198,7 @@ class SensitiveDataFilter:
 
     def _filter_list(self, data: list[Any]) -> list[Any]:
         """Filter sensitive data from list items."""
-        filtered = []
+        filtered: list[Any] = []
         for item in data:
             if isinstance(item, dict):
                 filtered.append(self.filter_dict(item, recursive=True))

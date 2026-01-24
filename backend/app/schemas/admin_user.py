@@ -6,9 +6,10 @@ account locking, activity logging, and bulk operations.
 
 from datetime import datetime
 from enum import Enum
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ValidationInfo
 
 
 class UserRole(str, Enum):
@@ -79,7 +80,7 @@ class AdminUserCreate(AdminUserBase):
 
     @field_validator("username", mode="before")
     @classmethod
-    def set_username_from_email(cls, v: str | None, info) -> str | None:
+    def set_username_from_email(cls, v: str | None, info: ValidationInfo) -> str | None:
         """If username not provided, it will be derived from email."""
         return v
 

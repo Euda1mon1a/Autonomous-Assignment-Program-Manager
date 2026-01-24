@@ -9,9 +9,9 @@ from pydantic import BaseModel, Field, HttpUrl, field_validator
 class OAuth2ClientCreate(BaseModel):
     """Request to create a new OAuth2 client."""
 
-    client_name: str = Field(..., min_length=1, max_length=255)
+    client_name: str = Field(min_length=1, max_length=255)
     client_uri: HttpUrl | None = None
-    redirect_uris: list[str] = Field(..., min_items=1)
+    redirect_uris: list[str] = Field(min_items=1)
     scope: str | None = None
 
     @field_validator("redirect_uris")

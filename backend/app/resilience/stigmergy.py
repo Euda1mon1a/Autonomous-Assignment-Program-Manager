@@ -27,7 +27,7 @@ import statistics
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
@@ -300,11 +300,11 @@ class StigmergicScheduler:
         self,
         faculty_id: UUID,
         trail_type: TrailType,
-        slot_id: UUID = None,
-        slot_type: str = None,
-        block_type: str = None,
-        service_type: str = None,
-        target_faculty_id: UUID = None,
+        slot_id: UUID | None = None,
+        slot_type: str | None = None,
+        block_type: str | None = None,
+        service_type: str | None = None,
+        target_faculty_id: UUID | None = None,
         strength: float = 0.5,
     ) -> PreferenceTrail:
         """
@@ -365,11 +365,11 @@ class StigmergicScheduler:
         self,
         faculty_id: UUID,
         signal_type: SignalType,
-        slot_id: UUID = None,
-        slot_type: str = None,
-        target_faculty_id: UUID = None,
-        strength_change: float = None,
-    ):
+        slot_id: UUID | None = None,
+        slot_type: str | None = None,
+        target_faculty_id: UUID | None = None,
+        strength_change: float | None = None,
+    ) -> None:
         """
         Record a behavioral signal that updates trails.
 
@@ -435,7 +435,7 @@ class StigmergicScheduler:
         else:
             trail.weaken(signal_type, amount)
 
-    def evaporate_trails(self, force: bool = False):
+    def evaporate_trails(self, force: bool = False) -> None:
         """
         Apply evaporation to all trails.
 
@@ -465,8 +465,8 @@ class StigmergicScheduler:
 
     def get_collective_preference(
         self,
-        slot_type: str = None,
-        slot_id: UUID = None,
+        slot_type: str | None = None,
+        slot_id: UUID | None = None,
     ) -> CollectivePreference | None:
         """
         Get aggregated preference for a slot or slot type.
@@ -541,7 +541,7 @@ class StigmergicScheduler:
     def get_faculty_preferences(
         self,
         faculty_id: UUID,
-        trail_type: TrailType = None,
+        trail_type: TrailType | None = None,
         min_strength: float = 0.1,
     ) -> list[PreferenceTrail]:
         """
@@ -723,7 +723,7 @@ class StigmergicScheduler:
         self.evaporate_trails()
 
         # Count trails
-        trails_by_type = {}
+        trails_by_type: dict[str, int] = {}
         active_count = 0
         strengths = []
         ages = []
@@ -797,11 +797,11 @@ class StigmergicScheduler:
         self,
         faculty_id: UUID,
         trail_type: TrailType,
-        slot_id: UUID = None,
-        slot_type: str = None,
-        block_type: str = None,
-        service_type: str = None,
-        target_faculty_id: UUID = None,
+        slot_id: UUID | None = None,
+        slot_type: str | None = None,
+        block_type: str | None = None,
+        service_type: str | None = None,
+        target_faculty_id: UUID | None = None,
     ) -> PreferenceTrail | None:
         """Find an existing trail matching the criteria."""
         trail_ids = self._trails_by_faculty.get(faculty_id, [])
@@ -834,7 +834,7 @@ class StigmergicScheduler:
 
         return None
 
-    def _index_trail(self, trail: PreferenceTrail):
+    def _index_trail(self, trail: PreferenceTrail) -> None:
         """Add trail to indexes."""
         # By faculty
         if trail.faculty_id not in self._trails_by_faculty:

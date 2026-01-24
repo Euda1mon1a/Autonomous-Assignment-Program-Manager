@@ -6,7 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from app.schemas.procedure import ProcedureSummary
-from app.validators.date_validators import validate_date_range
+from app.validators.date_validators import validate_date_not_null
 
 
 class CredentialBase(BaseModel):

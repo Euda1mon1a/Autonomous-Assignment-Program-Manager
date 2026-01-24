@@ -19,9 +19,9 @@ class FuzzyMatchAlgorithm(str):
 class FuzzyMatchRequest(BaseModel):
     """Request schema for fuzzy matching."""
 
-    query: str = Field(..., min_length=1, max_length=500, description="Text to match")
+    query: str = Field(min_length=1, max_length=500, description="Text to match")
     candidates: list[str] = Field(
-        ..., min_items=1, description="List of candidate strings to match against"
+        min_items=1, description="List of candidate strings to match against"
     )
     algorithm: str = Field(
         default=FuzzyMatchAlgorithm.COMBINED,
@@ -157,9 +157,7 @@ class NameMatchResponse(BaseModel):
 class DeduplicationRequest(BaseModel):
     """Request schema for fuzzy deduplication."""
 
-    items: list[str] = Field(
-        ..., min_items=1, description="List of items to deduplicate"
-    )
+    items: list[str] = Field(min_items=1, description="List of items to deduplicate")
     threshold: float = Field(
         default=0.85,
         ge=0.0,
@@ -223,10 +221,10 @@ class BatchFuzzyMatchRequest(BaseModel):
     """Request schema for batch fuzzy matching."""
 
     queries: list[str] = Field(
-        ..., min_items=1, max_items=1000, description="List of queries to match"
+        min_items=1, max_items=1000, description="List of queries to match"
     )
     candidates: list[str] = Field(
-        ..., min_items=1, description="List of candidates to match against"
+        min_items=1, description="List of candidates to match against"
     )
     algorithm: str = Field(
         default=FuzzyMatchAlgorithm.COMBINED, description="Algorithm to use"

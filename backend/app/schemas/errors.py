@@ -18,21 +18,21 @@ class ErrorDetail(BaseModel):
 
     field: str = Field(
         description="Field name that caused the error",
-        example="email",
+        examples=["email"],
     )
     message: str = Field(
         description="Error message for this field",
-        example="Invalid email format",
+        examples=["Invalid email format"],
     )
     type: str | None = Field(
         default=None,
         description="Error type (for validation errors)",
-        example="value_error.email",
+        examples=["value_error.email"],
     )
     location: str | None = Field(
         default=None,
         description="Location of the error (body, query, path, header)",
-        example="body",
+        examples=["body"],
     )
 
     model_config = ConfigDict(
@@ -52,37 +52,39 @@ class ErrorResponse(BaseModel):
 
     type: str = Field(
         description="URI reference identifying the problem type",
-        example="https://api.residency-scheduler.example.com/errors/validation-error",
+        examples=[
+            "https://api.residency-scheduler.example.com/errors/validation-error"
+        ],
     )
     title: str = Field(
         description="Short, human-readable summary of the problem type",
-        example="Validation Failed",
+        examples=["Validation Failed"],
     )
     status: int = Field(
         description="HTTP status code",
-        example=422,
+        examples=[422],
         ge=100,
         le=599,
     )
     detail: str = Field(
         description="Human-readable explanation specific to this occurrence",
-        example="The request contains invalid data",
+        examples=["The request contains invalid data"],
     )
     instance: str = Field(
         description="URI reference identifying the specific occurrence",
-        example="/api/v1/users",
+        examples=["/api/v1/users"],
     )
     error_code: ErrorCode = Field(
         description="Machine-readable error code",
-        example="VALIDATION_ERROR",
+        examples=["VALIDATION_ERROR"],
     )
     error_id: str = Field(
         description="Unique identifier for this error occurrence",
-        example="550e8400-e29b-41d4-a716-446655440000",
+        examples=["550e8400-e29b-41d4-a716-446655440000"],
     )
     timestamp: str = Field(
         description="ISO 8601 timestamp of error occurrence",
-        example="2025-12-31T10:30:00Z",
+        examples=["2025-12-31T10:30:00Z"],
     )
 
     model_config = ConfigDict(
@@ -106,20 +108,20 @@ class ValidationErrorResponse(ErrorResponse):
 
     errors: list[ErrorDetail] = Field(
         description="List of validation errors",
-        example=[
-            {
-                "field": "email",
-                "message": "Invalid email format",
-                "type": "value_error.email",
-                "location": "body",
-            }
+        examples=[
+            [
+                {
+                    "field": "email",
+                    "message": "Invalid email format",
+                    "type": "value_error.email",
+                    "location": "body",
+                }
+            ]
         ],
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "type": "https://api.residency-scheduler.example.com/errors/validation-error",
                 "title": "Validation Failed",
@@ -145,6 +147,7 @@ class ValidationErrorResponse(ErrorResponse):
                 ],
             }
         }
+    )
 
 
 class ACGMEViolationDetail(BaseModel):
@@ -187,10 +190,8 @@ class ACGMEComplianceErrorResponse(ErrorResponse):
         description="Details of the ACGME compliance violation",
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "type": "https://api.residency-scheduler.example.com/errors/work-hour-violation",
                 "title": "ACGME Work Hour Violation",
@@ -210,6 +211,7 @@ class ACGMEComplianceErrorResponse(ErrorResponse):
                 },
             }
         }
+    )
 
 
 class ScheduleConflictDetail(BaseModel):
@@ -240,10 +242,8 @@ class ScheduleConflictErrorResponse(ErrorResponse):
         description="Details of the schedule conflict",
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "type": "https://api.residency-scheduler.example.com/errors/schedule-conflict",
                 "title": "Schedule Conflict",
@@ -261,6 +261,7 @@ class ScheduleConflictErrorResponse(ErrorResponse):
                 },
             }
         }
+    )
 
 
 class RateLimitErrorResponse(ErrorResponse):
@@ -268,21 +269,19 @@ class RateLimitErrorResponse(ErrorResponse):
 
     limit: int = Field(
         description="Rate limit (requests per window)",
-        example=100,
+        examples=[100],
     )
     window_seconds: int = Field(
         description="Time window in seconds",
-        example=60,
+        examples=[60],
     )
     retry_after: int = Field(
         description="Seconds until rate limit resets",
-        example=45,
+        examples=[45],
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "type": "https://api.residency-scheduler.example.com/errors/rate-limit-exceeded",
                 "title": "Rate Limit Exceeded",
@@ -297,6 +296,7 @@ class RateLimitErrorResponse(ErrorResponse):
                 "retry_after": 45,
             }
         }
+    )
 
 
 class ErrorResponseWithSuggestions(ErrorResponse):
@@ -304,16 +304,16 @@ class ErrorResponseWithSuggestions(ErrorResponse):
 
     suggestions: list[str] = Field(
         description="Suggested actions to resolve the error",
-        example=[
-            "Check that all required fields are provided",
-            "Ensure the email format is valid",
+        examples=[
+            [
+                "Check that all required fields are provided",
+                "Ensure the email format is valid",
+            ]
         ],
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "type": "https://api.residency-scheduler.example.com/errors/validation-error",
                 "title": "Validation Failed",
@@ -330,6 +330,7 @@ class ErrorResponseWithSuggestions(ErrorResponse):
                 ],
             }
         }
+    )
 
 
 class MultiErrorResponse(BaseModel):
@@ -343,13 +344,11 @@ class MultiErrorResponse(BaseModel):
     )
     timestamp: str = Field(
         description="ISO 8601 timestamp",
-        example="2025-12-31T10:30:00Z",
+        examples=["2025-12-31T10:30:00Z"],
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "errors": [
                     {
@@ -377,6 +376,7 @@ class MultiErrorResponse(BaseModel):
                 "timestamp": "2025-12-31T10:30:00Z",
             }
         }
+    )
 
 
 # Legacy simple error response (for backwards compatibility)
@@ -385,25 +385,24 @@ class SimpleErrorResponse(BaseModel):
 
     detail: str = Field(
         description="Error message",
-        example="Resource not found",
+        examples=["Resource not found"],
     )
     status_code: int = Field(
         description="HTTP status code",
-        example=404,
+        examples=[404],
     )
     error_code: str | None = Field(
         default=None,
         description="Error code",
-        example="NOT_FOUND",
+        examples=["NOT_FOUND"],
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "detail": "Resource not found",
                 "status_code": 404,
                 "error_code": "NOT_FOUND",
             }
         }
+    )

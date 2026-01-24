@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 import strawberry
 from strawberry.scalars import JSON
@@ -114,9 +115,9 @@ class AssignmentWithWarnings:
     is_compliant: bool
 
 
-def assignment_from_db(db_assignment) -> Assignment:
+def assignment_from_db(db_assignment: Any) -> Assignment:
     """Convert database Assignment model to GraphQL type."""
-    return Assignment(
+    return Assignment(  # type: ignore[call-arg]
         id=strawberry.ID(str(db_assignment.id)),
         block_id=strawberry.ID(str(db_assignment.block_id)),
         person_id=strawberry.ID(str(db_assignment.person_id)),

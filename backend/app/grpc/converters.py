@@ -92,10 +92,10 @@ def timestamp_to_datetime(ts: Timestamp | None) -> datetime | None:
     """
     if ts is None or not ts.seconds:
         return None
-    return ts.ToDatetime()
+    return ts.ToDatetime()  # type: ignore[no-any-return]
 
 
-def pydantic_to_dict(obj: Any, exclude_none: bool = True) -> dict:
+def pydantic_to_dict(obj: Any, exclude_none: bool = True) -> dict[Any, Any]:
     """
     Convert Pydantic model to dict for Protobuf conversion.
 
@@ -108,10 +108,10 @@ def pydantic_to_dict(obj: Any, exclude_none: bool = True) -> dict:
     """
     if hasattr(obj, "model_dump"):
         # Pydantic v2
-        return obj.model_dump(exclude_none=exclude_none)
+        return obj.model_dump(exclude_none=exclude_none)  # type: ignore[no-any-return]
     elif hasattr(obj, "dict"):
         # Pydantic v1
-        return obj.dict(exclude_none=exclude_none)
+        return obj.dict(exclude_none=exclude_none)  # type: ignore[no-any-return]
     else:
         raise TypeError(f"Object {obj} is not a Pydantic model")
 
@@ -175,7 +175,7 @@ class AssignmentConverter:
             "block_id": string_to_uuid(proto_msg.get("block_id", "")),
             "person_id": string_to_uuid(proto_msg.get("person_id", "")),
             "rotation_template_id": string_to_uuid(
-                proto_msg.get("rotation_template_id")
+                proto_msg.get("rotation_template_id", "")
             ),
             "role": proto_msg.get("role", ""),
             "activity_override": proto_msg.get("activity_override") or None,

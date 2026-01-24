@@ -11,7 +11,7 @@ try:
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
-    SentenceTransformer = None  # type: ignore
+    SentenceTransformer = None
 
 
 class EmbeddingService:
@@ -26,17 +26,15 @@ class EmbeddingService:
     EMBEDDING_DIM = 384
 
     @classmethod
-    def get_model(cls) -> Any:  # type: ignore
+    def get_model(cls) -> Any:
         """Lazy load the sentence-transformer model."""
-        from typing import Any
-
         if not SENTENCE_TRANSFORMERS_AVAILABLE:
             raise ImportError(
                 "sentence-transformers not available. "
                 "Install with: pip install sentence-transformers"
             )
         if cls._model is None:
-            cls._model = SentenceTransformer(cls.MODEL_NAME)  # type: ignore
+            cls._model = SentenceTransformer(cls.MODEL_NAME)
         return cls._model
 
     @classmethod
@@ -51,7 +49,7 @@ class EmbeddingService:
         """
         model = cls.get_model()
         embedding = model.encode(text, convert_to_numpy=True)
-        return embedding.tolist()
+        return embedding.tolist()  # type: ignore[no-any-return]
 
     @classmethod
     def embed_batch(cls, texts: list[str]) -> list[list[float]]:

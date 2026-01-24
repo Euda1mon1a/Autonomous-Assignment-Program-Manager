@@ -60,7 +60,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
@@ -195,7 +195,7 @@ class TranscriptionFactor:
     # Conditions for activation
     activation_conditions: dict[str, Any] = field(default_factory=dict)
 
-    def induce(self, signal_strength: float = 1.0):
+    def induce(self, signal_strength: float = 1.0) -> None:
         """
         Induce TF expression in response to a signal.
 
@@ -217,7 +217,7 @@ class TranscriptionFactor:
             f"TF {self.name} induced: {old_level:.2f} -> {self.expression_level:.2f}"
         )
 
-    def decay(self, hours_elapsed: float):
+    def decay(self, hours_elapsed: float) -> None:
         """
         Apply natural decay to TF expression.
 
@@ -503,7 +503,7 @@ class TranscriptionFactorScheduler:
         weights = tfs.get_constraint_weights()
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.transcription_factors: dict[UUID, TranscriptionFactor] = {}
         self.promoters: dict[
             UUID, PromoterArchitecture
@@ -526,7 +526,7 @@ class TranscriptionFactorScheduler:
         # Initialize default TFs
         self._initialize_default_tfs()
 
-    def _initialize_default_tfs(self):
+    def _initialize_default_tfs(self) -> None:
         """Create default transcription factors for common scenarios."""
 
         # Master Regulator: Patient Safety (always active)
@@ -654,7 +654,7 @@ class TranscriptionFactorScheduler:
         activation_strength: float = 1.0,
         repression_strength: float = 0.5,
         half_life_hours: float = 24.0,
-        activation_conditions: dict = None,
+        activation_conditions: dict[str, Any] | None = None,
     ) -> TranscriptionFactor:
         """
         Create a new transcription factor.
@@ -700,7 +700,7 @@ class TranscriptionFactorScheduler:
         tf_id = self._tf_by_name.get(name)
         return self.transcription_factors.get(tf_id) if tf_id else None
 
-    def induce_tf(self, tf_id: UUID, signal_strength: float = 1.0):
+    def induce_tf(self, tf_id: UUID, signal_strength: float = 1.0) -> None:
         """
         Induce a transcription factor.
 
@@ -717,7 +717,7 @@ class TranscriptionFactorScheduler:
 
     def _propagate_cascade(
         self, source_tf_id: UUID, signal_strength: float, depth: int = 0
-    ):
+    ) -> None:
         """Propagate TF induction through cascade."""
         if depth > 5 or signal_strength < 0.1:  # Prevent infinite loops
             return
@@ -732,7 +732,7 @@ class TranscriptionFactorScheduler:
                 target_tf.induce(signal_strength)
                 self._propagate_cascade(target_tf_id, signal_strength * 0.7, depth + 1)
 
-    def decay_all_tfs(self, hours_elapsed: float = 1.0):
+    def decay_all_tfs(self, hours_elapsed: float = 1.0) -> None:
         """Apply decay to all TFs."""
         for tf in self.transcription_factors.values():
             tf.decay(hours_elapsed)
@@ -783,7 +783,7 @@ class TranscriptionFactorScheduler:
         as_activator: bool = True,
         required: bool = False,
         edge_strength: float = 1.0,
-    ):
+    ) -> None:
         """
         Link a TF to regulate a constraint.
 
@@ -846,7 +846,7 @@ class TranscriptionFactorScheduler:
         target_tf_id: UUID,
         as_activator: bool = True,
         edge_strength: float = 1.0,
-    ):
+    ) -> None:
         """
         Link one TF to regulate another (for cascade effects).
 
@@ -894,7 +894,7 @@ class TranscriptionFactorScheduler:
         self,
         event_type: str,
         handler: Callable[[SignalEvent], list[UUID]],
-    ):
+    ) -> None:
         """
         Register a handler for a signal type.
 
@@ -902,7 +902,7 @@ class TranscriptionFactorScheduler:
         """
         self.signal_handlers[event_type] = handler
 
-    def process_signal(self, signal: SignalEvent):
+    def process_signal(self, signal: SignalEvent) -> None:
         """
         Process an incoming signal event.
 
@@ -971,7 +971,7 @@ class TranscriptionFactorScheduler:
 
     def get_constraint_weights(
         self,
-        constraint_ids: list[UUID] = None,
+        constraint_ids: list[UUID] | None = None,
     ) -> dict[UUID, tuple[float, str]]:
         """
         Calculate current constraint weights based on TF states.
@@ -1040,7 +1040,7 @@ class TranscriptionFactorScheduler:
         self,
         constraint_id: UUID,
         state: ChromatinState,
-    ):
+    ) -> None:
         """
         Set the chromatin state for a constraint.
 
@@ -1056,12 +1056,12 @@ class TranscriptionFactorScheduler:
                 f"{old_state.value} -> {state.value}"
             )
 
-    def silence_constraints(self, constraint_ids: list[UUID]):
+    def silence_constraints(self, constraint_ids: list[UUID]) -> None:
         """Silence (completely disable) multiple constraints."""
         for cid in constraint_ids:
             self.set_chromatin_state(cid, ChromatinState.SILENCED)
 
-    def open_constraints(self, constraint_ids: list[UUID]):
+    def open_constraints(self, constraint_ids: list[UUID]) -> None:
         """Re-open silenced constraints."""
         for cid in constraint_ids:
             self.set_chromatin_state(cid, ChromatinState.OPEN)

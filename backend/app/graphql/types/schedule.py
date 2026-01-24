@@ -2,6 +2,7 @@
 
 from datetime import date
 from enum import Enum
+from typing import Any
 
 import strawberry
 
@@ -93,9 +94,9 @@ class ScheduleFilterInput:
     include_holidays: bool = True
 
 
-def block_from_db(db_block) -> Block:
+def block_from_db(db_block: Any) -> Block:
     """Convert database Block model to GraphQL type."""
-    return Block(
+    return Block(  # type: ignore[call-arg]
         id=strawberry.ID(str(db_block.id)),
         date=db_block.date,
         time_of_day=TimeOfDay(db_block.time_of_day),

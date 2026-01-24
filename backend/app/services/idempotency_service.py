@@ -156,11 +156,11 @@ class IdempotencyService:
             response_body: Response body to cache for replay
             response_status_code: HTTP status code of the response
         """
-        request.status = IdempotencyStatus.COMPLETED.value
-        request.completed_at = datetime.utcnow()
-        request.result_ref = result_ref
-        request.response_body = response_body
-        request.response_status_code = str(response_status_code)
+        request.status = IdempotencyStatus.COMPLETED.value  # type: ignore[assignment]
+        request.completed_at = datetime.utcnow()  # type: ignore[assignment]
+        request.result_ref = result_ref  # type: ignore[assignment]
+        request.response_body = response_body  # type: ignore[assignment]
+        request.response_status_code = str(response_status_code)  # type: ignore[assignment]
 
     def mark_failed(
         self,
@@ -178,11 +178,11 @@ class IdempotencyService:
             response_body: Response body to cache for replay
             response_status_code: HTTP status code of the response
         """
-        request.status = IdempotencyStatus.FAILED.value
-        request.completed_at = datetime.utcnow()
-        request.error_message = error_message
-        request.response_body = response_body
-        request.response_status_code = str(response_status_code)
+        request.status = IdempotencyStatus.FAILED.value  # type: ignore[assignment]
+        request.completed_at = datetime.utcnow()  # type: ignore[assignment]
+        request.error_message = error_message  # type: ignore[assignment]
+        request.response_body = response_body  # type: ignore[assignment]
+        request.response_status_code = str(response_status_code)  # type: ignore[assignment]
 
     def cleanup_expired(self, batch_size: int = 1000) -> int:
         """
@@ -241,9 +241,9 @@ class IdempotencyService:
 
         count = 0
         for request in stale_requests:
-            request.status = IdempotencyStatus.FAILED.value
-            request.completed_at = datetime.utcnow()
-            request.error_message = f"Request timed out after {timeout_minutes} minutes"
+            request.status = IdempotencyStatus.FAILED.value  # type: ignore[assignment]
+            request.completed_at = datetime.utcnow()  # type: ignore[assignment]
+            request.error_message = f"Request timed out after {timeout_minutes} minutes"  # type: ignore[assignment]
             count += 1
 
         if count > 0:

@@ -205,7 +205,7 @@ class DataSanitizer:
         if not isinstance(data, dict):
             return data
 
-        sanitized = {}
+        sanitized: dict[str, Any] = {}
 
         for key, value in data.items():
             # Check if field should be redacted by name
@@ -234,7 +234,7 @@ class DataSanitizer:
 
     def _sanitize_list(self, data: list[Any]) -> list[Any]:
         """Sanitize list items."""
-        sanitized = []
+        sanitized: list[Any] = []
 
         for item in data:
             if isinstance(item, dict):

@@ -58,7 +58,7 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db=Depends(get_db),
     _rate_limit: None = Depends(rate_limit_login),
-):
+) -> TokenWithRefresh:
     """
     Authenticate user and return JWT access and refresh tokens.
 
@@ -107,7 +107,7 @@ async def login_json(
     credentials: UserLogin,
     db=Depends(get_db),
     _rate_limit: None = Depends(rate_limit_login),
-):
+) -> TokenWithRefresh:
     """
     Authenticate user with JSON body and return JWT access and refresh tokens.
 
@@ -156,7 +156,7 @@ async def logout(
     current_user: User = Depends(get_current_active_user),
     token: str = Depends(oauth2_scheme),
     db=Depends(get_db),
-):
+) -> dict[str, str]:
     """
     Logout current user by blacklisting their token.
 
@@ -197,7 +197,7 @@ async def refresh_token(
     response: Response,
     request: RefreshTokenRequest,
     db=Depends(get_db),
-):
+) -> TokenWithRefresh:
     """
     Exchange a refresh token for a new access token.
 
@@ -276,7 +276,7 @@ async def refresh_token(
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     current_user: User = Depends(get_current_active_user),
-):
+) -> UserResponse:
     """Get current authenticated user information.
 
     Args:
@@ -297,7 +297,7 @@ async def register_user(
     db=Depends(get_db),
     current_user: User | None = Depends(get_current_user),
     _rate_limit: None = Depends(rate_limit_register),
-):
+) -> UserResponse:
     """Register a new user account.
 
     Args:
@@ -330,7 +330,7 @@ async def register_user(
 async def list_users(
     db=Depends(get_db),
     current_user: User = Depends(get_admin_user),
-):
+) -> list[UserResponse]:
     """List all users in the system.
 
     Args:
@@ -353,7 +353,7 @@ async def list_users(
 @router.post("/initialize-admin")
 async def initialize_admin(
     db=Depends(get_db),
-):
+) -> dict[str, str | int]:
     """
     Initialize database with default admin user if empty.
 

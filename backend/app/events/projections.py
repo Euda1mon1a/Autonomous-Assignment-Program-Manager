@@ -55,12 +55,14 @@ class ProjectionState(Base):
 
     __tablename__ = "projection_state"
 
-    projection_name = Column(String(100), primary_key=True)
-    last_event_sequence = Column(Integer, nullable=False, default=0)
-    last_event_timestamp = Column(DateTime)
-    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    status = Column(String(50), default="active")  # active, rebuilding, paused
-    error_message = Column(Text)
+    projection_name: Column = Column(String(100), primary_key=True)
+    last_event_sequence: Column = Column(Integer, nullable=False, default=0)
+    last_event_timestamp: Column = Column(DateTime)
+    last_updated: Column = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+    status: Column = Column(String(50), default="active")  # active, rebuilding, paused
+    error_message: Column = Column(Text)
 
 
 class ProjectionCheckpoint(Base):
@@ -73,11 +75,11 @@ class ProjectionCheckpoint(Base):
     __tablename__ = "projection_checkpoints"
     __table_args__ = {"extend_existing": True}
 
-    id = Column(GUID(), primary_key=True)
-    projection_name = Column(String(100), nullable=False, index=True)
-    checkpoint_sequence = Column(Integer, nullable=False)
-    checkpoint_data = Column(JSONType())
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id: Column = Column(GUID(), primary_key=True)
+    projection_name: Column = Column(String(100), nullable=False, index=True)
+    checkpoint_sequence: Column = Column(Integer, nullable=False)
+    checkpoint_data: Column = Column(JSONType())
+    created_at: Column = Column(DateTime, default=datetime.utcnow)
 
 
 # =============================================================================
@@ -104,7 +106,7 @@ class EventProjection(ABC):
         self.projection_name = projection_name
         self._load_state()
 
-    def _load_state(self):
+    def _load_state(self) -> None:
         """Load projection state from database."""
         state = (
             self.db.query(ProjectionState)
@@ -113,9 +115,9 @@ class EventProjection(ABC):
         )
 
         if state:
-            self.last_event_sequence = state.last_event_sequence
-            self.last_event_timestamp = state.last_event_timestamp
-            self.status = state.status
+            self.last_event_sequence: int = state.last_event_sequence
+            self.last_event_timestamp: datetime | None = state.last_event_timestamp
+            self.status: str = state.status
         else:
             # Initialize new projection
             self.last_event_sequence = 0
@@ -123,7 +125,7 @@ class EventProjection(ABC):
             self.status = "active"
             self._save_state()
 
-    def _save_state(self):
+    def _save_state(self) -> None:
         """Save projection state to database."""
         state = (
             self.db.query(ProjectionState)
@@ -148,7 +150,7 @@ class EventProjection(ABC):
         self.db.commit()
 
     @abstractmethod
-    async def handle_event(self, event: BaseEvent):
+    async def handle_event(self, event: BaseEvent) -> None:
         """
         Handle an event and update the projection.
 
@@ -157,7 +159,7 @@ class EventProjection(ABC):
         """
         pass
 
-    async def process_event(self, event: BaseEvent, event_sequence: int):
+    async def process_event(self, event: BaseEvent, event_sequence: int) -> None:
         """
         Process an event and update state.
 
@@ -181,7 +183,7 @@ class EventProjection(ABC):
             self._mark_error(str(e))
             raise
 
-    def _mark_error(self, error_message: str):
+    def _mark_error(self, error_message: str) -> None:
         """Mark projection as having an error."""
         state = (
             self.db.query(ProjectionState)
@@ -193,7 +195,7 @@ class EventProjection(ABC):
             state.error_message = error_message
             self.db.commit()
 
-    async def rebuild(self, event_store):
+    async def rebuild(self, event_store) -> None:
         """
         Rebuild projection from event store.
 
@@ -242,7 +244,7 @@ class EventProjection(ABC):
             raise
 
     @abstractmethod
-    async def reset(self):
+    async def reset(self) -> None:
         """Reset projection data (called before rebuild)."""
         pass
 
@@ -263,7 +265,7 @@ class ScheduleProjection(EventProjection):
         super().__init__(db, "schedule_summary")
         self.schedules: dict[str, dict] = {}
 
-    async def handle_event(self, event: BaseEvent):
+    async def handle_event(self, event: BaseEvent) -> None:
         """Handle schedule-related events."""
         if isinstance(event, ScheduleCreatedEvent):
             self.schedules[event.schedule_id] = {
@@ -283,7 +285,7 @@ class ScheduleProjection(EventProjection):
                     event.metadata.timestamp
                 )
 
-    async def reset(self):
+    async def reset(self) -> None:
         """Reset schedule data."""
         self.schedules.clear()
 
@@ -312,7 +314,7 @@ class AssignmentProjection(EventProjection):
         super().__init__(db, "assignment_current_state")
         self.assignments: dict[str, dict] = {}
 
-    async def handle_event(self, event: BaseEvent):
+    async def handle_event(self, event: BaseEvent) -> None:
         """Handle assignment-related events."""
         if isinstance(event, AssignmentCreatedEvent):
             self.assignments[event.assignment_id] = {
@@ -343,7 +345,7 @@ class AssignmentProjection(EventProjection):
                 else:
                     del self.assignments[event.assignment_id]
 
-    async def reset(self):
+    async def reset(self) -> None:
         """Reset assignment data."""
         self.assignments.clear()
 

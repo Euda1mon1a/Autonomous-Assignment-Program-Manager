@@ -24,7 +24,8 @@ router = APIRouter(tags=["metrics"])
 @router.get("", response_model=dict[str, Any])
 async def get_metrics_root() -> dict[str, Any]:
     """Base metrics endpoint for dashboard summary."""
-    return await metrics_summary()
+    result = await metrics_summary()
+    return result if isinstance(result, dict) else {}
 
 
 @router.get(

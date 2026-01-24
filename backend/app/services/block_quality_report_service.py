@@ -140,7 +140,8 @@ class BlockQualityReportService:
             """),
             {"start_date": start_date, "end_date": end_date},
         )
-        sun_thu_count = result.fetchone()[0]
+        row = result.fetchone()
+        sun_thu_count = row[0] if row else 0
 
         # Calculate Fri/Sat count (FMIT-covered)
         result = self.db.execute(
@@ -151,7 +152,8 @@ class BlockQualityReportService:
             """),
             {"start_date": start_date, "end_date": end_date},
         )
-        fri_sat_count = result.fetchone()[0]
+        row = result.fetchone()
+        fri_sat_count = row[0] if row else 0
 
         return CallCoverageSummary(
             sun_thu_count=sun_thu_count,

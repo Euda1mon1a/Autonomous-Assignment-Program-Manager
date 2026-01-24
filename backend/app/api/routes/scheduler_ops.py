@@ -9,15 +9,16 @@ These endpoints are designed to be called by n8n workflows for
 autonomous scheduling operations via Slack commands.
 """
 
+import json
 import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta
 from itertools import islice
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, and_, func
-from sqlalchemy.orm import Session
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_active_user
@@ -45,6 +46,9 @@ from app.schemas.scheduler_ops import (
     TaskMetrics,
     TaskStatus,
 )
+
+if TYPE_CHECKING:
+    from app.resilience.service import ResilienceService
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +212,7 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
     Queries actual task execution history from Redis/Celery result backend.
     Returns most recent tasks with their status, timing, and error information.
     """
-    recent_tasks = []
+    recent_tasks: list[RecentTaskInfo] = []
 
     try:
         import json
@@ -225,7 +229,7 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
         task_keys = redis_client.keys("celery-task-meta-*")
 
         # Parse and collect task information
-        task_data_list = []
+        task_data_list: list[dict[str, Any]] = []
 
         for key in task_keys:
             try:
@@ -233,10 +237,15 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
                 if not task_data:
                     continue
 
-                result = json.loads(task_data)
+                # task_data is bytes from Redis
+                if isinstance(task_data, bytes):
+                    result = json.loads(task_data.decode("utf-8"))
+                else:
+                    result = json.loads(task_data)
 
                 # Extract task ID from key (format: celery-task-meta-<uuid>)
-                task_id = key.decode("utf-8").replace("celery-task-meta-", "")
+                key_str = key.decode("utf-8") if isinstance(key, bytes) else key
+                task_id = key_str.replace("celery-task-meta-", "")
 
                 # Parse task information
                 status_str = result.get("status", "UNKNOWN")
@@ -294,7 +303,8 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
                 )
 
             except (json.JSONDecodeError, Exception) as parse_error:
-                logger.debug(f"Error parsing task key {key}: {parse_error}")
+                key_str = key.decode("utf-8") if isinstance(key, bytes) else key
+                logger.debug(f"Error parsing task key {key_str}: {parse_error}")
                 continue
 
         # Sort by completion time (most recent first)
@@ -312,8 +322,8 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
             )
         )
 
-        # Parse and collect task information
-        task_data_list = []
+        # Clear the list for the second iteration
+        task_data_list.clear()
 
         for key in task_keys:
             try:
@@ -321,10 +331,15 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
                 if not task_data:
                     continue
 
-                result = json.loads(task_data)
+                # task_data is bytes from Redis
+                if isinstance(task_data, bytes):
+                    result = json.loads(task_data.decode("utf-8"))
+                else:
+                    result = json.loads(task_data)
 
                 # Extract task ID from key (format: celery-task-meta-<uuid>)
-                task_id = key.decode("utf-8").replace("celery-task-meta-", "")
+                key_str = key.decode("utf-8") if isinstance(key, bytes) else key
+                task_id = key_str.replace("celery-task-meta-", "")
 
                 # Parse task information
                 status_str = result.get("status", "UNKNOWN")
@@ -382,7 +397,8 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
                 )
 
             except (json.JSONDecodeError, Exception) as parse_error:
-                logger.debug(f"Error parsing task key {key}: {parse_error}")
+                key_str = key.decode("utf-8") if isinstance(key, bytes) else key
+                logger.debug(f"Error parsing task key {key_str}: {parse_error}")
                 continue
 
         # Sort by completion time (most recent first)
@@ -429,15 +445,15 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
                 )
 
         # Take the most recent tasks up to limit
-        for task_data in task_data_list[:limit]:
+        for task_entry in task_data_list[:limit]:
             # Calculate duration if both timestamps available
             duration_seconds = None
-            if task_data.get("started_at") and task_data.get("completed_at"):
-                delta = task_data["completed_at"] - task_data["started_at"]
+            if task_entry.get("started_at") and task_entry.get("completed_at"):
+                delta = task_entry["completed_at"] - task_entry["started_at"]
                 duration_seconds = delta.total_seconds()
 
             # Generate human-readable task name from Celery task path
-            task_name = task_data["name"]
+            task_name = task_entry["name"]
             if "." in task_name:
                 # Extract last part for readability (e.g., app.resilience.tasks.periodic_health_check -> periodic_health_check)
                 task_name_parts = task_name.split(".")
@@ -446,27 +462,27 @@ def _get_recent_tasks(db: Session, limit: int = 10) -> list[RecentTaskInfo]:
                 friendly_name = task_name
 
             # Build description
-            description = task_data.get("description")
+            description = task_entry.get("description") or ""
             if not description:
-                if task_data["status"] == TaskStatus.COMPLETED:
+                if task_entry["status"] == TaskStatus.COMPLETED:
                     description = "Task completed successfully"
-                elif task_data["status"] == TaskStatus.FAILED:
-                    description = f"Task failed: {task_data.get('error_message', 'Unknown error')}"
-                elif task_data["status"] == TaskStatus.IN_PROGRESS:
+                elif task_entry["status"] == TaskStatus.FAILED:
+                    description = f"Task failed: {task_entry.get('error_message', 'Unknown error')}"
+                elif task_entry["status"] == TaskStatus.IN_PROGRESS:
                     description = "Task is currently running"
                 else:
-                    description = f"Task status: {task_data['status'].value}"
+                    description = f"Task status: {task_entry['status'].value}"
 
             recent_tasks.append(
                 RecentTaskInfo(
-                    task_id=task_data["task_id"],
+                    task_id=task_entry["task_id"],
                     name=friendly_name,
-                    status=task_data["status"],
+                    status=task_entry["status"],
                     description=description,
-                    started_at=task_data.get("started_at"),
-                    completed_at=task_data.get("completed_at"),
+                    started_at=task_entry.get("started_at"),
+                    completed_at=task_entry.get("completed_at"),
                     duration_seconds=duration_seconds,
-                    error_message=task_data.get("error_message"),
+                    error_message=task_entry.get("error_message"),
                 )
             )
 
@@ -574,7 +590,7 @@ async def get_situation_report(
 
         # Get system health
         try:
-            health_report = service.get_health_snapshot()
+            health_report = service.get_health_snapshot()  # type: ignore[attr-defined]
             health_status = health_report.get("overall_status", "unknown")
             defense_level = health_report.get("defense_level")
             crisis_mode = health_report.get("crisis_mode", False)

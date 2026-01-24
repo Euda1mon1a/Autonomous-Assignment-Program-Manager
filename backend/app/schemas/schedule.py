@@ -427,13 +427,13 @@ class ScheduleRunRead(BaseModel):
         """Custom from_orm to handle field mapping from model."""
         # Use getattr safely as different model versions might exist
         metrics = ScheduleMetrics(
-            runId=str(getattr(obj, "run_id", obj.id)),
+            run_id=str(getattr(obj, "run_id", obj.id)),
             status=getattr(obj, "status", "unknown"),
-            coveragePercent=getattr(obj, "coverage_percent", 0.0),
-            acgmeViolations=getattr(obj, "acgme_violations", 0),
-            blocksAssigned=getattr(obj, "total_blocks_assigned", 0),
-            totalBlocks=getattr(obj, "total_blocks", 0),
-            runtimeSeconds=getattr(obj, "runtime_seconds", 0.0),
+            coverage_percent=getattr(obj, "coverage_percent", 0.0),
+            acgme_violations=getattr(obj, "acgme_violations", 0),
+            blocks_assigned=getattr(obj, "total_blocks_assigned", 0),
+            total_blocks=getattr(obj, "total_blocks", 0),
+            runtime_seconds=getattr(obj, "runtime_seconds", 0.0),
             timestamp=getattr(obj, "created_at", datetime.now()),
         )
 
@@ -564,18 +564,18 @@ class ExperimentRunResponse(BaseModel):
             algorithm=getattr(obj, "algorithm", "hybrid"),
             constraints=config_json.get("constraints", []),
             # Handle both camelCase (frontend) and snake_case (legacy) keys
-            preserveFMIT=config_json.get(
+            preserve_fmit=config_json.get(
                 "preserveFMIT", config_json.get("preserve_fmit", True)
             ),
-            nfPostCallEnabled=config_json.get(
+            nf_post_call_enabled=config_json.get(
                 "nfPostCallEnabled", config_json.get("nf_post_call", True)
             ),
-            academicYear=config_json.get(
+            academic_year=config_json.get(
                 "academicYear", config_json.get("academic_year", "2025-2026")
             ),
-            blockRange=config_json.get("block_range", {"start": 1, "end": 26}),
-            timeoutSeconds=config_json.get("timeout_seconds", 60),
-            dryRun=config_json.get("dry_run", False),
+            block_range=config_json.get("block_range", {"start": 1, "end": 26}),
+            timeout_seconds=config_json.get("timeout_seconds", 60),
+            dry_run=config_json.get("dry_run", False),
         )
 
         # Build result if completed
@@ -583,16 +583,16 @@ class ExperimentRunResponse(BaseModel):
         status_str = getattr(obj, "status", "queued")
         if status_str in ("success", "partial", "failed", "completed"):
             result = ExperimentRunResult(
-                runId=str(obj.id),
+                run_id=str(obj.id),
                 status=status_str if status_str != "completed" else "success",
-                coveragePercent=getattr(obj, "coverage_percent", 0.0) or 0.0,
-                acgmeViolations=getattr(obj, "acgme_violations", 0) or 0,
-                fairnessScore=getattr(obj, "fairness_score", 0.0) or 0.0,
-                swapChurn=getattr(obj, "swap_churn", 0.0) or 0.0,
-                runtimeSeconds=float(getattr(obj, "runtime_seconds", 0.0) or 0.0),
+                coverage_percent=getattr(obj, "coverage_percent", 0.0) or 0.0,
+                acgme_violations=getattr(obj, "acgme_violations", 0) or 0,
+                fairness_score=getattr(obj, "fairness_score", 0.0) or 0.0,
+                swap_churn=getattr(obj, "swap_churn", 0.0) or 0.0,
+                runtime_seconds=float(getattr(obj, "runtime_seconds", 0.0) or 0.0),
                 stability=getattr(obj, "stability", 1.0) or 1.0,
-                blocksAssigned=getattr(obj, "total_blocks_assigned", 0) or 0,
-                totalBlocks=getattr(obj, "total_blocks", 0) or 0,
+                blocks_assigned=getattr(obj, "total_blocks_assigned", 0) or 0,
+                total_blocks=getattr(obj, "total_blocks", 0) or 0,
                 timestamp=getattr(obj, "created_at", datetime.now()),
             )
 
@@ -615,9 +615,9 @@ class ExperimentRunResponse(BaseModel):
             name=config_json.get("name", f"Run {str(obj.id)[:8]}"),
             status=status,
             configuration=configuration,
-            queuedAt=getattr(obj, "created_at", datetime.now()),
-            startedAt=getattr(obj, "started_at", None),
-            completedAt=getattr(obj, "completed_at", None),
+            queued_at=getattr(obj, "created_at", datetime.now()),
+            started_at=getattr(obj, "started_at", None),
+            completed_at=getattr(obj, "completed_at", None),
             progress=getattr(obj, "progress", None),
             result=result,
         )

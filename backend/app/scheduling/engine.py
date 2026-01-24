@@ -20,7 +20,7 @@ for flexible, maintainable scheduling.
 
 import time
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from sqlalchemy.orm import Session, selectinload
@@ -189,7 +189,7 @@ class SchedulingEngine:
             preserve_ids: set[UUID] = set()
             if preserve_fmit:
                 fmit_assignments = self._load_fmit_assignments()
-                preserve_ids = {a.id for a in fmit_assignments}
+                preserve_ids = {cast(UUID, a.id) for a in fmit_assignments}
                 if fmit_assignments:
                     logger.info(
                         f"Preserving {len(fmit_assignments)} FMIT faculty assignments"
@@ -201,7 +201,9 @@ class SchedulingEngine:
                 resident_inpatient_assignments = (
                     self._load_resident_inpatient_assignments()
                 )
-                preserve_ids.update({a.id for a in resident_inpatient_assignments})
+                preserve_ids.update(
+                    {cast(UUID, a.id) for a in resident_inpatient_assignments}
+                )
                 if resident_inpatient_assignments:
                     logger.info(
                         f"Preserving {len(resident_inpatient_assignments)} "
@@ -212,7 +214,7 @@ class SchedulingEngine:
             absence_assignments = []
             if preserve_absence:
                 absence_assignments = self._load_absence_assignments()
-                preserve_ids.update({a.id for a in absence_assignments})
+                preserve_ids.update({cast(UUID, a.id) for a in absence_assignments})
                 if absence_assignments:
                     logger.info(
                         f"Preserving {len(absence_assignments)} "
@@ -221,7 +223,7 @@ class SchedulingEngine:
 
             # Step 1.5d: Load off-site assignments (Hilo, Kapiolani, Okinawa)
             offsite_assignments = self._load_offsite_assignments()
-            preserve_ids.update({a.id for a in offsite_assignments})
+            preserve_ids.update({cast(UUID, a.id) for a in offsite_assignments})
             if offsite_assignments:
                 logger.info(
                     f"Preserving {len(offsite_assignments)} "
@@ -231,7 +233,7 @@ class SchedulingEngine:
             # Step 1.5e: Load recovery assignments (Post-Call)
             # Note: PC is also enforced by NightFloatPostCallConstraint
             recovery_assignments = self._load_recovery_assignments()
-            preserve_ids.update({a.id for a in recovery_assignments})
+            preserve_ids.update({cast(UUID, a.id) for a in recovery_assignments})
             if recovery_assignments:
                 logger.info(
                     f"Preserving {len(recovery_assignments)} "
@@ -240,7 +242,7 @@ class SchedulingEngine:
 
             # Step 1.5f: Load education assignments (FMO, GME, Lectures)
             education_assignments = self._load_education_assignments()
-            preserve_ids.update({a.id for a in education_assignments})
+            preserve_ids.update({cast(UUID, a.id) for a in education_assignments})
             if education_assignments:
                 logger.info(
                     f"Preserving {len(education_assignments)} "
@@ -313,7 +315,7 @@ class SchedulingEngine:
                 expanded_assignments = expansion_service.expand_block_assignments(
                     block_number=block_number,
                     academic_year=academic_year,
-                    schedule_run_id=run.id,
+                    schedule_run_id=cast(UUID, run.id),
                     created_by="engine_expansion",
                     apply_one_in_seven=True,
                     persist_half_day=True,  # Persist to HalfDayAssignment table
@@ -477,7 +479,11 @@ class SchedulingEngine:
             # In half-day mode, resident assignments come from expansion, not solver
             if not expand_block_assignments:
                 self._create_assignments_from_result(
-                    solver_result, residents, templates, run.id, preserved_assignments
+                    solver_result,
+                    residents,
+                    templates,
+                    cast(UUID, run.id),
+                    preserved_assignments,
                 )
             else:
                 logger.info(
@@ -615,7 +621,9 @@ class SchedulingEngine:
             # In half-day mode, faculty assignments already created by Step 6.8
             # (FacultyAssignmentExpansionService fills all 56 slots per faculty)
             if not expand_block_assignments:
-                self._assign_faculty(faculty, blocks, run.id, preserved_assignments)
+                self._assign_faculty(
+                    faculty, blocks, cast(UUID, run.id), preserved_assignments
+                )
             else:
                 logger.info(
                     "Skipping legacy faculty supervision - already handled by "
@@ -636,7 +644,7 @@ class SchedulingEngine:
                     end_date=self.end_date,
                     block_number=block_number,
                     created_by_id=created_by_id,
-                    schedule_run_id=run.id,
+                    schedule_run_id=cast(UUID, run.id),
                     notes=f"Generated by {algorithm} solver",
                 )
 
@@ -885,7 +893,7 @@ class SchedulingEngine:
 
         # Load activities and activity requirements for templates
         activities = self._load_activities()
-        template_ids = [t.id for t in templates]
+        template_ids = [cast(UUID, t.id) for t in templates]
         activity_requirements = self._load_activity_requirements(template_ids)
         protected_patterns = self._load_protected_patterns(template_ids)
 
@@ -1061,11 +1069,11 @@ class SchedulingEngine:
             if hasattr(self.resilience, "hub_analyzer"):
                 # Get latest centrality data
                 for fac in faculty:
-                    centrality = self.resilience.hub_analyzer.get_faculty_centrality(
-                        fac.id
+                    centrality = self.resilience.hub_analyzer.calculate_centrality(
+                        cast(UUID, fac.id)
                     )
                     if centrality:
-                        hub_scores[fac.id] = centrality.composite_score
+                        hub_scores[cast(UUID, fac.id)] = centrality.composite_score
         except Exception as e:
             logger.debug(f"Could not get hub scores: {e}")
 
@@ -1110,7 +1118,7 @@ class SchedulingEngine:
             if hasattr(self.resilience, "stigmergy"):
                 for fac in faculty:
                     prefs = self.resilience.get_faculty_preferences(
-                        fac.id, min_strength=0.3
+                        cast(UUID, fac.id), min_strength=0.3
                     )
                     if prefs:
                         faculty_prefs = {}
@@ -1118,7 +1126,7 @@ class SchedulingEngine:
                             if trail.slot_type:
                                 faculty_prefs[trail.slot_type] = trail.strength
                         if faculty_prefs:
-                            preference_trails[fac.id] = faculty_prefs
+                            preference_trails[cast(UUID, fac.id)] = faculty_prefs
         except Exception as e:
             logger.debug(f"Could not get preference trails: {e}")
 
@@ -1149,17 +1157,17 @@ class SchedulingEngine:
 
                 # Get faculty zone assignments
                 for fac in faculty:
-                    zone = blast_radius.get_faculty_zone(fac.id)
+                    zone = blast_radius.get_faculty_zone(cast(UUID, fac.id))  # type: ignore[attr-defined]
                     if zone:
-                        zone_data["faculty_zones"][fac.id] = zone.id
+                        zone_data["faculty_zones"][cast(UUID, fac.id)] = zone.id
 
                 # Get block zone assignments (from rotation template or service type)
                 for block in blocks:
                     # Blocks may be associated with zones through their rotation template
                     # or through explicit zone assignment
-                    zone = blast_radius.get_block_zone(block.id)
+                    zone = blast_radius.get_block_zone(cast(UUID, block.id))  # type: ignore[attr-defined]
                     if zone:
-                        zone_data["block_zones"][block.id] = zone.id
+                        zone_data["block_zones"][cast(UUID, block.id)] = zone.id
 
         except Exception as e:
             logger.debug(f"Could not get zone assignments: {e}")
@@ -1183,7 +1191,10 @@ class SchedulingEngine:
                 timeout_seconds=timeout_seconds,
             )
             # Pass existing_assignments from context as immutable constraints
-            return solver.solve(context, context.existing_assignments or None)
+            existing_assign = (
+                context.existing_assignments if context.existing_assignments else []
+            )
+            return solver.solve(context, existing_assign)
         except Exception as e:
             logger.error(f"Solver error: {e}")
             return SolverResult(
@@ -1210,7 +1221,7 @@ class SchedulingEngine:
         occupied_slots: set[tuple[UUID, UUID]] = set()
         if existing_assignments:
             for a in existing_assignments:
-                occupied_slots.add((a.person_id, a.block_id))
+                occupied_slots.add((cast(UUID, a.person_id), cast(UUID, a.block_id)))
 
         skipped = 0
         for person_id, block_id, template_id in result.assignments:
@@ -1255,7 +1266,7 @@ class SchedulingEngine:
         Returns:
             List of CallAssignment objects created
         """
-        call_assignments = []
+        call_assignments: list[CallAssignment] = []
 
         if not result.call_assignments:
             return call_assignments
@@ -1401,7 +1412,7 @@ class SchedulingEngine:
                         AssignmentSource.TEMPLATE.value,
                         AssignmentSource.SOLVER.value,
                     ):
-                        existing.activity_id = activity.id
+                        existing.activity_id = cast(UUID, activity.id)
                         existing.source = AssignmentSource.PRELOAD.value
                         count += 1
                 else:
@@ -2025,7 +2036,7 @@ class SchedulingEngine:
         # Group by template_id
         result: dict[UUID, list[dict]] = {}
         for pattern in patterns:
-            template_id = pattern.rotation_template_id
+            template_id = cast(UUID, pattern.rotation_template_id)
             if template_id not in result:
                 result[template_id] = []
             result[template_id].append(
@@ -2143,22 +2154,26 @@ class SchedulingEngine:
         # Build set of (faculty_id, block_id) pairs that are already assigned
         # Faculty with FMIT/absences OR solver-assigned cannot supervise clinic
         faculty_occupied_slots: set[tuple[UUID, UUID]] = set()
-        faculty_ids = {f.id for f in faculty}
+        faculty_ids = {cast(UUID, f.id) for f in faculty}
 
         # Check preserved assignments (FMIT, absences, etc.)
         if preserved_assignments:
             for a in preserved_assignments:
-                if a.person_id in faculty_ids:
-                    faculty_occupied_slots.add((a.person_id, a.block_id))
+                if cast(UUID, a.person_id) in faculty_ids:
+                    faculty_occupied_slots.add(
+                        (cast(UUID, a.person_id), cast(UUID, a.block_id))
+                    )
 
         # Also check assignments created by solver in this session
         for a in self.assignments:
-            if a.person_id in faculty_ids:
-                faculty_occupied_slots.add((a.person_id, a.block_id))
+            if cast(UUID, a.person_id) in faculty_ids:
+                faculty_occupied_slots.add(
+                    (cast(UUID, a.person_id), cast(UUID, a.block_id))
+                )
 
         # Group assignments by block - include BOTH new (self.assignments) AND preserved
         # Preserved assignments in DB need faculty supervision too
-        assignments_by_block = {}
+        assignments_by_block: dict[UUID, list[Assignment]] = {}
 
         # First add new assignments from this run
         for assignment in self.assignments:
@@ -2278,19 +2293,21 @@ class SchedulingEngine:
             available = [
                 f
                 for f in faculty
-                if self._is_available(f.id, block_id)
-                and (f.id, block_id) not in faculty_occupied_slots
+                if self._is_available(cast(UUID, f.id), cast(UUID, block_id))
+                and (cast(UUID, f.id), cast(UUID, block_id))
+                not in faculty_occupied_slots
             ]
 
             # Assign faculty (balance load)
-            selected = sorted(available, key=lambda f: faculty_assignments[f.id])[
-                :required
-            ]
+            selected = sorted(
+                available, key=lambda f: faculty_assignments[cast(UUID, f.id)]
+            )[:required]
 
             # Determine primary rotation template from resident assignments in this block
             # Faculty should be assigned the same rotation as the residents they supervise
             primary_template_id = self._get_primary_template_for_block(
-                block_assignments, templates_by_id
+                block_assignments,
+                {cast(UUID, k): v for k, v in templates_by_id.items()},
             )
 
             for fac in selected:
@@ -2323,14 +2340,15 @@ class SchedulingEngine:
             available = [
                 f
                 for f in faculty
-                if self._is_available(f.id, block.id)
-                and (f.id, block.id) not in faculty_occupied_slots
+                if self._is_available(cast(UUID, f.id), cast(UUID, block.id))
+                and (cast(UUID, f.id), cast(UUID, block.id))
+                not in faculty_occupied_slots
             ]
 
             if available:
-                selected = sorted(available, key=lambda f: faculty_assignments[f.id])[
-                    :1
-                ]
+                selected = sorted(
+                    available, key=lambda f: faculty_assignments[cast(UUID, f.id)]
+                )[:1]
                 for fac in selected:
                     assignment = Assignment(
                         block_id=block.id,
@@ -2376,7 +2394,7 @@ class SchedulingEngine:
         template_counts: dict[UUID, int] = {}
         for assignment in block_assignments:
             if assignment.rotation_template_id:
-                tid = assignment.rotation_template_id
+                tid = cast(UUID, assignment.rotation_template_id)
                 template_counts[tid] = template_counts.get(tid, 0) + 1
 
         if not template_counts:
@@ -2416,7 +2434,7 @@ class SchedulingEngine:
             return True
         if block_id not in self.availability_matrix[person_id]:
             return True
-        return self.availability_matrix[person_id][block_id]["available"]
+        return cast(bool, self.availability_matrix[person_id][block_id]["available"])
 
     def _create_initial_run(self, algorithm: str) -> ScheduleRun:
         """Create initial run record with 'in_progress' status."""
@@ -2673,7 +2691,7 @@ class SchedulingEngine:
         self,
         run: ScheduleRun,
         algorithm: str,
-        validation,
+        validation: ValidationResult,
         runtime: float,
         solver_result: SolverResult | None = None,
     ) -> None:
@@ -2792,9 +2810,9 @@ class SchedulingEngine:
             logger.warning(f"Post-generation resilience check failed: {e}")
             return None
 
-    def _get_resilience_warnings(self, health_report) -> list[str]:
+    def _get_resilience_warnings(self, health_report: Any) -> list[str]:
         """Extract actionable warnings from health report."""
-        warnings = []
+        warnings: list[str] = []
 
         if health_report is None:
             return warnings

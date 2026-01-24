@@ -32,7 +32,7 @@ import statistics
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -141,14 +141,14 @@ class UnifiedCriticalIndex:
     recommended_interventions: list[InterventionType] = field(default_factory=list)
     priority_rank: int = 0  # 1 = highest priority across population
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculate derived fields."""
         self._calculate_composite()
         self._identify_pattern()
         self._calculate_agreement()
         self._recommend_interventions()
 
-    def _calculate_composite(self):
+    def _calculate_composite(self) -> None:
         """
         Calculate weighted composite index.
 
@@ -171,7 +171,7 @@ class UnifiedCriticalIndex:
             * weights[CriticalityDomain.EPIDEMIOLOGY]
         )
 
-    def _identify_pattern(self):
+    def _identify_pattern(self) -> None:
         """Identify the risk pattern based on which domains are critical."""
         critical_domains = []
 
@@ -218,7 +218,7 @@ class UnifiedCriticalIndex:
         ]
         self.leading_domain = max(scores, key=lambda x: x[1])[0]
 
-    def _calculate_agreement(self):
+    def _calculate_agreement(self) -> None:
         """
         Calculate how much the three domains agree.
 
@@ -267,7 +267,7 @@ class UnifiedCriticalIndex:
                 "Strong domain consensus - high confidence in assessment"
             )
 
-    def _recommend_interventions(self):
+    def _recommend_interventions(self) -> None:
         """Recommend interventions based on risk pattern."""
         intervention_map = {
             RiskPattern.UNIVERSAL_CRITICAL: [
@@ -367,13 +367,13 @@ class PopulationAnalysis:
     # Top risks
     top_priority: list[UUID] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculate population-level metrics."""
         self._calculate_concentration()
         self._calculate_distribution()
         self._rank_priorities()
 
-    def _calculate_concentration(self):
+    def _calculate_concentration(self) -> None:
         """
         Calculate risk concentration using Gini coefficient.
 
@@ -397,7 +397,7 @@ class PopulationAnalysis:
 
         self.risk_concentration = cumulative / (n * sum(scores))
 
-    def _calculate_distribution(self):
+    def _calculate_distribution(self) -> None:
         """Calculate distribution of risk patterns."""
         self.pattern_distribution = {}
         for pattern in RiskPattern:
@@ -413,7 +413,7 @@ class PopulationAnalysis:
             RiskPattern.UNIVERSAL_CRITICAL, 0
         )
 
-    def _rank_priorities(self):
+    def _rank_priorities(self) -> None:
         """Rank faculty by intervention priority."""
         # Sort by composite index descending
         sorted_indices = sorted(
@@ -554,7 +554,7 @@ class UnifiedCriticalIndexAnalyzer:
 
         return self._network
 
-    def _compute_centrality_metrics(self):
+    def _compute_centrality_metrics(self) -> None:
         """Pre-compute all centrality metrics for the network."""
         if not self._network or self._network.number_of_nodes() == 0:
             return

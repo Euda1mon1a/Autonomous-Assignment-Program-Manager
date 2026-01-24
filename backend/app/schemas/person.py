@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
@@ -139,7 +140,7 @@ class PersonResponse(PersonBase):
     model_config = ConfigDict(from_attributes=True)
 
     @classmethod
-    def from_orm_masked(cls, person: object, user_role: str) -> "PersonResponse":  # type: ignore
+    def from_orm_masked(cls, person: object, user_role: str) -> "PersonResponse":
         """Return masked version for non-admin users.
 
         Args:
@@ -153,7 +154,7 @@ class PersonResponse(PersonBase):
         # or access attributes directly.
 
         # Helper to get attribute safely
-        def get_attr(obj, name, default=None):
+        def get_attr(obj: object, name: str, default: Any = None) -> Any:
             return getattr(obj, name, default)
 
         is_admin = user_role == "admin"

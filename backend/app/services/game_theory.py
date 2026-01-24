@@ -57,7 +57,7 @@ logger = logging.getLogger(__name__)
 # Only define ResilienceConfigPlayer if axelrod is available
 if AXELROD_AVAILABLE:
 
-    class ResilienceConfigPlayer(axl.Player):  # type: ignore
+    class ResilienceConfigPlayer(axl.Player):  # type: ignore[misc]
         """
         Custom Axelrod player that maps resilience configuration to PD strategy.
 
@@ -83,7 +83,7 @@ if AXELROD_AVAILABLE:
             initial_action: str = "cooperate",
             forgiveness_probability: float = 0.0,
             retaliation_memory: int = 1,
-            **kwargs,
+            **kwargs: Any,
         ) -> None:
             super().__init__()
             self.strategy_type = strategy_type
@@ -199,7 +199,7 @@ class GameTheoryService:
         strategy_type: str,
         description: str | None = None,
         created_by: str | None = None,
-        **config_params,
+        **config_params: Any,
     ) -> ConfigStrategy:
         """Create a new configuration strategy."""
         strategy = ConfigStrategy(
@@ -240,7 +240,9 @@ class GameTheoryService:
             query = query.filter(ConfigStrategy.is_active == True)
         return query.order_by(ConfigStrategy.created_at.desc()).all()
 
-    def update_strategy(self, strategy_id: UUID, **updates) -> ConfigStrategy | None:
+    def update_strategy(
+        self, strategy_id: UUID, **updates: Any
+    ) -> ConfigStrategy | None:
         """Update a strategy."""
         strategy = self.get_strategy(strategy_id)
         if not strategy:
@@ -255,13 +257,13 @@ class GameTheoryService:
     def _strategy_to_player(self, strategy: ConfigStrategy) -> axl.Player:
         """Convert a ConfigStrategy to an Axelrod player."""
         player = ResilienceConfigPlayer(
-            strategy_type=strategy.strategy_type,
-            utilization_target=strategy.utilization_target,
-            initial_action=strategy.initial_action,
-            forgiveness_probability=strategy.forgiveness_probability,
-            retaliation_memory=strategy.retaliation_memory,
+            strategy_type=str(strategy.strategy_type),  # type: ignore[arg-type]
+            utilization_target=float(strategy.utilization_target),  # type: ignore[arg-type]
+            initial_action=str(strategy.initial_action),  # type: ignore[arg-type]
+            forgiveness_probability=float(strategy.forgiveness_probability),  # type: ignore[arg-type]
+            retaliation_memory=int(strategy.retaliation_memory),  # type: ignore[arg-type]
         )
-        player.name = strategy.name
+        player.name = str(strategy.name)
         return player
 
     def create_default_strategies(self) -> list[ConfigStrategy]:
@@ -322,7 +324,10 @@ class GameTheoryService:
                 .first()
             )
             if not existing:
-                strategy = self.create_strategy(**config, created_by="system")
+                strategy = self.create_strategy(  # type: ignore[arg-type]
+                    **config,
+                    created_by="system",  # type: ignore[arg-type]
+                )
                 created.append(strategy)
 
         return created
@@ -396,14 +401,14 @@ class GameTheoryService:
             raise ValueError(f"Tournament already {tournament.status}")
 
         # Update status
-        tournament.status = SimulationStatus.RUNNING.value
-        tournament.started_at = datetime.utcnow()
+        tournament.status = SimulationStatus.RUNNING.value  # type: ignore[assignment]
+        tournament.started_at = datetime.utcnow()  # type: ignore[assignment]
         self.db.commit()
 
         try:
             # Load strategies
             strategies = []
-            for sid in tournament.strategy_ids:
+            for sid in tournament.strategy_ids:  # type: ignore[attr-defined]
                 strategy = self.get_strategy(UUID(sid))
                 if strategy:
                     strategies.append(strategy)
@@ -463,7 +468,7 @@ class GameTheoryService:
                         strategy.total_wins += 1
 
             # Build payoff matrix
-            payoff_matrix = {}
+            payoff_matrix: dict[str, dict[str, float]] = {}
             for i, p1 in enumerate(players):
                 payoff_matrix[p1.name] = {}
                 for j, p2 in enumerate(players):
@@ -478,23 +483,23 @@ class GameTheoryService:
                 pass
 
             # Update tournament
-            tournament.status = SimulationStatus.COMPLETED.value
-            tournament.completed_at = datetime.utcnow()
-            tournament.total_matches = (
+            tournament.status = SimulationStatus.COMPLETED.value  # type: ignore[assignment]
+            tournament.completed_at = datetime.utcnow()  # type: ignore[assignment]
+            tournament.total_matches = (  # type: ignore[assignment]
                 len(results.interactions)
                 if hasattr(results, "interactions")
                 else len(players) * (len(players) - 1) // 2
             )
-            tournament.winner_strategy_name = (
+            tournament.winner_strategy_name = (  # type: ignore[assignment]
                 rankings[0]["strategy_name"] if rankings else None
             )
-            tournament.winner_strategy_id = (
+            tournament.winner_strategy_id = (  # type: ignore[assignment]
                 UUID(rankings[0]["strategy_id"])
                 if rankings and rankings[0]["strategy_id"]
                 else None
             )
-            tournament.rankings = rankings
-            tournament.payoff_matrix = payoff_matrix
+            tournament.rankings = rankings  # type: ignore[assignment]
+            tournament.payoff_matrix = payoff_matrix  # type: ignore[assignment]
 
             self.db.commit()
 
@@ -507,8 +512,8 @@ class GameTheoryService:
 
         except Exception as e:
             logger.exception(f"Tournament {tournament_id} failed")
-            tournament.status = SimulationStatus.FAILED.value
-            tournament.error_message = str(e)
+            tournament.status = SimulationStatus.FAILED.value  # type: ignore[assignment]
+            tournament.error_message = str(e)  # type: ignore[assignment]
             self.db.commit()
             raise
 
@@ -601,7 +606,7 @@ class GameTheoryService:
 
             # Track population history
             population_history = []
-            sample_interval = max(1, evolution.max_generations // 100)
+            sample_interval = max(1, int(evolution.max_generations) // 100)  # type: ignore[arg-type]
 
             try:
                 generations = 0
@@ -609,7 +614,7 @@ class GameTheoryService:
                     generations = gen
                     if gen % sample_interval == 0:
                         # Count strategies
-                        counts = {}
+                        counts: dict[str, int] = {}
                         for player in pop:
                             name = player.name
                             counts[name] = counts.get(name, 0) + 1
@@ -628,7 +633,7 @@ class GameTheoryService:
                 pass
 
             # Get final state
-            final_counts = {}
+            final_counts: dict[str, int] = {}
             for player in mp.population:
                 name = player.name
                 final_counts[name] = final_counts.get(name, 0) + 1
@@ -643,15 +648,15 @@ class GameTheoryService:
                 winner_name = max(final_counts.keys(), key=lambda k: final_counts[k])
 
             # Update evolution record
-            evolution.status = SimulationStatus.COMPLETED.value
-            evolution.completed_at = datetime.utcnow()
-            evolution.generations_completed = generations
-            evolution.winner_strategy_name = winner_name
-            evolution.is_evolutionarily_stable = (
+            evolution.status = SimulationStatus.COMPLETED.value  # type: ignore[assignment]
+            evolution.completed_at = datetime.utcnow()  # type: ignore[assignment]
+            evolution.generations_completed = generations  # type: ignore[assignment]
+            evolution.winner_strategy_name = winner_name  # type: ignore[assignment]
+            evolution.is_evolutionarily_stable = (  # type: ignore[assignment]
                 mp.fixated if hasattr(mp, "fixated") else False
             )
-            evolution.population_history = population_history
-            evolution.final_population = final_counts
+            evolution.population_history = population_history  # type: ignore[assignment]
+            evolution.final_population = final_counts  # type: ignore[assignment]
 
             # Find winner strategy ID
             if winner_name:
@@ -661,7 +666,7 @@ class GameTheoryService:
                     .first()
                 )
                 if winner:
-                    evolution.winner_strategy_id = winner.id
+                    evolution.winner_strategy_id = winner.id  # type: ignore[assignment]
 
             self.db.commit()
 

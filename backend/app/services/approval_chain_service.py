@@ -154,7 +154,7 @@ class ApprovalChainService:
         new_seq = head.sequence_num + 1
 
         record_hash = ApprovalRecord.compute_hash(
-            prev_hash=head.record_hash,
+            prev_hash=str(head.record_hash) if head.record_hash else None,  # type: ignore[arg-type]
             payload=payload,
             actor_id=actor_id,
             actor_type=actor_type,
@@ -259,7 +259,7 @@ class ApprovalChainService:
                     chain_id=chain_id,
                     total_records=len(records),
                     verified_count=verified_count,
-                    first_invalid_seq=record.sequence_num,
+                    first_invalid_seq=int(record.sequence_num),  # type: ignore[arg-type]
                     first_invalid_id=str(record.id),
                     error_message=(
                         f"Sequence gap: expected {expected_seq}, "
@@ -276,7 +276,7 @@ class ApprovalChainService:
                         chain_id=chain_id,
                         total_records=len(records),
                         verified_count=verified_count,
-                        first_invalid_seq=record.sequence_num,
+                        first_invalid_seq=int(record.sequence_num),  # type: ignore[arg-type]
                         first_invalid_id=str(record.id),
                         error_message=(
                             f"Chain broken at seq {record.sequence_num}: "
@@ -292,7 +292,7 @@ class ApprovalChainService:
                     chain_id=chain_id,
                     total_records=len(records),
                     verified_count=verified_count,
-                    first_invalid_seq=record.sequence_num,
+                    first_invalid_seq=int(record.sequence_num),  # type: ignore[arg-type]
                     first_invalid_id=str(record.id),
                     error_message=(
                         f"Hash mismatch at seq {record.sequence_num}: "
@@ -314,8 +314,8 @@ class ApprovalChainService:
             chain_id=chain_id,
             total_records=len(records),
             verified_count=verified_count,
-            head_hash=head.record_hash,
-            genesis_hash=genesis.record_hash,
+            head_hash=str(head.record_hash) if head.record_hash else None,  # type: ignore[arg-type]
+            genesis_hash=str(genesis.record_hash) if genesis.record_hash else None,  # type: ignore[arg-type]
             verified_at=datetime.utcnow().isoformat(),
         )
 
@@ -361,11 +361,11 @@ class ApprovalChainService:
         return ChainStats(
             chain_id=chain_id,
             total_records=sum(c.count for c in action_counts),
-            head_sequence=head.sequence_num,
-            head_hash=head.record_hash,
-            genesis_hash=genesis.record_hash,
-            first_record_at=genesis.created_at,
-            last_record_at=head.created_at,
+            head_sequence=int(head.sequence_num),  # type: ignore[arg-type]
+            head_hash=str(head.record_hash) if head.record_hash else None,  # type: ignore[arg-type]
+            genesis_hash=str(genesis.record_hash) if genesis.record_hash else None,  # type: ignore[arg-type]
+            first_record_at=head.created_at if genesis.created_at else None,  # type: ignore[arg-type]
+            last_record_at=head.created_at if head.created_at else None,  # type: ignore[arg-type]
             actions_by_type={ac.action: ac.count for ac in action_counts},
         )
 

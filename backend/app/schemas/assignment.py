@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -145,7 +146,9 @@ class AssignmentWithExplanation(AssignmentResponse):
     model_config = ConfigDict(from_attributes=True)
 
     @classmethod
-    def from_assignment(cls, assignment, include_explanation: bool = True):
+    def from_assignment(
+        cls, assignment: Any, include_explanation: bool = True
+    ) -> "AssignmentResponse":
         """Create from Assignment model with explanation extraction."""
         data = {
             "id": assignment.id,

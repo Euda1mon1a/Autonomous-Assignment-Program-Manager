@@ -9,9 +9,10 @@ Provides Pydantic schemas for:
 
 from datetime import date, datetime
 from enum import Enum
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
 
 class ScheduleDraftStatus(str, Enum):
@@ -80,7 +81,7 @@ class ScheduleDraftCreate(BaseModel):
 
     @field_validator("target_end_date")
     @classmethod
-    def validate_date_range(cls, v: date, info) -> date:
+    def validate_date_range(cls, v: date, info: ValidationInfo) -> date:
         """Validate end date is after start date."""
         if info.data.get("target_start_date") and v < info.data["target_start_date"]:
             raise ValueError("target_end_date must be >= target_start_date")

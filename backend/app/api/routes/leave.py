@@ -124,7 +124,7 @@ async def list_leave(
     end_date: date | None = None,
     page: int = 1,
     page_size: int = 20,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -175,7 +175,7 @@ async def list_leave(
 async def get_leave_calendar(
     start_date: date,
     end_date: date,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -234,7 +234,7 @@ async def get_leave_calendar(
 async def create_leave(
     request: LeaveCreateRequest,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -287,7 +287,7 @@ async def create_leave(
 async def update_leave(
     leave_id: UUID,
     request: LeaveUpdateRequest,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Update an existing leave record."""
@@ -331,7 +331,7 @@ async def update_leave(
 @router.delete("/{leave_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_leave(
     leave_id: UUID,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete a leave record."""
@@ -352,7 +352,7 @@ async def delete_leave(
 async def leave_webhook(
     payload: LeaveWebhookPayload,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     _: None = Depends(verify_webhook_signature),
 ):
     """
@@ -378,7 +378,7 @@ async def leave_webhook(
 @router.post("/bulk-import", response_model=BulkLeaveImportResponse)
 async def bulk_import_leave(
     request: BulkLeaveImportRequest,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):

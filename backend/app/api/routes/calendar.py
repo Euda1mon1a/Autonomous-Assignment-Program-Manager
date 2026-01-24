@@ -34,7 +34,7 @@ async def export_all_calendars(
     include_types: list[str] | None = Query(
         None, description="Activity types to include"
     ),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
 ) -> Response:
     """
     Export complete schedule as ICS file.
@@ -87,7 +87,7 @@ async def export_person_ics(
     include_types: list[str] | None = Query(
         None, description="Activity types to include"
     ),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
 ) -> Response:
     """
     Export individual's schedule as ICS file.
@@ -140,7 +140,7 @@ async def export_person_calendar(
     include_types: list[str] | None = Query(
         None, description="Activity types to include"
     ),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
 ) -> Response:
     """
     Export calendar for a person as ICS file.
@@ -190,7 +190,7 @@ async def export_rotation_calendar(
     rotation_id: UUID,
     start_date: date = Query(..., description="Start date for calendar export"),
     end_date: date = Query(..., description="End date for calendar export"),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
 ) -> Response:
     """
     Export calendar for a rotation as ICS file.
@@ -250,7 +250,7 @@ def _get_base_url(request: Request) -> str:
 async def create_subscription(
     request_body: CalendarSubscriptionCreate,
     request: Request,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CalendarSubscriptionResponse:
     """
@@ -312,7 +312,7 @@ async def create_subscription(
 @router.get("/subscribe/{token}")
 async def get_subscription_feed(
     token: str,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
 ) -> Response:
     """
     Get calendar feed for a subscription (webcal endpoint).
@@ -382,7 +382,7 @@ async def list_subscriptions(
     request: Request,
     person_id: UUID | None = Query(None, description="Filter by person"),
     active_only: bool = Query(True, description="Only show active subscriptions"),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CalendarSubscriptionListResponse:
     """
@@ -433,7 +433,7 @@ async def list_subscriptions(
 @router.delete("/subscribe/{token}", status_code=204)
 async def revoke_subscription(
     token: str,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     """
@@ -469,7 +469,7 @@ async def revoke_subscription(
 @router.get("/feed/{token}")
 async def get_subscription_feed_legacy(
     token: str,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
 ) -> Response:
     """Legacy endpoint - redirects to /subscribe/{token}."""
     return get_subscription_feed(token, db)

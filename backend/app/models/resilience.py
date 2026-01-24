@@ -73,44 +73,44 @@ class ResilienceHealthCheck(Base):
 
     __tablename__ = "resilience_health_checks"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    timestamp: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Overall status
-    overall_status = Column(String(20), nullable=False)
+    overall_status: Column = Column(String(20), nullable=False)
 
     # Utilization metrics
-    utilization_rate = Column(Float, nullable=False)
-    utilization_level = Column(
+    utilization_rate: Column = Column(Float, nullable=False)
+    utilization_level: Column = Column(
         String(20), nullable=False
     )  # GREEN, YELLOW, ORANGE, RED, BLACK
-    buffer_remaining = Column(Float)
+    buffer_remaining: Column = Column(Float)
 
     # Defense status
-    defense_level = Column(
+    defense_level: Column = Column(
         String(30)
     )  # PREVENTION, CONTROL, SAFETY_SYSTEMS, CONTAINMENT, EMERGENCY
-    load_shedding_level = Column(
+    load_shedding_level: Column = Column(
         String(20)
     )  # NORMAL, YELLOW, ORANGE, RED, BLACK, CRITICAL
 
     # Contingency compliance
-    n1_pass = Column(Boolean, default=True)
-    n2_pass = Column(Boolean, default=True)
-    phase_transition_risk = Column(String(20))  # low, medium, high, critical
+    n1_pass: Column = Column(Boolean, default=True)
+    n2_pass: Column = Column(Boolean, default=True)
+    phase_transition_risk: Column = Column(String(20))  # low, medium, high, critical
 
     # Active responses
-    active_fallbacks = Column(StringArrayType())
-    crisis_mode = Column(Boolean, default=False)
+    active_fallbacks: Column = Column(StringArrayType())
+    crisis_mode: Column = Column(Boolean, default=False)
 
     # Recommendations captured
-    immediate_actions = Column(JSONType())
-    watch_items = Column(JSONType())
+    immediate_actions: Column = Column(JSONType())
+    watch_items: Column = Column(JSONType())
 
     # Full metrics snapshot for deep analysis
-    metrics_snapshot = Column(JSONType())
+    metrics_snapshot: Column = Column(JSONType())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<ResilienceHealthCheck(status='{self.overall_status}', util={self.utilization_rate:.0%})>"
 
 
@@ -137,29 +137,33 @@ class ResilienceEvent(Base):
 
     __tablename__ = "resilience_events"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
-    event_type = Column(String(50), nullable=False)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    timestamp: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    event_type: Column = Column(String(50), nullable=False)
 
     # Event context
-    severity = Column(String(20))  # minor, moderate, severe, critical
-    reason = Column(String(500))
-    triggered_by = Column(String(100))  # 'system', 'user:<id>', 'scheduled_task'
+    severity: Column = Column(String(20))  # minor, moderate, severe, critical
+    reason: Column = Column(String(500))
+    triggered_by: Column = Column(
+        String(100)
+    )  # 'system', 'user:<id>', 'scheduled_task'
 
     # State before/after
-    previous_state = Column(JSONType())
-    new_state = Column(JSONType())
+    previous_state: Column = Column(JSONType())
+    new_state: Column = Column(JSONType())
 
     # Related entities
-    related_health_check_id = Column(GUID(), ForeignKey("resilience_health_checks.id"))
+    related_health_check_id: Column = Column(
+        GUID(), ForeignKey("resilience_health_checks.id")
+    )
 
     # Additional context
-    event_metadata = Column(JSONType())
+    event_metadata: Column = Column(JSONType())
 
     # Relationships
     health_check = relationship("ResilienceHealthCheck", backref="events")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<ResilienceEvent(type='{self.event_type}', severity='{self.severity}')>"
         )
@@ -182,35 +186,39 @@ class SacrificeDecision(Base):
 
     __tablename__ = "sacrifice_decisions"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    timestamp: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Decision details
-    from_level = Column(String(20), nullable=False)  # Previous load shedding level
-    to_level = Column(String(20), nullable=False)  # New load shedding level
-    reason = Column(String(500), nullable=False)
+    from_level: Column = Column(
+        String(20), nullable=False
+    )  # Previous load shedding level
+    to_level: Column = Column(String(20), nullable=False)  # New load shedding level
+    reason: Column = Column(String(500), nullable=False)
 
     # What was affected
-    activities_suspended = Column(StringArrayType())
-    activities_protected = Column(StringArrayType())
+    activities_suspended: Column = Column(StringArrayType())
+    activities_protected: Column = Column(StringArrayType())
 
     # Authorization
-    approved_by = Column(String(100))  # User ID or 'auto' for automatic
-    approval_method = Column(String(50))  # 'automatic', 'manual', 'emergency_override'
+    approved_by: Column = Column(String(100))  # User ID or 'auto' for automatic
+    approval_method: Column = Column(
+        String(50)
+    )  # 'automatic', 'manual', 'emergency_override'
 
     # Context
-    utilization_at_decision = Column(Float)
-    coverage_at_decision = Column(Float)
-    related_event_id = Column(GUID(), ForeignKey("resilience_events.id"))
+    utilization_at_decision: Column = Column(Float)
+    coverage_at_decision: Column = Column(Float)
+    related_event_id: Column = Column(GUID(), ForeignKey("resilience_events.id"))
 
     # Recovery tracking
-    recovered_at = Column(DateTime)
-    recovery_reason = Column(String(500))
+    recovered_at: Column = Column(DateTime)
+    recovery_reason: Column = Column(String(500))
 
     # Relationships
     event = relationship("ResilienceEvent", backref="sacrifice_decisions")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<SacrificeDecision(from='{self.from_level}', to='{self.to_level}')>"
 
     @property
@@ -242,37 +250,37 @@ class FallbackActivation(Base):
 
     __tablename__ = "fallback_activations"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    activated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    activated_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Fallback details
-    scenario = Column(
+    scenario: Column = Column(
         String(50), nullable=False
     )  # e.g., 'single_faculty_loss', 'pcs_season'
-    scenario_description = Column(String(500))
+    scenario_description: Column = Column(String(500))
 
     # Authorization
-    activated_by = Column(String(100))  # User ID or 'auto'
-    activation_reason = Column(String(500))
+    activated_by: Column = Column(String(100))  # User ID or 'auto'
+    activation_reason: Column = Column(String(500))
 
     # Schedule details
-    assignments_count = Column(Integer)
-    coverage_rate = Column(Float)
-    services_reduced = Column(StringArrayType())
-    assumptions = Column(StringArrayType())
+    assignments_count: Column = Column(Integer)
+    coverage_rate: Column = Column(Float)
+    services_reduced: Column = Column(StringArrayType())
+    assumptions: Column = Column(StringArrayType())
 
     # Deactivation
-    deactivated_at = Column(DateTime)
-    deactivated_by = Column(String(100))
-    deactivation_reason = Column(String(500))
+    deactivated_at: Column = Column(DateTime)
+    deactivated_by: Column = Column(String(100))
+    deactivation_reason: Column = Column(String(500))
 
     # Related event
-    related_event_id = Column(GUID(), ForeignKey("resilience_events.id"))
+    related_event_id: Column = Column(GUID(), ForeignKey("resilience_events.id"))
 
     # Relationships
     event = relationship("ResilienceEvent", backref="fallback_activations")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<FallbackActivation(scenario='{self.scenario}', active={self.is_active})>"
         )
@@ -301,37 +309,43 @@ class VulnerabilityRecord(Base):
 
     __tablename__ = "vulnerability_records"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    analyzed_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    analyzed_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Analysis scope
-    period_start = Column(DateTime)
-    period_end = Column(DateTime)
-    faculty_count = Column(Integer)
-    block_count = Column(Integer)
+    period_start: Column = Column(DateTime)
+    period_end: Column = Column(DateTime)
+    faculty_count: Column = Column(Integer)
+    block_count: Column = Column(Integer)
 
     # Results
-    n1_pass = Column(Boolean, nullable=False)
-    n2_pass = Column(Boolean, nullable=False)
-    phase_transition_risk = Column(String(20))
+    n1_pass: Column = Column(Boolean, nullable=False)
+    n2_pass: Column = Column(Boolean, nullable=False)
+    phase_transition_risk: Column = Column(String(20))
 
     # Vulnerability details
-    n1_vulnerabilities = Column(JSONType())  # List of single-loss vulnerabilities
-    n2_fatal_pairs = Column(JSONType())  # List of fatal faculty pairs
-    most_critical_faculty = Column(JSONType())  # Faculty IDs with highest centrality
+    n1_vulnerabilities: Column = Column(
+        JSONType()
+    )  # List of single-loss vulnerabilities
+    n2_fatal_pairs: Column = Column(JSONType())  # List of fatal faculty pairs
+    most_critical_faculty: Column = Column(
+        JSONType()
+    )  # Faculty IDs with highest centrality
 
     # Recommendations generated
-    recommended_actions = Column(StringArrayType())
+    recommended_actions: Column = Column(StringArrayType())
 
     # Related health check
-    related_health_check_id = Column(GUID(), ForeignKey("resilience_health_checks.id"))
+    related_health_check_id: Column = Column(
+        GUID(), ForeignKey("resilience_health_checks.id")
+    )
 
     # Relationships
     health_check = relationship(
         "ResilienceHealthCheck", backref="vulnerability_records"
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<VulnerabilityRecord(n1={self.n1_pass}, n2={self.n2_pass})>"
 
 
@@ -389,32 +403,34 @@ class FeedbackLoopState(Base):
 
     __tablename__ = "feedback_loop_states"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    loop_name = Column(String(100), nullable=False)
-    setpoint_name = Column(String(100), nullable=False)
-    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    loop_name: Column = Column(String(100), nullable=False)
+    setpoint_name: Column = Column(String(100), nullable=False)
+    timestamp: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Setpoint configuration
-    target_value = Column(Float, nullable=False)
-    tolerance = Column(Float, nullable=False)
-    is_critical = Column(Boolean, default=False)
+    target_value: Column = Column(Float, nullable=False)
+    tolerance: Column = Column(Float, nullable=False)
+    is_critical: Column = Column(Boolean, default=False)
 
     # Current state
-    current_value = Column(Float)
-    deviation = Column(Float)
-    deviation_severity = Column(String(20))  # none, minor, moderate, major, critical
-    consecutive_deviations = Column(Integer, default=0)
+    current_value: Column = Column(Float)
+    deviation: Column = Column(Float)
+    deviation_severity: Column = Column(
+        String(20)
+    )  # none, minor, moderate, major, critical
+    consecutive_deviations: Column = Column(Integer, default=0)
 
     # Trend analysis
-    trend_direction = Column(String(20))  # stable, increasing, decreasing
-    is_improving = Column(Boolean)
+    trend_direction: Column = Column(String(20))  # stable, increasing, decreasing
+    is_improving: Column = Column(Boolean)
 
     # Action tracking
-    correction_triggered = Column(Boolean, default=False)
-    correction_type = Column(String(50))
-    correction_effective = Column(Boolean)
+    correction_triggered: Column = Column(Boolean, default=False)
+    correction_type: Column = Column(String(50))
+    correction_effective: Column = Column(Boolean)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<FeedbackLoopState(loop='{self.loop_name}', deviation={self.deviation_severity})>"
 
 
@@ -428,30 +444,30 @@ class AllostasisRecord(Base):
 
     __tablename__ = "allostasis_records"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    entity_id = Column(GUID(), nullable=False)  # Faculty ID or system UUID
-    entity_type = Column(String(20), nullable=False)  # "faculty" or "system"
-    calculated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    entity_id: Column = Column(GUID(), nullable=False)  # Faculty ID or system UUID
+    entity_type: Column = Column(String(20), nullable=False)  # "faculty" or "system"
+    calculated_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Stress factors
-    consecutive_weekend_calls = Column(Integer, default=0)
-    nights_past_month = Column(Integer, default=0)
-    schedule_changes_absorbed = Column(Integer, default=0)
-    holidays_worked_this_year = Column(Integer, default=0)
-    overtime_hours_month = Column(Float, default=0.0)
-    coverage_gap_responses = Column(Integer, default=0)
-    cross_coverage_events = Column(Integer, default=0)
+    consecutive_weekend_calls: Column = Column(Integer, default=0)
+    nights_past_month: Column = Column(Integer, default=0)
+    schedule_changes_absorbed: Column = Column(Integer, default=0)
+    holidays_worked_this_year: Column = Column(Integer, default=0)
+    overtime_hours_month: Column = Column(Float, default=0.0)
+    coverage_gap_responses: Column = Column(Integer, default=0)
+    cross_coverage_events: Column = Column(Integer, default=0)
 
     # Calculated scores
-    acute_stress_score = Column(Float, default=0.0)
-    chronic_stress_score = Column(Float, default=0.0)
-    total_allostatic_load = Column(Float, default=0.0)
+    acute_stress_score: Column = Column(Float, default=0.0)
+    chronic_stress_score: Column = Column(Float, default=0.0)
+    total_allostatic_load: Column = Column(Float, default=0.0)
 
     # State
-    allostasis_state = Column(String(30))  # AllostasisState enum value
-    risk_level = Column(String(20))  # low, moderate, high, critical
+    allostasis_state: Column = Column(String(30))  # AllostasisState enum value
+    risk_level: Column = Column(String(20))  # low, moderate, high, critical
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<AllostasisRecord(entity={self.entity_id}, load={self.total_allostatic_load:.1f})>"
 
 
@@ -465,31 +481,31 @@ class PositiveFeedbackAlert(Base):
 
     __tablename__ = "positive_feedback_alerts"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    name = Column(String(100), nullable=False)
-    description = Column(String(500))
-    detected_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    name: Column = Column(String(100), nullable=False)
+    description: Column = Column(String(500))
+    detected_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Loop pattern
-    trigger = Column(String(200))
-    amplification = Column(String(200))
-    consequence = Column(String(200))
+    trigger: Column = Column(String(200))
+    amplification: Column = Column(String(200))
+    consequence: Column = Column(String(200))
 
     # Detection
-    evidence = Column(JSONType())
-    confidence = Column(Float)
-    severity = Column(String(20))
+    evidence: Column = Column(JSONType())
+    confidence: Column = Column(Float)
+    severity: Column = Column(String(20))
 
     # Intervention
-    intervention_recommended = Column(String(500))
-    urgency = Column(String(20))  # immediate, soon, monitor
+    intervention_recommended: Column = Column(String(500))
+    urgency: Column = Column(String(20))  # immediate, soon, monitor
 
     # Resolution
-    resolved_at = Column(DateTime)
-    resolution_notes = Column(String(500))
-    intervention_effective = Column(Boolean)
+    resolved_at: Column = Column(DateTime)
+    resolution_notes: Column = Column(String(500))
+    intervention_effective: Column = Column(Boolean)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<PositiveFeedbackAlert(name='{self.name}', urgency='{self.urgency}')>"
 
 
@@ -503,44 +519,46 @@ class SchedulingZoneRecord(Base):
 
     __tablename__ = "scheduling_zones"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    name = Column(String(100), nullable=False)
-    zone_type = Column(
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    name: Column = Column(String(100), nullable=False)
+    zone_type: Column = Column(
         String(50), nullable=False
     )  # inpatient, outpatient, education, etc.
-    description = Column(String(500))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    description: Column = Column(String(500))
+    created_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Services
-    services = Column(StringArrayType())
+    services: Column = Column(StringArrayType())
 
     # Capacity requirements
-    minimum_coverage = Column(Integer, default=1)
-    optimal_coverage = Column(Integer, default=2)
-    maximum_coverage = Column(Integer, default=5)
+    minimum_coverage: Column = Column(Integer, default=1)
+    optimal_coverage: Column = Column(Integer, default=2)
+    maximum_coverage: Column = Column(Integer, default=5)
 
     # Current status
-    status = Column(String(20), default="green")  # ZoneStatus enum
-    containment_level = Column(String(20), default="none")  # ContainmentLevel enum
-    last_status_change = Column(DateTime)
+    status: Column = Column(String(20), default="green")  # ZoneStatus enum
+    containment_level: Column = Column(
+        String(20), default="none"
+    )  # ContainmentLevel enum
+    last_status_change: Column = Column(DateTime)
 
     # Borrowing configuration
-    borrowing_limit = Column(Integer, default=2)
-    lending_limit = Column(Integer, default=1)
-    priority = Column(Integer, default=5)
+    borrowing_limit: Column = Column(Integer, default=2)
+    lending_limit: Column = Column(Integer, default=1)
+    priority: Column = Column(Integer, default=5)
 
     # Relationships can_borrow_from and can_lend_to stored as arrays
-    can_borrow_from_zones = Column(StringArrayType())
-    can_lend_to_zones = Column(StringArrayType())
+    can_borrow_from_zones: Column = Column(StringArrayType())
+    can_lend_to_zones: Column = Column(StringArrayType())
 
     # Metrics
-    total_borrowing_requests = Column(Integer, default=0)
-    total_lending_events = Column(Integer, default=0)
+    total_borrowing_requests: Column = Column(Integer, default=0)
+    total_lending_events: Column = Column(Integer, default=0)
 
     # Active status
-    is_active = Column(Boolean, default=True)
+    is_active: Column = Column(Boolean, default=True)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<SchedulingZoneRecord(name='{self.name}', status='{self.status}')>"
 
 
@@ -551,19 +569,19 @@ class ZoneFacultyAssignmentRecord(Base):
 
     __tablename__ = "zone_faculty_assignments"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    zone_id = Column(GUID(), ForeignKey("scheduling_zones.id"), nullable=False)
-    faculty_id = Column(GUID(), nullable=False)
-    faculty_name = Column(String(200))
-    role = Column(String(20), nullable=False)  # primary, secondary, backup
-    assigned_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    is_available = Column(Boolean, default=True)
-    removed_at = Column(DateTime)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    zone_id: Column = Column(GUID(), ForeignKey("scheduling_zones.id"), nullable=False)
+    faculty_id: Column = Column(GUID(), nullable=False)
+    faculty_name: Column = Column(String(200))
+    role: Column = Column(String(20), nullable=False)  # primary, secondary, backup
+    assigned_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    is_available: Column = Column(Boolean, default=True)
+    removed_at: Column = Column(DateTime)
 
     # Relationship
     zone = relationship("SchedulingZoneRecord", backref="faculty_assignments")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<ZoneFacultyAssignment(zone_id={self.zone_id}, role='{self.role}')>"
 
 
@@ -574,31 +592,33 @@ class ZoneBorrowingRecord(Base):
 
     __tablename__ = "zone_borrowing_records"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    requesting_zone_id = Column(
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    requesting_zone_id: Column = Column(
         GUID(), ForeignKey("scheduling_zones.id"), nullable=False
     )
-    lending_zone_id = Column(GUID(), ForeignKey("scheduling_zones.id"), nullable=False)
-    faculty_id = Column(GUID(), nullable=False)
+    lending_zone_id: Column = Column(
+        GUID(), ForeignKey("scheduling_zones.id"), nullable=False
+    )
+    faculty_id: Column = Column(GUID(), nullable=False)
 
     # Request details
-    priority = Column(String(20), nullable=False)  # critical, high, medium, low
-    reason = Column(String(500))
-    duration_hours = Column(Integer)
-    requested_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    priority: Column = Column(String(20), nullable=False)  # critical, high, medium, low
+    reason: Column = Column(String(500))
+    duration_hours: Column = Column(Integer)
+    requested_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Approval
-    status = Column(
+    status: Column = Column(
         String(20), default="pending"
     )  # pending, approved, denied, completed
-    approved_by = Column(String(100))
-    approved_at = Column(DateTime)
-    denial_reason = Column(String(500))
+    approved_by: Column = Column(String(100))
+    approved_at: Column = Column(DateTime)
+    denial_reason: Column = Column(String(500))
 
     # Execution
-    started_at = Column(DateTime)
-    completed_at = Column(DateTime)
-    was_effective = Column(Boolean)
+    started_at: Column = Column(DateTime)
+    completed_at: Column = Column(DateTime)
+    was_effective: Column = Column(Boolean)
 
     # Relationships
     requesting_zone = relationship(
@@ -606,7 +626,7 @@ class ZoneBorrowingRecord(Base):
     )
     lending_zone = relationship("SchedulingZoneRecord", foreign_keys=[lending_zone_id])
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<ZoneBorrowingRecord(status='{self.status}', priority='{self.priority}')>"
         )
@@ -619,29 +639,31 @@ class ZoneIncidentRecord(Base):
 
     __tablename__ = "zone_incidents"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    zone_id = Column(GUID(), ForeignKey("scheduling_zones.id"), nullable=False)
-    incident_type = Column(
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    zone_id: Column = Column(GUID(), ForeignKey("scheduling_zones.id"), nullable=False)
+    incident_type: Column = Column(
         String(50), nullable=False
     )  # faculty_loss, demand_surge, etc.
-    description = Column(String(500))
-    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    severity = Column(String(20), nullable=False)  # minor, moderate, severe, critical
+    description: Column = Column(String(500))
+    started_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    severity: Column = Column(
+        String(20), nullable=False
+    )  # minor, moderate, severe, critical
 
     # Impact
-    faculty_affected = Column(StringArrayType())
-    capacity_lost = Column(Float, default=0.0)
-    services_affected = Column(StringArrayType())
+    faculty_affected: Column = Column(StringArrayType())
+    capacity_lost: Column = Column(Float, default=0.0)
+    services_affected: Column = Column(StringArrayType())
 
     # Resolution
-    resolved_at = Column(DateTime)
-    resolution_notes = Column(String(500))
-    containment_successful = Column(Boolean, default=True)
+    resolved_at: Column = Column(DateTime)
+    resolution_notes: Column = Column(String(500))
+    containment_successful: Column = Column(Boolean, default=True)
 
     # Relationship
     zone = relationship("SchedulingZoneRecord", backref="incidents")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<ZoneIncidentRecord(type='{self.incident_type}', severity='{self.severity}')>"
 
 
@@ -654,41 +676,41 @@ class EquilibriumShiftRecord(Base):
 
     __tablename__ = "equilibrium_shifts"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    calculated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    calculated_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Original state
-    original_capacity = Column(Float, nullable=False)
-    original_demand = Column(Float, nullable=False)
-    original_coverage_rate = Column(Float, nullable=False)
+    original_capacity: Column = Column(Float, nullable=False)
+    original_demand: Column = Column(Float, nullable=False)
+    original_coverage_rate: Column = Column(Float, nullable=False)
 
     # Stress applied
-    stress_types = Column(StringArrayType())
-    total_capacity_impact = Column(Float)
-    total_demand_impact = Column(Float)
+    stress_types: Column = Column(StringArrayType())
+    total_capacity_impact: Column = Column(Float)
+    total_demand_impact: Column = Column(Float)
 
     # Compensation
-    compensation_types = Column(StringArrayType())
-    total_compensation = Column(Float)
-    compensation_efficiency = Column(Float)
+    compensation_types: Column = Column(StringArrayType())
+    total_compensation: Column = Column(Float)
+    compensation_efficiency: Column = Column(Float)
 
     # New equilibrium
-    new_capacity = Column(Float, nullable=False)
-    new_demand = Column(Float, nullable=False)
-    new_coverage_rate = Column(Float, nullable=False)
-    sustainable_capacity = Column(Float)
+    new_capacity: Column = Column(Float, nullable=False)
+    new_demand: Column = Column(Float, nullable=False)
+    new_coverage_rate: Column = Column(Float, nullable=False)
+    sustainable_capacity: Column = Column(Float)
 
     # Costs
-    compensation_debt = Column(Float, default=0.0)
-    daily_debt_rate = Column(Float, default=0.0)
-    burnout_risk = Column(Float, default=0.0)
-    days_until_exhaustion = Column(Integer)
+    compensation_debt: Column = Column(Float, default=0.0)
+    daily_debt_rate: Column = Column(Float, default=0.0)
+    burnout_risk: Column = Column(Float, default=0.0)
+    days_until_exhaustion: Column = Column(Integer)
 
     # State
-    equilibrium_state = Column(String(30))  # EquilibriumState enum
-    is_sustainable = Column(Boolean)
+    equilibrium_state: Column = Column(String(30))  # EquilibriumState enum
+    is_sustainable: Column = Column(Boolean)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<EquilibriumShiftRecord(state='{self.equilibrium_state}', sustainable={self.is_sustainable})>"
 
 
@@ -699,27 +721,27 @@ class SystemStressRecord(Base):
 
     __tablename__ = "system_stress_records"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    stress_type = Column(String(50), nullable=False)
-    description = Column(String(500))
-    applied_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    stress_type: Column = Column(String(50), nullable=False)
+    description: Column = Column(String(500))
+    applied_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Quantification
-    magnitude = Column(Float, nullable=False)
-    duration_days = Column(Integer)
-    is_acute = Column(Boolean, default=True)
-    is_reversible = Column(Boolean, default=True)
+    magnitude: Column = Column(Float, nullable=False)
+    duration_days: Column = Column(Integer)
+    is_acute: Column = Column(Boolean, default=True)
+    is_reversible: Column = Column(Boolean, default=True)
 
     # Impact
-    capacity_impact = Column(Float)
-    demand_impact = Column(Float)
+    capacity_impact: Column = Column(Float)
+    demand_impact: Column = Column(Float)
 
     # Status
-    is_active = Column(Boolean, default=True)
-    resolved_at = Column(DateTime)
-    resolution_notes = Column(String(500))
+    is_active: Column = Column(Boolean, default=True)
+    resolved_at: Column = Column(DateTime)
+    resolution_notes: Column = Column(String(500))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<SystemStressRecord(type='{self.stress_type}', active={self.is_active})>"
         )
@@ -732,30 +754,32 @@ class CompensationRecord(Base):
 
     __tablename__ = "compensation_records"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    stress_id = Column(GUID(), ForeignKey("system_stress_records.id"), nullable=False)
-    compensation_type = Column(String(50), nullable=False)
-    description = Column(String(500))
-    initiated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    stress_id: Column = Column(
+        GUID(), ForeignKey("system_stress_records.id"), nullable=False
+    )
+    compensation_type: Column = Column(String(50), nullable=False)
+    description: Column = Column(String(500))
+    initiated_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Quantification
-    compensation_magnitude = Column(Float, nullable=False)
-    effectiveness = Column(Float, default=0.8)
+    compensation_magnitude: Column = Column(Float, nullable=False)
+    effectiveness: Column = Column(Float, default=0.8)
 
     # Costs
-    immediate_cost = Column(Float, default=0.0)
-    hidden_cost = Column(Float, default=0.0)
-    sustainability_days = Column(Integer)
+    immediate_cost: Column = Column(Float, default=0.0)
+    hidden_cost: Column = Column(Float, default=0.0)
+    sustainability_days: Column = Column(Integer)
 
     # Status
-    is_active = Column(Boolean, default=True)
-    ended_at = Column(DateTime)
-    end_reason = Column(String(200))
+    is_active: Column = Column(Boolean, default=True)
+    ended_at: Column = Column(DateTime)
+    end_reason: Column = Column(String(200))
 
     # Relationship
     stress = relationship("SystemStressRecord", backref="compensations")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<CompensationRecord(type='{self.compensation_type}', active={self.is_active})>"
 
 
@@ -846,25 +870,25 @@ class CognitiveSessionRecord(Base):
 
     __tablename__ = "cognitive_sessions"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    user_id = Column(GUID(), nullable=False)
-    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    ended_at = Column(DateTime)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id: Column = Column(GUID(), nullable=False)
+    started_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    ended_at: Column = Column(DateTime)
 
     # Configuration
-    max_decisions_before_break = Column(Integer, nullable=False, default=7)
+    max_decisions_before_break: Column = Column(Integer, nullable=False, default=7)
 
     # Tracking
-    total_cognitive_cost = Column(Float, nullable=False, default=0.0)
-    decisions_count = Column(Integer, nullable=False, default=0)
-    breaks_taken = Column(Integer, nullable=False, default=0)
+    total_cognitive_cost: Column = Column(Float, nullable=False, default=0.0)
+    decisions_count: Column = Column(Integer, nullable=False, default=0)
+    breaks_taken: Column = Column(Integer, nullable=False, default=0)
 
     # Final state when session ended
-    final_state = Column(String(50))  # CognitiveState enum value
+    final_state: Column = Column(String(50))  # CognitiveState enum value
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<CognitiveSessionRecord(user={self.user_id}, decisions={self.decisions_count})>"
 
     @property
@@ -883,45 +907,45 @@ class CognitiveDecisionRecord(Base):
 
     __tablename__ = "cognitive_decisions"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    session_id = Column(
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    session_id: Column = Column(
         GUID(), ForeignKey("cognitive_sessions.id", ondelete="SET NULL")
     )
 
     # Decision definition
-    category = Column(String(50), nullable=False)  # DecisionCategory enum
-    complexity = Column(String(50), nullable=False)  # DecisionComplexity enum
-    description = Column(String(1000), nullable=False)
+    category: Column = Column(String(50), nullable=False)  # DecisionCategory enum
+    complexity: Column = Column(String(50), nullable=False)  # DecisionComplexity enum
+    description: Column = Column(String(1000), nullable=False)
 
     # Options and guidance
-    options = Column(JSONType())
-    recommended_option = Column(String(255))
-    safe_default = Column(String(255))
-    has_safe_default = Column(Boolean, default=False)
+    options: Column = Column(JSONType())
+    recommended_option: Column = Column(String(255))
+    safe_default: Column = Column(String(255))
+    has_safe_default: Column = Column(Boolean, default=False)
 
     # Urgency
-    is_urgent = Column(Boolean, default=False)
-    can_defer = Column(Boolean, default=True)
-    deadline = Column(DateTime)
-    context = Column(JSONType())
+    is_urgent: Column = Column(Boolean, default=False)
+    can_defer: Column = Column(Boolean, default=True)
+    deadline: Column = Column(DateTime)
+    context: Column = Column(JSONType())
 
     # Timing
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Resolution
-    outcome = Column(String(50))  # DecisionOutcome enum
-    chosen_option = Column(String(255))
-    decided_at = Column(DateTime)
-    decided_by = Column(String(255))
+    outcome: Column = Column(String(50))  # DecisionOutcome enum
+    chosen_option: Column = Column(String(255))
+    decided_at: Column = Column(DateTime)
+    decided_by: Column = Column(String(255))
 
     # Cost metrics
-    estimated_cognitive_cost = Column(Float, nullable=False, default=1.0)
-    actual_time_seconds = Column(Float)
+    estimated_cognitive_cost: Column = Column(Float, nullable=False, default=1.0)
+    actual_time_seconds: Column = Column(Float)
 
     # Relationship
     session = relationship("CognitiveSessionRecord", backref="decisions")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<CognitiveDecisionRecord(category='{self.category}', outcome='{self.outcome}')>"
 
 
@@ -935,33 +959,33 @@ class PreferenceTrailRecord(Base):
 
     __tablename__ = "preference_trails"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    faculty_id = Column(GUID(), nullable=False)
-    trail_type = Column(String(50), nullable=False)  # TrailType enum
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    faculty_id: Column = Column(GUID(), nullable=False)
+    trail_type: Column = Column(String(50), nullable=False)  # TrailType enum
 
     # What the trail is about (at least one should be set)
-    slot_id = Column(GUID())
-    slot_type = Column(String(100))
-    block_type = Column(String(100))
-    service_type = Column(String(100))
-    target_faculty_id = Column(GUID())  # For swap affinity
+    slot_id: Column = Column(GUID())
+    slot_type: Column = Column(String(100))
+    block_type: Column = Column(String(100))
+    service_type: Column = Column(String(100))
+    target_faculty_id: Column = Column(GUID())  # For swap affinity
 
     # Trail strength (0.0 - 1.0)
-    strength = Column(Float, nullable=False, default=0.5)
-    peak_strength = Column(Float, nullable=False, default=0.5)
+    strength: Column = Column(Float, nullable=False, default=0.5)
+    peak_strength: Column = Column(Float, nullable=False, default=0.5)
 
     # Evaporation configuration
-    evaporation_rate = Column(Float, nullable=False, default=0.1)
+    evaporation_rate: Column = Column(Float, nullable=False, default=0.1)
 
     # Statistics
-    reinforcement_count = Column(Integer, nullable=False, default=0)
+    reinforcement_count: Column = Column(Integer, nullable=False, default=0)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    last_reinforced = Column(DateTime)
-    last_evaporated = Column(DateTime)
+    created_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    last_reinforced: Column = Column(DateTime)
+    last_evaporated: Column = Column(DateTime)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<PreferenceTrailRecord(faculty={self.faculty_id}, type='{self.trail_type}', strength={self.strength:.2f})>"
 
 
@@ -974,22 +998,22 @@ class TrailSignalRecord(Base):
 
     __tablename__ = "trail_signals"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    trail_id = Column(
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    trail_id: Column = Column(
         GUID(), ForeignKey("preference_trails.id", ondelete="CASCADE"), nullable=False
     )
 
     # Signal details
-    signal_type = Column(String(50), nullable=False)
-    strength_change = Column(Float, nullable=False)
+    signal_type: Column = Column(String(50), nullable=False)
+    strength_change: Column = Column(Float, nullable=False)
 
     # Timestamp
-    recorded_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    recorded_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Relationship
     trail = relationship("PreferenceTrailRecord", backref="signals")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<TrailSignalRecord(signal='{self.signal_type}', change={self.strength_change:+.2f})>"
 
 
@@ -1003,33 +1027,33 @@ class FacultyCentralityRecord(Base):
 
     __tablename__ = "faculty_centrality"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    faculty_id = Column(GUID(), nullable=False)
-    faculty_name = Column(String(255), nullable=False)
-    calculated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    faculty_id: Column = Column(GUID(), nullable=False)
+    faculty_name: Column = Column(String(255), nullable=False)
+    calculated_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Centrality scores (0.0 - 1.0 normalized)
-    degree_centrality = Column(Float, nullable=False, default=0.0)
-    betweenness_centrality = Column(Float, nullable=False, default=0.0)
-    eigenvector_centrality = Column(Float, nullable=False, default=0.0)
-    pagerank = Column(Float, nullable=False, default=0.0)
+    degree_centrality: Column = Column(Float, nullable=False, default=0.0)
+    betweenness_centrality: Column = Column(Float, nullable=False, default=0.0)
+    eigenvector_centrality: Column = Column(Float, nullable=False, default=0.0)
+    pagerank: Column = Column(Float, nullable=False, default=0.0)
 
     # Composite score
-    composite_score = Column(Float, nullable=False, default=0.0)
+    composite_score: Column = Column(Float, nullable=False, default=0.0)
 
     # Coverage metrics
-    services_covered = Column(Integer, nullable=False, default=0)
-    unique_services = Column(Integer, nullable=False, default=0)
-    total_assignments = Column(Integer, nullable=False, default=0)
+    services_covered: Column = Column(Integer, nullable=False, default=0)
+    unique_services: Column = Column(Integer, nullable=False, default=0)
+    total_assignments: Column = Column(Integer, nullable=False, default=0)
 
     # Replacement difficulty (0.0 easy - 1.0 impossible)
-    replacement_difficulty = Column(Float, nullable=False, default=0.0)
+    replacement_difficulty: Column = Column(Float, nullable=False, default=0.0)
 
     # Risk assessment
-    risk_level = Column(String(50), nullable=False)  # HubRiskLevel enum
-    is_hub = Column(Boolean, nullable=False, default=False)
+    risk_level: Column = Column(String(50), nullable=False)  # HubRiskLevel enum
+    is_hub: Column = Column(Boolean, nullable=False, default=False)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<FacultyCentralityRecord(faculty='{self.faculty_name}', score={self.composite_score:.2f}, hub={self.is_hub})>"
 
 
@@ -1043,37 +1067,37 @@ class HubProtectionPlanRecord(Base):
 
     __tablename__ = "hub_protection_plans"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    hub_faculty_id = Column(GUID(), nullable=False)
-    hub_faculty_name = Column(String(255), nullable=False)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    hub_faculty_id: Column = Column(GUID(), nullable=False)
+    hub_faculty_name: Column = Column(String(255), nullable=False)
 
     # Protection period
-    period_start = Column(DateTime, nullable=False)
-    period_end = Column(DateTime, nullable=False)
-    reason = Column(String(1000), nullable=False)
+    period_start: Column = Column(DateTime, nullable=False)
+    period_end: Column = Column(DateTime, nullable=False)
+    reason: Column = Column(String(1000), nullable=False)
 
     # Protection measures
-    workload_reduction = Column(Float, nullable=False, default=0.3)
-    backup_assigned = Column(Boolean, nullable=False, default=False)
-    backup_faculty_ids = Column(StringArrayType())
-    critical_only = Column(Boolean, nullable=False, default=False)
+    workload_reduction: Column = Column(Float, nullable=False, default=0.3)
+    backup_assigned: Column = Column(Boolean, nullable=False, default=False)
+    backup_faculty_ids: Column = Column(StringArrayType())
+    critical_only: Column = Column(Boolean, nullable=False, default=False)
 
     # Status tracking
-    status = Column(
+    status: Column = Column(
         String(50), nullable=False, default="planned"
     )  # planned, active, completed
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    activated_at = Column(DateTime)
-    deactivated_at = Column(DateTime)
-    created_by = Column(String(255))
+    created_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    activated_at: Column = Column(DateTime)
+    deactivated_at: Column = Column(DateTime)
+    created_by: Column = Column(String(255))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<HubProtectionPlanRecord(faculty='{self.hub_faculty_name}', status='{self.status}')>"
 
     @property
     def is_active(self) -> bool:
         """Check if protection plan is currently active."""
-        return self.status == "active"
+        return bool(self.status == "active")
 
 
 class CrossTrainingRecommendationRecord(Base):
@@ -1086,29 +1110,29 @@ class CrossTrainingRecommendationRecord(Base):
 
     __tablename__ = "cross_training_recommendations"
 
-    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    skill = Column(String(255), nullable=False)
+    id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    skill: Column = Column(String(255), nullable=False)
 
     # Current state
-    current_holders = Column(StringArrayType())
-    recommended_trainees = Column(StringArrayType())
+    current_holders: Column = Column(StringArrayType())
+    recommended_trainees: Column = Column(StringArrayType())
 
     # Priority and rationale
-    priority = Column(String(50), nullable=False)  # CrossTrainingPriority enum
-    reason = Column(String(1000), nullable=False)
+    priority: Column = Column(String(50), nullable=False)  # CrossTrainingPriority enum
+    reason: Column = Column(String(1000), nullable=False)
 
     # Effort estimation
-    estimated_training_hours = Column(Integer, nullable=False, default=20)
-    risk_reduction = Column(Float, nullable=False, default=0.0)
+    estimated_training_hours: Column = Column(Integer, nullable=False, default=20)
+    risk_reduction: Column = Column(Float, nullable=False, default=0.0)
 
     # Status tracking
-    status = Column(
+    status: Column = Column(
         String(50), nullable=False, default="pending"
     )  # pending, approved, in_progress, completed
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    started_at = Column(DateTime)
-    completed_at = Column(DateTime)
-    approved_by = Column(String(255))
+    created_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at: Column = Column(DateTime)
+    completed_at: Column = Column(DateTime)
+    approved_by: Column = Column(String(255))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<CrossTrainingRecommendationRecord(skill='{self.skill}', priority='{self.priority}')>"

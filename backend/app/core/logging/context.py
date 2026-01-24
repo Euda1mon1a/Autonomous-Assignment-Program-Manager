@@ -111,7 +111,7 @@ class LogContextManager:
     Automatically sets and clears context variables.
     """
 
-    def __init__(self, context: LogContext):
+    def __init__(self, context: LogContext) -> None:
         """
         Initialize context manager.
 
@@ -119,7 +119,7 @@ class LogContextManager:
             context: LogContext to set
         """
         self.context = context
-        self._tokens: list[contextvars.Token] = []
+        self._tokens: list[tuple[str, contextvars.Token[Any]]] = []
 
     def __enter__(self) -> LogContext:
         """Enter context and set context variables."""
@@ -148,12 +148,17 @@ class LogContextManager:
         if self.context.custom_fields:
             current = custom_ctx.get({})
             updated = {**current, **self.context.custom_fields}
-            token = custom_ctx.set(updated)
-            self._tokens.append(("custom", token))
+            custom_token: contextvars.Token[dict[str, Any]] = custom_ctx.set(updated)
+            self._tokens.append(("custom", custom_token))
 
         return self.context
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: Any,
+    ) -> None:
         """Exit context and reset context variables."""
         # Reset in reverse order
         for var_name, token in reversed(self._tokens):
@@ -336,7 +341,7 @@ def create_request_context(
     request_id: str | None = None,
     user_id: str | None = None,
     session_id: str | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> LogContext:
     """
     Create log context for a request.
@@ -362,7 +367,7 @@ def create_request_context(
     )
 
 
-def with_log_context(**context_fields):
+def with_log_context(**context_fields: Any):  # type: ignore[no-untyped-def]
     """
     Decorator to add context to function logging.
 
@@ -375,8 +380,8 @@ def with_log_context(**context_fields):
             logger.info("Starting")  # Will include operation="schedule_generation"
     """
 
-    def decorator(func):
-        def wrapper(*args, **kwargs):
+    def decorator(func):  # type: ignore[no-untyped-def]
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Set custom fields
             for key, value in context_fields.items():
                 set_custom_field(key, value)

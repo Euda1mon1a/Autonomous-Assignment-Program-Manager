@@ -56,7 +56,7 @@ def create_json_response(data: list, filename: str) -> StreamingResponse:
 @router.get("/people")
 async def export_people(
     format: str = Query("csv", description="Export format: csv or json"),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):
@@ -93,7 +93,7 @@ async def export_absences(
     format: str = Query("csv", description="Export format: csv or json"),
     start_date: date | None = Query(None, description="Filter absences starting from"),
     end_date: date | None = Query(None, description="Filter absences ending by"),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):
@@ -147,7 +147,7 @@ async def export_schedule(
     format: str = Query("csv", description="Export format: csv or json"),
     start_date: date = Query(..., description="Schedule start date"),
     end_date: date = Query(..., description="Schedule end date"),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):
@@ -213,7 +213,7 @@ async def export_schedule_xlsx(
     federal_holidays: str | None = Query(
         None, description="Comma-separated federal holiday dates (YYYY-MM-DD)"
     ),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
 ):

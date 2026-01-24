@@ -66,7 +66,7 @@ class CatastropheTheory:
     Control surface: a^3 + 27b^2 = 0 (bifurcation set)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize catastrophe theory model."""
         pass
 
@@ -328,7 +328,8 @@ class CatastropheTheory:
                 # Follow nearest stable equilibrium
                 if stable_equilibria:
                     current_x = min(
-                        stable_equilibria, key=lambda eq: abs(eq - current_x)
+                        stable_equilibria,
+                        key=lambda eq: abs(eq - current_x),  # type: ignore[operator]
                     )
 
             forward_path.append((b, current_x))
@@ -346,7 +347,7 @@ class CatastropheTheory:
             ]
 
             if stable_equilibria:
-                current_x = min(stable_equilibria, key=lambda eq: abs(eq - current_x))
+                current_x = min(stable_equilibria, key=lambda eq: abs(eq - current_x))  # type: ignore[operator]
 
             backward_path.append((b, current_x))
 

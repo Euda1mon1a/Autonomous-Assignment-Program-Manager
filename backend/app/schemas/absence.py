@@ -77,7 +77,7 @@ class AbsenceBase(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_dates(self):
+    def validate_dates(self) -> "AbsenceBase":
         if self.end_date < self.start_date:
             raise ValueError("end_date must be >= start_date")
         return self

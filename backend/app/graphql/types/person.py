@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 import strawberry
 
@@ -108,9 +109,9 @@ class PersonConnection:
     has_previous_page: bool
 
 
-def person_from_db(db_person) -> Person:
+def person_from_db(db_person: Any) -> Person:
     """Convert database Person model to GraphQL type."""
-    return Person(
+    return Person(  # type: ignore[call-arg]
         id=strawberry.ID(str(db_person.id)),
         name=db_person.name,
         type=db_person.type,

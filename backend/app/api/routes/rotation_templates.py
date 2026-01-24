@@ -74,7 +74,7 @@ async def list_rotation_templates(
     ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> RotationTemplateListResponse:
     """List all rotation templates, optionally filtered by activity type.
 
     By default, archived templates are excluded. Use include_archived=true to see all templates.

@@ -64,15 +64,16 @@ class MetricsRegistry:
     """
 
     _instance: Optional["MetricsRegistry"] = None
+    _initialized: bool
 
-    def __new__(cls):
+    def __new__(cls) -> "MetricsRegistry":
         """Singleton pattern to ensure metrics are only registered once."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize all Prometheus metrics."""
         if self._initialized:
             return
@@ -473,7 +474,7 @@ class MetricsRegistry:
     # =========================================================================
 
     @contextmanager
-    def time_database_query(self, operation: str):
+    def time_database_query(self, operation: str):  # type: ignore[no-untyped-def]
         """
         Context manager to time database queries.
 
@@ -497,7 +498,7 @@ class MetricsRegistry:
             self.db_queries_total.labels(operation=operation).inc()
 
     @contextmanager
-    def time_cache_operation(self, operation: str):
+    def time_cache_operation(self, operation: str):  # type: ignore[no-untyped-def]
         """
         Context manager to time cache operations.
 
@@ -522,7 +523,7 @@ class MetricsRegistry:
             )
 
     @contextmanager
-    def time_background_task(self, task_name: str):
+    def time_background_task(self, task_name: str):  # type: ignore[no-untyped-def]
         """
         Context manager to time background task execution.
 
@@ -557,7 +558,7 @@ class MetricsRegistry:
             self.background_tasks_in_progress.labels(task_name=task_name).dec()
 
     @contextmanager
-    def time_schedule_generation(self, algorithm: str):
+    def time_schedule_generation(self, algorithm: str):  # type: ignore[no-untyped-def]
         """
         Context manager to time schedule generation.
 
@@ -595,7 +596,7 @@ class MetricsRegistry:
         endpoint: str,
         status_code: int,
         duration: float,
-    ):
+    ) -> None:
         """Record HTTP request metrics."""
         if not self._enabled:
             return
@@ -611,12 +612,12 @@ class MetricsRegistry:
             endpoint=endpoint,
         ).observe(duration)
 
-    def record_cache_hit(self, operation: str = "get"):
+    def record_cache_hit(self, operation: str = "get") -> None:
         """Record cache hit."""
         if self._enabled:
             self.cache_operations_total.labels(operation=operation, result="hit").inc()
 
-    def record_cache_miss(self, operation: str = "get"):
+    def record_cache_miss(self, operation: str = "get") -> None:
         """Record cache miss."""
         if self._enabled:
             self.cache_operations_total.labels(operation=operation, result="miss").inc()
@@ -626,7 +627,7 @@ class MetricsRegistry:
         error_type: str,
         severity: str = "error",
         endpoint: str = "unknown",
-    ):
+    ) -> None:
         """Record error occurrence."""
         if self._enabled:
             self.errors_total.labels(
@@ -635,12 +636,12 @@ class MetricsRegistry:
                 endpoint=endpoint,
             ).inc()
 
-    def record_acgme_violation(self, violation_type: str):
+    def record_acgme_violation(self, violation_type: str) -> None:
         """Record ACGME compliance violation."""
         if self._enabled:
             self.acgme_violations_total.labels(violation_type=violation_type).inc()
 
-    def update_acgme_compliance_score(self, rule: str, score: float):
+    def update_acgme_compliance_score(self, rule: str, score: float) -> None:
         """Update ACGME compliance score (0.0-1.0)."""
         if self._enabled:
             self.acgme_compliance_score.labels(rule=rule).set(score)
@@ -651,7 +652,7 @@ class MetricsRegistry:
 
     def record_constraint_violation(
         self, constraint_name: str, constraint_type: str, severity: str = "soft"
-    ):
+    ) -> None:
         """
         Record a constraint violation during solving.
 
@@ -671,7 +672,7 @@ class MetricsRegistry:
             ).inc()
 
     @contextmanager
-    def time_constraint_evaluation(self, constraint_name: str):
+    def time_constraint_evaluation(self, constraint_name: str):  # type: ignore[no-untyped-def]
         """
         Context manager to time constraint evaluation.
 
@@ -695,7 +696,7 @@ class MetricsRegistry:
                 constraint_name=constraint_name
             ).observe(duration)
 
-    def update_constraint_satisfaction(self, constraint_name: str, rate: float):
+    def update_constraint_satisfaction(self, constraint_name: str, rate: float) -> None:
         """
         Update constraint satisfaction rate.
 
@@ -708,7 +709,7 @@ class MetricsRegistry:
                 constraint_name=constraint_name
             ).set(rate)
 
-    def record_solver_iteration(self, algorithm: str, count: int = 1):
+    def record_solver_iteration(self, algorithm: str, count: int = 1) -> None:
         """
         Record solver iteration(s).
 
@@ -719,7 +720,7 @@ class MetricsRegistry:
         if self._enabled:
             self.solver_iterations_total.labels(algorithm=algorithm).inc(count)
 
-    def record_solver_abort(self, reason: str):
+    def record_solver_abort(self, reason: str) -> None:
         """
         Record a solver abort event.
 
@@ -729,7 +730,9 @@ class MetricsRegistry:
         if self._enabled:
             self.solver_abort_total.labels(reason=reason).inc()
 
-    def update_solver_best_score(self, run_id: str, algorithm: str, score: float):
+    def update_solver_best_score(
+        self, run_id: str, algorithm: str, score: float
+    ) -> None:
         """
         Update best objective score during solving.
 
@@ -763,7 +766,7 @@ def get_metrics() -> MetricsRegistry:
 class _MetricsProxy:
     """Proxy to support lazy initialization while keeping 'metrics' as module-level."""
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str):  # type: ignore[no-untyped-def]
         return getattr(get_metrics(), name)
 
 

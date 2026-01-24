@@ -51,8 +51,8 @@ class ClaudeService:
                 ],
             ) as stream:
                 current_text = ""
-                code_blocks = []
-                artifacts = []
+                code_blocks: list[dict[str, str]] = []
+                artifacts: list[dict[str, str]] = []
 
                 for text in stream.text_stream:
                     current_text += text
@@ -197,7 +197,7 @@ Task Parameters:
 {json.dumps(request.parameters or {}, indent=2)}
 
 User Request:
-{request.userQuery}
+{request.user_query}
 
 Please provide a detailed, structured response that can be integrated into the scheduling system.
         """

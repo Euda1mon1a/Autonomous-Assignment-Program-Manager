@@ -2,9 +2,10 @@
 
 from datetime import date, datetime
 from enum import Enum
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
 from app.validators.date_validators import validate_academic_year_date
 
@@ -60,7 +61,9 @@ class SwapExecuteRequest(BaseModel):
 
     @field_validator("target_week")
     @classmethod
-    def validate_swap_type_consistency(cls, v, info):
+    def validate_swap_type_consistency(
+        cls, v: int | None, info: ValidationInfo
+    ) -> int | None:
         if info.data.get("swap_type") == SwapTypeSchema.ONE_TO_ONE and v is None:
             raise ValueError("target_week required for one-to-one swaps")
         return v

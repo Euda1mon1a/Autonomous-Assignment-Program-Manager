@@ -27,7 +27,7 @@ class TaskInfo(BaseModel):
     queue: str | None = None
     status: str | None = None
     args: list[Any] | None = None
-    kwargs: dict[str, Any] | None = None
+    kwargs: dict[str, Any] | None = None  # type: ignore[no-redef]
     time_start: float | None = Field(None, alias="timeStart")
     acknowledged: bool | None = None
     ready: bool | None = None
@@ -50,7 +50,7 @@ class ScheduledTaskInfo(BaseModel):
     eta: str | None = None
     priority: int | None = None
     args: list[Any] | None = None
-    kwargs: dict[str, Any] | None = None
+    kwargs: dict[str, Any] | None = None  # type: ignore[no-redef]
 
     class Config:
         populate_by_name = True
@@ -65,7 +65,7 @@ class ReservedTaskInfo(BaseModel):
     queue: str | None = None
     priority: int | None = None
     args: list[Any] | None = None
-    kwargs: dict[str, Any] | None = None
+    kwargs: dict[str, Any] | None = None  # type: ignore[no-redef]
 
     class Config:
         populate_by_name = True
@@ -254,7 +254,7 @@ class TaskHistoryRecord(BaseModel):
     queue: str | None = None
     retries: int | None = None
     args: list[Any] | None = None
-    kwargs: dict[str, Any] | None = None
+    kwargs: dict[str, Any] | None = None  # type: ignore[no-redef]
     result: Any | None = None
     error: str | None = None
 
@@ -316,7 +316,7 @@ class FailureRecord(BaseModel):
     queue: str | None = None
     retries: int | None = None
     args: list[Any] | None = None
-    kwargs: dict[str, Any] | None = None
+    kwargs: dict[str, Any] | None = None  # type: ignore[no-redef]
 
     class Config:
         populate_by_name = True

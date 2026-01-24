@@ -106,7 +106,7 @@ class JobCreateSchema(BaseModel):
     trigger_type: str = Field(..., pattern="^(cron|interval|date)$")
     trigger_config: dict[str, Any]
     args: list[Any] = Field(default_factory=list)
-    kwargs: dict[str, Any] = Field(default_factory=dict)
+    kwargs: dict[str, Any] = Field(default_factory=dict)  # type: ignore[no-redef]
     max_instances: int = Field(default=1, ge=1, le=10)
     misfire_grace_time: int | None = Field(default=None, ge=0)
     coalesce: bool = True
@@ -114,7 +114,7 @@ class JobCreateSchema(BaseModel):
 
     @field_validator("trigger_config")
     @classmethod
-    def validate_trigger_config(cls, v: dict, info) -> dict:
+    def validate_trigger_config(cls, v: dict[str, Any], info: Any) -> dict[str, Any]:
         """Validate trigger configuration based on trigger type."""
         if not v:
             raise ValueError("trigger_config cannot be empty")
@@ -160,7 +160,7 @@ class JobUpdateSchema(BaseModel):
 
     trigger_config: dict[str, Any] | None = None
     args: list[Any] | None = None
-    kwargs: dict[str, Any] | None = None
+    kwargs: dict[str, Any] | None = None  # type: ignore[no-redef]
     max_instances: int | None = Field(default=None, ge=1, le=10)
     misfire_grace_time: int | None = Field(default=None, ge=0)
     coalesce: bool | None = None
@@ -199,7 +199,7 @@ class JobResponseSchema(BaseModel):
     trigger_type: str
     trigger_config: dict[str, Any]
     args: list[Any]
-    kwargs: dict[str, Any]
+    kwargs: dict[str, Any]  # type: ignore[no-redef]
     next_run_time: datetime | None
     last_run_time: datetime | None
     run_count: int

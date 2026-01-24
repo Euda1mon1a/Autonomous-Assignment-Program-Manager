@@ -55,7 +55,7 @@ class InvalidationStrategy(ABC):
 
     @abstractmethod
     async def should_invalidate(
-        self, key: str, trigger: InvalidationTrigger, **kwargs
+        self, key: str, trigger: InvalidationTrigger, **kwargs: Any
     ) -> bool:
         """
         Determine if a cache entry should be invalidated.
@@ -72,7 +72,7 @@ class InvalidationStrategy(ABC):
 
     @abstractmethod
     async def invalidate(
-        self, cache_client: Any, key: str | None = None, **kwargs
+        self, cache_client: Any, key: str | None = None, **kwargs: Any
     ) -> int:
         """
         Execute invalidation for matching entries.
@@ -126,7 +126,7 @@ class TTLStrategy(InvalidationStrategy):
         self.default_ttl = default_ttl
 
     async def should_invalidate(
-        self, key: str, trigger: InvalidationTrigger, **kwargs
+        self, key: str, trigger: InvalidationTrigger, **kwargs: Any
     ) -> bool:
         """
         Check if entry should be invalidated based on TTL.
@@ -143,11 +143,11 @@ class TTLStrategy(InvalidationStrategy):
             return True
 
         # Check remaining TTL if provided
-        ttl_remaining = kwargs.get("ttl_remaining", -1)
-        return ttl_remaining <= 0
+        ttl_remaining: int = kwargs.get("ttl_remaining", -1)
+        return bool(ttl_remaining <= 0)
 
     async def invalidate(
-        self, cache_client: Any, key: str | None = None, **kwargs
+        self, cache_client: Any, key: str | None = None, **kwargs: Any
     ) -> int:
         """
         Invalidate expired entries (Redis handles automatically).
@@ -161,7 +161,7 @@ class TTLStrategy(InvalidationStrategy):
             Number of entries invalidated
         """
         if key:
-            deleted = await cache_client.delete(key)
+            deleted: int = await cache_client.delete(key)
             self._record_invalidation(deleted)
             return deleted
 
@@ -183,8 +183,9 @@ class TTLStrategy(InvalidationStrategy):
         Returns:
             True if TTL was set successfully
         """
-        ttl = ttl or self.default_ttl
-        return await cache_client.expire(key, ttl)
+        ttl_to_use = ttl or self.default_ttl
+        result: bool = await cache_client.expire(key, ttl_to_use)
+        return result
 
 
 class TagBasedStrategy(InvalidationStrategy):
@@ -213,7 +214,7 @@ class TagBasedStrategy(InvalidationStrategy):
         self.tag_prefix = f"cache:tag:{namespace}"
 
     async def should_invalidate(
-        self, key: str, trigger: InvalidationTrigger, **kwargs
+        self, key: str, trigger: InvalidationTrigger, **kwargs: Any
     ) -> bool:
         """
         Check if entry should be invalidated based on tags.
@@ -231,7 +232,7 @@ class TagBasedStrategy(InvalidationStrategy):
         return False
 
     async def invalidate(
-        self, cache_client: Any, key: str | None = None, **kwargs
+        self, cache_client: Any, key: str | None = None, **kwargs: Any
     ) -> int:
         """
         Invalidate entries by tag or specific key.
@@ -250,7 +251,7 @@ class TagBasedStrategy(InvalidationStrategy):
             return await self.invalidate_by_tag(cache_client, tag)
         elif key:
             # Remove key from all tag sets and delete the key
-            deleted = await cache_client.delete(key)
+            deleted: int = await cache_client.delete(key)
             self._record_invalidation(deleted)
             return deleted
 
@@ -276,7 +277,7 @@ class TagBasedStrategy(InvalidationStrategy):
             return 0
 
         # Delete all keys and the tag set
-        count = await cache_client.delete(*keys, tag_key)
+        count: int = await cache_client.delete(*keys, tag_key)
         self._record_invalidation(count)
 
         logger.info(f"Invalidated {count} entries for tag '{tag}'")
@@ -325,7 +326,7 @@ class PatternStrategy(InvalidationStrategy):
         super().__init__(namespace)
 
     async def should_invalidate(
-        self, key: str, trigger: InvalidationTrigger, **kwargs
+        self, key: str, trigger: InvalidationTrigger, **kwargs: Any
     ) -> bool:
         """
         Check if entry should be invalidated based on pattern.
@@ -343,7 +344,7 @@ class PatternStrategy(InvalidationStrategy):
         return False
 
     async def invalidate(
-        self, cache_client: Any, key: str | None = None, **kwargs
+        self, cache_client: Any, key: str | None = None, **kwargs: Any
     ) -> int:
         """
         Invalidate entries by pattern.
@@ -361,7 +362,7 @@ class PatternStrategy(InvalidationStrategy):
         if pattern:
             return await self.invalidate_by_pattern(cache_client, pattern)
         elif key:
-            deleted = await cache_client.delete(key)
+            deleted: int = await cache_client.delete(key)
             self._record_invalidation(deleted)
             return deleted
 
@@ -428,7 +429,7 @@ class WriteThroughStrategy(InvalidationStrategy):
         self.invalidate_before_write = invalidate_before_write
 
     async def should_invalidate(
-        self, key: str, trigger: InvalidationTrigger, **kwargs
+        self, key: str, trigger: InvalidationTrigger, **kwargs: Any
     ) -> bool:
         """
         Check if entry should be invalidated on write.
@@ -444,7 +445,7 @@ class WriteThroughStrategy(InvalidationStrategy):
         return trigger == InvalidationTrigger.WRITE_OPERATION
 
     async def invalidate(
-        self, cache_client: Any, key: str | None = None, **kwargs
+        self, cache_client: Any, key: str | None = None, **kwargs: Any
     ) -> int:
         """
         Invalidate cache entries on write operation.
@@ -457,15 +458,15 @@ class WriteThroughStrategy(InvalidationStrategy):
         Returns:
             Number of entries invalidated
         """
-        keys = kwargs.get("keys", [])
+        keys_list: list[str] = kwargs.get("keys", [])
 
         if key:
-            keys.append(key)
+            keys_list.append(key)
 
-        if not keys:
+        if not keys_list:
             return 0
 
-        count = await cache_client.delete(*keys)
+        count: int = await cache_client.delete(*keys_list)
         self._record_invalidation(count)
         return count
 
@@ -483,7 +484,7 @@ class WriteThroughStrategy(InvalidationStrategy):
         if not keys:
             return 0
 
-        count = await cache_client.delete(*keys)
+        count: int = await cache_client.delete(*keys)
         self._record_invalidation(count)
 
         logger.debug(f"Write-through invalidated {count} entries")

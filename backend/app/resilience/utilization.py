@@ -119,7 +119,7 @@ class UtilizationMonitor:
         threshold: UtilizationThreshold | None = None,
     ):
         self.threshold = threshold or UtilizationThreshold()
-        self._capacity_cache = {}
+        self._capacity_cache: dict[tuple[int, float, int], float] = {}
 
     def calculate_utilization(
         self,

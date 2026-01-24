@@ -2,9 +2,10 @@
 
 from datetime import date, datetime
 from enum import Enum
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 
 class MatchPriority(str, Enum):
@@ -228,7 +229,7 @@ class MatchingCriteria(BaseModel):
         "date_proximity_weight",
     )
     @classmethod
-    def validate_weights(cls, v, info):
+    def validate_weights(cls, v: float, info: ValidationInfo) -> float:
         """Ensure all weights are valid."""
         if v < 0 or v > 1:
             raise ValueError("Weights must be between 0 and 1")

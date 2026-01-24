@@ -30,7 +30,7 @@ async def list_blocks(
         None, description="Filter by academic block number"
     ),
     db=Depends(get_db),
-):
+) -> BlockListResponse:
     """List blocks, optionally filtered by date range or block number.
 
     This endpoint is public (no authentication required) as block data
@@ -48,7 +48,7 @@ async def list_blocks(
 async def get_block(
     block_id: UUID,
     db=Depends(get_db),
-):
+) -> BlockResponse:
     """Get a block by ID.
 
     This endpoint is public (no authentication required) as block data
@@ -63,7 +63,7 @@ async def create_block(
     block_in: BlockCreate,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BlockResponse:
     """Create a new block. Requires authentication."""
     controller = BlockController(db)
     return controller.create_block(block_in)
@@ -76,7 +76,7 @@ async def generate_blocks(
     base_block_number: int = Query(1, description="Starting block number"),
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> BlockListResponse:
     """
     Generate blocks for a date range. Requires authentication.
 
@@ -95,7 +95,7 @@ async def delete_block(
     block_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete a block. Requires authentication."""
     controller = BlockController(db)
     await controller.delete_block(block_id)

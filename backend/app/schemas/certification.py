@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.validators.date_validators import validate_date_range
+from app.validators.date_validators import validate_date_not_null
 
 # ============================================================================
 # Certification Type Schemas
@@ -132,7 +132,7 @@ class PersonCertificationBase(BaseModel):
     def validate_dates_in_range(cls, v: date | None) -> date | None:
         """Validate dates are within reasonable bounds."""
         if v is not None:
-            return validate_date_range(v, field_name="date")
+            return validate_date_not_null(v, field_name="date")
         return v
 
     @field_validator("status")
@@ -144,7 +144,7 @@ class PersonCertificationBase(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_expiration_after_issue(self):
+    def validate_expiration_after_issue(self) -> "PersonCertificationBase":
         """Ensure expiration_date is after issued_date."""
         if self.expiration_date <= self.issued_date:
             raise ValueError(
@@ -178,7 +178,7 @@ class PersonCertificationUpdate(BaseModel):
     def validate_dates_in_range(cls, v: date | None) -> date | None:
         """Validate dates are within reasonable bounds."""
         if v is not None:
-            return validate_date_range(v, field_name="date")
+            return validate_date_not_null(v, field_name="date")
         return v
 
     @field_validator("status")

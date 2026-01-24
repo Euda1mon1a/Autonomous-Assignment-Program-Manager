@@ -56,7 +56,7 @@ class CacheKeyGenerator:
         function_name: str,
         include_namespace: bool = True,
         include_version: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """
         Generate a cache key from function name and parameters.
@@ -92,7 +92,7 @@ class CacheKeyGenerator:
         return self.separator.join(components)
 
     def generate_tagged(
-        self, function_name: str, tags: list[str], **kwargs
+        self, function_name: str, tags: list[str], **kwargs: Any
     ) -> tuple[str, list[str]]:
         """
         Generate a cache key with associated tags for tag-based invalidation.
@@ -185,7 +185,7 @@ class CacheKeyGenerator:
 
 
 def generate_cache_key(
-    namespace: str, function_name: str, version: str = "v1", **kwargs
+    namespace: str, function_name: str, version: str = "v1", **kwargs: Any
 ) -> str:
     """
     Quick helper function to generate a cache key.

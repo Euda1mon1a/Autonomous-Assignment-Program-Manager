@@ -68,7 +68,7 @@ class LLMProvider(ABC):
         model: str | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.7,
-        **kwargs,
+        **kwargs: Any,
     ) -> LLMResponse:
         """
         Generate text from prompt.
@@ -96,7 +96,7 @@ class LLMProvider(ABC):
         tools: list[dict[str, Any]],
         system: str | None = None,
         model: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> LLMResponse:
         """
         Generate text with tool calling support.
@@ -122,7 +122,7 @@ class LLMProvider(ABC):
         prompt: str,
         system: str | None = None,
         model: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> AsyncGenerator[StreamChunk, None]:
         """
         Stream generation results.
@@ -250,7 +250,7 @@ class OllamaProvider(LLMProvider):
         model: str | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.7,
-        **kwargs,
+        **kwargs: Any,
     ) -> LLMResponse:
         """Generate text using Ollama API."""
         start_time = time.time()
@@ -328,7 +328,7 @@ class OllamaProvider(LLMProvider):
         tools: list[dict[str, Any]],
         system: str | None = None,
         model: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> LLMResponse:
         """Generate with tool calling (requires Mistral, Llama 3.1+)."""
         start_time = time.time()
@@ -388,12 +388,12 @@ class OllamaProvider(LLMProvider):
             logger.error(f"Ollama tool calling error: {str(e)}")
             raise LLMProviderError(f"Ollama tool calling failed: {str(e)}") from e
 
-    async def stream_generate(
+    async def stream_generate(  # type: ignore[override]
         self,
         prompt: str,
         system: str | None = None,
         model: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> AsyncGenerator[StreamChunk, None]:
         """Stream generation from Ollama."""
         model = model or self.default_model
@@ -512,7 +512,7 @@ class AnthropicProvider(LLMProvider):
         model: str | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.7,
-        **kwargs,
+        **kwargs: Any,
     ) -> LLMResponse:
         """Generate text using Anthropic API."""
         if not self._client:
@@ -569,7 +569,7 @@ class AnthropicProvider(LLMProvider):
         tools: list[dict[str, Any]],
         system: str | None = None,
         model: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> LLMResponse:
         """Generate with tool calling using Anthropic."""
         if not self._client:
@@ -627,12 +627,12 @@ class AnthropicProvider(LLMProvider):
             logger.error(f"Anthropic tool calling error: {str(e)}")
             raise LLMProviderError(f"Anthropic tool calling failed: {str(e)}") from e
 
-    async def stream_generate(
+    async def stream_generate(  # type: ignore[override]
         self,
         prompt: str,
         system: str | None = None,
         model: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> AsyncGenerator[StreamChunk, None]:
         """Stream generation from Anthropic."""
         if not self._client:
@@ -877,7 +877,7 @@ class LLMRouter:
             model = classification.recommended_model
         else:
             provider_name = request.provider
-            model = request.model
+            model = request.model or ""
 
         # Try primary provider
         try:

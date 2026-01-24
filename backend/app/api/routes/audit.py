@@ -99,75 +99,75 @@ def _generate_mock_audit_entries(
         AuditLogEntry(
             id="audit-001",
             timestamp=(datetime.utcnow() - timedelta(hours=2)).isoformat() + "Z",
-            entityType="assignment",
-            entityId="assign-123",
-            entityName="Night Shift - ICU",
+            entity_type="assignment",
+            entity_id="assign-123",
+            entity_name="Night Shift - ICU",
             action="create",
             severity="info",
             user=users[0],
             changes=[
                 FieldChange(
                     field="person_id",
-                    oldValue=None,
-                    newValue="person-456",
-                    displayName="Assigned Person",
+                    old_value=None,
+                    new_value="person-456",
+                    display_name="Assigned Person",
                 ),
                 FieldChange(
                     field="block_id",
-                    oldValue=None,
-                    newValue="block-789",
-                    displayName="Block",
+                    old_value=None,
+                    new_value="block-789",
+                    display_name="Block",
                 ),
             ],
             metadata={"source": "manual_assignment"},
-            ipAddress="10.0.1.45",
-            userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            ip_address="10.0.1.45",
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
             reason="Regular assignment",
         ),
         AuditLogEntry(
             id="audit-002",
             timestamp=(datetime.utcnow() - timedelta(hours=5)).isoformat() + "Z",
-            entityType="assignment",
-            entityId="assign-124",
-            entityName="Day Shift - ER",
+            entity_type="assignment",
+            entity_id="assign-124",
+            entity_name="Day Shift - ER",
             action="override",
             severity="warning",
             user=users[1],
             changes=[
                 FieldChange(
                     field="max_consecutive_days",
-                    oldValue=7,
-                    newValue=10,
-                    displayName="Max Consecutive Days",
+                    old_value=7,
+                    new_value=10,
+                    display_name="Max Consecutive Days",
                 ),
             ],
             metadata={"override_type": "acgme_violation", "rule_id": "rule-001"},
-            ipAddress="10.0.1.46",
-            acgmeOverride=True,
-            acgmeJustification="Educational opportunity - resident requested to continue for critical case",
+            ip_address="10.0.1.46",
+            acgme_override=True,
+            acgme_justification="Educational opportunity - resident requested to continue for critical case",
             reason="ACGME max consecutive days override",
         ),
         AuditLogEntry(
             id="audit-003",
             timestamp=(datetime.utcnow() - timedelta(hours=8)).isoformat() + "Z",
-            entityType="person",
-            entityId="person-789",
-            entityName="Dr. Alex Thompson",
+            entity_type="person",
+            entity_id="person-789",
+            entity_name="Dr. Alex Thompson",
             action="update",
             severity="info",
             user=users[2],
             changes=[
                 FieldChange(
                     field="email",
-                    oldValue="alex.t@old.mil",
-                    newValue="alex.thompson@hospital.mil",
-                    displayName="Email",
+                    old_value="alex.t@old.mil",
+                    new_value="alex.thompson@hospital.mil",
+                    display_name="Email",
                 ),
                 FieldChange(
                     field="phone",
-                    oldValue="555-0100",
-                    newValue="555-0199",
-                    displayName="Phone",
+                    old_value="555-0100",
+                    new_value="555-0199",
+                    display_name="Phone",
                 ),
             ],
             metadata={"updated_fields": 2},
@@ -176,9 +176,9 @@ def _generate_mock_audit_entries(
         AuditLogEntry(
             id="audit-004",
             timestamp=(datetime.utcnow() - timedelta(hours=12)).isoformat() + "Z",
-            entityType="schedule_run",
-            entityId="sched-001",
-            entityName="January 2025 Schedule",
+            entity_type="schedule_run",
+            entity_id="sched-001",
+            entity_name="January 2025 Schedule",
             action="schedule_generate",
             severity="info",
             user=users[1],
@@ -193,18 +193,18 @@ def _generate_mock_audit_entries(
         AuditLogEntry(
             id="audit-005",
             timestamp=(datetime.utcnow() - timedelta(hours=15)).isoformat() + "Z",
-            entityType="absence",
-            entityId="absence-456",
-            entityName="Vacation - Dr. Smith",
+            entity_type="absence",
+            entity_id="absence-456",
+            entity_name="Vacation - Dr. Smith",
             action="delete",
             severity="warning",
             user=users[0],
             changes=[
                 FieldChange(
                     field="status",
-                    oldValue="approved",
-                    newValue="deleted",
-                    displayName="Status",
+                    old_value="approved",
+                    new_value="deleted",
+                    display_name="Status",
                 ),
             ],
             reason="Cancelled vacation request",
@@ -213,18 +213,18 @@ def _generate_mock_audit_entries(
             id="audit-006",
             timestamp=(datetime.utcnow() - timedelta(days=1, hours=2)).isoformat()
             + "Z",
-            entityType="rotation_template",
-            entityId="template-001",
-            entityName="EM Residency Core",
+            entity_type="rotation_template",
+            entity_id="template-001",
+            entity_name="EM Residency Core",
             action="update",
             severity="info",
             user=users[1],
             changes=[
                 FieldChange(
                     field="duration_weeks",
-                    oldValue=4,
-                    newValue=6,
-                    displayName="Duration",
+                    old_value=4,
+                    new_value=6,
+                    display_name="Duration",
                 ),
             ],
             reason="Updated rotation duration per ACGME requirements",
@@ -233,44 +233,44 @@ def _generate_mock_audit_entries(
             id="audit-007",
             timestamp=(datetime.utcnow() - timedelta(days=1, hours=5)).isoformat()
             + "Z",
-            entityType="assignment",
-            entityId="assign-125",
-            entityName="Night Shift - Trauma",
+            entity_type="assignment",
+            entity_id="assign-125",
+            entity_name="Night Shift - Trauma",
             action="override",
             severity="critical",
             user=users[1],
             changes=[
                 FieldChange(
                     field="hours_per_week",
-                    oldValue=80,
-                    newValue=88,
-                    displayName="Hours Per Week",
+                    old_value=80,
+                    new_value=88,
+                    display_name="Hours Per Week",
                 ),
             ],
-            acgmeOverride=True,
-            acgmeJustification="Mass casualty event - temporary extension approved by GME office",
+            acgme_override=True,
+            acgme_justification="Mass casualty event - temporary extension approved by GME office",
             reason="Emergency staffing override due to mass casualty incident",
         ),
         AuditLogEntry(
             id="audit-008",
             timestamp=(datetime.utcnow() - timedelta(days=2)).isoformat() + "Z",
-            entityType="system",
-            entityId="sys-001",
-            entityName="Audit System",
+            entity_type="system",
+            entity_id="sys-001",
+            entity_name="Audit System",
             action="login",
             severity="info",
             user=users[4],
             metadata={"login_method": "saml_sso"},
-            ipAddress="10.0.2.15",
-            userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+            ip_address="10.0.2.15",
+            user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
         ),
         AuditLogEntry(
             id="audit-009",
             timestamp=(datetime.utcnow() - timedelta(days=2, hours=8)).isoformat()
             + "Z",
-            entityType="block",
-            entityId="block-999",
-            entityName="ICU Week 3",
+            entity_type="block",
+            entity_id="block-999",
+            entity_name="ICU Week 3",
             action="bulk_import",
             severity="info",
             user=users[2],
@@ -280,18 +280,18 @@ def _generate_mock_audit_entries(
         AuditLogEntry(
             id="audit-010",
             timestamp=(datetime.utcnow() - timedelta(days=3)).isoformat() + "Z",
-            entityType="assignment",
-            entityId="assign-200",
-            entityName="Call Shift - Pediatrics",
+            entity_type="assignment",
+            entity_id="assign-200",
+            entity_name="Call Shift - Pediatrics",
             action="restore",
             severity="warning",
             user=users[0],
             changes=[
                 FieldChange(
                     field="status",
-                    oldValue="deleted",
-                    newValue="active",
-                    displayName="Status",
+                    old_value="deleted",
+                    new_value="active",
+                    display_name="Status",
                 ),
             ],
             reason="Restored accidentally deleted assignment",
@@ -378,9 +378,9 @@ async def get_audit_logs(
     search: str | None = Query(None, description="Search query"),
     entity_id: str | None = Query(None, description="Filter by specific entity ID"),
     acgme_overrides_only: bool = Query(False, description="Show only ACGME overrides"),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> AuditLogResponse:
     """
     Get paginated audit logs with filtering and sorting. Requires authentication.
 
@@ -425,8 +425,8 @@ async def get_audit_logs(
                 items=entries,
                 total=total,
                 page=page,
-                pageSize=page_size,
-                totalPages=total_pages,
+                page_size=page_size,
+                total_pages=total_pages,
             )
     except (ValueError, KeyError, AttributeError) as e:
         logger.warning(
@@ -456,17 +456,17 @@ async def get_audit_logs(
         items=entries,
         total=total,
         page=page,
-        pageSize=page_size,
-        totalPages=total_pages,
+        page_size=page_size,
+        total_pages=total_pages,
     )
 
 
 @router.get("/logs/{log_id}", response_model=AuditLogEntry)
 async def get_audit_log_by_id(
     log_id: str,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> AuditLogEntry:
     """
     Get a single audit log entry by ID. Requires authentication.
     """
@@ -486,9 +486,9 @@ async def get_audit_statistics(
         None, description="Statistics start date (ISO format)"
     ),
     end_date: str | None = Query(None, description="Statistics end date (ISO format)"),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> AuditStatistics:
     """
     Get audit statistics grouped by action, entity type, user, and severity.
     Requires authentication.
@@ -515,13 +515,13 @@ async def get_audit_statistics(
             actual_end = end_date or now.isoformat()
 
             return AuditStatistics(
-                totalEntries=stats["totalEntries"],
-                entriesByAction=stats["entriesByAction"],
-                entriesByEntityType=stats["entriesByEntityType"],
-                entriesBySeverity=stats["entriesBySeverity"],
-                acgmeOverrideCount=stats["acgmeOverrideCount"],
-                uniqueUsers=stats["uniqueUsers"],
-                dateRange=DateRange(start=actual_start, end=actual_end),
+                total_entries=stats["totalEntries"],
+                entries_by_action=stats["entriesByAction"],
+                entries_by_entity_type=stats["entriesByEntityType"],
+                entries_by_severity=stats["entriesBySeverity"],
+                acgme_override_count=stats["acgmeOverrideCount"],
+                unique_users=stats["uniqueUsers"],
+                date_range=DateRange(start=actual_start, end=actual_end),
             )
     except (ValueError, KeyError, AttributeError) as e:
         logger.warning(
@@ -577,21 +577,21 @@ async def get_audit_statistics(
         actual_end = now.isoformat()
 
     return AuditStatistics(
-        totalEntries=total,
-        entriesByAction=entries_by_action,
-        entriesByEntityType=entries_by_entity_type,
-        entriesBySeverity=entries_by_severity,
-        acgmeOverrideCount=acgme_override_count,
-        uniqueUsers=unique_users,
-        dateRange=DateRange(start=actual_start, end=actual_end),
+        total_entries=total,
+        entries_by_action=entries_by_action,
+        entries_by_entity_type=entries_by_entity_type,
+        entries_by_severity=entries_by_severity,
+        acgme_override_count=acgme_override_count,
+        unique_users=unique_users,
+        date_range=DateRange(start=actual_start, end=actual_end),
     )
 
 
 @router.get("/users")
 async def get_audit_users(
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> list[AuditUser]:
     """
     Get list of users who have audit activity. Requires authentication.
 
@@ -616,10 +616,10 @@ async def get_audit_users(
 @router.post("/export")
 async def export_audit_logs(
     config: AuditExportConfig,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_admin()),
-):
+) -> StreamingResponse:
     """
     Export audit logs in the specified format (CSV, JSON, or PDF).
     Requires admin role.

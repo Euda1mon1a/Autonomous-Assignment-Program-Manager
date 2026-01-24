@@ -13,7 +13,6 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, and_
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 
@@ -98,7 +97,7 @@ def _anonymize_id(original_id: str, salt: str = "research") -> str:
 
 @router.get("/analytics/metrics/current", response_model=ScheduleVersionMetrics)
 async def get_current_metrics(
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> ScheduleVersionMetrics:
     """
@@ -189,7 +188,7 @@ async def get_metrics_history(
     ),
     start_date: datetime = Query(..., description="Start date (ISO format)"),
     end_date: datetime = Query(..., description="End date (ISO format)"),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> list[MetricTimeSeries]:
     """
@@ -314,7 +313,7 @@ async def get_metrics_history(
 @router.get("/analytics/fairness/trend", response_model=FairnessTrendReport)
 async def get_fairness_trend(
     months: int = Query(6, ge=1, le=24, description="Number of months to analyze"),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> FairnessTrendReport:
     """
@@ -463,7 +462,7 @@ async def get_fairness_trend(
 async def compare_versions(
     version_a: str,
     version_b: str,
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> VersionComparison:
     """
@@ -607,7 +606,7 @@ async def compare_versions(
 @router.post("/analytics/what-if", response_model=WhatIfResult)
 async def what_if_analysis(
     proposed_changes: list[AssignmentChange],
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> WhatIfResult:
     """
@@ -770,7 +769,7 @@ async def export_for_research(
     start_date: datetime = Query(..., description="Start date (ISO format)"),
     end_date: datetime = Query(..., description="End date (ISO format)"),
     anonymize: bool = Query(True, description="Anonymize sensitive data"),
-    db: Session = Depends(get_db),
+    db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> ResearchDataExport:
     """

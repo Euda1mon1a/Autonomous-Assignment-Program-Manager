@@ -9,7 +9,7 @@ Reference: https://tools.ietf.org/html/rfc7807
 
 import traceback
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -27,40 +27,48 @@ class ProblemDetail(BaseModel):
     """
 
     type: str = Field(
+        ...,
         description="URI reference identifying the problem type",
-        example="https://api.example.com/errors/validation-error",
+        examples=["https://api.example.com/errors/validation-error"],
     )
     title: str = Field(
+        ...,
         description="Short, human-readable summary of the problem type",
-        example="Validation Failed",
+        examples=["Validation Failed"],
     )
     status: int = Field(
+        ...,
         description="HTTP status code",
-        example=422,
+        examples=[422],
         ge=100,
         le=599,
     )
     detail: str = Field(
+        ...,
         description="Human-readable explanation specific to this occurrence",
-        example="The 'email' field is required",
+        examples=["The 'email' field is required"],
     )
     instance: str = Field(
+        ...,
         description="URI reference identifying the specific occurrence",
-        example="/api/v1/users/123",
+        examples=["/api/v1/users/123"],
     )
 
     # Extension members (RFC 7807 allows additional fields)
     error_code: ErrorCode = Field(
+        ...,
         description="Machine-readable error code",
-        example="VALIDATION_ERROR",
+        examples=["VALIDATION_ERROR"],
     )
     error_id: str = Field(
+        ...,
         description="Unique identifier for this error occurrence",
-        example="550e8400-e29b-41d4-a716-446655440000",
+        examples=["550e8400-e29b-41d4-a716-446655440000"],
     )
     timestamp: str = Field(
+        ...,
         description="ISO 8601 timestamp of error occurrence",
-        example="2025-12-20T10:30:00Z",
+        examples=["2025-12-20T10:30:00Z"],
     )
 
     # Optional fields for additional context
@@ -194,7 +202,7 @@ class ErrorFormatter:
         """
         # For AppException, use the safe message attribute
         if hasattr(exc, "message"):
-            return exc.message
+            return cast(str, exc.message)
 
         # For other exceptions, include details only if allowed
         if include_details:

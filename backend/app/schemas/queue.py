@@ -13,14 +13,14 @@ from pydantic import BaseModel, Field
 # ============================================================================
 
 
-class TaskSubmitRequest(BaseModel):
+class TaskSubmitRequest(BaseModel):  # type: ignore[no-redef]
     """Request to submit a task to the queue."""
 
     task_name: str = Field(
         ..., alias="taskName", description="Name of the task to execute"
     )
     args: list[Any] = Field(default_factory=list, description="Positional arguments")
-    kwargs: dict[str, Any] = Field(
+    kwargs: dict[str, Any] = Field(  # type: ignore[no-redef]
         default_factory=dict, description="Keyword arguments"
     )
     priority: int = Field(
@@ -81,7 +81,7 @@ class TaskDependencyRequest(BaseModel):
 
     task_name: str = Field(..., alias="taskName")
     args: list[Any] = Field(default_factory=list)
-    kwargs: dict[str, Any] = Field(default_factory=dict)
+    kwargs: dict[str, Any] = Field(default_factory=dict)  # type: ignore[no-redef]
     dependencies: list[str] = Field(
         ..., description="List of task IDs that must complete first"
     )
@@ -295,7 +295,7 @@ class ScheduleTaskRequest(BaseModel):
 
     task_name: str = Field(..., alias="taskName")
     args: list[Any] = Field(default_factory=list)
-    kwargs: dict[str, Any] = Field(default_factory=dict)
+    kwargs: dict[str, Any] = Field(default_factory=dict)  # type: ignore[no-redef]
     eta: str | None = Field(None, description="ISO timestamp when to execute")
     countdown: int | None = Field(None, ge=0, description="Delay in seconds")
     priority: int = Field(default=5, ge=0, le=9)
@@ -323,7 +323,7 @@ class PeriodicTaskRequest(BaseModel):
     task_name: str = Field(..., alias="taskName")
     schedule_config: dict[str, Any] = Field(..., alias="scheduleConfig")
     args: list[Any] = Field(default_factory=list)
-    kwargs: dict[str, Any] = Field(default_factory=dict)
+    kwargs: dict[str, Any] = Field(default_factory=dict)  # type: ignore[no-redef]
     options: dict[str, Any] = Field(default_factory=dict)
 
     class Config:
@@ -397,7 +397,7 @@ class DeadLetterTask(BaseModel):
     task_id: str = Field(..., alias="taskId")
     task_name: str = Field(..., alias="taskName")
     args: list[Any]
-    kwargs: dict[str, Any]
+    kwargs: dict[str, Any]  # type: ignore[no-redef]
     error: str
     error_type: str = Field(..., alias="errorType")
     traceback: str
