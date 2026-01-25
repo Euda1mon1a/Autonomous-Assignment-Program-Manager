@@ -192,6 +192,7 @@ docs/scheduling/*.csv
 # Local archival docs (may contain PII)
 archived/expansion/
 docs/archives/
+docs/analysis/
 
 # Backend local data
 backend/data/
