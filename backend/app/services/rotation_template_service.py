@@ -16,10 +16,12 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, selectinload
 
+from app.models.activity import Activity, ActivityCategory
 from app.models.rotation_halfday_requirement import RotationHalfDayRequirement
 from app.models.rotation_preference import RotationPreference
 from app.models.rotation_template import RotationTemplate
 from app.models.weekly_pattern import WeeklyPattern
+from app.utils.activity_naming import activity_code_from_name, activity_display_abbrev
 from app.schemas.rotation_template_gui import (
     HalfDayRequirementCreate,
     HalfDayRequirementResponse,
@@ -80,6 +82,47 @@ class RotationTemplateService:
             await self.db.refresh(obj)
         else:
             self.db.refresh(obj)
+
+    async def _ensure_activity_for_template(self, template: RotationTemplate) -> None:
+        """Create a specialty activity for outpatient/clinic templates if missing."""
+        if (template.activity_type or "").lower() not in ("clinic", "outpatient"):
+            return
+
+        code = activity_code_from_name(template.name)
+        display_abbrev = activity_display_abbrev(
+            template.name,
+            template.display_abbreviation,
+            template.abbreviation,
+        )
+
+        existing = await self._execute(
+            select(Activity).where(Activity.name == template.name)
+        )
+        if existing.scalar_one_or_none():
+            return
+
+        existing = await self._execute(
+            select(Activity).where(Activity.code.ilike(code))
+        )
+        if existing.scalar_one_or_none():
+            return
+
+        activity = Activity(
+            name=template.name,
+            code=code,
+            display_abbreviation=display_abbrev,
+            activity_category=ActivityCategory.CLINICAL.value,
+            font_color=template.font_color,
+            background_color=template.background_color,
+            requires_supervision=True,
+            is_protected=False,
+            counts_toward_clinical_hours=True,
+            provides_supervision=False,
+            counts_toward_physical_capacity=True,
+            display_order=0,
+        )
+        self.db.add(activity)
+        await self._flush()
 
     # =========================================================================
     # Template Operations
@@ -735,6 +778,7 @@ class RotationTemplateService:
                 self.db.add(template)
                 await self._flush()
                 await self._refresh(template)
+                await self._ensure_activity_for_template(template)
                 created_ids.append(template.id)
                 # Update result with created ID
                 for r in results:

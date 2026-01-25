@@ -21,9 +21,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
+from app.models.activity import Activity, ActivityCategory
 from app.models.block_assignment import BlockAssignment
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
+from app.utils.activity_naming import activity_code_from_name, activity_display_abbrev
 from app.schemas.block_assignment_import import (
     BlockAssignmentImportRequest,
     BlockAssignmentImportResult,
@@ -749,6 +751,8 @@ class BlockAssignmentImportService:
             is_archived=False,
         )
         self.session.add(template)
+        await self.session.flush()
+        await self._ensure_activity_for_template(template)
         await self.session.commit()
         await self.session.refresh(template)
 
@@ -758,6 +762,47 @@ class BlockAssignmentImportService:
         logger.info(f"Created rotation template: {abbreviation}")
 
         return template
+
+    async def _ensure_activity_for_template(self, template: RotationTemplate) -> None:
+        """Create a specialty activity for outpatient/clinic templates if missing."""
+        if (template.activity_type or "").lower() not in ("clinic", "outpatient"):
+            return
+
+        code = activity_code_from_name(template.name)
+        display_abbrev = activity_display_abbrev(
+            template.name,
+            template.display_abbreviation,
+            template.abbreviation,
+        )
+
+        existing = await self.session.execute(
+            select(Activity).where(Activity.name == template.name)
+        )
+        if existing.scalars().first():
+            return
+
+        existing = await self.session.execute(
+            select(Activity).where(Activity.code.ilike(code))
+        )
+        if existing.scalars().first():
+            return
+
+        activity = Activity(
+            name=template.name,
+            code=code,
+            display_abbreviation=display_abbrev,
+            activity_category=ActivityCategory.CLINICAL.value,
+            font_color=template.font_color,
+            background_color=template.background_color,
+            requires_supervision=True,
+            is_protected=False,
+            counts_toward_clinical_hours=True,
+            provides_supervision=False,
+            counts_toward_physical_capacity=True,
+            display_order=0,
+        )
+        self.session.add(activity)
+        await self.session.flush()
 
     async def preview_block_sheet_import(
         self, file_bytes: bytes, academic_year: int | None = None

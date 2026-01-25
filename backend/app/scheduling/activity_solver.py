@@ -15,14 +15,13 @@ Constraints:
     1. One activity per slot per person
     2. Skip locked slots (source=preload or source=manual)
     3. Activity distribution respects rotation_activity_requirements
-    4. LEC on Wednesday PM (weeks 1-3)
-    5. LEC on last Wednesday AM, ADV on last Wednesday PM
-    6. Total activity counts respect min/max from requirements
+    4. Total activity counts respect min/max from requirements
+    5. LEC/ADV are expected to be preloaded (locked) and are not assigned here
 """
 
 import time
 from collections import defaultdict
-from datetime import date, timedelta
+from datetime import date
 from typing import Any
 from uuid import UUID
 
@@ -30,14 +29,29 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
-from app.models.activity import Activity
+from app.models.activity import Activity, ActivityCategory
 from app.models.block_assignment import BlockAssignment
 from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
+from app.models.person import Person
 from app.models.rotation_activity_requirement import RotationActivityRequirement
+from app.models.rotation_template import RotationTemplate
 from app.utils.academic_blocks import get_block_dates
 from app.utils.activity_locking import is_activity_preloaded
+from app.utils.activity_naming import activity_code_from_name, activity_display_abbrev
 
 logger = get_logger(__name__)
+
+# Default weekly activity requirements (per week) when none are configured
+DEFAULT_WEEKLY_C_MIN = 2
+DEFAULT_WEEKLY_C_MAX = 4
+DEFAULT_WEEKLY_SPECIALTY_MIN = 3
+DEFAULT_WEEKLY_SPECIALTY_MAX = 4
+
+# Day index cutoff for secondary rotations (day 15+ uses secondary)
+BLOCK_HALF_DAY = 14
+
+# Rotation activity types considered outpatient for activity solving
+OUTPATIENT_ACTIVITY_TYPES = {"clinic", "outpatient"}
 
 
 class CPSATActivitySolver:
@@ -51,7 +65,7 @@ class CPSATActivitySolver:
     The solver respects:
     - Locked slots (source=preload or manual) - never touched
     - rotation_activity_requirements - determines which activities to assign
-    - Day/week rules - LEC on Wednesday PM, ADV on last Wednesday PM
+    - LEC/ADV are preloaded and therefore excluded from solver assignments
     """
 
     def __init__(
@@ -107,37 +121,6 @@ class CPSATActivitySolver:
             f"{start_date} to {end_date}"
         )
 
-        # Load activities
-        all_activities = self._load_activities()
-        if not all_activities:
-            return {
-                "success": False,
-                "assignments_updated": 0,
-                "status": "error",
-                "message": "No activities found",
-            }
-
-        # Candidate activities for solver: exclude preloaded/protected/time_off
-        activities = [a for a in all_activities if not is_activity_preloaded(a)]
-        if not activities:
-            return {
-                "success": False,
-                "assignments_updated": 0,
-                "status": "error",
-                "message": "No assignable activities (all locked/preloaded)",
-            }
-
-        # Get key activities
-        lec_activity = self._get_activity_by_code("lec")
-        adv_activity = self._get_activity_by_code("advising")
-        clinic_activity = self._get_activity_by_code("fm_clinic")
-
-        if not clinic_activity:
-            logger.warning(
-                "Missing fm_clinic activity, using first activity as default"
-            )
-            clinic_activity = activities[0]
-
         # Load unlocked half-day slots
         slots = self._load_unlocked_slots(start_date, end_date)
         if not slots:
@@ -151,69 +134,202 @@ class CPSATActivitySolver:
 
         logger.info(f"Found {len(slots)} unlocked slots to assign")
 
-        # Group slots by person for activity requirements lookup
-        person_slots: dict[UUID, list[HalfDayAssignment]] = {}
-        for slot in slots:
-            if slot.person_id not in person_slots:
-                person_slots[slot.person_id] = []
-            person_slots[slot.person_id].append(slot)
+        # Resolve active rotation template per slot and week number
+        slot_meta: dict[int, dict[str, Any]] = {}
+        templates_by_id: dict[UUID, RotationTemplate] = {}
+        for s_i, slot in enumerate(slots):
+            template = self._get_active_rotation_template(
+                slot.block_assignment, slot.date, start_date
+            )
+            if template:
+                templates_by_id[template.id] = template
+            week_number = self._get_week_number(slot.date, start_date)
+            slot_meta[s_i] = {
+                "person_id": slot.person_id,
+                "template_id": template.id if template else None,
+                "week": week_number,
+            }
 
-        # Load rotation activity requirements
-        requirements = self._load_activity_requirements()
+        # Load activity requirements for templates in scope
+        requirements_by_template = self._load_activity_requirements(
+            set(templates_by_id.keys())
+        )
+
+        # Ensure default requirements + rotation activities for outpatient templates
+        requirements_by_template = self._ensure_default_requirements(
+            templates_by_id, requirements_by_template
+        )
+
+        # Load activities after any default creation
+        all_activities = self._load_activities()
+        if not all_activities:
+            return {
+                "success": False,
+                "assignments_updated": 0,
+                "status": "error",
+                "message": "No activities found",
+            }
+
+        activity_by_id = {a.id: a for a in all_activities}
+
+        # Candidate activities for solver: exclude preloaded/protected/time_off
+        assignable_activities = [
+            a for a in all_activities if not is_activity_preloaded(a)
+        ]
+        assignable_ids = {a.id for a in assignable_activities}
+        if not assignable_ids:
+            return {
+                "success": False,
+                "assignments_updated": 0,
+                "status": "error",
+                "message": "No assignable activities (all locked/preloaded)",
+            }
+
+        # Get key activities
+        clinic_activity = self._get_activity_by_code(
+            "fm_clinic"
+        ) or self._get_activity_by_code("C")
 
         # Create the CP model
         model = cp_model.CpModel()
 
-        # Index activities
-        activity_idx = {a.id: i for i, a in enumerate(activities)}
+        # Build allowed activity sets per template
+        allowed_by_template: dict[UUID, list[UUID]] = {}
+        for template_id, reqs in requirements_by_template.items():
+            allowed_ids = []
+            for req in reqs:
+                if req.activity_id in assignable_ids and not is_activity_preloaded(
+                    req.activity
+                ):
+                    allowed_ids.append(req.activity_id)
+            # Deduplicate while preserving order
+            seen = set()
+            deduped = []
+            for act_id in allowed_ids:
+                if act_id not in seen:
+                    seen.add(act_id)
+                    deduped.append(act_id)
+            if deduped:
+                allowed_by_template[template_id] = deduped
+
+        # Fallback: if a template has no requirements, allow all assignables
+        fallback_allowed = sorted(
+            assignable_ids,
+            key=lambda act_id: activity_by_id.get(act_id).code
+            if act_id in activity_by_id
+            else "",
+        )
 
         # ==================================================
         # DECISION VARIABLES
-        # a[slot_idx, activity_idx] = 1 if slot gets activity
+        # a[slot_idx, activity_id] = 1 if slot gets activity
         # ==================================================
-        a = {}
-        slot_idx_map = {id(slot): i for i, slot in enumerate(slots)}
+        a: dict[tuple[int, UUID], Any] = {}
+        slot_allowed: dict[int, list[UUID]] = {}
 
         for s_i, slot in enumerate(slots):
-            for act_i, activity in enumerate(activities):
-                a[s_i, act_i] = model.NewBoolVar(f"a_{s_i}_{act_i}")
+            template_id = slot_meta[s_i]["template_id"]
+            allowed = allowed_by_template.get(template_id) if template_id else None
+            if not allowed:
+                if template_id:
+                    logger.warning(
+                        f"No activity requirements for template {template_id}, "
+                        "falling back to all assignable activities"
+                    )
+                allowed = fallback_allowed
+            slot_allowed[s_i] = allowed
+
+            for act_id in allowed:
+                act_code = (
+                    activity_by_id.get(act_id).code
+                    if act_id in activity_by_id
+                    else "act"
+                )
+                safe_code = act_code.replace("-", "_")
+                a[s_i, act_id] = model.NewBoolVar(f"a_{s_i}_{safe_code}")
 
         # ==================================================
         # CONSTRAINTS
         # ==================================================
 
         # Constraint 1: Exactly one activity per slot
-        for s_i in range(len(slots)):
-            model.Add(sum(a[s_i, act_i] for act_i in range(len(activities))) == 1)
+        for s_i, allowed in slot_allowed.items():
+            model.Add(sum(a[s_i, act_id] for act_id in allowed) == 1)
 
-        # Constraint 2: Wednesday PM = LEC (weeks 1-3)
-        # Constraint 3: Last Wednesday AM = LEC, PM = ADV
-        if lec_activity and adv_activity:
-            lec_idx = activity_idx.get(lec_activity.id)
-            adv_idx = activity_idx.get(adv_activity.id)
+        # Constraint 2: Activity requirements (per week, per person, per rotation)
+        slots_by_key: dict[tuple[UUID, UUID, int], list[int]] = defaultdict(list)
+        for s_i, meta in slot_meta.items():
+            template_id = meta["template_id"]
+            if not template_id:
+                continue
+            key = (meta["person_id"], template_id, meta["week"])
+            slots_by_key[key].append(s_i)
 
-            for s_i, slot in enumerate(slots):
-                is_wednesday = slot.date.weekday() == 2
+        locked_counts: dict[tuple[UUID, UUID, int, UUID], int] = defaultdict(int)
+        person_ids = {meta["person_id"] for meta in slot_meta.values()}
+        locked_slots = self._load_locked_slots(start_date, end_date, person_ids)
+        for locked in locked_slots:
+            if not locked.activity_id:
+                continue
+            template = self._get_active_rotation_template(
+                locked.block_assignment, locked.date, start_date
+            )
+            if not template:
+                continue
+            week_number = self._get_week_number(locked.date, start_date)
+            locked_counts[
+                (locked.person_id, template.id, week_number, locked.activity_id)
+            ] += 1
 
-                if is_wednesday:
-                    # Check if this is the last Wednesday of the block
-                    next_wed = slot.date + timedelta(days=7)
-                    is_last_wednesday = next_wed > end_date
+        constraint_count = 0
+        for (person_id, template_id, week), slot_indices in slots_by_key.items():
+            reqs = requirements_by_template.get(template_id, [])
+            if not reqs:
+                continue
+            for req in reqs:
+                if req.activity_id not in assignable_ids:
+                    continue
+                if req.applicable_weeks and week not in req.applicable_weeks:
+                    continue
 
-                    # Calculate week number
-                    days_into_block = (slot.date - start_date).days
-                    week_number = (days_into_block // 7) + 1
+                vars_for_req = [
+                    a[s_i, req.activity_id]
+                    for s_i in slot_indices
+                    if req.activity_id in slot_allowed[s_i]
+                ]
+                if not vars_for_req:
+                    continue
 
-                    if is_last_wednesday:
-                        # Last Wednesday: AM = LEC, PM = ADV
-                        if slot.time_of_day == "AM" and lec_idx is not None:
-                            model.Add(a[s_i, lec_idx] == 1)
-                        elif slot.time_of_day == "PM" and adv_idx is not None:
-                            model.Add(a[s_i, adv_idx] == 1)
-                    elif week_number <= 3 and slot.time_of_day == "PM":
-                        # Weeks 1-3 Wednesday PM = LEC
-                        if lec_idx is not None:
-                            model.Add(a[s_i, lec_idx] == 1)
+                locked_count = locked_counts.get(
+                    (person_id, template_id, week, req.activity_id), 0
+                )
+                min_needed = max(0, req.min_halfdays - locked_count)
+                max_allowed = max(0, req.max_halfdays - locked_count)
+
+                if min_needed > len(vars_for_req):
+                    logger.warning(
+                        "Clamping min requirement for person=%s template=%s "
+                        "week=%s activity=%s: min=%s available=%s",
+                        person_id,
+                        template_id,
+                        week,
+                        req.activity_id,
+                        min_needed,
+                        len(vars_for_req),
+                    )
+                    min_needed = len(vars_for_req)
+
+                if max_allowed < 0:
+                    max_allowed = 0
+                if max_allowed > len(vars_for_req):
+                    max_allowed = len(vars_for_req)
+
+                model.Add(sum(vars_for_req) >= min_needed)
+                model.Add(sum(vars_for_req) <= max_allowed)
+                constraint_count += 1
+
+        if constraint_count:
+            logger.info(f"Added {constraint_count} activity requirement constraints")
 
         # ==================================================
         # CONSTRAINT: Physical Capacity (Max 6 per slot)
@@ -246,12 +362,12 @@ class CPSATActivitySolver:
             baseline_capacity[(assignment.date, assignment.time_of_day)] += 1
 
         # For each time slot, sum(clinical activities) + baseline <= MAX
-        clinical_indices = [
-            act_i
-            for act_i, activity in enumerate(activities)
+        clinical_activity_ids = {
+            activity.id
+            for activity in assignable_activities
             if activity.counts_toward_physical_capacity
-        ]
-        if clinical_indices:
+        }
+        if clinical_activity_ids:
             for (slot_date, time_of_day), slot_indices in slot_groups.items():
                 # Skip weekends
                 if slot_date.weekday() >= 5:
@@ -259,7 +375,10 @@ class CPSATActivitySolver:
 
                 # Sum of clinical assignments for this slot
                 slot_clinic_sum = sum(
-                    a[s_i, act_i] for s_i in slot_indices for act_i in clinical_indices
+                    a[s_i, act_id]
+                    for s_i in slot_indices
+                    for act_id in slot_allowed[s_i]
+                    if act_id in clinical_activity_ids
                 )
 
                 baseline = baseline_capacity.get((slot_date, time_of_day), 0)
@@ -276,11 +395,14 @@ class CPSATActivitySolver:
         # (Most slots should be clinic for outpatient rotations)
         # Constraint above limits this to respect physical capacity
         # ==================================================
-        if clinic_activity:
-            clinic_idx = activity_idx.get(clinic_activity.id)
-            if clinic_idx is not None:
-                clinic_count = sum(a[s_i, clinic_idx] for s_i in range(len(slots)))
-                model.Maximize(clinic_count)
+        if clinic_activity and clinic_activity.id in assignable_ids:
+            clinic_id = clinic_activity.id
+            clinic_count = sum(
+                a[s_i, clinic_id]
+                for s_i in slot_allowed
+                if clinic_id in slot_allowed[s_i]
+            )
+            model.Maximize(clinic_count)
 
         # ==================================================
         # SOLVE
@@ -309,9 +431,9 @@ class CPSATActivitySolver:
         # ==================================================
         updated = 0
         for s_i, slot in enumerate(slots):
-            for act_i, activity in enumerate(activities):
-                if solver.Value(a[s_i, act_i]) == 1:
-                    slot.activity_id = activity.id
+            for act_id in slot_allowed[s_i]:
+                if solver.Value(a[s_i, act_id]) == 1:
+                    slot.activity_id = act_id
                     slot.source = AssignmentSource.SOLVER.value
                     updated += 1
                     break
@@ -345,6 +467,185 @@ class CPSATActivitySolver:
         """Get activity by code from cache."""
         return self._activity_cache.get(code)
 
+    def _get_week_number(self, slot_date: date, block_start: date) -> int:
+        """Get week number (1-4) for a slot within a block."""
+        days_into_block = (slot_date - block_start).days
+        return (days_into_block // 7) + 1
+
+    def _get_active_rotation_template(
+        self,
+        block_assignment: BlockAssignment | None,
+        slot_date: date,
+        block_start: date,
+    ) -> RotationTemplate | None:
+        """Resolve primary vs secondary rotation for a given slot date."""
+        if not block_assignment:
+            return None
+        if block_assignment.secondary_rotation_template_id:
+            day_in_block = (slot_date - block_start).days + 1
+            if day_in_block > BLOCK_HALF_DAY:
+                return block_assignment.secondary_rotation_template
+        return block_assignment.rotation_template
+
+    def _ensure_activity(
+        self,
+        name: str,
+        code: str,
+        display_abbreviation: str,
+        activity_category: str,
+        counts_toward_physical_capacity: bool,
+        font_color: str | None = None,
+        background_color: str | None = None,
+    ) -> Activity:
+        """Find or create an activity by name/code."""
+        stmt = select(Activity).where(Activity.name == name)
+        activity = self.session.execute(stmt).scalars().first()
+        if activity:
+            return activity
+
+        stmt = select(Activity).where(Activity.code.ilike(code))
+        activity = self.session.execute(stmt).scalars().first()
+        if activity:
+            return activity
+
+        activity = Activity(
+            name=name,
+            code=code,
+            display_abbreviation=display_abbreviation,
+            activity_category=activity_category,
+            font_color=font_color,
+            background_color=background_color,
+            requires_supervision=True,
+            is_protected=False,
+            counts_toward_clinical_hours=True,
+            provides_supervision=False,
+            counts_toward_physical_capacity=counts_toward_physical_capacity,
+            display_order=0,
+        )
+        self.session.add(activity)
+        self.session.flush()
+
+        # Update cache for lookups
+        self._activity_cache[activity.code] = activity
+        if activity.display_abbreviation:
+            self._activity_cache[activity.display_abbreviation] = activity
+
+        logger.info(f"Created activity '{activity.name}' (code={activity.code})")
+        return activity
+
+    def _ensure_rotation_activity(self, template: RotationTemplate) -> Activity:
+        """Ensure a specialty activity exists for this rotation template."""
+        code = activity_code_from_name(template.name)
+        display_abbrev = activity_display_abbrev(
+            template.name,
+            template.display_abbreviation,
+            template.abbreviation,
+        )
+        return self._ensure_activity(
+            name=template.name,
+            code=code,
+            display_abbreviation=display_abbrev,
+            activity_category=ActivityCategory.CLINICAL.value,
+            counts_toward_physical_capacity=True,
+            font_color=template.font_color,
+            background_color=template.background_color,
+        )
+
+    def _ensure_default_requirements(
+        self,
+        templates_by_id: dict[UUID, RotationTemplate],
+        requirements_by_template: dict[UUID, list[RotationActivityRequirement]],
+    ) -> dict[UUID, list[RotationActivityRequirement]]:
+        """Create default weekly activity requirements for outpatient templates."""
+        created = 0
+
+        for template_id, template in templates_by_id.items():
+            existing = requirements_by_template.get(template_id, [])
+            if existing:
+                continue
+            if (template.activity_type or "").lower() not in OUTPATIENT_ACTIVITY_TYPES:
+                continue
+
+            clinic_activity = self._ensure_activity(
+                name="FM Clinic",
+                code="fm_clinic",
+                display_abbreviation="C",
+                activity_category=ActivityCategory.CLINICAL.value,
+                counts_toward_physical_capacity=True,
+            )
+            specialty_activity = self._ensure_rotation_activity(template)
+
+            reqs: list[RotationActivityRequirement] = []
+            for week in (1, 2, 3, 4):
+                reqs.append(
+                    RotationActivityRequirement(
+                        rotation_template_id=template.id,
+                        activity_id=clinic_activity.id,
+                        min_halfdays=DEFAULT_WEEKLY_C_MIN,
+                        max_halfdays=DEFAULT_WEEKLY_C_MAX,
+                        applicable_weeks=[week],
+                        prefer_full_days=True,
+                        priority=80,
+                    )
+                )
+                reqs.append(
+                    RotationActivityRequirement(
+                        rotation_template_id=template.id,
+                        activity_id=specialty_activity.id,
+                        min_halfdays=DEFAULT_WEEKLY_SPECIALTY_MIN,
+                        max_halfdays=DEFAULT_WEEKLY_SPECIALTY_MAX,
+                        applicable_weeks=[week],
+                        prefer_full_days=True,
+                        priority=80,
+                    )
+                )
+
+            self.session.add_all(reqs)
+            self.session.flush()
+            requirements_by_template[template_id] = reqs
+            created += len(reqs)
+
+            logger.info(
+                f"Created default activity requirements for template {template.name}"
+            )
+
+        if created:
+            logger.info(f"Created {created} default activity requirements")
+
+        return requirements_by_template
+
+    def _load_slots(
+        self,
+        start_date: date,
+        end_date: date,
+        sources: list[str],
+        person_ids: set[UUID] | None = None,
+    ) -> list[HalfDayAssignment]:
+        """Load half-day slots with relationships and source filter."""
+        stmt = (
+            select(HalfDayAssignment)
+            .options(
+                selectinload(HalfDayAssignment.activity),
+                selectinload(HalfDayAssignment.block_assignment).selectinload(
+                    BlockAssignment.rotation_template
+                ),
+                selectinload(HalfDayAssignment.block_assignment).selectinload(
+                    BlockAssignment.secondary_rotation_template
+                ),
+            )
+            .join(Person, HalfDayAssignment.person_id == Person.id)
+            .where(
+                HalfDayAssignment.date >= start_date,
+                HalfDayAssignment.date <= end_date,
+                HalfDayAssignment.source.in_(sources),
+                Person.type != "faculty",
+            )
+        )
+        if person_ids:
+            stmt = stmt.where(HalfDayAssignment.person_id.in_(person_ids))
+        result = self.session.execute(stmt)
+        return list(result.scalars().all())
+
     def _load_unlocked_slots(
         self, start_date: date, end_date: date
     ) -> list[HalfDayAssignment]:
@@ -354,36 +655,48 @@ class CPSATActivitySolver:
         FacultyAssignmentExpansionService and should NOT be overwritten by
         the activity solver. Faculty get admin time (GME/DFM), not solver activities.
         """
-        from app.models.person import Person
+        return self._load_slots(
+            start_date,
+            end_date,
+            [AssignmentSource.SOLVER.value, AssignmentSource.TEMPLATE.value],
+        )
+
+    def _load_locked_slots(
+        self,
+        start_date: date,
+        end_date: date,
+        person_ids: set[UUID],
+    ) -> list[HalfDayAssignment]:
+        """Load locked (preload/manual) slots for baseline counts."""
+        return self._load_slots(
+            start_date,
+            end_date,
+            [AssignmentSource.PRELOAD.value, AssignmentSource.MANUAL.value],
+            person_ids=person_ids,
+        )
+
+    def _load_activity_requirements(
+        self, template_ids: set[UUID]
+    ) -> dict[UUID, list[RotationActivityRequirement]]:
+        """Load rotation activity requirements for specific templates."""
+        if not template_ids:
+            return {}
 
         stmt = (
-            select(HalfDayAssignment)
-            .join(Person, HalfDayAssignment.person_id == Person.id)
-            .where(
-                HalfDayAssignment.date >= start_date,
-                HalfDayAssignment.date <= end_date,
-                # Only slots without locked source
-                HalfDayAssignment.source.in_(
-                    [
-                        AssignmentSource.SOLVER.value,
-                        AssignmentSource.TEMPLATE.value,
-                    ]
-                ),
-                # Exclude faculty - their slots are managed separately
-                Person.type != "faculty",
+            select(RotationActivityRequirement)
+            .where(RotationActivityRequirement.rotation_template_id.in_(template_ids))
+            .options(
+                selectinload(RotationActivityRequirement.activity),
+                selectinload(RotationActivityRequirement.rotation_template),
             )
         )
         result = self.session.execute(stmt)
-        return list(result.scalars().all())
+        requirements = list(result.scalars().all())
 
-    def _load_activity_requirements(self) -> list[RotationActivityRequirement]:
-        """Load rotation activity requirements."""
-        stmt = select(RotationActivityRequirement).options(
-            selectinload(RotationActivityRequirement.activity),
-            selectinload(RotationActivityRequirement.rotation_template),
-        )
-        result = self.session.execute(stmt)
-        return list(result.scalars().all())
+        by_template: dict[UUID, list[RotationActivityRequirement]] = defaultdict(list)
+        for req in requirements:
+            by_template[req.rotation_template_id].append(req)
+        return by_template
 
 
 def solve_activities(
