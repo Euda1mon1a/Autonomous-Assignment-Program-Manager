@@ -135,10 +135,11 @@ class CPSATActivitySolver:
             f"{start_date} to {end_date}"
         )
 
-        # Load unlocked half-day slots
-        slots = self._load_unlocked_slots(start_date, end_date)
-        if not slots:
-            logger.info("No unlocked slots to assign")
+        # Load candidate slots WITHOUT template filtering first
+        # (template filtering requires _assignment_rotation_map which we build next)
+        candidate_slots = self._load_candidate_slots(start_date, end_date)
+        if not candidate_slots:
+            logger.info("No candidate slots to assign")
             return {
                 "success": True,
                 "assignments_updated": 0,
@@ -146,13 +147,25 @@ class CPSATActivitySolver:
                 "message": "All slots are locked or no slots exist",
             }
 
-        logger.info(f"Found {len(slots)} unlocked slots to assign")
-
-        # Resolve active rotation template per slot and week number
-        person_ids = {slot.person_id for slot in slots}
+        # Build assignment rotation map BEFORE filtering
+        # (needed for _get_active_rotation_template fallback path)
+        person_ids = {slot.person_id for slot in candidate_slots}
         self._assignment_rotation_map = self._load_assignment_rotation_map(
             start_date, end_date, person_ids
         )
+
+        # NOW filter for outpatient rotations (map is populated)
+        slots = self._filter_outpatient_slots(candidate_slots, start_date)
+        if not slots:
+            logger.info("No outpatient slots to assign after filtering")
+            return {
+                "success": True,
+                "assignments_updated": 0,
+                "status": "no_work",
+                "message": "No outpatient rotation slots found",
+            }
+
+        logger.info(f"Found {len(slots)} outpatient slots to assign")
         slot_meta: dict[int, dict[str, Any]] = {}
         templates_by_id: dict[UUID, RotationTemplate] = {}
         resident_slots: set[int] = set()
@@ -1092,6 +1105,53 @@ class CPSATActivitySolver:
             if slot.person and slot.person.type == "faculty":
                 if getattr(slot.person, "faculty_role", None) == "adjunct":
                     continue
+                eligible.append(slot)
+                continue
+            template = self._get_active_rotation_template(slot, start_date)
+            if not template:
+                continue
+            if (template.activity_type or "").lower() not in OUTPATIENT_ACTIVITY_TYPES:
+                continue
+            eligible.append(slot)
+        return eligible
+
+    def _load_candidate_slots(
+        self, start_date: date, end_date: date
+    ) -> list[HalfDayAssignment]:
+        """Load all solver/template slots without rotation filtering.
+
+        This method loads slots without checking rotation templates, allowing
+        the assignment rotation map to be built before filtering. Only adjunct
+        faculty are filtered out (they don't need template checks).
+        """
+        slots = self._load_slots(
+            start_date,
+            end_date,
+            [AssignmentSource.SOLVER.value, AssignmentSource.TEMPLATE.value],
+        )
+        # Only filter adjunct faculty (no template check needed for this)
+        return [
+            slot
+            for slot in slots
+            if not (
+                slot.person
+                and slot.person.type == "faculty"
+                and getattr(slot.person, "faculty_role", None) == "adjunct"
+            )
+        ]
+
+    def _filter_outpatient_slots(
+        self, slots: list[HalfDayAssignment], start_date: date
+    ) -> list[HalfDayAssignment]:
+        """Filter slots to only outpatient rotations.
+
+        IMPORTANT: Requires _assignment_rotation_map to be populated first,
+        as _get_active_rotation_template uses it as a fallback when
+        block_assignment is not set.
+        """
+        eligible: list[HalfDayAssignment] = []
+        for slot in slots:
+            if slot.person and slot.person.type == "faculty":
                 eligible.append(slot)
                 continue
             template = self._get_active_rotation_template(slot, start_date)

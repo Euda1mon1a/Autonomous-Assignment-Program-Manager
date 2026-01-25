@@ -404,13 +404,13 @@ class TestSolveReturnFormat:
     """Tests for solve() return value structure."""
 
     @patch("app.scheduling.activity_solver.get_block_dates")
-    @patch.object(CPSATActivitySolver, "_load_unlocked_slots")
-    def test_solve_no_slots_returns_no_work(self, mock_slots, mock_dates):
-        """solve() with no slots returns no_work status."""
+    @patch.object(CPSATActivitySolver, "_load_candidate_slots")
+    def test_solve_no_slots_returns_no_work(self, mock_candidates, mock_dates):
+        """solve() with no candidate slots returns no_work status."""
         mock_dates.return_value = MagicMock(
             start_date=date(2026, 3, 12), end_date=date(2026, 4, 8)
         )
-        mock_slots.return_value = []
+        mock_candidates.return_value = []
 
         solver = CPSATActivitySolver(MagicMock())
         result = solver.solve(10, 2025)
@@ -421,11 +421,17 @@ class TestSolveReturnFormat:
         assert "message" in result
 
     @patch("app.scheduling.activity_solver.get_block_dates")
-    @patch.object(CPSATActivitySolver, "_load_unlocked_slots")
+    @patch.object(CPSATActivitySolver, "_load_candidate_slots")
+    @patch.object(CPSATActivitySolver, "_filter_outpatient_slots")
     @patch.object(CPSATActivitySolver, "_load_activities")
     @patch.object(CPSATActivitySolver, "_load_assignment_rotation_map")
     def test_solve_no_activities_returns_error(
-        self, mock_rotation_map, mock_activities, mock_slots, mock_dates
+        self,
+        mock_rotation_map,
+        mock_activities,
+        mock_filter,
+        mock_candidates,
+        mock_dates,
     ):
         """solve() with no activities returns error status."""
         mock_dates.return_value = MagicMock(
@@ -440,7 +446,8 @@ class TestSolveReturnFormat:
         mock_slot.date = date(2026, 3, 12)
         mock_slot.time_of_day = "AM"
         mock_slot.block_assignment = None
-        mock_slots.return_value = [mock_slot]
+        mock_candidates.return_value = [mock_slot]
+        mock_filter.return_value = [mock_slot]
 
         mock_activities.return_value = []
         mock_rotation_map.return_value = {}
@@ -458,7 +465,7 @@ class TestSolveReturnFormat:
         solver = CPSATActivitySolver(mock_session)
 
         with (
-            patch.object(solver, "_load_unlocked_slots", return_value=[]),
+            patch.object(solver, "_load_candidate_slots", return_value=[]),
             patch("app.scheduling.activity_solver.get_block_dates") as mock_dates,
         ):
             mock_dates.return_value = MagicMock(
@@ -474,7 +481,7 @@ class TestSolveReturnFormat:
         solver = CPSATActivitySolver(mock_session)
 
         with (
-            patch.object(solver, "_load_unlocked_slots", return_value=[]),
+            patch.object(solver, "_load_candidate_slots", return_value=[]),
             patch("app.scheduling.activity_solver.get_block_dates") as mock_dates,
         ):
             mock_dates.return_value = MagicMock(
