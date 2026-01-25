@@ -45,8 +45,9 @@ A dependency security scan was evaluated against this repository's tech stack. *
 | Component | Version | Status | Notes |
 |-----------|---------|--------|-------|
 | **redis-py** | 7.1.0 | ✅ Current | Ahead of report's 7.0.1 |
-| **FastAPI** | 0.128.0 | ✅ Current | CVE-2024-27304 / CVE-2023-50447 affect older versions |
-| **SQLAlchemy** | 2.0.45 | ✅ Current | Using 2.x API patterns |
+| **FastAPI** | 0.128.0 | ✅ Current | Pydantic V2 only; V1 dropped |
+| **Pydantic** | 2.12.5 | ✅ Current | Well above 2.7.0 minimum |
+| **Python** | 3.11+ | ✅ Current | Well above 3.9 minimum |
 | **OR-Tools** | 9.8 (pinned) | ✅ Intentional | Pinned to avoid 9.9+ breaking changes |
 | **python-jose** | 3.5.0 | ✅ Current | No new advisories |
 | **Prometheus client** | 7.1.0 | ✅ N/A | Using instrumentator, not server |
@@ -55,6 +56,14 @@ A dependency security scan was evaluated against this repository's tech stack. *
 
 ### Low Priority / Maintenance
 
+#### SQLAlchemy 2.0.46 Available (Released 2026-01-21)
+
+- **Current:** 2.0.45
+- **Available:** 2.0.46
+- **Changes:** PostgreSQL JSONB operator fixes, improved type-checker integration, Unicode FK reflection
+- **Risk:** Low - patch release with bug fixes
+- **Recommendation:** Upgrade to get PostgreSQL JSONB fixes
+
 #### PuLP Version
 
 - **Current:** ≥2.7.0
@@ -62,11 +71,21 @@ A dependency security scan was evaluated against this repository's tech stack. *
 - **Risk:** Low - no breaking changes reported
 - **Recommendation:** Consider upgrade after testing optimization code
 
-#### SQLAlchemy Deprecations
+---
 
-- **Status:** Using 2.0.45 with current patterns
-- **Risk:** Low - baked queries and legacy patterns removed in 2.x
-- **Recommendation:** Audit for any remaining 1.x patterns during routine maintenance
+### Compatibility Verified
+
+#### FastAPI 0.128.0 + Pydantic V2 Requirement
+
+FastAPI 0.128.0 dropped all `pydantic.v1` compatibility and requires Pydantic ≥2.7.0.
+
+| Requirement | This Repo | Status |
+|-------------|-----------|--------|
+| Pydantic ≥2.7.0 | 2.12.5 | ✅ Compliant |
+| Python ≥3.9 | 3.11+ | ✅ Compliant |
+| No pydantic.v1 imports | N/A | ✅ Using V2 syntax |
+
+**No action required** - repo already uses Pydantic V2 patterns throughout.
 
 ---
 
@@ -76,6 +95,7 @@ A dependency security scan was evaluated against this repository's tech stack. *
 |------------|----------------------|
 | dbForge 2025.3 | SQL Server tool; this repo uses PostgreSQL |
 | AWS Aurora wrappers | Not using Aurora-specific tooling |
+| Pydantic V1 migration | Already on V2 (2.12.5) |
 
 ---
 
@@ -83,15 +103,15 @@ A dependency security scan was evaluated against this repository's tech stack. *
 
 ### Backend (Python 3.11+)
 
-| Package | Pinned Version | Latest Scanned | Gap |
-|---------|---------------|----------------|-----|
-| fastapi | 0.128.0 | - | Current |
-| sqlalchemy | 2.0.45 | - | Current |
-| redis | 7.1.0 | 7.0.1 | Ahead |
-| ortools | ≥9.8,<9.9 | 9.12 | Intentionally pinned |
-| pulp | ≥2.7.0 | 3.3.0 | Minor gap |
-| python-jose | 3.5.0 | - | Current |
-| pydantic | 2.5.3 | - | Current |
+| Package | Pinned Version | Latest Available | Gap |
+|---------|---------------|------------------|-----|
+| fastapi | 0.128.0 | 0.128.0 | ✅ Current |
+| pydantic | 2.12.5 | 2.12.5 | ✅ Current |
+| sqlalchemy | 2.0.45 | 2.0.46 | ⚠️ Patch available |
+| redis | 7.1.0 | 7.0.1 (report) | ✅ Ahead |
+| ortools | ≥9.8,<9.9 | 9.12 | ✅ Intentionally pinned |
+| pulp | ≥2.7.0 | 3.3.0 | ⚠️ Minor gap |
+| python-jose | 3.5.0 | 3.5.0 | ✅ Current |
 
 ### Infrastructure
 
@@ -113,8 +133,8 @@ A dependency security scan was evaluated against this repository's tech stack. *
 ### Follow-up Tasks
 
 1. **[HIGH]** Pin Redis images across all docker-compose files
-2. **[LOW]** Evaluate PuLP 3.3.0 upgrade
-3. **[LOW]** Audit for SQLAlchemy 1.x deprecated patterns
+2. **[MEDIUM]** Upgrade SQLAlchemy 2.0.45 → 2.0.46 (PostgreSQL JSONB fixes)
+3. **[LOW]** Evaluate PuLP 3.3.0 upgrade
 
 ---
 
