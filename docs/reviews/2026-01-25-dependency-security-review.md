@@ -2,7 +2,7 @@
 
 > **Review Date:** 2026-01-25
 > **Reviewer:** Claude (Automated)
-> **Scope:** FastAPI, OR-Tools, PuLP, SQLAlchemy, PostgreSQL, Redis, Prometheus, JWT libraries
+> **Scope:** FastAPI, OR-Tools, PuLP, SQLAlchemy, PostgreSQL, Redis, Prometheus, JWT libraries, FHIR R5
 
 ---
 
@@ -138,12 +138,51 @@ FastAPI 0.128.0 dropped all `pydantic.v1` compatibility and requires Pydantic â‰
 
 ---
 
+## Future Considerations
+
+### FHIR R5 Scheduling Model
+
+FHIR R5 introduces scheduling capabilities that align closely with residency block scheduling patterns. This could enable native interoperability with enterprise clinical systems.
+
+#### Relevant R5 Enhancements
+
+| Feature | Benefit for Residency Scheduling |
+|---------|----------------------------------|
+| **Multi-actor Schedule** | Schedule resource can reference multiple practitioners, locations, teams | Models duty blocks and shared coverage natively |
+| **Resource groupings** | Represents groups of resources and responsibilities | Maps directly to rotation blocks, call pools |
+| **Standardized availability queries** | Provider search across systems | Could integrate with hospital credentialing/privileging |
+| **Slot holds** | Temporary reservations before confirmation | Supports swap workflows, tentative assignments |
+
+#### Architectural Implications
+
+**Current State:** Custom mapping layers between scheduling engine and clinical systems.
+
+**Potential Future State:** FHIR R5-native scheduling could:
+- Eliminate custom adapters for clinical system integration
+- Enable direct queries of provider availability across enterprise
+- Standardize block schedule representation for interoperability
+- Support automated credentialing verification via FHIR
+
+#### Recommendation
+
+**Priority:** Low (research/planning phase)
+
+1. Monitor FHIR R5 Scheduling Implementation Guide development
+2. Evaluate alignment with current `Block`, `Assignment`, `RotationSchedule` models
+3. Consider FHIR facade layer for enterprise integration (future phase)
+
+**Note:** This is forward-looking architecture exploration, not an immediate action item.
+
+---
+
 ## References
 
 - [Redis Security Advisories](https://github.com/redis/redis/security/advisories)
 - [FastAPI Releases](https://github.com/tiangolo/fastapi/releases)
 - [SQLAlchemy 2.0 Migration Guide](https://docs.sqlalchemy.org/en/20/changelog/migration_20.html)
 - [OR-Tools Release Notes](https://github.com/google/or-tools/releases)
+- [FHIR R5 Schedule Resource](https://hl7.org/fhir/R5/schedule.html)
+- [FHIR Scheduling Implementation Guide](https://build.fhir.org/ig/HL7/fhir-scheduling/)
 
 ---
 
