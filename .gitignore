@@ -189,6 +189,10 @@ docs/scheduling/~$*
 docs/scheduling/VBA_MACROS.bas
 docs/scheduling/*.csv
 
+# Local archival docs (may contain PII)
+archived/expansion/
+docs/archives/
+
 # Backend local data
 backend/data/
 backend/docs/
