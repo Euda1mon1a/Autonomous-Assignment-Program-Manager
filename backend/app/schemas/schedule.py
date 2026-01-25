@@ -36,7 +36,7 @@ class ScheduleRequest(BaseModel):
     # Block assignment expansion params (Session 095)
     expand_block_assignments: bool = Field(
         default=False,
-        description="Expand block_assignments table into daily slots before solving",
+        description="Deprecated; expansion pipeline removed (ignored).",
     )
     block_number: int | None = Field(
         default=None,
@@ -69,16 +69,7 @@ class ScheduleRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_block_expansion_params(self) -> "ScheduleRequest":
-        """Ensure block_number and academic_year are provided if expand_block_assignments is True."""
-        if self.expand_block_assignments:
-            if self.block_number is None:
-                raise ValueError(
-                    "block_number is required when expand_block_assignments=True"
-                )
-            if self.academic_year is None:
-                raise ValueError(
-                    "academic_year is required when expand_block_assignments=True"
-                )
+        """Deprecated expansion params kept for compatibility."""
         return self
 
 

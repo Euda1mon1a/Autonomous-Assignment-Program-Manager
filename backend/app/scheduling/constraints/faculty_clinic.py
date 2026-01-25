@@ -7,9 +7,8 @@ Implements ACGME supervision requirements and faculty clinic caps:
 
 Session 136: Created to fix missing faculty C/AT assignments in solver.
 
-The solver was only generating resident assignments, leaving faculty slots
-to be filled by FacultyAssignmentExpansionService with GME/DFM by default.
-These constraints ensure proper faculty clinic and supervision coverage.
+These constraints ensure proper faculty clinic and supervision coverage
+within the CP-SAT pipeline (no expansion-based backfill).
 """
 
 import logging

@@ -78,6 +78,7 @@ logs/
 
 # Environment files
 .env
+.env.codex
 .env.local
 .env.*.local
 

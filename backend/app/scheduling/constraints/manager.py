@@ -36,7 +36,6 @@ from .capacity import (
     ClinicCapacityConstraint,
     CoverageConstraint,
     MaxPhysiciansInClinicConstraint,
-    OnePersonPerBlockConstraint,
 )
 from .equity import ContinuityConstraint, EquityConstraint
 from .night_float_post_call import NightFloatPostCallConstraint
@@ -323,7 +322,6 @@ class ConstraintManager:
 
         # Hard constraints (ACGME compliance)
         manager.add(AvailabilityConstraint())
-        manager.add(OnePersonPerBlockConstraint())
         manager.add(EightyHourRuleConstraint())
         manager.add(OneInSevenRuleConstraint())
         manager.add(SupervisionRatioConstraint())
@@ -480,7 +478,6 @@ class ConstraintManager:
 
         # Hard constraints (ACGME compliance)
         manager.add(AvailabilityConstraint())
-        manager.add(OnePersonPerBlockConstraint())
         manager.add(EightyHourRuleConstraint())
         manager.add(OneInSevenRuleConstraint())
         manager.add(SupervisionRatioConstraint())
@@ -598,7 +595,6 @@ class ConstraintManager:
         manager = cls()
 
         manager.add(AvailabilityConstraint())
-        manager.add(OnePersonPerBlockConstraint())
         manager.add(CoverageConstraint(weight=1000.0))
 
         return manager

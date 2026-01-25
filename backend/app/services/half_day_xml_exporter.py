@@ -9,10 +9,9 @@ Two Truths Architecture:
     PRESCRIPTIVE: rotation_templates + weekly_patterns → solver → DESCRIPTIVE
     DESCRIPTIVE:  half_day_assignments (what DID happen)
                                       ↓
-                  HalfDayXMLExporter → XML (canonical export)
+                  HalfDayJSONExporter → JSON (canonical export)
 
-This is the canonical export path. Use ScheduleXMLExporter only for validation
-against legacy ROSETTA format.
+This XML exporter is kept for validation and legacy ROSETTA compatibility.
 """
 
 from datetime import date
@@ -27,6 +26,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.logging import get_logger
 from app.models.activity import Activity
 from app.models.block_assignment import BlockAssignment
+from app.models.call_assignment import CallAssignment
 from app.models.half_day_assignment import HalfDayAssignment
 from app.models.person import Person
 
@@ -66,6 +66,7 @@ class HalfDayXMLExporter:
         block_end: date,
         person_ids: list[UUID] | None = None,
         include_faculty: bool = False,
+        include_call: bool = False,
     ) -> str:
         """Export schedule for date range to XML.
 
@@ -74,6 +75,7 @@ class HalfDayXMLExporter:
             block_end: Last day of schedule block
             person_ids: Optional list of person IDs to export (default: all residents)
             include_faculty: If True, include faculty in export (default: False)
+            include_call: If True, include call assignments (default: False)
 
         Returns:
             XML string in ROSETTA-compatible format
@@ -118,6 +120,11 @@ class HalfDayXMLExporter:
                 block_start,
                 block_end,
             )
+
+        if include_call:
+            call_assignments = self._fetch_call_assignments(block_start, block_end)
+            if call_assignments:
+                self._add_call_section(root, call_assignments)
 
         # Format and return XML
         xml_str = tostring(root, encoding="unicode")
@@ -299,6 +306,50 @@ class HalfDayXMLExporter:
 
             current = current + timedelta(days=1)
 
+    def _fetch_call_assignments(
+        self,
+        block_start: date,
+        block_end: date,
+    ) -> list[dict[str, Any]]:
+        """Fetch call assignments for date range."""
+        stmt = (
+            select(CallAssignment)
+            .join(Person, CallAssignment.person_id == Person.id)
+            .where(
+                CallAssignment.date >= block_start,
+                CallAssignment.date <= block_end,
+            )
+            .options(selectinload(CallAssignment.person))
+        )
+        result = self.db.execute(stmt)
+        calls = result.scalars().all()
+
+        call_rows: list[dict[str, Any]] = []
+        for ca in calls:
+            name = ca.person.name if ca.person else ""
+            # Use last name for call row (matches template convention)
+            last_name = name.split(",")[0] if "," in name else name
+            call_rows.append(
+                {
+                    "date": ca.date,
+                    "staff": last_name,
+                }
+            )
+
+        return call_rows
+
+    def _add_call_section(
+        self,
+        parent: Element,
+        call_rows: list[dict[str, Any]],
+    ) -> None:
+        """Add call section to XML."""
+        call_elem = SubElement(parent, "call")
+        for row in call_rows:
+            night = SubElement(call_elem, "night")
+            night.set("date", row.get("date").isoformat())
+            night.set("staff", row.get("staff", ""))
+
     def _get_activity_code(self, assignment: HalfDayAssignment | None) -> str:
         """Get activity code from assignment.
 
@@ -329,6 +380,7 @@ def export_block_schedule(
     block_number: int,
     academic_year: int,
     include_faculty: bool = False,
+    include_call: bool = False,
 ) -> str:
     """Convenience function to export a block schedule.
 
@@ -347,5 +399,8 @@ def export_block_schedule(
 
     exporter = HalfDayXMLExporter(db)
     return exporter.export(
-        block_dates.start_date, block_dates.end_date, include_faculty=include_faculty
+        block_dates.start_date,
+        block_dates.end_date,
+        include_faculty=include_faculty,
+        include_call=include_call,
     )

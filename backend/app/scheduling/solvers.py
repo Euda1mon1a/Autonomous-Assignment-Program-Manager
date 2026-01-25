@@ -246,9 +246,12 @@ class PuLPSolver(BaseSolver):
         x = {}
         template_idx = {t.id: i for i, t in enumerate(context.templates)}
 
+        locked_blocks = getattr(context, "locked_blocks", set())
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
             for block in workday_blocks:
+                if (resident.id, block.id) in locked_blocks:
+                    continue
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
                     # Skip templates requiring procedure credentials if resident doesn't have them
@@ -284,6 +287,8 @@ class PuLPSolver(BaseSolver):
         for faculty in context.faculty:
             f_i = context.faculty_idx[faculty.id]
             for block in workday_blocks:
+                if (faculty.id, block.id) in locked_blocks:
+                    continue
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
                     t_i = template_idx[template.id]
@@ -361,7 +366,7 @@ class PuLPSolver(BaseSolver):
                 ]
                 if rotation_vars:
                     prob += (
-                        pulp.lpSum(rotation_vars) <= 1,
+                        pulp.lpSum(rotation_vars) == 1,
                         f"one_rotation_res_{r_i}_{b_i}",
                     )
 
@@ -844,9 +849,12 @@ class CPSATSolver(BaseSolver):
         x = {}
         template_idx = {t.id: i for i, t in enumerate(context.templates)}
 
+        locked_blocks = getattr(context, "locked_blocks", set())
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
             for block in workday_blocks:
+                if (resident.id, block.id) in locked_blocks:
+                    continue
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
                     # Skip templates requiring procedure credentials if resident doesn't have them
@@ -885,6 +893,8 @@ class CPSATSolver(BaseSolver):
         for faculty in context.faculty:
             f_i = context.faculty_idx[faculty.id]
             for block in workday_blocks:
+                if (faculty.id, block.id) in locked_blocks:
+                    continue
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
                     t_i = template_idx[template.id]
@@ -968,7 +978,7 @@ class CPSATSolver(BaseSolver):
                     if (r_i, b_i, t_i) in x
                 ]
                 if rotation_vars:
-                    model.Add(sum(rotation_vars) <= 1)
+                    model.Add(sum(rotation_vars) == 1)
 
         # ==================================================
         # CONSTRAINT: At most one rotation per faculty per block

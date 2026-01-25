@@ -1,152 +1,112 @@
-# Canonical CP-SAT Pipeline (What Is Enforced Today)
+# CP-SAT Canonical Pipeline (JSON → XLSX)
 
-Purpose:
-This document describes the authoritative CP-SAT pipeline for schedule generation. It includes only the components that are actually enforced in the canonical path.
+**Purpose:** Define the current authoritative pipeline for schedule generation and export. This doc avoids names/PII and is intended for PRs and external review.
 
----
+## Canonical Flow (Two-Phase with Optional Pause)
 
-## New Components in the Canonical CP-SAT Path
+**Phase A — Generation (CP-SAT)**
+1. **Preload** locked assignments (e.g., absences, protected activities, lecture/advising, manual entries).
+2. **CP-SAT block/call generation** produces core assignments and call records.
+3. **Sync PCAT/DO from call** into half-day assignments.
+4. **CP-SAT activity solver** fills **only unlocked** half-day slots.
 
-1) Canonical CP-SAT enforcement
-- SchedulingEngine.generate() forces algorithm="cp_sat".
-- SchedulingEngine._run_solver() also forces CP-SAT regardless of caller.
+**Phase B — Export (JSON → XLSX)**
+5. **HalfDayJSONExporter** reads `half_day_assignments` (descriptive truth).
+6. **JSONToXlsxConverter** fills the official Block Template2 workbook.
+7. **Excel output** is produced from the template (formatting preserved).
 
-2) Call coverage is enforced in CP-SAT
-- Registered by default:
-  - OvernightCallCoverageConstraint
-  - AdjunctCallExclusionConstraint
-  - CallAvailabilityConstraint
-
-3) Call equity affects the objective
-- Call equity constraints now use call-eligible indices.
-- CP-SAT objective incorporates objective_terms (call equity penalties).
-
-4) Half-day mode uses CP-SAT for call
-- In half-day mode, CP-SAT generates call assignments (Sun-Thu).
-- Rotation assignments are discarded (expanded from block assignments instead).
-
-5) Faculty AT/C CP-SAT is mandatory
-- No greedy fallback if OR-Tools is missing.
-
-6) Activity locking centralization
-- activity_locking.py defines locked/preload activity codes.
-- Used by expansion + activity solver to protect preloaded/manual work.
-
-7) Documentation and archival
-- Canonical pipeline documented here.
-- Non-canonical solver paths documented separately.
+**Pauses are allowed** between Phase A and Phase B. Generation and export can be separate steps.
 
 ---
 
-## Diagram (Canonical CP-SAT Flow)
+## Sources of Truth
 
-```
-                 +--------------------------------+
-                 | SchedulingEngine.generate()    |
-                 | (forces algorithm=cp_sat)      |
-                 +---------------+----------------+
-                                 |
-                                 v
-                  +-------------------------------+
-                  | SyncPreloadService             |
-                  |  - loads preloads (locked)     |
-                  |  - skip stale faculty call     |
-                  +---------------+----------------+
-                                 |
-                                 v
-                +----------------------------------+
-                | BlockAssignmentExpansionService   |
-                |  - expands block -> half-day      |
-                |  - respects locked activities     |
-                +---------------+------------------+
-                                 |
-                                 v
-                +----------------------------------+
-                | SchedulingContext                |
-                |  - call-eligible faculty         |
-                |  - availability, templates       |
-                +---------------+------------------+
-                                 |
-                                 v
-          +-------------------------------------------+
-          | CP-SAT Call Solve (CPSATSolver)            |
-          |  - call vars (Sun-Thu)                     |
-          |  - call coverage constraints               |
-          |  - call equity objective_terms             |
-          +---------------+---------------------------+
-                                 |
-                                 v
-                +----------------------------------+
-                | Sync PCAT/DO from Call            |
-                |  - writes locked preload slots    |
-                +---------------+------------------+
-                                 |
-                                 v
-                +----------------------------------+
-                | CP-SAT Activity Solver            |
-                |  - assigns C/LEC/ADV              |
-                |  - skips locked/manual slots      |
-                +---------------+------------------+
-                                 |
-                                 v
-                +----------------------------------+
-                | CP-SAT Faculty AT/C Solver        |
-                |  - fills AT + clinic              |
-                |  - no greedy fallback             |
-                +---------------+------------------+
-                                 |
-                                 v
-                +----------------------------------+
-                | Validation + Commit               |
-                |  - ACGME validator                |
-                +----------------------------------+
+- **Descriptive Truth:** `half_day_assignments`
+- **Locked slots:** `source = preload | manual` (never overwritten by solver)
+- **Solver slots:** `source = solver`
+
+The activity solver **only fills unlocked slots**. It never overwrites preloads or manual edits.
+
+---
+
+## JSON Schedule Shape (Canonical)
+
+```json
+{
+  "block_start": "YYYY-MM-DD",
+  "block_end": "YYYY-MM-DD",
+  "source": "half_day_assignments",
+  "residents": [
+    {
+      "name": "First Last",
+      "pgy": 1,
+      "rotation1": "ROT1",
+      "rotation2": "ROT2",
+      "days": [
+        {"date": "YYYY-MM-DD", "weekday": "Mon", "am": "C", "pm": "C"}
+      ]
+    }
+  ],
+  "faculty": [
+    {
+      "name": "First Last",
+      "pgy": null,
+      "rotation1": "",
+      "rotation2": "",
+      "days": [
+        {"date": "YYYY-MM-DD", "weekday": "Mon", "am": "AT", "pm": "ADMIN"}
+      ]
+    }
+  ],
+  "call": {
+    "nights": [
+      {"date": "YYYY-MM-DD", "staff": "Last"}
+    ]
+  }
+}
 ```
 
 ---
 
-## Component Map (What Happens Where)
+## What’s Done (as of 2026-01-25)
 
-### Orchestration
-- backend/app/scheduling/engine.py
-  - Enforces CP-SAT globally
-  - Half-day flow: preloads -> expansion -> CP-SAT call -> PCAT/DO -> CP-SAT activities -> CP-SAT faculty -> validate
-
-### Call Coverage + Equity
-- backend/app/scheduling/constraints/manager.py
-  - Registers call coverage constraints by default
-- backend/app/scheduling/constraints/call_coverage.py
-  - Exactly one call per Sun-Thu night
-  - Adjunct exclusion, availability enforcement
-- backend/app/scheduling/constraints/call_equity.py
-  - Equity / spacing / preference penalties
-  - Uses call-eligible indices
-
-### CP-SAT Objective Integration
-- backend/app/scheduling/solvers.py
-  - objective_terms included in objective (call equity affects solution)
-
-### Half-Day Activity Assignment
-- backend/app/scheduling/activity_solver.py
-  - CP-SAT assignment of C/LEC/ADV
-  - Uses centralized activity locking
-
-### Faculty AT/C Assignment
-- backend/app/services/faculty_assignment_expansion_service.py
-  - CP-SAT model for AT + clinic
-  - No greedy fallback
-
-### Activity Locking
-- backend/app/utils/activity_locking.py
-  - Single source of truth for locked/preload activity codes
+- **Canonical JSON pipeline**: `half_day_assignments → JSON → XLSX`.
+- **Merged-cell safe writing** in the XLSX converter (headers + schedule cells).
+- **Faculty activities in CP-SAT activity solver** (AT coverage + admin activities).
+- **Row mapping improvements**: supports `Last, First` and `First Last` mapping.
+- **Export template binding**: Block Template2 template and structure XML are required for canonical export.
 
 ---
 
-## Why Non-Canonical Components Are Not Included
+## What Remains
 
-This document is a source of truth for what the system actually enforces today. Non-wired or disabled components are excluded to avoid:
-- Misleading operators about enforcement
-- Hiding data-dependency gaps
-- Creating false expectations in schedule review
+- **Preload rules completeness** (NF→Neuro split, TDY blocking, Hilo/Oki pre/post clinic, LEC/ADV on outpatient, etc.).
+- **Outpatient rotation requirements**: activity requirement records for all specialty rotations (GUI-editable).
+- **End-to-end runbook**: single “generate → pause → export” checklist/script.
+- **Strict row mapping enforcement**: fail fast when a person is not mapped.
+- **Frontend export flow**: ensure export route uses auth and canonical JSON path.
 
-For non-canonical constraints and solver paths, see:
-- docs/scheduling/NON_CANONICAL_CONSTRAINTS.md
+---
+
+## What’s Uncertain / Needs Confirmation
+
+- **Sports Medicine alignment rule**: confirm SM faculty/activity alignment behavior is correct.
+- **AT coverage math**: confirm resident clinic demand → AT coverage mapping for local policy.
+- **Template assumptions**: confirm template remains stable for long‑term airgapped deployments.
+
+---
+
+## Reference Entry Points
+
+- **Generation:** `backend/app/scheduling/engine.py` (CP‑SAT enforced)
+- **Activity solver:** `backend/app/scheduling/activity_solver.py`
+- **JSON export:** `backend/app/services/half_day_json_exporter.py`
+- **JSON → XLSX:** `backend/app/services/json_to_xlsx_converter.py`
+- **Canonical export service:** `backend/app/services/canonical_schedule_export_service.py`
+
+---
+
+## Non‑Canonical / Legacy
+
+- **XML export** remains for validation/legacy tooling only.
+- **Expansion service** is archived and no longer part of the pipeline.

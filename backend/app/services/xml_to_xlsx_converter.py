@@ -1,13 +1,15 @@
 """
-XML to XLSX Converter.
+XML to XLSX Converter (legacy/validation).
 
-Converts HalfDayXMLExporter output to Excel format.
+Converts schedule XML to Excel format.
+Canonical export now uses JSON → JSONToXlsxConverter, but XML remains
+for validation and legacy tooling.
 
 Supports two formats:
 1. ROSETTA format (validation): Simple layout for testing
 2. Block Template2 format (production): Full TAMC layout with all rows/columns
 
-This is the final step in the central dogma pipeline:
+Legacy pipeline:
     DB → HalfDayXMLExporter → XML → XMLToXlsxConverter → xlsx
 """
 
@@ -18,6 +20,7 @@ from typing import Any
 from xml.etree import ElementTree
 
 from openpyxl import Workbook, load_workbook
+from openpyxl.cell.cell import MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
@@ -173,12 +176,22 @@ class XMLToXlsxConverter:
         Returns:
             xlsx bytes (openpyxl workbook)
         """
-        # Parse XML
         root = ElementTree.fromstring(xml_string)
-        block_start = date.fromisoformat(root.get("block_start", ""))
-        block_end = date.fromisoformat(root.get("block_end", ""))
+        data = self._parse_xml_to_data(root)
+        return self.convert_from_data(data, output_path=output_path)
 
-        logger.info(f"Converting XML to xlsx: {block_start} to {block_end}")
+    def convert_from_data(
+        self,
+        data: dict[str, Any],
+        output_path: Path | str | None = None,
+    ) -> bytes:
+        """Convert schedule data dict to xlsx."""
+        block_start = self._coerce_date(data.get("block_start"))
+        block_end = self._coerce_date(data.get("block_end"))
+        if not block_start or not block_end:
+            raise ValueError("Missing block_start/block_end in schedule data")
+
+        logger.info(f"Converting schedule data to xlsx: {block_start} to {block_end}")
 
         # Load template or create new workbook
         if self.template_path and self.template_path.exists():
@@ -197,18 +210,21 @@ class XMLToXlsxConverter:
         # Fill header row (always - helps with readability)
         self._fill_header_row(sheet, block_start, block_end)
 
-        # Fill residents and faculty from XML
-        residents = root.findall(".//resident")
-        faculty = root.findall(".//faculty")
-        self._fill_residents(sheet, residents, block_start)
-        self._fill_residents(
-            sheet, faculty, block_start
-        )  # Same logic works for faculty
+        # Fill residents and faculty
+        residents = data.get("residents", [])
+        faculty = data.get("faculty", [])
+        self._fill_residents(sheet, residents, block_start, is_faculty=False)
+        self._fill_residents(sheet, faculty, block_start, is_faculty=True)
 
         # Fill call row (Row 4) - single cells for user to merge
-        call_section = root.find(".//call")
-        if call_section is not None:
-            self._fill_call_row(sheet, call_section, block_start, block_end)
+        call_section = data.get("call", {})
+        call_rows: list[dict[str, Any]] = []
+        if isinstance(call_section, dict):
+            call_rows = call_section.get("nights", []) or []
+        elif isinstance(call_section, list):
+            call_rows = call_section
+        if call_rows:
+            self._fill_call_row(sheet, call_rows, block_start, block_end)
 
         # Save to bytes
         buffer = BytesIO()
@@ -221,6 +237,65 @@ class XMLToXlsxConverter:
             logger.info(f"Saved xlsx to {output_path}")
 
         return xlsx_bytes
+
+    def _parse_xml_to_data(self, root: ElementTree.Element) -> dict[str, Any]:
+        """Parse XML schedule into a JSON-like dict."""
+        block_start = root.get("block_start", "")
+        block_end = root.get("block_end", "")
+
+        def _parse_people(elements: list[ElementTree.Element]) -> list[dict[str, Any]]:
+            people: list[dict[str, Any]] = []
+            for elem in elements:
+                person = {
+                    "name": elem.get("name", ""),
+                    "pgy": elem.get("pgy", ""),
+                    "rotation1": elem.get("rotation1", ""),
+                    "rotation2": elem.get("rotation2", ""),
+                    "days": [],
+                }
+                for day in elem.findall("day"):
+                    person["days"].append(
+                        {
+                            "date": day.get("date", ""),
+                            "am": day.get("am", ""),
+                            "pm": day.get("pm", ""),
+                        }
+                    )
+                people.append(person)
+            return people
+
+        residents = _parse_people(root.findall(".//resident"))
+        faculty = _parse_people(root.findall(".//faculty"))
+
+        call_rows: list[dict[str, Any]] = []
+        call_section = root.find(".//call")
+        if call_section is not None:
+            for night in call_section.findall("night"):
+                call_rows.append(
+                    {
+                        "date": night.get("date", ""),
+                        "staff": night.get("staff", ""),
+                    }
+                )
+
+        return {
+            "block_start": block_start,
+            "block_end": block_end,
+            "source": root.get("source", "xml"),
+            "residents": residents,
+            "faculty": faculty,
+            "call": {"nights": call_rows},
+        }
+
+    def _coerce_date(self, value: Any) -> date | None:
+        """Coerce ISO date string or datetime/date into date."""
+        if isinstance(value, date) and not isinstance(value, datetime):
+            return value
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, str) and value:
+            return date.fromisoformat(value)
+        return None
 
     def _apply_cell_color(self, cell, code: str) -> None:
         """Apply background and font color to cell based on schedule code.
@@ -291,6 +366,64 @@ class XMLToXlsxConverter:
 
         return wb
 
+    def _get_writable_cell(self, sheet, row: int, column: int):
+        """Return a writable cell, resolving merged ranges to their top-left cell."""
+        cell = sheet.cell(row=row, column=column)
+        if isinstance(cell, MergedCell):
+            coord = f"{get_column_letter(column)}{row}"
+            for merged_range in sheet.merged_cells.ranges:
+                if coord in merged_range:
+                    return sheet.cell(
+                        row=merged_range.min_row, column=merged_range.min_col
+                    )
+        return cell
+
+    def _fill_block_template2_headers(
+        self,
+        sheet,
+        block_start: date,
+        block_end: date,
+    ) -> None:
+        """Update day-of-week and date headers for Block Template2."""
+        day_full = {
+            0: "MON",
+            1: "TUE",
+            2: "WED",
+            3: "THURS",
+            4: "FRI",
+            5: "SAT",
+            6: "SUN",
+        }
+        day_abbrev = {
+            0: "MON",
+            1: "TUE",
+            2: "WED",
+            3: "THU",
+            4: "FRI",
+            5: "SAT",
+            6: "SUN",
+        }
+
+        block_number = self._calculate_block_number(block_start)
+        if block_number:
+            block_cell = self._get_writable_cell(sheet, row=1, column=BT2_COL_TEMPLATE)
+            block_cell.value = block_number
+
+        current = block_start
+        col = BT2_COL_SCHEDULE_START
+        while current <= block_end:
+            weekday = current.weekday()
+            day_cell = self._get_writable_cell(sheet, row=1, column=col)
+            abbrev_cell = self._get_writable_cell(sheet, row=2, column=col)
+            date_cell = self._get_writable_cell(sheet, row=3, column=col)
+
+            day_cell.value = day_full.get(weekday, "")
+            abbrev_cell.value = day_abbrev.get(weekday, "")
+            date_cell.value = datetime(current.year, current.month, current.day)
+
+            current += timedelta(days=1)
+            col += 2
+
     def _fill_header_row(
         self,
         sheet,
@@ -299,14 +432,9 @@ class XMLToXlsxConverter:
     ) -> None:
         """Fill header row based on format (Block Template2 or ROSETTA)."""
         if self.use_block_template2:
-            # Block Template2 format headers (Row 6 in actual template, Row 1 here)
-            # The actual template has complex multi-row headers, we simplify
-            sheet.cell(row=ROW_HEADERS, column=BT2_COL_ROTATION1).value = ""
-            sheet.cell(row=ROW_HEADERS, column=BT2_COL_ROTATION2).value = ""
-            sheet.cell(row=ROW_HEADERS, column=BT2_COL_TEMPLATE).value = "TEMPLATE"
-            sheet.cell(row=ROW_HEADERS, column=BT2_COL_ROLE).value = "ROLE"
-            sheet.cell(row=ROW_HEADERS, column=BT2_COL_NAME).value = "PROVIDER"
-            col_schedule_start = BT2_COL_SCHEDULE_START
+            # Use the template's own layout; only update day/date headers.
+            self._fill_block_template2_headers(sheet, block_start, block_end)
+            return
         else:
             # ROSETTA format headers
             sheet.cell(row=ROW_HEADERS, column=ROSETTA_COL_NAME).value = "Resident"
@@ -326,8 +454,8 @@ class XMLToXlsxConverter:
         while current <= block_end:
             day_str = current.strftime("%a %b %d").replace(" 0", " ")  # "Thu Mar 12"
 
-            am_cell = sheet.cell(row=ROW_HEADERS, column=col)
-            pm_cell = sheet.cell(row=ROW_HEADERS, column=col + 1)
+            am_cell = self._get_writable_cell(sheet, row=ROW_HEADERS, column=col)
+            pm_cell = self._get_writable_cell(sheet, row=ROW_HEADERS, column=col + 1)
 
             am_cell.value = f"{day_str} AM"
             pm_cell.value = f"{day_str} PM"
@@ -359,10 +487,11 @@ class XMLToXlsxConverter:
     def _fill_residents(
         self,
         sheet,
-        residents: list,
+        residents: list[dict[str, Any]],
         block_start: date,
+        is_faculty: bool,
     ) -> None:
-        """Fill resident/faculty rows from XML elements.
+        """Fill resident/faculty rows from schedule dicts.
 
         If row_mappings loaded from structure XML, uses name → row lookup.
         Otherwise, uses sequential rows starting at row 2 (ROSETTA format).
@@ -376,17 +505,25 @@ class XMLToXlsxConverter:
 
         for i, resident in enumerate(sorted_residents):
             name = resident.get("name", "")
-            is_faculty = resident.tag == "faculty"
+            name = str(name) if name is not None else ""
 
             # Use row mapping if available, else sequential
             if self.row_mappings:
                 # Normalize name for lookup
                 normalized = name.replace("*", "").strip()
-                row = self.row_mappings.get(normalized)
+                lookup_name = normalized
+
+                if lookup_name not in self.row_mappings and "," in lookup_name:
+                    last, first = [part.strip() for part in lookup_name.split(",", 1)]
+                    swapped = f"{first} {last}".strip()
+                    if swapped in self.row_mappings:
+                        lookup_name = swapped
+
+                row = self.row_mappings.get(lookup_name)
 
                 # Try fuzzy match by first name (DB uses "First Last")
                 if not row:
-                    first_name = normalized.split()[0] if normalized else ""
+                    first_name = lookup_name.split()[0] if lookup_name else ""
                     for mapping_name, mapping_row in self.row_mappings.items():
                         # Check if first name matches start of mapping
                         if mapping_name.startswith(first_name):
@@ -400,13 +537,20 @@ class XMLToXlsxConverter:
                 row = i + 2  # Start at row 2 (row 1 is headers)
 
             pgy = resident.get("pgy", "")
-            rotation1 = resident.get("rotation1", "")
-            rotation2 = resident.get("rotation2", "")
+            rotation1 = resident.get("rotation1", "") or ""
+            rotation2 = resident.get("rotation2", "") or ""
 
             if self.use_block_template2:
                 # Block Template2 format: Rotation1, Rotation2, Template, Role, Name
                 normalized = name.replace("*", "").strip()
-                template_code = self.template_mappings.get(normalized, "")
+                lookup_name = normalized
+                if lookup_name not in self.template_mappings and "," in lookup_name:
+                    last, first = [part.strip() for part in lookup_name.split(",", 1)]
+                    swapped = f"{first} {last}".strip()
+                    if swapped in self.template_mappings:
+                        lookup_name = swapped
+
+                template_code = self.template_mappings.get(lookup_name, "")
                 if not template_code and pgy:
                     template_code = f"R{pgy}"
                 elif not template_code and is_faculty:
@@ -415,45 +559,67 @@ class XMLToXlsxConverter:
                 role = self._get_role(pgy, is_faculty)
                 display_name = self._to_last_first(name)
 
-                rot1_cell = sheet.cell(row=row, column=BT2_COL_ROTATION1)
+                rot1_cell = self._get_writable_cell(
+                    sheet, row=row, column=BT2_COL_ROTATION1
+                )
                 rot1_cell.value = rotation1
                 self._apply_rotation_color(rot1_cell, rotation1)
 
-                rot2_cell = sheet.cell(row=row, column=BT2_COL_ROTATION2)
+                rot2_cell = self._get_writable_cell(
+                    sheet, row=row, column=BT2_COL_ROTATION2
+                )
                 rot2_cell.value = rotation2 or ""
                 if rotation2:
                     self._apply_rotation_color(rot2_cell, rotation2)
 
-                sheet.cell(row=row, column=BT2_COL_TEMPLATE).value = template_code
-                sheet.cell(row=row, column=BT2_COL_ROLE).value = role
-                sheet.cell(row=row, column=BT2_COL_NAME).value = display_name
+                self._get_writable_cell(
+                    sheet, row=row, column=BT2_COL_TEMPLATE
+                ).value = template_code
+                self._get_writable_cell(
+                    sheet, row=row, column=BT2_COL_ROLE
+                ).value = role
+                self._get_writable_cell(
+                    sheet, row=row, column=BT2_COL_NAME
+                ).value = display_name
             else:
                 # ROSETTA format: Name, PGY, Rotation1, Rotation2, Notes
-                sheet.cell(row=row, column=ROSETTA_COL_NAME).value = name
-                sheet.cell(row=row, column=ROSETTA_COL_PGY).value = pgy
+                self._get_writable_cell(
+                    sheet, row=row, column=ROSETTA_COL_NAME
+                ).value = name
+                self._get_writable_cell(
+                    sheet, row=row, column=ROSETTA_COL_PGY
+                ).value = pgy
 
-                rot1_cell = sheet.cell(row=row, column=ROSETTA_COL_ROTATION1)
+                rot1_cell = self._get_writable_cell(
+                    sheet, row=row, column=ROSETTA_COL_ROTATION1
+                )
                 rot1_cell.value = rotation1
                 self._apply_rotation_color(rot1_cell, rotation1)
 
-                rot2_cell = sheet.cell(row=row, column=ROSETTA_COL_ROTATION2)
+                rot2_cell = self._get_writable_cell(
+                    sheet, row=row, column=ROSETTA_COL_ROTATION2
+                )
                 rot2_cell.value = rotation2 or ""
                 if rotation2:
                     self._apply_rotation_color(rot2_cell, rotation2)
 
             # Fill schedule columns from day elements
-            for day in resident.findall("day"):
-                day_date = date.fromisoformat(day.get("date", ""))
-                am_code = day.get("am", "")
-                pm_code = day.get("pm", "")
+            days = resident.get("days", []) or []
+            sorted_days = sorted(days, key=lambda d: str(d.get("date", "")))
+            for day in sorted_days:
+                day_date = self._coerce_date(day.get("date"))
+                if not day_date:
+                    continue
+                am_code = day.get("am", "") or ""
+                pm_code = day.get("pm", "") or ""
 
                 # Calculate column from date
                 day_offset = (day_date - block_start).days
                 am_col = COL_SCHEDULE_START + (day_offset * 2)
                 pm_col = am_col + 1
 
-                am_cell = sheet.cell(row=row, column=am_col)
-                pm_cell = sheet.cell(row=row, column=pm_col)
+                am_cell = self._get_writable_cell(sheet, row=row, column=am_col)
+                pm_cell = self._get_writable_cell(sheet, row=row, column=pm_col)
 
                 am_cell.value = am_code
                 pm_cell.value = pm_code
@@ -467,7 +633,7 @@ class XMLToXlsxConverter:
     def _fill_call_row(
         self,
         sheet,
-        call_section,
+        call_rows: list[dict[str, Any]],
         block_start: date,
         block_end: date,
     ) -> None:
@@ -479,15 +645,16 @@ class XMLToXlsxConverter:
         Row position comes from self.call_row (default 4, from structure XML).
         """
 
-        # Build date -> staff lookup from XML
+        # Build date -> staff lookup
         call_lookup: dict[date, str] = {}
-        for night in call_section.findall("night"):
-            night_date_str = night.get("date", "")
-            if night_date_str:
-                night_date = date.fromisoformat(night_date_str)
-                staff_name = night.get("staff", "")
-                if staff_name:
-                    call_lookup[night_date] = staff_name
+        for night in call_rows:
+            night_date_val = night.get("date")
+            night_date = self._coerce_date(night_date_val)
+            if not night_date:
+                continue
+            staff_name = night.get("staff", "")
+            if staff_name:
+                call_lookup[night_date] = staff_name
 
         # Write to call row, AM column only (col 6, 8, 10, ...)
         current = block_start
@@ -495,7 +662,7 @@ class XMLToXlsxConverter:
         while current <= block_end:
             staff = call_lookup.get(current, "")
             if staff:
-                cell = sheet.cell(row=self.call_row, column=col)
+                cell = self._get_writable_cell(sheet, row=self.call_row, column=col)
                 cell.value = staff
             current += timedelta(days=1)
             col += 2  # Skip PM column (write to AM only)
