@@ -104,7 +104,7 @@ class HashMasker(BaseMasker):
         elif self.algorithm == "sha512":
             hash_obj = hashlib.sha512(value.encode())
         elif self.algorithm == "md5":
-            hash_obj = hashlib.md5(value.encode())
+            hash_obj = hashlib.md5(value.encode(), usedforsecurity=False)
         else:
             raise ValueError(f"Unsupported hash algorithm: {self.algorithm}")
 

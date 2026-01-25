@@ -119,14 +119,14 @@ repos:
   # PHASE 5: Python Security (Bandit)
   # ============================================================================
 
-  # Bandit - Python security linter
+  # Bandit - Python security linter (uses pyproject.toml config automatically)
   - repo: local
     hooks:
       - id: bandit
         name: bandit (Python security)
         entry: bash -c "cd backend && bandit -r app -ll"
         language: system
-        pass_filenames: false
+        types: [python]
         files: ^backend/app/
         stages: [pre-commit]
 

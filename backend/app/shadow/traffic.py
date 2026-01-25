@@ -453,7 +453,7 @@ class ShadowTrafficManager:
         timestamp = datetime.utcnow().isoformat()
         data = f"{method}:{path}:{timestamp}"
         if body:
-            data += f":{hashlib.md5(body).hexdigest()}"
+            data += f":{hashlib.md5(body, usedforsecurity=False).hexdigest()}"
 
         return hashlib.sha256(data.encode()).hexdigest()[:16]
 

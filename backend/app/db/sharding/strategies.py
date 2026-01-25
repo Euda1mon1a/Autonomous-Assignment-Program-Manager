@@ -166,9 +166,9 @@ class HashShardingStrategy(ShardingStrategy):
             Hash value as integer
         """
         if self.hash_function == "md5":
-            hash_obj = hashlib.md5(key.encode())
+            hash_obj = hashlib.md5(key.encode(), usedforsecurity=False)
         elif self.hash_function == "sha1":
-            hash_obj = hashlib.sha1(key.encode())
+            hash_obj = hashlib.sha1(key.encode(), usedforsecurity=False)
         elif self.hash_function == "sha256":
             hash_obj = hashlib.sha256(key.encode())
         else:

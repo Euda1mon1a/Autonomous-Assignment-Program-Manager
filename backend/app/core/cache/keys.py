@@ -180,7 +180,7 @@ class CacheKeyGenerator:
             param_str = str(sorted_params)
 
         # Generate hash (MD5 is fast and sufficient for cache keys)
-        hash_obj = hashlib.md5(param_str.encode())
+        hash_obj = hashlib.md5(param_str.encode(), usedforsecurity=False)
         return hash_obj.hexdigest()[:12]
 
 

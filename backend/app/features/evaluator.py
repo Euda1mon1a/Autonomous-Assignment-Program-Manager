@@ -181,8 +181,8 @@ class FeatureFlagEvaluator:
             # Combine user ID and flag key for deterministic hashing
             hash_input = f"{user_id}:{flag_key}"
 
-        # Hash the input
-        hash_value = hashlib.md5(hash_input.encode()).hexdigest()
+        # Hash the input (MD5 for deterministic distribution, not security)
+        hash_value = hashlib.md5(hash_input.encode(), usedforsecurity=False).hexdigest()
 
         # Convert first 8 hex chars to integer (0 to 2^32-1)
         hash_int = int(hash_value[:8], 16)
@@ -222,7 +222,7 @@ class FeatureFlagEvaluator:
         else:
             hash_input = f"{user_id}:{flag_key}"
 
-        hash_value = hashlib.md5(hash_input.encode()).hexdigest()
+        hash_value = hashlib.md5(hash_input.encode(), usedforsecurity=False).hexdigest()
         hash_int = int(hash_value[:8], 16)
         hash_normalized = hash_int / (2**32 - 1)
 

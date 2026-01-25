@@ -4,7 +4,7 @@ import logging
 import re
 from typing import Any
 
-from jinja2 import Environment, TemplateSyntaxError, meta
+from jinja2 import Environment, TemplateSyntaxError, meta, select_autoescape
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class TemplateValidator:
 
     def __init__(self):
         """Initialize the template validator."""
-        self.env = Environment()
+        self.env = Environment(autoescape=select_autoescape())
 
     def validate_template_syntax(self, template_string: str) -> bool:
         """
