@@ -149,7 +149,7 @@ class Activity(Base):
         Boolean,
         default=False,
         nullable=False,
-        comment="True for supervision activities (AT, PCAT, DO) that count toward supervision ratios",
+        comment="True for supervision activities (AT, PCAT) that count toward supervision ratios",
     )
 
     # Physical capacity tracking (C vs AT distinction)
@@ -213,5 +213,7 @@ class Activity(Base):
 
     @property
     def is_supervision(self) -> bool:
-        """Check if this is a supervision activity (AT, PCAT, DO)."""
-        return self.provides_supervision
+        """Check if this is a supervision activity (AT, PCAT)."""
+        code = (self.code or "").strip().lower()
+        abbrev = (self.display_abbreviation or "").strip().upper()
+        return code in {"at", "pcat"} or abbrev in {"AT", "PCAT"}

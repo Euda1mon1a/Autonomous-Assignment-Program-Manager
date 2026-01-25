@@ -367,7 +367,7 @@ class HalfDayScheduleService:
         for a in assignments:
             if not a.person or a.person.type != "faculty":
                 continue
-            if a.activity and a.activity.provides_supervision:
+            if a.activity and a.activity.is_supervision():
                 coverage += 1.0
 
         # Round up demand (can't have half a faculty)

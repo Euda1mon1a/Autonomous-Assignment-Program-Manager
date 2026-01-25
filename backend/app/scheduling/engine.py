@@ -280,7 +280,7 @@ class SchedulingEngine:
             # CORRECTED ORDER OF OPERATIONS (per TAMC skill)
             # =================================================================
             # The dependency chain is:
-            #   Call → PCAT/DO → AT Coverage → Resident Clinic Load → Faculty Admin
+            #   Call → PCAT (DO paired for rest) → AT Coverage → Resident Clinic Load → Faculty Admin
             #
             # PCAT (Post-Call Attending Time) counts toward AT coverage.
             # Residents must know PCAT availability BEFORE scheduling clinic.
@@ -356,7 +356,7 @@ class SchedulingEngine:
             # NOTE: Faculty expansion and activity solver are moved to AFTER
             # call assignments are created (see Steps 6.7 and 6.8)
             # This ensures:
-            # 1. PCAT/DO from NEW call is locked before activity solver runs
+            # 1. PCAT/DO from NEW call is locked before activity solver runs (PCAT drives AT coverage)
             # 2. Activity solver knows PCAT coverage for AT ratio calculations
             # 3. Faculty fills remaining slots AFTER knowing resident demand
 
@@ -526,7 +526,7 @@ class SchedulingEngine:
                             for issue in pcat_do_issues:
                                 logger.error(f"  - {issue}")
 
-                            # Fail generation - PCAT/DO is critical for AT coverage
+                            # Fail generation - PCAT is critical for AT coverage (DO is post-call rest)
                             # ROLLBACK all schedule changes to avoid partial state
                             # (CallAssignments, HalfDayAssignments written so far)
                             # Note: run record was committed in _create_initial_run,
@@ -567,13 +567,13 @@ class SchedulingEngine:
             # =================================================================
             # CORRECTED: Activity solver and faculty expansion run AFTER call
             # =================================================================
-            # NOW that PCAT/DO is locked, the activity solver knows AT coverage.
+            # NOW that PCAT is locked, the activity solver knows AT coverage.
             # Residents can be scheduled knowing which slots have supervision.
             # Faculty expansion fills remaining slots AFTER knowing resident demand.
 
             # Step 6.7: Run activity solver to assign C, LEC, ADV to half-day slots
             # This assigns activities to resident slots that aren't locked by preload.
-            # NOW runs AFTER PCAT/DO is created, so AT coverage is known.
+            # NOW runs AFTER PCAT is created, so AT coverage is known.
             # SKIP in draft mode - activity solver writes to live half_day_assignments
             if (
                 expand_block_assignments

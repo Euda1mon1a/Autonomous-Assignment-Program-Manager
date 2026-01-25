@@ -1434,7 +1434,7 @@ class BlockAssignmentExpansionService:
                     activity = self._lookup_activity_by_abbreviation(
                         abbrev,
                         strict=True,
-                        context=f"Block {block_number} solver assignment",
+                        context=f"Block {block_assignment.block_number} solver assignment",
                     )
 
             # Determine source: preloaded/protected activities must be locked

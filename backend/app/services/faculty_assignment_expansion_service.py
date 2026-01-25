@@ -194,7 +194,7 @@ class FacultyAssignmentExpansionService:
         # LV-AM, LV-PM for leave (matches SyncPreloadService)
         # gme, dfm, sm_clinic are lowercase (from 20260109 migration)
         # sm_clinic is for Sports Medicine faculty (Tagawa has admin_type='SM')
-        # at, pcat, do, fm_clinic for ACGME supervision and clinic (Session 136)
+        # at/pcat for ACGME supervision; fm_clinic for faculty clinic; do for post-call day off
         activity_codes = [
             "W",
             "HOL",
@@ -207,8 +207,8 @@ class FacultyAssignmentExpansionService:
             # Faculty clinic and supervision activities (NEW - Session 136)
             "at",  # Attending Time - ACGME supervision
             "fm_clinic",  # Faculty clinic - their own patients
-            "pcat",  # Post-Call Attending Time
-            "do",  # Direct Observation
+            "pcat",  # Post-Call Attending Time - supervision
+            "do",  # Post-call day off (not supervision)
         ]
 
         stmt = select(Activity).where(Activity.code.in_(activity_codes))
@@ -575,16 +575,7 @@ class FacultyAssignmentExpansionService:
     def _provides_supervision(self, activity: Activity | None) -> bool:
         if not activity:
             return False
-        if activity.provides_supervision:
-            return True
-        code = self._normalize_code(activity.code)
-        abbrev = self._normalize_abbrev(activity.display_abbreviation)
-        return code in {"at", "pcat", "fm_clinic", "cv"} or abbrev in {
-            "AT",
-            "PCAT",
-            "C",
-            "CV",
-        }
+        return activity.is_supervision()
 
     def _is_proc_or_vas(self, activity: Activity | None) -> bool:
         if not activity:

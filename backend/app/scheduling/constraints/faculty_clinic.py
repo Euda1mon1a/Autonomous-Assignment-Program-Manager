@@ -271,8 +271,6 @@ class FacultySupervisionConstraint(HardConstraint):
     AT coverage sources:
     - AT: Attending Time (primary supervision)
     - PCAT: Post-Call Attending Time
-    - C: Faculty clinic (they can supervise while seeing patients)
-    - CV: Virtual clinic
 
     This is the highest priority constraint - ACGME compliance.
     """
@@ -285,7 +283,7 @@ class FacultySupervisionConstraint(HardConstraint):
     }
 
     # Activity codes that count as AT coverage
-    AT_COVERAGE_CODES = {"at", "pcat", "fm_clinic", "C", "CV"}
+    AT_COVERAGE_CODES = {"at", "pcat"}
 
     def __init__(self) -> None:
         super().__init__(
@@ -302,14 +300,13 @@ class FacultySupervisionConstraint(HardConstraint):
     ) -> None:
         """Add ACGME supervision constraint to CP-SAT model."""
         faculty_at = variables.get("faculty_at", {})
-        faculty_clinic = variables.get("faculty_clinic", {})
         faculty_pcat = variables.get("faculty_pcat", {})
         resident_clinic = variables.get("resident_clinic", {})
 
         # If no faculty AT variables, can't enforce this constraint
-        if not faculty_at and not faculty_clinic:
+        if not faculty_at and not faculty_pcat:
             logger.warning(
-                "No faculty_at or faculty_clinic variables, "
+                "No faculty_at or faculty_pcat variables, "
                 "supervision constraint not applied"
             )
             return
@@ -348,14 +345,12 @@ class FacultySupervisionConstraint(HardConstraint):
                     # Sum weighted demand (each resident adds their factor)
                     total_demand = sum(var * factor for var, factor in demand_vars)
 
-                    # Sum coverage (AT + clinic + PCAT all count)
+                    # Sum coverage (AT + PCAT only)
                     coverage_vars = []
                     for faculty in context.faculty:
                         fkey = (faculty.id, current, slot)
                         if fkey in faculty_at:
                             coverage_vars.append(faculty_at[fkey])
-                        if fkey in faculty_clinic:
-                            coverage_vars.append(faculty_clinic[fkey])
                         if fkey in faculty_pcat:
                             coverage_vars.append(faculty_pcat[fkey])
 
