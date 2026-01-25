@@ -286,6 +286,8 @@ class CPSATActivitySolver:
             reqs = requirements_by_template.get(template_id, [])
             if not reqs:
                 continue
+
+            req_entries = []
             for req in reqs:
                 if req.activity_id not in assignable_ids:
                     continue
@@ -324,8 +326,55 @@ class CPSATActivitySolver:
                 if max_allowed > len(vars_for_req):
                     max_allowed = len(vars_for_req)
 
-                model.Add(sum(vars_for_req) >= min_needed)
-                model.Add(sum(vars_for_req) <= max_allowed)
+                req_entries.append(
+                    {
+                        "activity_id": req.activity_id,
+                        "vars": vars_for_req,
+                        "min": min_needed,
+                        "max": max_allowed,
+                    }
+                )
+
+            if not req_entries:
+                continue
+
+            # If per-activity max totals don't cover all slots, relax max to fill
+            total_max = sum(entry["max"] for entry in req_entries)
+            slack = len(slot_indices) - total_max
+            if slack > 0:
+                # Prefer giving slack to clinic activity
+                clinic_id = clinic_activity.id if clinic_activity else None
+                for entry in req_entries:
+                    if clinic_id and entry["activity_id"] == clinic_id:
+                        room = len(entry["vars"]) - entry["max"]
+                        bump = min(slack, room)
+                        if bump:
+                            entry["max"] += bump
+                            slack -= bump
+                        break
+                # If still slack, distribute to any activity with room
+                if slack > 0:
+                    for entry in req_entries:
+                        room = len(entry["vars"]) - entry["max"]
+                        bump = min(slack, room)
+                        if bump:
+                            entry["max"] += bump
+                            slack -= bump
+                        if slack <= 0:
+                            break
+                if slack > 0:
+                    logger.warning(
+                        "Unable to relax max enough for person=%s template=%s "
+                        "week=%s (slack remaining=%s)",
+                        person_id,
+                        template_id,
+                        week,
+                        slack,
+                    )
+
+            for entry in req_entries:
+                model.Add(sum(entry["vars"]) >= entry["min"])
+                model.Add(sum(entry["vars"]) <= entry["max"])
                 constraint_count += 1
 
         if constraint_count:
@@ -655,11 +704,23 @@ class CPSATActivitySolver:
         FacultyAssignmentExpansionService and should NOT be overwritten by
         the activity solver. Faculty get admin time (GME/DFM), not solver activities.
         """
-        return self._load_slots(
+        slots = self._load_slots(
             start_date,
             end_date,
             [AssignmentSource.SOLVER.value, AssignmentSource.TEMPLATE.value],
         )
+        # Only outpatient rotations are eligible for activity solving
+        eligible: list[HalfDayAssignment] = []
+        for slot in slots:
+            template = self._get_active_rotation_template(
+                slot.block_assignment, slot.date, start_date
+            )
+            if not template:
+                continue
+            if (template.activity_type or "").lower() not in OUTPATIENT_ACTIVITY_TYPES:
+                continue
+            eligible.append(slot)
+        return eligible
 
     def _load_locked_slots(
         self,

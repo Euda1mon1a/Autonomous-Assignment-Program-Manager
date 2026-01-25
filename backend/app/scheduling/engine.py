@@ -447,7 +447,13 @@ class SchedulingEngine:
                 "Running CP-SAT solver for Sun-Thu call assignments only "
                 "(rotation assignments handled by expansion service)"
             )
-            solver_result = self._run_solver("cp_sat", context, timeout_seconds)
+            call_only_manager = ConstraintManager.create_call_only()
+            solver_result = self._run_solver(
+                "cp_sat",
+                context,
+                timeout_seconds,
+                constraint_manager=call_only_manager,
+            )
             if not solver_result.success:
                 logger.error(
                     f"CP-SAT call solver failed: {solver_result.solver_status}"
@@ -1182,6 +1188,7 @@ class SchedulingEngine:
         algorithm: str,
         context: SchedulingContext,
         timeout_seconds: float,
+        constraint_manager: ConstraintManager | None = None,
     ) -> SolverResult:
         """Run the selected solver algorithm."""
         try:
@@ -1198,7 +1205,7 @@ class SchedulingEngine:
 
             solver = SolverFactory.create(
                 algorithm,
-                constraint_manager=self.constraint_manager,
+                constraint_manager=constraint_manager or self.constraint_manager,
                 timeout_seconds=timeout_seconds,
             )
             # Pass existing_assignments from context as immutable constraints

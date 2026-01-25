@@ -431,6 +431,30 @@ class ConstraintManager:
         return manager
 
     @classmethod
+    def create_call_only(cls) -> "ConstraintManager":
+        """
+        Create manager with call-only constraints.
+
+        This is used for CP-SAT overnight call generation without imposing
+        rotation or clinic constraints, which are handled elsewhere in the
+        half-day pipeline.
+        """
+        manager = cls()
+
+        # Overnight call coverage constraints (CP-SAT canonical call assignments)
+        manager.add(OvernightCallCoverageConstraint())
+        manager.add(AdjunctCallExclusionConstraint())
+        manager.add(CallAvailabilityConstraint())
+
+        # Call equity soft constraints (Block 10 weights)
+        manager.add(SundayCallEquityConstraint(weight=10.0))
+        manager.add(CallSpacingConstraint(weight=8.0))
+        manager.add(WeekdayCallEquityConstraint(weight=5.0))
+        manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
+
+        return manager
+
+    @classmethod
     def create_resilience_aware(
         cls,
         target_utilization: float = 0.80,

@@ -575,7 +575,7 @@ class FacultyAssignmentExpansionService:
     def _provides_supervision(self, activity: Activity | None) -> bool:
         if not activity:
             return False
-        return activity.is_supervision()
+        return activity.is_supervision
 
     def _is_proc_or_vas(self, activity: Activity | None) -> bool:
         if not activity:

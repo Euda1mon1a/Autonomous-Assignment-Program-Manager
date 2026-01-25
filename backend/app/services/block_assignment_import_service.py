@@ -101,6 +101,30 @@ COMBINED_ROTATION_MAPPINGS: dict[tuple[str, str], str] = {
     ("PEDS NF", "PEDS WARD"): "PNF",
 }
 
+# Single-rotation synonym mappings (xlsx/CSV inputs -> canonical abbreviations)
+ROTATION_SYNONYMS: dict[str, str] = {
+    # Surgical Experience
+    "SURG-EXP": "SURG",
+    "SURG EXP": "SURG",
+    "SURGICAL EXPERIENCE": "SURG",
+    # GYN Clinic
+    "GYN-CLIN": "GYN",
+    "GYN CLINIC": "GYN",
+    "GYNECOLOGY CLINIC": "GYN",
+    # Kapiolani L&D
+    "KAPI-LD": "KAPI-LD-PGY1",
+    "KAPI L&D": "KAPI-LD-PGY1",
+    "KAPIOLANI L AND D": "KAPI-LD-PGY1",
+    "KAPIOLANI L&D": "KAPI-LD-PGY1",
+    # Procedures
+    "PR-AM": "PROC-AM",
+    "PROC": "PROC-AM",
+    "PROCEDURES": "PROC-AM",
+    # Internal Medicine
+    "IM-INT": "IM",
+    "INTERNAL MEDICINE": "IM",
+}
+
 
 class BlockAssignmentImportService:
     """
@@ -118,6 +142,7 @@ class BlockAssignmentImportService:
         self.session = session
         self._rotation_cache: dict[str, tuple[uuid.UUID, str]] = {}
         self._resident_cache: dict[str, tuple[uuid.UUID, str]] = {}
+        self._resident_pgy_cache: dict[uuid.UUID, int | None] = {}
         self._preview_cache: dict[str, list[dict[str, Any]]] = {}
 
     async def load_caches(self) -> None:
@@ -160,6 +185,7 @@ class BlockAssignmentImportService:
                 key = part.upper()
                 if key not in self._resident_cache:
                     self._resident_cache[key] = (r.id, r.name)
+            self._resident_pgy_cache[r.id] = r.pgy_level
 
         logger.info(f"Loaded {len(residents)} residents into cache")
 
@@ -225,6 +251,34 @@ class BlockAssignmentImportService:
                 return rot_id, rot_name, 0.9
 
         return None, None, 0.0
+
+    def _normalize_rotation_input(
+        self, rotation_input: str, resident_id: uuid.UUID | None
+    ) -> str:
+        """
+        Normalize rotation inputs to canonical abbreviations.
+
+        Handles:
+        - Synonym mapping (SURG-EXP -> SURG, IM-INT -> IM)
+        - FMIT rotations resolved by PGY level when possible
+        """
+        key = rotation_input.upper().strip()
+        key = ROTATION_SYNONYMS.get(key, key)
+
+        # FMIT is PGY-specific; try to resolve from input or resident PGY level
+        if key.startswith("FMIT"):
+            pgy = None
+            match = re.search(r"([123])", key)
+            if match:
+                pgy = int(match.group(1))
+            if pgy is None and resident_id:
+                pgy = self._resident_pgy_cache.get(resident_id)
+            if pgy in (1, 2, 3):
+                return f"FMIT-PGY{pgy}"
+            # Fallback to a deterministic template to avoid unknown-rotation noise
+            return "FMIT-PGY1"
+
+        return key
 
     def _match_combined_rotation(
         self, primary: str, secondary: str
@@ -422,17 +476,20 @@ class BlockAssignmentImportService:
             rotation_input = str(row["rotation_abbrev"] or "").strip()
             resident_input = str(row["resident_name"] or "").strip()
 
-            # Match rotation
-            rotation_id, rotation_name, rotation_conf = self._match_rotation(
-                rotation_input
-            )
-            if not rotation_id:
-                unknown_rotation_counts[rotation_input.upper()] += 1
-
             # Match resident
             resident_id, resident_name, resident_conf = self._match_resident(
                 resident_input
             )
+
+            # Match rotation (normalize with resident context for FMIT)
+            normalized_rotation = self._normalize_rotation_input(
+                rotation_input, resident_id
+            )
+            rotation_id, rotation_name, rotation_conf = self._match_rotation(
+                normalized_rotation
+            )
+            if not rotation_id:
+                unknown_rotation_counts[rotation_input.upper()] += 1
 
             # Check for duplicate
             is_duplicate = False
