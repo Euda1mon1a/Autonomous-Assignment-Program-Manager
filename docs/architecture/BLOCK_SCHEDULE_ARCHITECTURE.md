@@ -145,7 +145,7 @@ CREATE TABLE assignments (
 );
 ```
 
-### Rotation Template Activity Types
+### Rotation Template Types
 
 | rotation_type | Solver Handling | Examples |
 |---------------|-----------------|----------|

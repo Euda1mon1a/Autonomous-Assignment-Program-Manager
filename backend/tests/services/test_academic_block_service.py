@@ -258,7 +258,7 @@ class TestAcademicBlockService:
         rotation = RotationTemplate(
             id=uuid4(),
             name="Test Rotation",
-            activity_type="outpatient",
+            rotation_type="outpatient",
         )
         db.add(rotation)
 
@@ -359,13 +359,13 @@ class TestAcademicBlockService:
             id=uuid4(),
             name="Clinic A",
             abbreviation="CA",
-            activity_type="outpatient",
+            rotation_type="outpatient",
         )
         rotation2 = RotationTemplate(
             id=uuid4(),
             name="Clinic B",
             abbreviation="CB",
-            activity_type="outpatient",
+            rotation_type="outpatient",
         )
 
         # 3 assignments to rotation1, 2 to rotation2
@@ -415,7 +415,7 @@ class TestAcademicBlockService:
             id=uuid4(),
             name="Clinic",
             abbreviation="CLI",
-            activity_type="outpatient",
+            rotation_type="outpatient",
         )
 
         # 2 with template, 3 with override
@@ -458,7 +458,7 @@ class TestAcademicBlockService:
             id=uuid4(),
             name="Surgery",
             abbreviation=None,  # No abbreviation
-            activity_type="outpatient",
+            rotation_type="outpatient",
         )
 
         assignment = Assignment(

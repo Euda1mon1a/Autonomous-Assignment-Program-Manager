@@ -145,8 +145,8 @@ class EmergencyCoverageService:
     def _is_critical_service(self, assignment: Assignment) -> bool:
         """Check if assignment is a critical service (24/7 coverage required)."""
         if assignment.rotation_template:
-            activity_type = assignment.rotation_template.activity_type.lower()
-            return any(keyword in activity_type for keyword in self.CRITICAL_ACTIVITIES)
+            rotation_type = assignment.rotation_template.rotation_type.lower()
+            return any(keyword in rotation_type for keyword in self.CRITICAL_ACTIVITIES)
         return False
 
     async def _find_replacement(self, assignment: Assignment) -> Person | None:

@@ -11,7 +11,7 @@
 The scheduling system uses a **hybrid model** that combines:
 1. **Protected patterns** - Fixed activities that cannot be moved (e.g., Wednesday lecture time)
 2. **Activity requirements** - Quantity targets that the solver satisfies (e.g., "3 clinic half-days")
-3. **Solver optimization** - Fills remaining slots with the rotation's default activity type
+3. **Solver optimization** - Fills remaining slots with the rotation's default rotation type
 
 This approach ensures academic time is sacred while allowing flexibility for clinic and specialty activities.
 
@@ -47,9 +47,9 @@ These define **how many half-days** of an activity are required. The solver deci
 
 ### Layer 3: Solver (Fills Remaining Slots)
 
-For slots not covered by protected patterns, the solver fills them with the rotation's **default activity type**:
+For slots not covered by protected patterns, the solver fills them with the rotation's **default rotation type**:
 
-| Rotation | Default Activity |
+| Rotation | Default Rotation Type |
 |----------|-----------------|
 | FMIT | inpatient |
 | FMC | outpatient |
@@ -374,7 +374,7 @@ If leave reset the counter, Day 7 would be counter = 1 and no forced day off wou
 1. **Lock protected patterns first** - Wednesday LEC/ADV, fixed clinic times
 2. **Check available slots** - Total slots minus protected minus weekends minus absences
 3. **Satisfy requirements** - Place flexible activities (specialty clinic) in available slots
-4. **Fill remaining** - Use rotation's default activity type (inpatient, outpatient, specialty)
+4. **Fill remaining** - Use rotation's default rotation type (inpatient, outpatient, specialty)
 
 **Example for DERM rotation:**
 - Protected: LEC (4 half-days), ADV (1 half-day)

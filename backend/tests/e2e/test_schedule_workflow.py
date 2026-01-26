@@ -77,7 +77,7 @@ def academic_year_setup(db: Session) -> dict:
         RotationTemplate(
             id=uuid4(),
             name="Sports Medicine Clinic",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="SM",
             clinic_location="Building A",
             max_residents=2,
@@ -91,7 +91,7 @@ def academic_year_setup(db: Session) -> dict:
         RotationTemplate(
             id=uuid4(),
             name="Neurology Clinic",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="NEURO",
             clinic_location="Building B",
             max_residents=2,
@@ -105,7 +105,7 @@ def academic_year_setup(db: Session) -> dict:
         RotationTemplate(
             id=uuid4(),
             name="Palliative Care",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="PC",
             clinic_location="Building C",
             max_residents=2,
@@ -325,7 +325,7 @@ class TestScheduleGenerationE2E:
             # If there are assignments, they should be absence-type rotations
             if assignment.rotation_template:
                 db.refresh(assignment.rotation_template)
-                assert assignment.rotation_template.activity_type == "absence", (
+                assert assignment.rotation_template.rotation_type == "absence", (
                     "Resident assigned to non-absence rotation during blocking absence"
                 )
 

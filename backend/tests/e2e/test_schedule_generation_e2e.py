@@ -91,11 +91,11 @@ def complete_program_setup(db: Session) -> dict:
         ("Procedures Half-Day", "procedures", "PROC", True, 2),
         ("Conference", "conference", "CONF", False, None),
     ]
-    for name, activity_type, abbrev, supervision, ratio in template_configs:
+    for name, rotation_type, abbrev, supervision, ratio in template_configs:
         template = RotationTemplate(
             id=uuid4(),
             name=name,
-            activity_type=activity_type,
+            rotation_type=rotation_type,
             abbreviation=abbrev,
             supervision_required=supervision,
             max_supervision_ratio=ratio,

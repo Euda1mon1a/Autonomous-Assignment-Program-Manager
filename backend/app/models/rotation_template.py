@@ -1,4 +1,4 @@
-"""Rotation template model - reusable activity patterns."""
+"""Rotation template model - reusable rotation patterns."""
 
 import uuid
 from datetime import datetime
@@ -24,7 +24,7 @@ class RotationTemplate(Base):
 
     NOTE on terminology:
     - RotationTemplate = the rotation (multi-week container).
-    - activity_type = rotation category/setting (NOT an Activity).
+    - rotation_type = rotation category/setting (NOT an Activity).
     """
 
     __tablename__ = "rotation_templates"
@@ -35,14 +35,14 @@ class RotationTemplate(Base):
         String(255), nullable=False
     )  # e.g., "PGY-1 Clinic", "FMIT", "Sports Medicine"
     # Rotation category/setting (not an Activity). Used for solver filtering + constraints.
-    activity_type = Column(
+    rotation_type = Column(
         String(255), nullable=False
     )  # "clinic", "inpatient", "outpatient", "procedure", "procedures", "conference", "education", "lecture", "absence", "off", "recovery"
 
     # Template category for UI grouping and filtering
     # - rotation: Clinical work (clinic, inpatient, outpatient, procedure)
     # - time_off: ACGME-protected rest (off, recovery)
-    # - absence: Days away from program (absence activity type)
+    # - absence: Days away from program (absence rotation type)
     # - educational: Structured learning (conference, education, lecture)
     template_category = Column(
         String(20),
@@ -134,7 +134,7 @@ class RotationTemplate(Base):
     )
 
     def __repr__(self):
-        return f"<RotationTemplate(name='{self.name}', type='{self.activity_type}')>"
+        return f"<RotationTemplate(name='{self.name}', type='{self.rotation_type}')>"
 
     @property
     def has_capacity_limit(self) -> bool:

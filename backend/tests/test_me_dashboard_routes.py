@@ -126,7 +126,7 @@ def rotation_templates(db: Session) -> list[RotationTemplate]:
         RotationTemplate(
             id=uuid4(),
             name="Sports Medicine Clinic",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="SM",
             clinic_location="Building A, Room 101",
             max_residents=4,
@@ -134,7 +134,7 @@ def rotation_templates(db: Session) -> list[RotationTemplate]:
         RotationTemplate(
             id=uuid4(),
             name="General Medicine",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="GM",
             clinic_location="Building B",
             max_residents=6,
@@ -142,7 +142,7 @@ def rotation_templates(db: Session) -> list[RotationTemplate]:
         RotationTemplate(
             id=uuid4(),
             name="Admin Time",
-            activity_type="admin",
+            rotation_type="admin",
             abbreviation="ADM",
             clinic_location=None,  # No location
             max_residents=10,

@@ -1176,13 +1176,13 @@ class BlockAssignmentExpansionService:
 
         Returns a dict where:
         - Explicit patterns from weekly_patterns table override defaults
-        - Missing slots use the rotation's activity_type as default
+        - Missing slots use the rotation's rotation_type as default
         """
         patterns: dict[tuple[int, str, int | None], WeeklyPattern] = {}
 
-        # First, generate defaults for ALL weekday slots based on activity_type
+        # First, generate defaults for ALL weekday slots based on rotation_type
         # The rotation's main activity applies unless overridden
-        default_activity = rotation.activity_type or "clinic"
+        default_activity = rotation.rotation_type or "clinic"
 
         # Determine which days to include
         if rotation.includes_weekend_work:

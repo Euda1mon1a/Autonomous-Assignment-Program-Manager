@@ -74,7 +74,7 @@ def test_preload_wednesday_patterns_and_last_wednesday(db):
     template = RotationTemplate(
         id=uuid4(),
         name="Neurology",
-        activity_type="outpatient",
+        rotation_type="outpatient",
         abbreviation="NEURO",
     )
     db.add_all([resident, template])
@@ -126,7 +126,7 @@ def test_preload_hilo_pattern(db):
     template = RotationTemplate(
         id=uuid4(),
         name="Hilo",
-        activity_type="off",
+        rotation_type="off",
         abbreviation="HILO",
     )
     db.add_all([resident, template])
@@ -180,7 +180,7 @@ def test_preload_okinawa_pattern(db):
     template = RotationTemplate(
         id=uuid4(),
         name="Okinawa",
-        activity_type="off",
+        rotation_type="off",
         abbreviation="OKI",
     )
     db.add_all([resident, template])
@@ -236,13 +236,13 @@ def test_preload_nf_split_secondary_rotation(db):
     primary = RotationTemplate(
         id=uuid4(),
         name="Neurology",
-        activity_type="outpatient",
+        rotation_type="outpatient",
         abbreviation="NEURO",
     )
     secondary = RotationTemplate(
         id=uuid4(),
         name="Night Float",
-        activity_type="inpatient",
+        rotation_type="inpatient",
         abbreviation="NF",
     )
     db.add_all([resident, primary, secondary])

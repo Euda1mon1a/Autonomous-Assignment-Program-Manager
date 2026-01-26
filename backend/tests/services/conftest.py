@@ -225,14 +225,14 @@ class RotationTemplateFactory:
     def create_template(
         db: Session,
         name: str = "Test Rotation",
-        activity_type: str = "outpatient",
+        rotation_type: str = "outpatient",
         abbreviation: str = "TR",
     ) -> RotationTemplate:
         """Create a rotation template."""
         template = RotationTemplate(
             id=uuid4(),
             name=name,
-            activity_type=activity_type,
+            rotation_type=rotation_type,
             abbreviation=abbreviation,
             max_residents=4,
             supervision_required=True,
@@ -248,13 +248,13 @@ class RotationTemplateFactory:
     ) -> list[RotationTemplate]:
         """Create multiple rotation templates."""
         templates = []
-        activity_types = ["outpatient", "inpatient", "call", "procedure"]
+        rotation_types = ["outpatient", "inpatient", "call", "procedure"]
 
         for i in range(count):
             template = RotationTemplate(
                 id=uuid4(),
                 name=f"Rotation {i + 1}",
-                activity_type=activity_types[i % len(activity_types)],
+                rotation_type=rotation_types[i % len(rotation_types)],
                 abbreviation=f"ROT{i + 1}",
                 max_residents=4,
                 supervision_required=True,

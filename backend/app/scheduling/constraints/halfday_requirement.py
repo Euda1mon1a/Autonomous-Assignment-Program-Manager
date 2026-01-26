@@ -256,15 +256,15 @@ class HalfDayRequirementConstraint(SoftConstraint):
         """Get half-day requirements for a rotation template."""
         return self._requirements.get(template_id)
 
-    def _get_template_ids_by_activity(
+    def _get_template_ids_by_rotation_type(
         self, context: SchedulingContext
     ) -> dict[str, set[UUID]]:
-        """Group template IDs by activity type."""
-        by_activity: dict[str, set[UUID]] = defaultdict(set)
+        """Group template IDs by rotation type."""
+        by_rotation_type: dict[str, set[UUID]] = defaultdict(set)
         for template in context.templates:
-            activity = getattr(template, "activity_type", "unknown")
-            by_activity[activity].add(template.id)
-        return by_activity
+            rotation_type = getattr(template, "rotation_type", "unknown")
+            by_rotation_type[rotation_type].add(template.id)
+        return by_rotation_type
 
     def _get_rotation_block_range(
         self,
@@ -300,10 +300,10 @@ class HalfDayRequirementConstraint(SoftConstraint):
             logger.debug("No half-day requirements configured")
             return
 
-        templates_by_activity = self._get_template_ids_by_activity(context)
-        fm_clinic_ids = templates_by_activity.get(
+        templates_by_rotation_type = self._get_template_ids_by_rotation_type(context)
+        fm_clinic_ids = templates_by_rotation_type.get(
             "outpatient", set()
-        ) | templates_by_activity.get("clinic", set())
+        ) | templates_by_rotation_type.get("clinic", set())
 
         # For each rotation template with requirements, create distribution targets
         for template_id, req in self._requirements.items():

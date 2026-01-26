@@ -49,7 +49,7 @@ class TestModuleConstants:
         """BLOCK_HALF_DAY should be 14 (day 15+ uses secondary rotation)."""
         assert BLOCK_HALF_DAY == 14
 
-    def test_outpatient_activity_types(self):
+    def test_outpatient_rotation_types(self):
         """OUTPATIENT_ACTIVITY_TYPES should include clinic and outpatient."""
         assert "clinic" in OUTPATIENT_ACTIVITY_TYPES
         assert "outpatient" in OUTPATIENT_ACTIVITY_TYPES

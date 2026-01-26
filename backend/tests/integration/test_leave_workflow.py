@@ -630,7 +630,7 @@ class TestLeaveConflictDetection:
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT Inpatient",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
         )
         integration_db.add(fmit_template)

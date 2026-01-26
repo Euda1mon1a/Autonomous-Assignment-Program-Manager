@@ -62,7 +62,7 @@ class RotationSummary(BaseModel):
     """B1: Rotation assignment summary."""
 
     rotation: str
-    activity_type: str
+    rotation_type: str
     count: int
 
 

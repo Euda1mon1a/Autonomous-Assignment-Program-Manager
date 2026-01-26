@@ -35,15 +35,15 @@ class TestListRotationTemplates:
         assert len(data["items"]) == 1
         assert data["items"][0]["name"] == sample_rotation_template.name
         assert (
-            data["items"][0]["activity_type"] == sample_rotation_template.activity_type
+            data["items"][0]["rotation_type"] == sample_rotation_template.rotation_type
         )
 
     def test_list_templates_multiple(self, client: TestClient, db: Session):
         """Test listing multiple templates."""
         templates_data = [
-            {"name": "Clinic A", "activity_type": "clinic", "abbreviation": "CA"},
-            {"name": "Inpatient B", "activity_type": "inpatient", "abbreviation": "IB"},
-            {"name": "Procedure C", "activity_type": "procedure", "abbreviation": "PC"},
+            {"name": "Clinic A", "rotation_type": "clinic", "abbreviation": "CA"},
+            {"name": "Inpatient B", "rotation_type": "inpatient", "abbreviation": "IB"},
+            {"name": "Procedure C", "rotation_type": "procedure", "abbreviation": "PC"},
         ]
 
         for template_data in templates_data:
@@ -61,9 +61,9 @@ class TestListRotationTemplates:
     def test_list_templates_sorted_by_name(self, client: TestClient, db: Session):
         """Test that templates are sorted by name."""
         templates_data = [
-            {"name": "Zebra Clinic", "activity_type": "clinic"},
-            {"name": "Alpha Clinic", "activity_type": "clinic"},
-            {"name": "Beta Clinic", "activity_type": "clinic"},
+            {"name": "Zebra Clinic", "rotation_type": "clinic"},
+            {"name": "Alpha Clinic", "rotation_type": "clinic"},
+            {"name": "Beta Clinic", "rotation_type": "clinic"},
         ]
 
         for template_data in templates_data:
@@ -78,15 +78,15 @@ class TestListRotationTemplates:
         names = [item["name"] for item in data["items"]]
         assert names == ["Alpha Clinic", "Beta Clinic", "Zebra Clinic"]
 
-    def test_list_templates_filter_by_activity_type_clinic(
+    def test_list_templates_filter_by_rotation_type_clinic(
         self, client: TestClient, db: Session
     ):
-        """Test filtering templates by activity_type='clinic'."""
+        """Test filtering templates by rotation_type='clinic'."""
         templates_data = [
-            {"name": "Clinic A", "activity_type": "clinic"},
-            {"name": "Inpatient B", "activity_type": "inpatient"},
-            {"name": "Clinic C", "activity_type": "clinic"},
-            {"name": "Procedure D", "activity_type": "procedure"},
+            {"name": "Clinic A", "rotation_type": "clinic"},
+            {"name": "Inpatient B", "rotation_type": "inpatient"},
+            {"name": "Clinic C", "rotation_type": "clinic"},
+            {"name": "Procedure D", "rotation_type": "procedure"},
         ]
 
         for template_data in templates_data:
@@ -94,21 +94,21 @@ class TestListRotationTemplates:
             db.add(template)
         db.commit()
 
-        response = client.get("/api/rotation-templates?activity_type=clinic")
+        response = client.get("/api/rotation-templates?rotation_type=clinic")
 
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 2
-        assert all(item["activity_type"] == "clinic" for item in data["items"])
+        assert all(item["rotation_type"] == "clinic" for item in data["items"])
 
-    def test_list_templates_filter_by_activity_type_inpatient(
+    def test_list_templates_filter_by_rotation_type_inpatient(
         self, client: TestClient, db: Session
     ):
-        """Test filtering templates by activity_type='inpatient'."""
+        """Test filtering templates by rotation_type='inpatient'."""
         templates_data = [
-            {"name": "Clinic A", "activity_type": "clinic"},
-            {"name": "Inpatient B", "activity_type": "inpatient"},
-            {"name": "Inpatient C", "activity_type": "inpatient"},
+            {"name": "Clinic A", "rotation_type": "clinic"},
+            {"name": "Inpatient B", "rotation_type": "inpatient"},
+            {"name": "Inpatient C", "rotation_type": "inpatient"},
         ]
 
         for template_data in templates_data:
@@ -116,26 +116,26 @@ class TestListRotationTemplates:
             db.add(template)
         db.commit()
 
-        response = client.get("/api/rotation-templates?activity_type=inpatient")
+        response = client.get("/api/rotation-templates?rotation_type=inpatient")
 
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 2
-        assert all(item["activity_type"] == "inpatient" for item in data["items"])
+        assert all(item["rotation_type"] == "inpatient" for item in data["items"])
 
-    def test_list_templates_filter_by_activity_type_no_results(
+    def test_list_templates_filter_by_rotation_type_no_results(
         self, client: TestClient, db: Session
     ):
-        """Test filtering by activity_type with no matching results."""
+        """Test filtering by rotation_type with no matching results."""
         template = RotationTemplate(
             id=uuid4(),
             name="Clinic A",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         db.add(template)
         db.commit()
 
-        response = client.get("/api/rotation-templates?activity_type=conference")
+        response = client.get("/api/rotation-templates?rotation_type=conference")
 
         assert response.status_code == 200
         data = response.json()
@@ -145,16 +145,16 @@ class TestListRotationTemplates:
     def test_list_templates_filter_case_sensitive(
         self, client: TestClient, db: Session
     ):
-        """Test that activity_type filter is case-sensitive."""
+        """Test that rotation_type filter is case-sensitive."""
         template = RotationTemplate(
             id=uuid4(),
             name="Clinic A",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         db.add(template)
         db.commit()
 
-        response = client.get("/api/rotation-templates?activity_type=CLINIC")
+        response = client.get("/api/rotation-templates?rotation_type=CLINIC")
 
         assert response.status_code == 200
         data = response.json()
@@ -165,7 +165,7 @@ class TestListRotationTemplates:
         template = RotationTemplate(
             id=uuid4(),
             name="Sports Medicine Clinic",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="SM",
             clinic_location="Building A",
             max_residents=4,
@@ -183,7 +183,7 @@ class TestListRotationTemplates:
         data = response.json()
         item = data["items"][0]
         assert item["name"] == "Sports Medicine Clinic"
-        assert item["activity_type"] == "clinic"
+        assert item["rotation_type"] == "clinic"
         assert item["abbreviation"] == "SM"
         assert item["clinic_location"] == "Building A"
         assert item["max_residents"] == 4
@@ -208,7 +208,7 @@ class TestGetRotationTemplate:
         data = response.json()
         assert data["id"] == str(sample_rotation_template.id)
         assert data["name"] == sample_rotation_template.name
-        assert data["activity_type"] == sample_rotation_template.activity_type
+        assert data["rotation_type"] == sample_rotation_template.rotation_type
 
     def test_get_template_not_found(self, client: TestClient):
         """Test getting a non-existent template returns 404."""
@@ -231,7 +231,7 @@ class TestGetRotationTemplate:
         template = RotationTemplate(
             id=uuid4(),
             name="Complete Template",
-            activity_type="procedure",
+            rotation_type="procedure",
             abbreviation="CT",
             clinic_location="Room 101",
             max_residents=2,
@@ -248,7 +248,7 @@ class TestGetRotationTemplate:
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Complete Template"
-        assert data["activity_type"] == "procedure"
+        assert data["rotation_type"] == "procedure"
         assert data["abbreviation"] == "CT"
         assert data["clinic_location"] == "Room 101"
         assert data["max_residents"] == 2
@@ -262,7 +262,7 @@ class TestGetRotationTemplate:
         template = RotationTemplate(
             id=uuid4(),
             name="Minimal Template",
-            activity_type="conference",
+            rotation_type="conference",
         )
         db.add(template)
         db.commit()
@@ -272,7 +272,7 @@ class TestGetRotationTemplate:
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Minimal Template"
-        assert data["activity_type"] == "conference"
+        assert data["rotation_type"] == "conference"
         assert data["abbreviation"] is None
         assert data["clinic_location"] is None
 
@@ -284,7 +284,7 @@ class TestCreateRotationTemplate:
         """Test creating template with only required fields."""
         template_data = {
             "name": "New Clinic",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
         }
 
         response = client.post("/api/rotation-templates", json=template_data)
@@ -293,7 +293,7 @@ class TestCreateRotationTemplate:
         data = response.json()
         assert "id" in data
         assert data["name"] == "New Clinic"
-        assert data["activity_type"] == "clinic"
+        assert data["rotation_type"] == "clinic"
         assert "created_at" in data
 
         # Verify it was saved to database
@@ -310,7 +310,7 @@ class TestCreateRotationTemplate:
         """Test creating template with all fields populated."""
         template_data = {
             "name": "Complete Sports Medicine",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
             "abbreviation": "CSM",
             "clinic_location": "Sports Med Center",
             "max_residents": 6,
@@ -325,7 +325,7 @@ class TestCreateRotationTemplate:
         assert response.status_code == 201
         data = response.json()
         assert data["name"] == "Complete Sports Medicine"
-        assert data["activity_type"] == "clinic"
+        assert data["rotation_type"] == "clinic"
         assert data["abbreviation"] == "CSM"
         assert data["clinic_location"] == "Sports Med Center"
         assert data["max_residents"] == 6
@@ -337,15 +337,15 @@ class TestCreateRotationTemplate:
     def test_create_template_missing_required_name(self, client: TestClient):
         """Test creating template without required 'name' field."""
         template_data = {
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
         }
 
         response = client.post("/api/rotation-templates", json=template_data)
 
         assert response.status_code == 422  # Validation error
 
-    def test_create_template_missing_required_activity_type(self, client: TestClient):
-        """Test creating template without required 'activity_type' field."""
+    def test_create_template_missing_required_rotation_type(self, client: TestClient):
+        """Test creating template without required 'rotation_type' field."""
         template_data = {
             "name": "Test Clinic",
         }
@@ -358,7 +358,7 @@ class TestCreateRotationTemplate:
         """Test creating template with null optional fields."""
         template_data = {
             "name": "Null Fields Template",
-            "activity_type": "inpatient",
+            "rotation_type": "inpatient",
             "abbreviation": None,
             "clinic_location": None,
             "max_residents": None,
@@ -376,7 +376,7 @@ class TestCreateRotationTemplate:
         """Test creating inpatient activity type template."""
         template_data = {
             "name": "FMIT Inpatient",
-            "activity_type": "inpatient",
+            "rotation_type": "inpatient",
             "abbreviation": "FMIT",
         }
 
@@ -384,13 +384,13 @@ class TestCreateRotationTemplate:
 
         assert response.status_code == 201
         data = response.json()
-        assert data["activity_type"] == "inpatient"
+        assert data["rotation_type"] == "inpatient"
 
     def test_create_template_procedure_type(self, client: TestClient):
         """Test creating procedure activity type template."""
         template_data = {
             "name": "Joint Injection Procedure",
-            "activity_type": "procedure",
+            "rotation_type": "procedure",
             "requires_procedure_credential": True,
         }
 
@@ -398,14 +398,14 @@ class TestCreateRotationTemplate:
 
         assert response.status_code == 201
         data = response.json()
-        assert data["activity_type"] == "procedure"
+        assert data["rotation_type"] == "procedure"
         assert data["requires_procedure_credential"] is True
 
     def test_create_template_conference_type(self, client: TestClient):
         """Test creating conference activity type template."""
         template_data = {
             "name": "Weekly Grand Rounds",
-            "activity_type": "conference",
+            "rotation_type": "conference",
             "supervision_required": False,
         }
 
@@ -413,13 +413,13 @@ class TestCreateRotationTemplate:
 
         assert response.status_code == 201
         data = response.json()
-        assert data["activity_type"] == "conference"
+        assert data["rotation_type"] == "conference"
 
     def test_create_template_with_zero_max_residents(self, client: TestClient):
         """Test creating template with max_residents=0."""
         template_data = {
             "name": "No Resident Clinic",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
             "max_residents": 0,
         }
 
@@ -433,7 +433,7 @@ class TestCreateRotationTemplate:
         """Test that boolean fields have correct defaults."""
         template_data = {
             "name": "Default Boolean Template",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
         }
 
         response = client.post("/api/rotation-templates", json=template_data)
@@ -447,7 +447,7 @@ class TestCreateRotationTemplate:
         """Test default max_supervision_ratio value."""
         template_data = {
             "name": "Default Ratio Template",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
         }
 
         response = client.post("/api/rotation-templates", json=template_data)
@@ -460,7 +460,7 @@ class TestCreateRotationTemplate:
         """Test that created_at timestamp is set correctly."""
         template_data = {
             "name": "Timestamp Test",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
         }
 
         response = client.post("/api/rotation-templates", json=template_data)
@@ -492,7 +492,7 @@ class TestUpdateRotationTemplate:
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Updated Clinic Name"
-        assert data["activity_type"] == sample_rotation_template.activity_type
+        assert data["rotation_type"] == sample_rotation_template.rotation_type
 
     def test_update_template_multiple_fields(
         self, client: TestClient, sample_rotation_template: RotationTemplate
@@ -521,7 +521,7 @@ class TestUpdateRotationTemplate:
         """Test updating all fields."""
         update_data = {
             "name": "Completely Updated",
-            "activity_type": "inpatient",
+            "rotation_type": "inpatient",
             "abbreviation": "CU",
             "clinic_location": "New Location",
             "max_residents": 8,
@@ -539,7 +539,7 @@ class TestUpdateRotationTemplate:
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Completely Updated"
-        assert data["activity_type"] == "inpatient"
+        assert data["rotation_type"] == "inpatient"
         assert data["abbreviation"] == "CU"
         assert data["clinic_location"] == "New Location"
         assert data["max_residents"] == 8
@@ -588,7 +588,7 @@ class TestUpdateRotationTemplate:
         template = RotationTemplate(
             id=uuid4(),
             name="Template with Data",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="TWD",
             clinic_location="Building B",
         )
@@ -610,12 +610,12 @@ class TestUpdateRotationTemplate:
         assert data["abbreviation"] is None
         assert data["clinic_location"] is None
 
-    def test_update_template_change_activity_type(
+    def test_update_template_change_rotation_type(
         self, client: TestClient, sample_rotation_template: RotationTemplate
     ):
-        """Test changing activity_type."""
+        """Test changing rotation_type."""
         update_data = {
-            "activity_type": "procedure",
+            "rotation_type": "procedure",
         }
 
         response = client.put(
@@ -625,7 +625,7 @@ class TestUpdateRotationTemplate:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["activity_type"] == "procedure"
+        assert data["rotation_type"] == "procedure"
 
     def test_update_template_toggle_boolean_fields(
         self, client: TestClient, sample_rotation_template: RotationTemplate
@@ -729,7 +729,7 @@ class TestDeleteRotationTemplate:
         template = RotationTemplate(
             id=uuid4(),
             name="To Be Deleted",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         db.add(template)
         db.commit()
@@ -775,7 +775,7 @@ class TestRotationTemplateIntegration:
         # Create
         create_data = {
             "name": "Lifecycle Test",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
             "abbreviation": "LT",
         }
         response = client.post("/api/rotation-templates", json=create_data)
@@ -806,10 +806,10 @@ class TestRotationTemplateIntegration:
     def test_create_multiple_and_filter(self, client: TestClient, db: Session):
         """Test creating multiple templates and filtering by type."""
         templates = [
-            {"name": "Clinic 1", "activity_type": "clinic"},
-            {"name": "Clinic 2", "activity_type": "clinic"},
-            {"name": "Inpatient 1", "activity_type": "inpatient"},
-            {"name": "Procedure 1", "activity_type": "procedure"},
+            {"name": "Clinic 1", "rotation_type": "clinic"},
+            {"name": "Clinic 2", "rotation_type": "clinic"},
+            {"name": "Inpatient 1", "rotation_type": "inpatient"},
+            {"name": "Procedure 1", "rotation_type": "procedure"},
         ]
 
         for template in templates:
@@ -817,14 +817,14 @@ class TestRotationTemplateIntegration:
             assert response.status_code == 201
 
         # Filter by clinic
-        response = client.get("/api/rotation-templates?activity_type=clinic")
+        response = client.get("/api/rotation-templates?rotation_type=clinic")
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 2
-        assert all(item["activity_type"] == "clinic" for item in data["items"])
+        assert all(item["rotation_type"] == "clinic" for item in data["items"])
 
         # Filter by inpatient
-        response = client.get("/api/rotation-templates?activity_type=inpatient")
+        response = client.get("/api/rotation-templates?rotation_type=inpatient")
         assert response.status_code == 200
         assert response.json()["total"] == 1
 
@@ -837,7 +837,7 @@ class TestRotationTemplateIntegration:
         """Test that newly created template can be immediately updated."""
         create_data = {
             "name": "Initial Name",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
         }
         response = client.post("/api/rotation-templates", json=create_data)
         assert response.status_code == 201
@@ -859,7 +859,7 @@ class TestRotationTemplateIntegration:
         """Test creating and managing template with specialty requirements."""
         create_data = {
             "name": "Sports Medicine Clinic",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
             "requires_specialty": "Sports Medicine",
             "requires_procedure_credential": True,
             "max_supervision_ratio": 2,
@@ -876,7 +876,7 @@ class TestRotationTemplateIntegration:
         """Test template with capacity constraints."""
         create_data = {
             "name": "Limited Capacity Clinic",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
             "max_residents": 3,
             "clinic_location": "Small Room A",
         }
@@ -893,15 +893,15 @@ class TestRotationTemplateIntegration:
         assert response.status_code == 200
         assert response.json()["max_residents"] == 5
 
-    def test_different_activity_types_coexist(self, client: TestClient, db: Session):
+    def test_different_rotation_types_coexist(self, client: TestClient, db: Session):
         """Test that different activity types can coexist."""
-        activity_types = ["clinic", "inpatient", "procedure", "conference"]
+        rotation_types = ["clinic", "inpatient", "procedure", "conference"]
 
-        for activity_type in activity_types:
+        for rotation_type in rotation_types:
             template = RotationTemplate(
                 id=uuid4(),
-                name=f"Test {activity_type.title()}",
-                activity_type=activity_type,
+                name=f"Test {rotation_type.title()}",
+                rotation_type=rotation_type,
             )
             db.add(template)
         db.commit()
@@ -911,5 +911,5 @@ class TestRotationTemplateIntegration:
         data = response.json()
         assert data["total"] == 4
 
-        returned_types = {item["activity_type"] for item in data["items"]}
-        assert returned_types == set(activity_types)
+        returned_types = {item["rotation_type"] for item in data["items"]}
+        assert returned_types == set(rotation_types)

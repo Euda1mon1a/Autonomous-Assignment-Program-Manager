@@ -9,9 +9,9 @@ Rotation templates define the types of clinical rotations, educational activitie
 - **Name**: Full descriptive name
 - **Abbreviation**: Short code used in the system
 - **Display Abbreviation**: What appears on schedules
-- **Activity Type**: Category (inpatient, outpatient, procedures, education, off, absence, recovery)
+- **Rotation Type**: Category (`rotation_type`: inpatient, outpatient, procedures, education, off, absence, recovery)
 
-## Activity Types
+## Rotation Types
 
 | Type | Description |
 |------|-------------|

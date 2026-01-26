@@ -377,7 +377,7 @@ class CachedCalendarService:
             person_id: Person UUID
             start_date: Start date for export
             end_date: End date for export
-            include_types: Optional list of activity types to include
+            include_types: Optional list of rotation types to include
 
         Returns:
             ICS file content as string

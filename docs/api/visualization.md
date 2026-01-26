@@ -118,7 +118,7 @@ Generate 3D voxel grid representation of schedule data.
 **Concept:** Represents the schedule as a 3D space where:
 - **X-axis:** Time (blocks/dates)
 - **Y-axis:** People (residents, faculty)
-- **Z-axis:** Activity type (clinic, inpatient, procedures, etc.)
+- **Z-axis:** Rotation type (clinic, inpatient, procedures, etc.)
 
 **Query Parameters:**
 
@@ -127,7 +127,7 @@ Generate 3D voxel grid representation of schedule data.
 | `start_date` | date | Yes | - | Start date for voxel grid |
 | `end_date` | date | Yes | - | End date for voxel grid |
 | `person_ids` | UUID[] | No | all | Filter by person IDs |
-| `activity_types` | string[] | No | all | Filter by activity types |
+| `rotation_types` | string[] | No | all | Filter by rotation types |
 | `include_violations` | boolean | No | true | Include ACGME violation markers |
 
 **Example Request:**
@@ -164,8 +164,8 @@ curl -X GET \
         "block_id": "789e0123-e45b-67d8-a901-234567890abc",
         "block_date": "2024-01-15",
         "block_time_of_day": "AM",
-        "activity_name": "Morning Clinic",
-        "activity_type": "clinic"
+        "rotation_name": "Morning Clinic",
+        "rotation_type": "clinic"
       },
       "visual": {
         "color": "#3B82F6",
@@ -205,8 +205,8 @@ curl -X GET \
 |-------|-------------|
 | `position.x` | Time index (block number from start) |
 | `position.y` | Person index (faculty first, then by PGY) |
-| `position.z` | Activity layer index |
-| `visual.color` | Hex color based on activity type |
+| `position.z` | Rotation layer index |
+| `visual.color` | Hex color based on rotation type |
 | `visual.opacity` | Confidence score (0-1) |
 | `state.is_conflict` | True if double-booked |
 | `state.is_violation` | True if ACGME violation |
@@ -245,7 +245,7 @@ curl -X GET \
       "identity": {
         "person_name": "PGY1-01",
         "block_date": "2024-01-17",
-        "activity_name": "Morning Clinic"
+        "rotation_name": "Morning Clinic"
       },
       "details": []
     },
@@ -254,7 +254,7 @@ curl -X GET \
       "identity": {
         "person_name": "PGY1-01",
         "block_date": "2024-01-17",
-        "activity_name": "On-Call"
+        "rotation_name": "On-Call"
       },
       "details": []
     }
@@ -283,7 +283,7 @@ Identify coverage gaps using 3D voxel space analysis.
 |-----------|------|----------|---------|-------------|
 | `start_date` | date | Yes | - | Start date |
 | `end_date` | date | Yes | - | End date |
-| `required_activity_types` | string[] | No | ["clinic"] | Activity types that must be covered |
+| `required_rotation_types` | string[] | No | ["clinic"] | Rotation types that must be covered |
 
 **Example Request:**
 
@@ -334,11 +334,11 @@ curl -X GET \
 
 ---
 
-## Activity Type Color Mapping
+## Rotation Type Color Mapping
 
 Colors used in voxel visualization:
 
-| Activity Type | Color | Hex Code |
+| Rotation Type | Color | Hex Code |
 |---------------|-------|----------|
 | clinic | Blue | `#3B82F6` |
 | inpatient | Purple | `#8B5CF6` |

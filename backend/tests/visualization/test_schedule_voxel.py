@@ -5,42 +5,42 @@ from datetime import date
 from uuid import uuid4
 
 from app.visualization.schedule_voxel import (
-    ActivityLayer,
+    RotationLayer,
     VoxelColor,
     ScheduleVoxel,
     ScheduleVoxelGrid,
     ScheduleVoxelTransformer,
     VoxelGridDimensions,
     transform_schedule_to_voxels,
-    ACTIVITY_COLORS,
+    ROTATION_COLORS,
 )
 
 
-class TestActivityLayer:
-    """Tests for ActivityLayer enum."""
+class TestRotationLayer:
+    """Tests for RotationLayer enum."""
 
-    def test_from_activity_type_clinic(self):
+    def test_from_rotation_type_clinic(self):
         """Test mapping clinic activity type."""
-        layer = ActivityLayer.from_activity_type("clinic")
-        assert layer == ActivityLayer.CLINIC
+        layer = RotationLayer.from_rotation_type("clinic")
+        assert layer == RotationLayer.CLINIC
 
-    def test_from_activity_type_inpatient(self):
+    def test_from_rotation_type_inpatient(self):
         """Test mapping inpatient activity type."""
-        layer = ActivityLayer.from_activity_type("inpatient")
-        assert layer == ActivityLayer.INPATIENT
+        layer = RotationLayer.from_rotation_type("inpatient")
+        assert layer == RotationLayer.INPATIENT
 
-    def test_from_activity_type_case_insensitive(self):
+    def test_from_rotation_type_case_insensitive(self):
         """Test case insensitivity of activity type mapping."""
-        layer = ActivityLayer.from_activity_type("CLINIC")
-        assert layer == ActivityLayer.CLINIC
+        layer = RotationLayer.from_rotation_type("CLINIC")
+        assert layer == RotationLayer.CLINIC
 
-        layer = ActivityLayer.from_activity_type("Inpatient")
-        assert layer == ActivityLayer.INPATIENT
+        layer = RotationLayer.from_rotation_type("Inpatient")
+        assert layer == RotationLayer.INPATIENT
 
-    def test_from_activity_type_unknown_returns_admin(self):
+    def test_from_rotation_type_unknown_returns_admin(self):
         """Test unknown activity types default to ADMIN."""
-        layer = ActivityLayer.from_activity_type("unknown_type")
-        assert layer == ActivityLayer.ADMIN
+        layer = RotationLayer.from_rotation_type("unknown_type")
+        assert layer == RotationLayer.ADMIN
 
 
 class TestVoxelColor:
@@ -97,7 +97,7 @@ class TestScheduleVoxel:
             assignment_id="test-id",
             person_name="Dr. Smith",
             block_date=date(2024, 1, 15),
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         result = voxel.to_dict()
 
@@ -162,8 +162,8 @@ class TestScheduleVoxelGrid:
         grid = ScheduleVoxelGrid(dimensions=sample_dimensions)
 
         # Add two voxels at same x,y but different z
-        grid.add_voxel(ScheduleVoxel(x=1, y=2, z=0, activity_type="clinic"))
-        grid.add_voxel(ScheduleVoxel(x=1, y=2, z=1, activity_type="inpatient"))
+        grid.add_voxel(ScheduleVoxel(x=1, y=2, z=0, rotation_type="clinic"))
+        grid.add_voxel(ScheduleVoxel(x=1, y=2, z=1, rotation_type="inpatient"))
 
         voxels = grid.get_voxels_at_position(1, 2)
         assert len(voxels) == 2
@@ -277,8 +277,8 @@ class TestScheduleVoxelTransformer:
                 "id": str(uuid4()),
                 "person_id": persons[0]["id"],
                 "block_id": blocks[0]["id"],
-                "activity_type": "clinic",
-                "activity_name": "Morning Clinic",
+                "rotation_type": "clinic",
+                "rotation_name": "Morning Clinic",
                 "role": "supervising",
                 "confidence": 1.0,
             },
@@ -286,8 +286,8 @@ class TestScheduleVoxelTransformer:
                 "id": str(uuid4()),
                 "person_id": persons[1]["id"],
                 "block_id": blocks[0]["id"],
-                "activity_type": "clinic",
-                "activity_name": "Morning Clinic",
+                "rotation_type": "clinic",
+                "rotation_name": "Morning Clinic",
                 "role": "primary",
                 "confidence": 0.9,
             },
@@ -295,8 +295,8 @@ class TestScheduleVoxelTransformer:
                 "id": str(uuid4()),
                 "person_id": persons[2]["id"],
                 "block_id": blocks[1]["id"],
-                "activity_type": "inpatient",
-                "activity_name": "Ward Coverage",
+                "rotation_type": "inpatient",
+                "rotation_name": "Ward Coverage",
                 "role": "primary",
                 "confidence": 1.0,
             },
@@ -315,7 +315,7 @@ class TestScheduleVoxelTransformer:
 
         assert grid.dimensions.x_size == 3  # 3 blocks
         assert grid.dimensions.y_size == 3  # 3 persons
-        assert grid.dimensions.z_size == 2  # 2 activity types (clinic, inpatient)
+        assert grid.dimensions.z_size == 2  # 2 rotation types (clinic, inpatient)
         assert len(grid.voxels) == 3
 
     def test_transform_person_ordering(self, sample_data):
@@ -342,8 +342,8 @@ class TestScheduleVoxelTransformer:
         # Should be ordered: 01-15 AM, 01-15 PM, 01-16 AM
         assert "2024-01-15 AM" in grid.dimensions.x_labels[0]
 
-    def test_transform_activity_colors(self, sample_data):
-        """Test that voxels get correct activity colors."""
+    def test_transform_rotation_colors(self, sample_data):
+        """Test that voxels get correct rotation colors."""
         transformer = ScheduleVoxelTransformer()
         grid = transformer.transform(
             assignments=sample_data["assignments"],
@@ -352,9 +352,9 @@ class TestScheduleVoxelTransformer:
         )
 
         # Find clinic voxel
-        clinic_voxels = [v for v in grid.voxels if v.activity_type == "clinic"]
+        clinic_voxels = [v for v in grid.voxels if v.rotation_type == "clinic"]
         assert len(clinic_voxels) > 0
-        assert clinic_voxels[0].color == ACTIVITY_COLORS[ActivityLayer.CLINIC]
+        assert clinic_voxels[0].color == ROTATION_COLORS[RotationLayer.CLINIC]
 
     def test_transform_empty_data(self):
         """Test transformation with empty data."""
@@ -378,7 +378,7 @@ class TestTransformScheduleToVoxels:
         persons = [{"id": "1", "name": "Test", "type": "resident", "pgy_level": 1}]
         blocks = [{"id": "b1", "date": "2024-01-15", "time_of_day": "AM"}]
         assignments = [
-            {"id": "a1", "person_id": "1", "block_id": "b1", "activity_type": "clinic"}
+            {"id": "a1", "person_id": "1", "block_id": "b1", "rotation_type": "clinic"}
         ]
 
         grid = transform_schedule_to_voxels(assignments, persons, blocks)
@@ -427,17 +427,17 @@ class TestVoxelGridNumpyConversion:
         assert numpy_grid[2, 2, 1] == 3  # violation
 
 
-class TestActivityColors:
-    """Tests for activity color constants."""
+class TestRotationColors:
+    """Tests for rotation color constants."""
 
-    def test_all_activity_layers_have_colors(self):
-        """Test that all activity layers have assigned colors."""
-        for layer in ActivityLayer:
-            assert layer in ACTIVITY_COLORS, f"Missing color for {layer}"
+    def test_all_rotation_layers_have_colors(self):
+        """Test that all rotation layers have assigned colors."""
+        for layer in RotationLayer:
+            assert layer in ROTATION_COLORS, f"Missing color for {layer}"
 
     def test_colors_are_valid(self):
         """Test that all colors are valid VoxelColor instances."""
-        for layer, color in ACTIVITY_COLORS.items():
+        for layer, color in ROTATION_COLORS.items():
             assert isinstance(color, VoxelColor)
             assert 0 <= color.r <= 1
             assert 0 <= color.g <= 1

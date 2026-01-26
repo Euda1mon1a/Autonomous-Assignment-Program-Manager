@@ -30,7 +30,7 @@ class AssignmentController:
         end_date: date | None = None,
         person_id: UUID | None = None,
         role: str | None = None,
-        activity_type: str | None = None,
+        rotation_type: str | None = None,
         page: int = 1,
         page_size: int = 100,
     ) -> AssignmentListResponse:
@@ -41,7 +41,7 @@ class AssignmentController:
             end_date: Filter assignments ending by this date
             person_id: Filter by specific person
             role: Filter by role type
-            activity_type: Filter by activity type
+            rotation_type: Filter by rotation type
             page: Page number (1-indexed)
             page_size: Number of items per page
 
@@ -56,7 +56,7 @@ class AssignmentController:
             end_date=end_date,
             person_id=person_id,
             role=role,
-            activity_type=activity_type,
+            rotation_type=rotation_type,
             offset=offset,
             limit=page_size,
         )
@@ -91,7 +91,6 @@ class AssignmentController:
             created_by=current_user.username,
             override_reason=assignment_in.override_reason,
             rotation_template_id=getattr(assignment_in, "rotation_template_id", None),
-            activity_type=getattr(assignment_in, "activity_type", None),
             notes=getattr(assignment_in, "notes", None),
         )
 

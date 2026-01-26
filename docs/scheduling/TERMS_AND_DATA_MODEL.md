@@ -14,11 +14,14 @@ Source of truth: `backend/app/utils/academic_blocks.py`.
 ## Blocks
 
 - A **block** is a time container.
+- There are two block concepts in the backend:
+  - **AcademicBlock (Block 0–13)** = 28‑day containers that rotations span.
+  - **Block (half‑day)** = AM/PM schedulable unit tied to a specific date.
 - **Block 0**: orientation (July 1 → day before first Thursday; 0–6 days).
 - **Blocks 1–12**: 28 days each, **Thursday → Wednesday**.
 - **Block 13**: variable length, ends June 30.
 
-Blocks define *when* rotations occur. They are not rotations.
+Rotations span **AcademicBlocks**. Assignments land on **half‑day Blocks**.
 
 ## Rotations (RotationTemplate)
 
@@ -34,7 +37,7 @@ Key model: `backend/app/models/rotation_template.py`.
 This field is a **category label for the rotation**, not an Activity.
 
 - It is used for **solver filtering** and **constraint selection**.
-- Examples: `outpatient`, `clinic`, `inpatient`, `conference`, `education`, `off`.
+- Examples: `outpatient`, `inpatient`, `conference`, `education`, `off`, `absence`, `recovery`.
 
 **Rule:** rotation_type is a *subset/category of the rotation* and never the
 Activity itself.
@@ -46,6 +49,15 @@ Activity itself.
 - Activities can repeat many times across dates and people.
 
 Key model: `backend/app/models/activity.py`.
+
+### Clinic vs Outpatient (terminology)
+
+- **Outpatient** = rotation category for elective/selective half‑day schedules
+  (weekday, no inpatient coverage).
+- **Clinic** = rotation category for continuity clinic (FMC) with dedicated
+  capacity/supervision constraints.
+- **Activity types** are slot‑level (e.g., `fm_clinic`, `specialty`, `procedure`,
+  `conference`). They live inside a rotation’s weekly pattern.
 
 ## Assignments (realized activities)
 
@@ -65,10 +77,11 @@ Key models: `backend/app/models/half_day_assignment.py`,
 
 ```
 AcademicYear
-  └─ Blocks (0–13, date ranges)
+  └─ AcademicBlocks (0–13, date ranges)
        └─ RotationTemplate (rotation container)
             └─ Activities (theoretical half‑day units)
                  └─ Assignments (Activity + date + person)
+                      └─ Blocks (half‑day AM/PM slots)
 ```
 
 ### Solver behavior (important)
@@ -91,3 +104,8 @@ To avoid confusion in the GUI:
 
 If UI copy needs a label for `rotation_type`, use **“Rotation category”** or
 **“Rotation setting”** (not “Activity”).
+
+## Naming rules (backend + docs)
+
+- If it is **rotation‑related**, do **not** use “activity” in the name.
+- Reserve “activity” for **slot‑level** Activities and Assignments only.

@@ -40,7 +40,7 @@ def outpatient_template(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="Family Medicine Outpatient",
-        activity_type="outpatient",
+        rotation_type="outpatient",
         abbreviation="FMO",
     )
     db.add(template)
@@ -55,7 +55,7 @@ def clinic_template(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="Primary Care Clinic",
-        activity_type="clinic",
+        rotation_type="clinic",
         abbreviation="PCC",
     )
     db.add(template)
@@ -304,7 +304,7 @@ class TestListResidentWeeklyRequirements:
         assert len(data["items"]) == 1
         assert data["items"][0]["fm_clinic_min_per_week"] == 2
 
-    def test_list_requirements_filter_by_activity_type(
+    def test_list_requirements_filter_by_rotation_type(
         self,
         client: TestClient,
         db: Session,
@@ -327,7 +327,7 @@ class TestListResidentWeeklyRequirements:
         db.commit()
 
         response = client.get(
-            "/api/resident-weekly-requirements?activity_type=outpatient"
+            "/api/resident-weekly-requirements?rotation_type=outpatient"
         )
 
         assert response.status_code == 200

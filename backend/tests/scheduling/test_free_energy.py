@@ -56,10 +56,10 @@ class MockBlock:
 class MockTemplate:
     """Mock RotationTemplate for testing."""
 
-    def __init__(self, name: str = "Clinic", activity_type: str = "outpatient"):
+    def __init__(self, name: str = "Clinic", rotation_type: str = "outpatient"):
         self.id = uuid.uuid4()
         self.name = name
-        self.activity_type = activity_type
+        self.rotation_type = rotation_type
         self.requires_procedure_credential = False
 
 

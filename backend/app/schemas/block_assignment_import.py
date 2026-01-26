@@ -205,16 +205,16 @@ class QuickTemplateCreateRequest(BaseModel):
     name: str = Field(
         ..., min_length=1, max_length=100, description="Full rotation name"
     )
-    activity_type: str = Field(
+    rotation_type: str = Field(
         "outpatient",
-        description="Activity type (clinic, inpatient, procedures, etc.)",
+        description="Rotation type (clinic, inpatient, procedures, etc.)",
     )
     leave_eligible: bool = Field(True, description="Whether rotation is leave-eligible")
 
-    @field_validator("activity_type")
+    @field_validator("rotation_type")
     @classmethod
-    def validate_activity_type(cls, v: str) -> str:
-        """Validate activity type."""
+    def validate_rotation_type(cls, v: str) -> str:
+        """Validate rotation type."""
         valid = [
             "clinic",
             "inpatient",
@@ -226,7 +226,7 @@ class QuickTemplateCreateRequest(BaseModel):
             "conference",
         ]
         if v.lower() not in valid:
-            raise ValueError(f"activity_type must be one of {valid}")
+            raise ValueError(f"rotation_type must be one of {valid}")
         return v.lower()
 
 
@@ -236,7 +236,7 @@ class QuickTemplateCreateResponse(BaseModel):
     id: UUID = Field(..., description="Created template ID")
     abbreviation: str = Field(..., description="Template abbreviation")
     name: str = Field(..., description="Template name")
-    activity_type: str = Field(..., description="Activity type")
+    rotation_type: str = Field(..., description="Rotation type")
 
 
 # ============================================================================

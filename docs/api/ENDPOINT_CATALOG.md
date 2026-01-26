@@ -228,7 +228,7 @@ See [Block Scheduler](block-scheduler.md) for full details.
 | `end_date` | date | Filter by end date |
 | `person_id` | uuid | Filter by person |
 | `rotation_id` | uuid | Filter by rotation |
-| `activity_type` | string | Filter by activity type |
+| `rotation_type` | string | Filter by rotation type |
 
 ---
 

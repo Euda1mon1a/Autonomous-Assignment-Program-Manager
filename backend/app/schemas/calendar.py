@@ -12,7 +12,7 @@ class CalendarExportRequest(BaseModel):
     person_id: UUID
     start_date: date
     end_date: date
-    include_types: list[str] | None = None  # Filter by activity types
+    include_types: list[str] | None = None  # Filter by rotation types
 
     @field_validator("end_date")
     @classmethod

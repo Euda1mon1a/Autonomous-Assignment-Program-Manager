@@ -857,12 +857,17 @@ async def export_for_research(
             )
 
         # Build rotation coverage data
-        rotation_counts = defaultdict(lambda: {"assignments": 0, "residents": set()})
+        rotation_counts = defaultdict(
+            lambda: {"assignments": 0, "residents": set(), "rotation_type": "unknown"}
+        )
         for assignment in assignments:
             if assignment.rotation_template:
                 key = str(assignment.rotation_template_id)
                 rotation_counts[key]["assignments"] += 1
                 rotation_counts[key]["residents"].add(assignment.person_id)
+                rotation_counts[key]["rotation_type"] = (
+                    assignment.rotation_template.rotation_type or "unknown"
+                )
 
         rotation_coverage = []
         for rotation_id, data in rotation_counts.items():
@@ -872,8 +877,7 @@ async def export_for_research(
             rotation_coverage.append(
                 RotationCoverageData(
                     rotationId=rotation_id_display,
-                    rotationType="clinical",  # Would need more logic
-                    activityType="clinical",
+                    rotationType=data["rotation_type"],
                     totalAssignments=data["assignments"],
                     uniqueResidents=len(data["residents"]),
                     averageDuration=4.0,  # Placeholder

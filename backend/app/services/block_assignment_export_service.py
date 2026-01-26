@@ -224,11 +224,11 @@ class BlockAssignmentExportService:
                 ws.cell(row=row_num, column=col_offset, value=assignment.has_leave)
                 ws.cell(row=row_num, column=col_offset + 1, value=assignment.leave_days)
 
-            # Apply activity type coloring to rotation cell
+            # Apply rotation type coloring to rotation cell
             if assignment.rotation_template:
-                activity_type = assignment.rotation_template.activity_type
-                if activity_type and activity_type.lower() in activity_colors:
-                    color = activity_colors[activity_type.lower()]
+                rotation_type = assignment.rotation_template.rotation_type
+                if rotation_type and rotation_type.lower() in activity_colors:
+                    color = activity_colors[rotation_type.lower()]
                     ws.cell(row=row_num, column=2).fill = PatternFill(
                         start_color=color, end_color=color, fill_type="solid"
                     )

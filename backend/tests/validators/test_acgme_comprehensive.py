@@ -93,7 +93,7 @@ def call_rotation(db: Session) -> RotationTemplate:
     rotation = RotationTemplate(
         id=uuid4(),
         name="Inpatient Call",
-        activity_type="call",
+        rotation_type="call",
         abbreviation="CALL",
         requires_call=True,
         max_residents=1,
@@ -110,7 +110,7 @@ def night_float_rotation(db: Session) -> RotationTemplate:
     rotation = RotationTemplate(
         id=uuid4(),
         name="Night Float",
-        activity_type="night_float",
+        rotation_type="night_float",
         abbreviation="NF",
         requires_call=True,
         max_residents=2,
@@ -127,7 +127,7 @@ def clinic_rotation(db: Session) -> RotationTemplate:
     rotation = RotationTemplate(
         id=uuid4(),
         name="Clinic",
-        activity_type="outpatient",
+        rotation_type="outpatient",
         abbreviation="CLINIC",
         requires_call=False,
         max_residents=4,

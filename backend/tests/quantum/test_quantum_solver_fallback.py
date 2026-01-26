@@ -60,7 +60,6 @@ def mock_context():
             id=uuid4(),
             name="Clinic",
             rotation_type="clinic",
-            activity_type="outpatient",
             requires_procedure_credential=False,
         )
     ]

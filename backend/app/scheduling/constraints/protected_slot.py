@@ -143,8 +143,8 @@ class ProtectedSlotConstraint(HardConstraint):
         for template in context.templates:
             # If protected slot is for a specific activity, block all others
             # e.g., if slot is 'lecture', block 'clinic', 'inpatient', etc.
-            if hasattr(template, "activity_type"):
-                if template.activity_type != protected_activity:
+            if hasattr(template, "rotation_type"):
+                if template.rotation_type != protected_activity:
                     conflicting.add(template.id)
         return conflicting
 
@@ -302,7 +302,7 @@ class ProtectedSlotConstraint(HardConstraint):
             if not assigned_template:
                 continue
 
-            assigned_activity = getattr(assigned_template, "activity_type", "")
+            assigned_rotation_type = getattr(assigned_template, "rotation_type", "")
 
             # Check if any protected pattern is violated
             for template_id, patterns in protected_patterns.items():
@@ -315,7 +315,7 @@ class ProtectedSlotConstraint(HardConstraint):
                         continue
 
                     # Violation if assigned activity != protected activity
-                    if assigned_activity != protected_activity:
+                    if assigned_rotation_type != protected_activity:
                         resident_name = getattr(resident, "name", str(resident.id))
                         violations.append(
                             ConstraintViolation(
@@ -323,7 +323,7 @@ class ProtectedSlotConstraint(HardConstraint):
                                 constraint_type=self.constraint_type,
                                 severity="CRITICAL",
                                 message=(
-                                    f"{resident_name} assigned to '{assigned_activity}' "
+                                    f"{resident_name} assigned to '{assigned_rotation_type}' "
                                     f"on protected '{protected_activity}' slot "
                                     f"({block.date} {block.time_of_day})"
                                 ),
@@ -333,7 +333,7 @@ class ProtectedSlotConstraint(HardConstraint):
                                     "date": str(block.date),
                                     "time_of_day": block.time_of_day,
                                     "protected_activity": protected_activity,
-                                    "assigned_activity": assigned_activity,
+                                    "assigned_rotation_type": assigned_rotation_type,
                                 },
                             )
                         )

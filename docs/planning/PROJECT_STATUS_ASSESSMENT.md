@@ -480,12 +480,12 @@ Response:
 #### 2. Call Roster (Filtered Calendar) ✅ COMPLETE
 
 **Status:** IMPLEMENTED
-**Backend:** `GET /api/assignments?activity_type=on_call` (filter added to all 4 layers)
+**Backend:** `GET /api/assignments?rotation_type=on_call` (filter added to all 4 layers)
 **Frontend:** `CallRoster.tsx` (414 lines) with color coding
 **Value:** HIGH - nurses need to know who to page
 
 ```
-GET /api/assignments?activity_type=on_call&start_date=2025-01-01&end_date=2025-01-31
+GET /api/assignments?rotation_type=on_call&start_date=2025-01-01&end_date=2025-01-31
 
 # Color coding implemented:
 # Red = Attending, Blue = Senior (PGY-2+), Green = Intern (PGY-1)
@@ -1503,7 +1503,7 @@ Current state of feature access across interfaces:
 **Mitigation needed:**
 - [ ] Maximum blocked weeks per academic year (configurable)
 - [ ] Fairness dashboard visible to all faculty
-- [ ] "You've blocked X weeks, average is Y" feedback
+- [ ] Blocked-week feedback (X blocked vs Y average)
 
 #### 3. The Phantom Edit
 **Scenario:** Coordinator makes schedule change, forgets to notify affected parties.
@@ -2163,7 +2163,7 @@ POST   /api/surrogates/{principal_id}/swaps/{swap_id}/respond  # Respond on beha
 function SurrogateBanner({ assignments }: { assignments: SurrogateAssignment[] }) {
   return (
     <Alert variant="info">
-      <AlertTitle>You are covering for:</AlertTitle>
+      <AlertTitle>Coverage active:</AlertTitle>
       {assignments.map(a => (
         <div key={a.id} className="flex items-center gap-2">
           <Avatar src={a.principal.avatar} />
@@ -2320,37 +2320,37 @@ function LeaveApprovalModal({ leaveRequest, onApprove }) {
 ### Workflow
 
 ```
-1. Dr. A submits leave request (Jan 15-28)
+1. Primary provider submits leave request (Jan 15-28)
 
 2. Coordinator approves leave, system prompts:
-   "Who will cover Dr. A's inbox?"
-   → Selects Dr. B
+   "Who will cover the primary provider's inbox?"
+   → Selects Covering provider
    → Checks "Can respond to swaps on behalf"
 
 3. System creates SurrogateAssignment:
-   - principal: Dr. A
-   - surrogate: Dr. B
+   - principal: Primary provider
+   - surrogate: Covering provider
    - start_date: Jan 15
    - end_date: Jan 28
    - permissions: { view_schedule: true, respond_to_swaps: true }
 
-4. Jan 15 arrives, Dr. B logs in:
-   - Sees banner: "You are covering for Dr. A (Jan 15-28)"
-   - Dashboard switcher shows: "My Dashboard" | "Dr. A's Dashboard"
+4. Jan 15 arrives, Covering provider logs in:
+   - Sees banner: "Coverage active for Primary provider (Jan 15-28)"
+   - Dashboard switcher shows: "My Dashboard" | "Primary provider's Dashboard"
 
-5. Dr. C requests swap with Dr. A for Feb 3:
-   - Notification sent to Dr. A (for record)
-   - Notification ALSO sent to Dr. B (as surrogate)
-   - Dr. B sees in their inbox: "Swap request for Dr. A from Dr. C"
+5. Requesting provider requests swap with Primary provider for Feb 3:
+   - Notification sent to Primary provider (for record)
+   - Notification ALSO sent to Covering provider (as surrogate)
+   - Covering provider sees in their inbox: "Swap request for Primary provider from Requesting provider"
 
-6. Dr. B responds:
-   - Clicks "Approve" on Dr. A's behalf
-   - System logs: "Swap approved by Dr. B (surrogate for Dr. A)"
-   - Dr. C gets notification: "Your swap with Dr. A was approved"
+6. Covering provider responds:
+   - Clicks "Approve" on Primary provider's behalf
+   - System logs: "Swap approved by Covering provider (surrogate for Primary provider)"
+   - Requesting provider gets notification: "Your swap with Primary provider was approved"
 
 7. Jan 28: Surrogate assignment auto-expires
-   - Dr. B no longer sees Dr. A's dashboard
-   - Dr. A returns, sees audit trail of actions taken
+   - Covering provider no longer sees Primary provider's dashboard
+   - Primary provider returns, sees audit trail of actions taken
 ```
 
 ### UI Components Needed

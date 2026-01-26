@@ -117,7 +117,7 @@ class TestLargeDatasetQueryBehavior:
         template = RotationTemplate(
             id=uuid4(),
             name="General Clinic",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="GC",
         )
         db.add(template)
@@ -203,7 +203,7 @@ class TestLargeDatasetScenarios:
         template = RotationTemplate(
             id=uuid4(),
             name="Ward Service",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="WS",
         )
         db.add(template)

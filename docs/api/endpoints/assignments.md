@@ -33,7 +33,7 @@ List all assignments with optional filters and pagination.
 | `end_date` | string (date) | No | Filter until this date (YYYY-MM-DD) |
 | `person_id` | UUID | No | Filter by person |
 | `role` | string | No | Filter by role (resident, faculty, etc.) |
-| `activity_type` | string | No | Filter by activity (on_call, clinic, inpatient) |
+| `rotation_type` | string | No | Filter by rotation type (on_call, clinic, inpatient) |
 | `page` | integer | No | Page number (1-indexed, default: 1) |
 | `page_size` | integer | No | Items per page (1-500, default: 100) |
 
@@ -90,10 +90,10 @@ curl "http://localhost:8000/api/v1/assignments?person_id=550e8400-e29b-41d4-a716
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
-**Filter by activity type**
+**Filter by rotation type**
 
 ```bash
-curl "http://localhost:8000/api/v1/assignments?activity_type=on_call&page=1&page_size=50" \
+curl "http://localhost:8000/api/v1/assignments?rotation_type=on_call&page=1&page_size=50" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -525,7 +525,7 @@ response = requests.get(
     params={
         "start_date": "2024-07-01",
         "end_date": "2024-07-31",
-        "activity_type": "on_call"
+        "rotation_type": "on_call"
     }
 )
 

@@ -337,10 +337,10 @@ class TestHeatmapService:
 
         # Create rotation templates
         rotation1 = RotationTemplate(
-            id=uuid4(), name="Clinic", activity_type="clinic", abbreviation="CL"
+            id=uuid4(), name="Clinic", rotation_type="clinic", abbreviation="CL"
         )
         rotation2 = RotationTemplate(
-            id=uuid4(), name="Procedures", activity_type="procedures", abbreviation="PR"
+            id=uuid4(), name="Procedures", rotation_type="procedures", abbreviation="PR"
         )
         db.add_all([rotation1, rotation2])
         db.commit()
@@ -380,7 +380,7 @@ class TestHeatmapService:
         end = date.today() + timedelta(days=6)
 
         rotation = RotationTemplate(
-            id=uuid4(), name="Clinic", activity_type="clinic", abbreviation="CL"
+            id=uuid4(), name="Clinic", rotation_type="clinic", abbreviation="CL"
         )
         db.add(rotation)
         db.commit()
@@ -745,10 +745,10 @@ class TestHeatmapService:
 
         # Create rotations
         rotation1 = RotationTemplate(
-            id=uuid4(), name="Clinic", activity_type="clinic", abbreviation="CL"
+            id=uuid4(), name="Clinic", rotation_type="clinic", abbreviation="CL"
         )
         rotation2 = RotationTemplate(
-            id=uuid4(), name="Procedures", activity_type="procedures", abbreviation="PR"
+            id=uuid4(), name="Procedures", rotation_type="procedures", abbreviation="PR"
         )
         db.add_all([rotation1, rotation2])
         db.commit()
@@ -805,7 +805,7 @@ class TestHeatmapService:
 
         # Create rotation
         rotation = RotationTemplate(
-            id=uuid4(), name="Clinic", activity_type="clinic", abbreviation="CL"
+            id=uuid4(), name="Clinic", rotation_type="clinic", abbreviation="CL"
         )
         db.add(rotation)
         db.commit()
@@ -846,7 +846,7 @@ class TestHeatmapService:
 
         # Create rotation
         rotation = RotationTemplate(
-            id=uuid4(), name="Clinic", activity_type="clinic", abbreviation="CL"
+            id=uuid4(), name="Clinic", rotation_type="clinic", abbreviation="CL"
         )
         db.add(rotation)
         db.commit()

@@ -255,7 +255,7 @@ class FacultyOutpatientAssignmentService:
 
         Only clears:
         - Faculty assignments (not resident)
-        - Outpatient/clinic activity types
+        - Outpatient/clinic rotation types
         - Primary role (not supervision - that will be regenerated anyway)
         """
         # Get faculty IDs
@@ -268,7 +268,7 @@ class FacultyOutpatientAssignmentService:
         outpatient_template_ids = [
             t.id
             for t in self.db.query(RotationTemplate.id)
-            .filter(RotationTemplate.activity_type.in_(["clinic", "outpatient"]))
+            .filter(RotationTemplate.rotation_type.in_(["clinic", "outpatient"]))
             .all()
         ]
 
@@ -318,7 +318,7 @@ class FacultyOutpatientAssignmentService:
             .filter(
                 or_(
                     RotationTemplate.name.ilike("%FMIT%"),
-                    RotationTemplate.activity_type == "inpatient",
+                    RotationTemplate.rotation_type == "inpatient",
                 )
             )
             .all()
@@ -367,7 +367,7 @@ class FacultyOutpatientAssignmentService:
         """Get rotation templates for outpatient/clinic activities."""
         return (
             self.db.query(RotationTemplate)
-            .filter(RotationTemplate.activity_type.in_(["clinic", "outpatient"]))
+            .filter(RotationTemplate.rotation_type.in_(["clinic", "outpatient"]))
             .all()
         )
 

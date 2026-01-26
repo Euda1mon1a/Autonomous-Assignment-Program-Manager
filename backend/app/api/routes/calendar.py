@@ -32,7 +32,7 @@ async def export_all_calendars(
         None, description="Rotation UUIDs to filter"
     ),
     include_types: list[str] | None = Query(
-        None, description="Activity types to include"
+        None, description="Rotation types to include"
     ),
     db=Depends(get_db),
 ) -> Response:
@@ -40,7 +40,7 @@ async def export_all_calendars(
     Export complete schedule as ICS file.
 
     Downloads an ICS file containing all assignments within the date range.
-    Can be filtered by persons, rotations, or activity types.
+    Can be filtered by persons, rotations, or rotation types.
     Compatible with Google Calendar, Outlook, and Apple Calendar.
 
     Args:
@@ -48,7 +48,7 @@ async def export_all_calendars(
         end_date: End date for export (YYYY-MM-DD)
         person_ids: Optional list of person UUIDs to filter
         rotation_ids: Optional list of rotation UUIDs to filter
-        include_types: Optional list of activity types to filter
+        include_types: Optional list of rotation types to filter
         db: Database session
 
     Returns:
@@ -85,7 +85,7 @@ async def export_person_ics(
     start_date: date = Query(..., description="Start date for calendar export"),
     end_date: date = Query(..., description="End date for calendar export"),
     include_types: list[str] | None = Query(
-        None, description="Activity types to include"
+        None, description="Rotation types to include"
     ),
     db=Depends(get_db),
 ) -> Response:
@@ -99,7 +99,7 @@ async def export_person_ics(
         person_id: Person UUID
         start_date: Start date for export (YYYY-MM-DD)
         end_date: End date for export (YYYY-MM-DD)
-        include_types: Optional list of activity types to filter
+        include_types: Optional list of rotation types to filter
         db: Database session
 
     Returns:
@@ -138,7 +138,7 @@ async def export_person_calendar(
     start_date: date = Query(..., description="Start date for calendar export"),
     end_date: date = Query(..., description="End date for calendar export"),
     include_types: list[str] | None = Query(
-        None, description="Activity types to include"
+        None, description="Rotation types to include"
     ),
     db=Depends(get_db),
 ) -> Response:
@@ -152,7 +152,7 @@ async def export_person_calendar(
         person_id: Person UUID
         start_date: Start date for export (YYYY-MM-DD)
         end_date: End date for export (YYYY-MM-DD)
-        include_types: Optional list of activity types to filter
+        include_types: Optional list of rotation types to filter
         db: Database session
 
     Returns:

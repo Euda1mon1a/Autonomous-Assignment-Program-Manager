@@ -437,7 +437,7 @@ def get_filtered_assignments(token, filters, page=1, page_size=100):
 filters = {
     "start_date": "2024-07-01",
     "end_date": "2024-07-31",
-    "activity_type": "on_call"
+    "rotation_type": "on_call"
 }
 
 page1 = get_filtered_assignments(token, filters, page=1)

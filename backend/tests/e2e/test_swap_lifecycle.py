@@ -139,7 +139,7 @@ def fmit_template(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="FMIT",
-        activity_type="inpatient",
+        rotation_type="inpatient",
         abbreviation="FMIT",
         max_residents=0,
         supervision_required=False,
@@ -156,7 +156,7 @@ def clinic_template(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="Clinic",
-        activity_type="outpatient",
+        rotation_type="outpatient",
         abbreviation="CLINIC",
         max_residents=4,
         supervision_required=True,

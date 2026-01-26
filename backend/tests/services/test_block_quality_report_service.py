@@ -242,7 +242,7 @@ class TestGetSolvedByRotation:
         assert len(result) == 3
         assert isinstance(result[0], RotationSummary)
         assert result[0].rotation == "PCAT PM"
-        assert result[0].activity_type == "clinic"
+        assert result[0].rotation_type == "clinic"
         assert result[0].count == 200
 
     def test_get_solved_by_rotation_handles_null_rotation(self):
@@ -259,7 +259,7 @@ class TestGetSolvedByRotation:
 
         assert len(result) == 1
         assert result[0].rotation == "Unknown"
-        assert result[0].activity_type == "unknown"
+        assert result[0].rotation_type == "unknown"
 
 
 # =============================================================================
@@ -446,7 +446,7 @@ class TestGenerateReport:
             FacultyPreloadedEntry(name="Dr. Smith", slots=24, role="attending")
         ]
         mock_rotation.return_value = [
-            RotationSummary(rotation="PCAT PM", activity_type="clinic", count=100)
+            RotationSummary(rotation="PCAT PM", rotation_type="clinic", count=100)
         ]
         mock_resident_dist.return_value = [
             ResidentDistribution(

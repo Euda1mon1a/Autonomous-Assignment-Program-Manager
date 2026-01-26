@@ -13,7 +13,7 @@ class TemplateCategory(str, Enum):
 
     - rotation: Clinical work (clinic, inpatient, outpatient, procedure)
     - time_off: ACGME-protected rest (off, recovery) - does NOT count toward away-from-program
-    - absence: Days away from program (absence activity type) - counts toward 28-day limit
+    - absence: Days away from program (absence rotation type) - counts toward 28-day limit
     - educational: Structured learning (conference, education, lecture)
     """
 
@@ -32,7 +32,7 @@ class RotationTemplateBase(BaseModel):
 
     name: str
     # Rotation category/setting (NOT an Activity). Used for solver filtering + constraints.
-    activity_type: (
+    rotation_type: (
         str  # 'clinic', 'inpatient', 'procedure', 'conference', 'lecture', etc.
     )
     template_category: str = Field(
@@ -58,10 +58,10 @@ class RotationTemplateBase(BaseModel):
             raise ValueError("name cannot be empty")
         return v.strip()
 
-    @field_validator("activity_type")
+    @field_validator("rotation_type")
     @classmethod
-    def validate_activity_type(cls, v: str) -> str:
-        """Validate activity_type is one of the valid rotation categories."""
+    def validate_rotation_type(cls, v: str) -> str:
+        """Validate rotation_type is one of the valid rotation categories."""
         # Valid rotation categories used across the system:
         # - clinic/outpatient: Clinic sessions and outpatient rotations
         # - inpatient: Hospital ward rotations (FMIT, wards)
@@ -88,7 +88,7 @@ class RotationTemplateBase(BaseModel):
             "leave",
         )
         if v not in valid_types:
-            raise ValueError(f"activity_type must be one of {valid_types}")
+            raise ValueError(f"rotation_type must be one of {valid_types}")
         return v
 
     @field_validator("max_residents")
@@ -128,7 +128,7 @@ class RotationTemplateUpdate(BaseModel):
     """Schema for updating a rotation template."""
 
     name: str | None = None
-    activity_type: str | None = None
+    rotation_type: str | None = None
     template_category: str | None = None
     abbreviation: str | None = None
     display_abbreviation: str | None = None  # User-facing code for schedule grid
@@ -149,10 +149,10 @@ class RotationTemplateUpdate(BaseModel):
             raise ValueError("name cannot be empty")
         return v.strip() if v else v
 
-    @field_validator("activity_type")
+    @field_validator("rotation_type")
     @classmethod
-    def validate_activity_type(cls, v: str | None) -> str | None:
-        """Validate activity_type is one of the valid rotation categories."""
+    def validate_rotation_type(cls, v: str | None) -> str | None:
+        """Validate rotation_type is one of the valid rotation categories."""
         if v is not None:
             valid_types = (
                 "clinic",
@@ -172,7 +172,7 @@ class RotationTemplateUpdate(BaseModel):
                 "leave",
             )
             if v not in valid_types:
-                raise ValueError(f"activity_type must be one of {valid_types}")
+                raise ValueError(f"rotation_type must be one of {valid_types}")
         return v
 
     @field_validator("template_category")

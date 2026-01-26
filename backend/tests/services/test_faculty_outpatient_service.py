@@ -59,7 +59,7 @@ class TestFacultyOutpatientService:
         template = RotationTemplate(
             id=uuid4(),
             name="Outpatient Clinic",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="OPC",
             max_residents=4,
             supervision_required=True,

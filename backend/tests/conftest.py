@@ -261,14 +261,14 @@ def sample_faculty_members(db: Session) -> list[Person]:
 def sample_rotation_template(db: Session) -> RotationTemplate:
     """Create a sample rotation template.
 
-    Note: Uses activity_type="outpatient" because the scheduling engine
+    Note: Uses rotation_type="outpatient" because the scheduling engine
     defaults to filtering for outpatient templates. Using "clinic" would
     cause the template to be filtered out, resulting in no assignments.
     """
     template = RotationTemplate(
         id=uuid4(),
         name="Sports Medicine Clinic",
-        activity_type="outpatient",  # Must match engine's default filter
+        rotation_type="outpatient",  # Must match engine's default filter
         abbreviation="SM",
         clinic_location="Building A",
         max_residents=4,

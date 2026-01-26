@@ -164,7 +164,7 @@ class TestComplianceWorkflow:
             "/api/rotation-templates/",
             json={
                 "name": "Supervised Clinic",
-                "activity_type": "outpatient",
+                "rotation_type": "outpatient",
                 "abbreviation": "SUP",
                 "max_residents": 4,
                 "supervision_required": True,

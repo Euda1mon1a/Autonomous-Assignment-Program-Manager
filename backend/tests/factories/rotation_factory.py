@@ -18,7 +18,7 @@ class RotationFactory:
     def create_rotation_template(
         db: Session,
         name: str | None = None,
-        activity_type: str = "clinic",
+        rotation_type: str = "clinic",
         abbreviation: str | None = None,
         max_residents: int | None = None,
         supervision_required: bool = True,
@@ -33,7 +33,7 @@ class RotationFactory:
         Args:
             db: Database session
             name: Template name (random if not provided)
-            activity_type: "clinic", "inpatient", "procedure", "conference", "outpatient"
+            rotation_type: "clinic", "inpatient", "procedure", "conference", "outpatient"
             abbreviation: Short abbreviation for Excel export
             max_residents: Maximum residents allowed (capacity constraint)
             supervision_required: Whether supervision is required
@@ -46,15 +46,15 @@ class RotationFactory:
             RotationTemplate: Created template instance
         """
         if name is None:
-            activity_types_names = {
+            rotation_types_names = {
                 "clinic": f"{fake.random_element(['PGY-1', 'PGY-2', 'General'])} Clinic",
                 "inpatient": "FMIT Inpatient",
                 "procedure": f"{fake.random_element(['Minor', 'Major'])} Procedures",
                 "conference": f"{fake.random_element(['Grand Rounds', 'Case Conference', 'Didactics'])}",
                 "outpatient": "Outpatient Services",
             }
-            name = activity_types_names.get(
-                activity_type, f"{activity_type.title()} Rotation"
+            name = rotation_types_names.get(
+                rotation_type, f"{rotation_type.title()} Rotation"
             )
 
         if abbreviation is None:
@@ -64,7 +64,7 @@ class RotationFactory:
         template = RotationTemplate(
             id=uuid4(),
             name=name,
-            activity_type=activity_type,
+            rotation_type=rotation_type,
             abbreviation=abbreviation,
             max_residents=max_residents,
             supervision_required=supervision_required,
@@ -105,7 +105,7 @@ class RotationFactory:
         return RotationFactory.create_rotation_template(
             db,
             name=name,
-            activity_type="outpatient",  # Engine default filter
+            rotation_type="outpatient",  # Engine default filter
             abbreviation=abbreviation,
             max_residents=max_residents,
             supervision_required=True,
@@ -129,7 +129,7 @@ class RotationFactory:
         return RotationFactory.create_rotation_template(
             db,
             name="FMIT Inpatient",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
             max_residents=None,  # No hard cap, staffing driven
             supervision_required=True,
@@ -152,7 +152,7 @@ class RotationFactory:
         return RotationFactory.create_rotation_template(
             db,
             name="Sports Medicine Clinic",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="SM",
             max_residents=3,
             supervision_required=True,
@@ -173,7 +173,7 @@ class RotationFactory:
         return RotationFactory.create_rotation_template(
             db,
             name="Procedure Clinic",
-            activity_type="procedure",
+            rotation_type="procedure",
             abbreviation="PROC",
             max_residents=2,  # Limited by procedure room capacity
             supervision_required=True,
@@ -193,7 +193,7 @@ class RotationFactory:
         return RotationFactory.create_rotation_template(
             db,
             name="Grand Rounds",
-            activity_type="conference",
+            rotation_type="conference",
             abbreviation="CONF",
             max_residents=None,  # No capacity limit
             supervision_required=False,  # Group learning
@@ -211,7 +211,7 @@ class RotationFactory:
         return RotationFactory.create_rotation_template(
             db,
             name="Administrative",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="ADMIN",
             max_residents=1,  # Usually one chief at a time
             supervision_required=False,
@@ -242,7 +242,7 @@ class RotationFactory:
     def create_batch_templates(
         db: Session,
         count: int = 5,
-        activity_types: list[str] | None = None,
+        rotation_types: list[str] | None = None,
     ) -> list[RotationTemplate]:
         """
         Create multiple rotation templates.
@@ -250,19 +250,19 @@ class RotationFactory:
         Args:
             db: Database session
             count: Number of templates to create
-            activity_types: List of activity types to use (cycles through if count > len)
+            rotation_types: List of activity types to use (cycles through if count > len)
 
         Returns:
             list[RotationTemplate]: List of created templates
         """
-        if activity_types is None:
-            activity_types = ["clinic", "inpatient", "procedure", "conference"]
+        if rotation_types is None:
+            rotation_types = ["clinic", "inpatient", "procedure", "conference"]
 
         templates = []
         for i in range(count):
-            activity_type = activity_types[i % len(activity_types)]
+            rotation_type = rotation_types[i % len(rotation_types)]
             template = RotationFactory.create_rotation_template(
-                db, activity_type=activity_type
+                db, rotation_type=rotation_type
             )
             templates.append(template)
 

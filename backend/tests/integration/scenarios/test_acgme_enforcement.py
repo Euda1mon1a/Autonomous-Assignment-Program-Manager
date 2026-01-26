@@ -142,7 +142,7 @@ class TestACGMEEnforcementScenarios:
         template = RotationTemplate(
             id=uuid4(),
             name="Supervised",
-            activity_type="procedures",
+            rotation_type="procedures",
             abbreviation="SUP",
             supervision_required=True,
             max_supervision_ratio=2,  # 1:2

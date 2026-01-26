@@ -39,7 +39,7 @@ class TestSchedulingProblem:
             )
         ]
         person_data = [{"id": "1", "name": "Dr. A", "pgy_level": 1}]
-        block_data = [{"id": "1", "name": "Block 1", "activity_type": "clinic"}]
+        block_data = [{"id": "1", "name": "Block 1", "rotation_type": "clinic"}]
 
         problem = SchedulingProblem(
             n_persons=1,
@@ -215,11 +215,11 @@ class TestSchedulingProblem:
         ]
         constraints = []
         person_data = [
-            {"id": "1", "preferred_activity_types": ["clinic", "procedures"]}
+            {"id": "1", "preferred_rotation_types": ["clinic", "procedures"]}
         ]
         block_data = [
-            {"id": "1", "activity_type": "clinic"},
-            {"id": "2", "activity_type": "inpatient"},
+            {"id": "1", "rotation_type": "clinic"},
+            {"id": "2", "rotation_type": "inpatient"},
         ]
 
         problem = SchedulingProblem(
@@ -707,7 +707,7 @@ class TestParetoOptimizationService:
             person.id = uuid4()
             person.name = f"Dr. Person {i + 1}"
             person.pgy_level = i + 1
-            person.preferred_activity_types = ["clinic"]
+            person.preferred_rotation_types = ["clinic"]
             persons.append(person)
         return persons
 
@@ -720,7 +720,7 @@ class TestParetoOptimizationService:
             block = Mock(spec=Block)
             block.id = uuid4()
             block.name = f"Block {i + 1}"
-            block.activity_type = "clinic"
+            block.rotation_type = "clinic"
             block.specialty = "general"
             block.start_date = start_date + timedelta(days=i)
             block.end_date = start_date + timedelta(days=i)
@@ -1209,7 +1209,7 @@ class TestParetoOptimizationService:
         assert person_dict["id"] == str(person.id)
         assert person_dict["name"] == person.name
         assert person_dict["pgy_level"] == person.pgy_level
-        assert "preferred_activity_types" in person_dict
+        assert "preferred_rotation_types" in person_dict
 
     def test_block_to_dict(self, service, mock_blocks):
         """Test _block_to_dict conversion."""
@@ -1218,7 +1218,7 @@ class TestParetoOptimizationService:
 
         assert block_dict["id"] == str(block.id)
         assert block_dict["name"] == block.name
-        assert block_dict["activity_type"] == block.activity_type
+        assert block_dict["rotation_type"] == block.rotation_type
         assert block_dict["specialty"] == block.specialty
 
     def test_extract_solutions_no_results(self, service, mock_persons, mock_blocks):

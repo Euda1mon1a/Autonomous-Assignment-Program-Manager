@@ -266,7 +266,7 @@ class TestFiftySixSlotExpansion:
         mock_rotation.id = uuid4()
         mock_rotation.includes_weekend_work = False
         mock_rotation.weekly_patterns = []
-        mock_rotation.activity_type = "clinic"
+        mock_rotation.rotation_type = "clinic"
 
         mock_block_assignment = MagicMock()
         mock_block_assignment.id = uuid4()
@@ -332,7 +332,7 @@ class TestFiftySixSlotExpansion:
         mock_rotation.id = uuid4()
         mock_rotation.includes_weekend_work = True  # Include weekends to simplify
         mock_rotation.weekly_patterns = []
-        mock_rotation.activity_type = "clinic"
+        mock_rotation.rotation_type = "clinic"
 
         mock_block_assignment = MagicMock()
         mock_block_assignment.id = uuid4()
@@ -402,7 +402,7 @@ class TestFiftySixSlotExpansion:
         mock_rotation.id = uuid4()
         mock_rotation.includes_weekend_work = True  # No weekends to simplify
         mock_rotation.weekly_patterns = []
-        mock_rotation.activity_type = "clinic"
+        mock_rotation.rotation_type = "clinic"
 
         mock_block_assignment = MagicMock()
         mock_block_assignment.id = uuid4()
@@ -468,7 +468,7 @@ class TestFiftySixSlotExpansion:
         mock_rotation.id = uuid4()
         mock_rotation.includes_weekend_work = False
         mock_rotation.weekly_patterns = []
-        mock_rotation.activity_type = "clinic"
+        mock_rotation.rotation_type = "clinic"
 
         mock_block_assignment = MagicMock()
         mock_block_assignment.id = uuid4()

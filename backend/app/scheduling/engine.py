@@ -1689,7 +1689,7 @@ class SchedulingEngine:
 
         Detection logic:
             - person.type == 'faculty'
-            - template.activity_type == 'inpatient'
+            - template.rotation_type == 'inpatient'
 
         Returns:
             List of Assignment objects for faculty on FMIT rotations
@@ -1705,7 +1705,7 @@ class SchedulingEngine:
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
                 Person.type == "faculty",
-                RotationTemplate.activity_type == "inpatient",
+                RotationTemplate.rotation_type == "inpatient",
             )
             .all()
         )
@@ -1720,7 +1720,7 @@ class SchedulingEngine:
 
         Detection logic:
             - person.type == 'resident'
-            - template.activity_type == 'inpatient'
+            - template.rotation_type == 'inpatient'
             - Includes: FMIT AM/PM, Night Float AM/PM, NICU
 
         Business Rules:
@@ -1743,7 +1743,7 @@ class SchedulingEngine:
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
                 Person.type == "resident",
-                RotationTemplate.activity_type == "inpatient",
+                RotationTemplate.rotation_type == "inpatient",
             )
             .all()
         )
@@ -1756,7 +1756,7 @@ class SchedulingEngine:
         so the solver skips assigning new work to people with absences.
 
         Detection logic:
-            - template.activity_type == 'absence'
+            - template.rotation_type == 'absence'
             - Includes: Leave AM/PM, Weekend AM/PM
 
         Business Rules:
@@ -1776,7 +1776,7 @@ class SchedulingEngine:
             .filter(
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
-                RotationTemplate.activity_type == "absence",
+                RotationTemplate.rotation_type == "absence",
             )
             .all()
         )
@@ -1789,7 +1789,7 @@ class SchedulingEngine:
         and should be preserved so the solver doesn't double-book people.
 
         Detection logic:
-            - template.activity_type == 'off'
+            - template.rotation_type == 'off'
             - Includes: Hilo, Kapiolani, Okinawa, OFF AM/PM
 
         Business Rules:
@@ -1809,7 +1809,7 @@ class SchedulingEngine:
             .filter(
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
-                RotationTemplate.activity_type == "off",
+                RotationTemplate.rotation_type == "off",
             )
             .all()
         )
@@ -1822,7 +1822,7 @@ class SchedulingEngine:
         residents and faculty. These are mandatory rest periods.
 
         Detection logic:
-            - template.activity_type == 'recovery'
+            - template.rotation_type == 'recovery'
             - Includes: Post-Call Recovery (PCR)
 
         Business Rules:
@@ -1842,7 +1842,7 @@ class SchedulingEngine:
             .filter(
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
-                RotationTemplate.activity_type == "recovery",
+                RotationTemplate.rotation_type == "recovery",
             )
             .all()
         )
@@ -1855,7 +1855,7 @@ class SchedulingEngine:
         These are protected academic time that cannot be preempted.
 
         Detection logic:
-            - template.activity_type == 'education'
+            - template.rotation_type == 'education'
             - Includes: FMO, GME AM/PM, Lecture AM/PM
 
         Business Rules:
@@ -1875,7 +1875,7 @@ class SchedulingEngine:
             .filter(
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
-                RotationTemplate.activity_type == "education",
+                RotationTemplate.rotation_type == "education",
             )
             .all()
         )
@@ -1988,14 +1988,14 @@ class SchedulingEngine:
     def _get_rotation_templates(
         self,
         template_ids: list[UUID] | None = None,
-        activity_type: str | None = "outpatient",
+        rotation_type: str | None = "outpatient",
     ) -> list[RotationTemplate]:
         """
         Get rotation templates for solver optimization.
 
         Args:
             template_ids: Optional list of specific template IDs to include
-            activity_type: Filter by activity type (default: "outpatient").
+            rotation_type: Filter by rotation type (default: "outpatient").
                           Use None to get all templates.
 
         Returns:
@@ -2007,9 +2007,9 @@ class SchedulingEngine:
             Block-assigned rotations (FMIT, NF, Inpatient, NICU) should NOT
             be passed to the solver - they are pre-assigned separately.
 
-            The "outpatient" activity_type includes elective/selective rotations
+            The "outpatient" rotation_type includes elective/selective rotations
             (Neurology, ID, Palliative, etc.) that use half-day scheduling.
-            Note: "clinic" is a separate activity_type for FM Clinic (FMC) which
+            Note: "clinic" is a separate rotation_type for FM Clinic (FMC) which
             has its own capacity and supervision constraints.
 
             See backend/app/scheduling/solvers.py header for architecture details.
@@ -2019,8 +2019,8 @@ class SchedulingEngine:
         if template_ids:
             query = query.filter(RotationTemplate.id.in_(template_ids))
 
-        if activity_type:
-            query = query.filter(RotationTemplate.activity_type == activity_type)
+        if rotation_type:
+            query = query.filter(RotationTemplate.rotation_type == rotation_type)
 
         return query.all()
 
@@ -2190,7 +2190,7 @@ class SchedulingEngine:
 
             # Check for procedure clinic requiring +1 faculty (immediate supervision)
             # ONLY specific procedure clinics (PROC, VAS, BTX, COLPO) need +1
-            # Not all "procedures" activity_type - POCUS, PR-AM don't require +1
+            # Not all "procedures" rotation_type - POCUS, PR-AM don't require +1
             procedure_bonus = 0
             for assignment in block_assignments:
                 # Check activity_override first (slot-level activity)
@@ -2354,7 +2354,7 @@ class SchedulingEngine:
                     .filter(RotationTemplate.id == tid)
                     .first()
                 )
-            if template and template.activity_type == "inpatient":
+            if template and template.rotation_type == "inpatient":
                 return tid
 
         # Default to first candidate

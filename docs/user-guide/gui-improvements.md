@@ -60,9 +60,9 @@ The **Scheduled Hours Calculator** provides transparency into projected work hou
 
 ### How Hours Are Calculated
 
-The calculator estimates scheduled hours by activity type:
+The calculator estimates scheduled hours by rotation type:
 
-| Activity Type | Estimated Hours |
+| Rotation Type | Estimated Hours |
 |---------------|-----------------|
 | Call | 12 hours |
 | Inpatient | 5 hours |

@@ -116,7 +116,7 @@ def sample_data(db):
     template = RotationTemplate(
         id=uuid4(),
         name="Test Clinic",
-        activity_type="clinic",
+        rotation_type="clinic",
         abbreviation="TC",
         max_residents=4,
         supervision_required=True,
@@ -490,27 +490,27 @@ class TestOptimisticLocking:
 class TestAssignmentFiltering:
     """Test assignment filtering functionality."""
 
-    def test_filter_by_activity_type(self, client, sample_data, admin_token, db):
-        """Test filtering assignments by activity_type."""
+    def test_filter_by_rotation_type(self, client, sample_data, admin_token, db):
+        """Test filtering assignments by rotation_type."""
         # Create rotation templates with different activity types
         on_call_template = RotationTemplate(
             id=uuid4(),
             name="On Call",
-            activity_type="on_call",
+            rotation_type="on_call",
             abbreviation="OC",
             supervision_required=True,
         )
         clinic_template = RotationTemplate(
             id=uuid4(),
             name="Clinic",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="CL",
             supervision_required=True,
         )
         inpatient_template = RotationTemplate(
             id=uuid4(),
             name="Inpatient",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="IP",
             supervision_required=True,
         )
@@ -547,37 +547,37 @@ class TestAssignmentFiltering:
         response = client.get(
             "/api/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
-            params={"activity_type": "on_call"},
+            params={"rotation_type": "on_call"},
         )
         assert response.status_code == 200
         data = response.json()
         assert len(data["items"]) == 2
         for item in data["items"]:
-            assert item["rotation_template"]["activity_type"] == "on_call"
+            assert item["rotation_template"]["rotation_type"] == "on_call"
 
         # Test filtering by clinic
         response = client.get(
             "/api/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
-            params={"activity_type": "clinic"},
+            params={"rotation_type": "clinic"},
         )
         assert response.status_code == 200
         data = response.json()
         assert len(data["items"]) == 2
         for item in data["items"]:
-            assert item["rotation_template"]["activity_type"] == "clinic"
+            assert item["rotation_template"]["rotation_type"] == "clinic"
 
         # Test filtering by inpatient
         response = client.get(
             "/api/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
-            params={"activity_type": "inpatient"},
+            params={"rotation_type": "inpatient"},
         )
         assert response.status_code == 200
         data = response.json()
         assert len(data["items"]) == 2
         for item in data["items"]:
-            assert item["rotation_template"]["activity_type"] == "inpatient"
+            assert item["rotation_template"]["rotation_type"] == "inpatient"
 
         # Test with no filter - should return all assignments
         response = client.get(
@@ -589,15 +589,15 @@ class TestAssignmentFiltering:
         # Should have at least 6 assignments (could have more from sample_data)
         assert len(data["items"]) >= 6
 
-    def test_filter_by_activity_type_with_date_range(
+    def test_filter_by_rotation_type_with_date_range(
         self, client, sample_data, admin_token, db
     ):
-        """Test combining activity_type filter with date range."""
+        """Test combining rotation_type filter with date range."""
         # Create an on_call template
         on_call_template = RotationTemplate(
             id=uuid4(),
             name="On Call",
-            activity_type="on_call",
+            rotation_type="on_call",
             abbreviation="OC",
             supervision_required=True,
         )
@@ -621,7 +621,7 @@ class TestAssignmentFiltering:
                 },
             )
 
-        # Test filtering by activity_type and date range
+        # Test filtering by rotation_type and date range
         start_date = today.isoformat()
         end_date = (today + timedelta(days=2)).isoformat()
 
@@ -629,7 +629,7 @@ class TestAssignmentFiltering:
             "/api/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
             params={
-                "activity_type": "on_call",
+                "rotation_type": "on_call",
                 "start_date": start_date,
                 "end_date": end_date,
             },
@@ -639,4 +639,4 @@ class TestAssignmentFiltering:
         # Should return assignments within the date range that are on_call
         assert len(data["items"]) >= 1
         for item in data["items"]:
-            assert item["rotation_template"]["activity_type"] == "on_call"
+            assert item["rotation_template"]["rotation_type"] == "on_call"

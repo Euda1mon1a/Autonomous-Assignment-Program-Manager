@@ -111,7 +111,7 @@ def websocket_test_setup(db: Session) -> dict:
     template = RotationTemplate(
         id=uuid4(),
         name="Sports Medicine Clinic",
-        activity_type="clinic",
+        rotation_type="clinic",
         abbreviation="SMC",
         supervision_required=True,
         max_supervision_ratio=4,

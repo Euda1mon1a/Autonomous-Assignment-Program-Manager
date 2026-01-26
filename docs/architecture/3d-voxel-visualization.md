@@ -151,7 +151,7 @@ Generate 3D voxel grid representation of schedule data.
 | `start_date` | date | Yes | Start of date range |
 | `end_date` | date | Yes | End of date range |
 | `person_ids` | UUID[] | No | Filter to specific people |
-| `activity_types` | string[] | No | Filter to specific activity types |
+| `rotation_types` | string[] | No | Filter to specific rotation types |
 | `include_violations` | bool | No | Include ACGME violation markers (default: true) |
 
 **Response:**
@@ -173,7 +173,7 @@ Generate 3D voxel grid representation of schedule data.
         "assignment_id": "uuid",
         "person_name": "Dr. Smith",
         "block_date": "2024-01-15",
-        "activity_name": "Morning Clinic"
+        "rotation_name": "Morning Clinic"
       },
       "visual": {
         "color": "#3B82F6",
@@ -292,9 +292,9 @@ function SchedulePage() {
 
 ## Color Coding
 
-### Activity Type Colors
+### Rotation Type Colors
 
-| Activity | Color | Hex |
+| Rotation Type | Color | Hex |
 |----------|-------|-----|
 | Clinic | Blue | `#3B82F6` |
 | Inpatient | Purple | `#8B5CF6` |
@@ -307,7 +307,7 @@ function SchedulePage() {
 
 ### Compliance Status Override
 
-When violations exist, activity colors are overridden:
+When violations exist, rotation colors are overridden:
 
 | Status | Color | Meaning |
 |--------|-------|---------|

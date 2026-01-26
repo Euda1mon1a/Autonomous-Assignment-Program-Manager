@@ -136,7 +136,7 @@ class TestPHIHeaders:
             person_id=sample_residents[0].id,
             block_id=sample_blocks[0].id,
             role="primary",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             notes="Sensitive note about performance",
         )
         db.add(assignment)
@@ -165,7 +165,7 @@ class TestPHIHeaders:
             person_id=sample_residents[0].id,
             block_id=sample_blocks[0].id,
             role="primary",
-            activity_type="inpatient",
+            rotation_type="inpatient",
         )
         db.add(assignment)
         db.commit()

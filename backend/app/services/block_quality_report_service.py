@@ -189,14 +189,14 @@ class BlockQualityReportService:
         """B1: Get solved assignments grouped by rotation."""
         result = self.db.execute(
             text("""
-                SELECT rt.name, rt.activity_type, COUNT(a.id) as cnt
+                SELECT rt.name, rt.rotation_type, COUNT(a.id) as cnt
                 FROM assignments a
                 JOIN blocks b ON a.block_id = b.id
                 LEFT JOIN rotation_templates rt ON a.rotation_template_id = rt.id
                 JOIN people p ON a.person_id = p.id
                 WHERE b.date BETWEEN :start_date AND :end_date
                 AND p.type = 'resident'
-                GROUP BY rt.id, rt.name, rt.activity_type
+                GROUP BY rt.id, rt.name, rt.rotation_type
                 ORDER BY cnt DESC
             """),
             {"start_date": start_date, "end_date": end_date},
@@ -204,7 +204,7 @@ class BlockQualityReportService:
         return [
             RotationSummary(
                 rotation=row[0] or "Unknown",
-                activity_type=row[1] or "unknown",
+                rotation_type=row[1] or "unknown",
                 count=row[2],
             )
             for row in result.fetchall()
@@ -709,7 +709,7 @@ class BlockQualityReportService:
         lines.append("| Rotation | Activity | Count |")
         lines.append("|----------|----------|-------|")
         for rot in report.section_b.by_rotation:
-            lines.append(f"| {rot.rotation} | {rot.activity_type} | {rot.count} |")
+            lines.append(f"| {rot.rotation} | {rot.rotation_type} | {rot.count} |")
         lines.append("")
 
         lines.append("## B2: Resident Distribution")

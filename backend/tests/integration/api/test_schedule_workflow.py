@@ -36,7 +36,7 @@ class TestScheduleWorkflow:
             "/api/rotation-templates/",
             json={
                 "name": "Clinic A",
-                "activity_type": "outpatient",
+                "rotation_type": "outpatient",
                 "abbreviation": "CLNA",
                 "max_residents": 2,
                 "supervision_required": True,
@@ -184,7 +184,7 @@ class TestScheduleWorkflow:
                 "/api/rotation-templates/",
                 json={
                     "name": f"Rotation {i + 1}",
-                    "activity_type": activity,
+                    "rotation_type": activity,
                     "abbreviation": f"R{i + 1}",
                     "max_residents": 3,
                 },

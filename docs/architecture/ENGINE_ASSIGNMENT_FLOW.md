@@ -193,11 +193,11 @@ Old solver-managed assignments are deleted **after** successful solve:
 
 ---
 
-## Activity Type Filters
+## Rotation Type Filters
 
-Each loader method filters by activity type:
+Each loader method filters by rotation type:
 
-| Loader | Activity Types | Description |
+| Loader | Rotation Types | Description |
 |--------|----------------|-------------|
 | `_load_fmit_assignments` | `inpatient` + name contains "FMIT" | Faculty FMIT weeks |
 | `_load_resident_inpatient_assignments` | `inpatient` | All other inpatient |

@@ -62,7 +62,7 @@ def sample_assignments(db: Session):
             id=uuid.uuid4(),
             name=name,
             abbreviation=name[:3].upper(),
-            activity_type="clinical" if name != "Conference" else "administrative",
+            rotation_type="clinical" if name != "Conference" else "administrative",
         )
         db.add(rotation)
         rotations.append(rotation)

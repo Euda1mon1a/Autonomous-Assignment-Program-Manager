@@ -235,7 +235,7 @@ class FacultyPrimaryDutyClinicConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -301,7 +301,7 @@ class FacultyPrimaryDutyClinicConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -368,7 +368,7 @@ class FacultyPrimaryDutyClinicConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         # Count clinic assignments by faculty and week
@@ -509,7 +509,7 @@ class FacultyDayAvailabilityConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -558,7 +558,7 @@ class FacultyDayAvailabilityConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -606,7 +606,7 @@ class FacultyDayAvailabilityConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
@@ -699,7 +699,7 @@ class FacultyClinicEquitySoftConstraint(SoftConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -769,7 +769,7 @@ class FacultyClinicEquitySoftConstraint(SoftConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -838,7 +838,7 @@ class FacultyClinicEquitySoftConstraint(SoftConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         # Count assignments

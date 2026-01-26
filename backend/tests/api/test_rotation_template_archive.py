@@ -23,7 +23,7 @@ class TestRotationTemplateArchive:
         # Create a template
         template_data = {
             "name": "Test Clinic",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
             "supervision_required": True,
         }
         response = client.post(
@@ -52,7 +52,7 @@ class TestRotationTemplateArchive:
         # Create and archive a template
         template_data = {
             "name": "Test Clinic",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
         }
         response = client.post(
             "/api/v1/rotation-templates",
@@ -82,7 +82,7 @@ class TestRotationTemplateArchive:
         # Create and archive a template
         template_data = {
             "name": "Test Clinic",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
         }
         response = client.post(
             "/api/v1/rotation-templates",
@@ -114,7 +114,7 @@ class TestRotationTemplateArchive:
         # Create a template (not archived)
         template_data = {
             "name": "Test Clinic",
-            "activity_type": "clinic",
+            "rotation_type": "clinic",
         }
         response = client.post(
             "/api/v1/rotation-templates",
@@ -139,7 +139,7 @@ class TestRotationTemplateArchive:
         for i in range(2):
             client.post(
                 "/api/v1/rotation-templates",
-                json={"name": f"Template {i}", "activity_type": "clinic"},
+                json={"name": f"Template {i}", "rotation_type": "clinic"},
                 headers=auth_headers,
             )
 
@@ -176,7 +176,7 @@ class TestRotationTemplateArchive:
         # Create and archive a template
         response = client.post(
             "/api/v1/rotation-templates",
-            json={"name": "Test Clinic", "activity_type": "clinic"},
+            json={"name": "Test Clinic", "rotation_type": "clinic"},
             headers=auth_headers,
         )
         template_id = response.json()["id"]
@@ -211,7 +211,7 @@ class TestRotationTemplateBatchArchive:
         for i in range(3):
             response = client.post(
                 "/api/v1/rotation-templates",
-                json={"name": f"Template {i}", "activity_type": "clinic"},
+                json={"name": f"Template {i}", "rotation_type": "clinic"},
                 headers=auth_headers,
             )
             template_ids.append(response.json()["id"])
@@ -235,7 +235,7 @@ class TestRotationTemplateBatchArchive:
         # Create a template
         response = client.post(
             "/api/v1/rotation-templates",
-            json={"name": "Test Clinic", "activity_type": "clinic"},
+            json={"name": "Test Clinic", "rotation_type": "clinic"},
             headers=auth_headers,
         )
         template_id = response.json()["id"]
@@ -265,7 +265,7 @@ class TestRotationTemplateBatchArchive:
         # Create one valid template
         response = client.post(
             "/api/v1/rotation-templates",
-            json={"name": "Valid Template", "activity_type": "clinic"},
+            json={"name": "Valid Template", "rotation_type": "clinic"},
             headers=auth_headers,
         )
         valid_id = response.json()["id"]
@@ -290,7 +290,7 @@ class TestRotationTemplateBatchArchive:
         for i in range(2):
             response = client.post(
                 "/api/v1/rotation-templates",
-                json={"name": f"Template {i}", "activity_type": "clinic"},
+                json={"name": f"Template {i}", "rotation_type": "clinic"},
                 headers=auth_headers,
             )
             template_id = response.json()["id"]
@@ -327,7 +327,7 @@ class TestRotationTemplateBatchPatterns:
         for i in range(2):
             response = client.post(
                 "/api/v1/rotation-templates",
-                json={"name": f"Clinic {i}", "activity_type": "clinic"},
+                json={"name": f"Clinic {i}", "rotation_type": "clinic"},
                 headers=auth_headers,
             )
             template_ids.append(response.json()["id"])
@@ -337,13 +337,13 @@ class TestRotationTemplateBatchPatterns:
             {
                 "day_of_week": 0,  # Monday
                 "time_of_day": "AM",
-                "activity_type": "clinic",
+                "rotation_type": "clinic",
                 "is_protected": False,
             },
             {
                 "day_of_week": 0,  # Monday
                 "time_of_day": "PM",
-                "activity_type": "clinic",
+                "rotation_type": "clinic",
                 "is_protected": False,
             },
         ]
@@ -385,7 +385,7 @@ class TestRotationTemplateBatchPreferences:
         for i in range(2):
             response = client.post(
                 "/api/v1/rotation-templates",
-                json={"name": f"Template {i}", "activity_type": "clinic"},
+                json={"name": f"Template {i}", "rotation_type": "clinic"},
                 headers=auth_headers,
             )
             template_ids.append(response.json()["id"])
@@ -439,7 +439,7 @@ class TestRotationTemplateHistory:
         # Create a template
         response = client.post(
             "/api/v1/rotation-templates",
-            json={"name": "Test Clinic", "activity_type": "clinic"},
+            json={"name": "Test Clinic", "rotation_type": "clinic"},
             headers=auth_headers,
         )
         template_id = response.json()["id"]

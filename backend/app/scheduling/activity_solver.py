@@ -55,7 +55,7 @@ DEFAULT_WEEKLY_SPECIALTY_MAX = 4
 # Day index cutoff for secondary rotations (day 15+ uses secondary)
 BLOCK_HALF_DAY = 14
 
-# Rotation activity types considered outpatient for activity solving
+# Rotation types considered outpatient for activity solving
 OUTPATIENT_ACTIVITY_TYPES = {"clinic", "outpatient"}
 
 # Clinic/supervision codes for activity-level constraints
@@ -1002,7 +1002,7 @@ class CPSATActivitySolver:
             existing = requirements_by_template.get(template_id, [])
             if existing:
                 continue
-            if (template.activity_type or "").lower() not in OUTPATIENT_ACTIVITY_TYPES:
+            if (template.rotation_type or "").lower() not in OUTPATIENT_ACTIVITY_TYPES:
                 continue
 
             clinic_activity = self._ensure_activity(
@@ -1110,7 +1110,7 @@ class CPSATActivitySolver:
             template = self._get_active_rotation_template(slot, start_date)
             if not template:
                 continue
-            if (template.activity_type or "").lower() not in OUTPATIENT_ACTIVITY_TYPES:
+            if (template.rotation_type or "").lower() not in OUTPATIENT_ACTIVITY_TYPES:
                 continue
             eligible.append(slot)
         return eligible
@@ -1157,7 +1157,7 @@ class CPSATActivitySolver:
             template = self._get_active_rotation_template(slot, start_date)
             if not template:
                 continue
-            if (template.activity_type or "").lower() not in OUTPATIENT_ACTIVITY_TYPES:
+            if (template.rotation_type or "").lower() not in OUTPATIENT_ACTIVITY_TYPES:
                 continue
             eligible.append(slot)
         return eligible

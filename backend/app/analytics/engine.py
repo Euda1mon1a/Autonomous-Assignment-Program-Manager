@@ -225,7 +225,7 @@ class AnalyticsEngine:
             self.db.query(
                 RotationTemplate.id,
                 RotationTemplate.name,
-                RotationTemplate.activity_type,
+                RotationTemplate.rotation_type,
                 func.count(Assignment.id).label("assignment_count"),
             )
             .join(Assignment)
@@ -239,28 +239,28 @@ class AnalyticsEngine:
             query = query.filter(Block.date <= end_date)
 
         results = query.group_by(
-            RotationTemplate.id, RotationTemplate.name, RotationTemplate.activity_type
+            RotationTemplate.id, RotationTemplate.name, RotationTemplate.rotation_type
         ).all()
 
         coverage_data = []
-        for rotation_id, name, activity_type, count in results:
+        for rotation_id, name, rotation_type, count in results:
             coverage_data.append(
                 {
                     "rotation_id": str(rotation_id),
                     "name": name,
-                    "activity_type": activity_type,
+                    "rotation_type": rotation_type,
                     "total_assignments": count,
                 }
             )
 
-        # Group by activity type
-        by_activity_type = defaultdict(int)
+        # Group by rotation type
+        by_rotation_type = defaultdict(int)
         for item in coverage_data:
-            by_activity_type[item["activity_type"]] += item["total_assignments"]
+            by_rotation_type[item["rotation_type"]] += item["total_assignments"]
 
         return {
             "rotations": coverage_data,
-            "by_activity_type": dict(by_activity_type),
+            "by_rotation_type": dict(by_rotation_type),
             "total_rotations": len(coverage_data),
         }
 

@@ -70,12 +70,12 @@ class MockTemplate:
         self,
         template_id=None,
         name="Test Template",
-        activity_type="outpatient",
+        rotation_type="outpatient",
         max_residents=None,
     ):
         self.id = template_id or uuid4()
         self.name = name
-        self.activity_type = activity_type
+        self.rotation_type = rotation_type
         self.max_residents = max_residents
 
 
@@ -818,7 +818,7 @@ class TestMaxPhysiciansInClinicConstraint:
         blocks = create_week_of_blocks()
         template = MockTemplate(
             name="Clinic",
-            activity_type="outpatient",
+            rotation_type="outpatient",
         )
 
         context = SchedulingContext(
@@ -838,7 +838,7 @@ class TestMaxPhysiciansInClinicConstraint:
         blocks = create_week_of_blocks()
         residents = create_residents(count=10)
         # Template is not outpatient type
-        template = MockTemplate(name="Inpatient", activity_type="inpatient")
+        template = MockTemplate(name="Inpatient", rotation_type="inpatient")
 
         assignments = [
             MockAssignment(
@@ -867,7 +867,7 @@ class TestMaxPhysiciansInClinicConstraint:
         blocks = create_week_of_blocks()
         residents = create_residents(count=4)
         faculty = create_faculty(count=2)
-        template = MockTemplate(name="Clinic", activity_type="outpatient")
+        template = MockTemplate(name="Clinic", rotation_type="outpatient")
 
         # Assign 4 residents + 2 faculty = 6 physicians (at limit)
         assignments = []
@@ -905,7 +905,7 @@ class TestMaxPhysiciansInClinicConstraint:
         blocks = create_week_of_blocks()
         residents = create_residents(count=5)
         faculty = create_faculty(count=3)
-        template = MockTemplate(name="Clinic", activity_type="outpatient")
+        template = MockTemplate(name="Clinic", rotation_type="outpatient")
 
         # Assign 5 residents + 3 faculty = 8 physicians (exceeds limit of 6)
         first_block = blocks[0]
@@ -947,7 +947,7 @@ class TestMaxPhysiciansInClinicConstraint:
         constraint = MaxPhysiciansInClinicConstraint(max_physicians=4)
         blocks = create_week_of_blocks()
         residents = create_residents(count=3)
-        template = MockTemplate(name="Clinic", activity_type="outpatient")
+        template = MockTemplate(name="Clinic", rotation_type="outpatient")
 
         assignments = [
             MockAssignment(
@@ -974,7 +974,7 @@ class TestMaxPhysiciansInClinicConstraint:
         constraint = MaxPhysiciansInClinicConstraint(max_physicians=4)
         blocks = create_week_of_blocks()
         faculty = create_faculty(count=3)
-        template = MockTemplate(name="Clinic", activity_type="outpatient")
+        template = MockTemplate(name="Clinic", rotation_type="outpatient")
 
         assignments = [
             MockAssignment(
@@ -1001,7 +1001,7 @@ class TestMaxPhysiciansInClinicConstraint:
         constraint = MaxPhysiciansInClinicConstraint(max_physicians=4)
         blocks = create_week_of_blocks()
         residents = create_residents(count=8)
-        template = MockTemplate(name="Clinic", activity_type="outpatient")
+        template = MockTemplate(name="Clinic", rotation_type="outpatient")
 
         assignments = [
             # Block 0: 4 residents (at limit, ok)
@@ -1067,11 +1067,11 @@ class TestMaxPhysiciansInClinicConstraint:
         residents = create_residents(count=6)
         template1 = MockTemplate(
             name="Sports Med",
-            activity_type="outpatient",
+            rotation_type="outpatient",
         )
         template2 = MockTemplate(
             name="Primary Care",
-            activity_type="outpatient",
+            rotation_type="outpatient",
         )
 
         # Assign to same block but different clinic templates
@@ -1129,11 +1129,11 @@ class TestMaxPhysiciansInClinicConstraint:
         residents = create_residents(count=6)
         clinic_template = MockTemplate(
             name="Clinic",
-            activity_type="outpatient",
+            rotation_type="outpatient",
         )
         inpatient_template = MockTemplate(
             name="Inpatient",
-            activity_type="inpatient",
+            rotation_type="inpatient",
         )
 
         first_block = blocks[0]
@@ -1454,7 +1454,7 @@ class TestCapacityConstraintsIntegration:
         faculty = create_faculty(count=2)
         template = MockTemplate(
             name="Sports Med",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             max_residents=4,
         )
 
@@ -1505,7 +1505,7 @@ class TestCapacityConstraintsIntegration:
         residents = create_residents(count=10)
         template = MockTemplate(
             name="Small Clinic",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             max_residents=2,
         )
 

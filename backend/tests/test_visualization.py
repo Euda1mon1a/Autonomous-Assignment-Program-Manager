@@ -72,14 +72,14 @@ def sample_schedule_data(db):
     clinic_rotation = RotationTemplate(
         id=uuid4(),
         name="Clinic",
-        activity_type="clinic",
+        rotation_type="clinic",
         abbreviation="C",
         max_residents=4,
     )
     fmit_rotation = RotationTemplate(
         id=uuid4(),
         name="FMIT Inpatient",
-        activity_type="inpatient",
+        rotation_type="inpatient",
         abbreviation="FMIT",
     )
     db.add_all([clinic_rotation, fmit_rotation])

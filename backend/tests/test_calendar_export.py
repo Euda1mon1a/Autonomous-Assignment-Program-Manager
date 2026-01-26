@@ -39,7 +39,7 @@ class TestCalendarExportICSEndpoint:
         rotation = RotationTemplate(
             id=uuid.uuid4(),
             name="Sports Medicine Clinic",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="SMC",
             clinic_location="Building A, Room 101",
         )
@@ -105,12 +105,12 @@ class TestCalendarExportICSEndpoint:
         rotation1 = RotationTemplate(
             id=uuid.uuid4(),
             name="Primary Care",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         rotation2 = RotationTemplate(
             id=uuid.uuid4(),
             name="Inpatient Service",
-            activity_type="inpatient",
+            rotation_type="inpatient",
         )
         db.add_all([rotation1, rotation2])
 
@@ -191,7 +191,7 @@ class TestCalendarExportICSEndpoint:
         rotation = RotationTemplate(
             id=uuid.uuid4(),
             name="Test Rotation",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         db.add(rotation)
 
@@ -249,7 +249,7 @@ class TestCalendarExportICSEndpoint:
         rotation = RotationTemplate(
             id=uuid.uuid4(),
             name="Clinic Rotation",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         db.add(rotation)
 
@@ -370,7 +370,7 @@ class TestRFC5545Compliance:
         rotation = RotationTemplate(
             id=uuid.uuid4(),
             name="Test Event Rotation",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         db.add(rotation)
 
@@ -421,7 +421,7 @@ class TestRFC5545Compliance:
         rotation = RotationTemplate(
             id=uuid.uuid4(),
             name="UID Rotation",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         db.add(rotation)
 
@@ -478,7 +478,7 @@ class TestRFC5545Compliance:
         rotation = RotationTemplate(
             id=uuid.uuid4(),
             name="DateTime Rotation",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         db.add(rotation)
 
@@ -625,7 +625,7 @@ class TestTimezoneHandling:
         rotation = RotationTemplate(
             id=uuid.uuid4(),
             name="AM Rotation",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         db.add(rotation)
 
@@ -671,7 +671,7 @@ class TestTimezoneHandling:
         rotation = RotationTemplate(
             id=uuid.uuid4(),
             name="PM Rotation",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         db.add(rotation)
 
@@ -806,7 +806,7 @@ class TestFilterParameters:
         rotation = RotationTemplate(
             id=uuid.uuid4(),
             name="Test Rotation",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         db.add(rotation)
 
@@ -981,7 +981,7 @@ class TestICSFileContent:
         rotation = RotationTemplate(
             id=uuid.uuid4(),
             name="Location Clinic",
-            activity_type="clinic",
+            rotation_type="clinic",
             clinic_location="Medical Center, Floor 3, Suite 301",
         )
         db.add(rotation)
@@ -1027,7 +1027,7 @@ class TestICSFileContent:
         rotation = RotationTemplate(
             id=uuid.uuid4(),
             name="Notes Rotation",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         db.add(rotation)
 
@@ -1063,7 +1063,7 @@ class TestICSFileContent:
         content = response.text
         assert "Bring stethoscope and laptop" in content
 
-    def test_ics_includes_activity_type(self, client: TestClient, db: Session) -> None:
+    def test_ics_includes_rotation_type(self, client: TestClient, db: Session) -> None:
         """Test that activity type is included in event descriptions."""
         person = Person(id=uuid.uuid4(), name="Dr. Activity Test", type="resident")
         db.add(person)
@@ -1071,7 +1071,7 @@ class TestICSFileContent:
         rotation = RotationTemplate(
             id=uuid.uuid4(),
             name="Activity Rotation",
-            activity_type="inpatient",
+            rotation_type="inpatient",
         )
         db.add(rotation)
 

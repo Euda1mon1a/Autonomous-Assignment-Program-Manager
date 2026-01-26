@@ -175,14 +175,14 @@ class TestDailyManifest:
         template_a = RotationTemplate(
             id=uuid4(),
             name="Clinic A",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="CA",
             clinic_location="Building A",
         )
         template_b = RotationTemplate(
             id=uuid4(),
             name="Clinic B",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="CB",
             clinic_location="Building B",
         )
@@ -317,7 +317,7 @@ class TestDailyManifest:
         template = RotationTemplate(
             id=uuid4(),
             name="Mixed Clinic",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="MC",
             clinic_location="Main Clinic",
         )
@@ -517,14 +517,14 @@ class TestDailyManifest:
         template_z = RotationTemplate(
             id=uuid4(),
             name="Z Clinic",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="ZC",
             clinic_location="Zebra Building",
         )
         template_a = RotationTemplate(
             id=uuid4(),
             name="A Clinic",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="AC",
             clinic_location="Alpha Building",
         )

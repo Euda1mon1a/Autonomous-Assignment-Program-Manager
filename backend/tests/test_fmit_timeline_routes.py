@@ -39,7 +39,7 @@ def sample_fmit_rotation(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="FMIT Block",
-        activity_type="clinic",
+        rotation_type="clinic",
         abbreviation="FMIT",
         clinic_location="Main Campus",
         max_residents=2,

@@ -237,7 +237,7 @@ class FairnessAuditService:
 
             if template:
                 template_name = (template.name or "").upper()
-                activity_type = (template.activity_type or "").lower()
+                rotation_type = (template.rotation_type or "").lower()
 
                 # Count FMIT (by week)
                 if "FMIT" in template_name:
@@ -248,14 +248,14 @@ class FairnessAuditService:
                             workload.fmit_weeks += 1
 
                 # Count clinic
-                if activity_type in ("outpatient", "clinic", "fm_clinic"):
+                if rotation_type in ("outpatient", "clinic", "fm_clinic"):
                     workload.clinic_halfdays += 1
 
                 # Count admin
                 if (
                     "GME" in template_name
                     or "DFM" in template_name
-                    or activity_type in ("admin", "gme", "dfm")
+                    or rotation_type in ("admin", "gme", "dfm")
                 ):
                     workload.admin_halfdays += 1
 
@@ -263,7 +263,7 @@ class FairnessAuditService:
                 if (
                     "LEC" in template_name
                     or "ADV" in template_name
-                    or activity_type in ("academic", "lecture", "advising")
+                    or rotation_type in ("academic", "lecture", "advising")
                 ):
                     workload.academic_halfdays += 1
 

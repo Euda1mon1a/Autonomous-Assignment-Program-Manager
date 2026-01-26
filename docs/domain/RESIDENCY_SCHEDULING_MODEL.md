@@ -2,6 +2,13 @@
 
 ## Core Concepts
 
+### Academic Year & Blocks (non‑Gregorian)
+
+- Academic year runs **July 1 → June 30**.
+- **Academic Blocks (0–13)** are 28‑day containers that rotations span.
+- **Block 0** is orientation (July 1 → day before first Thursday; 0–6 days).
+- **Half‑day Blocks** are AM/PM slots used by assignments (730 per year).
+
 ### Rotation vs Activity vs Absence
 
 **Rotation** = Multi-week block assignment (28 days = 4 weeks)
@@ -9,6 +16,7 @@
 - Stored in `rotation_templates` table
 - Residents are assigned to rotations via `block_assignments`
 - A rotation CONTAINS multiple activities within its 56 half-day slots
+- Rotation category lives in `RotationTemplate.rotation_type` (NOT an Activity)
 
 **Activity** = Slot-level event that fills half-day slots
 - Examples: FM Clinic AM, Specialty PM, LEC Wednesday PM
@@ -114,9 +122,9 @@ RotationActivityRequirement:
 
 ## Template Categories
 
-| Category | Activity Types | Away Tracking |
+| Category | Rotation Types | Away Tracking |
 |----------|----------------|---------------|
-| rotation | clinic, inpatient, procedure | No |
+| rotation | clinic, outpatient, inpatient, procedure | No |
 | time_off | off, recovery | No |
 | absence | absence | Yes (counts toward 28 days) |
 | educational | conference, lecture | No |

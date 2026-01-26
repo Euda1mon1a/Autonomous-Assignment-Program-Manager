@@ -40,25 +40,25 @@ class TestBlockSchedulerController:
         template_data = [
             {
                 "name": "FMIT",
-                "activity_type": "inpatient",
+                "rotation_type": "inpatient",
                 "leave_eligible": False,
                 "abbreviation": "FMIT",
             },
             {
                 "name": "Outpatient Clinic",
-                "activity_type": "outpatient",
+                "rotation_type": "outpatient",
                 "leave_eligible": True,
                 "abbreviation": "OPC",
             },
             {
                 "name": "Night Float",
-                "activity_type": "call",
+                "rotation_type": "call",
                 "leave_eligible": False,
                 "abbreviation": "NF",
             },
             {
                 "name": "Elective",
-                "activity_type": "elective",
+                "rotation_type": "elective",
                 "leave_eligible": True,
                 "abbreviation": "ELEC",
             },
@@ -67,7 +67,7 @@ class TestBlockSchedulerController:
             template = RotationTemplate(
                 id=uuid4(),
                 name=data["name"],
-                activity_type=data["activity_type"],
+                rotation_type=data["rotation_type"],
                 leave_eligible=data["leave_eligible"],
                 abbreviation=data["abbreviation"],
                 max_residents=4,

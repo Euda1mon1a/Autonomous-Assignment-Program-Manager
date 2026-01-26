@@ -160,7 +160,7 @@ Post-Call Recovery  PCR
 
 ### Loading Preserved Assignments
 
-The engine loads preserved assignments using activity type filters:
+The engine loads preserved assignments using rotation type filters:
 
 ```python
 # backend/app/scheduling/engine.py

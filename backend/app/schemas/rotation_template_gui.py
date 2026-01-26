@@ -27,7 +27,7 @@ class WeeklyPatternBase(BaseModel):
         ...,
         max_length=50,
         description=(
-            "Activity code for this slot (Activity, not RotationTemplate.activity_type). "
+            "Activity code for this slot (Activity, not RotationTemplate.rotation_type). "
             "Examples: fm_clinic, specialty, elective, conference, inpatient, call, procedure, off."
         ),
     )
@@ -157,7 +157,7 @@ class RotationTemplateExtendedCreate(BaseModel):
     # Core fields
     name: str
     # Rotation category/setting (NOT an Activity). Used for solver filtering + constraints.
-    activity_type: str
+    rotation_type: str
     abbreviation: str | None = None
     font_color: str | None = None
     background_color: str | None = None
@@ -187,7 +187,7 @@ class RotationTemplateExtendedResponse(BaseModel):
     # Core fields
     id: UUID
     name: str
-    activity_type: str
+    rotation_type: str
     abbreviation: str | None = None
     font_color: str | None = None
     background_color: str | None = None
@@ -232,7 +232,7 @@ class SplitRotationTemplateConfig(BaseModel):
     """Configuration for one half of a split rotation."""
 
     name: str
-    activity_type: str
+    rotation_type: str
     abbreviation: str | None = None
     font_color: str | None = None
     background_color: str | None = None

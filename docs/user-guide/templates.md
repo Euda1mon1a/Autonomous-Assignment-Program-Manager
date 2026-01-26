@@ -30,7 +30,7 @@ View all rotation templates with search and filtering capabilities.
 
 **Features:**
 - Search by name or abbreviation
-- Filter by activity type (Clinic, Inpatient, Call, etc.)
+- Filter by rotation type (Clinic, Inpatient, Call, etc.)
 - Sortable columns
 - View template details
 
@@ -75,7 +75,7 @@ At-a-glance overview of all faculty schedules for a week.
 **Features:**
 - All faculty in rows, days in columns
 - AM/PM cells show activity abbreviations
-- Color-coded by activity type
+- Color-coded by rotation type
 - Adjunct faculty toggle
 - Workload badges showing deviation from mean
 - Click any cell to open editor modal
@@ -119,7 +119,7 @@ Administrative tools for system-wide template management.
 
 ---
 
-## Activity Types
+## Rotation Types
 
 | Type | Color | Description |
 |------|-------|-------------|

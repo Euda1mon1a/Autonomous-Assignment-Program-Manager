@@ -147,7 +147,7 @@ Click the **Res.** button (graduation cap icon) to access:
 - **Drag-and-drop** to reschedule assignments within a resident's row
 - Compact/normal zoom toggle for different detail levels
 - "Today" button to quickly navigate to current date
-- Color-coded activity types (Clinic, Inpatient, Procedure, Call, Elective, Leave)
+- Color-coded rotation types (Clinic, Inpatient, Procedure, Call, Elective, Leave)
 
 **How to use drag-and-drop:**
 1. Click and hold on any assignment cell
@@ -250,7 +250,7 @@ Templates define the types of rotations/activities in your program with their co
 | Field | Description |
 |-------|-------------|
 | **Name** | Template name (e.g., "Inpatient Ward", "Clinic AM") |
-| **Activity Type** | Category: clinic, inpatient, procedure, conference, elective, call |
+| **Rotation Type** | Category: clinic, inpatient, procedure, conference, elective, call |
 | **Abbreviation** | Short code for schedule display (e.g., "INP", "CLN") |
 | **Max Residents** | Maximum residents allowed on this rotation at once |
 | **Supervision Ratio** | Faculty-to-resident ratio (1:2, 1:4, etc.) |
@@ -269,9 +269,9 @@ Templates define the types of rotations/activities in your program with their co
 3. Modify settings
 4. Click **Save Changes**
 
-### Activity Type Colors
+### Rotation Type Colors
 
-Templates are color-coded by activity type:
+Templates are color-coded by rotation type:
 - **Blue**: Clinic
 - **Purple**: Inpatient
 - **Red**: Procedure
@@ -656,7 +656,7 @@ A: Yes, multiple users can be logged in simultaneously. Changes are saved immedi
 A: Start with "Greedy" for quick results. Try "Min Conflicts" if you're getting violations. Use "CP-SAT" when you need the best possible schedule and have time to wait.
 
 **Q: How far in advance can I generate schedules?**
-A: You can generate schedules for any date range. Most programs do one block (4 weeks) at a time.
+Schedules can be generated for any date range. Common practice is one block (4 weeks) at a time.
 
 **Q: Why is the schedule showing compliance violations?**
 A: Violations appear when the schedule breaks ACGME rules. Check the Compliance page to see details and adjust the schedule accordingly.

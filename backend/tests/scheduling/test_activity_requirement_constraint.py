@@ -64,11 +64,11 @@ class MockTemplate:
         self,
         template_id=None,
         name="Test Template",
-        activity_type="outpatient",
+        rotation_type="outpatient",
     ):
         self.id = template_id or uuid4()
         self.name = name
-        self.activity_type = activity_type
+        self.rotation_type = rotation_type
 
 
 class MockActivity:

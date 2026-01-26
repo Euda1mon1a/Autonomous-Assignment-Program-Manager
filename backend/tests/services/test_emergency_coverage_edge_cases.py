@@ -73,7 +73,7 @@ class TestEmergencyCoverageEdgeCases:
         template = RotationTemplate(
             id=uuid4(),
             name="Call Coverage",
-            activity_type="call",
+            rotation_type="call",
             abbreviation="CALL",
             max_residents=1,
             supervision_required=True,
@@ -89,7 +89,7 @@ class TestEmergencyCoverageEdgeCases:
         template = RotationTemplate(
             id=uuid4(),
             name="Clinic",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="CLINIC",
             max_residents=4,
             supervision_required=False,
@@ -105,7 +105,7 @@ class TestEmergencyCoverageEdgeCases:
         template = RotationTemplate(
             id=uuid4(),
             name="Inpatient",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="IP",
             max_residents=2,
             supervision_required=True,

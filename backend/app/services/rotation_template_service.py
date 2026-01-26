@@ -85,7 +85,7 @@ class RotationTemplateService:
 
     async def _ensure_activity_for_template(self, template: RotationTemplate) -> None:
         """Create a specialty activity for outpatient/clinic templates if missing."""
-        if (template.activity_type or "").lower() not in ("clinic", "outpatient"):
+        if (template.rotation_type or "").lower() not in ("clinic", "outpatient"):
             return
 
         code = activity_code_from_name(template.name)
@@ -876,7 +876,7 @@ class RotationTemplateService:
                 "template": {
                     "id": str(template.id),
                     "name": template.name,
-                    "activity_type": template.activity_type,
+                    "rotation_type": template.rotation_type,
                     "abbreviation": template.abbreviation,
                     "display_abbreviation": template.display_abbreviation,
                     "font_color": template.font_color,

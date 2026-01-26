@@ -42,7 +42,7 @@ class TestConflictAutoResolver:
         template = RotationTemplate(
             id=uuid4(),
             name="Rotation",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="ROT",
             max_residents=4,
         )

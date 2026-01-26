@@ -76,7 +76,7 @@ def rotation_templates(db: Session) -> dict:
     clinic_rotation = RotationTemplate(
         id=uuid4(),
         name="Sports Medicine Clinic",
-        activity_type="clinic",
+        rotation_type="clinic",
         abbreviation="SM",
         clinic_location="Building A",
         max_residents=4,
@@ -87,7 +87,7 @@ def rotation_templates(db: Session) -> dict:
     call_rotation = RotationTemplate(
         id=uuid4(),
         name="Call Coverage",
-        activity_type="call",
+        rotation_type="call",
         abbreviation="CALL",
         max_residents=1,
         supervision_required=True,
@@ -97,7 +97,7 @@ def rotation_templates(db: Session) -> dict:
     procedures_rotation = RotationTemplate(
         id=uuid4(),
         name="Procedures",
-        activity_type="procedures",
+        rotation_type="procedures",
         abbreviation="PROC",
         max_residents=2,
         supervision_required=True,

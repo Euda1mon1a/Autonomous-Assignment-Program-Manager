@@ -785,7 +785,7 @@ class BlockAssignmentImportService:
         )
 
     async def create_quick_template(
-        self, abbreviation: str, name: str, activity_type: str, leave_eligible: bool
+        self, abbreviation: str, name: str, rotation_type: str, leave_eligible: bool
     ) -> RotationTemplate:
         """
         Create a new rotation template quickly during import.
@@ -793,7 +793,7 @@ class BlockAssignmentImportService:
         Args:
             abbreviation: Short abbreviation
             name: Full name
-            activity_type: Activity type
+            rotation_type: Rotation category for the template
             leave_eligible: Whether rotation allows leave
 
         Returns:
@@ -803,7 +803,7 @@ class BlockAssignmentImportService:
             abbreviation=abbreviation.upper(),
             display_abbreviation=abbreviation.upper()[:4],
             name=name,
-            activity_type=activity_type,
+            rotation_type=rotation_type,
             leave_eligible=leave_eligible,
             is_archived=False,
         )
@@ -822,7 +822,7 @@ class BlockAssignmentImportService:
 
     async def _ensure_activity_for_template(self, template: RotationTemplate) -> None:
         """Create a specialty activity for outpatient/clinic templates if missing."""
-        if (template.activity_type or "").lower() not in ("clinic", "outpatient"):
+        if (template.rotation_type or "").lower() not in ("clinic", "outpatient"):
             return
 
         code = activity_code_from_name(template.name)

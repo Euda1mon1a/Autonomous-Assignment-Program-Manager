@@ -171,8 +171,8 @@ def predict_next_block_failures(db: Session, current_block_number: int) -> list[
         if not rotation:
             continue
 
-        # Use activity_type as slot_type (simplified)
-        slot_type = rotation.activity_type
+        # Use rotation_type as slot_type (simplified)
+        slot_type = rotation.rotation_type
 
         # Check eligibility for block start date
         block = db.query(Block).filter(Block.id == assignment.block_id).first()
@@ -340,7 +340,7 @@ def inpatient_call_rotation(db: Session) -> RotationTemplate:
     rotation = RotationTemplate(
         id=uuid4(),
         name="Inpatient Call",
-        activity_type="inpatient_call",
+        rotation_type="inpatient_call",
         abbreviation="Call",
         max_residents=4,
         supervision_required=True,
@@ -357,7 +357,7 @@ def peds_clinic_rotation(db: Session) -> RotationTemplate:
     rotation = RotationTemplate(
         id=uuid4(),
         name="Pediatric Clinic",
-        activity_type="peds_clinic",
+        rotation_type="peds_clinic",
         abbreviation="Peds",
         max_residents=4,
         supervision_required=True,
@@ -807,7 +807,7 @@ class TestDashboardHardFailurePrediction:
         peds_rotation = RotationTemplate(
             id=uuid4(),
             name="Pediatric Clinic",
-            activity_type="peds_clinic",
+            rotation_type="peds_clinic",
             abbreviation="Peds",
             max_residents=4,
         )
@@ -888,7 +888,7 @@ class TestDashboardHardFailurePrediction:
         peds_rotation = RotationTemplate(
             id=uuid4(),
             name="Pediatric Clinic",
-            activity_type="peds_clinic",
+            rotation_type="peds_clinic",
             abbreviation="Peds",
             max_residents=4,
         )
@@ -993,7 +993,7 @@ class TestDashboardHardFailurePrediction:
         peds_rotation = RotationTemplate(
             id=uuid4(),
             name="Pediatric Clinic",
-            activity_type="peds_clinic",
+            rotation_type="peds_clinic",
             abbreviation="Peds",
             max_residents=4,
         )

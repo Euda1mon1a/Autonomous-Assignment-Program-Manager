@@ -242,7 +242,7 @@ class TestDashboardQueries:
         """Test week count calculation with assignments."""
         # Create FMIT template
         fmit_template = RotationTemplate(
-            id=uuid4(), name="FMIT", activity_type="clinic", abbreviation="FMIT"
+            id=uuid4(), name="FMIT", rotation_type="clinic", abbreviation="FMIT"
         )
         db.add(fmit_template)
         db.commit()
@@ -296,7 +296,7 @@ class TestDashboardQueries:
         """Test upcoming weeks with future assignments."""
         # Create FMIT template
         fmit_template = RotationTemplate(
-            id=uuid4(), name="FMIT", activity_type="clinic", abbreviation="FMIT"
+            id=uuid4(), name="FMIT", rotation_type="clinic", abbreviation="FMIT"
         )
         db.add(fmit_template)
         db.commit()
@@ -487,7 +487,7 @@ class TestDashboardEndpoint:
 
         # Create FMIT template
         fmit_template = RotationTemplate(
-            id=uuid4(), name="FMIT", activity_type="clinic", abbreviation="FMIT"
+            id=uuid4(), name="FMIT", rotation_type="clinic", abbreviation="FMIT"
         )
         db.add(fmit_template)
         db.commit()
@@ -549,7 +549,7 @@ class TestDashboardIntegration:
 
         # Create FMIT template
         fmit_template = RotationTemplate(
-            id=uuid4(), name="FMIT", activity_type="clinic", abbreviation="FMIT"
+            id=uuid4(), name="FMIT", rotation_type="clinic", abbreviation="FMIT"
         )
         db.add(fmit_template)
         db.commit()
