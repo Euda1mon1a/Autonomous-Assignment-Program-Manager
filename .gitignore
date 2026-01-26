@@ -177,10 +177,13 @@ test_write.xlsx
 
 # AI session artifacts
 .claude/Scratchpad/session-*
+.claude/dontreadme/sessions/*.md
 .claude/plans/
 .claude/Missions/
 .claude/skills/*/
+.claude/settings.local.json
 .agent/
+local/
 
 # Local scheduling docs (may contain PII)
 docs/scheduling/*.xlsx
