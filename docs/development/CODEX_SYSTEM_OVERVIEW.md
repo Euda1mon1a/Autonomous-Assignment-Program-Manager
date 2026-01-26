@@ -57,10 +57,9 @@ This document summarizes the current state of the residency scheduling system fo
 
 ### Instructions for Codex
 
-- You are reviewing code for a medical residency scheduling system. This
-  is a FastAPI + PostgreSQL backend with Next.js frontend. The system
-  schedules residents and faculty for rotations, clinic, call, and ensures
-  ACGME compliance.
+- Context: FastAPI + PostgreSQL backend with a Next.js frontend.
+- Scope: schedules trainees and supervisors for rotations, clinic, and call; enforces
+  compliance rules.
 
 ### What Was Implemented Yesterday (Dec 21, 2025)
 
@@ -208,7 +207,7 @@ New Components to Create
 
 1. PC (Post-Call) Rotation Template
 
-INSERT INTO rotation_templates (name, abbreviation, activity_type,
+INSERT INTO rotation_templates (name, abbreviation, rotation_type,
 leave_eligible, is_block_half_rotation)
 VALUES ('Post-Call Recovery', 'PC', 'recovery', false, false);
 - leave_eligible = false (cannot take leave on PC day)
@@ -253,7 +252,7 @@ Implementation Steps
 Step 1: Create PC Template (migration + seeder)
 
 - Add migration for PC rotation template
-- Set activity_type = 'recovery'
+- Set rotation_type = 'recovery'
 - Set leave_eligible = false
 
 Step 2: Create NightFloatPostCallConstraint

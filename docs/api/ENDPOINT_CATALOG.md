@@ -404,7 +404,7 @@ See [Swaps](swaps.md) for full details.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/rotation-templates` | Bearer | List templates (supports `activity_type`, `include_archived` filters) |
+| GET | `/rotation-templates` | Bearer | List templates (supports `rotation_type`, `include_archived` filters) |
 | GET | `/rotation-templates/{template_id}` | Bearer | Get template by ID |
 | POST | `/rotation-templates` | Bearer | Create template |
 | PUT | `/rotation-templates/{template_id}` | Bearer | Update template |
@@ -460,7 +460,7 @@ Soft constraints for scheduling optimizer.
 |--------|------|------|-------------|
 | GET | `/rotation-templates/{template_id}/history` | Bearer | Get version history (SQLAlchemy-Continuum) |
 
-### Activity Types
+### Rotation Types
 
 `CLINIC`, `INPATIENT`, `PROCEDURES`, `CONFERENCE`, `ADMIN`, `CALL`, `OFF`
 
@@ -490,7 +490,7 @@ Soft constraints for scheduling optimizer.
 {
   "templates": [
     {"template_id": "uuid1", "updates": {"max_residents": 5}},
-    {"template_id": "uuid2", "updates": {"activity_type": "inpatient"}}
+    {"template_id": "uuid2", "updates": {"rotation_type": "inpatient"}}
   ],
   "dry_run": false
 }
@@ -500,8 +500,8 @@ Soft constraints for scheduling optimizer.
 ```json
 {
   "templates": [
-    {"name": "New Clinic", "activity_type": "clinic"},
-    {"name": "New Inpatient", "activity_type": "inpatient"}
+    {"name": "New Clinic", "rotation_type": "clinic"},
+    {"name": "New Inpatient", "rotation_type": "inpatient"}
   ],
   "dry_run": false
 }

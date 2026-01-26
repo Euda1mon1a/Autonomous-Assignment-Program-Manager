@@ -266,6 +266,6 @@ List of Assignment objects passed to the solver as constraints.
 
 ## Related Documentation
 
-- [Activity Types](ACTIVITY_TYPES.md) - Classification of rotation types
+- [Rotation Types](ROTATION_TYPES.md) - Classification of rotation types
 - [FMIT Constraints](FMIT_CONSTRAINTS.md) - FMIT-specific constraint rules
 - [Session: Immutable Assignments](../sessions/SESSION_2025-12-26_IMMUTABLE_ASSIGNMENTS.md) - Development history

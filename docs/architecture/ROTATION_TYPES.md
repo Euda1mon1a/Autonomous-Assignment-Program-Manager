@@ -1,14 +1,14 @@
-# Activity Types Reference
+# Rotation Types Reference
 
-This document defines the 7 rotation activity types and how the scheduling engine handles each.
+This document defines the rotation types (categories) and how the scheduling engine handles each.
 
 ---
 
 ## Overview
 
-Rotation templates are classified by `activity_type` to determine whether the solver manages them or they are preserved as immutable pre-seeded assignments.
+Rotation templates are classified by `rotation_type` to determine whether the solver manages them or they are preserved as immutable pre-seeded assignments.
 
-| Activity Type | Solver Manages? | Count | Description |
+| Rotation Type | Solver Manages? | Count | Description |
 |---------------|-----------------|-------|-------------|
 | `outpatient` | **Yes** | 16 | Clinic rotations - solver optimizes coverage |
 | `procedures` | **Yes** | 6 | Procedure half-days - solver assigns |
@@ -212,12 +212,12 @@ CREATE TABLE rotation_templates (
     id UUID PRIMARY KEY,
     name VARCHAR NOT NULL,
     abbreviation VARCHAR,
-    activity_type VARCHAR,  -- 'outpatient', 'inpatient', 'off', etc.
+    rotation_type VARCHAR,  -- 'outpatient', 'inpatient', 'off', etc.
     ...
 );
 ```
 
-The `activity_type` field determines how the engine handles the rotation during schedule generation.
+The `rotation_type` field determines how the engine handles the rotation during schedule generation.
 
 ---
 

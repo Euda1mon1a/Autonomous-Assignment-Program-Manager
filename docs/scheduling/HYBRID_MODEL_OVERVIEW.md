@@ -198,7 +198,7 @@ These are "placeholder" rotation templates used to show blocked time in the UI:
 | W-AM | Weekend (morning) |
 | W-PM | Weekend (afternoon) |
 
-These have `activity_type = 'absence'` and are NOT scheduled by the solver - they're used for display purposes.
+These have `rotation_type = 'absence'` and are NOT scheduled by the solver - they're used for display purposes.
 
 ### How Absences Affect Schedule Generation
 

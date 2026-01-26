@@ -40,8 +40,8 @@ The constraint system distinguishes faculty from residents based on template nam
 
 ```python
 is_fmit = (
-    hasattr(template, "activity_type")
-    and template.activity_type == "inpatient"
+    hasattr(template, "rotation_type")
+    and template.rotation_type == "inpatient"
     and hasattr(template, "name")
     and "FMIT" in template.name.upper()
 )
@@ -232,6 +232,6 @@ Returns True if date is Sunday through Thursday (call blocking days during FMIT)
 
 ## Related Documentation
 
-- [Activity Types](ACTIVITY_TYPES.md) - How FMIT templates are classified
+- [Rotation Types](ROTATION_TYPES.md) - How FMIT templates are classified
 - [Engine Assignment Flow](ENGINE_ASSIGNMENT_FLOW.md) - How FMIT assignments are preserved
 - [Faculty Scheduling Specification](FACULTY_SCHEDULING_SPECIFICATION.md) - Full faculty rules

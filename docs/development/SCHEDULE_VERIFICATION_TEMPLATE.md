@@ -36,7 +36,7 @@ SELECT
   p.name,
   p.pgy_level,
   rt.abbreviation as rotation,
-  rt.activity_type,
+  rt.rotation_type,
   a.date,
   a.time_of_day
 FROM assignments a

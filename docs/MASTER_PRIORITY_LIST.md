@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-25 (Session 142: Added terminology standardization)
+> **Last Updated:** 2026-01-26 (Rotation terminology: rotation_type naming)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -428,12 +428,12 @@ Pre-commit hooks fail due to missing dependencies:
 **Added:** 2026-01-25
 **Source:** Commit `a3609d9b` - `docs/scheduling/TERMS_AND_DATA_MODEL.md`
 
-**Core Issue:** `RotationTemplate.activity_type` is a **rotation category**, not an Activity. The field name causes UI/LLM confusion.
+**Core Issue:** `RotationTemplate.activity_type` is a **rotation category**, not an Activity. Rotation fields must not use “activity” in the name.
 
 **Rename Needed:**
 | Current | Proposed | Rationale |
 |---------|----------|-----------|
-| `activity_type` | `rotation_type` or `rotation_category` | Describes the rotation, not an activity |
+| `activity_type` | `rotation_type` | Describes the rotation, not an activity |
 
 **Breaking Change Scope:**
 | Layer | Files | Change |

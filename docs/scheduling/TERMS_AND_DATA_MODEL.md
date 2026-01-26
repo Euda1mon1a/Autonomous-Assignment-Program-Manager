@@ -29,14 +29,14 @@ Blocks define *when* rotations occur. They are not rotations.
 
 Key model: `backend/app/models/rotation_template.py`.
 
-### RotationTemplate.activity_type
+### RotationTemplate.rotation_type
 
 This field is a **category label for the rotation**, not an Activity.
 
 - It is used for **solver filtering** and **constraint selection**.
 - Examples: `outpatient`, `clinic`, `inpatient`, `conference`, `education`, `off`.
 
-**Rule:** activity_type is a *subset/category of the rotation* and never the
+**Rule:** rotation_type is a *subset/category of the rotation* and never the
 Activity itself.
 
 ## Activities (Activity)
@@ -73,7 +73,7 @@ AcademicYear
 
 ### Solver behavior (important)
 
-- The CP-SAT half-day solver defaults to **RotationTemplate.activity_type = outpatient**.
+- The CP-SAT half-day solver defaults to **RotationTemplate.rotation_type = outpatient**.
 - Inpatient/away rotations are preloaded (locked) before solver runs.
 
 Sources:
@@ -85,9 +85,9 @@ Sources:
 To avoid confusion in the GUI:
 
 - **Rotation** = RotationTemplate (multi-week container).
-- **Rotation category/setting** = `RotationTemplate.activity_type`.
+- **Rotation category/setting** = `RotationTemplate.rotation_type`.
 - **Activity** = theoretical assignment unit (FM clinic, lecture, procedure).
 - **Assignment** = Activity scheduled to a person/date.
 
-If UI copy needs a label for `activity_type`, use **“Rotation category”** or
+If UI copy needs a label for `rotation_type`, use **“Rotation category”** or
 **“Rotation setting”** (not “Activity”).

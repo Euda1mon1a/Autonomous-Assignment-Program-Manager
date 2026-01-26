@@ -59,14 +59,14 @@ The repository contains **sanitized** data with PII removed:
 |-------|---------|
 | `people` | Residents and faculty (name, type, pgy_level) |
 | `blocks` | Half-day slots (date, time_of_day, block_number) |
-| `rotation_templates` | Rotation types (name, activity_type) |
+| `rotation_templates` | Rotation types (name, rotation_type) |
 | `assignments` | Links person + block + rotation |
 
 ### Inpatient Templates
 
 ```sql
-SELECT name, activity_type FROM rotation_templates
-WHERE activity_type = 'inpatient';
+SELECT name, rotation_type FROM rotation_templates
+WHERE rotation_type = 'inpatient';
 ```
 
 Expected templates:
@@ -202,7 +202,7 @@ docker compose exec db psql -U scheduler -d residency_scheduler \
 
 # Check inpatient templates exist
 docker compose exec db psql -U scheduler -d residency_scheduler \
-  -c "SELECT name FROM rotation_templates WHERE activity_type = 'inpatient';"
+  -c "SELECT name FROM rotation_templates WHERE rotation_type = 'inpatient';"
 ```
 
 ### Step 3: De-Sanitize JSON Files
@@ -230,13 +230,13 @@ python scripts/seed_inpatient_rotations.py --block 10
 
 ```bash
 docker compose exec db psql -U scheduler -d residency_scheduler -c "
-SELECT p.name, rt.name as rotation, rt.activity_type
+SELECT p.name, rt.name as rotation, rt.rotation_type
 FROM assignments a
 JOIN people p ON a.person_id = p.id
 JOIN rotation_templates rt ON a.rotation_template_id = rt.id
 JOIN blocks b ON a.block_id = b.id
-WHERE b.block_number = 10 AND rt.activity_type = 'inpatient'
-GROUP BY p.name, rt.name, rt.activity_type;"
+WHERE b.block_number = 10 AND rt.rotation_type = 'inpatient'
+GROUP BY p.name, rt.name, rt.rotation_type;"
 ```
 
 ### Step 6: Run Outpatient Solver
@@ -266,12 +266,12 @@ curl -X POST http://localhost:8000/api/v1/schedule/generate \
 ```bash
 # Check total assignments
 docker compose exec db psql -U scheduler -d residency_scheduler -c "
-SELECT rt.activity_type, COUNT(*) as count
+SELECT rt.rotation_type, COUNT(*) as count
 FROM assignments a
 JOIN rotation_templates rt ON a.rotation_template_id = rt.id
 JOIN blocks b ON a.block_id = b.id
 WHERE b.block_number = 10
-GROUP BY rt.activity_type;"
+GROUP BY rt.rotation_type;"
 
 # Run ACGME validation
 curl -s "http://localhost:8000/api/v1/schedule/validate?start_date=2026-03-12&end_date=2026-04-08" \
@@ -300,7 +300,7 @@ The rotation name from Airtable doesn't map to a database template. The script t
 Check available templates:
 ```bash
 docker compose exec db psql -U scheduler -d residency_scheduler \
-  -c "SELECT name, activity_type FROM rotation_templates;"
+  -c "SELECT name, rotation_type FROM rotation_templates;"
 ```
 
 ### Duplicate Key Errors

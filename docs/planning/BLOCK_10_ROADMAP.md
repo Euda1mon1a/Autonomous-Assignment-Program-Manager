@@ -35,7 +35,7 @@
 
 | Date | Reason | Approved By | Resolution |
 |------|--------|-------------|------------|
-| 2025-12-26 | activity_type filter fix (PR #442) | Human | Corrected "clinic" → "outpatient" |
+| 2025-12-26 | rotation_type filter fix (PR #442) | Human | Corrected "clinic" → "outpatient" |
 
 ---
 
@@ -121,7 +121,7 @@
 
 | ID | Task | Est. | Status |
 |----|------|------|--------|
-| **T1** | ~~Fix activity_type filter (clinic → outpatient)~~ | 30m | ✅ Merged PR #443, #444 |
+| **T1** | ~~Fix rotation_type filter (clinic → outpatient)~~ | 30m | ✅ Merged PR #443, #444 |
 | **T2** | ~~Implement `PostFMITSundayBlockingConstraint`~~ | 2h | ✅ Implemented in fmit.py, registered |
 | **T3** | ~~Implement `CallSpacingConstraint`~~ | 2h | ✅ Implemented in call_equity.py, registered |
 | **T4** | ~~Add `ResidentInpatientHeadcountConstraint`~~ | 2h | ✅ Implemented in inpatient.py, registered |
@@ -134,7 +134,7 @@
 
 | ID | Task | Status |
 |----|------|--------|
-| **H1** | ~~Review and merge activity_type fix PR~~ | ✅ Merged PR #443 |
+| **H1** | ~~Review and merge rotation_type fix PR~~ | ✅ Merged PR #443 |
 | **H2** | ~~Approve T2-T8 task queue~~ | ✅ All approved and merged |
 | **H3** | ~~Run production schedule generation~~ | ✅ 87 assignments, 112.5% coverage |
 | **H4** | ~~Validate schedule with real roster~~ | ✅ 0 ACGME violations |
@@ -457,9 +457,9 @@ docker compose exec db psql -U scheduler -d residency_scheduler \
 
 ### Sanitized Data Export for Claude Web (No PII)
 
-**Rotation Templates by Activity Type (38 total):**
+**Rotation Templates by Rotation Type (38 total):**
 ```
-| activity_type | rotations                                    | is_block_half |
+| rotation_type | rotations                                    | is_block_half |
 |---------------|----------------------------------------------|---------------|
 | inpatient     | FMIT AM/PM, NICU, Night Float AM/PM          | NF/NICU: true |
 | outpatient    | Clinic, Sports Med, Colposcopy, PCAT, etc.   | false         |
@@ -479,7 +479,7 @@ docker compose exec db psql -U scheduler -d residency_scheduler \
 ```
 
 **Key Schema Fields:**
-- `rotation_templates.activity_type` = inpatient|outpatient|procedures|recovery|education|off
+- `rotation_templates.rotation_type` = inpatient|outpatient|procedures|recovery|education|off
 - `rotation_templates.is_block_half_rotation` = true for NF/NICU (split mid-block)
 - `rotation_templates.max_residents` = NULL (no headcount constraint!)
 
@@ -504,7 +504,7 @@ def _load_fmit_assignments(self) -> list[Assignment]:
     """
     Detection logic:
         - person.type == 'faculty'
-        - template.activity_type == 'inpatient'
+        - template.rotation_type == 'inpatient'
     """
 ```
 
@@ -651,7 +651,7 @@ def _load_resident_inpatient_assignments(self) -> list[Assignment]:
 
     Detection logic:
         - person.type == 'resident'
-        - template.activity_type == 'inpatient'
+        - template.rotation_type == 'inpatient'
         - Includes: FMIT AM/PM, Night Float AM/PM, NICU
 
     Business Rules Applied:
@@ -672,7 +672,7 @@ def _load_resident_inpatient_assignments(self) -> list[Assignment]:
             Block.date >= self.start_date,
             Block.date <= self.end_date,
             Person.type == "resident",
-            RotationTemplate.activity_type == "inpatient",
+            RotationTemplate.rotation_type == "inpatient",
         )
         .all()
     )

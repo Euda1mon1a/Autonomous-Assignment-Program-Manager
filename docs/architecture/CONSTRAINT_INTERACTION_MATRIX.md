@@ -710,7 +710,7 @@ CallEquity Constraints (2.0-10.0)
 Database
     ├─ Persons (residents, faculty)
     ├─ Blocks (date, time_of_day)
-    ├─ RotationTemplates (max_residents, activity_type)
+    ├─ RotationTemplates (max_residents, rotation_type)
     └─ Absences (blocking, start_date, end_date)
 
 SchedulingContext
