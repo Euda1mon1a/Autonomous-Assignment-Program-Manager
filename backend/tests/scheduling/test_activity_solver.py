@@ -4,6 +4,7 @@ These tests use mocking to avoid JSONB/SQLite compatibility issues.
 """
 
 from datetime import date
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
@@ -354,6 +355,45 @@ class TestHelperMethods:
         mock_template.abbreviation = "IM"
 
         assert solver._is_sm_template(mock_template) is False
+
+    def test_should_count_sm_resident_presence_sm_clinic(self):
+        """_should_count_sm_resident_presence is True for SM clinic in SM template."""
+        solver = CPSATActivitySolver(MagicMock())
+        sm_template = SimpleNamespace(
+            requires_specialty="Sports Medicine", name="", abbreviation=""
+        )
+        sm_clinic_activity = SimpleNamespace(id=uuid4())
+
+        result = solver._should_count_sm_resident_presence(
+            sm_template, sm_clinic_activity.id, sm_clinic_activity
+        )
+        assert result is True
+
+    def test_should_count_sm_resident_presence_non_clinic(self):
+        """_should_count_sm_resident_presence is False for non-clinic activity."""
+        solver = CPSATActivitySolver(MagicMock())
+        sm_template = SimpleNamespace(
+            requires_specialty="Sports Medicine", name="", abbreviation=""
+        )
+        sm_clinic_activity = SimpleNamespace(id=uuid4())
+
+        result = solver._should_count_sm_resident_presence(
+            sm_template, uuid4(), sm_clinic_activity
+        )
+        assert result is False
+
+    def test_should_count_sm_resident_presence_non_sm_template(self):
+        """_should_count_sm_resident_presence is False for non-SM template."""
+        solver = CPSATActivitySolver(MagicMock())
+        non_sm_template = SimpleNamespace(
+            requires_specialty=None, name="Cardiology", abbreviation="CARD"
+        )
+        sm_clinic_activity = SimpleNamespace(id=uuid4())
+
+        result = solver._should_count_sm_resident_presence(
+            non_sm_template, sm_clinic_activity.id, sm_clinic_activity
+        )
+        assert result is False
 
     def test_get_week_number_first_day(self):
         """_get_week_number returns 1 for first day of block."""

@@ -441,7 +441,9 @@ class CPSATActivitySolver:
             template = self._get_active_rotation_template(locked, start_date)
             if not template:
                 continue
-            if person_type != "faculty" and self._is_sm_template(template):
+            if person_type != "faculty" and self._should_count_sm_resident_presence(
+                template, locked.activity_id, sm_clinic_activity
+            ):
                 baseline_sm_resident_presence[slot_key] += 1
             locked_counts[
                 (locked.person_id, template.id, week_number, locked.activity_id)
@@ -671,10 +673,14 @@ class CPSATActivitySolver:
                             a[s_i, sm_clinic_activity.id]
                         )
                 else:
-                    if meta.get("template_id") in sm_template_ids:
-                        # Any activity assigned for SM resident counts as SM presence
-                        for act_id in slot_allowed[s_i]:
-                            sm_resident_vars_by_slot[key].append(a[s_i, act_id])
+                    if (
+                        meta.get("template_id") in sm_template_ids
+                        and sm_clinic_activity.id in slot_allowed[s_i]
+                    ):
+                        # Only SM clinic activity counts toward SM alignment.
+                        sm_resident_vars_by_slot[key].append(
+                            a[s_i, sm_clinic_activity.id]
+                        )
 
             all_sm_keys = set(sm_resident_vars_by_slot.keys()) | set(
                 baseline_sm_resident_presence.keys()
@@ -903,6 +909,19 @@ class CPSATActivitySolver:
             or name_upper == "SM"
             or abbrev_upper == "SM"
         )
+
+    def _should_count_sm_resident_presence(
+        self,
+        template: RotationTemplate | None,
+        activity_id: UUID | None,
+        sm_clinic_activity: Activity | None,
+    ) -> bool:
+        """Return True if a locked resident slot should count for SM alignment."""
+        if not template or not sm_clinic_activity or not activity_id:
+            return False
+        if activity_id != sm_clinic_activity.id:
+            return False
+        return self._is_sm_template(template)
 
     def _get_week_number(self, slot_date: date, block_start: date) -> int:
         """Get week number (1-4) for a slot within a block."""
