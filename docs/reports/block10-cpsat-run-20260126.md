@@ -2,26 +2,26 @@
 
 ## Summary
 - **CP-SAT generation succeeded** for Block 10 (AY2026) with 617 solver assignments + 20 call nights.
-- **Activity solver succeeded** (OPTIMAL) after skipping physical-capacity constraints that were impossible to satisfy.
-- **Supervision demand now uses activity flags** (`requires_supervision` / `provides_supervision`) instead of narrow code lists.
-- **XLSX export succeeded** via canonical JSON → XLSX pipeline.
-- **JSON export** shows 17 residents, 10 faculty, 20 call nights, **1112 filled** / **400 empty** slots.
+- **Activity solver failed** under the new **soft 6 / hard 8** physical capacity model because minimum clinic demand is 15-16 in most slots (35/40).
+- **Supervision demand uses activity flags** (`requires_supervision` / `provides_supervision`) instead of narrow code lists.
+- **XLSX / JSON exports not re-run** after the hard-capacity change (activity solver failure leaves activities unassigned).
 
 Block window: **2027-03-11 → 2027-04-07** (Block 10, AY2026).
 
-## Changes Applied (to reach success)
+## Changes Applied (latest run)
 - **Engine now filters residents by BlockAssignment** when block/year provided.
 - **Block 0 handling** fixed by checking `block_number is not None` instead of truthy checks.
 - **Post-call template lookup** now accepts PCAT/DO prefixes (PCAT-AM / DO-PM).
-- **Activity solver** now skips physical-capacity constraints when minimum required > max.
-- **Activity solver** now computes supervision demand/coverage from activity flags.
-- **Ops scripts** now backfill `DATABASE_URL` when empty and repair invalid `CORS_ORIGINS` values.
+- **Activity solver** computes supervision demand/coverage from activity flags.
+- **Physical capacity model** updated to **soft 6 / hard 8** and now fails fast if minimum clinic demand exceeds hard limit.
+- **Ops scripts** load `.env` before imports and backfill `DATABASE_URL` when empty.
+- **New audit script:** `scripts/ops/supervision_activity_audit.py`
 
 ## Environment + Preconditions
 - Python: `python3.11`
 - Database: `residency-scheduler-db` (Docker)
 - Required migration: `20260126_rename_rotation_type`
-- Ops scripts now auto-load `.env` and backfill `DATABASE_URL` when empty.
+- Ops scripts now auto-load `.env` before backend imports and backfill `DATABASE_URL` when empty.
 
 ## Commands Run (Latest Successful Run)
 
@@ -30,12 +30,12 @@ Block window: **2027-03-11 → 2027-04-07** (Block 10, AY2026).
 python3.11 scripts/ops/block_regen.py --block 10 --academic-year 2026 --clear
 ```
 
-### 2) Canonical XLSX export
+### 2) Canonical XLSX export (not re-run after capacity change)
 ```
 python3.11 scripts/ops/block_export.py --block 10 --academic-year 2026 --output /tmp/block10_export.xlsx
 ```
 
-### 3) Canonical JSON metrics
+### 3) Canonical JSON metrics (not re-run after capacity change)
 ```
 PYTHONPATH=backend python3.11 - <<'PY'
 from app.db.session import SessionLocal
@@ -88,15 +88,13 @@ PY
 ... CP-SAT solver generated 617 rotation assignments and 20 call assignments
 ... Synced 40 PCAT/DO slots to match new call assignments
 ... Supervision activity sets: required=48, providers=4 (fallback_required=False, fallback_providers=False)
-... Skipped physical capacity constraint for 35 of 40 slots (min > max 6)
-... Activity solver status: OPTIMAL (0.20s)
-... Activity solver updated 872 slots
+... Physical capacity infeasible: 35 of 40 slots have minimum clinic demand above hard 8
+... Activity solver failed: Physical capacity infeasible (min clinic demand exceeds hard 8)
 STATUS: partial
 MESSAGE: Generated 617 assignments using cp_sat
 SUMMARY COUNTS:
   call_assignments: 20
   half_day_assignments: 1112
-  hda_activity_at: 106
   hda_activity_do: 19
   hda_activity_pcat: 19
   hda_source_preload: 240
@@ -105,43 +103,37 @@ SUMMARY COUNTS:
 ```
 
 ### JSON Metrics
-```
-JSON residents: 17
-JSON faculty: 10
-JSON call nights: 20
-JSON filled slots: 1112
-JSON empty slots: 400
-```
+Not re-run for this pass (activity solver failure leaves activities unassigned).
 
 ### XLSX Export
-```
-Saved xlsx to /tmp/block10_export.xlsx
-```
+Not re-run for this pass (would export partial schedule).
 
 ## Findings
-- **CP-SAT + call** now succeeds end-to-end for Block 10.
-- **Activity solver succeeds**, but **physical capacity constraints were skipped for 35/40 time slots** because the minimum clinic demand exceeded max capacity.
+- **CP-SAT + call** succeeds for Block 10 (solver + call assignments created).
+- **Activity solver fails** because minimum clinic demand is **15-16** per slot for most weekdays, which exceeds the **hard 8** capacity.
+- The forced clinic minimum indicates that **all outpatient slots are limited to clinical activities**, leaving no non-clinic options to relieve capacity.
 - **Supervision constraint** at block solver still logs: `No faculty_at or faculty_pcat variables, supervision constraint not applied` (activity solver now enforces AT coverage).
 - **Night Float post-call constraint** still logs: `NF or PC templates not found` (inactive).
 
 ## Plan (Next Steps)
-1) **Revisit physical capacity model**
-   - Decide whether capacity should be a soft constraint or scoped to FM clinic only.
-   - Update `Activity` flags or capacity codes accordingly.
-2) **Validate supervision coverage**
-   - Confirm `requires_supervision` / `provides_supervision` flags are correct for clinical activities.
+1) **Make physical capacity feasible**
+   - Decide which activities truly consume exam rooms.
+   - Update `Activity.counts_toward_physical_capacity` so non-clinic activities do not count.
+   - Add at least one **non-capacity** activity option to outpatient rotations if clinic demand must be reduced.
+2) **Validate supervision metadata**
+   - Use `scripts/ops/supervision_activity_audit.py` and fix missing `requires_supervision` flags.
 3) **Confirm NF/PC templates**
    - Ensure night-float + post-call templates exist where required.
 
 ## Priority List (Block 10 Stabilization)
-- **P0:** Physical capacity constraint skipped for most slots (needs policy decision).
+- **P0:** Physical capacity infeasible (min clinic demand 15-16 > hard 8).
 - **P1:** Supervision coverage depends on activity flags; validate clinical activity metadata.
 - **P2:** NF/PC templates absent (post-call constraint inactive).
 
 ## Console Additions (Recommended)
 Add these standard post-run checks:
 - Count residents included by BlockAssignment for the block.
-- Report how many capacity constraints were skipped vs enforced.
+- Report how many capacity constraints are infeasible (min clinic demand > hard cap).
 - Surface missing AT/PCAT/NF/PC templates explicitly.
 - JSON metrics: filled vs empty slots.
 

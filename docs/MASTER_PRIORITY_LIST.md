@@ -161,30 +161,27 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 
 ## HIGH (Address Soon)
 
-### 4. Block 10 Schedule Generation - FAILED (CP-SAT INFEASIBLE)
-**Status:** Generation ❌ | Backend Export ⚠️ (preloads-only) | Frontend Export ⚠️ (see #1)
+### 4. Block 10 Schedule Generation - FAILED (Activity Solver Capacity)
+**Status:** CP-SAT ✅ | Activity Solver ❌ | Backend Export ⚠️ (partial) | Frontend Export ⚠️ (see #1)
 
 **Latest Run (2026-01-26):**
-- CP-SAT solver status: **INFEASIBLE**
-- Post-run: **preloads only** (202 half-day assignments)
-- Call assignments: **0**
-- Canonical JSON/XLSX export succeeds but **contains only preloads**
-- `assignments` table: **0 rows** in block date range (CSV export empty)
+- CP-SAT solver generated **617** rotation assignments + **20** call nights
+- Activity solver failed: **minimum clinic demand 15-16 > hard cap 8** for **35/40** slots
+- Post-run: **partial schedule** (preloads + solver slots without activities)
+- Call assignments: **20**
 
-**Root Causes Observed:**
-- Missing **PCAT/DO** rotation templates (0 present)
-- Missing **SM** rotation templates (0 present)
-- Faculty schedule context absent in assignments
-- Required migration not applied initially (`rotation_type` rename)
+**Root Cause Observed:**
+- Outpatient rotations allow **only clinical activities**, so every outpatient slot counts toward clinic capacity
+- With 15-16 resident slots per half-day, **hard cap 8 is infeasible**
 
 **References:**
 - `docs/reports/block10-cpsat-run-20260126.md`
 - `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md`
 
 **Immediate Action:**
-1. Restore missing templates (PCAT/DO/SM).
-2. Rebuild faculty assignment context for the block.
-3. Re-run `scripts/ops/block_regen.py` and verify solver status != INFEASIBLE.
+1. Decide which activities should **count toward physical capacity**; update `Activity.counts_toward_physical_capacity`.
+2. Add at least one **non-capacity** activity option to outpatient rotations (or relax requirements).
+3. Re-run `scripts/ops/block_regen.py` and verify activity solver status != error.
 
 ### 5. ACGME Compliance Validation Gaps
 Call duty and performance profiling have edge cases:

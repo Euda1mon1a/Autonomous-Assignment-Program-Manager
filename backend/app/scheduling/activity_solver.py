@@ -64,6 +64,7 @@ AT_COVERAGE_CODES = {"AT", "PCAT"}
 ADMIN_ACTIVITY_CODES = {"GME": "gme", "DFM": "dfm", "SM": "sm_clinic"}
 FACULTY_CLINIC_SHORTFALL_PENALTY = 10
 FACULTY_ADMIN_BONUS = 1
+PHYSICAL_CAPACITY_SOFT_PENALTY = 10
 
 
 class CPSATActivitySolver:
@@ -729,11 +730,12 @@ class CPSATActivitySolver:
                 model.Add(sum(faculty_vars) + baseline_faculty >= any_resident)
 
         # ==================================================
-        # CONSTRAINT: Physical Capacity (Max 6 per slot)
+        # CONSTRAINT: Physical Capacity (Soft 6, Hard 8 per slot)
         # Session 136: Clinic has limited exam rooms
         # Includes baseline occupancy from locked/preloaded slots.
         # ==================================================
-        MAX_PHYSICAL_CAPACITY = 6
+        SOFT_PHYSICAL_CAPACITY = 6
+        HARD_PHYSICAL_CAPACITY = 8
 
         # Group slots by (date, time_of_day)
         slot_groups: dict[tuple[date, str], list[int]] = defaultdict(list)
@@ -754,32 +756,16 @@ class CPSATActivitySolver:
             if assignment.activity_id in capacity_activity_ids:
                 baseline_capacity[(assignment.date, assignment.time_of_day)] += 1
 
-        # For each time slot, sum(clinical activities) + baseline <= MAX
+        # For each time slot, sum(clinical activities) + baseline <= HARD
         clinical_activity_ids = capacity_activity_ids.intersection(assignable_ids)
+        overage_vars: list[Any] = []
         if clinical_activity_ids:
             enforced_groups = 0
-            skipped_groups = 0
-            skipped_examples: list[str] = []
+            overhard_groups = 0
+            overhard_examples: list[str] = []
             for (slot_date, time_of_day), slot_indices in slot_groups.items():
                 # Skip weekends
                 if slot_date.weekday() >= 5:
-                    continue
-
-                baseline = baseline_capacity.get((slot_date, time_of_day), 0)
-
-                # If all allowed activities for a slot count toward capacity,
-                # that slot contributes a hard minimum of 1 to the capacity sum.
-                forced_capacity = sum(
-                    1
-                    for s_i in slot_indices
-                    if set(slot_allowed[s_i]).issubset(clinical_activity_ids)
-                )
-                if forced_capacity + baseline > MAX_PHYSICAL_CAPACITY:
-                    skipped_groups += 1
-                    if len(skipped_examples) < 5:
-                        skipped_examples.append(
-                            f"{slot_date} {time_of_day} min={forced_capacity + baseline}"
-                        )
                     continue
 
                 # Sum of clinical assignments for this slot
@@ -790,21 +776,64 @@ class CPSATActivitySolver:
                     if act_id in clinical_activity_ids
                 )
 
-                # Hard constraint: at most 6 in clinic per slot
-                model.Add(slot_clinic_sum + baseline <= MAX_PHYSICAL_CAPACITY)
+                baseline = baseline_capacity.get((slot_date, time_of_day), 0)
+                forced_capacity = sum(
+                    1
+                    for s_i in slot_indices
+                    if set(slot_allowed[s_i]).issubset(clinical_activity_ids)
+                )
+                min_required = forced_capacity + baseline
+                if min_required > HARD_PHYSICAL_CAPACITY:
+                    overhard_groups += 1
+                    if len(overhard_examples) < 5:
+                        overhard_examples.append(
+                            f"{slot_date} {time_of_day} min={min_required}"
+                        )
+                    continue
+
+                total_clinic = slot_clinic_sum + baseline
+
+                # Hard constraint: at most 8 in clinic per slot
+                model.Add(total_clinic <= HARD_PHYSICAL_CAPACITY)
+
+                # Soft constraint: penalize clinic counts above 6
+                over_expr = model.NewIntVar(
+                    -HARD_PHYSICAL_CAPACITY,
+                    HARD_PHYSICAL_CAPACITY,
+                    f"cap_over_expr_{slot_date.strftime('%Y%m%d')}_{time_of_day}",
+                )
+                model.Add(over_expr == total_clinic - SOFT_PHYSICAL_CAPACITY)
+                overage = model.NewIntVar(
+                    0,
+                    max(HARD_PHYSICAL_CAPACITY - SOFT_PHYSICAL_CAPACITY, 0),
+                    f"cap_over_{slot_date.strftime('%Y%m%d')}_{time_of_day}",
+                )
+                model.AddMaxEquality(overage, [over_expr, 0])
+                overage_vars.append(overage)
                 enforced_groups += 1
+
+            if overhard_groups:
+                examples = ", ".join(overhard_examples)
+                logger.error(
+                    f"Physical capacity infeasible: {overhard_groups} of "
+                    f"{len(slot_groups)} slots have minimum clinic demand above "
+                    f"hard {HARD_PHYSICAL_CAPACITY}. Examples: {examples}"
+                )
+                return {
+                    "success": False,
+                    "assignments_updated": 0,
+                    "status": "error",
+                    "message": (
+                        "Physical capacity infeasible (min clinic demand exceeds hard "
+                        f"{HARD_PHYSICAL_CAPACITY})"
+                    ),
+                }
 
             if enforced_groups:
                 logger.info(
-                    f"Added physical capacity constraint (max {MAX_PHYSICAL_CAPACITY}) "
-                    f"for {enforced_groups} of {len(slot_groups)} time slots"
-                )
-            if skipped_groups:
-                examples = ", ".join(skipped_examples)
-                logger.warning(
-                    f"Skipped physical capacity constraint for {skipped_groups} of "
-                    f"{len(slot_groups)} slots (min > max {MAX_PHYSICAL_CAPACITY}). "
-                    f"Examples: {examples}"
+                    f"Added physical capacity constraints (soft {SOFT_PHYSICAL_CAPACITY}, "
+                    f"hard {HARD_PHYSICAL_CAPACITY}) for {enforced_groups} of "
+                    f"{len(slot_groups)} time slots"
                 )
 
         # ==================================================
@@ -840,6 +869,14 @@ class CPSATActivitySolver:
             penalty = shortfall_sum * FACULTY_CLINIC_SHORTFALL_PENALTY
             objective_expr = (
                 objective_expr - penalty if objective_expr is not None else -penalty
+            )
+
+        if overage_vars:
+            overage_penalty = sum(overage_vars) * PHYSICAL_CAPACITY_SOFT_PENALTY
+            objective_expr = (
+                objective_expr - overage_penalty
+                if objective_expr is not None
+                else -overage_penalty
             )
 
         if objective_expr is not None:

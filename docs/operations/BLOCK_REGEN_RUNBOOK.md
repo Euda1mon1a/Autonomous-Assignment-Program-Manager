@@ -106,8 +106,13 @@ If CP-SAT returns **INFEASIBLE**, capture:
 
 **Failure snapshot (new):**
 - On pre-solver validation failure or solver failure, a PII-free snapshot is written to:
-  - `/tmp/schedule_failure_<run_id>_<timestamp>.json`
-  - Override location with `SCHEDULE_FAILURE_SNAPSHOT_DIR`.
+- `/tmp/schedule_failure_<run_id>_<timestamp>.json`
+- Override location with `SCHEDULE_FAILURE_SNAPSHOT_DIR`.
+
+If the **activity solver** fails with:
+`Physical capacity infeasible: ... minimum clinic demand above hard 8`
+- Audit `Activity.counts_toward_physical_capacity` values.
+- Add a non-capacity activity option for outpatient rotations or relax requirements.
 
 ## Debug: Infeasibility Test (No Live Writes)
 

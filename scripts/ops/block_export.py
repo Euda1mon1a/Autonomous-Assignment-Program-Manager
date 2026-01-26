@@ -19,11 +19,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_DIR = REPO_ROOT / "backend"
 sys.path.insert(0, str(BACKEND_DIR))
 
-from app.db.session import SessionLocal  # noqa: E402
-from app.services.canonical_schedule_export_service import (  # noqa: E402
-    CanonicalScheduleExportService,
-)
-
 
 def _load_env() -> None:
     env_path = REPO_ROOT / ".env"
@@ -50,6 +45,14 @@ def _load_env() -> None:
             f"postgresql://scheduler:{os.environ['DB_PASSWORD']}@localhost:5432/"
             "residency_scheduler"
         )
+
+
+_load_env()
+
+from app.db.session import SessionLocal  # noqa: E402
+from app.services.canonical_schedule_export_service import (  # noqa: E402
+    CanonicalScheduleExportService,
+)
 
 
 def main() -> int:
