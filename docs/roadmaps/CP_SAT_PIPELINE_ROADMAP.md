@@ -67,6 +67,7 @@ This roadmap starts at the beginning (inputs + preloads) and walks forward to ex
 **Remaining**
 - Confirm Sports Medicine alignment rule is correct for local policy.
 - Confirm AT coverage math (resident clinic demand → AT coverage).
+- Resolve CP-SAT infeasibility in Block 10 (2026-01-26 run): missing PCAT/DO/SM templates and no call output caused preload-only exports.
 
 **Acceptance criteria**
 - Call assignments exist for all Sun–Thu nights (no gaps).
@@ -78,6 +79,7 @@ This roadmap starts at the beginning (inputs + preloads) and walks forward to ex
 - `backend/app/scheduling/constraints/overnight_call.py`
 - `backend/app/scheduling/constraints/call_coverage.py`
 - `backend/app/scheduling/constraints/call_equity.py`
+- `docs/reports/block10-cpsat-run-20260126.md`
 
 ---
 
@@ -200,6 +202,7 @@ This roadmap starts at the beginning (inputs + preloads) and walks forward to ex
 **Remaining**
 - End-to-end “generate → pause → export” runbook.
 - Add export verification tests (row mapping, call row, faculty rows).
+- Re-run Block 10 after template fixes to validate JSON/XLSX counts.
 
 **Acceptance criteria**
 - One command or runbook produces validated XLSX from CP-SAT output.

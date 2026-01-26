@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-26 (Rotation terminology: rotation_type naming)
+> **Last Updated:** 2026-01-26 (Block 10 CP-SAT regen status + rotation_type naming)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -161,24 +161,30 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 
 ## HIGH (Address Soon)
 
-### 4. Block 10 Schedule Generation - WORKING and Backend Export Unblocked
-**Status:** Generation ✅ | Backend Export ✅ | Frontend Export ⚠️ (see #1)
+### 4. Block 10 Schedule Generation - FAILED (CP-SAT INFEASIBLE)
+**Status:** Generation ❌ | Backend Export ⚠️ (preloads-only) | Frontend Export ⚠️ (see #1)
 
-**What's Working:**
-- Block 10 generation: 1,512 half-day assignments (17 residents × 56 slots + 10 faculty × 56 slots)
-- 0 NULL activity_id - all assignments have valid activities
-- Canonical JSON export reads from `half_day_assignments`
-- Backend export produces Block Template2 XLSX via JSON pipeline
-- CP-SAT canonical path enforced for call/activity/faculty; greedy/hybrid archived (see `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md`)
+**Latest Run (2026-01-26):**
+- CP-SAT solver status: **INFEASIBLE**
+- Post-run: **preloads only** (202 half-day assignments)
+- Call assignments: **0**
+- Canonical JSON/XLSX export succeeds but **contains only preloads**
+- `assignments` table: **0 rows** in block date range (CSV export empty)
 
-**What's Blocked:**
-- Frontend export may fail due to auth bypass (needs axios/JWT fix)
-- Export UI lacks explicit failure feedback
-- Missing row mapping should hard-fail instead of warning
+**Root Causes Observed:**
+- Missing **PCAT/DO** rotation templates (0 present)
+- Missing **SM** rotation templates (0 present)
+- Faculty schedule context absent in assignments
+- Required migration not applied initially (`rotation_type` rename)
 
-**Reference:** `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md` (done / remaining / uncertain)
+**References:**
+- `docs/reports/block10-cpsat-run-20260126.md`
+- `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md`
 
-**Workaround (Plan B):** Manual export via Excel still works, but backend export is now functional
+**Immediate Action:**
+1. Restore missing templates (PCAT/DO/SM).
+2. Rebuild faculty assignment context for the block.
+3. Re-run `scripts/ops/block_regen.py` and verify solver status != INFEASIBLE.
 
 ### 5. ACGME Compliance Validation Gaps
 Call duty and performance profiling have edge cases:
