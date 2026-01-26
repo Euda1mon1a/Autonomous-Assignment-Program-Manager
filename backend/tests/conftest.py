@@ -13,6 +13,8 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import Session, configure_mappers, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -30,6 +32,12 @@ from app.utils.academic_blocks import get_block_number_for_date
 
 # Use in-memory SQLite for tests
 TEST_DATABASE_URL = "sqlite:///:memory:"
+
+
+@compiles(JSONB, "sqlite")
+def _compile_jsonb_sqlite(_type, _compiler, **_kw):
+    return "JSON"
+
 
 engine = create_engine(
     TEST_DATABASE_URL,

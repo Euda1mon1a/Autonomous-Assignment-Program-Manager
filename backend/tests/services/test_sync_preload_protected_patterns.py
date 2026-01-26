@@ -165,6 +165,60 @@ def test_preload_hilo_pattern(db):
     assert _get_assignment_code(db, resident.id, day19, "PM") == "C"
 
 
+def test_preload_okinawa_pattern(db):
+    _create_activity(db, "C", "C", ActivityCategory.CLINICAL.value)
+    _create_activity(db, "TDY", "TDY", ActivityCategory.TIME_OFF.value)
+    _create_activity(db, "LEC", "LEC", ActivityCategory.EDUCATIONAL.value)
+    _create_activity(db, "ADV", "ADV", ActivityCategory.EDUCATIONAL.value)
+
+    resident = Person(
+        id=uuid4(),
+        name="Resident Okinawa",
+        type="resident",
+        pgy_level=3,
+    )
+    template = RotationTemplate(
+        id=uuid4(),
+        name="Okinawa",
+        activity_type="off",
+        abbreviation="OKI",
+    )
+    db.add_all([resident, template])
+    db.commit()
+
+    block_number = 10
+    academic_year = 2025
+    assignment = BlockAssignment(
+        id=uuid4(),
+        block_number=block_number,
+        academic_year=academic_year,
+        resident_id=resident.id,
+        rotation_template_id=template.id,
+    )
+    db.add(assignment)
+    db.commit()
+
+    service = SyncPreloadService(db)
+    service._load_rotation_protected_preloads(block_number, academic_year)
+
+    block_dates = get_block_dates(block_number, academic_year)
+    day0 = block_dates.start_date
+    day1 = block_dates.start_date + timedelta(days=1)
+    day2 = block_dates.start_date + timedelta(days=2)
+    day19 = block_dates.start_date + timedelta(days=19)
+
+    assert _get_assignment_code(db, resident.id, day0, "AM") == "C"
+    assert _get_assignment_code(db, resident.id, day0, "PM") == "C"
+    assert _get_assignment_code(db, resident.id, day1, "AM") == "C"
+    assert _get_assignment_code(db, resident.id, day1, "PM") == "C"
+
+    assert _get_assignment_code(db, resident.id, day2, "AM") == "TDY"
+    assert _get_assignment_code(db, resident.id, day2, "PM") == "TDY"
+
+    assert _get_assignment_code(db, resident.id, day19, "AM") == "C"
+    assert _get_assignment_code(db, resident.id, day19, "PM") == "C"
+
+
 def test_preload_nf_split_secondary_rotation(db):
     _create_activity(db, "OFF", "OFF", ActivityCategory.TIME_OFF.value)
     _create_activity(db, "NF", "NF", ActivityCategory.CLINICAL.value)

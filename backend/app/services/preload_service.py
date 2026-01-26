@@ -430,7 +430,7 @@ class PreloadService:
             return ("LEC", "ADV")
 
         if rotation_code in _OFFSITE_ROTATIONS:
-            if rotation_code == "HILO":
+            if rotation_code in {"HILO", "OKI"}:
                 return self._get_hilo_codes(current_date, block_start)
             return ("TDY", "TDY")
 
@@ -498,7 +498,7 @@ class PreloadService:
         return ("OFF", "NF")
 
     def _get_hilo_codes(self, current_date: date, block_start: date) -> tuple[str, str]:
-        """Hilo TDY pattern with pre/post clinic days."""
+        """Hilo/Okinawa TDY pattern with pre/post clinic days."""
         day_index = (current_date - block_start).days
         if day_index in (0, 1):  # Thu/Fri before leaving
             return ("C", "C")
