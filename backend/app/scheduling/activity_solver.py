@@ -65,6 +65,24 @@ ADMIN_ACTIVITY_CODES = {"GME": "gme", "DFM": "dfm", "SM": "sm_clinic"}
 FACULTY_CLINIC_SHORTFALL_PENALTY = 10
 FACULTY_ADMIN_BONUS = 1
 PHYSICAL_CAPACITY_SOFT_PENALTY = 10
+CAPACITY_ACTIVITY_CODES = {
+    "C",
+    "C-N",
+    "C-I",
+    "CV",
+    "V1",
+    "V2",
+    "V3",
+    "FM_CLINIC",
+    "PROC",
+    "PR",
+    "PROCEDURE",
+    "VAS",
+    "SM",
+    "SM_CLINIC",
+    "ASM",
+}
+SM_CAPACITY_CODES = {"SM", "SM_CLINIC", "ASM"}
 
 
 class CPSATActivitySolver:
@@ -279,15 +297,11 @@ class CPSATActivitySolver:
                 "status": "error",
                 "message": "Missing supervision-providing activities (AT/PCAT/DO)",
             }
-        capacity_activity_ids = {
-            activity.id
-            for activity in all_activities
-            if activity.counts_toward_physical_capacity
-        }
-        capacity_activity_ids.update(
-            self._activity_ids_for_codes(
-                all_activities, {"FM_CLINIC", "C", "C-N", "CV", "PR", "VAS"}
-            )
+        capacity_activity_ids = self._activity_ids_for_codes(
+            all_activities, CAPACITY_ACTIVITY_CODES
+        )
+        sm_capacity_ids = self._activity_ids_for_codes(
+            all_activities, SM_CAPACITY_CODES
         )
 
         # Create the CP model
@@ -743,17 +757,38 @@ class CPSATActivitySolver:
             key = (slot.date, slot.time_of_day)
             slot_groups[key].append(s_i)
 
+        def _capacity_ids_for_person(person_type: str | None) -> set[UUID]:
+            if person_type == "faculty":
+                return capacity_activity_ids
+            return capacity_activity_ids - sm_capacity_ids
+
+        def _counts_toward_capacity(
+            activity_id: UUID | None, person_type: str | None
+        ) -> bool:
+            if not activity_id:
+                return False
+            if activity_id not in capacity_activity_ids:
+                return False
+            if activity_id in sm_capacity_ids and person_type != "faculty":
+                return False
+            return True
+
         # Baseline occupancy from locked/preloaded slots not in solver
         slot_ids = {slot.id for slot in slots}
         baseline_capacity: dict[tuple[date, str], int] = defaultdict(int)
-        baseline_stmt = select(HalfDayAssignment).where(
-            HalfDayAssignment.date >= start_date,
-            HalfDayAssignment.date <= end_date,
+        baseline_stmt = (
+            select(HalfDayAssignment)
+            .options(selectinload(HalfDayAssignment.person))
+            .where(
+                HalfDayAssignment.date >= start_date,
+                HalfDayAssignment.date <= end_date,
+            )
         )
         for assignment in self.session.execute(baseline_stmt).scalars():
             if assignment.id in slot_ids:
                 continue  # handled by solver
-            if assignment.activity_id in capacity_activity_ids:
+            person_type = assignment.person.type if assignment.person else None
+            if _counts_toward_capacity(assignment.activity_id, person_type):
                 baseline_capacity[(assignment.date, assignment.time_of_day)] += 1
 
         # For each time slot, sum(clinical activities) + baseline <= HARD
@@ -773,14 +808,18 @@ class CPSATActivitySolver:
                     a[s_i, act_id]
                     for s_i in slot_indices
                     for act_id in slot_allowed[s_i]
-                    if act_id in clinical_activity_ids
+                    if _counts_toward_capacity(
+                        act_id, slot_meta[s_i].get("person_type")
+                    )
                 )
 
                 baseline = baseline_capacity.get((slot_date, time_of_day), 0)
                 forced_capacity = sum(
                     1
                     for s_i in slot_indices
-                    if set(slot_allowed[s_i]).issubset(clinical_activity_ids)
+                    if set(slot_allowed[s_i]).issubset(
+                        _capacity_ids_for_person(slot_meta[s_i].get("person_type"))
+                    )
                 )
                 min_required = forced_capacity + baseline
                 if min_required > HARD_PHYSICAL_CAPACITY:

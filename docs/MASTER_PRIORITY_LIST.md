@@ -171,7 +171,7 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 - Call assignments: **20**
 
 **Root Cause Observed:**
-- Outpatient rotations allow **only clinical activities**, so every outpatient slot counts toward clinic capacity
+- Outpatient rotations allow **only capacity-coded activities** (C/PROC/SM/VAS), so every outpatient slot counts toward clinic capacity
 - With 15-16 resident slots per half-day, **hard cap 8 is infeasible**
 
 **References:**
@@ -179,7 +179,7 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 - `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md`
 
 **Immediate Action:**
-1. Decide which activities should **count toward physical capacity**; update `Activity.counts_toward_physical_capacity`.
+1. Decide whether PROC/VAS should count for residents or only faculty.
 2. Add at least one **non-capacity** activity option to outpatient rotations (or relax requirements).
 3. Re-run `scripts/ops/block_regen.py` and verify activity solver status != error.
 

@@ -2,7 +2,7 @@
 
 ## Summary
 - **CP-SAT generation succeeded** for Block 10 (AY2026) with 617 solver assignments + 20 call nights.
-- **Activity solver failed** under the new **soft 6 / hard 8** physical capacity model because minimum clinic demand is 15-16 in most slots (35/40).
+- **Activity solver failed** under the **soft 6 / hard 8** physical capacity model because minimum clinic demand is 15-16 in most slots (35/40), even after restricting capacity to C-variants/PROC/SM/VAS.
 - **Supervision demand uses activity flags** (`requires_supervision` / `provides_supervision`) instead of narrow code lists.
 - **XLSX / JSON exports not re-run** after the hard-capacity change (activity solver failure leaves activities unassigned).
 
@@ -14,6 +14,7 @@ Block window: **2027-03-11 → 2027-04-07** (Block 10, AY2026).
 - **Post-call template lookup** now accepts PCAT/DO prefixes (PCAT-AM / DO-PM).
 - **Activity solver** computes supervision demand/coverage from activity flags.
 - **Physical capacity model** updated to **soft 6 / hard 8** and now fails fast if minimum clinic demand exceeds hard limit.
+- **Capacity codes now explicit:** C + variants, PROC, SM (faculty only), VAS.
 - **Ops scripts** load `.env` before imports and backfill `DATABASE_URL` when empty.
 - **New audit script:** `scripts/ops/supervision_activity_audit.py`
 
@@ -111,15 +112,16 @@ Not re-run for this pass (would export partial schedule).
 ## Findings
 - **CP-SAT + call** succeeds for Block 10 (solver + call assignments created).
 - **Activity solver fails** because minimum clinic demand is **15-16** per slot for most weekdays, which exceeds the **hard 8** capacity.
-- The forced clinic minimum indicates that **all outpatient slots are limited to clinical activities**, leaving no non-clinic options to relieve capacity.
+- Even with **capacity limited to C/PROC/SM/VAS**, the **allowed activity sets per outpatient template are still all capacity-coded**, so every outpatient slot contributes to the minimum.
+- **SM capacity is faculty-only** to avoid double counting resident + faculty in the same room.
 - **Supervision constraint** at block solver still logs: `No faculty_at or faculty_pcat variables, supervision constraint not applied` (activity solver now enforces AT coverage).
 - **Night Float post-call constraint** still logs: `NF or PC templates not found` (inactive).
 
 ## Plan (Next Steps)
 1) **Make physical capacity feasible**
-   - Decide which activities truly consume exam rooms.
-   - Update `Activity.counts_toward_physical_capacity` so non-clinic activities do not count.
-   - Add at least one **non-capacity** activity option to outpatient rotations if clinic demand must be reduced.
+   - Decide if PROC/VAS should count for **residents**, or only for **faculty** (similar to SM).
+   - Add at least one **non-capacity** activity option to outpatient rotations (e.g., admin/reading) if clinic demand must be reduced.
+   - Update activity requirements so outpatient templates have at least one non-capacity alternative.
 2) **Validate supervision metadata**
    - Use `scripts/ops/supervision_activity_audit.py` and fix missing `requires_supervision` flags.
 3) **Confirm NF/PC templates**

@@ -111,8 +111,8 @@ If CP-SAT returns **INFEASIBLE**, capture:
 
 If the **activity solver** fails with:
 `Physical capacity infeasible: ... minimum clinic demand above hard 8`
-- Audit `Activity.counts_toward_physical_capacity` values.
-- Add a non-capacity activity option for outpatient rotations or relax requirements.
+- Capacity currently counts **C-variants + PROC + SM (faculty only) + VAS**.
+- If demand still exceeds hard 8, add a non-capacity activity option to outpatient rotations (or relax requirements).
 
 ## Debug: Infeasibility Test (No Live Writes)
 
