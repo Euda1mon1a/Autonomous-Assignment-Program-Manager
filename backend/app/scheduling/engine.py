@@ -2747,22 +2747,17 @@ class SchedulingEngine:
         soft = self.constraint_manager.get_soft_constraints()
 
         logger.error(
-            "Constraint summary: enabled=%s (hard=%s, soft=%s), disabled=%s",
-            len(enabled),
-            len(hard),
-            len(soft),
-            len(disabled),
+            f"Constraint summary: enabled={len(enabled)} (hard={len(hard)}, "
+            f"soft={len(soft)}), disabled={len(disabled)}"
         )
 
         enabled_names = sorted({c.name for c in enabled})
         disabled_names = sorted({c.name for c in disabled})
 
         if enabled_names:
-            logger.error("Enabled constraints: %s", self._format_list(enabled_names))
+            logger.error(f"Enabled constraints: {self._format_list(enabled_names)}")
         if disabled_names:
-            logger.warning(
-                "Disabled constraints: %s", self._format_list(disabled_names)
-            )
+            logger.warning(f"Disabled constraints: {self._format_list(disabled_names)}")
 
     def _log_context_summary(self, context: SchedulingContext) -> None:
         """Log context counts and template coverage for solver diagnostics."""
@@ -2775,15 +2770,17 @@ class SchedulingEngine:
         call_eligible = len(getattr(context, "call_eligible_faculty", []))
 
         logger.error(
-            "Context summary: residents=%s, faculty=%s, templates=%s, blocks=%s (workday=%s), locked=%s, call_eligible=%s, existing_assignments=%s",
-            len(context.residents),
-            len(context.faculty),
-            len(context.templates),
-            len(context.blocks),
-            len(workday_blocks),
-            locked_count,
-            call_eligible,
-            len(getattr(context, "existing_assignments", [])),
+            "Context summary: residents=%s, faculty=%s, templates=%s, blocks=%s (workday=%s), locked=%s, call_eligible=%s, existing_assignments=%s"
+            % (
+                len(context.residents),
+                len(context.faculty),
+                len(context.templates),
+                len(context.blocks),
+                len(workday_blocks),
+                locked_count,
+                call_eligible,
+                len(getattr(context, "existing_assignments", [])),
+            )
         )
 
         template_codes = sorted(
@@ -2794,17 +2791,14 @@ class SchedulingEngine:
             }
         )
         if template_codes:
-            logger.error(
-                "Template abbreviations: %s", self._format_list(template_codes)
-            )
+            logger.error(f"Template abbreviations: {self._format_list(template_codes)}")
 
         required_templates = {"PCAT", "DO", "SM", "NF", "PC"}
         present = {code.upper() for code in template_codes}
         missing = sorted(code for code in required_templates if code not in present)
         if missing:
             logger.warning(
-                "Missing templates (may disable constraints): %s",
-                ", ".join(missing),
+                f"Missing templates (may disable constraints): {', '.join(missing)}"
             )
 
     def _dump_failure_snapshot(
@@ -2900,7 +2894,7 @@ class SchedulingEngine:
             safe_run_id = str(run_id) if run_id else "unknown"
             path = output_dir / f"schedule_failure_{safe_run_id}_{stamp}.json"
             path.write_text(json.dumps(snapshot, indent=2, default=str))
-            logger.error("Wrote failure snapshot to %s", path)
+            logger.error(f"Wrote failure snapshot to {path}")
         except Exception as exc:
             logger.error(f"Failed to write failure snapshot: {exc}")
 
