@@ -233,3 +233,9 @@ workspace/
 
 # Schedule exports with PII (real names)
 docs/priorities/*
+
+# Local ThinkOS pairing docs (user-specific)
+docs/thinkos_cli_browser_pairing_plan.md
+
+# Pytest hypothesis cache
+.hypothesis/
