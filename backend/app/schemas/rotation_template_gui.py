@@ -26,7 +26,10 @@ class WeeklyPatternBase(BaseModel):
     activity_type: str = Field(
         ...,
         max_length=50,
-        description="fm_clinic, specialty, elective, conference, inpatient, call, procedure, off",
+        description=(
+            "Activity code for this slot (Activity, not RotationTemplate.activity_type). "
+            "Examples: fm_clinic, specialty, elective, conference, inpatient, call, procedure, off."
+        ),
     )
     week_number: int | None = Field(
         None,
@@ -153,6 +156,7 @@ class RotationTemplateExtendedCreate(BaseModel):
 
     # Core fields
     name: str
+    # Rotation category/setting (NOT an Activity). Used for solver filtering + constraints.
     activity_type: str
     abbreviation: str | None = None
     font_color: str | None = None

@@ -68,19 +68,21 @@ router = APIRouter()
 
 @router.get("", response_model=RotationTemplateListResponse)
 async def list_rotation_templates(
-    activity_type: str | None = Query(None, description="Filter by activity type"),
+    activity_type: str | None = Query(
+        None, description="Filter by rotation category (activity_type)"
+    ),
     include_archived: bool = Query(
         False, description="Include archived templates in results"
     ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> RotationTemplateListResponse:
-    """List all rotation templates, optionally filtered by activity type.
+    """List all rotation templates, optionally filtered by rotation category.
 
     By default, archived templates are excluded. Use include_archived=true to see all templates.
 
     Args:
-        activity_type: Filter by activity type (e.g., 'clinic', 'inpatient')
+        activity_type: Filter by rotation category (e.g., 'clinic', 'inpatient')
         include_archived: Include archived templates (default: False)
         db: Database session
         current_user: Current authenticated user

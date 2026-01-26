@@ -31,6 +31,7 @@ class RotationTemplateBase(BaseModel):
     """Base rotation template schema."""
 
     name: str
+    # Rotation category/setting (NOT an Activity). Used for solver filtering + constraints.
     activity_type: (
         str  # 'clinic', 'inpatient', 'procedure', 'conference', 'lecture', etc.
     )
@@ -60,8 +61,8 @@ class RotationTemplateBase(BaseModel):
     @field_validator("activity_type")
     @classmethod
     def validate_activity_type(cls, v: str) -> str:
-        """Validate activity_type is one of the valid types."""
-        # Valid activity types used across the system:
+        """Validate activity_type is one of the valid rotation categories."""
+        # Valid rotation categories used across the system:
         # - clinic/outpatient: Clinic sessions and outpatient rotations
         # - inpatient: Hospital ward rotations (FMIT, wards)
         # - procedure/procedures: Procedural rotations
@@ -151,7 +152,7 @@ class RotationTemplateUpdate(BaseModel):
     @field_validator("activity_type")
     @classmethod
     def validate_activity_type(cls, v: str | None) -> str | None:
-        """Validate activity_type is one of the valid types."""
+        """Validate activity_type is one of the valid rotation categories."""
         if v is not None:
             valid_types = (
                 "clinic",

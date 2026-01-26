@@ -21,6 +21,10 @@ class RotationTemplate(Base):
 
     Version history is tracked via SQLAlchemy-Continuum.
     Access history: template.versions
+
+    NOTE on terminology:
+    - RotationTemplate = the rotation (multi-week container).
+    - activity_type = rotation category/setting (NOT an Activity).
     """
 
     __tablename__ = "rotation_templates"
@@ -30,6 +34,7 @@ class RotationTemplate(Base):
     name = Column(
         String(255), nullable=False
     )  # e.g., "PGY-1 Clinic", "FMIT", "Sports Medicine"
+    # Rotation category/setting (not an Activity). Used for solver filtering + constraints.
     activity_type = Column(
         String(255), nullable=False
     )  # "clinic", "inpatient", "outpatient", "procedure", "procedures", "conference", "education", "lecture", "absence", "off", "recovery"
