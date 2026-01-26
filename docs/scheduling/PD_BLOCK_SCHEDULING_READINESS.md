@@ -76,7 +76,7 @@
 ### F) Export
 - ✅ Canonical JSON export reads half_day_assignments. (`backend/app/services/half_day_json_exporter.py`)
 - ✅ JSON → XLSX conversion for Template2. (`backend/app/services/json_to_xlsx_converter.py`)
-- 🟡 Missing strict row mapping enforcement (silent skip risk). (`backend/app/services/json_to_xlsx_converter.py`)
+- ✅ Strict row mapping enforcement (missing row -> explicit error). (`backend/app/services/xml_to_xlsx_converter.py`)
 - 🟡 Export UI auth wiring in frontend still pending. (`frontend/src/lib/export.ts`)
 
 ### G) Edge cases (edge-of-edge)
@@ -90,7 +90,7 @@
 ## Findings (what prevents “every possible scenario”)
 
 **P0 — Functional gaps**
-1) **Export row mapping is not strict.** Missing mappings can silently skip people in XLSX output. This is acceptable for dev but not PD‑safe. (`backend/app/services/json_to_xlsx_converter.py`)
+1) **Export UI still needs auth wiring + error handling.** (`frontend/src/lib/export.ts`)
 
 **P1 — Editing caveats**
 2) **Draft edits do not override preloads by default.** Add/update skips if existing source is PRELOAD or MANUAL; users must delete first. This is correct for safety but needs GUI messaging. (`backend/app/services/schedule_draft_service.py`)
@@ -105,10 +105,10 @@
 ## Implementation Plan (phased)
 
 ### Phase 1 — PD-safe generation + export (P0)
-1) **Fail fast on missing export mappings**
-   - Enforce strict row mapping in JSON → XLSX conversion.
-   - Return explicit error for missing person or row mapping.
-   - Files: `backend/app/services/json_to_xlsx_converter.py`, `backend/app/services/canonical_schedule_export_service.py`
+1) **Export UX + error handling**
+   - Ensure export uses authenticated call.
+   - Surface missing mapping / backend errors in UI.
+   - Files: `frontend/src/lib/export.ts`
 
 ### Phase 2 — PD-safe editing (P1)
 2) **Draft override UX / API affordances**
