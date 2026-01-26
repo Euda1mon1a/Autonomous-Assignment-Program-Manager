@@ -246,9 +246,12 @@ class PuLPSolver(BaseSolver):
         x = {}
         template_idx = {t.id: i for i, t in enumerate(context.templates)}
 
+        locked_blocks = getattr(context, "locked_blocks", set())
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
             for block in workday_blocks:
+                if (resident.id, block.id) in locked_blocks:
+                    continue
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
                     # Skip templates requiring procedure credentials if resident doesn't have them
@@ -284,6 +287,8 @@ class PuLPSolver(BaseSolver):
         for faculty in context.faculty:
             f_i = context.faculty_idx[faculty.id]
             for block in workday_blocks:
+                if (faculty.id, block.id) in locked_blocks:
+                    continue
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
                     t_i = template_idx[template.id]
@@ -361,7 +366,7 @@ class PuLPSolver(BaseSolver):
                 ]
                 if rotation_vars:
                     prob += (
-                        pulp.lpSum(rotation_vars) <= 1,
+                        pulp.lpSum(rotation_vars) == 1,
                         f"one_rotation_res_{r_i}_{b_i}",
                     )
 
@@ -544,18 +549,15 @@ class PuLPSolver(BaseSolver):
         # ==================================================
         call_assignments_result = []
         if call_eligible and call:
+            block_id_by_idx = {context.block_idx[b.id]: b.id for b in context.blocks}
             for (f_i, b_i, call_type), var in call.items():
                 if pulp.value(var) == 1:
                     # Find the faculty and block for this variable
                     faculty_id = None
-                    block_id = None
+                    block_id = block_id_by_idx.get(b_i)
                     for fac in call_eligible:
                         if call_idx.get(fac.id) == f_i:
                             faculty_id = fac.id
-                            break
-                    for block in workday_blocks:
-                        if context.block_idx[block.id] == b_i:
-                            block_id = block.id
                             break
                     if faculty_id and block_id:
                         call_assignments_result.append(
@@ -844,9 +846,12 @@ class CPSATSolver(BaseSolver):
         x = {}
         template_idx = {t.id: i for i, t in enumerate(context.templates)}
 
+        locked_blocks = getattr(context, "locked_blocks", set())
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
             for block in workday_blocks:
+                if (resident.id, block.id) in locked_blocks:
+                    continue
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
                     # Skip templates requiring procedure credentials if resident doesn't have them
@@ -885,6 +890,8 @@ class CPSATSolver(BaseSolver):
         for faculty in context.faculty:
             f_i = context.faculty_idx[faculty.id]
             for block in workday_blocks:
+                if (faculty.id, block.id) in locked_blocks:
+                    continue
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
                     t_i = template_idx[template.id]
@@ -968,7 +975,7 @@ class CPSATSolver(BaseSolver):
                     if (r_i, b_i, t_i) in x
                 ]
                 if rotation_vars:
-                    model.Add(sum(rotation_vars) <= 1)
+                    model.Add(sum(rotation_vars) == 1)
 
         # ==================================================
         # CONSTRAINT: At most one rotation per faculty per block
@@ -1041,23 +1048,18 @@ class CPSATSolver(BaseSolver):
 
         # Build objective with all penalties
         equity_penalty = variables.get("equity_penalty")
-        if equity_penalty is not None and template_balance_penalty is not None:
-            model.Maximize(
-                coverage * COVERAGE_WEIGHT
-                - equity_penalty * EQUITY_PENALTY_WEIGHT
-                - template_balance_penalty * TEMPLATE_BALANCE_WEIGHT
-            )
-        elif equity_penalty is not None:
-            model.Maximize(
-                coverage * COVERAGE_WEIGHT - equity_penalty * EQUITY_PENALTY_WEIGHT
-            )
-        elif template_balance_penalty is not None:
-            model.Maximize(
-                coverage * COVERAGE_WEIGHT
-                - template_balance_penalty * TEMPLATE_BALANCE_WEIGHT
-            )
-        else:
-            model.Maximize(coverage)
+        objective_terms = variables.get("objective_terms", [])
+
+        objective_expr = coverage * COVERAGE_WEIGHT
+        if equity_penalty is not None:
+            objective_expr -= equity_penalty * EQUITY_PENALTY_WEIGHT
+        if template_balance_penalty is not None:
+            objective_expr -= template_balance_penalty * TEMPLATE_BALANCE_WEIGHT
+        if objective_terms:
+            for term_var, weight in objective_terms:
+                objective_expr -= term_var * int(weight)
+
+        model.Maximize(objective_expr)
 
         # ==================================================
         # SOLVE
@@ -1182,18 +1184,15 @@ class CPSATSolver(BaseSolver):
         # ==================================================
         call_assignments_result = []
         if call_eligible and call:
+            block_id_by_idx = {context.block_idx[b.id]: b.id for b in context.blocks}
             for (f_i, b_i, call_type), var in call.items():
                 if solver.Value(var) == 1:
                     # Find the faculty and block for this variable
                     faculty_id = None
-                    block_id = None
+                    block_id = block_id_by_idx.get(b_i)
                     for fac in call_eligible:
                         if call_idx.get(fac.id) == f_i:
                             faculty_id = fac.id
-                            break
-                    for block in workday_blocks:
-                        if context.block_idx[block.id] == b_i:
-                            block_id = block.id
                             break
                     if faculty_id and block_id:
                         call_assignments_result.append(

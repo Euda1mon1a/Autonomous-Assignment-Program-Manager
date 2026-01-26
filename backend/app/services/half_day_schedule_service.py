@@ -1,8 +1,7 @@
 """HalfDayScheduleService - Read service for half-day assignments.
 
 This service provides read access to the persisted half_day_assignments table.
-It replaces the compute-on-read pattern from BlockAssignmentExpansionService
-for read operations.
+Legacy expansion has been archived; HalfDayAssignment is the source of truth.
 
 The half_day_assignments table is the source of truth for daily schedules.
 Use PreloadService to populate preloaded assignments, then this service to read.
@@ -367,7 +366,7 @@ class HalfDayScheduleService:
         for a in assignments:
             if not a.person or a.person.type != "faculty":
                 continue
-            if a.activity and a.activity.provides_supervision:
+            if a.activity and a.activity.is_supervision:
                 coverage += 1.0
 
         # Round up demand (can't have half a faculty)

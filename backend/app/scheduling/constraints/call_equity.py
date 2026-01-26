@@ -88,10 +88,19 @@ class SundayCallEquityConstraint(SoftConstraint):
         if not sunday_blocks:
             return
 
-        # Count Sunday calls per faculty
+        # Count Sunday calls per call-eligible faculty
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
         faculty_sunday_counts = {}
-        for faculty in context.faculty:
-            f_i = context.resident_idx.get(faculty.id)
+        for faculty in call_eligible_faculty:
+            f_i = call_faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 
@@ -135,10 +144,19 @@ class SundayCallEquityConstraint(SoftConstraint):
         if not sunday_blocks:
             return
 
-        # Track Sunday calls per faculty and add variance penalty
+        # Track Sunday calls per call-eligible faculty and add variance penalty
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
         faculty_counts = []
-        for faculty in context.faculty:
-            f_i = context.resident_idx.get(faculty.id)
+        for faculty in call_eligible_faculty:
+            f_i = call_faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 
@@ -272,9 +290,18 @@ class WeekdayCallEquityConstraint(SoftConstraint):
         if not weekday_blocks:
             return
 
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
         faculty_weekday_counts = {}
-        for faculty in context.faculty:
-            f_i = context.resident_idx.get(faculty.id)
+        for faculty in call_eligible_faculty:
+            f_i = call_faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 
@@ -317,9 +344,18 @@ class WeekdayCallEquityConstraint(SoftConstraint):
         if not weekday_blocks:
             return
 
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
         faculty_counts = []
-        for faculty in context.faculty:
-            f_i = context.resident_idx.get(faculty.id)
+        for faculty in call_eligible_faculty:
+            f_i = call_faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 
@@ -442,16 +478,25 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
         if not tuesday_blocks:
             return
 
-        # Find PD and APD faculty
+        # Find PD and APD faculty (call-eligible)
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
         penalty_vars = []
-        for faculty in context.faculty:
+        for faculty in call_eligible_faculty:
             if (
                 not hasattr(faculty, "avoid_tuesday_call")
                 or not faculty.avoid_tuesday_call
             ):
                 continue
 
-            f_i = context.resident_idx.get(faculty.id)
+            f_i = call_faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 
@@ -484,15 +529,24 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
         if not tuesday_blocks:
             return
 
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
         penalty_vars: list[Any] = []
-        for faculty in context.faculty:
+        for faculty in call_eligible_faculty:
             if (
                 not hasattr(faculty, "avoid_tuesday_call")
                 or not faculty.avoid_tuesday_call
             ):
                 continue
 
-            f_i = context.resident_idx.get(faculty.id)
+            f_i = call_faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 
@@ -606,9 +660,18 @@ class CallSpacingConstraint(SoftConstraint):
             return
 
         # For each faculty, penalize consecutive week calls
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
         penalty_vars = []
-        for faculty in context.faculty:
-            f_i = context.resident_idx.get(faculty.id)
+        for faculty in call_eligible_faculty:
+            f_i = call_faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 
@@ -675,9 +738,18 @@ class CallSpacingConstraint(SoftConstraint):
         if len(sorted_weeks) < 2:
             return
 
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
         constraint_count = 0
-        for faculty in context.faculty:
-            f_i = context.resident_idx.get(faculty.id)
+        for faculty in call_eligible_faculty:
+            f_i = call_faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 
@@ -856,16 +928,25 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
         if not wednesday_blocks:
             return
 
-        # Find Dept Chief
+        # Find Dept Chief (call-eligible)
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
         bonus_vars = []
-        for faculty in context.faculty:
+        for faculty in call_eligible_faculty:
             if (
                 not hasattr(faculty, "prefer_wednesday_call")
                 or not faculty.prefer_wednesday_call
             ):
                 continue
 
-            f_i = context.resident_idx.get(faculty.id)
+            f_i = call_faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 
@@ -899,15 +980,24 @@ class DeptChiefWednesdayPreferenceConstraint(SoftConstraint):
         if not wednesday_blocks:
             return
 
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
         bonus_vars: list[Any] = []
-        for faculty in context.faculty:
+        for faculty in call_eligible_faculty:
             if (
                 not hasattr(faculty, "prefer_wednesday_call")
                 or not faculty.prefer_wednesday_call
             ):
                 continue
 
-            f_i = context.resident_idx.get(faculty.id)
+            f_i = call_faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 

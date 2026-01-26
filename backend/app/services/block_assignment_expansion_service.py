@@ -33,6 +33,7 @@ from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.weekly_pattern import WeeklyPattern
 from app.utils.academic_blocks import get_block_dates
+from app.utils.activity_locking import is_activity_preloaded
 
 logger = get_logger(__name__)
 
@@ -1433,15 +1434,14 @@ class BlockAssignmentExpansionService:
                     activity = self._lookup_activity_by_abbreviation(
                         abbrev,
                         strict=True,
-                        context=f"Block {block_number} solver assignment",
+                        context=f"Block {block_assignment.block_number} solver assignment",
                     )
 
-            # Determine source: time_off activities (W, LV, HOL, OFF) should be preload
+            # Determine source: preloaded/protected activities must be locked
             # so activity solver won't overwrite them
-            is_time_off = activity and activity.activity_category == "time_off"
             source = (
                 AssignmentSource.PRELOAD.value
-                if is_time_off
+                if is_activity_preloaded(activity)
                 else AssignmentSource.SOLVER.value
             )
 

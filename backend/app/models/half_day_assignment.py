@@ -1,7 +1,7 @@
 """HalfDayAssignment model - persisted half-day schedule slots.
 
 This model stores the actual daily AM/PM schedule assignments with source tracking.
-It replaces the compute-on-read pattern from BlockAssignmentExpansionService.
+It is the source of truth for the CP-SAT pipeline; legacy expansion is archived.
 
 Key design principles:
 - Uses actual dates (not block references) for natural inter-block constraint handling

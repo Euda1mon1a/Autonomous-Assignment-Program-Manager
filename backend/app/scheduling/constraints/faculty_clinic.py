@@ -7,9 +7,8 @@ Implements ACGME supervision requirements and faculty clinic caps:
 
 Session 136: Created to fix missing faculty C/AT assignments in solver.
 
-The solver was only generating resident assignments, leaving faculty slots
-to be filled by FacultyAssignmentExpansionService with GME/DFM by default.
-These constraints ensure proper faculty clinic and supervision coverage.
+These constraints ensure proper faculty clinic and supervision coverage
+within the CP-SAT pipeline (no expansion-based backfill).
 """
 
 import logging
@@ -48,7 +47,7 @@ FACULTY_CLINIC_CAPS: dict[str, tuple[int, int]] = {
     "Tagawa": (0, 0),  # SM only
     # FMIT-focused faculty (no outpatient clinic)
     "Bevis": (0, 0),
-    "Dahl": (0, 0),
+    "Dahl": (1, 2),
     "Chu": (0, 0),
     "Napierala": (0, 0),
     "Van Brunt": (0, 0),
@@ -97,23 +96,13 @@ class FacultyClinicCapConstraint(SoftConstraint):
         weeks = []
         current = start_date
 
-        # Find first Monday (or start_date if it's Monday)
-        days_to_monday = (7 - current.weekday()) % 7
-        if days_to_monday > 0:
-            # Partial first week
-            week_end = current + timedelta(days=days_to_monday - 1)
-            if week_end > end_date:
-                week_end = end_date
-            weeks.append((current, week_end))
-            current = current + timedelta(days=days_to_monday)
-
-        # Full weeks
+        # Use 7-day windows anchored to start_date (block-aligned weeks)
         while current <= end_date:
             week_end = current + timedelta(days=6)
             if week_end > end_date:
                 week_end = end_date
             weeks.append((current, week_end))
-            current = current + timedelta(days=7)
+            current = week_end + timedelta(days=1)
 
         return weeks
 
@@ -281,8 +270,6 @@ class FacultySupervisionConstraint(HardConstraint):
     AT coverage sources:
     - AT: Attending Time (primary supervision)
     - PCAT: Post-Call Attending Time
-    - C: Faculty clinic (they can supervise while seeing patients)
-    - CV: Virtual clinic
 
     This is the highest priority constraint - ACGME compliance.
     """
@@ -295,7 +282,7 @@ class FacultySupervisionConstraint(HardConstraint):
     }
 
     # Activity codes that count as AT coverage
-    AT_COVERAGE_CODES = {"at", "pcat", "fm_clinic", "C", "CV", "do"}
+    AT_COVERAGE_CODES = {"at", "pcat"}
 
     def __init__(self) -> None:
         super().__init__(
@@ -312,14 +299,13 @@ class FacultySupervisionConstraint(HardConstraint):
     ) -> None:
         """Add ACGME supervision constraint to CP-SAT model."""
         faculty_at = variables.get("faculty_at", {})
-        faculty_clinic = variables.get("faculty_clinic", {})
         faculty_pcat = variables.get("faculty_pcat", {})
         resident_clinic = variables.get("resident_clinic", {})
 
         # If no faculty AT variables, can't enforce this constraint
-        if not faculty_at and not faculty_clinic:
+        if not faculty_at and not faculty_pcat:
             logger.warning(
-                "No faculty_at or faculty_clinic variables, "
+                "No faculty_at or faculty_pcat variables, "
                 "supervision constraint not applied"
             )
             return
@@ -358,14 +344,12 @@ class FacultySupervisionConstraint(HardConstraint):
                     # Sum weighted demand (each resident adds their factor)
                     total_demand = sum(var * factor for var, factor in demand_vars)
 
-                    # Sum coverage (AT + clinic + PCAT all count)
+                    # Sum coverage (AT + PCAT only)
                     coverage_vars = []
                     for faculty in context.faculty:
                         fkey = (faculty.id, current, slot)
                         if fkey in faculty_at:
                             coverage_vars.append(faculty_at[fkey])
-                        if fkey in faculty_clinic:
-                            coverage_vars.append(faculty_clinic[fkey])
                         if fkey in faculty_pcat:
                             coverage_vars.append(faculty_pcat[fkey])
 

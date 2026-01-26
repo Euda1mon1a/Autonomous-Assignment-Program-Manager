@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-24 (Session 139: mypy parallel fixes - 983 errors fixed, 13.2%)
+> **Last Updated:** 2026-01-25 (Session 140: CP-SAT canonical JSON export pipeline + XLSX fixes)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -116,12 +116,16 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 
 **Why Plan B (Claude for macOS manual):** These silent failures produce incomplete Excel files without user feedback.
 
-**Required Fixes:**
-1. Replace silent skip with exception in `xml_to_xlsx_converter.py:397`
-2. Add `include_faculty=True` parameter to `HalfDayXMLExporter`
-3. Fix frontend auth - use axios instead of raw fetch in `export.ts`
-4. Validate row mappings during converter initialization
-5. Add user feedback (toast) on export failures
+**Status Update (2026-01-25):**
+- ✅ Canonical JSON export pipeline (`HalfDayJSONExporter` → `JSONToXlsxConverter`)
+- ✅ Merged-cell safe writing (headers + schedule cells)
+- ✅ Name mapping handles `Last, First` ↔ `First Last`
+- ✅ Faculty included in canonical export
+
+**Remaining Fixes:**
+1. Replace silent skip with exception (fail fast on missing row mapping)
+2. Fix frontend auth - use axios instead of raw fetch in `export.ts`
+3. Add user feedback (toast) on export failures
 
 **Files:**
 - `backend/app/services/xml_to_xlsx_converter.py`
@@ -173,22 +177,24 @@ Real faculty/provider names exposed in burnout and vulnerability API responses:
 
 ## HIGH (Address Soon)
 
-### 4. Block 10 Schedule Generation - WORKING but Export Blocked
-**Status:** Generation ✅ | Export ⚠️ BLOCKED (see #1)
+### 4. Block 10 Schedule Generation - WORKING and Backend Export Unblocked
+**Status:** Generation ✅ | Backend Export ✅ | Frontend Export ⚠️ (see #1)
 
 **What's Working:**
 - Block 10 generation: 1,512 half-day assignments (17 residents × 56 slots + 10 faculty × 56 slots)
 - 0 NULL activity_id - all assignments have valid activities
-- HalfDayXMLExporter reads from `half_day_assignments` table correctly
-- XML checkpoint exists for validation
-- CP-SAT canonical path enforced for call/activity/faculty; greedy/hybrid archived (see `docs/scheduling/CP_SAT_SCHEDULE_GENERATION.md`)
+- Canonical JSON export reads from `half_day_assignments`
+- Backend export produces Block Template2 XLSX via JSON pipeline
+- CP-SAT canonical path enforced for call/activity/faculty; greedy/hybrid archived (see `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md`)
 
 **What's Blocked:**
-- xlsx export has silent failures (see CRITICAL #1)
-- Faculty excluded from export
-- Frontend export may fail due to auth bypass
+- Frontend export may fail due to auth bypass (needs axios/JWT fix)
+- Export UI lacks explicit failure feedback
+- Missing row mapping should hard-fail instead of warning
 
-**Workaround (Plan B):** Manual export via Claude for macOS using XML → Excel transformation
+**Reference:** `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md` (done / remaining / uncertain)
+
+**Workaround (Plan B):** Manual export via Excel still works, but backend export is now functional
 
 ### 5. ACGME Compliance Validation Gaps
 Call duty and performance profiling have edge cases:

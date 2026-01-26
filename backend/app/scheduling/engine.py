@@ -56,13 +56,7 @@ from app.scheduling.solvers import (
     SolverResult,
 )
 from app.scheduling.validator import ACGMEValidator
-from app.services.block_assignment_expansion_service import (
-    BlockAssignmentExpansionService,
-)
 from app.services.sync_preload_service import SyncPreloadService
-from app.services.faculty_assignment_expansion_service import (
-    FacultyAssignmentExpansionService,
-)
 from app.scheduling.activity_solver import CPSATActivitySolver
 from app.services.schedule_draft_service import ScheduleDraftService
 from app.models.schedule_draft import DraftSourceType
@@ -146,13 +140,12 @@ class SchedulingEngine:
                                         (FMIT, NF, NICU) - prevents over-assignment bug
             preserve_absence: Preserve existing absence assignments (Leave, Weekend)
                              so solver skips people with scheduled time off
-            expand_block_assignments: Generate daily slots from block_assignments table
-                                     (default True). This bridges the gap between
-                                     "Resident X on FMIT for Block 10" and daily AM/PM slots.
-            block_number: Academic block number (1-13) for block_assignment expansion.
-                         Required if expand_block_assignments=True.
-            academic_year: Academic year (e.g., 2025 for AY 2025-2026).
-                          Required if expand_block_assignments=True.
+            expand_block_assignments: Deprecated (expansion pipeline removed).
+                                     Kept for API compatibility; ignored.
+            block_number: Academic block number (1-13), used for preloads and
+                         activity solver defaults.
+            academic_year: Academic year (e.g., 2025 for AY 2025-2026), used for
+                          preloads and activity solver defaults.
             create_draft: If True, stage assignments in a draft instead of committing
                          directly to live assignments. Draft must be published separately.
             created_by_id: UUID of user creating the schedule (for audit trail).
@@ -167,12 +160,26 @@ class SchedulingEngine:
 
         # Validate algorithm
         if algorithm not in self.ALGORITHMS:
-            logger.warning(f"Unknown algorithm '{algorithm}', using 'greedy'")
-            algorithm = "greedy"
+            logger.warning(f"Unknown algorithm '{algorithm}', using canonical CP-SAT")
+            algorithm = "cp_sat"
+
+        # Canonical solver path: CP-SAT only
+        if algorithm != "cp_sat":
+            logger.info(
+                f"Overriding algorithm '{algorithm}' -> 'cp_sat' (canonical pathway)"
+            )
+            algorithm = "cp_sat"
 
         # Issue #3: Transaction boundaries - wrap everything in a single transaction
         # Create an "in_progress" run record first
         run = self._create_initial_run(algorithm)
+
+        # Expansion pipeline removed; expand_block_assignments is deprecated.
+        if expand_block_assignments is False:
+            logger.warning(
+                "expand_block_assignments is deprecated and ignored "
+                "(CP-SAT is canonical)."
+            )
 
         # Pre-generation resilience check
         # Store as instance attribute for _populate_resilience_data to access
@@ -253,7 +260,7 @@ class SchedulingEngine:
             # CORRECTED ORDER OF OPERATIONS (per TAMC skill)
             # =================================================================
             # The dependency chain is:
-            #   Call → PCAT/DO → AT Coverage → Resident Clinic Load → Faculty Admin
+            #   Call → PCAT (DO paired for rest) → AT Coverage → Resident Clinic Load → Faculty Admin
             #
             # PCAT (Post-Call Attending Time) counts toward AT coverage.
             # Residents must know PCAT availability BEFORE scheduling clinic.
@@ -261,18 +268,17 @@ class SchedulingEngine:
             # =================================================================
 
             # Step 1.5g: Infer block/year if not provided
-            if expand_block_assignments:
-                if block_number is None or academic_year is None:
-                    # Try to infer from date range
-                    block_number, _ = get_block_number_for_date(self.start_date)
-                    # Academic year is the year of July 1 that starts the AY
-                    if self.start_date.month >= 7:
-                        academic_year = self.start_date.year
-                    else:
-                        academic_year = self.start_date.year - 1
-                    logger.info(
-                        f"Inferred block {block_number} AY {academic_year} from dates"
-                    )
+            if block_number is None or academic_year is None:
+                # Try to infer from date range
+                block_number, _ = get_block_number_for_date(self.start_date)
+                # Academic year is the year of July 1 that starts the AY
+                if self.start_date.month >= 7:
+                    academic_year = self.start_date.year
+                else:
+                    academic_year = self.start_date.year - 1
+                logger.info(
+                    f"Inferred block {block_number} AY {academic_year} from dates"
+                )
 
             # Step 2: Load absences and build availability matrix (moved earlier)
             self._build_availability_matrix()
@@ -283,19 +289,14 @@ class SchedulingEngine:
             faculty = self._get_faculty()
 
             # NOTE: Context is built in Step 4 (unchanged location)
-            # Call solving happens in Step 5 (half-day mode)
-            # The key change is preloads now skip stale faculty call PCAT/DO
+            # CP-SAT solving happens in Step 5
+            # Preloads now skip stale faculty call PCAT/DO
 
             # Step 3.5: Load NON-CALL preloads (FMIT, absences, C-I, NF, aSM)
             # SKIP faculty call PCAT/DO - those will come from NEW call in Step 6.5
             # This prevents loading stale PCAT/DO from old CallAssignment records
             # SKIP in draft mode - preloads write to live half_day_assignments
-            if (
-                expand_block_assignments
-                and block_number
-                and academic_year
-                and not create_draft
-            ):
+            if block_number and academic_year and not create_draft:
                 preload_service = SyncPreloadService(self.db)
                 preload_count = preload_service.load_all_preloads(
                     block_number, academic_year, skip_faculty_call=True
@@ -306,32 +307,10 @@ class SchedulingEngine:
                     "Skipping preload sync in draft mode (would modify live data)"
                 )
 
-            # Step 3.6: Expand block_assignments into daily slots
-            # This generates HalfDayAssignment records from the master rotation schedule
-            # Now runs AFTER preloads are loaded (absences, FMIT, etc.)
-            expanded_assignments: list[Assignment] = []
-            if expand_block_assignments and block_number and academic_year:
-                expansion_service = BlockAssignmentExpansionService(self.db)
-                expanded_assignments = expansion_service.expand_block_assignments(
-                    block_number=block_number,
-                    academic_year=academic_year,
-                    schedule_run_id=cast(UUID, run.id),
-                    created_by="engine_expansion",
-                    apply_one_in_seven=True,
-                    persist_half_day=True,  # Persist to HalfDayAssignment table
-                )
-                if expanded_assignments:
-                    logger.info(
-                        f"Expanded {len(expanded_assignments)} assignments from "
-                        f"block_assignments for Block {block_number}"
-                    )
-
-            # NOTE: Faculty expansion and activity solver are moved to AFTER
-            # call assignments are created (see Steps 6.7 and 6.8)
+            # NOTE: Activity solver runs AFTER call assignments are created.
             # This ensures:
-            # 1. PCAT/DO from NEW call is locked before activity solver runs
+            # 1. PCAT/DO from NEW call is locked before activity solver runs (PCAT drives AT coverage)
             # 2. Activity solver knows PCAT coverage for AT ratio calculations
-            # 3. Faculty fills remaining slots AFTER knowing resident demand
 
             # NOTE: Deletion deferred until after successful solve (see Step 5.5)
             # This prevents data loss if the solver fails
@@ -350,7 +329,6 @@ class SchedulingEngine:
 
             # Step 4: Create scheduling context (with resilience data if available)
             # Combine all preserved assignments to pass to context as immutable
-            # Note: expanded_assignments are NEW records from block_assignments expansion
             preserved_assignments = (
                 fmit_assignments
                 + resident_inpatient_assignments
@@ -358,7 +336,6 @@ class SchedulingEngine:
                 + offsite_assignments
                 + recovery_assignments
                 + education_assignments
-                + expanded_assignments  # NEW: from block_assignments expansion
             )
             context = self._build_context(
                 residents,
@@ -413,83 +390,51 @@ class SchedulingEngine:
                 for warning in validation_result.warnings:
                     logger.warning(f"Pre-solver warning: {warning}")
 
-            # Step 5: Run solver
-            # NOTE: In half-day mode (expand_block_assignments=True), the activity solver
-            # (CPSATActivitySolver in Step 1.5i) handles activity assignment to HalfDayAssignment.
-            # The legacy rotation solver is skipped because its results are discarded anyway.
-            if not expand_block_assignments:
-                solver_result = self._run_solver(algorithm, context, timeout_seconds)
-
-                if not solver_result.success:
-                    logger.warning(f"Solver failed: {solver_result.solver_status}")
-                    # Fallback to greedy if advanced solver fails
-                    if algorithm != "greedy":
-                        logger.info("Falling back to greedy solver")
-                        solver_result = self._run_solver(
-                            "greedy", context, timeout_seconds
-                        )
-            else:
-                # Half-day mode: Run greedy solver ONLY for call assignments (Sun-Thu)
-                # Rotation assignments come from expansion service, but call equity
-                # logic is in the greedy solver. We discard rotation assignments but
-                # keep call_assignments from the result.
-                logger.info(
-                    "Running greedy solver for Sun-Thu call assignments only "
-                    "(rotation assignments handled by expansion service)"
-                )
-                solver_result = self._run_solver("greedy", context, timeout_seconds)
-                # Clear rotation assignments (we don't need them in half-day mode)
-                # but preserve call_assignments for Step 6.5
-                solver_result.assignments = []
-                logger.info(
-                    f"Greedy solver generated {len(solver_result.call_assignments)} "
-                    f"Sun-Thu call assignments"
-                )
+            # Step 5: Run solver (CP-SAT full outpatient assignments)
+            logger.info("Running CP-SAT solver for outpatient assignments + call")
+            solver_result = self._run_solver("cp_sat", context, timeout_seconds)
+            if not solver_result.success:
+                logger.error(f"CP-SAT solver failed: {solver_result.solver_status}")
+                self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
+                self.db.commit()
+                return {
+                    "status": "failed",
+                    "message": f"CP-SAT solver failed: {solver_result.solver_status}",
+                    "total_assigned": 0,
+                    "total_blocks": len(blocks),
+                    "validation": self._empty_validation(),
+                    "run_id": run.id,
+                }
+            logger.info(
+                f"CP-SAT solver generated {len(solver_result.assignments)} "
+                f"rotation assignments and {len(solver_result.call_assignments)} call assignments"
+            )
 
             # Step 5.5: Delete existing assignments (except preserved ones)
             # This happens AFTER successful solve to prevent data loss on solver failure
             # SKIP in draft mode - draft staging should not modify live schedule
             if not create_draft:
                 self._delete_existing_assignments(preserve_ids)
-
-            # Step 5.6: Add expanded assignments from block_assignments
-            # These are NEW records generated from the master rotation schedule
-            # NOTE: When expand_block_assignments=True with persist_half_day=True,
-            # HalfDayAssignment records are already created by the expansion service.
-            # We DO NOT add to self.assignments since that list gets persisted to
-            # the old Assignment table in Step 8, causing constraint violations.
-            if not expand_block_assignments:
-                # Legacy path: persist Assignment objects to old table
-                for assignment in expanded_assignments:
-                    self.db.add(assignment)
-                    self.assignments.append(assignment)
-                if expanded_assignments:
-                    logger.info(
-                        f"Added {len(expanded_assignments)} expanded assignments to session"
-                    )
-            else:
-                # New path: HalfDayAssignment already persisted by expansion service
-                # Skip adding to self.assignments to avoid duplicate persistence
-                logger.info(
-                    f"Skipped {len(expanded_assignments)} expanded assignments "
-                    f"(already persisted as HalfDayAssignment)"
-                )
+                self._delete_existing_half_day_assignments()
 
             # Step 6: Convert solver results to assignments
-            # In half-day mode, resident assignments come from expansion, not solver
-            if not expand_block_assignments:
-                self._create_assignments_from_result(
-                    solver_result,
-                    residents,
-                    templates,
-                    cast(UUID, run.id),
-                    preserved_assignments,
-                )
-            else:
-                logger.info(
-                    "Skipping solver assignment conversion in half-day mode "
-                    "(residents already assigned via expansion)"
-                )
+            locked_slots = self._get_blocking_half_day_slots()
+            blocks_by_id = {b.id: b for b in blocks}
+            self._create_assignments_from_result(
+                solver_result,
+                residents,
+                templates,
+                cast(UUID, run.id),
+                existing_assignments=preserved_assignments,
+                locked_half_day_slots=locked_slots,
+                blocks_by_id=blocks_by_id,
+            )
+            if not create_draft:
+                for assignment in self.assignments:
+                    self.db.add(assignment)
+                self.db.flush()
+                self._persist_solver_assignments_to_half_day(self.assignments, blocks)
+                self._ensure_faculty_half_day_slots(faculty, blocks)
 
             # Step 6.5: Create call assignments from solver results
             # Creates CallAssignment records for overnight call (Sun-Thurs)
@@ -503,7 +448,7 @@ class SchedulingEngine:
                 # Step 6.6: Sync PCAT/DO to half_day_assignments based on NEW call
                 # Creates PCAT (AM) and DO (PM) for day after call, locked as preload.
                 # NOW we have baseline AT coverage for ratio calculations.
-                if call_assignments and expand_block_assignments:
+                if call_assignments:
                     self._sync_call_pcat_do_to_half_day(call_assignments)
 
                     # Step 6.6.1: Validate PCAT/DO integrity (catches sync bugs)
@@ -521,7 +466,7 @@ class SchedulingEngine:
                             for issue in pcat_do_issues:
                                 logger.error(f"  - {issue}")
 
-                            # Fail generation - PCAT/DO is critical for AT coverage
+                            # Fail generation - PCAT is critical for AT coverage (DO is post-call rest)
                             # ROLLBACK all schedule changes to avoid partial state
                             # (CallAssignments, HalfDayAssignments written so far)
                             # Note: run record was committed in _create_initial_run,
@@ -560,22 +505,16 @@ class SchedulingEngine:
                 )
 
             # =================================================================
-            # CORRECTED: Activity solver and faculty expansion run AFTER call
+            # CORRECTED: Activity solver runs AFTER call
             # =================================================================
-            # NOW that PCAT/DO is locked, the activity solver knows AT coverage.
+            # NOW that PCAT is locked, the activity solver knows AT coverage.
             # Residents can be scheduled knowing which slots have supervision.
-            # Faculty expansion fills remaining slots AFTER knowing resident demand.
 
-            # Step 6.7: Run activity solver to assign C, LEC, ADV to half-day slots
-            # This assigns activities to resident slots that aren't locked by preload.
-            # NOW runs AFTER PCAT/DO is created, so AT coverage is known.
+            # Step 6.7: Run activity solver to assign activities to half-day slots
+            # This assigns activities to resident + faculty slots that aren't locked by preload.
+            # NOW runs AFTER PCAT is created, so AT coverage is known.
             # SKIP in draft mode - activity solver writes to live half_day_assignments
-            if (
-                expand_block_assignments
-                and block_number
-                and academic_year
-                and not create_draft
-            ):
+            if block_number and academic_year and not create_draft:
                 activity_solver = CPSATActivitySolver(
                     self.db,
                     timeout_seconds=min(timeout_seconds, 30.0),  # Cap at 30s
@@ -590,45 +529,13 @@ class SchedulingEngine:
                     logger.warning(
                         f"Activity solver failed: {activity_result.get('message', 'unknown error')}"
                     )
-            elif create_draft and expand_block_assignments:
+            elif create_draft and (block_number and academic_year):
                 logger.info(
                     "Skipping activity solver in draft mode (would modify live data)"
                 )
 
-            # Step 6.8: Fill faculty half-day assignments
-            # Creates HalfDayAssignment records for faculty with source='template'.
-            # Ensures all faculty have 56 slots filled (weekends=W, absences=LV, else=GME/DFM).
-            # NOW runs AFTER activity solver, so we know resident clinic demand.
-            # PCAT/DO from Step 6.6 is preserved (source='preload' > 'template').
-            # SKIP in draft mode - faculty expansion writes to live half_day_assignments
-            if (
-                expand_block_assignments
-                and block_number
-                and academic_year
-                and not create_draft
-            ):
-                faculty_expansion_service = FacultyAssignmentExpansionService(self.db)
-                faculty_count = faculty_expansion_service.fill_faculty_assignments(
-                    block_number, academic_year, exclude_adjuncts=True
-                )
-                logger.info(f"Created {faculty_count} faculty half-day assignments")
-            elif create_draft and expand_block_assignments:
-                logger.info(
-                    "Skipping faculty expansion in draft mode (would modify live data)"
-                )
-
             # Step 7: Assign faculty supervision (legacy mode only)
-            # In half-day mode, faculty assignments already created by Step 6.8
-            # (FacultyAssignmentExpansionService fills all 56 slots per faculty)
-            if not expand_block_assignments:
-                self._assign_faculty(
-                    faculty, blocks, cast(UUID, run.id), preserved_assignments
-                )
-            else:
-                logger.info(
-                    "Skipping legacy faculty supervision - already handled by "
-                    "FacultyAssignmentExpansionService in Step 6.8"
-                )
+            logger.info("Skipping legacy faculty supervision (CP-SAT output only)")
 
             # Step 8: Handle draft vs live assignment persistence
             draft_id = None
@@ -668,12 +575,8 @@ class SchedulingEngine:
                         self.db.add(assignment)
                     self.db.flush()
             else:
-                # Add assignments to session (live mode - original behavior)
-                for assignment in self.assignments:
-                    self.db.add(assignment)
-
+                # Assignments already added/flushed in Step 6 for live mode.
                 # Step 8.5: Flush to make assignments visible to validator
-                # Validator queries DB, so flush is needed before validation
                 self.db.flush()
 
             # Step 9: Validate
@@ -898,6 +801,7 @@ class SchedulingEngine:
         protected_patterns = self._load_protected_patterns(template_ids)
 
         # Build base context
+        locked_blocks = self._get_locked_block_pairs(blocks)
         context = SchedulingContext(
             residents=residents,
             faculty=faculty,
@@ -907,6 +811,7 @@ class SchedulingEngine:
             start_date=self.start_date,
             end_date=self.end_date,
             existing_assignments=existing_assignments or [],
+            locked_blocks=locked_blocks,
             call_eligible_faculty=call_eligible,
             activities=activities,
             activity_requirements=activity_requirements,
@@ -1182,12 +1087,24 @@ class SchedulingEngine:
         algorithm: str,
         context: SchedulingContext,
         timeout_seconds: float,
+        constraint_manager: ConstraintManager | None = None,
     ) -> SolverResult:
         """Run the selected solver algorithm."""
         try:
+            if algorithm not in self.ALGORITHMS:
+                logger.warning(
+                    f"Unknown solver '{algorithm}', forcing canonical CP-SAT"
+                )
+                algorithm = "cp_sat"
+            if algorithm != "cp_sat":
+                logger.info(
+                    f"Overriding solver '{algorithm}' -> 'cp_sat' (canonical pathway)"
+                )
+                algorithm = "cp_sat"
+
             solver = SolverFactory.create(
                 algorithm,
-                constraint_manager=self.constraint_manager,
+                constraint_manager=constraint_manager or self.constraint_manager,
                 timeout_seconds=timeout_seconds,
             )
             # Pass existing_assignments from context as immutable constraints
@@ -1211,6 +1128,8 @@ class SchedulingEngine:
         templates: list[RotationTemplate],
         run_id: UUID,
         existing_assignments: list[Assignment] | None = None,
+        locked_half_day_slots: set[tuple[UUID, date, str]] | None = None,
+        blocks_by_id: dict[UUID, Block] | None = None,
     ) -> None:
         """Convert solver results to Assignment objects.
 
@@ -1224,11 +1143,19 @@ class SchedulingEngine:
                 occupied_slots.add((cast(UUID, a.person_id), cast(UUID, a.block_id)))
 
         skipped = 0
+        locked_skipped = 0
         for person_id, block_id, template_id in result.assignments:
             # Skip if this person+block is already occupied by an immutable assignment
             if (person_id, block_id) in occupied_slots:
                 skipped += 1
                 continue
+            if locked_half_day_slots and blocks_by_id:
+                block = blocks_by_id.get(cast(UUID, block_id))
+                if block:
+                    key = (cast(UUID, person_id), block.date, block.time_of_day)
+                    if key in locked_half_day_slots:
+                        locked_skipped += 1
+                        continue
 
             assignment = Assignment(
                 block_id=block_id,
@@ -1243,6 +1170,11 @@ class SchedulingEngine:
             logger.info(
                 f"Skipped {skipped} solver assignments that conflicted with "
                 "immutable existing assignments"
+            )
+        if locked_skipped > 0:
+            logger.info(
+                f"Skipped {locked_skipped} solver assignments due to "
+                "locked half-day slots (preload/manual)"
             )
 
     def _create_call_assignments_from_result(
@@ -2510,6 +2442,204 @@ class SchedulingEngine:
             # CRITICAL: Flush deletes before any inserts to avoid constraint violations
             # SQLAlchemy may execute INSERTs before DELETEs without explicit flush
             self.db.flush()
+
+    def _delete_existing_half_day_assignments(self) -> None:
+        """
+        Delete existing half-day assignments for the date range that are
+        solver/template generated. Preload/manual are preserved.
+        """
+        from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
+
+        deleted_count = (
+            self.db.query(HalfDayAssignment)
+            .filter(
+                HalfDayAssignment.date >= self.start_date,
+                HalfDayAssignment.date <= self.end_date,
+                HalfDayAssignment.source.in_(
+                    [
+                        AssignmentSource.SOLVER.value,
+                        AssignmentSource.TEMPLATE.value,
+                    ]
+                ),
+            )
+            .delete(synchronize_session=False)
+        )
+        if deleted_count:
+            logger.info(
+                f"Deleted {deleted_count} solver/template half-day assignments "
+                f"for date range {self.start_date} to {self.end_date}"
+            )
+            self.db.flush()
+
+    def _get_blocking_half_day_slots(self) -> set[tuple[UUID, date, str]]:
+        """
+        Get blocking half-day slots (preload/manual) for the date range.
+        Blocking slots should not receive solver rotation assignments.
+        """
+        from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
+        from app.models.activity import Activity
+        from app.utils.activity_locking import is_activity_blocking_for_solver
+
+        locked_rows = (
+            self.db.query(
+                HalfDayAssignment.person_id,
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+                Activity,
+            )
+            .join(Activity, HalfDayAssignment.activity_id == Activity.id)
+            .filter(
+                HalfDayAssignment.date >= self.start_date,
+                HalfDayAssignment.date <= self.end_date,
+                HalfDayAssignment.source.in_(
+                    [
+                        AssignmentSource.PRELOAD.value,
+                        AssignmentSource.MANUAL.value,
+                    ]
+                ),
+            )
+            .all()
+        )
+        blocking = set()
+        for person_id, slot_date, time_of_day, activity in locked_rows:
+            if is_activity_blocking_for_solver(activity):
+                blocking.add((person_id, slot_date, time_of_day))
+        return blocking
+
+    def _get_locked_block_pairs(self, blocks: list[Block]) -> set[tuple[UUID, UUID]]:
+        """
+        Convert locked half-day assignments (preload/manual) into (person_id, block_id) pairs.
+        """
+        locked_slots = self._get_blocking_half_day_slots()
+        if not locked_slots:
+            return set()
+
+        block_by_key = {(b.date, b.time_of_day): b.id for b in blocks}
+        locked_blocks: set[tuple[UUID, UUID]] = set()
+        for person_id, slot_date, time_of_day in locked_slots:
+            block_id = block_by_key.get((slot_date, time_of_day))
+            if block_id:
+                locked_blocks.add((person_id, block_id))
+        return locked_blocks
+
+    def _persist_solver_assignments_to_half_day(
+        self,
+        assignments: list[Assignment],
+        blocks: list[Block],
+    ) -> int:
+        """
+        Persist solver assignments into HalfDayAssignment with source='solver'.
+
+        Uses source priority:
+        - preload/manual: never overwritten
+        - solver/template: overwritten by solver
+        """
+        from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
+
+        block_by_id = {b.id: b for b in blocks}
+        updated = 0
+
+        for assignment in assignments:
+            block = block_by_id.get(cast(UUID, assignment.block_id))
+            if not block:
+                continue
+
+            existing = (
+                self.db.query(HalfDayAssignment)
+                .filter(
+                    HalfDayAssignment.person_id == assignment.person_id,
+                    HalfDayAssignment.date == block.date,
+                    HalfDayAssignment.time_of_day == block.time_of_day,
+                )
+                .first()
+            )
+
+            if existing:
+                if existing.is_locked:
+                    continue
+                existing.activity_id = None
+                existing.source = AssignmentSource.SOLVER.value
+                updated += 1
+                continue
+
+            self.db.add(
+                HalfDayAssignment(
+                    person_id=assignment.person_id,
+                    date=block.date,
+                    time_of_day=block.time_of_day,
+                    activity_id=None,
+                    source=AssignmentSource.SOLVER.value,
+                )
+            )
+            updated += 1
+
+        if updated:
+            self.db.flush()
+            logger.info(
+                f"Persisted {updated} solver half-day assignments (source=solver)"
+            )
+
+        return updated
+
+    def _ensure_faculty_half_day_slots(
+        self,
+        faculty: list[Person],
+        blocks: list[Block],
+    ) -> int:
+        """
+        Ensure faculty have half-day slots for the block date range.
+
+        Creates source='solver' HalfDayAssignment rows for any missing
+        faculty slots on workdays, preserving any existing preload/manual rows.
+        """
+        from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
+
+        if not faculty:
+            return 0
+
+        eligible_faculty = [
+            f for f in faculty if getattr(f, "faculty_role", None) != "adjunct"
+        ]
+        faculty_ids = [cast(UUID, f.id) for f in eligible_faculty]
+        existing = (
+            self.db.query(
+                HalfDayAssignment.person_id,
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+            )
+            .filter(
+                HalfDayAssignment.person_id.in_(faculty_ids),
+                HalfDayAssignment.date >= self.start_date,
+                HalfDayAssignment.date <= self.end_date,
+            )
+            .all()
+        )
+        existing_keys = {(p, d, t) for p, d, t in existing}
+
+        created = 0
+        for block in blocks:
+            if block.is_weekend:
+                continue
+            for fac in eligible_faculty:
+                key = (cast(UUID, fac.id), block.date, block.time_of_day)
+                if key in existing_keys:
+                    continue
+                self.db.add(
+                    HalfDayAssignment(
+                        person_id=fac.id,
+                        date=block.date,
+                        time_of_day=block.time_of_day,
+                        activity_id=None,
+                        source=AssignmentSource.SOLVER.value,
+                    )
+                )
+                created += 1
+
+        if created:
+            self.db.flush()
+            logger.info(f"Created {created} faculty half-day slots for solver")
+
+        return created
 
     def _audit_nf_pc_allocations(self) -> dict:
         """

@@ -76,36 +76,41 @@ class BlockScheduleParser:
         # Sports Medicine
         "SM": "SM-AM",
         "Sports Medicine": "SM-AM",
-        # FMIT
+        # FMIT (resolved by import service based on PGY level)
         "FMIT 2": "FMIT-R",
         "FMIT 1": "FMIT-R",
         "FMIT": "FMIT-R",
+        "FMIT-R": "FMIT-R",
         # L&D Night Float
         "L and D night float": "LDNF",
         "L and D NF": "LDNF",
         "L&D Night Float": "LDNF",
         "L&D NF": "LDNF",
         # Surgical Experience
-        "Surg Exp": "SURG-EXP",
-        "Surgical Experience": "SURG-EXP",
+        "Surg Exp": "SURG",
+        "Surgical Experience": "SURG",
+        "SURG-EXP": "SURG",
         # GYN Clinic
-        "Gyn Clinic": "GYN-CLIN",
-        "GYN Clinic": "GYN-CLIN",
-        "Gynecology Clinic": "GYN-CLIN",
+        "Gyn Clinic": "GYN",
+        "GYN Clinic": "GYN",
+        "Gynecology Clinic": "GYN",
+        "GYN-CLIN": "GYN",
         # Pediatrics
         "Peds Ward": "PEDS-W",
         "Pediatrics Ward": "PEDS-W",
         "Peds NF": "PNF",
         "Pediatrics Night Float": "PNF",
         # Kapiolani
-        "Kapiolani L and D": "KAPI-LD",
-        "Kapiolani L&D": "KAPI-LD",
+        "Kapiolani L and D": "KAPI-LD-PGY1",
+        "Kapiolani L&D": "KAPI-LD-PGY1",
+        "KAPI-LD": "KAPI-LD-PGY1",
         # Procedures
-        "PROC": "PR-AM",
-        "Procedures": "PR-AM",
+        "PROC": "PROC-AM",
+        "Procedures": "PROC-AM",
+        "PR-AM": "PROC-AM",
         # Internal Medicine
-        "IM": "IM-INT",
-        "Internal Medicine": "IM-INT",
+        "Internal Medicine": "IM",
+        "IM-INT": "IM",
         # Endocrinology
         "MS: Endo": "ENDO",
         "Endocrinology": "ENDO",

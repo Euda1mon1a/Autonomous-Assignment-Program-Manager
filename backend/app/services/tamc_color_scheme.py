@@ -5,7 +5,8 @@ Loads color mappings from TAMC_Color_Scheme_Reference.xml and provides
 methods to get colors for schedule codes, headers, and rotation columns.
 
 Central Dogma Pipeline Integration:
-    DB → XML → XMLToXlsxConverter (uses this module) → colored xlsx
+    DB → JSON → JSONToXlsxConverter (uses this module) → colored xlsx
+    (XML converter remains for validation/legacy tooling.)
 """
 
 from pathlib import Path

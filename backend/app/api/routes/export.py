@@ -4,7 +4,7 @@ import csv
 import io
 import json
 import logging
-from datetime import date, datetime
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
@@ -19,7 +19,10 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.models.user import User
-from app.services.xlsx_export import generate_legacy_xlsx
+from app.services.canonical_schedule_export_service import (
+    CanonicalScheduleExportService,
+)
+from app.utils.academic_blocks import get_block_number_for_date
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -218,45 +221,31 @@ async def export_schedule_xlsx(
     _: None = Depends(require_admin()),
 ):
     """
-    Export schedule in legacy Excel format. Requires admin role.
+    Export schedule in canonical Block Template2 Excel format. Requires admin role.
 
-    This generates an Excel file matching the historical format used for
-    schedule distribution with:
-    - AM/PM columns per day
-    - Color-coded rotation labels
-    - PGY level grouping
-    - Federal holiday highlighting
+    This generates an Excel file using the formatted Block Template2 template,
+    filled from half_day_assignments (descriptive truth).
 
     Args:
         start_date: Start date of the block (typically 28 days)
         end_date: End date of the block
         block_number: Block number to display in header (1-13 for academic year)
-        federal_holidays: Comma-separated list of holiday dates to highlight
+        federal_holidays: Ignored (legacy parameter)
 
     Returns:
         Excel file (.xlsx) download
     """
-    # Parse federal holidays if provided
-    holidays: list[date] = []
-    if federal_holidays:
-        try:
-            for date_str in federal_holidays.split(","):
-                date_str = date_str.strip()
-                if date_str:
-                    holidays.append(datetime.strptime(date_str, "%Y-%m-%d").date())
-        except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid date format in federal_holidays. Use YYYY-MM-DD format",
-            )
-
     try:
-        xlsx_bytes = generate_legacy_xlsx(
-            db=db,
-            start_date=start_date,
-            end_date=end_date,
+        if block_number is None:
+            block_number, academic_year = get_block_number_for_date(start_date)
+        else:
+            _, academic_year = get_block_number_for_date(start_date)
+
+        exporter = CanonicalScheduleExportService(db)
+        xlsx_bytes = exporter.export_block_xlsx(
             block_number=block_number,
-            federal_holidays=holidays,
+            academic_year=academic_year,
+            include_faculty=True,
         )
     except Exception:
         raise HTTPException(

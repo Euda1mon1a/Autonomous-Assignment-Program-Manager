@@ -18,9 +18,9 @@ from sqlalchemy.orm import relationship
 from app.db.base import Base
 from app.db.types import GUID
 
-# Valid absence types with their default blocking behavior
-# Blocking types: person cannot be assigned to any rotation during absence
-# Non-blocking types: tracked but person can still be assigned
+# Valid absence types with their default blocking behavior.
+# NOTE: Scheduling now treats ALL absences as blocking for assignment solving.
+# These defaults are retained for reporting/UI context only.
 ABSENCE_TYPES = {
     # Original types
     "vacation": False,  # Planned leave - non-blocking by default
@@ -138,26 +138,7 @@ class Absence(Base):
         """
         Determine if this absence should block assignment to clinical blocks.
 
-        Logic:
-        - If is_blocking is explicitly set, use that value
-        - Otherwise, auto-determine based on absence type (Hawaii-appropriate defaults):
-          - Always blocking: deployment, tdy, family_emergency, bereavement,
-            emergency_leave, convalescent, maternity_paternity
-          - Duration-based: medical (>7 days), sick (>3 days)
-          - Non-blocking: vacation, conference
+        Policy: ALL absences are blocking for solver assignments.
+        Absence types and is_blocking are retained for reporting/UI only.
         """
-        if self.is_blocking is not None:
-            return self.is_blocking
-
-        # Auto-determine based on type and duration
-        if self.absence_type in ALWAYS_BLOCKING_TYPES:
-            return True
-
-        # Duration-based blocking thresholds
-        if self.absence_type == "medical":
-            return self.duration_days > 7
-        if self.absence_type == "sick":
-            return self.duration_days > 3
-
-        # Non-blocking types: vacation, conference
-        return False
+        return True

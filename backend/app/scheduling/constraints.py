@@ -198,6 +198,9 @@ class SchedulingContext:
     # Existing assignments (for incremental scheduling)
     existing_assignments: list = field(default_factory=list)
 
+    # Locked blocks (preload/manual half-day slots mapped to block IDs)
+    locked_blocks: set[tuple[UUID, UUID]] = field(default_factory=set)
+
     # Date range
     start_date: date | None = None
     end_date: date | None = None

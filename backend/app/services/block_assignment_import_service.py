@@ -21,9 +21,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
+from app.models.activity import Activity, ActivityCategory
 from app.models.block_assignment import BlockAssignment
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
+from app.utils.activity_naming import activity_code_from_name, activity_display_abbrev
 from app.schemas.block_assignment_import import (
     BlockAssignmentImportRequest,
     BlockAssignmentImportResult,
@@ -99,6 +101,30 @@ COMBINED_ROTATION_MAPPINGS: dict[tuple[str, str], str] = {
     ("PEDS NF", "PEDS WARD"): "PNF",
 }
 
+# Single-rotation synonym mappings (xlsx/CSV inputs -> canonical abbreviations)
+ROTATION_SYNONYMS: dict[str, str] = {
+    # Surgical Experience
+    "SURG-EXP": "SURG",
+    "SURG EXP": "SURG",
+    "SURGICAL EXPERIENCE": "SURG",
+    # GYN Clinic
+    "GYN-CLIN": "GYN",
+    "GYN CLINIC": "GYN",
+    "GYNECOLOGY CLINIC": "GYN",
+    # Kapiolani L&D
+    "KAPI-LD": "KAPI-LD-PGY1",
+    "KAPI L&D": "KAPI-LD-PGY1",
+    "KAPIOLANI L AND D": "KAPI-LD-PGY1",
+    "KAPIOLANI L&D": "KAPI-LD-PGY1",
+    # Procedures
+    "PR-AM": "PROC-AM",
+    "PROC": "PROC-AM",
+    "PROCEDURES": "PROC-AM",
+    # Internal Medicine
+    "IM-INT": "IM",
+    "INTERNAL MEDICINE": "IM",
+}
+
 
 class BlockAssignmentImportService:
     """
@@ -116,6 +142,7 @@ class BlockAssignmentImportService:
         self.session = session
         self._rotation_cache: dict[str, tuple[uuid.UUID, str]] = {}
         self._resident_cache: dict[str, tuple[uuid.UUID, str]] = {}
+        self._resident_pgy_cache: dict[uuid.UUID, int | None] = {}
         self._preview_cache: dict[str, list[dict[str, Any]]] = {}
 
     async def load_caches(self) -> None:
@@ -158,6 +185,7 @@ class BlockAssignmentImportService:
                 key = part.upper()
                 if key not in self._resident_cache:
                     self._resident_cache[key] = (r.id, r.name)
+            self._resident_pgy_cache[r.id] = r.pgy_level
 
         logger.info(f"Loaded {len(residents)} residents into cache")
 
@@ -223,6 +251,34 @@ class BlockAssignmentImportService:
                 return rot_id, rot_name, 0.9
 
         return None, None, 0.0
+
+    def _normalize_rotation_input(
+        self, rotation_input: str, resident_id: uuid.UUID | None
+    ) -> str:
+        """
+        Normalize rotation inputs to canonical abbreviations.
+
+        Handles:
+        - Synonym mapping (SURG-EXP -> SURG, IM-INT -> IM)
+        - FMIT rotations resolved by PGY level when possible
+        """
+        key = rotation_input.upper().strip()
+        key = ROTATION_SYNONYMS.get(key, key)
+
+        # FMIT is PGY-specific; try to resolve from input or resident PGY level
+        if key.startswith("FMIT"):
+            pgy = None
+            match = re.search(r"([123])", key)
+            if match:
+                pgy = int(match.group(1))
+            if pgy is None and resident_id:
+                pgy = self._resident_pgy_cache.get(resident_id)
+            if pgy in (1, 2, 3):
+                return f"FMIT-PGY{pgy}"
+            # Fallback to a deterministic template to avoid unknown-rotation noise
+            return "FMIT-PGY1"
+
+        return key
 
     def _match_combined_rotation(
         self, primary: str, secondary: str
@@ -420,17 +476,20 @@ class BlockAssignmentImportService:
             rotation_input = str(row["rotation_abbrev"] or "").strip()
             resident_input = str(row["resident_name"] or "").strip()
 
-            # Match rotation
-            rotation_id, rotation_name, rotation_conf = self._match_rotation(
-                rotation_input
-            )
-            if not rotation_id:
-                unknown_rotation_counts[rotation_input.upper()] += 1
-
             # Match resident
             resident_id, resident_name, resident_conf = self._match_resident(
                 resident_input
             )
+
+            # Match rotation (normalize with resident context for FMIT)
+            normalized_rotation = self._normalize_rotation_input(
+                rotation_input, resident_id
+            )
+            rotation_id, rotation_name, rotation_conf = self._match_rotation(
+                normalized_rotation
+            )
+            if not rotation_id:
+                unknown_rotation_counts[rotation_input.upper()] += 1
 
             # Check for duplicate
             is_duplicate = False
@@ -749,6 +808,8 @@ class BlockAssignmentImportService:
             is_archived=False,
         )
         self.session.add(template)
+        await self.session.flush()
+        await self._ensure_activity_for_template(template)
         await self.session.commit()
         await self.session.refresh(template)
 
@@ -758,6 +819,47 @@ class BlockAssignmentImportService:
         logger.info(f"Created rotation template: {abbreviation}")
 
         return template
+
+    async def _ensure_activity_for_template(self, template: RotationTemplate) -> None:
+        """Create a specialty activity for outpatient/clinic templates if missing."""
+        if (template.activity_type or "").lower() not in ("clinic", "outpatient"):
+            return
+
+        code = activity_code_from_name(template.name)
+        display_abbrev = activity_display_abbrev(
+            template.name,
+            template.display_abbreviation,
+            template.abbreviation,
+        )
+
+        existing = await self.session.execute(
+            select(Activity).where(Activity.name == template.name)
+        )
+        if existing.scalars().first():
+            return
+
+        existing = await self.session.execute(
+            select(Activity).where(Activity.code.ilike(code))
+        )
+        if existing.scalars().first():
+            return
+
+        activity = Activity(
+            name=template.name,
+            code=code,
+            display_abbreviation=display_abbrev,
+            activity_category=ActivityCategory.CLINICAL.value,
+            font_color=template.font_color,
+            background_color=template.background_color,
+            requires_supervision=True,
+            is_protected=False,
+            counts_toward_clinical_hours=True,
+            provides_supervision=False,
+            counts_toward_physical_capacity=True,
+            display_order=0,
+        )
+        self.session.add(activity)
+        await self.session.flush()
 
     async def preview_block_sheet_import(
         self, file_bytes: bytes, academic_year: int | None = None

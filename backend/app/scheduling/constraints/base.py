@@ -205,6 +205,10 @@ class SchedulingContext:
     # Existing assignments (for incremental scheduling)
     existing_assignments: list = field(default_factory=list)
 
+    # Locked blocks (preload/manual half-day slots mapped to block IDs)
+    # Used to prevent solver from assigning into locked slots.
+    locked_blocks: set[tuple[UUID, UUID]] = field(default_factory=set)
+
     # Call-eligible faculty (excludes adjuncts for solver-generated call)
     call_eligible_faculty: list = field(default_factory=list)
     call_eligible_faculty_idx: dict[UUID, int] = field(default_factory=dict)
