@@ -115,43 +115,15 @@ check_backend_available() {
     return 1
 }
 
-# Generate fresh types from OpenAPI spec
-generate_types_from_openapi() {
+# Generate and compare types via frontend generator (camelCase-safe)
+run_generate_types_check() {
     local api_url="${API_URL:-http://localhost:8000}"
-    local output_file="$PROJECT_ROOT/frontend/src/types/api-generated-check.ts"
 
-    log_info "Fetching OpenAPI spec from $api_url..."
-
-    # Generate types using openapi-typescript
-    cd "$PROJECT_ROOT/frontend"
-    npx openapi-typescript "${api_url}/openapi.json" -o "$output_file" 2>/dev/null
-
-    echo "$output_file"
-}
-
-# Compare generated types against existing
-compare_types() {
-    local generated="$1"
-    local existing="$PROJECT_ROOT/frontend/src/types/api-generated.ts"
-
-    if [ ! -f "$existing" ]; then
-        log_warn "No existing api-generated.ts found - skipping comparison"
-        return 0
-    fi
-
-    # Compare (ignoring comments and empty lines, but preserving structure)
-    # Do NOT sort - structural changes (property moves) must be detected
-    local diff_output
-    diff_output=$(diff -u \
-        <(grep -v "^//" "$existing" | grep -v "^\s*$") \
-        <(grep -v "^//" "$generated" | grep -v "^\s*$") \
-        2>/dev/null || true)
-
-    if [ -n "$diff_output" ]; then
-        return 1  # Types differ
-    fi
-
-    return 0  # Types match
+    log_info "Running frontend type check against $api_url..."
+    (
+        cd "$PROJECT_ROOT/frontend"
+        BACKEND_URL="$api_url" ./scripts/generate-api-types.sh --check
+    )
 }
 
 # Validate specific type mappings
@@ -237,19 +209,13 @@ run_validation() {
     if check_backend_available; then
         log_info "Backend available - performing full type comparison..."
 
-        local generated_file
-        generated_file=$(generate_types_from_openapi)
-
-        if ! compare_types "$generated_file"; then
+        if ! run_generate_types_check; then
             log_error "Generated types differ from committed types!"
-            log_error "Run 'npm run generate-types' and commit the changes."
+            log_error "Run 'cd frontend && npm run generate:types' and commit the changes."
             ((errors++))
         else
             log_success "Generated types match committed types"
         fi
-
-        # Cleanup
-        rm -f "$generated_file" 2>/dev/null || true
     else
         log_warn "Backend not available - skipping OpenAPI comparison"
         log_warn "To enable full validation, start the backend: docker-compose up -d"
