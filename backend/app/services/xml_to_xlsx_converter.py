@@ -26,6 +26,7 @@ from openpyxl.utils import get_column_letter
 
 from app.core.logging import get_logger
 from app.services.tamc_color_scheme import get_color_scheme
+from app.utils.academic_blocks import get_block_number_for_date
 
 logger = get_logger(__name__)
 
@@ -669,12 +670,8 @@ class XMLToXlsxConverter:
 
     def _calculate_block_number(self, block_start: date) -> int:
         """Calculate block number from start date."""
-        # Block 10 starts Mar 12, 2026
-        # Simple lookup for now - could calculate from academic year start
-        known_blocks = {
-            date(2026, 3, 12): 10,
-        }
-        return known_blocks.get(block_start, 0)
+        block_number, _ = get_block_number_for_date(block_start)
+        return block_number
 
 
 def convert_xml_to_xlsx(

@@ -549,18 +549,15 @@ class PuLPSolver(BaseSolver):
         # ==================================================
         call_assignments_result = []
         if call_eligible and call:
+            block_id_by_idx = {context.block_idx[b.id]: b.id for b in context.blocks}
             for (f_i, b_i, call_type), var in call.items():
                 if pulp.value(var) == 1:
                     # Find the faculty and block for this variable
                     faculty_id = None
-                    block_id = None
+                    block_id = block_id_by_idx.get(b_i)
                     for fac in call_eligible:
                         if call_idx.get(fac.id) == f_i:
                             faculty_id = fac.id
-                            break
-                    for block in workday_blocks:
-                        if context.block_idx[block.id] == b_i:
-                            block_id = block.id
                             break
                     if faculty_id and block_id:
                         call_assignments_result.append(
@@ -1187,18 +1184,15 @@ class CPSATSolver(BaseSolver):
         # ==================================================
         call_assignments_result = []
         if call_eligible and call:
+            block_id_by_idx = {context.block_idx[b.id]: b.id for b in context.blocks}
             for (f_i, b_i, call_type), var in call.items():
                 if solver.Value(var) == 1:
                     # Find the faculty and block for this variable
                     faculty_id = None
-                    block_id = None
+                    block_id = block_id_by_idx.get(b_i)
                     for fac in call_eligible:
                         if call_idx.get(fac.id) == f_i:
                             faculty_id = fac.id
-                            break
-                    for block in workday_blocks:
-                        if context.block_idx[block.id] == b_i:
-                            block_id = block.id
                             break
                     if faculty_id and block_id:
                         call_assignments_result.append(
