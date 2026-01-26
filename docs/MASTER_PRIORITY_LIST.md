@@ -338,16 +338,22 @@ Critical infrastructure gaps:
 ### 11. Hooks and Scripts Consolidation
 **Priority:** MEDIUM
 **Roadmap:** [`docs/planning/HOOKS_AND_SCRIPTS_ROADMAP.md`](planning/HOOKS_AND_SCRIPTS_ROADMAP.md)
+**Updated:** 2026-01-26 (Session 141)
+
+**✅ Verified Aligned (2026-01-26):**
+- All 15 pre-commit scripts exist and match config
+- D&D hooks (Couatl Killer, Beholder Bane, Gorgon's Gaze) run in parallel
+- CLAUDE.md documents all 5 D&D patterns + enforcement
 
 | Gap | Current State | Impact |
 |-----|---------------|--------|
 | No pre-push hook | Missing | Dangerous ops reach remote |
-| 24 sequential phases | 15-30s commits | Developer friction |
+| ~~24 sequential phases~~ | D&D hooks parallel, others sequential | ~~15-30s~~ Improved |
 | MyPy/Bandit advisory | `|| true` patterns | Bugs/security issues slip through |
 
 **Human Decisions Required:**
-- [ ] Approve parallel pre-commit approach (Phase 1)
-- [ ] Decide GPG signing policy (Phase 4)
+- [ ] Approve full parallel pre-commit approach
+- [ ] Decide GPG signing policy
 
 ### 12. Admin Debugger - Database Inspector Enhancement
 **Priority:** MEDIUM
@@ -646,6 +652,7 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 | ✅ Resolved | API/WS Convention Audit | PRs #758, #760, #765 - full enforcement |
 | ✅ N/A | PII in Burnout APIs | Files don't exist (planned, not implemented) |
 | 📝 Updated | Bandit hook | Branch ready, needs merge |
+| ✅ Verified | Hooks Consolidation | All 15 scripts aligned, D&D parallel |
 
 ---
 
