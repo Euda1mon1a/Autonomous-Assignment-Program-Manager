@@ -58,7 +58,7 @@ BLOCK_HALF_DAY = 14
 # Rotation types considered outpatient for activity solving
 OUTPATIENT_ACTIVITY_TYPES = {"clinic", "outpatient"}
 
-# Clinic/supervision codes for activity-level constraints
+# Clinic/supervision codes for activity-level constraints (legacy fallback)
 RESIDENT_CLINIC_CODES = {"FM_CLINIC", "C", "C-N", "CV"}
 AT_COVERAGE_CODES = {"AT", "PCAT"}
 ADMIN_ACTIVITY_CODES = {"GME": "gme", "DFM": "dfm", "SM": "sm_clinic"}
@@ -239,20 +239,44 @@ class CPSATActivitySolver:
             "AT"
         )
 
-        # Activity ID sets for supervision and clinic demand
-        resident_clinic_activity_ids = self._activity_ids_for_codes(
-            all_activities, RESIDENT_CLINIC_CODES
-        )
-        at_coverage_activity_ids = self._activity_ids_for_codes(
-            all_activities, AT_COVERAGE_CODES
+        # Activity ID sets for supervision and clinic demand (data-driven)
+        supervision_required_ids = {
+            activity.id
+            for activity in all_activities
+            if activity.requires_supervision
+            and activity.activity_category == "clinical"
+        }
+        supervision_provider_ids = {
+            activity.id for activity in all_activities if activity.provides_supervision
+        }
+
+        # Legacy fallback for older data (no flags configured)
+        used_required_fallback = False
+        used_provider_fallback = False
+        if not supervision_required_ids:
+            supervision_required_ids = self._activity_ids_for_codes(
+                all_activities, RESIDENT_CLINIC_CODES
+            )
+            used_required_fallback = True
+        if not supervision_provider_ids:
+            supervision_provider_ids = self._activity_ids_for_codes(
+                all_activities, AT_COVERAGE_CODES
+            )
+            used_provider_fallback = True
+
+        logger.info(
+            "Supervision activity sets: required="
+            f"{len(supervision_required_ids)}, providers="
+            f"{len(supervision_provider_ids)} (fallback_required="
+            f"{used_required_fallback}, fallback_providers={used_provider_fallback})"
         )
 
-        if resident_slots and not at_activity:
+        if resident_slots and not supervision_provider_ids:
             return {
                 "success": False,
                 "assignments_updated": 0,
                 "status": "error",
-                "message": "Missing AT activity for supervision coverage",
+                "message": "Missing supervision-providing activities (AT/PCAT/DO)",
             }
         capacity_activity_ids = {
             activity.id
@@ -417,7 +441,7 @@ class CPSATActivitySolver:
             slot_key = (locked.date, locked.time_of_day)
 
             if person_type == "faculty":
-                if locked.activity_id in at_coverage_activity_ids:
+                if locked.activity_id in supervision_provider_ids:
                     baseline_faculty_coverage[slot_key] += 1
                 if clinic_activity and locked.activity_id == clinic_activity.id:
                     locked_faculty_clinic_counts[(locked.person_id, week_number)] += 1
@@ -429,7 +453,7 @@ class CPSATActivitySolver:
                 ):
                     baseline_sm_faculty_coverage[slot_key] += 1
             else:
-                if locked.activity_id in resident_clinic_activity_ids:
+                if locked.activity_id in supervision_required_ids:
                     pgy_level = (
                         locked.person.pgy_level
                         if locked.person and locked.person.pgy_level
@@ -618,7 +642,7 @@ class CPSATActivitySolver:
                     pgy_level = slot_meta[s_i].get("pgy_level") or 2
                     demand_units = 2 if pgy_level == 1 else 1
                     for act_id in slot_allowed[s_i]:
-                        if act_id in resident_clinic_activity_ids:
+                        if act_id in supervision_required_ids:
                             demand_terms.append(a[s_i, act_id] * demand_units)
 
                 baseline_demand = baseline_resident_demand.get(slot_key, 0)
@@ -627,8 +651,9 @@ class CPSATActivitySolver:
 
                 coverage_terms = []
                 for s_i in faculty_slots_by_key.get(slot_key, []):
-                    if at_activity.id in slot_allowed[s_i]:
-                        coverage_terms.append(a[s_i, at_activity.id])
+                    for act_id in slot_allowed[s_i]:
+                        if act_id in supervision_provider_ids:
+                            coverage_terms.append(a[s_i, act_id])
 
                 baseline_coverage = baseline_faculty_coverage.get(slot_key, 0)
                 total_demand = sum(demand_terms) + baseline_demand

@@ -490,7 +490,22 @@ minimum clinic demand exceeds the hard cap of 6 (e.g., 15–16 required).
 
 **Effort:** 2-4 hours
 
-### 26. MCP Placeholder Tools (NEW - Session 136)
+### 26. Supervision Activity Metadata Validation (NEW - Session 142)
+**Added:** 2026-01-26
+**Source:** Block 10 regen report (`docs/reports/block10-cpsat-run-20260126.md`)
+
+AT coverage now uses `Activity.requires_supervision` + `Activity.provides_supervision`
+instead of narrow code lists. If these flags are incorrect or incomplete, AT
+coverage constraints will under/over-count demand.
+
+**Fix:**
+1. Audit clinical activities for `requires_supervision=True`.
+2. Ensure AT/PCAT/DO (and SM clinic if applicable) have `provides_supervision=True`.
+3. Add a validation check for missing supervision flags on clinical activities.
+
+**Effort:** 1-2 hours
+
+### 27. MCP Placeholder Tools (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [MCP Tools Audit](reports/MCP_TOOLS_AUDIT_2026-01-23.md)
 
@@ -707,9 +722,9 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 |----------|------|----------|
 | **CRITICAL** | 3 | 5 |
 | **HIGH** | 9 | 6 |
-| **MEDIUM** | 10 | 11 |
+| **MEDIUM** | 11 | 11 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **35** | **25** |
+| **TOTAL** | **36** | **25** |
 
 ### Top 5 Actions for Next Session
 
@@ -727,6 +742,7 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 | ✅ Resolved | MEDIUM #23 | CP-SAT failure logging improvements |
 | ➕ Added | MEDIUM #24 | Preload service code duplication (~300 LOC + magic numbers) |
 | ➕ Added | MEDIUM #25 | Activity solver physical-capacity overflow (capacity skipped) |
+| ➕ Added | MEDIUM #26 | Supervision activity metadata validation |
 | 📝 Added | Review doc | `docs/reviews/CODEX_CPSAT_REVIEW_20260125.md` |
 | ✅ Fixed | Block 10 | CP-SAT + activity solver succeed after block-assignment filtering |
 | ⚠️ Found | Block 10 | Capacity constraints skipped for 35/40 slots (policy needed) |
