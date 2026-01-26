@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-25 (Session 140: CP-SAT canonical JSON export pipeline + XLSX fixes)
+> **Last Updated:** 2026-01-26 (Session 141: Priority list audit - 2 items resolved)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -157,22 +157,6 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 
 **Ref:** PR #764, Session 136
 
-### 4. PII Exposure in Resilience/Burnout Tools (NEW - Session 136)
-**Added:** 2026-01-23
-**Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
-**Severity:** CRITICAL - HIPAA/OPSEC Violation
-
-Real faculty/provider names exposed in burnout and vulnerability API responses:
-
-| Location | Class | Exposed Field |
-|----------|-------|---------------|
-| `contagion_model.py:107-130` | `SuperspreaderProfile` | `provider_name` |
-| `resilience_integration.py:114-124` | `VulnerabilityInfo` | `faculty_name` |
-| `resilience_integration.py:126-135` | `FatalPairInfo` | `faculty_1_name`, `faculty_2_name` |
-
-**Fix:** Apply existing `_anonymize_id()` function at `resilience_integration.py:27-45`.
-**Effort:** 1.5 hours (3 classes × 30 min)
-
 ---
 
 ## HIGH (Address Soon)
@@ -219,18 +203,7 @@ Remaining faculty-specific gaps:
 2. Wire faculty expansion into half-day pipeline before CP-SAT activity solver
 3. Enforce or normalize weekly clinic min/max limits and fix template coverage gaps
 
-### 7. API/WS Convention Audit Required (Session 128)
-
-WebSocket debugging revealed convention violations. Systematic audit needed:
-
-| Audit | Scope | Status |
-|-------|-------|--------|
-| Full WS audit | All WebSocket messages for case consistency | TODO |
-| REST endpoint audit | Query params, request/response bodies | TODO |
-| Hook/useX audit | Frontend hooks for snake_case violations | TODO |
-| WS smoke test | `GET /api/v1/ws/health` + wscat connect | TODO |
-
-### 8. Pre-commit Hook Failures (Session 128) - MYPY PROGRESS
+### 7. Pre-commit Hook Failures (Session 128) - MYPY PROGRESS
 **Updated:** 2026-01-24 (Session 139)
 
 Pre-commit hooks blocking commits due to pre-existing issues:
@@ -238,7 +211,7 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 | Hook | Issue | Scope | Progress |
 |------|-------|-------|----------|
 | **mypy** | 6,443 type errors | 742 files | 13.2% fixed (983 errors) |
-| **bandit** | `command not found` | Tool not installed | TODO |
+| **bandit** | Config + fixes ready | Branch `bandit-config` | ⏳ Needs merge to main |
 | **Modron March** | FairnessAuditResponse location | Type in wrong file | TODO |
 
 **mypy Progress (Sessions 137-139):**
@@ -266,7 +239,7 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 3. Install bandit: `pip install bandit`
 4. Update Modron March to check correct type locations
 
-### 9. Orphan Framework Code (12K+ LOC) - ANALYSIS COMPLETE
+### 8. Orphan Framework Code (12K+ LOC) - ANALYSIS COMPLETE
 Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
 | Module | LOC | Quality | Recommendation |
@@ -279,7 +252,7 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
 **Decision:** Keep all modules on roadmap. Integrate as features require.
 
-### 10. DoS Vulnerabilities - Unbounded Queries (NEW - Session 136)
+### 9. DoS Vulnerabilities - Unbounded Queries (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
 
@@ -299,7 +272,7 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
 **Effort:** 2 hours
 
-### 11. Missing Rate Limits on Expensive Endpoints (NEW - Session 136)
+### 10. Missing Rate Limits on Expensive Endpoints (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
 
@@ -313,7 +286,7 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 **Fix:** Add `@limiter.limit("2/minute")` decorator from `app.core.slowapi_limiter`.
 **Effort:** 1 hour
 
-### 12. No DB-Schema Drift Detection (NEW - Session 136)
+### 11. No DB-Schema Drift Detection (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [DB-Schema Alignment Audit](reports/DB_SCHEMA_ALIGNMENT_AUDIT_2026-01-23.md)
 
@@ -337,7 +310,7 @@ Critical infrastructure gaps:
 
 **Effort:** 4 hours
 
-### 13. API Test Coverage Gap - 366 Untested Endpoints (NEW - Session 136)
+### 12. API Test Coverage Gap - 366 Untested Endpoints (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [API Coverage Matrix](reports/API_COVERAGE_MATRIX_2026-01-23.md)
 
@@ -636,33 +609,43 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 ### ~~GUI + Wiring Review (PR #756)~~ ✅ RESOLVED (2026-01-20)
 ~~Verified GUI fixes, identified and fixed remaining wiring gaps.~~
 
+### ~~API/WS Convention Audit~~ ✅ RESOLVED (2026-01-26)
+~~Full audit completed via PRs #758, #760, #765:~~
+- ~~WS messages: Auto snake↔camel conversion (PR #760)~~
+- ~~REST query params: 90+ violations fixed (PR #758)~~
+- ~~Frontend hooks: 17 hooks fixed~~
+- ~~Enforcement: Gorgon's Gaze, Couatl Killer, Modron March hooks~~
+
+### ~~PII in Burnout APIs~~ ✅ N/A (2026-01-26)
+~~Security report referenced `contagion_model.py`, `resilience_integration.py` with PII-exposing classes. Investigation found these files/classes don't exist - report was based on planned (not implemented) code.~~
+
 ---
 
 ## SUMMARY
 
 | Priority | Open | Resolved |
 |----------|------|----------|
-| **CRITICAL** | 4 | 4 |
-| **HIGH** | 10 | 5 |
+| **CRITICAL** | 3 | 5 |
+| **HIGH** | 9 | 6 |
 | **MEDIUM** | 8 | 9 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **35** | **21** |
+| **TOTAL** | **33** | **23** |
 
 ### Top 5 Actions for Next Session
 
-1. **Fix PII Exposure** (CRITICAL #4) - 3 classes exposing faculty names in burnout APIs
-2. **Fix Excel Export Silent Failures** (CRITICAL #1) - Blocking production use
-3. **Add Rate Limits** (HIGH #11) - DoS protection on expensive endpoints
-4. **Add DB-Schema Drift Tests** (HIGH #12) - Prevent 12+ more models drifting
-5. **Add Resilience Route Tests** (HIGH #13) - 59 untested safety-critical endpoints
+1. **Fix Excel Export Silent Failures** (CRITICAL #1) - Frontend auth bypass, need axios
+2. **Add Rate Limits** (HIGH #10) - DoS protection on expensive endpoints
+3. **Add DB-Schema Drift Tests** (HIGH #11) - Prevent 12+ more models drifting
+4. **Add Resilience Route Tests** (HIGH #12) - 59 untested safety-critical endpoints
+5. **Merge bandit-config branch** (HIGH #7) - Security scanner ready, needs PR
 
-### Session 136 Net New Items
+### Session 141 Updates (2026-01-26)
 
-| Priority | New | Source Report |
-|----------|-----|---------------|
-| CRITICAL | +1 | Security Posture (PII exposure) |
-| HIGH | +4 | Security Posture (DoS), DB-Schema, API Coverage |
-| MEDIUM | +2 | Skills-Tools, MCP Tools |
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Resolved | API/WS Convention Audit | PRs #758, #760, #765 - full enforcement |
+| ✅ N/A | PII in Burnout APIs | Files don't exist (planned, not implemented) |
+| 📝 Updated | Bandit hook | Branch ready, needs merge |
 
 ---
 
