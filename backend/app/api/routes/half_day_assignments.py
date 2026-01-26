@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 
 @router.get("", response_model=HalfDayAssignmentListResponse)
 async def list_half_day_assignments(
-    block_number: int | None = Query(None, ge=1, le=13, description="Block number"),
+    block_number: int | None = Query(None, ge=0, le=13, description="Block number"),
     academic_year: int | None = Query(None, description="Academic year (e.g., 2025)"),
     start_date: date | None = Query(None, description="Start date"),
     end_date: date | None = Query(None, description="End date"),
@@ -45,7 +45,7 @@ async def list_half_day_assignments(
     - Mid-block transitions
 
     Args:
-        block_number: Block number (1-13)
+        block_number: Block number (0-13)
         academic_year: Academic year (e.g., 2025 for AY 2025-2026)
         start_date: Start date for date range query
         end_date: End date for date range query

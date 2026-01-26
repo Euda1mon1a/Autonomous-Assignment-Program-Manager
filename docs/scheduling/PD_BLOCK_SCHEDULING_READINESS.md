@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-**Answer:** The backend can generate a full block schedule end-to-end for typical use, and it has a draft-based edit/publish workflow. It does **not** yet cover every scenario and edge case a PD will hit without additional guardrails and UI wiring. The biggest gaps are around **conference/protected-time preloads**, **export row mapping enforcement**, and **GUI wiring for draft edits**. Several edge cases (block 0/13, call edits → PCAT/DO, missing activity mappings) can also produce silent holes unless we add explicit checks.
+**Answer:** The backend can generate a full block schedule end-to-end for typical use, and it has a draft-based edit/publish workflow. It does **not** yet cover every scenario and edge case a PD will hit without additional guardrails and UI wiring. The biggest gaps are around **export row mapping enforcement** and **GUI wiring for draft edits**. Several edge cases (block 13 length, call edits → PCAT/DO, missing activity mappings) can also produce silent holes unless we add explicit checks.
 
 ---
 
@@ -40,7 +40,7 @@
 - ✅ Inpatient preloads for FMIT/NF/PedW/KAP/IM/LDNF. (`backend/app/models/inpatient_preload.py`, `backend/app/services/preload_service.py`)
 - ✅ Resident call preloads. (`backend/app/models/resident_call_preload.py`, `backend/app/services/preload_service.py`)
 - ✅ Activity requirements with default fallback for outpatient. (`backend/app/scheduling/activity_solver.py`)
-- 🟡 Conference/protected-time preloads (HAFP/USAFP/SIM/PI/MM) are **not implemented** in preload service (returns 0 / commented). (`backend/app/services/preload_service.py`, `backend/app/services/sync_preload_service.py`)
+- ✅ Conference/protected time handled **manually** (not auto-preloaded by design).
 - 🟡 Activity codes missing → preload skipped (logs only). (`backend/app/services/preload_service.py`)
 
 ### B) Generation (CP-SAT)
@@ -49,7 +49,7 @@
 - ✅ Fri/Sat call handled via FMIT preloads. (`backend/app/services/preload_service.py`)
 - ✅ Manual/preload slots are preserved during re-gen; solver/template slots are cleared. (`backend/app/scheduling/engine.py`)
 - 🟡 Algorithm parameter accepted but overridden to CP-SAT; UI may mislead. (`backend/app/api/routes/schedule.py`, `backend/app/scheduling/engine.py`)
-- 🟡 Block 0 (orientation) not supported by half-day list endpoint (block_number min=1). (`backend/app/api/routes/half_day_assignments.py`)
+- ✅ Block 0 supported in half-day list endpoint (0–13).
 
 ### C) Protected patterns (rotation rules)
 - ✅ Wednesday PM LEC for most rotations. (`backend/app/services/preload_service.py`)
@@ -90,51 +90,38 @@
 ## Findings (what prevents “every possible scenario”)
 
 **P0 — Functional gaps**
-1) **Conference/protected-time preloads are effectively disabled.** `preload_service` returns 0 and `sync_preload_service` comments them out. This means any program relying on those rules won’t get them unless encoded elsewhere. (`backend/app/services/preload_service.py`, `backend/app/services/sync_preload_service.py`)
-
-2) **Export row mapping is not strict.** Missing mappings can silently skip people in XLSX output. This is acceptable for dev but not PD‑safe. (`backend/app/services/json_to_xlsx_converter.py`)
+1) **Export row mapping is not strict.** Missing mappings can silently skip people in XLSX output. This is acceptable for dev but not PD‑safe. (`backend/app/services/json_to_xlsx_converter.py`)
 
 **P1 — Editing caveats**
-3) **Draft edits do not override preloads by default.** Add/update skips if existing source is PRELOAD or MANUAL; users must delete first. This is correct for safety but needs GUI messaging. (`backend/app/services/schedule_draft_service.py`)
+2) **Draft edits do not override preloads by default.** Add/update skips if existing source is PRELOAD or MANUAL; users must delete first. This is correct for safety but needs GUI messaging. (`backend/app/services/schedule_draft_service.py`)
 
-4) **Call edits require explicit PCAT/DO regeneration.** Manual call updates won’t automatically update post-call time unless the dedicated endpoint is used. (`backend/app/api/routes/call_assignments.py`)
+3) **Call edits require explicit PCAT/DO regeneration.** Manual call updates won’t automatically update post-call time unless the dedicated endpoint is used. (`backend/app/api/routes/call_assignments.py`)
 
 **P2 — Edge-case coverage**
-5) **Block 0 cannot be queried via half-day endpoint.** The API restricts block_number to 1–13. (`backend/app/api/routes/half_day_assignments.py`)
-
-6) **Compound rotation parsing is fragile.** It handles common patterns but depends on rotation naming conventions that may drift. (`backend/app/services/sync_preload_service.py`)
+4) **Compound rotation parsing is fragile.** It handles common patterns but depends on rotation naming conventions that may drift. (`backend/app/services/sync_preload_service.py`)
 
 ---
 
 ## Implementation Plan (phased)
 
 ### Phase 1 — PD-safe generation + export (P0)
-1) **Enable conferences/protected-time preloads**
-   - Implement `_load_conferences` and `_load_protected_time` or wire in templates.
-   - Add tests to confirm LEC/ADV/HAFP/USAFP/SIM/MM/PI appear as expected.
-   - Files: `backend/app/services/preload_service.py`, `backend/app/services/sync_preload_service.py`
-
-2) **Fail fast on missing export mappings**
+1) **Fail fast on missing export mappings**
    - Enforce strict row mapping in JSON → XLSX conversion.
    - Return explicit error for missing person or row mapping.
    - Files: `backend/app/services/json_to_xlsx_converter.py`, `backend/app/services/canonical_schedule_export_service.py`
 
 ### Phase 2 — PD-safe editing (P1)
-3) **Draft override UX / API affordances**
+2) **Draft override UX / API affordances**
    - Add explicit “override preload” change type or confirm-delete flow.
    - Surface locked/preload reasons in draft preview.
    - Files: `backend/app/services/schedule_draft_service.py`, `backend/app/api/routes/schedule_drafts.py`
 
-4) **Call edit + PCAT/DO sync**
+3) **Call edit + PCAT/DO sync**
    - Offer optional `auto_generate_post_call=true` on call update endpoints.
    - Files: `backend/app/api/routes/call_assignments.py`, `backend/app/services/call_assignment_service.py`
 
 ### Phase 3 — Edge-case hardening (P2)
-5) **Block 0 support**
-   - Allow block 0 in half-day list endpoint if needed.
-   - Files: `backend/app/api/routes/half_day_assignments.py`
-
-6) **Compound rotation normalization**
+4) **Compound rotation normalization**
    - Centralize rotation code normalization and move to data-driven mapping.
    - Add tests for naming variants.
    - Files: `backend/app/services/sync_preload_service.py`, `backend/app/services/preload_service.py`
