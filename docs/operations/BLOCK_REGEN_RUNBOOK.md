@@ -103,3 +103,8 @@ If CP-SAT returns **INFEASIBLE**, capture:
 - Preload count vs solver count (should not be preload-only).
 - Presence of PCAT/DO/SM rotation templates.
 - Presence of AT/PCAT/DO activities.
+
+**Failure snapshot (new):**
+- On pre-solver validation failure or solver failure, a PII-free snapshot is written to:
+  - `/tmp/schedule_failure_<run_id>_<timestamp>.json`
+  - Override location with `SCHEDULE_FAILURE_SNAPSHOT_DIR`.

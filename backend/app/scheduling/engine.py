@@ -18,8 +18,11 @@ The engine uses a modular constraint system (constraints.py) and pluggable solve
 for flexible, maintainable scheduling.
 """
 
+import json
+import os
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
@@ -394,6 +397,18 @@ class SchedulingEngine:
                     logger.info(f"  Recommendation: {recommendation}")
                 self._log_constraint_summary()
                 self._log_context_summary(context)
+                self._dump_failure_snapshot(
+                    context,
+                    run_id=run.id,
+                    stage="pre_solver_validation",
+                    solver_status="pre_solver_validation_failed",
+                    pre_solver_validation={
+                        "feasible": validation_result.feasible,
+                        "issues": validation_result.issues,
+                        "recommendations": validation_result.recommendations,
+                        "statistics": validation_result.statistics,
+                    },
+                )
 
                 self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
                 self.db.commit()
@@ -435,6 +450,13 @@ class SchedulingEngine:
                     )
                 self._log_constraint_summary()
                 self._log_context_summary(context)
+                self._dump_failure_snapshot(
+                    context,
+                    run_id=run.id,
+                    stage="solver",
+                    solver_status=solver_result.solver_status,
+                    solver_stats=solver_result.statistics,
+                )
                 self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
                 self.db.commit()
                 return {
@@ -2784,6 +2806,103 @@ class SchedulingEngine:
                 "Missing templates (may disable constraints): %s",
                 ", ".join(missing),
             )
+
+    def _dump_failure_snapshot(
+        self,
+        context: SchedulingContext,
+        run_id: UUID | None,
+        stage: str,
+        solver_status: str,
+        pre_solver_validation: dict[str, Any] | None = None,
+        solver_stats: dict[Any, Any] | None = None,
+    ) -> None:
+        """Write a PII-free failure snapshot to disk for debugging."""
+        if not context:
+            logger.error("Failure snapshot unavailable: context is None")
+            return
+
+        enabled = (
+            self.constraint_manager.get_enabled() if self.constraint_manager else []
+        )
+        disabled = (
+            [c for c in self.constraint_manager.constraints if not c.enabled]
+            if self.constraint_manager
+            else []
+        )
+        workday_blocks = [b for b in context.blocks if not b.is_weekend]
+        locked_count = len(getattr(context, "locked_blocks", set()))
+        call_eligible = len(getattr(context, "call_eligible_faculty", []))
+
+        template_summaries = [
+            {
+                "id": str(getattr(t, "id", "")),
+                "name": getattr(t, "name", None),
+                "abbreviation": getattr(t, "abbreviation", None),
+                "rotation_type": getattr(t, "rotation_type", None),
+            }
+            for t in context.templates
+        ]
+        template_codes = {
+            (t.abbreviation or t.name or "").strip().upper()
+            for t in context.templates
+            if (t.abbreviation or t.name)
+        }
+        required_templates = {"PCAT", "DO", "SM", "NF", "PC"}
+        missing_templates = sorted(
+            code for code in required_templates if code not in template_codes
+        )
+
+        snapshot = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "stage": stage,
+            "solver_status": solver_status,
+            "run_id": str(run_id) if run_id else None,
+            "start_date": str(self.start_date),
+            "end_date": str(self.end_date),
+            "counts": {
+                "residents": len(context.residents),
+                "faculty": len(context.faculty),
+                "templates": len(context.templates),
+                "blocks": len(context.blocks),
+                "workday_blocks": len(workday_blocks),
+                "locked_blocks": locked_count,
+                "call_eligible_faculty": call_eligible,
+                "existing_assignments": len(
+                    getattr(context, "existing_assignments", [])
+                ),
+            },
+            "constraints": {
+                "enabled": sorted({c.name for c in enabled}),
+                "disabled": sorted({c.name for c in disabled}),
+                "hard_enabled": sorted(
+                    {c.name for c in self.constraint_manager.get_hard_constraints()}
+                )
+                if self.constraint_manager
+                else [],
+                "soft_enabled": sorted(
+                    {c.name for c in self.constraint_manager.get_soft_constraints()}
+                )
+                if self.constraint_manager
+                else [],
+            },
+            "templates": template_summaries,
+            "missing_templates": missing_templates,
+            "pre_solver_validation": pre_solver_validation,
+            "solver_stats": solver_stats,
+        }
+
+        output_dir = Path(
+            os.environ.get("SCHEDULE_FAILURE_SNAPSHOT_DIR", "/tmp")
+        ).expanduser()
+        try:
+            output_dir.mkdir(parents=True, exist_ok=True)
+            stamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+            safe_run_id = str(run_id) if run_id else "unknown"
+            path = output_dir / f"schedule_failure_{safe_run_id}_{stamp}.json"
+            path.write_text(json.dumps(snapshot, indent=2, default=str))
+            logger.error("Wrote failure snapshot to %s", path)
+        except Exception as exc:
+            logger.error(f"Failed to write failure snapshot: {exc}")
 
     @staticmethod
     def _format_list(items: list[str], max_items: int = 20) -> str:
