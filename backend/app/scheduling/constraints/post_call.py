@@ -329,13 +329,27 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
         self, context: SchedulingContext, activity_name: str
     ) -> Any | None:
         """Find template ID by activity name or abbreviation."""
+        target = activity_name.upper()
         for t in context.templates:
             # Check name
-            if hasattr(t, "name") and t.name.upper() == activity_name.upper():
+            name = (t.name or "").upper() if hasattr(t, "name") else ""
+            if name == target:
                 return t.id
             # Check abbreviation
-            if hasattr(t, "abbreviation") and t.abbreviation:
-                if t.abbreviation.upper() == activity_name.upper():
+            abbrev = (
+                (t.abbreviation or "").upper() if hasattr(t, "abbreviation") else ""
+            )
+            if abbrev == target:
+                return t.id
+
+        # Accept AM/PM suffix variants (e.g., PCAT-AM, DO-PM) for post-call templates.
+        if target in {"PCAT", "DO"}:
+            for t in context.templates:
+                name = (t.name or "").upper() if hasattr(t, "name") else ""
+                abbrev = (
+                    (t.abbreviation or "").upper() if hasattr(t, "abbreviation") else ""
+                )
+                if name.startswith(target) or abbrev.startswith(target):
                     return t.id
         return None
 

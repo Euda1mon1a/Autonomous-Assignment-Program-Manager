@@ -430,45 +430,85 @@ Pre-commit hooks fail due to missing dependencies:
 
 **Missing Skill:** `check-camelcase` referenced in CLAUDE.md but skill doesn't exist.
 
-### 22. Rename `activity_type` → `rotation_type` (NEW - Session 142)
+### ~~22. Rename `activity_type` → `rotation_type`~~ ✅ RESOLVED (2026-01-25)
+**Resolved by:** Commit `7cd3f4eb` - 180 files changed, migration `20260126_rename_rotation_type`
+
+Complete rename across entire codebase including DB migration, models, schemas, API, frontend types, solver, and all documentation.
+
+### 23. CP-SAT Failure Logging Improvements (NEW - Session 142)
 **Added:** 2026-01-25
-**Source:** Commit `a3609d9b` - `docs/scheduling/TERMS_AND_DATA_MODEL.md`
+**Source:** Codex CP-SAT Review (`docs/reviews/CODEX_CPSAT_REVIEW_20260125.md`)
 
-**Core Issue:** `RotationTemplate.activity_type` is a **rotation category**, not an Activity. Rotation fields must not use “activity” in the name.
+Block 10 infeasibility was hard to diagnose - failures logged at INFO without context.
 
-**Rename Needed:**
-| Current | Proposed | Rationale |
-|---------|----------|-----------|
-| `activity_type` | `rotation_type` | Describes the rotation, not an activity |
+| Scenario | Current | Recommended | Key Addition |
+|----------|---------|-------------|--------------|
+| Template not found | INFO | WARNING | List available templates |
+| Solver INFEASIBLE | INFO | **ERROR** | Active/disabled constraints |
+| Constraint disabled | INFO | WARNING | Reason + compliance note |
+| Missing preflight | (none) | WARNING | Structured checklist |
+| Export row missing | WARNING | ERROR + raise | Available mappings |
 
-**Breaking Change Scope:**
-| Layer | Files | Change |
-|-------|-------|--------|
-| **DB** | `rotation_template` table | Column rename migration |
-| **Models** | `rotation_template.py` | Field rename |
-| **Schemas** | `rotation_template.py`, `rotation_template_gui.py` | Field rename |
-| **API** | `rotation_templates.py` | Query param rename |
-| **Frontend** | `api-generated.ts` + components | Regenerate types |
-| **Solver** | `engine.py`, `constraints.py` | Update references |
+**Priority:**
+1. **P0:** Solver INFEASIBLE → ERROR with constraint context
+2. **P1:** Template lookup → WARNING with available templates
+3. **P2:** Add `_log_preflight_status()` function
 
-**Terminology Table (for docs/UI):**
-| Term | Definition |
-|------|------------|
-| **Block** | Time container (0-13, 28 days each) |
-| **Rotation** | RotationTemplate (multi-week container) |
-| **rotation_type** | Category of rotation (`outpatient`, `inpatient`, `off`) |
-| **Activity** | Theoretical half-day unit (FM Clinic, Lecture) |
-| **Assignment** | Activity + date + person (realized) |
+**Files:**
+- `backend/app/scheduling/engine.py`
+- `backend/app/scheduling/solvers.py`
+- `backend/app/scheduling/constraints/post_call.py`
 
-**Action:**
-1. Create Alembic migration to rename column
-2. Update models/schemas/routes
-3. Regenerate frontend types
-4. Update CLAUDE.md terminology section
+**Effort:** 2-3 hours
 
-**Effort:** 6-8 hours (breaking change, needs coordinated PR)
+### 24. Preload Service Code Duplication (NEW - Session 142)
+**Added:** 2026-01-25
+**Source:** Codex CP-SAT Review (`docs/reviews/CODEX_CPSAT_REVIEW_20260125.md`)
 
-### 23. MCP Placeholder Tools (NEW - Session 136)
+`preload_service.py` (async) and `sync_preload_service.py` (sync) have ~300 LOC of identical rotation pattern logic:
+
+| Duplicated Code | LOC | Purpose |
+|-----------------|-----|---------|
+| `_ROTATION_ALIASES` | 15 | Alias normalization |
+| `_NIGHT_FLOAT_ROTATIONS`, etc. | 10 | Exempt rotation sets |
+| `_get_hilo_codes()` | 8 | Hilo TDY pattern |
+| `_get_kap_codes()` | 10 | Kapiolani pattern |
+| `_get_nf_codes()` | 8 | Night float pattern |
+| `_resolve_rotation_code_for_date()` | 40 | Mid-block transitions |
+| `_get_rotation_preload_codes()` | 50 | Pattern dispatcher |
+
+**Also includes magic numbers:**
+```python
+if day_index in (0, 1):   # Thu/Fri before Hilo TDY
+if day_index == 19:       # Return Tuesday
+```
+
+**Fix:**
+1. Extract to `backend/app/services/rotation_pattern_utils.py`
+2. Replace magic numbers with named constants
+3. Both services import shared logic
+
+**Effort:** 2-3 hours
+
+### 25. Activity Solver Physical Capacity Overflow (NEW - Session 142)
+**Added:** 2026-01-26
+**Source:** Block 10 regen report (`docs/reports/block10-cpsat-run-20260126.md`)
+
+Activity solver now skips physical-capacity constraints for most slots because
+minimum clinic demand exceeds the hard cap of 6 (e.g., 15–16 required).
+
+**Impact:**
+- Activity solver succeeds, but capacity is unenforced for ~35/40 slots in Block 10.
+- Policy decision needed: soft constraint vs FM-clinic-only vs per-activity caps.
+
+**Fix:**
+1. Decide capacity scope (FM clinic only vs all clinical activities).
+2. Consider soft-penalty model if hard caps are routinely exceeded.
+3. Align `counts_toward_physical_capacity` flags with policy.
+
+**Effort:** 2-4 hours
+
+### 26. MCP Placeholder Tools (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [MCP Tools Audit](reports/MCP_TOOLS_AUDIT_2026-01-23.md)
 
@@ -669,6 +709,14 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 ### ~~PII in Burnout APIs~~ ✅ N/A (2026-01-26)
 ~~Security report referenced `contagion_model.py`, `resilience_integration.py` with PII-exposing classes. Investigation found these files/classes don't exist - report was based on planned (not implemented) code.~~
 
+### ~~Rename `activity_type` → `rotation_type`~~ ✅ RESOLVED (2026-01-25)
+~~Complete rename across 180 files (commit `7cd3f4eb`):~~
+- ~~Alembic migration: `20260126_rename_rotation_type`~~
+- ~~Models, schemas, API routes updated~~
+- ~~Frontend types regenerated~~
+- ~~Solver and constraints updated~~
+- ~~All docs standardized on `rotation_type` terminology~~
+
 ---
 
 ## SUMMARY
@@ -677,9 +725,9 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 |----------|------|----------|
 | **CRITICAL** | 3 | 5 |
 | **HIGH** | 9 | 6 |
-| **MEDIUM** | 9 | 9 |
+| **MEDIUM** | 11 | 10 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **34** | **23** |
+| **TOTAL** | **36** | **24** |
 
 ### Top 5 Actions for Next Session
 
@@ -689,13 +737,19 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 4. **Add Resilience Route Tests** (HIGH #12) - 59 untested safety-critical endpoints
 5. **Merge bandit-config branch** (HIGH #7) - Security scanner ready, needs PR
 
-### Session 142 Updates (2026-01-25)
+### Session 142 Updates (2026-01-26)
 
 | Change | Item | Reason |
 |--------|------|--------|
-| ➕ Added | MEDIUM #22 | `activity_type` → `rotation_type` rename (commit a3609d9b) |
+| ✅ Resolved | MEDIUM #22 | `activity_type` → `rotation_type` rename done (commit 7cd3f4eb) |
+| ➕ Added | MEDIUM #23 | CP-SAT failure logging improvements |
+| ➕ Added | MEDIUM #24 | Preload service code duplication (~300 LOC + magic numbers) |
+| ➕ Added | MEDIUM #25 | Activity solver physical-capacity overflow (capacity skipped) |
+| 📝 Added | Review doc | `docs/reviews/CODEX_CPSAT_REVIEW_20260125.md` |
+| ✅ Fixed | Block 10 | CP-SAT + activity solver succeed after block-assignment filtering |
+| ⚠️ Found | Block 10 | Capacity constraints skipped for 35/40 slots (policy needed) |
 | 📝 Added | gitignore | `.claude/dontreadme/sessions/*.md` for session scratchpads |
-| 📝 Added | ops script | `scripts/ops/block_export.py` for canonical export |
+| 📝 Updated | ops scripts | `block_regen.py` + `block_export.py` now backfill env |
 
 ### Session 141 Updates (2026-01-26)
 

@@ -6,8 +6,12 @@ It assumes you have a valid local DB and have already taken a backup.
 ## Prerequisites
 
 - Python 3.11+ environment for the backend.
-- `DATABASE_URL` set in your shell or in `.env`.
+- Ops scripts load `.env` and backfill `DATABASE_URL` if missing/empty.
 - Local backup created (required before destructive clears).
+
+**Note:** If your shell has a stale `CORS_ORIGINS` value (e.g., from `source .env`),
+set it to a valid JSON string before running scripts:
+`export CORS_ORIGINS='[\"*\"]'`.
 
 ## Pre-flight Checks (Recommended)
 

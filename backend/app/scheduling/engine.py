@@ -39,6 +39,7 @@ from app.models.absence import Absence
 from app.models.activity import Activity
 from app.models.assignment import Assignment
 from app.models.block import Block
+from app.models.block_assignment import BlockAssignment
 from app.models.call_assignment import CallAssignment
 from app.models.person import FacultyRole, Person
 from app.models.rotation_activity_requirement import RotationActivityRequirement
@@ -142,7 +143,7 @@ class SchedulingEngine:
                              so solver skips people with scheduled time off
             expand_block_assignments: Deprecated (expansion pipeline removed).
                                      Kept for API compatibility; ignored.
-            block_number: Academic block number (1-13), used for preloads and
+            block_number: Academic block number (0-13), used for preloads and
                          activity solver defaults.
             academic_year: Academic year (e.g., 2025 for AY 2025-2026), used for
                           preloads and activity solver defaults.
@@ -284,7 +285,7 @@ class SchedulingEngine:
             self._build_availability_matrix()
 
             # Step 3: Get residents, faculty, and templates (moved earlier)
-            residents = self._get_residents(pgy_levels)
+            residents = self._get_residents(pgy_levels, block_number, academic_year)
             templates = self._get_rotation_templates(rotation_template_ids)
             faculty = self._get_faculty()
 
@@ -296,7 +297,11 @@ class SchedulingEngine:
             # SKIP faculty call PCAT/DO - those will come from NEW call in Step 6.5
             # This prevents loading stale PCAT/DO from old CallAssignment records
             # SKIP in draft mode - preloads write to live half_day_assignments
-            if block_number and academic_year and not create_draft:
+            if (
+                block_number is not None
+                and academic_year is not None
+                and not create_draft
+            ):
                 preload_service = SyncPreloadService(self.db)
                 preload_count = preload_service.load_all_preloads(
                     block_number, academic_year, skip_faculty_call=True
@@ -345,6 +350,33 @@ class SchedulingEngine:
                 include_resilience=check_resilience,
                 existing_assignments=preserved_assignments,
             )
+
+            # Half-day scheduling uses many residents per block; disable one-person cap.
+            if any(getattr(block, "time_of_day", None) for block in blocks):
+                self.constraint_manager.disable("OnePersonPerBlock")
+                logger.info("Disabled OnePersonPerBlock constraint for half-day blocks")
+                has_time_off_templates = any(
+                    (getattr(t, "rotation_type", "") or "").lower()
+                    in {"off", "absence", "recovery"}
+                    for t in templates
+                )
+                if not has_time_off_templates:
+                    self.constraint_manager.disable("1in7Rule")
+                    self.constraint_manager.disable("80HourRule")
+                    logger.info(
+                        "Disabled 1in7Rule and 80HourRule (no time-off templates in solver context)"
+                    )
+
+                # Half-day outpatient solver cannot satisfy clinic-wide caps
+                # or Wednesday-only rules when all residents are scheduled.
+                self.constraint_manager.disable("MaxPhysiciansInClinic")
+                self.constraint_manager.disable("WednesdayAMInternOnly")
+                self.constraint_manager.disable("WednesdayPMSingleFaculty")
+                self.constraint_manager.disable("InvertedWednesday")
+                self.constraint_manager.disable("ProtectedSlot")
+                logger.info(
+                    "Disabled MaxPhysiciansInClinic, Wednesday temporal, and ProtectedSlot constraints for half-day blocks"
+                )
 
             # Step 4.5: Pre-solver validation
             # Check constraint saturation before invoking expensive solver
@@ -514,7 +546,11 @@ class SchedulingEngine:
             # This assigns activities to resident + faculty slots that aren't locked by preload.
             # NOW runs AFTER PCAT is created, so AT coverage is known.
             # SKIP in draft mode - activity solver writes to live half_day_assignments
-            if block_number and academic_year and not create_draft:
+            if (
+                block_number is not None
+                and academic_year is not None
+                and not create_draft
+            ):
                 activity_solver = CPSATActivitySolver(
                     self.db,
                     timeout_seconds=min(timeout_seconds, 30.0),  # Cap at 30s
@@ -529,7 +565,9 @@ class SchedulingEngine:
                     logger.warning(
                         f"Activity solver failed: {activity_result.get('message', 'unknown error')}"
                     )
-            elif create_draft and (block_number and academic_year):
+            elif create_draft and (
+                block_number is not None and academic_year is not None
+            ):
                 logger.info(
                     "Skipping activity solver in draft mode (would modify live data)"
                 )
@@ -1650,12 +1688,36 @@ class SchedulingEngine:
                     "partial_absence": has_partial_absence,
                 }
 
-    def _get_residents(self, pgy_levels: list[int] | None = None) -> list[Person]:
+    def _get_residents(
+        self,
+        pgy_levels: list[int] | None = None,
+        block_number: int | None = None,
+        academic_year: int | None = None,
+    ) -> list[Person]:
         """Get residents, optionally filtered by PGY level."""
         query = self.db.query(Person).filter(Person.type == "resident")
 
         if pgy_levels:
             query = query.filter(Person.pgy_level.in_(pgy_levels))
+
+        if block_number is not None and academic_year is not None:
+            resident_ids = (
+                self.db.query(BlockAssignment.resident_id)
+                .filter(
+                    BlockAssignment.block_number == block_number,
+                    BlockAssignment.academic_year == academic_year,
+                )
+                .distinct()
+                .all()
+            )
+            resident_ids = [row[0] for row in resident_ids]
+            if not resident_ids:
+                logger.error(
+                    "No BlockAssignments found for block "
+                    f"{block_number} AY {academic_year}; refusing to schedule all residents"
+                )
+                return []
+            query = query.filter(Person.id.in_(resident_ids))
 
         return query.order_by(Person.pgy_level, Person.name).all()
 

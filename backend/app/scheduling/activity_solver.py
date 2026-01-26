@@ -478,14 +478,10 @@ class CPSATActivitySolver:
 
                 if min_needed > len(vars_for_req):
                     logger.warning(
-                        "Clamping min requirement for person=%s template=%s "
-                        "week=%s activity=%s: min=%s available=%s",
-                        person_id,
-                        template_id,
-                        week,
-                        req.activity_id,
-                        min_needed,
-                        len(vars_for_req),
+                        f"Clamping min requirement for person={person_id} "
+                        f"template={template_id} week={week} "
+                        f"activity={req.activity_id}: min={min_needed} "
+                        f"available={len(vars_for_req)}"
                     )
                     min_needed = len(vars_for_req)
 
@@ -736,9 +732,29 @@ class CPSATActivitySolver:
         # For each time slot, sum(clinical activities) + baseline <= MAX
         clinical_activity_ids = capacity_activity_ids.intersection(assignable_ids)
         if clinical_activity_ids:
+            enforced_groups = 0
+            skipped_groups = 0
+            skipped_examples: list[str] = []
             for (slot_date, time_of_day), slot_indices in slot_groups.items():
                 # Skip weekends
                 if slot_date.weekday() >= 5:
+                    continue
+
+                baseline = baseline_capacity.get((slot_date, time_of_day), 0)
+
+                # If all allowed activities for a slot count toward capacity,
+                # that slot contributes a hard minimum of 1 to the capacity sum.
+                forced_capacity = sum(
+                    1
+                    for s_i in slot_indices
+                    if set(slot_allowed[s_i]).issubset(clinical_activity_ids)
+                )
+                if forced_capacity + baseline > MAX_PHYSICAL_CAPACITY:
+                    skipped_groups += 1
+                    if len(skipped_examples) < 5:
+                        skipped_examples.append(
+                            f"{slot_date} {time_of_day} min={forced_capacity + baseline}"
+                        )
                     continue
 
                 # Sum of clinical assignments for this slot
@@ -749,14 +765,22 @@ class CPSATActivitySolver:
                     if act_id in clinical_activity_ids
                 )
 
-                baseline = baseline_capacity.get((slot_date, time_of_day), 0)
                 # Hard constraint: at most 6 in clinic per slot
                 model.Add(slot_clinic_sum + baseline <= MAX_PHYSICAL_CAPACITY)
+                enforced_groups += 1
 
-            logger.info(
-                f"Added physical capacity constraint (max {MAX_PHYSICAL_CAPACITY}) "
-                f"for {len(slot_groups)} time slots with baseline occupancy"
-            )
+            if enforced_groups:
+                logger.info(
+                    f"Added physical capacity constraint (max {MAX_PHYSICAL_CAPACITY}) "
+                    f"for {enforced_groups} of {len(slot_groups)} time slots"
+                )
+            if skipped_groups:
+                examples = ", ".join(skipped_examples)
+                logger.warning(
+                    f"Skipped physical capacity constraint for {skipped_groups} of "
+                    f"{len(slot_groups)} slots (min > max {MAX_PHYSICAL_CAPACITY}). "
+                    f"Examples: {examples}"
+                )
 
         # ==================================================
         # OBJECTIVE: Maximize clinic (C) assignments

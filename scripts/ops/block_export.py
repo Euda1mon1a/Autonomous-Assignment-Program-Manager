@@ -36,9 +36,16 @@ def _load_env() -> None:
             continue
         key, value = line.split("=", 1)
         value = value.strip().strip('"').strip("'")
-        os.environ.setdefault(key.strip(), value)
+        key = key.strip()
+        existing = os.environ.get(key)
+        if key == "CORS_ORIGINS":
+            if not existing or '"' not in existing:
+                os.environ[key] = value
+            continue
+        if not existing:
+            os.environ[key] = value
 
-    if "DATABASE_URL" not in os.environ and "DB_PASSWORD" in os.environ:
+    if not os.environ.get("DATABASE_URL") and os.environ.get("DB_PASSWORD"):
         os.environ["DATABASE_URL"] = (
             f"postgresql://scheduler:{os.environ['DB_PASSWORD']}@localhost:5432/"
             "residency_scheduler"

@@ -63,15 +63,18 @@ This roadmap starts at the beginning (inputs + preloads) and walks forward to ex
 - CP-SAT canonical solver path enforced.
 - Weekend call extraction preserved in result map.
 - Call coverage constraints for Sun–Thu nights active.
+- Block 10 regen now produces solver assignments + call (617 assignments, 20 calls).
 
 **Remaining**
 - Confirm Sports Medicine alignment rule is correct for local policy.
 - Confirm AT coverage math (resident clinic demand → AT coverage).
-- Resolve CP-SAT infeasibility in Block 10 (2026-01-26 run): missing PCAT/DO/SM templates and no call output caused preload-only exports.
+- Ensure supervision constraint activates (AT/PCAT availability currently logs as missing).
+- Verify NF/PC templates exist where Night Float post-call rules are expected.
 
 **Acceptance criteria**
 - Call assignments exist for all Sun–Thu nights (no gaps).
 - Call assignments appear in `call_assignments` and propagate to post-call rules.
+- Block 10 regen produces solver assignments (no preload-only output).
 - All solver outputs are consistent with `ConstraintManager` hard constraints.
 
 **References**
@@ -110,14 +113,18 @@ This roadmap starts at the beginning (inputs + preloads) and walks forward to ex
 **Done**
 - Activity solver honors locks and focuses on open slots.
 - Faculty AT/admin activities supported.
+- Activity solver completes for Block 10 with capacity overflow safeguards.
 
 **Remaining**
 - Complete activity requirement records for all outpatient rotations (GUI-editable).
 - Verify rotation-specific activity caps and specialty matching.
+- Resolve physical-capacity overflow (capacity constraints are currently skipped
+  when minimum demand exceeds max).
 
 **Acceptance criteria**
 - No locked slots overwritten.
 - Required activities satisfied within block.
+- Physical capacity constraints either enforced or explicitly waived with policy.
 
 **References**
 - `backend/app/scheduling/activity_solver.py`
