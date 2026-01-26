@@ -60,6 +60,15 @@ def _find_first_non_last_wednesday(start_date, end_date):
     return None
 
 
+def _find_weekday(start_date, end_date, weekday: int):
+    current = start_date
+    while current <= end_date:
+        if current.weekday() == weekday:
+            return current
+        current += timedelta(days=1)
+    return None
+
+
 def test_preload_wednesday_patterns_and_last_wednesday(db):
     _create_activity(db, "C", "C", ActivityCategory.CLINICAL.value)
     _create_activity(db, "LEC", "LEC", ActivityCategory.EDUCATIONAL.value)
@@ -217,6 +226,237 @@ def test_preload_okinawa_pattern(db):
 
     assert _get_assignment_code(db, resident.id, day19, "AM") == "C"
     assert _get_assignment_code(db, resident.id, day19, "PM") == "C"
+
+
+def test_preload_kapiolani_pattern(db):
+    _create_activity(db, "KAP", "KAP", ActivityCategory.CLINICAL.value)
+    _create_activity(db, "OFF", "OFF", ActivityCategory.TIME_OFF.value)
+    _create_activity(db, "C", "C", ActivityCategory.CLINICAL.value)
+    _create_activity(db, "LEC", "LEC", ActivityCategory.EDUCATIONAL.value)
+    _create_activity(db, "ADV", "ADV", ActivityCategory.EDUCATIONAL.value)
+
+    resident = Person(
+        id=uuid4(),
+        name="Resident KAP",
+        type="resident",
+        pgy_level=2,
+    )
+    template = RotationTemplate(
+        id=uuid4(),
+        name="Kapiolani L&D",
+        rotation_type="off",
+        abbreviation="KAP",
+    )
+    db.add_all([resident, template])
+    db.commit()
+
+    block_number = 10
+    academic_year = 2025
+    assignment = BlockAssignment(
+        id=uuid4(),
+        block_number=block_number,
+        academic_year=academic_year,
+        resident_id=resident.id,
+        rotation_template_id=template.id,
+    )
+    db.add(assignment)
+    db.commit()
+
+    service = SyncPreloadService(db)
+    service._load_rotation_protected_preloads(block_number, academic_year)
+
+    block_dates = get_block_dates(block_number, academic_year)
+    monday = _find_weekday(block_dates.start_date, block_dates.end_date, 0)
+    tuesday = _find_weekday(block_dates.start_date, block_dates.end_date, 1)
+    wednesday = _find_first_non_last_wednesday(
+        block_dates.start_date, block_dates.end_date
+    )
+    thursday = _find_weekday(block_dates.start_date, block_dates.end_date, 3)
+
+    assert monday is not None
+    assert tuesday is not None
+    assert wednesday is not None
+    assert thursday is not None
+
+    assert _get_assignment_code(db, resident.id, monday, "AM") == "KAP"
+    assert _get_assignment_code(db, resident.id, monday, "PM") == "OFF"
+
+    assert _get_assignment_code(db, resident.id, tuesday, "AM") == "OFF"
+    assert _get_assignment_code(db, resident.id, tuesday, "PM") == "OFF"
+
+    assert _get_assignment_code(db, resident.id, wednesday, "AM") == "C"
+    assert _get_assignment_code(db, resident.id, wednesday, "PM") == "LEC"
+
+    assert _get_assignment_code(db, resident.id, thursday, "AM") == "KAP"
+    assert _get_assignment_code(db, resident.id, thursday, "PM") == "KAP"
+
+
+def test_preload_ldnf_pattern(db):
+    _create_activity(db, "LDNF", "LDNF", ActivityCategory.CLINICAL.value)
+    _create_activity(db, "OFF", "OFF", ActivityCategory.TIME_OFF.value)
+    _create_activity(db, "C", "C", ActivityCategory.CLINICAL.value)
+    _create_activity(db, "W", "W", ActivityCategory.TIME_OFF.value)
+    _create_activity(db, "LEC", "LEC", ActivityCategory.EDUCATIONAL.value)
+    _create_activity(db, "ADV", "ADV", ActivityCategory.EDUCATIONAL.value)
+
+    resident = Person(
+        id=uuid4(),
+        name="Resident LDNF",
+        type="resident",
+        pgy_level=2,
+    )
+    template = RotationTemplate(
+        id=uuid4(),
+        name="L&D Night Float",
+        rotation_type="inpatient",
+        abbreviation="LDNF",
+    )
+    db.add_all([resident, template])
+    db.commit()
+
+    block_number = 10
+    academic_year = 2025
+    assignment = BlockAssignment(
+        id=uuid4(),
+        block_number=block_number,
+        academic_year=academic_year,
+        resident_id=resident.id,
+        rotation_template_id=template.id,
+    )
+    db.add(assignment)
+    db.commit()
+
+    service = SyncPreloadService(db)
+    service._load_rotation_protected_preloads(block_number, academic_year)
+
+    block_dates = get_block_dates(block_number, academic_year)
+    monday = _find_weekday(block_dates.start_date, block_dates.end_date, 0)
+    friday = _find_weekday(block_dates.start_date, block_dates.end_date, 4)
+    saturday = _find_weekday(block_dates.start_date, block_dates.end_date, 5)
+
+    assert monday is not None
+    assert friday is not None
+    assert saturday is not None
+
+    assert _get_assignment_code(db, resident.id, monday, "AM") == "OFF"
+    assert _get_assignment_code(db, resident.id, monday, "PM") == "LDNF"
+
+    assert _get_assignment_code(db, resident.id, friday, "AM") == "C"
+    assert _get_assignment_code(db, resident.id, friday, "PM") == "OFF"
+
+    assert _get_assignment_code(db, resident.id, saturday, "AM") == "W"
+    assert _get_assignment_code(db, resident.id, saturday, "PM") == "W"
+
+
+def test_preload_pednf_pattern(db):
+    _create_activity(db, "PedNF", "PedNF", ActivityCategory.CLINICAL.value)
+    _create_activity(db, "OFF", "OFF", ActivityCategory.TIME_OFF.value)
+    _create_activity(db, "W", "W", ActivityCategory.TIME_OFF.value)
+    _create_activity(db, "LEC", "LEC", ActivityCategory.EDUCATIONAL.value)
+    _create_activity(db, "ADV", "ADV", ActivityCategory.EDUCATIONAL.value)
+
+    resident = Person(
+        id=uuid4(),
+        name="Resident PedNF",
+        type="resident",
+        pgy_level=2,
+    )
+    template = RotationTemplate(
+        id=uuid4(),
+        name="Pediatrics Night Float",
+        rotation_type="inpatient",
+        abbreviation="PEDNF",
+    )
+    db.add_all([resident, template])
+    db.commit()
+
+    block_number = 10
+    academic_year = 2025
+    assignment = BlockAssignment(
+        id=uuid4(),
+        block_number=block_number,
+        academic_year=academic_year,
+        resident_id=resident.id,
+        rotation_template_id=template.id,
+    )
+    db.add(assignment)
+    db.commit()
+
+    service = SyncPreloadService(db)
+    service._load_rotation_protected_preloads(block_number, academic_year)
+
+    block_dates = get_block_dates(block_number, academic_year)
+    monday = _find_weekday(block_dates.start_date, block_dates.end_date, 0)
+    sunday = _find_weekday(block_dates.start_date, block_dates.end_date, 6)
+
+    assert monday is not None
+    assert sunday is not None
+
+    assert _get_assignment_code(db, resident.id, monday, "AM") == "OFF"
+    assert _get_assignment_code(db, resident.id, monday, "PM") == "PedNF"
+
+    assert _get_assignment_code(db, resident.id, sunday, "AM") == "W"
+    assert _get_assignment_code(db, resident.id, sunday, "PM") == "W"
+
+
+def test_preload_compound_rotation_weekends(db):
+    _create_activity(db, "W", "W", ActivityCategory.TIME_OFF.value)
+
+    resident = Person(
+        id=uuid4(),
+        name="Resident Compound",
+        type="resident",
+        pgy_level=3,
+    )
+    primary = RotationTemplate(
+        id=uuid4(),
+        name="Neurology",
+        rotation_type="outpatient",
+        abbreviation="NEURO",
+        includes_weekend_work=False,
+    )
+    secondary = RotationTemplate(
+        id=uuid4(),
+        name="Night Float",
+        rotation_type="inpatient",
+        abbreviation="NF",
+        includes_weekend_work=True,
+    )
+    db.add_all([resident, primary, secondary])
+    db.commit()
+
+    block_number = 10
+    academic_year = 2025
+    assignment = BlockAssignment(
+        id=uuid4(),
+        block_number=block_number,
+        academic_year=academic_year,
+        resident_id=resident.id,
+        rotation_template_id=primary.id,
+        secondary_rotation_template_id=secondary.id,
+    )
+    db.add(assignment)
+    db.commit()
+
+    service = SyncPreloadService(db)
+    block_dates = get_block_dates(block_number, academic_year)
+    service._load_compound_rotation_weekends(
+        block_number, academic_year, block_dates.start_date, block_dates.end_date
+    )
+
+    first_saturday = _find_weekday(block_dates.start_date, block_dates.end_date, 5)
+    second_saturday = _find_weekday(
+        block_dates.start_date + timedelta(days=12), block_dates.end_date, 5
+    )
+
+    assert first_saturday is not None
+    assert second_saturday is not None
+
+    assert _get_assignment_code(db, resident.id, first_saturday, "AM") == "W"
+    assert _get_assignment_code(db, resident.id, first_saturday, "PM") == "W"
+
+    assert _get_assignment_code(db, resident.id, second_saturday, "AM") is None
+    assert _get_assignment_code(db, resident.id, second_saturday, "PM") is None
 
 
 def test_preload_nf_split_secondary_rotation(db):
