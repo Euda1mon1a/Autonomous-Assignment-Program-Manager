@@ -108,3 +108,16 @@ If CP-SAT returns **INFEASIBLE**, capture:
 - On pre-solver validation failure or solver failure, a PII-free snapshot is written to:
   - `/tmp/schedule_failure_<run_id>_<timestamp>.json`
   - Override location with `SCHEDULE_FAILURE_SNAPSHOT_DIR`.
+
+## Debug: Infeasibility Test (No Live Writes)
+
+Use this script to confirm the solver can go INFEASIBLE under hard constraints.
+It runs in draft mode and writes a failure snapshot on error.
+
+```
+python3.11 scripts/ops/solver_infeasible_test.py --block 10 --academic-year 2026
+```
+
+Snapshot location:
+- `/tmp/schedule_failure_<run_id>_<timestamp>.json`
+- Override with `--snapshot-dir /path` or `SCHEDULE_FAILURE_SNAPSHOT_DIR`
