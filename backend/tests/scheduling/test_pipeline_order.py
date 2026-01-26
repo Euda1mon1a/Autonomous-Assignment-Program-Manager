@@ -51,25 +51,28 @@ class TestPreloadServiceSkipFacultyCall:
 
         # Should not raise when skip_faculty_call=True
         with patch.object(service, "_load_absences", return_value=0):
-            with patch.object(service, "_load_inpatient_preloads", return_value=0):
-                with patch.object(service, "_load_fmit_call", return_value=0):
-                    with patch.object(
-                        service, "_load_inpatient_clinic", return_value=0
-                    ):
+            with patch.object(
+                service, "_load_rotation_protected_preloads", return_value=0
+            ):
+                with patch.object(service, "_load_inpatient_preloads", return_value=0):
+                    with patch.object(service, "_load_fmit_call", return_value=0):
                         with patch.object(
-                            service, "_load_resident_call", return_value=0
+                            service, "_load_inpatient_clinic", return_value=0
                         ):
                             with patch.object(
-                                service, "_load_faculty_call", return_value=0
-                            ) as mock_faculty_call:
+                                service, "_load_resident_call", return_value=0
+                            ):
                                 with patch.object(
-                                    service, "_load_sm_preloads", return_value=0
-                                ):
-                                    service.load_all_preloads(
-                                        block_number=10,
-                                        academic_year=2025,
-                                        skip_faculty_call=True,
-                                    )
+                                    service, "_load_faculty_call", return_value=0
+                                ) as mock_faculty_call:
+                                    with patch.object(
+                                        service, "_load_sm_preloads", return_value=0
+                                    ):
+                                        service.load_all_preloads(
+                                            block_number=10,
+                                            academic_year=2025,
+                                            skip_faculty_call=True,
+                                        )
 
         # _load_faculty_call should NOT be called when skip_faculty_call=True
         mock_faculty_call.assert_not_called()
@@ -84,25 +87,28 @@ class TestPreloadServiceSkipFacultyCall:
         service = SyncPreloadService(mock_session)
 
         with patch.object(service, "_load_absences", return_value=0):
-            with patch.object(service, "_load_inpatient_preloads", return_value=0):
-                with patch.object(service, "_load_fmit_call", return_value=0):
-                    with patch.object(
-                        service, "_load_inpatient_clinic", return_value=0
-                    ):
+            with patch.object(
+                service, "_load_rotation_protected_preloads", return_value=0
+            ):
+                with patch.object(service, "_load_inpatient_preloads", return_value=0):
+                    with patch.object(service, "_load_fmit_call", return_value=0):
                         with patch.object(
-                            service, "_load_resident_call", return_value=0
+                            service, "_load_inpatient_clinic", return_value=0
                         ):
                             with patch.object(
-                                service, "_load_faculty_call", return_value=0
-                            ) as mock_faculty_call:
+                                service, "_load_resident_call", return_value=0
+                            ):
                                 with patch.object(
-                                    service, "_load_sm_preloads", return_value=0
-                                ):
-                                    service.load_all_preloads(
-                                        block_number=10,
-                                        academic_year=2025,
-                                        # skip_faculty_call defaults to False
-                                    )
+                                    service, "_load_faculty_call", return_value=0
+                                ) as mock_faculty_call:
+                                    with patch.object(
+                                        service, "_load_sm_preloads", return_value=0
+                                    ):
+                                        service.load_all_preloads(
+                                            block_number=10,
+                                            academic_year=2025,
+                                            # skip_faculty_call defaults to False
+                                        )
 
         # _load_faculty_call SHOULD be called when skip_faculty_call=False
         mock_faculty_call.assert_called_once()
@@ -339,26 +345,29 @@ class TestPipelineOrderEnforcement:
         service = SyncPreloadService(mock_session)
 
         with patch.object(service, "_load_absences", return_value=0):
-            with patch.object(service, "_load_inpatient_preloads", return_value=0):
-                with patch.object(service, "_load_fmit_call", return_value=0):
-                    with patch.object(
-                        service, "_load_inpatient_clinic", return_value=0
-                    ):
+            with patch.object(
+                service, "_load_rotation_protected_preloads", return_value=0
+            ):
+                with patch.object(service, "_load_inpatient_preloads", return_value=0):
+                    with patch.object(service, "_load_fmit_call", return_value=0):
                         with patch.object(
-                            service, "_load_resident_call", return_value=0
+                            service, "_load_inpatient_clinic", return_value=0
                         ):
                             with patch.object(
-                                service, "_load_faculty_call", return_value=0
-                            ) as mock_faculty:
+                                service, "_load_resident_call", return_value=0
+                            ):
                                 with patch.object(
-                                    service, "_load_sm_preloads", return_value=0
-                                ):
-                                    # Call with skip_faculty_call=True (as engine does)
-                                    service.load_all_preloads(
-                                        block_number=10,
-                                        academic_year=2025,
-                                        skip_faculty_call=True,
-                                    )
+                                    service, "_load_faculty_call", return_value=0
+                                ) as mock_faculty:
+                                    with patch.object(
+                                        service, "_load_sm_preloads", return_value=0
+                                    ):
+                                        # Call with skip_faculty_call=True (as engine does)
+                                        service.load_all_preloads(
+                                            block_number=10,
+                                            academic_year=2025,
+                                            skip_faculty_call=True,
+                                        )
 
         # Faculty call should NOT be loaded
         mock_faculty.assert_not_called()

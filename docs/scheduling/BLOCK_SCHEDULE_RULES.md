@@ -305,14 +305,14 @@ def get_nf_assignment(day_of_block: int, is_am: bool, is_oncoming_week: bool) ->
 
 ---
 
-### Hilo TDY (Off-Island)
+### Hilo / Okinawa TDY (Off-Island)
 
 **Pre-departure (Week 1):**
 - Thu (col 6-7): C / C
 - Fri (col 8-9): C / C
 - Weekend: Travel
 
-**During Hilo (Weeks 2-4):**
+**During Hilo/Okinawa (Weeks 2-4):**
 - All slots: TDY
 
 **Return (Week 4):**
@@ -320,7 +320,7 @@ def get_nf_assignment(day_of_block: int, is_am: bool, is_oncoming_week: bool) ->
 
 ```python
 def get_hilo_assignment(col: int, block_start_col: int = 6) -> str:
-    """Hilo TDY pattern."""
+    """Hilo/Okinawa TDY pattern."""
     # First Thu/Fri = clinic before leaving
     if col in {6, 7, 8, 9}:
         return 'C'
@@ -341,8 +341,8 @@ Some residents switch rotations mid-block at column 28:
 
 | Resident | First Half (col 6-27) | Second Half (col 28-61) |
 |----------|----------------------|------------------------|
-| Wilhelm | Peds Ward | Peds NF |
-| Byrnes | Peds NF | Peds Ward |
+| Resident A | Peds Ward | Peds NF |
+| Resident B | Peds NF | Peds Ward |
 
 ```python
 def get_rotation_for_column(
@@ -362,7 +362,7 @@ def get_rotation_for_column(
 
 ### NEURO → NF Mid-Block Transition
 
-Jae You has NEURO first half, then NF second half:
+Example (PGY-3): NEURO first half, then NF second half:
 
 | Period | Pattern |
 |--------|---------|
