@@ -435,31 +435,13 @@ Pre-commit hooks fail due to missing dependencies:
 
 Complete rename across entire codebase including DB migration, models, schemas, API, frontend types, solver, and all documentation.
 
-### 23. CP-SAT Failure Logging Improvements (NEW - Session 142)
-**Added:** 2026-01-25
-**Source:** Codex CP-SAT Review (`docs/reviews/CODEX_CPSAT_REVIEW_20260125.md`)
+### ~~23. CP-SAT Failure Logging Improvements~~ ✅ RESOLVED (2026-01-26)
+**Resolved by:** Commit `9a5c9b19`
 
-Block 10 infeasibility was hard to diagnose - failures logged at INFO without context.
-
-| Scenario | Current | Recommended | Key Addition |
-|----------|---------|-------------|--------------|
-| Template not found | INFO | WARNING | List available templates |
-| Solver INFEASIBLE | INFO | **ERROR** | Active/disabled constraints |
-| Constraint disabled | INFO | WARNING | Reason + compliance note |
-| Missing preflight | (none) | WARNING | Structured checklist |
-| Export row missing | WARNING | ERROR + raise | Available mappings |
-
-**Priority:**
-1. **P0:** Solver INFEASIBLE → ERROR with constraint context
-2. **P1:** Template lookup → WARNING with available templates
-3. **P2:** Add `_log_preflight_status()` function
-
-**Files:**
-- `backend/app/scheduling/engine.py`
-- `backend/app/scheduling/solvers.py`
-- `backend/app/scheduling/constraints/post_call.py`
-
-**Effort:** 2-3 hours
+Added solver failure diagnostics in `SchedulingEngine`:
+- Logs enabled/disabled constraint lists
+- Logs context summary (residents, templates, blocks, locked slots)
+- Warns on missing key templates (PCAT/DO/SM/NF/PC)
 
 ### 24. Preload Service Code Duplication (NEW - Session 142)
 **Added:** 2026-01-25
@@ -725,9 +707,9 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 |----------|------|----------|
 | **CRITICAL** | 3 | 5 |
 | **HIGH** | 9 | 6 |
-| **MEDIUM** | 11 | 10 |
+| **MEDIUM** | 10 | 11 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **36** | **24** |
+| **TOTAL** | **35** | **25** |
 
 ### Top 5 Actions for Next Session
 
@@ -742,7 +724,7 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 | Change | Item | Reason |
 |--------|------|--------|
 | ✅ Resolved | MEDIUM #22 | `activity_type` → `rotation_type` rename done (commit 7cd3f4eb) |
-| ➕ Added | MEDIUM #23 | CP-SAT failure logging improvements |
+| ✅ Resolved | MEDIUM #23 | CP-SAT failure logging improvements |
 | ➕ Added | MEDIUM #24 | Preload service code duplication (~300 LOC + magic numbers) |
 | ➕ Added | MEDIUM #25 | Activity solver physical-capacity overflow (capacity skipped) |
 | 📝 Added | Review doc | `docs/reviews/CODEX_CPSAT_REVIEW_20260125.md` |

@@ -392,6 +392,8 @@ class SchedulingEngine:
                     logger.error(f"  - {issue}")
                 for recommendation in validation_result.recommendations:
                     logger.info(f"  Recommendation: {recommendation}")
+                self._log_constraint_summary()
+                self._log_context_summary(context)
 
                 self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
                 self.db.commit()
@@ -427,6 +429,12 @@ class SchedulingEngine:
             solver_result = self._run_solver("cp_sat", context, timeout_seconds)
             if not solver_result.success:
                 logger.error(f"CP-SAT solver failed: {solver_result.solver_status}")
+                if solver_result.solver_status.upper() == "INFEASIBLE":
+                    logger.error(
+                        "CP-SAT reported INFEASIBLE; schedule may be impossible with current hard constraints."
+                    )
+                self._log_constraint_summary()
+                self._log_context_summary(context)
                 self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
                 self.db.commit()
                 return {
@@ -2702,6 +2710,87 @@ class SchedulingEngine:
             logger.info(f"Created {created} faculty half-day slots for solver")
 
         return created
+
+    def _log_constraint_summary(self) -> None:
+        """Log enabled/disabled constraint summary for solver diagnostics."""
+        if not self.constraint_manager:
+            logger.error(
+                "Constraint summary unavailable: no ConstraintManager configured"
+            )
+            return
+
+        enabled = self.constraint_manager.get_enabled()
+        disabled = [c for c in self.constraint_manager.constraints if not c.enabled]
+        hard = self.constraint_manager.get_hard_constraints()
+        soft = self.constraint_manager.get_soft_constraints()
+
+        logger.error(
+            "Constraint summary: enabled=%s (hard=%s, soft=%s), disabled=%s",
+            len(enabled),
+            len(hard),
+            len(soft),
+            len(disabled),
+        )
+
+        enabled_names = sorted({c.name for c in enabled})
+        disabled_names = sorted({c.name for c in disabled})
+
+        if enabled_names:
+            logger.error("Enabled constraints: %s", self._format_list(enabled_names))
+        if disabled_names:
+            logger.warning(
+                "Disabled constraints: %s", self._format_list(disabled_names)
+            )
+
+    def _log_context_summary(self, context: SchedulingContext) -> None:
+        """Log context counts and template coverage for solver diagnostics."""
+        if not context:
+            logger.error("Context summary unavailable: context is None")
+            return
+
+        workday_blocks = [b for b in context.blocks if not b.is_weekend]
+        locked_count = len(getattr(context, "locked_blocks", set()))
+        call_eligible = len(getattr(context, "call_eligible_faculty", []))
+
+        logger.error(
+            "Context summary: residents=%s, faculty=%s, templates=%s, blocks=%s (workday=%s), locked=%s, call_eligible=%s, existing_assignments=%s",
+            len(context.residents),
+            len(context.faculty),
+            len(context.templates),
+            len(context.blocks),
+            len(workday_blocks),
+            locked_count,
+            call_eligible,
+            len(getattr(context, "existing_assignments", [])),
+        )
+
+        template_codes = sorted(
+            {
+                (t.abbreviation or t.name or "").strip()
+                for t in context.templates
+                if (t.abbreviation or t.name)
+            }
+        )
+        if template_codes:
+            logger.error(
+                "Template abbreviations: %s", self._format_list(template_codes)
+            )
+
+        required_templates = {"PCAT", "DO", "SM", "NF", "PC"}
+        present = {code.upper() for code in template_codes}
+        missing = sorted(code for code in required_templates if code not in present)
+        if missing:
+            logger.warning(
+                "Missing templates (may disable constraints): %s",
+                ", ".join(missing),
+            )
+
+    @staticmethod
+    def _format_list(items: list[str], max_items: int = 20) -> str:
+        """Format long lists for logs without overwhelming output."""
+        if len(items) <= max_items:
+            return ", ".join(items)
+        return ", ".join(items[:max_items]) + f", ... (+{len(items) - max_items} more)"
 
     def _audit_nf_pc_allocations(self) -> dict:
         """
