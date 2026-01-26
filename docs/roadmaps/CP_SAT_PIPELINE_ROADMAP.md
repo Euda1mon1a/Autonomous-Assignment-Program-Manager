@@ -130,9 +130,9 @@ This roadmap starts at the beginning (inputs + preloads) and walks forward to ex
 **Done**
 - `HalfDayJSONExporter` reads `half_day_assignments` as descriptive truth.
 - Faculty included in JSON export.
+- Strict row mapping enforced (missing person mapping fails fast).
 
 **Remaining**
-- Enforce strict row mapping (fail fast if person not mapped).
 - Consolidate any remaining legacy XML-only behaviors.
 
 **Acceptance criteria**
@@ -153,9 +153,9 @@ This roadmap starts at the beginning (inputs + preloads) and walks forward to ex
 - JSON→XLSX conversion implemented.
 - Merged-cell safe writing.
 - Block number computed from date (no hardcode).
+- Strict row mapping enforcement for XLSX.
 
 **Remaining**
-- Strict row mapping enforcement for XLSX.
 - Add user feedback on export failure (backend and frontend).
 
 **Acceptance criteria**
@@ -217,7 +217,7 @@ This roadmap starts at the beginning (inputs + preloads) and walks forward to ex
 - Preload rules complete and verified.
 - Activity requirements complete for outpatient rotations.
 - Frontend export uses authenticated canonical endpoint.
-- Strict row mapping enabled (no silent skips).
+- Strict row mapping enabled (no silent skips). ✅
 - End-to-end runbook tested with real-ish block data.
 
 ---
