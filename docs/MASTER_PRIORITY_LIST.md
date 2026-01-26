@@ -171,7 +171,7 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 - Call assignments: **20**
 
 **Root Cause Observed:**
-- Outpatient rotations allow **only capacity-coded activities** (C/PROC/SM/VAS), so every outpatient slot counts toward clinic capacity
+- Outpatient rotations allow **only capacity-coded activities** (C/PROC/SM/VAS; CV excluded), so every outpatient slot counts toward clinic capacity
 - With 15-16 resident slots per half-day, **hard cap 8 is infeasible**
 
 **References:**

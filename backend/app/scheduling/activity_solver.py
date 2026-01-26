@@ -61,6 +61,7 @@ OUTPATIENT_ACTIVITY_TYPES = {"clinic", "outpatient"}
 # Clinic/supervision codes for activity-level constraints (legacy fallback)
 RESIDENT_CLINIC_CODES = {"FM_CLINIC", "C", "C-N", "CV"}
 AT_COVERAGE_CODES = {"AT", "PCAT"}
+SUPERVISION_REQUIRED_CODES = {"PROC", "PR", "PROCEDURE", "VAS"}
 ADMIN_ACTIVITY_CODES = {"GME": "gme", "DFM": "dfm", "SM": "sm_clinic"}
 FACULTY_CLINIC_SHORTFALL_PENALTY = 10
 FACULTY_ADMIN_BONUS = 1
@@ -69,7 +70,6 @@ CAPACITY_ACTIVITY_CODES = {
     "C",
     "C-N",
     "C-I",
-    "CV",
     "V1",
     "V2",
     "V3",
@@ -283,6 +283,9 @@ class CPSATActivitySolver:
             )
             used_provider_fallback = True
 
+        supervision_required_ids |= self._activity_ids_for_codes(
+            all_activities, SUPERVISION_REQUIRED_CODES
+        )
         logger.info(
             "Supervision activity sets: required="
             f"{len(supervision_required_ids)}, providers="
