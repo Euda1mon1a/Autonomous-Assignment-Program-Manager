@@ -299,14 +299,24 @@ class CallAssignmentService:
 
         # Update fields
         update_dict = update_data.model_dump(exclude_unset=True)
+        auto_generate_post_call = update_dict.pop("auto_generate_post_call", False)
+        previous_person_id = call_assignment.person_id
+        previous_date = call_assignment.date
         for field, value in update_dict.items():
             if value is not None:
                 setattr(call_assignment, field, value)
 
         await self.db.flush()
+
+        if auto_generate_post_call:
+            await self._clear_post_call_assignments(previous_person_id, previous_date)
+
         if commit:
             await self.db.commit()
         await self.db.refresh(call_assignment)
+
+        if auto_generate_post_call:
+            await self.generate_pcat_for_assignments([call_assignment.id])
 
         logger.info(f"Updated call assignment {call_id}")
 
@@ -596,6 +606,7 @@ class CallAssignmentService:
         self,
         assignment_ids: list[UUID],
         updates: BulkCallAssignmentUpdateInput,
+        auto_generate_post_call: bool = False,
     ) -> dict:
         """
         Bulk update multiple call assignments with the same updates.
@@ -612,6 +623,7 @@ class CallAssignmentService:
         """
         updated_assignments = []
         errors = []
+        previous_states: list[tuple[UUID, date]] = []
 
         # Validate new person_id if provided
         if updates.person_id:
@@ -640,6 +652,9 @@ class CallAssignmentService:
                 errors.append(f"Call assignment {assignment_id} not found")
                 continue
 
+            # Capture previous state for post-call cleanup
+            previous_states.append((call_assignment.person_id, call_assignment.date))
+
             # Apply updates
             if updates.person_id:
                 call_assignment.person_id = updates.person_id
@@ -648,11 +663,21 @@ class CallAssignmentService:
 
         # Commit all changes
         await self.db.flush()
+
+        if auto_generate_post_call:
+            for person_id, call_date in previous_states:
+                await self._clear_post_call_assignments(person_id, call_date)
+
         await self.db.commit()
 
         # Refresh to get updated relationships
         for assignment in updated_assignments:
             await self.db.refresh(assignment)
+
+        if auto_generate_post_call and updated_assignments:
+            await self.generate_pcat_for_assignments(
+                [assignment.id for assignment in updated_assignments]
+            )
 
         logger.info(
             f"Bulk updated {len(updated_assignments)} call assignments, "
@@ -692,6 +717,41 @@ class CallAssignmentService:
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
+
+    async def _clear_post_call_assignments(
+        self,
+        person_id: UUID,
+        call_date: date,
+    ) -> None:
+        """Remove existing PCAT/DO assignments for a given person and call date."""
+        next_day = call_date + timedelta(days=1)
+        pcat_template = await self._find_template_by_abbrev("PCAT")
+        do_template = await self._find_template_by_abbrev("DO")
+
+        if not pcat_template or not do_template:
+            return
+
+        am_block = await self._find_block_for_date_time(next_day, "AM")
+        if am_block:
+            await self.db.execute(
+                delete(Assignment).where(
+                    Assignment.person_id == person_id,
+                    Assignment.block_id == am_block.id,
+                    Assignment.rotation_template_id == pcat_template.id,
+                )
+            )
+
+        pm_block = await self._find_block_for_date_time(next_day, "PM")
+        if pm_block:
+            await self.db.execute(
+                delete(Assignment).where(
+                    Assignment.person_id == person_id,
+                    Assignment.block_id == pm_block.id,
+                    Assignment.rotation_template_id == do_template.id,
+                )
+            )
+
+        await self.db.flush()
 
     async def _create_assignment_if_not_exists(
         self,

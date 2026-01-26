@@ -64,12 +64,12 @@
 ### D) Post-call rules
 - ✅ PCAT/DO created for faculty call (Sun–Thu) via preload sync. (`backend/app/services/sync_preload_service.py`, `backend/app/services/call_assignment_service.py`)
 - ✅ Call assignments API supports edits + PCAT/DO regen. (`backend/app/api/routes/call_assignments.py`)
-- 🟡 Manual call edits do **not** auto-sync PCAT/DO unless the endpoint is used. (`backend/app/api/routes/call_assignments.py`)
+- ✅ Call edits can auto‑sync PCAT/DO via `auto_generate_post_call`. (`backend/app/api/routes/call_assignments.py`)
 
 ### E) Editing workflow
 - ✅ Draft workflow: create, preview, publish, rollback within 24h. (`backend/app/api/routes/schedule_drafts.py`)
 - ✅ Drafts write to half_day_assignments as MANUAL. (`backend/app/services/schedule_draft_service.py`)
-- 🟡 Drafts **do not override** preloads/manual slots on ADD (locked by source). Must DELETE first. (`backend/app/services/schedule_draft_service.py`)
+- ✅ Draft adds now override locked slots (preload/manual) and mark overrides. (`backend/app/services/schedule_draft_service.py`)
 - 🟡 No direct half-day assignment edit endpoint (drafts only). (`backend/app/api/routes/half_day_assignments.py`)
 - 🟡 GUI wiring for drafts is still in progress (backend ready, frontend TBD). (`frontend/*` not wired yet)
 
@@ -93,9 +93,7 @@
 1) **Export UI still needs auth wiring + error handling.** (`frontend/src/lib/export.ts`)
 
 **P1 — Editing caveats**
-2) **Draft edits do not override preloads by default.** Add/update skips if existing source is PRELOAD or MANUAL; users must delete first. This is correct for safety but needs GUI messaging. (`backend/app/services/schedule_draft_service.py`)
-
-3) **Call edits require explicit PCAT/DO regeneration.** Manual call updates won’t automatically update post-call time unless the dedicated endpoint is used. (`backend/app/api/routes/call_assignments.py`)
+2) **Draft edits can override locked slots.** This is now allowed; GUI should surface that overrides are explicit. (`backend/app/services/schedule_draft_service.py`)
 
 **P2 — Edge-case coverage**
 4) **Compound rotation parsing is fragile.** It handles common patterns but depends on rotation naming conventions that may drift. (`backend/app/services/sync_preload_service.py`)

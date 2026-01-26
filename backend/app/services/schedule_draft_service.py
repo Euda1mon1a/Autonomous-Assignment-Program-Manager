@@ -764,15 +764,14 @@ class ScheduleDraftService:
                     .first()
                 )
                 if existing:
-                    # Update existing if not locked
-                    if existing.source not in (
-                        AssignmentSource.PRELOAD.value,
-                        AssignmentSource.MANUAL.value,
-                    ):
-                        existing.activity_id = activity_id
-                        existing.source = AssignmentSource.MANUAL.value
-                        existing.updated_at = datetime.utcnow()
-                        created_ids.append(existing.id)
+                    # Update existing (manual edits can override locked slots)
+                    prior_source = existing.source
+                    existing.activity_id = activity_id
+                    existing.source = AssignmentSource.MANUAL.value
+                    if prior_source != AssignmentSource.MANUAL.value:
+                        existing.is_override = True
+                    existing.updated_at = datetime.utcnow()
+                    created_ids.append(existing.id)
                 else:
                     # Create new half-day assignment
                     half_day = self._create_half_day_assignment(
