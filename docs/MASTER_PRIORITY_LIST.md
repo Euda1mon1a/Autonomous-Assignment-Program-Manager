@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-26 (Session 141: Priority list audit - 2 items resolved)
+> **Last Updated:** 2026-01-25 (Session 142: Added terminology standardization)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -424,7 +424,45 @@ Pre-commit hooks fail due to missing dependencies:
 
 **Missing Skill:** `check-camelcase` referenced in CLAUDE.md but skill doesn't exist.
 
-### 21. MCP Placeholder Tools (NEW - Session 136)
+### 22. Rename `activity_type` → `rotation_type` (NEW - Session 142)
+**Added:** 2026-01-25
+**Source:** Commit `a3609d9b` - `docs/scheduling/TERMS_AND_DATA_MODEL.md`
+
+**Core Issue:** `RotationTemplate.activity_type` is a **rotation category**, not an Activity. The field name causes UI/LLM confusion.
+
+**Rename Needed:**
+| Current | Proposed | Rationale |
+|---------|----------|-----------|
+| `activity_type` | `rotation_type` or `rotation_category` | Describes the rotation, not an activity |
+
+**Breaking Change Scope:**
+| Layer | Files | Change |
+|-------|-------|--------|
+| **DB** | `rotation_template` table | Column rename migration |
+| **Models** | `rotation_template.py` | Field rename |
+| **Schemas** | `rotation_template.py`, `rotation_template_gui.py` | Field rename |
+| **API** | `rotation_templates.py` | Query param rename |
+| **Frontend** | `api-generated.ts` + components | Regenerate types |
+| **Solver** | `engine.py`, `constraints.py` | Update references |
+
+**Terminology Table (for docs/UI):**
+| Term | Definition |
+|------|------------|
+| **Block** | Time container (0-13, 28 days each) |
+| **Rotation** | RotationTemplate (multi-week container) |
+| **rotation_type** | Category of rotation (`outpatient`, `inpatient`, `off`) |
+| **Activity** | Theoretical half-day unit (FM Clinic, Lecture) |
+| **Assignment** | Activity + date + person (realized) |
+
+**Action:**
+1. Create Alembic migration to rename column
+2. Update models/schemas/routes
+3. Regenerate frontend types
+4. Update CLAUDE.md terminology section
+
+**Effort:** 6-8 hours (breaking change, needs coordinated PR)
+
+### 23. MCP Placeholder Tools (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [MCP Tools Audit](reports/MCP_TOOLS_AUDIT_2026-01-23.md)
 
@@ -633,9 +671,9 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 |----------|------|----------|
 | **CRITICAL** | 3 | 5 |
 | **HIGH** | 9 | 6 |
-| **MEDIUM** | 8 | 9 |
+| **MEDIUM** | 9 | 9 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **33** | **23** |
+| **TOTAL** | **34** | **23** |
 
 ### Top 5 Actions for Next Session
 
@@ -644,6 +682,14 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 3. **Add DB-Schema Drift Tests** (HIGH #11) - Prevent 12+ more models drifting
 4. **Add Resilience Route Tests** (HIGH #12) - 59 untested safety-critical endpoints
 5. **Merge bandit-config branch** (HIGH #7) - Security scanner ready, needs PR
+
+### Session 142 Updates (2026-01-25)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ➕ Added | MEDIUM #22 | `activity_type` → `rotation_type` rename (commit a3609d9b) |
+| 📝 Added | gitignore | `.claude/dontreadme/sessions/*.md` for session scratchpads |
+| 📝 Added | ops script | `scripts/ops/block_export.py` for canonical export |
 
 ### Session 141 Updates (2026-01-26)
 
