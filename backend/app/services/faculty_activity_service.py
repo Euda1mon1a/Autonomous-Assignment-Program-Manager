@@ -12,10 +12,11 @@ from datetime import date, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, select, and_, or_
+from sqlalchemy import and_, delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.exceptions import ActivityNotFoundError
 from app.models.activity import Activity
 from app.models.faculty_weekly_override import FacultyWeeklyOverride
 from app.models.faculty_weekly_template import FacultyWeeklyTemplate
@@ -377,6 +378,15 @@ class FacultyActivityService:
         if existing:
             await self._delete(existing)
             await self._flush()
+
+        if activity_id is None:
+            result = await self._execute(
+                select(Activity).where(func.lower(Activity.code) == "off")
+            )
+            activity = result.scalar_one_or_none()
+            if not activity:
+                raise ActivityNotFoundError("off", context="faculty_weekly_overrides")
+            activity_id = activity.id
 
         # Create new override
         override = FacultyWeeklyOverride(

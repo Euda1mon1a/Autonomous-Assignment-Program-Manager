@@ -15,6 +15,7 @@ References:
 """
 
 import logging
+import os
 from datetime import datetime
 from typing import Any
 from uuid import UUID
@@ -325,40 +326,50 @@ async def analyze_schedule_periodicity(
     Returns:
         PeriodicityAnalysisResponse with detected cycles and patterns
     """
-    # Try backend API first
+    # Try backend API first (optional)
     try:
+        use_backend = (
+            os.environ.get("MCP_USE_EXOTIC_BACKEND", "")
+            .strip()
+            .lower()
+            in {"1", "true", "yes"}
+        )
+        if use_backend:
+            from .api_client import SchedulerAPIClient
 
-        from .api_client import SchedulerAPIClient
+            async with SchedulerAPIClient() as client:
+                request_data = {"lookback_days": 90, "min_confidence": 0.7}
+                if schedule_id:
+                    request_data["schedule_id"] = schedule_id
 
-        async with SchedulerAPIClient() as client:
-            request_data = {"lookback_days": 90, "min_confidence": 0.7}
-            if schedule_id:
-                request_data["schedule_id"] = schedule_id
+                response = await client.client.post(
+                    f"{client.config.api_prefix}/resilience/exotic/time-crystal/subharmonics",
+                    json=request_data,
+                    headers=await client._ensure_authenticated(),
+                )
+                response.raise_for_status()
+                data = response.json()
 
-            response = await client.client.post(
-                f"{client.config.api_prefix}/resilience/exotic/time-crystal/subharmonics",
-                json=request_data,
-                headers=await client._ensure_authenticated(),
-            )
-            response.raise_for_status()
-            data = response.json()
+                logger.info("Schedule periodicity analyzed from backend")
 
-            logger.info("Schedule periodicity analyzed from backend")
-
-            return PeriodicityAnalysisResponse(
-                fundamental_period_days=float(data.get("dominant_period_days", 7)) if data.get("dominant_period_days") else None,
-                subharmonic_periods=[p.get("period_days", 7) for p in data.get("detected_periods", [])],
-                periodicity_strength=data.get("dominant_period_confidence", 0.0),
-                detected_patterns=[
-                    f"{p.get('period_days', 0)}-day cycle (confidence: {p.get('confidence', 0):.0%})"
-                    for p in data.get("detected_periods", [])
-                ],
-                recommendations=data.get("recommendations", []),
-                autocorrelation_peaks=[
-                    {"lag": p.get("period_days", 7), "correlation": p.get("confidence", 0.0)}
-                    for p in data.get("detected_periods", [])
-                ],
-            )
+                return PeriodicityAnalysisResponse(
+                    fundamental_period_days=float(data.get("dominant_period_days", 7))
+                    if data.get("dominant_period_days")
+                    else None,
+                    subharmonic_periods=[
+                        p.get("period_days", 7) for p in data.get("detected_periods", [])
+                    ],
+                    periodicity_strength=data.get("dominant_period_confidence", 0.0),
+                    detected_patterns=[
+                        f"{p.get('period_days', 0)}-day cycle (confidence: {p.get('confidence', 0):.0%})"
+                        for p in data.get("detected_periods", [])
+                    ],
+                    recommendations=data.get("recommendations", []),
+                    autocorrelation_peaks=[
+                        {"lag": p.get("period_days", 7), "correlation": p.get("confidence", 0.0)}
+                        for p in data.get("detected_periods", [])
+                    ],
+                )
 
     except Exception as api_error:
         logger.warning(f"Backend API call failed, using local module: {api_error}")

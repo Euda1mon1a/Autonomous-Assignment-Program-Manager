@@ -430,72 +430,6 @@ async def handle_emergency_coverage(
     )
 
 
-@router.get("/{start_date}/{end_date}")
-async def get_schedule(start_date: str, end_date: str, db: Session = Depends(get_db)):
-    """
-    Get the schedule for a date range.
-
-    Returns all assignments with person and rotation template details.
-    """
-    from datetime import datetime
-
-    from sqlalchemy.orm import joinedload
-
-    from app.models.assignment import Assignment
-    from app.models.block import Block
-
-    try:
-        start = datetime.strptime(start_date, "%Y-%m-%d").date()
-        end = datetime.strptime(end_date, "%Y-%m-%d").date()
-    except ValueError:
-        raise HTTPException(
-            status_code=400, detail="Invalid date format. Use YYYY-MM-DD"
-        )
-
-    assignments = (
-        db.query(Assignment)
-        .options(
-            joinedload(Assignment.block),
-            joinedload(Assignment.person),
-            joinedload(Assignment.rotation_template),
-        )
-        .join(Block)
-        .filter(Block.date >= start, Block.date <= end)
-        .order_by(Block.date, Block.time_of_day)
-        .all()
-    )
-
-    # Group by date for calendar view
-    schedule_by_date = {}
-    for assignment in assignments:
-        date_str = assignment.block.date.isoformat()
-        if date_str not in schedule_by_date:
-            schedule_by_date[date_str] = {"AM": [], "PM": []}
-
-        schedule_by_date[date_str][assignment.block.time_of_day].append(
-            {
-                "id": str(assignment.id),
-                "person": {
-                    "id": str(assignment.person.id),
-                    "name": assignment.person.name,
-                    "type": assignment.person.type,
-                    "pgy_level": assignment.person.pgy_level,
-                },
-                "role": assignment.role,
-                "activity": assignment.activity_name,
-                "abbreviation": assignment.abbreviation,
-                "display_abbreviation": assignment.display_abbreviation,
-            }
-        )
-
-    return {
-        "start_date": start_date,
-        "end_date": end_date,
-        "schedule": schedule_by_date,
-        "total_assignments": len(assignments),
-    }
-
-
 @router.post("/import/analyze", response_model=ImportAnalysisResponse)
 async def analyze_imported_schedules(
     fmit_file: UploadFile = File(..., description="FMIT rotation schedule Excel file"),
@@ -1125,9 +1059,9 @@ async def find_swap_candidates_json(
                 .join(Block, Assignment.block_id == Block.id)
                 .where(
                     Assignment.person_id == person_uuid,
-                    Block.start_date >= datetime.utcnow().date(),
+                    Block.date >= datetime.utcnow().date(),
                 )
-                .order_by(Block.start_date)
+                .order_by(Block.date)
                 .limit(5)
             )
         ).all()
@@ -1163,9 +1097,9 @@ async def find_swap_candidates_json(
             .where(
                 Assignment.person_id != person_uuid,
                 Person.type == requester.type,  # Same type (faculty/resident)
-                Block.start_date >= datetime.utcnow().date(),
+                Block.date >= datetime.utcnow().date(),
             )
-            .order_by(Block.start_date)
+            .order_by(Block.date)
             .limit(100)  # Get a pool of candidates
         )
     ).all()
@@ -1189,7 +1123,7 @@ async def find_swap_candidates_json(
 
         # Penalize if dates are far apart
         if target_block:
-            days_apart = abs((block.start_date - target_block.start_date).days)
+            days_apart = abs((block.date - target_block.date).days)
             if days_apart <= 7:
                 score += 0.1
             elif days_apart <= 28:
@@ -1213,8 +1147,8 @@ async def find_swap_candidates_json(
                 candidate_name=person.name,
                 candidate_role=person.type.capitalize() if person.type else "Unknown",
                 assignment_id=str(assignment.id),
-                block_date=block.start_date.isoformat(),
-                block_session=block.session or "AM",
+                block_date=block.date.isoformat(),
+                block_session=block.time_of_day,
                 match_score=score,
                 rotation_name=rotation.name if rotation else None,
                 compatibility_factors={
@@ -1403,6 +1337,72 @@ async def get_schedule_run(
         raise HTTPException(status_code=404, detail="Schedule run not found")
 
     return ScheduleRunRead.from_orm(result)
+
+
+@router.get("/{start_date}/{end_date}")
+async def get_schedule(start_date: str, end_date: str, db: Session = Depends(get_db)):
+    """
+    Get the schedule for a date range.
+
+    Returns all assignments with person and rotation template details.
+    """
+    from datetime import datetime
+
+    from sqlalchemy.orm import joinedload
+
+    from app.models.assignment import Assignment
+    from app.models.block import Block
+
+    try:
+        start = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end = datetime.strptime(end_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(
+            status_code=400, detail="Invalid date format. Use YYYY-MM-DD"
+        )
+
+    assignments = (
+        db.query(Assignment)
+        .options(
+            joinedload(Assignment.block),
+            joinedload(Assignment.person),
+            joinedload(Assignment.rotation_template),
+        )
+        .join(Block)
+        .filter(Block.date >= start, Block.date <= end)
+        .order_by(Block.date, Block.time_of_day)
+        .all()
+    )
+
+    # Group by date for calendar view
+    schedule_by_date = {}
+    for assignment in assignments:
+        date_str = assignment.block.date.isoformat()
+        if date_str not in schedule_by_date:
+            schedule_by_date[date_str] = {"AM": [], "PM": []}
+
+        schedule_by_date[date_str][assignment.block.time_of_day].append(
+            {
+                "id": str(assignment.id),
+                "person": {
+                    "id": str(assignment.person.id),
+                    "name": assignment.person.name,
+                    "type": assignment.person.type,
+                    "pgy_level": assignment.person.pgy_level,
+                },
+                "role": assignment.role,
+                "activity": assignment.activity_name,
+                "abbreviation": assignment.abbreviation,
+                "display_abbreviation": assignment.display_abbreviation,
+            }
+        )
+
+    return {
+        "start_date": start_date,
+        "end_date": end_date,
+        "schedule": schedule_by_date,
+        "total_assignments": len(assignments),
+    }
 
 
 @router.get("/rollback-points", response_model=list[RollbackPoint])

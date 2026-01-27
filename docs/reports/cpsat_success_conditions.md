@@ -27,7 +27,7 @@ This document captures the **known-good conditions** under which CP‑SAT succes
 - `CV` never counts toward physical capacity.
 - `CV` **does** count toward supervision demand (AT/PCAT ratios).
 - `PROC`/`VAS` count toward physical capacity and **add a soft AT supervision penalty**
-  (they do **not** count toward hard AT capacity; hard AT uses `AT` + `PCAY`).
+  (they do **not** count toward hard AT capacity; hard AT uses `AT` + `PCAT`).
 - **Clinic floor** (hard min 1) applies **only when CV is not allowed**
   (PGY‑1 or non‑FMC templates). CV‑eligible PGY‑2/3 can satisfy clinic weeks
   with CV if capacity binds.

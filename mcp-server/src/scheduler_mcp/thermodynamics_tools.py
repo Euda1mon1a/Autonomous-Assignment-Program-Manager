@@ -22,6 +22,7 @@ Based on 2025 research showing thermodynamic approaches detect transitions
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -317,64 +318,73 @@ async def calculate_schedule_entropy(
     end = date.fromisoformat(end_date) if end_date else (today + timedelta(days=30))
 
     try:
-        # Try to call backend API first
-        from .api_client import SchedulerAPIClient
+        use_backend = (
+            os.environ.get("MCP_USE_EXOTIC_BACKEND", "")
+            .strip()
+            .lower()
+            in {"1", "true", "yes"}
+        )
+        if use_backend:
+            # Try to call backend API first
+            from .api_client import SchedulerAPIClient
 
-        try:
-            async with SchedulerAPIClient() as client:
-                response = await client.client.post(
-                    f"{client.config.api_prefix}/resilience/exotic/thermodynamics/entropy",
-                    json={
-                        "start_date": start.isoformat(),
-                        "end_date": end.isoformat(),
-                    },
-                    headers=await client._ensure_authenticated(),
-                )
-                response.raise_for_status()
-                data = response.json()
+            try:
+                async with SchedulerAPIClient() as client:
+                    response = await client.client.post(
+                        f"{client.config.api_prefix}/resilience/exotic/thermodynamics/entropy",
+                        json={
+                            "start_date": start.isoformat(),
+                            "end_date": end.isoformat(),
+                        },
+                        headers=await client._ensure_authenticated(),
+                    )
+                    response.raise_for_status()
+                    data = response.json()
 
-                # Build response from backend data
-                metrics = EntropyMetricsResponse(
-                    person_entropy=data.get("person_entropy", 0.0),
-                    rotation_entropy=data.get("rotation_entropy", 0.0),
-                    time_entropy=data.get("time_entropy", 0.0),
-                    joint_entropy=data.get("joint_entropy", 0.0),
-                    mutual_information=data.get("mutual_information", 0.0),
-                    entropy_production_rate=data.get("entropy_production_rate", 0.0),
-                    normalized_entropy=data.get("normalized_entropy", 0.0),
-                    computed_at=data.get("computed_at", datetime.now().isoformat()),
-                )
+                    # Build response from backend data
+                    metrics = EntropyMetricsResponse(
+                        person_entropy=data.get("person_entropy", 0.0),
+                        rotation_entropy=data.get("rotation_entropy", 0.0),
+                        time_entropy=data.get("time_entropy", 0.0),
+                        joint_entropy=data.get("joint_entropy", 0.0),
+                        mutual_information=data.get("mutual_information", 0.0),
+                        entropy_production_rate=data.get("entropy_production_rate", 0.0),
+                        normalized_entropy=data.get("normalized_entropy", 0.0),
+                        computed_at=data.get("computed_at", datetime.now().isoformat()),
+                    )
 
-                interpretation = data.get("interpretation", "")
-                recommendations = data.get("recommendations", [])
+                    interpretation = data.get("interpretation", "")
+                    recommendations = data.get("recommendations", [])
 
-                # Determine status
-                if metrics.normalized_entropy < 0.4:
-                    status = "too_concentrated"
-                    severity = "warning"
-                elif metrics.normalized_entropy > 0.85:
-                    status = "too_dispersed"
-                    severity = "warning"
-                else:
-                    status = "balanced"
-                    severity = "healthy"
+                    # Determine status
+                    if metrics.normalized_entropy < 0.4:
+                        status = "too_concentrated"
+                        severity = "warning"
+                    elif metrics.normalized_entropy > 0.85:
+                        status = "too_dispersed"
+                        severity = "warning"
+                    else:
+                        status = "balanced"
+                        severity = "healthy"
 
-                logger.info("Schedule entropy calculated from backend (source=backend)")
+                    logger.info(
+                        "Schedule entropy calculated from backend (source=backend)"
+                    )
 
-                return ScheduleEntropyResponse(
-                    analyzed_at=datetime.now().isoformat(),
-                    period_start=start.isoformat(),
-                    period_end=end.isoformat(),
-                    assignments_analyzed=100,
-                    metrics=metrics,
-                    interpretation=interpretation,
-                    entropy_status=status,
-                    recommendations=recommendations,
-                    severity=severity,
-                )
+                    return ScheduleEntropyResponse(
+                        analyzed_at=datetime.now().isoformat(),
+                        period_start=start.isoformat(),
+                        period_end=end.isoformat(),
+                        assignments_analyzed=100,
+                        metrics=metrics,
+                        interpretation=interpretation,
+                        entropy_status=status,
+                        recommendations=recommendations,
+                        severity=severity,
+                    )
 
-        except Exception as api_error:
-            logger.warning(f"Backend API call failed, using fallback: {api_error}")
+            except Exception as api_error:
+                logger.warning(f"Backend API call failed, using fallback: {api_error}")
 
         # Fallback to mock data if backend unavailable
         logger.warning("Schedule entropy using placeholder data (backend unavailable)")

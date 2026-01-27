@@ -4849,7 +4849,7 @@ async def generate_block_quality_report_tool(
                     "format": output_format,
                 },
             )
-            return response
+            return response.json()
         except Exception:
             pass  # Endpoint doesn't exist, use fallback
 
@@ -4943,7 +4943,7 @@ async def generate_multi_block_quality_report_tool(
                     "include_summary": include_summary,
                 },
             )
-            return response
+            return response.json()
         except Exception:
             pass  # Fallback
 

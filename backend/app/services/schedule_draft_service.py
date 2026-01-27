@@ -35,6 +35,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import and_, delete, func, select, update
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.exceptions import ActivityNotFoundError
 from app.db.transaction import transactional_with_retry
 from app.models.activity import Activity
 from app.models.assignment import Assignment
@@ -707,16 +708,41 @@ class ScheduleDraftService:
         """
         created_ids = []
 
-        # Resolve activity_code to activity_id
+        # Resolve activity_code to activity_id (required for add/modify)
         activity_id = None
-        if da.activity_code:
-            activity = (
-                self.db.query(Activity)
-                .filter(Activity.code == da.activity_code)
-                .first()
-            )
-            if activity:
+        if da.change_type != DraftAssignmentChangeType.DELETE:
+            if da.activity_code:
+                normalized = da.activity_code.strip()
+                activity = (
+                    self.db.query(Activity)
+                    .filter(func.lower(Activity.code) == normalized.lower())
+                    .first()
+                )
+                if not activity:
+                    activity = (
+                        self.db.query(Activity)
+                        .filter(
+                            func.lower(Activity.display_abbreviation)
+                            == normalized.lower()
+                        )
+                        .first()
+                    )
+                if not activity:
+                    activity = (
+                        self.db.query(Activity)
+                        .filter(func.lower(Activity.name) == normalized.lower())
+                        .first()
+                    )
+                if not activity:
+                    raise ActivityNotFoundError(
+                        normalized, context="schedule_draft_service"
+                    )
                 activity_id = activity.id
+            else:
+                raise ActivityNotFoundError(
+                    "<missing activity_code>",
+                    context="schedule_draft_service",
+                )
 
         # Determine time slots to process
         # Draft uses 'ALL' for full-day, HalfDayAssignment needs separate AM/PM

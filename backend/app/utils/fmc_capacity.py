@@ -38,6 +38,8 @@ FMC_CAPACITY_CODES = {
     "ASM",
 }
 
+CV_CODES = {"CV"}
+
 SM_CAPACITY_CODES = {"SM", "SM_CLINIC", "ASM"}
 
 PROC_VAS_CODES = {"PR", "PROC", "PROCEDURE", "VAS"}
@@ -71,12 +73,14 @@ def activity_counts_toward_fmc_capacity_for_template(
 ) -> bool:
     if not activity:
         return False
+    code = _normalize_code(activity.code)
+    display = _normalize_code(activity.display_abbreviation)
+    if code in CV_CODES or display in CV_CODES:
+        return False
     if activity_is_sm_capacity(activity):
         return True
     if activity_is_proc_or_vas(activity):
         return True
-    code = _normalize_code(activity.code)
-    display = _normalize_code(activity.display_abbreviation)
     if code in {"V1", "V2", "V3"} or display in {"V1", "V2", "V3"}:
         return True
     if code in FMC_CLINIC_CODES or display in FMC_CLINIC_CODES:
@@ -88,6 +92,9 @@ def activity_counts_toward_fmc_capacity(activity: Activity | None) -> bool:
     if not activity:
         return False
     code = _normalize_code(activity.code)
+    display = _normalize_code(activity.display_abbreviation)
+    if code in CV_CODES or display in CV_CODES:
+        return False
     return code in FMC_CAPACITY_CODES
 
 

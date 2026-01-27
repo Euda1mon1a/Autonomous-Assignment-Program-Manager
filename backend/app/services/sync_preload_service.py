@@ -23,6 +23,7 @@ from sqlalchemy import select, and_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.exceptions import ActivityNotFoundError
 from app.core.logging import get_logger
 from app.models.absence import Absence
 from app.models.activity import Activity
@@ -32,8 +33,10 @@ from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
 from app.models.inpatient_preload import InpatientPreload, InpatientRotationType
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
+from app.models.weekly_pattern import WeeklyPattern
 from app.models.resident_call_preload import ResidentCallPreload
 from app.utils.academic_blocks import get_block_dates
+from app.utils.fmc_capacity import activity_counts_toward_fmc_capacity
 
 logger = get_logger(__name__)
 
@@ -66,6 +69,13 @@ _INTERN_CONTINUITY_EXEMPT_ROTATIONS = {
 }
 _OFFSITE_ROTATIONS = {"TDY", "HILO", "OKI"}
 _KAP_ROTATIONS = {"KAP"}
+_CLINIC_PATTERN_CODES = {"C", "C-I", "C-N", "FM_CLINIC"}
+
+# Rotation types that require translation to activity codes
+_ROTATION_TO_ACTIVITY = {
+    "HILO": "TDY",
+    "FMC": "fm_clinic",
+}
 
 
 class SyncPreloadService:
@@ -150,10 +160,6 @@ class SyncPreloadService:
         lv_am_id = self._get_activity_id("LV-AM")
         lv_pm_id = self._get_activity_id("LV-PM")
 
-        if not lv_am_id or not lv_pm_id:
-            logger.warning("Missing LV-AM or LV-PM activity, skipping absences")
-            return 0
-
         # Query all absences in date range, then filter in Python
         # NOTE: should_block_assignment is a @property, not a SQL column,
         # so we cannot filter on it in SQL - must load and filter in Python
@@ -217,9 +223,6 @@ class SyncPreloadService:
 
             # Get activity for this rotation
             activity_id = self._get_activity_id(activity_code)
-            if not activity_id:
-                logger.warning(f"No activity found for rotation type: {activity_code}")
-                continue
 
             # Create preloads for each day
             current = max(preload.start_date, start_date)
@@ -229,8 +232,8 @@ class SyncPreloadService:
                 # Get day-specific codes for special rotations
                 am_code, pm_code = self._get_rotation_codes(rotation_type, current)
 
-                am_activity_id = self._get_activity_id(am_code) or activity_id
-                pm_activity_id = self._get_activity_id(pm_code) or activity_id
+                am_activity_id = self._get_activity_id(am_code)
+                pm_activity_id = self._get_activity_id(pm_code)
 
                 # Skip weekends for non-24/7 rotations
                 # Note: NF-type rotations still need weekend preloads (with W activity)
@@ -289,8 +292,12 @@ class SyncPreloadService:
         stmt = (
             select(BlockAssignment)
             .options(
-                selectinload(BlockAssignment.rotation_template),
-                selectinload(BlockAssignment.secondary_rotation_template),
+                selectinload(BlockAssignment.rotation_template)
+                .selectinload(RotationTemplate.weekly_patterns)
+                .selectinload(WeeklyPattern.activity),
+                selectinload(BlockAssignment.secondary_rotation_template)
+                .selectinload(RotationTemplate.weekly_patterns)
+                .selectinload(WeeklyPattern.activity),
                 selectinload(BlockAssignment.resident),
             )
             .where(
@@ -316,8 +323,35 @@ class SyncPreloadService:
                     current += timedelta(days=1)
                     continue
 
+                active_template = assignment.rotation_template
+                if (
+                    assignment.secondary_rotation_template_id
+                    and current >= mid_block_date
+                ):
+                    active_template = assignment.secondary_rotation_template
+                rotation_type = (
+                    (active_template.rotation_type or "").lower()
+                    if active_template
+                    else ""
+                )
+                is_outpatient = rotation_type == "outpatient"
+                is_inpatient = rotation_type == "inpatient"
+
+                if is_inpatient and active_template:
+                    count += self._apply_inpatient_clinic_patterns(
+                        assignment.resident_id,
+                        current,
+                        active_template,
+                        start_date,
+                    )
+
                 am_code, pm_code = self._get_rotation_preload_codes(
-                    rotation_code, current, start_date, end_date, pgy
+                    rotation_code,
+                    current,
+                    start_date,
+                    end_date,
+                    pgy,
+                    is_outpatient,
                 )
 
                 if am_code:
@@ -410,6 +444,7 @@ class SyncPreloadService:
         block_start: date,
         block_end: date,
         pgy_level: int,
+        is_outpatient: bool,
     ) -> tuple[str | None, str | None]:
         """Return AM/PM activity codes that should be preloaded for this slot."""
         if not rotation_code:
@@ -432,10 +467,14 @@ class SyncPreloadService:
         if rotation_code in ("NF", "PEDNF"):
             return self._get_nf_codes(rotation_code, current_date)
 
-        # Wednesday protected patterns for outpatient rotations
+        # Wednesday protected patterns (intern continuity only for outpatient rotations)
         if current_date.weekday() == 2:  # Wednesday
             am_code = None
-            if pgy_level == 1 and not self._is_intern_continuity_exempt(rotation_code):
+            if (
+                is_outpatient
+                and pgy_level == 1
+                and not self._is_intern_continuity_exempt(rotation_code)
+            ):
                 am_code = "C"
 
             pm_code = None
@@ -445,6 +484,50 @@ class SyncPreloadService:
             return (am_code, pm_code)
 
         return (None, None)
+
+    def _apply_inpatient_clinic_patterns(
+        self,
+        person_id: UUID,
+        current_date: date,
+        template: RotationTemplate,
+        block_start: date,
+    ) -> int:
+        """Preload clinic activities from weekly patterns for inpatient rotations."""
+        patterns = list(template.weekly_patterns or [])
+        if not patterns:
+            return 0
+
+        target_week = self._pattern_week_number(current_date, block_start)
+        target_dow = self._pattern_day_of_week(current_date)
+        count = 0
+
+        for pattern in patterns:
+            if pattern.day_of_week != target_dow:
+                continue
+            if pattern.week_number is not None and pattern.week_number != target_week:
+                continue
+            if not self._is_clinic_pattern_activity(pattern.activity):
+                continue
+            if pattern.activity_id and self._create_preload(
+                person_id, current_date, pattern.time_of_day, pattern.activity_id
+            ):
+                count += 1
+
+        return count
+
+    def _pattern_week_number(self, current_date: date, block_start: date) -> int:
+        return ((current_date - block_start).days // 7) + 1
+
+    def _pattern_day_of_week(self, current_date: date) -> int:
+        """Convert Python weekday (Mon=0..Sun=6) to weekly_pattern (Sun=0..Sat=6)."""
+        return (current_date.weekday() + 1) % 7
+
+    def _is_clinic_pattern_activity(self, activity: Activity | None) -> bool:
+        if not activity:
+            return False
+        code = (activity.code or "").strip().upper()
+        display = (activity.display_abbreviation or "").strip().upper()
+        return code in _CLINIC_PATTERN_CODES or display in _CLINIC_PATTERN_CODES
 
     def _is_last_wednesday(self, current_date: date, block_end: date) -> bool:
         """Return True if the date is the last Wednesday of the block."""
@@ -543,16 +626,14 @@ class SyncPreloadService:
 
         # Rotations that work all days including weekends:
         # FMIT, PedW, IM - just use rotation code for both slots
-        # Default: use rotation type for both slots
-        return (code, code)
+        # Default: use rotation type for both slots (after mapping to activity code)
+        mapped = _ROTATION_TO_ACTIVITY.get(code, code)
+        return (mapped, mapped)
 
     def _load_fmit_call(self, start_date: date, end_date: date) -> int:
         """Load FMIT call (Fri/Sat PM during FMIT weeks)."""
         count = 0
         call_id = self._get_activity_id("CALL")
-        if not call_id:
-            logger.warning("Missing CALL activity")
-            return 0
 
         # Get FMIT preloads
         stmt = select(InpatientPreload).where(
@@ -585,10 +666,9 @@ class SyncPreloadService:
         PGY-3: Monday PM
         """
         count = 0
-        ci_id = self._get_activity_id("C-I") or self._get_activity_id("C")
-        if not ci_id:
-            logger.warning("Missing C-I or C activity")
-            return 0
+        ci_id = self._get_activity_id("C-I", required=False) or self._get_activity_id(
+            "C"
+        )
 
         block_dates = get_block_dates(block_number, academic_year)
         start_date = block_dates.start_date
@@ -645,9 +725,6 @@ class SyncPreloadService:
         """Load resident call preloads."""
         count = 0
         call_id = self._get_activity_id("CALL")
-        if not call_id:
-            logger.warning("Missing CALL activity")
-            return 0
 
         stmt = select(ResidentCallPreload).where(
             ResidentCallPreload.call_date >= start_date,
@@ -673,10 +750,6 @@ class SyncPreloadService:
         pcat_id = self._get_activity_id("PCAT")
         do_id = self._get_activity_id("DO")
 
-        if not call_id:
-            logger.warning("Missing CALL activity")
-            return 0
-
         stmt = select(CallAssignment).where(
             CallAssignment.date >= start_date,
             CallAssignment.date <= end_date,
@@ -694,13 +767,9 @@ class SyncPreloadService:
             # dates, and preload source is locked so next block won't overwrite it
             next_day = call.date + timedelta(days=1)
             if not self._is_on_fmit(call.person_id, next_day):
-                if pcat_id and self._create_preload(
-                    call.person_id, next_day, "AM", pcat_id
-                ):
+                if self._create_preload(call.person_id, next_day, "AM", pcat_id):
                     count += 1
-                if do_id and self._create_preload(
-                    call.person_id, next_day, "PM", do_id
-                ):
+                if self._create_preload(call.person_id, next_day, "PM", do_id):
                     count += 1
 
         logger.info(f"Loaded {count} faculty call preloads")
@@ -709,7 +778,7 @@ class SyncPreloadService:
     def _load_sm_preloads(self, start_date: date, end_date: date) -> int:
         """Load Sports Medicine preloads (Wed AM for SM faculty)."""
         count = 0
-        asm_id = self._get_activity_id("aSM")
+        asm_id = self._get_activity_id("aSM", required=False)
         if not asm_id:
             # aSM might not exist in all deployments
             return 0
@@ -759,9 +828,6 @@ class SyncPreloadService:
         """
         count = 0
         w_id = self._get_activity_id("W")
-        if not w_id:
-            logger.warning("Missing W activity, skipping compound rotation weekends")
-            return 0
 
         # Find block assignments with compound rotations
         from app.models.rotation_template import RotationTemplate
@@ -862,7 +928,12 @@ class SyncPreloadService:
             logger.info(f"Loaded {count} compound rotation weekend preloads")
         return count
 
-    def _get_activity_id(self, code: str) -> UUID | None:
+    def _get_activity_id(
+        self,
+        code: str,
+        *,
+        required: bool = True,
+    ) -> UUID | None:
         """Get activity ID by code (cached)."""
         if code in self._activity_cache:
             return self._activity_cache[code]
@@ -888,6 +959,11 @@ class SyncPreloadService:
             self._activity_cache[code] = activity.id
             return activity.id
 
+        if required:
+            logger.error(f"Unknown activity code during preload: {code}")
+            raise ActivityNotFoundError(code, context="sync_preload_service")
+
+        logger.warning(f"Optional activity not found during preload: {code}")
         return None
 
     def _create_preload(
@@ -902,6 +978,19 @@ class SyncPreloadService:
 
         Returns True if created, False if already exists.
         """
+        if not activity_id:
+            logger.error(
+                "Cannot create preload without activity_id "
+                f"(person_id={person_id}, date={date_val}, time_of_day={time_of_day})"
+            )
+            raise ActivityNotFoundError(
+                "<missing activity_id>", context="sync_preload_service"
+            )
+        activity = self.session.get(Activity, activity_id) if activity_id else None
+        capacity_flag = (
+            activity_counts_toward_fmc_capacity(activity) if activity else None
+        )
+
         # Check if exists
         stmt = select(HalfDayAssignment).where(
             HalfDayAssignment.person_id == person_id,
@@ -919,6 +1008,7 @@ class SyncPreloadService:
             ):
                 existing.activity_id = activity_id
                 existing.source = AssignmentSource.PRELOAD.value
+                existing.counts_toward_fmc_capacity = capacity_flag
                 return True
             if (
                 existing.source == AssignmentSource.PRELOAD.value
@@ -926,7 +1016,17 @@ class SyncPreloadService:
                 and activity_id
             ):
                 existing.activity_id = activity_id
+                existing.counts_toward_fmc_capacity = capacity_flag
                 return True
+            if existing.source == AssignmentSource.PRELOAD.value:
+                # Keep counts_toward_fmc_capacity in sync with activity
+                if (
+                    existing.activity_id == activity_id
+                    and capacity_flag is not None
+                    and existing.counts_toward_fmc_capacity != capacity_flag
+                ):
+                    existing.counts_toward_fmc_capacity = capacity_flag
+                    return True
             return False
 
         # Create new
@@ -935,6 +1035,7 @@ class SyncPreloadService:
             date=date_val,
             time_of_day=time_of_day,
             activity_id=activity_id,
+            counts_toward_fmc_capacity=capacity_flag,
             source=AssignmentSource.PRELOAD.value,
         )
         self.session.add(assignment)

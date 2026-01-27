@@ -27,7 +27,7 @@ Before proceeding, understand this distinction:
 ## Ground Rules (Current Intent)
 
 - **Assignments, not rotations, drive physical capacity.**
-- **Faculty AT hard capacity counts only for:** `AT`, `PCAY`.
+- **Faculty AT hard capacity counts only for:** `AT`, `PCAT`.
 - **PROC/VAS:** do **not** count toward hard AT capacity, but **do** add a soft penalty
   to reflect supervision load.
 - **C** is the display abbreviation for clinic assignments.
@@ -342,7 +342,7 @@ But that's not needed now.
 
 **Hard AT capacity counts only these faculty assignments:**
 - `AT`
-- `PCAY`
+- `PCAT`
 
 **Soft AT penalty only (does NOT count toward hard capacity):**
 - `PROC` (soft penalty)

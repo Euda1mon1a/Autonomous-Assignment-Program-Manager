@@ -65,13 +65,16 @@ class BlockQualityReportService:
         Returns:
             BlockDates with calculated start/end dates
         """
-        # Use the canonical utility for date calculation
+        # Use the canonical utility for expected date calculation
         util_dates = get_block_dates_util(block_number, academic_year)
 
-        # Verify block exists in database and get actual day count
+        # Verify block exists in database and get actual range within expected window
         result = self.db.execute(
             text("""
-                SELECT COUNT(DISTINCT date) as days
+                SELECT
+                    MIN(date) as start_date,
+                    MAX(date) as end_date,
+                    COUNT(DISTINCT date) as days
                 FROM blocks
                 WHERE block_number = :block_num
                 AND date BETWEEN :start_date AND :end_date
@@ -83,9 +86,7 @@ class BlockQualityReportService:
             },
         )
         row = result.fetchone()
-        days = row[0] if row else 0
-
-        if days == 0:
+        if not row or not row[0]:
             raise ValueError(
                 f"Block {block_number} for AY {academic_year} not found in database "
                 f"(expected dates: {util_dates.start_date} to {util_dates.end_date})"
@@ -94,10 +95,10 @@ class BlockQualityReportService:
         return BlockDates(
             block_number=block_number,
             academic_year=academic_year,
-            start_date=util_dates.start_date,
-            end_date=util_dates.end_date,
-            days=days,
-            slots=days * 2,
+            start_date=row[0],
+            end_date=row[1],
+            days=row[2],
+            slots=row[2] * 2,
         )
 
     def get_block_assignments(
@@ -472,6 +473,22 @@ class BlockQualityReportService:
         faculty_total = sum(f.slots for f in faculty_preloaded)
         resident_total = totals.get("resident", 0)
 
+        gaps_detected = []
+        expected_dates = get_block_dates_util(block_number, academic_year)
+        expected_days = expected_dates.duration_days
+        if (
+            block_dates.start_date != expected_dates.start_date
+            or block_dates.end_date != expected_dates.end_date
+            or block_dates.days != expected_days
+        ):
+            gaps_detected.append(
+                "Block date mismatch: "
+                f"expected {expected_dates.start_date} to {expected_dates.end_date} "
+                f"({expected_days} days), "
+                f"found {block_dates.start_date} to {block_dates.end_date} "
+                f"({block_dates.days} days)"
+            )
+
         all_assignments = []
         for rd in resident_dist:
             all_assignments.append(
@@ -509,7 +526,7 @@ class BlockQualityReportService:
             if res_counts
             else "0",
             faculty_range=f"{min(fac_counts)}-{max(fac_counts)}" if fac_counts else "0",
-            gaps_detected=[],
+            gaps_detected=gaps_detected,
         )
 
         # Section D: Post-Constraint
@@ -608,7 +625,7 @@ class BlockQualityReportService:
                 gaps.append(f"Block {block_num}: Post-Call PCAT/DO gap")
 
         return CrossBlockSummary(
-            academic_year=resolved_year,
+            academic_year=academic_year,
             blocks=blocks,
             total_assignments=total_resident + total_faculty,
             total_resident=total_resident,

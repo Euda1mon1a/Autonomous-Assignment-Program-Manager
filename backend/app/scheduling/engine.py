@@ -26,8 +26,10 @@ from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.exceptions import ActivityNotFoundError
 from app.core.logging import get_logger
 from app.schemas.schedule import (
     NFPCAudit,
@@ -2563,6 +2565,20 @@ class SchedulingEngine:
             )
             self.db.flush()
 
+    def _get_off_activity_id(self) -> UUID:
+        """Resolve the OFF activity once for placeholder slots."""
+        if getattr(self, "_off_activity_id", None):
+            return self._off_activity_id
+
+        result = self.db.execute(
+            select(Activity).where(func.lower(Activity.code) == "off")
+        )
+        activity = result.scalars().first()
+        if not activity:
+            raise ActivityNotFoundError("off", context="SchedulingEngine")
+        self._off_activity_id = activity.id
+        return self._off_activity_id
+
     def _get_blocking_half_day_slots(self) -> set[tuple[UUID, date, str]]:
         """
         Get blocking half-day slots (preload/manual) for the date range.
@@ -2628,6 +2644,7 @@ class SchedulingEngine:
         """
         from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
 
+        off_activity_id = self._get_off_activity_id()
         block_by_id = {b.id: b for b in blocks}
         updated = 0
 
@@ -2649,7 +2666,7 @@ class SchedulingEngine:
             if existing:
                 if existing.is_locked:
                     continue
-                existing.activity_id = None
+                existing.activity_id = off_activity_id
                 existing.source = AssignmentSource.SOLVER.value
                 updated += 1
                 continue
@@ -2659,7 +2676,7 @@ class SchedulingEngine:
                     person_id=assignment.person_id,
                     date=block.date,
                     time_of_day=block.time_of_day,
-                    activity_id=None,
+                    activity_id=off_activity_id,
                     source=AssignmentSource.SOLVER.value,
                 )
             )
@@ -2689,6 +2706,7 @@ class SchedulingEngine:
         if not faculty:
             return 0
 
+        off_activity_id = self._get_off_activity_id()
         eligible_faculty = [
             f for f in faculty if getattr(f, "faculty_role", None) != "adjunct"
         ]
@@ -2721,7 +2739,7 @@ class SchedulingEngine:
                         person_id=fac.id,
                         date=block.date,
                         time_of_day=block.time_of_day,
-                        activity_id=None,
+                        activity_id=off_activity_id,
                         source=AssignmentSource.SOLVER.value,
                     )
                 )

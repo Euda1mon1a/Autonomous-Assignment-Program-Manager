@@ -452,24 +452,23 @@ class PuLPSolver(BaseSolver):
 
         # Build objective with all penalties
         equity_penalty = variables.get("equity_penalty")
-        if equity_penalty is not None and template_balance_penalty is not None:
-            prob += (
-                COVERAGE_WEIGHT * coverage
-                - EQUITY_PENALTY_WEIGHT * equity_penalty
-                - TEMPLATE_BALANCE_WEIGHT * template_balance_penalty,
-                "objective",
-            )
-        elif equity_penalty is not None:
-            prob += (
-                COVERAGE_WEIGHT * coverage - EQUITY_PENALTY_WEIGHT * equity_penalty,
-                "objective",
-            )
-        elif template_balance_penalty is not None:
-            prob += (
-                COVERAGE_WEIGHT * coverage
-                - TEMPLATE_BALANCE_WEIGHT * template_balance_penalty,
-                "objective",
-            )
+        objective_terms = variables.get("objective_terms", [])
+
+        if (
+            equity_penalty is not None
+            or template_balance_penalty is not None
+            or objective_terms
+        ):
+            objective_expr = COVERAGE_WEIGHT * coverage
+            if equity_penalty is not None:
+                objective_expr -= EQUITY_PENALTY_WEIGHT * equity_penalty
+            if template_balance_penalty is not None:
+                objective_expr -= TEMPLATE_BALANCE_WEIGHT * template_balance_penalty
+            if objective_terms:
+                objective_expr -= pulp.lpSum(
+                    term_var * int(weight) for term_var, weight in objective_terms
+                )
+            prob += objective_expr, "objective"
         else:
             prob += coverage, "objective"
 

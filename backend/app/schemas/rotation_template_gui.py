@@ -23,6 +23,13 @@ class WeeklyPatternBase(BaseModel):
 
     day_of_week: int = Field(..., ge=0, le=6, description="0=Sunday, 6=Saturday")
     time_of_day: Literal["AM", "PM"]
+    activity_id: UUID | None = Field(
+        None,
+        description=(
+            "Optional Activity UUID for this slot. "
+            "If omitted, the backend resolves from activity_type."
+        ),
+    )
     activity_type: str = Field(
         ...,
         max_length=50,
@@ -51,6 +58,7 @@ class WeeklyPatternCreate(WeeklyPatternBase):
 class WeeklyPatternUpdate(BaseModel):
     """Schema for updating a weekly pattern slot."""
 
+    activity_id: UUID | None = None
     activity_type: str | None = Field(None, max_length=50)
     week_number: int | None = Field(None, ge=1, le=4)
     linked_template_id: UUID | None = None

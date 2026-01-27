@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-26T06:31:24Z
+ * Generated at: 2026-01-27T20:44:41Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -2252,7 +2252,7 @@ export interface paths {
          *     By default, archived templates are excluded. Use include_archived=true to see all templates.
          *
          *     Args:
-         *         activity_type: Filter by rotation category (e.g., 'clinic', 'inpatient')
+         *         rotation_type: Filter by rotation category (e.g., 'outpatient', 'inpatient')
          *         include_archived: Include archived templates (default: False)
          *         db: Database session
          *         current_user: Current authenticated user
@@ -2312,7 +2312,7 @@ export interface paths {
          *             },
          *             {
          *               "template_id": "uuid2",
-         *               "updates": {"activity_type": "inpatient"}
+         *               "updates": {"rotation_type": "inpatient"}
          *             }
          *           ],
          *           "dry_run": false
@@ -2346,8 +2346,8 @@ export interface paths {
          *         ```json
          *         {
          *           "templates": [
-         *             {"name": "New Clinic", "activity_type": "clinic"},
-         *             {"name": "New Inpatient", "activity_type": "inpatient"}
+         *             {"name": "New Outpatient", "rotation_type": "outpatient"},
+         *             {"name": "New Inpatient", "rotation_type": "inpatient"}
          *           ],
          *           "dry_run": false
          *         }
@@ -3362,10 +3362,10 @@ export interface paths {
         };
         /**
          * List Resident Weekly Requirements
-         * @description List all resident weekly requirements, optionally filtered by activity type.
+         * @description List all resident weekly requirements, optionally filtered by rotation type.
          *
          *     Args:
-         *         activity_type: Filter by rotation template activity type (e.g., 'outpatient')
+         *         rotation_type: Filter by rotation template rotation type (e.g., 'outpatient')
          *         db: Database session
          *         current_user: Current authenticated user
          *
@@ -3631,7 +3631,7 @@ export interface paths {
          *         end_date: Filter assignments ending on or before this date.
          *         person_id: Filter assignments for a specific person.
          *         role: Filter by assignment role.
-         *         activity_type: Filter by activity type (e.g., 'on_call', 'clinic', 'inpatient').
+         *         rotation_type: Filter by rotation type (e.g., 'inpatient', 'outpatient').
          *         page: Page number (1-indexed).
          *         page_size: Number of items per page (max 500).
          *         db: Database session.
@@ -4436,28 +4436,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/schedule/{start_date}/{end_date}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Schedule
-         * @description Get the schedule for a date range.
-         *
-         *     Returns all assignments with person and rotation template details.
-         */
-        get: operations["get_schedule_api_v1_schedule__start_date___end_date__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/schedule/import/analyze": {
         parameters: {
             query?: never;
@@ -4701,6 +4679,28 @@ export interface paths {
          * @description Get details of a specific schedule run.
          */
         get: operations["get_schedule_run_api_v1_schedule_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schedule/{start_date}/{end_date}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Schedule
+         * @description Get the schedule for a date range.
+         *
+         *     Returns all assignments with person and rotation template details.
+         */
+        get: operations["get_schedule_api_v1_schedule__start_date___end_date__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6749,6 +6749,46 @@ export interface paths {
          *         }
          */
         post: operations["generate_faculty_summary_report_api_v1_reports_faculty_summary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/block-quality": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Block Quality Report
+         * @description Generate a block quality report (summary/full/markdown).
+         */
+        get: operations["get_block_quality_report_api_v1_reports_block_quality_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/block-quality/multi": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Multi Block Quality Report
+         * @description Generate block quality summaries for multiple blocks.
+         */
+        get: operations["get_multi_block_quality_report_api_v1_reports_block_quality_multi_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -10550,7 +10590,7 @@ export interface paths {
          * @description Export complete schedule as ICS file.
          *
          *     Downloads an ICS file containing all assignments within the date range.
-         *     Can be filtered by persons, rotations, or activity types.
+         *     Can be filtered by persons, rotations, or rotation types.
          *     Compatible with Google Calendar, Outlook, and Apple Calendar.
          *
          *     Args:
@@ -10558,7 +10598,7 @@ export interface paths {
          *         end_date: End date for export (YYYY-MM-DD)
          *         person_ids: Optional list of person UUIDs to filter
          *         rotation_ids: Optional list of rotation UUIDs to filter
-         *         include_types: Optional list of activity types to filter
+         *         include_types: Optional list of rotation types to filter
          *         db: Database session
          *
          *     Returns:
@@ -10591,7 +10631,7 @@ export interface paths {
          *         person_id: Person UUID
          *         start_date: Start date for export (YYYY-MM-DD)
          *         end_date: End date for export (YYYY-MM-DD)
-         *         include_types: Optional list of activity types to filter
+         *         include_types: Optional list of rotation types to filter
          *         db: Database session
          *
          *     Returns:
@@ -10624,7 +10664,7 @@ export interface paths {
          *         person_id: Person UUID
          *         start_date: Start date for export (YYYY-MM-DD)
          *         end_date: End date for export (YYYY-MM-DD)
-         *         include_types: Optional list of activity types to filter
+         *         include_types: Optional list of rotation types to filter
          *         db: Database session
          *
          *     Returns:
@@ -11891,11 +11931,11 @@ export interface paths {
          *     a 3D space where:
          *     - X-axis: Time (blocks/dates)
          *     - Y-axis: People (residents, faculty)
-         *     - Z-axis: Activity type (clinic, inpatient, procedures, etc.)
+         *     - Z-axis: Rotation type (clinic, inpatient, procedures, etc.)
          *
          *     Each voxel represents an assignment with properties:
          *     - Position (x, y, z) in the 3D grid
-         *     - Color based on activity type or compliance status
+         *     - Color based on rotation type or compliance status
          *     - Opacity based on confidence score
          *     - State flags (occupied, conflict, violation)
          *
@@ -11909,7 +11949,7 @@ export interface paths {
          *         start_date: Start date for visualization
          *         end_date: End date for visualization
          *         person_ids: Optional filter for specific people
-         *         activity_types: Optional filter for specific activity types
+         *         rotation_types: Optional filter for specific rotation types
          *         include_violations: Whether to include ACGME violation markers
          *
          *     Returns:
@@ -14601,212 +14641,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/conflicts/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Conflicts
-         * @description List conflicts with pagination, filtering, and sorting.
-         *
-         *     Retrieves conflicts from the ConflictAlert table with support for:
-         *     - Filtering by type, severity, status, affected person, and date range
-         *     - Text search in description
-         *     - Sorting by various fields
-         *     - Pagination
-         *
-         *     Args:
-         *         types: Comma-separated list of conflict types
-         *         severities: Comma-separated list of severities (critical, high, medium, low)
-         *         statuses: Comma-separated list of statuses (new, acknowledged, resolved, ignored)
-         *         person_ids: Comma-separated list of person UUIDs
-         *         start_date: Filter conflicts on or after this date
-         *         end_date: Filter conflicts on or before this date
-         *         search: Text to search for in conflict descriptions
-         *         sort_by: Field to sort by
-         *         sort_dir: Sort direction (asc or desc)
-         *         page: Page number (1-based)
-         *         page_size: Number of items per page (max 100)
-         *
-         *     Returns:
-         *         ConflictListResponse with paginated conflict items
-         */
-        get: operations["list_conflicts_api_v1_conflicts__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/conflicts/{conflict_id}/analyze": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Analyze Conflict
-         * @description Perform deep analysis of a schedule conflict.
-         *
-         *     Returns comprehensive analysis including:
-         *     - Root cause determination
-         *     - Complexity score
-         *     - Safety check results
-         *     - Recommended strategies
-         *     - Estimated resolution time
-         *
-         *     Args:
-         *         conflict_id: UUID of the conflict alert to analyze
-         *
-         *     Returns:
-         *         ConflictAnalysis with full details
-         */
-        get: operations["analyze_conflict_api_v1_conflicts__conflict_id__analyze_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/conflicts/{conflict_id}/options": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Resolution Options
-         * @description Generate resolution options for a conflict.
-         *
-         *     Returns up to max_options resolution strategies, sorted by overall
-         *     effectiveness score. Each option includes:
-         *     - Strategy type
-         *     - Impact assessment
-         *     - Safety validation status
-         *     - Whether it can be auto-applied
-         *
-         *     Args:
-         *         conflict_id: UUID of the conflict to resolve
-         *         max_options: Maximum number of options to generate (1-10)
-         *
-         *     Returns:
-         *         List of ResolutionOption objects
-         */
-        get: operations["get_resolution_options_api_v1_conflicts__conflict_id__options_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/conflicts/{conflict_id}/resolve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Resolve Conflict
-         * @description Automatically resolve a conflict if it passes safety checks.
-         *
-         *     This endpoint will:
-         *     1. Analyze the conflict
-         *     2. Perform all safety checks
-         *     3. If safe, apply the best resolution strategy
-         *     4. Return the result with details
-         *
-         *     If a specific strategy is provided, that strategy will be used.
-         *     Otherwise, the best available strategy is selected automatically.
-         *
-         *     Args:
-         *         conflict_id: UUID of the conflict to resolve
-         *         strategy: Optional specific strategy to apply
-         *
-         *     Returns:
-         *         ResolutionResult with outcome details
-         */
-        post: operations["resolve_conflict_api_v1_conflicts__conflict_id__resolve_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/conflicts/batch/resolve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Batch Resolve Conflicts
-         * @description Batch auto-resolve multiple conflicts.
-         *
-         *     Processes conflicts in priority order (highest severity first) and
-         *     only resolves those that pass all safety checks.
-         *
-         *     Args:
-         *         conflict_ids: Optional list of specific conflicts to resolve
-         *         max_conflicts: Maximum number to process (1-100)
-         *         severity_filter: Optional filter by severity level
-         *         dry_run: If True, simulate without making changes
-         *
-         *     Returns:
-         *         BatchResolutionReport with summary of all resolutions
-         */
-        post: operations["batch_resolve_conflicts_api_v1_conflicts_batch_resolve_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/conflicts/{conflict_id}/can-auto-resolve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Can Auto Resolve
-         * @description Check if a conflict can be safely auto-resolved.
-         *
-         *     Returns a quick check without performing the full resolution.
-         *     Useful for UI to show "Auto-resolve" button enabled/disabled.
-         *
-         *     Args:
-         *         conflict_id: UUID of the conflict to check
-         *
-         *     Returns:
-         *         Dict with can_auto_resolve boolean and reason
-         */
-        get: operations["can_auto_resolve_api_v1_conflicts__conflict_id__can_auto_resolve_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/conflicts/analysis/analyze": {
         parameters: {
             query?: never;
@@ -15082,6 +14916,212 @@ export interface paths {
          *         Aggregated conflict analysis for all specified people
          */
         post: operations["batch_analyze_conflicts_api_v1_conflicts_analysis_batch_analyze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/conflicts/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Conflicts
+         * @description List conflicts with pagination, filtering, and sorting.
+         *
+         *     Retrieves conflicts from the ConflictAlert table with support for:
+         *     - Filtering by type, severity, status, affected person, and date range
+         *     - Text search in description
+         *     - Sorting by various fields
+         *     - Pagination
+         *
+         *     Args:
+         *         types: Comma-separated list of conflict types
+         *         severities: Comma-separated list of severities (critical, high, medium, low)
+         *         statuses: Comma-separated list of statuses (new, acknowledged, resolved, ignored)
+         *         person_ids: Comma-separated list of person UUIDs
+         *         start_date: Filter conflicts on or after this date
+         *         end_date: Filter conflicts on or before this date
+         *         search: Text to search for in conflict descriptions
+         *         sort_by: Field to sort by
+         *         sort_dir: Sort direction (asc or desc)
+         *         page: Page number (1-based)
+         *         page_size: Number of items per page (max 100)
+         *
+         *     Returns:
+         *         ConflictListResponse with paginated conflict items
+         */
+        get: operations["list_conflicts_api_v1_conflicts__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/conflicts/{conflict_id}/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Analyze Conflict
+         * @description Perform deep analysis of a schedule conflict.
+         *
+         *     Returns comprehensive analysis including:
+         *     - Root cause determination
+         *     - Complexity score
+         *     - Safety check results
+         *     - Recommended strategies
+         *     - Estimated resolution time
+         *
+         *     Args:
+         *         conflict_id: UUID of the conflict alert to analyze
+         *
+         *     Returns:
+         *         ConflictAnalysis with full details
+         */
+        get: operations["analyze_conflict_api_v1_conflicts__conflict_id__analyze_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/conflicts/{conflict_id}/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Resolution Options
+         * @description Generate resolution options for a conflict.
+         *
+         *     Returns up to max_options resolution strategies, sorted by overall
+         *     effectiveness score. Each option includes:
+         *     - Strategy type
+         *     - Impact assessment
+         *     - Safety validation status
+         *     - Whether it can be auto-applied
+         *
+         *     Args:
+         *         conflict_id: UUID of the conflict to resolve
+         *         max_options: Maximum number of options to generate (1-10)
+         *
+         *     Returns:
+         *         List of ResolutionOption objects
+         */
+        get: operations["get_resolution_options_api_v1_conflicts__conflict_id__options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/conflicts/{conflict_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resolve Conflict
+         * @description Automatically resolve a conflict if it passes safety checks.
+         *
+         *     This endpoint will:
+         *     1. Analyze the conflict
+         *     2. Perform all safety checks
+         *     3. If safe, apply the best resolution strategy
+         *     4. Return the result with details
+         *
+         *     If a specific strategy is provided, that strategy will be used.
+         *     Otherwise, the best available strategy is selected automatically.
+         *
+         *     Args:
+         *         conflict_id: UUID of the conflict to resolve
+         *         strategy: Optional specific strategy to apply
+         *
+         *     Returns:
+         *         ResolutionResult with outcome details
+         */
+        post: operations["resolve_conflict_api_v1_conflicts__conflict_id__resolve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/conflicts/batch/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Batch Resolve Conflicts
+         * @description Batch auto-resolve multiple conflicts.
+         *
+         *     Processes conflicts in priority order (highest severity first) and
+         *     only resolves those that pass all safety checks.
+         *
+         *     Args:
+         *         conflict_ids: Optional list of specific conflicts to resolve
+         *         max_conflicts: Maximum number to process (1-100)
+         *         severity_filter: Optional filter by severity level
+         *         dry_run: If True, simulate without making changes
+         *
+         *     Returns:
+         *         BatchResolutionReport with summary of all resolutions
+         */
+        post: operations["batch_resolve_conflicts_api_v1_conflicts_batch_resolve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/conflicts/{conflict_id}/can-auto-resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Can Auto Resolve
+         * @description Check if a conflict can be safely auto-resolved.
+         *
+         *     Returns a quick check without performing the full resolution.
+         *     Useful for UI to show "Auto-resolve" button enabled/disabled.
+         *
+         *     Args:
+         *         conflict_id: UUID of the conflict to check
+         *
+         *     Returns:
+         *         Dict with can_auto_resolve boolean and reason
+         */
+        get: operations["can_auto_resolve_api_v1_conflicts__conflict_id__can_auto_resolve_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -19543,7 +19583,7 @@ export interface components {
          *     Shows who is absent and why (vacation, sick, deployment, etc.)
          */
         AbsenceInfo: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Absence Type
              * @description Type of absence (vacation, sick, deployment)
@@ -21134,7 +21174,7 @@ export interface components {
          * @description Summary of an assignment for manifest display.
          */
         AssignmentSummary: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Role
              * @description primary, supervising, or backup
@@ -21270,9 +21310,9 @@ export interface components {
          */
         AttendingInfo: {
             /** @description AM attending */
-            am?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            am?: components["schemas"]["PersonSummary"] | null;
             /** @description PM attending */
-            pm?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            pm?: components["schemas"]["PersonSummary"] | null;
         };
         /**
          * AttractorInfoResponse
@@ -22145,11 +22185,8 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
-            /**
-             * Template Id
-             * Format: uuid
-             */
-            templateId: string;
+            /** Person Id */
+            personId?: string | null;
             /** Success */
             success: boolean;
             /** Error */
@@ -22389,7 +22426,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__person__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -22698,7 +22735,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -22917,7 +22954,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["app__schemas__block_assignment_import__ExportFormat"];
+            format: components["schemas"]["ExportFormat"];
             /**
              * Academic Year
              * @description Academic year to export
@@ -23335,24 +23372,19 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Response for listing academic blocks.
+         * @description Schema for list of blocks.
          */
         BlockListResponse: {
             /**
-             * Blocks
-             * @description List of academic blocks
+             * Items
+             * @description List of block responses
              */
-            blocks: components["schemas"]["BlockSummary"][];
+            items: components["schemas"]["BlockResponse"][];
             /**
-             * Academic Year
-             * @description Academic year
-             */
-            academicYear: string;
-            /**
-             * Total Blocks
+             * Total
              * @description Total number of blocks
              */
-            totalBlocks: number;
+            total: number;
         };
         /**
          * BlockMatrixResponse
@@ -25615,29 +25647,15 @@ export interface components {
         };
         /**
          * ConflictCheckResponse
-         * @description Response for conflict checking before assignment.
+         * @description Response for conflict check.
          */
         ConflictCheckResponse: {
-            /**
-             * Can Assign
-             * @description Whether assignment can proceed
-             */
-            canAssign: boolean;
-            /**
-             * Conflicts
-             * @description Detected conflicts
-             */
-            conflicts?: components["schemas"]["ConflictDetail"][];
-            /**
-             * Warnings
-             * @description Warnings
-             */
-            warnings?: string[];
-            /**
-             * Suggestions
-             * @description Alternative suggestions
-             */
-            suggestions?: string[];
+            /** Has Conflicts */
+            hasConflicts: boolean;
+            /** Conflicts */
+            conflicts: components["schemas"]["TemplateConflict"][];
+            /** Can Proceed */
+            canProceed: boolean;
         };
         /**
          * ConflictDetail
@@ -25784,15 +25802,93 @@ export interface components {
         };
         /**
          * ConflictSummary
-         * @description Summary of conflicts found.
+         * @description Summary statistics for a set of conflicts.
+         *
+         *     Used for dashboard displays and reporting.
+         * @example {
+         *       "affectedPeopleCount": 8,
+         *       "autoResolvableCount": 6,
+         *       "averageImpactScore": 0.65,
+         *       "criticalCount": 3,
+         *       "highCount": 5,
+         *       "lowCount": 3,
+         *       "mediumCount": 4,
+         *       "totalConflicts": 15
+         *     }
          */
         ConflictSummary: {
-            /** Total Conflicts */
+            /**
+             * Total Conflicts
+             * @default 0
+             */
             totalConflicts: number;
-            /** Errors */
-            errors: number;
-            /** Warnings */
-            warnings: number;
+            /**
+             * Critical Count
+             * @default 0
+             */
+            criticalCount: number;
+            /**
+             * High Count
+             * @default 0
+             */
+            highCount: number;
+            /**
+             * Medium Count
+             * @default 0
+             */
+            mediumCount: number;
+            /**
+             * Low Count
+             * @default 0
+             */
+            lowCount: number;
+            /** By Category */
+            byCategory?: {
+                [key: string]: number | undefined;
+            };
+            /** By Type */
+            byType?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Affected People Count
+             * @default 0
+             */
+            affectedPeopleCount: number;
+            /**
+             * Affected Blocks Count
+             * @default 0
+             */
+            affectedBlocksCount: number;
+            /**
+             * Auto Resolvable Count
+             * @default 0
+             */
+            autoResolvableCount: number;
+            /**
+             * Requires Manual Count
+             * @default 0
+             */
+            requiresManualCount: number;
+            /**
+             * Average Impact Score
+             * @default 0
+             */
+            averageImpactScore: number;
+            /**
+             * Average Urgency Score
+             * @default 0
+             */
+            averageUrgencyScore: number;
+            /**
+             * Average Complexity Score
+             * @default 0
+             */
+            averageComplexityScore: number;
+            /** Earliest Date */
+            earliestDate?: string | null;
+            /** Latest Date */
+            latestDate?: string | null;
         };
         /**
          * ConflictType
@@ -28745,10 +28841,10 @@ export interface components {
         ExportDeliveryMethod: "email" | "s3" | "both";
         /**
          * ExportFormat
-         * @description Export file formats.
+         * @description Supported export formats.
          * @enum {string}
          */
-        ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        ExportFormat: "csv" | "xlsx";
         /**
          * ExportFormat
          * @description Export file formats.
@@ -28776,7 +28872,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["ExportFormat"];
+            format: components["schemas"]["app__models__export_job__ExportFormat"];
             /**
              * @description Delivery method
              * @default email
@@ -29075,7 +29171,7 @@ export interface components {
             /** Description */
             description?: string | null;
             template?: components["schemas"]["ExportTemplate"] | null;
-            format?: components["schemas"]["ExportFormat"] | null;
+            format?: components["schemas"]["app__models__export_job__ExportFormat"] | null;
             deliveryMethod?: components["schemas"]["ExportDeliveryMethod"] | null;
             /** Email Recipients */
             emailRecipients?: string[] | null;
@@ -29566,12 +29662,12 @@ export interface components {
          */
         FMITSection: {
             /** @description Attending physician for inpatient */
-            attending?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            attending?: components["schemas"]["PersonSummary"] | null;
             /**
              * Residents
              * @description Residents on FMIT
              */
-            residents?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"][];
+            residents?: components["schemas"]["PersonSummary"][];
         };
         /**
          * FMITWeekInfo
@@ -32345,7 +32441,7 @@ export interface components {
              * @default []
              */
             recommendations: components["schemas"]["Recommendation"][];
-            summary?: components["schemas"]["ConflictSummary"] | null;
+            summary?: components["schemas"]["app__schemas__schedule__ConflictSummary"] | null;
         };
         /**
          * ImportApplyError
@@ -34251,7 +34347,7 @@ export interface components {
          *     Shows who is on night call so staff know they're unavailable during day.
          */
         NightCallInfo: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Call Type
              * @description Type of call (night, backup)
@@ -34961,7 +35057,7 @@ export interface components {
          *     Shows person with their AM and PM assignments (if any).
          */
         PersonClinicCoverage: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /** @description AM assignment */
             am?: components["schemas"]["AssignmentInfo"] | null;
             /** @description PM assignment */
@@ -35251,7 +35347,7 @@ export interface components {
         };
         /**
          * PersonSummary
-         * @description Minimal person info for embedding in credential responses.
+         * @description Summary of person for manifest display.
          */
         PersonSummary: {
             /**
@@ -35261,8 +35357,11 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /** Type */
-            type: string;
+            /**
+             * Pgy Level
+             * @description PGY level for residents
+             */
+            pgyLevel?: number | null;
         };
         /**
          * PersonType
@@ -36327,7 +36426,7 @@ export interface components {
             /** Procedure Name */
             procedureName: string;
             /** Qualified Faculty */
-            qualifiedFaculty: components["schemas"]["PersonSummary"][];
+            qualifiedFaculty: components["schemas"]["app__schemas__procedure_credential__PersonSummary"][];
             /** Total */
             total: number;
         };
@@ -36443,7 +36542,6 @@ export interface components {
             queueName: string;
             /**
              * Confirm
-             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
@@ -36587,11 +36685,11 @@ export interface components {
              */
             name: string;
             /**
-             * Activity Type
-             * @description Activity type (clinic, inpatient, procedures, etc.)
+             * Rotation Type
+             * @description Rotation type (outpatient, inpatient, education, off, etc.)
              * @default outpatient
              */
-            activityType: string;
+            rotationType: string;
             /**
              * Leave Eligible
              * @description Whether rotation is leave-eligible
@@ -36621,10 +36719,10 @@ export interface components {
              */
             name: string;
             /**
-             * Activity Type
-             * @description Activity type
+             * Rotation Type
+             * @description Rotation type
              */
-            activityType: string;
+            rotationType: string;
         };
         /**
          * QuotaAlert
@@ -37311,14 +37409,14 @@ export interface components {
          *     Shows who is away at a remote site and their local surrogate/proxy.
          */
         RemoteAssignment: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Location
              * @description Remote location name
              */
             location: string;
             /** @description Local proxy/surrogate if assigned */
-            surrogate?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            surrogate?: components["schemas"]["PersonSummary"] | null;
         };
         /**
          * RenewalRequest
@@ -38031,10 +38129,10 @@ export interface components {
              */
             templateName: string;
             /**
-             * Template Activity Type
-             * @description Activity type of the rotation template
+             * Template Rotation Type
+             * @description Rotation type of the rotation template
              */
-            templateActivityType: string;
+            templateRotationType: string;
         };
         /**
          * ResidentWorkloadData
@@ -38577,8 +38675,6 @@ export interface components {
             rotationId: string;
             /** Rotationtype */
             rotationType: string;
-            /** Activitytype */
-            activityType: string;
             /** Totalassignments */
             totalAssignments: number;
             /** Uniqueresidents */
@@ -38697,8 +38793,8 @@ export interface components {
         RotationTemplateCreate: {
             /** Name */
             name: string;
-            /** Activity Type */
-            activityType: string;
+            /** Rotation Type */
+            rotationType: string;
             /**
              * Template Category
              * @description Category for UI grouping: rotation, time_off, absence, educational
@@ -38747,8 +38843,8 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /** Activity Type */
-            activityType: string;
+            /** Rotation Type */
+            rotationType: string;
             /** Leave Eligible */
             leaveEligible: boolean;
         };
@@ -38769,8 +38865,8 @@ export interface components {
         RotationTemplateResponse: {
             /** Name */
             name: string;
-            /** Activity Type */
-            activityType: string;
+            /** Rotation Type */
+            rotationType: string;
             /**
              * Template Category
              * @description Category for UI grouping: rotation, time_off, absence, educational
@@ -38833,8 +38929,8 @@ export interface components {
         RotationTemplateUpdate: {
             /** Name */
             name?: string | null;
-            /** Activity Type */
-            activityType?: string | null;
+            /** Rotation Type */
+            rotationType?: string | null;
             /** Template Category */
             templateCategory?: string | null;
             /** Abbreviation */
@@ -39424,6 +39520,10 @@ export interface components {
             timestamp: string;
             /** Status */
             status: string;
+            /** Startdate */
+            startDate?: string | null;
+            /** Enddate */
+            endDate?: string | null;
             /** Configuration */
             configuration?: {
                 [key: string]: unknown;
@@ -44916,8 +45016,13 @@ export interface components {
              */
             timeOfDay: "AM" | "PM";
             /**
+             * Activity Id
+             * @description Optional Activity UUID for this slot. If omitted, the backend resolves from activity_type.
+             */
+            activityId?: string | null;
+            /**
              * Activity Type
-             * @description Activity code for this slot (Activity, not RotationTemplate.activity_type). Examples: fm_clinic, specialty, elective, conference, inpatient, call, procedure, off.
+             * @description Activity code for this slot (Activity, not RotationTemplate.rotation_type). Examples: fm_clinic, specialty, elective, conference, inpatient, call, procedure, off.
              */
             activityType: string;
             /**
@@ -44951,8 +45056,13 @@ export interface components {
              */
             timeOfDay: "AM" | "PM";
             /**
+             * Activity Id
+             * @description Optional Activity UUID for this slot. If omitted, the backend resolves from activity_type.
+             */
+            activityId?: string | null;
+            /**
              * Activity Type
-             * @description Activity code for this slot (Activity, not RotationTemplate.activity_type). Examples: fm_clinic, specialty, elective, conference, inpatient, call, procedure, off.
+             * @description Activity code for this slot (Activity, not RotationTemplate.rotation_type). Examples: fm_clinic, specialty, elective, conference, inpatient, call, procedure, off.
              */
             activityType: string;
             /**
@@ -45787,94 +45897,31 @@ export interface components {
             gapSize: number;
         };
         /**
-         * ConflictSummary
-         * @description Summary statistics for a set of conflicts.
-         *
-         *     Used for dashboard displays and reporting.
-         * @example {
-         *       "affectedPeopleCount": 8,
-         *       "autoResolvableCount": 6,
-         *       "averageImpactScore": 0.65,
-         *       "criticalCount": 3,
-         *       "highCount": 5,
-         *       "lowCount": 3,
-         *       "mediumCount": 4,
-         *       "totalConflicts": 15
-         *     }
+         * ExportFormat
+         * @description Export file formats.
+         * @enum {string}
          */
-        app__scheduling__conflicts__types__ConflictSummary: {
+        app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        /**
+         * BlockListResponse
+         * @description Response for listing academic blocks.
+         */
+        app__schemas__academic_blocks__BlockListResponse: {
             /**
-             * Total Conflicts
-             * @default 0
+             * Blocks
+             * @description List of academic blocks
              */
-            totalConflicts: number;
+            blocks: components["schemas"]["BlockSummary"][];
             /**
-             * Critical Count
-             * @default 0
+             * Academic Year
+             * @description Academic year
              */
-            criticalCount: number;
+            academicYear: string;
             /**
-             * High Count
-             * @default 0
+             * Total Blocks
+             * @description Total number of blocks
              */
-            highCount: number;
-            /**
-             * Medium Count
-             * @default 0
-             */
-            mediumCount: number;
-            /**
-             * Low Count
-             * @default 0
-             */
-            lowCount: number;
-            /** By Category */
-            byCategory?: {
-                [key: string]: number | undefined;
-            };
-            /** By Type */
-            byType?: {
-                [key: string]: number | undefined;
-            };
-            /**
-             * Affected People Count
-             * @default 0
-             */
-            affectedPeopleCount: number;
-            /**
-             * Affected Blocks Count
-             * @default 0
-             */
-            affectedBlocksCount: number;
-            /**
-             * Auto Resolvable Count
-             * @default 0
-             */
-            autoResolvableCount: number;
-            /**
-             * Requires Manual Count
-             * @default 0
-             */
-            requiresManualCount: number;
-            /**
-             * Average Impact Score
-             * @default 0
-             */
-            averageImpactScore: number;
-            /**
-             * Average Urgency Score
-             * @default 0
-             */
-            averageUrgencyScore: number;
-            /**
-             * Average Complexity Score
-             * @default 0
-             */
-            averageComplexityScore: number;
-            /** Earliest Date */
-            earliestDate?: string | null;
-            /** Latest Date */
-            latestDate?: string | null;
+            totalBlocks: number;
         };
         /**
          * BatchOperationResult
@@ -45894,22 +45941,6 @@ export interface components {
             error?: string | null;
             /** Warnings */
             warnings?: string[];
-        };
-        /**
-         * BlockListResponse
-         * @description Schema for list of blocks.
-         */
-        app__schemas__block__BlockListResponse: {
-            /**
-             * Items
-             * @description List of block responses
-             */
-            items: components["schemas"]["BlockResponse"][];
-            /**
-             * Total
-             * @description Total number of blocks
-             */
-            total: number;
         };
         /**
          * CoverageGap
@@ -45933,12 +45964,6 @@ export interface components {
             severity: string;
         };
         /**
-         * ExportFormat
-         * @description Supported export formats.
-         * @enum {string}
-         */
-        app__schemas__block_assignment_import__ExportFormat: "csv" | "xlsx";
-        /**
          * PersonSummary
          * @description Minimal person info for certification reports.
          */
@@ -45956,35 +45981,30 @@ export interface components {
             email?: string | null;
         };
         /**
-         * PersonSummary
-         * @description Summary of person for manifest display.
+         * ConflictCheckResponse
+         * @description Response for conflict checking before assignment.
          */
-        app__schemas__daily_manifest__PersonSummary: {
+        app__schemas__fmit_assignments__ConflictCheckResponse: {
             /**
-             * Id
-             * Format: uuid
+             * Can Assign
+             * @description Whether assignment can proceed
              */
-            id: string;
-            /** Name */
-            name: string;
+            canAssign: boolean;
             /**
-             * Pgy Level
-             * @description PGY level for residents
+             * Conflicts
+             * @description Detected conflicts
              */
-            pgyLevel?: number | null;
-        };
-        /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
-         */
-        app__schemas__jobs__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
+            conflicts?: components["schemas"]["ConflictDetail"][];
             /**
-             * Confirm
-             * @default false
+             * Warnings
+             * @description Warnings
              */
-            confirm: boolean;
+            warnings?: string[];
+            /**
+             * Suggestions
+             * @description Alternative suggestions
+             */
+            suggestions?: string[];
         };
         /**
          * QueuePurgeResponse
@@ -46021,33 +46041,65 @@ export interface components {
             affectedItems?: string[];
         };
         /**
+         * PersonSummary
+         * @description Minimal person info for embedding in credential responses.
+         */
+        app__schemas__procedure_credential__PersonSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+        };
+        /**
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
+         */
+        app__schemas__queue__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
+            /**
+             * Confirm
+             * @description Must be true to confirm purge
+             * @default false
+             */
+            confirm: boolean;
+        };
+        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
-        app__schemas__person__BatchOperationResult: {
+        app__schemas__rotation_template__BatchOperationResult: {
             /**
              * Index
              * @description Index of the operation in the batch
              */
             index: number;
-            /** Person Id */
-            personId?: string | null;
+            /**
+             * Template Id
+             * Format: uuid
+             */
+            templateId: string;
             /** Success */
             success: boolean;
             /** Error */
             error?: string | null;
         };
         /**
-         * ConflictCheckResponse
-         * @description Response for conflict check.
+         * ConflictSummary
+         * @description Summary of conflicts found.
          */
-        app__schemas__rotation_template__ConflictCheckResponse: {
-            /** Has Conflicts */
-            hasConflicts: boolean;
-            /** Conflicts */
-            conflicts: components["schemas"]["TemplateConflict"][];
-            /** Can Proceed */
-            canProceed: boolean;
+        app__schemas__schedule__ConflictSummary: {
+            /** Total Conflicts */
+            totalConflicts: number;
+            /** Errors */
+            errors: number;
+            /** Warnings */
+            warnings: number;
         };
     };
     responses: never;
@@ -48094,7 +48146,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -48221,7 +48273,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -48287,7 +48339,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -48533,8 +48585,8 @@ export interface operations {
     list_rotation_templates_api_v1_rotation_templates_get: {
         parameters: {
             query?: {
-                /** @description Filter by rotation category (activity_type) */
-                activity_type?: string | null;
+                /** @description Filter by rotation category (rotation_type) */
+                rotation_type?: string | null;
                 /** @description Include archived templates in results */
                 include_archived?: boolean;
             };
@@ -48715,7 +48767,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__rotation_template__ConflictCheckResponse"];
+                    "application/json": components["schemas"]["ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -49949,8 +50001,8 @@ export interface operations {
     list_resident_weekly_requirements_api_v1_resident_weekly_requirements_get: {
         parameters: {
             query?: {
-                /** @description Filter by rotation template activity type */
-                activity_type?: string | null;
+                /** @description Filter by rotation template rotation type */
+                rotation_type?: string | null;
             };
             header?: never;
             path?: never;
@@ -50320,8 +50372,8 @@ export interface operations {
                 person_id?: string | null;
                 /** @description Filter by role */
                 role?: string | null;
-                /** @description Filter by activity type (e.g., on_call, clinic, inpatient) */
-                activity_type?: string | null;
+                /** @description Filter by rotation type (e.g., inpatient, outpatient) */
+                rotation_type?: string | null;
                 /** @description Page number (1-indexed) */
                 page?: number;
                 /** @description Items per page (max 5000) */
@@ -51519,38 +51571,6 @@ export interface operations {
             };
         };
     };
-    get_schedule_api_v1_schedule__start_date___end_date__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                start_date: string;
-                end_date: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     analyze_imported_schedules_api_v1_schedule_import_analyze_post: {
         parameters: {
             query?: never;
@@ -51801,6 +51821,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScheduleRunRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_schedule_api_v1_schedule__start_date___end_date__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                start_date: string;
+                end_date: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -54192,6 +54244,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReportResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_block_quality_report_api_v1_reports_block_quality_get: {
+        parameters: {
+            query: {
+                block_number: number;
+                academic_year?: number | null;
+                format?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_multi_block_quality_report_api_v1_reports_block_quality_multi_get: {
+        parameters: {
+            query: {
+                /** @description Comma-separated or range, e.g. 10,11 or 10-13 */
+                blocks: string;
+                academic_year?: number | null;
+                include_summary?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -59547,7 +59666,7 @@ export interface operations {
                 person_ids?: string[] | null;
                 /** @description Rotation UUIDs to filter */
                 rotation_ids?: string[] | null;
-                /** @description Activity types to include */
+                /** @description Rotation types to include */
                 include_types?: string[] | null;
             };
             header?: never;
@@ -59583,7 +59702,7 @@ export interface operations {
                 start_date: string;
                 /** @description End date for calendar export */
                 end_date: string;
-                /** @description Activity types to include */
+                /** @description Rotation types to include */
                 include_types?: string[] | null;
             };
             header?: never;
@@ -59621,7 +59740,7 @@ export interface operations {
                 start_date: string;
                 /** @description End date for calendar export */
                 end_date: string;
-                /** @description Activity types to include */
+                /** @description Rotation types to include */
                 include_types?: string[] | null;
             };
             header?: never;
@@ -61146,8 +61265,8 @@ export interface operations {
                 end_date: string;
                 /** @description Filter by person IDs */
                 person_ids?: string[] | null;
-                /** @description Filter by activity types */
-                activity_types?: string[] | null;
+                /** @description Filter by rotation types */
+                rotation_types?: string[] | null;
                 /** @description Include ACGME violation data */
                 include_violations?: boolean;
             };
@@ -61222,8 +61341,8 @@ export interface operations {
                 start_date: string;
                 /** @description End date */
                 end_date: string;
-                /** @description Activity types that must be covered */
-                required_activity_types?: string[];
+                /** @description Rotation types that must be covered */
+                required_rotation_types?: string[];
             };
             header?: never;
             path?: never;
@@ -63791,7 +63910,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictCheckResponse"];
+                    "application/json": components["schemas"]["app__schemas__fmit_assignments__ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -63928,226 +64047,6 @@ export interface operations {
             };
         };
     };
-    list_conflicts_api_v1_conflicts__get: {
-        parameters: {
-            query?: {
-                /** @description Comma-separated conflict types to filter */
-                types?: string | null;
-                /** @description Comma-separated severities to filter */
-                severities?: string | null;
-                /** @description Comma-separated statuses to filter */
-                statuses?: string | null;
-                /** @description Comma-separated person UUIDs to filter */
-                person_ids?: string | null;
-                /** @description Filter conflicts from this date */
-                start_date?: string | null;
-                /** @description Filter conflicts up to this date */
-                end_date?: string | null;
-                /** @description Search in conflict description */
-                search?: string | null;
-                /** @description Sort field: severity, date, type, status, detected_at */
-                sort_by?: string;
-                /** @description Sort direction: asc, desc */
-                sort_dir?: string;
-                /** @description Page number */
-                page?: number;
-                /** @description Items per page */
-                page_size?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ConflictListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    analyze_conflict_api_v1_conflicts__conflict_id__analyze_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                conflict_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ConflictAnalysis"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_resolution_options_api_v1_conflicts__conflict_id__options_get: {
-        parameters: {
-            query?: {
-                /** @description Maximum options to return */
-                max_options?: number;
-            };
-            header?: never;
-            path: {
-                conflict_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ResolutionOption"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    resolve_conflict_api_v1_conflicts__conflict_id__resolve_post: {
-        parameters: {
-            query?: {
-                /** @description Specific strategy to use */
-                strategy?: string | null;
-            };
-            header?: never;
-            path: {
-                conflict_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ResolutionResult"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    batch_resolve_conflicts_api_v1_conflicts_batch_resolve_post: {
-        parameters: {
-            query?: {
-                /** @description Specific conflicts to resolve */
-                conflict_ids?: string[] | null;
-                /** @description Maximum conflicts to process */
-                max_conflicts?: number;
-                /** @description Filter by severity: HIGH, MEDIUM, LOW */
-                severity_filter?: string | null;
-                /** @description Simulate without applying changes */
-                dry_run?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BatchResolutionReport"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    can_auto_resolve_api_v1_conflicts__conflict_id__can_auto_resolve_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                conflict_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     analyze_conflicts_api_v1_conflicts_analysis_analyze_get: {
         parameters: {
             query: {
@@ -64206,7 +64105,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__scheduling__conflicts__types__ConflictSummary"];
+                    "application/json": components["schemas"]["ConflictSummary"];
                 };
             };
             /** @description Validation Error */
@@ -64444,6 +64343,226 @@ export interface operations {
             };
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_conflicts_api_v1_conflicts__get: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated conflict types to filter */
+                types?: string | null;
+                /** @description Comma-separated severities to filter */
+                severities?: string | null;
+                /** @description Comma-separated statuses to filter */
+                statuses?: string | null;
+                /** @description Comma-separated person UUIDs to filter */
+                person_ids?: string | null;
+                /** @description Filter conflicts from this date */
+                start_date?: string | null;
+                /** @description Filter conflicts up to this date */
+                end_date?: string | null;
+                /** @description Search in conflict description */
+                search?: string | null;
+                /** @description Sort field: severity, date, type, status, detected_at */
+                sort_by?: string;
+                /** @description Sort direction: asc, desc */
+                sort_dir?: string;
+                /** @description Page number */
+                page?: number;
+                /** @description Items per page */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConflictListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyze_conflict_api_v1_conflicts__conflict_id__analyze_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conflict_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConflictAnalysis"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_resolution_options_api_v1_conflicts__conflict_id__options_get: {
+        parameters: {
+            query?: {
+                /** @description Maximum options to return */
+                max_options?: number;
+            };
+            header?: never;
+            path: {
+                conflict_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionOption"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_conflict_api_v1_conflicts__conflict_id__resolve_post: {
+        parameters: {
+            query?: {
+                /** @description Specific strategy to use */
+                strategy?: string | null;
+            };
+            header?: never;
+            path: {
+                conflict_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolutionResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    batch_resolve_conflicts_api_v1_conflicts_batch_resolve_post: {
+        parameters: {
+            query?: {
+                /** @description Specific conflicts to resolve */
+                conflict_ids?: string[] | null;
+                /** @description Maximum conflicts to process */
+                max_conflicts?: number;
+                /** @description Filter by severity: HIGH, MEDIUM, LOW */
+                severity_filter?: string | null;
+                /** @description Simulate without applying changes */
+                dry_run?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchResolutionReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    can_auto_resolve_api_v1_conflicts__conflict_id__can_auto_resolve_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conflict_id: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -65263,7 +65382,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -65630,7 +65749,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
             };
         };
         responses: {

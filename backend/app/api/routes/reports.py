@@ -1,8 +1,9 @@
 """Report generation API routes for PDF reports."""
 
 import logging
+from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -23,6 +24,7 @@ from app.services.reports.templates.faculty_summary_report import (
     FacultySummaryReportTemplate,
 )
 from app.services.reports.templates.schedule_report import ScheduleReportTemplate
+from app.services.block_quality_report_service import BlockQualityReportService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -293,4 +295,111 @@ async def generate_faculty_summary_report(
         raise HTTPException(
             status_code=500,
             detail="Failed to generate faculty summary report",
+        )
+
+
+@router.get("/block-quality")
+async def get_block_quality_report(
+    block_number: int = Query(..., ge=0, le=13),
+    academic_year: int | None = Query(None),
+    format: str = Query("summary", pattern="^(summary|full|markdown)$"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Generate a block quality report (summary/full/markdown)."""
+    if academic_year is None:
+        today = date.today()
+        academic_year = today.year if today.month >= 7 else today.year - 1
+
+    try:
+        service = BlockQualityReportService(db)
+        report = service.generate_report(block_number, academic_year)
+
+        if format == "markdown":
+            return {
+                "status": "ok",
+                "block_number": block_number,
+                "academic_year": academic_year,
+                "format": "markdown",
+                "content": service.to_markdown(report),
+            }
+
+        if format == "summary":
+            return {
+                "status": "ok",
+                "block_number": block_number,
+                "academic_year": academic_year,
+                "block_dates": report.block_dates.model_dump(),
+                "executive_summary": report.executive_summary.model_dump(),
+            }
+
+        return report.model_dump()
+
+    except Exception as e:
+        logger.error(f"Error generating block quality report: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Failed to generate block quality report"
+        )
+
+
+@router.get("/block-quality/multi")
+async def get_multi_block_quality_report(
+    blocks: str = Query(
+        ..., description="Comma-separated or range, e.g. 10,11 or 10-13"
+    ),
+    academic_year: int | None = Query(None),
+    include_summary: bool = Query(True),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Generate block quality summaries for multiple blocks."""
+    if academic_year is None:
+        today = date.today()
+        academic_year = today.year if today.month >= 7 else today.year - 1
+
+    def _parse_blocks(spec: str) -> list[int]:
+        items: list[int] = []
+        for part in spec.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            if "-" in part:
+                start, end = part.split("-")
+                items.extend(range(int(start), int(end) + 1))
+            else:
+                items.append(int(part))
+        return sorted(set(items))
+
+    try:
+        block_numbers = _parse_blocks(blocks)
+        service = BlockQualityReportService(db)
+
+        block_reports = []
+        for block_num in block_numbers:
+            report = service.generate_report(block_num, academic_year)
+            block_reports.append(
+                {
+                    "block_number": block_num,
+                    "block_dates": report.block_dates.model_dump(),
+                    "executive_summary": report.executive_summary.model_dump(),
+                }
+            )
+
+        summary = (
+            service.generate_summary(block_numbers, academic_year)
+            if include_summary
+            else None
+        )
+
+        return {
+            "status": "ok",
+            "academic_year": academic_year,
+            "blocks": block_reports,
+            "summary": summary.model_dump() if summary else None,
+        }
+
+    except Exception as e:
+        logger.error(f"Error generating multi-block quality report: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail="Failed to generate multi-block quality report"
         )

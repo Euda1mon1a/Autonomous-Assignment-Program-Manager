@@ -8,6 +8,7 @@ to call the FastAPI backend instead of accessing the database directly.
 import asyncio
 import logging
 import os
+from datetime import datetime
 from typing import Any
 
 import httpx
@@ -178,6 +179,17 @@ class SchedulerAPIClient:
         response.raise_for_status()
         return response.json()
 
+    async def get_schedule_run(self, run_id: str) -> dict[str, Any]:
+        """Fetch a schedule run by ID."""
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "GET",
+            f"{self.config.api_prefix}/schedule/runs/{run_id}",
+            headers=headers,
+        )
+        response.raise_for_status()
+        return response.json()
+
     async def validate_schedule_by_id(
         self,
         schedule_id: str,
@@ -186,27 +198,99 @@ class SchedulerAPIClient:
     ) -> dict[str, Any]:
         """Validate a specific schedule by ID.
 
-        Args:
-            schedule_id: Schedule identifier (UUID or alphanumeric)
-            constraint_config: Constraint configuration (default, minimal, strict, resilience)
-            include_suggestions: Include suggested actions for issues
-
-        Returns:
-            Validation results with compliance rate and issues
+        Tries the dedicated schedules/validate endpoint if available; falls back
+        to validating the schedule's date range when the endpoint is missing.
         """
         headers = await self._ensure_authenticated()
-        response = await self._request_with_retry(
-            "POST",
-            f"{self.config.api_prefix}/schedules/validate",
-            headers=headers,
-            json={
-                "schedule_id": schedule_id,
-                "constraint_config": constraint_config,
-                "include_suggestions": include_suggestions,
-            },
+        use_validate_endpoint = (
+            os.environ.get("MCP_USE_SCHEDULES_VALIDATE_ENDPOINT", "")
+            .strip()
+            .lower()
+            in {"1", "true", "yes"}
         )
-        response.raise_for_status()
-        return response.json()
+        if use_validate_endpoint:
+            try:
+                response = await self._request_with_retry(
+                    "POST",
+                    f"{self.config.api_prefix}/schedules/validate",
+                    headers=headers,
+                    json={
+                        "schedule_id": schedule_id,
+                        "constraint_config": constraint_config,
+                        "include_suggestions": include_suggestions,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except httpx.HTTPStatusError as exc:
+                # Fallback when endpoint not implemented in backend
+                if exc.response is None or exc.response.status_code not in {404, 405}:
+                    raise
+
+        run = await self.get_schedule_run(schedule_id)
+        start_date = run.get("start_date") or run.get("startDate")
+        end_date = run.get("end_date") or run.get("endDate")
+        if not start_date or not end_date:
+            raise RuntimeError(
+                f"Schedule run {schedule_id} missing start/end dates"
+            )
+
+        fallback = await self.validate_schedule(start_date=start_date, end_date=end_date)
+        violations = fallback.get("violations", [])
+
+        def _map_severity(value: str | None) -> str:
+            if not value:
+                return "info"
+            value = value.upper()
+            if value == "CRITICAL":
+                return "critical"
+            if value in {"HIGH", "MEDIUM"}:
+                return "warning"
+            return "info"
+
+        issues = [
+            {
+                "severity": _map_severity(v.get("severity")),
+                "rule_type": v.get("type", "acgme_violation"),
+                "message": v.get("message", "ACGME violation detected"),
+                "constraint_name": v.get("type", "acgme_violation"),
+                "affected_entity_ref": str(v.get("person_id")) if v.get("person_id") else None,
+                "date_context": None,
+                "details": v.get("details") or {},
+                "suggested_action": None,
+            }
+            for v in violations
+        ]
+
+        coverage_rate = fallback.get("coverage_rate", 0.0)
+        if coverage_rate > 1:
+            compliance_rate = min(1.0, coverage_rate / 100.0)
+        else:
+            compliance_rate = coverage_rate
+        severity_counts = {
+            "critical": sum(1 for i in issues if i["severity"] == "critical"),
+            "warning": sum(1 for i in issues if i["severity"] == "warning"),
+            "info": sum(1 for i in issues if i["severity"] == "info"),
+        }
+
+        return {
+            "schedule_id": schedule_id,
+            "is_valid": fallback.get("valid", False),
+            "compliance_rate": compliance_rate,
+            "total_issues": len(issues),
+            "critical_count": severity_counts["critical"],
+            "warning_count": severity_counts["warning"],
+            "info_count": severity_counts["info"],
+            "issues": issues,
+            "validated_at": datetime.utcnow().isoformat(),
+            "constraint_config": constraint_config,
+            "metadata": {
+                "source": "fallback_schedule_validate",
+                "start_date": start_date,
+                "end_date": end_date,
+                "coverage_rate": fallback.get("coverage_rate"),
+            },
+        }
 
     async def get_conflicts(self, start_date: str, end_date: str) -> dict[str, Any]:
         """Get schedule conflicts via API (conflict analysis)."""

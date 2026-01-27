@@ -8,9 +8,11 @@ from datetime import datetime
 from typing import Sequence
 from uuid import UUID
 
-from sqlalchemy import and_, delete, select
+from sqlalchemy import and_, delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import ActivityNotFoundError
+from app.models.activity import Activity
 from app.models.weekly_pattern import WeeklyPattern
 from app.repositories.async_base import AsyncBaseRepository
 from app.schemas.rotation_template_gui import WeeklyPatternCreate
@@ -102,12 +104,52 @@ class WeeklyPatternRepository(AsyncBaseRepository[WeeklyPattern]):
         now = datetime.utcnow()
         new_patterns = []
 
+        async def resolve_activity_id(
+            activity_type: str | None,
+            activity_id: UUID | None,
+        ) -> UUID:
+            if activity_id:
+                result = await self.db.execute(
+                    select(Activity).where(Activity.id == activity_id)
+                )
+                activity = result.scalar_one_or_none()
+                if activity:
+                    return activity.id
+                raise ActivityNotFoundError(
+                    str(activity_id), context="weekly_patterns.activity_id"
+                )
+
+            if not activity_type or not activity_type.strip():
+                raise ValueError("weekly pattern requires activity_type or activity_id")
+
+            normalized = activity_type.strip()
+            result = await self.db.execute(
+                select(Activity).where(
+                    or_(
+                        func.lower(Activity.code) == normalized.lower(),
+                        func.lower(Activity.display_abbreviation) == normalized.lower(),
+                        func.lower(Activity.name) == normalized.lower(),
+                    )
+                )
+            )
+            activity = result.scalar_one_or_none()
+            if not activity:
+                raise ActivityNotFoundError(
+                    normalized, context="weekly_patterns.activity_type"
+                )
+            return activity.id
+
         for pattern_data in patterns:
+            activity_id = await resolve_activity_id(
+                pattern_data.activity_type,
+                getattr(pattern_data, "activity_id", None),
+            )
             pattern = WeeklyPattern(
                 rotation_template_id=template_id,
                 day_of_week=pattern_data.day_of_week,
                 time_of_day=pattern_data.time_of_day,
                 activity_type=pattern_data.activity_type,
+                activity_id=activity_id,
                 linked_template_id=pattern_data.linked_template_id,
                 is_protected=pattern_data.is_protected,
                 notes=pattern_data.notes,

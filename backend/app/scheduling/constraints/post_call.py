@@ -30,15 +30,15 @@ from .base import (
     ConstraintResult,
     ConstraintType,
     ConstraintViolation,
-    HardConstraint,
     SchedulingContext,
+    SoftConstraint,
 )
 from .fmit import is_sun_thurs
 
 logger = logging.getLogger(__name__)
 
 
-class PostCallAutoAssignmentConstraint(HardConstraint):
+class PostCallAutoAssignmentConstraint(SoftConstraint):
     """
     Automatically assigns PCAT (AM) and DO (PM) after overnight call.
 
@@ -61,14 +61,32 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
     # Activity type identifiers
     PCAT_ACTIVITY = "PCAT"  # Post-Call Attending
     DO_ACTIVITY = "DO"  # Direct Observation
+    DEFAULT_WEIGHT = 35.0
 
-    def __init__(self) -> None:
+    def __init__(self, weight: float = DEFAULT_WEIGHT) -> None:
         """Initialize post-call auto-assignment constraint."""
         super().__init__(
             name="PostCallAutoAssignment",
             constraint_type=ConstraintType.CALL,
+            weight=weight,
             priority=ConstraintPriority.HIGH,
         )
+
+    def _is_exempt_block(
+        self,
+        faculty_id: Any,
+        block: Any,
+        context: SchedulingContext,
+    ) -> bool:
+        """Return True if the next-day block should be exempt from post-call."""
+        locked_blocks = getattr(context, "locked_blocks", set())
+        if (faculty_id, block.id) in locked_blocks:
+            return True
+        availability = getattr(context, "availability", {}) or {}
+        block_avail = availability.get(faculty_id, {}).get(block.id)
+        if block_avail and not block_avail.get("available", True):
+            return True
+        return False
 
     def add_to_cpsat(
         self,
@@ -80,13 +98,14 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
         Add post-call assignment constraints to CP-SAT model.
 
         For each Sun-Thurs overnight call assignment:
-        - Force PCAT for next day AM
-        - Force DO for next day PM
+        - Penalize missing PCAT for next day AM (soft)
+        - Penalize missing DO for next day PM (soft)
         """
         call_vars = variables.get("call_assignments", {})
-        template_vars = variables.get("template_assignments", {})
+        faculty_template_vars = variables.get("faculty_template_assignments", {})
+        objective_terms = variables.get("objective_terms", [])
 
-        if not call_vars or not template_vars:
+        if not call_vars or not faculty_template_vars:
             return
 
         # Find PCAT and DO templates
@@ -108,47 +127,93 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
         # Group blocks by date and time
         blocks_by_date_time = self._group_blocks_by_date_time(context)
 
-        # For each faculty and Sun-Thurs date
-        for faculty in context.faculty:
-            f_i = context.resident_idx.get(faculty.id)
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_by_idx = {i: fac for i, fac in enumerate(call_eligible_faculty)}
+        block_by_idx = {context.block_idx[b.id]: b for b in context.blocks}
+        # For each call variable, penalize missing next-day PCAT/DO
+        for (call_f_i, b_i, call_type), call_var in call_vars.items():
+            if call_type != "overnight":
+                continue
+
+            block = block_by_idx.get(b_i)
+            if not block or not is_sun_thurs(block.date):
+                continue
+
+            faculty = call_faculty_by_idx.get(call_f_i)
+            if not faculty:
+                continue
+
+            f_i = context.faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 
-            for block in context.blocks:
-                # Only Sun-Thurs for overnight call
-                if not is_sun_thurs(block.date):
-                    continue
+            next_day = block.date + timedelta(days=1)
 
-                b_i = context.block_idx[block.id]
+            # Find next day AM and PM blocks
+            am_blocks = blocks_by_date_time.get((next_day, "AM"), [])
+            pm_blocks = blocks_by_date_time.get((next_day, "PM"), [])
 
-                # Check if overnight call variable exists
-                if (f_i, b_i, "overnight") not in call_vars:
-                    continue
+            # If on call => next day AM should be PCAT (soft)
+            am_has_var = False
+            for am_block in am_blocks:
+                if self._is_exempt_block(faculty.id, am_block, context):
+                    am_has_var = False
+                    am_blocks = []
+                    break
+                am_b_i = context.block_idx[am_block.id]
+                key = (f_i, am_b_i, pcat_t_i)
+                if key in faculty_template_vars:
+                    am_has_var = True
+            if am_blocks:
+                if am_has_var:
+                    pcat_vars = [
+                        faculty_template_vars[(f_i, context.block_idx[b.id], pcat_t_i)]
+                        for b in am_blocks
+                        if (f_i, context.block_idx[b.id], pcat_t_i)
+                        in faculty_template_vars
+                    ]
+                    shortfall = model.NewIntVar(
+                        0,
+                        1,
+                        f"post_call_pcat_shortfall_{f_i}_{b_i}",
+                    )
+                    model.Add(sum(pcat_vars) + shortfall >= call_var)
+                    objective_terms.append((shortfall, int(self.weight)))
+                else:
+                    objective_terms.append((call_var, int(self.weight)))
 
-                call_var = call_vars[f_i, b_i, "overnight"]
-                next_day = block.date + timedelta(days=1)
+            # If on call => next day PM should be DO (soft)
+            pm_has_var = False
+            for pm_block in pm_blocks:
+                if self._is_exempt_block(faculty.id, pm_block, context):
+                    pm_has_var = False
+                    pm_blocks = []
+                    break
+                pm_b_i = context.block_idx[pm_block.id]
+                key = (f_i, pm_b_i, do_t_i)
+                if key in faculty_template_vars:
+                    pm_has_var = True
+            if pm_blocks:
+                if pm_has_var:
+                    do_vars = [
+                        faculty_template_vars[(f_i, context.block_idx[b.id], do_t_i)]
+                        for b in pm_blocks
+                        if (f_i, context.block_idx[b.id], do_t_i)
+                        in faculty_template_vars
+                    ]
+                    shortfall = model.NewIntVar(
+                        0,
+                        1,
+                        f"post_call_do_shortfall_{f_i}_{b_i}",
+                    )
+                    model.Add(sum(do_vars) + shortfall >= call_var)
+                    objective_terms.append((shortfall, int(self.weight)))
+                else:
+                    objective_terms.append((call_var, int(self.weight)))
 
-                # Find next day AM and PM blocks
-                am_blocks = blocks_by_date_time.get((next_day, "AM"), [])
-                pm_blocks = blocks_by_date_time.get((next_day, "PM"), [])
-
-                # If on call => next day AM must be PCAT
-                for am_block in am_blocks:
-                    am_b_i = context.block_idx[am_block.id]
-                    if (f_i, am_b_i, pcat_t_i) in template_vars:
-                        # call_var == 1 => pcat_var == 1
-                        model.AddImplication(
-                            call_var, template_vars[f_i, am_b_i, pcat_t_i]
-                        )
-
-                # If on call => next day PM must be DO
-                for pm_block in pm_blocks:
-                    pm_b_i = context.block_idx[pm_block.id]
-                    if (f_i, pm_b_i, do_t_i) in template_vars:
-                        # call_var == 1 => do_var == 1
-                        model.AddImplication(
-                            call_var, template_vars[f_i, pm_b_i, do_t_i]
-                        )
+        variables["objective_terms"] = objective_terms
 
     def add_to_pulp(
         self,
@@ -156,11 +221,12 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Add post-call assignment constraints to PuLP model."""
+        """Add post-call assignment constraints to PuLP model (soft)."""
         call_vars = variables.get("call_assignments", {})
-        template_vars = variables.get("template_assignments", {})
+        faculty_template_vars = variables.get("faculty_template_assignments", {})
+        objective_terms = variables.get("objective_terms", [])
 
-        if not call_vars or not template_vars:
+        if not call_vars or not faculty_template_vars:
             return
 
         pcat_template_id = self._find_template_id(context, self.PCAT_ACTIVITY)
@@ -178,43 +244,103 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
         blocks_by_date_time = self._group_blocks_by_date_time(context)
         constraint_count = 0
 
-        for faculty in context.faculty:
-            f_i = context.resident_idx.get(faculty.id)
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_by_idx = {i: fac for i, fac in enumerate(call_eligible_faculty)}
+        block_by_idx = {context.block_idx[b.id]: b for b in context.blocks}
+        for (call_f_i, b_i, call_type), call_var in call_vars.items():
+            if call_type != "overnight":
+                continue
+
+            block = block_by_idx.get(b_i)
+            if not block or not is_sun_thurs(block.date):
+                continue
+
+            faculty = call_faculty_by_idx.get(call_f_i)
+            if not faculty:
+                continue
+
+            f_i = context.faculty_idx.get(faculty.id)
             if f_i is None:
                 continue
 
-            for block in context.blocks:
-                if not is_sun_thurs(block.date):
-                    continue
+            next_day = block.date + timedelta(days=1)
 
-                b_i = context.block_idx[block.id]
-                if (f_i, b_i, "overnight") not in call_vars:
-                    continue
+            am_blocks = blocks_by_date_time.get((next_day, "AM"), [])
+            pm_blocks = blocks_by_date_time.get((next_day, "PM"), [])
 
-                call_var = call_vars[f_i, b_i, "overnight"]
-                next_day = block.date + timedelta(days=1)
+            am_has_var = False
+            for am_block in am_blocks:
+                if self._is_exempt_block(faculty.id, am_block, context):
+                    am_has_var = False
+                    am_blocks = []
+                    break
+                am_b_i = context.block_idx[am_block.id]
+                key = (f_i, am_b_i, pcat_t_i)
+                if key in faculty_template_vars:
+                    am_has_var = True
+            if am_blocks:
+                if am_has_var:
+                    import pulp
 
-                am_blocks = blocks_by_date_time.get((next_day, "AM"), [])
-                pm_blocks = blocks_by_date_time.get((next_day, "PM"), [])
+                    pcat_vars = [
+                        faculty_template_vars[(f_i, context.block_idx[b.id], pcat_t_i)]
+                        for b in am_blocks
+                        if (f_i, context.block_idx[b.id], pcat_t_i)
+                        in faculty_template_vars
+                    ]
+                    shortfall = pulp.LpVariable(
+                        f"post_call_pcat_shortfall_{f_i}_{b_i}",
+                        lowBound=0,
+                        upBound=1,
+                        cat=pulp.LpInteger,
+                    )
+                    model += (
+                        pulp.lpSum(pcat_vars) + shortfall >= call_var,
+                        f"post_call_pcat_soft_{f_i}_{b_i}_{constraint_count}",
+                    )
+                    objective_terms.append((shortfall, int(self.weight)))
+                    constraint_count += 1
+                else:
+                    objective_terms.append((call_var, int(self.weight)))
 
-                # Implication as linear constraint: pcat >= call
-                for am_block in am_blocks:
-                    am_b_i = context.block_idx[am_block.id]
-                    if (f_i, am_b_i, pcat_t_i) in template_vars:
-                        model += (
-                            template_vars[f_i, am_b_i, pcat_t_i] >= call_var,
-                            f"post_call_pcat_{f_i}_{b_i}_{constraint_count}",
-                        )
-                        constraint_count += 1
+            pm_has_var = False
+            for pm_block in pm_blocks:
+                if self._is_exempt_block(faculty.id, pm_block, context):
+                    pm_has_var = False
+                    pm_blocks = []
+                    break
+                pm_b_i = context.block_idx[pm_block.id]
+                key = (f_i, pm_b_i, do_t_i)
+                if key in faculty_template_vars:
+                    pm_has_var = True
+            if pm_blocks:
+                if pm_has_var:
+                    import pulp
 
-                for pm_block in pm_blocks:
-                    pm_b_i = context.block_idx[pm_block.id]
-                    if (f_i, pm_b_i, do_t_i) in template_vars:
-                        model += (
-                            template_vars[f_i, pm_b_i, do_t_i] >= call_var,
-                            f"post_call_do_{f_i}_{b_i}_{constraint_count}",
-                        )
-                        constraint_count += 1
+                    do_vars = [
+                        faculty_template_vars[(f_i, context.block_idx[b.id], do_t_i)]
+                        for b in pm_blocks
+                        if (f_i, context.block_idx[b.id], do_t_i)
+                        in faculty_template_vars
+                    ]
+                    shortfall = pulp.LpVariable(
+                        f"post_call_do_shortfall_{f_i}_{b_i}",
+                        lowBound=0,
+                        upBound=1,
+                        cat=pulp.LpInteger,
+                    )
+                    model += (
+                        pulp.lpSum(do_vars) + shortfall >= call_var,
+                        f"post_call_do_soft_{f_i}_{b_i}_{constraint_count}",
+                    )
+                    objective_terms.append((shortfall, int(self.weight)))
+                    constraint_count += 1
+                else:
+                    objective_terms.append((call_var, int(self.weight)))
+
+        variables["objective_terms"] = objective_terms
 
     def validate(
         self,
@@ -225,10 +351,11 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
         Validate post-call assignments.
 
         Checks that faculty with Sun-Thurs overnight call have:
-        - PCAT assigned for next day AM
-        - DO assigned for next day PM
+        - PCAT assigned for next day AM (soft)
+        - DO assigned for next day PM (soft)
         """
         violations: list[ConstraintViolation] = []
+        total_penalty = 0.0
 
         # Find overnight call assignments
         call_assignments = self._extract_call_assignments(assignments, context)
@@ -270,18 +397,31 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
             am_assignments = assignments_by_person_date_time.get(
                 (call_a.person_id, next_day, "AM"), []
             )
+            am_block = next(
+                (
+                    b
+                    for b in context.blocks
+                    if b.date == next_day and b.time_of_day == "AM"
+                ),
+                None,
+            )
             has_pcat = (
                 any(a.rotation_template_id == pcat_template_id for a in am_assignments)
                 if pcat_template_id
                 else False
             )
 
-            if not has_pcat and pcat_template_id:
+            if (
+                not has_pcat
+                and pcat_template_id
+                and am_block
+                and not self._is_exempt_block(faculty.id, am_block, context)
+            ):
                 violations.append(
                     ConstraintViolation(
                         constraint_name=self.name,
                         constraint_type=self.constraint_type,
-                        severity="HIGH",
+                        severity="MEDIUM",
                         message=f"{faculty.name} on call {block.date} missing PCAT assignment for {next_day} AM",
                         person_id=faculty.id,
                         block_id=call_a.block_id,
@@ -297,18 +437,31 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
             pm_assignments = assignments_by_person_date_time.get(
                 (call_a.person_id, next_day, "PM"), []
             )
+            pm_block = next(
+                (
+                    b
+                    for b in context.blocks
+                    if b.date == next_day and b.time_of_day == "PM"
+                ),
+                None,
+            )
             has_do = (
                 any(a.rotation_template_id == do_template_id for a in pm_assignments)
                 if do_template_id
                 else False
             )
 
-            if not has_do and do_template_id:
+            if (
+                not has_do
+                and do_template_id
+                and pm_block
+                and not self._is_exempt_block(faculty.id, pm_block, context)
+            ):
                 violations.append(
                     ConstraintViolation(
                         constraint_name=self.name,
                         constraint_type=self.constraint_type,
-                        severity="HIGH",
+                        severity="MEDIUM",
                         message=f"{faculty.name} on call {block.date} missing DO assignment for {next_day} PM",
                         person_id=faculty.id,
                         block_id=call_a.block_id,
@@ -320,9 +473,13 @@ class PostCallAutoAssignmentConstraint(HardConstraint):
                     )
                 )
 
+        if violations:
+            total_penalty = self.get_penalty(len(violations))
+
         return ConstraintResult(
             satisfied=len(violations) == 0,
             violations=violations,
+            penalty=total_penalty,
         )
 
     def _find_template_id(

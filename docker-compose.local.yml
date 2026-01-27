@@ -129,8 +129,7 @@ services:
       - backend_local_venv:/app/venv
     networks:
       - app-network
-    # Entrypoint handles migrations + uvicorn; just pass --reload for dev
-    command: ["--reload"]
+    # Use Dockerfile.local CMD (uvicorn --reload)
 
   # ===========================================================================
   # Celery Worker (Background Tasks)
