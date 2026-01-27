@@ -47,8 +47,8 @@ from app.utils.academic_blocks import get_block_dates
 from app.utils.activity_locking import is_activity_preloaded
 from app.utils.activity_naming import activity_code_from_name
 from app.utils.fmc_capacity import (
-    activity_is_proc_or_vas,
     activity_counts_toward_fmc_capacity,
+    activity_counts_toward_fmc_capacity_for_template,
     activity_is_sm_capacity,
     assignment_counts_toward_fmc_capacity,
 )
@@ -66,8 +66,6 @@ RESIDENT_CLINIC_CODES = {"FM_CLINIC", "C", "C-N", "CV"}
 AT_COVERAGE_CODES = {"AT", "PCAT"}
 SUPERVISION_REQUIRED_CODES = {"PROC", "PR", "PROCEDURE", "VAS"}
 ADMIN_ACTIVITY_CODES = {"GME": "gme", "DFM": "dfm", "SM": "sm_clinic"}
-FMC_TEMPLATE_ABBREVS = {"C", "C-AM", "C-PM", "CONT", "CONTINUITY"}
-FMC_CLINIC_CODES = {"C", "C-N", "C-I", "FM_CLINIC"}
 FACULTY_CLINIC_SHORTFALL_PENALTY = 10
 FACULTY_ADMIN_BONUS = 1
 PHYSICAL_CAPACITY_SOFT_PENALTY = 10
@@ -536,7 +534,7 @@ class CPSATActivitySolver:
                 activity = activity_by_id.get(act_id)
                 if not activity:
                     continue
-                if self._counts_toward_fmc_capacity(activity, template):
+                if activity_counts_toward_fmc_capacity_for_template(activity, template):
                     capacity_ids.append(act_id)
                     if activity_is_sm_capacity(activity):
                         sm_ids.append(act_id)
@@ -1365,8 +1363,10 @@ class CPSATActivitySolver:
                     activity = activity_by_id.get(act_id)
                     template = templates_by_id.get(slot_meta[s_i].get("template_id"))
                     slot.activity_id = act_id
-                    slot.counts_toward_fmc_capacity = self._counts_toward_fmc_capacity(
-                        activity, template
+                    slot.counts_toward_fmc_capacity = (
+                        activity_counts_toward_fmc_capacity_for_template(
+                            activity, template
+                        )
                     )
                     slot.source = AssignmentSource.SOLVER.value
                     updated += 1
@@ -1674,30 +1674,6 @@ class CPSATActivitySolver:
             template_code,
             base_template_code,
         }
-
-    def _template_is_fmc_clinic(self, template: RotationTemplate | None) -> bool:
-        """Return True if the template represents FMC continuity clinic."""
-        if not template:
-            return False
-        abbrev = (template.display_abbreviation or template.abbreviation or "").strip()
-        return abbrev.upper() in FMC_TEMPLATE_ABBREVS
-
-    def _counts_toward_fmc_capacity(
-        self, activity: Activity | None, template: RotationTemplate | None
-    ) -> bool:
-        """Return True if this activity counts toward FMC capacity for this template."""
-        if not activity:
-            return False
-        code = (activity.code or "").strip().upper()
-        if activity_is_sm_capacity(activity):
-            return True
-        if activity_is_proc_or_vas(activity):
-            return True
-        if code in {"V1", "V2", "V3"}:
-            return True
-        if code in FMC_CLINIC_CODES:
-            return self._template_is_fmc_clinic(template)
-        return False
 
     def _get_faculty_clinic_caps(self, faculty: Person) -> tuple[int, int]:
         """Return (min, max) weekly clinic half-days for a faculty member."""

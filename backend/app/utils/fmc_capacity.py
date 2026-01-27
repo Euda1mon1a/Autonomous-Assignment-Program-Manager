@@ -6,11 +6,18 @@ from typing import Iterable
 
 from app.models.activity import Activity
 from app.models.half_day_assignment import HalfDayAssignment
+from app.models.rotation_template import RotationTemplate
 
 
 def _normalize_code(code: str | None) -> str:
     return (code or "").strip().upper()
 
+
+# Templates that represent FMC continuity clinic.
+FMC_TEMPLATE_ABBREVS = {"C", "C-AM", "C-PM", "CONT", "CONTINUITY"}
+
+# Clinic activity codes that *may* represent FMC continuity depending on template.
+FMC_CLINIC_CODES = {"C", "C-N", "C-I", "FM_CLINIC"}
 
 # Activities that consume FMC physical capacity (room/screener constraint).
 # CV (virtual clinic) explicitly excluded.
@@ -40,14 +47,41 @@ def activity_is_sm_capacity(activity: Activity | None) -> bool:
     if not activity:
         return False
     code = _normalize_code(activity.code)
-    return code in SM_CAPACITY_CODES
+    display = _normalize_code(activity.display_abbreviation)
+    return code in SM_CAPACITY_CODES or display in SM_CAPACITY_CODES
 
 
 def activity_is_proc_or_vas(activity: Activity | None) -> bool:
     if not activity:
         return False
     code = _normalize_code(activity.code)
-    return code in PROC_VAS_CODES
+    display = _normalize_code(activity.display_abbreviation)
+    return code in PROC_VAS_CODES or display in PROC_VAS_CODES
+
+
+def template_is_fmc_clinic(template: RotationTemplate | None) -> bool:
+    if not template:
+        return False
+    abbrev = (template.display_abbreviation or template.abbreviation or "").strip()
+    return abbrev.upper() in FMC_TEMPLATE_ABBREVS
+
+
+def activity_counts_toward_fmc_capacity_for_template(
+    activity: Activity | None, template: RotationTemplate | None
+) -> bool:
+    if not activity:
+        return False
+    if activity_is_sm_capacity(activity):
+        return True
+    if activity_is_proc_or_vas(activity):
+        return True
+    code = _normalize_code(activity.code)
+    display = _normalize_code(activity.display_abbreviation)
+    if code in {"V1", "V2", "V3"} or display in {"V1", "V2", "V3"}:
+        return True
+    if code in FMC_CLINIC_CODES or display in FMC_CLINIC_CODES:
+        return template_is_fmc_clinic(template)
+    return False
 
 
 def activity_counts_toward_fmc_capacity(activity: Activity | None) -> bool:
