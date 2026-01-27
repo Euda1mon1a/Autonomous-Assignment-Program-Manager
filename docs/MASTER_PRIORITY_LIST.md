@@ -524,6 +524,100 @@ coverage constraints will under/over-count demand.
 
 **Action:** Add `[MOCK]` prefix to tool descriptions until backend services exist.
 
+### 28. Exception Handling Audit (NEW - Blind Spot Assessment)
+**Added:** 2026-01-27
+**Source:** Blind spot assessment (`.claude/plans/deep-foraging-starfish.md`)
+**Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+Found 20+ instances of exception swallowing pattern:
+```python
+except Exception as e:
+    logger.error(f"Something failed: {e}")
+    # continues execution  ← silent failure
+```
+
+**Affected files:**
+- `solver_control.py` - 8 instances
+- `free_energy_integration.py` - 3 instances
+- `solvers.py` - several instances
+
+**Risk:** Silent failures hide bugs until downstream effects appear. Errors logged but not surfaced.
+
+**Medical analogy:** Like logging critical lab values to a file nobody checks - patient continues until they code.
+
+**Fix options:**
+1. **Fail loudly:** `raise` after logging (crash on error)
+2. **Explicit recovery:** Document and handle specific exceptions with fallbacks
+
+**Action:** Audit each `except Exception` and decide: fatal or explicit recovery?
+
+**Effort:** 4-6 hours
+
+### 29. Transaction Boundary Audit (NEW - Blind Spot Assessment)
+**Added:** 2026-01-27
+**Source:** Blind spot assessment (`.claude/plans/deep-foraging-starfish.md`)
+**Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+`engine.py` has 13+ calls to `commit()`, `flush()`, `rollback()` scattered throughout, suggesting:
+1. Transaction boundaries evolved organically
+2. Partial commits possible (some data saved, some not)
+3. Rollback may not undo everything expected
+
+**Risk:** Partial schedule commits = data corruption worse than no schedule.
+
+**Medical analogy:** Surgery where power fails mid-procedure - organ removed but nothing closed.
+
+**Files:**
+- `backend/app/scheduling/engine.py` - 13+ transaction calls
+- `backend/app/scheduling/activity_solver.py` - 1 flush
+
+**Fix:**
+1. Map all commit/rollback calls in engine.py
+2. Identify transaction boundaries
+3. Ensure atomic operations (all-or-nothing)
+
+**Effort:** 4-6 hours
+
+### 30. Async/Sync Documentation Fix (NEW - Blind Spot Assessment)
+**Added:** 2026-01-27
+**Source:** Blind spot assessment (`.claude/plans/deep-foraging-starfish.md`)
+**Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+`BEST_PRACTICES_AND_GOTCHAS.md` states "All database operations MUST be async" but:
+- `activity_solver.py` uses sync `Session` (intentionally)
+- `engine.py` uses sync `Session` (intentionally)
+
+**This is correct behavior** - scheduler is CPU-bound (like surgery), not I/O-bound. But docs don't reflect this.
+
+**Medical analogy:** API = ED attending (multitask). Scheduler = Surgeon (blocking is expected).
+
+**Fix:** Update `docs/development/BEST_PRACTICES_AND_GOTCHAS.md` Section 4 to clarify:
+- API layer: async required
+- Scheduler: sync intentional (CPU-bound work)
+
+**Effort:** 30 minutes
+
+### 31. CP-SAT Pipeline Integration Tests (NEW - Blind Spot Assessment)
+**Added:** 2026-01-27
+**Source:** Blind spot assessment (`.claude/plans/deep-foraging-starfish.md`)
+**Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+The MCP validation `await` bug wasn't caught by unit tests - found by operational testing.
+
+**Gap:**
+- Unit tests: pass (functions exist, logic correct in isolation)
+- Integration tests: sparse (components interacting)
+- End-to-end: manual (Codex operational testing)
+
+**Medical analogy:** Unit tests = in vitro (cells in dish). Integration tests = in vivo (whole organism). You can have all proteins working but still have disease.
+
+**Fix:**
+1. Add integration test that actually calls MCP validation against real backend
+2. Add integration test that runs full CP-SAT pipeline on test data
+3. Include in CI pipeline
+
+**Effort:** 4-8 hours
+
 ---
 
 ## LOW (Backlog)
@@ -725,9 +819,9 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 |----------|------|----------|
 | **CRITICAL** | 3 | 5 |
 | **HIGH** | 9 | 6 |
-| **MEDIUM** | 11 | 11 |
+| **MEDIUM** | 15 | 11 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **36** | **25** |
+| **TOTAL** | **40** | **25** |
 
 ### Top 5 Actions for Next Session
 
@@ -736,6 +830,17 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 3. **Add DB-Schema Drift Tests** (HIGH #11) - Prevent 12+ more models drifting
 4. **Add Resilience Route Tests** (HIGH #12) - 59 untested safety-critical endpoints
 5. **Merge bandit-config branch** (HIGH #7) - Security scanner ready, needs PR
+
+### Blind Spot Assessment Items (2026-01-27)
+
+| # | Item | Effort | Priority |
+|---|------|--------|----------|
+| 28 | Exception Handling Audit | 4-6h | MEDIUM |
+| 29 | Transaction Boundary Audit | 4-6h | MEDIUM |
+| 30 | Async/Sync Doc Fix | 30m | MEDIUM |
+| 31 | CP-SAT Integration Tests | 4-8h | MEDIUM |
+
+**Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
 
 ### Session 142 Updates (2026-01-26)
 

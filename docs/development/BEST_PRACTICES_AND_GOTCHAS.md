@@ -339,7 +339,16 @@ def get_person(db: Session, person_id: UUID) -> Person | None:  # Don't use sync
 
 ### Golden Rule
 
-**All database operations MUST be async.** No exceptions.
+**All API layer database operations MUST be async.**
+
+**Exception:** The scheduling engine (`engine.py`, `activity_solver.py`) intentionally uses sync sessions because:
+1. Scheduler is **CPU-bound** (solving math), not I/O-bound (waiting for data)
+2. Runs in **background tasks**, not blocking the API event loop
+3. Async overhead provides **no benefit** for compute-intensive work
+
+**Medical analogy:** API = ED attending (multitask, never wait). Scheduler = Surgeon (one procedure at a time, blocking is expected).
+
+> **Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
 
 ### Common Mistakes
 
