@@ -301,9 +301,7 @@ class HalfDayRequirementConstraint(SoftConstraint):
             return
 
         templates_by_rotation_type = self._get_template_ids_by_rotation_type(context)
-        fm_clinic_ids = templates_by_rotation_type.get(
-            "outpatient", set()
-        ) | templates_by_rotation_type.get("clinic", set())
+        fm_clinic_ids = templates_by_rotation_type.get("outpatient", set())
 
         # For each rotation template with requirements, create distribution targets
         for template_id, req in self._requirements.items():

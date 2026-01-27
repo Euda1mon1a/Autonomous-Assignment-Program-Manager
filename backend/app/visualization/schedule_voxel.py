@@ -572,7 +572,7 @@ def transform_schedule_to_voxels(
 
     Example usage:
         grid = transform_schedule_to_voxels(
-            assignments=[{"person_id": "...", "block_id": "...", "rotation_type": "clinic"}],
+            assignments=[{"person_id": "...", "block_id": "...", "rotation_type": "outpatient"}],
             persons=[{"id": "...", "name": "Dr. Smith", "type": "faculty"}],
             blocks=[{"id": "...", "date": "2024-01-15", "time_of_day": "AM"}],
         )

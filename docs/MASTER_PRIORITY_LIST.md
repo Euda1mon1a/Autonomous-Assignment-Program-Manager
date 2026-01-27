@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-26 (Block 10 CP-SAT regen status + rotation_type naming)
+> **Last Updated:** 2026-01-27 (Block 10 CP-SAT regen status + rotation_type normalization)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -161,27 +161,33 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 
 ## HIGH (Address Soon)
 
-### 4. Block 10 Schedule Generation - FAILED (Activity Solver Capacity)
+### 4. Block 10 Schedule Generation - FAILED (Activity Solver)
 **Status:** CP-SAT ✅ | Activity Solver ❌ | Backend Export ⚠️ (partial) | Frontend Export ⚠️ (see #1)
 
-**Latest Run (2026-01-26):**
+**Latest Run (2026-01-27):**
 - CP-SAT solver generated **617** rotation assignments + **20** call nights
-- Activity solver failed: **minimum clinic demand 15-16 > hard cap 8** for **35/40** slots
+- Activity solver status: **INFEASIBLE** after **0.78s**
+- Outpatient slots to assign: **872**
+- Activity requirements: **607 constraints** added; many **min requirements clamped** to availability
+- Supervision activity sets: **required=15**, **providers=4** (fallbacks false)
+- Physical capacity constraints applied to **40/40** time slots (soft 6 / hard 8)
 - Post-run: **partial schedule** (preloads + solver slots without activities)
-- Call assignments: **20**
 
 **Root Cause Observed:**
-- Outpatient rotations allow **only capacity-coded activities** (C/PROC/SM/VAS; CV excluded), so every outpatient slot counts toward clinic capacity
-- With 15-16 resident slots per half-day, **hard cap 8 is infeasible**
+- Activity solver infeasibility persists **after** FMC-capacity refactor and rotation_type normalization.
+- Need constraint-level diagnostics to isolate whether the blocker is:
+  - FMC physical capacity, or
+  - supervision coverage, or
+  - per-template activity requirements vs available slots.
 
 **References:**
-- `docs/reports/block10-cpsat-run-20260126.md`
+- `docs/reports/block10-cpsat-run-20260127.md`
 - `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md`
 
 **Immediate Action:**
-1. Decide whether PROC/VAS should count for residents or only faculty.
-2. Add at least one **non-capacity** activity option to outpatient rotations (or relax requirements).
-3. Re-run `scripts/ops/block_regen.py` and verify activity solver status != error.
+1. Add **activity solver infeasibility diagnostics** (slot/constraint attribution).
+2. Inspect **clamped min requirements** (e.g., activity_id `24998...`) and align min/availability.
+3. Verify **supervision coverage math** for FMC activities (AT demand vs providers).
 
 ### 5. ACGME Compliance Validation Gaps
 Call duty and performance profiling have edge cases:

@@ -2101,8 +2101,8 @@ class SchedulingEngine:
 
             The "outpatient" rotation_type includes elective/selective rotations
             (Neurology, ID, Palliative, etc.) that use half-day scheduling.
-            Note: "clinic" is a separate rotation_type for FM Clinic (FMC) which
-            has its own capacity and supervision constraints.
+            FMC continuity clinic is modeled as Activities (fm_clinic, C, C-N),
+            not as a separate rotation_type.
 
             See backend/app/scheduling/solvers.py header for architecture details.
         """

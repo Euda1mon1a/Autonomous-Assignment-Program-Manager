@@ -170,7 +170,7 @@ class IntegratedWorkloadConstraint(SoftConstraint):
     def _is_clinic_assignment(
         self, assignment: Any, context: SchedulingContext
     ) -> bool:
-        """Check if assignment is clinic (outpatient/clinic activity)."""
+        """Check if assignment is outpatient rotation."""
         if not hasattr(assignment, "rotation_template_id"):
             return False
 
@@ -178,7 +178,7 @@ class IntegratedWorkloadConstraint(SoftConstraint):
         for template in context.templates:
             if template.id == assignment.rotation_template_id:
                 rotation_type = getattr(template, "rotation_type", "")
-                return rotation_type in ("outpatient", "clinic", "fm_clinic")
+                return rotation_type == "outpatient"
 
         return False
 

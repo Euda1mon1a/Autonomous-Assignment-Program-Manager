@@ -84,8 +84,11 @@ class RotationTemplateService:
             self.db.refresh(obj)
 
     async def _ensure_activity_for_template(self, template: RotationTemplate) -> None:
-        """Create a specialty activity for outpatient/clinic templates if missing."""
-        if (template.rotation_type or "").lower() not in ("clinic", "outpatient"):
+        """Create a specialty activity for outpatient templates if missing."""
+        if (
+            template.template_category != "rotation"
+            or (template.rotation_type or "").lower() != "outpatient"
+        ):
             return
 
         code = activity_code_from_name(template.name)
@@ -118,7 +121,7 @@ class RotationTemplateService:
             is_protected=False,
             counts_toward_clinical_hours=True,
             provides_supervision=False,
-            counts_toward_physical_capacity=True,
+            counts_toward_physical_capacity=False,
             display_order=0,
         )
         self.db.add(activity)

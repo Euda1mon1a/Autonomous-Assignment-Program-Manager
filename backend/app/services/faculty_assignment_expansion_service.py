@@ -37,6 +37,11 @@ from app.models.activity import Activity
 from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
 from app.models.person import Person
 from app.utils.academic_blocks import get_block_dates
+from app.utils.fmc_capacity import (
+    activity_counts_toward_fmc_capacity,
+    activity_is_proc_or_vas,
+    slot_fmc_capacity,
+)
 
 logger = get_logger(__name__)
 
@@ -67,9 +72,9 @@ AT_DEMAND_BY_PGY: dict[int, float] = {
     3: 0.25,
 }
 
-# Physical capacity: max people in clinic per slot
+# Physical capacity: hard cap per slot (soft cap handled elsewhere)
 # AT doesn't count - supervision doesn't take exam room space
-MAX_PHYSICAL_CAPACITY = 6
+MAX_PHYSICAL_CAPACITY = 8
 
 
 class FacultyAssignmentExpansionService:
@@ -560,17 +565,7 @@ class FacultyAssignmentExpansionService:
     def _counts_toward_capacity(self, activity: Activity | None) -> bool:
         if not activity:
             return False
-        if activity.counts_toward_physical_capacity:
-            return True
-        code = self._normalize_code(activity.code)
-        abbrev = self._normalize_abbrev(activity.display_abbreviation)
-        return code in {"fm_clinic", "c", "c-n", "cv", "pr", "vas"} or abbrev in {
-            "C",
-            "C-N",
-            "CV",
-            "PR",
-            "VAS",
-        }
+        return activity_counts_toward_fmc_capacity(activity)
 
     def _provides_supervision(self, activity: Activity | None) -> bool:
         if not activity:
@@ -578,11 +573,7 @@ class FacultyAssignmentExpansionService:
         return activity.is_supervision
 
     def _is_proc_or_vas(self, activity: Activity | None) -> bool:
-        if not activity:
-            return False
-        code = self._normalize_code(activity.code)
-        abbrev = self._normalize_abbrev(activity.display_abbreviation)
-        return code in {"pr", "vas"} or abbrev in {"PR", "VAS"}
+        return activity_is_proc_or_vas(activity)
 
     def _week_index_by_date(self, start_date: date, end_date: date) -> dict[date, int]:
         """Map each date to a 0-based week index anchored at start_date."""
@@ -609,10 +600,17 @@ class FacultyAssignmentExpansionService:
             .where(HalfDayAssignment.date >= start_date)
             .where(HalfDayAssignment.date <= end_date)
         )
-        capacity_by_slot: dict[tuple[date, str], int] = defaultdict(int)
+        slot_assignments: dict[tuple[date, str], list[HalfDayAssignment]] = defaultdict(
+            list
+        )
         for assignment in self.db.execute(stmt).scalars():
-            if self._counts_toward_capacity(assignment.activity):
-                capacity_by_slot[(assignment.date, assignment.time_of_day)] += 1
+            slot_assignments[(assignment.date, assignment.time_of_day)].append(
+                assignment
+            )
+
+        capacity_by_slot: dict[tuple[date, str], int] = {}
+        for key, assignments in slot_assignments.items():
+            capacity_by_slot[key] = slot_fmc_capacity(assignments)
         return capacity_by_slot
 
     def _calculate_existing_supervision(
@@ -927,10 +925,17 @@ class FacultyAssignmentExpansionService:
             .where(HalfDayAssignment.date <= end_date)
         )
 
-        capacity_by_slot: dict[tuple[date, str], int] = defaultdict(int)
+        slot_assignments: dict[tuple[date, str], list[HalfDayAssignment]] = defaultdict(
+            list
+        )
         for assignment in self.db.execute(stmt).scalars():
-            if self._counts_toward_capacity(assignment.activity):
-                capacity_by_slot[(assignment.date, assignment.time_of_day)] += 1
+            slot_assignments[(assignment.date, assignment.time_of_day)].append(
+                assignment
+            )
+
+        capacity_by_slot: dict[tuple[date, str], int] = {}
+        for key, assignments in slot_assignments.items():
+            capacity_by_slot[key] = slot_fmc_capacity(assignments)
 
         return capacity_by_slot
 

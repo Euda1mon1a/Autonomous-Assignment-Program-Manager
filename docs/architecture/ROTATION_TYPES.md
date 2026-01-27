@@ -6,25 +6,26 @@ This document defines the rotation types (categories) and how the scheduling eng
 
 ## Overview
 
-Rotation templates are classified by `rotation_type` to determine whether the solver manages them or they are preserved as immutable pre-seeded assignments.
+Rotation templates are classified by `rotation_type` to determine whether the solver manages them or they are preserved as immutable pre-seeded assignments. For **rotation templates**, `rotation_type` is **only** `inpatient` or `outpatient`.
 
-| Rotation Type | Solver Manages? | Count | Description |
-|---------------|-----------------|-------|-------------|
-| `outpatient` | **Yes** | 16 | Clinic rotations - solver optimizes coverage |
-| `procedures` | **Yes** | 6 | Procedure half-days - solver assigns |
-| `inpatient` | No - Preserved | 23 | Hospital rotations - pre-seeded from block schedule |
-| `off` | No - Preserved | 5 | Off-site rotations - different hospitals |
-| `education` | No - Preserved | 5 | Orientation, GME, lectures |
-| `absence` | No - Preserved | 4 | Leave, weekend |
-| `recovery` | No - Preserved | 1 | Post-call recovery |
+| Rotation Type | Solver Manages? | Description |
+|---------------|-----------------|-------------|
+| `outpatient` | **Yes** | Outpatient rotations (includes procedure templates) |
+| `inpatient` | No - Preserved | Hospital rotations - pre-seeded from block schedule |
+| `off` | No - Preserved | Off-site rotations - different hospitals |
+| `education` | No - Preserved | Orientation, GME, lectures |
+| `absence` | No - Preserved | Leave, weekend |
+| `recovery` | No - Preserved | Post-call recovery |
 
 ---
 
 ## Solver-Managed Types
 
-### `outpatient` (16 templates)
+### `outpatient`
 
-Clinic rotations that the solver optimizes for coverage and equity.
+Outpatient rotations that the solver optimizes for coverage and equity. This
+includes **procedure** templates (PROC/VAS/etc.), which are outpatient rotations
+in the rotation_type model.
 
 ```
 Clinic AM                    CLI-AM
@@ -44,21 +45,6 @@ Direct Observation PM       DOB-PM
 Department of Family Medicine AM  DFM-AM
 Department of Family Medicine PM  DFM-PM
 ```
-
-### `procedures` (6 templates)
-
-Procedure slots assigned by the solver.
-
-```
-Procedure AM    PRO-AM
-Procedure PM    PRO-PM
-Botox AM        BOT-AM
-Botox PM        BOT-PM
-Vasectomy AM    VAS-AM
-Vasectomy PM    VAS-PM
-```
-
----
 
 ## Preserved Types (Immutable)
 

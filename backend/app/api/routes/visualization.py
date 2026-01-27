@@ -553,11 +553,11 @@ async def get_3d_voxel_grid(
             # Try to infer rotation type from override name
             override_lower = a.activity_override.lower()
             if "clinic" in override_lower:
-                rotation_type = "clinic"
+                rotation_type = "outpatient"
             elif "inpatient" in override_lower or "ward" in override_lower:
                 rotation_type = "inpatient"
             elif "proc" in override_lower:
-                rotation_type = "procedure"
+                rotation_type = "outpatient"
             elif "call" in override_lower:
                 rotation_type = "call"
             elif "leave" in override_lower or "off" in override_lower:

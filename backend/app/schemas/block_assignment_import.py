@@ -207,7 +207,7 @@ class QuickTemplateCreateRequest(BaseModel):
     )
     rotation_type: str = Field(
         "outpatient",
-        description="Rotation type (clinic, inpatient, procedures, etc.)",
+        description="Rotation type (outpatient, inpatient, education, off, etc.)",
     )
     leave_eligible: bool = Field(True, description="Whether rotation is leave-eligible")
 
@@ -215,19 +215,22 @@ class QuickTemplateCreateRequest(BaseModel):
     @classmethod
     def validate_rotation_type(cls, v: str) -> str:
         """Validate rotation type."""
-        valid = [
-            "clinic",
+        aliases = {
+            "clinic": "outpatient",
+            "procedure": "outpatient",
+            "procedures": "outpatient",
+        }
+        valid = {
             "inpatient",
             "outpatient",
-            "procedures",
-            "call",
             "education",
             "off",
             "conference",
-        ]
-        if v.lower() not in valid:
-            raise ValueError(f"rotation_type must be one of {valid}")
-        return v.lower()
+        }
+        normalized = aliases.get(v.lower(), v.lower())
+        if normalized not in valid:
+            raise ValueError(f"rotation_type must be one of {sorted(valid)}")
+        return normalized
 
 
 class QuickTemplateCreateResponse(BaseModel):

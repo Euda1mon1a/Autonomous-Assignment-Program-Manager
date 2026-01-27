@@ -73,7 +73,7 @@ class AssignmentService:
             end_date: Filter assignments on or before this date.
             person_id: Filter by the assigned person's UUID.
             role: Filter by assignment role (e.g., 'resident', 'faculty').
-            rotation_type: Filter by rotation type (e.g., 'clinic', 'inpatient').
+            rotation_type: Filter by rotation type (e.g., 'inpatient', 'outpatient').
             offset: Number of records to skip for pagination.
             limit: Maximum number of records to return.
 

@@ -37,10 +37,10 @@ class RotationTemplate(Base):
     # Rotation category/setting (not an Activity). Used for solver filtering + constraints.
     rotation_type = Column(
         String(255), nullable=False
-    )  # "clinic", "inpatient", "outpatient", "procedure", "procedures", "conference", "education", "lecture", "absence", "off", "recovery"
+    )  # rotation: inpatient|outpatient; non-rotation categories: off|absence|recovery|education|conference|lecture
 
     # Template category for UI grouping and filtering
-    # - rotation: Clinical work (clinic, inpatient, outpatient, procedure)
+    # - rotation: Clinical work (inpatient, outpatient)
     # - time_off: ACGME-protected rest (off, recovery)
     # - absence: Days away from program (absence rotation type)
     # - educational: Structured learning (conference, education, lecture)

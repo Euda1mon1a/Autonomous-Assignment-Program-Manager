@@ -82,7 +82,7 @@ async def list_rotation_templates(
     By default, archived templates are excluded. Use include_archived=true to see all templates.
 
     Args:
-        rotation_type: Filter by rotation category (e.g., 'clinic', 'inpatient')
+        rotation_type: Filter by rotation category (e.g., 'outpatient', 'inpatient')
         include_archived: Include archived templates (default: False)
         db: Database session
         current_user: Current authenticated user
@@ -295,7 +295,7 @@ async def batch_create_rotation_templates(
         ```json
         {
           "templates": [
-            {"name": "New Clinic", "rotation_type": "clinic"},
+            {"name": "New Outpatient", "rotation_type": "outpatient"},
             {"name": "New Inpatient", "rotation_type": "inpatient"}
           ],
           "dry_run": false

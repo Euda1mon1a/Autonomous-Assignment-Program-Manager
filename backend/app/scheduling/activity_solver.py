@@ -43,6 +43,10 @@ from app.models.rotation_template import RotationTemplate
 from app.utils.academic_blocks import get_block_dates
 from app.utils.activity_locking import is_activity_preloaded
 from app.utils.activity_naming import activity_code_from_name, activity_display_abbrev
+from app.utils.fmc_capacity import (
+    activity_counts_toward_fmc_capacity,
+    activity_is_sm_capacity,
+)
 
 logger = get_logger(__name__)
 
@@ -56,7 +60,7 @@ DEFAULT_WEEKLY_SPECIALTY_MAX = 4
 BLOCK_HALF_DAY = 14
 
 # Rotation types considered outpatient for activity solving
-OUTPATIENT_ACTIVITY_TYPES = {"clinic", "outpatient"}
+OUTPATIENT_ACTIVITY_TYPES = {"outpatient"}
 
 # Clinic/supervision codes for activity-level constraints (legacy fallback)
 RESIDENT_CLINIC_CODES = {"FM_CLINIC", "C", "C-N", "CV"}
@@ -66,23 +70,6 @@ ADMIN_ACTIVITY_CODES = {"GME": "gme", "DFM": "dfm", "SM": "sm_clinic"}
 FACULTY_CLINIC_SHORTFALL_PENALTY = 10
 FACULTY_ADMIN_BONUS = 1
 PHYSICAL_CAPACITY_SOFT_PENALTY = 10
-CAPACITY_ACTIVITY_CODES = {
-    "C",
-    "C-N",
-    "C-I",
-    "V1",
-    "V2",
-    "V3",
-    "FM_CLINIC",
-    "PROC",
-    "PR",
-    "PROCEDURE",
-    "VAS",
-    "SM",
-    "SM_CLINIC",
-    "ASM",
-}
-SM_CAPACITY_CODES = {"SM", "SM_CLINIC", "ASM"}
 
 
 class CPSATActivitySolver:
@@ -242,6 +229,7 @@ class CPSATActivitySolver:
             a for a in all_activities if not is_activity_preloaded(a)
         ]
         assignable_ids = {a.id for a in assignable_activities}
+        template_locked_ids = {a.id for a in all_activities if is_activity_preloaded(a)}
         if not assignable_ids:
             return {
                 "success": False,
@@ -262,8 +250,8 @@ class CPSATActivitySolver:
         supervision_required_ids = {
             activity.id
             for activity in all_activities
-            if activity.requires_supervision
-            and activity.activity_category == "clinical"
+            if activity.activity_category == "clinical"
+            and activity_counts_toward_fmc_capacity(activity)
         }
         supervision_provider_ids = {
             activity.id for activity in all_activities if activity.provides_supervision
@@ -300,12 +288,16 @@ class CPSATActivitySolver:
                 "status": "error",
                 "message": "Missing supervision-providing activities (AT/PCAT/DO)",
             }
-        capacity_activity_ids = self._activity_ids_for_codes(
-            all_activities, CAPACITY_ACTIVITY_CODES
-        )
-        sm_capacity_ids = self._activity_ids_for_codes(
-            all_activities, SM_CAPACITY_CODES
-        )
+        capacity_activity_ids = {
+            activity.id
+            for activity in all_activities
+            if activity_counts_toward_fmc_capacity(activity)
+        }
+        sm_capacity_ids = {
+            activity.id
+            for activity in all_activities
+            if activity_is_sm_capacity(activity)
+        }
 
         # Create the CP model
         model = cp_model.CpModel()
@@ -313,10 +305,16 @@ class CPSATActivitySolver:
         # Build allowed activity sets per template
         allowed_by_template: dict[UUID, list[UUID]] = {}
         for template_id, reqs in requirements_by_template.items():
+            template = templates_by_id.get(template_id)
             allowed_ids = []
             for req in reqs:
-                if req.activity_id in assignable_ids and not is_activity_preloaded(
-                    req.activity
+                if req.activity_id in assignable_ids:
+                    allowed_ids.append(req.activity_id)
+                    continue
+                if (
+                    req.activity_id in template_locked_ids
+                    and template
+                    and self._activity_matches_template(req.activity, template)
                 ):
                     allowed_ids.append(req.activity_id)
             # Deduplicate while preserving order
@@ -760,25 +758,12 @@ class CPSATActivitySolver:
             key = (slot.date, slot.time_of_day)
             slot_groups[key].append(s_i)
 
-        def _capacity_ids_for_person(person_type: str | None) -> set[UUID]:
-            if person_type == "faculty":
-                return capacity_activity_ids
-            return capacity_activity_ids - sm_capacity_ids
-
-        def _counts_toward_capacity(
-            activity_id: UUID | None, person_type: str | None
-        ) -> bool:
-            if not activity_id:
-                return False
-            if activity_id not in capacity_activity_ids:
-                return False
-            if activity_id in sm_capacity_ids and person_type != "faculty":
-                return False
-            return True
+        non_sm_capacity_ids = capacity_activity_ids - sm_capacity_ids
 
         # Baseline occupancy from locked/preloaded slots not in solver
         slot_ids = {slot.id for slot in slots}
-        baseline_capacity: dict[tuple[date, str], int] = defaultdict(int)
+        baseline_non_sm: dict[tuple[date, str], int] = defaultdict(int)
+        baseline_sm_present: dict[tuple[date, str], int] = defaultdict(int)
         baseline_stmt = (
             select(HalfDayAssignment)
             .options(selectinload(HalfDayAssignment.person))
@@ -790,9 +775,12 @@ class CPSATActivitySolver:
         for assignment in self.session.execute(baseline_stmt).scalars():
             if assignment.id in slot_ids:
                 continue  # handled by solver
-            person_type = assignment.person.type if assignment.person else None
-            if _counts_toward_capacity(assignment.activity_id, person_type):
-                baseline_capacity[(assignment.date, assignment.time_of_day)] += 1
+            activity_id = assignment.activity_id
+            if activity_id in sm_capacity_ids:
+                baseline_sm_present[(assignment.date, assignment.time_of_day)] = 1
+                continue
+            if activity_id in non_sm_capacity_ids:
+                baseline_non_sm[(assignment.date, assignment.time_of_day)] += 1
 
         # For each time slot, sum(clinical activities) + baseline <= HARD
         clinical_activity_ids = capacity_activity_ids.intersection(assignable_ids)
@@ -806,25 +794,42 @@ class CPSATActivitySolver:
                 if slot_date.weekday() >= 5:
                     continue
 
-                # Sum of clinical assignments for this slot
-                slot_clinic_sum = sum(
+                # Sum of non-SM clinical assignments for this slot
+                slot_non_sm_sum = sum(
                     a[s_i, act_id]
                     for s_i in slot_indices
                     for act_id in slot_allowed[s_i]
-                    if _counts_toward_capacity(
-                        act_id, slot_meta[s_i].get("person_type")
-                    )
+                    if act_id in non_sm_capacity_ids
                 )
 
-                baseline = baseline_capacity.get((slot_date, time_of_day), 0)
-                forced_capacity = sum(
-                    1
+                sm_vars = [
+                    a[s_i, act_id]
                     for s_i in slot_indices
-                    if set(slot_allowed[s_i]).issubset(
-                        _capacity_ids_for_person(slot_meta[s_i].get("person_type"))
+                    for act_id in slot_allowed[s_i]
+                    if act_id in sm_capacity_ids
+                ]
+                sm_present = 0
+                if sm_vars:
+                    sm_present = model.NewBoolVar(
+                        f"sm_present_{slot_date.strftime('%Y%m%d')}_{time_of_day}"
                     )
+                    model.AddMaxEquality(sm_present, sm_vars)
+
+                baseline = baseline_non_sm.get((slot_date, time_of_day), 0)
+                baseline_sm = baseline_sm_present.get((slot_date, time_of_day), 0)
+                forced_non_sm = 0
+                forced_sm = False
+                for s_i in slot_indices:
+                    allowed = set(slot_allowed[s_i])
+                    if not allowed or not allowed.issubset(capacity_activity_ids):
+                        continue
+                    if allowed.issubset(sm_capacity_ids):
+                        forced_sm = True
+                    else:
+                        forced_non_sm += 1
+                min_required = (
+                    forced_non_sm + (1 if forced_sm else 0) + baseline + baseline_sm
                 )
-                min_required = forced_capacity + baseline
                 if min_required > HARD_PHYSICAL_CAPACITY:
                     overhard_groups += 1
                     if len(overhard_examples) < 5:
@@ -833,7 +838,9 @@ class CPSATActivitySolver:
                         )
                     continue
 
-                total_clinic = slot_clinic_sum + baseline
+                total_clinic = slot_non_sm_sum + baseline + baseline_sm
+                if sm_vars:
+                    total_clinic += sm_present
 
                 # Hard constraint: at most 8 in clinic per slot
                 model.Add(total_clinic <= HARD_PHYSICAL_CAPACITY)
@@ -953,7 +960,11 @@ class CPSATActivitySolver:
         for s_i, slot in enumerate(slots):
             for act_id in slot_allowed[s_i]:
                 if solver.Value(a[s_i, act_id]) == 1:
+                    activity = activity_by_id.get(act_id)
                     slot.activity_id = act_id
+                    slot.counts_toward_fmc_capacity = (
+                        activity_counts_toward_fmc_capacity(activity)
+                    )
                     slot.source = AssignmentSource.SOLVER.value
                     updated += 1
                     break
@@ -999,6 +1010,27 @@ class CPSATActivitySolver:
             if code in normalized or abbrev in normalized:
                 matched.add(activity.id)
         return matched
+
+    def _activity_matches_template(
+        self, activity: Activity | None, template: RotationTemplate
+    ) -> bool:
+        """Return True if activity corresponds to the rotation template itself."""
+        if not activity:
+            return False
+        template_abbrev = (template.abbreviation or "").strip().upper()
+        base_abbrev = template_abbrev.replace("-AM", "").replace("-PM", "")
+        template_name = (template.name or "").strip().upper()
+        base_name = template_name.replace(" AM", "").replace(" PM", "")
+
+        activity_abbrev = (activity.display_abbreviation or "").strip().upper()
+        activity_code = (activity.code or "").strip().upper()
+        template_code = activity_code_from_name(template.name).upper()
+        base_template_code = activity_code_from_name(base_name).upper()
+
+        return activity_abbrev in {base_abbrev, base_name} or activity_code in {
+            template_code,
+            base_template_code,
+        }
 
     def _get_faculty_clinic_caps(self, faculty: Person) -> tuple[int, int]:
         """Return (min, max) weekly clinic half-days for a faculty member."""
@@ -1132,7 +1164,7 @@ class CPSATActivitySolver:
             code=code,
             display_abbreviation=display_abbrev,
             activity_category=ActivityCategory.CLINICAL.value,
-            counts_toward_physical_capacity=True,
+            counts_toward_physical_capacity=False,
             font_color=template.font_color,
             background_color=template.background_color,
         )
@@ -1147,8 +1179,6 @@ class CPSATActivitySolver:
 
         for template_id, template in templates_by_id.items():
             existing = requirements_by_template.get(template_id, [])
-            if existing:
-                continue
             if (template.rotation_type or "").lower() not in OUTPATIENT_ACTIVITY_TYPES:
                 continue
 
@@ -1161,39 +1191,66 @@ class CPSATActivitySolver:
             )
             specialty_activity = self._ensure_rotation_activity(template)
 
-            reqs: list[RotationActivityRequirement] = []
-            for week in (1, 2, 3, 4):
-                reqs.append(
-                    RotationActivityRequirement(
-                        rotation_template_id=template.id,
-                        activity_id=clinic_activity.id,
-                        min_halfdays=DEFAULT_WEEKLY_C_MIN,
-                        max_halfdays=DEFAULT_WEEKLY_C_MAX,
-                        applicable_weeks=[week],
-                        prefer_full_days=True,
-                        priority=80,
+            if not existing:
+                reqs: list[RotationActivityRequirement] = []
+                for week in (1, 2, 3, 4):
+                    reqs.append(
+                        RotationActivityRequirement(
+                            rotation_template_id=template.id,
+                            activity_id=clinic_activity.id,
+                            min_halfdays=DEFAULT_WEEKLY_C_MIN,
+                            max_halfdays=DEFAULT_WEEKLY_C_MAX,
+                            applicable_weeks=[week],
+                            prefer_full_days=True,
+                            priority=80,
+                        )
                     )
-                )
-                reqs.append(
-                    RotationActivityRequirement(
-                        rotation_template_id=template.id,
-                        activity_id=specialty_activity.id,
-                        min_halfdays=DEFAULT_WEEKLY_SPECIALTY_MIN,
-                        max_halfdays=DEFAULT_WEEKLY_SPECIALTY_MAX,
-                        applicable_weeks=[week],
-                        prefer_full_days=True,
-                        priority=80,
+                    reqs.append(
+                        RotationActivityRequirement(
+                            rotation_template_id=template.id,
+                            activity_id=specialty_activity.id,
+                            min_halfdays=DEFAULT_WEEKLY_SPECIALTY_MIN,
+                            max_halfdays=DEFAULT_WEEKLY_SPECIALTY_MAX,
+                            applicable_weeks=[week],
+                            prefer_full_days=True,
+                            priority=80,
+                        )
                     )
+
+                self.session.add_all(reqs)
+                self.session.flush()
+                requirements_by_template[template_id] = reqs
+                created += len(reqs)
+
+                logger.info(
+                    f"Created default activity requirements for template {template.name}"
                 )
+                continue
 
-            self.session.add_all(reqs)
-            self.session.flush()
-            requirements_by_template[template_id] = reqs
-            created += len(reqs)
-
-            logger.info(
-                f"Created default activity requirements for template {template.name}"
+            has_specialty = any(
+                req.activity_id == specialty_activity.id for req in existing
             )
+            if not has_specialty:
+                reqs = []
+                for week in (1, 2, 3, 4):
+                    reqs.append(
+                        RotationActivityRequirement(
+                            rotation_template_id=template.id,
+                            activity_id=specialty_activity.id,
+                            min_halfdays=0,
+                            max_halfdays=DEFAULT_WEEKLY_SPECIALTY_MAX,
+                            applicable_weeks=[week],
+                            prefer_full_days=True,
+                            priority=80,
+                        )
+                    )
+                self.session.add_all(reqs)
+                self.session.flush()
+                requirements_by_template[template_id] = existing + reqs
+                created += len(reqs)
+                logger.info(
+                    f"Added specialty activity requirements for template {template.name}"
+                )
 
         if created:
             logger.info(f"Created {created} default activity requirements")

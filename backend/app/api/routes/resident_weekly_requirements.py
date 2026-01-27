@@ -439,7 +439,7 @@ async def apply_outpatient_defaults(
     # Query templates
     query = select(RotationTemplate).where(
         RotationTemplate.is_archived == False,
-        RotationTemplate.rotation_type.in_(["outpatient", "clinic"]),
+        RotationTemplate.rotation_type == "outpatient",
     )
 
     if template_ids:

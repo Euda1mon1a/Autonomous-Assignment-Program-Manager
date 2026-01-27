@@ -20,6 +20,11 @@ from app.models.activity import Activity
 from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
 from app.models.person import Person
 from app.utils.academic_blocks import get_block_dates
+from app.utils.fmc_capacity import (
+    activity_is_proc_or_vas,
+    assignment_counts_toward_fmc_capacity,
+    slot_fmc_capacity,
+)
 
 logger = get_logger(__name__)
 
@@ -267,8 +272,7 @@ class HalfDayScheduleService:
         """
         Calculate physical capacity for a slot.
 
-        Max 6 people doing clinical work (C) per half-day.
-        AT does NOT count toward this limit.
+        FMC physical capacity (soft 6 / hard 8) per half-day.
 
         Args:
             date_val: Date
@@ -279,20 +283,19 @@ class HalfDayScheduleService:
         """
         stmt = (
             select(HalfDayAssignment)
-            .join(HalfDayAssignment.activity)
+            .options(selectinload(HalfDayAssignment.activity))
             .where(
                 and_(
                     HalfDayAssignment.date == date_val,
                     HalfDayAssignment.time_of_day == time_of_day,
-                    Activity.counts_toward_physical_capacity == True,
                 )
             )
         )
         result = await self.session.execute(stmt)
-        clinical_assignments = result.scalars().all()
+        assignments = result.scalars().all()
 
-        count = len(clinical_assignments)
-        max_capacity = 6
+        count = slot_fmc_capacity(assignments)
+        max_capacity = 8
 
         return {
             "date": date_val,
@@ -348,13 +351,11 @@ class HalfDayScheduleService:
             if not a.person or a.person.type != "resident":
                 continue
 
-            activity_code = a.activity.code if a.activity else ""
-
             # PROC/VAS = +1.0 AT
-            if activity_code in ("PR", "VAS"):
+            if activity_is_proc_or_vas(a.activity):
                 demand += 1.0
             # Regular clinic based on PGY
-            elif a.activity and a.activity.counts_toward_physical_capacity:
+            elif assignment_counts_toward_fmc_capacity(a):
                 pgy = a.person.pgy_level or 1
                 if pgy == 1:
                     demand += 0.5

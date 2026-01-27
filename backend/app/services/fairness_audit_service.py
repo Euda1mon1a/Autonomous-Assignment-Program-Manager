@@ -248,7 +248,7 @@ class FairnessAuditService:
                             workload.fmit_weeks += 1
 
                 # Count clinic
-                if rotation_type in ("outpatient", "clinic", "fm_clinic"):
+                if rotation_type == "outpatient":
                     workload.clinic_halfdays += 1
 
                 # Count admin

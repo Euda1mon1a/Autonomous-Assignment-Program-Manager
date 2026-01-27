@@ -34,10 +34,13 @@ Key model: `backend/app/models/rotation_template.py`.
 
 ### RotationTemplate.rotation_type
 
-This field is a **category label for the rotation**, not an Activity.
+This field is a **category/setting label for the rotation**, not an Activity.
 
 - It is used for **solver filtering** and **constraint selection**.
-- Examples: `outpatient`, `inpatient`, `conference`, `education`, `off`, `absence`, `recovery`.
+- For **rotation templates** (`template_category = rotation`), the only valid
+  values are **`inpatient`** or **`outpatient`**.
+- For **non-rotation templates** (time_off/absence/educational), rotation_type
+  reflects the category (`off`, `absence`, `recovery`, `education`, etc.).
 
 **Rule:** rotation_type is a *subset/category of the rotation* and never the
 Activity itself.
@@ -52,12 +55,15 @@ Key model: `backend/app/models/activity.py`.
 
 ### Clinic vs Outpatient (terminology)
 
-- **Outpatient** = rotation category for elective/selective half‑day schedules
-  (weekday, no inpatient coverage).
-- **Clinic** = rotation category for continuity clinic (FMC) with dedicated
-  capacity/supervision constraints.
+- **Outpatient** = rotation setting (`rotation_type = outpatient`) for rotations
+  whose half-days are **solved** (not preloaded).
+- **Clinic** = an **Activity** for **Family Medicine Clinic (FMC)** continuity
+  sessions (`fm_clinic`, `C`, `C-N`, etc.).
 - **Activity types** are slot‑level (e.g., `fm_clinic`, `specialty`, `procedure`,
   `conference`). They live inside a rotation’s weekly pattern.
+
+**Important:** `fm_clinic` is **not** a placeholder for “outpatient.” It means
+**FMC continuity clinic** specifically.
 
 ## Assignments (realized activities)
 
@@ -86,8 +92,18 @@ AcademicYear
 
 ### Solver behavior (important)
 
-- The CP-SAT half-day solver defaults to **RotationTemplate.rotation_type = outpatient**.
-- Inpatient/away rotations are preloaded (locked) before solver runs.
+- The CP-SAT half-day solver only assigns **outpatient rotations**
+  (`rotation_type = outpatient`, `template_category = rotation`).
+- **Inpatient rotations** and **non-rotation templates** (off/absence/recovery/
+  education) are preloaded/locked before the solver runs.
+
+### FMC physical capacity (activity-level)
+
+- Physical capacity is **assignment-level**, not rotation-level.
+- `HalfDayAssignment.counts_toward_fmc_capacity = true` means the slot consumes
+  **FMC physical capacity**.
+- **SM** (resident supervision) counts as **1** per slot regardless of how many
+  learners are assigned.
 
 Sources:
 - `backend/app/scheduling/engine.py` (`_get_rotation_templates`)

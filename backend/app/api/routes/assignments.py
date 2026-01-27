@@ -34,7 +34,7 @@ async def list_assignments(
     role: str | None = Query(None, description="Filter by role"),
     rotation_type: str | None = Query(
         None,
-        description="Filter by rotation type (e.g., clinic, inpatient, outpatient)",
+        description="Filter by rotation type (e.g., inpatient, outpatient)",
     ),
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(100, ge=1, le=5000, description="Items per page (max 5000)"),
@@ -49,7 +49,7 @@ async def list_assignments(
         end_date: Filter assignments ending on or before this date.
         person_id: Filter assignments for a specific person.
         role: Filter by assignment role.
-        rotation_type: Filter by rotation type (e.g., 'clinic', 'inpatient', 'outpatient').
+        rotation_type: Filter by rotation type (e.g., 'inpatient', 'outpatient').
         page: Page number (1-indexed).
         page_size: Number of items per page (max 500).
         db: Database session.
