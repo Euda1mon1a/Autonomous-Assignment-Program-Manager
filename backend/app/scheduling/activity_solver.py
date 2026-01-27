@@ -51,6 +51,7 @@ from app.utils.fmc_capacity import (
     activity_counts_toward_fmc_capacity_for_template,
     activity_is_sm_capacity,
     assignment_counts_toward_fmc_capacity,
+    template_is_fmc_clinic,
 )
 
 logger = get_logger(__name__)
@@ -75,6 +76,14 @@ ACTIVITY_MAX_OVERAGE_PENALTY = 20
 CLINIC_MAX_OVERAGE_PENALTY = 40
 AT_COVERAGE_SHORTFALL_PENALTY = 50
 SM_ALIGNMENT_SHORTFALL_PENALTY = 30
+CV_TARGET_NUMERATOR = 3
+CV_TARGET_DENOMINATOR = 10
+CV_TARGET_SHORTFALL_PENALTY = 25
+CV_PENALTY_BY_ROLE = {
+    "faculty": 0,
+    "pgy3": 5,
+    "pgy2": 15,
+}
 
 
 class CPSATActivitySolver:
@@ -104,6 +113,25 @@ class CPSATActivitySolver:
         self._assignment_rotation_map: dict[
             tuple[UUID, date, str], RotationTemplate
         ] = {}
+
+    def _is_fmc_clinic_activity(self, activity: Activity | None) -> bool:
+        if not activity:
+            return False
+        code = (activity.code or "").strip().upper()
+        display = (activity.display_abbreviation or "").strip().upper()
+        return code in {"C", "C-N", "C-I", "FM_CLINIC"} or display in {
+            "C",
+            "C-N",
+            "C-I",
+            "FM_CLINIC",
+        }
+
+    def _is_cv_activity(self, activity: Activity | None) -> bool:
+        if not activity:
+            return False
+        code = (activity.code or "").strip().upper()
+        display = (activity.display_abbreviation or "").strip().upper()
+        return code == "CV" or display == "CV"
 
     def solve(
         self,
@@ -345,6 +373,7 @@ class CPSATActivitySolver:
         clinic_activity = self._get_activity_by_code(
             "fm_clinic"
         ) or self._get_activity_by_code("C")
+        cv_activity = self._get_activity_by_code("CV")
         at_activity = self._get_activity_by_code("at") or self._get_activity_by_code(
             "AT"
         )
@@ -354,7 +383,8 @@ class CPSATActivitySolver:
             activity.id
             for activity in all_activities
             if activity.activity_category == "clinical"
-            and activity_counts_toward_fmc_capacity(activity)
+            and activity.requires_supervision
+            and not activity.provides_supervision
         }
         supervision_provider_ids = {
             activity.id for activity in all_activities if activity.provides_supervision
@@ -377,6 +407,7 @@ class CPSATActivitySolver:
         supervision_required_ids |= self._activity_ids_for_codes(
             all_activities, SUPERVISION_REQUIRED_CODES
         )
+        supervision_required_ids |= self._activity_ids_for_codes(all_activities, {"CV"})
         logger.info(
             "Supervision activity sets: required="
             f"{len(supervision_required_ids)}, providers="
@@ -464,6 +495,7 @@ class CPSATActivitySolver:
         a: dict[tuple[int, UUID], Any] = {}
         slot_allowed: dict[int, list[UUID]] = {}
         faculty_admin_activity_by_slot: dict[int, UUID] = {}
+        cv_penalty_terms: list[tuple[Any, int]] = []
 
         for s_i, slot in enumerate(slots):
             person_type = slot_meta[s_i].get("person_type")
@@ -502,17 +534,44 @@ class CPSATActivitySolver:
                     if clinic_activity and (max_c > 0 or min_c > 0):
                         if clinic_activity.id in assignable_ids:
                             allowed.append(clinic_activity.id)
+                            if (
+                                cv_activity
+                                and cv_activity.id in assignable_ids
+                                and cv_activity.id not in allowed
+                            ):
+                                allowed.append(cv_activity.id)
                 if not allowed:
                     allowed = list(faculty_allowed_ids)
             else:
-                allowed = allowed_by_template.get(template_id) if template_id else None
+                allowed = list(allowed_by_template.get(template_id) or [])
                 if not allowed:
                     if template_id:
                         logger.warning(
                             f"No activity requirements for template {template_id}, "
                             "falling back to all assignable activities"
                         )
-                    allowed = fallback_allowed
+                    allowed = list(fallback_allowed)
+                template = templates_by_id.get(template_id)
+                pgy_level = slot_meta[s_i].get("pgy_level") or 0
+                allow_cv = False
+                if (
+                    cv_activity
+                    and cv_activity.id in assignable_ids
+                    and template
+                    and template_is_fmc_clinic(template)
+                    and pgy_level >= 2
+                ):
+                    allow_cv = True
+                if cv_activity and cv_activity.id in allowed and not allow_cv:
+                    allowed = [act_id for act_id in allowed if act_id != cv_activity.id]
+                if allow_cv and cv_activity and cv_activity.id not in allowed:
+                    allowed.append(cv_activity.id)
+                if not allowed:
+                    allowed = list(fallback_allowed)
+                    if cv_activity and cv_activity.id in allowed and not allow_cv:
+                        allowed = [
+                            act_id for act_id in allowed if act_id != cv_activity.id
+                        ]
             slot_allowed[s_i] = allowed
 
             for act_id in allowed:
@@ -523,6 +582,22 @@ class CPSATActivitySolver:
                 )
                 safe_code = act_code.replace("-", "_")
                 a[s_i, act_id] = model.NewBoolVar(f"a_{s_i}_{safe_code}")
+
+            if cv_activity and cv_activity.id in allowed:
+                if (s_i, cv_activity.id) in a:
+                    penalty_weight = 0
+                    if person_type == "faculty":
+                        penalty_weight = CV_PENALTY_BY_ROLE["faculty"]
+                    else:
+                        pgy_level = slot_meta[s_i].get("pgy_level") or 0
+                        if pgy_level >= 3:
+                            penalty_weight = CV_PENALTY_BY_ROLE["pgy3"]
+                        elif pgy_level == 2:
+                            penalty_weight = CV_PENALTY_BY_ROLE["pgy2"]
+                    if penalty_weight > 0:
+                        cv_penalty_terms.append(
+                            (a[s_i, cv_activity.id], penalty_weight)
+                        )
 
         slot_capacity_ids: dict[int, list[UUID]] = {}
         slot_sm_capacity_ids: dict[int, list[UUID]] = {}
@@ -582,18 +657,34 @@ class CPSATActivitySolver:
         disable_physical_capacity = os.environ.get(
             "DISABLE_PHYSICAL_CAPACITY", ""
         ).lower() in {"1", "true", "yes"}
+        locked_cv_target_counts: dict[int, dict[str, int]] = defaultdict(
+            lambda: {"clinic": 0, "cv": 0}
+        )
+
         for locked in locked_slots:
             if not locked.activity_id:
                 continue
             week_number = self._get_week_number(locked.date, start_date)
             person_type = locked.person.type if locked.person else None
             slot_key = (locked.date, locked.time_of_day)
+            activity = activity_by_id.get(locked.activity_id)
+            is_cv = self._is_cv_activity(activity)
+            is_clinic = self._is_fmc_clinic_activity(activity)
+            pgy_level = (
+                locked.person.pgy_level
+                if locked.person and locked.person.pgy_level
+                else 2
+            )
 
             if person_type == "faculty":
                 if locked.activity_id in supervision_provider_ids:
                     baseline_faculty_coverage[slot_key] += 1
                 if clinic_activity and locked.activity_id == clinic_activity.id:
                     locked_faculty_clinic_counts[(locked.person_id, week_number)] += 1
+                if is_cv:
+                    locked_cv_target_counts[week_number]["cv"] += 1
+                elif is_clinic:
+                    locked_cv_target_counts[week_number]["clinic"] += 1
                 if (
                     sm_clinic_activity
                     and locked.activity_id == sm_clinic_activity.id
@@ -603,13 +694,13 @@ class CPSATActivitySolver:
                     baseline_sm_faculty_coverage[slot_key] += 1
             else:
                 if locked.activity_id in supervision_required_ids:
-                    pgy_level = (
-                        locked.person.pgy_level
-                        if locked.person and locked.person.pgy_level
-                        else 2
-                    )
                     demand_units = 2 if pgy_level == 1 else 1
                     baseline_resident_demand[slot_key] += demand_units
+                if pgy_level == 3:
+                    if is_cv:
+                        locked_cv_target_counts[week_number]["cv"] += 1
+                    elif is_clinic and assignment_counts_toward_fmc_capacity(locked):
+                        locked_cv_target_counts[week_number]["clinic"] += 1
 
             template = self._get_active_rotation_template(locked, start_date)
             if not template:
@@ -744,7 +835,15 @@ class CPSATActivitySolver:
                     and clinic_activity
                     and entry["activity_id"] == clinic_activity.id
                 ):
-                    if min_target > 0 and vars_for_req:
+                    pgy_level = slot_meta[slot_indices[0]].get("pgy_level") or 0
+                    cv_allowed = bool(
+                        cv_activity
+                        and any(
+                            cv_activity.id in slot_allowed[s_i] for s_i in slot_indices
+                        )
+                    )
+                    enforce_floor = pgy_level == 1 or not cv_allowed
+                    if enforce_floor and min_target > 0 and vars_for_req:
                         hard_min = min(1, len(vars_for_req))
                         model.Add(sum(vars_for_req) >= hard_min)
 
@@ -822,6 +921,70 @@ class CPSATActivitySolver:
                     )
                     model.Add(sum(clinic_vars) + shortfall >= min_needed)
                     faculty_clinic_shortfalls.append(shortfall)
+
+        # ==================================================
+        # CV TARGET (faculty + PGY-3) per week
+        # Applies to FMC clinic assignments only
+        # ==================================================
+        cv_target_shortfalls: list[Any] = []
+        if cv_activity and clinic_activity:
+            clinic_id = clinic_activity.id
+            cv_id = cv_activity.id
+            cv_terms_by_week: dict[int, dict[str, list[Any]]] = defaultdict(
+                lambda: {"clinic": [], "cv": []}
+            )
+            for s_i, meta in slot_meta.items():
+                week = meta.get("week")
+                if week is None:
+                    continue
+                person_type = meta.get("person_type")
+                if person_type == "faculty":
+                    if clinic_id not in slot_allowed.get(s_i, []):
+                        continue
+                else:
+                    pgy_level = meta.get("pgy_level") or 0
+                    if pgy_level != 3:
+                        continue
+                    template = templates_by_id.get(meta.get("template_id"))
+                    if not template or not template_is_fmc_clinic(template):
+                        continue
+
+                allowed = slot_allowed.get(s_i, [])
+                if clinic_id in allowed and (s_i, clinic_id) in a:
+                    cv_terms_by_week[week]["clinic"].append(a[s_i, clinic_id])
+                if cv_id in allowed and (s_i, cv_id) in a:
+                    cv_terms_by_week[week]["cv"].append(a[s_i, cv_id])
+
+            for week, terms in cv_terms_by_week.items():
+                locked_counts = locked_cv_target_counts.get(
+                    week, {"clinic": 0, "cv": 0}
+                )
+                if (
+                    not terms["clinic"]
+                    and not terms["cv"]
+                    and not locked_counts["clinic"]
+                    and not locked_counts["cv"]
+                ):
+                    continue
+                locked_clinic = locked_counts["clinic"]
+                locked_cv = locked_counts["cv"]
+                total_clinic = (
+                    sum(terms["clinic"]) + sum(terms["cv"]) + locked_clinic + locked_cv
+                )
+                cv_count = sum(terms["cv"]) + locked_cv
+                max_terms = (
+                    len(terms["clinic"]) + len(terms["cv"]) + locked_clinic + locked_cv
+                )
+                shortfall = model.NewIntVar(
+                    0,
+                    CV_TARGET_NUMERATOR * max_terms,
+                    f"cv_shortfall_week_{week}",
+                )
+                model.Add(
+                    CV_TARGET_DENOMINATOR * cv_count + shortfall
+                    >= CV_TARGET_NUMERATOR * total_clinic
+                )
+                cv_target_shortfalls.append(shortfall)
 
         # ==================================================
         # ACGME AT COVERAGE (faculty supervision)
@@ -1017,6 +1180,7 @@ class CPSATActivitySolver:
             enforced_groups = 0
             overhard_groups = 0
             overhard_examples: list[str] = []
+            overhard_details: list[dict[str, Any]] = []
             for (slot_date, time_of_day), slot_indices in slot_groups.items():
                 # Skip weekends
                 if slot_date.weekday() >= 5:
@@ -1067,6 +1231,22 @@ class CPSATActivitySolver:
                         overhard_examples.append(
                             f"{slot_date} {time_of_day} min={min_required}"
                         )
+                    overhard_details.append(
+                        self._build_physical_capacity_detail(
+                            slot_date=slot_date,
+                            time_of_day=time_of_day,
+                            slot_indices=slot_indices,
+                            slot_meta=slot_meta,
+                            slot_allowed=slot_allowed,
+                            slot_capacity_ids=slot_capacity_ids,
+                            slot_sm_capacity_ids=slot_sm_capacity_ids,
+                            activity_by_id=activity_by_id,
+                            templates_by_id=templates_by_id,
+                            baseline_non_sm=baseline,
+                            baseline_sm=baseline_sm,
+                            min_required=min_required,
+                        )
+                    )
                     continue
 
                 total_clinic = slot_non_sm_sum + baseline + baseline_sm
@@ -1099,6 +1279,24 @@ class CPSATActivitySolver:
                     f"{len(slot_groups)} slots have minimum clinic demand above "
                     f"hard {HARD_PHYSICAL_CAPACITY}. Examples: {examples}"
                 )
+                self._write_failure_snapshot(
+                    {
+                        "stage": "capacity",
+                        "status": "error",
+                        "block_number": block_number,
+                        "academic_year": academic_year,
+                        "start_date": str(start_date),
+                        "end_date": str(end_date),
+                        "capacity": {
+                            "hard_limit": HARD_PHYSICAL_CAPACITY,
+                            "soft_limit": SOFT_PHYSICAL_CAPACITY,
+                            "slot_groups": len(slot_groups),
+                            "overhard_groups": overhard_groups,
+                            "examples": overhard_examples,
+                            "details": overhard_details[:10],
+                        },
+                    }
+                )
                 return {
                     "success": False,
                     "assignments_updated": 0,
@@ -1107,6 +1305,7 @@ class CPSATActivitySolver:
                         "Physical capacity infeasible (min clinic demand exceeds hard "
                         f"{HARD_PHYSICAL_CAPACITY})"
                     ),
+                    "details": overhard_details,
                 }
 
             if enforced_groups:
@@ -1193,6 +1392,20 @@ class CPSATActivitySolver:
 
         if sm_shortfalls:
             penalty = sum(sm_shortfalls) * SM_ALIGNMENT_SHORTFALL_PENALTY
+            objective_expr = (
+                objective_expr - penalty if objective_expr is not None else -penalty
+            )
+
+        if cv_penalty_terms:
+            penalties = [var * weight for var, weight in cv_penalty_terms]
+            if penalties:
+                penalty = sum(penalties)
+                objective_expr = (
+                    objective_expr - penalty if objective_expr is not None else -penalty
+                )
+
+        if cv_target_shortfalls:
+            penalty = sum(cv_target_shortfalls) * CV_TARGET_SHORTFALL_PENALTY
             objective_expr = (
                 objective_expr - penalty if objective_expr is not None else -penalty
             )
@@ -1450,6 +1663,84 @@ class CPSATActivitySolver:
             logger.error(f"Wrote activity failure snapshot to {path}")
         except Exception as exc:
             logger.error(f"Failed to write activity failure snapshot: {exc}")
+
+    @staticmethod
+    def _build_physical_capacity_detail(
+        *,
+        slot_date: date,
+        time_of_day: str,
+        slot_indices: list[int],
+        slot_meta: dict[int, dict[str, Any]],
+        slot_allowed: dict[int, list[UUID]],
+        slot_capacity_ids: dict[int, list[UUID]],
+        slot_sm_capacity_ids: dict[int, list[UUID]],
+        activity_by_id: dict[UUID, Activity],
+        templates_by_id: dict[UUID, RotationTemplate],
+        baseline_non_sm: int,
+        baseline_sm: int,
+        min_required: int,
+    ) -> dict[str, Any]:
+        """Return diagnostics for a single slot group that exceeds hard capacity."""
+        forced_non_sm = 0
+        forced_sm_slots = 0
+        forced_slots: list[dict[str, Any]] = []
+
+        for s_i in slot_indices:
+            allowed = set(slot_allowed.get(s_i, []))
+            if not allowed:
+                continue
+
+            capacity_allowed = set(slot_capacity_ids.get(s_i, []))
+            if not capacity_allowed or not allowed.issubset(capacity_allowed):
+                continue
+
+            sm_allowed = set(slot_sm_capacity_ids.get(s_i, []))
+            is_sm_only = bool(capacity_allowed) and capacity_allowed.issubset(
+                sm_allowed
+            )
+            if is_sm_only:
+                forced_sm_slots += 1
+            else:
+                forced_non_sm += 1
+
+            meta = slot_meta.get(s_i, {})
+            template_id = meta.get("template_id")
+            template = templates_by_id.get(template_id) if template_id else None
+
+            def _activity_label(act_id: UUID) -> str:
+                activity = activity_by_id.get(act_id)
+                if not activity:
+                    return str(act_id)
+                return activity.display_abbreviation or activity.code or str(act_id)
+
+            forced_slots.append(
+                {
+                    "slot_index": s_i,
+                    "person_id": str(meta.get("person_id")),
+                    "person_type": meta.get("person_type"),
+                    "template_id": str(template_id) if template_id else None,
+                    "template_name": getattr(template, "name", None),
+                    "allowed": [_activity_label(act_id) for act_id in allowed],
+                    "capacity_allowed": [
+                        _activity_label(act_id) for act_id in capacity_allowed
+                    ],
+                    "forced_sm_only": is_sm_only,
+                }
+            )
+
+        forced_sm_capacity = 1 if forced_sm_slots > 0 else 0
+
+        return {
+            "date": str(slot_date),
+            "time_of_day": time_of_day,
+            "baseline_non_sm": baseline_non_sm,
+            "baseline_sm": baseline_sm,
+            "forced_non_sm": forced_non_sm,
+            "forced_sm_slots": forced_sm_slots,
+            "forced_sm_capacity": forced_sm_capacity,
+            "min_required": min_required,
+            "forced_slots": forced_slots,
+        }
 
     @staticmethod
     def _build_at_coverage_diagnostics(

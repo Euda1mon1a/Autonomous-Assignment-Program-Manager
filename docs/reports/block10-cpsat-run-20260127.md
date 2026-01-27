@@ -1,14 +1,102 @@
 # Block 10 CP-SAT Regen + Activity Solver Report (2026-01-27)
 
-## Summary
+## Latest Run (Step 4: post-call soft + CV target includes locked slots)
+**Block window:** **2026-03-12 → 2026-04-08** (Block 10, **AY2025**).
+
+### Summary
+- **CP-SAT generation succeeded** with **589** solver assignments + **20** call nights.
+- **Activity solver succeeded** (OPTIMAL, ~0.13s, 455 activities).
+- **Physical capacity constraints applied** (soft 6 / hard 8) across **40/40** slots.
+- **CV target enforced** per week across **faculty + PGY‑3** in FMC clinic.
+- **PCAT/DO integrity check passed** (20 calls verified; **34** PCAT/DO slots synced).
+- **AT coverage shortfall total:** 0 (CP-SAT run).
+- **Activity min shortfall total:** 1 (soft penalty applied).
+
+### Command
+```
+DATABASE_URL=postgresql://scheduler:<local_db_password>@localhost:5432/residency_scheduler \
+  python3.11 scripts/ops/block_regen.py --block 10 --academic-year 2025 --timeout 300 --clear
+```
+
+### Console Highlights
+```
+... CP-SAT solver generated 589 rotation assignments and 20 call assignments
+... Synced 34 PCAT/DO slots to match new call assignments
+... Found 455 outpatient slots to assign
+... Added physical capacity constraints (soft 6, hard 8) for 40 of 40 time slots
+... Activity solver status: OPTIMAL (0.13s)
+... Activity min shortfall total: 1
+STATUS: partial
+SUMMARY COUNTS:
+  call_assignments: 20
+  half_day_assignments: 1296
+  hda_activity_at: 29
+  hda_activity_do: 16
+  hda_activity_pcat: 16
+  hda_source_preload: 841
+  hda_source_solver: 455
+  pcat_do_next_day: 2
+```
+
+### Notes
+- Inpatient rotations now preload clinic **from weekly patterns only** (C/C‑I/C‑N).
+- **CV is proactive** (not fallback): faculty/PGY‑3 FMC clinic slots can choose CV
+  with a **30% weekly target** (group‑level, includes locked preloads).
+- **CV still requires AT/PCAT coverage** (supervision demand decoupled from physical capacity).
+- **Clinic floor relaxed for CV‑eligible PGY‑2/3** (PGY‑1 still requires in‑person C).
+- CV usage in FMC clinic (faculty+PGY‑3): **17** assignments.
+- Weekly CV ratios (faculty+PGY‑3, FMC clinic only): **22.22% / 28.57% / 25.00% / 29.41%**.
+- Solver slots alone meet ~30.77% each week; **preloaded C slots reduce the
+  overall group ratio**.
+- Peak FMC physical capacity remains **8** at **2026‑04‑01 AM**.
+
+### MCP Validation (Local-Only)
+- **validate_schedule_range:** 10 issues (2 critical 80‑hour violations; 8 consecutive‑days warnings).
+- **detect_conflicts:** 26 conflicts (2 work‑hour, 8 rest‑period, 16 supervision gaps).
+- **validate_schedule_by_id:** 10 issues (2 critical, 8 warning).
+- **compliance tools** (`check_work_hours`, `check_day_off`, `check_supervision`, `get_violations`) returned empty data.
+- **generate_compliance_report** returned **404** (endpoint missing).
+- Full local outputs saved in:
+  - `docs/analysis/block10_mcp_validation_human_20260127.md`
+  - `docs/analysis/block10_mcp_validation_llm_20260127.md`
+
+---
+
+## Previous Run (Step 2b: intern continuity outpatient-only + CV excluded)
+**Block window:** **2026-03-12 → 2026-04-08** (Block 10, **AY2025**).
+
+### Summary
+- **CP-SAT generation succeeded** with **584** solver assignments + **20** call nights.
+- **Activity solver failed**: physical capacity infeasible (min clinic demand > hard 8).
+- **Snapshot written:** `/tmp/activity_failure_capacity_block10_ay2025_20260127T150159Z.json`
+- **PCAT/DO integrity check passed** (20 calls verified).
+- **Null activity_id rows:** 0 in `weekly_patterns`, 0 in `half_day_assignments`.
+
+### Console Highlights
+```
+... CP-SAT solver generated 584 rotation assignments and 20 call assignments
+... Synced 36 PCAT/DO slots to match new call assignments
+... Found 453 outpatient slots to assign
+... Physical capacity infeasible: 1 of 40 slots have minimum clinic demand above hard 8. Examples: 2026-04-01 AM min=10
+... Wrote activity failure snapshot to /tmp/activity_failure_capacity_block10_ay2025_20260127T150159Z.json
+```
+
+### Notes
+- Strict preload activity resolution surfaced missing **FMC → fm_clinic** mapping in sync preloads; fixed by adding `_ROTATION_TO_ACTIVITY` mapping.
+- Preload activity codes now fail fast on unknown codes (prevents silent NULL activity_id rows).
+
+---
+
+## Prior Run (pre-Step 1)
+**Block window:** **2027-03-11 → 2027-04-07** (Block 10, AY2026).
+
+### Summary
 - **CP-SAT generation succeeded** for Block 10 (AY2026) with **617** solver assignments + **20** call nights.
 - **Activity solver succeeded** with status **OPTIMAL** after **~0.24s**.
 - **Outpatient slots to assign:** 872
 - **Supervision sets:** required=15, providers=4 (no fallback)
 - **Physical capacity constraints:** soft 6 / hard 8 applied to **40/40** time slots (template‑aware FMC only).
 - **Export succeeded** via canonical pipeline to `/tmp/block10_export.xlsx`.
-
-Block window: **2027-03-11 → 2027-04-07** (Block 10, AY2026).
 
 ## Changes Applied Before Run
 - Normalized `rotation_type` for rotation templates to **inpatient/outpatient** (procedures → outpatient).
