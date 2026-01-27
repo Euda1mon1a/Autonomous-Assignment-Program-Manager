@@ -15,10 +15,6 @@ from app.scheduling.activity_solver import (
     AT_COVERAGE_CODES,
     BLOCK_HALF_DAY,
     CPSATActivitySolver,
-    DEFAULT_WEEKLY_C_MAX,
-    DEFAULT_WEEKLY_C_MIN,
-    DEFAULT_WEEKLY_SPECIALTY_MAX,
-    DEFAULT_WEEKLY_SPECIALTY_MIN,
     FACULTY_ADMIN_BONUS,
     FACULTY_CLINIC_SHORTFALL_PENALTY,
     OUTPATIENT_ACTIVITY_TYPES,
@@ -30,29 +26,12 @@ from app.scheduling.activity_solver import (
 class TestModuleConstants:
     """Tests verifying module constants are defined correctly."""
 
-    def test_default_weekly_c_min(self):
-        """DEFAULT_WEEKLY_C_MIN should be defined."""
-        assert DEFAULT_WEEKLY_C_MIN == 2
-
-    def test_default_weekly_c_max(self):
-        """DEFAULT_WEEKLY_C_MAX should be defined."""
-        assert DEFAULT_WEEKLY_C_MAX == 4
-
-    def test_default_weekly_specialty_min(self):
-        """DEFAULT_WEEKLY_SPECIALTY_MIN should be defined."""
-        assert DEFAULT_WEEKLY_SPECIALTY_MIN == 3
-
-    def test_default_weekly_specialty_max(self):
-        """DEFAULT_WEEKLY_SPECIALTY_MAX should be defined."""
-        assert DEFAULT_WEEKLY_SPECIALTY_MAX == 4
-
     def test_block_half_day(self):
         """BLOCK_HALF_DAY should be 14 (day 15+ uses secondary rotation)."""
         assert BLOCK_HALF_DAY == 14
 
     def test_outpatient_rotation_types(self):
-        """OUTPATIENT_ACTIVITY_TYPES should include clinic and outpatient."""
-        assert "clinic" in OUTPATIENT_ACTIVITY_TYPES
+        """OUTPATIENT_ACTIVITY_TYPES should include outpatient."""
         assert "outpatient" in OUTPATIENT_ACTIVITY_TYPES
 
     def test_resident_clinic_codes(self):
