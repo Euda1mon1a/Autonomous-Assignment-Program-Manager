@@ -93,7 +93,7 @@ services:
 
       # Redis
       REDIS_PASSWORD: local_dev_redis_pass
-      REDIS_URL: redis://:local_dev_redis_pass@redis:6379/0
+      REDIS_URL: redis://redis:6379/0
 
       # Celery
       CELERY_BROKER_URL: redis://:local_dev_redis_pass@redis:6379/0
@@ -129,13 +129,8 @@ services:
       - backend_local_venv:/app/venv
     networks:
       - app-network
-    command: >
-      sh -c "
-        echo 'Running database migrations...' &&
-        alembic upgrade head &&
-        echo 'Starting FastAPI development server with hot reload...' &&
-        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-      "
+    # Entrypoint handles migrations + uvicorn; just pass --reload for dev
+    command: ["--reload"]
 
   # ===========================================================================
   # Celery Worker (Background Tasks)
@@ -156,7 +151,7 @@ services:
     environment:
       DATABASE_URL: postgresql://scheduler:local_dev_password@db:5432/residency_scheduler
       REDIS_PASSWORD: local_dev_redis_pass
-      REDIS_URL: redis://:local_dev_redis_pass@redis:6379/0
+      REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://:local_dev_redis_pass@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:local_dev_redis_pass@redis:6379/0
       SECRET_KEY: local_dev_secret_key_not_for_production_use_only_12345678901234567890
@@ -196,7 +191,7 @@ services:
     environment:
       DATABASE_URL: postgresql://scheduler:local_dev_password@db:5432/residency_scheduler
       REDIS_PASSWORD: local_dev_redis_pass
-      REDIS_URL: redis://:local_dev_redis_pass@redis:6379/0
+      REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://:local_dev_redis_pass@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:local_dev_redis_pass@redis:6379/0
       SECRET_KEY: local_dev_secret_key_not_for_production_use_only_12345678901234567890

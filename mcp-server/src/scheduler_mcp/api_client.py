@@ -178,13 +178,43 @@ class SchedulerAPIClient:
         response.raise_for_status()
         return response.json()
 
+    async def validate_schedule_by_id(
+        self,
+        schedule_id: str,
+        constraint_config: str = "default",
+        include_suggestions: bool = True,
+    ) -> dict[str, Any]:
+        """Validate a specific schedule by ID.
+
+        Args:
+            schedule_id: Schedule identifier (UUID or alphanumeric)
+            constraint_config: Constraint configuration (default, minimal, strict, resilience)
+            include_suggestions: Include suggested actions for issues
+
+        Returns:
+            Validation results with compliance rate and issues
+        """
+        headers = await self._ensure_authenticated()
+        response = await self._request_with_retry(
+            "POST",
+            f"{self.config.api_prefix}/schedules/validate",
+            headers=headers,
+            json={
+                "schedule_id": schedule_id,
+                "constraint_config": constraint_config,
+                "include_suggestions": include_suggestions,
+            },
+        )
+        response.raise_for_status()
+        return response.json()
+
     async def get_conflicts(self, start_date: str, end_date: str) -> dict[str, Any]:
         """Get schedule conflicts via API (conflict analysis)."""
-        # Note: Uses GET /conflicts/analyze endpoint (requires auth)
+        # Note: Uses GET /conflicts/analysis/analyze endpoint (requires auth)
         headers = await self._ensure_authenticated()
         response = await self._request_with_retry(
             "GET",
-            f"{self.config.api_prefix}/conflicts/analyze",
+            f"{self.config.api_prefix}/conflicts/analysis/analyze",
             headers=headers,
             params={"start_date": start_date, "end_date": end_date},
         )

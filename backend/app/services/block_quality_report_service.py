@@ -17,6 +17,7 @@ from sqlalchemy import select, func, text
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
+from app.utils.academic_blocks import get_block_dates as get_block_dates_util
 from app.schemas.block_quality_report import (
     BlockDates,
     BlockAssignmentEntry,
@@ -54,41 +55,53 @@ class BlockQualityReportService:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_block_dates(self, block_number: int) -> BlockDates:
-        """Get start/end dates for a block from database."""
+    def get_block_dates(self, block_number: int, academic_year: int) -> BlockDates:
+        """Get start/end dates for a block using canonical calculation.
+
+        Args:
+            block_number: Block number (0-13)
+            academic_year: Academic year (e.g., 2025 for AY 2025-2026)
+
+        Returns:
+            BlockDates with calculated start/end dates
+        """
+        # Use the canonical utility for date calculation
+        util_dates = get_block_dates_util(block_number, academic_year)
+
+        # Verify block exists in database and get actual day count
         result = self.db.execute(
             text("""
-                SELECT
-                    MIN(date) as start_date,
-                    MAX(date) as end_date,
-                    COUNT(DISTINCT date) as days
+                SELECT COUNT(DISTINCT date) as days
                 FROM blocks
                 WHERE block_number = :block_num
+                AND date BETWEEN :start_date AND :end_date
             """),
-            {"block_num": block_number},
+            {
+                "block_num": block_number,
+                "start_date": util_dates.start_date,
+                "end_date": util_dates.end_date,
+            },
         )
         row = result.fetchone()
-        if not row or not row[0]:
-            raise ValueError(f"Block {block_number} not found in database")
+        days = row[0] if row else 0
 
-        days = row[2]
-        # Derive academic year from start date (July-June cycle)
-        # If month >= 7 (July), use that year; otherwise use previous year
-        start_date = row[0]
-        academic_year = (
-            start_date.year if start_date.month >= 7 else start_date.year - 1
-        )
+        if days == 0:
+            raise ValueError(
+                f"Block {block_number} for AY {academic_year} not found in database "
+                f"(expected dates: {util_dates.start_date} to {util_dates.end_date})"
+            )
+
         return BlockDates(
             block_number=block_number,
             academic_year=academic_year,
-            start_date=start_date,
-            end_date=row[1],
+            start_date=util_dates.start_date,
+            end_date=util_dates.end_date,
             days=days,
             slots=days * 2,
         )
 
     def get_block_assignments(
-        self, block_number: int, academic_year: int = 2025
+        self, block_number: int, academic_year: int
     ) -> list[BlockAssignmentEntry]:
         """A1: Get master rotation schedule from block_assignments."""
         result = self.db.execute(
@@ -412,21 +425,24 @@ class BlockQualityReportService:
         return residents, faculty
 
     def generate_report(
-        self, block_number: int, academic_year: int | None = None
+        self, block_number: int, academic_year: int
     ) -> BlockQualityReport:
-        """Generate complete block quality report."""
-        logger.info(f"Generating quality report for Block {block_number}")
+        """Generate complete block quality report.
 
-        # Get block dates (derives academic year from block start date)
-        block_dates = self.get_block_dates(block_number)
+        Args:
+            block_number: Block number (0-13)
+            academic_year: Academic year (e.g., 2025 for AY 2025-2026). Required.
+        """
+        logger.info(
+            f"Generating quality report for Block {block_number}, AY {academic_year}"
+        )
+
+        # Get block dates using canonical calculation
+        block_dates = self.get_block_dates(block_number, academic_year)
         start_date = block_dates.start_date
         end_date = block_dates.end_date
         max_slots = block_dates.slots
-
-        # Use derived academic year if not explicitly provided
-        resolved_year = (
-            academic_year if academic_year is not None else block_dates.academic_year
-        )
+        resolved_year = academic_year
 
         # Section A: Preloaded
         block_assignments = self.get_block_assignments(block_number, resolved_year)
@@ -550,24 +566,25 @@ class BlockQualityReportService:
         )
 
     def generate_summary(
-        self, block_numbers: list[int], academic_year: int | None = None
+        self, block_numbers: list[int], academic_year: int
     ) -> CrossBlockSummary:
-        """Generate cross-block summary report."""
-        logger.info(f"Generating summary for blocks {block_numbers}")
+        """Generate cross-block summary report.
+
+        Args:
+            block_numbers: List of block numbers to include
+            academic_year: Academic year (e.g., 2025 for AY 2025-2026). Required.
+        """
+        logger.info(
+            f"Generating summary for blocks {block_numbers}, AY {academic_year}"
+        )
 
         blocks = []
         total_resident = 0
         total_faculty = 0
         gaps = []
 
-        # Derive academic year from first block if not provided
-        resolved_year = academic_year
-        if resolved_year is None and block_numbers:
-            first_block_dates = self.get_block_dates(block_numbers[0])
-            resolved_year = first_block_dates.academic_year
-
         for block_num in block_numbers:
-            report = self.generate_report(block_num, resolved_year)
+            report = self.generate_report(block_num, academic_year)
 
             blocks.append(
                 BlockSummaryEntry(

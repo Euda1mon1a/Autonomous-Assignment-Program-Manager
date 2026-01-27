@@ -15,12 +15,13 @@ from fastapi import (
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from app.core.file_security import FileValidationError, validate_excel_upload
 from app.core.logging import get_logger
 from app.core.security import get_current_active_user
-from app.db.session import get_db
+from app.db.session import get_async_db, get_db
 from app.models.user import User
 from app.scheduling.engine import SchedulingEngine
 from app.scheduling.validator import ACGMEValidator
@@ -1029,7 +1030,7 @@ async def find_swap_candidates(
 @router.post("/swaps/candidates", response_model=SwapCandidateJsonResponse)
 async def find_swap_candidates_json(
     request: SwapCandidateJsonRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> SwapCandidateJsonResponse:
     """
@@ -1062,7 +1063,7 @@ async def find_swap_candidates_json(
         raise HTTPException(status_code=400, detail="Invalid person_id format")
 
     requester = (
-        db.execute(select(Person).where(Person.id == person_uuid))
+        await db.execute(select(Person).where(Person.id == person_uuid))
     ).scalar_one_or_none()
     if not requester:
         raise HTTPException(
@@ -1080,14 +1081,16 @@ async def find_swap_candidates_json(
             raise HTTPException(status_code=400, detail="Invalid assignment_id format")
 
         target_assignment = (
-            db.execute(select(Assignment).where(Assignment.id == assignment_uuid))
+            await db.execute(select(Assignment).where(Assignment.id == assignment_uuid))
         ).scalar_one_or_none()
         if not target_assignment:
             raise HTTPException(
                 status_code=404, detail=f"Assignment {request.assignment_id} not found"
             )
         target_block = (
-            db.execute(select(Block).where(Block.id == target_assignment.block_id))
+            await db.execute(
+                select(Block).where(Block.id == target_assignment.block_id)
+            )
         ).scalar_one_or_none()
 
     elif request.block_id:
@@ -1097,7 +1100,7 @@ async def find_swap_candidates_json(
             raise HTTPException(status_code=400, detail="Invalid block_id format")
 
         target_block = (
-            db.execute(select(Block).where(Block.id == block_uuid))
+            await db.execute(select(Block).where(Block.id == block_uuid))
         ).scalar_one_or_none()
         if not target_block:
             raise HTTPException(
@@ -1106,27 +1109,28 @@ async def find_swap_candidates_json(
 
         # Find the requester's assignment for this block
         target_assignment = (
-            db.query(Assignment)
-            .filter(
-                Assignment.person_id == person_uuid,
-                Assignment.block_id == block_uuid,
+            await db.execute(
+                select(Assignment).where(
+                    Assignment.person_id == person_uuid,
+                    Assignment.block_id == block_uuid,
+                )
             )
-            .first()
-        )
+        ).scalar_one_or_none()
 
     # Get future assignments for the requester if no specific target
     if not target_block:
         future_assignments = (
-            db.query(Assignment, Block)
-            .join(Block, Assignment.block_id == Block.id)
-            .filter(
-                Assignment.person_id == person_uuid,
-                Block.start_date >= datetime.utcnow().date(),
+            await db.execute(
+                select(Assignment, Block)
+                .join(Block, Assignment.block_id == Block.id)
+                .where(
+                    Assignment.person_id == person_uuid,
+                    Block.start_date >= datetime.utcnow().date(),
+                )
+                .order_by(Block.start_date)
+                .limit(5)
             )
-            .order_by(Block.start_date)
-            .limit(5)
-            .all()
-        )
+        ).all()
 
         if not future_assignments:
             return SwapCandidateJsonResponse(
@@ -1149,21 +1153,22 @@ async def find_swap_candidates_json(
 
     # Get other people's assignments on the same block or nearby
     other_assignments = (
-        db.query(Assignment, Block, Person, RotationTemplate)
-        .join(Block, Assignment.block_id == Block.id)
-        .join(Person, Assignment.person_id == Person.id)
-        .outerjoin(
-            RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+        await db.execute(
+            select(Assignment, Block, Person, RotationTemplate)
+            .join(Block, Assignment.block_id == Block.id)
+            .join(Person, Assignment.person_id == Person.id)
+            .outerjoin(
+                RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
+            )
+            .where(
+                Assignment.person_id != person_uuid,
+                Person.type == requester.type,  # Same type (faculty/resident)
+                Block.start_date >= datetime.utcnow().date(),
+            )
+            .order_by(Block.start_date)
+            .limit(100)  # Get a pool of candidates
         )
-        .filter(
-            Assignment.person_id != person_uuid,
-            Person.type == requester.type,  # Same type (faculty/resident)
-            Block.start_date >= datetime.utcnow().date(),
-        )
-        .order_by(Block.start_date)
-        .limit(100)  # Get a pool of candidates
-        .all()
-    )
+    ).all()
 
     for assignment, block, person, rotation in other_assignments:
         # Calculate a simple match score based on various factors
