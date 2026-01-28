@@ -17,12 +17,14 @@ This document captures the **known-good conditions** under which CP‑SAT succes
 - Activities required for CP‑SAT and capacity logic exist in `activities` table:
   - Clinic/continuity: `C` (fm_clinic), `C‑I`
   - Capacity-counted: `V1`, `V2`, `V3`, `PROC`, `VAS`, `SM`
-  - Excluded from physical capacity: `CV`, `AT`, `GME`, `DFM`
+  - Non‑physical (capacity_units=0): admin/educ/time_off + explicit codes like
+    `CV`, `AT`, `PCAT`, `DO`, `GME`, `DFM`, `LEC`, `ADV`
   - **CV still requires AT/PCAT supervision coverage**
 
 ## Capacity Semantics (Assignment-Level)
 - **Physical capacity is assignment-based, not rotation-based.**
-- `counts_toward_fmc_capacity` is the source of truth for room capacity.
+- `counts_toward_fmc_capacity` is the primary source of truth for room capacity;
+  `activities.capacity_units` refines the count when capacity applies.
 - FMC continuity **`C`** only counts **when the rotation template is FMC continuity** (template abbreviation `C/CONT`).
 - `CV` never counts toward physical capacity.
 - `CV` **does** count toward supervision demand (AT/PCAT ratios).
@@ -32,6 +34,8 @@ This document captures the **known-good conditions** under which CP‑SAT succes
   (PGY‑1 or non‑FMC templates). CV‑eligible PGY‑2/3 can satisfy clinic weeks
   with CV if capacity binds.
 - `SM` counts **once per slot**, regardless of number of learners.
+- `activities.capacity_units` defaults to **1** for physical activities; non‑physical
+  activities (e.g., CV/AT/PCAT/DO/LEC/OFF) are set to **0**. SM still counts once per slot.
 
 ## Solver Constraints (Current Baseline)
 Hard constraints:

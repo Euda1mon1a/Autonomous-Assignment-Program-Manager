@@ -73,6 +73,9 @@ def activity_counts_toward_fmc_capacity_for_template(
 ) -> bool:
     if not activity:
         return False
+    units = getattr(activity, "capacity_units", None)
+    if units is not None and units <= 0:
+        return False
     code = _normalize_code(activity.code)
     display = _normalize_code(activity.display_abbreviation)
     if code in CV_CODES or display in CV_CODES:
@@ -91,11 +94,27 @@ def activity_counts_toward_fmc_capacity_for_template(
 def activity_counts_toward_fmc_capacity(activity: Activity | None) -> bool:
     if not activity:
         return False
+    units = getattr(activity, "capacity_units", None)
+    if units is not None and units <= 0:
+        return False
     code = _normalize_code(activity.code)
     display = _normalize_code(activity.display_abbreviation)
     if code in CV_CODES or display in CV_CODES:
         return False
     return code in FMC_CAPACITY_CODES
+
+
+def activity_capacity_units(activity: Activity | None) -> int:
+    """Return capacity units for an activity (defaults to 1)."""
+    if not activity:
+        return 0
+    units = getattr(activity, "capacity_units", None)
+    if units is None:
+        return 1
+    try:
+        return max(0, int(units))
+    except (TypeError, ValueError):
+        return 1
 
 
 def assignment_counts_toward_fmc_capacity(assignment: HalfDayAssignment) -> bool:
@@ -116,5 +135,5 @@ def slot_fmc_capacity(assignments: Iterable[HalfDayAssignment]) -> int:
                 sm_present = True
             continue
         if assignment_counts_toward_fmc_capacity(assignment):
-            non_sm += 1
+            non_sm += activity_capacity_units(activity)
     return non_sm + (1 if sm_present else 0)

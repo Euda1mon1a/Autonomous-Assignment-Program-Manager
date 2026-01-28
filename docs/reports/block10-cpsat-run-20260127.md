@@ -1,13 +1,76 @@
 # Block 10 CP-SAT Regen + Activity Solver Report (2026-01-27)
 
-## Latest Run (Step 4: post-call soft + CV target includes locked slots)
+## Latest Run (Step 5: capacity_units backfill + regen)
 **Block window:** **2026-03-12 → 2026-04-08** (Block 10, **AY2025**).
 
 ### Summary
 - **CP-SAT generation succeeded** with **589** solver assignments + **20** call nights.
-- **Activity solver succeeded** (OPTIMAL, ~0.13s, 455 activities).
+- **Activity solver succeeded** (OPTIMAL, ~2.56s, **457** activities).
+- **Physical capacity constraints applied** (soft 6 / hard 8) across **40/40** slots.
+- **PCAT/DO integrity check passed** (20 calls verified; **32** PCAT/DO slots synced).
+- **AT coverage shortfall total:** 0 (CP-SAT run).
+- **Activity min shortfall total:** 1 (soft penalty applied).
+- **Note:** 144 solver assignments skipped due to immutable existing assignments.
+- **Note:** Several templates had no activity requirements; solver fell back to all assignable activities.
+
+### Command
+```
+DATABASE_URL=postgresql://scheduler:local_dev_password@localhost:5432/residency_scheduler \
+  backend/venv/bin/python scripts/ops/block_regen.py --block 10 --academic-year 2025 --timeout 300 --clear
+```
+
+### Console Highlights
+```
+... CP-SAT solver generated 589 rotation assignments and 20 call assignments
+... Synced 32 PCAT/DO slots to match new call assignments
+... Found 457 outpatient slots to assign
+... Added physical capacity constraints (soft 6, hard 8) for 40 of 40 time slots
+... Activity solver status: OPTIMAL (2.56s)
+... Activity min shortfall total: 1
+STATUS: partial
+SUMMARY COUNTS:
+  call_assignments: 20
+  half_day_assignments: 1296
+  hda_activity_at: 36
+  hda_activity_do: 15
+  hda_activity_pcat: 15
+  hda_source_preload: 839
+  hda_source_solver: 457
+  pcat_do_next_day: 2
+```
+
+### Notes
+- Inpatient rotations now preload clinic **from weekly patterns only** (C/C‑I/C‑N).
+- **CV is proactive** (not fallback): faculty/PGY‑3 FMC clinic slots can choose CV
+  with a **30% weekly target** (group‑level, includes locked preloads).
+- **CV still requires AT/PCAT coverage** (supervision demand decoupled from physical capacity).
+- **Clinic floor relaxed for CV‑eligible PGY‑2/3** (PGY‑1 still requires in‑person C).
+- CV usage in FMC clinic (faculty+PGY‑3): **17** assignments.
+- Weekly CV ratios (faculty+PGY‑3, FMC clinic only): **35.71% / 30.77% / 25.00% / 35.71%**.
+- Daily spread improved (soft), but some weekdays still under target due to
+  preloaded C + limited flexible slots (e.g., Week 3 has a 0% day).
+- Peak FMC physical capacity remains **8** at **2026‑04‑01 AM**.
+
+### MCP Validation (Local-Only, re-run)
+- **validate_schedule_tool:** 10 issues (2 critical 80‑hour violations; 8 consecutive‑days warnings).
+- **detect_conflicts_tool:** 26 conflicts (2 work‑hour, 8 rest‑period, 16 supervision gaps).
+- **generate_block_quality_report_tool:** **ok** (overall **PASS (1 GAP)**; post‑call PCAT/DO **GAP**).
+- **No new 404/500s** on MCP tool calls.
+- Full local outputs saved in:
+  - `docs/analysis/block10_mcp_validation_human_20260127.md`
+  - `docs/analysis/block10_mcp_validation_llm_20260127.md`
+
+---
+
+## Previous Run (Step 4b: post-call soft + CV target + daily spread penalty)
+**Block window:** **2026-03-12 → 2026-04-08** (Block 10, **AY2025**).
+
+### Summary
+- **CP-SAT generation succeeded** with **589** solver assignments + **20** call nights.
+- **Activity solver succeeded** (OPTIMAL, ~2.45s, 455 activities).
 - **Physical capacity constraints applied** (soft 6 / hard 8) across **40/40** slots.
 - **CV target enforced** per week across **faculty + PGY‑3** in FMC clinic.
+- **CV daily spread penalty enabled** (soft, weight=6) to distribute CV across weekdays.
 - **PCAT/DO integrity check passed** (20 calls verified; **34** PCAT/DO slots synced).
 - **AT coverage shortfall total:** 0 (CP-SAT run).
 - **Activity min shortfall total:** 1 (soft penalty applied).
@@ -24,7 +87,7 @@ DATABASE_URL=postgresql://scheduler:<local_db_password>@localhost:5432/residency
 ... Synced 34 PCAT/DO slots to match new call assignments
 ... Found 455 outpatient slots to assign
 ... Added physical capacity constraints (soft 6, hard 8) for 40 of 40 time slots
-... Activity solver status: OPTIMAL (0.13s)
+... Activity solver status: OPTIMAL (2.45s)
 ... Activity min shortfall total: 1
 STATUS: partial
 SUMMARY COUNTS:
@@ -45,17 +108,16 @@ SUMMARY COUNTS:
 - **CV still requires AT/PCAT coverage** (supervision demand decoupled from physical capacity).
 - **Clinic floor relaxed for CV‑eligible PGY‑2/3** (PGY‑1 still requires in‑person C).
 - CV usage in FMC clinic (faculty+PGY‑3): **17** assignments.
-- Weekly CV ratios (faculty+PGY‑3, FMC clinic only): **22.22% / 28.57% / 25.00% / 29.41%**.
-- Solver slots alone meet ~30.77% each week; **preloaded C slots reduce the
-  overall group ratio**.
+- Weekly CV ratios (faculty+PGY‑3, FMC clinic only): **35.71% / 30.77% / 25.00% / 35.71%**.
+- Daily spread improved (soft), but some weekdays still under target due to
+  preloaded C + limited flexible slots (e.g., Week 3 has a 0% day).
 - Peak FMC physical capacity remains **8** at **2026‑04‑01 AM**.
 
-### MCP Validation (Local-Only)
-- **validate_schedule_range:** 10 issues (2 critical 80‑hour violations; 8 consecutive‑days warnings).
-- **detect_conflicts:** 26 conflicts (2 work‑hour, 8 rest‑period, 16 supervision gaps).
-- **validate_schedule_by_id:** 10 issues (2 critical, 8 warning).
-- **compliance tools** (`check_work_hours`, `check_day_off`, `check_supervision`, `get_violations`) returned empty data.
-- **generate_compliance_report** returned **404** (endpoint missing).
+### MCP Validation (Local-Only, re-run)
+- **validate_schedule_tool:** 10 issues (2 critical 80‑hour violations; 8 consecutive‑days warnings).
+- **detect_conflicts_tool:** 26 conflicts (2 work‑hour, 8 rest‑period, 16 supervision gaps).
+- **generate_block_quality_report_tool:** **ok** (overall **PASS (1 GAP)**; post‑call PCAT/DO **GAP**).
+- **No new 404/500s** on MCP tool calls.
 - Full local outputs saved in:
   - `docs/analysis/block10_mcp_validation_human_20260127.md`
   - `docs/analysis/block10_mcp_validation_llm_20260127.md`

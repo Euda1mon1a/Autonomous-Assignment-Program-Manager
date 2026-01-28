@@ -154,18 +154,22 @@ class ActivityService:
         if existing_code.scalar_one_or_none():
             raise ValueError(f"Activity with code '{data.code}' already exists")
 
-        activity = Activity(
-            name=data.name,
-            code=data.code,
-            display_abbreviation=data.display_abbreviation,
-            activity_category=data.activity_category,
-            font_color=data.font_color,
-            background_color=data.background_color,
-            requires_supervision=data.requires_supervision,
-            is_protected=data.is_protected,
-            counts_toward_clinical_hours=data.counts_toward_clinical_hours,
-            display_order=data.display_order,
-        )
+        activity_kwargs = {
+            "name": data.name,
+            "code": data.code,
+            "display_abbreviation": data.display_abbreviation,
+            "activity_category": data.activity_category,
+            "font_color": data.font_color,
+            "background_color": data.background_color,
+            "requires_supervision": data.requires_supervision,
+            "is_protected": data.is_protected,
+            "counts_toward_clinical_hours": data.counts_toward_clinical_hours,
+            "display_order": data.display_order,
+        }
+        if data.capacity_units is not None:
+            activity_kwargs["capacity_units"] = data.capacity_units
+
+        activity = Activity(**activity_kwargs)
         self.db.add(activity)
         await self._flush()
         await self._refresh(activity)
@@ -233,6 +237,8 @@ class ActivityService:
             activity.counts_toward_clinical_hours = data.counts_toward_clinical_hours
         if data.display_order is not None:
             activity.display_order = data.display_order
+        if data.capacity_units is not None:
+            activity.capacity_units = data.capacity_units
 
         await self._flush()
         await self._refresh(activity)

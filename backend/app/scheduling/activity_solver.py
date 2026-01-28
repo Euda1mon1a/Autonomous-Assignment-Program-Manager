@@ -50,6 +50,7 @@ from app.utils.fmc_capacity import (
     activity_counts_toward_fmc_capacity,
     activity_counts_toward_fmc_capacity_for_template,
     activity_is_sm_capacity,
+    activity_capacity_units,
     assignment_counts_toward_fmc_capacity,
     template_is_fmc_clinic,
 )
@@ -79,6 +80,7 @@ SM_ALIGNMENT_SHORTFALL_PENALTY = 30
 CV_TARGET_NUMERATOR = 3
 CV_TARGET_DENOMINATOR = 10
 CV_TARGET_SHORTFALL_PENALTY = 25
+CV_DAILY_SPREAD_PENALTY = 6
 CV_PENALTY_BY_ROLE = {
     "faculty": 0,
     "pgy3": 5,
@@ -660,11 +662,15 @@ class CPSATActivitySolver:
         locked_cv_target_counts: dict[int, dict[str, int]] = defaultdict(
             lambda: {"clinic": 0, "cv": 0}
         )
+        locked_cv_target_counts_by_day: dict[tuple[int, int], dict[str, int]] = (
+            defaultdict(lambda: {"clinic": 0, "cv": 0})
+        )
 
         for locked in locked_slots:
             if not locked.activity_id:
                 continue
             week_number = self._get_week_number(locked.date, start_date)
+            day_of_week = locked.date.weekday()
             person_type = locked.person.type if locked.person else None
             slot_key = (locked.date, locked.time_of_day)
             activity = activity_by_id.get(locked.activity_id)
@@ -683,8 +689,14 @@ class CPSATActivitySolver:
                     locked_faculty_clinic_counts[(locked.person_id, week_number)] += 1
                 if is_cv:
                     locked_cv_target_counts[week_number]["cv"] += 1
+                    locked_cv_target_counts_by_day[(week_number, day_of_week)][
+                        "cv"
+                    ] += 1
                 elif is_clinic:
                     locked_cv_target_counts[week_number]["clinic"] += 1
+                    locked_cv_target_counts_by_day[(week_number, day_of_week)][
+                        "clinic"
+                    ] += 1
                 if (
                     sm_clinic_activity
                     and locked.activity_id == sm_clinic_activity.id
@@ -699,8 +711,14 @@ class CPSATActivitySolver:
                 if pgy_level == 3:
                     if is_cv:
                         locked_cv_target_counts[week_number]["cv"] += 1
+                        locked_cv_target_counts_by_day[(week_number, day_of_week)][
+                            "cv"
+                        ] += 1
                     elif is_clinic and assignment_counts_toward_fmc_capacity(locked):
                         locked_cv_target_counts[week_number]["clinic"] += 1
+                        locked_cv_target_counts_by_day[(week_number, day_of_week)][
+                            "clinic"
+                        ] += 1
 
             template = self._get_active_rotation_template(locked, start_date)
             if not template:
@@ -927,16 +945,21 @@ class CPSATActivitySolver:
         # Applies to FMC clinic assignments only
         # ==================================================
         cv_target_shortfalls: list[Any] = []
+        cv_day_shortfalls: list[Any] = []
         if cv_activity and clinic_activity:
             clinic_id = clinic_activity.id
             cv_id = cv_activity.id
             cv_terms_by_week: dict[int, dict[str, list[Any]]] = defaultdict(
                 lambda: {"clinic": [], "cv": []}
             )
+            cv_terms_by_week_day: dict[tuple[int, int], dict[str, list[Any]]] = (
+                defaultdict(lambda: {"clinic": [], "cv": []})
+            )
             for s_i, meta in slot_meta.items():
                 week = meta.get("week")
                 if week is None:
                     continue
+                day_of_week = meta["date"].weekday()
                 person_type = meta.get("person_type")
                 if person_type == "faculty":
                     if clinic_id not in slot_allowed.get(s_i, []):
@@ -952,8 +975,14 @@ class CPSATActivitySolver:
                 allowed = slot_allowed.get(s_i, [])
                 if clinic_id in allowed and (s_i, clinic_id) in a:
                     cv_terms_by_week[week]["clinic"].append(a[s_i, clinic_id])
+                    cv_terms_by_week_day[(week, day_of_week)]["clinic"].append(
+                        a[s_i, clinic_id]
+                    )
                 if cv_id in allowed and (s_i, cv_id) in a:
                     cv_terms_by_week[week]["cv"].append(a[s_i, cv_id])
+                    cv_terms_by_week_day[(week, day_of_week)]["cv"].append(
+                        a[s_i, cv_id]
+                    )
 
             for week, terms in cv_terms_by_week.items():
                 locked_counts = locked_cv_target_counts.get(
@@ -985,6 +1014,37 @@ class CPSATActivitySolver:
                     >= CV_TARGET_NUMERATOR * total_clinic
                 )
                 cv_target_shortfalls.append(shortfall)
+
+            for (week, day_of_week), terms in cv_terms_by_week_day.items():
+                locked_counts = locked_cv_target_counts_by_day.get(
+                    (week, day_of_week), {"clinic": 0, "cv": 0}
+                )
+                if (
+                    not terms["clinic"]
+                    and not terms["cv"]
+                    and not locked_counts["clinic"]
+                    and not locked_counts["cv"]
+                ):
+                    continue
+                locked_clinic = locked_counts["clinic"]
+                locked_cv = locked_counts["cv"]
+                total_clinic = (
+                    sum(terms["clinic"]) + sum(terms["cv"]) + locked_clinic + locked_cv
+                )
+                cv_count = sum(terms["cv"]) + locked_cv
+                max_terms = (
+                    len(terms["clinic"]) + len(terms["cv"]) + locked_clinic + locked_cv
+                )
+                shortfall = model.NewIntVar(
+                    0,
+                    CV_TARGET_NUMERATOR * max_terms,
+                    f"cv_day_shortfall_w{week}_d{day_of_week}",
+                )
+                model.Add(
+                    CV_TARGET_DENOMINATOR * cv_count + shortfall
+                    >= CV_TARGET_NUMERATOR * total_clinic
+                )
+                cv_day_shortfalls.append(shortfall)
 
         # ==================================================
         # ACGME AT COVERAGE (faculty supervision)
@@ -1167,7 +1227,9 @@ class CPSATActivitySolver:
             if activity_is_sm_capacity(assignment.activity):
                 baseline_sm_present[(assignment.date, assignment.time_of_day)] = 1
                 continue
-            baseline_non_sm[(assignment.date, assignment.time_of_day)] += 1
+            baseline_non_sm[(assignment.date, assignment.time_of_day)] += (
+                activity_capacity_units(assignment.activity)
+            )
 
         # For each time slot, sum(clinical activities) + baseline <= HARD
         has_capacity = (
@@ -1188,7 +1250,7 @@ class CPSATActivitySolver:
 
                 # Sum of non-SM clinical assignments for this slot
                 slot_non_sm_sum = sum(
-                    a[s_i, act_id]
+                    a[s_i, act_id] * activity_capacity_units(activity_by_id.get(act_id))
                     for s_i in slot_indices
                     for act_id in slot_capacity_ids[s_i]
                     if act_id not in set(slot_sm_capacity_ids[s_i])
@@ -1406,6 +1468,12 @@ class CPSATActivitySolver:
 
         if cv_target_shortfalls:
             penalty = sum(cv_target_shortfalls) * CV_TARGET_SHORTFALL_PENALTY
+            objective_expr = (
+                objective_expr - penalty if objective_expr is not None else -penalty
+            )
+
+        if cv_day_shortfalls:
+            penalty = sum(cv_day_shortfalls) * CV_DAILY_SPREAD_PENALTY
             objective_expr = (
                 objective_expr - penalty if objective_expr is not None else -penalty
             )

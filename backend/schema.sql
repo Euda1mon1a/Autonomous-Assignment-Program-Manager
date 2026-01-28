@@ -373,7 +373,8 @@ CREATE TABLE public.activities (
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
     provides_supervision boolean DEFAULT false NOT NULL,
-    counts_toward_physical_capacity boolean DEFAULT false NOT NULL
+    counts_toward_physical_capacity boolean DEFAULT false NOT NULL,
+    capacity_units integer DEFAULT 1 NOT NULL
 );
 
 
