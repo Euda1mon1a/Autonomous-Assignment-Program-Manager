@@ -39,23 +39,52 @@ Issues are consistent across runs and documented; they are Phase‑2 work, not P
 - Enforce 80‑hour limits in solver context (time‑off aware).
 - Resolve critical work‑hour violations to 0 in validation runs.
 
+**P0 Substeps + Acceptance Criteria**
+1. Load time‑off templates into solver context (see P1).
+2. Add 80‑hour constraint in solver (soft, high penalty).
+3. Validate: **0 critical 80‑hour violations** in Block‑10 MCP validation.
+
 ### P1 — Time‑Off Context
 - Ensure time‑off templates/absences are loaded into solver context.
 - Restore 1‑in‑7 rest constraints with correct data.
+
+**P1 Substeps + Acceptance Criteria**
+1. Ensure time‑off templates are present in solver context.
+2. Ensure time‑off half‑days are assigned/locked before CP‑SAT.
+3. Validate: **0 critical 1‑in‑7 violations** (or explicitly exempted).
 
 ### P2 — Supervision Constraints
 - Align AT/PCAT ratio constraints with current staffing patterns.
 - Make supervision constraints feasible but enforced (hard or high‑penalty soft).
 
+**P2 Substeps + Acceptance Criteria**
+1. Confirm supervision provider set (AT + PCAT) and required set (C/CV/PROC/VAS).
+2. Implement supervision ratio as soft constraint (penalty 50–75).
+3. Validate: **supervision gaps = 0** in MCP detect_conflicts (or justified).
+
 ### P3 — Template/Activity Data Cleanup
 - Eliminate missing activity requirement warnings (data completeness).
 - Ensure all outpatient templates have rotation_activity_requirements.
+
+**P3 Substeps + Acceptance Criteria**
+1. Identify templates missing activity requirements (warnings list).
+2. Backfill requirements for outpatient templates.
+3. Validate: **0 missing activity requirement warnings** in solver logs.
+
+**P3 Completed**
+- Integrated workload now classifies canonical educational rotation types:
+  commit `ad62d8a1` (rotation_type + template_category).
 
 ### P4 — Faculty Equity at Assignment Level (Non‑rotation)
 - Move admin/academic equity to **assignment‑level** for faculty only
   (AT/GME/DFM/LEC/ADV, etc.).
 - Remove rotation‑level academic/admin workload logic.
 - Define role‑based targets (core vs PD vs adjunct) and penalties.
+
+**P4 Substeps + Acceptance Criteria**
+1. Define role‑based targets (core vs PD vs adjunct) and weights.
+2. Implement assignment‑level equity in activity solver objective.
+3. Validate: equity metric reported; penalty weight documented.
 
 ## Non‑Goals (Phase 2)
 - GUI/UX changes (defer until correctness is stable).
