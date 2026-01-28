@@ -164,10 +164,10 @@ class SchedulingProblem(Problem):
                     block = self.block_data[block_idx]
 
                     # Example preference matching logic
-                    if person.get("preferred_activity_types") and block.get(
-                        "activity_type"
+                    if person.get("preferred_rotation_types") and block.get(
+                        "rotation_type"
                     ):
-                        if block["activity_type"] in person["preferred_activity_types"]:
+                        if block["rotation_type"] in person["preferred_rotation_types"]:
                             satisfaction_score += 1.0
 
         # Normalize by total assignments
@@ -572,15 +572,21 @@ class ParetoOptimizationService:
             "id": str(person.id),
             "name": person.name,
             "pgy_level": person.pgy_level,
-            "preferred_activity_types": getattr(person, "preferred_activity_types", []),
+            "preferred_rotation_types": (
+                getattr(person, "preferred_rotation_types", None)
+                or getattr(person, "preferred_activity_types", [])
+            ),
         }
 
     def _block_to_dict(self, block: Block) -> dict:
         """Convert block model to dictionary."""
+        rotation_type = getattr(block, "rotation_type", None)
+        if rotation_type is None:
+            rotation_type = getattr(block, "activity_type", None)
         return {
             "id": str(block.id),
             "name": block.name,
-            "activity_type": block.activity_type,
+            "rotation_type": rotation_type,
             "specialty": getattr(block, "specialty", "general"),
             "start_date": str(block.start_date),
             "end_date": str(block.end_date),

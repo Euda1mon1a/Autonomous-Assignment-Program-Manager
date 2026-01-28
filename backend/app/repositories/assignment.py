@@ -48,7 +48,7 @@ class AssignmentRepository(BaseRepository[Assignment]):
         end_date: date | None = None,
         person_id: UUID | None = None,
         role: str | None = None,
-        activity_type: str | None = None,
+        rotation_type: str | None = None,
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[list[Assignment], int]:
@@ -74,10 +74,10 @@ class AssignmentRepository(BaseRepository[Assignment]):
             query = query.filter(Assignment.person_id == person_id)
         if role:
             query = query.filter(Assignment.role == role)
-        if activity_type:
-            # Filter by activity_type in the rotation_template
+        if rotation_type:
+            # Filter by rotation_type in the rotation_template
             query = query.filter(
-                Assignment.rotation_template.has(activity_type=activity_type)
+                Assignment.rotation_template.has(rotation_type=rotation_type)
             )
 
         # Get total count before pagination (using a subquery for efficiency)

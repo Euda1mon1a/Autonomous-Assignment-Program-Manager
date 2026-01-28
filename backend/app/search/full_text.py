@@ -810,7 +810,7 @@ class FullTextSearchService:
             conditions.append(
                 or_(
                     RotationTemplate.name.ilike(f"%{token}%"),
-                    RotationTemplate.activity_type.ilike(f"%{token}%"),
+                    RotationTemplate.rotation_type.ilike(f"%{token}%"),
                     RotationTemplate.abbreviation.ilike(f"%{token}%"),
                 )
             )
@@ -819,9 +819,9 @@ class FullTextSearchService:
             query = query.filter(or_(*conditions))
 
         # Apply filters
-        if filters.get("activity_type"):
+        if filters.get("rotation_type"):
             query = query.filter(
-                RotationTemplate.activity_type == filters["activity_type"]
+                RotationTemplate.rotation_type == filters["rotation_type"]
             )
 
         rotations = query.all()
@@ -833,7 +833,7 @@ class FullTextSearchService:
                 tokens,
                 {
                     "name": rotation.name,
-                    "type": rotation.activity_type,
+                    "type": rotation.rotation_type,
                     "abbreviation": rotation.abbreviation or "",
                 },
             )
@@ -848,13 +848,13 @@ class FullTextSearchService:
                     id=str(rotation.id),
                     type="rotation",
                     title=rotation.name,
-                    subtitle=rotation.activity_type.title(),
+                    subtitle=rotation.rotation_type.title(),
                     score=score,
                     highlights=highlights,
                     entity={
                         "id": str(rotation.id),
                         "name": rotation.name,
-                        "activity_type": rotation.activity_type,
+                        "rotation_type": rotation.rotation_type,
                         "abbreviation": rotation.abbreviation,
                     },
                 )

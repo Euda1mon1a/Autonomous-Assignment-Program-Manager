@@ -25,21 +25,21 @@ def sample_heatmap_data(db: Session, sample_blocks: list[Block]) -> dict:
     fmit_template = RotationTemplate(
         id=uuid4(),
         name="FMIT",
-        activity_type="fmit",
+        rotation_type="fmit",
         abbreviation="FMIT",
         supervision_required=True,
     )
     clinic_template = RotationTemplate(
         id=uuid4(),
         name="Sports Medicine Clinic",
-        activity_type="clinic",
+        rotation_type="clinic",
         abbreviation="SM",
         supervision_required=True,
     )
     procedures_template = RotationTemplate(
         id=uuid4(),
         name="Procedures",
-        activity_type="procedures",
+        rotation_type="procedures",
         abbreviation="PROC",
         supervision_required=True,
     )

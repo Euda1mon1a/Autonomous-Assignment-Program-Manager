@@ -369,7 +369,7 @@ class TestNMinus1Contingency:
         specialized = RotationTemplate(
             id=uuid4(),
             name="Specialized Procedure",
-            activity_type="procedure",
+            rotation_type="procedure",
             abbreviation="SPEC",
             max_residents=1,
         )
@@ -548,14 +548,14 @@ class TestBlastRadiusIsolation:
         rotation_a = RotationTemplate(
             id=uuid4(),
             name="Clinic A",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="CA",
             max_residents=2,
         )
         rotation_b = RotationTemplate(
             id=uuid4(),
             name="Clinic B",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="CB",
             max_residents=2,
         )
@@ -612,14 +612,14 @@ class TestBlastRadiusIsolation:
         basic_rotation = RotationTemplate(
             id=uuid4(),
             name="Basic Skills",
-            activity_type="training",
+            rotation_type="training",
             abbreviation="BASIC",
             max_residents=2,
         )
         advanced_rotation = RotationTemplate(
             id=uuid4(),
             name="Advanced Skills",
-            activity_type="training",
+            rotation_type="training",
             abbreviation="ADV",
             max_residents=2,
             prerequisites=[basic_rotation.id],  # Requires basic first

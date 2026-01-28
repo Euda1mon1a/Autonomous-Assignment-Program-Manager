@@ -124,11 +124,11 @@ def full_program_setup(integration_db: Session) -> dict:
         ("Sports Medicine Clinic", "clinic", "SMC", True),
         ("Inpatient Service", "inpatient", "INP", True),
     ]
-    for name, activity_type, abbrev, supervision in template_configs:
+    for name, rotation_type, abbrev, supervision in template_configs:
         template = RotationTemplate(
             id=uuid4(),
             name=name,
-            activity_type=activity_type,
+            rotation_type=rotation_type,
             abbreviation=abbrev,
             supervision_required=supervision,
             max_supervision_ratio=4,

@@ -110,6 +110,11 @@ class HalfDayAssignment(Base):
         index=True,
         comment="Activity for this slot (FK to activities)",
     )
+    counts_toward_fmc_capacity = Column(
+        Boolean,
+        nullable=True,
+        comment="True if this assignment consumes FMC physical capacity",
+    )
 
     # Source tracking (critical for source priority system)
     source = Column(

@@ -64,6 +64,10 @@ class CallAssignmentUpdate(BaseModel):
     call_type: str | None = None
     is_weekend: bool | None = None
     is_holiday: bool | None = None
+    auto_generate_post_call: bool | None = Field(
+        default=None,
+        description="If true, regenerate next-day PCAT/DO after update",
+    )
 
     @field_validator("call_type")
     @classmethod
@@ -211,6 +215,10 @@ class BulkCallAssignmentUpdateRequest(BaseModel):
     )
     updates: BulkCallAssignmentUpdateInput = Field(
         ..., description="Fields to update on all selected assignments"
+    )
+    auto_generate_post_call: bool = Field(
+        default=False,
+        description="If true, regenerate next-day PCAT/DO after update",
     )
 
     @field_validator("assignment_ids")

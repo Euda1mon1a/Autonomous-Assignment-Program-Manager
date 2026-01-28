@@ -763,13 +763,13 @@ class TestAnalyticsEngineIntegration:
         rotation_a = RotationTemplate(
             id=uuid4(),
             name="Clinic A",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="CA",
         )
         rotation_b = RotationTemplate(
             id=uuid4(),
             name="Procedures B",
-            activity_type="procedures",
+            rotation_type="procedures",
             abbreviation="PB",
         )
         db.add(rotation_a)
@@ -792,10 +792,10 @@ class TestAnalyticsEngineIntegration:
         result = engine.get_rotation_coverage_stats()
 
         assert "rotations" in result
-        assert "by_activity_type" in result
+        assert "by_rotation_type" in result
         assert result["total_rotations"] == 2
-        assert "clinic" in result["by_activity_type"]
-        assert "procedures" in result["by_activity_type"]
+        assert "clinic" in result["by_rotation_type"]
+        assert "procedures" in result["by_rotation_type"]
 
 
 # ============================================================================

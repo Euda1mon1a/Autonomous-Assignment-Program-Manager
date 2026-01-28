@@ -117,32 +117,32 @@ class TestAssignmentService:
         assert result["total"] == 1
         assert result["items"][0].role == "primary"
 
-    def test_list_assignments_filter_by_activity_type(
+    def test_list_assignments_filter_by_rotation_type(
         self, db, sample_resident, sample_blocks
     ):
-        """Test filtering assignments by activity_type."""
+        """Test filtering assignments by rotation_type."""
         assignment1 = Assignment(
             id=uuid4(),
             block_id=sample_blocks[0].id,
             person_id=sample_resident.id,
             role="primary",
-            activity_type="clinic",
+            rotation_type="clinic",
         )
         assignment2 = Assignment(
             id=uuid4(),
             block_id=sample_blocks[1].id,
             person_id=sample_resident.id,
             role="primary",
-            activity_type="inpatient",
+            rotation_type="inpatient",
         )
         db.add_all([assignment1, assignment2])
         db.commit()
 
         service = AssignmentService(db)
-        result = service.list_assignments(activity_type="clinic")
+        result = service.list_assignments(rotation_type="clinic")
 
         assert result["total"] == 1
-        assert result["items"][0].activity_type == "clinic"
+        assert result["items"][0].rotation_type == "clinic"
 
     def test_list_assignments_filter_by_date_range(self, db, sample_resident):
         """Test filtering assignments by date range."""
@@ -256,13 +256,13 @@ class TestAssignmentService:
             role="primary",
             created_by="test_user",
             rotation_template_id=sample_rotation_template.id,
-            activity_type="clinic",
+            rotation_type="clinic",
             notes="Test assignment",
         )
 
         assignment = result["assignment"]
         assert assignment.rotation_template_id == sample_rotation_template.id
-        assert assignment.activity_type == "clinic"
+        assert assignment.rotation_type == "clinic"
         assert assignment.notes == "Test assignment"
 
     @patch("app.services.assignment_service.ACGMEValidator")

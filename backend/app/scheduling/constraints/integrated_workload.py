@@ -170,15 +170,15 @@ class IntegratedWorkloadConstraint(SoftConstraint):
     def _is_clinic_assignment(
         self, assignment: Any, context: SchedulingContext
     ) -> bool:
-        """Check if assignment is clinic (outpatient/clinic activity)."""
+        """Check if assignment is outpatient rotation."""
         if not hasattr(assignment, "rotation_template_id"):
             return False
 
-        # Check if rotation template has clinic activity type
+        # Check if rotation template has clinic rotation type
         for template in context.templates:
             if template.id == assignment.rotation_template_id:
-                activity_type = getattr(template, "activity_type", "")
-                return activity_type in ("outpatient", "clinic", "fm_clinic")
+                rotation_type = getattr(template, "rotation_type", "")
+                return rotation_type == "outpatient"
 
         return False
 
@@ -190,12 +190,12 @@ class IntegratedWorkloadConstraint(SoftConstraint):
         for template in context.templates:
             if template.id == assignment.rotation_template_id:
                 template_name = getattr(template, "name", "").upper()
-                activity_type = getattr(template, "activity_type", "").lower()
+                rotation_type = getattr(template, "rotation_type", "").lower()
                 # GME = Graduate Medical Education, DFM = Department of Family Medicine
                 return (
                     "GME" in template_name
                     or "DFM" in template_name
-                    or activity_type in ("admin", "administrative", "gme", "dfm")
+                    or rotation_type in ("admin", "administrative", "gme", "dfm")
                 )
 
         return False
@@ -210,15 +210,25 @@ class IntegratedWorkloadConstraint(SoftConstraint):
         for template in context.templates:
             if template.id == assignment.rotation_template_id:
                 template_name = getattr(template, "name", "").upper()
-                activity_type = getattr(template, "activity_type", "").lower()
+                rotation_type = getattr(template, "rotation_type", "").lower()
+                template_category = getattr(template, "template_category", "").lower()
                 # LEC = Lecture, ADV = Advising
                 return (
-                    "LEC" in template_name
+                    template_category == "educational"
+                    or rotation_type
+                    in (
+                        "education",
+                        "conference",
+                        "lecture",
+                        "academic",
+                        "advising",
+                        "lec",
+                        "adv",
+                    )
+                    or "LEC" in template_name
                     or "ADV" in template_name
                     or "LECTURE" in template_name
                     or "ADVISING" in template_name
-                    or activity_type
-                    in ("academic", "lecture", "advising", "lec", "adv")
                 )
 
         return False

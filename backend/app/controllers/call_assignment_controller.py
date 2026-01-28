@@ -174,6 +174,7 @@ class CallAssignmentController:
         result = await self.service.bulk_update_call_assignments(
             assignment_ids=request.assignment_ids,
             updates=request.updates,
+            auto_generate_post_call=request.auto_generate_post_call,
         )
 
         if result["errors"] and result["updated"] == 0:

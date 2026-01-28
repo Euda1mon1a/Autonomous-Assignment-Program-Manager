@@ -212,13 +212,13 @@ template_vars = variables.get("template_assignments", {})
 
 ### Clinic Template Identification
 
-Clinic templates are identified by `activity_type == "outpatient"`:
+Clinic templates are identified by `rotation_type == "outpatient"`:
 
 ```python
 clinic_template_ids = {
     t.id
     for t in context.templates
-    if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+    if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
 }
 ```
 

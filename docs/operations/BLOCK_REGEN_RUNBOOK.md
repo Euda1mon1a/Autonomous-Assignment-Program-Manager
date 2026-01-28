@@ -6,8 +6,42 @@ It assumes you have a valid local DB and have already taken a backup.
 ## Prerequisites
 
 - Python 3.11+ environment for the backend.
-- `DATABASE_URL` set in your shell or in `.env`.
+- Ops scripts load `.env` and backfill `DATABASE_URL` if missing/empty.
 - Local backup created (required before destructive clears).
+
+**Note:** If your shell has a stale `CORS_ORIGINS` value (e.g., from `source .env`),
+set it to a valid JSON string before running scripts:
+`export CORS_ORIGINS='[\"*\"]'`.
+
+## Pre-flight Checks (Recommended)
+
+Use these before a regen to avoid silent failures:
+
+```
+# Ensure DB schema is current (rotation_type rename)
+cd backend
+python3.11 -m alembic upgrade head
+
+# Confirm required rotation templates exist (PCAT/DO/SM)
+PYTHONPATH=backend python3.11 - <<'PY'
+from app.db.session import SessionLocal
+from app.models.rotation_template import RotationTemplate
+
+session = SessionLocal()
+try:
+    pcat_do = session.query(RotationTemplate).filter(
+        RotationTemplate.abbreviation.in_(["PCAT", "DO"])
+    ).count()
+    sm = session.query(RotationTemplate).filter(
+        RotationTemplate.abbreviation == "SM"
+    ).count()
+finally:
+    session.close()
+
+print(f"PCAT/DO templates: {pcat_do}")
+print(f"SM templates: {sm}")
+PY
+```
 
 ## Script
 
@@ -31,3 +65,64 @@ Common flags:
 - The script prints a PII-free summary of counts by source and activity.
 - The canonical pipeline uses CP-SAT for call + outpatient activity filling;
   inpatient coverage should be preloaded upstream.
+
+## Post-run Quick Checks (Console Additions)
+
+These help confirm CP-SAT produced real schedule output:
+
+```
+PYTHONPATH=backend python3.11 - <<'PY'
+from app.db.session import SessionLocal
+from app.models.half_day_assignment import HalfDayAssignment
+from app.models.call_assignment import CallAssignment
+from app.utils.academic_blocks import get_block_dates
+
+block_number = 10
+academic_year = 2026
+block_dates = get_block_dates(block_number, academic_year)
+
+session = SessionLocal()
+try:
+    hda = session.query(HalfDayAssignment).filter(
+        HalfDayAssignment.date >= block_dates.start_date,
+        HalfDayAssignment.date <= block_dates.end_date,
+    ).count()
+    calls = session.query(CallAssignment).filter(
+        CallAssignment.date >= block_dates.start_date,
+        CallAssignment.date <= block_dates.end_date,
+    ).count()
+finally:
+    session.close()
+
+print(f"Half-day assignments: {hda}")
+print(f"Call assignments: {calls}")
+PY
+```
+
+If CP-SAT returns **INFEASIBLE**, capture:
+- Preload count vs solver count (should not be preload-only).
+- Presence of PCAT/DO/SM rotation templates.
+- Presence of AT/PCAT/DO activities.
+
+**Failure snapshot (new):**
+- On pre-solver validation failure or solver failure, a PII-free snapshot is written to:
+- `/tmp/schedule_failure_<run_id>_<timestamp>.json`
+- Override location with `SCHEDULE_FAILURE_SNAPSHOT_DIR`.
+
+If the **activity solver** fails with:
+`Physical capacity infeasible: ... minimum clinic demand above hard 8`
+- Capacity currently counts **C-variants (excludes CV) + V1-3 + PROC/PR/PROCEDURE + SM (faculty only) + VAS**.
+- If demand still exceeds hard 8, add a non-capacity activity option to outpatient rotations (or relax requirements).
+
+## Debug: Infeasibility Test (No Live Writes)
+
+Use this script to confirm the solver can go INFEASIBLE under hard constraints.
+It runs in draft mode and writes a failure snapshot on error.
+
+```
+python3.11 scripts/ops/solver_infeasible_test.py --block 10 --academic-year 2026
+```
+
+Snapshot location:
+- `/tmp/schedule_failure_<run_id>_<timestamp>.json`
+- Override with `--snapshot-dir /path` or `SCHEDULE_FAILURE_SNAPSHOT_DIR`

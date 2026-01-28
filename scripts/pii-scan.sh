@@ -192,7 +192,9 @@ echo -n "Checking for personnel names in staged files... "
 
 # Known personnel names (last names only - add as needed)
 # These are from the residency program roster
-KNOWN_NAMES="Bevis|Byrnes|Cataquiz|Chu|Colgan|Connolly|Cook|Dahl|Gigon|Headid|Hernandez|Kinkennon|LaBounty|Lamoureux|Maher|Mayell|McGuire|McRae|Monsivais|Montgomery|Napierala|Petrie|Sawyer|Sloss|Tagawa|Thomas|Travis|Van Brunt|Wilhelm|You"
+# Note: "You" omitted - causes false positives on common English ("You have", "Bites You")
+# For Jae You / Dr. You, manually search: grep -nE "(Jae|Dr\.)\s+You" docs/
+KNOWN_NAMES="Bevis|Byrnes|Cataquiz|Chu|Colgan|Connolly|Cook|Dahl|Gigon|Headid|Hernandez|Kinkennon|LaBounty|Lamoureux|Maher|Mayell|McGuire|McRae|Monsivais|Montgomery|Napierala|Petrie|Sawyer|Sloss|Tagawa|Thomas|Travis|Van Brunt|Wilhelm"
 
 # Get staged files (or all tracked files if not in pre-commit context)
 if [ "${1:-}" = "--staged-only" ]; then

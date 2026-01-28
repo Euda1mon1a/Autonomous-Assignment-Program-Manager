@@ -93,7 +93,7 @@ services:
 
       # Redis
       REDIS_PASSWORD: local_dev_redis_pass
-      REDIS_URL: redis://:local_dev_redis_pass@redis:6379/0
+      REDIS_URL: redis://redis:6379/0
 
       # Celery
       CELERY_BROKER_URL: redis://:local_dev_redis_pass@redis:6379/0
@@ -129,13 +129,7 @@ services:
       - backend_local_venv:/app/venv
     networks:
       - app-network
-    command: >
-      sh -c "
-        echo 'Running database migrations...' &&
-        alembic upgrade head &&
-        echo 'Starting FastAPI development server with hot reload...' &&
-        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-      "
+    # Use Dockerfile.local CMD (uvicorn --reload)
 
   # ===========================================================================
   # Celery Worker (Background Tasks)
@@ -156,7 +150,7 @@ services:
     environment:
       DATABASE_URL: postgresql://scheduler:local_dev_password@db:5432/residency_scheduler
       REDIS_PASSWORD: local_dev_redis_pass
-      REDIS_URL: redis://:local_dev_redis_pass@redis:6379/0
+      REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://:local_dev_redis_pass@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:local_dev_redis_pass@redis:6379/0
       SECRET_KEY: local_dev_secret_key_not_for_production_use_only_12345678901234567890
@@ -196,7 +190,7 @@ services:
     environment:
       DATABASE_URL: postgresql://scheduler:local_dev_password@db:5432/residency_scheduler
       REDIS_PASSWORD: local_dev_redis_pass
-      REDIS_URL: redis://:local_dev_redis_pass@redis:6379/0
+      REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://:local_dev_redis_pass@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:local_dev_redis_pass@redis:6379/0
       SECRET_KEY: local_dev_secret_key_not_for_production_use_only_12345678901234567890
@@ -246,10 +240,9 @@ services:
     ports:
       - "3000:3000"  # Next.js dev server
     volumes:
-      # Mount source code for hot reload
+      # Mount source code for hot reload (includes host's node_modules)
       - ./frontend:/app
-      # Don't override these directories
-      - /app/node_modules
+      # Keep .next in container to avoid permission issues
       - /app/.next
     networks:
       - app-network
@@ -315,6 +308,10 @@ services:
 
       # Logging
       LOG_LEVEL: DEBUG
+
+      # Allow unauthenticated local dev access (bypasses MCP_API_KEY requirement)
+      # Handles Docker Desktop host IPs (192.168.65.x) and Docker bridge networks
+      MCP_ALLOW_LOCAL_DEV: "true"
     ports:
       - "8081:8081"  # MCP HTTP transport for Claude Code (8080 used by Claude Code)
     entrypoint: ["python", "-m", "scheduler_mcp.server", "--host", "0.0.0.0", "--port", "8081"]

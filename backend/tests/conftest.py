@@ -13,6 +13,8 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import Session, configure_mappers, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -30,6 +32,12 @@ from app.utils.academic_blocks import get_block_number_for_date
 
 # Use in-memory SQLite for tests
 TEST_DATABASE_URL = "sqlite:///:memory:"
+
+
+@compiles(JSONB, "sqlite")
+def _compile_jsonb_sqlite(_type, _compiler, **_kw):
+    return "JSON"
+
 
 engine = create_engine(
     TEST_DATABASE_URL,
@@ -253,14 +261,14 @@ def sample_faculty_members(db: Session) -> list[Person]:
 def sample_rotation_template(db: Session) -> RotationTemplate:
     """Create a sample rotation template.
 
-    Note: Uses activity_type="outpatient" because the scheduling engine
+    Note: Uses rotation_type="outpatient" because the scheduling engine
     defaults to filtering for outpatient templates. Using "clinic" would
     cause the template to be filtered out, resulting in no assignments.
     """
     template = RotationTemplate(
         id=uuid4(),
         name="Sports Medicine Clinic",
-        activity_type="outpatient",  # Must match engine's default filter
+        rotation_type="outpatient",  # Must match engine's default filter
         abbreviation="SM",
         clinic_location="Building A",
         max_residents=4,

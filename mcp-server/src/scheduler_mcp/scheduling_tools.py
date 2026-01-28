@@ -507,14 +507,33 @@ async def detect_conflicts(
         # Transform backend response to MCP format
         conflicts: list[ConflictInfo] = []
 
+        type_map = {
+            "double_booking": ConflictType.DOUBLE_BOOKING,
+            "overlapping_shifts": ConflictType.DOUBLE_BOOKING,
+            "insufficient_coverage": ConflictType.SUPERVISION_GAP,
+            "supervision_ratio_violation": ConflictType.SUPERVISION_GAP,
+            "facility_overbooked": ConflictType.SUPERVISION_GAP,
+            "unsupervised_resident": ConflictType.SUPERVISION_GAP,
+            "inadequate_supervision": ConflictType.SUPERVISION_GAP,
+            "eighty_hour_violation": ConflictType.WORK_HOUR_VIOLATION,
+            "continuous_duty_violation": ConflictType.WORK_HOUR_VIOLATION,
+            "night_float_violation": ConflictType.WORK_HOUR_VIOLATION,
+            "pgy_shift_length_violation": ConflictType.WORK_HOUR_VIOLATION,
+            "excessive_consecutive_days": ConflictType.REST_PERIOD_VIOLATION,
+            "one_in_seven_violation": ConflictType.REST_PERIOD_VIOLATION,
+            "assigned_during_absence": ConflictType.LEAVE_OVERLAP,
+            "assigned_during_deployment": ConflictType.LEAVE_OVERLAP,
+            "assigned_during_tdy": ConflictType.LEAVE_OVERLAP,
+        }
+
         for conflict in result.get("conflicts", []):
             # Map backend conflict type to MCP ConflictType
-            conflict_type_str = conflict.get("type", "").upper()
-            try:
-                conflict_type = ConflictType(conflict_type_str.lower())
-            except ValueError:
-                # Default to double_booking if unknown type
-                conflict_type = ConflictType.DOUBLE_BOOKING
+            raw_type = (
+                conflict.get("conflict_type")
+                or conflict.get("type")
+                or ""
+            ).lower()
+            conflict_type = type_map.get(raw_type, ConflictType.DOUBLE_BOOKING)
 
             # Map severity
             severity_str = conflict.get("severity", "warning").lower()

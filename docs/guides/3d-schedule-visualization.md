@@ -73,7 +73,7 @@ Show only specific residents' schedules:
 />
 ```
 
-### Filter by Activity Type
+### Filter by Rotation Type
 
 Show only clinic and call assignments:
 
@@ -81,7 +81,7 @@ Show only clinic and call assignments:
 <VoxelScheduleView
   startDate={new Date('2024-01-15')}
   endDate={new Date('2024-01-28')}
-  activityTypes={['clinic', 'call']}
+  rotationTypes={['clinic', 'call']}
 />
 ```
 
@@ -156,7 +156,7 @@ function SchedulePage() {
       {hoveredVoxel && (
         <div className="absolute top-4 right-4 bg-white p-4 rounded shadow">
           <h3>{hoveredVoxel.identity.person_name}</h3>
-          <p>{hoveredVoxel.identity.activity_name}</p>
+          <p>{hoveredVoxel.identity.rotation_name}</p>
           <p>{hoveredVoxel.identity.block_date}</p>
           {hoveredVoxel.state.is_conflict && (
             <p className="text-red-500">CONFLICT DETECTED</p>
@@ -209,7 +209,7 @@ Each cube in the visualization represents one **assignment**:
 
 The component displays a built-in legend:
 
-| Color | Activity Type |
+| Color | Rotation Type |
 |-------|---------------|
 | Blue | Clinic |
 | Purple | Inpatient |
@@ -262,8 +262,8 @@ interface Voxel {
     person_name: string | null;
     block_date: string | null;
     block_time_of_day: 'AM' | 'PM' | null;
-    activity_name: string | null;
-    activity_type: string | null;
+    rotation_name: string | null;
+    rotation_type: string | null;
   };
   visual: {
     color: string;     // Hex color
@@ -348,7 +348,7 @@ function SchedulePage() {
 
 - **Date range:** Larger date ranges = more voxels = slower rendering
 - **Recommended:** 2-4 weeks at a time for smooth interaction
-- **Large datasets:** Consider filtering by person or activity type
+- **Large datasets:** Consider filtering by person or rotation type
 - **Caching:** API responses are cached for 60 seconds
 
 ---
@@ -378,7 +378,7 @@ function SchedulePage() {
 ### Performance is slow
 
 1. Reduce date range
-2. Filter to fewer people/activity types
+2. Filter to fewer people/rotation types
 3. Consider using the 2D heatmap for large datasets
 
 ---

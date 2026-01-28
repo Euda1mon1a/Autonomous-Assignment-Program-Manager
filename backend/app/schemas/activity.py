@@ -57,6 +57,11 @@ class ActivityBase(BaseModel):
         True, description="ACGME clinical hour limit"
     )
     display_order: int = Field(0, description="Sort order for UI")
+    capacity_units: int | None = Field(
+        None,
+        ge=0,
+        description="FMC physical capacity units consumed by this activity (0 for non-physical)",
+    )
 
     @field_validator("name")
     @classmethod
@@ -111,6 +116,7 @@ class ActivityUpdate(BaseModel):
     is_protected: bool | None = None
     counts_toward_clinical_hours: bool | None = None
     display_order: int | None = None
+    capacity_units: int | None = None
 
     @field_validator("code")
     @classmethod

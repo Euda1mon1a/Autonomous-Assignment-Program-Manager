@@ -84,7 +84,7 @@ def high_capacity_rotation(db: Session) -> RotationTemplate:
     rotation = RotationTemplate(
         id=uuid4(),
         name="Busy Clinic",
-        activity_type="outpatient",
+        rotation_type="outpatient",
         abbreviation="BUSY",
         max_residents=10,  # Requires 10 residents
         min_residents=8,
@@ -102,7 +102,7 @@ def exclusive_rotation(db: Session) -> RotationTemplate:
     rotation = RotationTemplate(
         id=uuid4(),
         name="Exclusive Procedure",
-        activity_type="procedure",
+        rotation_type="procedure",
         abbreviation="EXCL",
         max_residents=1,
         min_residents=1,
@@ -295,7 +295,7 @@ class TestConflictingConstraints:
         rotation = RotationTemplate(
             id=uuid4(),
             name="High Supervision Procedure",
-            activity_type="procedure",
+            rotation_type="procedure",
             abbreviation="HSP",
             max_residents=3,
             supervision_required=True,
@@ -326,7 +326,7 @@ class TestConflictingConstraints:
         call_rotation = RotationTemplate(
             id=uuid4(),
             name="24hr Call",
-            activity_type="call",
+            rotation_type="call",
             abbreviation="CALL",
             max_residents=1,
         )
@@ -414,7 +414,7 @@ class TestHolidayWeekendHandling:
         weekend_call = RotationTemplate(
             id=uuid4(),
             name="Weekend Call",
-            activity_type="call",
+            rotation_type="call",
             abbreviation="WKD",
             max_residents=1,
             min_residents=1,
@@ -514,7 +514,7 @@ class TestBoundaryConditions:
         overnight = RotationTemplate(
             id=uuid4(),
             name="Overnight Call",
-            activity_type="call",
+            rotation_type="call",
             abbreviation="NIGHT",
             max_residents=1,
         )

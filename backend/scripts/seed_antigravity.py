@@ -79,7 +79,7 @@ class AntigravitySeed:
 
     # Rotation template definitions
     ROTATION_TEMPLATES = [
-        # (name, activity_type, abbrev, display_abbrev, max_residents, supervision_req, leave_eligible, font_color, bg_color)
+        # (name, rotation_type, abbrev, display_abbrev, max_residents, supervision_req, leave_eligible, font_color, bg_color)
         (
             "Inpatient",
             "inpatient",
@@ -507,7 +507,7 @@ class AntigravitySeed:
         for config in self.ROTATION_TEMPLATES:
             (
                 name,
-                activity_type,
+                rotation_type,
                 abbreviation,
                 display_abbrev,
                 max_residents,
@@ -530,7 +530,7 @@ class AntigravitySeed:
             template = RotationTemplate(
                 id=uuid4(),
                 name=name,
-                activity_type=activity_type,
+                rotation_type=rotation_type,
                 abbreviation=abbreviation,
                 display_abbreviation=display_abbrev,
                 max_residents=max_residents,
@@ -542,7 +542,7 @@ class AntigravitySeed:
             )
             self.db.add(template)
             self.created["templates"][name] = template
-            print(f"  Created: {name} ({activity_type})")
+            print(f"  Created: {name} ({rotation_type})")
 
         self.db.flush()
         print(f"  Total templates: {len(self.created['templates'])}")
@@ -653,7 +653,7 @@ class AntigravitySeed:
 
                 # Assign to weekday blocks (AM sessions for clinic, both for inpatient)
                 for block in weekday_blocks:
-                    if template and template.activity_type == "outpatient":
+                    if template and template.rotation_type == "outpatient":
                         # Clinic only AM
                         if block.time_of_day == "AM":
                             self._create_assignment(

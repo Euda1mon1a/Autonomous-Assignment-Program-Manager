@@ -27,13 +27,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_DIR = REPO_ROOT / "backend"
 sys.path.insert(0, str(BACKEND_DIR))
 
-from app.db.session import SessionLocal  # noqa: E402
-from app.models.activity import Activity  # noqa: E402
-from app.models.call_assignment import CallAssignment  # noqa: E402
-from app.models.half_day_assignment import HalfDayAssignment  # noqa: E402
-from app.scheduling.engine import SchedulingEngine  # noqa: E402
-from app.utils.academic_blocks import get_block_dates  # noqa: E402
-
 
 def _load_env() -> None:
     env_path = REPO_ROOT / ".env"
@@ -46,13 +39,30 @@ def _load_env() -> None:
             continue
         key, value = line.split("=", 1)
         value = value.strip().strip('"').strip("'")
-        os.environ.setdefault(key.strip(), value)
+        key = key.strip()
+        existing = os.environ.get(key)
+        if key == "CORS_ORIGINS":
+            if not existing or '"' not in existing:
+                os.environ[key] = value
+            continue
+        if not existing:
+            os.environ[key] = value
 
-    if "DATABASE_URL" not in os.environ and "DB_PASSWORD" in os.environ:
+    if not os.environ.get("DATABASE_URL") and os.environ.get("DB_PASSWORD"):
         os.environ["DATABASE_URL"] = (
             f"postgresql://scheduler:{os.environ['DB_PASSWORD']}@localhost:5432/"
             "residency_scheduler"
         )
+
+
+_load_env()
+
+from app.db.session import SessionLocal  # noqa: E402
+from app.models.activity import Activity  # noqa: E402
+from app.models.call_assignment import CallAssignment  # noqa: E402
+from app.models.half_day_assignment import HalfDayAssignment  # noqa: E402
+from app.scheduling.engine import SchedulingEngine  # noqa: E402
+from app.utils.academic_blocks import get_block_dates  # noqa: E402
 
 
 def _clear_block(session, start_date, end_date) -> dict[str, int]:

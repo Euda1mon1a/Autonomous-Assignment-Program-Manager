@@ -42,16 +42,16 @@ logger = get_logger(__name__)
 
 @router.get("", response_model=ResidentWeeklyRequirementListResponse)
 async def list_resident_weekly_requirements(
-    activity_type: str | None = Query(
-        None, description="Filter by rotation template activity type"
+    rotation_type: str | None = Query(
+        None, description="Filter by rotation template rotation type"
     ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> ResidentWeeklyRequirementListResponse:
-    """List all resident weekly requirements, optionally filtered by activity type.
+    """List all resident weekly requirements, optionally filtered by rotation type.
 
     Args:
-        activity_type: Filter by rotation template activity type (e.g., 'outpatient')
+        rotation_type: Filter by rotation template rotation type (e.g., 'outpatient')
         db: Database session
         current_user: Current authenticated user
 
@@ -64,8 +64,8 @@ async def list_resident_weekly_requirements(
         .join(RotationTemplate)
     )
 
-    if activity_type:
-        query = query.where(RotationTemplate.activity_type == activity_type)
+    if rotation_type:
+        query = query.where(RotationTemplate.rotation_type == rotation_type)
 
     # Exclude requirements for archived templates
     query = query.where(RotationTemplate.is_archived == False)
@@ -183,7 +183,7 @@ async def get_requirement_by_template(
     return ResidentWeeklyRequirementWithTemplate(
         **base.model_dump(),
         template_name=template.name,
-        template_activity_type=template.activity_type,
+        template_rotation_type=template.rotation_type,
     )
 
 
@@ -253,7 +253,7 @@ async def upsert_requirement_by_template(
     return ResidentWeeklyRequirementWithTemplate(
         **base.model_dump(),
         template_name=template.name,
-        template_activity_type=template.activity_type,
+        template_rotation_type=template.rotation_type,
     )
 
 
@@ -439,7 +439,7 @@ async def apply_outpatient_defaults(
     # Query templates
     query = select(RotationTemplate).where(
         RotationTemplate.is_archived == False,
-        RotationTemplate.activity_type.in_(["outpatient", "clinic"]),
+        RotationTemplate.rotation_type == "outpatient",
     )
 
     if template_ids:

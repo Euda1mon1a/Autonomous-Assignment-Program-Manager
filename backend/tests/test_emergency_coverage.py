@@ -34,7 +34,7 @@ def critical_rotation_template(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="Inpatient Service",
-        activity_type="inpatient",
+        rotation_type="inpatient",
         abbreviation="IP",
         max_residents=4,
         supervision_required=True,
@@ -51,7 +51,7 @@ def call_rotation_template(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="Emergency Call",
-        activity_type="call",
+        rotation_type="call",
         abbreviation="CALL",
         max_residents=2,
         supervision_required=True,
@@ -68,7 +68,7 @@ def clinic_rotation_template(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="Sports Medicine Clinic",
-        activity_type="clinic",
+        rotation_type="clinic",
         abbreviation="SM",
         max_residents=3,
         supervision_required=False,
@@ -85,7 +85,7 @@ def education_rotation_template(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="Didactic Education",
-        activity_type="education",
+        rotation_type="education",
         abbreviation="EDU",
         max_residents=10,
         supervision_required=False,

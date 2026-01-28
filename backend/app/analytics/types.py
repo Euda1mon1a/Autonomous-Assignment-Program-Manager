@@ -116,7 +116,7 @@ class RotationCoverage(TypedDict):
 
     rotation_id: str
     name: str
-    activity_type: str
+    rotation_type: str
     total_assignments: int
 
 
@@ -124,7 +124,7 @@ class RotationCoverageStats(TypedDict):
     """Rotation coverage statistics."""
 
     rotations: list[RotationCoverage]
-    by_activity_type: dict[str, int]
+    by_rotation_type: dict[str, int]
     total_rotations: int
 
 

@@ -408,6 +408,8 @@ class ScheduleRunRead(BaseModel):
     algorithm: SchedulingAlgorithm
     timestamp: datetime
     status: str
+    start_date: date | None = Field(default=None, alias="startDate")
+    end_date: date | None = Field(default=None, alias="endDate")
     configuration: dict = Field(default_factory=dict)
     result: ScheduleMetrics | None = None
     notes: str | None = None
@@ -434,6 +436,8 @@ class ScheduleRunRead(BaseModel):
             algorithm=getattr(obj, "algorithm", "hybrid"),
             timestamp=getattr(obj, "created_at", datetime.now()),
             status=getattr(obj, "status", "unknown"),
+            startDate=getattr(obj, "start_date", None),
+            endDate=getattr(obj, "end_date", None),
             configuration=getattr(obj, "config_json", {}),
             result=metrics,
             notes=getattr(obj, "notes", None),

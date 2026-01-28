@@ -31,7 +31,8 @@ This document is the single source of truth for scheduling domain concepts, term
 | **Block** | 28-day scheduling period (4 weeks) | "Block 5 starts March 6" |
 | **Rotation** | Multi-week assignment to a template | "On FMIT rotation" |
 | **Rotation Template** | Reusable blueprint defining rotation requirements | "FMIT Inpatient template" |
-| **Activity** | Potential slot type (catalog/vocabulary) | "FM Clinic is a clinical activity" |
+| **Rotation Type** | Category/setting for a rotation template (not an Activity) | `clinic`, `outpatient`, `inpatient`, `education` |
+| **Activity** | Slot-level activity vocabulary | "FM Clinic is a clinical activity" |
 | **Assignment** | Actualized scheduled slot (solver output) | "Dr. Smith assigned FM Clinic Tue AM" |
 | **Slot** | Half-day period (AM or PM) | "Wednesday PM slot" |
 | **AT** | Attending Time (supervision coverage unit) | "Requires 2 AT for this clinic" |
@@ -107,7 +108,7 @@ A **Rotation Template** defines:
 | Field | Purpose | Example |
 |-------|---------|---------|
 | `name` | Display name | "FMIT Inpatient" |
-| `type` | Category | `inpatient`, `outpatient`, `educational` |
+| `rotation_type` | Rotation category/setting | `inpatient`, `outpatient`, `education` |
 | `includes_weekend_work` | Weekend scheduling | `true` for FMIT, `false` for clinics |
 | `leave_eligible` | Can take leave | `false` for inpatient |
 | `weekly_patterns` | 7x2 activity grid | See Weekly Patterns below |
@@ -135,6 +136,9 @@ Each rotation template has a **7x2 grid** defining activities per slot:
 | **Call eligible** | NO (already providing coverage) | YES |
 | **Leave eligible** | NO | YES |
 | **Hours/day** | ~12 hours | ~8-10 hours |
+
+**Terminology note:** “Clinic” is a slot‑level Activity that often appears in
+outpatient rotations. Use `rotation_type=outpatient` for the rotation category.
 
 ---
 

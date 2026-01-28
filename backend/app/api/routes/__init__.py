@@ -226,10 +226,10 @@ api_router.include_router(
     fmit_timeline.router, prefix="/fmit_timeline", tags=["fmit-timeline"]
 )
 api_router.include_router(
-    conflict_resolution.router, prefix="/conflicts", tags=["conflict-resolution"]
+    conflicts.router, prefix="/conflicts/analysis", tags=["conflicts-analysis"]
 )
 api_router.include_router(
-    conflicts.router, prefix="/conflicts/analysis", tags=["conflicts-analysis"]
+    conflict_resolution.router, prefix="/conflicts", tags=["conflict-resolution"]
 )
 
 api_router.include_router(role_views.router, prefix="/views", tags=["role-views"])

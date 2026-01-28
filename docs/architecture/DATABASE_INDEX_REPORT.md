@@ -200,7 +200,7 @@ CREATE INDEX idx_people_faculty_role ON people(faculty_role);
 -- Impact: 60% faster faculty role filtering
 
 -- Rotation templates
-CREATE INDEX idx_rotation_templates_activity_type ON rotation_templates(activity_type);
+CREATE INDEX idx_rotation_templates_rotation_type ON rotation_templates(rotation_type);
 -- Used in: Solver template filtering, capacity calculations
 -- Impact: 50% faster template selection queries
 
@@ -336,7 +336,7 @@ CREATE INDEX idx_people_pgy_level ON people(pgy_level);
 CREATE INDEX idx_people_faculty_role ON people(faculty_role);
 
 -- Rotation templates (solver performance)
-CREATE INDEX idx_rotation_templates_activity_type ON rotation_templates(activity_type);
+CREATE INDEX idx_rotation_templates_rotation_type ON rotation_templates(rotation_type);
 
 -- Notifications (user experience)
 CREATE INDEX idx_notifications_recipient_read ON notifications(recipient_id, is_read);
@@ -435,9 +435,9 @@ def upgrade() -> None:
         if_not_exists=True
     )
     op.create_index(
-        'idx_rotation_templates_activity_type',
+        'idx_rotation_templates_rotation_type',
         'rotation_templates',
-        ['activity_type'],
+        ['rotation_type'],
         if_not_exists=True
     )
     op.create_index(
@@ -609,7 +609,7 @@ def downgrade() -> None:
     # Frequently filtered
     op.drop_index('idx_swap_records_status', 'swap_records', if_exists=True)
     op.drop_index('idx_schedule_runs_status', 'schedule_runs', if_exists=True)
-    op.drop_index('idx_rotation_templates_activity_type', 'rotation_templates', if_exists=True)
+    op.drop_index('idx_rotation_templates_rotation_type', 'rotation_templates', if_exists=True)
     op.drop_index('idx_people_faculty_role', 'people', if_exists=True)
     op.drop_index('idx_people_pgy_level', 'people', if_exists=True)
 
@@ -695,7 +695,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
    JOIN people p ON a.person_id = p.id
    JOIN rotation_templates rt ON a.rotation_template_id = rt.id
    WHERE p.pgy_level = 1
-     AND rt.activity_type = 'clinic'
+     AND rt.rotation_type = 'clinic'
      AND a.created_at >= '2025-01-01';
    ```
 

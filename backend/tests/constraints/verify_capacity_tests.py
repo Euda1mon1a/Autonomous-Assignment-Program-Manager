@@ -52,12 +52,12 @@ class MockTemplate:
         self,
         template_id=None,
         name="Test",
-        activity_type="outpatient",
+        rotation_type="outpatient",
         max_residents=None,
     ):
         self.id = template_id or uuid4()
         self.name = name
-        self.activity_type = activity_type
+        self.rotation_type = rotation_type
         self.max_residents = max_residents
 
 
@@ -187,7 +187,7 @@ def test_max_physicians_in_clinic_basic():
     blocks = [MockBlock()]
     residents = [MockPerson(person_type="resident") for _ in range(4)]
     faculty = [MockPerson(person_type="faculty") for _ in range(3)]
-    template = MockTemplate(activity_type="outpatient")
+    template = MockTemplate(rotation_type="outpatient")
 
     # Test at limit (4 residents + 2 faculty = 6, at limit)
     assignments = []

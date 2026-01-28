@@ -207,7 +207,7 @@ class TestFMITOverlapDetection:
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT Inpatient",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
             supervision_required=True,
         )
@@ -264,13 +264,13 @@ class TestCrossSystemConflicts:
         residency_template = RotationTemplate(
             id=uuid4(),
             name="Clinic Rotation",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="CL",
         )
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT Coverage",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
         )
         db.add_all([residency_template, fmit_template])
@@ -337,7 +337,7 @@ class TestACGMEViolations:
         template = RotationTemplate(
             id=uuid4(),
             name="Busy Clinic",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="BC",
         )
         db.add(template)
@@ -401,7 +401,7 @@ class TestACGMEViolations:
         template = RotationTemplate(
             id=uuid4(),
             name="Intensive Care",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="IC",
         )
         db.add(template)
@@ -471,7 +471,7 @@ class TestSupervisionViolations:
         template = RotationTemplate(
             id=uuid4(),
             name="Clinic",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="CL",
             supervision_required=True,
         )
@@ -540,7 +540,7 @@ class TestSupervisionViolations:
         template = RotationTemplate(
             id=uuid4(),
             name="Clinic",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="CL",
             supervision_required=True,
         )
@@ -788,7 +788,7 @@ class TestIntegratedConflictDetection:
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT Rotation",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
         )
         db.add(fmit_template)

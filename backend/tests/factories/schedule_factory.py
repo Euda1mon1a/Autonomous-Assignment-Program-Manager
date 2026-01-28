@@ -410,7 +410,7 @@ class ScheduleFactory:
         call_template = RotationFactory.create_rotation_template(
             db,
             name="Weekend Call",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="CALL",
             leave_eligible=False,
         )

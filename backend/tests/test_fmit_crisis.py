@@ -154,7 +154,7 @@ class TestFMITStaffingFloorConstraint:
         """Create mock FMIT template."""
         template = Mock()
         template.id = uuid4()
-        template.activity_type = "inpatient"
+        template.rotation_type = "inpatient"
         template.name = "FMIT Rotation"
         return template
 
@@ -163,7 +163,7 @@ class TestFMITStaffingFloorConstraint:
         """Create mock non-FMIT template."""
         template = Mock()
         template.id = uuid4()
-        template.activity_type = "clinic"
+        template.rotation_type = "clinic"
         template.name = "Family Medicine Clinic"
         return template
 
@@ -507,7 +507,7 @@ class TestFMITCrisisIntegration:
             residents=[],
             faculty=[Mock(id=uuid4(), name=f"Faculty {i}") for i in range(4)],
             blocks=[Mock(id=uuid4(), date=date(2025, 1, 3))],
-            templates=[Mock(id=uuid4(), activity_type="inpatient", name="FMIT")],
+            templates=[Mock(id=uuid4(), rotation_type="inpatient", name="FMIT")],
         )
         context.load_shedding_level = 3  # RED - system stressed
 

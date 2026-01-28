@@ -94,7 +94,7 @@ def clinic_rotation(db: Session) -> RotationTemplate:
     rotation = RotationTemplate(
         id=uuid4(),
         name="Sports Medicine Clinic",
-        activity_type="outpatient",
+        rotation_type="outpatient",
         abbreviation="SM",
         requires_call=False,
         max_residents=4,
@@ -111,7 +111,7 @@ def call_rotation(db: Session) -> RotationTemplate:
     rotation = RotationTemplate(
         id=uuid4(),
         name="Inpatient Call",
-        activity_type="call",
+        rotation_type="call",
         abbreviation="CALL",
         requires_call=True,
         max_residents=1,

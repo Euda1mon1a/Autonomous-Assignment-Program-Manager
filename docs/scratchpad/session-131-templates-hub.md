@@ -60,7 +60,7 @@ The solver does NOT optimize inpatient assignments. It reads them as **constants
 for resident in block_assignments:
     template = resident.rotation_template
 
-    if template.activity_type == 'inpatient':
+    if template.rotation_type == 'inpatient':
         # All 56 slots are FIXED - load from weekly_patterns
         for slot in template.weekly_patterns:
             # Mark slot as occupied

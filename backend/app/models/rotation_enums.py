@@ -53,8 +53,8 @@ class ActivityType(str, Enum):
     """
     Activity types for weekly grid cells.
 
-    These are the assignable activities for each AM/PM slot in the
-    7x2 weekly pattern grid.
+    These are slot-level Activity types (NOT RotationTemplate.rotation_type).
+    They populate each AM/PM slot in the 7x2 weekly pattern grid.
     """
 
     FM_CLINIC = "fm_clinic"

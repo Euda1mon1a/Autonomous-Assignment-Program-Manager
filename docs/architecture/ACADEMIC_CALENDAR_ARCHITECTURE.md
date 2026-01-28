@@ -199,7 +199,7 @@ All of these become unnecessary with proper data model:
 | `engine.py:858` | `_load_fmit_assignments()` | Query `ResidentBlockRotation` |
 | `fmit.py:289,447,650` | `"FMIT" in name.upper()` | `calendar_mode == "fmit_week"` |
 | `inpatient.py:70` | `"night" in name_lower` | `is_block_half_rotation=True` |
-| `engine.py:956` | `activity_type == "clinic"` | `is_solver_eligible=True` |
+| `engine.py:956` | `rotation_type == "clinic"` | `is_solver_eligible=True` |
 
 ---
 

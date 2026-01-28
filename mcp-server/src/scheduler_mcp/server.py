@@ -4786,7 +4786,7 @@ async def check_schema_drift_tool() -> dict[str, Any]:
 @mcp.tool()
 async def generate_block_quality_report_tool(
     block_number: int,
-    academic_year: int = 2025,
+    academic_year: int | None = None,
     output_format: str = "summary",
 ) -> dict[str, Any]:
     """
@@ -4801,7 +4801,8 @@ async def generate_block_quality_report_tool(
 
     Args:
         block_number: Block number (1-13)
-        academic_year: Academic year (default: 2025)
+        academic_year: Academic year (e.g., 2025 for AY 2025-2026).
+            If not provided, derives from current date (July-June cycle).
         output_format: Output format:
             - "summary": Executive summary only (fast)
             - "full": Complete report data
@@ -4826,6 +4827,13 @@ async def generate_block_quality_report_tool(
             output_format="full"
         )
     """
+    # Derive academic year from current date if not provided
+    if academic_year is None:
+        from datetime import date
+
+        today = date.today()
+        academic_year = today.year if today.month >= 7 else today.year - 1
+
     try:
         api_client = await get_api_client()
 
@@ -4841,7 +4849,7 @@ async def generate_block_quality_report_tool(
                     "format": output_format,
                 },
             )
-            return response
+            return response.json()
         except Exception:
             pass  # Endpoint doesn't exist, use fallback
 
@@ -4878,7 +4886,7 @@ async def generate_block_quality_report_tool(
 @mcp.tool()
 async def generate_multi_block_quality_report_tool(
     block_numbers: str,
-    academic_year: int = 2025,
+    academic_year: int | None = None,
     include_summary: bool = True,
 ) -> dict[str, Any]:
     """
@@ -4887,7 +4895,8 @@ async def generate_multi_block_quality_report_tool(
     Args:
         block_numbers: Block specification as comma-separated or range.
             Examples: "10,11,12" or "10-13"
-        academic_year: Academic year (default: 2025)
+        academic_year: Academic year (e.g., 2025 for AY 2025-2026).
+            If not provided, derives from current date (July-June cycle).
         include_summary: Include cross-block summary report
 
     Returns:
@@ -4902,6 +4911,13 @@ async def generate_multi_block_quality_report_tool(
         for block in result['blocks']:
             print(f"Block {block['block_number']}: {block['status']}")
     """
+    # Derive academic year from current date if not provided
+    if academic_year is None:
+        from datetime import date
+
+        today = date.today()
+        academic_year = today.year if today.month >= 7 else today.year - 1
+
     try:
         # Parse block numbers
         blocks = []
@@ -4927,7 +4943,7 @@ async def generate_multi_block_quality_report_tool(
                     "include_summary": include_summary,
                 },
             )
-            return response
+            return response.json()
         except Exception:
             pass  # Fallback
 

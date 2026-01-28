@@ -161,6 +161,12 @@ class Activity(Base):
         nullable=False,
         comment="True for clinical work (C, CV, PR, VAS) that counts toward max 6/slot",
     )
+    capacity_units = Column(
+        Integer,
+        default=1,
+        nullable=False,
+        comment="FMC physical capacity units consumed by this activity (0 for non-physical)",
+    )
 
     # UI ordering
     display_order = Column(

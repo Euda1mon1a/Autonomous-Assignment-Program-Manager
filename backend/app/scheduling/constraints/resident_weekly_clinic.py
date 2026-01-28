@@ -81,11 +81,11 @@ class ResidentWeeklyClinicConstraint(HardConstraint):
         return self._weekly_requirements.get(template_id)
 
     def _get_fm_clinic_template_ids(self, context: SchedulingContext) -> set[UUID]:
-        """Get template IDs for FM clinic rotations (outpatient activity type)."""
+        """Get template IDs for outpatient rotations (rotation_type=outpatient)."""
         fm_ids: set[UUID] = set()
         for template in context.templates:
-            if hasattr(template, "activity_type"):
-                if template.activity_type in ("outpatient", "clinic"):
+            if hasattr(template, "rotation_type"):
+                if template.rotation_type in ("outpatient",):
                     fm_ids.add(template.id)
         return fm_ids
 
@@ -410,8 +410,8 @@ class ResidentAcademicTimeConstraint(HardConstraint):
         """Get template IDs for clinic rotations."""
         clinic_ids: set[UUID] = set()
         for template in context.templates:
-            if hasattr(template, "activity_type"):
-                if template.activity_type in ("outpatient", "clinic"):
+            if hasattr(template, "rotation_type"):
+                if template.rotation_type in ("outpatient",):
                     clinic_ids.add(template.id)
         return clinic_ids
 
@@ -600,8 +600,8 @@ class ResidentClinicDayPreferenceConstraint(SoftConstraint):
         # Get clinic templates
         clinic_ids: set[UUID] = set()
         for template in context.templates:
-            if hasattr(template, "activity_type"):
-                if template.activity_type in ("outpatient", "clinic"):
+            if hasattr(template, "rotation_type"):
+                if template.rotation_type in ("outpatient",):
                     clinic_ids.add(template.id)
 
         if not clinic_ids:
@@ -654,8 +654,8 @@ class ResidentClinicDayPreferenceConstraint(SoftConstraint):
 
         clinic_ids: set[UUID] = set()
         for template in context.templates:
-            if hasattr(template, "activity_type"):
-                if template.activity_type in ("outpatient", "clinic"):
+            if hasattr(template, "rotation_type"):
+                if template.rotation_type in ("outpatient",):
                     clinic_ids.add(template.id)
 
         if not clinic_ids:
@@ -703,8 +703,8 @@ class ResidentClinicDayPreferenceConstraint(SoftConstraint):
 
         clinic_ids: set[UUID] = set()
         for template in context.templates:
-            if hasattr(template, "activity_type"):
-                if template.activity_type in ("outpatient", "clinic"):
+            if hasattr(template, "rotation_type"):
+                if template.rotation_type in ("outpatient",):
                     clinic_ids.add(template.id)
 
         total_penalty = 0.0

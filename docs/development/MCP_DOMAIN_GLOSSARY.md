@@ -12,7 +12,7 @@
 2. [Scheduling Concepts](#scheduling-concepts)
 3. [Constraint Patterns](#constraint-patterns)
 4. [Role Types](#role-types)
-5. [Activity Types](#activity-types)
+5. [Rotation & Activity Types](#rotation-types-templates)
 6. [Temporal Patterns](#temporal-patterns)
 7. [Open Questions](#open-questions)
 
@@ -180,22 +180,36 @@ class ScreenerRole(str, Enum):
 
 ---
 
-## Activity Types
+## Rotation Types (Templates)
 
-### Template Categories
+### Rotation Categories
+
+| Rotation Type | Description | Typical Duration |
+|---------------|-------------|------------------|
+| `clinic` | Continuity clinic rotations | Half-day slots |
+| `outpatient` | Elective/selective ambulatory rotations | Half-day slots |
+| `inpatient` | Inpatient services (FMIT, wards) | Full week |
+| `procedures` | Procedural rotations | Half-day slots |
+| `conference` | Didactics/education blocks | Usually PM |
+| `call` | On-call coverage rotations | Overnight |
+| `recovery` | Post-call recovery | Full day |
+| `admin` | Administrative rotations | Varies |
+| `leave` | Leave/absence rotations | Varies |
+
+## Activity Types (Slot-level)
+
+These map to **weekly pattern** slots and are not rotation categories.
 
 | Activity Type | Description | Typical Duration |
 |---------------|-------------|------------------|
-| `clinic` | Outpatient clinic session | AM or PM |
-| `procedures` | Procedures clinic | AM or PM |
-| `fmit` | Inpatient team (Family Med) | Full week |
-| `call` | On-call coverage | Overnight |
-| `recovery` | Post-call recovery | Full day |
-| `conference` | Didactics/lectures | Usually PM |
-| `simulation` | Skills training | Usually PM |
-| `research` | Research time | Varies |
-| `admin` | Administrative duties | Varies |
-| `leave` | Approved time off | Varies |
+| `fm_clinic` | Family Medicine clinic | AM or PM |
+| `specialty` | Specialty clinic | AM or PM |
+| `elective` | Elective session | AM or PM |
+| `conference` | Lecture/didactics | Usually PM |
+| `inpatient` | Inpatient coverage | Full day |
+| `call` | Call coverage | Overnight |
+| `procedure` | Procedure session | AM or PM |
+| `off` | Off / protected time | AM or PM |
 
 ### Wednesday Special Sessions
 

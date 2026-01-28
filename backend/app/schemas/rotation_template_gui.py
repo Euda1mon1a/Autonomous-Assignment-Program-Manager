@@ -23,10 +23,20 @@ class WeeklyPatternBase(BaseModel):
 
     day_of_week: int = Field(..., ge=0, le=6, description="0=Sunday, 6=Saturday")
     time_of_day: Literal["AM", "PM"]
+    activity_id: UUID | None = Field(
+        None,
+        description=(
+            "Optional Activity UUID for this slot. "
+            "If omitted, the backend resolves from activity_type."
+        ),
+    )
     activity_type: str = Field(
         ...,
         max_length=50,
-        description="fm_clinic, specialty, elective, conference, inpatient, call, procedure, off",
+        description=(
+            "Activity code for this slot (Activity, not RotationTemplate.rotation_type). "
+            "Examples: fm_clinic, specialty, elective, conference, inpatient, call, procedure, off."
+        ),
     )
     week_number: int | None = Field(
         None,
@@ -48,6 +58,7 @@ class WeeklyPatternCreate(WeeklyPatternBase):
 class WeeklyPatternUpdate(BaseModel):
     """Schema for updating a weekly pattern slot."""
 
+    activity_id: UUID | None = None
     activity_type: str | None = Field(None, max_length=50)
     week_number: int | None = Field(None, ge=1, le=4)
     linked_template_id: UUID | None = None
@@ -153,7 +164,8 @@ class RotationTemplateExtendedCreate(BaseModel):
 
     # Core fields
     name: str
-    activity_type: str
+    # Rotation category/setting (NOT an Activity). Used for solver filtering + constraints.
+    rotation_type: str
     abbreviation: str | None = None
     font_color: str | None = None
     background_color: str | None = None
@@ -183,7 +195,7 @@ class RotationTemplateExtendedResponse(BaseModel):
     # Core fields
     id: UUID
     name: str
-    activity_type: str
+    rotation_type: str
     abbreviation: str | None = None
     font_color: str | None = None
     background_color: str | None = None
@@ -228,7 +240,7 @@ class SplitRotationTemplateConfig(BaseModel):
     """Configuration for one half of a split rotation."""
 
     name: str
-    activity_type: str
+    rotation_type: str
     abbreviation: str | None = None
     font_color: str | None = None
     background_color: str | None = None

@@ -1167,7 +1167,7 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -1212,7 +1212,7 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -1248,7 +1248,7 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -1326,7 +1326,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -1368,7 +1368,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -1409,7 +1409,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:

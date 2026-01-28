@@ -209,7 +209,7 @@ Get a single block assignment by ID.
   "rotation_template": {
     "id": "uuid",
     "name": "Sports Medicine Elective",
-    "activity_type": "elective",
+    "rotation_type": "elective",
     "leave_eligible": true
   }
 }

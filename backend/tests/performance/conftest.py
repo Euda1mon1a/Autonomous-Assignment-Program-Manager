@@ -112,7 +112,7 @@ def large_rotation_template(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="Primary Care Clinic",
-        activity_type="clinic",
+        rotation_type="clinic",
         abbreviation="PC",
         clinic_location="Main Clinic",
         max_residents=8,

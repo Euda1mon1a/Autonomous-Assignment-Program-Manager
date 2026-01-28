@@ -60,7 +60,7 @@ export function useVoxelGridData({
       });
 
       personIds?.forEach(id => params.append('person_ids', String(id)));
-      activityTypes?.forEach(type => params.append('activity_types', type));
+      rotationTypes?.forEach(type => params.append('rotation_types', type));
 
       const response = await api.get(`/api/visualization/voxel-grid?${params}`);
       return response.data;
@@ -96,7 +96,7 @@ export function useVoxelCoverageGaps(
         start_date: startDate,
         end_date: endDate,
       });
-      requiredActivityTypes.forEach(t => params.append('required_activity_types', t));
+      requiredRotationTypes.forEach(t => params.append('required_rotation_types', t));
 
       const response = await api.get(`/api/visualization/voxel-grid/coverage-gaps?${params}`);
       return response.data;

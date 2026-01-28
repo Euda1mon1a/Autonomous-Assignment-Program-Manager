@@ -17,6 +17,7 @@ from sqlalchemy import select, func, text
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
+from app.utils.academic_blocks import get_block_dates as get_block_dates_util
 from app.schemas.block_quality_report import (
     BlockDates,
     BlockAssignmentEntry,
@@ -54,8 +55,20 @@ class BlockQualityReportService:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_block_dates(self, block_number: int) -> BlockDates:
-        """Get start/end dates for a block from database."""
+    def get_block_dates(self, block_number: int, academic_year: int) -> BlockDates:
+        """Get start/end dates for a block using canonical calculation.
+
+        Args:
+            block_number: Block number (0-13)
+            academic_year: Academic year (e.g., 2025 for AY 2025-2026)
+
+        Returns:
+            BlockDates with calculated start/end dates
+        """
+        # Use the canonical utility for expected date calculation
+        util_dates = get_block_dates_util(block_number, academic_year)
+
+        # Verify block exists in database and get actual range within expected window
         result = self.db.execute(
             text("""
                 SELECT
@@ -64,31 +77,32 @@ class BlockQualityReportService:
                     COUNT(DISTINCT date) as days
                 FROM blocks
                 WHERE block_number = :block_num
+                AND date BETWEEN :start_date AND :end_date
             """),
-            {"block_num": block_number},
+            {
+                "block_num": block_number,
+                "start_date": util_dates.start_date,
+                "end_date": util_dates.end_date,
+            },
         )
         row = result.fetchone()
         if not row or not row[0]:
-            raise ValueError(f"Block {block_number} not found in database")
+            raise ValueError(
+                f"Block {block_number} for AY {academic_year} not found in database "
+                f"(expected dates: {util_dates.start_date} to {util_dates.end_date})"
+            )
 
-        days = row[2]
-        # Derive academic year from start date (July-June cycle)
-        # If month >= 7 (July), use that year; otherwise use previous year
-        start_date = row[0]
-        academic_year = (
-            start_date.year if start_date.month >= 7 else start_date.year - 1
-        )
         return BlockDates(
             block_number=block_number,
             academic_year=academic_year,
-            start_date=start_date,
+            start_date=row[0],
             end_date=row[1],
-            days=days,
-            slots=days * 2,
+            days=row[2],
+            slots=row[2] * 2,
         )
 
     def get_block_assignments(
-        self, block_number: int, academic_year: int = 2025
+        self, block_number: int, academic_year: int
     ) -> list[BlockAssignmentEntry]:
         """A1: Get master rotation schedule from block_assignments."""
         result = self.db.execute(
@@ -189,14 +203,14 @@ class BlockQualityReportService:
         """B1: Get solved assignments grouped by rotation."""
         result = self.db.execute(
             text("""
-                SELECT rt.name, rt.activity_type, COUNT(a.id) as cnt
+                SELECT rt.name, rt.rotation_type, COUNT(a.id) as cnt
                 FROM assignments a
                 JOIN blocks b ON a.block_id = b.id
                 LEFT JOIN rotation_templates rt ON a.rotation_template_id = rt.id
                 JOIN people p ON a.person_id = p.id
                 WHERE b.date BETWEEN :start_date AND :end_date
                 AND p.type = 'resident'
-                GROUP BY rt.id, rt.name, rt.activity_type
+                GROUP BY rt.id, rt.name, rt.rotation_type
                 ORDER BY cnt DESC
             """),
             {"start_date": start_date, "end_date": end_date},
@@ -204,7 +218,7 @@ class BlockQualityReportService:
         return [
             RotationSummary(
                 rotation=row[0] or "Unknown",
-                activity_type=row[1] or "unknown",
+                rotation_type=row[1] or "unknown",
                 count=row[2],
             )
             for row in result.fetchall()
@@ -412,21 +426,24 @@ class BlockQualityReportService:
         return residents, faculty
 
     def generate_report(
-        self, block_number: int, academic_year: int | None = None
+        self, block_number: int, academic_year: int
     ) -> BlockQualityReport:
-        """Generate complete block quality report."""
-        logger.info(f"Generating quality report for Block {block_number}")
+        """Generate complete block quality report.
 
-        # Get block dates (derives academic year from block start date)
-        block_dates = self.get_block_dates(block_number)
+        Args:
+            block_number: Block number (0-13)
+            academic_year: Academic year (e.g., 2025 for AY 2025-2026). Required.
+        """
+        logger.info(
+            f"Generating quality report for Block {block_number}, AY {academic_year}"
+        )
+
+        # Get block dates using canonical calculation
+        block_dates = self.get_block_dates(block_number, academic_year)
         start_date = block_dates.start_date
         end_date = block_dates.end_date
         max_slots = block_dates.slots
-
-        # Use derived academic year if not explicitly provided
-        resolved_year = (
-            academic_year if academic_year is not None else block_dates.academic_year
-        )
+        resolved_year = academic_year
 
         # Section A: Preloaded
         block_assignments = self.get_block_assignments(block_number, resolved_year)
@@ -455,6 +472,22 @@ class BlockQualityReportService:
         # Section C: Combined
         faculty_total = sum(f.slots for f in faculty_preloaded)
         resident_total = totals.get("resident", 0)
+
+        gaps_detected = []
+        expected_dates = get_block_dates_util(block_number, academic_year)
+        expected_days = expected_dates.duration_days
+        if (
+            block_dates.start_date != expected_dates.start_date
+            or block_dates.end_date != expected_dates.end_date
+            or block_dates.days != expected_days
+        ):
+            gaps_detected.append(
+                "Block date mismatch: "
+                f"expected {expected_dates.start_date} to {expected_dates.end_date} "
+                f"({expected_days} days), "
+                f"found {block_dates.start_date} to {block_dates.end_date} "
+                f"({block_dates.days} days)"
+            )
 
         all_assignments = []
         for rd in resident_dist:
@@ -493,7 +526,7 @@ class BlockQualityReportService:
             if res_counts
             else "0",
             faculty_range=f"{min(fac_counts)}-{max(fac_counts)}" if fac_counts else "0",
-            gaps_detected=[],
+            gaps_detected=gaps_detected,
         )
 
         # Section D: Post-Constraint
@@ -550,24 +583,25 @@ class BlockQualityReportService:
         )
 
     def generate_summary(
-        self, block_numbers: list[int], academic_year: int | None = None
+        self, block_numbers: list[int], academic_year: int
     ) -> CrossBlockSummary:
-        """Generate cross-block summary report."""
-        logger.info(f"Generating summary for blocks {block_numbers}")
+        """Generate cross-block summary report.
+
+        Args:
+            block_numbers: List of block numbers to include
+            academic_year: Academic year (e.g., 2025 for AY 2025-2026). Required.
+        """
+        logger.info(
+            f"Generating summary for blocks {block_numbers}, AY {academic_year}"
+        )
 
         blocks = []
         total_resident = 0
         total_faculty = 0
         gaps = []
 
-        # Derive academic year from first block if not provided
-        resolved_year = academic_year
-        if resolved_year is None and block_numbers:
-            first_block_dates = self.get_block_dates(block_numbers[0])
-            resolved_year = first_block_dates.academic_year
-
         for block_num in block_numbers:
-            report = self.generate_report(block_num, resolved_year)
+            report = self.generate_report(block_num, academic_year)
 
             blocks.append(
                 BlockSummaryEntry(
@@ -591,7 +625,7 @@ class BlockQualityReportService:
                 gaps.append(f"Block {block_num}: Post-Call PCAT/DO gap")
 
         return CrossBlockSummary(
-            academic_year=resolved_year,
+            academic_year=academic_year,
             blocks=blocks,
             total_assignments=total_resident + total_faculty,
             total_resident=total_resident,
@@ -709,7 +743,7 @@ class BlockQualityReportService:
         lines.append("| Rotation | Activity | Count |")
         lines.append("|----------|----------|-------|")
         for rot in report.section_b.by_rotation:
-            lines.append(f"| {rot.rotation} | {rot.activity_type} | {rot.count} |")
+            lines.append(f"| {rot.rotation} | {rot.rotation_type} | {rot.count} |")
         lines.append("")
 
         lines.append("## B2: Resident Distribution")

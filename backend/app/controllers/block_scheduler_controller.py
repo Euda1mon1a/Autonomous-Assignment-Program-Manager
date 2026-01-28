@@ -72,7 +72,7 @@ class BlockSchedulerController:
             rotation_info = RotationTemplateInfo(
                 id=assignment.rotation_template.id,
                 name=assignment.rotation_template.name,
-                activity_type=assignment.rotation_template.activity_type,
+                rotation_type=assignment.rotation_template.rotation_type,
                 leave_eligible=assignment.rotation_template.leave_eligible,
             )
 

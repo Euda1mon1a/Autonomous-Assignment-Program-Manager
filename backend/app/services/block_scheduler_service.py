@@ -556,7 +556,7 @@ class BlockSchedulerService:
                 rotation_info = RotationTemplateInfo(
                     id=assignment.rotation_template.id,
                     name=assignment.rotation_template.name,
-                    activity_type=assignment.rotation_template.activity_type,
+                    rotation_type=assignment.rotation_template.rotation_type,
                     leave_eligible=assignment.rotation_template.leave_eligible,
                 )
 
@@ -1022,7 +1022,7 @@ class BlockSchedulerService:
                         "id": str(rotation.id),
                         "name": rotation.name,
                         "abbreviation": rotation_abbrev,
-                        "category": rotation.activity_type or "Other",
+                        "category": rotation.rotation_type or "Other",
                         "color": rotation_color,
                         "capacity": cap.max_residents,
                         "assignedCount": cap.current_assigned,

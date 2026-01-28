@@ -157,7 +157,7 @@ def clinic_template(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="Test Clinic",
-        activity_type="clinic",
+        rotation_type="clinic",
         abbreviation="TC",
         clinic_location="Building A",
         max_residents=4,
@@ -175,7 +175,7 @@ def on_call_template(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="On Call",
-        activity_type="on_call",
+        rotation_type="on_call",
         abbreviation="OC",
         supervision_required=True,
     )
@@ -191,7 +191,7 @@ def inpatient_template(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="Inpatient Service",
-        activity_type="inpatient",
+        rotation_type="inpatient",
         abbreviation="IP",
         supervision_required=True,
     )
@@ -929,7 +929,7 @@ class TestAssignmentFiltering:
         for item in data["items"]:
             assert item["role"] == "primary"
 
-    def test_filter_by_activity_type_clinic(
+    def test_filter_by_rotation_type_clinic(
         self,
         client: TestClient,
         admin_token: str,
@@ -965,7 +965,7 @@ class TestAssignmentFiltering:
         response = client.get(
             "/api/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
-            params={"activity_type": "clinic"},
+            params={"rotation_type": "clinic"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -973,9 +973,9 @@ class TestAssignmentFiltering:
         # Note: Response includes rotation_template nested object
         for item in data["items"]:
             if item.get("rotation_template"):
-                assert item["rotation_template"]["activity_type"] == "clinic"
+                assert item["rotation_template"]["rotation_type"] == "clinic"
 
-    def test_filter_by_activity_type_on_call(
+    def test_filter_by_rotation_type_on_call(
         self,
         client: TestClient,
         admin_token: str,
@@ -1002,16 +1002,16 @@ class TestAssignmentFiltering:
         response = client.get(
             "/api/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
-            params={"activity_type": "on_call"},
+            params={"rotation_type": "on_call"},
         )
         assert response.status_code == 200
         data = response.json()
         assert len(data["items"]) >= 1
         for item in data["items"]:
             if item.get("rotation_template"):
-                assert item["rotation_template"]["activity_type"] == "on_call"
+                assert item["rotation_template"]["rotation_type"] == "on_call"
 
-    def test_filter_by_activity_type_inpatient(
+    def test_filter_by_rotation_type_inpatient(
         self,
         client: TestClient,
         admin_token: str,
@@ -1038,14 +1038,14 @@ class TestAssignmentFiltering:
         response = client.get(
             "/api/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
-            params={"activity_type": "inpatient"},
+            params={"rotation_type": "inpatient"},
         )
         assert response.status_code == 200
         data = response.json()
         assert len(data["items"]) >= 1
         for item in data["items"]:
             if item.get("rotation_template"):
-                assert item["rotation_template"]["activity_type"] == "inpatient"
+                assert item["rotation_template"]["rotation_type"] == "inpatient"
 
     def test_filter_combined_date_and_person(
         self,
@@ -1088,7 +1088,7 @@ class TestAssignmentFiltering:
         for item in data["items"]:
             assert item["person_id"] == str(target_resident.id)
 
-    def test_filter_combined_activity_type_and_role(
+    def test_filter_combined_rotation_type_and_role(
         self,
         client: TestClient,
         admin_token: str,
@@ -1116,7 +1116,7 @@ class TestAssignmentFiltering:
             "/api/assignments",
             headers={"Authorization": f"Bearer {admin_token}"},
             params={
-                "activity_type": "on_call",
+                "rotation_type": "on_call",
                 "role": "primary",
             },
         )
@@ -1125,7 +1125,7 @@ class TestAssignmentFiltering:
         for item in data["items"]:
             assert item["role"] == "primary"
             if item.get("rotation_template"):
-                assert item["rotation_template"]["activity_type"] == "on_call"
+                assert item["rotation_template"]["rotation_type"] == "on_call"
 
 
 # ============================================================================

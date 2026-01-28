@@ -418,8 +418,8 @@ async def get_3d_voxel_grid(
     start_date: date = Query(..., description="Start date for voxel grid"),
     end_date: date = Query(..., description="End date for voxel grid"),
     person_ids: list[UUID] | None = Query(None, description="Filter by person IDs"),
-    activity_types: list[str] | None = Query(
-        None, description="Filter by activity types"
+    rotation_types: list[str] | None = Query(
+        None, description="Filter by rotation types"
     ),
     include_violations: bool = Query(True, description="Include ACGME violation data"),
     db: Session = Depends(get_db),
@@ -432,11 +432,11 @@ async def get_3d_voxel_grid(
     a 3D space where:
     - X-axis: Time (blocks/dates)
     - Y-axis: People (residents, faculty)
-    - Z-axis: Activity type (clinic, inpatient, procedures, etc.)
+    - Z-axis: Rotation type (clinic, inpatient, procedures, etc.)
 
     Each voxel represents an assignment with properties:
     - Position (x, y, z) in the 3D grid
-    - Color based on activity type or compliance status
+    - Color based on rotation type or compliance status
     - Opacity based on confidence score
     - State flags (occupied, conflict, violation)
 
@@ -450,7 +450,7 @@ async def get_3d_voxel_grid(
         start_date: Start date for visualization
         end_date: End date for visualization
         person_ids: Optional filter for specific people
-        activity_types: Optional filter for specific activity types
+        rotation_types: Optional filter for specific rotation types
         include_violations: Whether to include ACGME violation markers
 
     Returns:
@@ -542,29 +542,29 @@ async def get_3d_voxel_grid(
     # Convert to dict format for transformer
     assignments_data = []
     for a in assignments:
-        activity_type = "unknown"
-        activity_name = "Unknown"
+        rotation_type = "unknown"
+        rotation_name = "Unknown"
 
         if a.rotation_template:
-            activity_type = a.rotation_template.activity_type or "unknown"
-            activity_name = a.rotation_template.name
+            rotation_type = a.rotation_template.rotation_type or "unknown"
+            rotation_name = a.rotation_template.name
         elif a.activity_override:
-            activity_name = a.activity_override
-            # Try to infer activity type from override name
+            rotation_name = a.activity_override
+            # Try to infer rotation type from override name
             override_lower = a.activity_override.lower()
             if "clinic" in override_lower:
-                activity_type = "clinic"
+                rotation_type = "outpatient"
             elif "inpatient" in override_lower or "ward" in override_lower:
-                activity_type = "inpatient"
+                rotation_type = "inpatient"
             elif "proc" in override_lower:
-                activity_type = "procedure"
+                rotation_type = "outpatient"
             elif "call" in override_lower:
-                activity_type = "call"
+                rotation_type = "call"
             elif "leave" in override_lower or "off" in override_lower:
-                activity_type = "leave"
+                rotation_type = "leave"
 
-        # Filter by activity type if specified
-        if activity_types and activity_type not in activity_types:
+        # Filter by rotation type if specified
+        if rotation_types and rotation_type not in rotation_types:
             continue
 
         # Find person name
@@ -575,8 +575,8 @@ async def get_3d_voxel_grid(
             "person_id": str(a.person_id),
             "person_name": person_name,
             "block_id": str(a.block_id),
-            "activity_type": activity_type,
-            "activity_name": activity_name,
+            "rotation_type": rotation_type,
+            "rotation_name": rotation_name,
             "role": a.role,
             "confidence": a.confidence or 1.0,
         }
@@ -620,7 +620,7 @@ async def get_3d_conflicts(
         start_date=start_date,
         end_date=end_date,
         person_ids=None,
-        activity_types=None,
+        rotation_types=None,
         include_violations=True,
         db=db,
         current_user=current_user,
@@ -654,8 +654,8 @@ async def get_3d_conflicts(
 async def get_3d_coverage_gaps(
     start_date: date = Query(..., description="Start date"),
     end_date: date = Query(..., description="End date"),
-    required_activity_types: list[str] = Query(
-        ["clinic"], description="Activity types that must be covered"
+    required_rotation_types: list[str] = Query(
+        ["clinic"], description="Rotation types that must be covered"
     ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -673,7 +673,7 @@ async def get_3d_coverage_gaps(
         start_date=start_date,
         end_date=end_date,
         person_ids=None,
-        activity_types=None,
+        rotation_types=None,
         include_violations=True,
         db=db,
         current_user=current_user,

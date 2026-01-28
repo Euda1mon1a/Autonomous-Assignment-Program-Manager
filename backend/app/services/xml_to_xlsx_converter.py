@@ -94,6 +94,7 @@ class XMLToXlsxConverter:
         apply_colors: bool = True,
         structure_xml_path: Path | str | None = None,
         use_block_template2: bool = True,
+        strict_row_mapping: bool = False,
     ):
         """
         Initialize converter with optional template.
@@ -106,11 +107,13 @@ class XMLToXlsxConverter:
                                If provided, uses name → row lookup instead of sequential.
             use_block_template2: If True, use Block Template2 column layout (production).
                                 If False, use ROSETTA layout (validation).
+            strict_row_mapping: If True, fail export when a person name has no row mapping.
         """
         self.template_path = Path(template_path) if template_path else None
         self.apply_colors = apply_colors
         self.color_scheme = get_color_scheme() if apply_colors else None
         self.use_block_template2 = use_block_template2
+        self.strict_row_mapping = strict_row_mapping
 
         # Load row mappings from structure XML if provided
         self.row_mappings: dict[str, int] = {}
@@ -532,6 +535,11 @@ class XMLToXlsxConverter:
                             break
 
                 if not row:
+                    if self.strict_row_mapping:
+                        raise ValueError(
+                            f"No row mapping for: {name}. "
+                            "Update BlockTemplate2_Structure.xml."
+                        )
                     logger.warning(f"No row mapping for: {name}")
                     continue
             else:

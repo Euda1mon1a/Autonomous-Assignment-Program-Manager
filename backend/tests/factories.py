@@ -73,7 +73,7 @@ class RotationTemplateFactory(factory.Factory):
 
     id = factory.LazyFunction(uuid4)
     name = factory.Iterator(["Sports Medicine", "Primary Care", "Inpatient", "ICU"])
-    activity_type = factory.Iterator(["clinic", "inpatient", "call"])
+    rotation_type = factory.Iterator(["clinic", "inpatient", "call"])
     abbreviation = factory.LazyAttribute(lambda o: o.name[:2].upper())
     leave_eligible = True  # Most rotations allow scheduled leave
     max_residents = 4
@@ -84,7 +84,7 @@ class RotationTemplateFactory(factory.Factory):
         # Trait for coverage/inpatient rotations that don't allow leave
         coverage = factory.Trait(
             name="FMIT",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             leave_eligible=False,
         )
 

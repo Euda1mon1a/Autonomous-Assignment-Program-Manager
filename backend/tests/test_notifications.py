@@ -248,7 +248,7 @@ class TestLeaveConflictDetectionTask:
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT Rotation",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
         )
         db.add(fmit_template)

@@ -79,12 +79,12 @@ class MockTemplate:
         self,
         template_id=None,
         name="Test Template",
-        activity_type="outpatient",
+        rotation_type="outpatient",
         max_residents=None,
     ):
         self.id = template_id or uuid4()
         self.name = name
-        self.activity_type = activity_type
+        self.rotation_type = rotation_type
         self.max_residents = max_residents
 
 
@@ -144,8 +144,8 @@ def create_basic_context() -> SchedulingContext:
             blocks.append(block)
 
     templates = [
-        MockTemplate(name="Clinic", activity_type="outpatient", max_residents=4),
-        MockTemplate(name="Inpatient", activity_type="inpatient", max_residents=2),
+        MockTemplate(name="Clinic", rotation_type="outpatient", max_residents=4),
+        MockTemplate(name="Inpatient", rotation_type="inpatient", max_residents=2),
     ]
 
     return SchedulingContext(
@@ -650,7 +650,7 @@ class TestConstraintInteractions:
 
         # Template with capacity limit of 2
         limited_template = MockTemplate(
-            name="Limited", activity_type="outpatient", max_residents=2
+            name="Limited", rotation_type="outpatient", max_residents=2
         )
         context.templates.append(limited_template)
 

@@ -38,7 +38,7 @@ def get_reports_directory() -> Path:
 def generate_block_quality_report(
     self,
     block_number: int,
-    academic_year: int = 2025,
+    academic_year: int | None = None,
     output_format: str = "markdown",
     save_to_file: bool = True,
 ) -> dict[str, Any]:
@@ -47,7 +47,7 @@ def generate_block_quality_report(
 
     Args:
         block_number: Block number (1-13)
-        academic_year: Academic year (default: 2025)
+        academic_year: Academic year (auto-detects if not provided)
         output_format: Output format ('markdown', 'json', or 'summary')
         save_to_file: Whether to save report to file system
 
@@ -63,7 +63,12 @@ def generate_block_quality_report(
             print(result.get())
     """
     try:
-        logger.info(f"Generating quality report for Block {block_number}")
+        if academic_year is None:
+            today = datetime.now().date()
+            academic_year = today.year if today.month >= 7 else today.year - 1
+        logger.info(
+            f"Generating quality report for Block {block_number}, AY {academic_year}"
+        )
 
         db = SessionLocal()
         try:
@@ -126,7 +131,7 @@ def generate_block_quality_report(
 def generate_multi_block_report(
     self,
     block_numbers: list[int],
-    academic_year: int = 2025,
+    academic_year: int | None = None,
     include_summary: bool = True,
     output_format: str = "markdown",
     save_to_file: bool = True,
@@ -136,7 +141,7 @@ def generate_multi_block_report(
 
     Args:
         block_numbers: List of block numbers
-        academic_year: Academic year (default: 2025)
+        academic_year: Academic year (auto-detects if not provided)
         include_summary: Whether to generate cross-block summary
         output_format: Output format ('markdown' or 'json')
         save_to_file: Whether to save reports to file system
@@ -151,7 +156,12 @@ def generate_multi_block_report(
         )
     """
     try:
-        logger.info(f"Generating quality reports for blocks {block_numbers}")
+        if academic_year is None:
+            today = datetime.now().date()
+            academic_year = today.year if today.month >= 7 else today.year - 1
+        logger.info(
+            f"Generating quality reports for blocks {block_numbers}, AY {academic_year}"
+        )
 
         db = SessionLocal()
         try:
@@ -257,7 +267,7 @@ def generate_multi_block_report(
 @shared_task(name="app.tasks.block_quality_report_tasks.check_block_schedule_quality")
 def check_block_schedule_quality(
     block_number: int,
-    academic_year: int = 2025,
+    academic_year: int | None = None,
 ) -> dict[str, Any]:
     """
     Quick quality check for a block (no file output).
@@ -266,12 +276,15 @@ def check_block_schedule_quality(
 
     Args:
         block_number: Block number to check
-        academic_year: Academic year
+        academic_year: Academic year (auto-detects if not provided)
 
     Returns:
         dict: Quality check result with pass/fail status
     """
     try:
+        if academic_year is None:
+            today = datetime.now().date()
+            academic_year = today.year if today.month >= 7 else today.year - 1
         db = SessionLocal()
         try:
             service = BlockQualityReportService(db)

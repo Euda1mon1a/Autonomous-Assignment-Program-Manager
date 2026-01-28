@@ -167,16 +167,13 @@ async def validate_schedule(
         # Import API client for backend communication
         from ..api_client import get_api_client
 
-        client = get_api_client()
+        client = await get_api_client()
 
         # Call backend validation endpoint
-        result = await client.post(
-            "/api/v1/schedules/validate",
-            json={
-                "schedule_id": request.schedule_id,
-                "constraint_config": request.constraint_config.value,
-                "include_suggestions": request.include_suggestions,
-            },
+        result = await client.validate_schedule_by_id(
+            schedule_id=request.schedule_id,
+            constraint_config=request.constraint_config.value,
+            include_suggestions=request.include_suggestions,
         )
 
         if result is None:

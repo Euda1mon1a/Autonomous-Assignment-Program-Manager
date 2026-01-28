@@ -68,19 +68,21 @@ router = APIRouter()
 
 @router.get("", response_model=RotationTemplateListResponse)
 async def list_rotation_templates(
-    activity_type: str | None = Query(None, description="Filter by activity type"),
+    rotation_type: str | None = Query(
+        None, description="Filter by rotation category (rotation_type)"
+    ),
     include_archived: bool = Query(
         False, description="Include archived templates in results"
     ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> RotationTemplateListResponse:
-    """List all rotation templates, optionally filtered by activity type.
+    """List all rotation templates, optionally filtered by rotation category.
 
     By default, archived templates are excluded. Use include_archived=true to see all templates.
 
     Args:
-        activity_type: Filter by activity type (e.g., 'clinic', 'inpatient')
+        rotation_type: Filter by rotation category (e.g., 'outpatient', 'inpatient')
         include_archived: Include archived templates (default: False)
         db: Database session
         current_user: Current authenticated user
@@ -94,8 +96,8 @@ async def list_rotation_templates(
     if not include_archived:
         query = query.where(RotationTemplate.is_archived == False)
 
-    if activity_type:
-        query = query.where(RotationTemplate.activity_type == activity_type)
+    if rotation_type:
+        query = query.where(RotationTemplate.rotation_type == rotation_type)
 
     query = query.order_by(RotationTemplate.name)
     result = db.execute(query)
@@ -220,7 +222,7 @@ async def batch_update_rotation_templates(
             },
             {
               "template_id": "uuid2",
-              "updates": {"activity_type": "inpatient"}
+              "updates": {"rotation_type": "inpatient"}
             }
           ],
           "dry_run": false
@@ -293,8 +295,8 @@ async def batch_create_rotation_templates(
         ```json
         {
           "templates": [
-            {"name": "New Clinic", "activity_type": "clinic"},
-            {"name": "New Inpatient", "activity_type": "inpatient"}
+            {"name": "New Outpatient", "rotation_type": "outpatient"},
+            {"name": "New Inpatient", "rotation_type": "inpatient"}
           ],
           "dry_run": false
         }

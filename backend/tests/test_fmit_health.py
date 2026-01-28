@@ -68,7 +68,7 @@ def sample_fmit_rotation_template(db: Session) -> RotationTemplate:
     template = RotationTemplate(
         id=uuid4(),
         name="FMIT Coverage",
-        activity_type="fmit",
+        rotation_type="fmit",
         abbreviation="FMIT",
         max_residents=1,
         supervision_required=False,

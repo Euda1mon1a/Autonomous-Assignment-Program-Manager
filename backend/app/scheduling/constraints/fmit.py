@@ -83,7 +83,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
     - Faculty MUST take Friday and Saturday night call (mandatory)
 
     This constraint requires FMIT assignments to be pre-identified in the context.
-    FMIT assignments should have activity_type='inpatient' and name containing 'FMIT'.
+    FMIT assignments should have rotation_type='inpatient' and name containing 'FMIT'.
     """
 
     def __init__(self) -> None:
@@ -120,7 +120,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
@@ -165,7 +165,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         constraint_count = 0
@@ -234,8 +234,8 @@ class FMITWeekBlockingConstraint(HardConstraint):
                 template = template_by_id.get(a.rotation_template_id)
                 if (
                     template
-                    and hasattr(template, "activity_type")
-                    and template.activity_type == "outpatient"
+                    and hasattr(template, "rotation_type")
+                    and template.rotation_type == "outpatient"
                 ):
                     violations.append(
                         ConstraintViolation(
@@ -272,7 +272,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
         # Look for FMIT assignments in existing assignments
         for a in context.existing_assignments:
             # Check if this is an FMIT assignment
-            # FMIT templates have activity_type='inpatient' and name contains 'FMIT'
+            # FMIT templates have rotation_type='inpatient' and name contains 'FMIT'
             template = None
             for t in context.templates:
                 if t.id == a.rotation_template_id:
@@ -283,8 +283,8 @@ class FMITWeekBlockingConstraint(HardConstraint):
                 continue
 
             is_fmit = (
-                hasattr(template, "activity_type")
-                and template.activity_type == "inpatient"
+                hasattr(template, "rotation_type")
+                and template.rotation_type == "inpatient"
                 and hasattr(template, "name")
                 and "FMIT" in template.name.upper()
             )
@@ -441,8 +441,8 @@ class FMITMandatoryCallConstraint(HardConstraint):
                 continue
 
             is_fmit = (
-                hasattr(template, "activity_type")
-                and template.activity_type == "inpatient"
+                hasattr(template, "rotation_type")
+                and template.rotation_type == "inpatient"
                 and hasattr(template, "name")
                 and "FMIT" in template.name.upper()
             )
@@ -644,8 +644,8 @@ class PostFMITRecoveryConstraint(HardConstraint):
                 continue
 
             is_fmit = (
-                hasattr(template, "activity_type")
-                and template.activity_type == "inpatient"
+                hasattr(template, "rotation_type")
+                and template.rotation_type == "inpatient"
                 and hasattr(template, "name")
                 and "FMIT" in template.name.upper()
             )
@@ -827,8 +827,8 @@ class PostFMITSundayBlockingConstraint(HardConstraint):
                 continue
 
             is_fmit = (
-                hasattr(template, "activity_type")
-                and template.activity_type == "inpatient"
+                hasattr(template, "rotation_type")
+                and template.rotation_type == "inpatient"
                 and hasattr(template, "name")
                 and "FMIT" in template.name.upper()
             )
@@ -1143,8 +1143,8 @@ class FMITStaffingFloorConstraint(HardConstraint):
     def _is_fmit_template(self, template: Any) -> bool:
         """Check if template is an FMIT rotation."""
         return (
-            hasattr(template, "activity_type")
-            and template.activity_type == "inpatient"
+            hasattr(template, "rotation_type")
+            and template.rotation_type == "inpatient"
             and hasattr(template, "name")
             and "FMIT" in template.name.upper()
         )

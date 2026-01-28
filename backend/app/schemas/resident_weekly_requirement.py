@@ -215,6 +215,6 @@ class ResidentWeeklyRequirementWithTemplate(ResidentWeeklyRequirementResponse):
     """Response including the associated rotation template name."""
 
     template_name: str = Field(description="Name of the associated rotation template")
-    template_activity_type: str = Field(
-        description="Activity type of the rotation template"
+    template_rotation_type: str = Field(
+        description="Rotation type of the rotation template"
     )

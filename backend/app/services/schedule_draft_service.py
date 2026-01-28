@@ -35,10 +35,13 @@ from uuid import UUID, uuid4
 from sqlalchemy import and_, delete, func, select, update
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.exceptions import ActivityNotFoundError
 from app.db.transaction import transactional_with_retry
 from app.models.activity import Activity
 from app.models.assignment import Assignment
+from app.models.block_assignment import BlockAssignment
 from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
+from app.models.rotation_template import RotationTemplate
 from app.models.schedule_draft import (
     DraftAssignmentChangeType,
     DraftFlagSeverity,
@@ -52,6 +55,8 @@ from app.models.schedule_draft import (
 from app.models.person import Person
 from app.models.schedule_run import ScheduleRun
 from app.scheduling.validator import ACGMEValidator
+from app.utils.academic_blocks import get_block_half, get_block_number_for_date
+from app.utils.fmc_capacity import activity_counts_toward_fmc_capacity_for_template
 
 logger = logging.getLogger(__name__)
 
@@ -703,16 +708,41 @@ class ScheduleDraftService:
         """
         created_ids = []
 
-        # Resolve activity_code to activity_id
+        # Resolve activity_code to activity_id (required for add/modify)
         activity_id = None
-        if da.activity_code:
-            activity = (
-                self.db.query(Activity)
-                .filter(Activity.code == da.activity_code)
-                .first()
-            )
-            if activity:
+        if da.change_type != DraftAssignmentChangeType.DELETE:
+            if da.activity_code:
+                normalized = da.activity_code.strip()
+                activity = (
+                    self.db.query(Activity)
+                    .filter(func.lower(Activity.code) == normalized.lower())
+                    .first()
+                )
+                if not activity:
+                    activity = (
+                        self.db.query(Activity)
+                        .filter(
+                            func.lower(Activity.display_abbreviation)
+                            == normalized.lower()
+                        )
+                        .first()
+                    )
+                if not activity:
+                    activity = (
+                        self.db.query(Activity)
+                        .filter(func.lower(Activity.name) == normalized.lower())
+                        .first()
+                    )
+                if not activity:
+                    raise ActivityNotFoundError(
+                        normalized, context="schedule_draft_service"
+                    )
                 activity_id = activity.id
+            else:
+                raise ActivityNotFoundError(
+                    "<missing activity_code>",
+                    context="schedule_draft_service",
+                )
 
         # Determine time slots to process
         # Draft uses 'ALL' for full-day, HalfDayAssignment needs separate AM/PM
@@ -729,6 +759,9 @@ class ScheduleDraftService:
                 # Return None for deletes (no new ID created)
 
             elif da.change_type == DraftAssignmentChangeType.MODIFY:
+                capacity_flag = self._resolve_fmc_capacity_flag(
+                    da.person_id, da.assignment_date, activity_id
+                )
                 # Update existing half-day assignment
                 existing = (
                     self.db.query(HalfDayAssignment)
@@ -741,18 +774,22 @@ class ScheduleDraftService:
                 )
                 if existing:
                     existing.activity_id = activity_id
+                    existing.counts_toward_fmc_capacity = capacity_flag
                     existing.source = AssignmentSource.MANUAL.value
                     existing.updated_at = datetime.utcnow()
                     created_ids.append(existing.id)
                 else:
                     # No existing record - create new (shouldn't happen but handle gracefully)
                     half_day = self._create_half_day_assignment(
-                        da, time_slot, activity_id
+                        da, time_slot, activity_id, capacity_flag
                     )
                     self.db.add(half_day)
                     created_ids.append(half_day.id)
 
             else:  # ADD
+                capacity_flag = self._resolve_fmc_capacity_flag(
+                    da.person_id, da.assignment_date, activity_id
+                )
                 # Check if slot already exists (upsert logic)
                 existing = (
                     self.db.query(HalfDayAssignment)
@@ -764,30 +801,71 @@ class ScheduleDraftService:
                     .first()
                 )
                 if existing:
-                    # Update existing if not locked
-                    if existing.source not in (
-                        AssignmentSource.PRELOAD.value,
-                        AssignmentSource.MANUAL.value,
-                    ):
-                        existing.activity_id = activity_id
-                        existing.source = AssignmentSource.MANUAL.value
-                        existing.updated_at = datetime.utcnow()
-                        created_ids.append(existing.id)
+                    # Update existing (manual edits can override locked slots)
+                    prior_source = existing.source
+                    existing.activity_id = activity_id
+                    existing.counts_toward_fmc_capacity = capacity_flag
+                    existing.source = AssignmentSource.MANUAL.value
+                    if prior_source != AssignmentSource.MANUAL.value:
+                        existing.is_override = True
+                    existing.updated_at = datetime.utcnow()
+                    created_ids.append(existing.id)
                 else:
                     # Create new half-day assignment
                     half_day = self._create_half_day_assignment(
-                        da, time_slot, activity_id
+                        da, time_slot, activity_id, capacity_flag
                     )
                     self.db.add(half_day)
                     created_ids.append(half_day.id)
 
         return created_ids
 
+    def _resolve_rotation_template_for_date(
+        self, person_id: UUID, assignment_date: date
+    ) -> RotationTemplate | None:
+        block_number, academic_year = get_block_number_for_date(assignment_date)
+        block_assignment = (
+            self.db.query(BlockAssignment)
+            .options(
+                selectinload(BlockAssignment.rotation_template),
+                selectinload(BlockAssignment.secondary_rotation_template),
+            )
+            .filter(
+                BlockAssignment.resident_id == person_id,
+                BlockAssignment.block_number == block_number,
+                BlockAssignment.academic_year == academic_year,
+            )
+            .first()
+        )
+        if not block_assignment:
+            return None
+        if (
+            block_assignment.secondary_rotation_template_id
+            and get_block_half(assignment_date) == 2
+        ):
+            return block_assignment.secondary_rotation_template
+        return block_assignment.rotation_template
+
+    def _resolve_fmc_capacity_flag(
+        self,
+        person_id: UUID,
+        assignment_date: date,
+        activity_id: UUID | None,
+    ) -> bool | None:
+        if not activity_id:
+            return None
+        activity = self.db.get(Activity, activity_id)
+        if not activity:
+            return None
+        template = self._resolve_rotation_template_for_date(person_id, assignment_date)
+        return activity_counts_toward_fmc_capacity_for_template(activity, template)
+
     def _create_half_day_assignment(
         self,
         da: ScheduleDraftAssignment,
         time_slot: str,
         activity_id: UUID | None,
+        counts_toward_fmc_capacity: bool | None,
     ) -> HalfDayAssignment:
         """Create a new HalfDayAssignment from draft assignment data."""
         return HalfDayAssignment(
@@ -796,6 +874,7 @@ class ScheduleDraftService:
             date=da.assignment_date,
             time_of_day=time_slot,
             activity_id=activity_id,
+            counts_toward_fmc_capacity=counts_toward_fmc_capacity,
             source=AssignmentSource.MANUAL.value,  # Published drafts = manual
             is_override=False,
             created_at=datetime.utcnow(),

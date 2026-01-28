@@ -28,7 +28,7 @@ class TestGetWeeklyPatterns:
         template = RotationTemplate(
             id=uuid4(),
             name="Test Clinic Template",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="TC",
             created_at=datetime.utcnow(),
         )

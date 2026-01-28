@@ -38,7 +38,7 @@ class TestBatchDeleteRotationTemplates:
             template = RotationTemplate(
                 id=uuid4(),
                 name=f"Test Template {i}",
-                activity_type="clinic",
+                rotation_type="clinic",
                 abbreviation=f"T{i}",
                 created_at=datetime.utcnow(),
             )
@@ -211,7 +211,7 @@ class TestBatchUpdateRotationTemplates:
             template = RotationTemplate(
                 id=uuid4(),
                 name=f"Test Template {i}",
-                activity_type="clinic",
+                rotation_type="clinic",
                 abbreviation=f"T{i}",
                 max_residents=i + 1,
                 supervision_required=True,
@@ -240,7 +240,7 @@ class TestBatchUpdateRotationTemplates:
             },
             {
                 "template_id": str(sample_templates[2].id),
-                "updates": {"activity_type": "inpatient", "max_residents": 5},
+                "updates": {"rotation_type": "inpatient", "max_residents": 5},
             },
         ]
 
@@ -273,7 +273,7 @@ class TestBatchUpdateRotationTemplates:
             elif i == 1:
                 assert template_data["supervision_required"] is False
             elif i == 2:
-                assert template_data["activity_type"] == "inpatient"
+                assert template_data["rotation_type"] == "inpatient"
                 assert template_data["max_residents"] == 5
 
     def test_batch_update_dry_run(
@@ -468,7 +468,7 @@ class TestBatchUpdateRotationTemplates:
     ):
         """Test that partial updates only change specified fields."""
         original_name = sample_templates[0].name
-        original_activity = sample_templates[0].activity_type
+        original_activity = sample_templates[0].rotation_type
 
         updates = [
             {
@@ -493,4 +493,4 @@ class TestBatchUpdateRotationTemplates:
         template_data = get_response.json()
         assert template_data["max_residents"] == 50
         assert template_data["name"] == original_name
-        assert template_data["activity_type"] == original_activity
+        assert template_data["rotation_type"] == original_activity

@@ -2213,12 +2213,12 @@ class TestSplitRotations:
         split_config = {
             "primary_template": {
                 "name": "Night Float",
-                "activity_type": "inpatient",
+                "rotation_type": "inpatient",
                 "abbreviation": "NF"
             },
             "secondary_template": {
                 "name": "Elective",
-                "activity_type": "elective",
+                "rotation_type": "elective",
                 "abbreviation": "ELEC"
             },
             "pattern_type": "split",
@@ -2244,11 +2244,11 @@ class TestSplitRotations:
         split_config = {
             "primary_template": {
                 "name": "Night Float",
-                "activity_type": "inpatient"
+                "rotation_type": "inpatient"
             },
             "secondary_template": {
                 "name": "Elective",
-                "activity_type": "elective"
+                "rotation_type": "elective"
             },
             "pattern_type": "mirrored",
             "split_day": 14,

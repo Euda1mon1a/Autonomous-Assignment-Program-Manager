@@ -33,9 +33,9 @@ class TestBatchCreateRotationTemplates:
     ):
         """Test successful atomic creation of multiple templates."""
         templates = [
-            {"name": "Test Clinic A", "activity_type": "clinic"},
-            {"name": "Test Inpatient B", "activity_type": "inpatient"},
-            {"name": "Test Procedure C", "activity_type": "procedure"},
+            {"name": "Test Clinic A", "rotation_type": "clinic"},
+            {"name": "Test Inpatient B", "rotation_type": "inpatient"},
+            {"name": "Test Procedure C", "rotation_type": "procedure"},
         ]
 
         response = client.post(
@@ -77,8 +77,8 @@ class TestBatchCreateRotationTemplates:
     ):
         """Test dry-run mode validates without creating."""
         templates = [
-            {"name": "Dry Run Clinic", "activity_type": "clinic"},
-            {"name": "Dry Run Inpatient", "activity_type": "inpatient"},
+            {"name": "Dry Run Clinic", "rotation_type": "clinic"},
+            {"name": "Dry Run Inpatient", "rotation_type": "inpatient"},
         ]
 
         response = client.post(
@@ -114,8 +114,8 @@ class TestBatchCreateRotationTemplates:
     ):
         """Test that duplicate names within batch fail atomically."""
         templates = [
-            {"name": "Duplicate Test", "activity_type": "clinic"},
-            {"name": "Duplicate Test", "activity_type": "inpatient"},
+            {"name": "Duplicate Test", "rotation_type": "clinic"},
+            {"name": "Duplicate Test", "rotation_type": "inpatient"},
         ]
 
         response = client.post(
@@ -140,15 +140,15 @@ class TestBatchCreateRotationTemplates:
         existing = RotationTemplate(
             id=uuid4(),
             name="Existing Template",
-            activity_type="clinic",
+            rotation_type="clinic",
             created_at=datetime.utcnow(),
         )
         db.add(existing)
         db.commit()
 
         templates = [
-            {"name": "Existing Template", "activity_type": "inpatient"},
-            {"name": "New Template", "activity_type": "clinic"},
+            {"name": "Existing Template", "rotation_type": "inpatient"},
+            {"name": "New Template", "rotation_type": "clinic"},
         ]
 
         response = client.post(
@@ -169,7 +169,7 @@ class TestBatchCreateRotationTemplates:
     ):
         """Test batch create with single template."""
         templates = [
-            {"name": "Single Batch Create", "activity_type": "clinic"},
+            {"name": "Single Batch Create", "rotation_type": "clinic"},
         ]
 
         response = client.post(
@@ -187,7 +187,7 @@ class TestBatchCreateRotationTemplates:
     def test_batch_create_unauthorized(self, client: TestClient):
         """Test 401 for unauthenticated request."""
         templates = [
-            {"name": "Unauthorized", "activity_type": "clinic"},
+            {"name": "Unauthorized", "rotation_type": "clinic"},
         ]
 
         response = client.post(
@@ -219,7 +219,7 @@ class TestBatchCreateRotationTemplates:
         templates = [
             {
                 "name": "Full Template",
-                "activity_type": "clinic",
+                "rotation_type": "clinic",
                 "abbreviation": "FT",
                 "display_abbreviation": "FULL",
                 "font_color": "text-blue-400",
@@ -255,14 +255,14 @@ class TestBatchCreateRotationTemplates:
         assert template["max_residents"] == 5
         assert template["supervision_required"] is True
 
-    def test_batch_create_invalid_activity_type_fails(
+    def test_batch_create_invalid_rotation_type_fails(
         self,
         client: TestClient,
         auth_headers: dict,
     ):
-        """Test that invalid activity_type fails validation."""
+        """Test that invalid rotation_type fails validation."""
         templates = [
-            {"name": "Invalid Type", "activity_type": "invalid_type"},
+            {"name": "Invalid Type", "rotation_type": "invalid_type"},
         ]
 
         response = client.post(

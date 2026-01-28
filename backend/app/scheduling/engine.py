@@ -18,13 +18,18 @@ The engine uses a modular constraint system (constraints.py) and pluggable solve
 for flexible, maintainable scheduling.
 """
 
+import json
+import os
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.exceptions import ActivityNotFoundError
 from app.core.logging import get_logger
 from app.schemas.schedule import (
     NFPCAudit,
@@ -39,6 +44,7 @@ from app.models.absence import Absence
 from app.models.activity import Activity
 from app.models.assignment import Assignment
 from app.models.block import Block
+from app.models.block_assignment import BlockAssignment
 from app.models.call_assignment import CallAssignment
 from app.models.person import FacultyRole, Person
 from app.models.rotation_activity_requirement import RotationActivityRequirement
@@ -142,7 +148,7 @@ class SchedulingEngine:
                              so solver skips people with scheduled time off
             expand_block_assignments: Deprecated (expansion pipeline removed).
                                      Kept for API compatibility; ignored.
-            block_number: Academic block number (1-13), used for preloads and
+            block_number: Academic block number (0-13), used for preloads and
                          activity solver defaults.
             academic_year: Academic year (e.g., 2025 for AY 2025-2026), used for
                           preloads and activity solver defaults.
@@ -284,7 +290,7 @@ class SchedulingEngine:
             self._build_availability_matrix()
 
             # Step 3: Get residents, faculty, and templates (moved earlier)
-            residents = self._get_residents(pgy_levels)
+            residents = self._get_residents(pgy_levels, block_number, academic_year)
             templates = self._get_rotation_templates(rotation_template_ids)
             faculty = self._get_faculty()
 
@@ -296,7 +302,11 @@ class SchedulingEngine:
             # SKIP faculty call PCAT/DO - those will come from NEW call in Step 6.5
             # This prevents loading stale PCAT/DO from old CallAssignment records
             # SKIP in draft mode - preloads write to live half_day_assignments
-            if block_number and academic_year and not create_draft:
+            if (
+                block_number is not None
+                and academic_year is not None
+                and not create_draft
+            ):
                 preload_service = SyncPreloadService(self.db)
                 preload_count = preload_service.load_all_preloads(
                     block_number, academic_year, skip_faculty_call=True
@@ -346,6 +356,33 @@ class SchedulingEngine:
                 existing_assignments=preserved_assignments,
             )
 
+            # Half-day scheduling uses many residents per block; disable one-person cap.
+            if any(getattr(block, "time_of_day", None) for block in blocks):
+                self.constraint_manager.disable("OnePersonPerBlock")
+                logger.info("Disabled OnePersonPerBlock constraint for half-day blocks")
+                has_time_off_templates = any(
+                    (getattr(t, "rotation_type", "") or "").lower()
+                    in {"off", "absence", "recovery"}
+                    for t in templates
+                )
+                if not has_time_off_templates:
+                    self.constraint_manager.disable("1in7Rule")
+                    self.constraint_manager.disable("80HourRule")
+                    logger.info(
+                        "Disabled 1in7Rule and 80HourRule (no time-off templates in solver context)"
+                    )
+
+                # Half-day outpatient solver cannot satisfy clinic-wide caps
+                # or Wednesday-only rules when all residents are scheduled.
+                self.constraint_manager.disable("MaxPhysiciansInClinic")
+                self.constraint_manager.disable("WednesdayAMInternOnly")
+                self.constraint_manager.disable("WednesdayPMSingleFaculty")
+                self.constraint_manager.disable("InvertedWednesday")
+                self.constraint_manager.disable("ProtectedSlot")
+                logger.info(
+                    "Disabled MaxPhysiciansInClinic, Wednesday temporal, and ProtectedSlot constraints for half-day blocks"
+                )
+
             # Step 4.5: Pre-solver validation
             # Check constraint saturation before invoking expensive solver
             pre_validator = PreSolverValidator()
@@ -360,6 +397,20 @@ class SchedulingEngine:
                     logger.error(f"  - {issue}")
                 for recommendation in validation_result.recommendations:
                     logger.info(f"  Recommendation: {recommendation}")
+                self._log_constraint_summary()
+                self._log_context_summary(context)
+                self._dump_failure_snapshot(
+                    context,
+                    run_id=run.id,
+                    stage="pre_solver_validation",
+                    solver_status="pre_solver_validation_failed",
+                    pre_solver_validation={
+                        "feasible": validation_result.feasible,
+                        "issues": validation_result.issues,
+                        "recommendations": validation_result.recommendations,
+                        "statistics": validation_result.statistics,
+                    },
+                )
 
                 self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
                 self.db.commit()
@@ -395,6 +446,19 @@ class SchedulingEngine:
             solver_result = self._run_solver("cp_sat", context, timeout_seconds)
             if not solver_result.success:
                 logger.error(f"CP-SAT solver failed: {solver_result.solver_status}")
+                if solver_result.solver_status.upper() == "INFEASIBLE":
+                    logger.error(
+                        "CP-SAT reported INFEASIBLE; schedule may be impossible with current hard constraints."
+                    )
+                self._log_constraint_summary()
+                self._log_context_summary(context)
+                self._dump_failure_snapshot(
+                    context,
+                    run_id=run.id,
+                    stage="solver",
+                    solver_status=solver_result.solver_status,
+                    solver_stats=solver_result.statistics,
+                )
                 self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
                 self.db.commit()
                 return {
@@ -514,7 +578,11 @@ class SchedulingEngine:
             # This assigns activities to resident + faculty slots that aren't locked by preload.
             # NOW runs AFTER PCAT is created, so AT coverage is known.
             # SKIP in draft mode - activity solver writes to live half_day_assignments
-            if block_number and academic_year and not create_draft:
+            if (
+                block_number is not None
+                and academic_year is not None
+                and not create_draft
+            ):
                 activity_solver = CPSATActivitySolver(
                     self.db,
                     timeout_seconds=min(timeout_seconds, 30.0),  # Cap at 30s
@@ -529,7 +597,9 @@ class SchedulingEngine:
                     logger.warning(
                         f"Activity solver failed: {activity_result.get('message', 'unknown error')}"
                     )
-            elif create_draft and (block_number and academic_year):
+            elif create_draft and (
+                block_number is not None and academic_year is not None
+            ):
                 logger.info(
                     "Skipping activity solver in draft mode (would modify live data)"
                 )
@@ -1650,12 +1720,36 @@ class SchedulingEngine:
                     "partial_absence": has_partial_absence,
                 }
 
-    def _get_residents(self, pgy_levels: list[int] | None = None) -> list[Person]:
+    def _get_residents(
+        self,
+        pgy_levels: list[int] | None = None,
+        block_number: int | None = None,
+        academic_year: int | None = None,
+    ) -> list[Person]:
         """Get residents, optionally filtered by PGY level."""
         query = self.db.query(Person).filter(Person.type == "resident")
 
         if pgy_levels:
             query = query.filter(Person.pgy_level.in_(pgy_levels))
+
+        if block_number is not None and academic_year is not None:
+            resident_ids = (
+                self.db.query(BlockAssignment.resident_id)
+                .filter(
+                    BlockAssignment.block_number == block_number,
+                    BlockAssignment.academic_year == academic_year,
+                )
+                .distinct()
+                .all()
+            )
+            resident_ids = [row[0] for row in resident_ids]
+            if not resident_ids:
+                logger.error(
+                    "No BlockAssignments found for block "
+                    f"{block_number} AY {academic_year}; refusing to schedule all residents"
+                )
+                return []
+            query = query.filter(Person.id.in_(resident_ids))
 
         return query.order_by(Person.pgy_level, Person.name).all()
 
@@ -1689,7 +1783,7 @@ class SchedulingEngine:
 
         Detection logic:
             - person.type == 'faculty'
-            - template.activity_type == 'inpatient'
+            - template.rotation_type == 'inpatient'
 
         Returns:
             List of Assignment objects for faculty on FMIT rotations
@@ -1705,7 +1799,7 @@ class SchedulingEngine:
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
                 Person.type == "faculty",
-                RotationTemplate.activity_type == "inpatient",
+                RotationTemplate.rotation_type == "inpatient",
             )
             .all()
         )
@@ -1720,7 +1814,7 @@ class SchedulingEngine:
 
         Detection logic:
             - person.type == 'resident'
-            - template.activity_type == 'inpatient'
+            - template.rotation_type == 'inpatient'
             - Includes: FMIT AM/PM, Night Float AM/PM, NICU
 
         Business Rules:
@@ -1743,7 +1837,7 @@ class SchedulingEngine:
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
                 Person.type == "resident",
-                RotationTemplate.activity_type == "inpatient",
+                RotationTemplate.rotation_type == "inpatient",
             )
             .all()
         )
@@ -1756,7 +1850,7 @@ class SchedulingEngine:
         so the solver skips assigning new work to people with absences.
 
         Detection logic:
-            - template.activity_type == 'absence'
+            - template.rotation_type == 'absence'
             - Includes: Leave AM/PM, Weekend AM/PM
 
         Business Rules:
@@ -1776,7 +1870,7 @@ class SchedulingEngine:
             .filter(
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
-                RotationTemplate.activity_type == "absence",
+                RotationTemplate.rotation_type == "absence",
             )
             .all()
         )
@@ -1789,7 +1883,7 @@ class SchedulingEngine:
         and should be preserved so the solver doesn't double-book people.
 
         Detection logic:
-            - template.activity_type == 'off'
+            - template.rotation_type == 'off'
             - Includes: Hilo, Kapiolani, Okinawa, OFF AM/PM
 
         Business Rules:
@@ -1809,7 +1903,7 @@ class SchedulingEngine:
             .filter(
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
-                RotationTemplate.activity_type == "off",
+                RotationTemplate.rotation_type == "off",
             )
             .all()
         )
@@ -1822,7 +1916,7 @@ class SchedulingEngine:
         residents and faculty. These are mandatory rest periods.
 
         Detection logic:
-            - template.activity_type == 'recovery'
+            - template.rotation_type == 'recovery'
             - Includes: Post-Call Recovery (PCR)
 
         Business Rules:
@@ -1842,7 +1936,7 @@ class SchedulingEngine:
             .filter(
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
-                RotationTemplate.activity_type == "recovery",
+                RotationTemplate.rotation_type == "recovery",
             )
             .all()
         )
@@ -1855,7 +1949,7 @@ class SchedulingEngine:
         These are protected academic time that cannot be preempted.
 
         Detection logic:
-            - template.activity_type == 'education'
+            - template.rotation_type == 'education'
             - Includes: FMO, GME AM/PM, Lecture AM/PM
 
         Business Rules:
@@ -1875,7 +1969,7 @@ class SchedulingEngine:
             .filter(
                 Block.date >= self.start_date,
                 Block.date <= self.end_date,
-                RotationTemplate.activity_type == "education",
+                RotationTemplate.rotation_type == "education",
             )
             .all()
         )
@@ -1988,14 +2082,14 @@ class SchedulingEngine:
     def _get_rotation_templates(
         self,
         template_ids: list[UUID] | None = None,
-        activity_type: str | None = "outpatient",
+        rotation_type: str | None = "outpatient",
     ) -> list[RotationTemplate]:
         """
         Get rotation templates for solver optimization.
 
         Args:
             template_ids: Optional list of specific template IDs to include
-            activity_type: Filter by activity type (default: "outpatient").
+            rotation_type: Filter by rotation type (default: "outpatient").
                           Use None to get all templates.
 
         Returns:
@@ -2007,10 +2101,10 @@ class SchedulingEngine:
             Block-assigned rotations (FMIT, NF, Inpatient, NICU) should NOT
             be passed to the solver - they are pre-assigned separately.
 
-            The "outpatient" activity_type includes elective/selective rotations
+            The "outpatient" rotation_type includes elective/selective rotations
             (Neurology, ID, Palliative, etc.) that use half-day scheduling.
-            Note: "clinic" is a separate activity_type for FM Clinic (FMC) which
-            has its own capacity and supervision constraints.
+            FMC continuity clinic is modeled as Activities (fm_clinic, C, C-N),
+            not as a separate rotation_type.
 
             See backend/app/scheduling/solvers.py header for architecture details.
         """
@@ -2019,8 +2113,8 @@ class SchedulingEngine:
         if template_ids:
             query = query.filter(RotationTemplate.id.in_(template_ids))
 
-        if activity_type:
-            query = query.filter(RotationTemplate.activity_type == activity_type)
+        if rotation_type:
+            query = query.filter(RotationTemplate.rotation_type == rotation_type)
 
         return query.all()
 
@@ -2190,7 +2284,7 @@ class SchedulingEngine:
 
             # Check for procedure clinic requiring +1 faculty (immediate supervision)
             # ONLY specific procedure clinics (PROC, VAS, BTX, COLPO) need +1
-            # Not all "procedures" activity_type - POCUS, PR-AM don't require +1
+            # Not all "procedures" rotation_type - POCUS, PR-AM don't require +1
             procedure_bonus = 0
             for assignment in block_assignments:
                 # Check activity_override first (slot-level activity)
@@ -2354,7 +2448,7 @@ class SchedulingEngine:
                     .filter(RotationTemplate.id == tid)
                     .first()
                 )
-            if template and template.activity_type == "inpatient":
+            if template and template.rotation_type == "inpatient":
                 return tid
 
         # Default to first candidate
@@ -2471,6 +2565,20 @@ class SchedulingEngine:
             )
             self.db.flush()
 
+    def _get_off_activity_id(self) -> UUID:
+        """Resolve the OFF activity once for placeholder slots."""
+        if getattr(self, "_off_activity_id", None):
+            return self._off_activity_id
+
+        result = self.db.execute(
+            select(Activity).where(func.lower(Activity.code) == "off")
+        )
+        activity = result.scalars().first()
+        if not activity:
+            raise ActivityNotFoundError("off", context="SchedulingEngine")
+        self._off_activity_id = activity.id
+        return self._off_activity_id
+
     def _get_blocking_half_day_slots(self) -> set[tuple[UUID, date, str]]:
         """
         Get blocking half-day slots (preload/manual) for the date range.
@@ -2536,6 +2644,7 @@ class SchedulingEngine:
         """
         from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
 
+        off_activity_id = self._get_off_activity_id()
         block_by_id = {b.id: b for b in blocks}
         updated = 0
 
@@ -2557,7 +2666,7 @@ class SchedulingEngine:
             if existing:
                 if existing.is_locked:
                     continue
-                existing.activity_id = None
+                existing.activity_id = off_activity_id
                 existing.source = AssignmentSource.SOLVER.value
                 updated += 1
                 continue
@@ -2567,7 +2676,7 @@ class SchedulingEngine:
                     person_id=assignment.person_id,
                     date=block.date,
                     time_of_day=block.time_of_day,
-                    activity_id=None,
+                    activity_id=off_activity_id,
                     source=AssignmentSource.SOLVER.value,
                 )
             )
@@ -2597,6 +2706,7 @@ class SchedulingEngine:
         if not faculty:
             return 0
 
+        off_activity_id = self._get_off_activity_id()
         eligible_faculty = [
             f for f in faculty if getattr(f, "faculty_role", None) != "adjunct"
         ]
@@ -2629,7 +2739,7 @@ class SchedulingEngine:
                         person_id=fac.id,
                         date=block.date,
                         time_of_day=block.time_of_day,
-                        activity_id=None,
+                        activity_id=off_activity_id,
                         source=AssignmentSource.SOLVER.value,
                     )
                 )
@@ -2640,6 +2750,178 @@ class SchedulingEngine:
             logger.info(f"Created {created} faculty half-day slots for solver")
 
         return created
+
+    def _log_constraint_summary(self) -> None:
+        """Log enabled/disabled constraint summary for solver diagnostics."""
+        if not self.constraint_manager:
+            logger.error(
+                "Constraint summary unavailable: no ConstraintManager configured"
+            )
+            return
+
+        enabled = self.constraint_manager.get_enabled()
+        disabled = [c for c in self.constraint_manager.constraints if not c.enabled]
+        hard = self.constraint_manager.get_hard_constraints()
+        soft = self.constraint_manager.get_soft_constraints()
+
+        logger.error(
+            f"Constraint summary: enabled={len(enabled)} (hard={len(hard)}, "
+            f"soft={len(soft)}), disabled={len(disabled)}"
+        )
+
+        enabled_names = sorted({c.name for c in enabled})
+        disabled_names = sorted({c.name for c in disabled})
+
+        if enabled_names:
+            logger.error(f"Enabled constraints: {self._format_list(enabled_names)}")
+        if disabled_names:
+            logger.warning(f"Disabled constraints: {self._format_list(disabled_names)}")
+
+    def _log_context_summary(self, context: SchedulingContext) -> None:
+        """Log context counts and template coverage for solver diagnostics."""
+        if not context:
+            logger.error("Context summary unavailable: context is None")
+            return
+
+        workday_blocks = [b for b in context.blocks if not b.is_weekend]
+        locked_count = len(getattr(context, "locked_blocks", set()))
+        call_eligible = len(getattr(context, "call_eligible_faculty", []))
+
+        logger.error(
+            "Context summary: residents=%s, faculty=%s, templates=%s, blocks=%s (workday=%s), locked=%s, call_eligible=%s, existing_assignments=%s"
+            % (
+                len(context.residents),
+                len(context.faculty),
+                len(context.templates),
+                len(context.blocks),
+                len(workday_blocks),
+                locked_count,
+                call_eligible,
+                len(getattr(context, "existing_assignments", [])),
+            )
+        )
+
+        template_codes = sorted(
+            {
+                (t.abbreviation or t.name or "").strip()
+                for t in context.templates
+                if (t.abbreviation or t.name)
+            }
+        )
+        if template_codes:
+            logger.error(f"Template abbreviations: {self._format_list(template_codes)}")
+
+        required_templates = {"PCAT", "DO", "SM", "NF", "PC"}
+        present = {code.upper() for code in template_codes}
+        missing = sorted(code for code in required_templates if code not in present)
+        if missing:
+            logger.warning(
+                f"Missing templates (may disable constraints): {', '.join(missing)}"
+            )
+
+    def _dump_failure_snapshot(
+        self,
+        context: SchedulingContext,
+        run_id: UUID | None,
+        stage: str,
+        solver_status: str,
+        pre_solver_validation: dict[str, Any] | None = None,
+        solver_stats: dict[Any, Any] | None = None,
+    ) -> None:
+        """Write a PII-free failure snapshot to disk for debugging."""
+        if not context:
+            logger.error("Failure snapshot unavailable: context is None")
+            return
+
+        enabled = (
+            self.constraint_manager.get_enabled() if self.constraint_manager else []
+        )
+        disabled = (
+            [c for c in self.constraint_manager.constraints if not c.enabled]
+            if self.constraint_manager
+            else []
+        )
+        workday_blocks = [b for b in context.blocks if not b.is_weekend]
+        locked_count = len(getattr(context, "locked_blocks", set()))
+        call_eligible = len(getattr(context, "call_eligible_faculty", []))
+
+        template_summaries = [
+            {
+                "id": str(getattr(t, "id", "")),
+                "name": getattr(t, "name", None),
+                "abbreviation": getattr(t, "abbreviation", None),
+                "rotation_type": getattr(t, "rotation_type", None),
+            }
+            for t in context.templates
+        ]
+        template_codes = {
+            (t.abbreviation or t.name or "").strip().upper()
+            for t in context.templates
+            if (t.abbreviation or t.name)
+        }
+        required_templates = {"PCAT", "DO", "SM", "NF", "PC"}
+        missing_templates = sorted(
+            code for code in required_templates if code not in template_codes
+        )
+
+        snapshot = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "stage": stage,
+            "solver_status": solver_status,
+            "run_id": str(run_id) if run_id else None,
+            "start_date": str(self.start_date),
+            "end_date": str(self.end_date),
+            "counts": {
+                "residents": len(context.residents),
+                "faculty": len(context.faculty),
+                "templates": len(context.templates),
+                "blocks": len(context.blocks),
+                "workday_blocks": len(workday_blocks),
+                "locked_blocks": locked_count,
+                "call_eligible_faculty": call_eligible,
+                "existing_assignments": len(
+                    getattr(context, "existing_assignments", [])
+                ),
+            },
+            "constraints": {
+                "enabled": sorted({c.name for c in enabled}),
+                "disabled": sorted({c.name for c in disabled}),
+                "hard_enabled": sorted(
+                    {c.name for c in self.constraint_manager.get_hard_constraints()}
+                )
+                if self.constraint_manager
+                else [],
+                "soft_enabled": sorted(
+                    {c.name for c in self.constraint_manager.get_soft_constraints()}
+                )
+                if self.constraint_manager
+                else [],
+            },
+            "templates": template_summaries,
+            "missing_templates": missing_templates,
+            "pre_solver_validation": pre_solver_validation,
+            "solver_stats": solver_stats,
+        }
+
+        output_dir = Path(
+            os.environ.get("SCHEDULE_FAILURE_SNAPSHOT_DIR", "/tmp")
+        ).expanduser()
+        try:
+            output_dir.mkdir(parents=True, exist_ok=True)
+            stamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+            safe_run_id = str(run_id) if run_id else "unknown"
+            path = output_dir / f"schedule_failure_{safe_run_id}_{stamp}.json"
+            path.write_text(json.dumps(snapshot, indent=2, default=str))
+            logger.error(f"Wrote failure snapshot to {path}")
+        except Exception as exc:
+            logger.error(f"Failed to write failure snapshot: {exc}")
+
+    @staticmethod
+    def _format_list(items: list[str], max_items: int = 20) -> str:
+        """Format long lists for logs without overwhelming output."""
+        if len(items) <= max_items:
+            return ", ".join(items)
+        return ", ".join(items[:max_items]) + f", ... (+{len(items) - max_items} more)"
 
     def _audit_nf_pc_allocations(self) -> dict:
         """

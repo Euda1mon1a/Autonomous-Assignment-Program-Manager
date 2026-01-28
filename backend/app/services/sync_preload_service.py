@@ -23,6 +23,7 @@ from sqlalchemy import select, and_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.exceptions import ActivityNotFoundError
 from app.core.logging import get_logger
 from app.models.absence import Absence
 from app.models.activity import Activity
@@ -31,10 +32,50 @@ from app.models.call_assignment import CallAssignment
 from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
 from app.models.inpatient_preload import InpatientPreload, InpatientRotationType
 from app.models.person import Person
+from app.models.rotation_template import RotationTemplate
+from app.models.weekly_pattern import WeeklyPattern
 from app.models.resident_call_preload import ResidentCallPreload
 from app.utils.academic_blocks import get_block_dates
+from app.utils.fmc_capacity import activity_counts_toward_fmc_capacity
 
 logger = get_logger(__name__)
+
+# Rotation normalization and protected slot rules
+_ROTATION_ALIASES = {
+    "PNF": "PEDNF",
+    "PEDS NF": "PEDNF",
+    "PEDS NIGHT FLOAT": "PEDNF",
+    "PEDIATRICS NIGHT FLOAT": "PEDNF",
+    "L&D NIGHT FLOAT": "LDNF",
+    "L AND D NIGHT FLOAT": "LDNF",
+    "KAPI": "KAP",
+    "KAPI-LD": "KAP",
+    "KAPI_LD": "KAP",
+    "KAPIOLANI": "KAP",
+    "KAPIOLANI L AND D": "KAP",
+    "OKINAWA": "OKI",
+}
+
+_NIGHT_FLOAT_ROTATIONS = {"NF", "PEDNF", "LDNF"}
+_LEC_EXEMPT_ROTATIONS = {"NF", "PEDNF", "LDNF", "TDY", "HILO", "OKI"}
+_INTERN_CONTINUITY_EXEMPT_ROTATIONS = {
+    "NF",
+    "PEDNF",
+    "LDNF",
+    "TDY",
+    "HILO",
+    "OKI",
+    "KAP",
+}
+_OFFSITE_ROTATIONS = {"TDY", "HILO", "OKI"}
+_KAP_ROTATIONS = {"KAP"}
+_CLINIC_PATTERN_CODES = {"C", "C-I", "C-N", "FM_CLINIC"}
+
+# Rotation types that require translation to activity codes
+_ROTATION_TO_ACTIVITY = {
+    "HILO": "TDY",
+    "FMC": "fm_clinic",
+}
 
 
 class SyncPreloadService:
@@ -82,6 +123,7 @@ class SyncPreloadService:
 
         # Order of operations (per TAMC skill)
         total += self._load_absences(start_date, end_date)
+        total += self._load_rotation_protected_preloads(block_number, academic_year)
         total += self._load_inpatient_preloads(start_date, end_date)
         total += self._load_fmit_call(start_date, end_date)
         total += self._load_inpatient_clinic(block_number, academic_year)
@@ -117,10 +159,6 @@ class SyncPreloadService:
         # Get LV activities
         lv_am_id = self._get_activity_id("LV-AM")
         lv_pm_id = self._get_activity_id("LV-PM")
-
-        if not lv_am_id or not lv_pm_id:
-            logger.warning("Missing LV-AM or LV-PM activity, skipping absences")
-            return 0
 
         # Query all absences in date range, then filter in Python
         # NOTE: should_block_assignment is a @property, not a SQL column,
@@ -185,9 +223,6 @@ class SyncPreloadService:
 
             # Get activity for this rotation
             activity_id = self._get_activity_id(activity_code)
-            if not activity_id:
-                logger.warning(f"No activity found for rotation type: {activity_code}")
-                continue
 
             # Create preloads for each day
             current = max(preload.start_date, start_date)
@@ -197,8 +232,8 @@ class SyncPreloadService:
                 # Get day-specific codes for special rotations
                 am_code, pm_code = self._get_rotation_codes(rotation_type, current)
 
-                am_activity_id = self._get_activity_id(am_code) or activity_id
-                pm_activity_id = self._get_activity_id(pm_code) or activity_id
+                am_activity_id = self._get_activity_id(am_code)
+                pm_activity_id = self._get_activity_id(pm_code)
 
                 # Skip weekends for non-24/7 rotations
                 # Note: NF-type rotations still need weekend preloads (with W activity)
@@ -234,6 +269,314 @@ class SyncPreloadService:
 
         logger.info(f"Loaded {count} inpatient preloads")
         return count
+
+    def _load_rotation_protected_preloads(
+        self, block_number: int, academic_year: int
+    ) -> int:
+        """
+        Load protected patterns from rotation assignments.
+
+        Applies:
+        - LEC/ADV (last Wednesday)
+        - Wednesday PM LEC (non-exempt rotations)
+        - Intern continuity clinic (PGY-1 Wed AM, non-exempt)
+        - Fixed off-site/night-float patterns when not covered by inpatient_preloads
+        - Hilo pre/post clinic pattern
+        """
+        count = 0
+        block_dates = get_block_dates(block_number, academic_year)
+        start_date = block_dates.start_date
+        end_date = block_dates.end_date
+        mid_block_date = start_date + timedelta(days=11)
+
+        stmt = (
+            select(BlockAssignment)
+            .options(
+                selectinload(BlockAssignment.rotation_template)
+                .selectinload(RotationTemplate.weekly_patterns)
+                .selectinload(WeeklyPattern.activity),
+                selectinload(BlockAssignment.secondary_rotation_template)
+                .selectinload(RotationTemplate.weekly_patterns)
+                .selectinload(WeeklyPattern.activity),
+                selectinload(BlockAssignment.resident),
+            )
+            .where(
+                BlockAssignment.block_number == block_number,
+                BlockAssignment.academic_year == academic_year,
+            )
+        )
+        result = self.session.execute(stmt)
+        assignments = result.scalars().all()
+
+        for assignment in assignments:
+            resident = assignment.resident
+            if not resident or resident.type != "resident":
+                continue
+
+            pgy = resident.pgy_level or 0
+            current = start_date
+            while current <= end_date:
+                rotation_code = self._resolve_rotation_code_for_date(
+                    assignment, current, mid_block_date
+                )
+                if not rotation_code:
+                    current += timedelta(days=1)
+                    continue
+
+                active_template = assignment.rotation_template
+                if (
+                    assignment.secondary_rotation_template_id
+                    and current >= mid_block_date
+                ):
+                    active_template = assignment.secondary_rotation_template
+                rotation_type = (
+                    (active_template.rotation_type or "").lower()
+                    if active_template
+                    else ""
+                )
+                is_outpatient = rotation_type == "outpatient"
+                is_inpatient = rotation_type == "inpatient"
+
+                if is_inpatient and active_template:
+                    count += self._apply_inpatient_clinic_patterns(
+                        assignment.resident_id,
+                        current,
+                        active_template,
+                        start_date,
+                    )
+
+                am_code, pm_code = self._get_rotation_preload_codes(
+                    rotation_code,
+                    current,
+                    start_date,
+                    end_date,
+                    pgy,
+                    is_outpatient,
+                )
+
+                if am_code:
+                    am_activity_id = self._get_activity_id(am_code)
+                    if am_activity_id and self._create_preload(
+                        assignment.resident_id, current, "AM", am_activity_id
+                    ):
+                        count += 1
+                if pm_code:
+                    pm_activity_id = self._get_activity_id(pm_code)
+                    if pm_activity_id and self._create_preload(
+                        assignment.resident_id, current, "PM", pm_activity_id
+                    ):
+                        count += 1
+
+                current += timedelta(days=1)
+
+        if count:
+            logger.info(f"Loaded {count} rotation protected preloads")
+        return count
+
+    def _resolve_rotation_code_for_date(
+        self,
+        assignment: BlockAssignment,
+        current_date: date,
+        mid_block_date: date,
+    ) -> str:
+        """Resolve active rotation code for a date (supports mid-block transitions)."""
+        template = assignment.rotation_template
+        if assignment.secondary_rotation_template_id and current_date >= mid_block_date:
+            template = assignment.secondary_rotation_template
+
+        raw_code = self._rotation_label(template)
+        code = self._canonical_rotation_code(raw_code)
+        if assignment.secondary_rotation_template_id:
+            return code
+
+        # Fallback: parse compound codes like NEURO-1ST-NF-2ND or NEURO/NF
+        if "-1ST-" in code and "-2ND" in code:
+            first, second = code.split("-1ST-", 1)
+            second = second.replace("-2ND", "")
+            first = self._canonical_rotation_code(first)
+            second = self._canonical_rotation_code(second)
+            return second if current_date >= mid_block_date else first
+
+        if "/" in code:
+            parts = [p.strip() for p in code.split("/") if p.strip()]
+            if len(parts) == 2:
+                first = self._canonical_rotation_code(parts[0])
+                second = self._canonical_rotation_code(parts[1])
+                return second if current_date >= mid_block_date else first
+
+        if "+" in code:
+            parts = [p.strip() for p in code.split("+") if p.strip()]
+            if len(parts) == 2:
+                first = self._canonical_rotation_code(parts[0])
+                second = self._canonical_rotation_code(parts[1])
+                return second if current_date >= mid_block_date else first
+
+        return code
+
+    def _rotation_label(self, template: RotationTemplate | None) -> str:
+        """Get the best available label for a rotation template."""
+        if not template:
+            return ""
+        return (
+            template.abbreviation
+            or template.display_abbreviation
+            or template.name
+            or ""
+        )
+
+    def _canonical_rotation_code(self, raw_code: str | None) -> str:
+        """Normalize a rotation code for matching."""
+        code = (raw_code or "").strip().upper()
+        if not code:
+            return ""
+        if code.startswith("HILO"):
+            return "HILO"
+        if code.startswith("OKI"):
+            return "OKI"
+        if code.startswith("KAPI"):
+            return "KAP"
+        return _ROTATION_ALIASES.get(code, code)
+
+    def _get_rotation_preload_codes(
+        self,
+        rotation_code: str,
+        current_date: date,
+        block_start: date,
+        block_end: date,
+        pgy_level: int,
+        is_outpatient: bool,
+    ) -> tuple[str | None, str | None]:
+        """Return AM/PM activity codes that should be preloaded for this slot."""
+        if not rotation_code:
+            return (None, None)
+
+        if self._is_last_wednesday(current_date, block_end):
+            return ("LEC", "ADV")
+
+        if rotation_code in _OFFSITE_ROTATIONS:
+            if rotation_code in {"HILO", "OKI"}:
+                return self._get_hilo_codes(current_date, block_start)
+            return ("TDY", "TDY")
+
+        if rotation_code in _KAP_ROTATIONS:
+            return self._get_kap_codes(current_date)
+
+        if rotation_code == "LDNF":
+            return self._get_ldnf_codes(current_date)
+
+        if rotation_code in ("NF", "PEDNF"):
+            return self._get_nf_codes(rotation_code, current_date)
+
+        # Wednesday protected patterns (intern continuity only for outpatient rotations)
+        if current_date.weekday() == 2:  # Wednesday
+            am_code = None
+            if (
+                is_outpatient
+                and pgy_level == 1
+                and not self._is_intern_continuity_exempt(rotation_code)
+            ):
+                am_code = "C"
+
+            pm_code = None
+            if not self._is_lec_exempt(rotation_code):
+                pm_code = "LEC"
+
+            return (am_code, pm_code)
+
+        return (None, None)
+
+    def _apply_inpatient_clinic_patterns(
+        self,
+        person_id: UUID,
+        current_date: date,
+        template: RotationTemplate,
+        block_start: date,
+    ) -> int:
+        """Preload clinic activities from weekly patterns for inpatient rotations."""
+        patterns = list(template.weekly_patterns or [])
+        if not patterns:
+            return 0
+
+        target_week = self._pattern_week_number(current_date, block_start)
+        target_dow = self._pattern_day_of_week(current_date)
+        count = 0
+
+        for pattern in patterns:
+            if pattern.day_of_week != target_dow:
+                continue
+            if pattern.week_number is not None and pattern.week_number != target_week:
+                continue
+            if not self._is_clinic_pattern_activity(pattern.activity):
+                continue
+            if pattern.activity_id and self._create_preload(
+                person_id, current_date, pattern.time_of_day, pattern.activity_id
+            ):
+                count += 1
+
+        return count
+
+    def _pattern_week_number(self, current_date: date, block_start: date) -> int:
+        return ((current_date - block_start).days // 7) + 1
+
+    def _pattern_day_of_week(self, current_date: date) -> int:
+        """Convert Python weekday (Mon=0..Sun=6) to weekly_pattern (Sun=0..Sat=6)."""
+        return (current_date.weekday() + 1) % 7
+
+    def _is_clinic_pattern_activity(self, activity: Activity | None) -> bool:
+        if not activity:
+            return False
+        code = (activity.code or "").strip().upper()
+        display = (activity.display_abbreviation or "").strip().upper()
+        return code in _CLINIC_PATTERN_CODES or display in _CLINIC_PATTERN_CODES
+
+    def _is_last_wednesday(self, current_date: date, block_end: date) -> bool:
+        """Return True if the date is the last Wednesday of the block."""
+        if current_date.weekday() != 2:
+            return False
+        return current_date + timedelta(days=7) > block_end
+
+    def _is_lec_exempt(self, rotation_code: str) -> bool:
+        return rotation_code in _LEC_EXEMPT_ROTATIONS
+
+    def _is_intern_continuity_exempt(self, rotation_code: str) -> bool:
+        return rotation_code in _INTERN_CONTINUITY_EXEMPT_ROTATIONS
+
+    def _get_kap_codes(self, current_date: date) -> tuple[str, str]:
+        """Kapiolani L&D pattern."""
+        dow = current_date.weekday()
+        if dow == 0:  # Monday
+            return ("KAP", "OFF")
+        if dow == 1:  # Tuesday
+            return ("OFF", "OFF")
+        if dow == 2:  # Wednesday
+            return ("C", "LEC")
+        return ("KAP", "KAP")
+
+    def _get_ldnf_codes(self, current_date: date) -> tuple[str, str]:
+        """L&D Night Float pattern with Friday clinic."""
+        dow = current_date.weekday()
+        if dow == 4:  # Friday
+            return ("C", "OFF")
+        if dow >= 5:  # Weekend
+            return ("W", "W")
+        return ("OFF", "LDNF")
+
+    def _get_nf_codes(self, rotation_code: str, current_date: date) -> tuple[str, str]:
+        """Night Float pattern (NF/PedNF)."""
+        if current_date.weekday() >= 5:
+            return ("W", "W")
+        if rotation_code == "PEDNF":
+            return ("OFF", "PedNF")
+        return ("OFF", "NF")
+
+    def _get_hilo_codes(self, current_date: date, block_start: date) -> tuple[str, str]:
+        """Hilo/Okinawa TDY pattern with pre/post clinic days."""
+        day_index = (current_date - block_start).days
+        if day_index in (0, 1):  # Thu/Fri before leaving
+            return ("C", "C")
+        if day_index == 19:  # Return Tuesday (4th Tuesday)
+            return ("C", "C")
+        return ("TDY", "TDY")
 
     def _get_rotation_codes(
         self, rotation_type: InpatientRotationType | str | None, current_date: date
@@ -283,16 +626,14 @@ class SyncPreloadService:
 
         # Rotations that work all days including weekends:
         # FMIT, PedW, IM - just use rotation code for both slots
-        # Default: use rotation type for both slots
-        return (code, code)
+        # Default: use rotation type for both slots (after mapping to activity code)
+        mapped = _ROTATION_TO_ACTIVITY.get(code, code)
+        return (mapped, mapped)
 
     def _load_fmit_call(self, start_date: date, end_date: date) -> int:
         """Load FMIT call (Fri/Sat PM during FMIT weeks)."""
         count = 0
         call_id = self._get_activity_id("CALL")
-        if not call_id:
-            logger.warning("Missing CALL activity")
-            return 0
 
         # Get FMIT preloads
         stmt = select(InpatientPreload).where(
@@ -325,10 +666,9 @@ class SyncPreloadService:
         PGY-3: Monday PM
         """
         count = 0
-        ci_id = self._get_activity_id("C-I") or self._get_activity_id("C")
-        if not ci_id:
-            logger.warning("Missing C-I or C activity")
-            return 0
+        ci_id = self._get_activity_id("C-I", required=False) or self._get_activity_id(
+            "C"
+        )
 
         block_dates = get_block_dates(block_number, academic_year)
         start_date = block_dates.start_date
@@ -385,9 +725,6 @@ class SyncPreloadService:
         """Load resident call preloads."""
         count = 0
         call_id = self._get_activity_id("CALL")
-        if not call_id:
-            logger.warning("Missing CALL activity")
-            return 0
 
         stmt = select(ResidentCallPreload).where(
             ResidentCallPreload.call_date >= start_date,
@@ -413,10 +750,6 @@ class SyncPreloadService:
         pcat_id = self._get_activity_id("PCAT")
         do_id = self._get_activity_id("DO")
 
-        if not call_id:
-            logger.warning("Missing CALL activity")
-            return 0
-
         stmt = select(CallAssignment).where(
             CallAssignment.date >= start_date,
             CallAssignment.date <= end_date,
@@ -434,13 +767,9 @@ class SyncPreloadService:
             # dates, and preload source is locked so next block won't overwrite it
             next_day = call.date + timedelta(days=1)
             if not self._is_on_fmit(call.person_id, next_day):
-                if pcat_id and self._create_preload(
-                    call.person_id, next_day, "AM", pcat_id
-                ):
+                if self._create_preload(call.person_id, next_day, "AM", pcat_id):
                     count += 1
-                if do_id and self._create_preload(
-                    call.person_id, next_day, "PM", do_id
-                ):
+                if self._create_preload(call.person_id, next_day, "PM", do_id):
                     count += 1
 
         logger.info(f"Loaded {count} faculty call preloads")
@@ -449,7 +778,7 @@ class SyncPreloadService:
     def _load_sm_preloads(self, start_date: date, end_date: date) -> int:
         """Load Sports Medicine preloads (Wed AM for SM faculty)."""
         count = 0
-        asm_id = self._get_activity_id("aSM")
+        asm_id = self._get_activity_id("aSM", required=False)
         if not asm_id:
             # aSM might not exist in all deployments
             return 0
@@ -499,9 +828,6 @@ class SyncPreloadService:
         """
         count = 0
         w_id = self._get_activity_id("W")
-        if not w_id:
-            logger.warning("Missing W activity, skipping compound rotation weekends")
-            return 0
 
         # Find block assignments with compound rotations
         from app.models.rotation_template import RotationTemplate
@@ -509,6 +835,7 @@ class SyncPreloadService:
         stmt = (
             select(BlockAssignment)
             .options(selectinload(BlockAssignment.rotation_template))
+            .options(selectinload(BlockAssignment.secondary_rotation_template))
             .where(
                 BlockAssignment.block_number == block_number,
                 BlockAssignment.academic_year == academic_year,
@@ -525,20 +852,46 @@ class SyncPreloadService:
             if not assignment.rotation_template:
                 continue
 
-            abbrev = assignment.rotation_template.abbreviation or ""
+            primary_template = assignment.rotation_template
+            secondary_template = assignment.secondary_rotation_template
+            primary_code = self._canonical_rotation_code(
+                self._rotation_label(primary_template)
+            )
+            secondary_code = self._canonical_rotation_code(
+                self._rotation_label(secondary_template)
+            )
 
             # Detect compound rotation patterns
-            # Pattern: *-1ST-NF-2ND → first half is elective (no weekends)
-            # Pattern: NF-1ST-*-2ND → second half is elective (no weekends)
+            # One half is night float, the other half should be weekend-off.
             first_half_no_weekend = False
             second_half_no_weekend = False
 
-            if "-1ST-NF-2ND" in abbrev or "-1ST-PEDNF-2ND" in abbrev:
-                # First half is elective (NEURO, etc.) - no weekend work
-                first_half_no_weekend = True
-            elif abbrev.startswith("NF-1ST-") or abbrev.startswith("PEDNF-1ST-"):
-                # Second half is elective (ENDO, etc.) - no weekend work
-                second_half_no_weekend = True
+            if secondary_template:
+                first_is_night_float = primary_code in _NIGHT_FLOAT_ROTATIONS
+                second_is_night_float = secondary_code in _NIGHT_FLOAT_ROTATIONS
+
+                if not first_is_night_float and not second_is_night_float:
+                    continue
+
+                if (
+                    not first_is_night_float
+                    and not primary_template.includes_weekend_work
+                    and primary_code not in _OFFSITE_ROTATIONS
+                ):
+                    first_half_no_weekend = True
+
+                if (
+                    not second_is_night_float
+                    and not secondary_template.includes_weekend_work
+                    and secondary_code not in _OFFSITE_ROTATIONS
+                ):
+                    second_half_no_weekend = True
+            else:
+                abbrev = primary_code
+                if "-1ST-NF-2ND" in abbrev or "-1ST-PEDNF-2ND" in abbrev:
+                    first_half_no_weekend = True
+                elif abbrev.startswith("NF-1ST-") or abbrev.startswith("PEDNF-1ST-"):
+                    second_half_no_weekend = True
 
             if not first_half_no_weekend and not second_half_no_weekend:
                 continue
@@ -575,7 +928,12 @@ class SyncPreloadService:
             logger.info(f"Loaded {count} compound rotation weekend preloads")
         return count
 
-    def _get_activity_id(self, code: str) -> UUID | None:
+    def _get_activity_id(
+        self,
+        code: str,
+        *,
+        required: bool = True,
+    ) -> UUID | None:
         """Get activity ID by code (cached)."""
         if code in self._activity_cache:
             return self._activity_cache[code]
@@ -601,6 +959,11 @@ class SyncPreloadService:
             self._activity_cache[code] = activity.id
             return activity.id
 
+        if required:
+            logger.error(f"Unknown activity code during preload: {code}")
+            raise ActivityNotFoundError(code, context="sync_preload_service")
+
+        logger.warning(f"Optional activity not found during preload: {code}")
         return None
 
     def _create_preload(
@@ -615,6 +978,19 @@ class SyncPreloadService:
 
         Returns True if created, False if already exists.
         """
+        if not activity_id:
+            logger.error(
+                "Cannot create preload without activity_id "
+                f"(person_id={person_id}, date={date_val}, time_of_day={time_of_day})"
+            )
+            raise ActivityNotFoundError(
+                "<missing activity_id>", context="sync_preload_service"
+            )
+        activity = self.session.get(Activity, activity_id) if activity_id else None
+        capacity_flag = (
+            activity_counts_toward_fmc_capacity(activity) if activity else None
+        )
+
         # Check if exists
         stmt = select(HalfDayAssignment).where(
             HalfDayAssignment.person_id == person_id,
@@ -632,6 +1008,7 @@ class SyncPreloadService:
             ):
                 existing.activity_id = activity_id
                 existing.source = AssignmentSource.PRELOAD.value
+                existing.counts_toward_fmc_capacity = capacity_flag
                 return True
             if (
                 existing.source == AssignmentSource.PRELOAD.value
@@ -639,7 +1016,17 @@ class SyncPreloadService:
                 and activity_id
             ):
                 existing.activity_id = activity_id
+                existing.counts_toward_fmc_capacity = capacity_flag
                 return True
+            if existing.source == AssignmentSource.PRELOAD.value:
+                # Keep counts_toward_fmc_capacity in sync with activity
+                if (
+                    existing.activity_id == activity_id
+                    and capacity_flag is not None
+                    and existing.counts_toward_fmc_capacity != capacity_flag
+                ):
+                    existing.counts_toward_fmc_capacity = capacity_flag
+                    return True
             return False
 
         # Create new
@@ -648,6 +1035,7 @@ class SyncPreloadService:
             date=date_val,
             time_of_day=time_of_day,
             activity_id=activity_id,
+            counts_toward_fmc_capacity=capacity_flag,
             source=AssignmentSource.PRELOAD.value,
         )
         self.session.add(assignment)

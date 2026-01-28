@@ -158,7 +158,13 @@ class ACGMEValidator:
             )
             .count()
         )
-        assigned_blocks = len({a.block_id for a in assignments})
+        assigned_blocks = len(
+            {
+                a.block_id
+                for a in assignments
+                if a.block is not None and not a.block.is_weekend
+            }
+        )
         coverage_rate = assigned_blocks / total_blocks if total_blocks > 0 else 0.0
 
         return ValidationResult(

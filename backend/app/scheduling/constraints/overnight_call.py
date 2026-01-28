@@ -173,8 +173,8 @@ class OvernightCallGenerationConstraint(HardConstraint):
                 continue
 
             is_fmit = (
-                hasattr(template, "activity_type")
-                and template.activity_type == "inpatient"
+                hasattr(template, "rotation_type")
+                and template.rotation_type == "inpatient"
                 and hasattr(template, "name")
                 and "FMIT" in template.name.upper()
             )

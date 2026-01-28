@@ -104,7 +104,7 @@ Complete technical architecture documentation for the Residency Scheduler system
 | [Import/Export System](import-export-system.md) | Data import/export architecture |
 | [Block Schedule Parser](BLOCK_SCHEDULE_PARSER.md) | Excel schedule parsing |
 | [Academic Year Blocks](ACADEMIC_YEAR_BLOCKS.md) | Block structure and calendar |
-| [Activity Types](ACTIVITY_TYPES.md) | Assignment activity categorization |
+| [Rotation Types](ROTATION_TYPES.md) | Rotation category classification |
 
 ### Security & Operations
 

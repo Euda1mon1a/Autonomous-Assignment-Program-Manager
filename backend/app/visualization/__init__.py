@@ -6,25 +6,25 @@ transforming traditional 2D grids into interactive voxel-based representations.
 """
 
 from app.visualization.schedule_voxel import (
-    ActivityLayer,
+    RotationLayer,
     ScheduleVoxel,
     ScheduleVoxelGrid,
     ScheduleVoxelTransformer,
     VoxelColor,
     VoxelGridDimensions,
     transform_schedule_to_voxels,
-    ACTIVITY_COLORS,
+    ROTATION_COLORS,
     COMPLIANCE_COLORS,
 )
 
 __all__ = [
-    "ActivityLayer",
+    "RotationLayer",
     "ScheduleVoxel",
     "ScheduleVoxelGrid",
     "ScheduleVoxelTransformer",
     "VoxelColor",
     "VoxelGridDimensions",
     "transform_schedule_to_voxels",
-    "ACTIVITY_COLORS",
+    "ROTATION_COLORS",
     "COMPLIANCE_COLORS",
 ]

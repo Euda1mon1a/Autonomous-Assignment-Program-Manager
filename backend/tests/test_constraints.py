@@ -76,13 +76,13 @@ class MockTemplate:
         name="Test Rotation",
         max_residents=None,
         requires_procedure_credential=False,
-        activity_type=None,
+        rotation_type=None,
     ):
         self.id = id or uuid4()
         self.name = name
         self.max_residents = max_residents
         self.requires_procedure_credential = requires_procedure_credential
-        self.activity_type = activity_type
+        self.rotation_type = rotation_type
 
 
 @pytest.fixture
@@ -662,7 +662,7 @@ class TestMaxPhysiciansInClinicConstraint:
         ]
 
         # Create clinic template
-        clinic_template = MockTemplate(name="Clinic", activity_type="clinic")
+        clinic_template = MockTemplate(name="Clinic", rotation_type="clinic")
         templates = [clinic_template]
 
         context = SchedulingContext(
@@ -816,7 +816,7 @@ class TestMaxPhysiciansInClinicConstraint:
         constraint = MaxPhysiciansInClinicConstraint(max_physicians=6)
 
         # Add a non-clinic template
-        research_template = MockTemplate(name="Research", activity_type="research")
+        research_template = MockTemplate(name="Research", rotation_type="research")
         context.templates.append(research_template)
         context.template_idx[research_template.id] = len(context.templates) - 1
 
@@ -878,7 +878,7 @@ class TestWednesdayAMInternOnlyConstraint:
         ]
 
         # Create clinic template
-        clinic_template = MockTemplate(name="Clinic", activity_type="clinic")
+        clinic_template = MockTemplate(name="Clinic", rotation_type="clinic")
         templates = [clinic_template]
 
         context = SchedulingContext(
@@ -1061,7 +1061,7 @@ class TestWednesdayAMInternOnlyConstraint:
         constraint = WednesdayAMInternOnlyConstraint()
 
         # Add a non-clinic template
-        research_template = MockTemplate(name="Research", activity_type="research")
+        research_template = MockTemplate(name="Research", rotation_type="research")
         context.templates.append(research_template)
         context.template_idx[research_template.id] = len(context.templates) - 1
 

@@ -9,19 +9,21 @@ Rotation templates define the types of clinical rotations, educational activitie
 - **Name**: Full descriptive name
 - **Abbreviation**: Short code used in the system
 - **Display Abbreviation**: What appears on schedules
-- **Activity Type**: Category (inpatient, outpatient, procedures, education, off, absence, recovery)
+- **Rotation Type**: Category (`rotation_type`: inpatient, outpatient, education, off, absence, recovery)
 
-## Activity Types
+## Rotation Types
 
 | Type | Description |
 |------|-------------|
 | `inpatient` | Hospital-based rotations requiring 24/7 coverage |
 | `outpatient` | Clinic-based rotations during business hours |
-| `procedures` | Procedural training (Botox, vasectomy, colposcopy) |
 | `education` | Lectures, GME activities, orientation |
 | `off` | Off-site rotations (Hilo, Kapiolani, Okinawa) |
 | `absence` | Leave, weekends |
 | `recovery` | Post-call recovery time |
+
+**Note:** Procedure templates (Botox, vasectomy, colposcopy) are **outpatient**
+rotations and use `rotation_type = outpatient`.
 
 ## Current Rotation Templates
 
@@ -74,7 +76,7 @@ Rotation templates define the types of clinical rotations, educational activitie
 | COLP-AM | COLP | Colposcopy AM | |
 | COLP-PM | COLP | Colposcopy PM | |
 
-### Procedures
+### Procedures (Outpatient Rotations)
 
 | Abbreviation | Display | Name |
 |--------------|---------|------|

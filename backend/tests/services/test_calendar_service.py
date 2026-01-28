@@ -122,13 +122,13 @@ class TestCalendarService:
         template1 = RotationTemplate(
             id=uuid4(),
             name="Clinic",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="CL",
         )
         template2 = RotationTemplate(
             id=uuid4(),
             name="Call",
-            activity_type="call",
+            rotation_type="call",
             abbreviation="CA",
         )
         db.add_all([template1, template2])
@@ -223,7 +223,7 @@ class TestCalendarService:
         template = RotationTemplate(
             id=uuid4(),
             name="Clinic",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="CL",
             clinic_location="Building A, Room 101",
         )
@@ -421,13 +421,13 @@ class TestCalendarService:
         template1 = RotationTemplate(
             id=uuid4(),
             name="Clinic",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="CL",
         )
         template2 = RotationTemplate(
             id=uuid4(),
             name="Call",
-            activity_type="call",
+            rotation_type="call",
             abbreviation="CA",
         )
         db.add_all([template1, template2])
@@ -465,7 +465,7 @@ class TestCalendarService:
         assert len(events) == 1
         assert "Clinic" in str(events[0]["summary"])
 
-    def test_generate_ics_all_filter_by_activity_types(
+    def test_generate_ics_all_filter_by_rotation_types(
         self,
         db: Session,
         sample_resident: Person,
@@ -476,13 +476,13 @@ class TestCalendarService:
         template1 = RotationTemplate(
             id=uuid4(),
             name="Clinic",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="CL",
         )
         template2 = RotationTemplate(
             id=uuid4(),
             name="Call",
-            activity_type="call",
+            rotation_type="call",
             abbreviation="CA",
         )
         db.add_all([template1, template2])

@@ -34,7 +34,7 @@ class TestFMITSchedulerService:
         template = RotationTemplate(
             id=uuid4(),
             name="FMIT",  # Must match FMITSchedulerService.FMIT_ROTATION_NAME
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="FMIT",
             clinic_location="Main Campus",
             max_residents=2,
@@ -393,7 +393,7 @@ class TestFMITSchedulerIntegration:
         template = RotationTemplate(
             id=uuid4(),
             name="FMIT",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="FMIT",
             clinic_location="Main Campus",
             max_residents=2,

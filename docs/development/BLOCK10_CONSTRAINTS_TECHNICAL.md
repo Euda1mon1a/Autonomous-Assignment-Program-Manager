@@ -93,7 +93,7 @@ class ResidentInpatientHeadcountConstraint(BaseConstraint):
     def check_daily(self, date: date, assignments: List[Assignment]) -> ConstraintResult:
         inpatient_count = sum(
             1 for a in assignments
-            if a.rotation.activity_type == "inpatient"
+            if a.rotation.rotation_type == "inpatient"
         )
 
         if inpatient_count < self.min_residents:

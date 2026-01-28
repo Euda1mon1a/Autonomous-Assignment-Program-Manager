@@ -138,7 +138,7 @@ class SpatialFatigueMap:
     Maps fatigue data to positions for 3D visualization:
     - X: Time (blocks/days)
     - Y: Person (sorted by PGY level or team)
-    - Z: Rotation/activity type
+    - Z: Rotation type
     - Color: Effectiveness score
     - Opacity: Confidence level
     """
@@ -150,7 +150,7 @@ class SpatialFatigueMap:
     # Axis labels
     x_labels: list[str] = field(default_factory=list)  # Dates/blocks
     y_labels: list[str] = field(default_factory=list)  # Person names
-    z_labels: list[str] = field(default_factory=list)  # Activity types
+    z_labels: list[str] = field(default_factory=list)  # Rotation types
 
     def to_dict(self) -> dict:
         """Serialize for JSON export."""
@@ -412,7 +412,7 @@ class HolographicExporter:
         Maps fatigue data to a voxel grid where:
         - X axis: Time (blocks sorted by date)
         - Y axis: People (sorted by PGY level)
-        - Z axis: Activity type
+        - Z axis: Rotation type
         - Color: Effectiveness score
 
         Args:
@@ -442,25 +442,25 @@ class HolographicExporter:
         )
 
         # Activity types
-        activity_types = sorted(
+        rotation_types = sorted(
             list(set(a.get("rotation_type", "unknown") for a in assignments))
         )
 
         # Build index maps
         block_idx = {b.get("id"): i for i, b in enumerate(sorted_blocks)}
         person_idx = {p.get("id"): i for i, p in enumerate(sorted_persons)}
-        activity_idx = {t: i for i, t in enumerate(activity_types)}
+        rotation_idx = {t: i for i, t in enumerate(rotation_types)}
 
         # Generate voxels
         voxels = []
         for assignment in assignments:
             person_id = assignment.get("person_id")
             block_id = assignment.get("block_id")
-            activity = assignment.get("rotation_type", "unknown")
+            rotation_type = assignment.get("rotation_type", "unknown")
 
             x = block_idx.get(block_id)
             y = person_idx.get(person_id)
-            z = activity_idx.get(activity, 0)
+            z = rotation_idx.get(rotation_type, 0)
 
             if x is None or y is None:
                 continue
@@ -489,12 +489,12 @@ class HolographicExporter:
             grid_dimensions={
                 "x": len(sorted_blocks),
                 "y": len(sorted_persons),
-                "z": len(activity_types),
+                "z": len(rotation_types),
             },
             voxels=voxels,
             x_labels=[str(b.get("date", "")) for b in sorted_blocks],
             y_labels=[p.get("name", "Unknown") for p in sorted_persons],
-            z_labels=activity_types,
+            z_labels=rotation_types,
         )
 
     def export_predictive_waves(

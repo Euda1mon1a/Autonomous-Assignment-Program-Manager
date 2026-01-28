@@ -54,7 +54,7 @@ class AssignmentService:
         end_date: date | None = None,
         person_id: UUID | None = None,
         role: str | None = None,
-        activity_type: str | None = None,
+        rotation_type: str | None = None,
         offset: int | None = None,
         limit: int | None = None,
     ) -> dict:
@@ -73,7 +73,7 @@ class AssignmentService:
             end_date: Filter assignments on or before this date.
             person_id: Filter by the assigned person's UUID.
             role: Filter by assignment role (e.g., 'resident', 'faculty').
-            activity_type: Filter by activity type (e.g., 'clinic', 'inpatient').
+            rotation_type: Filter by rotation type (e.g., 'inpatient', 'outpatient').
             offset: Number of records to skip for pagination.
             limit: Maximum number of records to return.
 
@@ -85,7 +85,7 @@ class AssignmentService:
             end_date=end_date,
             person_id=person_id,
             role=role,
-            activity_type=activity_type,
+            rotation_type=rotation_type,
             offset=offset,
             limit=limit,
         )
@@ -99,7 +99,6 @@ class AssignmentService:
         created_by: str,
         override_reason: str | None = None,
         rotation_template_id: UUID | None = None,
-        activity_type: str | None = None,
         notes: str | None = None,
         # Freeze horizon override parameters
         freeze_override_reason_code: OverrideReasonCode | None = None,
@@ -119,7 +118,6 @@ class AssignmentService:
             created_by: Identifier of the user creating the assignment.
             override_reason: Optional reason for overriding ACGME warnings.
             rotation_template_id: Optional UUID of the rotation template.
-            activity_type: Optional activity type for the assignment.
             notes: Optional notes to attach to the assignment.
             freeze_override_reason_code: Override reason code if block is frozen.
             freeze_override_reason_text: Override explanation if block is frozen.
@@ -182,8 +180,6 @@ class AssignmentService:
         }
         if rotation_template_id:
             assignment_data["rotation_template_id"] = rotation_template_id
-        if activity_type:
-            assignment_data["activity_type"] = activity_type
         if notes:
             assignment_data["notes"] = notes
 

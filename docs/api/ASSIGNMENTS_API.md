@@ -20,7 +20,7 @@ The Assignments API manages individual schedule assignments for residents and fa
 Assignment
 ├── Person (resident or faculty)
 ├── Block (date + AM/PM)
-├── Rotation Template (activity type)
+├── Rotation Template (rotation type)
 ├── Role (resident or supervising faculty)
 └── Warnings (ACGME compliance issues)
 ```
@@ -44,7 +44,7 @@ curl -X GET 'http://localhost:8000/api/assignments?start_date=2025-01-01&end_dat
 - `end_date` (optional, YYYY-MM-DD): Filter assignments until this date
 - `person_id` (optional, UUID): Filter assignments for a specific person
 - `role` (optional): Filter by role - `'resident'`, `'faculty'`, `'attending'`, etc.
-- `activity_type` (optional): Filter by activity type - `'on_call'`, `'clinic'`, `'inpatient'`, etc.
+- `rotation_type` (optional): Filter by rotation type - `'on_call'`, `'clinic'`, `'inpatient'`, etc.
 - `page` (optional, default: 1): Page number (1-indexed)
 - `page_size` (optional, default: 100): Items per page (max: 500)
 
@@ -419,14 +419,14 @@ curl -X POST http://localhost:8000/api/assignments \
 ### Get All Clinic Assignments for a Resident
 
 ```bash
-curl -X GET 'http://localhost:8000/api/assignments?person_id=550e8400-e29b-41d4-a716-446655440001&activity_type=clinic' \
+curl -X GET 'http://localhost:8000/api/assignments?person_id=550e8400-e29b-41d4-a716-446655440001&rotation_type=clinic' \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 ### Get All Call Assignments in January
 
 ```bash
-curl -X GET 'http://localhost:8000/api/assignments?start_date=2025-01-01&end_date=2025-01-31&activity_type=on_call' \
+curl -X GET 'http://localhost:8000/api/assignments?start_date=2025-01-01&end_date=2025-01-31&rotation_type=on_call' \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 

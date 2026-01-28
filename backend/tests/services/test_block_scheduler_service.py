@@ -35,7 +35,7 @@ class TestBlockSchedulerService:
         template = RotationTemplate(
             id=uuid4(),
             name="Sports Medicine Elective",
-            activity_type="elective",
+            rotation_type="elective",
             abbreviation="SME",
             leave_eligible=True,
             max_residents=3,
@@ -51,7 +51,7 @@ class TestBlockSchedulerService:
         template = RotationTemplate(
             id=uuid4(),
             name="FMIT Inpatient",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
             leave_eligible=False,
             max_residents=2,
@@ -535,7 +535,7 @@ class TestLeaveConflictDetection:
         fmit = RotationTemplate(
             id=uuid4(),
             name="FMIT",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             leave_eligible=False,
             max_residents=2,
         )

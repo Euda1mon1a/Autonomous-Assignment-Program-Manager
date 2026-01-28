@@ -63,11 +63,11 @@ class MockTemplate:
         self,
         template_id=None,
         name="Test Template",
-        activity_type="outpatient",
+        rotation_type="outpatient",
     ):
         self.id = template_id or uuid4()
         self.name = name
-        self.activity_type = activity_type
+        self.rotation_type = rotation_type
 
 
 class MockAssignment:
@@ -204,7 +204,7 @@ class TestWednesdayAMInternOnlyConstraint:
         """Test validate with no assignments passes (no violations)."""
         constraint = WednesdayAMInternOnlyConstraint()
         am_block, pm_block = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         context = SchedulingContext(
             residents=[],
@@ -221,7 +221,7 @@ class TestWednesdayAMInternOnlyConstraint:
         """Test validate passes when PGY-1 assigned to Wednesday AM clinic."""
         constraint = WednesdayAMInternOnlyConstraint()
         am_block, pm_block = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         # Create PGY-1 resident (intern)
         intern = MockPerson(
@@ -252,7 +252,7 @@ class TestWednesdayAMInternOnlyConstraint:
         """Test validate fails when PGY-2 assigned to Wednesday AM clinic."""
         constraint = WednesdayAMInternOnlyConstraint()
         am_block, pm_block = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         # Create PGY-2 resident
         pgy2 = MockPerson(
@@ -288,7 +288,7 @@ class TestWednesdayAMInternOnlyConstraint:
         """Test validate fails when PGY-3 assigned to Wednesday AM clinic."""
         constraint = WednesdayAMInternOnlyConstraint()
         am_block, pm_block = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         # Create PGY-3 resident
         pgy3 = MockPerson(
@@ -319,7 +319,7 @@ class TestWednesdayAMInternOnlyConstraint:
         """Test Wednesday PM assignments are not checked by this constraint."""
         constraint = WednesdayAMInternOnlyConstraint()
         am_block, pm_block = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         # PGY-2 on Wednesday PM is OK (constraint only checks AM)
         pgy2 = MockPerson(
@@ -353,7 +353,7 @@ class TestWednesdayAMInternOnlyConstraint:
         # Non-clinic template (e.g., inpatient)
         inpatient_template = MockTemplate(
             name="Inpatient Ward",
-            activity_type="inpatient",
+            rotation_type="inpatient",
         )
 
         # PGY-2 on Wednesday AM inpatient is OK (not clinic)
@@ -384,7 +384,7 @@ class TestWednesdayAMInternOnlyConstraint:
         """Test faculty assignments are not checked (only residents)."""
         constraint = WednesdayAMInternOnlyConstraint()
         am_block, pm_block = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         # Faculty on Wednesday AM clinic is OK (constraint only checks residents)
         faculty = MockPerson(
@@ -413,7 +413,7 @@ class TestWednesdayAMInternOnlyConstraint:
         """Test validation with mix of PGY-1 and PGY-2/3."""
         constraint = WednesdayAMInternOnlyConstraint()
         am_block, pm_block = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         pgy1 = MockPerson(person_type="resident", name="PGY-1", pgy_level=1)
         pgy2 = MockPerson(person_type="resident", name="PGY-2", pgy_level=2)
@@ -466,7 +466,7 @@ class TestWednesdayAMInternOnlyConstraint:
         # Template is not a clinic
         non_clinic_template = MockTemplate(
             name="Admin",
-            activity_type="admin",
+            rotation_type="admin",
         )
 
         assignment = MockAssignment(
@@ -545,7 +545,7 @@ class TestWednesdayPMSingleFacultyConstraint:
         """Test validate with no assignments fails (need exactly 1 faculty)."""
         constraint = WednesdayPMSingleFacultyConstraint()
         wed1_am, wed1_pm = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         context = SchedulingContext(
             residents=[],
@@ -565,7 +565,7 @@ class TestWednesdayPMSingleFacultyConstraint:
         """Test validate passes when exactly 1 faculty on Wed PM."""
         constraint = WednesdayPMSingleFacultyConstraint()
         wed1_am, wed1_pm = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         faculty = MockPerson(person_type="faculty", name="Dr. Faculty")
 
@@ -590,7 +590,7 @@ class TestWednesdayPMSingleFacultyConstraint:
         """Test validate fails when 2 faculty on Wed PM (need exactly 1)."""
         constraint = WednesdayPMSingleFacultyConstraint()
         wed1_am, wed1_pm = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         faculty1 = MockPerson(person_type="faculty", name="Dr. One")
         faculty2 = MockPerson(person_type="faculty", name="Dr. Two")
@@ -625,7 +625,7 @@ class TestWednesdayPMSingleFacultyConstraint:
         """Test 4th Wednesday PM is not checked by this constraint."""
         constraint = WednesdayPMSingleFacultyConstraint()
         wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         # No faculty on 4th Wed PM - should pass (not checked)
         context = SchedulingContext(
@@ -643,7 +643,7 @@ class TestWednesdayPMSingleFacultyConstraint:
         """Test Wednesday AM is not checked by this constraint."""
         constraint = WednesdayPMSingleFacultyConstraint()
         wed1_am, wed1_pm = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         faculty = MockPerson(person_type="faculty", name="Dr. Faculty")
 
@@ -673,9 +673,9 @@ class TestWednesdayPMSingleFacultyConstraint:
 
         inpatient_template = MockTemplate(
             name="Inpatient",
-            activity_type="inpatient",
+            rotation_type="inpatient",
         )
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         faculty = MockPerson(person_type="faculty", name="Dr. Faculty")
 
@@ -701,7 +701,7 @@ class TestWednesdayPMSingleFacultyConstraint:
         """Test resident assignments don't count toward faculty coverage."""
         constraint = WednesdayPMSingleFacultyConstraint()
         wed1_am, wed1_pm = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         resident = MockPerson(person_type="resident", name="PGY-1", pgy_level=1)
 
@@ -732,7 +732,7 @@ class TestWednesdayPMSingleFacultyConstraint:
         wed2_am, wed2_pm = create_wednesday_blocks(2025, 1, 2)
         wed3_am, wed3_pm = create_wednesday_blocks(2025, 1, 3)
 
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
         faculty = MockPerson(person_type="faculty", name="Dr. Faculty")
 
         assignments = [
@@ -769,7 +769,7 @@ class TestWednesdayPMSingleFacultyConstraint:
 
         non_clinic_template = MockTemplate(
             name="Admin",
-            activity_type="admin",
+            rotation_type="admin",
         )
 
         context = SchedulingContext(
@@ -826,7 +826,7 @@ class TestInvertedWednesdayConstraint:
         """Test validate with no assignments fails (need 1 AM + 1 PM)."""
         constraint = InvertedWednesdayConstraint()
         wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         context = SchedulingContext(
             residents=[],
@@ -844,7 +844,7 @@ class TestInvertedWednesdayConstraint:
         """Test validate passes when 1 faculty AM, 1 different faculty PM."""
         constraint = InvertedWednesdayConstraint()
         wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         faculty_am = MockPerson(person_type="faculty", name="Dr. AM")
         faculty_pm = MockPerson(person_type="faculty", name="Dr. PM")
@@ -877,7 +877,7 @@ class TestInvertedWednesdayConstraint:
         """Test validate fails when same faculty assigned both AM and PM."""
         constraint = InvertedWednesdayConstraint()
         wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         faculty = MockPerson(person_type="faculty", name="Dr. Both")
 
@@ -911,7 +911,7 @@ class TestInvertedWednesdayConstraint:
         """Test validate fails when 0 faculty on AM (need exactly 1)."""
         constraint = InvertedWednesdayConstraint()
         wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         faculty_pm = MockPerson(person_type="faculty", name="Dr. PM")
 
@@ -937,7 +937,7 @@ class TestInvertedWednesdayConstraint:
         """Test validate fails when 2 faculty on AM (need exactly 1)."""
         constraint = InvertedWednesdayConstraint()
         wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         faculty_am1 = MockPerson(person_type="faculty", name="Dr. AM1")
         faculty_am2 = MockPerson(person_type="faculty", name="Dr. AM2")
@@ -977,7 +977,7 @@ class TestInvertedWednesdayConstraint:
         """Test validate fails when 2 faculty on PM (need exactly 1)."""
         constraint = InvertedWednesdayConstraint()
         wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         faculty_am = MockPerson(person_type="faculty", name="Dr. AM")
         faculty_pm1 = MockPerson(person_type="faculty", name="Dr. PM1")
@@ -1017,7 +1017,7 @@ class TestInvertedWednesdayConstraint:
         """Test 1st, 2nd, 3rd Wednesdays are not checked."""
         constraint = InvertedWednesdayConstraint()
         wed1_am, wed1_pm = create_wednesday_blocks(2025, 1, 1)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         # No assignments on 1st Wednesday - should pass (not checked)
         context = SchedulingContext(
@@ -1038,9 +1038,9 @@ class TestInvertedWednesdayConstraint:
 
         inpatient_template = MockTemplate(
             name="Inpatient",
-            activity_type="inpatient",
+            rotation_type="inpatient",
         )
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         faculty = MockPerson(person_type="faculty", name="Dr. Faculty")
 
@@ -1066,7 +1066,7 @@ class TestInvertedWednesdayConstraint:
         """Test resident assignments don't count toward faculty coverage."""
         constraint = InvertedWednesdayConstraint()
         wed4_am, wed4_pm = create_wednesday_blocks(2025, 1, 4)
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         resident = MockPerson(person_type="resident", name="PGY-1", pgy_level=1)
 
@@ -1103,7 +1103,7 @@ class TestInvertedWednesdayConstraint:
 
         non_clinic_template = MockTemplate(
             name="Admin",
-            activity_type="admin",
+            rotation_type="admin",
         )
 
         context = SchedulingContext(
@@ -1146,7 +1146,7 @@ class TestTemporalConstraintsIntegration:
             wed4_pm,
         ]
 
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         # Create people
         pgy1 = MockPerson(person_type="resident", name="PGY-1", pgy_level=1)
@@ -1245,7 +1245,7 @@ class TestTemporalConstraintsIntegration:
             wed4_pm,
         ]
 
-        clinic_template = MockTemplate(activity_type="outpatient")
+        clinic_template = MockTemplate(rotation_type="outpatient")
 
         pgy1 = MockPerson(person_type="resident", name="PGY-1", pgy_level=1)
         pgy2 = MockPerson(person_type="resident", name="PGY-2", pgy_level=2)

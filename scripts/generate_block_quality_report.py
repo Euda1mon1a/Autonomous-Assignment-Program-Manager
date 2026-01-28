@@ -79,8 +79,8 @@ def main():
     parser.add_argument(
         "--year",
         type=int,
-        default=2025,
-        help="Academic year (default: 2025)",
+        default=None,
+        help="Academic year (e.g., 2025 for AY 2025-2026). Auto-detects from current date if not specified.",
     )
     parser.add_argument(
         "--output",
@@ -113,6 +113,12 @@ def main():
     # Create output directory
     output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Derive academic year from current date if not provided
+    if args.year is None:
+        today = datetime.now().date()
+        args.year = today.year if today.month >= 7 else today.year - 1
+        print(f"  Auto-detected academic year: {args.year}")
 
     # Generate reports
     db = SessionLocal()

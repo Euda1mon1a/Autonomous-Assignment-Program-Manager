@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-25 (Session 140: CP-SAT canonical JSON export pipeline + XLSX fixes)
+> **Last Updated:** 2026-01-27 (Block 10 CP-SAT Step 3.5 + proactive CV target)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -157,44 +157,37 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 
 **Ref:** PR #764, Session 136
 
-### 4. PII Exposure in Resilience/Burnout Tools (NEW - Session 136)
-**Added:** 2026-01-23
-**Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
-**Severity:** CRITICAL - HIPAA/OPSEC Violation
-
-Real faculty/provider names exposed in burnout and vulnerability API responses:
-
-| Location | Class | Exposed Field |
-|----------|-------|---------------|
-| `contagion_model.py:107-130` | `SuperspreaderProfile` | `provider_name` |
-| `resilience_integration.py:114-124` | `VulnerabilityInfo` | `faculty_name` |
-| `resilience_integration.py:126-135` | `FatalPairInfo` | `faculty_1_name`, `faculty_2_name` |
-
-**Fix:** Apply existing `_anonymize_id()` function at `resilience_integration.py:27-45`.
-**Effort:** 1.5 hours (3 classes × 30 min)
-
 ---
 
 ## HIGH (Address Soon)
 
-### 4. Block 10 Schedule Generation - WORKING and Backend Export Unblocked
-**Status:** Generation ✅ | Backend Export ✅ | Frontend Export ⚠️ (see #1)
+### 4. Block 10 Schedule Generation - PARTIAL (Activity Solver OK)
+**Status:** CP-SAT ✅ | Activity Solver ✅ | Backend Export ⚠️ (partial) | Frontend Export ⚠️ (see #1)
 
-**What's Working:**
-- Block 10 generation: 1,512 half-day assignments (17 residents × 56 slots + 10 faculty × 56 slots)
-- 0 NULL activity_id - all assignments have valid activities
-- Canonical JSON export reads from `half_day_assignments`
-- Backend export produces Block Template2 XLSX via JSON pipeline
-- CP-SAT canonical path enforced for call/activity/faculty; greedy/hybrid archived (see `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md`)
+**Latest Run (2026-01-27):**
+- CP-SAT solver generated **589** rotation assignments + **20** call nights
+- Activity solver status: **OPTIMAL** (~0.13s), **455** activities assigned
+- Outpatient slots to assign: **455**
+- Physical capacity constraints applied to **40/40** time slots (soft 6 / hard 8)
+- Activity min shortfall total: **1** (soft penalty)
+- Post-call PCAT/DO gap persists (expected in dev)
+- Weekly CV ratio (faculty+PGY‑3, FMC clinic only): **22.22% / 28.57% / 25.00% / 29.41%**
+  - Solver slots alone hit ~30.77% each week; preloaded C lowers overall ratio.
 
-**What's Blocked:**
-- Frontend export may fail due to auth bypass (needs axios/JWT fix)
-- Export UI lacks explicit failure feedback
-- Missing row mapping should hard-fail instead of warning
+**Root Cause Observed (resolved):**
+- Capacity infeasibility (2026-04-01 AM) resolved by:
+  - Preloading inpatient clinic from weekly patterns
+  - **Proactive CV target** for faculty + PGY‑3 (not fallback)
 
-**Reference:** `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md` (done / remaining / uncertain)
+**References:**
+- `docs/reports/block10-cpsat-run-20260127.md`
+- `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md`
 
-**Workaround (Plan B):** Manual export via Excel still works, but backend export is now functional
+**Immediate Action:**
+1. Review **activity min shortfall** (1 total) and decide if acceptable.
+2. Address **post-call PCAT/DO** gap (Step 4 in `cpsat-open-questions`).
+3. Address **1-in-7/rest-period** warnings (time-off templates not in solver context).
+4. Continue policy decisions in `docs/reports/cpsat-open-questions-20260127.md`.
 
 ### 5. ACGME Compliance Validation Gaps
 Call duty and performance profiling have edge cases:
@@ -219,18 +212,7 @@ Remaining faculty-specific gaps:
 2. Wire faculty expansion into half-day pipeline before CP-SAT activity solver
 3. Enforce or normalize weekly clinic min/max limits and fix template coverage gaps
 
-### 7. API/WS Convention Audit Required (Session 128)
-
-WebSocket debugging revealed convention violations. Systematic audit needed:
-
-| Audit | Scope | Status |
-|-------|-------|--------|
-| Full WS audit | All WebSocket messages for case consistency | TODO |
-| REST endpoint audit | Query params, request/response bodies | TODO |
-| Hook/useX audit | Frontend hooks for snake_case violations | TODO |
-| WS smoke test | `GET /api/v1/ws/health` + wscat connect | TODO |
-
-### 8. Pre-commit Hook Failures (Session 128) - MYPY PROGRESS
+### 7. Pre-commit Hook Failures (Session 128) - MYPY PROGRESS
 **Updated:** 2026-01-24 (Session 139)
 
 Pre-commit hooks blocking commits due to pre-existing issues:
@@ -238,7 +220,7 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 | Hook | Issue | Scope | Progress |
 |------|-------|-------|----------|
 | **mypy** | 6,443 type errors | 742 files | 13.2% fixed (983 errors) |
-| **bandit** | `command not found` | Tool not installed | TODO |
+| **bandit** | Config + fixes ready | Branch `bandit-config` | ⏳ Needs merge to main |
 | **Modron March** | FairnessAuditResponse location | Type in wrong file | TODO |
 
 **mypy Progress (Sessions 137-139):**
@@ -266,7 +248,7 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 3. Install bandit: `pip install bandit`
 4. Update Modron March to check correct type locations
 
-### 9. Orphan Framework Code (12K+ LOC) - ANALYSIS COMPLETE
+### 8. Orphan Framework Code (12K+ LOC) - ANALYSIS COMPLETE
 Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
 | Module | LOC | Quality | Recommendation |
@@ -279,7 +261,7 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
 **Decision:** Keep all modules on roadmap. Integrate as features require.
 
-### 10. DoS Vulnerabilities - Unbounded Queries (NEW - Session 136)
+### 9. DoS Vulnerabilities - Unbounded Queries (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
 
@@ -299,7 +281,7 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
 **Effort:** 2 hours
 
-### 11. Missing Rate Limits on Expensive Endpoints (NEW - Session 136)
+### 10. Missing Rate Limits on Expensive Endpoints (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
 
@@ -313,7 +295,7 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 **Fix:** Add `@limiter.limit("2/minute")` decorator from `app.core.slowapi_limiter`.
 **Effort:** 1 hour
 
-### 12. No DB-Schema Drift Detection (NEW - Session 136)
+### 11. No DB-Schema Drift Detection (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [DB-Schema Alignment Audit](reports/DB_SCHEMA_ALIGNMENT_AUDIT_2026-01-23.md)
 
@@ -337,7 +319,7 @@ Critical infrastructure gaps:
 
 **Effort:** 4 hours
 
-### 13. API Test Coverage Gap - 366 Untested Endpoints (NEW - Session 136)
+### 12. API Test Coverage Gap - 366 Untested Endpoints (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [API Coverage Matrix](reports/API_COVERAGE_MATRIX_2026-01-23.md)
 
@@ -365,16 +347,22 @@ Critical infrastructure gaps:
 ### 11. Hooks and Scripts Consolidation
 **Priority:** MEDIUM
 **Roadmap:** [`docs/planning/HOOKS_AND_SCRIPTS_ROADMAP.md`](planning/HOOKS_AND_SCRIPTS_ROADMAP.md)
+**Updated:** 2026-01-26 (Session 141)
+
+**✅ Verified Aligned (2026-01-26):**
+- All 15 pre-commit scripts exist and match config
+- D&D hooks (Couatl Killer, Beholder Bane, Gorgon's Gaze) run in parallel
+- CLAUDE.md documents all 5 D&D patterns + enforcement
 
 | Gap | Current State | Impact |
 |-----|---------------|--------|
 | No pre-push hook | Missing | Dangerous ops reach remote |
-| 24 sequential phases | 15-30s commits | Developer friction |
+| ~~24 sequential phases~~ | D&D hooks parallel, others sequential | ~~15-30s~~ Improved |
 | MyPy/Bandit advisory | `|| true` patterns | Bugs/security issues slip through |
 
 **Human Decisions Required:**
-- [ ] Approve parallel pre-commit approach (Phase 1)
-- [ ] Decide GPG signing policy (Phase 4)
+- [ ] Approve full parallel pre-commit approach
+- [ ] Decide GPG signing policy
 
 ### 12. Admin Debugger - Database Inspector Enhancement
 **Priority:** MEDIUM
@@ -445,7 +433,82 @@ Pre-commit hooks fail due to missing dependencies:
 
 **Missing Skill:** `check-camelcase` referenced in CLAUDE.md but skill doesn't exist.
 
-### 21. MCP Placeholder Tools (NEW - Session 136)
+### ~~22. Rename `activity_type` → `rotation_type`~~ ✅ RESOLVED (2026-01-25)
+**Resolved by:** Commit `7cd3f4eb` - 180 files changed, migration `20260126_rename_rotation_type`
+
+Complete rename across entire codebase including DB migration, models, schemas, API, frontend types, solver, and all documentation.
+
+### ~~23. CP-SAT Failure Logging Improvements~~ ✅ RESOLVED (2026-01-26)
+**Resolved by:** Commit `9a5c9b19`
+
+Added solver failure diagnostics in `SchedulingEngine`:
+- Logs enabled/disabled constraint lists
+- Logs context summary (residents, templates, blocks, locked slots)
+- Warns on missing key templates (PCAT/DO/SM/NF/PC)
+
+### 24. Preload Service Code Duplication (NEW - Session 142)
+**Added:** 2026-01-25
+**Source:** Codex CP-SAT Review (`docs/reviews/CODEX_CPSAT_REVIEW_20260125.md`)
+
+`preload_service.py` (async) and `sync_preload_service.py` (sync) have ~300 LOC of identical rotation pattern logic:
+
+| Duplicated Code | LOC | Purpose |
+|-----------------|-----|---------|
+| `_ROTATION_ALIASES` | 15 | Alias normalization |
+| `_NIGHT_FLOAT_ROTATIONS`, etc. | 10 | Exempt rotation sets |
+| `_get_hilo_codes()` | 8 | Hilo TDY pattern |
+| `_get_kap_codes()` | 10 | Kapiolani pattern |
+| `_get_nf_codes()` | 8 | Night float pattern |
+| `_resolve_rotation_code_for_date()` | 40 | Mid-block transitions |
+| `_get_rotation_preload_codes()` | 50 | Pattern dispatcher |
+
+**Also includes magic numbers:**
+```python
+if day_index in (0, 1):   # Thu/Fri before Hilo TDY
+if day_index == 19:       # Return Tuesday
+```
+
+**Fix:**
+1. Extract to `backend/app/services/rotation_pattern_utils.py`
+2. Replace magic numbers with named constants
+3. Both services import shared logic
+
+**Effort:** 2-3 hours
+
+### 25. Activity Solver Physical Capacity Overflow (NEW - Session 142)
+**Added:** 2026-01-26
+**Source:** Block 10 regen report (`docs/reports/block10-cpsat-run-20260126.md`)
+
+Activity solver now skips physical-capacity constraints for most slots because
+minimum clinic demand exceeds the hard cap of 6 (e.g., 15–16 required).
+
+**Impact:**
+- Activity solver succeeds, but capacity is unenforced for ~35/40 slots in Block 10.
+- Policy decision needed: soft constraint vs FM-clinic-only vs per-activity caps.
+
+**Fix:**
+1. Decide capacity scope (FM clinic only vs all clinical activities).
+2. Consider soft-penalty model if hard caps are routinely exceeded.
+3. Align `counts_toward_physical_capacity` flags with policy.
+
+**Effort:** 2-4 hours
+
+### 26. Supervision Activity Metadata Validation (NEW - Session 142)
+**Added:** 2026-01-26
+**Source:** Block 10 regen report (`docs/reports/block10-cpsat-run-20260126.md`)
+
+AT coverage now uses `Activity.requires_supervision` + `Activity.provides_supervision`
+instead of narrow code lists. If these flags are incorrect or incomplete, AT
+coverage constraints will under/over-count demand.
+
+**Fix:**
+1. Audit clinical activities for `requires_supervision=True`.
+2. Ensure AT/PCAT/DO (and SM clinic if applicable) have `provides_supervision=True`.
+3. Add a validation check for missing supervision flags on clinical activities.
+
+**Effort:** 1-2 hours
+
+### 27. MCP Placeholder Tools (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [MCP Tools Audit](reports/MCP_TOOLS_AUDIT_2026-01-23.md)
 
@@ -460,6 +523,100 @@ Pre-commit hooks fail due to missing dependencies:
 | (6 more) | See PLACEHOLDER_IMPLEMENTATIONS.md |
 
 **Action:** Add `[MOCK]` prefix to tool descriptions until backend services exist.
+
+### 28. Exception Handling Audit (NEW - Blind Spot Assessment)
+**Added:** 2026-01-27
+**Source:** Blind spot assessment (`.claude/plans/deep-foraging-starfish.md`)
+**Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+Found 20+ instances of exception swallowing pattern:
+```python
+except Exception as e:
+    logger.error(f"Something failed: {e}")
+    # continues execution  ← silent failure
+```
+
+**Affected files:**
+- `solver_control.py` - 8 instances
+- `free_energy_integration.py` - 3 instances
+- `solvers.py` - several instances
+
+**Risk:** Silent failures hide bugs until downstream effects appear. Errors logged but not surfaced.
+
+**Medical analogy:** Like logging critical lab values to a file nobody checks - patient continues until they code.
+
+**Fix options:**
+1. **Fail loudly:** `raise` after logging (crash on error)
+2. **Explicit recovery:** Document and handle specific exceptions with fallbacks
+
+**Action:** Audit each `except Exception` and decide: fatal or explicit recovery?
+
+**Effort:** 4-6 hours
+
+### 29. Transaction Boundary Audit (NEW - Blind Spot Assessment)
+**Added:** 2026-01-27
+**Source:** Blind spot assessment (`.claude/plans/deep-foraging-starfish.md`)
+**Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+`engine.py` has 13+ calls to `commit()`, `flush()`, `rollback()` scattered throughout, suggesting:
+1. Transaction boundaries evolved organically
+2. Partial commits possible (some data saved, some not)
+3. Rollback may not undo everything expected
+
+**Risk:** Partial schedule commits = data corruption worse than no schedule.
+
+**Medical analogy:** Surgery where power fails mid-procedure - organ removed but nothing closed.
+
+**Files:**
+- `backend/app/scheduling/engine.py` - 13+ transaction calls
+- `backend/app/scheduling/activity_solver.py` - 1 flush
+
+**Fix:**
+1. Map all commit/rollback calls in engine.py
+2. Identify transaction boundaries
+3. Ensure atomic operations (all-or-nothing)
+
+**Effort:** 4-6 hours
+
+### 30. Async/Sync Documentation Fix (NEW - Blind Spot Assessment)
+**Added:** 2026-01-27
+**Source:** Blind spot assessment (`.claude/plans/deep-foraging-starfish.md`)
+**Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+`BEST_PRACTICES_AND_GOTCHAS.md` states "All database operations MUST be async" but:
+- `activity_solver.py` uses sync `Session` (intentionally)
+- `engine.py` uses sync `Session` (intentionally)
+
+**This is correct behavior** - scheduler is CPU-bound (like surgery), not I/O-bound. But docs don't reflect this.
+
+**Medical analogy:** API = ED attending (multitask). Scheduler = Surgeon (blocking is expected).
+
+**Fix:** Update `docs/development/BEST_PRACTICES_AND_GOTCHAS.md` Section 4 to clarify:
+- API layer: async required
+- Scheduler: sync intentional (CPU-bound work)
+
+**Effort:** 30 minutes
+
+### 31. CP-SAT Pipeline Integration Tests (NEW - Blind Spot Assessment)
+**Added:** 2026-01-27
+**Source:** Blind spot assessment (`.claude/plans/deep-foraging-starfish.md`)
+**Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+The MCP validation `await` bug wasn't caught by unit tests - found by operational testing.
+
+**Gap:**
+- Unit tests: pass (functions exist, logic correct in isolation)
+- Integration tests: sparse (components interacting)
+- End-to-end: manual (Codex operational testing)
+
+**Medical analogy:** Unit tests = in vitro (cells in dish). Integration tests = in vivo (whole organism). You can have all proteins working but still have disease.
+
+**Fix:**
+1. Add integration test that actually calls MCP validation against real backend
+2. Add integration test that runs full CP-SAT pipeline on test data
+3. Include in CI pipeline
+
+**Effort:** 4-8 hours
 
 ---
 
@@ -636,33 +793,78 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 ### ~~GUI + Wiring Review (PR #756)~~ ✅ RESOLVED (2026-01-20)
 ~~Verified GUI fixes, identified and fixed remaining wiring gaps.~~
 
+### ~~API/WS Convention Audit~~ ✅ RESOLVED (2026-01-26)
+~~Full audit completed via PRs #758, #760, #765:~~
+- ~~WS messages: Auto snake↔camel conversion (PR #760)~~
+- ~~REST query params: 90+ violations fixed (PR #758)~~
+- ~~Frontend hooks: 17 hooks fixed~~
+- ~~Enforcement: Gorgon's Gaze, Couatl Killer, Modron March hooks~~
+
+### ~~PII in Burnout APIs~~ ✅ N/A (2026-01-26)
+~~Security report referenced `contagion_model.py`, `resilience_integration.py` with PII-exposing classes. Investigation found these files/classes don't exist - report was based on planned (not implemented) code.~~
+
+### ~~Rename `activity_type` → `rotation_type`~~ ✅ RESOLVED (2026-01-25)
+~~Complete rename across 180 files (commit `7cd3f4eb`):~~
+- ~~Alembic migration: `20260126_rename_rotation_type`~~
+- ~~Models, schemas, API routes updated~~
+- ~~Frontend types regenerated~~
+- ~~Solver and constraints updated~~
+- ~~All docs standardized on `rotation_type` terminology~~
+
 ---
 
 ## SUMMARY
 
 | Priority | Open | Resolved |
 |----------|------|----------|
-| **CRITICAL** | 4 | 4 |
-| **HIGH** | 10 | 5 |
-| **MEDIUM** | 8 | 9 |
+| **CRITICAL** | 3 | 5 |
+| **HIGH** | 9 | 6 |
+| **MEDIUM** | 15 | 11 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **35** | **21** |
+| **TOTAL** | **40** | **25** |
 
 ### Top 5 Actions for Next Session
 
-1. **Fix PII Exposure** (CRITICAL #4) - 3 classes exposing faculty names in burnout APIs
-2. **Fix Excel Export Silent Failures** (CRITICAL #1) - Blocking production use
-3. **Add Rate Limits** (HIGH #11) - DoS protection on expensive endpoints
-4. **Add DB-Schema Drift Tests** (HIGH #12) - Prevent 12+ more models drifting
-5. **Add Resilience Route Tests** (HIGH #13) - 59 untested safety-critical endpoints
+1. **Fix Excel Export Silent Failures** (CRITICAL #1) - Frontend auth bypass, need axios
+2. **Add Rate Limits** (HIGH #10) - DoS protection on expensive endpoints
+3. **Add DB-Schema Drift Tests** (HIGH #11) - Prevent 12+ more models drifting
+4. **Add Resilience Route Tests** (HIGH #12) - 59 untested safety-critical endpoints
+5. **Merge bandit-config branch** (HIGH #7) - Security scanner ready, needs PR
 
-### Session 136 Net New Items
+### Blind Spot Assessment Items (2026-01-27)
 
-| Priority | New | Source Report |
-|----------|-----|---------------|
-| CRITICAL | +1 | Security Posture (PII exposure) |
-| HIGH | +4 | Security Posture (DoS), DB-Schema, API Coverage |
-| MEDIUM | +2 | Skills-Tools, MCP Tools |
+| # | Item | Effort | Priority |
+|---|------|--------|----------|
+| 28 | Exception Handling Audit | 4-6h | MEDIUM |
+| 29 | Transaction Boundary Audit | 4-6h | MEDIUM |
+| 30 | Async/Sync Doc Fix | 30m | MEDIUM |
+| 31 | CP-SAT Integration Tests | 4-8h | MEDIUM |
+
+**Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+### Session 142 Updates (2026-01-26)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Resolved | MEDIUM #22 | `activity_type` → `rotation_type` rename done (commit 7cd3f4eb) |
+| ✅ Resolved | MEDIUM #23 | CP-SAT failure logging improvements |
+| ➕ Added | MEDIUM #24 | Preload service code duplication (~300 LOC + magic numbers) |
+| ➕ Added | MEDIUM #25 | Activity solver physical-capacity overflow (capacity skipped) |
+| ➕ Added | MEDIUM #26 | Supervision activity metadata validation |
+| 📝 Added | Review doc | `docs/reviews/CODEX_CPSAT_REVIEW_20260125.md` |
+| ✅ Fixed | Block 10 | CP-SAT + activity solver succeed after block-assignment filtering |
+| ⚠️ Found | Block 10 | Capacity constraints skipped for 35/40 slots (policy needed) |
+| 📝 Added | gitignore | `.claude/dontreadme/sessions/*.md` for session scratchpads |
+| 📝 Updated | ops scripts | `block_regen.py` + `block_export.py` now backfill env |
+
+### Session 141 Updates (2026-01-26)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Resolved | API/WS Convention Audit | PRs #758, #760, #765 - full enforcement |
+| ✅ N/A | PII in Burnout APIs | Files don't exist (planned, not implemented) |
+| 📝 Updated | Bandit hook | Branch ready, needs merge |
+| ✅ Verified | Hooks Consolidation | All 15 scripts aligned, D&D parallel |
 
 ---
 

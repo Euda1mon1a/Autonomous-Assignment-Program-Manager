@@ -78,7 +78,7 @@ class CalendarService:
             person_id: Person UUID
             start_date: Start date for export
             end_date: End date for export
-            include_types: Optional list of activity types to include
+            include_types: Optional list of rotation types to include
 
         Returns:
             ICS file content as string
@@ -104,10 +104,10 @@ class CalendarService:
             )
         )
 
-        # Filter by activity types if specified
+        # Filter by rotation types if specified
         if include_types:
             query = query.filter(
-                Assignment.rotation_template.has(activity_type=include_types)
+                Assignment.rotation_template.has(rotation_type=include_types)
             )
 
         assignments = query.all()
@@ -154,7 +154,7 @@ class CalendarService:
 
             if assignment.rotation_template:
                 description_parts.append(
-                    f"Type: {assignment.rotation_template.activity_type}"
+                    f"Type: {assignment.rotation_template.rotation_type}"
                 )
                 if assignment.rotation_template.clinic_location:
                     description_parts.append(
@@ -312,7 +312,7 @@ class CalendarService:
             end_date: End date for export
             person_ids: Optional list of person UUIDs to filter
             rotation_ids: Optional list of rotation UUIDs to filter
-            include_types: Optional list of activity types to include
+            include_types: Optional list of rotation types to include
 
         Returns:
             ICS file content as string
@@ -340,10 +340,10 @@ class CalendarService:
         if rotation_ids:
             query = query.filter(Assignment.rotation_template_id.in_(rotation_ids))
 
-        # Filter by activity types if specified
+        # Filter by rotation types if specified
         if include_types:
             query = query.filter(
-                Assignment.rotation_template.has(activity_type=include_types)
+                Assignment.rotation_template.has(rotation_type=include_types)
             )
 
         assignments = query.all()
@@ -395,7 +395,7 @@ class CalendarService:
 
             if assignment.rotation_template:
                 description_parts.append(
-                    f"Type: {assignment.rotation_template.activity_type}"
+                    f"Type: {assignment.rotation_template.rotation_type}"
                 )
                 if assignment.rotation_template.clinic_location:
                     description_parts.append(

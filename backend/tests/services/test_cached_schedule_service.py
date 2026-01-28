@@ -44,7 +44,7 @@ class TestCachedScheduleService:
         template = RotationTemplate(
             id=uuid4(),
             name="Test Rotation",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="TR",
             max_residents=4,
         )

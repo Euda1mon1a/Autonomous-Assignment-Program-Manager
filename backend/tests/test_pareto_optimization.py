@@ -137,7 +137,7 @@ def pareto_test_blocks(db: Session) -> list[Block]:
             block_number=1,
             is_weekend=False,
             is_holiday=False,
-            activity_type="clinic" if i % 3 == 0 else "admin",
+            rotation_type="clinic" if i % 3 == 0 else "admin",
         )
         db.add(block)
         blocks.append(block)
@@ -337,15 +337,15 @@ class TestSchedulingProblem:
     def test_calculate_preference_satisfaction(self, sample_objectives):
         """Test preference satisfaction objective calculation."""
         person_data = [
-            {"id": "1", "preferred_activity_types": ["clinic", "admin"]},
-            {"id": "2", "preferred_activity_types": ["admin"]},
-            {"id": "3", "preferred_activity_types": []},
+            {"id": "1", "preferred_rotation_types": ["clinic", "admin"]},
+            {"id": "2", "preferred_rotation_types": ["admin"]},
+            {"id": "3", "preferred_rotation_types": []},
         ]
         block_data = [
-            {"id": "1", "activity_type": "clinic"},
-            {"id": "2", "activity_type": "admin"},
-            {"id": "3", "activity_type": "other"},
-            {"id": "4", "activity_type": "clinic"},
+            {"id": "1", "rotation_type": "clinic"},
+            {"id": "2", "rotation_type": "admin"},
+            {"id": "3", "rotation_type": "other"},
+            {"id": "4", "rotation_type": "clinic"},
         ]
 
         problem = SchedulingProblem(
@@ -516,7 +516,7 @@ class TestSchedulingProblem:
             constraints=[],
             person_data=[{"id": str(i)} for i in range(3)],
             block_data=[
-                {"id": str(i), "activity_type": "clinic", "specialty": "general"}
+                {"id": str(i), "rotation_type": "clinic", "specialty": "general"}
                 for i in range(4)
             ],
         )
@@ -869,7 +869,7 @@ class TestParetoOptimizationService:
         assert isinstance(block_dict, dict)
         assert "id" in block_dict
         assert "name" in block_dict
-        assert "activity_type" in block_dict
+        assert "rotation_type" in block_dict
         assert "start_date" in block_dict
         assert "end_date" in block_dict
 
@@ -971,7 +971,7 @@ class TestParetoOptimizationIntegration:
             {
                 "id": str(b.id),
                 "name": b.name,
-                "activity_type": b.activity_type,
+                "rotation_type": b.rotation_type,
                 "specialty": "general",
             }
             for b in pareto_test_blocks

@@ -278,7 +278,6 @@ class RotationCoverageData(BaseModel):
 
     rotation_id: str = Field(alias="rotationId")  # Anonymized if requested
     rotation_type: str = Field(alias="rotationType")
-    activity_type: str = Field(alias="activityType")
     total_assignments: int = Field(alias="totalAssignments")
     unique_residents: int = Field(alias="uniqueResidents")
     average_duration: float = Field(alias="averageDuration")

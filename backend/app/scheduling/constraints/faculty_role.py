@@ -85,7 +85,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -139,7 +139,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         if not clinic_template_ids:
@@ -195,7 +195,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
         clinic_template_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type") and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type") and t.rotation_type == "outpatient"
         }
 
         # Count clinic assignments by faculty and week
@@ -296,8 +296,8 @@ class SMFacultyClinicConstraint(HardConstraint):
         regular_clinic_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type")
-            and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type")
+            and t.rotation_type == "outpatient"
             and (
                 not hasattr(t, "requires_specialty")
                 or t.requires_specialty != "Sports Medicine"
@@ -345,8 +345,8 @@ class SMFacultyClinicConstraint(HardConstraint):
         regular_clinic_ids = {
             t.id
             for t in context.templates
-            if hasattr(t, "activity_type")
-            and t.activity_type == "outpatient"
+            if hasattr(t, "rotation_type")
+            and t.rotation_type == "outpatient"
             and (
                 not hasattr(t, "requires_specialty")
                 or t.requires_specialty != "Sports Medicine"
@@ -406,8 +406,8 @@ class SMFacultyClinicConstraint(HardConstraint):
                 continue
 
             is_regular_clinic = (
-                hasattr(template, "activity_type")
-                and template.activity_type == "outpatient"
+                hasattr(template, "rotation_type")
+                and template.rotation_type == "outpatient"
                 and (
                     not hasattr(template, "requires_specialty")
                     or template.requires_specialty != "Sports Medicine"

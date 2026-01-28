@@ -481,7 +481,7 @@ GET /assignments?block_id={block_id}
 
 ### Rotations
 
-Rotation templates define activity types for blocks:
+Rotation templates define rotation types for blocks:
 ```bash
 GET /rotations/{rotation_id}/blocks
 ```

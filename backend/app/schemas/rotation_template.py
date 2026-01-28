@@ -4,16 +4,16 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class TemplateCategory(str, Enum):
     """
     Template categories for UI grouping and filtering.
 
-    - rotation: Clinical work (clinic, inpatient, outpatient, procedure)
+    - rotation: Clinical work (inpatient, outpatient)
     - time_off: ACGME-protected rest (off, recovery) - does NOT count toward away-from-program
-    - absence: Days away from program (absence activity type) - counts toward 28-day limit
+    - absence: Days away from program (absence rotation type) - counts toward 28-day limit
     - educational: Structured learning (conference, education, lecture)
     """
 
@@ -31,8 +31,9 @@ class RotationTemplateBase(BaseModel):
     """Base rotation template schema."""
 
     name: str
-    activity_type: (
-        str  # 'clinic', 'inpatient', 'procedure', 'conference', 'lecture', etc.
+    # Rotation category/setting (NOT an Activity). Used for solver filtering + constraints.
+    rotation_type: (
+        str  # rotation category/setting (inpatient/outpatient or non-rotation category)
     )
     template_category: str = Field(
         default="rotation",
@@ -57,38 +58,39 @@ class RotationTemplateBase(BaseModel):
             raise ValueError("name cannot be empty")
         return v.strip()
 
-    @field_validator("activity_type")
+    @field_validator("rotation_type")
     @classmethod
-    def validate_activity_type(cls, v: str) -> str:
-        """Validate activity_type is one of the valid types."""
-        # Valid activity types used across the system:
-        # - clinic/outpatient: Clinic sessions and outpatient rotations
-        # - inpatient: Hospital ward rotations (FMIT, wards)
-        # - procedure/procedures: Procedural rotations
-        # - conference/education/lecture: Educational activities, didactics
-        # - absence: Leave, vacation, sick time
-        # - off: Days off, recovery days
-        # - recovery: Post-call recovery
-        valid_types = (
-            "clinic",
+    def validate_rotation_type(cls, v: str) -> str:
+        """Validate rotation_type is one of the valid rotation categories."""
+        aliases = {
+            "clinic": "outpatient",
+            "procedure": "outpatient",
+            "procedures": "outpatient",
+        }
+        canonical = (
             "inpatient",
-            "procedure",
-            "procedures",
+            "outpatient",
             "conference",
             "education",
             "lecture",
-            "outpatient",
             "absence",
             "off",
             "recovery",
-            # Legacy/alternate names
-            "academic",
-            "clinical",
-            "leave",
         )
-        if v not in valid_types:
-            raise ValueError(f"activity_type must be one of {valid_types}")
-        return v
+        normalized = aliases.get(v, v)
+        if normalized not in canonical:
+            raise ValueError(f"rotation_type must be one of {canonical}")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_rotation_type_by_category(self):
+        """Ensure rotation templates use inpatient/outpatient rotation_type."""
+        if self.template_category == "rotation":
+            if self.rotation_type not in ("inpatient", "outpatient"):
+                raise ValueError(
+                    "rotation templates must use rotation_type of inpatient or outpatient"
+                )
+        return self
 
     @field_validator("max_residents")
     @classmethod
@@ -127,7 +129,7 @@ class RotationTemplateUpdate(BaseModel):
     """Schema for updating a rotation template."""
 
     name: str | None = None
-    activity_type: str | None = None
+    rotation_type: str | None = None
     template_category: str | None = None
     abbreviation: str | None = None
     display_abbreviation: str | None = None  # User-facing code for schedule grid
@@ -148,31 +150,41 @@ class RotationTemplateUpdate(BaseModel):
             raise ValueError("name cannot be empty")
         return v.strip() if v else v
 
-    @field_validator("activity_type")
+    @field_validator("rotation_type")
     @classmethod
-    def validate_activity_type(cls, v: str | None) -> str | None:
-        """Validate activity_type is one of the valid types."""
+    def validate_rotation_type(cls, v: str | None) -> str | None:
+        """Validate rotation_type is one of the valid rotation categories."""
         if v is not None:
-            valid_types = (
-                "clinic",
+            aliases = {
+                "clinic": "outpatient",
+                "procedure": "outpatient",
+                "procedures": "outpatient",
+            }
+            canonical = (
                 "inpatient",
-                "procedure",
-                "procedures",
+                "outpatient",
                 "conference",
                 "education",
                 "lecture",
-                "outpatient",
                 "absence",
                 "off",
                 "recovery",
-                # Legacy/alternate names
-                "academic",
-                "clinical",
-                "leave",
             )
-            if v not in valid_types:
-                raise ValueError(f"activity_type must be one of {valid_types}")
+            normalized = aliases.get(v, v)
+            if normalized not in canonical:
+                raise ValueError(f"rotation_type must be one of {canonical}")
+            return normalized
         return v
+
+    @model_validator(mode="after")
+    def validate_rotation_type_by_category(self):
+        """Ensure rotation templates use inpatient/outpatient rotation_type."""
+        if self.template_category == "rotation" and self.rotation_type is not None:
+            if self.rotation_type not in ("inpatient", "outpatient"):
+                raise ValueError(
+                    "rotation templates must use rotation_type of inpatient or outpatient"
+                )
+        return self
 
     @field_validator("template_category")
     @classmethod

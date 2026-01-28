@@ -564,7 +564,7 @@ class FacetedSearchService:
             query_obj = query_obj.filter(
                 or_(
                     RotationTemplate.name.ilike(f"%{query}%"),
-                    RotationTemplate.activity_type.ilike(f"%{query}%"),
+                    RotationTemplate.rotation_type.ilike(f"%{query}%"),
                 )
             )
 
@@ -572,7 +572,7 @@ class FacetedSearchService:
         for selection in facet_selections:
             if selection.facet_name == "rotation_type" and selection.values:
                 query_obj = query_obj.filter(
-                    RotationTemplate.activity_type.in_(selection.values)
+                    RotationTemplate.rotation_type.in_(selection.values)
                 )
 
         rotations = query_obj.limit(100).all()
@@ -584,13 +584,13 @@ class FacetedSearchService:
                     id=str(rotation.id),
                     type="rotation",
                     title=rotation.name,
-                    subtitle=rotation.activity_type.title(),
+                    subtitle=rotation.rotation_type.title(),
                     score=1.0,
                     highlights={},
                     entity={
                         "id": str(rotation.id),
                         "name": rotation.name,
-                        "activity_type": rotation.activity_type,
+                        "rotation_type": rotation.rotation_type,
                     },
                 )
             )
@@ -1059,9 +1059,9 @@ class FacetedSearchService:
 
         for result in results:
             if result.type == "rotation" and result.entity:
-                activity_type = result.entity.get("activity_type")
-                if activity_type:
-                    counts[activity_type] += 1
+                rotation_type = result.entity.get("rotation_type")
+                if rotation_type:
+                    counts[rotation_type] += 1
 
         if not counts:
             return None
@@ -1075,12 +1075,12 @@ class FacetedSearchService:
         # Create facet values
         facet_values = [
             FacetValue(
-                value=activity_type.title(),
-                key=activity_type,
+                value=rotation_type.title(),
+                key=rotation_type,
                 count=count,
-                selected=activity_type in selected_values,
+                selected=rotation_type in selected_values,
             )
-            for activity_type, count in counts.items()
+            for rotation_type, count in counts.items()
             if count >= config.min_facet_count
         ]
 

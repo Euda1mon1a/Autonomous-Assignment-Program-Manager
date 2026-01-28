@@ -20,7 +20,7 @@ class TestIsWeekAssignedToFaculty:
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
             supervision_required=True,
         )
@@ -77,7 +77,7 @@ class TestIsWeekAssignedToFaculty:
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
             supervision_required=True,
         )
@@ -129,7 +129,7 @@ class TestIsWeekAssignedToFaculty:
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
             supervision_required=True,
         )
@@ -139,7 +139,7 @@ class TestIsWeekAssignedToFaculty:
         clinic_template = RotationTemplate(
             id=uuid4(),
             name="PGY-1 Clinic",
-            activity_type="clinic",
+            rotation_type="clinic",
             abbreviation="C",
             supervision_required=True,
         )
@@ -196,7 +196,7 @@ class TestIsWeekAssignedToFaculty:
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
             supervision_required=True,
         )
@@ -255,7 +255,7 @@ class TestIsWeekAssignedToFaculty:
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
             supervision_required=True,
         )
@@ -320,7 +320,7 @@ class TestIsWeekAssignedToFaculty:
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
             supervision_required=True,
         )
@@ -401,7 +401,7 @@ class TestCreateRequest:
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
             supervision_required=True,
         )
@@ -438,7 +438,7 @@ class TestCreateRequest:
         fmit_template = RotationTemplate(
             id=uuid4(),
             name="FMIT",
-            activity_type="inpatient",
+            rotation_type="inpatient",
             abbreviation="FMIT",
             supervision_required=True,
         )

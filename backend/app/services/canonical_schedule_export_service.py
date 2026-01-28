@@ -49,6 +49,7 @@ class CanonicalScheduleExportService:
             structure_xml_path=self._structure_path(),
             use_block_template2=True,
             apply_colors=True,
+            strict_row_mapping=True,
         )
         return converter.convert_from_json(data, output_path)
 

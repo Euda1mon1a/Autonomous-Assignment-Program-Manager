@@ -86,7 +86,7 @@ def sample_rotation(db: Session) -> RotationTemplate:
     rotation = RotationTemplate(
         id=uuid4(),
         name="Test Clinic",
-        activity_type="outpatient",
+        rotation_type="outpatient",
         abbreviation="TC",
         max_residents=4,
     )

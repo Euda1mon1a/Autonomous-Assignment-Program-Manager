@@ -5,11 +5,11 @@ A novel approach to schedule visualization that represents assignments
 as voxels in a 3D space where:
 - X-axis: Time (blocks/dates)
 - Y-axis: People (residents, faculty)
-- Z-axis: Activity type (clinic, inpatient, procedures, etc.)
+- Z-axis: Rotation type (clinic, inpatient, procedures, etc.)
 
 Each voxel's properties encode:
 - Presence: Whether an assignment exists
-- Color: Activity type or compliance status
+- Color: Rotation type or compliance status
 - Opacity: Confidence score
 - Height: Workload intensity
 
@@ -27,8 +27,8 @@ from typing import Optional
 import math
 
 
-class ActivityLayer(Enum):
-    """Z-axis layers for different activity types."""
+class RotationLayer(Enum):
+    """Z-axis layers for different rotation types."""
 
     CLINIC = 0
     INPATIENT = 1
@@ -40,8 +40,8 @@ class ActivityLayer(Enum):
     SUPERVISION = 7  # Special layer for faculty oversight
 
     @classmethod
-    def from_activity_type(cls, activity_type: str) -> "ActivityLayer":
-        """Convert activity type string to layer enum."""
+    def from_rotation_type(cls, rotation_type: str) -> "RotationLayer":
+        """Convert rotation type string to layer enum."""
         mapping = {
             "clinic": cls.CLINIC,
             "inpatient": cls.INPATIENT,
@@ -53,7 +53,7 @@ class ActivityLayer(Enum):
             "admin": cls.ADMIN,
             "supervision": cls.SUPERVISION,
         }
-        return mapping.get(activity_type.lower(), cls.ADMIN)
+        return mapping.get(rotation_type.lower(), cls.ADMIN)
 
 
 @dataclass
@@ -83,19 +83,19 @@ class VoxelColor:
         return cls(r, g, b)
 
 
-# Activity type color palette (matches frontend ScheduleCell colors)
-ACTIVITY_COLORS: dict[ActivityLayer, VoxelColor] = {
-    ActivityLayer.CLINIC: VoxelColor.from_hex("#3B82F6"),  # blue
-    ActivityLayer.INPATIENT: VoxelColor.from_hex("#8B5CF6"),  # purple
-    ActivityLayer.PROCEDURES: VoxelColor.from_hex("#EF4444"),  # red
-    ActivityLayer.CONFERENCE: VoxelColor.from_hex("#6B7280"),  # gray
-    ActivityLayer.CALL: VoxelColor.from_hex("#F97316"),  # orange
-    ActivityLayer.LEAVE: VoxelColor.from_hex("#F59E0B"),  # amber
-    ActivityLayer.ADMIN: VoxelColor.from_hex("#10B981"),  # green
-    ActivityLayer.SUPERVISION: VoxelColor.from_hex("#EC4899"),  # pink
+# Rotation type color palette (matches frontend ScheduleCell colors)
+ROTATION_COLORS: dict[RotationLayer, VoxelColor] = {
+    RotationLayer.CLINIC: VoxelColor.from_hex("#3B82F6"),  # blue
+    RotationLayer.INPATIENT: VoxelColor.from_hex("#8B5CF6"),  # purple
+    RotationLayer.PROCEDURES: VoxelColor.from_hex("#EF4444"),  # red
+    RotationLayer.CONFERENCE: VoxelColor.from_hex("#6B7280"),  # gray
+    RotationLayer.CALL: VoxelColor.from_hex("#F97316"),  # orange
+    RotationLayer.LEAVE: VoxelColor.from_hex("#F59E0B"),  # amber
+    RotationLayer.ADMIN: VoxelColor.from_hex("#10B981"),  # green
+    RotationLayer.SUPERVISION: VoxelColor.from_hex("#EC4899"),  # pink
 }
 
-# Compliance status colors (override activity colors when violations exist)
+# Compliance status colors (override rotation colors when violations exist)
 COMPLIANCE_COLORS = {
     "compliant": VoxelColor(0.2, 0.8, 0.2, 1.0),  # green
     "warning": VoxelColor(1.0, 0.8, 0.0, 1.0),  # yellow
@@ -109,13 +109,13 @@ class ScheduleVoxel:
     """
     A single voxel in the 3D schedule space.
 
-    Represents one assignment at a specific (time, person, activity) coordinate.
+    Represents one assignment at a specific (time, person, rotation) coordinate.
     """
 
     # Position in 3D grid
     x: int  # Time index (block index from start date)
     y: int  # Person index
-    z: int  # Activity layer
+    z: int  # Rotation layer
 
     # Identity
     assignment_id: str | None = None
@@ -124,8 +124,8 @@ class ScheduleVoxel:
     block_id: str | None = None
     block_date: date | None = None
     block_time_of_day: str | None = None  # "AM" or "PM"
-    activity_name: str | None = None
-    activity_type: str | None = None
+    rotation_name: str | None = None
+    rotation_type: str | None = None
 
     # Visual properties
     color: VoxelColor = field(default_factory=lambda: VoxelColor(0.5, 0.5, 0.5))
@@ -154,8 +154,8 @@ class ScheduleVoxel:
                 "block_id": self.block_id,
                 "block_date": self.block_date.isoformat() if self.block_date else None,
                 "block_time_of_day": self.block_time_of_day,
-                "activity_name": self.activity_name,
-                "activity_type": self.activity_type,
+                "rotation_name": self.rotation_name,
+                "rotation_type": self.rotation_type,
             },
             "visual": {
                 "color": self.color.to_hex(),
@@ -183,17 +183,17 @@ class VoxelGridDimensions:
 
     x_size: int  # Number of time blocks
     y_size: int  # Number of people
-    z_size: int  # Number of activity layers
+    z_size: int  # Number of rotation layers
 
     # Axis metadata for labels
     x_labels: list[str] = field(default_factory=list)  # Date strings
     y_labels: list[str] = field(default_factory=list)  # Person names
-    z_labels: list[str] = field(default_factory=list)  # Activity types
+    z_labels: list[str] = field(default_factory=list)  # Rotation types
 
     # Mapping from IDs to indices
     x_id_to_index: dict[str, int] = field(default_factory=dict)  # block_id -> x
     y_id_to_index: dict[str, int] = field(default_factory=dict)  # person_id -> y
-    z_type_to_index: dict[str, int] = field(default_factory=dict)  # activity_type -> z
+    z_type_to_index: dict[str, int] = field(default_factory=dict)  # rotation_type -> z
 
 
 @dataclass
@@ -277,7 +277,7 @@ class ScheduleVoxelGrid:
         occupied = {(v.x, v.y, v.z) for v in self.voxels}
 
         # For now, just identify completely empty time-person combinations
-        # Could be enhanced to require specific activity coverage
+        # Could be enhanced to require specific rotation coverage
         for x in range(self.dimensions.x_size):
             for y in range(self.dimensions.y_size):
                 voxels_here = self.get_voxels_at_position(x, y)
@@ -359,23 +359,23 @@ class ScheduleVoxelTransformer:
     def __init__(self):
         self._person_index_map: dict[str, int] = {}
         self._block_index_map: dict[str, int] = {}
-        self._activity_index_map: dict[str, int] = {}
+        self._rotation_index_map: dict[str, int] = {}
 
     def transform(
         self,
         assignments: list[dict],
         persons: list[dict],
         blocks: list[dict],
-        activity_types: list[str] | None = None,
+        rotation_types: list[str] | None = None,
     ) -> ScheduleVoxelGrid:
         """
         Transform schedule data into a 3D voxel grid.
 
         Args:
-            assignments: List of assignment dicts with person_id, block_id, activity_type
+            assignments: List of assignment dicts with person_id, block_id, rotation_type
             persons: List of person dicts with id, name, type, pgy_level
             blocks: List of block dicts with id, date, time_of_day
-            activity_types: Optional list of activity types (auto-detected if None)
+            rotation_types: Optional list of rotation types (auto-detected if None)
 
         Returns:
             ScheduleVoxelGrid ready for visualization
@@ -384,21 +384,21 @@ class ScheduleVoxelTransformer:
         self._build_person_index(persons)
         self._build_block_index(blocks)
 
-        if activity_types is None:
-            activity_types = self._detect_activity_types(assignments)
-        self._build_activity_index(activity_types)
+        if rotation_types is None:
+            rotation_types = self._detect_rotation_types(assignments)
+        self._build_rotation_index(rotation_types)
 
         # Create dimensions
         dimensions = VoxelGridDimensions(
             x_size=len(blocks),
             y_size=len(persons),
-            z_size=len(activity_types),
+            z_size=len(rotation_types),
             x_labels=self._generate_block_labels(blocks),
             y_labels=[p.get("name", f"Person {i}") for i, p in enumerate(persons)],
-            z_labels=activity_types,
+            z_labels=rotation_types,
             x_id_to_index=self._block_index_map.copy(),
             y_id_to_index=self._person_index_map.copy(),
-            z_type_to_index=self._activity_index_map.copy(),
+            z_type_to_index=self._rotation_index_map.copy(),
         )
 
         # Create grid
@@ -456,26 +456,26 @@ class ScheduleVoxelTransformer:
             b.get("id", str(i)): i for i, b in enumerate(sorted_blocks)
         }
 
-    def _build_activity_index(self, activity_types: list[str]) -> None:
-        """Build mapping from activity_type to z-index."""
+    def _build_rotation_index(self, rotation_types: list[str]) -> None:
+        """Build mapping from rotation_type to z-index."""
 
-        # Use ActivityLayer enum order if possible
-        def sort_key(activity_type: str) -> int:
+        # Use RotationLayer enum order if possible
+        def sort_key(rotation_type: str) -> int:
             try:
-                return ActivityLayer.from_activity_type(activity_type).value
+                return RotationLayer.from_rotation_type(rotation_type).value
             except (KeyError, ValueError):
                 return 100  # Unknown types go last
 
-        sorted_types = sorted(activity_types, key=sort_key)
-        self._activity_index_map = {t: i for i, t in enumerate(sorted_types)}
+        sorted_types = sorted(rotation_types, key=sort_key)
+        self._rotation_index_map = {t: i for i, t in enumerate(sorted_types)}
 
-    def _detect_activity_types(self, assignments: list[dict]) -> list[str]:
-        """Auto-detect unique activity types from assignments."""
+    def _detect_rotation_types(self, assignments: list[dict]) -> list[str]:
+        """Auto-detect unique rotation types from assignments."""
         types = set()
         for assignment in assignments:
-            activity_type = assignment.get("activity_type")
-            if activity_type:
-                types.add(activity_type)
+            rotation_type = assignment.get("rotation_type")
+            if rotation_type:
+                types.add(rotation_type)
         return list(types) or ["unknown"]
 
     def _generate_block_labels(self, blocks: list[dict]) -> list[str]:
@@ -513,12 +513,12 @@ class ScheduleVoxelTransformer:
         """Convert a single assignment to a voxel."""
         person_id = assignment.get("person_id")
         block_id = assignment.get("block_id")
-        activity_type = assignment.get("activity_type", "unknown")
+        rotation_type = assignment.get("rotation_type", "unknown")
 
         # Get indices
         x = self._block_index_map.get(block_id)
         y = self._person_index_map.get(person_id)
-        z = self._activity_index_map.get(activity_type, 0)
+        z = self._rotation_index_map.get(rotation_type, 0)
 
         if x is None or y is None:
             return None
@@ -526,10 +526,10 @@ class ScheduleVoxelTransformer:
         # Find block for date info
         block_info = next((b for b in blocks if b.get("id") == block_id), {})
 
-        # Determine color based on activity type
+        # Determine color based on rotation type
         try:
-            layer = ActivityLayer.from_activity_type(activity_type)
-            color = ACTIVITY_COLORS.get(layer, VoxelColor(0.5, 0.5, 0.5))
+            layer = RotationLayer.from_rotation_type(rotation_type)
+            color = ROTATION_COLORS.get(layer, VoxelColor(0.5, 0.5, 0.5))
         except (KeyError, ValueError):
             color = VoxelColor(0.5, 0.5, 0.5)
 
@@ -544,8 +544,8 @@ class ScheduleVoxelTransformer:
             block_id=block_id,
             block_date=self._parse_date(block_info.get("date")),
             block_time_of_day=block_info.get("time_of_day"),
-            activity_name=assignment.get("activity_name"),
-            activity_type=activity_type,
+            rotation_name=assignment.get("rotation_name"),
+            rotation_type=rotation_type,
             color=color,
             opacity=assignment.get("confidence", 1.0),
             role=assignment.get("role"),
@@ -572,7 +572,7 @@ def transform_schedule_to_voxels(
 
     Example usage:
         grid = transform_schedule_to_voxels(
-            assignments=[{"person_id": "...", "block_id": "...", "activity_type": "clinic"}],
+            assignments=[{"person_id": "...", "block_id": "...", "rotation_type": "outpatient"}],
             persons=[{"id": "...", "name": "Dr. Smith", "type": "faculty"}],
             blocks=[{"id": "...", "date": "2024-01-15", "time_of_day": "AM"}],
         )

@@ -84,7 +84,7 @@ class RotationTemplateInfo(BaseModel):
 
     id: UUID
     name: str
-    activity_type: str
+    rotation_type: str
     leave_eligible: bool
 
     model_config = ConfigDict(from_attributes=True)

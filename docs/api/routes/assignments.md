@@ -27,7 +27,7 @@ The Assignments API manages schedule assignments linking people (residents/facul
 - **ACGME Validation**: Creates/updates validate compliance and return warnings
 - **Optimistic Locking**: Updates use `updated_at` timestamp to prevent concurrent modifications
 - **Pagination**: List endpoint supports pagination with configurable page size
-- **Filtering**: Filter by date range, person, role, or activity type
+- **Filtering**: Filter by date range, person, role, or rotation type
 
 ---
 
@@ -49,7 +49,7 @@ List assignments with optional filters and pagination.
 | `end_date` | date | No | - | Filter until this date (YYYY-MM-DD) |
 | `person_id` | UUID | No | - | Filter by person |
 | `role` | string | No | - | Filter by role (`primary`, `supervising`, `backup`) |
-| `activity_type` | string | No | - | Filter by activity type (e.g., `on_call`, `clinic`, `inpatient`) |
+| `rotation_type` | string | No | - | Filter by rotation type (e.g., `on_call`, `clinic`, `inpatient`) |
 | `page` | int | No | 1 | Page number (1-indexed) |
 | `page_size` | int | No | 100 | Items per page (max 500) |
 

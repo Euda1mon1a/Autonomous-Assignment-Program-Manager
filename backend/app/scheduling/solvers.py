@@ -13,7 +13,7 @@ These solvers are designed for OUTPATIENT HALF-DAY OPTIMIZATION only.
 Block-assigned rotations (FMIT, NF, inpatient) are handled separately and
 should NOT be passed to these solvers.
 
-IMPORTANT: The engine._get_rotation_templates() must filter to activity_type="outpatient"
+IMPORTANT: The engine._get_rotation_templates() must filter to rotation_type="outpatient"
 before passing templates to solvers. If NF/PC/inpatient templates are included,
 solvers will incorrectly assign residents to them.
 
@@ -36,7 +36,7 @@ KNOWN ISSUES (2025-12-24) - ALL FIXED:
 
 4. TEMPLATE FILTERING - Engine Issue (engine.py:874-905):
    Previously returned ALL templates without filtering.
-   STATUS: FIXED - _get_rotation_templates() now defaults to activity_type="outpatient".
+   STATUS: FIXED - _get_rotation_templates() now defaults to rotation_type="outpatient".
    Block-assigned rotations (NF, PC, FMIT, inpatient) excluded by default.
    NOTE: Previous fix incorrectly used "clinic" instead of "outpatient" - corrected 2025-12-26.
 
@@ -452,24 +452,23 @@ class PuLPSolver(BaseSolver):
 
         # Build objective with all penalties
         equity_penalty = variables.get("equity_penalty")
-        if equity_penalty is not None and template_balance_penalty is not None:
-            prob += (
-                COVERAGE_WEIGHT * coverage
-                - EQUITY_PENALTY_WEIGHT * equity_penalty
-                - TEMPLATE_BALANCE_WEIGHT * template_balance_penalty,
-                "objective",
-            )
-        elif equity_penalty is not None:
-            prob += (
-                COVERAGE_WEIGHT * coverage - EQUITY_PENALTY_WEIGHT * equity_penalty,
-                "objective",
-            )
-        elif template_balance_penalty is not None:
-            prob += (
-                COVERAGE_WEIGHT * coverage
-                - TEMPLATE_BALANCE_WEIGHT * template_balance_penalty,
-                "objective",
-            )
+        objective_terms = variables.get("objective_terms", [])
+
+        if (
+            equity_penalty is not None
+            or template_balance_penalty is not None
+            or objective_terms
+        ):
+            objective_expr = COVERAGE_WEIGHT * coverage
+            if equity_penalty is not None:
+                objective_expr -= EQUITY_PENALTY_WEIGHT * equity_penalty
+            if template_balance_penalty is not None:
+                objective_expr -= TEMPLATE_BALANCE_WEIGHT * template_balance_penalty
+            if objective_terms:
+                objective_expr -= pulp.lpSum(
+                    term_var * int(weight) for term_var, weight in objective_terms
+                )
+            prob += objective_expr, "objective"
         else:
             prob += coverage, "objective"
 

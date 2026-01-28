@@ -1,4 +1,4 @@
-"""Rotation template model - reusable activity patterns."""
+"""Rotation template model - reusable rotation patterns."""
 
 import uuid
 from datetime import datetime
@@ -21,6 +21,10 @@ class RotationTemplate(Base):
 
     Version history is tracked via SQLAlchemy-Continuum.
     Access history: template.versions
+
+    NOTE on terminology:
+    - RotationTemplate = the rotation (multi-week container).
+    - rotation_type = rotation category/setting (NOT an Activity).
     """
 
     __tablename__ = "rotation_templates"
@@ -30,14 +34,15 @@ class RotationTemplate(Base):
     name = Column(
         String(255), nullable=False
     )  # e.g., "PGY-1 Clinic", "FMIT", "Sports Medicine"
-    activity_type = Column(
+    # Rotation category/setting (not an Activity). Used for solver filtering + constraints.
+    rotation_type = Column(
         String(255), nullable=False
-    )  # "clinic", "inpatient", "outpatient", "procedure", "procedures", "conference", "education", "lecture", "absence", "off", "recovery"
+    )  # rotation: inpatient|outpatient; non-rotation categories: off|absence|recovery|education|conference|lecture
 
     # Template category for UI grouping and filtering
-    # - rotation: Clinical work (clinic, inpatient, outpatient, procedure)
+    # - rotation: Clinical work (inpatient, outpatient)
     # - time_off: ACGME-protected rest (off, recovery)
-    # - absence: Days away from program (absence activity type)
+    # - absence: Days away from program (absence rotation type)
     # - educational: Structured learning (conference, education, lecture)
     template_category = Column(
         String(20),
@@ -129,7 +134,7 @@ class RotationTemplate(Base):
     )
 
     def __repr__(self):
-        return f"<RotationTemplate(name='{self.name}', type='{self.activity_type}')>"
+        return f"<RotationTemplate(name='{self.name}', type='{self.rotation_type}')>"
 
     @property
     def has_capacity_limit(self) -> bool:

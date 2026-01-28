@@ -47,7 +47,7 @@ class TestConstraintService:
         template = RotationTemplate(
             id=uuid4(),
             name="Clinic Rotation",
-            activity_type="outpatient",
+            rotation_type="outpatient",
             abbreviation="CLI",
             max_residents=4,
             supervision_required=True,

@@ -73,7 +73,7 @@ class TestEmergencyCoverageService:
         template = RotationTemplate(
             id=uuid4(),
             name="Call Coverage",
-            activity_type="call",
+            rotation_type="call",
             abbreviation="CALL",
             max_residents=1,
             supervision_required=True,

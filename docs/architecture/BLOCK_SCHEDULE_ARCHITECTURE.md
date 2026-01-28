@@ -145,9 +145,9 @@ CREATE TABLE assignments (
 );
 ```
 
-### Rotation Template Activity Types
+### Rotation Template Types
 
-| activity_type | Solver Handling | Examples |
+| rotation_type | Solver Handling | Examples |
 |---------------|-----------------|----------|
 | `outpatient` | **Optimized by solver** | Clinic, Sports Med, ID Selective |
 | `inpatient` | **Pre-assigned, preserved** | FMIT, Night Float, NICU |

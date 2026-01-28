@@ -42,32 +42,32 @@ Schedule creation establishes the foundation for the academic year: defining rot
 5. **Save Configuration**
 
 **Data Model:**
-- Each day is split into 2 blocks (AM/PM)
-- 365 days × 2 = 730 blocks per academic year
-- Blocks are numbered sequentially by 28-day periods
+- Each day is split into 2 half‑day blocks (AM/PM)
+- 365 days × 2 = 730 half‑day blocks per academic year
+- Academic Blocks (0–13) are 28‑day containers that rotations span
 
 ---
 
 ### 1.2 Defining Rotation Templates
 
-Rotation templates are reusable activity patterns that define the types of work residents perform.
+Rotation templates are reusable rotation patterns that define the overall category of work residents perform.
 
 **Common Templates:**
 
-| Template Name | Activity Type | Max Residents | Supervision Required | Leave Eligible |
+| Template Name | Rotation Type | Max Residents | Supervision Required | Leave Eligible |
 |---------------|---------------|---------------|----------------------|----------------|
 | PGY-1 Clinic | clinic | 4 | Yes (1:2 ratio) | Yes |
 | PGY-2 Clinic | clinic | 6 | Yes (1:4 ratio) | Yes |
 | FMIT Inpatient | inpatient | 2 | Yes (1:2 ratio) | No |
 | Procedures | procedure | 2 | Yes | Yes |
 | Conference | conference | All | No | Yes |
-| Sports Medicine | clinic | 2 | Yes (specialty) | Yes |
+| Sports Medicine | outpatient | 2 | Yes (specialty) | Yes |
 
 **Template Configuration:**
 
 ```
 Template: "PGY-1 Clinic"
-├── Activity Type: clinic
+├── Rotation Type: clinic
 ├── Max Residents: 4 (physical space constraint)
 ├── Clinic Location: "Main Clinic"
 ├── Supervision Required: Yes
@@ -81,7 +81,7 @@ Template: "PGY-1 Clinic"
 1. Navigate to **Settings** → **Rotation Templates** → **New Template**
 2. Enter template details:
    - **Name**: Descriptive name (e.g., "PGY-1 Clinic")
-   - **Activity Type**: clinic, inpatient, procedure, conference
+   - **Rotation Type**: clinic, outpatient, inpatient, procedure, conference
    - **Abbreviation**: Short code for calendar display (e.g., "C", "FMIT")
 3. Set constraints:
    - **Max Residents**: Physical capacity limit
@@ -1309,13 +1309,13 @@ Approval Status:
 └─────────────────────────────────┘
 
 ┌─────────────────────────────────┐
-│ Dr. Johnson (Target)            │
+│ Swap Target                     │
 │ Status: ⏳ Pending Response     │
 │ Notified: 2025-07-01 10:31 AM   │
 │ Reminder Sent: 2025-07-03       │
 └─────────────────────────────────┘
 
-Actions for Dr. Johnson:
+Actions for Swap Target:
   [✓ Approve]  [✗ Reject]  [? Need Info]
 ```
 
@@ -1325,19 +1325,18 @@ Actions for Dr. Johnson:
 ┌──────────────────────────────────────────┐
 │           Email Notification             │
 ├──────────────────────────────────────────┤
-│ To: Dr. Johnson                          │
-│ Subject: Swap Request from Dr. Smith     │
+│ To: Swap Target                          │
+│ Subject: Swap Request from Requester     │
 │                                          │
-│ Dr. Smith has requested to swap:         │
+│ Requester has requested to swap:         │
 │                                          │
-│ Give You:  Week of Aug 11 (FMIT)        │
-│ Take From: Week of Sep 15 (Clinic)      │
+│ Swap From: Block (FMIT)                  │
+│ Swap To:   Block (Clinic)                │
 │                                          │
 │ Reason: "Family commitment that week"    │
 │                                          │
 │ This swap is mutually beneficial:        │
-│ - You prefer Aug 11 (marked preferred)   │
-│ - Dr. Smith prefers Sep 15               │
+│ - Preference alignment noted             │
 │ - Compatibility Score: 92%               │
 │                                          │
 │ Please review and respond within 48hrs:  │

@@ -12,10 +12,11 @@ from datetime import datetime
 from typing import Any, Union
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.exceptions import ActivityNotFoundError
 from app.models.activity import Activity, ActivityCategory
 from app.models.rotation_halfday_requirement import RotationHalfDayRequirement
 from app.models.rotation_preference import RotationPreference
@@ -84,8 +85,11 @@ class RotationTemplateService:
             self.db.refresh(obj)
 
     async def _ensure_activity_for_template(self, template: RotationTemplate) -> None:
-        """Create a specialty activity for outpatient/clinic templates if missing."""
-        if (template.activity_type or "").lower() not in ("clinic", "outpatient"):
+        """Create a specialty activity for outpatient templates if missing."""
+        if (
+            template.template_category != "rotation"
+            or (template.rotation_type or "").lower() != "outpatient"
+        ):
             return
 
         code = activity_code_from_name(template.name)
@@ -118,7 +122,7 @@ class RotationTemplateService:
             is_protected=False,
             counts_toward_clinical_hours=True,
             provides_supervision=False,
-            counts_toward_physical_capacity=True,
+            counts_toward_physical_capacity=False,
             display_order=0,
         )
         self.db.add(activity)
@@ -224,11 +228,16 @@ class RotationTemplateService:
         now = datetime.utcnow()
         new_patterns = []
         for pattern_data in patterns:
+            activity = await self._resolve_pattern_activity(
+                pattern_data.activity_type,
+                getattr(pattern_data, "activity_id", None),
+            )
             pattern = WeeklyPattern(
                 rotation_template_id=template_id,
                 day_of_week=pattern_data.day_of_week,
                 time_of_day=pattern_data.time_of_day,
                 activity_type=pattern_data.activity_type,
+                activity_id=activity.id,
                 linked_template_id=pattern_data.linked_template_id,
                 is_protected=pattern_data.is_protected,
                 notes=pattern_data.notes,
@@ -268,6 +277,9 @@ class RotationTemplateService:
                 )
             seen.add(key)
 
+            if not pattern.activity_type or not pattern.activity_type.strip():
+                raise ValueError("activity_type is required for weekly pattern slots")
+
             # Validate day of week
             if pattern.day_of_week < 0 or pattern.day_of_week > 6:
                 raise ValueError(
@@ -279,6 +291,43 @@ class RotationTemplateService:
                 raise ValueError(
                     f"Invalid time_of_day: {pattern.time_of_day}. Must be 'AM' or 'PM'."
                 )
+
+    async def _resolve_pattern_activity(
+        self,
+        activity_type: str | None,
+        activity_id: UUID | None,
+    ) -> Activity:
+        """Resolve a weekly pattern activity to a real Activity record."""
+        if activity_id:
+            result = await self._execute(
+                select(Activity).where(Activity.id == activity_id)
+            )
+            activity = result.scalar_one_or_none()
+            if activity:
+                return activity
+            raise ActivityNotFoundError(
+                str(activity_id), context="weekly_patterns.activity_id"
+            )
+
+        if not activity_type or not activity_type.strip():
+            raise ValueError("weekly pattern requires activity_type or activity_id")
+
+        normalized = activity_type.strip()
+        result = await self._execute(
+            select(Activity).where(
+                or_(
+                    func.lower(Activity.code) == normalized.lower(),
+                    func.lower(Activity.display_abbreviation) == normalized.lower(),
+                    func.lower(Activity.name) == normalized.lower(),
+                )
+            )
+        )
+        activity = result.scalar_one_or_none()
+        if not activity:
+            raise ActivityNotFoundError(
+                normalized, context="weekly_patterns.activity_type"
+            )
+        return activity
 
     # =========================================================================
     # Half-Day Requirement Operations
@@ -876,7 +925,7 @@ class RotationTemplateService:
                 "template": {
                     "id": str(template.id),
                     "name": template.name,
-                    "activity_type": template.activity_type,
+                    "rotation_type": template.rotation_type,
                     "abbreviation": template.abbreviation,
                     "display_abbreviation": template.display_abbreviation,
                     "font_color": template.font_color,
@@ -1486,9 +1535,19 @@ class RotationTemplateService:
             day_of_week = slot_data["day_of_week"]
             time_of_day = slot_data["time_of_day"]
             linked_template_id = slot_data.get("linked_template_id")
-            activity_type = slot_data.get("activity_type", "scheduled")
+            activity_type = slot_data.get("activity_type")
+            activity_id = slot_data.get("activity_id")
             is_protected = slot_data.get("is_protected")
             notes = slot_data.get("notes")
+
+            resolved_activity = None
+            activity_type_value = activity_type
+            if activity_type is not None or activity_id is not None:
+                resolved_activity = await self._resolve_pattern_activity(
+                    activity_type, activity_id
+                )
+                if activity_type_value is None:
+                    activity_type_value = resolved_activity.code
 
             # Determine which weeks to apply to
             target_weeks = week_numbers if week_numbers else [None]
@@ -1509,8 +1568,10 @@ class RotationTemplateService:
                         # Update existing pattern
                         if linked_template_id is not None:
                             existing.linked_template_id = linked_template_id
-                        if activity_type:
-                            existing.activity_type = activity_type
+                        if activity_type_value is not None:
+                            existing.activity_type = activity_type_value
+                        if resolved_activity is not None:
+                            existing.activity_id = resolved_activity.id
                         if is_protected is not None:
                             existing.is_protected = is_protected
                         if notes is not None:
@@ -1518,13 +1579,18 @@ class RotationTemplateService:
                         slots_modified += 1
                     else:
                         # Create new pattern
+                        if resolved_activity is None:
+                            raise ValueError(
+                                "activity_type or activity_id required for new weekly pattern"
+                            )
                         new_pattern = WeeklyPattern(
                             rotation_template_id=template_id,
                             day_of_week=day_of_week,
                             time_of_day=time_of_day,
                             week_number=week_num,
                             linked_template_id=linked_template_id,
-                            activity_type=activity_type or "scheduled",
+                            activity_type=activity_type_value or resolved_activity.code,
+                            activity_id=resolved_activity.id,
                             is_protected=is_protected or False,
                             notes=notes,
                         )
@@ -1532,13 +1598,18 @@ class RotationTemplateService:
                         slots_modified += 1
                 else:
                     # Replace mode - create new patterns
+                    if resolved_activity is None:
+                        raise ValueError(
+                            "activity_type or activity_id required for weekly pattern"
+                        )
                     new_pattern = WeeklyPattern(
                         rotation_template_id=template_id,
                         day_of_week=day_of_week,
                         time_of_day=time_of_day,
                         week_number=week_num,
                         linked_template_id=linked_template_id,
-                        activity_type=activity_type or "scheduled",
+                        activity_type=activity_type_value or resolved_activity.code,
+                        activity_id=resolved_activity.id,
                         is_protected=is_protected or False,
                         notes=notes,
                     )

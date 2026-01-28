@@ -166,7 +166,7 @@ async def quick_create_rotation_template(
     template = await service.create_quick_template(
         abbreviation=request.abbreviation,
         name=request.name,
-        activity_type=request.activity_type,
+        rotation_type=request.rotation_type,
         leave_eligible=request.leave_eligible,
     )
 
@@ -179,7 +179,7 @@ async def quick_create_rotation_template(
         id=template.id,
         abbreviation=template.abbreviation,
         name=template.name,
-        activity_type=template.activity_type,
+        rotation_type=template.rotation_type,
     )
 
 

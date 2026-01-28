@@ -491,7 +491,7 @@ paths:
           in: query
           schema:
             type: string
-        - name: activity_type
+        - name: rotation_type
           in: query
           schema:
             type: string

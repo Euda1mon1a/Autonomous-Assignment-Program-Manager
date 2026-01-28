@@ -42,7 +42,7 @@ GET /calendar/export/ics?start_date=2024-01-01&end_date=2024-12-31
 | `end_date` | date | Yes | End date for export (YYYY-MM-DD) |
 | `person_ids` | UUID[] | No | Filter by person UUIDs |
 | `rotation_ids` | UUID[] | No | Filter by rotation UUIDs |
-| `include_types` | string[] | No | Filter by activity types |
+| `include_types` | string[] | No | Filter by rotation types |
 
 #### Response
 
@@ -107,7 +107,7 @@ GET /calendar/export/ics/{person_id}?start_date=2024-01-01&end_date=2024-12-31
 |-----------|------|----------|-------------|
 | `start_date` | date | Yes | Start date for export (YYYY-MM-DD) |
 | `end_date` | date | Yes | End date for export (YYYY-MM-DD) |
-| `include_types` | string[] | No | Filter by activity types |
+| `include_types` | string[] | No | Filter by rotation types |
 
 #### Response
 

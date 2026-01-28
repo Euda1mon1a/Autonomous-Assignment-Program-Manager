@@ -304,17 +304,17 @@ class TestFullTextSearchService:
         rotations = [
             RotationTemplate(
                 name="PGY-1 Clinic",
-                activity_type="clinic",
+                rotation_type="clinic",
                 abbreviation="C",
             ),
             RotationTemplate(
                 name="FMIT Inpatient",
-                activity_type="inpatient",
+                rotation_type="inpatient",
                 abbreviation="FMIT",
             ),
             RotationTemplate(
                 name="Sports Medicine",
-                activity_type="clinic",
+                rotation_type="clinic",
                 abbreviation="SM",
             ),
         ]

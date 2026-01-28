@@ -99,7 +99,7 @@ def absence_conflict_setup(db: Session) -> dict:
     fmit_template = RotationTemplate(
         id=uuid4(),
         name="FMIT Week",
-        activity_type="inpatient",
+        rotation_type="inpatient",
         abbreviation="FMIT",
         supervision_required=True,
         max_supervision_ratio=2,
@@ -107,7 +107,7 @@ def absence_conflict_setup(db: Session) -> dict:
     clinic_template = RotationTemplate(
         id=uuid4(),
         name="Sports Medicine Clinic",
-        activity_type="clinic",
+        rotation_type="clinic",
         abbreviation="SMC",
         supervision_required=True,
         max_supervision_ratio=4,

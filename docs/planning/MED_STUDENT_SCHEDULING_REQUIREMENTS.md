@@ -333,7 +333,7 @@ def check_procedures_conflict(block_id: UUID, med_student_id: UUID) -> bool:
     """
     intern_in_procedures = db.query(Assignment).filter(
         Assignment.block_id == block_id,
-        Assignment.rotation_template.has(activity_type="procedure"),
+        Assignment.rotation_template.has(rotation_type="procedure"),
         Assignment.person.has(type="resident", pgy_level=1)
     ).first()
 

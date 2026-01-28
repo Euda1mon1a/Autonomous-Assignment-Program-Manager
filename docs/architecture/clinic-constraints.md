@@ -30,7 +30,7 @@ The clinic has unique operational requirements beyond standard ACGME rules:
 ```python
 # Pseudocode
 for each block:
-    clinic_count = count(assignments where template.activity_type == 'clinic')
+    clinic_count = count(assignments where template.rotation_type == 'clinic')
     assert clinic_count <= 6
 ```
 
