@@ -1,7 +1,7 @@
-# MCP Web Search & Research Tools - Research Summary
+# MCP Tools Research - Comprehensive Guide
 
 > **Date:** 2026-01-28
-> **Purpose:** Research on Model Context Protocol (MCP) apps and web search capabilities
+> **Purpose:** Research on Model Context Protocol (MCP) servers for web search, development, security, and project-specific needs
 
 ---
 
@@ -319,21 +319,483 @@ When MCP tool descriptions consume >10% of context window, Claude Code automatic
 
 ---
 
-## 8. Recommended Setup for This Project
+## 8. Database MCP Servers
 
-Based on research needs for the Residency Scheduler project:
+### PostgreSQL MCP Servers
 
-### Minimum Recommended Servers
+#### Reference Server (Read-Only)
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/postgres-mcp"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      }
+    }
+  }
+}
+```
+
+**Features:**
+- Schema introspection (tables, columns, constraints, indexes)
+- Read-only query execution
+- Safe for production use
+
+#### Postgres MCP Pro (Advanced)
+```json
+{
+  "mcpServers": {
+    "postgres-pro": {
+      "command": "uvx",
+      "args": ["postgres-mcp"]
+    }
+  }
+}
+```
+
+**Repository:** https://github.com/crystaldba/postgres-mcp
+
+**Additional Features:**
+- Query execution plan analysis with hypothetical indexes
+- Slow query identification via `pg_stat_statements`
+- Index recommendations based on workload analysis
+- Health checks: buffer cache, connections, vacuum status, invalid indexes
+- Configurable read/write access
+
+#### Full Access Server (Development Only)
+```json
+{
+  "mcpServers": {
+    "postgres-full": {
+      "command": "npx",
+      "args": ["-y", "mcp-postgres-full-access"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      }
+    }
+  }
+}
+```
+
+**Repository:** https://github.com/syahiidkamil/mcp-postgres-full-access
+
+**Warning:** Provides full read-write access. Use only in development environments.
+
+### Redis MCP Server
 
 ```json
 {
   "mcpServers": {
-    "perplexity": {
+    "redis": {
       "command": "npx",
-      "args": ["-y", "@perplexity-ai/mcp-server"],
+      "args": ["-y", "@redis/mcp-redis"],
       "env": {
-        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}",
-        "STRIP_THINKING": "true"
+        "REDIS_URL": "${REDIS_URL}"
+      }
+    }
+  }
+}
+```
+
+**Repository:** https://github.com/redis/mcp-redis
+
+**Use Cases:**
+- Cache inspection and debugging
+- Celery queue monitoring
+- Session management
+- Key pattern analysis
+
+---
+
+## 9. DevOps & Infrastructure MCP Servers
+
+### GitHub MCP Server
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@github/github-mcp-server"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+**Repository:** https://github.com/github/github-mcp-server
+
+**Capabilities:**
+- Repository management (create, fork, clone)
+- Issue and PR operations (create, update, review, merge)
+- Code search across repositories
+- Branch and commit management
+- CI/CD workflow monitoring
+- File operations (read, create, update)
+
+### Docker MCP Server
+
+```json
+{
+  "mcpServers": {
+    "docker": {
+      "command": "npx",
+      "args": ["-y", "@QuantGeekDev/docker-mcp"]
+    }
+  }
+}
+```
+
+**Alternative - Docker MCP Toolkit:**
+- One-click setup via Docker Desktop
+- Pre-configured for Claude Desktop
+- Documentation: https://docs.docker.com/ai/mcp-catalog-and-toolkit/
+
+**Capabilities:**
+- Container lifecycle management (start, stop, restart, remove)
+- Image management (pull, build, list)
+- Docker Compose operations
+- Log retrieval and streaming
+- Network and volume management
+
+---
+
+## 10. Communication MCP Servers
+
+### Slack MCP Server (Official)
+
+```json
+{
+  "mcpServers": {
+    "slack": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}",
+        "SLACK_TEAM_ID": "${SLACK_TEAM_ID}"
+      }
+    }
+  }
+}
+```
+
+**Required Bot Token Scopes:**
+- `channels:read`, `channels:history`
+- `chat:write`
+- `users:read`
+
+**Capabilities:**
+- Send messages to channels
+- Read channel history
+- List channels and users
+- Post formatted messages (Block Kit support)
+
+### Slack Notification MCP (Webhook-based)
+
+```json
+{
+  "mcpServers": {
+    "slack-notify": {
+      "command": "npx",
+      "args": ["-y", "slack-notification-mcp"],
+      "env": {
+        "SLACK_WEBHOOK_URL": "${SLACK_WEBHOOK_URL}"
+      }
+    }
+  }
+}
+```
+
+**Repository:** https://github.com/Zavdielx89/slack-notification-mcp
+
+**Use Cases:**
+- Task completion notifications
+- Schedule change alerts
+- On-call notifications
+- Swap request alerts
+
+### Email MCP Server
+
+```json
+{
+  "mcpServers": {
+    "email": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/email-mcp"],
+      "env": {
+        "SMTP_HOST": "${SMTP_HOST}",
+        "SMTP_USER": "${SMTP_USER}",
+        "SMTP_PASS": "${SMTP_PASS}"
+      }
+    }
+  }
+}
+```
+
+**Supports:** Gmail, Outlook, Yahoo, custom SMTP
+
+---
+
+## 11. Security MCP Servers
+
+### MCP-Scan (Security Scanner)
+
+```bash
+# Installation
+pip install mcp-scan
+
+# Static scan - checks for tool poisoning, prompt injection
+mcp-scan scan
+
+# Proxy mode - real-time monitoring
+mcp-scan proxy
+```
+
+**Repository:** https://github.com/invariantlabs-ai/mcp-scan
+
+**Detects:**
+- Tool poisoning attacks
+- Cross-origin escalation
+- Rug pull attacks
+- Toxic flows
+- PII exposure
+- Indirect prompt injection
+
+### OWASP ZAP MCP Server
+
+```json
+{
+  "mcpServers": {
+    "zap": {
+      "command": "npx",
+      "args": ["-y", "@lisberndt/zap-mcp"]
+    }
+  }
+}
+```
+
+**Prerequisites:** OWASP ZAP running locally
+
+**Capabilities:**
+- Active vulnerability scanning
+- Passive analysis
+- Spider/crawler functionality
+- AJAX crawling
+- Configurable scan policies
+
+### VSGuard MCP (OWASP ASVS)
+
+```json
+{
+  "mcpServers": {
+    "vsguard": {
+      "command": "npx",
+      "args": ["-y", "vsguard-mcp"]
+    }
+  }
+}
+```
+
+**Features:**
+- OWASP ASVS requirements guidance
+- Semgrep-based vulnerability scanning
+- Custom ASVS rules
+- Real-time security recommendations
+
+### OWASP MCP Top 10 Vulnerabilities
+
+| # | Vulnerability | Description |
+|---|---------------|-------------|
+| 1 | Tool Poisoning | Malicious tools injecting harmful context |
+| 2 | Prompt Injection | Untrusted input manipulating model behavior |
+| 3 | Context Spoofing | Fake context misleading model decisions |
+| 4 | Memory Poisoning | Corrupted memory/state affecting responses |
+| 5 | Command Injection | Unsanitized input in system commands |
+| 6 | Credential Exposure | Secrets in logs or model memory |
+| 7 | Tool Interference | Tools affecting each other's behavior |
+| 8 | Covert Channels | Hidden communication bypassing controls |
+| 9 | Model Misbinding | Wrong model for security-critical tasks |
+| 10 | State Manipulation | Tampering with protocol state |
+
+**Resource:** https://owasp.org/www-project-mcp-top-10/
+
+---
+
+## 12. Calendar & Scheduling MCP Servers
+
+### Google Calendar MCP
+
+```json
+{
+  "mcpServers": {
+    "google-calendar": {
+      "command": "npx",
+      "args": ["-y", "google-calendar-mcp"],
+      "env": {
+        "GOOGLE_CLIENT_ID": "${GOOGLE_CLIENT_ID}",
+        "GOOGLE_CLIENT_SECRET": "${GOOGLE_CLIENT_SECRET}"
+      }
+    }
+  }
+}
+```
+
+**Repository:** https://github.com/nspady/google-calendar-mcp
+
+**Features:**
+- Multi-account support (work + personal)
+- Multi-calendar queries
+- Cross-account conflict detection
+- Event CRUD operations
+- Recurring event handling
+- Free/busy queries
+- Natural language scheduling
+
+### Outlook Calendar MCP
+
+```json
+{
+  "mcpServers": {
+    "outlook-calendar": {
+      "command": "npx",
+      "args": ["-y", "outlook-calendar-mcp"]
+    }
+  }
+}
+```
+
+**Features:**
+- Event management
+- Attendee status updates
+- Free slot finding
+- Meeting scheduling
+
+### Combined Calendar MCP (cal-mcp)
+
+Supports both Google Calendar and Microsoft Outlook in one integration.
+
+**Repository:** https://lobehub.com/mcp/sms03-cal-mcp
+
+---
+
+## 13. Code Quality & Testing MCP Servers
+
+### Code Checker MCP
+
+```json
+{
+  "mcpServers": {
+    "code-checker": {
+      "command": "uvx",
+      "args": ["mcp-code-checker"]
+    }
+  }
+}
+```
+
+**Repository:** https://github.com/MarcusJellinghaus/mcp-code-checker
+
+**Tools:**
+- `run_pylint` - Python linting
+- `run_pytest` - Test execution
+- `run_mypy` - Type checking
+
+### MCP Server Analyzer
+
+```json
+{
+  "mcpServers": {
+    "analyzer": {
+      "command": "uvx",
+      "args": ["mcp-server-analyzer"]
+    }
+  }
+}
+```
+
+**Repository:** https://github.com/Anselmoo/mcp-server-analyzer
+
+**Features:**
+- Ruff linting and formatting
+- Dead code detection (vulture)
+- Complexity analysis (radon)
+- Dependency checking
+
+---
+
+## 14. Pricing Models Summary
+
+| Provider | Model | Free Tier | Paid |
+|----------|-------|-----------|------|
+| **Brave Search** | Usage-based | 2,000 queries/month (ongoing) | $3/1,000 queries |
+| **Tavily** | Hybrid | 1,000 credits/month | $0.005-0.008/credit |
+| **Perplexity** | Separate | API: None | $1/M tokens + request fees |
+| **Exa** | Credits | ~$10-20 signup credits | $49/8,000 credits |
+| **GitHub** | Free with limits | Included with account | Enterprise plans available |
+| **Redis** | Self-hosted | Free (OSS) | Redis Cloud pricing |
+| **PostgreSQL** | Self-hosted | Free (OSS) | Managed DB pricing |
+
+**Note:** Perplexity consumer subscription ($20/mo Pro) provides only $5/month in API credits. API access is purely usage-based with no free tier.
+
+---
+
+## 15. Recommended Setup for This Project
+
+Based on the Residency Scheduler's tech stack (PostgreSQL, Redis, Celery, Docker, GitHub) and requirements (military medical, ACGME compliance, security):
+
+### Priority Tiers
+
+| Tier | MCP Server | Rationale |
+|------|------------|-----------|
+| **High** | PostgreSQL | Database-heavy app, schema introspection, query debugging |
+| **High** | GitHub | Active development, PR/issue management |
+| **Medium** | Slack | Existing slack-bot/, schedule notifications |
+| **Medium** | Docker | Multiple compose files, container management |
+| **Medium** | Redis | Cache/Celery broker inspection |
+| **Medium** | MCP-Scan | Security scanning (military/medical context) |
+| **Low** | Brave Search | Research, documentation lookups |
+| **Low** | Calendar | Schedule visualization (future integration) |
+
+### Recommended Configuration
+
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "uvx",
+      "args": ["postgres-mcp"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@github/github-mcp-server"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "slack": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}",
+        "SLACK_TEAM_ID": "${SLACK_TEAM_ID}"
+      }
+    },
+    "docker": {
+      "command": "npx",
+      "args": ["-y", "@QuantGeekDev/docker-mcp"]
+    },
+    "redis": {
+      "command": "npx",
+      "args": ["-y", "@redis/mcp-redis"],
+      "env": {
+        "REDIS_URL": "${REDIS_URL}"
       }
     },
     "brave-search": {
@@ -347,32 +809,49 @@ Based on research needs for the Residency Scheduler project:
 }
 ```
 
-### For Enhanced Research
+### Environment Variables Required
 
-Add Tavily for citation-heavy research:
-```json
-{
-  "tavily": {
-    "command": "npx",
-    "args": ["-y", "@tavily/mcp-server"],
-    "env": {
-      "TAVILY_API_KEY": "${TAVILY_API_KEY}"
-    }
-  }
-}
+```bash
+# Database
+DATABASE_URL=postgresql://user:pass@localhost:5432/residency_scheduler
+
+# GitHub (create at https://github.com/settings/tokens)
+GITHUB_TOKEN=ghp_xxxxxxxxxxxx
+
+# Slack (create app at https://api.slack.com/apps)
+SLACK_BOT_TOKEN=xoxb-xxxxxxxxxxxx
+SLACK_TEAM_ID=T01234567
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# Brave Search (get at https://api-dashboard.search.brave.com)
+BRAVE_API_KEY=BSA_xxxxxxxxxxxx
 ```
 
-### For Dynamic Content
+### Security Scanning Setup
 
-Add Playwright for scraping JavaScript-heavy sites:
-```json
-{
-  "playwright": {
-    "command": "npx",
-    "args": ["-y", "@executeautomation/playwright-mcp-server"]
-  }
-}
+```bash
+# Install MCP-Scan
+pip install mcp-scan
+
+# Run before deploying new MCP servers
+mcp-scan scan
+
+# For continuous monitoring during development
+mcp-scan proxy
 ```
+
+### Use Cases for This Project
+
+| Task | MCP Server | Example |
+|------|------------|---------|
+| Debug slow queries | PostgreSQL | Analyze `pg_stat_statements`, recommend indexes |
+| Review PRs | GitHub | Get PR diff, check CI status, post review |
+| Alert on schedule changes | Slack | Notify coordinators of swap approvals |
+| Troubleshoot containers | Docker | Check logs, restart services |
+| Inspect Celery tasks | Redis | Monitor queue depth, failed tasks |
+| Research ACGME rules | Brave Search | Look up compliance requirements |
 
 ---
 
@@ -385,9 +864,38 @@ Add Playwright for scraping JavaScript-heavy sites:
 
 ### Web Search Providers
 - [Perplexity MCP Server Docs](https://docs.perplexity.ai/guides/mcp-server)
+- [Perplexity Pricing](https://docs.perplexity.ai/getting-started/pricing)
 - [Brave Search MCP Server](https://www.pulsemcp.com/servers/brave-search)
 - [Tavily MCP Server](https://www.pulsemcp.com/servers/tavily-search)
+- [Exa Pricing](https://exa.ai/pricing)
 - [Top 5 MCP Search Tools Evaluation](https://www.oreateai.com/blog/indepth-evaluation-of-the-top-5-popular-mcp-search-tools-in-2025-technical-analysis-and-developer-selection-guide-for-exa-brave-tavily-duckduckgo-and-perplexity/3badf1e2e4f4177c0a04d075c34186e3)
+
+### Database MCP Servers
+- [PostgreSQL MCP Server (Official)](https://www.pulsemcp.com/servers/modelcontextprotocol-postgres)
+- [Postgres MCP Pro](https://github.com/crystaldba/postgres-mcp)
+- [PostgreSQL Full Access MCP](https://github.com/syahiidkamil/mcp-postgres-full-access)
+- [pgEdge Postgres MCP](https://www.pgedge.com/blog/introducing-the-pgedge-postgres-mcp-server)
+- [Redis MCP Server](https://github.com/redis/mcp-redis)
+
+### DevOps & Infrastructure
+- [GitHub MCP Server](https://github.com/github/github-mcp-server)
+- [Docker MCP Toolkit](https://docs.docker.com/ai/mcp-catalog-and-toolkit/get-started/)
+
+### Communication
+- [Slack MCP Server (Official)](https://github.com/modelcontextprotocol/servers)
+- [Slack Notification MCP](https://github.com/Zavdielx89/slack-notification-mcp)
+- [Slack MCP Server (korotovsky)](https://github.com/korotovsky/slack-mcp-server)
+
+### Security
+- [OWASP MCP Top 10](https://owasp.org/www-project-mcp-top-10/)
+- [OWASP MCP Security Guide](https://genai.owasp.org/resource/cheatsheet-a-practical-guide-for-securely-using-third-party-mcp-servers-1-0/)
+- [MCP-Scan](https://github.com/invariantlabs-ai/mcp-scan)
+- [OWASP ZAP MCP Server](https://www.pulsemcp.com/servers/lisberndt-zap)
+
+### Calendar & Scheduling
+- [Google Calendar MCP](https://github.com/nspady/google-calendar-mcp)
+- [Outlook Calendar MCP](https://www.pulsemcp.com/servers/merajmehrabi-outlook-calendar)
+- [Microsoft Outlook Calendar MCP Reference](https://learn.microsoft.com/en-us/microsoft-agent-365/mcp-server-reference/calendar)
 
 ### Browser Automation
 - [Playwright MCP Server](https://www.pulsemcp.com/servers/executeautomation-playwright)
@@ -398,6 +906,7 @@ Add Playwright for scraping JavaScript-heavy sites:
 - [PulseMCP Server Directory](https://www.pulsemcp.com/servers)
 - [Awesome MCP Servers](https://github.com/punkpeye/awesome-mcp-servers)
 - [Anthropic Connectors Directory FAQ](https://support.anthropic.com/en/articles/11596036-anthropic-mcp-directory-faq)
+- [Official MCP Servers Repository](https://github.com/modelcontextprotocol/servers)
 
 ### Configuration Guides
 - [Claude Code MCP Documentation](https://code.claude.com/docs/en/mcp)
