@@ -8,17 +8,27 @@ scheduling issues.
 
 import hashlib
 import logging
+import math
+import re
 from collections import defaultdict
 from datetime import date, timedelta
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.models.activity import Activity
 from app.models.assignment import Assignment
 from app.models.block import Block
+from app.models.half_day_assignment import HalfDayAssignment
 from app.models.person import Person
+from app.utils.fmc_capacity import activity_is_proc_or_vas
+from app.utils.supervision import (
+    activity_provides_supervision,
+    assignment_requires_fmc_supervision,
+)
 from app.scheduling.conflicts.types import (
     ACGMEViolationConflict,
     Conflict,
@@ -64,6 +74,8 @@ class ConflictAnalyzer:
             db: Async database session
         """
         self.db = db
+        self._time_off_slots: set[tuple[str, date, str]] = set()
+        self._time_off_codes = {"W", "OFF", "LV-AM", "LV-PM", "PC"}
 
     async def analyze_schedule(
         self,
@@ -229,91 +241,127 @@ class ConflictAnalyzer:
         """
         conflicts: list[SupervisionConflict] = []
 
-        # Get all assignments in date range
-        result = await self.db.execute(
-            select(Assignment)
-            .join(Block)
-            .options(selectinload(Assignment.person), selectinload(Assignment.block))
-            .where(
+        # Load blocks for date/time lookup
+        block_result = await self.db.execute(
+            select(Block).where(
                 and_(
                     Block.date >= start_date,
                     Block.date <= end_date,
                 )
             )
         )
+        blocks = block_result.scalars().all()
+        blocks_by_key = {(b.date, b.time_of_day): b for b in blocks}
+
+        # Get half-day assignments with activity context
+        result = await self.db.execute(
+            select(HalfDayAssignment)
+            .options(
+                selectinload(HalfDayAssignment.person),
+                selectinload(HalfDayAssignment.activity),
+            )
+            .where(
+                and_(
+                    HalfDayAssignment.date >= start_date,
+                    HalfDayAssignment.date <= end_date,
+                )
+            )
+        )
         assignments = result.scalars().all()
 
-        # Group by block
-        by_block: dict[UUID, list[Assignment]] = defaultdict(list)
+        by_slot: dict[tuple[date, str], dict[str, Any]] = defaultdict(
+            lambda: {
+                "resident_ids": [],
+                "faculty_ids": [],
+                "pgy1_count": 0,
+                "pgy2_3_count": 0,
+                "proc_vas_count": 0,
+                "demand_units": 0,
+            }
+        )
+
         for assignment in assignments:
-            by_block[assignment.block_id].append(assignment)
+            if not assignment.person or not assignment.activity:
+                continue
+            if assignment.date.weekday() >= 5:
+                continue
+            slot_key = (assignment.date, assignment.time_of_day)
 
-        # Check each block
-        for block_id, block_assignments in by_block.items():
-            if not block_assignments:
+            if assignment.person.is_resident:
+                if not assignment_requires_fmc_supervision(assignment):
+                    continue
+                pgy_level = assignment.person.pgy_level or 2
+                demand_units = 2 if pgy_level == 1 else 1
+                if activity_is_proc_or_vas(assignment.activity):
+                    demand_units += 4
+                    by_slot[slot_key]["proc_vas_count"] += 1
+                by_slot[slot_key]["resident_ids"].append(assignment.person_id)
+                if pgy_level == 1:
+                    by_slot[slot_key]["pgy1_count"] += 1
+                else:
+                    by_slot[slot_key]["pgy2_3_count"] += 1
+                by_slot[slot_key]["demand_units"] += demand_units
                 continue
 
-            # Separate residents and faculty
-            residents = [
-                a for a in block_assignments if a.person and a.person.is_resident
-            ]
-            faculty = [a for a in block_assignments if a.person and a.person.is_faculty]
+            if assignment.person.is_faculty:
+                if not activity_provides_supervision(assignment.activity):
+                    continue
+                by_slot[slot_key]["faculty_ids"].append(assignment.person_id)
 
-            if not residents:
+        for slot_key, slot_data in by_slot.items():
+            demand_units = slot_data["demand_units"]
+            if demand_units <= 0:
+                continue
+            required_faculty = math.ceil(demand_units / 4)
+            faculty_count = len(slot_data["faculty_ids"])
+            if faculty_count >= required_faculty:
                 continue
 
-            # Count PGY levels
-            pgy1_count = sum(
-                1 for a in residents if a.person and a.person.pgy_level == 1
+            block = blocks_by_key.get(slot_key)
+            block_id = block.id if block else None
+            slot_date, time_of_day = slot_key
+
+            conflict_id = self._generate_conflict_id(
+                "supervision",
+                str(block_id) if block_id else f"{slot_date}-{time_of_day}",
             )
-            pgy2_3_count = len(residents) - pgy1_count
-
-            # Calculate required faculty
-            required_faculty = self._calculate_required_faculty(
-                pgy1_count, pgy2_3_count
+            severity = (
+                ConflictSeverity.CRITICAL
+                if faculty_count == 0
+                else ConflictSeverity.HIGH
+            )
+            title_date = block.date if block else slot_date
+            title_time = block.time_of_day if block else time_of_day
+            conflict = SupervisionConflict(
+                conflict_id=conflict_id,
+                conflict_type=ConflictType.SUPERVISION_RATIO_VIOLATION,
+                severity=severity,
+                title=f"Inadequate Supervision on {title_date}",
+                description=(
+                    f"Block on {title_date} {title_time} has {len(slot_data['resident_ids'])} residents "
+                    f"({slot_data['pgy1_count']} PGY-1, {slot_data['pgy2_3_count']} PGY-2/3"
+                    f"{', ' + str(slot_data['proc_vas_count']) + ' PROC/VAS' if slot_data['proc_vas_count'] else ''}) "
+                    f"but only {faculty_count} faculty (requires {required_faculty})"
+                ),
+                start_date=title_date,
+                end_date=title_date,
+                affected_blocks=[block_id] if block_id else [],
+                affected_people=slot_data["resident_ids"],
+                resident_ids=slot_data["resident_ids"],
+                pgy1_count=slot_data["pgy1_count"],
+                pgy2_3_count=slot_data["pgy2_3_count"],
+                faculty_ids=slot_data["faculty_ids"],
+                faculty_count=faculty_count,
+                required_faculty_count=required_faculty,
+                impact_score=0.9,
+                urgency_score=0.95,
+                complexity_score=0.6,
+                is_auto_resolvable=False,
+                resolution_difficulty="medium",
+                estimated_resolution_time_minutes=30,
             )
 
-            if len(faculty) < required_faculty:
-                # Supervision violation
-                block = block_assignments[0].block
-
-                conflict_id = self._generate_conflict_id("supervision", str(block_id))
-
-                severity = (
-                    ConflictSeverity.CRITICAL
-                    if len(faculty) == 0
-                    else ConflictSeverity.HIGH
-                )
-
-                conflict = SupervisionConflict(
-                    conflict_id=conflict_id,
-                    conflict_type=ConflictType.SUPERVISION_RATIO_VIOLATION,
-                    severity=severity,
-                    title=f"Inadequate Supervision on {block.date}",
-                    description=(
-                        f"Block on {block.date} {block.time_of_day} has {len(residents)} residents "
-                        f"({pgy1_count} PGY-1, {pgy2_3_count} PGY-2/3) but only {len(faculty)} faculty "
-                        f"(requires {required_faculty})"
-                    ),
-                    start_date=block.date,
-                    end_date=block.date,
-                    affected_blocks=[block_id],
-                    affected_people=[a.person_id for a in residents],
-                    resident_ids=[a.person_id for a in residents],
-                    pgy1_count=pgy1_count,
-                    pgy2_3_count=pgy2_3_count,
-                    faculty_ids=[a.person_id for a in faculty],
-                    faculty_count=len(faculty),
-                    required_faculty_count=required_faculty,
-                    impact_score=0.9,
-                    urgency_score=0.95,
-                    complexity_score=0.6,
-                    is_auto_resolvable=False,
-                    resolution_difficulty="medium",
-                    estimated_resolution_time_minutes=30,
-                )
-
-                conflicts.append(conflict)
+            conflicts.append(conflict)
 
         return conflicts
 
@@ -340,6 +388,11 @@ class ConflictAnalyzer:
             List of ACGME violation conflicts
         """
         conflicts: list[ACGMEViolationConflict] = []
+
+        # Preload time-off slots (source of truth for duty hour exclusions)
+        self._time_off_slots = await self._load_time_off_slots(
+            start_date, end_date, person_id
+        )
 
         # Get residents
         query = select(Person).where(Person.type == "resident")
@@ -396,14 +449,23 @@ class ConflictAnalyzer:
                     Block.date <= end_date,
                 )
             )
-            .options(selectinload(Assignment.block))
+            .options(
+                selectinload(Assignment.block),
+                selectinload(Assignment.rotation_template),
+            )
         )
         assignments = result.scalars().all()
 
         # Group by date
         blocks_by_date: dict[date, int] = defaultdict(int)
         for assignment in assignments:
+            if not self._counts_toward_duty_hours(assignment):
+                continue
             blocks_by_date[assignment.block.date] += 1
+
+        fixed_blocks_by_date = await self._fixed_half_day_blocks_by_date(
+            resident.id, start_date, end_date
+        )
 
         if not blocks_by_date:
             return violations
@@ -426,6 +488,18 @@ class ConflictAnalyzer:
             avg_weekly = total_hours / self.ROLLING_WEEKS
 
             if avg_weekly > self.MAX_WEEKLY_HOURS:
+                fixed_blocks = sum(
+                    count
+                    for d, count in fixed_blocks_by_date.items()
+                    if window_start <= d <= window_end
+                )
+                fixed_total_hours = fixed_blocks * self.HOURS_PER_BLOCK
+                fixed_avg_weekly = (
+                    fixed_total_hours / self.ROLLING_WEEKS
+                    if fixed_total_hours
+                    else 0.0
+                )
+                fixed_exempt = fixed_avg_weekly > self.MAX_WEEKLY_HOURS
                 conflict_id = self._generate_conflict_id(
                     "80hour",
                     str(resident.id),
@@ -463,6 +537,9 @@ class ConflictAnalyzer:
                         "window_start": window_start.isoformat(),
                         "window_end": window_end.isoformat(),
                         "total_blocks": total_blocks,
+                        "fixed_workload_exempt": fixed_exempt,
+                        "fixed_blocks": fixed_blocks,
+                        "fixed_avg_weekly_hours": fixed_avg_weekly,
                     },
                 )
 
@@ -503,12 +580,26 @@ class ConflictAnalyzer:
                     Block.date <= end_date,
                 )
             )
-            .options(selectinload(Assignment.block))
+            .options(
+                selectinload(Assignment.block),
+                selectinload(Assignment.rotation_template),
+            )
         )
         assignments = result.scalars().all()
 
         # Get unique dates worked
-        dates_worked = set(assignment.block.date for assignment in assignments)
+        dates_worked = set(
+            assignment.block.date
+            for assignment in assignments
+            if self._counts_toward_duty_hours(assignment)
+        )
+        fixed_dates_worked = set(
+            (
+                await self._fixed_half_day_blocks_by_date(
+                    resident.id, start_date, end_date
+                )
+            ).keys()
+        )
 
         if len(dates_worked) < self.MAX_CONSECUTIVE_DAYS + 1:
             return violations
@@ -530,6 +621,9 @@ class ConflictAnalyzer:
                     violation_end = dates_sorted[i]
             else:
                 consecutive = 1
+
+        fixed_max_consecutive = self._max_consecutive_days(fixed_dates_worked)
+        fixed_exempt = fixed_max_consecutive > self.MAX_CONSECUTIVE_DAYS
 
         if max_consecutive > self.MAX_CONSECUTIVE_DAYS:
             conflict_id = self._generate_conflict_id(
@@ -564,6 +658,10 @@ class ConflictAnalyzer:
                 is_auto_resolvable=False,
                 resolution_difficulty="medium",
                 estimated_resolution_time_minutes=45,
+                context={
+                    "fixed_workload_exempt": fixed_exempt,
+                    "fixed_consecutive_days": fixed_max_consecutive,
+                },
             )
 
             violations.append(violation)
@@ -590,6 +688,163 @@ class ConflictAnalyzer:
         """
         # Placeholder - to be implemented based on resource tracking requirements
         return []
+
+    async def _fixed_half_day_blocks_by_date(
+        self, resident_id: UUID, start_date: date, end_date: date
+    ) -> dict[date, int]:
+        """Return fixed workload blocks per date from preload/manual half-day assignments."""
+        from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
+        from app.models.activity import Activity
+
+        result = await self.db.execute(
+            select(
+                HalfDayAssignment.date,
+                Activity.code,
+                Activity.display_abbreviation,
+                Activity.activity_category,
+            )
+            .join(Activity, HalfDayAssignment.activity_id == Activity.id)
+            .where(
+                and_(
+                    HalfDayAssignment.person_id == resident_id,
+                    HalfDayAssignment.date >= start_date,
+                    HalfDayAssignment.date <= end_date,
+                    HalfDayAssignment.source.in_(
+                        [
+                            AssignmentSource.PRELOAD.value,
+                            AssignmentSource.MANUAL.value,
+                        ]
+                    ),
+                )
+            )
+        )
+        rows = result.all()
+        fixed_prefixes = ("FMIT", "ICU", "NICU", "NIC", "LAD", "NBN", "IM", "PEDW")
+        offsite_prefixes = ("HILO", "OKI", "KAP", "KAPI", "TDY")
+        fixed_exact = {"TAMC-LD", "TAMC_LD"}
+        nf_tokens = {"NF", "PEDNF", "LDNF", "PNF"}
+
+        def is_fixed_code(raw: str | None) -> bool:
+            base = (raw or "").strip().upper()
+            if not base:
+                return False
+            if base.endswith("-AM") or base.endswith("-PM"):
+                base = base[:-3]
+            if base in fixed_exact:
+                return True
+            if base.startswith(fixed_prefixes) or base.startswith(offsite_prefixes):
+                return True
+            tokens = [t for t in re.split(r"[^A-Z0-9]+", base) if t]
+            return any(t in nf_tokens for t in tokens)
+        blocks_by_date: dict[date, int] = defaultdict(int)
+        for slot_date, code, abbrev, category in rows:
+            if (category or "").lower() == "time_off":
+                continue
+            if is_fixed_code(code) or is_fixed_code(abbrev):
+                blocks_by_date[slot_date] += 1
+
+        return blocks_by_date
+
+    def _counts_toward_duty_hours(self, assignment: Assignment) -> bool:
+        """Return True if assignment counts toward duty hours."""
+        if assignment.block:
+            slot_key = (
+                str(assignment.person_id),
+                assignment.block.date,
+                assignment.block.time_of_day,
+            )
+            if slot_key in self._time_off_slots:
+                return False
+        template = assignment.rotation_template
+        if not template:
+            return True
+
+        rotation_type = (template.rotation_type or "").lower()
+        template_category = (template.template_category or "").lower()
+
+        if template_category in {"time_off", "absence"}:
+            return False
+        if rotation_type in {"off", "absence", "recovery"}:
+            return False
+
+        return True
+
+    def _is_fixed_workload(self, assignment: Assignment) -> bool:
+        """Return True if assignment is fixed workload (inpatient/offsite)."""
+        if not self._counts_toward_duty_hours(assignment):
+            return False
+
+        template = assignment.rotation_template
+        if not template:
+            return False
+
+        rotation_type = (template.rotation_type or "").lower()
+        template_category = (template.template_category or "").lower()
+
+        if template_category in {"time_off", "absence"}:
+            return False
+
+        return rotation_type in {"inpatient", "off"}
+
+    async def _load_time_off_slots(
+        self,
+        start_date: date,
+        end_date: date,
+        person_id: UUID | None = None,
+    ) -> set[tuple[str, date, str]]:
+        """Load time-off slots from half-day assignments."""
+        query = (
+            select(
+                HalfDayAssignment.person_id,
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+                Activity.code,
+                Activity.display_abbreviation,
+                Activity.activity_category,
+            )
+            .join(Activity, HalfDayAssignment.activity_id == Activity.id)
+            .where(
+                and_(
+                    HalfDayAssignment.date >= start_date,
+                    HalfDayAssignment.date <= end_date,
+                )
+            )
+        )
+
+        if person_id:
+            query = query.where(HalfDayAssignment.person_id == person_id)
+
+        result = await self.db.execute(query)
+        rows = result.all()
+
+        slots: set[tuple[str, date, str]] = set()
+        for row in rows:
+            person_id_val, slot_date, time_of_day, code, display, category = row
+            cat = (category or "").lower()
+            code_norm = (code or "").strip().upper()
+            display_norm = (display or "").strip().upper()
+            if cat == "time_off" or code_norm in self._time_off_codes or display_norm in self._time_off_codes:
+                slots.add((str(person_id_val), slot_date, time_of_day))
+
+        return slots
+
+    def _max_consecutive_days(self, dates: set[date]) -> int:
+        """Return max consecutive day streak for a set of dates."""
+        if not dates:
+            return 0
+
+        sorted_dates = sorted(dates)
+        consecutive = 1
+        max_consecutive = 1
+
+        for i in range(1, len(sorted_dates)):
+            if (sorted_dates[i] - sorted_dates[i - 1]).days == 1:
+                consecutive += 1
+                max_consecutive = max(max_consecutive, consecutive)
+            else:
+                consecutive = 1
+
+        return max_consecutive
 
     def _calculate_required_faculty(self, pgy1_count: int, other_count: int) -> int:
         """

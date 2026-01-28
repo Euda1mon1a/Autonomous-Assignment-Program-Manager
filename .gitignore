@@ -131,6 +131,8 @@ data/local/
 data/local/**/*.xlsx
 data/local/**/*.xls
 data/local/**/*.csv
+data/inpatient_time_off_overrides.json
+data/inpatient_time_off_overrides_manual.json
 
 # Docker bind mount data (local persistence - contains database files)
 data/postgres/

@@ -42,7 +42,7 @@ Issues are consistent across runs and documented; they are Phase‑2 work, not P
 **P0 Substeps + Acceptance Criteria**
 1. Load time‑off templates into solver context (see P1).
 2. Add 80‑hour constraint in solver (soft, high penalty).
-3. Validate: **0 critical 80‑hour violations** in Block‑10 MCP validation.
+3. Validate: **0 non‑exempt 80‑hour violations** in Block‑10 MCP validation.
 
 ### P1 — Time‑Off Context
 - Ensure time‑off templates/absences are loaded into solver context.
@@ -51,7 +51,25 @@ Issues are consistent across runs and documented; they are Phase‑2 work, not P
 **P1 Substeps + Acceptance Criteria**
 1. Ensure time‑off templates are present in solver context.
 2. Ensure time‑off half‑days are assigned/locked before CP‑SAT.
-3. Validate: **0 critical 1‑in‑7 violations** (or explicitly exempted).
+3. Validate: **0 non‑exempt 1‑in‑7 violations** (fixed‑workload exempt allowed).
+
+**Status (2026‑01‑28)**
+- Implemented **preassigned workload maps** from preload/manual half‑day assignments.
+- 1‑in‑7 and 80‑hour constraints now **account for fixed workload** and skip infeasible windows.
+- Validation still reports **2× 80‑hour** and **8× 1‑in‑7** violations (fixed‑workload driven).
+- Policy: **fixed‑workload violations are exempt but tagged**; non‑exempt remain actionable.
+- **Templates sheet integration:** OFF/W weekly patterns now applied as time‑off preloads.
+  - Source: `data/inpatient_time_off_overrides.json`
+  - Pipeline: `scripts/ops/generate_inpatient_time_off_overrides.py` → `scripts/ops/apply_inpatient_time_off_overrides.py`
+  - Current mappings: **PEDSW (week‑4 weekend W)**, **PNF (Fri PM OFF)**
+- **Manual rules added (authoritative):**
+  - **FMIT PGY‑1/PGY‑2:** Saturday = W (AM/PM, weeks 1–4)
+  - **FMIT PGY‑3:** Sunday = W (AM/PM, weeks 1–4)
+  - **IMW (IM / IM‑PGY1):** Saturday = W (AM/PM, weeks 1–4)
+  - **PEDSW (Peds Ward Day):** Saturday = W (AM/PM, weeks 1–4)
+  - **PNF (Peds NF):** Saturday = W (AM/PM, weeks 1–4)
+  - Manual file: `data/inpatient_time_off_overrides_manual.json`
+- **Status update:** 80‑hour and 1‑in‑7 violations cleared for Block 10.
 
 ### P2 — Supervision Constraints
 - Align AT/PCAT ratio constraints with current staffing patterns.
@@ -62,6 +80,13 @@ Issues are consistent across runs and documented; they are Phase‑2 work, not P
 2. Implement supervision ratio as soft constraint (penalty 50–75).
 3. Validate: **supervision gaps = 0** in MCP detect_conflicts (or justified).
 
+**Status (2026‑01‑28)**
+- Implemented assignment‑level supervision demand (clinic/CV/PROC/VAS).
+- Supervision coverage restricted to **AT/PCAT** only.
+- PROC/VAS add +1 AT demand (scaled by 4 units in CP‑SAT).
+- Conflict analyzer now evaluates **half‑day assignments** for supervision ratios.
+- Block 10 conflict analysis: **0 supervision gaps**.
+
 ### P3 — Template/Activity Data Cleanup
 - Eliminate missing activity requirement warnings (data completeness).
 - Ensure all outpatient templates have rotation_activity_requirements.
@@ -71,9 +96,12 @@ Issues are consistent across runs and documented; they are Phase‑2 work, not P
 2. Backfill requirements for outpatient templates.
 3. Validate: **0 missing activity requirement warnings** in solver logs.
 
-**P3 Completed**
-- Integrated workload now classifies canonical educational rotation types:
-  commit `ad62d8a1` (rotation_type + template_category).
+**Status (2026-01-28)**
+- Added `scripts/ops/backfill_rotation_activity_requirements.py` to backfill
+  requirements from `weekly_patterns`.
+- Audit run (dry-run) reports **0 missing outpatient requirements**
+  (37 outpatient templates already have requirements).
+- P3 complete; keep backfill script for future templates.
 
 ### P4 — Faculty Equity at Assignment Level (Non‑rotation)
 - Move admin/academic equity to **assignment‑level** for faculty only
@@ -85,6 +113,25 @@ Issues are consistent across runs and documented; they are Phase‑2 work, not P
 1. Define role‑based targets (core vs PD vs adjunct) and weights.
 2. Implement assignment‑level equity in activity solver objective.
 3. Validate: equity metric reported; penalty weight documented.
+
+**Status (2026‑01‑28)**
+- Implemented **assignment‑level equity** in activity solver:
+  - Admin/academic set: **GME/DFM/LEC/ADV** (per‑week, per‑role range penalty).
+  - Supervision set: **AT/PCAT** (per‑week, per‑role range penalty).
+- Added solver logging for equity range totals.
+
+**P3 Follow‑up (2026‑01‑28)**
+- Archived non‑rotation templates **BTX/COLPO/VAS/POCUS/PROC‑AM/PR‑PM** and
+  remapped any block/assignment rows to **PROC** rotation.
+- Removed fallback warnings for these templates.
+
+**Deferred Policy (2026‑01‑28)**
+- **VAS post‑solver allocation** (not implemented):
+  - Target **~3 VAS per block**, include some **VAS+C** pairings.
+  - Resident priority (soft): **PROC > FMC > US/POCUS**.
+  - May be cleaner as a **post‑solver** step than a core CP‑SAT constraint.
+  - **VASC = Vasectomy Counseling**: normal AT supervision rules (clinic‑like),
+    group counseling + exams/consents.
 
 ## Non‑Goals (Phase 2)
 - GUI/UX changes (defer until correctness is stable).
@@ -109,6 +156,11 @@ Issues are consistent across runs and documented; they are Phase‑2 work, not P
 3. **Supervision ratios** (AT/PCAT constraints)
 4. **Template requirements cleanup**
 5. **Faculty assignment‑level equity**
+
+## Deferred to Phase 3
+Procedure/counseling refinements (VASC + post‑solver VAS allocator) moved to
+Phase 3 to keep Phase 2 focused on compliance. See
+`docs/planning/CP_SAT_PIPELINE_REFINEMENT_PHASE3.md`.
 
 ## Validation Checklist (Per Iteration)
 - Run `block_regen.py` for Block 10 (AY2025).

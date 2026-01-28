@@ -37,18 +37,17 @@ logger = logging.getLogger(__name__)
 # AT = Faculty supervising residents (no cap - unlimited)
 FACULTY_CLINIC_CAPS: dict[str, tuple[int, int]] = {
     # Core faculty with clinic responsibilities
-    "Kinkennon": (2, 4),  # MIN 2, MAX 4 per week
-    "LaBounty": (2, 4),
-    "McRae": (2, 4),
-    "Montgomery": (2, 2),  # Fixed at 2 per week
-    "Lamoureux": (2, 2),
-    "McGuire": (1, 1),  # DFM focus, minimal clinic
+    "Kinkennon": (0, 4),  # MIN 0, MAX 4 per week (min set to 0 to preserve AT)
+    "LaBounty": (0, 4),
+    "McRae": (0, 4),
+    "Montgomery": (0, 2),  # Fixed max 2 per week
+    "McGuire": (0, 1),  # DFM focus, minimal clinic
     # Sports Med and specialty faculty (no FM clinic)
     "Tagawa": (0, 0),  # SM only
     # FMIT-focused faculty (no outpatient clinic)
     "Bevis": (0, 0),
-    "Dahl": (1, 2),
-    "Chu": (0, 0),
+    "Dahl": (0, 2),
+    "Chu": (0, 4),
     "Napierala": (0, 0),
     "Van Brunt": (0, 0),
     "Colgan": (0, 0),  # Deployed

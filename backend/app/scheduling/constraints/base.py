@@ -209,6 +209,12 @@ class SchedulingContext:
     # Used to prevent solver from assigning into locked slots.
     locked_blocks: set[tuple[UUID, UUID]] = field(default_factory=set)
 
+    # Preassigned workload (preload/manual half-day slots) for ACGME constraints
+    # Tracks fixed work that the solver cannot change.
+    preassigned_work_blocks: dict[UUID, set[UUID]] = field(default_factory=dict)
+    preassigned_work_days: dict[UUID, set[date]] = field(default_factory=dict)
+    preassigned_off_days: dict[UUID, set[date]] = field(default_factory=dict)
+
     # Call-eligible faculty (excludes adjuncts for solver-generated call)
     call_eligible_faculty: list = field(default_factory=list)
     call_eligible_faculty_idx: dict[UUID, int] = field(default_factory=dict)

@@ -563,6 +563,8 @@ class BlockQualityReportService:
             total_assignments=section_c.grand_total,
             resident_assignments=resident_total,
             faculty_assignments=faculty_total,
+            # Placeholder: ACGME compliance is not yet calculated in this report.
+            # Use ACGMEValidator/validate_schedule for authoritative compliance.
             acgme_compliance_rate=100.0,
             double_bookings=0,
             call_coverage=f"{call_coverage.total_nights}/{block_dates.days}",

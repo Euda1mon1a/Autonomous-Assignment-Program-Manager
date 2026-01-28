@@ -336,9 +336,17 @@ class SyncPreloadService:
                 )
                 is_outpatient = rotation_type == "outpatient"
                 is_inpatient = rotation_type == "inpatient"
+                is_offsite = rotation_type == "off"
 
                 if is_inpatient and active_template:
                     count += self._apply_inpatient_clinic_patterns(
+                        assignment.resident_id,
+                        current,
+                        active_template,
+                        start_date,
+                    )
+                if (is_inpatient or is_offsite) and active_template:
+                    count += self._apply_inpatient_time_off_patterns(
                         assignment.resident_id,
                         current,
                         active_template,
@@ -515,6 +523,36 @@ class SyncPreloadService:
 
         return count
 
+    def _apply_inpatient_time_off_patterns(
+        self,
+        person_id: UUID,
+        current_date: date,
+        template: RotationTemplate,
+        block_start: date,
+    ) -> int:
+        """Preload time-off activities from weekly patterns for inpatient/off rotations."""
+        patterns = list(template.weekly_patterns or [])
+        if not patterns:
+            return 0
+
+        target_week = self._pattern_week_number(current_date, block_start)
+        target_dow = self._pattern_day_of_week(current_date)
+        count = 0
+
+        for pattern in patterns:
+            if pattern.day_of_week != target_dow:
+                continue
+            if pattern.week_number is not None and pattern.week_number != target_week:
+                continue
+            if not self._is_time_off_pattern_activity(pattern.activity):
+                continue
+            if pattern.activity_id and self._create_preload(
+                person_id, current_date, pattern.time_of_day, pattern.activity_id
+            ):
+                count += 1
+
+        return count
+
     def _pattern_week_number(self, current_date: date, block_start: date) -> int:
         return ((current_date - block_start).days // 7) + 1
 
@@ -528,6 +566,15 @@ class SyncPreloadService:
         code = (activity.code or "").strip().upper()
         display = (activity.display_abbreviation or "").strip().upper()
         return code in _CLINIC_PATTERN_CODES or display in _CLINIC_PATTERN_CODES
+
+    def _is_time_off_pattern_activity(self, activity: Activity | None) -> bool:
+        if not activity:
+            return False
+        category = (activity.activity_category or "").strip().lower()
+        if category == "time_off":
+            return True
+        code = (activity.code or "").strip().upper()
+        return code in {"OFF", "W"}
 
     def _is_last_wednesday(self, current_date: date, block_end: date) -> bool:
         """Return True if the date is the last Wednesday of the block."""
@@ -1018,6 +1065,28 @@ class SyncPreloadService:
                 existing.activity_id = activity_id
                 existing.counts_toward_fmc_capacity = capacity_flag
                 return True
+            if existing.source == AssignmentSource.PRELOAD.value:
+                existing_activity = (
+                    self.session.get(Activity, existing.activity_id)
+                    if existing.activity_id
+                    else None
+                )
+                new_is_time_off = (
+                    (activity.activity_category or "").lower() == "time_off"
+                    or activity.counts_toward_clinical_hours is False
+                )
+                existing_is_time_off = (
+                    existing_activity
+                    and (
+                        (existing_activity.activity_category or "").lower()
+                        == "time_off"
+                        or existing_activity.counts_toward_clinical_hours is False
+                    )
+                )
+                if new_is_time_off and not existing_is_time_off:
+                    existing.activity_id = activity_id
+                    existing.counts_toward_fmc_capacity = capacity_flag
+                    return True
             if existing.source == AssignmentSource.PRELOAD.value:
                 # Keep counts_toward_fmc_capacity in sync with activity
                 if (

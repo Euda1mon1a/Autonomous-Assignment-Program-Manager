@@ -49,10 +49,15 @@ from app.utils.activity_naming import activity_code_from_name
 from app.utils.fmc_capacity import (
     activity_counts_toward_fmc_capacity,
     activity_counts_toward_fmc_capacity_for_template,
+    activity_is_proc_or_vas,
     activity_is_sm_capacity,
     activity_capacity_units,
     assignment_counts_toward_fmc_capacity,
     template_is_fmc_clinic,
+)
+from app.utils.supervision import (
+    activity_provides_supervision,
+    activity_requires_fmc_supervision,
 )
 
 logger = get_logger(__name__)
@@ -68,7 +73,13 @@ RESIDENT_CLINIC_CODES = {"FM_CLINIC", "C", "C-N", "CV"}
 AT_COVERAGE_CODES = {"AT", "PCAT"}
 SUPERVISION_REQUIRED_CODES = {"PROC", "PR", "PROCEDURE", "VAS"}
 ADMIN_ACTIVITY_CODES = {"GME": "gme", "DFM": "dfm", "SM": "sm_clinic"}
+ADMIN_EQUITY_CODES = {"GME", "DFM", "LEC", "ADV"}
+SUPERVISION_EQUITY_CODES = {"AT", "PCAT"}
 FACULTY_CLINIC_SHORTFALL_PENALTY = 10
+FACULTY_CLINIC_OVERAGE_PENALTY = 40
+OIC_CLINICAL_AVOID_PENALTY = 18
+FACULTY_ADMIN_EQUITY_PENALTY = 12
+FACULTY_AT_EQUITY_PENALTY = 12
 FACULTY_ADMIN_BONUS = 1
 PHYSICAL_CAPACITY_SOFT_PENALTY = 10
 ACTIVITY_MIN_SHORTFALL_PENALTY = 10
@@ -76,7 +87,9 @@ CLINIC_MIN_SHORTFALL_PENALTY = 25
 ACTIVITY_MAX_OVERAGE_PENALTY = 20
 CLINIC_MAX_OVERAGE_PENALTY = 40
 AT_COVERAGE_SHORTFALL_PENALTY = 50
+PROC_VAS_EXTRA_UNITS = 4  # +1 AT for PROC/VAS (scaled by 4)
 SM_ALIGNMENT_SHORTFALL_PENALTY = 30
+VAS_ALIGNMENT_SHORTFALL_PENALTY = 30
 CV_TARGET_NUMERATOR = 3
 CV_TARGET_DENOMINATOR = 10
 CV_TARGET_SHORTFALL_PENALTY = 25
@@ -86,6 +99,15 @@ CV_PENALTY_BY_ROLE = {
     "pgy3": 5,
     "pgy2": 15,
 }
+OIC_CLINIC_AVOID_DAYS = {0, 4}  # Monday, Friday (Python weekday)
+VAS_FACULTY_PRIMARY_NAMES = {"KINKENNON", "LABOUNTY"}
+VAS_FACULTY_SECONDARY_NAMES = {"TAGAWA"}
+VAS_FACULTY_SECONDARY_PENALTY = 10
+VAS_RESIDENT_PENALTY_PROC = 0
+VAS_RESIDENT_PENALTY_FMC = 5
+VAS_RESIDENT_PENALTY_POCUS = 10
+VAS_RESIDENT_PENALTY_OTHER = 20
+VAS_ALLOWED_WEEKDAY_TIMES = {(3, "AM"), (3, "PM"), (4, "AM")}
 
 
 class CPSATActivitySolver:
@@ -134,6 +156,57 @@ class CPSATActivitySolver:
         code = (activity.code or "").strip().upper()
         display = (activity.display_abbreviation or "").strip().upper()
         return code == "CV" or display == "CV"
+
+    def _is_vas_allowed_slot(self, slot_date: date, time_of_day: str) -> bool:
+        return (slot_date.weekday(), time_of_day.upper()) in VAS_ALLOWED_WEEKDAY_TIMES
+
+    def _normalize_person_name(self, person: Person | None) -> str:
+        if not person or not person.name:
+            return ""
+        return "".join(ch for ch in person.name.upper() if ch.isalpha())
+
+    def _vas_faculty_tier(self, faculty: Person | None) -> str:
+        normalized = self._normalize_person_name(faculty)
+        if any(name in normalized for name in VAS_FACULTY_PRIMARY_NAMES):
+            return "primary"
+        if any(name in normalized for name in VAS_FACULTY_SECONDARY_NAMES):
+            return "secondary"
+        return "other"
+
+    def _is_vas_faculty(self, faculty: Person | None) -> bool:
+        return self._vas_faculty_tier(faculty) != "other"
+
+    def _vas_faculty_penalty(self, faculty: Person | None) -> int:
+        tier = self._vas_faculty_tier(faculty)
+        if tier == "secondary":
+            return VAS_FACULTY_SECONDARY_PENALTY
+        return 0
+
+    def _vas_resident_category(self, template: RotationTemplate | None) -> str:
+        if not template:
+            return "other"
+        abbrev = (template.abbreviation or template.display_abbreviation or "").upper()
+        name = (template.name or "").upper()
+        if "PROC" in abbrev or "PROC" in name:
+            return "proc"
+        if "POCUS" in abbrev or "POCUS" in name or abbrev == "US":
+            return "pocus"
+        if template_is_fmc_clinic(template) or "FMC" in abbrev or "FMC" in name:
+            return "fmc"
+        return "other"
+
+    def _is_vas_resident_template(self, template: RotationTemplate | None) -> bool:
+        return self._vas_resident_category(template) in {"proc", "fmc", "pocus"}
+
+    def _vas_resident_penalty(self, template: RotationTemplate | None) -> int:
+        category = self._vas_resident_category(template)
+        if category == "proc":
+            return VAS_RESIDENT_PENALTY_PROC
+        if category == "fmc":
+            return VAS_RESIDENT_PENALTY_FMC
+        if category == "pocus":
+            return VAS_RESIDENT_PENALTY_POCUS
+        return VAS_RESIDENT_PENALTY_OTHER
 
     def solve(
         self,
@@ -380,16 +453,16 @@ class CPSATActivitySolver:
             "AT"
         )
 
-        # Activity ID sets for supervision and clinic demand (data-driven)
+        # Activity ID sets for supervision and clinic demand (AT/PCAT only)
         supervision_required_ids = {
             activity.id
             for activity in all_activities
-            if activity.activity_category == "clinical"
-            and activity.requires_supervision
-            and not activity.provides_supervision
+            if activity_requires_fmc_supervision(activity)
         }
         supervision_provider_ids = {
-            activity.id for activity in all_activities if activity.provides_supervision
+            activity.id
+            for activity in all_activities
+            if activity_provides_supervision(activity)
         }
 
         # Legacy fallback for older data (no flags configured)
@@ -397,7 +470,8 @@ class CPSATActivitySolver:
         used_provider_fallback = False
         if not supervision_required_ids:
             supervision_required_ids = self._activity_ids_for_codes(
-                all_activities, RESIDENT_CLINIC_CODES
+                all_activities,
+                RESIDENT_CLINIC_CODES | SUPERVISION_REQUIRED_CODES | {"CV"},
             )
             used_required_fallback = True
         if not supervision_provider_ids:
@@ -405,11 +479,6 @@ class CPSATActivitySolver:
                 all_activities, AT_COVERAGE_CODES
             )
             used_provider_fallback = True
-
-        supervision_required_ids |= self._activity_ids_for_codes(
-            all_activities, SUPERVISION_REQUIRED_CODES
-        )
-        supervision_required_ids |= self._activity_ids_for_codes(all_activities, {"CV"})
         logger.info(
             "Supervision activity sets: required="
             f"{len(supervision_required_ids)}, providers="
@@ -422,18 +491,30 @@ class CPSATActivitySolver:
                 "success": False,
                 "assignments_updated": 0,
                 "status": "error",
-                "message": "Missing supervision-providing activities (AT/PCAT/DO)",
+                "message": "Missing supervision-providing activities (AT/PCAT)",
             }
         capacity_activity_ids = {
             activity.id
             for activity in all_activities
             if activity_counts_toward_fmc_capacity(activity)
         }
+        proc_vas_activity_ids = {
+            activity.id
+            for activity in all_activities
+            if activity_is_proc_or_vas(activity)
+        }
+        vas_activity_ids = self._activity_ids_for_codes(all_activities, {"VAS"})
         sm_capacity_ids = {
             activity.id
             for activity in all_activities
             if activity_is_sm_capacity(activity)
         }
+        admin_equity_ids = self._activity_ids_for_codes(
+            all_activities, ADMIN_EQUITY_CODES
+        )
+        supervision_equity_ids = self._activity_ids_for_codes(
+            all_activities, SUPERVISION_EQUITY_CODES
+        )
 
         # Create the CP model
         model = cp_model.CpModel()
@@ -498,6 +579,8 @@ class CPSATActivitySolver:
         slot_allowed: dict[int, list[UUID]] = {}
         faculty_admin_activity_by_slot: dict[int, UUID] = {}
         cv_penalty_terms: list[tuple[Any, int]] = []
+        vas_penalty_terms: list[tuple[Any, int]] = []
+        oic_clinical_avoid_terms: list[tuple[Any, int]] = []
 
         for s_i, slot in enumerate(slots):
             person_type = slot_meta[s_i].get("person_type")
@@ -542,6 +625,10 @@ class CPSATActivitySolver:
                                 and cv_activity.id not in allowed
                             ):
                                 allowed.append(cv_activity.id)
+                    if vas_activity_ids and faculty and self._is_vas_faculty(faculty):
+                        for vas_id in vas_activity_ids:
+                            if vas_id in assignable_ids and vas_id not in allowed:
+                                allowed.append(vas_id)
                 if not allowed:
                     allowed = list(faculty_allowed_ids)
             else:
@@ -574,6 +661,48 @@ class CPSATActivitySolver:
                         allowed = [
                             act_id for act_id in allowed if act_id != cv_activity.id
                         ]
+            vas_penalty_weight: int | None = None
+            if vas_activity_ids and any(act_id in vas_activity_ids for act_id in allowed):
+                if not self._is_vas_allowed_slot(slot.date, slot.time_of_day):
+                    allowed = [act_id for act_id in allowed if act_id not in vas_activity_ids]
+                elif person_type == "faculty":
+                    if not self._is_vas_faculty(slot.person):
+                        allowed = [
+                            act_id for act_id in allowed if act_id not in vas_activity_ids
+                        ]
+                    else:
+                        vas_penalty_weight = self._vas_faculty_penalty(slot.person)
+                else:
+                    template = templates_by_id.get(template_id)
+                    if not self._is_vas_resident_template(template):
+                        allowed = [
+                            act_id for act_id in allowed if act_id not in vas_activity_ids
+                        ]
+                    else:
+                        vas_penalty_weight = self._vas_resident_penalty(template)
+            if not allowed:
+                allowed = list(fallback_allowed)
+                if cv_activity and cv_activity.id in allowed:
+                    if person_type != "faculty":
+                        template = templates_by_id.get(template_id)
+                        pgy_level = slot_meta[s_i].get("pgy_level") or 0
+                        allow_cv = (
+                            cv_activity
+                            and cv_activity.id in assignable_ids
+                            and template
+                            and template_is_fmc_clinic(template)
+                            and pgy_level >= 2
+                        )
+                        if not allow_cv:
+                            allowed = [
+                                act_id for act_id in allowed if act_id != cv_activity.id
+                            ]
+                if vas_activity_ids and any(
+                    act_id in vas_activity_ids for act_id in allowed
+                ):
+                    allowed = [
+                        act_id for act_id in allowed if act_id not in vas_activity_ids
+                    ]
             slot_allowed[s_i] = allowed
 
             for act_id in allowed:
@@ -584,6 +713,11 @@ class CPSATActivitySolver:
                 )
                 safe_code = act_code.replace("-", "_")
                 a[s_i, act_id] = model.NewBoolVar(f"a_{s_i}_{safe_code}")
+
+            if vas_penalty_weight and vas_penalty_weight > 0:
+                for act_id in allowed:
+                    if act_id in vas_activity_ids and (s_i, act_id) in a:
+                        vas_penalty_terms.append((a[s_i, act_id], vas_penalty_weight))
 
             if cv_activity and cv_activity.id in allowed:
                 if (s_i, cv_activity.id) in a:
@@ -596,10 +730,24 @@ class CPSATActivitySolver:
                             penalty_weight = CV_PENALTY_BY_ROLE["pgy3"]
                         elif pgy_level == 2:
                             penalty_weight = CV_PENALTY_BY_ROLE["pgy2"]
-                    if penalty_weight > 0:
-                        cv_penalty_terms.append(
-                            (a[s_i, cv_activity.id], penalty_weight)
-                        )
+                        if penalty_weight > 0:
+                            cv_penalty_terms.append(
+                                (a[s_i, cv_activity.id], penalty_weight)
+                            )
+
+            if person_type == "faculty" and slot.person:
+                role = (getattr(slot.person, "faculty_role", "") or "").lower()
+                if role == "oic" and slot_meta[s_i]["date"].weekday() in OIC_CLINIC_AVOID_DAYS:
+                    for act_id in allowed:
+                        activity = activity_by_id.get(act_id)
+                        if not activity or activity.activity_category != "clinical":
+                            continue
+                        if activity.provides_supervision:
+                            continue
+                        if (s_i, act_id) in a:
+                            oic_clinical_avoid_terms.append(
+                                (a[s_i, act_id], OIC_CLINICAL_AVOID_PENALTY)
+                            )
 
         slot_capacity_ids: dict[int, list[UUID]] = {}
         slot_sm_capacity_ids: dict[int, list[UUID]] = {}
@@ -639,10 +787,13 @@ class CPSATActivitySolver:
         baseline_resident_demand: dict[tuple[date, str], int] = defaultdict(int)
         baseline_faculty_coverage: dict[tuple[date, str], int] = defaultdict(int)
         locked_faculty_clinic_counts: dict[tuple[UUID, int], int] = defaultdict(int)
+        locked_faculty_admin_counts: dict[tuple[UUID, int], int] = defaultdict(int)
+        locked_faculty_supervision_counts: dict[tuple[UUID, int], int] = defaultdict(int)
         baseline_sm_resident_presence: dict[tuple[date, str], int] = defaultdict(int)
         baseline_sm_faculty_coverage: dict[tuple[date, str], int] = defaultdict(int)
-        person_ids = {meta["person_id"] for meta in slot_meta.values()}
-        locked_slots = self._load_locked_slots(start_date, end_date, person_ids)
+        baseline_vas_resident_presence: dict[tuple[date, str], int] = defaultdict(int)
+        baseline_vas_faculty_coverage: dict[tuple[date, str], int] = defaultdict(int)
+        locked_slots = self._load_locked_slots(start_date, end_date, None)
         sm_clinic_activity = self._get_activity_by_code(
             "sm_clinic"
         ) or self._get_activity_by_code("SM")
@@ -687,6 +838,14 @@ class CPSATActivitySolver:
                     baseline_faculty_coverage[slot_key] += 1
                 if clinic_activity and locked.activity_id == clinic_activity.id:
                     locked_faculty_clinic_counts[(locked.person_id, week_number)] += 1
+                if locked.activity_id in admin_equity_ids:
+                    locked_faculty_admin_counts[(locked.person_id, week_number)] += 1
+                if locked.activity_id in supervision_equity_ids:
+                    locked_faculty_supervision_counts[
+                        (locked.person_id, week_number)
+                    ] += 1
+                if locked.activity_id in vas_activity_ids:
+                    baseline_vas_faculty_coverage[slot_key] += 1
                 if is_cv:
                     locked_cv_target_counts[week_number]["cv"] += 1
                     locked_cv_target_counts_by_day[(week_number, day_of_week)][
@@ -708,6 +867,10 @@ class CPSATActivitySolver:
                 if locked.activity_id in supervision_required_ids:
                     demand_units = 2 if pgy_level == 1 else 1
                     baseline_resident_demand[slot_key] += demand_units
+                    if locked.activity_id in proc_vas_activity_ids:
+                        baseline_resident_demand[slot_key] += PROC_VAS_EXTRA_UNITS
+                if locked.activity_id in vas_activity_ids:
+                    baseline_vas_resident_presence[slot_key] += 1
                 if pgy_level == 3:
                     if is_cv:
                         locked_cv_target_counts[week_number]["cv"] += 1
@@ -896,6 +1059,7 @@ class CPSATActivitySolver:
         # FACULTY CLINIC CAPS (min/max per week)
         # ==================================================
         faculty_clinic_shortfalls: list[Any] = []
+        faculty_clinic_overages: list[Any] = []
         if faculty_slots and clinic_activity:
             faculty_by_id: dict[UUID, Person] = {}
             for s_i in faculty_slots:
@@ -925,20 +1089,106 @@ class CPSATActivitySolver:
                 if not clinic_vars:
                     continue
 
-                if max_allowed <= 0:
-                    model.Add(sum(clinic_vars) == 0)
-                else:
-                    if max_allowed < len(clinic_vars):
-                        model.Add(sum(clinic_vars) <= max_allowed)
+                over_max = model.NewIntVar(
+                    0,
+                    len(clinic_vars),
+                    f"fac_clinic_over_{str(faculty_id)[:8]}_{week}",
+                )
+                model.Add(sum(clinic_vars) <= max_allowed + over_max)
+                faculty_clinic_overages.append(over_max)
 
-                if min_needed > 0:
-                    shortfall = model.NewIntVar(
-                        0,
-                        min_needed,
-                        f"fac_clinic_shortfall_{str(faculty_id)[:8]}_{week}",
-                    )
-                    model.Add(sum(clinic_vars) + shortfall >= min_needed)
-                    faculty_clinic_shortfalls.append(shortfall)
+        # ==================================================
+        # FACULTY EQUITY (admin + supervision) by role, per week
+        # ==================================================
+        faculty_admin_equity_ranges: list[Any] = []
+        faculty_supervision_equity_ranges: list[Any] = []
+        if faculty_slots:
+            faculty_by_id: dict[UUID, Person] = {}
+            for s_i in faculty_slots:
+                slot_person = slots[s_i].person
+                if slot_person:
+                    faculty_by_id[slot_person.id] = slot_person
+
+            faculty_week_slots: dict[tuple[UUID, int], list[int]] = defaultdict(list)
+            for s_i in faculty_slots:
+                meta = slot_meta[s_i]
+                faculty_week_slots[(meta["person_id"], meta["week"])].append(s_i)
+
+            role_groups: dict[str, list[UUID]] = defaultdict(list)
+            for faculty_id, faculty in faculty_by_id.items():
+                role = (getattr(faculty, "faculty_role", None) or "core").lower()
+                role_groups[role].append(faculty_id)
+
+            week_numbers = sorted(
+                {
+                    meta["week"]
+                    for meta in slot_meta.values()
+                    if meta.get("week") is not None
+                }
+            )
+
+            def add_equity_ranges(
+                *,
+                activity_ids: set[UUID],
+                locked_counts: dict[tuple[UUID, int], int],
+                ranges_out: list[Any],
+                label: str,
+            ) -> None:
+                if not activity_ids:
+                    return
+                for week in week_numbers:
+                    for role, faculty_ids in role_groups.items():
+                        counts = []
+                        max_possible = 0
+                        for faculty_id in faculty_ids:
+                            slot_indices = faculty_week_slots.get((faculty_id, week))
+                            if not slot_indices:
+                                continue
+                            vars_for_activity = [
+                                a[s_i, act_id]
+                                for s_i in slot_indices
+                                for act_id in activity_ids
+                                if act_id in slot_allowed[s_i]
+                            ]
+                            locked_count = locked_counts.get((faculty_id, week), 0)
+                            if not vars_for_activity and locked_count == 0:
+                                continue
+                            max_slots = len(slot_indices)
+                            max_possible = max(
+                                max_possible, locked_count + max_slots
+                            )
+                            count_var = model.NewIntVar(
+                                locked_count,
+                                locked_count + max_slots,
+                                f"{label}_count_{str(faculty_id)[:6]}_{week}",
+                            )
+                            model.Add(
+                                count_var == locked_count + sum(vars_for_activity)
+                            )
+                            counts.append(count_var)
+                        if len(counts) <= 1:
+                            continue
+                        max_var = model.NewIntVar(0, max_possible, f"{label}_max_{role}_{week}")
+                        min_var = model.NewIntVar(0, max_possible, f"{label}_min_{role}_{week}")
+                        for count_var in counts:
+                            model.Add(count_var <= max_var)
+                            model.Add(count_var >= min_var)
+                        range_var = model.NewIntVar(0, max_possible, f"{label}_range_{role}_{week}")
+                        model.Add(range_var == max_var - min_var)
+                        ranges_out.append(range_var)
+
+            add_equity_ranges(
+                activity_ids=admin_equity_ids,
+                locked_counts=locked_faculty_admin_counts,
+                ranges_out=faculty_admin_equity_ranges,
+                label="admin_eq",
+            )
+            add_equity_ranges(
+                activity_ids=supervision_equity_ids,
+                locked_counts=locked_faculty_supervision_counts,
+                ranges_out=faculty_supervision_equity_ranges,
+                label="at_eq",
+            )
 
         # ==================================================
         # CV TARGET (faculty + PGY-3) per week
@@ -1075,6 +1325,10 @@ class CPSATActivitySolver:
                     for act_id in slot_allowed[s_i]:
                         if act_id in supervision_required_ids:
                             demand_terms.append(a[s_i, act_id] * demand_units)
+                            if act_id in proc_vas_activity_ids:
+                                demand_terms.append(
+                                    a[s_i, act_id] * PROC_VAS_EXTRA_UNITS
+                                )
 
                 baseline_demand = baseline_resident_demand.get(slot_key, 0)
                 if not demand_terms and baseline_demand == 0:
@@ -1099,6 +1353,8 @@ class CPSATActivitySolver:
                         continue
                     pgy_level = slot_meta[s_i].get("pgy_level") or 2
                     max_demand += 2 if pgy_level == 1 else 1
+                    if allowed.intersection(proc_vas_activity_ids):
+                        max_demand += PROC_VAS_EXTRA_UNITS
                 shortfall = model.NewIntVar(
                     0,
                     max_demand,
@@ -1189,6 +1445,78 @@ class CPSATActivitySolver:
                 sm_shortfalls.append(shortfall)
         elif sm_template_ids and sm_clinic_activity and disable_sm_alignment:
             logger.warning("Skipping SM alignment constraints (DISABLE_SM_ALIGNMENT)")
+
+        # ==================================================
+        # VASECTOMY ALIGNMENT
+        # VAS residents must align with VAS faculty, and faculty VAS requires resident
+        # ==================================================
+        vas_shortfalls: list[Any] = []
+        if vas_activity_ids:
+            vas_resident_vars_by_slot: dict[tuple[date, str], list[Any]] = defaultdict(
+                list
+            )
+            vas_faculty_vars_by_slot: dict[tuple[date, str], list[Any]] = defaultdict(
+                list
+            )
+
+            for s_i, meta in slot_meta.items():
+                key = (meta["date"], meta["time_of_day"])
+                if meta.get("person_type") == "faculty":
+                    for act_id in slot_allowed[s_i]:
+                        if act_id in vas_activity_ids:
+                            vas_faculty_vars_by_slot[key].append(a[s_i, act_id])
+                else:
+                    for act_id in slot_allowed[s_i]:
+                        if act_id in vas_activity_ids:
+                            vas_resident_vars_by_slot[key].append(a[s_i, act_id])
+
+            all_vas_keys = set(vas_resident_vars_by_slot.keys()) | set(
+                vas_faculty_vars_by_slot.keys()
+            )
+            all_vas_keys |= set(baseline_vas_resident_presence.keys())
+            all_vas_keys |= set(baseline_vas_faculty_coverage.keys())
+
+            for slot_key in all_vas_keys:
+                slot_date, time_of_day = slot_key
+                resident_vars = vas_resident_vars_by_slot.get(slot_key, [])
+                faculty_vars = vas_faculty_vars_by_slot.get(slot_key, [])
+                baseline_resident = baseline_vas_resident_presence.get(slot_key, 0)
+                baseline_faculty = baseline_vas_faculty_coverage.get(slot_key, 0)
+
+                if not resident_vars and not faculty_vars and not baseline_resident and not baseline_faculty:
+                    continue
+
+                shortfall = model.NewIntVar(
+                    0,
+                    1,
+                    f"vas_shortfall_{slot_date.strftime('%Y%m%d')}_{time_of_day}",
+                )
+
+                # Resident VAS requires faculty VAS coverage.
+                if baseline_resident > 0:
+                    model.Add(sum(faculty_vars) + baseline_faculty + shortfall >= 1)
+                elif resident_vars:
+                    any_resident = model.NewBoolVar(
+                        f"any_vas_res_{slot_date.strftime('%Y%m%d')}_{time_of_day}"
+                    )
+                    model.AddMaxEquality(any_resident, resident_vars)
+                    model.Add(
+                        sum(faculty_vars) + baseline_faculty + shortfall >= any_resident
+                    )
+
+                # Faculty VAS requires resident presence.
+                if baseline_faculty > 0:
+                    model.Add(sum(resident_vars) + baseline_resident + shortfall >= 1)
+                elif faculty_vars:
+                    any_faculty = model.NewBoolVar(
+                        f"any_vas_fac_{slot_date.strftime('%Y%m%d')}_{time_of_day}"
+                    )
+                    model.AddMaxEquality(any_faculty, faculty_vars)
+                    model.Add(
+                        sum(resident_vars) + baseline_resident + shortfall >= any_faculty
+                    )
+
+                vas_shortfalls.append(shortfall)
 
         # ==================================================
         # CONSTRAINT: Physical Capacity (Soft 6, Hard 8 per slot)
@@ -1458,8 +1786,30 @@ class CPSATActivitySolver:
                 objective_expr - penalty if objective_expr is not None else -penalty
             )
 
+        if vas_shortfalls:
+            penalty = sum(vas_shortfalls) * VAS_ALIGNMENT_SHORTFALL_PENALTY
+            objective_expr = (
+                objective_expr - penalty if objective_expr is not None else -penalty
+            )
+
         if cv_penalty_terms:
             penalties = [var * weight for var, weight in cv_penalty_terms]
+            if penalties:
+                penalty = sum(penalties)
+                objective_expr = (
+                    objective_expr - penalty if objective_expr is not None else -penalty
+                )
+
+        if vas_penalty_terms:
+            penalties = [var * weight for var, weight in vas_penalty_terms]
+            if penalties:
+                penalty = sum(penalties)
+                objective_expr = (
+                    objective_expr - penalty if objective_expr is not None else -penalty
+                )
+
+        if oic_clinical_avoid_terms:
+            penalties = [var * weight for var, weight in oic_clinical_avoid_terms]
             if penalties:
                 penalty = sum(penalties)
                 objective_expr = (
@@ -1478,8 +1828,27 @@ class CPSATActivitySolver:
                 objective_expr - penalty if objective_expr is not None else -penalty
             )
 
+        if faculty_admin_equity_ranges:
+            penalty = sum(faculty_admin_equity_ranges) * FACULTY_ADMIN_EQUITY_PENALTY
+            objective_expr = (
+                objective_expr - penalty if objective_expr is not None else -penalty
+            )
+
+        if faculty_supervision_equity_ranges:
+            penalty = sum(faculty_supervision_equity_ranges) * FACULTY_AT_EQUITY_PENALTY
+            objective_expr = (
+                objective_expr - penalty if objective_expr is not None else -penalty
+            )
+
         if overage_vars:
             overage_penalty = sum(overage_vars) * PHYSICAL_CAPACITY_SOFT_PENALTY
+            objective_expr = (
+                objective_expr - overage_penalty
+                if objective_expr is not None
+                else -overage_penalty
+            )
+        if faculty_clinic_overages:
+            overage_penalty = sum(faculty_clinic_overages) * FACULTY_CLINIC_OVERAGE_PENALTY
             objective_expr = (
                 objective_expr - overage_penalty
                 if objective_expr is not None
@@ -1510,6 +1879,7 @@ class CPSATActivitySolver:
                 baseline_faculty_coverage=baseline_faculty_coverage,
                 supervision_required_ids=supervision_required_ids,
                 supervision_provider_ids=supervision_provider_ids,
+                proc_vas_activity_ids=proc_vas_activity_ids,
             )
             sm_alignment_diagnostics = self._build_sm_alignment_diagnostics(
                 slot_meta=slot_meta,
@@ -1688,6 +2058,25 @@ class CPSATActivitySolver:
             else:
                 logger.info("SM alignment shortfall total: 0")
 
+        if vas_shortfalls:
+            vas_total = sum(solver.Value(var) for var in vas_shortfalls)
+            if vas_total:
+                logger.warning(f"VAS alignment shortfall total: {vas_total}")
+            else:
+                logger.info("VAS alignment shortfall total: 0")
+
+        if faculty_admin_equity_ranges:
+            admin_eq_total = sum(
+                solver.Value(var) for var in faculty_admin_equity_ranges
+            )
+            logger.info(f"Faculty admin equity range total: {admin_eq_total}")
+
+        if faculty_supervision_equity_ranges:
+            at_eq_total = sum(
+                solver.Value(var) for var in faculty_supervision_equity_ranges
+            )
+            logger.info(f"Faculty AT equity range total: {at_eq_total}")
+
         return {
             "success": True,
             "assignments_updated": updated,
@@ -1819,6 +2208,7 @@ class CPSATActivitySolver:
         baseline_faculty_coverage: dict[tuple[date, str], int],
         supervision_required_ids: set[UUID],
         supervision_provider_ids: set[UUID],
+        proc_vas_activity_ids: set[UUID],
     ) -> dict[str, Any]:
         """Summarize per-slot AT coverage bounds to explain infeasibility."""
         resident_slots_by_key: dict[tuple[date, str], list[int]] = defaultdict(list)
@@ -1857,9 +2247,13 @@ class CPSATActivitySolver:
                 if allowed.issubset(supervision_required_ids):
                     min_demand += demand_units
                     forced_residents += 1
+                    if allowed.issubset(proc_vas_activity_ids):
+                        min_demand += PROC_VAS_EXTRA_UNITS
                 if allowed.intersection(supervision_required_ids):
                     max_demand += demand_units
                     flexible_residents += 1
+                    if allowed.intersection(proc_vas_activity_ids):
+                        max_demand += PROC_VAS_EXTRA_UNITS
 
             min_coverage = baseline_faculty_coverage.get(slot_key, 0)
             max_coverage = baseline_faculty_coverage.get(slot_key, 0)
@@ -2036,11 +2430,11 @@ class CPSATActivitySolver:
 
     def _get_faculty_clinic_caps(self, faculty: Person) -> tuple[int, int]:
         """Return (min, max) weekly clinic half-days for a faculty member."""
-        min_c = getattr(faculty, "min_clinic_halfdays_per_week", 0) or 0
         max_c = getattr(faculty, "max_clinic_halfdays_per_week", 4) or 0
-        if max_c < min_c:
-            max_c = min_c
-        return min_c, max_c
+        if max_c < 0:
+            max_c = 0
+        # Policy: no minimum clinic requirement to preserve AT capacity.
+        return 0, max_c
 
     def _get_admin_activity_for_faculty(
         self, faculty: Person, activities: dict[str, Activity]
