@@ -211,14 +211,24 @@ class IntegratedWorkloadConstraint(SoftConstraint):
             if template.id == assignment.rotation_template_id:
                 template_name = getattr(template, "name", "").upper()
                 rotation_type = getattr(template, "rotation_type", "").lower()
+                template_category = getattr(template, "template_category", "").lower()
                 # LEC = Lecture, ADV = Advising
                 return (
-                    "LEC" in template_name
+                    template_category == "educational"
+                    or rotation_type
+                    in (
+                        "education",
+                        "conference",
+                        "lecture",
+                        "academic",
+                        "advising",
+                        "lec",
+                        "adv",
+                    )
+                    or "LEC" in template_name
                     or "ADV" in template_name
                     or "LECTURE" in template_name
                     or "ADVISING" in template_name
-                    or rotation_type
-                    in ("academic", "lecture", "advising", "lec", "adv")
                 )
 
         return False
