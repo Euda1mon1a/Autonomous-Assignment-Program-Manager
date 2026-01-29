@@ -22,6 +22,7 @@ from app.models.absence import Absence
 from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.call_assignment import CallAssignment
+from app.models.call_override import CallOverride
 from app.models.person import Person
 from app.models.user import User
 from app.schemas.daily_manifest import (
@@ -256,6 +257,34 @@ async def get_daily_manifest_v2(
         .filter(CallAssignment.date == date_param)
         .all()
     )
+    if call_assignments:
+        call_ids = [c.id for c in call_assignments]
+        call_overrides = (
+            db.query(CallOverride)
+            .options(joinedload(CallOverride.replacement_person))
+            .filter(CallOverride.call_assignment_id.in_(call_ids))
+            .filter(CallOverride.is_active.is_(True))
+            .all()
+        )
+        override_map = {o.call_assignment_id: o for o in call_overrides}
+        updated_calls = []
+        for call in call_assignments:
+            override = override_map.get(call.id)
+            if not override or not override.replacement_person:
+                updated_calls.append(call)
+                continue
+            clone = CallAssignment(
+                id=call.id,
+                date=call.date,
+                person_id=override.replacement_person.id,
+                call_type=call.call_type,
+                is_weekend=call.is_weekend,
+                is_holiday=call.is_holiday,
+                created_at=call.created_at,
+            )
+            clone.person = override.replacement_person
+            updated_calls.append(clone)
+        call_assignments = updated_calls
 
     # Query absences that overlap with the date
     absences_query = (

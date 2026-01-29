@@ -30,6 +30,9 @@ async def list_half_day_assignments(
     start_date: date | None = Query(None, description="Start date"),
     end_date: date | None = Query(None, description="End date"),
     person_type: str | None = Query(None, description="Filter by person type"),
+    include_overrides: bool = Query(
+        True, description="Apply active schedule overrides"
+    ),
     db: AsyncSession = Depends(get_async_db),
 ) -> HalfDayAssignmentListResponse:
     """
@@ -78,11 +81,13 @@ async def list_half_day_assignments(
         start_date=start_date,
         end_date=end_date,
         person_type=person_type,
+        include_overrides=include_overrides,
     )
 
     # Convert to response schema
     assignment_reads = []
     for a in assignments:
+        is_gap = bool(getattr(a, "is_gap", False))
         assignment_reads.append(
             HalfDayAssignmentRead(
                 id=a.id,
@@ -100,6 +105,7 @@ async def list_half_day_assignments(
                 else None,
                 source=a.source,
                 is_locked=a.is_locked,
+                is_gap=is_gap,
                 created_at=a.created_at,
                 updated_at=a.updated_at,
             )

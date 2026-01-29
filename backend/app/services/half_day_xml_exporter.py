@@ -20,7 +20,7 @@ from uuid import UUID
 from xml.dom import minidom
 from xml.etree.ElementTree import Element, SubElement, tostring
 
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
@@ -29,6 +29,8 @@ from app.models.block_assignment import BlockAssignment
 from app.models.call_assignment import CallAssignment
 from app.models.half_day_assignment import HalfDayAssignment
 from app.models.person import Person
+from app.models.schedule_override import ScheduleOverride
+from app.models.activity import Activity, ActivityCategory
 
 logger = get_logger(__name__)
 
@@ -67,6 +69,7 @@ class HalfDayXMLExporter:
         person_ids: list[UUID] | None = None,
         include_faculty: bool = False,
         include_call: bool = False,
+        include_overrides: bool = True,
     ) -> str:
         """Export schedule for date range to XML.
 
@@ -88,7 +91,11 @@ class HalfDayXMLExporter:
 
         # Get all half_day_assignments for date range with activity codes
         assignments = self._fetch_assignments(
-            block_start, block_end, person_ids, include_faculty
+            block_start,
+            block_end,
+            person_ids,
+            include_faculty,
+            include_overrides=include_overrides,
         )
 
         # Group by person
@@ -136,6 +143,7 @@ class HalfDayXMLExporter:
         block_end: date,
         person_ids: list[UUID] | None,
         include_faculty: bool = False,
+        include_overrides: bool = True,
     ) -> list[HalfDayAssignment]:
         """Fetch half_day_assignments with joined activity codes.
 
@@ -148,22 +156,22 @@ class HalfDayXMLExporter:
         Note: By default only fetches residents (Person.type == 'resident').
         Set include_faculty=True to also include faculty schedules.
         """
-        from sqlalchemy import or_
-
-        # Build person type filter
+        # Build person type filter (applied after overrides when enabled)
         if include_faculty:
-            type_filter = or_(Person.type == "resident", Person.type == "faculty")
+            type_filter = None
         else:
             type_filter = Person.type == "resident"
 
         stmt = (
             select(HalfDayAssignment)
-            .options(selectinload(HalfDayAssignment.activity))
+            .options(
+                selectinload(HalfDayAssignment.activity),
+                selectinload(HalfDayAssignment.person),
+            )
             .join(Person, HalfDayAssignment.person_id == Person.id)
             .where(
                 HalfDayAssignment.date >= block_start,
                 HalfDayAssignment.date <= block_end,
-                type_filter,
             )
             .order_by(
                 HalfDayAssignment.person_id,
@@ -172,11 +180,149 @@ class HalfDayXMLExporter:
             )
         )
 
+        if type_filter is not None and not include_overrides:
+            stmt = stmt.where(type_filter)
+
         if person_ids:
-            stmt = stmt.where(HalfDayAssignment.person_id.in_(person_ids))
+            if include_overrides:
+                override_assignment_ids = (
+                    self.db.execute(
+                        select(ScheduleOverride.half_day_assignment_id).where(
+                            ScheduleOverride.is_active.is_(True),
+                            ScheduleOverride.effective_date >= block_start,
+                            ScheduleOverride.effective_date <= block_end,
+                            ScheduleOverride.replacement_person_id.in_(person_ids),
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
+            else:
+                override_assignment_ids = []
+
+            if override_assignment_ids:
+                stmt = stmt.where(
+                    or_(
+                        HalfDayAssignment.person_id.in_(person_ids),
+                        HalfDayAssignment.id.in_(override_assignment_ids),
+                    )
+                )
+            else:
+                stmt = stmt.where(HalfDayAssignment.person_id.in_(person_ids))
 
         result = self.db.execute(stmt)
-        return list(result.scalars().all())
+        assignments = list(result.scalars().all())
+
+        if include_overrides:
+            assignments = self._apply_overrides(assignments, block_start, block_end)
+            if type_filter is not None:
+                assignments = [
+                    a for a in assignments if a.person and a.person.type == "resident"
+                ]
+
+        return assignments
+
+    def _apply_overrides(
+        self,
+        assignments: list[HalfDayAssignment],
+        start_date: date,
+        end_date: date,
+    ) -> list[HalfDayAssignment]:
+        if not assignments:
+            return assignments
+
+        overrides = (
+            self.db.execute(
+                select(ScheduleOverride).where(
+                    ScheduleOverride.is_active.is_(True),
+                    ScheduleOverride.effective_date >= start_date,
+                    ScheduleOverride.effective_date <= end_date,
+                )
+            )
+            .scalars()
+            .all()
+        )
+        if not overrides:
+            return assignments
+
+        replacement_ids = {
+            o.replacement_person_id
+            for o in overrides
+            if o.override_type == "coverage" and o.replacement_person_id
+        }
+        replacement_people = {}
+        if replacement_ids:
+            people = (
+                self.db.execute(select(Person).where(Person.id.in_(replacement_ids)))
+                .scalars()
+                .all()
+            )
+            replacement_people = {p.id: p for p in people}
+
+        overrides_by_assignment = {o.half_day_assignment_id: o for o in overrides}
+
+        effective: list[HalfDayAssignment] = []
+        for assignment in assignments:
+            override = overrides_by_assignment.get(assignment.id)
+            if not override:
+                effective.append(assignment)
+                continue
+            if override.override_type == "cancellation":
+                continue
+            if override.override_type == "gap":
+                clone = HalfDayAssignment(
+                    id=assignment.id,
+                    person_id=assignment.person_id,
+                    date=assignment.date,
+                    time_of_day=assignment.time_of_day,
+                    activity_id=None,
+                    counts_toward_fmc_capacity=assignment.counts_toward_fmc_capacity,
+                    source=assignment.source,
+                    block_assignment_id=assignment.block_assignment_id,
+                    is_override=assignment.is_override,
+                    override_reason=assignment.override_reason,
+                    overridden_by=assignment.overridden_by,
+                    overridden_at=assignment.overridden_at,
+                    created_at=assignment.created_at,
+                    updated_at=assignment.updated_at,
+                )
+                clone.activity = Activity(
+                    name="GAP",
+                    code="gap",
+                    display_abbreviation="GAP",
+                    activity_category=ActivityCategory.ADMINISTRATIVE.value,
+                )
+                clone.person = assignment.person
+                clone.is_gap = True
+                effective.append(clone)
+                continue
+
+            replacement = replacement_people.get(override.replacement_person_id)
+            if not replacement:
+                effective.append(assignment)
+                continue
+
+            clone = HalfDayAssignment(
+                id=assignment.id,
+                person_id=replacement.id,
+                date=assignment.date,
+                time_of_day=assignment.time_of_day,
+                activity_id=assignment.activity_id,
+                counts_toward_fmc_capacity=assignment.counts_toward_fmc_capacity,
+                source=assignment.source,
+                block_assignment_id=assignment.block_assignment_id,
+                is_override=assignment.is_override,
+                override_reason=assignment.override_reason,
+                overridden_by=assignment.overridden_by,
+                overridden_at=assignment.overridden_at,
+                created_at=assignment.created_at,
+                updated_at=assignment.updated_at,
+            )
+            clone.activity = assignment.activity
+            clone.person = replacement
+            effective.append(clone)
+
+        return effective
 
     def _fetch_people(self, person_ids: list[UUID]) -> dict[UUID, dict[str, Any]]:
         """Fetch person details by ID."""

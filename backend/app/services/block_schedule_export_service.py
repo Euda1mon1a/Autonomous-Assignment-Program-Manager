@@ -30,6 +30,7 @@ from app.models.call_assignment import CallAssignment
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.services.schedule_xml_exporter import ScheduleXMLExporter
+from app.services.call_override_service import CallOverrideService
 from app.services.xml_to_xlsx_converter import XMLToXlsxConverter
 from app.utils.academic_blocks import get_block_dates
 from app.utils.rosetta_xml_validator import compare_xml, get_mismatch_summary
@@ -359,7 +360,10 @@ class BlockScheduleExportService:
             .options(selectinload(CallAssignment.person))
         )
         result = await self.session.execute(stmt)
-        call_assignments = result.scalars().all()
+        call_assignments = list(result.scalars().all())
+
+        override_service = CallOverrideService(self.session)
+        call_assignments = await override_service.apply_overrides(call_assignments)
 
         call_list = []
         for ca in call_assignments:

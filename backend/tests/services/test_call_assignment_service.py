@@ -12,6 +12,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db.base import Base
 from app.models.call_assignment import CallAssignment
+from app.models.call_override import CallOverride
 from app.models.person import Person
 from app.services.call_assignment_service import CallAssignmentService
 
@@ -522,6 +523,187 @@ class TestCoverageReport:
 
         # Should have partial coverage
         assert report.coverage_percentage < 100 or report.total_expected_nights <= 1
+
+
+class TestCallAssignmentOverrideAwareQueries:
+    """Test that person-filtered queries include assignments covered via overrides."""
+
+    @pytest.fixture
+    async def setup_override_data(self, async_db):
+        """Create test data for override-aware query testing."""
+        # Create two faculty members
+        faculty_a = Person(
+            id=uuid4(),
+            name="Dr. Faculty A",
+            type="faculty",
+            email="faculty_a@hospital.org",
+        )
+        faculty_b = Person(
+            id=uuid4(),
+            name="Dr. Faculty B",
+            type="faculty",
+            email="faculty_b@hospital.org",
+        )
+        async_db.add(faculty_a)
+        async_db.add(faculty_b)
+        await async_db.commit()
+        await async_db.refresh(faculty_a)
+        await async_db.refresh(faculty_b)
+
+        return {"faculty_a": faculty_a, "faculty_b": faculty_b}
+
+    @pytest.mark.asyncio
+    async def test_get_by_person_includes_override_covered(
+        self, async_db, setup_override_data
+    ):
+        """Test that get_call_assignments_by_person includes assignments covered via override.
+
+        Scenario: A's call is overridden to B
+        Expected: Querying for B's assignments returns A's call (with B as effective person)
+        """
+        service = CallAssignmentService(async_db)
+        from app.schemas.call_assignment import CallAssignmentCreate
+
+        faculty_a = setup_override_data["faculty_a"]
+        faculty_b = setup_override_data["faculty_b"]
+
+        # Create call assignment for faculty A
+        call_date = date.today() + timedelta(days=5)
+        create_result = await service.create_call_assignment(
+            CallAssignmentCreate(
+                person_id=faculty_a.id,
+                call_date=call_date,
+                call_type="weekday",
+            )
+        )
+        call_assignment = create_result["call_assignment"]
+
+        # Create override: A's call covered by B
+        override = CallOverride(
+            id=uuid4(),
+            call_assignment_id=call_assignment.id,
+            original_person_id=faculty_a.id,
+            replacement_person_id=faculty_b.id,
+            override_type="coverage",
+            reason="deployment",
+            effective_date=call_date,
+            call_type="weekday",
+            is_active=True,
+        )
+        async_db.add(override)
+        await async_db.commit()
+
+        # Query for B's assignments WITH overrides
+        b_assignments = await service.get_call_assignments_by_person(
+            person_id=faculty_b.id,
+            include_overrides=True,
+        )
+
+        # B should see A's call (now showing B as person due to override)
+        assert len(b_assignments) == 1
+        assert b_assignments[0].id == call_assignment.id
+        assert (
+            b_assignments[0].person_id == faculty_b.id
+        )  # Shows B after override applied
+
+    @pytest.mark.asyncio
+    async def test_get_by_person_without_overrides_excludes_covered(
+        self, async_db, setup_override_data
+    ):
+        """Test that get_call_assignments_by_person without overrides excludes covered assignments.
+
+        Scenario: A's call is overridden to B
+        Expected: Querying for B's assignments WITHOUT overrides returns empty
+        """
+        service = CallAssignmentService(async_db)
+        from app.schemas.call_assignment import CallAssignmentCreate
+
+        faculty_a = setup_override_data["faculty_a"]
+        faculty_b = setup_override_data["faculty_b"]
+
+        # Create call assignment for faculty A
+        call_date = date.today() + timedelta(days=6)
+        create_result = await service.create_call_assignment(
+            CallAssignmentCreate(
+                person_id=faculty_a.id,
+                call_date=call_date,
+                call_type="weekday",
+            )
+        )
+        call_assignment = create_result["call_assignment"]
+
+        # Create override: A's call covered by B
+        override = CallOverride(
+            id=uuid4(),
+            call_assignment_id=call_assignment.id,
+            original_person_id=faculty_a.id,
+            replacement_person_id=faculty_b.id,
+            override_type="coverage",
+            reason="sick",
+            effective_date=call_date,
+            call_type="weekday",
+            is_active=True,
+        )
+        async_db.add(override)
+        await async_db.commit()
+
+        # Query for B's assignments WITHOUT overrides
+        b_assignments = await service.get_call_assignments_by_person(
+            person_id=faculty_b.id,
+            include_overrides=False,
+        )
+
+        # B should NOT see A's call when overrides are disabled
+        assert len(b_assignments) == 0
+
+    @pytest.mark.asyncio
+    async def test_get_assignments_list_includes_override_covered(
+        self, async_db, setup_override_data
+    ):
+        """Test that get_call_assignments with person filter includes override-covered assignments."""
+        service = CallAssignmentService(async_db)
+        from app.schemas.call_assignment import CallAssignmentCreate
+
+        faculty_a = setup_override_data["faculty_a"]
+        faculty_b = setup_override_data["faculty_b"]
+
+        # Create call assignment for faculty A
+        call_date = date.today() + timedelta(days=7)
+        create_result = await service.create_call_assignment(
+            CallAssignmentCreate(
+                person_id=faculty_a.id,
+                call_date=call_date,
+                call_type="weekday",
+            )
+        )
+        call_assignment = create_result["call_assignment"]
+
+        # Create override: A's call covered by B
+        override = CallOverride(
+            id=uuid4(),
+            call_assignment_id=call_assignment.id,
+            original_person_id=faculty_a.id,
+            replacement_person_id=faculty_b.id,
+            override_type="coverage",
+            reason="TDY",
+            effective_date=call_date,
+            call_type="weekday",
+            is_active=True,
+        )
+        async_db.add(override)
+        await async_db.commit()
+
+        # Query using get_call_assignments with person_id filter
+        result = await service.get_call_assignments(
+            person_id=faculty_b.id,
+            include_overrides=True,
+        )
+
+        # B should see A's call in the list
+        assert result["total"] == 1
+        assert len(result["items"]) == 1
+        assert result["items"][0].id == call_assignment.id
+        assert result["items"][0].person_id == faculty_b.id
 
 
 class TestCallAssignmentConcurrency:

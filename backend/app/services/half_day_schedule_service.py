@@ -16,9 +16,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.logging import get_logger
-from app.models.activity import Activity
+from app.models.activity import Activity, ActivityCategory
 from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
 from app.models.person import Person
+from app.models.schedule_override import ScheduleOverride
 from app.utils.academic_blocks import get_block_dates
 from app.utils.fmc_capacity import (
     activity_is_proc_or_vas,
@@ -45,6 +46,7 @@ class HalfDayScheduleService:
         start_date: date,
         end_date: date,
         person_type: str | None = None,
+        include_overrides: bool = True,
     ) -> list[HalfDayAssignment]:
         """
         Get all assignments in a date range.
@@ -73,17 +75,27 @@ class HalfDayScheduleService:
             .order_by(HalfDayAssignment.date, HalfDayAssignment.time_of_day)
         )
 
-        if person_type:
+        if person_type and not include_overrides:
             stmt = stmt.where(Person.type == person_type)
 
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        assignments = list(result.scalars().all())
+
+        if include_overrides:
+            assignments = await self._apply_overrides(assignments, start_date, end_date)
+            if person_type:
+                assignments = [
+                    a for a in assignments if a.person and a.person.type == person_type
+                ]
+
+        return assignments
 
     async def get_schedule_by_person(
         self,
         person_id: UUID,
         start_date: date,
         end_date: date,
+        include_overrides: bool = True,
     ) -> list[HalfDayAssignment]:
         """
         Get assignments for a specific person in a date range.
@@ -96,6 +108,14 @@ class HalfDayScheduleService:
         Returns:
             List of HalfDayAssignment objects
         """
+        if include_overrides:
+            assignments = await self.get_schedule_by_date_range(
+                start_date=start_date,
+                end_date=end_date,
+                include_overrides=True,
+            )
+            return [a for a in assignments if a.person_id == person_id]
+
         stmt = (
             select(HalfDayAssignment)
             .where(
@@ -116,6 +136,7 @@ class HalfDayScheduleService:
         block_number: int,
         academic_year: int,
         person_type: str | None = None,
+        include_overrides: bool = True,
     ) -> list[HalfDayAssignment]:
         """
         Get all assignments for an academic block.
@@ -133,6 +154,7 @@ class HalfDayScheduleService:
             block_dates.start_date,
             block_dates.end_date,
             person_type,
+            include_overrides,
         )
 
     async def get_slot(
@@ -172,6 +194,7 @@ class HalfDayScheduleService:
     async def get_daily_schedule(
         self,
         date_val: date,
+        include_overrides: bool = True,
     ) -> dict[str, list[HalfDayAssignment]]:
         """
         Get all assignments for a specific date, grouped by time of day.
@@ -192,12 +215,112 @@ class HalfDayScheduleService:
             .order_by(HalfDayAssignment.time_of_day)
         )
         result = await self.session.execute(stmt)
-        assignments = result.scalars().all()
+        assignments = list(result.scalars().all())
+
+        if include_overrides:
+            assignments = await self._apply_overrides(assignments, date_val, date_val)
 
         return {
             "AM": [a for a in assignments if a.time_of_day == "AM"],
             "PM": [a for a in assignments if a.time_of_day == "PM"],
         }
+
+    async def _apply_overrides(
+        self,
+        assignments: list[HalfDayAssignment],
+        start_date: date,
+        end_date: date,
+    ) -> list[HalfDayAssignment]:
+        if not assignments:
+            return assignments
+
+        result = await self.session.execute(
+            select(ScheduleOverride).where(
+                ScheduleOverride.is_active.is_(True),
+                ScheduleOverride.effective_date >= start_date,
+                ScheduleOverride.effective_date <= end_date,
+            )
+        )
+        overrides = list(result.scalars().all())
+        if not overrides:
+            return assignments
+
+        replacement_ids = {
+            o.replacement_person_id
+            for o in overrides
+            if o.override_type == "coverage" and o.replacement_person_id
+        }
+        replacement_people = {}
+        if replacement_ids:
+            people_result = await self.session.execute(
+                select(Person).where(Person.id.in_(replacement_ids))
+            )
+            replacement_people = {p.id: p for p in people_result.scalars().all()}
+
+        overrides_by_assignment = {o.half_day_assignment_id: o for o in overrides}
+
+        effective: list[HalfDayAssignment] = []
+        for assignment in assignments:
+            override = overrides_by_assignment.get(assignment.id)
+            if not override:
+                effective.append(assignment)
+                continue
+            if override.override_type == "cancellation":
+                continue
+            if override.override_type == "gap":
+                clone = HalfDayAssignment(
+                    id=assignment.id,
+                    person_id=assignment.person_id,
+                    date=assignment.date,
+                    time_of_day=assignment.time_of_day,
+                    activity_id=None,
+                    counts_toward_fmc_capacity=assignment.counts_toward_fmc_capacity,
+                    source=assignment.source,
+                    block_assignment_id=assignment.block_assignment_id,
+                    is_override=assignment.is_override,
+                    override_reason=assignment.override_reason,
+                    overridden_by=assignment.overridden_by,
+                    overridden_at=assignment.overridden_at,
+                    created_at=assignment.created_at,
+                    updated_at=assignment.updated_at,
+                )
+                clone.activity = Activity(
+                    name="GAP",
+                    code="gap",
+                    display_abbreviation="GAP",
+                    activity_category=ActivityCategory.ADMINISTRATIVE.value,
+                )
+                clone.person = assignment.person
+                clone.is_gap = True
+                effective.append(clone)
+                continue
+
+            replacement = replacement_people.get(override.replacement_person_id)
+            if not replacement:
+                effective.append(assignment)
+                continue
+
+            clone = HalfDayAssignment(
+                id=assignment.id,
+                person_id=replacement.id,
+                date=assignment.date,
+                time_of_day=assignment.time_of_day,
+                activity_id=assignment.activity_id,
+                counts_toward_fmc_capacity=assignment.counts_toward_fmc_capacity,
+                source=assignment.source,
+                block_assignment_id=assignment.block_assignment_id,
+                is_override=assignment.is_override,
+                override_reason=assignment.override_reason,
+                overridden_by=assignment.overridden_by,
+                overridden_at=assignment.overridden_at,
+                created_at=assignment.created_at,
+                updated_at=assignment.updated_at,
+            )
+            clone.activity = assignment.activity
+            clone.person = replacement
+            effective.append(clone)
+
+        return effective
 
     async def get_preloaded_slots(
         self,
@@ -417,6 +540,7 @@ async def get_block_schedule(
     block_number: int,
     academic_year: int,
     person_type: str | None = None,
+    include_overrides: bool = True,
 ) -> list[HalfDayAssignment]:
     """
     Convenience function to get block schedule.
@@ -431,4 +555,9 @@ async def get_block_schedule(
         List of HalfDayAssignment objects
     """
     service = HalfDayScheduleService(session)
-    return await service.get_schedule_by_block(block_number, academic_year, person_type)
+    return await service.get_schedule_by_block(
+        block_number,
+        academic_year,
+        person_type,
+        include_overrides,
+    )
