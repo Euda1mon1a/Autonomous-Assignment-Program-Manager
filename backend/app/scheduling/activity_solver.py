@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
@@ -41,6 +41,8 @@ from app.models.block import Block
 from app.models.block_assignment import BlockAssignment
 from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
 from app.models.person import Person
+from app.models.procedure import Procedure
+from app.models.procedure_credential import ProcedureCredential
 from app.models.rotation_activity_requirement import RotationActivityRequirement
 from app.models.rotation_template import RotationTemplate
 from app.utils.academic_blocks import get_block_dates
@@ -71,7 +73,7 @@ OUTPATIENT_ACTIVITY_TYPES = {"outpatient"}
 # Clinic/supervision codes for activity-level constraints (legacy fallback)
 RESIDENT_CLINIC_CODES = {"FM_CLINIC", "C", "C-N", "CV"}
 AT_COVERAGE_CODES = {"AT", "PCAT"}
-SUPERVISION_REQUIRED_CODES = {"PROC", "PR", "PROCEDURE", "VAS"}
+SUPERVISION_REQUIRED_CODES = {"PROC", "PR", "PROCEDURE", "VAS", "VASC"}
 ADMIN_ACTIVITY_CODES = {"GME": "gme", "DFM": "dfm", "SM": "sm_clinic"}
 ADMIN_EQUITY_CODES = {"GME", "DFM", "LEC", "ADV"}
 SUPERVISION_EQUITY_CODES = {"AT", "PCAT"}
@@ -87,7 +89,7 @@ CLINIC_MIN_SHORTFALL_PENALTY = 25
 ACTIVITY_MAX_OVERAGE_PENALTY = 20
 CLINIC_MAX_OVERAGE_PENALTY = 40
 AT_COVERAGE_SHORTFALL_PENALTY = 50
-PROC_VAS_EXTRA_UNITS = 4  # +1 AT for PROC/VAS (scaled by 4)
+PROC_VAS_EXTRA_UNITS = 4  # +1 AT for PROC only (scaled by 4)
 SM_ALIGNMENT_SHORTFALL_PENALTY = 30
 VAS_ALIGNMENT_SHORTFALL_PENALTY = 30
 CV_TARGET_NUMERATOR = 3
@@ -100,9 +102,12 @@ CV_PENALTY_BY_ROLE = {
     "pgy2": 15,
 }
 OIC_CLINIC_AVOID_DAYS = {0, 4}  # Monday, Friday (Python weekday)
-VAS_FACULTY_PRIMARY_NAMES = {"KINKENNON", "LABOUNTY"}
-VAS_FACULTY_SECONDARY_NAMES = {"TAGAWA"}
-VAS_FACULTY_SECONDARY_PENALTY = 10
+VAS_FACULTY_PENALTY_BY_COMPETENCY = {
+    "master": 0,
+    "expert": 0,
+    "qualified": 10,
+    "trainee": 20,
+}
 VAS_RESIDENT_PENALTY_PROC = 0
 VAS_RESIDENT_PENALTY_FMC = 5
 VAS_RESIDENT_PENALTY_POCUS = 10
@@ -137,6 +142,12 @@ class CPSATActivitySolver:
         self._assignment_rotation_map: dict[
             tuple[UUID, date, str], RotationTemplate
         ] = {}
+        self._procedure_credentials_by_person: dict[
+            UUID, dict[UUID, ProcedureCredential]
+        ] = {}
+        self._procedure_requires_cert: dict[UUID, bool] = {}
+        self._vas_procedure_id: UUID | None = None
+        self._sm_procedure_id: UUID | None = None
 
     def _is_fmc_clinic_activity(self, activity: Activity | None) -> bool:
         if not activity:
@@ -160,27 +171,85 @@ class CPSATActivitySolver:
     def _is_vas_allowed_slot(self, slot_date: date, time_of_day: str) -> bool:
         return (slot_date.weekday(), time_of_day.upper()) in VAS_ALLOWED_WEEKDAY_TIMES
 
-    def _normalize_person_name(self, person: Person | None) -> str:
-        if not person or not person.name:
-            return ""
-        return "".join(ch for ch in person.name.upper() if ch.isalpha())
+    def _load_procedure_credentials(
+        self,
+        person_ids: set[UUID],
+        procedure_ids: set[UUID],
+    ) -> dict[UUID, dict[UUID, ProcedureCredential]]:
+        if not person_ids or not procedure_ids:
+            return {}
+        stmt = select(ProcedureCredential).where(
+            ProcedureCredential.person_id.in_(person_ids),
+            ProcedureCredential.procedure_id.in_(procedure_ids),
+            ProcedureCredential.status == "active",
+            or_(
+                ProcedureCredential.expiration_date.is_(None),
+                ProcedureCredential.expiration_date >= date.today(),
+            ),
+        )
+        creds = self.session.execute(stmt).scalars().all()
+        by_person: dict[UUID, dict[UUID, ProcedureCredential]] = defaultdict(dict)
+        for cred in creds:
+            by_person[cred.person_id][cred.procedure_id] = cred
+        return by_person
 
-    def _vas_faculty_tier(self, faculty: Person | None) -> str:
-        normalized = self._normalize_person_name(faculty)
-        if any(name in normalized for name in VAS_FACULTY_PRIMARY_NAMES):
-            return "primary"
-        if any(name in normalized for name in VAS_FACULTY_SECONDARY_NAMES):
-            return "secondary"
-        return "other"
+    def _procedure_requires_credential(self, procedure_id: UUID | None) -> bool:
+        if not procedure_id:
+            return False
+        return self._procedure_requires_cert.get(procedure_id, True)
 
-    def _is_vas_faculty(self, faculty: Person | None) -> bool:
-        return self._vas_faculty_tier(faculty) != "other"
+    def _get_procedure_credential(
+        self, faculty: Person | None, procedure_id: UUID | None
+    ) -> ProcedureCredential | None:
+        if not faculty or not procedure_id:
+            return None
+        return self._procedure_credentials_by_person.get(faculty.id, {}).get(
+            procedure_id
+        )
+
+    def _faculty_has_procedure_credential(
+        self, faculty: Person | None, procedure_id: UUID | None
+    ) -> bool:
+        if not faculty or not procedure_id:
+            return False
+        if not self._procedure_requires_credential(procedure_id):
+            return True
+        return self._get_procedure_credential(faculty, procedure_id) is not None
+
+    def _filter_allowed_by_credentials(
+        self,
+        faculty: Person | None,
+        allowed: list[UUID],
+        activity_by_id: dict[UUID, Activity],
+    ) -> list[UUID]:
+        if not faculty or not allowed:
+            return allowed
+        filtered: list[UUID] = []
+        for act_id in allowed:
+            activity = activity_by_id.get(act_id)
+            if not activity or not activity.procedure_id:
+                filtered.append(act_id)
+                continue
+            if not self._procedure_requires_credential(activity.procedure_id):
+                filtered.append(act_id)
+                continue
+            if self._faculty_has_procedure_credential(faculty, activity.procedure_id):
+                filtered.append(act_id)
+        return filtered
 
     def _vas_faculty_penalty(self, faculty: Person | None) -> int:
-        tier = self._vas_faculty_tier(faculty)
-        if tier == "secondary":
-            return VAS_FACULTY_SECONDARY_PENALTY
-        return 0
+        if not self._vas_procedure_id:
+            return 0
+        cred = self._get_procedure_credential(faculty, self._vas_procedure_id)
+        if not cred:
+            return 0
+        level = (cred.competency_level or "").lower()
+        return VAS_FACULTY_PENALTY_BY_COMPETENCY.get(level, 0)
+
+    def _is_vas_faculty(self, faculty: Person | None) -> bool:
+        if not self._vas_procedure_id:
+            return False
+        return self._faculty_has_procedure_credential(faculty, self._vas_procedure_id)
 
     def _vas_resident_category(self, template: RotationTemplate | None) -> str:
         if not template:
@@ -311,6 +380,12 @@ class CPSATActivitySolver:
             else:
                 resident_slots.add(s_i)
 
+        faculty_person_ids = {
+            slot_meta[s_i]["person_id"]
+            for s_i in faculty_slots
+            if slot_meta[s_i].get("person_id")
+        }
+
         # Load activity requirements for templates in scope
         requirements_by_template = self._load_activity_requirements(
             set(templates_by_id.keys())
@@ -411,6 +486,56 @@ class CPSATActivitySolver:
 
         activity_by_id = {a.id: a for a in all_activities}
 
+        procedure_ids = {a.procedure_id for a in all_activities if a.procedure_id}
+        if procedure_ids:
+            procedures = (
+                self.session.execute(
+                    select(Procedure).where(Procedure.id.in_(procedure_ids))
+                )
+                .scalars()
+                .all()
+            )
+            self._procedure_requires_cert = {
+                proc.id: bool(proc.requires_certification) for proc in procedures
+            }
+            self._procedure_credentials_by_person = self._load_procedure_credentials(
+                faculty_person_ids, procedure_ids
+            )
+        else:
+            self._procedure_requires_cert = {}
+            self._procedure_credentials_by_person = {}
+
+        self._vas_procedure_id = None
+        self._sm_procedure_id = None
+        for activity in all_activities:
+            if not activity.procedure_id:
+                continue
+            code = (activity.code or "").strip().upper()
+            display = (activity.display_abbreviation or "").strip().upper()
+            if code in {"VAS", "VASC"} or display in {"VAS", "VASC"}:
+                self._vas_procedure_id = activity.procedure_id
+            if code in {"SM", "SM_CLINIC"} or display in {"SM", "SM_CLINIC"}:
+                self._sm_procedure_id = activity.procedure_id
+
+        if self._vas_procedure_id:
+            has_vas_cred = any(
+                self._vas_procedure_id in creds
+                for creds in self._procedure_credentials_by_person.values()
+            )
+            if not has_vas_cred:
+                logger.warning(
+                    "No active vasectomy credentials found; VAS/VASC assignments will be disabled."
+                )
+        if self._sm_procedure_id:
+            has_sm_cred = any(
+                self._sm_procedure_id in creds
+                for creds in self._procedure_credentials_by_person.values()
+            )
+            if not has_sm_cred:
+                logger.warning(
+                    "No active sports medicine credentials found; SM clinic assignments will be disabled."
+                )
+
         # Candidate activities for solver: exclude preloaded/protected/time_off
         assignable_activities = [
             a for a in all_activities if not is_activity_preloaded(a)
@@ -503,7 +628,7 @@ class CPSATActivitySolver:
             for activity in all_activities
             if activity_is_proc_or_vas(activity)
         }
-        vas_activity_ids = self._activity_ids_for_codes(all_activities, {"VAS"})
+        vas_activity_ids = self._activity_ids_for_codes(all_activities, {"VAS", "VASC"})
         sm_capacity_ids = {
             activity.id
             for activity in all_activities
@@ -631,6 +756,10 @@ class CPSATActivitySolver:
                                 allowed.append(vas_id)
                 if not allowed:
                     allowed = list(faculty_allowed_ids)
+                if faculty:
+                    allowed = self._filter_allowed_by_credentials(
+                        faculty, allowed, activity_by_id
+                    )
             else:
                 allowed = list(allowed_by_template.get(template_id) or [])
                 if not allowed:
@@ -662,13 +791,19 @@ class CPSATActivitySolver:
                             act_id for act_id in allowed if act_id != cv_activity.id
                         ]
             vas_penalty_weight: int | None = None
-            if vas_activity_ids and any(act_id in vas_activity_ids for act_id in allowed):
+            if vas_activity_ids and any(
+                act_id in vas_activity_ids for act_id in allowed
+            ):
                 if not self._is_vas_allowed_slot(slot.date, slot.time_of_day):
-                    allowed = [act_id for act_id in allowed if act_id not in vas_activity_ids]
+                    allowed = [
+                        act_id for act_id in allowed if act_id not in vas_activity_ids
+                    ]
                 elif person_type == "faculty":
                     if not self._is_vas_faculty(slot.person):
                         allowed = [
-                            act_id for act_id in allowed if act_id not in vas_activity_ids
+                            act_id
+                            for act_id in allowed
+                            if act_id not in vas_activity_ids
                         ]
                     else:
                         vas_penalty_weight = self._vas_faculty_penalty(slot.person)
@@ -676,7 +811,9 @@ class CPSATActivitySolver:
                     template = templates_by_id.get(template_id)
                     if not self._is_vas_resident_template(template):
                         allowed = [
-                            act_id for act_id in allowed if act_id not in vas_activity_ids
+                            act_id
+                            for act_id in allowed
+                            if act_id not in vas_activity_ids
                         ]
                     else:
                         vas_penalty_weight = self._vas_resident_penalty(template)
@@ -737,7 +874,10 @@ class CPSATActivitySolver:
 
             if person_type == "faculty" and slot.person:
                 role = (getattr(slot.person, "faculty_role", "") or "").lower()
-                if role == "oic" and slot_meta[s_i]["date"].weekday() in OIC_CLINIC_AVOID_DAYS:
+                if (
+                    role == "oic"
+                    and slot_meta[s_i]["date"].weekday() in OIC_CLINIC_AVOID_DAYS
+                ):
                     for act_id in allowed:
                         activity = activity_by_id.get(act_id)
                         if not activity or activity.activity_category != "clinical":
@@ -788,7 +928,9 @@ class CPSATActivitySolver:
         baseline_faculty_coverage: dict[tuple[date, str], int] = defaultdict(int)
         locked_faculty_clinic_counts: dict[tuple[UUID, int], int] = defaultdict(int)
         locked_faculty_admin_counts: dict[tuple[UUID, int], int] = defaultdict(int)
-        locked_faculty_supervision_counts: dict[tuple[UUID, int], int] = defaultdict(int)
+        locked_faculty_supervision_counts: dict[tuple[UUID, int], int] = defaultdict(
+            int
+        )
         baseline_sm_resident_presence: dict[tuple[date, str], int] = defaultdict(int)
         baseline_sm_faculty_coverage: dict[tuple[date, str], int] = defaultdict(int)
         baseline_vas_resident_presence: dict[tuple[date, str], int] = defaultdict(int)
@@ -1154,9 +1296,7 @@ class CPSATActivitySolver:
                             if not vars_for_activity and locked_count == 0:
                                 continue
                             max_slots = len(slot_indices)
-                            max_possible = max(
-                                max_possible, locked_count + max_slots
-                            )
+                            max_possible = max(max_possible, locked_count + max_slots)
                             count_var = model.NewIntVar(
                                 locked_count,
                                 locked_count + max_slots,
@@ -1168,12 +1308,18 @@ class CPSATActivitySolver:
                             counts.append(count_var)
                         if len(counts) <= 1:
                             continue
-                        max_var = model.NewIntVar(0, max_possible, f"{label}_max_{role}_{week}")
-                        min_var = model.NewIntVar(0, max_possible, f"{label}_min_{role}_{week}")
+                        max_var = model.NewIntVar(
+                            0, max_possible, f"{label}_max_{role}_{week}"
+                        )
+                        min_var = model.NewIntVar(
+                            0, max_possible, f"{label}_min_{role}_{week}"
+                        )
                         for count_var in counts:
                             model.Add(count_var <= max_var)
                             model.Add(count_var >= min_var)
-                        range_var = model.NewIntVar(0, max_possible, f"{label}_range_{role}_{week}")
+                        range_var = model.NewIntVar(
+                            0, max_possible, f"{label}_range_{role}_{week}"
+                        )
                         model.Add(range_var == max_var - min_var)
                         ranges_out.append(range_var)
 
@@ -1483,7 +1629,12 @@ class CPSATActivitySolver:
                 baseline_resident = baseline_vas_resident_presence.get(slot_key, 0)
                 baseline_faculty = baseline_vas_faculty_coverage.get(slot_key, 0)
 
-                if not resident_vars and not faculty_vars and not baseline_resident and not baseline_faculty:
+                if (
+                    not resident_vars
+                    and not faculty_vars
+                    and not baseline_resident
+                    and not baseline_faculty
+                ):
                     continue
 
                 shortfall = model.NewIntVar(
@@ -1513,7 +1664,8 @@ class CPSATActivitySolver:
                     )
                     model.AddMaxEquality(any_faculty, faculty_vars)
                     model.Add(
-                        sum(resident_vars) + baseline_resident + shortfall >= any_faculty
+                        sum(resident_vars) + baseline_resident + shortfall
+                        >= any_faculty
                     )
 
                 vas_shortfalls.append(shortfall)
@@ -1848,7 +2000,9 @@ class CPSATActivitySolver:
                 else -overage_penalty
             )
         if faculty_clinic_overages:
-            overage_penalty = sum(faculty_clinic_overages) * FACULTY_CLINIC_OVERAGE_PENALTY
+            overage_penalty = (
+                sum(faculty_clinic_overages) * FACULTY_CLINIC_OVERAGE_PENALTY
+            )
             objective_expr = (
                 objective_expr - overage_penalty
                 if objective_expr is not None
@@ -2446,6 +2600,10 @@ class CPSATActivitySolver:
 
     def _is_sports_medicine_faculty(self, faculty: Person) -> bool:
         """Return True if faculty is Sports Medicine."""
+        if self._sm_procedure_id and self._faculty_has_procedure_credential(
+            faculty, self._sm_procedure_id
+        ):
+            return True
         if hasattr(faculty, "is_sports_medicine"):
             return bool(faculty.is_sports_medicine)
         role = getattr(faculty, "faculty_role", None)

@@ -1,30 +1,26 @@
 # Architecture Diagram Bundle
 
 > **Purpose:** Consolidated mermaid diagrams for AI context preloading
-> **Auto-generated:** 2026-01-28
-> **Source:** docs/architecture/*.md
+> **Auto-generated:** Do not edit manually - run `scripts/generate-diagram-bundle.sh`
+> **doc_type:** architecture_diagrams
 
-This bundle contains all architecture diagrams extracted from the codebase for efficient AI context loading. Each diagram is machine-readable mermaid syntax with metadata.
-
----
-
-## Table of Contents
-
-1. [Engine Assignment Flow](#engine-assignment-flow)
-2. [MCP Orchestration Patterns](#mcp-orchestration-patterns)
-3. [Tool Composition Patterns](#tool-composition-patterns)
-4. [Hub-Epidemiology Bridge](#hub-epidemiology-bridge)
-5. [Meta-Tool Specifications](#meta-tool-specifications)
+This bundle contains all architecture diagrams extracted from the codebase for efficient AI context loading. Each diagram is machine-readable mermaid syntax with source attribution.
 
 ---
 
-## Engine Assignment Flow
+## Quick Stats
+
+- **Files scanned:** 8
+- **Total diagrams:** 42
+- **Generated:** 2026-01-29T01:00:05Z
+
+---
+
+## ENGINE_ASSIGNMENT_FLOW
 
 **Source:** `docs/architecture/ENGINE_ASSIGNMENT_FLOW.md`
-**Domain:** Scheduling Engine
-**Entities:** Solver, Validator, Assignments, Database, Preserved Slots
+**Diagrams:** 1
 
-### Diagram: Schedule Generation Pipeline
 
 ```mermaid
 graph TD
@@ -61,13 +57,11 @@ graph TD
 
 ---
 
-## MCP Orchestration Patterns
+## MCP_ORCHESTRATION_PATTERNS
 
 **Source:** `docs/architecture/MCP_ORCHESTRATION_PATTERNS.md`
-**Domain:** Tool Orchestration, DAG Execution
-**Entities:** MCP Tools, Meta-Tools, DAG Executor, Parallel Tasks
+**Diagrams:** 6
 
-### Diagram: Deep Schedule Audit DAG
 
 ```mermaid
 graph TD
@@ -88,7 +82,6 @@ graph TD
     Z --> J
 ```
 
-### Diagram: Conflict Resolution Pipeline
 
 ```mermaid
 graph TD
@@ -111,7 +104,6 @@ graph TD
     Z --> K
 ```
 
-### Diagram: Resilience Health Check Tiers
 
 ```mermaid
 graph TD
@@ -155,7 +147,6 @@ graph TD
     T --> U[Aggregate Resilience Report]
 ```
 
-### Diagram: Background Task Lifecycle
 
 ```mermaid
 graph TD
@@ -185,7 +176,6 @@ graph TD
     O --> P[Revoked]
 ```
 
-### Diagram: Deployment Pipeline
 
 ```mermaid
 graph TD
@@ -222,7 +212,6 @@ graph TD
     P --> L
 ```
 
-### Diagram: Tool Dependency Graph
 
 ```mermaid
 graph TD
@@ -257,13 +246,11 @@ graph TD
 
 ---
 
-## Tool Composition Patterns
+## TOOL_COMPOSITION_PATTERNS
 
 **Source:** `docs/architecture/TOOL_COMPOSITION_PATTERNS.md`
-**Domain:** Pattern Library
-**Entities:** Sequential Chain, Parallel Fan-Out, Conditional Branch, Retry, Saga
+**Diagrams:** 6
 
-### Diagram: Sequential Chain Pattern
 
 ```mermaid
 graph LR
@@ -277,7 +264,6 @@ graph LR
     style D fill:#FFD700
 ```
 
-### Diagram: Parallel Fan-Out Pattern
 
 ```mermaid
 graph TB
@@ -302,7 +288,6 @@ graph TB
     style G fill:#98FB98
 ```
 
-### Diagram: Conditional Branching Pattern
 
 ```mermaid
 graph TB
@@ -331,7 +316,6 @@ graph TB
     style I fill:#DDA0DD
 ```
 
-### Diagram: Retry with Fallback Pattern
 
 ```mermaid
 graph TB
@@ -364,7 +348,6 @@ graph TB
     style K fill:#FFB6C1
 ```
 
-### Diagram: Long-Running Task Pattern
 
 ```mermaid
 graph TB
@@ -397,7 +380,6 @@ graph TB
     style K fill:#FF6B6B
 ```
 
-### Diagram: Transactional Saga Pattern
 
 ```mermaid
 graph TB
@@ -436,13 +418,11 @@ graph TB
 
 ---
 
-## Hub-Epidemiology Bridge
+## HUB_EPIDEMIOLOGY_BRIDGE
 
 **Source:** `docs/architecture/bridges/HUB_EPIDEMIOLOGY_BRIDGE.md`
-**Domain:** Resilience Framework, Network Analysis, Epidemiology
-**Entities:** Hub Analyzer, Burnout Epidemiology, Super-spreader Detection, UCI
+**Diagrams:** 1
 
-### Diagram: Data Flow Sequence
 
 ```mermaid
 sequenceDiagram
@@ -472,13 +452,298 @@ sequenceDiagram
 
 ---
 
-## Meta-Tool Specifications
+## N8N_WORKFLOW_SUMMARY
+
+**Source:** `docs/data/N8N_WORKFLOW_SUMMARY.md`
+**Diagrams:** 1
+
+
+```mermaid
+flowchart TD
+    A[Phase 0: Absence Loading] --> B[Phase 1: Block Pairing]
+    B --> C[Phase 2: Resident Association]
+    C --> D[Phase 3: Faculty Assignment]
+    D --> E[Phase 4: Call Scheduling]
+    E --> F[Phase 5: SKIPPED/Obsolete]
+    F --> G[Phase 6: Minimal Cleanup]
+    G --> H[Phase 7: Validation & Reporting]
+    H --> I[Phase 8: Emergency Coverage]
+    I --> J[Phase 9: Excel Export]
+    J --> K[Finalize & Generate Report]
+```
+
+---
+
+## AUDIENCE_AUTH_USAGE
+
+**Source:** `docs/development/AUDIENCE_AUTH_USAGE.md`
+**Diagrams:** 1
+
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant AuthAPI
+    participant OperationAPI
+    participant Database
+
+    User->>Frontend: Initiate sensitive operation
+    Frontend->>AuthAPI: POST /api/audience-tokens/tokens
+    Note right of AuthAPI: Validates user<br/>access token
+    AuthAPI->>Database: Log token creation
+    AuthAPI-->>Frontend: Audience token (2 min TTL)
+    Frontend->>OperationAPI: POST /jobs/{id}/abort<br/>(with audience token)
+    Note right of OperationAPI: Validates audience<br/>matches operation
+    OperationAPI->>Database: Check blacklist
+    OperationAPI->>Database: Execute operation
+    OperationAPI->>Database: Log operation
+    OperationAPI-->>Frontend: Success
+    Frontend->>AuthAPI: POST /api/audience-tokens/revoke
+    AuthAPI->>Database: Blacklist token
+```
+
+---
+
+## MERMAID_GRAPH_RAG_ENHANCEMENT
+
+**Source:** `docs/development/MERMAID_GRAPH_RAG_ENHANCEMENT.md`
+**Diagrams:** 9
+
+
+```mermaid
+graph TD
+    A[Solver] --> B[Validator]
+    B --> C[Committer]
+```
+
+
+```mermaid
+        echo "## $(basename "$file" .md)" >> "$OUTPUT"
+        echo "" >> "$OUTPUT"
+        echo "**Source:** \`$file\`" >> "$OUTPUT"
+        echo "" >> "$OUTPUT"
+
+        # Extract mermaid blocks with context
+
+```mermaid
+        echo "" >> "$OUTPUT"
+        echo "---" >> "$OUTPUT"
+        echo "" >> "$OUTPUT"
+    fi
+done
+
+echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$OUTPUT"
+```
+
+
+```mermaid
+        matches = re.findall(pattern, content, re.DOTALL)
+        return matches
+
+    def parse_diagram(
+        self,
+        mermaid_code: str,
+        source_file: str | None = None
+    ) -> ParsedDiagram:
+        """Parse a mermaid diagram into structured data."""
+        lines = mermaid_code.strip().split('\n')
+
+        # Detect diagram type
+        diagram_type = "other"
+        for line in lines:
+            match = self.DIAGRAM_TYPE.match(line.strip())
+            if match:
+                type_str = match.group(1).lower()
+                if type_str in ("graph", "flowchart"):
+                    diagram_type = "flowchart"
+                elif type_str == "sequencediagram":
+                    diagram_type = "sequence"
+                elif type_str == "classdiagram":
+                    diagram_type = "class"
+                elif type_str == "erdiagram":
+                    diagram_type = "er"
+                elif type_str == "statediagram":
+                    diagram_type = "state"
+                break
+
+        # Extract title from comments
+        title = None
+        for line in lines:
+            if line.strip().startswith('%%') and 'title' in line.lower():
+                title = line.replace('%%', '').replace('title:', '').strip()
+                break
+
+        # Parse nodes and edges (flowchart-specific for now)
+        nodes = {}
+        edges = []
+
+        if diagram_type == "flowchart":
+            for line in lines:
+                # Find nodes
+                for match in self.FLOWCHART_NODE.finditer(line):
+                    node_id, label = match.groups()
+                    if node_id not in nodes:
+                        nodes[node_id] = DiagramNode(
+                            id=node_id,
+                            label=label.strip(),
+                            node_type=self._infer_node_type(label)
+                        )
+
+                # Find edges
+                for match in self.FLOWCHART_EDGE.finditer(line):
+                    source, label, target = match.groups()
+                    edges.append(DiagramEdge(
+                        source=source,
+                        target=target,
+                        label=label.strip() if label else None
+                    ))
+
+        return ParsedDiagram(
+            diagram_type=diagram_type,
+            title=title,
+            nodes=list(nodes.values()),
+            edges=edges,
+            raw_mermaid=mermaid_code,
+            source_file=source_file
+        )
+
+    def _infer_node_type(self, label: str) -> str | None:
+        """Infer node type from label text."""
+        label_lower = label.lower()
+        if any(kw in label_lower for kw in ['database', 'db', 'store']):
+            return 'database'
+        if any(kw in label_lower for kw in ['api', 'endpoint', 'route']):
+            return 'api'
+        if any(kw in label_lower for kw in ['service', 'handler']):
+            return 'service'
+        if any(kw in label_lower for kw in ['?', 'valid', 'check']):
+            return 'decision'
+        return 'process'
+
+    def to_entity_metadata(self, diagram: ParsedDiagram) -> list[dict]:
+        """Convert parsed diagram to entity metadata for RAG storage."""
+        entities = []
+
+        for node in diagram.nodes:
+            entities.append({
+                "entity_type": "diagram_node",
+                "entity_id": node.id,
+                "entity_label": node.label,
+                "node_type": node.node_type,
+                "diagram_type": diagram.diagram_type,
+                "diagram_title": diagram.title,
+                "source_file": diagram.source_file,
+                "relations": [
+                    {
+                        "type": "connects_to",
+                        "target": edge.target,
+                        "label": edge.label
+                    }
+                    for edge in diagram.edges
+                    if edge.source == node.id
+                ]
+            })
+
+        return entities
+```
+
+
+```mermaid
+%% FILE: scheduling-engine.ai.mmd
+%% PURPOSE: End-to-end schedule generation showing solver, validator, committer pipeline
+%% DOMAIN: scheduling
+%% ENTITIES: Solver, Validator, Committer, Database, Cache
+%% UPDATED: 2026-01-28
+
+graph TD
+    subgraph Input
+        A[Load Preserved Assignments]
+        B[Load Constraints]
+    end
+
+    subgraph Solver
+        C[Initialize CP-SAT]
+        D[Add Variables]
+        E[Add Constraints]
+        F[Solve]
+    end
+
+    subgraph Validation
+        G{ACGME Valid?}
+        H[Log Violations]
+    end
+
+    subgraph Output
+        I[Commit to DB]
+        J[Invalidate Cache]
+        K[Notify Subscribers]
+    end
+
+    A --> C
+    B --> C
+    C --> D --> E --> F
+    F --> G
+    G -->|Yes| I
+    G -->|No| H
+    H --> F
+    I --> J --> K
+```
+
+
+```mermaid
+%% FILE: <filename>
+%% PURPOSE: <one-line description>
+%% DOMAIN: <scheduling|auth|resilience|data|frontend>
+%% ENTITIES: <comma-separated list of key nodes>
+%% UPDATED: <YYYY-MM-DD>
+%% RELATES_TO: <other diagram files>
+```
+
+
+```mermaid
+graph TD
+    A[Rectangle]           %% Standard process
+    B(Rounded)             %% Alternative process
+    C{Diamond}             %% Decision
+    D[(Database)]          %% Database
+    E((Circle))            %% Start/End
+    F>Flag]                %% Flag/Note
+    G{{Hexagon}}           %% Preparation
+```
+
+
+```mermaid
+graph LR
+    A --> B                %% Arrow
+    A --- B                %% Line
+    A -.-> B               %% Dotted arrow
+    A ==> B                %% Thick arrow
+    A --text--> B          %% Arrow with text
+    A -->|text| B          %% Arrow with text (alt)
+```
+
+
+```mermaid
+graph TD
+    subgraph Backend
+        A[Service]
+        B[Repository]
+    end
+    subgraph Frontend
+        C[Component]
+        D[Hook]
+    end
+    C --> A
+```
+
+---
+
+## MCP_META_TOOLS_SPEC
 
 **Source:** `docs/specs/MCP_META_TOOLS_SPEC.md`
-**Domain:** MCP Meta-Tools
-**Entities:** full_schedule_generation, emergency_coverage, swap_workflow
+**Diagrams:** 2
 
-### Diagram: Full Schedule Generation DAG
 
 ```mermaid
 graph TD
@@ -526,54 +791,67 @@ graph TD
     Z --> Y
 ```
 
----
 
-## Quick Reference: Entity Relationships
+```mermaid
+graph TD
+    A[Detect Coverage Gaps] --> B{Gaps Found?}
+    B -->|No| Z[No Action Needed]
+    B -->|Yes| C[Parallel Analysis]
 
-### Core Scheduling Flow
+    C --> D[run_contingency_analysis]
+    C --> E[analyze_swap_candidates for each gap]
+    C --> F[get_static_fallbacks]
+
+    D --> G[Aggregate Options]
+    E --> G
+    F --> G
+
+    G --> H[Rank Solutions]
+    H --> I{Best Solution?}
+
+    I -->|Swap| J[Validate Swap]
+    I -->|Fallback| K[Validate Fallback]
+    I -->|Load Shed| L[execute_sacrifice_hierarchy simulate]
+
+    J --> M{Valid?}
+    K --> M
+    L --> M
+
+    M -->|Yes| N{Auto-Apply?}
+    M -->|No| O[Try Next Option]
+
+    N -->|Yes| P[Apply Solution]
+    N -->|No| Q[Request Approval]
+
+    P --> R[Verify Resolution]
+    Q --> S{Approved?}
+    S -->|Yes| P
+    S -->|No| O
+
+    R --> T{Gaps Closed?}
+    T -->|No| O
+    T -->|Yes| U[Success Report]
+
+    O --> H
+    Z --> U
 ```
-Preserved Assignments --> Solver --> Validator --> Committer --> Database
-```
-
-### Resilience Analysis Flow
-```
-Faculty --> Hub Analyzer --> Centrality Scores --> Epidemiology --> Super-spreader Detection
-```
-
-### Tool Orchestration Flow
-```
-Meta-Tool --> DAG Executor --> Atomic Tools (parallel) --> Aggregator --> Report
-```
-
-### Deployment Flow
-```
-Validate --> Security Scan --> Stage --> Smoke Test --> Approve --> Production
-```
-
----
-
-## Diagram Metadata Summary
-
-| Diagram | Type | Nodes | Edges | Domain |
-|---------|------|-------|-------|--------|
-| Schedule Generation Pipeline | flowchart | 16 | 18 | scheduling |
-| Deep Schedule Audit DAG | flowchart | 11 | 13 | orchestration |
-| Conflict Resolution Pipeline | flowchart | 12 | 14 | orchestration |
-| Resilience Health Check Tiers | flowchart | 21 | 24 | resilience |
-| Background Task Lifecycle | flowchart | 16 | 17 | async |
-| Deployment Pipeline | flowchart | 19 | 21 | deployment |
-| Tool Dependency Graph | flowchart | 18 | 12 | orchestration |
-| Sequential Chain Pattern | flowchart | 4 | 3 | pattern |
-| Parallel Fan-Out Pattern | flowchart | 7 | 8 | pattern |
-| Conditional Branching Pattern | flowchart | 9 | 10 | pattern |
-| Retry with Fallback Pattern | flowchart | 11 | 12 | pattern |
-| Long-Running Task Pattern | flowchart | 11 | 12 | pattern |
-| Transactional Saga Pattern | flowchart | 13 | 13 | pattern |
-| Hub-Epidemiology Data Flow | sequence | 4 | 12 | resilience |
-| Full Schedule Generation DAG | flowchart | 25 | 28 | meta-tool |
-
-**Total:** 15 diagrams, 197 nodes, 207 edges
 
 ---
 
-*Bundle generated: 2026-01-28 | Source files: 5*
+## Regeneration
+
+To regenerate this bundle:
+
+```bash
+./scripts/generate-diagram-bundle.sh
+```
+
+To check if bundle is stale:
+
+```bash
+./scripts/generate-diagram-bundle.sh --check
+```
+
+---
+
+*This file is auto-generated. Do not edit manually.*

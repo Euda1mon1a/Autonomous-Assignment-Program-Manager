@@ -61,6 +61,7 @@ from .overnight_call import (
 
 # Call equity and preference constraints (soft)
 from .call_equity import (
+    CallNightBeforeLeaveConstraint,
     CallSpacingConstraint,
     DeptChiefWednesdayPreferenceConstraint,
     SundayCallEquityConstraint,
@@ -249,6 +250,7 @@ __all__ = [
     "OvernightCallGenerationConstraint",
     "is_overnight_call_night",
     # Call equity and preference constraints (soft)
+    "CallNightBeforeLeaveConstraint",
     "CallSpacingConstraint",
     "DeptChiefWednesdayPreferenceConstraint",
     "SundayCallEquityConstraint",

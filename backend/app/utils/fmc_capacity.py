@@ -33,6 +33,7 @@ FMC_CAPACITY_CODES = {
     "PR",
     "PROCEDURE",
     "VAS",
+    "VASC",
     "SM",
     "SM_CLINIC",
     "ASM",
@@ -42,7 +43,8 @@ CV_CODES = {"CV"}
 
 SM_CAPACITY_CODES = {"SM", "SM_CLINIC", "ASM"}
 
-PROC_VAS_CODES = {"PR", "PROC", "PROCEDURE", "VAS"}
+# Procedures that add +1 AT demand (VAS handled like clinic/SM; no extra demand)
+PROC_VAS_CODES = {"PR", "PROC", "PROCEDURE"}
 
 
 def activity_is_sm_capacity(activity: Activity | None) -> bool:
@@ -54,6 +56,7 @@ def activity_is_sm_capacity(activity: Activity | None) -> bool:
 
 
 def activity_is_proc_or_vas(activity: Activity | None) -> bool:
+    """Return True for procedure activities that add extra AT demand (PROC/PR only)."""
     if not activity:
         return False
     code = _normalize_code(activity.code)
@@ -88,6 +91,8 @@ def activity_counts_toward_fmc_capacity_for_template(
         return True
     if code in FMC_CLINIC_CODES or display in FMC_CLINIC_CODES:
         return template_is_fmc_clinic(template)
+    if code in FMC_CAPACITY_CODES or display in FMC_CAPACITY_CODES:
+        return True
     return False
 
 

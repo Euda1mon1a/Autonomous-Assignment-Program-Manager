@@ -59,6 +59,7 @@ class Procedure(Base):
     credentials = relationship(
         "ProcedureCredential", back_populates="procedure", cascade="all, delete-orphan"
     )
+    activities = relationship("Activity", back_populates="procedure")
 
     def __repr__(self):
         return f"<Procedure(name='{self.name}', specialty='{self.specialty}')>"

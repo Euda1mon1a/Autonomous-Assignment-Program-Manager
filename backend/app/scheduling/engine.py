@@ -2157,7 +2157,7 @@ class SchedulingEngine:
 
         Additional Rules:
             - AM weekday floor: Minimum 1 AT for all AM weekday blocks (safeguard)
-            - Procedure clinic +1: PROC, VAS, BTX, COLPO require +1 faculty
+            - Procedure clinic +1: PROC, BTX, COLPO require +1 faculty
             - PCAT counts as AT: Post-Call Attending Time satisfies supervision
 
         Algorithm:
@@ -2270,7 +2270,7 @@ class SchedulingEngine:
         blocks_by_id = {b.id: b for b in blocks}
 
         # Procedure clinic abbreviations that require +1 faculty for immediate supervision
-        PROCEDURE_CLINIC_ABBREVS = {"PROC", "VAS", "BTX", "COLPO"}
+        PROCEDURE_CLINIC_ABBREVS = {"PROC", "BTX", "COLPO"}
 
         # Assign faculty to each block
         faculty_assignments = {f.id: 0 for f in faculty}
@@ -2301,14 +2301,15 @@ class SchedulingEngine:
             )
 
             # Check for procedure clinic requiring +1 faculty (immediate supervision)
-            # ONLY specific procedure clinics (PROC, VAS, BTX, COLPO) need +1
+            # ONLY specific procedure clinics (PROC, BTX, COLPO) need +1
             # Not all "procedures" rotation_type - POCUS, PR-AM don't require +1
             procedure_bonus = 0
             for assignment in block_assignments:
                 # Check activity_override first (slot-level activity)
                 if assignment.activity_override:
                     override_upper = assignment.activity_override.upper()
-                    if any(proc in override_upper for proc in PROCEDURE_CLINIC_ABBREVS):
+                    override_code = override_upper.split("-")[0]
+                    if override_code in PROCEDURE_CLINIC_ABBREVS:
                         procedure_bonus = 1
                         break
 

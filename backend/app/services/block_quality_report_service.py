@@ -29,6 +29,7 @@ from app.schemas.block_quality_report import (
     PersonAssignmentSummary,
     NFOneInSevenEntry,
     PostCallEntry,
+    CallBeforeLeaveEntry,
     AccountabilityEntry,
     ExecutiveSummary,
     SectionA,
@@ -307,8 +308,105 @@ class BlockQualityReportService:
         self, start_date: date, end_date: date
     ) -> list[PostCallEntry]:
         """D3: Check post-call PCAT/DO assignments."""
-        # End date - 1 to avoid checking call on last day
+        # Use half_day_assignments for PCAT/DO (post-call is slot-level), and allow cross-block
+        # checks for next-day slots when call occurs at the end of the block.
         check_end = end_date
+        result = self.db.execute(
+            text("""
+                WITH call_days AS (
+                    SELECT ca.date as call_date, ca.person_id, p.name
+                    FROM call_assignments ca
+                    JOIN people p ON ca.person_id = p.id
+                    WHERE ca.date BETWEEN :start_date AND :end_date
+                ),
+                next_day_slots AS (
+                    SELECT
+                        hda.person_id,
+                        hda.date,
+                        hda.time_of_day,
+                        a.code as activity_code,
+                        a.display_abbreviation as activity_display,
+                        a.activity_category as activity_category
+                    FROM half_day_assignments hda
+                    LEFT JOIN activities a ON a.id = hda.activity_id
+                )
+                SELECT
+                    cd.name,
+                    cd.call_date,
+                    am.activity_code as am_code,
+                    am.activity_display as am_display,
+                    am.activity_category as am_category,
+                    pm.activity_code as pm_code,
+                    pm.activity_display as pm_display,
+                    pm.activity_category as pm_category,
+                    CASE WHEN fmit.id IS NOT NULL THEN TRUE ELSE FALSE END as fmit_exempt
+                FROM call_days cd
+                LEFT JOIN next_day_slots am
+                    ON am.person_id = cd.person_id
+                    AND am.date = cd.call_date + INTERVAL '1 day'
+                    AND am.time_of_day = 'AM'
+                LEFT JOIN next_day_slots pm
+                    ON pm.person_id = cd.person_id
+                    AND pm.date = cd.call_date + INTERVAL '1 day'
+                    AND pm.time_of_day = 'PM'
+                LEFT JOIN inpatient_preloads fmit
+                    ON fmit.person_id = cd.person_id
+                    AND fmit.rotation_type = 'FMIT'
+                    AND fmit.start_date <= cd.call_date + INTERVAL '1 day'
+                    AND fmit.end_date >= cd.call_date + INTERVAL '1 day'
+                ORDER BY cd.call_date
+            """),
+            {"start_date": start_date, "end_date": check_end},
+        )
+
+        entries = []
+        for row in result.fetchall():
+            name = row[0]
+            call_date = row[1]
+            am_code = (row[2] or "").upper()
+            am_display = (row[3] or "").upper()
+            am_category = row[4] or ""
+            pm_code = (row[5] or "").upper()
+            pm_display = (row[6] or "").upper()
+            pm_category = row[7] or ""
+            fmit_exempt = bool(row[8])
+
+            am_label = am_display or am_code or None
+            pm_label = pm_display or pm_code or None
+
+            time_off_exempt = (am_category == "time_off") or (pm_category == "time_off")
+
+            if fmit_exempt:
+                status = "EXEMPT (FMIT)"
+            elif time_off_exempt:
+                status = "EXEMPT (TIME OFF)"
+            else:
+                has_pcat = am_code == "PCAT" or am_display.startswith("PCAT")
+                has_do = pm_code == "DO" or pm_display.startswith("DO")
+                if has_pcat and has_do:
+                    status = "PASS"
+                elif has_pcat or has_do:
+                    status = "PARTIAL"
+                elif am_label is None and pm_label is None:
+                    status = "NO PCAT/DO"
+                else:
+                    status = "PARTIAL"
+
+            entries.append(
+                PostCallEntry(
+                    name=name,
+                    call_date=call_date,
+                    am_next_day=am_label,
+                    pm_next_day=pm_label,
+                    status=status,
+                )
+            )
+        return entries
+
+    def get_call_before_leave_check(
+        self, start_date: date, end_date: date
+    ) -> list[CallBeforeLeaveEntry]:
+        """D4: Soft check for overnight call the night before leave."""
         result = self.db.execute(
             text("""
                 WITH call_days AS (
@@ -320,43 +418,36 @@ class BlockQualityReportService:
                 SELECT
                     cd.name,
                     cd.call_date,
-                    am_rt.name as am_rotation,
-                    pm_rt.name as pm_rotation
+                    cd.call_date + INTERVAL '1 day' as next_day,
+                    ab.absence_type as absence_type
                 FROM call_days cd
-                LEFT JOIN blocks am_block ON am_block.date = cd.call_date + INTERVAL '1 day'
-                    AND am_block.time_of_day = 'AM'
-                LEFT JOIN blocks pm_block ON pm_block.date = cd.call_date + INTERVAL '1 day'
-                    AND pm_block.time_of_day = 'PM'
-                LEFT JOIN assignments am ON am.block_id = am_block.id AND am.person_id = cd.person_id
-                LEFT JOIN assignments pm ON pm.block_id = pm_block.id AND pm.person_id = cd.person_id
-                LEFT JOIN rotation_templates am_rt ON am.rotation_template_id = am_rt.id
-                LEFT JOIN rotation_templates pm_rt ON pm.rotation_template_id = pm_rt.id
+                LEFT JOIN LATERAL (
+                    SELECT a.absence_type
+                    FROM absences a
+                    WHERE a.person_id = cd.person_id
+                      AND cd.call_date + INTERVAL '1 day' BETWEEN a.start_date AND a.end_date
+                    ORDER BY a.start_date
+                    LIMIT 1
+                ) ab ON TRUE
                 ORDER BY cd.call_date
             """),
-            {"start_date": start_date, "end_date": check_end},
+            {"start_date": start_date, "end_date": end_date},
         )
 
-        entries = []
+        entries: list[CallBeforeLeaveEntry] = []
         for row in result.fetchall():
-            am = row[2]
-            pm = row[3]
-
-            # Determine status
-            if am is None and pm is None:
-                status = "NO PCAT/DO"
-            elif am and "PCAT" in am.upper():
-                status = "PASS" if pm and "DO" in pm.upper() else "PARTIAL"
-            elif pm and "DO" in pm.upper():
-                status = "PARTIAL"
-            else:
-                status = "PARTIAL"
+            name = row[0]
+            call_date = row[1]
+            next_day = row[2]
+            absence_type = row[3]
+            status = "SOFT" if absence_type else "PASS"
 
             entries.append(
-                PostCallEntry(
-                    name=row[0],
-                    call_date=row[1],
-                    am_next_day=am,
-                    pm_next_day=pm,
+                CallBeforeLeaveEntry(
+                    name=name,
+                    call_date=call_date,
+                    next_day=next_day,
+                    absence_type=absence_type,
                     status=status,
                 )
             )
@@ -532,13 +623,25 @@ class BlockQualityReportService:
         # Section D: Post-Constraint
         nf_entries = self.get_nf_one_in_seven(start_date, end_date, block_dates.days)
         post_call_entries = self.get_post_call_check(start_date, end_date)
-        gap_count = sum(1 for e in post_call_entries if e.status != "PASS")
+        call_before_leave_entries = self.get_call_before_leave_check(
+            start_date, end_date
+        )
+        gap_count = sum(
+            1
+            for e in post_call_entries
+            if e.status not in ("PASS", "EXEMPT (FMIT)", "EXEMPT (TIME OFF)")
+        )
+        call_before_leave_gap_count = sum(
+            1 for e in call_before_leave_entries if e.status != "PASS"
+        )
 
         section_d = SectionD(
             faculty_fmit_friday="N/A (within block)",
             nf_one_in_seven=nf_entries,
             post_call_pcat_do=post_call_entries,
             post_call_gap_count=gap_count,
+            call_before_leave=call_before_leave_entries,
+            call_before_leave_gap_count=call_before_leave_gap_count,
         )
 
         # Section E: Accountability
@@ -556,6 +659,11 @@ class BlockQualityReportService:
         nf_pass = sum(1 for e in nf_entries if e.status == "PASS")
         nf_total = len(nf_entries)
         post_call_status = "GAP" if gap_count > 0 else "PASS"
+        call_before_leave_status = (
+            "PASS"
+            if call_before_leave_gap_count == 0
+            else f"SOFT ({call_before_leave_gap_count})"
+        )
 
         executive = ExecutiveSummary(
             block_number=block_number,
@@ -570,6 +678,7 @@ class BlockQualityReportService:
             call_coverage=f"{call_coverage.total_nights}/{block_dates.days}",
             nf_one_in_seven=f"PASS ({nf_pass}/{nf_total})" if nf_total else "N/A",
             post_call_pcat_do=post_call_status,
+            call_before_leave=call_before_leave_status,
             overall_status="PASS" if post_call_status == "PASS" else "PASS (1 GAP)",
         )
 
@@ -616,6 +725,7 @@ class BlockQualityReportService:
                     acgme_compliance=f"{report.executive_summary.acgme_compliance_rate}%",
                     nf_one_in_seven=report.executive_summary.nf_one_in_seven,
                     post_call=report.executive_summary.post_call_pcat_do,
+                    call_before_leave=report.executive_summary.call_before_leave,
                     status=report.executive_summary.overall_status,
                 )
             )
@@ -685,6 +795,9 @@ class BlockQualityReportService:
         lines.append(f"| NF 1-in-7 | {report.executive_summary.nf_one_in_seven} |")
         lines.append(
             f"| Post-Call PCAT/DO | {report.executive_summary.post_call_pcat_do} |"
+        )
+        lines.append(
+            f"| Call Night Before Leave (soft) | {report.executive_summary.call_before_leave} |"
         )
         lines.append("")
 
@@ -782,6 +895,26 @@ class BlockQualityReportService:
         lines.append(
             f"**Status:** {report.executive_summary.post_call_pcat_do} ({report.section_d.post_call_gap_count} gaps)"
         )
+        lines.append("")
+
+        lines.append("## D4: Call Night Before Leave (Soft)")
+        lines.append("")
+        lines.append(
+            f"**Status:** {report.executive_summary.call_before_leave} ({report.section_d.call_before_leave_gap_count} flagged)"
+        )
+        lines.append("")
+        if report.section_d.call_before_leave_gap_count:
+            lines.append("| Name | Call Date | Next Day | Absence Type | Status |")
+            lines.append("|------|-----------|----------|--------------|--------|")
+            for entry in report.section_d.call_before_leave:
+                if entry.status == "PASS":
+                    continue
+                lines.append(
+                    f"| {entry.name} | {entry.call_date} | {entry.next_day} | "
+                    f"{entry.absence_type or ''} | {entry.status} |"
+                )
+        else:
+            lines.append("No call nights immediately before leave.")
         lines.append("")
 
         # Footer

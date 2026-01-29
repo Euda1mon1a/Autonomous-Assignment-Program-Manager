@@ -185,7 +185,7 @@ class TAMCColorScheme:
         Get font hex color for a schedule code.
 
         Font colors have semantic meaning:
-        - Red (#FF0000): +1 AT demand (dedicated supervision) - PR, VAS, COLPO, GER
+        - Red (#FF0000): Procedures needing supervision (PR adds +1 AT) - PR, VAS, COLPO, GER
         - Red (#FF0000): Visibility for Lamoureux - HV
         - Light gray (#E8E8E8): Night Float - NF, Peds NF
         - White (#FFFFFF): Contrast on dark backgrounds - HOL, TNG, MM, FED

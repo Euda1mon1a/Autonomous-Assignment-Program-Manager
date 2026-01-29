@@ -78,3 +78,68 @@ See `docs/development/AGENTS.md` for:
 - Consistency drift checks
 - Type safety enforcement
 - Performance pattern detection
+
+---
+
+## API Type Contract (CRITICAL)
+
+### Naming Convention
+- **Backend (Python):** snake_case everywhere
+- **Frontend (TypeScript):** camelCase for interface properties
+- **Axios interceptor converts automatically** (snake_case ↔ camelCase)
+
+```typescript
+// ✓ CORRECT - TypeScript interfaces use camelCase
+interface Person {
+  pgyLevel: number;
+  createdAt: string;
+  isActive: boolean;
+}
+
+// ✗ WRONG - will cause undefined at runtime
+interface Person {
+  pgy_level: number;  // Axios converts to pgyLevel, this won't match
+}
+```
+
+### Enum Values Stay snake_case (Gorgon's Gaze)
+Axios converts KEYS only, not VALUES. Database stores snake_case values.
+
+```typescript
+// ✓ CORRECT
+type SwapType = 'one_to_one' | 'absorb';
+
+// ✗ WRONG - will never match API responses
+type SwapType = 'oneToOne' | 'absorb';
+```
+
+### URL Query Parameters Stay snake_case (Couatl Killer)
+URL params go directly to API - interceptor doesn't convert them.
+
+```typescript
+// ✓ CORRECT
+router.push(`/schedule?block_id=${id}&include_inactive=true`);
+
+// ✗ WRONG
+router.push(`/schedule?blockId=${id}&includeInactive=true`);
+```
+
+### Type Regeneration (STANDING ORDER)
+After ANY backend schema change (`backend/app/schemas/*.py`):
+
+```bash
+cd frontend && npm run generate:types
+git add frontend/src/types/api-generated.ts
+```
+
+Pre-commit hooks (`api-contract`, `modron-march`) will block if types drift.
+
+---
+
+## Full Guidelines
+
+See `CLAUDE.md` in project root for complete project guidelines including:
+- Architecture patterns
+- Security requirements
+- Testing requirements
+- Git workflow

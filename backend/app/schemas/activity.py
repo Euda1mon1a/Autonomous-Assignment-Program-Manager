@@ -45,6 +45,10 @@ class ActivityBase(BaseModel):
         ...,
         description="Category: clinical, educational, administrative, time_off",
     )
+    procedure_id: UUID | None = Field(
+        None,
+        description="Optional procedure ID for credentialed activities (e.g., VAS, SM)",
+    )
     font_color: str | None = Field(None, description="Tailwind color class for text")
     background_color: str | None = Field(
         None, description="Tailwind color class for background"
@@ -117,6 +121,7 @@ class ActivityUpdate(BaseModel):
     counts_toward_clinical_hours: bool | None = None
     display_order: int | None = None
     capacity_units: int | None = None
+    procedure_id: UUID | None = None
 
     @field_validator("code")
     @classmethod

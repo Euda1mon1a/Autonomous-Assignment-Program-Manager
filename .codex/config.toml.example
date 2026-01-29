@@ -1,0 +1,35 @@
+# Codex MCP Configuration Template
+# Copy to config.toml and fill in your API keys
+#
+# Setup:
+#   cp .codex/config.toml.example .codex/config.toml
+#   # Edit config.toml with your API keys
+#   export PERPLEXITY_API_KEY=pplx-your-key-here
+
+[mcp_servers.residency-scheduler]
+url = "http://127.0.0.1:8081/mcp"
+startup_timeout_sec = 30
+tool_timeout_sec = 120
+
+# Key tools available (all enabled by default):
+# - rag_search, rag_context, rag_health, rag_ingest
+# - validate_schedule_tool, detect_conflicts_tool
+# - analyze_swap_candidates_tool, check_circuit_breakers_tool
+# - get_defense_level_tool, check_mtf_compliance_tool
+# - spawn_agent_tool, and 20+ more
+
+# Perplexity MCP for web research capabilities
+# Requires PERPLEXITY_API_KEY environment variable
+[mcp_servers.perplexity]
+command = "npx"
+args = ["-y", "@anthropic-ai/perplexity-mcp"]
+env_vars = ["PERPLEXITY_API_KEY"]
+startup_timeout_sec = 30
+tool_timeout_sec = 120
+
+# Optional: Playwright MCP for browser automation
+# [mcp_servers.playwright]
+# command = "npx"
+# args = ["-y", "@anthropic-ai/playwright-mcp"]
+# startup_timeout_sec = 60
+# tool_timeout_sec = 300

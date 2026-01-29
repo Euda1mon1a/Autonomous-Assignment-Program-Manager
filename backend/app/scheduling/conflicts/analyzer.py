@@ -340,7 +340,7 @@ class ConflictAnalyzer:
                 description=(
                     f"Block on {title_date} {title_time} has {len(slot_data['resident_ids'])} residents "
                     f"({slot_data['pgy1_count']} PGY-1, {slot_data['pgy2_3_count']} PGY-2/3"
-                    f"{', ' + str(slot_data['proc_vas_count']) + ' PROC/VAS' if slot_data['proc_vas_count'] else ''}) "
+                    f"{', ' + str(slot_data['proc_vas_count']) + ' PROC' if slot_data['proc_vas_count'] else ''}) "
                     f"but only {faculty_count} faculty (requires {required_faculty})"
                 ),
                 start_date=title_date,
@@ -495,9 +495,7 @@ class ConflictAnalyzer:
                 )
                 fixed_total_hours = fixed_blocks * self.HOURS_PER_BLOCK
                 fixed_avg_weekly = (
-                    fixed_total_hours / self.ROLLING_WEEKS
-                    if fixed_total_hours
-                    else 0.0
+                    fixed_total_hours / self.ROLLING_WEEKS if fixed_total_hours else 0.0
                 )
                 fixed_exempt = fixed_avg_weekly > self.MAX_WEEKLY_HOURS
                 conflict_id = self._generate_conflict_id(
@@ -736,6 +734,7 @@ class ConflictAnalyzer:
                 return True
             tokens = [t for t in re.split(r"[^A-Z0-9]+", base) if t]
             return any(t in nf_tokens for t in tokens)
+
         blocks_by_date: dict[date, int] = defaultdict(int)
         for slot_date, code, abbrev, category in rows:
             if (category or "").lower() == "time_off":
@@ -823,7 +822,11 @@ class ConflictAnalyzer:
             cat = (category or "").lower()
             code_norm = (code or "").strip().upper()
             display_norm = (display or "").strip().upper()
-            if cat == "time_off" or code_norm in self._time_off_codes or display_norm in self._time_off_codes:
+            if (
+                cat == "time_off"
+                or code_norm in self._time_off_codes
+                or display_norm in self._time_off_codes
+            ):
                 slots.add((str(person_id_val), slot_date, time_of_day))
 
         return slots

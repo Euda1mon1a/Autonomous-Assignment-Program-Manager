@@ -317,7 +317,7 @@ class HalfDayScheduleService:
         AT demand based on residents in clinic:
         - PGY-1: 0.5 AT each
         - PGY-2/3: 0.25 AT each
-        - PROC/VAS: +1.0 AT each
+        - PROC: +1.0 AT each
 
         Args:
             date_val: Date
@@ -361,7 +361,7 @@ class HalfDayScheduleService:
             else:
                 demand += 0.25
 
-            # PROC/VAS = +1.0 AT
+            # PROC = +1.0 AT
             if activity_is_proc_or_vas(a.activity):
                 demand += 1.0
 

@@ -159,6 +159,7 @@ class ActivityService:
             "code": data.code,
             "display_abbreviation": data.display_abbreviation,
             "activity_category": data.activity_category,
+            "procedure_id": data.procedure_id,
             "font_color": data.font_color,
             "background_color": data.background_color,
             "requires_supervision": data.requires_supervision,
@@ -225,6 +226,8 @@ class ActivityService:
             activity.display_abbreviation = data.display_abbreviation
         if data.activity_category is not None:
             activity.activity_category = data.activity_category
+        if data.procedure_id is not None:
+            activity.procedure_id = data.procedure_id
         if data.font_color is not None:
             activity.font_color = data.font_color
         if data.background_color is not None:
