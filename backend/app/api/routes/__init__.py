@@ -21,6 +21,7 @@ from app.api.routes import (
     blocks,
     calendar,
     call_assignments,
+    call_overrides,
     certifications,
     changelog,
     claude_chat,
@@ -160,6 +161,11 @@ api_router.include_router(
     schedule_overrides.router,
     prefix="/admin/schedule-overrides",
     tags=["schedule-overrides"],
+)
+api_router.include_router(
+    call_overrides.router,
+    prefix="/admin/call-overrides",
+    tags=["call-overrides"],
 )
 api_router.include_router(me_dashboard.router, prefix="/me", tags=["dashboard"])
 api_router.include_router(export.router, prefix="/export", tags=["export"])

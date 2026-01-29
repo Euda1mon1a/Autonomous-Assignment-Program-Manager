@@ -34,7 +34,7 @@ changing the underlying base schedule.
 - Overrides are stored as a **delta** and applied at view/export time.
 
 **Data Model (minimal)**
-- `schedule_overrides` table:
+- `schedule_overrides` table (half-day):
   - `id`
   - `half_day_assignment_id`
   - `replacement_person_id`
@@ -46,7 +46,8 @@ changing the underlying base schedule.
 **Behavior**
 - UI/export shows **replacement** when override is active.
 - Original assignment remains for audit and rollback.
-- Overrides never touch FMIT/absences/PCAT/DO unless explicitly allowed.
+- FMIT/AT/PCAT/DO cannot be cancelled; coverage-only allowed.
+- Time-off assignments cannot be overridden.
 
 **Acceptance Criteria**
 - Admin can create an override without regenerating a block.
@@ -61,10 +62,20 @@ changing the underlying base schedule.
 - `DELETE /admin/schedule-overrides/{id}`
   - Soft-delete (deactivate) override.
 
+**Call Coverage (Admin)**
+- `call_overrides` table (call assignments):
+  - Mirrors `schedule_overrides` for call coverage.
+  - Call must **always be staffed** (coverage-only).
+- `POST /admin/call-overrides`
+- `GET /admin/call-overrides`
+- `DELETE /admin/call-overrides/{id}`
+
 **Policy Notes**
-- Reject overrides if replacement already has a slot at the same date/time.
+- Reject overrides if replacement already has a slot at the same date/time
+  (unless the replacement’s slot is already cancelled).
 - One active override per assignment (partial unique index).
-- Protected slots: FMIT, time-off, PCAT/DO (no override).
+- Protected slots: FMIT/AT/PCAT/DO cannot be cancelled.
+- GAP override: marks required slot unfilled (visible shortage, does not count as coverage).
 
 **Future Read Layer**
 - Schedule reads/export should apply overrides by default
@@ -82,6 +93,35 @@ Automate multi-step replacements using resilience tooling:
 - Use `backend/app/resilience/` modules to propose low-impact backfills.
 - Use MCP tools (when wired) to estimate blast radius and contingency options.
 - Create overrides atomically after admin confirmation.
+
+**Cascade Helper (P5.1 — Updated)**
+Handle deployment-style cascades across both **half-day** and **call**:
+
+Inputs:
+- Deployed person + date range
+
+Outputs:
+- Ordered override steps (cancel/backfill first, then coverage)
+- Warnings + N-1 penalty score
+
+Sacrifice Hierarchy:
+1. GME/DFM (admin)
+2. Faculty solo clinic
+3. Procedure supervision (VAS/SM/BTX/COLPO)
+
+Protected (never auto-sacrifice):
+- FMIT
+- AT/PCAT/DO (resident supervision)
+
+Rules:
+- Call must always be staffed (coverage-only).
+- Call replacements must match person type (faculty now; resident later).
+- Adjunct faculty excluded from auto-cascade.
+- Same-day clinic + call is allowed **with warning**.
+- N-1 hard-block for protected coverage loss.
+- If replacement has next-day protected work (AT/PCAT/DO/FMIT/time-off), warn and do
+  not auto-reassign PCAT/DO. Manual follow-up required.
+- GAP overrides are auto-created only for post-call PCAT/DO after call changes.
 
 ---
 

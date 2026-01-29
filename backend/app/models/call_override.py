@@ -1,9 +1,4 @@
-"""ScheduleOverride model - admin overlay for released schedules.
-
-Overrides provide a delta layer on top of the base schedule without
-mutating original assignments. This supports short-notice coverage
-changes (deployment, illness) while preserving audit history.
-"""
+"""CallOverride model - admin overlay for call assignments."""
 
 from __future__ import annotations
 
@@ -27,16 +22,16 @@ from app.db.base import Base
 from app.db.types import GUID
 
 
-class ScheduleOverride(Base):
-    """Admin override for a half-day assignment."""
+class CallOverride(Base):
+    """Admin override for a call assignment."""
 
-    __tablename__ = "schedule_overrides"
+    __tablename__ = "call_overrides"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
 
-    half_day_assignment_id = Column(
+    call_assignment_id = Column(
         GUID(),
-        ForeignKey("half_day_assignments.id", ondelete="CASCADE"),
+        ForeignKey("call_assignments.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -57,13 +52,13 @@ class ScheduleOverride(Base):
         String(20),
         nullable=False,
         default="coverage",
-        comment="coverage or cancellation",
+        comment="coverage only (call must always be staffed)",
     )
     reason = Column(String(50), nullable=True)
     notes = Column(Text, nullable=True)
 
     effective_date = Column(Date, nullable=False, index=True)
-    time_of_day = Column(String(2), nullable=False)
+    call_type = Column(String(50), nullable=False)
 
     is_active = Column(Boolean, default=True, nullable=False, index=True)
 
@@ -85,42 +80,35 @@ class ScheduleOverride(Base):
 
     supersedes_override_id = Column(
         GUID(),
-        ForeignKey("schedule_overrides.id", ondelete="SET NULL"),
+        ForeignKey("call_overrides.id", ondelete="SET NULL"),
         nullable=True,
     )
 
     __table_args__ = (
         CheckConstraint(
-            "override_type IN ('coverage', 'cancellation', 'gap')",
-            name="ck_schedule_override_type",
+            "override_type IN ('coverage')",
+            name="ck_call_override_type",
         ),
         CheckConstraint(
-            "time_of_day IN ('AM', 'PM')",
-            name="ck_schedule_override_time_of_day",
-        ),
-        CheckConstraint(
-            "(override_type = 'coverage' AND replacement_person_id IS NOT NULL) "
-            "OR (override_type IN ('cancellation', 'gap') AND replacement_person_id IS NULL)",
-            name="ck_schedule_override_replacement",
+            "replacement_person_id IS NOT NULL",
+            name="ck_call_override_replacement",
         ),
         Index(
-            "idx_schedule_overrides_effective",
+            "idx_call_overrides_effective",
             "effective_date",
-            "time_of_day",
+            "call_type",
         ),
     )
 
-    half_day_assignment = relationship("HalfDayAssignment")
+    call_assignment = relationship("CallAssignment")
     original_person = relationship("Person", foreign_keys=[original_person_id])
     replacement_person = relationship("Person", foreign_keys=[replacement_person_id])
     created_by = relationship("User", foreign_keys=[created_by_id])
     deactivated_by = relationship("User", foreign_keys=[deactivated_by_id])
-    supersedes_override = relationship(
-        "ScheduleOverride", remote_side=[id], uselist=False
-    )
+    supersedes_override = relationship("CallOverride", remote_side=[id], uselist=False)
 
     def __repr__(self) -> str:
         return (
-            f"<ScheduleOverride(id={self.id}, assignment={self.half_day_assignment_id}, "
-            f"override_type={self.override_type}, active={self.is_active})>"
+            f"<CallOverride(id={self.id}, assignment={self.call_assignment_id}, "
+            f"active={self.is_active})>"
         )

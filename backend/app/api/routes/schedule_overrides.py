@@ -14,6 +14,11 @@ from app.schemas.schedule_override import (
     ScheduleOverrideListResponse,
     ScheduleOverrideResponse,
 )
+from app.schemas.cascade_override import (
+    CascadeOverridePlanResponse,
+    CascadeOverrideRequest,
+)
+from app.services.cascade_override_service import CascadeOverrideService
 from app.services.schedule_override_service import get_schedule_override_service
 
 router = APIRouter()
@@ -88,3 +93,21 @@ async def deactivate_schedule_override(
     )
     await db.commit()
     return ScheduleOverrideResponse.model_validate(override)
+
+
+@router.post(
+    "/cascade",
+    response_model=CascadeOverridePlanResponse,
+    summary="Plan or apply cascade overrides",
+    description="Admin-only: build and optionally apply cascade overrides for a deployment.",
+)
+async def create_cascade_overrides(
+    request: CascadeOverrideRequest,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_admin_user),
+) -> CascadeOverridePlanResponse:
+    service = CascadeOverrideService(db)
+    plan = await service.plan_and_apply(request, created_by_id=current_user.id)
+    if request.apply and not plan.errors:
+        await db.commit()
+    return plan

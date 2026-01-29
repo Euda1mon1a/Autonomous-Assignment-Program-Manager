@@ -39,6 +39,7 @@ class CallAssignmentController:
         call_type: str | None = None,
         skip: int = 0,
         limit: int = 100,
+        include_overrides: bool = True,
     ) -> CallAssignmentListResponse:
         """List call assignments with optional filters."""
         result = await self.service.get_call_assignments(
@@ -48,6 +49,7 @@ class CallAssignmentController:
             end_date=end_date,
             person_id=person_id,
             call_type=call_type,
+            include_overrides=include_overrides,
         )
         return CallAssignmentListResponse(
             items=[
@@ -125,12 +127,14 @@ class CallAssignmentController:
         person_id: UUID,
         start_date: date | None = None,
         end_date: date | None = None,
+        include_overrides: bool = True,
     ) -> CallAssignmentListResponse:
         """Get all call assignments for a specific person."""
         assignments = await self.service.get_call_assignments_by_person(
             person_id=person_id,
             start_date=start_date,
             end_date=end_date,
+            include_overrides=include_overrides,
         )
         return CallAssignmentListResponse(
             items=[CallAssignmentResponse.model_validate(item) for item in assignments],
@@ -138,12 +142,13 @@ class CallAssignmentController:
         )
 
     async def get_call_assignments_by_date(
-        self, on_date: date
+        self, on_date: date, include_overrides: bool = True
     ) -> CallAssignmentListResponse:
         """Get all call assignments for a specific date."""
         assignments = await self.service.get_call_assignments_by_date_range(
             start_date=on_date,
             end_date=on_date,
+            include_overrides=include_overrides,
         )
         return CallAssignmentListResponse(
             items=[CallAssignmentResponse.model_validate(item) for item in assignments],

@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-29T15:40:49Z
+ * Generated at: 2026-01-29T22:24:30Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -6300,6 +6300,70 @@ export interface paths {
          * @description Admin-only: deactivate an override (soft delete).
          */
         delete: operations["deactivate_schedule_override_api_v1_admin_schedule_overrides__override_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/schedule-overrides/cascade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Plan or apply cascade overrides
+         * @description Admin-only: build and optionally apply cascade overrides for a deployment.
+         */
+        post: operations["create_cascade_overrides_api_v1_admin_schedule_overrides_cascade_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/call-overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List call overrides
+         * @description Admin-only: list call overrides for a block or date range.
+         */
+        get: operations["list_call_overrides_api_v1_admin_call_overrides_get"];
+        put?: never;
+        /**
+         * Create call override
+         * @description Admin-only: create a coverage override for a call assignment.
+         */
+        post: operations["create_call_override_api_v1_admin_call_overrides_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/call-overrides/{override_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Deactivate call override
+         * @description Admin-only: deactivate a call override (soft delete).
+         */
+        delete: operations["deactivate_call_override_api_v1_admin_call_overrides__override_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -22253,11 +22317,8 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
-            /**
-             * Template Id
-             * Format: uuid
-             */
-            templateId: string;
+            /** Person Id */
+            personId?: string | null;
             /** Success */
             success: boolean;
             /** Error */
@@ -22497,7 +22558,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__person__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -22806,7 +22867,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -24573,6 +24634,235 @@ export interface components {
             }[];
         };
         /**
+         * CallOverrideCreate
+         * @description Create a call override for a call assignment.
+         */
+        CallOverrideCreate: {
+            /**
+             * Call Assignment Id
+             * Format: uuid
+             * @description Call assignment ID
+             */
+            callAssignmentId: string;
+            /**
+             * Override Type
+             * @description coverage replaces person (call must be staffed)
+             * @default coverage
+             * @constant
+             */
+            overrideType: "coverage";
+            /**
+             * Replacement Person Id
+             * Format: uuid
+             * @description Replacement person (required)
+             */
+            replacementPersonId: string;
+            /**
+             * Reason
+             * @description Short reason (deployment, sick, urgent)
+             */
+            reason?: string | null;
+            /**
+             * Notes
+             * @description Optional notes
+             */
+            notes?: string | null;
+            /**
+             * Supersedes Override Id
+             * @description Optional prior override ID
+             */
+            supersedesOverrideId?: string | null;
+        };
+        /**
+         * CallOverrideListResponse
+         * @description List of call overrides.
+         */
+        CallOverrideListResponse: {
+            /** Overrides */
+            overrides: components["schemas"]["CallOverrideResponse"][];
+            /** Total */
+            total: number;
+            /** Block Number */
+            blockNumber?: number | null;
+            /** Academic Year */
+            academicYear?: number | null;
+            /** Start Date */
+            startDate?: string | null;
+            /** End Date */
+            endDate?: string | null;
+        };
+        /**
+         * CallOverrideResponse
+         * @description Call override response schema.
+         */
+        CallOverrideResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Call Assignment Id
+             * Format: uuid
+             */
+            callAssignmentId: string;
+            /** Original Person Id */
+            originalPersonId?: string | null;
+            /**
+             * Replacement Person Id
+             * Format: uuid
+             */
+            replacementPersonId: string;
+            /**
+             * Override Type
+             * @constant
+             */
+            overrideType: "coverage";
+            /** Reason */
+            reason?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Effective Date
+             * Format: date
+             */
+            effectiveDate: string;
+            /** Call Type */
+            callType: string;
+            /** Is Active */
+            isActive: boolean;
+            /** Created By Id */
+            createdById?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Deactivated At */
+            deactivatedAt?: string | null;
+            /** Deactivated By Id */
+            deactivatedById?: string | null;
+            /** Supersedes Override Id */
+            supersedesOverrideId?: string | null;
+        };
+        /**
+         * CascadeOverridePlanResponse
+         * @description Response for a cascade plan.
+         */
+        CascadeOverridePlanResponse: {
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            personId: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            startDate: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            endDate: string;
+            /** Applied */
+            applied: boolean;
+            /** Steps */
+            steps: components["schemas"]["CascadeOverrideStep"][];
+            /**
+             * Warnings
+             * @default []
+             */
+            warnings: string[];
+            /**
+             * Errors
+             * @default []
+             */
+            errors: string[];
+        };
+        /**
+         * CascadeOverrideRequest
+         * @description Request a cascade plan for a deployed person.
+         */
+        CascadeOverrideRequest: {
+            /**
+             * Person Id
+             * Format: uuid
+             * @description Deployed person ID
+             */
+            personId: string;
+            /**
+             * Start Date
+             * Format: date
+             * @description Start date (inclusive)
+             */
+            startDate: string;
+            /**
+             * End Date
+             * Format: date
+             * @description End date (inclusive)
+             */
+            endDate: string;
+            /**
+             * Reason
+             * @description Reason for override (deployment, sick)
+             */
+            reason?: string | null;
+            /**
+             * Notes
+             * @description Optional notes
+             */
+            notes?: string | null;
+            /**
+             * Apply
+             * @description Apply overrides if true; otherwise dry-run
+             * @default false
+             */
+            apply: boolean;
+            /**
+             * Max Depth
+             * @description Cascade depth (max 2)
+             * @default 2
+             */
+            maxDepth: number;
+        };
+        /**
+         * CascadeOverrideStep
+         * @description Single step in a cascade plan.
+         */
+        CascadeOverrideStep: {
+            /**
+             * Target Type
+             * @enum {string}
+             */
+            targetType: "half_day" | "call";
+            /**
+             * Assignment Id
+             * Format: uuid
+             */
+            assignmentId: string;
+            /**
+             * Override Type
+             * @enum {string}
+             */
+            overrideType: "coverage" | "cancellation" | "gap";
+            /** Replacement Person Id */
+            replacementPersonId?: string | null;
+            /** Reason */
+            reason?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Score */
+            score?: number | null;
+            /**
+             * Warnings
+             * @default []
+             */
+            warnings: string[];
+            /** Created Override Id */
+            createdOverrideId?: string | null;
+        };
+        /**
          * CatalystCapacityResponse
          * @description Response schema for system catalyst capacity.
          */
@@ -25878,15 +26168,93 @@ export interface components {
         };
         /**
          * ConflictSummary
-         * @description Summary of conflicts found.
+         * @description Summary statistics for a set of conflicts.
+         *
+         *     Used for dashboard displays and reporting.
+         * @example {
+         *       "affectedPeopleCount": 8,
+         *       "autoResolvableCount": 6,
+         *       "averageImpactScore": 0.65,
+         *       "criticalCount": 3,
+         *       "highCount": 5,
+         *       "lowCount": 3,
+         *       "mediumCount": 4,
+         *       "totalConflicts": 15
+         *     }
          */
         ConflictSummary: {
-            /** Total Conflicts */
+            /**
+             * Total Conflicts
+             * @default 0
+             */
             totalConflicts: number;
-            /** Errors */
-            errors: number;
-            /** Warnings */
-            warnings: number;
+            /**
+             * Critical Count
+             * @default 0
+             */
+            criticalCount: number;
+            /**
+             * High Count
+             * @default 0
+             */
+            highCount: number;
+            /**
+             * Medium Count
+             * @default 0
+             */
+            mediumCount: number;
+            /**
+             * Low Count
+             * @default 0
+             */
+            lowCount: number;
+            /** By Category */
+            byCategory?: {
+                [key: string]: number | undefined;
+            };
+            /** By Type */
+            byType?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Affected People Count
+             * @default 0
+             */
+            affectedPeopleCount: number;
+            /**
+             * Affected Blocks Count
+             * @default 0
+             */
+            affectedBlocksCount: number;
+            /**
+             * Auto Resolvable Count
+             * @default 0
+             */
+            autoResolvableCount: number;
+            /**
+             * Requires Manual Count
+             * @default 0
+             */
+            requiresManualCount: number;
+            /**
+             * Average Impact Score
+             * @default 0
+             */
+            averageImpactScore: number;
+            /**
+             * Average Urgency Score
+             * @default 0
+             */
+            averageUrgencyScore: number;
+            /**
+             * Average Complexity Score
+             * @default 0
+             */
+            averageComplexityScore: number;
+            /** Earliest Date */
+            earliestDate?: string | null;
+            /** Latest Date */
+            latestDate?: string | null;
         };
         /**
          * ConflictType
@@ -26110,36 +26478,34 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap in the schedule.
-         * @example {
-         *       "date": "2024-01-15",
-         *       "rotation": "FMIT Inpatient",
-         *       "severity": "high",
-         *       "timeOfDay": "PM"
-         *     }
+         * @description Represents a coverage gap with details.
          */
         CoverageGap: {
+            /** Gap Id */
+            gapId: string;
             /**
              * Date
              * Format: date
-             * @description Date of the gap
              */
             date: string;
-            /**
-             * Time Of Day
-             * @description AM or PM
-             */
+            /** Time Of Day */
             timeOfDay: string;
-            /**
-             * Rotation
-             * @description Rotation with gap
-             */
-            rotation?: string | null;
-            /**
-             * Severity
-             * @description low, medium, high
-             */
+            /** Block Id */
+            blockId: string;
+            /** Severity */
             severity: string;
+            /** Days Until */
+            daysUntil: number;
+            /** Affected Area */
+            affectedArea: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            currentAssignments: number;
+            /** Required Assignments */
+            requiredAssignments: number;
+            /** Gap Size */
+            gapSize: number;
         };
         /**
          * CoverageGapsResponse
@@ -26166,7 +26532,7 @@ export interface components {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
+            gaps: components["schemas"]["CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
@@ -26218,7 +26584,7 @@ export interface components {
              * Gaps
              * @description List of coverage gaps
              */
-            gaps?: components["schemas"]["CoverageGap"][];
+            gaps?: components["schemas"]["app__schemas__visualization__CoverageGap"][];
             /**
              * Title
              * @description Title for the heatmap
@@ -31292,6 +31658,11 @@ export interface components {
              */
             isLocked: boolean;
             /**
+             * Is Gap
+             * @default false
+             */
+            isGap: boolean;
+            /**
              * Created At
              * Format: date-time
              */
@@ -32439,7 +32810,7 @@ export interface components {
              * @default []
              */
             recommendations: components["schemas"]["Recommendation"][];
-            summary?: components["schemas"]["ConflictSummary"] | null;
+            summary?: components["schemas"]["app__schemas__schedule__ConflictSummary"] | null;
         };
         /**
          * ImportApplyError
@@ -36545,7 +36916,7 @@ export interface components {
         };
         /**
          * QueuePurgeResponse
-         * @description Response to queue purge request.
+         * @description Response after purging a queue.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -39379,11 +39750,11 @@ export interface components {
             halfDayAssignmentId: string;
             /**
              * Override Type
-             * @description coverage replaces person, cancellation clears slot
+             * @description coverage replaces person, cancellation clears slot, gap flags shortage
              * @default coverage
              * @enum {string}
              */
-            overrideType: "coverage" | "cancellation";
+            overrideType: "coverage" | "cancellation" | "gap";
             /**
              * Replacement Person Id
              * @description Replacement person (required for coverage)
@@ -39446,7 +39817,7 @@ export interface components {
              * Override Type
              * @enum {string}
              */
-            overrideType: "coverage" | "cancellation";
+            overrideType: "coverage" | "cancellation" | "gap";
             /** Reason */
             reason?: string | null;
             /** Notes */
@@ -39671,7 +40042,7 @@ export interface components {
             /** Components */
             components: components["schemas"]["ScoreComponentResponse"][];
             /** Suggestions */
-            suggestions?: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
+            suggestions?: components["schemas"]["SuggestionResponse"][];
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -41533,24 +41904,25 @@ export interface components {
         };
         /**
          * SuggestionResponse
-         * @description Response schema for autocomplete suggestions.
+         * @description Response for improvement suggestion.
          */
         SuggestionResponse: {
+            /** Type */
+            type: string;
             /**
-             * Suggestions
-             * @description List of suggestions
+             * Priority
+             * @description high, medium, low
              */
-            suggestions: string[];
+            priority: string;
+            /** Description */
+            description: string;
             /**
-             * Query
-             * @description Original query string
+             * Impact
+             * @description Expected improvement
              */
-            query: string;
-            /**
-             * Entity Type
-             * @description Entity type
-             */
-            entityType: string;
+            impact: number;
+            /** Affected Items */
+            affectedItems?: string[];
         };
         /**
          * SurveyFrequencyEnum
@@ -45619,7 +45991,7 @@ export interface components {
             /** People */
             people: components["schemas"]["PersonWorkloadResponse"][];
             /** Rebalancing Suggestions */
-            rebalancingSuggestions: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
+            rebalancingSuggestions: components["schemas"]["SuggestionResponse"][];
         };
         /**
          * WorkloadSummary
@@ -45974,127 +46346,6 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
-         * CoverageGap
-         * @description Represents a coverage gap with details.
-         */
-        app__api__routes__fmit_health__CoverageGap: {
-            /** Gap Id */
-            gapId: string;
-            /**
-             * Date
-             * Format: date
-             */
-            date: string;
-            /** Time Of Day */
-            timeOfDay: string;
-            /** Block Id */
-            blockId: string;
-            /** Severity */
-            severity: string;
-            /** Days Until */
-            daysUntil: number;
-            /** Affected Area */
-            affectedArea: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            currentAssignments: number;
-            /** Required Assignments */
-            requiredAssignments: number;
-            /** Gap Size */
-            gapSize: number;
-        };
-        /**
-         * ConflictSummary
-         * @description Summary statistics for a set of conflicts.
-         *
-         *     Used for dashboard displays and reporting.
-         * @example {
-         *       "affectedPeopleCount": 8,
-         *       "autoResolvableCount": 6,
-         *       "averageImpactScore": 0.65,
-         *       "criticalCount": 3,
-         *       "highCount": 5,
-         *       "lowCount": 3,
-         *       "mediumCount": 4,
-         *       "totalConflicts": 15
-         *     }
-         */
-        app__scheduling__conflicts__types__ConflictSummary: {
-            /**
-             * Total Conflicts
-             * @default 0
-             */
-            totalConflicts: number;
-            /**
-             * Critical Count
-             * @default 0
-             */
-            criticalCount: number;
-            /**
-             * High Count
-             * @default 0
-             */
-            highCount: number;
-            /**
-             * Medium Count
-             * @default 0
-             */
-            mediumCount: number;
-            /**
-             * Low Count
-             * @default 0
-             */
-            lowCount: number;
-            /** By Category */
-            byCategory?: {
-                [key: string]: number | undefined;
-            };
-            /** By Type */
-            byType?: {
-                [key: string]: number | undefined;
-            };
-            /**
-             * Affected People Count
-             * @default 0
-             */
-            affectedPeopleCount: number;
-            /**
-             * Affected Blocks Count
-             * @default 0
-             */
-            affectedBlocksCount: number;
-            /**
-             * Auto Resolvable Count
-             * @default 0
-             */
-            autoResolvableCount: number;
-            /**
-             * Requires Manual Count
-             * @default 0
-             */
-            requiresManualCount: number;
-            /**
-             * Average Impact Score
-             * @default 0
-             */
-            averageImpactScore: number;
-            /**
-             * Average Urgency Score
-             * @default 0
-             */
-            averageUrgencyScore: number;
-            /**
-             * Average Complexity Score
-             * @default 0
-             */
-            averageComplexityScore: number;
-            /** Earliest Date */
-            earliestDate?: string | null;
-            /** Latest Date */
-            latestDate?: string | null;
-        };
-        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
@@ -46201,43 +46452,16 @@ export interface components {
             suggestions?: string[];
         };
         /**
-         * SuggestionResponse
-         * @description Response for improvement suggestion.
+         * QueuePurgeResponse
+         * @description Response to queue purge request.
          */
-        app__schemas__ml__SuggestionResponse: {
-            /** Type */
-            type: string;
-            /**
-             * Priority
-             * @description high, medium, low
-             */
-            priority: string;
-            /** Description */
-            description: string;
-            /**
-             * Impact
-             * @description Expected improvement
-             */
-            impact: number;
-            /** Affected Items */
-            affectedItems?: string[];
-        };
-        /**
-         * BatchOperationResult
-         * @description Result for a single operation in a batch.
-         */
-        app__schemas__person__BatchOperationResult: {
-            /**
-             * Index
-             * @description Index of the operation in the batch
-             */
-            index: number;
-            /** Person Id */
-            personId?: string | null;
-            /** Success */
-            success: boolean;
-            /** Error */
-            error?: string | null;
+        app__schemas__jobs__QueuePurgeResponse: {
+            /** Queuename */
+            queueName: string;
+            /** Taskspurged */
+            tasksPurged: number;
+            /** Timestamp */
+            timestamp: string;
         };
         /**
          * PersonSummary
@@ -46269,16 +46493,90 @@ export interface components {
             confirm: boolean;
         };
         /**
-         * QueuePurgeResponse
-         * @description Response after purging a queue.
+         * BatchOperationResult
+         * @description Result for a single operation in a batch.
          */
-        app__schemas__queue__QueuePurgeResponse: {
-            /** Queuename */
-            queueName: string;
-            /** Taskspurged */
-            tasksPurged: number;
-            /** Timestamp */
-            timestamp: string;
+        app__schemas__rotation_template__BatchOperationResult: {
+            /**
+             * Index
+             * @description Index of the operation in the batch
+             */
+            index: number;
+            /**
+             * Template Id
+             * Format: uuid
+             */
+            templateId: string;
+            /** Success */
+            success: boolean;
+            /** Error */
+            error?: string | null;
+        };
+        /**
+         * ConflictSummary
+         * @description Summary of conflicts found.
+         */
+        app__schemas__schedule__ConflictSummary: {
+            /** Total Conflicts */
+            totalConflicts: number;
+            /** Errors */
+            errors: number;
+            /** Warnings */
+            warnings: number;
+        };
+        /**
+         * SuggestionResponse
+         * @description Response schema for autocomplete suggestions.
+         */
+        app__schemas__search__SuggestionResponse: {
+            /**
+             * Suggestions
+             * @description List of suggestions
+             */
+            suggestions: string[];
+            /**
+             * Query
+             * @description Original query string
+             */
+            query: string;
+            /**
+             * Entity Type
+             * @description Entity type
+             */
+            entityType: string;
+        };
+        /**
+         * CoverageGap
+         * @description Represents a coverage gap in the schedule.
+         * @example {
+         *       "date": "2024-01-15",
+         *       "rotation": "FMIT Inpatient",
+         *       "severity": "high",
+         *       "timeOfDay": "PM"
+         *     }
+         */
+        app__schemas__visualization__CoverageGap: {
+            /**
+             * Date
+             * Format: date
+             * @description Date of the gap
+             */
+            date: string;
+            /**
+             * Time Of Day
+             * @description AM or PM
+             */
+            timeOfDay: string;
+            /**
+             * Rotation
+             * @description Rotation with gap
+             */
+            rotation?: string | null;
+            /**
+             * Severity
+             * @description low, medium, high
+             */
+            severity: string;
         };
     };
     responses: never;
@@ -50759,6 +51057,8 @@ export interface operations {
                 skip?: number;
                 /** @description Max records to return */
                 limit?: number;
+                /** @description Apply call overrides to returned assignments */
+                include_overrides?: boolean;
             };
             header?: never;
             path?: never;
@@ -50954,6 +51254,8 @@ export interface operations {
                 start_date?: string | null;
                 /** @description Filter by end date */
                 end_date?: string | null;
+                /** @description Apply call overrides to returned assignments */
+                include_overrides?: boolean;
             };
             header?: never;
             path: {
@@ -50985,7 +51287,10 @@ export interface operations {
     };
     get_call_assignments_by_date_api_v1_call_assignments_by_date__on_date__get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Apply call overrides to returned assignments */
+                include_overrides?: boolean;
+            };
             header?: never;
             path: {
                 on_date: string;
@@ -53915,6 +54220,143 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScheduleOverrideResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_cascade_overrides_api_v1_admin_schedule_overrides_cascade_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CascadeOverrideRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CascadeOverridePlanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_call_overrides_api_v1_admin_call_overrides_get: {
+        parameters: {
+            query?: {
+                /** @description Block number */
+                block_number?: number | null;
+                /** @description Academic year (e.g., 2025) */
+                academic_year?: number | null;
+                /** @description Start date */
+                start_date?: string | null;
+                /** @description End date */
+                end_date?: string | null;
+                /** @description Only active overrides */
+                active_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallOverrideListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_call_override_api_v1_admin_call_overrides_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CallOverrideCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallOverrideResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deactivate_call_override_api_v1_admin_call_overrides__override_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                override_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CallOverrideResponse"];
                 };
             };
             /** @description Validation Error */
@@ -59460,7 +59902,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuggestionResponse"];
+                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -59493,7 +59935,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuggestionResponse"];
+                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -64390,7 +64832,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__scheduling__conflicts__types__ConflictSummary"];
+                    "application/json": components["schemas"]["ConflictSummary"];
                 };
             };
             /** @description Validation Error */
@@ -65677,7 +66119,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -66044,7 +66486,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */

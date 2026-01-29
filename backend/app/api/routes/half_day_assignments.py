@@ -87,6 +87,7 @@ async def list_half_day_assignments(
     # Convert to response schema
     assignment_reads = []
     for a in assignments:
+        is_gap = bool(getattr(a, "is_gap", False))
         assignment_reads.append(
             HalfDayAssignmentRead(
                 id=a.id,
@@ -104,6 +105,7 @@ async def list_half_day_assignments(
                 else None,
                 source=a.source,
                 is_locked=a.is_locked,
+                is_gap=is_gap,
                 created_at=a.created_at,
                 updated_at=a.updated_at,
             )

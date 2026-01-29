@@ -57,6 +57,9 @@ async def list_call_assignments(
     call_type: str | None = Query(None, description="Filter by call type"),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Max records to return"),
+    include_overrides: bool = Query(
+        True, description="Apply call overrides to returned assignments"
+    ),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CallAssignmentListResponse:
@@ -69,6 +72,7 @@ async def list_call_assignments(
         call_type=call_type,
         skip=skip,
         limit=limit,
+        include_overrides=include_overrides,
     )
 
 
@@ -169,6 +173,9 @@ async def get_call_assignments_by_person(
     person_id: UUID,
     start_date: date | None = Query(None, description="Filter by start date"),
     end_date: date | None = Query(None, description="Filter by end date"),
+    include_overrides: bool = Query(
+        True, description="Apply call overrides to returned assignments"
+    ),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CallAssignmentListResponse:
@@ -178,6 +185,7 @@ async def get_call_assignments_by_person(
         person_id=person_id,
         start_date=start_date,
         end_date=end_date,
+        include_overrides=include_overrides,
     )
 
 
@@ -189,12 +197,17 @@ async def get_call_assignments_by_person(
 )
 async def get_call_assignments_by_date(
     on_date: date,
+    include_overrides: bool = Query(
+        True, description="Apply call overrides to returned assignments"
+    ),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
 ) -> CallAssignmentListResponse:
     """Get all call assignments for a specific date."""
     controller = CallAssignmentController(db)
-    return await controller.get_call_assignments_by_date(on_date)
+    return await controller.get_call_assignments_by_date(
+        on_date, include_overrides=include_overrides
+    )
 
 
 @router.get(

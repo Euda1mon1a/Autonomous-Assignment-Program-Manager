@@ -82,6 +82,7 @@ from app.models.schedule_draft import (
     ScheduleDraftStatus,
 )
 from app.models.schedule_override import ScheduleOverride
+from app.models.call_override import CallOverride
 from app.models.assignment_backup import AssignmentBackup
 from app.models.intern_stagger import InternStaggerPattern
 from app.models.notification import (
@@ -237,6 +238,7 @@ __all__ = [
     "ScheduleDraftFlag",
     "ScheduleDraftStatus",
     "ScheduleOverride",
+    "CallOverride",
     "DraftSourceType",
     "DraftAssignmentChangeType",
     "DraftFlagType",

@@ -75,10 +75,11 @@ class ScheduleOverrideService:
                 or ""
             ).upper()
             if activity_code in PROTECTED_OVERRIDE_CODES:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Cannot override FMIT or PCAT/DO assignments",
-                )
+                if request.override_type == "cancellation":
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Cannot cancel FMIT or PCAT/DO assignments",
+                    )
             if assignment.activity.activity_category == ActivityCategory.TIME_OFF.value:
                 raise HTTPException(
                     status_code=400,
@@ -186,18 +187,27 @@ class ScheduleOverrideService:
         if not replacement:
             raise HTTPException(status_code=404, detail="Replacement person not found")
 
-        conflict = await self.session.execute(
+        conflict_result = await self.session.execute(
             select(HalfDayAssignment.id).where(
                 HalfDayAssignment.person_id == replacement_person_id,
                 HalfDayAssignment.date == assignment.date,
                 HalfDayAssignment.time_of_day == assignment.time_of_day,
             )
         )
-        if conflict.scalar_one_or_none():
-            raise HTTPException(
-                status_code=409,
-                detail="Replacement person already assigned for this slot",
+        conflict_id = conflict_result.scalar_one_or_none()
+        if conflict_id:
+            cancellation_override = await self.session.execute(
+                select(ScheduleOverride.id).where(
+                    ScheduleOverride.half_day_assignment_id == conflict_id,
+                    ScheduleOverride.override_type.in_(["cancellation", "gap"]),
+                    ScheduleOverride.is_active.is_(True),
+                )
             )
+            if cancellation_override.scalar_one_or_none() is None:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Replacement person already assigned for this slot",
+                )
 
         override_conflict = await self.session.execute(
             select(ScheduleOverride.id).where(

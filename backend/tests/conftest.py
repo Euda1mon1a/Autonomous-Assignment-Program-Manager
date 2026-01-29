@@ -92,6 +92,10 @@ class AsyncSessionWrapper:
         """Close session."""
         self._session.close()
 
+    async def get(self, entity, ident, **kwargs):
+        """Get entity by primary key (makes sync get awaitable)."""
+        return self._session.get(entity, ident, **kwargs)
+
     def __getattr__(self, name):
         """Proxy attribute access to underlying session."""
         return getattr(self._session, name)

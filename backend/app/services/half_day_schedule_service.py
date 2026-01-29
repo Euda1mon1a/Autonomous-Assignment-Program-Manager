@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.logging import get_logger
-from app.models.activity import Activity
+from app.models.activity import Activity, ActivityCategory
 from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
 from app.models.person import Person
 from app.models.schedule_override import ScheduleOverride
@@ -266,6 +266,33 @@ class HalfDayScheduleService:
                 effective.append(assignment)
                 continue
             if override.override_type == "cancellation":
+                continue
+            if override.override_type == "gap":
+                clone = HalfDayAssignment(
+                    id=assignment.id,
+                    person_id=assignment.person_id,
+                    date=assignment.date,
+                    time_of_day=assignment.time_of_day,
+                    activity_id=None,
+                    counts_toward_fmc_capacity=assignment.counts_toward_fmc_capacity,
+                    source=assignment.source,
+                    block_assignment_id=assignment.block_assignment_id,
+                    is_override=assignment.is_override,
+                    override_reason=assignment.override_reason,
+                    overridden_by=assignment.overridden_by,
+                    overridden_at=assignment.overridden_at,
+                    created_at=assignment.created_at,
+                    updated_at=assignment.updated_at,
+                )
+                clone.activity = Activity(
+                    name="GAP",
+                    code="gap",
+                    display_abbreviation="GAP",
+                    activity_category=ActivityCategory.ADMINISTRATIVE.value,
+                )
+                clone.person = assignment.person
+                clone.is_gap = True
+                effective.append(clone)
                 continue
 
             replacement = replacement_people.get(override.replacement_person_id)

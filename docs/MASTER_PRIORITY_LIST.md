@@ -217,7 +217,7 @@ Remaining faculty-specific gaps:
 3. Enforce or normalize weekly clinic min/max limits and fix template coverage gaps
 
 ### Phase 5 — Post-release Coverage Overrides (NEW - Session 150)
-**Status:** P5-1 API draft in progress
+**Status:** P5-1 call + cascade extension in progress
 **Doc:** [`docs/planning/CP_SAT_PIPELINE_REFINEMENT_PHASE5.md`](planning/CP_SAT_PIPELINE_REFINEMENT_PHASE5.md)
 
 **Problem**
@@ -230,10 +230,13 @@ base schedule instead of rewriting it. Excel round-trip import/export is optiona
 should generate overrides (not re-create assignments).
 
 **Action**
-1. Create `schedule_overrides` table + API (admin-only).
-2. Apply overrides in UI/export rendering, keep base schedule immutable.
-3. Optional: Excel round-trip import creates overrides only (no hard deletes).
-4. Future: Cascade helper using resilience modules (auto-suggest backfills).
+1. Add `call_overrides` table + API (admin-only). Call must always be staffed.
+2. Add cascade endpoint for deployments (half-day + call) with N-1 hard-block and sacrifice hierarchy.
+   - Warn if call replacement has next-day protected work; PCAT/DO manual follow-up.
+   - GAP overrides for orphaned PCAT/DO to make shortages visible.
+3. Apply call overrides in exports and daily manifest.
+4. Optional: Excel round-trip import creates overrides only (no hard deletes).
+5. Future: Resilience-driven cascade scoring (blast radius + contingency).
 
 ### 7. Pre-commit Hook Failures (Session 128) - MYPY PROGRESS
 **Updated:** 2026-01-24 (Session 139)

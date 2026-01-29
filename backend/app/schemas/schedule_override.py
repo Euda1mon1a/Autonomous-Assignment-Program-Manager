@@ -11,8 +11,9 @@ class ScheduleOverrideCreate(BaseModel):
     """Create a schedule override for a half-day assignment."""
 
     half_day_assignment_id: UUID = Field(..., description="Half-day assignment ID")
-    override_type: Literal["coverage", "cancellation"] = Field(
-        "coverage", description="coverage replaces person, cancellation clears slot"
+    override_type: Literal["coverage", "cancellation", "gap"] = Field(
+        "coverage",
+        description="coverage replaces person, cancellation clears slot, gap flags shortage",
     )
     replacement_person_id: UUID | None = Field(
         None, description="Replacement person (required for coverage)"
@@ -30,11 +31,11 @@ class ScheduleOverrideCreate(BaseModel):
         if self.override_type == "coverage" and self.replacement_person_id is None:
             raise ValueError("replacement_person_id is required for coverage overrides")
         if (
-            self.override_type == "cancellation"
+            self.override_type in ("cancellation", "gap")
             and self.replacement_person_id is not None
         ):
             raise ValueError(
-                "replacement_person_id must be null for cancellation overrides"
+                "replacement_person_id must be null for cancellation/gap overrides"
             )
         return self
 
@@ -48,7 +49,7 @@ class ScheduleOverrideResponse(BaseModel):
     half_day_assignment_id: UUID
     original_person_id: UUID | None = None
     replacement_person_id: UUID | None = None
-    override_type: Literal["coverage", "cancellation"]
+    override_type: Literal["coverage", "cancellation", "gap"]
     reason: str | None = None
     notes: str | None = None
     effective_date: date

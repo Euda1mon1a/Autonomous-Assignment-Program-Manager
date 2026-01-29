@@ -27,6 +27,7 @@ from app.schemas.call_assignment import (
     PCATGenerationResponse,
     SimulatedChange,
 )
+from app.services.call_override_service import CallOverrideService
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,7 @@ class CallAssignmentService:
         call_type: str | None = None,
         start_date: date | None = None,
         end_date: date | None = None,
+        include_overrides: bool = True,
     ) -> dict:
         """
         Get paginated list of call assignments with optional filters.
@@ -119,7 +121,11 @@ class CallAssignmentService:
         # Apply pagination and execute
         stmt = stmt.order_by(CallAssignment.date.desc()).offset(skip).limit(limit)
         result = await self.db.execute(stmt)
-        call_assignments = result.scalars().all()
+        call_assignments = list(result.scalars().all())
+
+        if include_overrides:
+            override_service = CallOverrideService(self.db)
+            call_assignments = await override_service.apply_overrides(call_assignments)
 
         return {"items": list(call_assignments), "total": total}
 
@@ -127,6 +133,7 @@ class CallAssignmentService:
         self,
         start_date: date,
         end_date: date,
+        include_overrides: bool = True,
     ) -> list[CallAssignment]:
         """
         Get all call assignments within a date range.
@@ -150,13 +157,18 @@ class CallAssignmentService:
             .order_by(CallAssignment.date)
         )
         result = await self.db.execute(stmt)
-        return list(result.scalars().all())
+        call_assignments = list(result.scalars().all())
+        if include_overrides:
+            override_service = CallOverrideService(self.db)
+            call_assignments = await override_service.apply_overrides(call_assignments)
+        return call_assignments
 
     async def get_call_assignments_by_person(
         self,
         person_id: UUID,
         start_date: date | None = None,
         end_date: date | None = None,
+        include_overrides: bool = True,
     ) -> list[CallAssignment]:
         """
         Get all call assignments for a specific person, optionally filtered by date range.
@@ -182,7 +194,11 @@ class CallAssignmentService:
 
         stmt = stmt.order_by(CallAssignment.date)
         result = await self.db.execute(stmt)
-        return list(result.scalars().all())
+        call_assignments = list(result.scalars().all())
+        if include_overrides:
+            override_service = CallOverrideService(self.db)
+            call_assignments = await override_service.apply_overrides(call_assignments)
+        return call_assignments
 
     async def create_call_assignment(
         self,

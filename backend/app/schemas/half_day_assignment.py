@@ -25,6 +25,7 @@ class HalfDayAssignmentRead(BaseModel):
     display_abbreviation: str | None = None
     source: str  # "preload", "manual", "solver", "template"
     is_locked: bool = False
+    is_gap: bool = False
     created_at: datetime
     updated_at: datetime
 
