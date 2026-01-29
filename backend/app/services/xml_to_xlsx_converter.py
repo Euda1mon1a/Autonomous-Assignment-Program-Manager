@@ -305,7 +305,7 @@ class XMLToXlsxConverter:
         """Apply background and font color to cell based on schedule code.
 
         Font colors have semantic meaning:
-        - Red: +1 AT demand (PR, VAS, COLPO, GER) or high-visibility roles
+        - Red: procedures needing supervision (PR adds +1 AT), or high-visibility roles
         - Light gray: Night Float (NF, Peds NF)
         - White: Contrast on dark backgrounds
         """

@@ -59,6 +59,7 @@ from .temporal import (
 
 # Block 10 constraints - call equity and inpatient headcount
 from .call_equity import (
+    CallNightBeforeLeaveConstraint,
     CallSpacingConstraint,
     DeptChiefWednesdayPreferenceConstraint,
     SundayCallEquityConstraint,
@@ -410,6 +411,7 @@ class ConstraintManager:
         manager.add(CallSpacingConstraint(weight=8.0))
         manager.add(WeekdayCallEquityConstraint(weight=5.0))
         manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
+        manager.add(CallNightBeforeLeaveConstraint(weight=2.0))
 
         # Tier 1: Resilience-aware soft constraints (ENABLED by default)
         # These provide critical protection against cascade failures

@@ -529,7 +529,7 @@ class BlockScheduleExportService:
 
         # Check 3: Physical clinic cap (≤6 per slot)
         # Clinical codes that count toward cap (NOT AT/PCAT)
-        clinical_codes = {"C", "CV", "PR", "VAS"}
+        clinical_codes = {"C", "CV", "PR", "VAS", "VASC"}
 
         # Build per-slot counts from faculty schedules
         current = start_date

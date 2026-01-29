@@ -179,6 +179,10 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
   - Preloading inpatient clinic from weekly patterns
   - **Proactive CV target** for faculty + PGY‑3 (not fallback)
 
+**New (2026-01-29):**
+- Credentialed procedures now linked via `activities.procedure_id` (VAS/VASC/SM).
+- VAS/VASC allocator + activity solver use `procedure_credentials` with competency-based priority.
+
 **References:**
 - `docs/reports/block10-cpsat-run-20260127.md`
 - `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md`
@@ -211,6 +215,24 @@ Remaining faculty-specific gaps:
 1. Decide canonical schedule table for faculty (prefer half_day_assignments)
 2. Wire faculty expansion into half-day pipeline before CP-SAT activity solver
 3. Enforce or normalize weekly clinic min/max limits and fix template coverage gaps
+
+### Phase 5 — Post-release Coverage Overrides (NEW - Session 150)
+**Status:** Proposed
+**Doc:** [`docs/planning/CP_SAT_PIPELINE_REFINEMENT_PHASE5.md`](planning/CP_SAT_PIPELINE_REFINEMENT_PHASE5.md)
+
+**Problem**
+Short-notice coverage changes (deployment/illness) require editing **released** clinic
+slots without regenerating the entire schedule.
+
+**Recommendation**
+Implement an **admin-only coverage override layer** (delta-based) that overlays the
+base schedule instead of rewriting it. Excel round-trip import/export is optional and
+should generate overrides (not re-create assignments).
+
+**Action**
+1. Create `schedule_overrides` table (assignment_id + replacement + reason + audit).
+2. Apply overrides in UI/export rendering, keep base schedule immutable.
+3. Optional: Excel round-trip import creates overrides only (no hard deletes).
 
 ### 7. Pre-commit Hook Failures (Session 128) - MYPY PROGRESS
 **Updated:** 2026-01-24 (Session 139)

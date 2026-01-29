@@ -22,6 +22,7 @@ Call Schedule Overview:
 
 import logging
 from collections import defaultdict
+from datetime import timedelta
 from typing import Any
 
 from .base import (
@@ -601,6 +602,200 @@ class TuesdayCallPreferenceConstraint(SoftConstraint):
                         },
                     )
                 )
+
+        return ConstraintResult(
+            satisfied=True,
+            violations=violations,
+            penalty=penalty,
+        )
+
+
+class CallNightBeforeLeaveConstraint(SoftConstraint):
+    """
+    Soft penalty for overnight call the night before a leave/absence.
+
+    This discourages assigning overnight call immediately before a day
+    where the faculty member is unavailable (e.g., vacation/leave).
+    It remains soft to avoid infeasibility when coverage is tight.
+    """
+
+    def __init__(self, weight: float = 2.0) -> None:
+        """
+        Initialize call-before-leave preference constraint.
+
+        Args:
+            weight: Small penalty weight (default 2.0)
+        """
+        super().__init__(
+            name="CallNightBeforeLeave",
+            constraint_type=ConstraintType.PREFERENCE,
+            weight=weight,
+            priority=ConstraintPriority.LOW,
+        )
+
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Add penalty for call assignments the night before leave."""
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
+        block_by_idx = {context.block_idx[b.id]: b for b in context.blocks}
+        availability = context.availability or {}
+
+        objective_vars = variables.get("objective_terms", [])
+
+        for faculty in call_eligible_faculty:
+            f_i = call_faculty_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            faculty_avail = availability.get(faculty.id, {})
+
+            for (call_f_i, b_i, call_type), call_var in call_vars.items():
+                if call_f_i != f_i or call_type != "overnight":
+                    continue
+
+                block = block_by_idx.get(b_i)
+                if not block:
+                    continue
+
+                next_day = block.date + timedelta(days=1)
+                next_blocks = context.blocks_by_date.get(next_day, [])
+                if not next_blocks:
+                    continue
+
+                next_day_unavailable = any(
+                    not faculty_avail.get(nb.id, {}).get("available", True)
+                    for nb in next_blocks
+                )
+                if next_day_unavailable:
+                    objective_vars.append((call_var, int(self.weight)))
+
+        variables["objective_terms"] = objective_vars
+
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        """Add penalty for call assignments the night before leave (PuLP)."""
+        import pulp
+
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
+        block_by_idx = {context.block_idx[b.id]: b for b in context.blocks}
+        availability = context.availability or {}
+
+        penalty_vars = []
+        for faculty in call_eligible_faculty:
+            f_i = call_faculty_idx.get(faculty.id)
+            if f_i is None:
+                continue
+
+            faculty_avail = availability.get(faculty.id, {})
+
+            for (call_f_i, b_i, call_type), call_var in call_vars.items():
+                if call_f_i != f_i or call_type != "overnight":
+                    continue
+
+                block = block_by_idx.get(b_i)
+                if not block:
+                    continue
+
+                next_day = block.date + timedelta(days=1)
+                next_blocks = context.blocks_by_date.get(next_day, [])
+                if not next_blocks:
+                    continue
+
+                next_day_unavailable = any(
+                    not faculty_avail.get(nb.id, {}).get("available", True)
+                    for nb in next_blocks
+                )
+                if next_day_unavailable:
+                    penalty_vars.append(call_var)
+
+        if penalty_vars and "objective" in variables:
+            variables["objective"] += self.weight * pulp.lpSum(penalty_vars)
+
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
+        """Report call assignments the night before leave."""
+        faculty_by_id = {f.id: f for f in context.faculty}
+        block_by_id = {b.id: b for b in context.blocks}
+        availability = context.availability or {}
+
+        violations = []
+        penalty = 0.0
+
+        for a in assignments:
+            if not hasattr(a, "call_type") or a.call_type != "overnight":
+                continue
+
+            faculty = faculty_by_id.get(a.person_id)
+            if not faculty:
+                continue
+
+            block = block_by_id.get(a.block_id)
+            if not block:
+                continue
+
+            next_day = block.date + timedelta(days=1)
+            next_blocks = context.blocks_by_date.get(next_day, [])
+            if not next_blocks:
+                continue
+
+            faculty_avail = availability.get(faculty.id, {})
+            next_day_unavailable = any(
+                not faculty_avail.get(nb.id, {}).get("available", True)
+                for nb in next_blocks
+            )
+            if not next_day_unavailable:
+                continue
+
+            penalty += self.weight
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity="LOW",
+                    message=(
+                        f"{faculty.name} assigned overnight call on {block.date} "
+                        f"before leave on {next_day}"
+                    ),
+                    person_id=faculty.id,
+                    block_id=block.id,
+                    details={"call_date": str(block.date), "next_day": str(next_day)},
+                )
+            )
 
         return ConstraintResult(
             satisfied=True,

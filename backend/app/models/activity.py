@@ -23,10 +23,12 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    ForeignKey,
     Integer,
     String,
     UniqueConstraint,
 )
+from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 from app.db.types import GUID
@@ -63,6 +65,7 @@ class Activity(Base):
     SQLAlchemy Relationships:
         weekly_patterns: One-to-many to WeeklyPattern (via activity_id FK).
             Back-populates WeeklyPattern.activity.
+        procedure: Optional Procedure link for credentialed activities.
 
     Example usage:
         # Create a new activity for sports medicine lectures
@@ -112,6 +115,13 @@ class Activity(Base):
         index=True,
         comment="Category: clinical, educational, administrative, time_off",
     )
+    procedure_id = Column(
+        GUID(),
+        ForeignKey("procedures.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment="Optional procedure link for credentialed activities (e.g., VAS, SM)",
+    )
 
     # Visual styling (Tailwind CSS classes)
     font_color = Column(
@@ -159,7 +169,7 @@ class Activity(Base):
         Boolean,
         default=False,
         nullable=False,
-        comment="True for clinical work (C, CV, PR, VAS) that counts toward max 6/slot",
+        comment="True for clinical work (C, CV, PR, VAS, VASC) that counts toward max 6/slot",
     )
     capacity_units = Column(
         Integer,
@@ -198,6 +208,9 @@ class Activity(Base):
         onupdate=datetime.utcnow,
         nullable=False,
     )
+
+    # Relationships
+    procedure = relationship("Procedure", back_populates="activities")
 
     def __repr__(self) -> str:
         return f"<Activity {self.code}: {self.name}>"

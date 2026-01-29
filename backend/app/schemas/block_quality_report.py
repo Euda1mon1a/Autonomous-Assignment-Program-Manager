@@ -104,7 +104,17 @@ class PostCallEntry(BaseModel):
     call_date: date
     am_next_day: str | None = None
     pm_next_day: str | None = None
-    status: str  # PASS, PARTIAL, NO PCAT/DO
+    status: str  # PASS, PARTIAL, NO PCAT/DO, EXEMPT (FMIT|TIME OFF)
+
+
+class CallBeforeLeaveEntry(BaseModel):
+    """D4: Call the night before leave (soft)."""
+
+    name: str
+    call_date: date
+    next_day: date
+    absence_type: str | None = None
+    status: str  # PASS or SOFT
 
 
 class AccountabilityEntry(BaseModel):
@@ -131,6 +141,7 @@ class ExecutiveSummary(BaseModel):
     call_coverage: str  # e.g., "28/28"
     nf_one_in_seven: str  # e.g., "PASS (4/4)"
     post_call_pcat_do: str  # e.g., "GAP" or "PASS"
+    call_before_leave: str  # e.g., "PASS" or "SOFT (2)"
     overall_status: str  # PASS or FAIL
 
 
@@ -170,6 +181,8 @@ class SectionD(BaseModel):
     nf_one_in_seven: list[NFOneInSevenEntry]
     post_call_pcat_do: list[PostCallEntry]
     post_call_gap_count: int
+    call_before_leave: list[CallBeforeLeaveEntry]
+    call_before_leave_gap_count: int
 
 
 class SectionE(BaseModel):
@@ -205,6 +218,7 @@ class BlockSummaryEntry(BaseModel):
     acgme_compliance: str
     nf_one_in_seven: str
     post_call: str
+    call_before_leave: str
     status: str
 
 
