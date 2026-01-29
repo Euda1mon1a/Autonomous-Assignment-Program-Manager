@@ -53,6 +53,36 @@ changing the underlying base schedule.
 - Exports reflect overrides while keeping base schedule intact.
 - Audit trail captures who changed what and why.
 
+**API Draft (Admin)**
+- `POST /admin/schedule-overrides`
+  - Create coverage (replacement) or cancellation (empty slot).
+- `GET /admin/schedule-overrides?block_number&academic_year&active_only`
+  - List overrides for a block or date range.
+- `DELETE /admin/schedule-overrides/{id}`
+  - Soft-delete (deactivate) override.
+
+**Policy Notes**
+- Reject overrides if replacement already has a slot at the same date/time.
+- One active override per assignment (partial unique index).
+- Protected slots: FMIT, time-off, PCAT/DO (no override).
+
+**Future Read Layer**
+- Schedule reads/export should apply overrides by default
+  (`include_overrides=true`), with optional base-only view for audit.
+  - Implemented in half-day schedule API + canonical export (Phase 5 draft).
+
+**Manual Cascade Workflow (Now)**
+When the best replacement is already assigned:
+1. Identify a low-impact backfill (often GME/DFM) for the replacement’s slot.
+2. Create override for the backfill first (freeing the replacement).
+3. Create override for the original slot (replacement covers target).
+
+**Future: Cascade Helper (P5.1)**
+Automate multi-step replacements using resilience tooling:
+- Use `backend/app/resilience/` modules to propose low-impact backfills.
+- Use MCP tools (when wired) to estimate blast radius and contingency options.
+- Create overrides atomically after admin confirmation.
+
 ---
 
 ### P5-2 — Targeted Swap (Optional Name)

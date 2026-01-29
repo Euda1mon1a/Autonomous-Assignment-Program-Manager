@@ -71,6 +71,7 @@ from app.api.routes import (
     rotation_templates,
     schedule,
     schedule_drafts,
+    schedule_overrides,
     scheduler,
     scheduler_ops,
     scheduling_catalyst,
@@ -154,6 +155,11 @@ api_router.include_router(
     admin_block_assignments.router,
     prefix="/admin/block-assignments",
     tags=["admin-block-assignments"],
+)
+api_router.include_router(
+    schedule_overrides.router,
+    prefix="/admin/schedule-overrides",
+    tags=["schedule-overrides"],
 )
 api_router.include_router(me_dashboard.router, prefix="/me", tags=["dashboard"])
 api_router.include_router(export.router, prefix="/export", tags=["export"])

@@ -103,6 +103,11 @@ from app.schemas.rotation_template import (
     RotationTemplateUpdate,
 )
 from app.schemas.schedule import ScheduleRequest, ScheduleResponse, ValidationResult
+from app.schemas.schedule_override import (
+    ScheduleOverrideCreate,
+    ScheduleOverrideListResponse,
+    ScheduleOverrideResponse,
+)
 from app.schemas.settings import SettingsCreate, SettingsResponse, SettingsUpdate
 from app.schemas.swap import (
     SwapApprovalRequest,
@@ -176,6 +181,9 @@ __all__ = [
     "ScheduleRequest",
     "ScheduleResponse",
     "ValidationResult",
+    "ScheduleOverrideCreate",
+    "ScheduleOverrideListResponse",
+    "ScheduleOverrideResponse",
     "SettingsCreate",
     "SettingsUpdate",
     "SettingsResponse",

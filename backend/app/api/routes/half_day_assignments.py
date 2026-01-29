@@ -30,6 +30,9 @@ async def list_half_day_assignments(
     start_date: date | None = Query(None, description="Start date"),
     end_date: date | None = Query(None, description="End date"),
     person_type: str | None = Query(None, description="Filter by person type"),
+    include_overrides: bool = Query(
+        True, description="Apply active schedule overrides"
+    ),
     db: AsyncSession = Depends(get_async_db),
 ) -> HalfDayAssignmentListResponse:
     """
@@ -78,6 +81,7 @@ async def list_half_day_assignments(
         start_date=start_date,
         end_date=end_date,
         person_type=person_type,
+        include_overrides=include_overrides,
     )
 
     # Convert to response schema

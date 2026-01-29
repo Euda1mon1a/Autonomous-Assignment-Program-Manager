@@ -33,6 +33,7 @@ class CanonicalScheduleExportService:
         block_number: int,
         academic_year: int,
         include_faculty: bool = True,
+        include_overrides: bool = True,
         output_path: Path | str | None = None,
     ) -> bytes:
         """Export a block schedule to XLSX using the canonical template."""
@@ -42,6 +43,7 @@ class CanonicalScheduleExportService:
             block_dates.start_date,
             block_dates.end_date,
             include_faculty=include_faculty,
+            include_overrides=include_overrides,
         )
 
         converter = JSONToXlsxConverter(
@@ -58,6 +60,7 @@ class CanonicalScheduleExportService:
         start_date: date,
         end_date: date,
         include_faculty: bool,
+        include_overrides: bool,
     ) -> dict[str, Any]:
         exporter = HalfDayJSONExporter(self.db)
         return exporter.export(
@@ -65,6 +68,7 @@ class CanonicalScheduleExportService:
             block_end=end_date,
             include_faculty=include_faculty,
             include_call=True,
+            include_overrides=include_overrides,
         )
 
     def _data_dir(self) -> Path:

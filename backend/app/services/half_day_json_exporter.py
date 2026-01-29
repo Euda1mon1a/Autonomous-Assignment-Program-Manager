@@ -37,6 +37,7 @@ class HalfDayJSONExporter(HalfDayXMLExporter):
         person_ids: list[UUID] | None = None,
         include_faculty: bool = False,
         include_call: bool = False,
+        include_overrides: bool = True,
     ) -> dict[str, Any]:
         """Export schedule for date range to JSON-friendly dict.
 
@@ -59,7 +60,11 @@ class HalfDayJSONExporter(HalfDayXMLExporter):
         }
 
         assignments = self._fetch_assignments(
-            block_start, block_end, person_ids, include_faculty
+            block_start,
+            block_end,
+            person_ids,
+            include_faculty,
+            include_overrides=include_overrides,
         )
 
         by_person: dict[UUID, list] = {}
@@ -116,6 +121,7 @@ class HalfDayJSONExporter(HalfDayXMLExporter):
         person_ids: list[UUID] | None = None,
         include_faculty: bool = False,
         include_call: bool = False,
+        include_overrides: bool = True,
         pretty: bool = False,
     ) -> str:
         """Export schedule to JSON string."""
@@ -125,6 +131,7 @@ class HalfDayJSONExporter(HalfDayXMLExporter):
             person_ids=person_ids,
             include_faculty=include_faculty,
             include_call=include_call,
+            include_overrides=include_overrides,
         )
         return json.dumps(data, indent=2 if pretty else None)
 
@@ -177,6 +184,7 @@ def export_block_schedule_json(
     academic_year: int,
     include_faculty: bool = False,
     include_call: bool = False,
+    include_overrides: bool = True,
 ) -> dict[str, Any]:
     """Convenience function to export a block schedule as JSON dict."""
     from app.utils.academic_blocks import get_block_dates
@@ -189,4 +197,5 @@ def export_block_schedule_json(
         block_dates.end_date,
         include_faculty=include_faculty,
         include_call=include_call,
+        include_overrides=include_overrides,
     )
