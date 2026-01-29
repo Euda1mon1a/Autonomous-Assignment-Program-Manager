@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.call_assignment import CallAssignment
+from app.models.call_override import CallOverride
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.block import Block
@@ -43,6 +44,44 @@ class CallAssignmentService:
             db: Async database session
         """
         self.db = db
+
+    async def _get_assignments_covered_by_person(
+        self,
+        person_id: UUID,
+        start_date: date | None = None,
+        end_date: date | None = None,
+    ) -> list[CallAssignment]:
+        """
+        Get call assignments where person is the replacement via active override.
+
+        When include_overrides is true, we need to also return assignments that
+        this person is covering for someone else (via call_override).
+
+        Args:
+            person_id: The person who is the replacement
+            start_date: Optional start date filter (inclusive)
+            end_date: Optional end date filter (inclusive)
+
+        Returns:
+            List of CallAssignments where this person covers via override
+        """
+        stmt = (
+            select(CallAssignment)
+            .join(CallOverride, CallOverride.call_assignment_id == CallAssignment.id)
+            .options(selectinload(CallAssignment.person))
+            .where(
+                CallOverride.replacement_person_id == person_id,
+                CallOverride.is_active.is_(True),
+            )
+        )
+
+        if start_date:
+            stmt = stmt.where(CallAssignment.date >= start_date)
+        if end_date:
+            stmt = stmt.where(CallAssignment.date <= end_date)
+
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
 
     async def get_call_assignment(self, call_id: UUID) -> CallAssignment | None:
         """
@@ -124,6 +163,21 @@ class CallAssignmentService:
         call_assignments = list(result.scalars().all())
 
         if include_overrides:
+            # When filtering by person_id, also include assignments they cover via override
+            if person_id:
+                covered_assignments = await self._get_assignments_covered_by_person(
+                    person_id, start_date, end_date
+                )
+                existing_ids = {a.id for a in call_assignments}
+                for ca in covered_assignments:
+                    if ca.id not in existing_ids:
+                        call_assignments.append(ca)
+                        existing_ids.add(ca.id)
+                # Re-sort after merge (descending by date to match original order)
+                call_assignments.sort(key=lambda a: a.date, reverse=True)
+                # Update total count to include covered assignments
+                total = len(existing_ids)
+
             override_service = CallOverrideService(self.db)
             call_assignments = await override_service.apply_overrides(call_assignments)
 
@@ -173,14 +227,19 @@ class CallAssignmentService:
         """
         Get all call assignments for a specific person, optionally filtered by date range.
 
+        When include_overrides is True, also includes assignments where this person
+        is covering for someone else via an active call override.
+
         Args:
             person_id: Person ID
             start_date: Optional start date filter (inclusive)
             end_date: Optional end date filter (inclusive)
+            include_overrides: Include override-covered assignments (default True)
 
         Returns:
-            List of CallAssignments for the person
+            List of CallAssignments for the person (including those they cover)
         """
+        # Get assignments where person is originally assigned
         stmt = (
             select(CallAssignment)
             .options(selectinload(CallAssignment.person))
@@ -195,9 +254,27 @@ class CallAssignmentService:
         stmt = stmt.order_by(CallAssignment.date)
         result = await self.db.execute(stmt)
         call_assignments = list(result.scalars().all())
+
         if include_overrides:
+            # Also include assignments where this person is covering via override
+            covered_assignments = await self._get_assignments_covered_by_person(
+                person_id, start_date, end_date
+            )
+
+            # Merge and deduplicate
+            existing_ids = {a.id for a in call_assignments}
+            for ca in covered_assignments:
+                if ca.id not in existing_ids:
+                    call_assignments.append(ca)
+                    existing_ids.add(ca.id)
+
+            # Sort by date after merge
+            call_assignments.sort(key=lambda a: a.date)
+
+            # Apply overrides to show effective person
             override_service = CallOverrideService(self.db)
             call_assignments = await override_service.apply_overrides(call_assignments)
+
         return call_assignments
 
     async def create_call_assignment(
