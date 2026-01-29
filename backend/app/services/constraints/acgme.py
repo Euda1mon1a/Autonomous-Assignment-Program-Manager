@@ -127,6 +127,9 @@ class SchedulingContext:
     block_idx: dict = field(default_factory=dict)
     blocks_by_date: dict = field(default_factory=dict)
     availability: dict = field(default_factory=dict)
+    preassigned_work_blocks: dict = field(default_factory=dict)
+    preassigned_work_days: dict = field(default_factory=dict)
+    preassigned_off_days: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Build lookup dictionaries for fast constraint evaluation."""
@@ -417,6 +420,10 @@ class EightyHourRuleConstraint(HardConstraint):
         if not dates:
             return
 
+        preassigned_blocks = getattr(context, "preassigned_work_blocks", {})
+
+        warned_fixed_80 = set()
+
         # For each possible 28-day window starting point
         for window_start in dates:
             window_end = window_start + timedelta(days=self.ROLLING_DAYS - 1)
@@ -432,13 +439,39 @@ class EightyHourRuleConstraint(HardConstraint):
             # For each resident, sum of blocks in window <= max
             for resident in context.residents:
                 r_i = context.resident_idx[resident.id]
+                resident_preassigned = preassigned_blocks.get(resident.id, set())
+                preassigned_count = sum(
+                    1 for b in window_blocks if b.id in resident_preassigned
+                )
+                if preassigned_count > self.max_blocks_per_window:
+                    if resident.id not in warned_fixed_80:
+                        warned_fixed_80.add(resident.id)
+                        logger.warning(
+                            "80HourRule preassigned workload exceeds limit: "
+                            f"{resident.name} {window_start}→{window_end} "
+                            f"preassigned_blocks={preassigned_count}"
+                        )
+                    continue
                 window_vars = [
                     x[r_i, context.block_idx[b.id]]
                     for b in window_blocks
                     if (r_i, context.block_idx[b.id]) in x
                 ]
-                if window_vars:
-                    model.Add(sum(window_vars) <= self.max_blocks_per_window)
+                decision_count = len(window_vars)
+                if preassigned_count + decision_count > self.max_blocks_per_window:
+                    if resident.id not in warned_fixed_80:
+                        warned_fixed_80.add(resident.id)
+                        logger.warning(
+                            "80HourRule infeasible due to fixed workload: "
+                            f"{resident.name} {window_start}→{window_end} "
+                            f"fixed_blocks={preassigned_count + decision_count}"
+                        )
+                    continue
+                if window_vars or preassigned_count:
+                    model.Add(
+                        sum(window_vars) + preassigned_count
+                        <= self.max_blocks_per_window
+                    )
 
     def add_to_pulp(
         self, model: Any, variables: dict[str, Any], context: SchedulingContext
@@ -459,6 +492,8 @@ class EightyHourRuleConstraint(HardConstraint):
         if not dates:
             return
 
+        preassigned_blocks = getattr(context, "preassigned_work_blocks", {})
+        warned_fixed_80 = set()
         window_count = 0
         for window_start in dates:
             window_end = window_start + timedelta(days=self.ROLLING_DAYS - 1)
@@ -472,14 +507,38 @@ class EightyHourRuleConstraint(HardConstraint):
 
             for resident in context.residents:
                 r_i = context.resident_idx[resident.id]
+                resident_preassigned = preassigned_blocks.get(resident.id, set())
+                preassigned_count = sum(
+                    1 for b in window_blocks if b.id in resident_preassigned
+                )
+                if preassigned_count > self.max_blocks_per_window:
+                    if resident.id not in warned_fixed_80:
+                        warned_fixed_80.add(resident.id)
+                        logger.warning(
+                            "80HourRule preassigned workload exceeds limit (PuLP): "
+                            f"{resident.name} {window_start}→{window_end} "
+                            f"preassigned_blocks={preassigned_count}"
+                        )
+                    continue
                 window_vars = [
                     x[r_i, context.block_idx[b.id]]
                     for b in window_blocks
                     if (r_i, context.block_idx[b.id]) in x
                 ]
-                if window_vars:
+                decision_count = len(window_vars)
+                if preassigned_count + decision_count > self.max_blocks_per_window:
+                    if resident.id not in warned_fixed_80:
+                        warned_fixed_80.add(resident.id)
+                        logger.warning(
+                            "80HourRule infeasible due to fixed workload (PuLP): "
+                            f"{resident.name} {window_start}→{window_end} "
+                            f"fixed_blocks={preassigned_count + decision_count}"
+                        )
+                    continue
+                if window_vars or preassigned_count:
                     model += (
-                        pulp.lpSum(window_vars) <= self.max_blocks_per_window,
+                        pulp.lpSum(window_vars) + preassigned_count
+                        <= self.max_blocks_per_window,
                         f"80hr_{r_i}_{window_count}",
                     )
             window_count += 1
@@ -602,8 +661,12 @@ class OneInSevenRuleConstraint(HardConstraint):
         if len(dates) < self.MAX_CONSECUTIVE_DAYS + 1:
             return
 
+        preassigned_days = getattr(context, "preassigned_work_days", {})
+        warned_fixed_1in7 = set()
+
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
+            resident_preassigned = preassigned_days.get(resident.id, set())
 
             # Check each possible 7-day window
             for start_idx in range(len(dates)):
@@ -621,7 +684,21 @@ class OneInSevenRuleConstraint(HardConstraint):
 
                 # Create indicator variables for each day
                 day_worked_vars = []
+                preassigned_day_count = sum(
+                    1 for d in consecutive_dates if d in resident_preassigned
+                )
+                if preassigned_day_count > self.MAX_CONSECUTIVE_DAYS:
+                    if resident.id not in warned_fixed_1in7:
+                        warned_fixed_1in7.add(resident.id)
+                        logger.warning(
+                            "1in7Rule preassigned workload exceeds limit: "
+                            f"{resident.name} {start_date} "
+                            f"preassigned_days={preassigned_day_count}"
+                        )
+                    continue
                 for d in consecutive_dates[: self.MAX_CONSECUTIVE_DAYS + 1]:
+                    if d in resident_preassigned:
+                        continue
                     day_blocks = context.blocks_by_date[d]
                     day_vars = [
                         x[r_i, context.block_idx[b.id]]
@@ -635,8 +712,23 @@ class OneInSevenRuleConstraint(HardConstraint):
                         day_worked_vars.append(day_worked)
 
                 # At most 6 days worked in any 7-day window
-                if len(day_worked_vars) == self.MAX_CONSECUTIVE_DAYS + 1:
-                    model.Add(sum(day_worked_vars) <= self.MAX_CONSECUTIVE_DAYS)
+                if (
+                    preassigned_day_count + len(day_worked_vars)
+                    > self.MAX_CONSECUTIVE_DAYS
+                ):
+                    if resident.id not in warned_fixed_1in7:
+                        warned_fixed_1in7.add(resident.id)
+                        logger.warning(
+                            "1in7Rule infeasible due to fixed workload: "
+                            f"{resident.name} {start_date} "
+                            f"fixed_days={preassigned_day_count + len(day_worked_vars)}"
+                        )
+                    continue
+                if day_worked_vars or preassigned_day_count:
+                    model.Add(
+                        sum(day_worked_vars) + preassigned_day_count
+                        <= self.MAX_CONSECUTIVE_DAYS
+                    )
 
     def add_to_pulp(
         self, model: Any, variables: dict[str, Any], context: SchedulingContext
@@ -657,6 +749,8 @@ class OneInSevenRuleConstraint(HardConstraint):
         if len(dates) < self.MAX_CONSECUTIVE_DAYS + 1:
             return
 
+        preassigned_blocks = getattr(context, "preassigned_work_blocks", {})
+        warned_fixed_1in7 = set()
         constraint_count = 0
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
@@ -680,9 +774,26 @@ class OneInSevenRuleConstraint(HardConstraint):
                         if (r_i, context.block_idx[b.id]) in x:
                             all_vars.append(x[r_i, context.block_idx[b.id]])
 
-                if all_vars:
+                resident_preassigned = preassigned_blocks.get(resident.id, set())
+                preassigned_count = sum(
+                    1
+                    for d in consecutive_dates[: self.MAX_CONSECUTIVE_DAYS + 1]
+                    for b in context.blocks_by_date[d]
+                    if b.id in resident_preassigned
+                )
+                if preassigned_count > self.MAX_CONSECUTIVE_DAYS * 2:
+                    if resident.id not in warned_fixed_1in7:
+                        warned_fixed_1in7.add(resident.id)
+                        logger.warning(
+                            "1in7Rule preassigned workload exceeds limit (PuLP): "
+                            f"{resident.name} {start_date} "
+                            f"preassigned_blocks={preassigned_count}"
+                        )
+                    continue
+                if all_vars or preassigned_count:
                     model += (
-                        pulp.lpSum(all_vars) <= self.MAX_CONSECUTIVE_DAYS * 2,
+                        pulp.lpSum(all_vars) + preassigned_count
+                        <= self.MAX_CONSECUTIVE_DAYS * 2,
                         f"1in7_{r_i}_{constraint_count}",
                     )
                     constraint_count += 1

@@ -28,8 +28,8 @@ This document captures the **known-good conditions** under which CP‑SAT succes
 - FMC continuity **`C`** only counts **when the rotation template is FMC continuity** (template abbreviation `C/CONT`).
 - `CV` never counts toward physical capacity.
 - `CV` **does** count toward supervision demand (AT/PCAT ratios).
-- `PROC`/`VAS` count toward physical capacity and **add a soft AT supervision penalty**
-  (they do **not** count toward hard AT capacity; hard AT uses `AT` + `PCAT`).
+- `PROC`/`VAS` count toward physical capacity and **add +1 AT supervision demand**
+  (soft via AT shortfall; hard AT capacity uses `AT` + `PCAT` only).
 - **Clinic floor** (hard min 1) applies **only when CV is not allowed**
   (PGY‑1 or non‑FMC templates). CV‑eligible PGY‑2/3 can satisfy clinic weeks
   with CV if capacity binds.
@@ -55,7 +55,7 @@ Soft constraints (penalized, not enforced):
  - Placeholder solver slots use `OFF` (no NULL activity_id).
 
 ## Known-Good Run Indicators
-- Activity solver returns **OPTIMAL**.
+- Activity solver returns **OPTIMAL** (or **FEASIBLE** when shortfalls are accepted).
 - Exports (CSV/XLSX) complete without NULL activity_id warnings.
 - MCP validation works against date range without tool errors.
 

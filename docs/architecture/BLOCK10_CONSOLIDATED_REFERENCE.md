@@ -33,7 +33,8 @@ All services MUST use codes from this table. No ad-hoc codes.
 | `GYN` | GYN | Gynecology | clinical | 20260120_add_rot_activities |
 | `SURG` | SURG | Surgery | clinical | 20260120_add_rot_activities |
 | `PR` | PR | Procedures | clinical | 20260120_add_rot_activities |
-| `VAS` | VAS | Vascular | clinical | 20260120_add_rot_activities |
+| `VAS` | VAS | Vasectomy (procedure) | clinical | 20260120_add_rot_activities |
+| `VASC` | VASC | Vasectomy Counseling | clinical | 202602XX_add_vasc |
 | `HLC` | HLC | Houseless Clinic | clinical | 20260120_add_rot_activities |
 | `C-N` | C-N | Night Float Clinic | clinical | 20260120_add_rot_activities |
 | `CV` | CV | Virtual Clinic | clinical | 20260120_add_rot_activities |
@@ -123,23 +124,24 @@ All preloads have `source='preload'` which is LOCKED - solver cannot overwrite.
 
 ## Faculty Weekly Caps (Block 10)
 
-From `Person` model `min_clinic_halfdays_per_week` and `max_clinic_halfdays_per_week`:
+From `Person` model `min_clinic_halfdays_per_week` and `max_clinic_halfdays_per_week`
+(**solver overrides min to 0 for all faculty to preserve AT capacity**):
 
 | Faculty | min_c | max_c | admin_type | Notes |
 |---------|-------|-------|------------|-------|
 | Bevis | 0 | 0 | GME | APD, 100% admin |
-| Kinkennon | 2 | 4 | GME | |
-| LaBounty | 2 | 4 | GME | |
-| McGuire | 1 | 1 | DFM | 90% DFM admin |
-| McRae | 2 | 4 | GME | |
+| Kinkennon | 0 | 4 | GME | min overridden to 0 |
+| LaBounty | 0 | 4 | GME | min overridden to 0 |
+| McGuire | 0 | 1 | DFM | min overridden to 0 |
+| McRae | 0 | 4 | GME | min overridden to 0 |
 | Tagawa | 0 | 0 | GME | SM only, no personal C |
-| Montgomery | 2 | 2 | GME | |
+| Montgomery | 0 | 2 | GME | min overridden to 0 |
 | Colgan | 0 | 0 | GME | DEP (deployed) |
-| Chu | 0 | 0 | GME | FMIT weeks |
+| Chu | 0 | 4 | GME | min overridden to 0 |
 | Napierala | 0 | 0 | GME | FMIT/Call only (adjunct) |
 | Van Brunt | 0 | 0 | GME | FMIT/Call only (adjunct) |
-| Lamoureux | 2 | 2 | GME | |
-| Dahl | 0 | 0 | GME | OUT Dec-Jun |
+| Lamoureux | 0 | 0 | GME | adjunct (manual only) |
+| Dahl | 0 | 2 | GME | OUT Dec-Jun |
 
 ---
 
@@ -151,6 +153,12 @@ From `Person` model `min_clinic_halfdays_per_week` and `max_clinic_halfdays_per_
 | 2 | Mar 20-26 | Bevis | Petrie (R3), Cataquiz (R2) |
 | 3 | Mar 27-Apr 2 | Chu | Petrie (R3), Cataquiz (R2) |
 | 4 | Apr 3-9 | LaBounty | Petrie (R3), Cataquiz (R2) |
+
+## Procedure Templates (Non‑Rotation)
+- **BTX/COLPO/VAS/PROC‑AM/PR‑PM** templates are **archived** (not rotations).
+- Procedures are handled as **activities** within **PROC/FMC/POCUS** rotations and
+  faculty weekly templates.
+- **POCUS** is a rotation (US + C mix), not a procedure template.
 
 ---
 

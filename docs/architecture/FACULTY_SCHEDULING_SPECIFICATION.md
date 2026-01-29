@@ -37,19 +37,22 @@ This document defines the complete scheduling parameters for faculty roles, FMIT
 
 | Role | Clinic Half-Days/Week | SM Clinic/Week | FMIT Eligible | Max FMIT/Year | Notes |
 |------|----------------------|----------------|---------------|---------------|-------|
-| **PD** (Program Director) | 0 | - | Yes | ~6 weeks | Leadership/admin focus |
-| **APD** (Associate Program Director) | 2 (0.2 FTE) | - | Yes | ~6 weeks | Flexible within block |
-| **OIC** (Officer in Charge) | 2 (0.2 FTE) | - | Yes | ~6 weeks | Flexible within block |
-| **Department Chief** | 1 | - | Yes | ~6 weeks | Administrative duties |
-| **Sports Medicine** | 0 | 4 | Yes | ~6 weeks | SM clinic only, no regular clinic |
-| **Core Faculty** | Max 4 | - | Yes | ~6 weeks | Max 16 half-days per block |
-| **Adjunct** | 0 | - | Yes (manual) | N/A | Not auto-scheduled; pre-loaded to FMIT manually |
+| **PD** (Program Director) | Max 0 (min 0) | - | Yes | ~6 weeks | Leadership/admin focus |
+| **APD** (Associate Program Director) | Max 2 (min 0) | - | Yes | ~6 weeks | Flexible within block |
+| **OIC** (Officer in Charge) | Max 2 (min 0) | - | Yes | ~6 weeks | Flexible within block |
+| **Department Chief** | Max 1 (min 0) | - | Yes | ~6 weeks | Administrative duties |
+| **Sports Medicine** | Max 0 (min 0) | 4 | Yes | ~6 weeks | SM clinic only, no regular clinic |
+| **Core Faculty** | Max 4 (min 0) | - | Yes | ~6 weeks | Max 16 half-days per block |
+| **Adjunct** | Max 0 (min 0) | - | Yes (manual) | N/A | Not auto-scheduled; pre-loaded to FMIT manually |
 
 ### Clinic Flexibility Rules
 
-- **APD/OIC**: 2 half-days/week target, can be distributed flexibly within a 4-week block (e.g., 0 one week, 4 another) as long as block total = 8 half-days
-- **Core Faculty**: Hard maximum of 4 half-days per week, 16 per block
+- **All faculty minimum clinic is 0** to preserve AT capacity (supervision is priority).
+- **APD/OIC**: 2 half-days/week **cap**, can be distributed flexibly within a 4-week block (e.g., 0 one week, 4 another) as long as block total ≤ 8 half-days.
+- **Core Faculty**: Hard maximum of 4 half-days per week, 16 per block.
 - **Sports Medicine**: Regular clinic blocked; SM clinic = 4 half-days/week
+- **OIC clinical day preference (soft)**: avoid Monday/Friday **clinic patient‑care activities** when feasible (AT/PCAT/DO supervision still allowed).
+- **Clinic caps are soft** (weekly, penalty-weighted); overages are allowed with harsh penalties.
 
 ---
 
@@ -315,6 +318,20 @@ Certain procedures require specific faculty credentialing. Only credentialed fac
 - Each faculty member needs a `credentialed_procedures` field (list/array)
 - When scheduling procedure clinics, validate faculty has required credential
 - Some faculty may have **negative credentials** (explicitly NOT credentialed for common procedures like IUD insertion)
+
+### Current Procedure Scheduling Rules (2026‑01‑28)
+- **Vasectomy (VAS)**: clinic only **Thursday AM/PM** and **Friday AM**.
+  - Faculty priority for VAS: **Kinkennon > LaBounty >> Tagawa** (SM focus).
+  - Resident VAS requires faculty VAS in the same slot, and faculty VAS requires a resident.
+  - Resident eligibility priority (soft): **PROC > FMC > POCUS**.
+  - Future policy (not implemented): target **~3 VAS per block** with some **VAS+C**
+    pairing; may be best handled by a post‑solver allocator.
+  - **VASC (Vasectomy Counseling)**: group counseling + individual exams/consents.
+    Uses **normal AT supervision rules** (no extra PROC/VAS demand). Treat as clinic‑like
+    capacity usage.
+- **Botox (BTX)** and **Colposcopy (COLPO)**: **not active yet**; they are
+  assignment‑level activities when introduced (not rotations).
+- **POCUS**: rotation; primary activity is **US** with some **C** mix.
 
 ### Data Model
 

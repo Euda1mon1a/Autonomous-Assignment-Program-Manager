@@ -22,9 +22,9 @@ from app.models.person import Person
 from app.utils.academic_blocks import get_block_dates
 from app.utils.fmc_capacity import (
     activity_is_proc_or_vas,
-    assignment_counts_toward_fmc_capacity,
     slot_fmc_capacity,
 )
+from app.utils.supervision import assignment_requires_fmc_supervision
 
 logger = get_logger(__name__)
 
@@ -351,16 +351,19 @@ class HalfDayScheduleService:
             if not a.person or a.person.type != "resident":
                 continue
 
+            if not assignment_requires_fmc_supervision(a):
+                continue
+
+            # Base clinic supervision demand by PGY
+            pgy = a.person.pgy_level or 1
+            if pgy == 1:
+                demand += 0.5
+            else:
+                demand += 0.25
+
             # PROC/VAS = +1.0 AT
             if activity_is_proc_or_vas(a.activity):
                 demand += 1.0
-            # Regular clinic based on PGY
-            elif assignment_counts_toward_fmc_capacity(a):
-                pgy = a.person.pgy_level or 1
-                if pgy == 1:
-                    demand += 0.5
-                else:
-                    demand += 0.25
 
         # Calculate coverage (faculty providing supervision)
         coverage = 0.0

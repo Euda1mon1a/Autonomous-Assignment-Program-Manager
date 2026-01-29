@@ -360,16 +360,23 @@ class SchedulingEngine:
             if any(getattr(block, "time_of_day", None) for block in blocks):
                 self.constraint_manager.disable("OnePersonPerBlock")
                 logger.info("Disabled OnePersonPerBlock constraint for half-day blocks")
-                has_time_off_templates = any(
-                    (getattr(t, "rotation_type", "") or "").lower()
-                    in {"off", "absence", "recovery"}
-                    for t in templates
+                has_time_off_context = any(
+                    bool(days)
+                    for days in getattr(context, "preassigned_off_days", {}).values()
                 )
-                if not has_time_off_templates:
-                    self.constraint_manager.disable("1in7Rule")
-                    self.constraint_manager.disable("80HourRule")
+                if not has_time_off_context:
+                    for resident in context.residents:
+                        for info in context.availability.get(resident.id, {}).values():
+                            if not info.get("available", True):
+                                has_time_off_context = True
+                                break
+                        if has_time_off_context:
+                            break
+
+                if not has_time_off_context:
                     logger.info(
-                        "Disabled 1in7Rule and 80HourRule (no time-off templates in solver context)"
+                        "No time-off data detected in solver context; "
+                        "1in7Rule and 80HourRule remain enabled"
                     )
 
                 # Half-day outpatient solver cannot satisfy clinic-wide caps
@@ -872,6 +879,12 @@ class SchedulingEngine:
 
         # Build base context
         locked_blocks = self._get_locked_block_pairs(blocks)
+        resident_ids = [cast(UUID, r.id) for r in residents]
+        (
+            preassigned_work_blocks,
+            preassigned_work_days,
+            preassigned_off_days,
+        ) = self._get_preassigned_work_maps(blocks, resident_ids)
         context = SchedulingContext(
             residents=residents,
             faculty=faculty,
@@ -882,6 +895,9 @@ class SchedulingEngine:
             end_date=self.end_date,
             existing_assignments=existing_assignments or [],
             locked_blocks=locked_blocks,
+            preassigned_work_blocks=preassigned_work_blocks,
+            preassigned_work_days=preassigned_work_days,
+            preassigned_off_days=preassigned_off_days,
             call_eligible_faculty=call_eligible,
             activities=activities,
             activity_requirements=activity_requirements,
@@ -2108,7 +2124,9 @@ class SchedulingEngine:
 
             See backend/app/scheduling/solvers.py header for architecture details.
         """
-        query = self.db.query(RotationTemplate)
+        query = self.db.query(RotationTemplate).filter(
+            RotationTemplate.is_archived == False  # noqa: E712
+        )
 
         if template_ids:
             query = query.filter(RotationTemplate.id.in_(template_ids))
@@ -2630,6 +2648,71 @@ class SchedulingEngine:
                 locked_blocks.add((person_id, block_id))
         return locked_blocks
 
+    def _get_preassigned_work_maps(
+        self,
+        blocks: list[Block],
+        resident_ids: list[UUID],
+    ) -> tuple[dict[UUID, set[UUID]], dict[UUID, set[date]], dict[UUID, set[date]]]:
+        """
+        Build fixed workload maps from preload/manual half-day assignments.
+
+        Returns:
+            preassigned_work_blocks: {resident_id: {block_id, ...}}
+            preassigned_work_days: {resident_id: {date, ...}}
+            preassigned_off_days: {resident_id: {date, ...}}
+        """
+        from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
+        from app.models.activity import Activity
+
+        if not resident_ids:
+            return {}, {}, {}
+
+        block_by_key = {(b.date, b.time_of_day): b.id for b in blocks}
+
+        rows = (
+            self.db.query(
+                HalfDayAssignment.person_id,
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+                Activity.activity_category,
+                Activity.counts_toward_clinical_hours,
+            )
+            .join(Activity, HalfDayAssignment.activity_id == Activity.id)
+            .filter(
+                HalfDayAssignment.person_id.in_(resident_ids),
+                HalfDayAssignment.date >= self.start_date,
+                HalfDayAssignment.date <= self.end_date,
+                HalfDayAssignment.source.in_(
+                    [
+                        AssignmentSource.PRELOAD.value,
+                        AssignmentSource.MANUAL.value,
+                    ]
+                ),
+            )
+            .all()
+        )
+
+        work_blocks: dict[UUID, set[UUID]] = {}
+        work_days: dict[UUID, set[date]] = {}
+        off_days: dict[UUID, set[date]] = {}
+
+        for person_id, slot_date, time_of_day, category, counts_toward in rows:
+            block_id = block_by_key.get((slot_date, time_of_day))
+            if not block_id:
+                continue
+
+            is_time_off = (str(category or "").lower() == "time_off") or (
+                counts_toward is False
+            )
+            if is_time_off:
+                off_days.setdefault(person_id, set()).add(slot_date)
+                continue
+
+            work_blocks.setdefault(person_id, set()).add(block_id)
+            work_days.setdefault(person_id, set()).add(slot_date)
+
+        return work_blocks, work_days, off_days
+
     def _persist_solver_assignments_to_half_day(
         self,
         assignments: list[Assignment],
@@ -2786,9 +2869,28 @@ class SchedulingEngine:
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
         locked_count = len(getattr(context, "locked_blocks", set()))
         call_eligible = len(getattr(context, "call_eligible_faculty", []))
+        preassigned_work_blocks = sum(
+            len(v) for v in getattr(context, "preassigned_work_blocks", {}).values()
+        )
+        preassigned_work_days = sum(
+            len(v) for v in getattr(context, "preassigned_work_days", {}).values()
+        )
+        preassigned_off_days = sum(
+            len(v) for v in getattr(context, "preassigned_off_days", {}).values()
+        )
+
+        preassigned_work_blocks = sum(
+            len(v) for v in getattr(context, "preassigned_work_blocks", {}).values()
+        )
+        preassigned_work_days = sum(
+            len(v) for v in getattr(context, "preassigned_work_days", {}).values()
+        )
+        preassigned_off_days = sum(
+            len(v) for v in getattr(context, "preassigned_off_days", {}).values()
+        )
 
         logger.error(
-            "Context summary: residents=%s, faculty=%s, templates=%s, blocks=%s (workday=%s), locked=%s, call_eligible=%s, existing_assignments=%s"
+            "Context summary: residents=%s, faculty=%s, templates=%s, blocks=%s (workday=%s), locked=%s, call_eligible=%s, existing_assignments=%s, preassigned_work_blocks=%s, preassigned_work_days=%s, preassigned_off_days=%s"
             % (
                 len(context.residents),
                 len(context.faculty),
@@ -2798,6 +2900,9 @@ class SchedulingEngine:
                 locked_count,
                 call_eligible,
                 len(getattr(context, "existing_assignments", [])),
+                preassigned_work_blocks,
+                preassigned_work_days,
+                preassigned_off_days,
             )
         )
 
@@ -2844,6 +2949,15 @@ class SchedulingEngine:
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
         locked_count = len(getattr(context, "locked_blocks", set()))
         call_eligible = len(getattr(context, "call_eligible_faculty", []))
+        preassigned_work_blocks = sum(
+            len(v) for v in getattr(context, "preassigned_work_blocks", {}).values()
+        )
+        preassigned_work_days = sum(
+            len(v) for v in getattr(context, "preassigned_work_days", {}).values()
+        )
+        preassigned_off_days = sum(
+            len(v) for v in getattr(context, "preassigned_off_days", {}).values()
+        )
 
         template_summaries = [
             {
@@ -2882,6 +2996,9 @@ class SchedulingEngine:
                 "existing_assignments": len(
                     getattr(context, "existing_assignments", [])
                 ),
+                "preassigned_work_blocks": preassigned_work_blocks,
+                "preassigned_work_days": preassigned_work_days,
+                "preassigned_off_days": preassigned_off_days,
             },
             "constraints": {
                 "enabled": sorted({c.name for c in enabled}),

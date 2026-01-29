@@ -4,6 +4,94 @@
 
 ---
 
+## LaTeX/MFR Generation Research (2026-01-28)
+
+**Priority:** Low (deferred)
+**Status:** DEFERRED - Research archived
+**ADR:** `docs/decisions/ADR-2026-01-28-latex-generation.md`
+
+**Summary:** PR #772 evaluated LaTeX libraries for military MFR generation.
+- Recommendation: Jinja2 + pylatexenc when needed
+- Current state: ReportLab sufficient for existing PDF needs
+- Retrieve research: `git show origin/claude/research-latex-generation-THEPp:docs/research/latex-generation-research.md`
+
+**Revisit when:** AR 25-50 MFR auto-generation becomes a priority
+
+---
+
+## Excel-to-CP-SAT Alignment (2026-01-28)
+
+**Priority:** High (improves schedule quality)
+**Status:** Analysis complete, implementation pending
+**Analysis:** `docs/analysis/excel-vs-cpsat-block10-comparison.md`
+
+**Findings:** Excel hand-tuned schedule differs significantly from CP-SAT output:
+- CP-SAT assigns more clinic days to outpatient residents (+11 to +25 half-days)
+- Excel captures institutional events (USAFP, OB retreat, DOCTORS' DAY) not in CP-SAT
+- Faculty AT distribution differs (Excel more spread, CP-SAT concentrated with equity)
+
+**Recommended Actions:**
+- [ ] Create Excel import script as preload baseline
+- [ ] Add weekly pattern constraints from Templates sheet
+- [ ] Create `institutional_events` table for recurring events
+- [ ] Map Excel short codes (C, CV, AT) to canonical activity codes
+
+---
+
+## CP-SAT Phase 2: COMPLETE (2026-01-28)
+
+**Priority:** N/A - COMPLETE
+**Status:** ✅ All P0-P4 items resolved, validator fixed, MCP validation clean
+
+### Phase 2 Summary
+
+| Item | Status | Description |
+|------|--------|-------------|
+| **P0: 80-hour** | ✅ | Time-off patterns loaded into weekly_patterns |
+| **P1: 1-in-7** | ✅ | Saturday OFF for FMIT/IMW/PEDSW/PNF |
+| **P2: Supervision** | ✅ | AT/PCAT ratios via half_day_assignments |
+| **P3: Templates** | ✅ | 37 templates have activity requirements |
+| **P4: Faculty Equity** | ✅ | Admin/AT equity via penalty weights |
+| **Validator Fix** | ✅ | Time-off excluded from duty hours |
+
+### Validator Bug Fixed (2026-01-28)
+
+**Root cause:** Validator counted W/OFF as duty hours, causing false 80-hour and consecutive-day violations.
+
+**Fix applied:**
+- `backend/app/scheduling/validator.py` - Exclude time-off from duty hours
+- `backend/app/scheduling/conflicts/analyzer.py` - Same exclusion for detect_conflicts
+- `backend/app/services/block_quality_report_service.py` - Note ACGME is placeholder
+
+### Block 10 Validation (Post-Fix)
+
+| Tool | Result |
+|------|--------|
+| `validate_schedule_tool` | ✅ is_valid=true, 0 issues |
+| `detect_conflicts_tool` | ✅ 0 conflicts |
+| `block_quality_report_tool` | ✅ PASS (ACGME placeholder, PCAT/DO gap expected) |
+
+### Time-Off Rules Applied (Authoritative)
+
+| Rotation | Day Off |
+|----------|---------|
+| FMIT PGY-1/PGY-2 | Saturday |
+| FMIT PGY-3 | Sunday |
+| IMW | Saturday |
+| PEDSW | Saturday |
+| PNF | Saturday |
+
+### Files Changed
+- `backend/app/scheduling/validator.py`
+- `backend/app/scheduling/conflicts/analyzer.py`
+- `backend/app/services/block_quality_report_service.py`
+- `scripts/ops/apply_inpatient_time_off_overrides.py`
+- `data/inpatient_time_off_overrides_manual.json`
+
+**Ready for:** Phase 2 PR and merge
+
+---
+
 ## Priority: Import/Export Staging DB (2026-01-01)
 
 **Status:** ✅ COMPLETE (verified 2026-01-04)
@@ -939,7 +1027,7 @@ See also:
 
 ---
 
-*Last updated: 2026-01-12 (Hub Consolidation Phase 1 complete, PRs #694-700 merged)*
+*Last updated: 2026-01-28 (Phase 2 COMPLETE - validator fix, MCP validation clean)*
 
 
 ---
