@@ -361,7 +361,8 @@ class SchedulingEngine:
                 self.constraint_manager.disable("OnePersonPerBlock")
                 logger.info("Disabled OnePersonPerBlock constraint for half-day blocks")
                 has_time_off_context = any(
-                    bool(days) for days in getattr(context, "preassigned_off_days", {}).values()
+                    bool(days)
+                    for days in getattr(context, "preassigned_off_days", {}).values()
                 )
                 if not has_time_off_context:
                     for resident in context.residents:
@@ -2948,6 +2949,15 @@ class SchedulingEngine:
         workday_blocks = [b for b in context.blocks if not b.is_weekend]
         locked_count = len(getattr(context, "locked_blocks", set()))
         call_eligible = len(getattr(context, "call_eligible_faculty", []))
+        preassigned_work_blocks = sum(
+            len(v) for v in getattr(context, "preassigned_work_blocks", {}).values()
+        )
+        preassigned_work_days = sum(
+            len(v) for v in getattr(context, "preassigned_work_days", {}).values()
+        )
+        preassigned_off_days = sum(
+            len(v) for v in getattr(context, "preassigned_off_days", {}).values()
+        )
 
         template_summaries = [
             {
