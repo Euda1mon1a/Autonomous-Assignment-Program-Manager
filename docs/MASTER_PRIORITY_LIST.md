@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-27 (Block 10 CP-SAT Step 3.5 + proactive CV target)
+> **Last Updated:** 2026-01-29 (Phase 5 override layer + test quirks audit)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -216,27 +216,23 @@ Remaining faculty-specific gaps:
 2. Wire faculty expansion into half-day pipeline before CP-SAT activity solver
 3. Enforce or normalize weekly clinic min/max limits and fix template coverage gaps
 
-### Phase 5 — Post-release Coverage Overrides (NEW - Session 150)
-**Status:** P5-1 call + cascade extension in progress
+### Phase 5 — Post-release Coverage Overrides ✅ COMMITTED (Session 150)
+**Status:** P5.0 + P5.1 committed (`5826b410`, `7cd4b045`)
 **Doc:** [`docs/planning/CP_SAT_PIPELINE_REFINEMENT_PHASE5.md`](planning/CP_SAT_PIPELINE_REFINEMENT_PHASE5.md)
 
-**Problem**
-Short-notice coverage changes (deployment/illness) require editing **released** clinic
-slots without regenerating the entire schedule.
+**Completed:**
+1. ✅ Schedule override model (coverage, cancellation, gap types)
+2. ✅ Admin-only routes (create, list, deactivate)
+3. ✅ Overlay integration (`include_overrides` param)
+4. ✅ Call override model + service
+5. ✅ Cascade planner with sacrifice hierarchy:
+   - GME/DFM → Solo clinic → Procedures → PROTECTED (FMIT/AT/PCAT/DO)
+6. ✅ GAP override type for visible unfilled slots
+7. ✅ Post-call PCAT/DO auto-GAP creation
 
-**Recommendation**
-Implement an **admin-only coverage override layer** (delta-based) that overlays the
-base schedule instead of rewriting it. Excel round-trip import/export is optional and
-should generate overrides (not re-create assignments).
-
-**Action**
-1. Add `call_overrides` table + API (admin-only). Call must always be staffed.
-2. Add cascade endpoint for deployments (half-day + call) with N-1 hard-block and sacrifice hierarchy.
-   - Warn if call replacement has next-day protected work; PCAT/DO manual follow-up.
-   - GAP overrides for orphaned PCAT/DO to make shortages visible.
-3. Apply call overrides in exports and daily manifest.
-4. Optional: Excel round-trip import creates overrides only (no hard deletes).
-5. Future: Resilience-driven cascade scoring (blast radius + contingency).
+**Remaining (optional):**
+- [ ] Excel round-trip import creates overrides only (no hard deletes)
+- [ ] Resilience-driven cascade scoring (blast radius + contingency)
 
 ### 7. Pre-commit Hook Failures (Session 128) - MYPY PROGRESS
 **Updated:** 2026-01-24 (Session 139)
@@ -630,6 +626,32 @@ except Exception as e:
 
 The MCP validation `await` bug wasn't caught by unit tests - found by operational testing.
 
+### 32. Test Infrastructure Quirks Audit (NEW - Session 150)
+**Added:** 2026-01-29
+**Source:** P5.1 schedule override test failures
+
+FastAPI TestClient has undocumented behavior differences between versioned and non-versioned routes:
+
+| Issue | Symptom | Root Cause |
+|-------|---------|------------|
+| Query params stripped | `?start_date=...&end_date=...` not reaching handler | TestClient on `/api/*` paths |
+| Tests pass locally, fail in CI | Inconsistent path handling | Path prefix routing quirks |
+
+**Discovery:** Tests hitting `/api/admin/schedule-overrides?start_date=...` returned 400 (missing required params). Same tests hitting `/api/v1/admin/schedule-overrides?start_date=...` worked correctly.
+
+**Fix Applied:** Changed all test paths to use `/api/v1/*` versioned routes.
+
+**Action Required:**
+1. Audit all route tests for `/api/*` vs `/api/v1/*` consistency
+2. Document TestClient path quirk in `BEST_PRACTICES_AND_GOTCHAS.md`
+3. Consider adding test helper that enforces versioned paths
+
+**Files:**
+- `backend/tests/routes/*.py` - All route test files
+- `backend/tests/conftest.py` - Test client fixture
+
+**Effort:** 2-3 hours
+
 **Gap:**
 - Unit tests: pass (functions exist, logic correct in isolation)
 - Integration tests: sparse (components interacting)
@@ -845,9 +867,9 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 |----------|------|----------|
 | **CRITICAL** | 3 | 5 |
 | **HIGH** | 9 | 6 |
-| **MEDIUM** | 15 | 11 |
+| **MEDIUM** | 16 | 11 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **40** | **25** |
+| **TOTAL** | **41** | **25** |
 
 ### Top 5 Actions for Next Session
 
@@ -882,6 +904,15 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 | ⚠️ Found | Block 10 | Capacity constraints skipped for 35/40 slots (policy needed) |
 | 📝 Added | gitignore | `.claude/dontreadme/sessions/*.md` for session scratchpads |
 | 📝 Updated | ops scripts | `block_regen.py` + `block_export.py` now backfill env |
+
+### Session 150 Updates (2026-01-29)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Committed | Phase 5.0 | Schedule override layer (commit `5826b410`) |
+| ✅ Committed | Phase 5.1 | Cascade overrides + GAP + call coverage (commit `7cd4b045`) |
+| ➕ Added | MEDIUM #32 | Test infrastructure quirks (TestClient `/api` vs `/api/v1`) |
+| 📝 Updated | HIGH Phase 5 | Call + cascade + GAP override complete |
 
 ### Session 141 Updates (2026-01-26)
 
