@@ -425,7 +425,6 @@ class BlockQualityReportService:
                     SELECT a.absence_type
                     FROM absences a
                     WHERE a.person_id = cd.person_id
-                      AND a.is_blocking = TRUE
                       AND cd.call_date + INTERVAL '1 day' BETWEEN a.start_date AND a.end_date
                     ORDER BY a.start_date
                     LIMIT 1
