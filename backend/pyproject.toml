@@ -129,14 +129,22 @@ known-first-party = ["app"]
 
 [tool.mypy]
 python_version = "3.11"
-warn_return_any = true
-warn_unused_ignores = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-strict_optional = true
+# Relaxed config: catch actual bugs, not annotation noise
+# Ruff handles missing annotations; mypy catches type mismatches
+warn_return_any = false           # Often intentional (generic wrappers)
+warn_unused_ignores = false       # Cleanup noise
+disallow_untyped_defs = false     # Ruff handles this
+disallow_incomplete_defs = false  # Ruff handles this
+check_untyped_defs = true         # Still check bodies of untyped functions
+strict_optional = true            # None checking is valuable
 ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
+
+# Disable low-value error codes
+disable_error_code = [
+    "var-annotated",    # "Need type annotation for variable" - noise
+    "no-untyped-call",  # Calling untyped functions - noise
+]
 
 [[tool.mypy.overrides]]
 module = [

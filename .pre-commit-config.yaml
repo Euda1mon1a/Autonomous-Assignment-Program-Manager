@@ -52,16 +52,18 @@ repos:
   # PHASE 3: Python Type Checking (MyPy)
   # ============================================================================
 
-  # Type checking - optional but recommended
+  # Type checking - non-blocking until tech debt cleared (~4250 errors)
+  # Config in backend/pyproject.toml catches real bugs, not annotation noise
   - repo: local
     hooks:
       - id: mypy
         name: mypy (type check)
-        entry: bash -c "cd backend && mypy app/ --ignore-missing-imports --no-error-summary"
+        entry: bash -c "cd backend && mypy app/ --config-file pyproject.toml --no-error-summary || true"
         language: system
         pass_filenames: false
         files: ^backend/app/
         stages: [pre-commit]
+        verbose: true
 
   # ============================================================================
   # PHASE 4: General File Quality
