@@ -932,10 +932,12 @@ class CPSATActivitySolver:
                         pref_weight = int(pref.weight) if pref.weight is not None else 0
                         if pref_weight <= 0:
                             continue
+                        # PREFER: negative weight so subtracting penalty = reward
+                        # AVOID: positive weight so subtracting penalty = penalize
                         weight = (
-                            pref_weight
+                            -pref_weight
                             if pref.direction == FacultyPreferenceDirection.PREFER
-                            else -pref_weight
+                            else pref_weight
                         )
                         for act_id in allowed:
                             if act_id not in clinic_preference_activity_ids:
