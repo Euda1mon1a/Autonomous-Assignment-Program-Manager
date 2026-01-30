@@ -157,6 +157,11 @@ class Person(Base):
         cascade="all, delete-orphan",
         foreign_keys="[FacultyWeeklyOverride.person_id]",
     )
+    faculty_schedule_preferences = relationship(
+        "FacultySchedulePreference",
+        back_populates="person",
+        cascade="all, delete-orphan",
+    )
 
     # Half-day assignment relationships (new unified schedule model)
     half_day_assignments = relationship(

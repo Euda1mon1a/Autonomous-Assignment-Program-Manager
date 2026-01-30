@@ -33,6 +33,12 @@ from app.schemas.email import (
     EmailTemplateSummary,
     EmailTemplateUpdate,
 )
+from app.schemas.faculty_schedule_preference import (
+    FacultySchedulePreferenceCreate,
+    FacultySchedulePreferenceListResponse,
+    FacultySchedulePreferenceResponse,
+    FacultySchedulePreferenceUpdate,
+)
 from app.schemas.leave import (
     BulkLeaveImportRequest,
     BulkLeaveImportResponse,
@@ -278,6 +284,10 @@ __all__ = [
     "SwapRespondRequest",
     "PreferencesUpdate",
     "PreferencesResponse",
+    "FacultySchedulePreferenceCreate",
+    "FacultySchedulePreferenceUpdate",
+    "FacultySchedulePreferenceResponse",
+    "FacultySchedulePreferenceListResponse",
     "DashboardAlert",
     "DashboardStats",
     "DashboardResponse",

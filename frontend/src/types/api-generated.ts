@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-30T00:58:07Z
+ * Generated at: 2026-01-30T08:27:32Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -6384,6 +6384,80 @@ export interface paths {
          * @description Admin-only: deactivate a call override (soft delete).
          */
         delete: operations["deactivate_call_override_api_v1_admin_call_overrides__override_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/institutional-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Institutional Events */
+        get: operations["list_institutional_events_api_v1_admin_institutional_events_get"];
+        put?: never;
+        /** Create Institutional Event */
+        post: operations["create_institutional_event_api_v1_admin_institutional_events_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/institutional-events/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Institutional Event */
+        get: operations["get_institutional_event_api_v1_admin_institutional_events__event_id__get"];
+        /** Update Institutional Event */
+        put: operations["update_institutional_event_api_v1_admin_institutional_events__event_id__put"];
+        post?: never;
+        /** Delete Institutional Event */
+        delete: operations["delete_institutional_event_api_v1_admin_institutional_events__event_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/faculty-schedule-preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Faculty Schedule Preferences */
+        get: operations["list_faculty_schedule_preferences_api_v1_admin_faculty_schedule_preferences_get"];
+        put?: never;
+        /** Create Faculty Schedule Preference */
+        post: operations["create_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/faculty-schedule-preferences/{preference_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Faculty Schedule Preference */
+        get: operations["get_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences__preference_id__get"];
+        /** Update Faculty Schedule Preference */
+        put: operations["update_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences__preference_id__put"];
+        post?: never;
+        /** Delete Faculty Schedule Preference */
+        delete: operations["delete_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences__preference_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -17160,6 +17234,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/import/half-day/stage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stage a Block Template2 schedule for diff
+         * @description Upload a Block Template2 Excel file and stage diffs vs live schedule.
+         */
+        post: operations["stage_half_day_import_api_v1_import_half_day_stage_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/import/half-day/batches/{batch_id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Preview staged half-day diffs */
+        get: operations["preview_half_day_import_api_v1_import_half_day_batches__batch_id__preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/schedules/drafts": {
         parameters: {
             query?: never;
@@ -19711,7 +19822,7 @@ export interface components {
          *     Shows who is absent and why (vacation, sick, deployment, etc.)
          */
         AbsenceInfo: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Absence Type
              * @description Type of absence (vacation, sick, deployment)
@@ -21326,7 +21437,7 @@ export interface components {
          * @description Summary of an assignment for manifest display.
          */
         AssignmentSummary: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Role
              * @description primary, supervising, or backup
@@ -21462,9 +21573,9 @@ export interface components {
          */
         AttendingInfo: {
             /** @description AM attending */
-            am?: components["schemas"]["PersonSummary"] | null;
+            am?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
             /** @description PM attending */
-            pm?: components["schemas"]["PersonSummary"] | null;
+            pm?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
         };
         /**
          * AttractorInfoResponse
@@ -23527,19 +23638,24 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Schema for list of blocks.
+         * @description Response for listing academic blocks.
          */
         BlockListResponse: {
             /**
-             * Items
-             * @description List of block responses
+             * Blocks
+             * @description List of academic blocks
              */
-            items: components["schemas"]["BlockResponse"][];
+            blocks: components["schemas"]["BlockSummary"][];
             /**
-             * Total
+             * Academic Year
+             * @description Academic year
+             */
+            academicYear: string;
+            /**
+             * Total Blocks
              * @description Total number of blocks
              */
-            total: number;
+            totalBlocks: number;
         };
         /**
          * BlockMatrixResponse
@@ -23778,7 +23894,7 @@ export interface components {
             /** Residents With Leave */
             residentsWithLeave: number;
             /** Coverage Gaps */
-            coverageGaps: components["schemas"]["app__schemas__block_assignment__CoverageGap"][];
+            coverageGaps: components["schemas"]["CoverageGap"][];
             /** Leave Conflicts */
             leaveConflicts: components["schemas"]["LeaveConflict"][];
             /** Rotation Capacities */
@@ -24047,6 +24163,21 @@ export interface components {
             facultyAffected?: string[] | null;
             /** Services Affected */
             servicesAffected?: string[] | null;
+        };
+        /** Body_stage_half_day_import_api_v1_import_half_day_stage_post */
+        Body_stage_half_day_import_api_v1_import_half_day_stage_post: {
+            /**
+             * File
+             * Format: binary
+             * @description Block Template2 xlsx file
+             */
+            file: string;
+            /** Block Number */
+            blockNumber: number;
+            /** Academic Year */
+            academicYear: number;
+            /** Notes */
+            notes?: string | null;
         };
         /** Body_stage_import_api_v1_import_stage_post */
         Body_stage_import_api_v1_import_stage_post: {
@@ -26432,35 +26563,23 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap in the schedule.
-         * @example {
-         *       "date": "2024-01-15",
-         *       "rotation": "FMIT Inpatient",
-         *       "severity": "high",
-         *       "timeOfDay": "PM"
-         *     }
+         * @description Identified coverage gap.
          */
         CoverageGap: {
             /**
-             * Date
-             * Format: date
-             * @description Date of the gap
+             * Rotation Template Id
+             * Format: uuid
              */
-            date: string;
-            /**
-             * Time Of Day
-             * @description AM or PM
-             */
-            timeOfDay: string;
-            /**
-             * Rotation
-             * @description Rotation with gap
-             */
-            rotation?: string | null;
-            /**
-             * Severity
-             * @description low, medium, high
-             */
+            rotationTemplateId: string;
+            /** Rotation Name */
+            rotationName: string;
+            /** Required Coverage */
+            requiredCoverage: number;
+            /** Assigned Coverage */
+            assignedCoverage: number;
+            /** Gap */
+            gap: number;
+            /** Severity */
             severity: string;
         };
         /**
@@ -26540,7 +26659,7 @@ export interface components {
              * Gaps
              * @description List of coverage gaps
              */
-            gaps?: components["schemas"]["CoverageGap"][];
+            gaps?: components["schemas"]["app__schemas__visualization__CoverageGap"][];
             /**
              * Title
              * @description Title for the heatmap
@@ -29231,7 +29350,7 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            person: components["schemas"]["app__schemas__certification__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             certificationType: components["schemas"]["CertificationTypeSummary"];
             /**
              * Expiration Date
@@ -30084,12 +30203,12 @@ export interface components {
          */
         FMITSection: {
             /** @description Attending physician for inpatient */
-            attending?: components["schemas"]["PersonSummary"] | null;
+            attending?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
             /**
              * Residents
              * @description Residents on FMIT
              */
-            residents?: components["schemas"]["PersonSummary"][];
+            residents?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"][];
         };
         /**
          * FMITWeekInfo
@@ -30356,6 +30475,18 @@ export interface components {
             total: number;
         };
         /**
+         * FacultyPreferenceDirection
+         * @description Preference direction (prefer or avoid).
+         * @enum {string}
+         */
+        FacultyPreferenceDirection: "prefer" | "avoid";
+        /**
+         * FacultyPreferenceType
+         * @description Preference category (clinic or call).
+         * @enum {string}
+         */
+        FacultyPreferenceType: "clinic" | "call";
+        /**
          * FacultyPreferencesResponse
          * @description Response for faculty preferences.
          */
@@ -30375,6 +30506,95 @@ export interface components {
          * @enum {string}
          */
         FacultyRoleSchema: "pd" | "apd" | "oic" | "dept_chief" | "sports_med" | "core" | "adjunct";
+        /** FacultySchedulePreferenceCreate */
+        FacultySchedulePreferenceCreate: {
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            personId: string;
+            preferenceType: components["schemas"]["FacultyPreferenceType"];
+            direction: components["schemas"]["FacultyPreferenceDirection"];
+            /** Rank */
+            rank: number;
+            /** Day Of Week */
+            dayOfWeek: number;
+            /** Time Of Day */
+            timeOfDay?: ("AM" | "PM") | null;
+            /**
+             * Weight
+             * @default 6
+             */
+            weight: number;
+            /**
+             * Is Active
+             * @default true
+             */
+            isActive: boolean;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** FacultySchedulePreferenceListResponse */
+        FacultySchedulePreferenceListResponse: {
+            /** Items */
+            items: components["schemas"]["FacultySchedulePreferenceResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            pageSize: number;
+        };
+        /** FacultySchedulePreferenceResponse */
+        FacultySchedulePreferenceResponse: {
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            personId: string;
+            preferenceType: components["schemas"]["FacultyPreferenceType"];
+            direction: components["schemas"]["FacultyPreferenceDirection"];
+            /** Rank */
+            rank: number;
+            /** Day Of Week */
+            dayOfWeek: number;
+            /** Time Of Day */
+            timeOfDay?: ("AM" | "PM") | null;
+            /**
+             * Weight
+             * @default 6
+             */
+            weight: number;
+            /**
+             * Is Active
+             * @default true
+             */
+            isActive: boolean;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /** FacultySchedulePreferenceUpdate */
+        FacultySchedulePreferenceUpdate: {
+            preferenceType?: components["schemas"]["FacultyPreferenceType"] | null;
+            direction?: components["schemas"]["FacultyPreferenceDirection"] | null;
+            /** Rank */
+            rank?: number | null;
+            /** Day Of Week */
+            dayOfWeek?: number | null;
+            /** Time Of Day */
+            timeOfDay?: ("AM" | "PM") | null;
+            /** Weight */
+            weight?: number | null;
+            /** Is Active */
+            isActive?: boolean | null;
+            /** Notes */
+            notes?: string | null;
+        };
         /**
          * FacultySummaryReportRequest
          * @description Request schema for faculty summary report.
@@ -31762,6 +31982,132 @@ export interface components {
              * Format: date-time
              */
             updatedAt: string;
+        };
+        /**
+         * HalfDayDiffEntry
+         * @description Single diff entry between Excel and live schedule.
+         */
+        HalfDayDiffEntry: {
+            /** Person Id */
+            personId?: string | null;
+            /** Person Name */
+            personName: string;
+            /**
+             * Assignment Date
+             * Format: date
+             */
+            assignmentDate: string;
+            /** Time Of Day */
+            timeOfDay: string;
+            diffType: components["schemas"]["HalfDayDiffType"];
+            /** Excel Value */
+            excelValue?: string | null;
+            /** Current Value */
+            currentValue?: string | null;
+            /** Warnings */
+            warnings?: string[];
+        };
+        /**
+         * HalfDayDiffMetrics
+         * @description Summary metrics for Excel vs schedule diff.
+         */
+        HalfDayDiffMetrics: {
+            /**
+             * Total Slots
+             * @default 0
+             */
+            totalSlots: number;
+            /**
+             * Changed Slots
+             * @default 0
+             */
+            changedSlots: number;
+            /**
+             * Added
+             * @default 0
+             */
+            added: number;
+            /**
+             * Removed
+             * @default 0
+             */
+            removed: number;
+            /**
+             * Modified
+             * @default 0
+             */
+            modified: number;
+            /**
+             * Percent Changed
+             * @default 0
+             */
+            percentChanged: number;
+            /**
+             * Manual Half Days
+             * @default 0
+             */
+            manualHalfDays: number;
+            /**
+             * Manual Hours
+             * @default 0
+             */
+            manualHours: number;
+            /** By Activity */
+            byActivity?: {
+                [key: string]: number | undefined;
+            };
+        };
+        /**
+         * HalfDayDiffType
+         * @description Diff classification for a half-day slot.
+         * @enum {string}
+         */
+        HalfDayDiffType: "added" | "removed" | "modified";
+        /**
+         * HalfDayImportPreviewResponse
+         * @description Preview response for half-day staged batch.
+         */
+        HalfDayImportPreviewResponse: {
+            /**
+             * Batch Id
+             * Format: uuid
+             */
+            batchId: string;
+            metrics: components["schemas"]["HalfDayDiffMetrics"];
+            /** Diffs */
+            diffs?: components["schemas"]["HalfDayDiffEntry"][];
+            /**
+             * Total Diffs
+             * @default 0
+             */
+            totalDiffs: number;
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /**
+             * Page Size
+             * @default 50
+             */
+            pageSize: number;
+        };
+        /**
+         * HalfDayImportStageResponse
+         * @description Response for staging a half-day Excel import.
+         */
+        HalfDayImportStageResponse: {
+            /** Success */
+            success: boolean;
+            /** Batch Id */
+            batchId?: string | null;
+            /** Created At */
+            createdAt?: string | null;
+            /** Message */
+            message: string;
+            /** Warnings */
+            warnings?: string[];
+            diffMetrics?: components["schemas"]["HalfDayDiffMetrics"] | null;
         };
         /**
          * HalfDayRequirementCreate
@@ -33435,6 +33781,129 @@ export interface components {
              */
             message: string;
         };
+        /** InstitutionalEventCreate */
+        InstitutionalEventCreate: {
+            /** Name */
+            name: string;
+            eventType: components["schemas"]["InstitutionalEventType"];
+            /**
+             * Start Date
+             * Format: date
+             */
+            startDate: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            endDate: string;
+            /** Time Of Day */
+            timeOfDay?: ("AM" | "PM") | null;
+            /** @default all */
+            appliesTo: components["schemas"]["InstitutionalEventScope"];
+            /**
+             * Applies To Inpatient
+             * @default false
+             */
+            appliesToInpatient: boolean;
+            /**
+             * Activity Id
+             * Format: uuid
+             */
+            activityId: string;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Is Active
+             * @default true
+             */
+            isActive: boolean;
+        };
+        /** InstitutionalEventListResponse */
+        InstitutionalEventListResponse: {
+            /** Items */
+            items: components["schemas"]["InstitutionalEventResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            pageSize: number;
+        };
+        /** InstitutionalEventResponse */
+        InstitutionalEventResponse: {
+            /** Name */
+            name: string;
+            eventType: components["schemas"]["InstitutionalEventType"];
+            /**
+             * Start Date
+             * Format: date
+             */
+            startDate: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            endDate: string;
+            /** Time Of Day */
+            timeOfDay?: ("AM" | "PM") | null;
+            /** @default all */
+            appliesTo: components["schemas"]["InstitutionalEventScope"];
+            /**
+             * Applies To Inpatient
+             * @default false
+             */
+            appliesToInpatient: boolean;
+            /**
+             * Activity Id
+             * Format: uuid
+             */
+            activityId: string;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Is Active
+             * @default true
+             */
+            isActive: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /**
+         * InstitutionalEventScope
+         * @description Who the event applies to.
+         * @enum {string}
+         */
+        InstitutionalEventScope: "all" | "faculty" | "resident";
+        /**
+         * InstitutionalEventType
+         * @description High-level classification for institutional events.
+         * @enum {string}
+         */
+        InstitutionalEventType: "holiday" | "conference" | "retreat" | "training" | "closure" | "other";
+        /** InstitutionalEventUpdate */
+        InstitutionalEventUpdate: {
+            /** Name */
+            name?: string | null;
+            eventType?: components["schemas"]["InstitutionalEventType"] | null;
+            /** Start Date */
+            startDate?: string | null;
+            /** End Date */
+            endDate?: string | null;
+            /** Time Of Day */
+            timeOfDay?: ("AM" | "PM") | null;
+            appliesTo?: components["schemas"]["InstitutionalEventScope"] | null;
+            /** Applies To Inpatient */
+            appliesToInpatient?: boolean | null;
+            /** Activity Id */
+            activityId?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Is Active */
+            isActive?: boolean | null;
+        };
         /**
          * JobActionResponseSchema
          * @description Schema for job action response.
@@ -34833,7 +35302,7 @@ export interface components {
          *     Shows who is on night call so staff know they're unavailable during day.
          */
         NightCallInfo: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Call Type
              * @description Type of call (night, backup)
@@ -35543,7 +36012,7 @@ export interface components {
          *     Shows person with their AM and PM assignments (if any).
          */
         PersonClinicCoverage: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /** @description AM assignment */
             am?: components["schemas"]["AssignmentInfo"] | null;
             /** @description PM assignment */
@@ -35554,7 +36023,7 @@ export interface components {
          * @description Certification compliance for a single person.
          */
         PersonComplianceResponse: {
-            person: components["schemas"]["app__schemas__certification__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /** Total Required */
             totalRequired: number;
             /** Total Current */
@@ -35833,7 +36302,7 @@ export interface components {
         };
         /**
          * PersonSummary
-         * @description Summary of person for manifest display.
+         * @description Minimal person info for certification reports.
          */
         PersonSummary: {
             /**
@@ -35843,11 +36312,10 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /**
-             * Pgy Level
-             * @description PGY level for residents
-             */
-            pgyLevel?: number | null;
+            /** Type */
+            type: string;
+            /** Email */
+            email?: string | null;
         };
         /**
          * PersonType
@@ -37028,14 +37496,13 @@ export interface components {
             queueName: string;
             /**
              * Confirm
-             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
         };
         /**
          * QueuePurgeResponse
-         * @description Response to queue purge request.
+         * @description Response after purging a queue.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -37896,14 +38363,14 @@ export interface components {
          *     Shows who is away at a remote site and their local surrogate/proxy.
          */
         RemoteAssignment: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
             /**
              * Location
              * @description Remote location name
              */
             location: string;
             /** @description Local proxy/surrogate if assigned */
-            surrogate?: components["schemas"]["PersonSummary"] | null;
+            surrogate?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
         };
         /**
          * RenewalRequest
@@ -46625,27 +47092,6 @@ export interface components {
             latestDate?: string | null;
         };
         /**
-         * BlockListResponse
-         * @description Response for listing academic blocks.
-         */
-        app__schemas__academic_blocks__BlockListResponse: {
-            /**
-             * Blocks
-             * @description List of academic blocks
-             */
-            blocks: components["schemas"]["BlockSummary"][];
-            /**
-             * Academic Year
-             * @description Academic year
-             */
-            academicYear: string;
-            /**
-             * Total Blocks
-             * @description Total number of blocks
-             */
-            totalBlocks: number;
-        };
-        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
@@ -46665,31 +47111,26 @@ export interface components {
             warnings?: string[];
         };
         /**
-         * CoverageGap
-         * @description Identified coverage gap.
+         * BlockListResponse
+         * @description Schema for list of blocks.
          */
-        app__schemas__block_assignment__CoverageGap: {
+        app__schemas__block__BlockListResponse: {
             /**
-             * Rotation Template Id
-             * Format: uuid
+             * Items
+             * @description List of block responses
              */
-            rotationTemplateId: string;
-            /** Rotation Name */
-            rotationName: string;
-            /** Required Coverage */
-            requiredCoverage: number;
-            /** Assigned Coverage */
-            assignedCoverage: number;
-            /** Gap */
-            gap: number;
-            /** Severity */
-            severity: string;
+            items: components["schemas"]["BlockResponse"][];
+            /**
+             * Total
+             * @description Total number of blocks
+             */
+            total: number;
         };
         /**
          * PersonSummary
-         * @description Minimal person info for certification reports.
+         * @description Summary of person for manifest display.
          */
-        app__schemas__certification__PersonSummary: {
+        app__schemas__daily_manifest__PersonSummary: {
             /**
              * Id
              * Format: uuid
@@ -46697,23 +47138,23 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /** Type */
-            type: string;
-            /** Email */
-            email?: string | null;
+            /**
+             * Pgy Level
+             * @description PGY level for residents
+             */
+            pgyLevel?: number | null;
         };
         /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
+         * QueuePurgeResponse
+         * @description Response to queue purge request.
          */
-        app__schemas__jobs__QueuePurgeRequest: {
+        app__schemas__jobs__QueuePurgeResponse: {
             /** Queuename */
             queueName: string;
-            /**
-             * Confirm
-             * @default false
-             */
-            confirm: boolean;
+            /** Taskspurged */
+            tasksPurged: number;
+            /** Timestamp */
+            timestamp: string;
         };
         /**
          * BatchOperationResult
@@ -46748,16 +47189,18 @@ export interface components {
             type: string;
         };
         /**
-         * QueuePurgeResponse
-         * @description Response after purging a queue.
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
          */
-        app__schemas__queue__QueuePurgeResponse: {
+        app__schemas__queue__QueuePurgeRequest: {
             /** Queuename */
             queueName: string;
-            /** Taskspurged */
-            tasksPurged: number;
-            /** Timestamp */
-            timestamp: string;
+            /**
+             * Confirm
+             * @description Must be true to confirm purge
+             * @default false
+             */
+            confirm: boolean;
         };
         /**
          * ConflictCheckResponse
@@ -46791,6 +47234,39 @@ export interface components {
              * @description Entity type
              */
             entityType: string;
+        };
+        /**
+         * CoverageGap
+         * @description Represents a coverage gap in the schedule.
+         * @example {
+         *       "date": "2024-01-15",
+         *       "rotation": "FMIT Inpatient",
+         *       "severity": "high",
+         *       "timeOfDay": "PM"
+         *     }
+         */
+        app__schemas__visualization__CoverageGap: {
+            /**
+             * Date
+             * Format: date
+             * @description Date of the gap
+             */
+            date: string;
+            /**
+             * Time Of Day
+             * @description AM or PM
+             */
+            timeOfDay: string;
+            /**
+             * Rotation
+             * @description Rotation with gap
+             */
+            rotation?: string | null;
+            /**
+             * Severity
+             * @description low, medium, high
+             */
+            severity: string;
         };
     };
     responses: never;
@@ -48837,7 +49313,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -48964,7 +49440,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -49030,7 +49506,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -54605,6 +55081,346 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["CallOverrideResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_institutional_events_api_v1_admin_institutional_events_get: {
+        parameters: {
+            query?: {
+                /** @description Filter events overlapping start */
+                start_date?: string | null;
+                /** @description Filter events overlapping end */
+                end_date?: string | null;
+                /** @description Filter by event type */
+                event_type?: string | null;
+                /** @description Filter by scope */
+                applies_to?: string | null;
+                /** @description Filter by active status */
+                is_active?: boolean | null;
+                /** @description Page number (1-indexed) */
+                page?: number;
+                /** @description Items per page */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionalEventListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_institutional_event_api_v1_admin_institutional_events_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstitutionalEventCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionalEventResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_institutional_event_api_v1_admin_institutional_events__event_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionalEventResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_institutional_event_api_v1_admin_institutional_events__event_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstitutionalEventUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionalEventResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_institutional_event_api_v1_admin_institutional_events__event_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_faculty_schedule_preferences_api_v1_admin_faculty_schedule_preferences_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by faculty person_id */
+                person_id?: string | null;
+                /** @description Filter by preference type */
+                preference_type?: components["schemas"]["FacultyPreferenceType"] | null;
+                /** @description Filter by active status */
+                is_active?: boolean | null;
+                /** @description Page number (1-indexed) */
+                page?: number;
+                /** @description Items per page */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacultySchedulePreferenceListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacultySchedulePreferenceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacultySchedulePreferenceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences__preference_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                preference_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacultySchedulePreferenceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences__preference_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                preference_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacultySchedulePreferenceUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacultySchedulePreferenceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences__preference_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                preference_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -66356,7 +67172,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -66366,7 +67182,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -66723,7 +67539,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -66733,7 +67549,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -67525,6 +68341,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImportRollbackResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stage_half_day_import_api_v1_import_half_day_stage_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_stage_half_day_import_api_v1_import_half_day_stage_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HalfDayImportStageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_half_day_import_api_v1_import_half_day_batches__batch_id__preview_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HalfDayImportPreviewResponse"];
                 };
             };
             /** @description Validation Error */

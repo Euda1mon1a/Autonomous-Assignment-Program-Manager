@@ -62,6 +62,8 @@ from .call_equity import (
     CallNightBeforeLeaveConstraint,
     CallSpacingConstraint,
     DeptChiefWednesdayPreferenceConstraint,
+    FacultyCallPreferenceConstraint,
+    HolidayCallEquityConstraint,
     SundayCallEquityConstraint,
     TuesdayCallPreferenceConstraint,
     WeekdayCallEquityConstraint,
@@ -406,10 +408,13 @@ class ConstraintManager:
         manager.add(FacultyClinicEquitySoftConstraint(weight=15.0))
 
         # Block 10 soft constraints - call equity (weight hierarchy documented)
-        # Weight order: Sunday (10) > CallSpacing (8) > Weekday (5) > Tuesday (2)
+        # Weight order: Sunday (10) > Holiday (7) > CallSpacing (8) > Weekday (5)
+        # Preferences: Tuesday (2) > FacultyCallPreference (1)
         manager.add(SundayCallEquityConstraint(weight=10.0))
+        manager.add(HolidayCallEquityConstraint(weight=7.0))
         manager.add(CallSpacingConstraint(weight=8.0))
         manager.add(WeekdayCallEquityConstraint(weight=5.0))
+        manager.add(FacultyCallPreferenceConstraint(weight=1.0))
         manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
         manager.add(CallNightBeforeLeaveConstraint(weight=2.0))
 
@@ -448,8 +453,10 @@ class ConstraintManager:
 
         # Call equity soft constraints (Block 10 weights)
         manager.add(SundayCallEquityConstraint(weight=10.0))
+        manager.add(HolidayCallEquityConstraint(weight=7.0))
         manager.add(CallSpacingConstraint(weight=8.0))
         manager.add(WeekdayCallEquityConstraint(weight=5.0))
+        manager.add(FacultyCallPreferenceConstraint(weight=1.0))
         manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
 
         return manager
@@ -563,8 +570,10 @@ class ConstraintManager:
 
         # Block 10 soft constraints - call equity
         manager.add(SundayCallEquityConstraint(weight=10.0))
+        manager.add(HolidayCallEquityConstraint(weight=7.0))
         manager.add(CallSpacingConstraint(weight=8.0))
         manager.add(WeekdayCallEquityConstraint(weight=5.0))
+        manager.add(FacultyCallPreferenceConstraint(weight=1.0))
         manager.add(TuesdayCallPreferenceConstraint(weight=2.0))
 
         # Tier 1: Core resilience constraints (ENABLED)

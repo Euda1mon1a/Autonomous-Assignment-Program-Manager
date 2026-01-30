@@ -6,14 +6,15 @@ into the half_day_assignments table with source='preload'.
 
 Order of Operations (per TAMC skill):
 1. Load absences → LV-AM, LV-PM
-2. Load inpatient_preloads → FMIT, NF, PedW, KAP, IM, LDNF
-3. Load FMIT Fri/Sat call (auto-assigned with FMIT)
-4. Load C-I (inpatient clinic): PGY-1 Wed AM, PGY-2 Tue PM, PGY-3 Mon PM
-5. Load resident_call_preloads → CALL, PC
-6. Load faculty_call → CALL, PCAT, DO
-7. Load aSM (Wed AM for SM faculty)
-8. Load conferences (HAFP, USAFP, LEC)
-9. Load protected time (SIM, PI, MM)
+2. Load institutional events → USAFP, holidays, retreats
+3. Load inpatient_preloads → FMIT, NF, PedW, KAP, IM, LDNF
+4. Load FMIT Fri/Sat call (auto-assigned with FMIT)
+5. Load C-I (inpatient clinic): PGY-1 Wed AM, PGY-2 Tue PM, PGY-3 Mon PM
+6. Load resident_call_preloads → CALL, PC
+7. Load faculty_call → CALL, PCAT, DO
+8. Load aSM (Wed AM for SM faculty)
+9. Load conferences (HAFP, USAFP, LEC)
+10. Load protected time (SIM, PI, MM)
 """
 
 from datetime import date, timedelta
@@ -31,6 +32,7 @@ from app.models.block_assignment import BlockAssignment
 from app.models.call_assignment import CallAssignment
 from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
 from app.models.inpatient_preload import InpatientPreload, InpatientRotationType
+from app.models.institutional_event import InstitutionalEvent, InstitutionalEventScope
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.weekly_pattern import WeeklyPattern
@@ -143,6 +145,7 @@ class SyncPreloadService:
 
         # Order of operations (per TAMC skill)
         total += self._load_absences(start_date, end_date)
+        total += self._load_institutional_events(start_date, end_date)
         total += self._load_rotation_protected_preloads(block_number, academic_year)
         total += self._load_inpatient_preloads(start_date, end_date)
         total += self._load_fmit_call(start_date, end_date)
@@ -212,6 +215,99 @@ class SyncPreloadService:
 
         logger.info(f"Loaded {count} absence preloads")
         return count
+
+    def _load_institutional_events(self, start_date: date, end_date: date) -> int:
+        """Load institutional events (USAFP, holidays, retreats) as preloads."""
+        stmt = (
+            select(InstitutionalEvent)
+            .options(selectinload(InstitutionalEvent.activity))
+            .where(
+                InstitutionalEvent.is_active.is_(True),
+                InstitutionalEvent.start_date <= end_date,
+                InstitutionalEvent.end_date >= start_date,
+            )
+        )
+        result = self.session.execute(stmt)
+        events = result.scalars().all()
+        if not events:
+            return 0
+
+        people = self.session.execute(select(Person)).scalars().all()
+        people_by_scope: dict[InstitutionalEventScope, list[Person]] = {
+            InstitutionalEventScope.ALL: people,
+            InstitutionalEventScope.FACULTY: [p for p in people if p.type == "faculty"],
+            InstitutionalEventScope.RESIDENT: [
+                p for p in people if p.type == "resident"
+            ],
+        }
+        inpatient_map = self._build_inpatient_preload_map(start_date, end_date)
+
+        count = 0
+        for event in events:
+            if not event.activity_id:
+                logger.warning(
+                    "Institutional event missing activity_id; skipping "
+                    f"event_id={event.id} name={event.name}"
+                )
+                continue
+
+            scope = event.applies_to or InstitutionalEventScope.ALL
+            if isinstance(scope, str):
+                scope = InstitutionalEventScope(scope)
+            targets = people_by_scope.get(scope, people)
+            time_slots = [event.time_of_day] if event.time_of_day else ["AM", "PM"]
+            current = max(event.start_date, start_date)
+            end = min(event.end_date, end_date)
+
+            while current <= end:
+                for time_of_day in time_slots:
+                    for person in targets:
+                        if (
+                            person.type == "resident"
+                            and not event.applies_to_inpatient
+                            and self._is_on_inpatient_preload(
+                                person.id, current, inpatient_map
+                            )
+                        ):
+                            continue
+                        if self._create_preload(
+                            person.id, current, time_of_day, event.activity_id
+                        ):
+                            count += 1
+                current += timedelta(days=1)
+
+        logger.info(f"Loaded {count} institutional event preloads")
+        return count
+
+    def _build_inpatient_preload_map(
+        self, start_date: date, end_date: date
+    ) -> dict[UUID, list[tuple[date, date]]]:
+        """Build a map of inpatient preload date ranges by person."""
+        stmt = select(
+            InpatientPreload.person_id,
+            InpatientPreload.start_date,
+            InpatientPreload.end_date,
+        ).where(
+            InpatientPreload.start_date <= end_date,
+            InpatientPreload.end_date >= start_date,
+        )
+        rows = self.session.execute(stmt).all()
+        preload_map: dict[UUID, list[tuple[date, date]]] = {}
+        for person_id, start, end in rows:
+            preload_map.setdefault(person_id, []).append((start, end))
+        return preload_map
+
+    def _is_on_inpatient_preload(
+        self,
+        person_id: UUID,
+        date_val: date,
+        preload_map: dict[UUID, list[tuple[date, date]]],
+    ) -> bool:
+        """Check if person is on any inpatient preload for the date."""
+        for start, end in preload_map.get(person_id, []):
+            if start <= date_val <= end:
+                return True
+        return False
 
     def _load_inpatient_preloads(self, start_date: date, end_date: date) -> int:
         """Load inpatient rotation preloads (FMIT, NF, PedW, KAP, IM, LDNF)."""

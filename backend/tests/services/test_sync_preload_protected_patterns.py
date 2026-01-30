@@ -4,6 +4,8 @@ from uuid import uuid4
 from app.models.activity import Activity, ActivityCategory
 from app.models.block_assignment import BlockAssignment
 from app.models.half_day_assignment import HalfDayAssignment
+from app.models.institutional_event import InstitutionalEvent
+from app.models.inpatient_preload import InpatientPreload
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.services.sync_preload_service import SyncPreloadService
@@ -514,3 +516,94 @@ def test_preload_nf_split_secondary_rotation(db):
     # No protected preload expected on first day for NEURO (non-Wednesday)
     assert _get_assignment_code(db, resident.id, day0, "AM") is None
     assert _get_assignment_code(db, resident.id, day0, "PM") is None
+
+
+def test_preload_institutional_event_all_people(db):
+    event_activity = _create_activity(
+        db, "USAFP", "USAFP", ActivityCategory.EDUCATIONAL.value
+    )
+
+    resident = Person(
+        id=uuid4(),
+        name="Resident Event",
+        type="resident",
+        pgy_level=2,
+    )
+    faculty = Person(
+        id=uuid4(),
+        name="Faculty Event",
+        type="faculty",
+    )
+    db.add_all([resident, faculty])
+    db.commit()
+
+    block_dates = get_block_dates(10, 2025)
+    event = InstitutionalEvent(
+        id=uuid4(),
+        name="USAFP Conference",
+        event_type="conference",
+        applies_to="all",
+        activity_id=event_activity.id,
+        start_date=block_dates.start_date,
+        end_date=block_dates.start_date,
+        time_of_day="AM",
+        is_active=True,
+    )
+    db.add(event)
+    db.commit()
+
+    service = SyncPreloadService(db)
+    service._load_institutional_events(block_dates.start_date, block_dates.end_date)
+
+    assert (
+        _get_assignment_code(db, resident.id, block_dates.start_date, "AM") == "USAFP"
+    )
+    assert _get_assignment_code(db, faculty.id, block_dates.start_date, "AM") == "USAFP"
+
+
+def test_preload_institutional_event_skips_inpatient(db):
+    event_activity = _create_activity(
+        db, "RETREAT", "RET", ActivityCategory.EDUCATIONAL.value
+    )
+
+    resident = Person(
+        id=uuid4(),
+        name="Resident Inpatient",
+        type="resident",
+        pgy_level=1,
+    )
+    db.add(resident)
+    db.commit()
+
+    block_dates = get_block_dates(10, 2025)
+    event_date = block_dates.start_date
+
+    inpatient = InpatientPreload(
+        id=uuid4(),
+        person_id=resident.id,
+        rotation_type="FMIT",
+        start_date=event_date,
+        end_date=event_date + timedelta(days=3),
+    )
+    db.add(inpatient)
+    db.commit()
+
+    event = InstitutionalEvent(
+        id=uuid4(),
+        name="Retreat",
+        event_type="retreat",
+        applies_to="resident",
+        applies_to_inpatient=False,
+        activity_id=event_activity.id,
+        start_date=event_date,
+        end_date=event_date,
+        time_of_day="AM",
+        is_active=True,
+    )
+    db.add(event)
+    db.commit()
+
+    service = SyncPreloadService(db)
+    service._load_institutional_events(block_dates.start_date, block_dates.end_date)
+
+    assert _get_assignment_code(db, resident.id, event_date, "AM") is None

@@ -219,6 +219,10 @@ class SchedulingContext:
     call_eligible_faculty: list = field(default_factory=list)
     call_eligible_faculty_idx: dict[UUID, int] = field(default_factory=dict)
 
+    # Faculty schedule preferences (clinic/call)
+    faculty_schedule_preferences: list = field(default_factory=list)
+    faculty_preferences_by_person: dict[UUID, list] = field(default_factory=dict)
+
     # Date range
     start_date: date | None = None
     end_date: date | None = None
@@ -305,6 +309,12 @@ class SchedulingContext:
         self.call_eligible_faculty_idx = {
             f.id: i for i, f in enumerate(self.call_eligible_faculty)
         }
+
+        if self.faculty_schedule_preferences and not self.faculty_preferences_by_person:
+            pref_map: dict[UUID, list] = defaultdict(list)
+            for pref in self.faculty_schedule_preferences:
+                pref_map[pref.person_id].append(pref)
+            self.faculty_preferences_by_person = dict(pref_map)
 
         # Build activity index if activities provided
         self.activity_idx = {a.id: i for i, a in enumerate(self.activities)}

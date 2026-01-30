@@ -46,6 +46,7 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.block_assignment import BlockAssignment
 from app.models.call_assignment import CallAssignment
+from app.models.faculty_schedule_preference import FacultySchedulePreference
 from app.models.person import FacultyRole, Person
 from app.models.rotation_activity_requirement import RotationActivityRequirement
 from app.models.rotation_template import RotationTemplate
@@ -876,6 +877,9 @@ class SchedulingEngine:
         template_ids = [cast(UUID, t.id) for t in templates]
         activity_requirements = self._load_activity_requirements(template_ids)
         protected_patterns = self._load_protected_patterns(template_ids)
+        faculty_preferences = self._load_faculty_schedule_preferences(
+            [cast(UUID, f.id) for f in faculty]
+        )
 
         # Build base context
         locked_blocks = self._get_locked_block_pairs(blocks)
@@ -902,6 +906,7 @@ class SchedulingEngine:
             activities=activities,
             activity_requirements=activity_requirements,
             protected_patterns=protected_patterns,
+            faculty_schedule_preferences=faculty_preferences,
         )
 
         # Enable activity requirement constraint if we have data
@@ -1329,7 +1334,7 @@ class SchedulingEngine:
                 person_id=person_id,
                 call_type=mapped_call_type,
                 is_weekend=is_sunday,
-                is_holiday=False,  # Could be enhanced to check holiday calendar
+                is_holiday=bool(getattr(block, "is_holiday", False)),
             )
             self.db.add(call_assignment)
             call_assignments.append(call_assignment)
@@ -2006,6 +2011,34 @@ class SchedulingEngine:
             self.db.query(Activity)
             .filter(Activity.is_archived == False)  # noqa: E712
             .order_by(Activity.display_order)
+            .all()
+        )
+
+    def _load_faculty_schedule_preferences(
+        self, faculty_ids: list[UUID]
+    ) -> list[FacultySchedulePreference]:
+        """
+        Load active faculty schedule preferences for clinic/call.
+
+        Args:
+            faculty_ids: List of faculty Person IDs to include.
+
+        Returns:
+            List of FacultySchedulePreference rows (active only).
+        """
+        if not faculty_ids:
+            return []
+
+        return (
+            self.db.query(FacultySchedulePreference)
+            .filter(
+                FacultySchedulePreference.person_id.in_(faculty_ids),
+                FacultySchedulePreference.is_active.is_(True),
+            )
+            .order_by(
+                FacultySchedulePreference.person_id,
+                FacultySchedulePreference.rank,
+            )
             .all()
         )
 

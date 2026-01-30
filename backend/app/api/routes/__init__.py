@@ -9,6 +9,7 @@ from app.api.routes import (
     admin_block_assignments,
     # approval_chain,  # QUARANTINED: requires_coordinator_or_above not implemented
     faculty_activities,
+    faculty_schedule_preferences,
     admin_users,
     analytics,
     assignments,
@@ -47,7 +48,9 @@ from app.api.routes import (
     health,
     impersonation,
     import_staging,
+    half_day_imports,
     imports,
+    institutional_events,
     jobs,
     leave,
     mcp_proxy,
@@ -167,6 +170,16 @@ api_router.include_router(
     prefix="/admin/call-overrides",
     tags=["call-overrides"],
 )
+api_router.include_router(
+    institutional_events.router,
+    prefix="/admin/institutional-events",
+    tags=["institutional-events"],
+)
+api_router.include_router(
+    faculty_schedule_preferences.router,
+    prefix="/admin/faculty-schedule-preferences",
+    tags=["faculty-schedule-preferences"],
+)
 api_router.include_router(me_dashboard.router, prefix="/me", tags=["dashboard"])
 api_router.include_router(export.router, prefix="/export", tags=["export"])
 api_router.include_router(exports.router, prefix="/exports", tags=["exports"])
@@ -252,6 +265,9 @@ api_router.include_router(upload.router, prefix="/uploads", tags=["upload"])
 api_router.include_router(imports.router, prefix="/imports", tags=["imports"])
 api_router.include_router(
     import_staging.router, prefix="/import", tags=["import-staging"]
+)
+api_router.include_router(
+    half_day_imports.router, prefix="/import/half-day", tags=["import-half-day"]
 )
 api_router.include_router(
     schedule_drafts.router, prefix="/schedules/drafts", tags=["schedule-drafts"]

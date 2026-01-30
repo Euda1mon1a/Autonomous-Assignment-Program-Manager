@@ -40,6 +40,11 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.block_assignment import BlockAssignment
 from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
+from app.models.faculty_schedule_preference import (
+    FacultyPreferenceDirection,
+    FacultyPreferenceType,
+    FacultySchedulePreference,
+)
 from app.models.person import Person
 from app.models.procedure import Procedure
 from app.models.procedure_credential import ProcedureCredential
@@ -75,13 +80,17 @@ RESIDENT_CLINIC_CODES = {"FM_CLINIC", "C", "C-N", "CV"}
 AT_COVERAGE_CODES = {"AT", "PCAT"}
 SUPERVISION_REQUIRED_CODES = {"PROC", "PR", "PROCEDURE", "VAS", "VASC"}
 ADMIN_ACTIVITY_CODES = {"GME": "gme", "DFM": "dfm", "SM": "sm_clinic"}
-ADMIN_EQUITY_CODES = {"GME", "DFM", "LEC", "ADV"}
+ADMIN_EQUITY_CODES = {"GME", "DFM"}
+ACADEMIC_EQUITY_CODES = {"LEC", "ADV"}
 SUPERVISION_EQUITY_CODES = {"AT", "PCAT"}
+RESIDENT_CLINIC_EQUITY_CODES = {"C", "CV", "FM_CLINIC"}
 FACULTY_CLINIC_SHORTFALL_PENALTY = 10
 FACULTY_CLINIC_OVERAGE_PENALTY = 40
 OIC_CLINICAL_AVOID_PENALTY = 18
 FACULTY_ADMIN_EQUITY_PENALTY = 12
 FACULTY_AT_EQUITY_PENALTY = 12
+FACULTY_ACADEMIC_EQUITY_PENALTY = 8
+RESIDENT_CLINIC_EQUITY_PENALTY = 8
 FACULTY_ADMIN_BONUS = 1
 PHYSICAL_CAPACITY_SOFT_PENALTY = 10
 ACTIVITY_MIN_SHORTFALL_PENALTY = 10
@@ -385,6 +394,15 @@ class CPSATActivitySolver:
             for s_i in faculty_slots
             if slot_meta[s_i].get("person_id")
         }
+        faculty_preferences = self._load_faculty_schedule_preferences(
+            faculty_person_ids
+        )
+        clinic_preferences_by_person: dict[UUID, list[FacultySchedulePreference]] = (
+            defaultdict(list)
+        )
+        for pref in faculty_preferences:
+            if pref.preference_type == FacultyPreferenceType.CLINIC:
+                clinic_preferences_by_person[pref.person_id].append(pref)
 
         # Load activity requirements for templates in scope
         requirements_by_template = self._load_activity_requirements(
@@ -485,6 +503,12 @@ class CPSATActivitySolver:
             }
 
         activity_by_id = {a.id: a for a in all_activities}
+        clinic_preference_activity_ids = {
+            activity.id
+            for activity in all_activities
+            if activity.activity_category == "clinical"
+            and not activity.provides_supervision
+        }
 
         procedure_ids = {a.procedure_id for a in all_activities if a.procedure_id}
         if procedure_ids:
@@ -637,8 +661,14 @@ class CPSATActivitySolver:
         admin_equity_ids = self._activity_ids_for_codes(
             all_activities, ADMIN_EQUITY_CODES
         )
+        academic_equity_ids = self._activity_ids_for_codes(
+            all_activities, ACADEMIC_EQUITY_CODES
+        )
         supervision_equity_ids = self._activity_ids_for_codes(
             all_activities, SUPERVISION_EQUITY_CODES
+        )
+        resident_clinic_equity_ids = self._activity_ids_for_codes(
+            all_activities, RESIDENT_CLINIC_EQUITY_CODES
         )
 
         # Create the CP model
@@ -706,6 +736,7 @@ class CPSATActivitySolver:
         cv_penalty_terms: list[tuple[Any, int]] = []
         vas_penalty_terms: list[tuple[Any, int]] = []
         oic_clinical_avoid_terms: list[tuple[Any, int]] = []
+        clinic_preference_terms: list[tuple[Any, int]] = []
 
         for s_i, slot in enumerate(slots):
             person_type = slot_meta[s_i].get("person_type")
@@ -889,6 +920,31 @@ class CPSATActivitySolver:
                                 (a[s_i, act_id], OIC_CLINICAL_AVOID_PENALTY)
                             )
 
+                preferences = clinic_preferences_by_person.get(slot.person.id, [])
+                if preferences:
+                    slot_weekday = slot_meta[s_i]["date"].weekday()
+                    slot_time = slot_meta[s_i]["time_of_day"]
+                    for pref in preferences:
+                        if pref.day_of_week != slot_weekday:
+                            continue
+                        if pref.time_of_day != slot_time:
+                            continue
+                        pref_weight = int(pref.weight) if pref.weight is not None else 0
+                        if pref_weight <= 0:
+                            continue
+                        # PREFER: negative weight so subtracting penalty = reward
+                        # AVOID: positive weight so subtracting penalty = penalize
+                        weight = (
+                            -pref_weight
+                            if pref.direction == FacultyPreferenceDirection.PREFER
+                            else pref_weight
+                        )
+                        for act_id in allowed:
+                            if act_id not in clinic_preference_activity_ids:
+                                continue
+                            if (s_i, act_id) in a:
+                                clinic_preference_terms.append((a[s_i, act_id], weight))
+
         slot_capacity_ids: dict[int, list[UUID]] = {}
         slot_sm_capacity_ids: dict[int, list[UUID]] = {}
         for s_i, allowed in slot_allowed.items():
@@ -931,6 +987,8 @@ class CPSATActivitySolver:
         locked_faculty_supervision_counts: dict[tuple[UUID, int], int] = defaultdict(
             int
         )
+        locked_faculty_academic_counts: dict[tuple[UUID, int], int] = defaultdict(int)
+        locked_resident_clinic_counts: dict[tuple[UUID, int], int] = defaultdict(int)
         baseline_sm_resident_presence: dict[tuple[date, str], int] = defaultdict(int)
         baseline_sm_faculty_coverage: dict[tuple[date, str], int] = defaultdict(int)
         baseline_vas_resident_presence: dict[tuple[date, str], int] = defaultdict(int)
@@ -982,6 +1040,8 @@ class CPSATActivitySolver:
                     locked_faculty_clinic_counts[(locked.person_id, week_number)] += 1
                 if locked.activity_id in admin_equity_ids:
                     locked_faculty_admin_counts[(locked.person_id, week_number)] += 1
+                if locked.activity_id in academic_equity_ids:
+                    locked_faculty_academic_counts[(locked.person_id, week_number)] += 1
                 if locked.activity_id in supervision_equity_ids:
                     locked_faculty_supervision_counts[
                         (locked.person_id, week_number)
@@ -1024,6 +1084,8 @@ class CPSATActivitySolver:
                         locked_cv_target_counts_by_day[(week_number, day_of_week)][
                             "clinic"
                         ] += 1
+                if locked.activity_id in resident_clinic_equity_ids:
+                    locked_resident_clinic_counts[(locked.person_id, week_number)] += 1
 
             template = self._get_active_rotation_template(locked, start_date)
             if not template:
@@ -1240,9 +1302,13 @@ class CPSATActivitySolver:
                 faculty_clinic_overages.append(over_max)
 
         # ==================================================
-        # FACULTY EQUITY (admin + supervision) by role, per week
+        # FACULTY EQUITY (admin/academic/supervision)
+        # - Admin (GME/DFM) by role
+        # - Supervision (AT/PCAT) by role
+        # - Academic (LEC/ADV) across all faculty
         # ==================================================
         faculty_admin_equity_ranges: list[Any] = []
+        faculty_academic_equity_ranges: list[Any] = []
         faculty_supervision_equity_ranges: list[Any] = []
         if faculty_slots:
             faculty_by_id: dict[UUID, Person] = {}
@@ -1260,6 +1326,7 @@ class CPSATActivitySolver:
             for faculty_id, faculty in faculty_by_id.items():
                 role = (getattr(faculty, "faculty_role", None) or "core").lower()
                 role_groups[role].append(faculty_id)
+            all_group = {"all": list(faculty_by_id.keys())}
 
             week_numbers = sorted(
                 {
@@ -1275,11 +1342,13 @@ class CPSATActivitySolver:
                 locked_counts: dict[tuple[UUID, int], int],
                 ranges_out: list[Any],
                 label: str,
+                groups: dict[str, list[UUID]] | None = None,
             ) -> None:
                 if not activity_ids:
                     return
+                group_map = groups or role_groups
                 for week in week_numbers:
-                    for role, faculty_ids in role_groups.items():
+                    for role, faculty_ids in group_map.items():
                         counts = []
                         max_possible = 0
                         for faculty_id in faculty_ids:
@@ -1328,12 +1397,134 @@ class CPSATActivitySolver:
                 locked_counts=locked_faculty_admin_counts,
                 ranges_out=faculty_admin_equity_ranges,
                 label="admin_eq",
+                groups=role_groups,
+            )
+            add_equity_ranges(
+                activity_ids=academic_equity_ids,
+                locked_counts=locked_faculty_academic_counts,
+                ranges_out=faculty_academic_equity_ranges,
+                label="acad_eq",
+                groups=all_group,
             )
             add_equity_ranges(
                 activity_ids=supervision_equity_ids,
                 locked_counts=locked_faculty_supervision_counts,
                 ranges_out=faculty_supervision_equity_ranges,
                 label="at_eq",
+                groups=role_groups,
+            )
+
+        # ==================================================
+        # RESIDENT CLINIC EQUITY (outpatient) per week + block
+        # ==================================================
+        resident_clinic_equity_ranges: list[Any] = []
+        if resident_slots and resident_clinic_equity_ids:
+            resident_by_id: dict[UUID, Person] = {}
+            for s_i in resident_slots:
+                slot_person = slots[s_i].person
+                if slot_person:
+                    resident_by_id[slot_person.id] = slot_person
+
+            resident_week_slots: dict[tuple[UUID, int], list[int]] = defaultdict(list)
+            for s_i in resident_slots:
+                meta = slot_meta[s_i]
+                resident_week_slots[(meta["person_id"], meta["week"])].append(s_i)
+
+            week_numbers = sorted(
+                {
+                    meta["week"]
+                    for meta in slot_meta.values()
+                    if meta.get("week") is not None
+                }
+            )
+
+            def _add_equity_range_for_counts(
+                *, counts: list[Any], max_possible: int, label: str
+            ) -> None:
+                if len(counts) <= 1:
+                    return
+                max_var = model.NewIntVar(0, max_possible, f"{label}_max")
+                min_var = model.NewIntVar(0, max_possible, f"{label}_min")
+                for count_var in counts:
+                    model.Add(count_var <= max_var)
+                    model.Add(count_var >= min_var)
+                range_var = model.NewIntVar(0, max_possible, f"{label}_range")
+                model.Add(range_var == max_var - min_var)
+                resident_clinic_equity_ranges.append(range_var)
+
+            # Weekly equity
+            for week in week_numbers:
+                counts = []
+                max_possible = 0
+                for resident_id in resident_by_id:
+                    slot_indices = resident_week_slots.get((resident_id, week))
+                    if not slot_indices:
+                        continue
+                    vars_for_activity = [
+                        a[s_i, act_id]
+                        for s_i in slot_indices
+                        for act_id in resident_clinic_equity_ids
+                        if act_id in slot_allowed[s_i]
+                    ]
+                    locked_count = locked_resident_clinic_counts.get(
+                        (resident_id, week), 0
+                    )
+                    if not vars_for_activity and locked_count == 0:
+                        continue
+                    max_slots = len(slot_indices)
+                    max_possible = max(max_possible, locked_count + max_slots)
+                    count_var = model.NewIntVar(
+                        locked_count,
+                        locked_count + max_slots,
+                        f"res_clinic_count_{str(resident_id)[:6]}_{week}",
+                    )
+                    model.Add(count_var == locked_count + sum(vars_for_activity))
+                    counts.append(count_var)
+
+                _add_equity_range_for_counts(
+                    counts=counts,
+                    max_possible=max_possible,
+                    label=f"res_clinic_week_{week}",
+                )
+
+            # Block-level equity
+            block_counts = []
+            max_possible = 0
+            for resident_id in resident_by_id:
+                slot_indices = [
+                    s_i
+                    for (pid, _week), slots_list in resident_week_slots.items()
+                    if pid == resident_id
+                    for s_i in slots_list
+                ]
+                if not slot_indices:
+                    continue
+                vars_for_activity = [
+                    a[s_i, act_id]
+                    for s_i in slot_indices
+                    for act_id in resident_clinic_equity_ids
+                    if act_id in slot_allowed[s_i]
+                ]
+                locked_count = sum(
+                    locked_resident_clinic_counts.get((resident_id, week), 0)
+                    for week in week_numbers
+                )
+                if not vars_for_activity and locked_count == 0:
+                    continue
+                max_slots = len(slot_indices)
+                max_possible = max(max_possible, locked_count + max_slots)
+                count_var = model.NewIntVar(
+                    locked_count,
+                    locked_count + max_slots,
+                    f"res_clinic_block_{str(resident_id)[:6]}",
+                )
+                model.Add(count_var == locked_count + sum(vars_for_activity))
+                block_counts.append(count_var)
+
+            _add_equity_range_for_counts(
+                counts=block_counts,
+                max_possible=max_possible,
+                label="res_clinic_block",
             )
 
         # ==================================================
@@ -1968,6 +2159,14 @@ class CPSATActivitySolver:
                     objective_expr - penalty if objective_expr is not None else -penalty
                 )
 
+        if clinic_preference_terms:
+            penalties = [var * weight for var, weight in clinic_preference_terms]
+            if penalties:
+                penalty = sum(penalties)
+                objective_expr = (
+                    objective_expr - penalty if objective_expr is not None else -penalty
+                )
+
         if cv_target_shortfalls:
             penalty = sum(cv_target_shortfalls) * CV_TARGET_SHORTFALL_PENALTY
             objective_expr = (
@@ -1986,8 +2185,24 @@ class CPSATActivitySolver:
                 objective_expr - penalty if objective_expr is not None else -penalty
             )
 
+        if faculty_academic_equity_ranges:
+            penalty = (
+                sum(faculty_academic_equity_ranges) * FACULTY_ACADEMIC_EQUITY_PENALTY
+            )
+            objective_expr = (
+                objective_expr - penalty if objective_expr is not None else -penalty
+            )
+
         if faculty_supervision_equity_ranges:
             penalty = sum(faculty_supervision_equity_ranges) * FACULTY_AT_EQUITY_PENALTY
+            objective_expr = (
+                objective_expr - penalty if objective_expr is not None else -penalty
+            )
+
+        if resident_clinic_equity_ranges:
+            penalty = (
+                sum(resident_clinic_equity_ranges) * RESIDENT_CLINIC_EQUITY_PENALTY
+            )
             objective_expr = (
                 objective_expr - penalty if objective_expr is not None else -penalty
             )
@@ -2225,11 +2440,23 @@ class CPSATActivitySolver:
             )
             logger.info(f"Faculty admin equity range total: {admin_eq_total}")
 
+        if faculty_academic_equity_ranges:
+            academic_eq_total = sum(
+                solver.Value(var) for var in faculty_academic_equity_ranges
+            )
+            logger.info(f"Faculty academic equity range total: {academic_eq_total}")
+
         if faculty_supervision_equity_ranges:
             at_eq_total = sum(
                 solver.Value(var) for var in faculty_supervision_equity_ranges
             )
             logger.info(f"Faculty AT equity range total: {at_eq_total}")
+
+        if resident_clinic_equity_ranges:
+            res_eq_total = sum(
+                solver.Value(var) for var in resident_clinic_equity_ranges
+            )
+            logger.info(f"Resident clinic equity range total: {res_eq_total}")
 
         return {
             "success": True,
@@ -2252,6 +2479,26 @@ class CPSATActivitySolver:
                 self._activity_cache[activity.display_abbreviation] = activity
 
         return activities
+
+    def _load_faculty_schedule_preferences(
+        self, faculty_ids: set[UUID]
+    ) -> list[FacultySchedulePreference]:
+        """Load active faculty schedule preferences for the given faculty IDs."""
+        if not faculty_ids:
+            return []
+        stmt = (
+            select(FacultySchedulePreference)
+            .where(
+                FacultySchedulePreference.person_id.in_(faculty_ids),
+                FacultySchedulePreference.is_active.is_(True),
+            )
+            .order_by(
+                FacultySchedulePreference.person_id,
+                FacultySchedulePreference.rank,
+            )
+        )
+        result = self.session.execute(stmt)
+        return list(result.scalars().all())
 
     def _write_failure_snapshot(self, snapshot: dict[str, Any]) -> None:
         """Write a PII-free failure snapshot to disk for debugging."""
