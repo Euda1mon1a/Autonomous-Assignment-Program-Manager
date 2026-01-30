@@ -62,6 +62,10 @@ making equity/preferences **data‑driven and measurable**.
 ### P6-3 — Excel Import + Diff (Staged)
 **Goal:** Import Excel into a staging layer and **measure manual vs automated** changes.
 
+**Endpoints (new)**
+- `POST /api/v1/import/half-day/stage` — Upload Block Template2 xlsx, stage diffs
+- `GET /api/v1/import/half-day/batches/{id}/preview` — View diff metrics + samples
+
 **Pipeline**
 1. Import Excel → staging tables (no direct overwrite).
 2. Compute diff vs base schedule (slot‑level).

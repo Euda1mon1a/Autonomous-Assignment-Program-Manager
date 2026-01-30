@@ -47,6 +47,7 @@ from app.api.routes import (
     health,
     impersonation,
     import_staging,
+    half_day_imports,
     imports,
     jobs,
     leave,
@@ -252,6 +253,9 @@ api_router.include_router(upload.router, prefix="/uploads", tags=["upload"])
 api_router.include_router(imports.router, prefix="/imports", tags=["imports"])
 api_router.include_router(
     import_staging.router, prefix="/import", tags=["import-staging"]
+)
+api_router.include_router(
+    half_day_imports.router, prefix="/import/half-day", tags=["import-half-day"]
 )
 api_router.include_router(
     schedule_drafts.router, prefix="/schedules/drafts", tags=["schedule-drafts"]

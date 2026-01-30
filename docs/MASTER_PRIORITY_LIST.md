@@ -243,6 +243,7 @@ Remaining faculty-specific gaps:
 2. External rotation time‑off intake (FMIT/IMW/Peds patterns)
    - Temporary default: Saturday off for external/inpatient rotations until refined
 3. Excel staging + diff metrics (measure manual vs automated changes)
+   - In progress: half-day Block Template2 staging + diff preview endpoints
 4. Institutional events table (USAFP/holidays/retreats)
 5. Equity + preferences:
    - Faculty equity by role (GME/DFM/AT/C)
