@@ -31,7 +31,7 @@ class CircuitBreakerHealthCheck:
     - Individual breaker status
     """
 
-    def __init__(self, timeout: float = 5.0):
+    def __init__(self, timeout: float = 5.0) -> None:
         """
         Initialize circuit breaker health check.
 
@@ -164,7 +164,7 @@ class CircuitBreakerHealthCheck:
         if total_breakers == 0:
             return "healthy"
 
-        # Check for critical breakers being open
+            # Check for critical breakers being open
         critical_breakers = {"database", "redis", "external_api"}
         open_critical = set(open_breaker_names) & critical_breakers
 
@@ -172,15 +172,15 @@ class CircuitBreakerHealthCheck:
         if open_breakers == total_breakers:
             return "unhealthy"
 
-        # If any critical breaker is open, system is unhealthy
+            # If any critical breaker is open, system is unhealthy
         if open_critical:
             return "unhealthy"
 
-        # If some breakers are open or half-open, system is degraded
+            # If some breakers are open or half-open, system is degraded
         if open_breakers > 0 or half_open_breakers > 0:
             return "degraded"
 
-        # All breakers are closed
+            # All breakers are closed
         return "healthy"
 
     def _get_degraded_warning(self, health_data: dict[str, Any]) -> str:

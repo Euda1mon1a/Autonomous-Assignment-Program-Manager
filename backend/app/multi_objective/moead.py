@@ -194,7 +194,7 @@ class PBIDecomposition(DecompositionMethod):
     Balances convergence (d1) and diversity (d2).
     """
 
-    def __init__(self, theta: float = 5.0):
+    def __init__(self, theta: float = 5.0) -> None:
         """
         Initialize PBI decomposition.
 
@@ -245,7 +245,7 @@ class WeightedNormDecomposition(DecompositionMethod):
     p=inf: Tchebycheff
     """
 
-    def __init__(self, p: float = 2.0):
+    def __init__(self, p: float = 2.0) -> None:
         """
         Initialize weighted norm decomposition.
 
@@ -307,8 +307,8 @@ def _uniform_weight_design(n_objectives: int, n_vectors: int) -> list[np.ndarray
             weights.append(np.array([w1, 1 - w1]))
         return weights
 
-    # General case: Das and Dennis method
-    # Approximate divisions per axis
+        # General case: Das and Dennis method
+        # Approximate divisions per axis
     H = 1
     while _n_combinations(H + n_objectives - 1, n_objectives - 1) < n_vectors:
         H += 1
@@ -399,7 +399,7 @@ class MOEADAlgorithm:
         self,
         objectives: list[ObjectiveConfig],
         config: MOEADConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize MOEA/D algorithm.
 
@@ -457,7 +457,7 @@ class MOEADAlgorithm:
                 distances[i, j] = dist
                 distances[j, i] = dist
 
-        # Assign neighbors (T closest vectors)
+                # Assign neighbors (T closest vectors)
         T = min(self.config.n_neighbors, n - 1)
         for i in range(n):
             # Get indices sorted by distance
@@ -514,7 +514,7 @@ class MOEADAlgorithm:
                 if len(parent_pool) < 2:
                     continue
 
-                # Generate offspring
+                    # Generate offspring
                 parents = np.random.choice(len(parent_pool), 2, replace=False)
                 parent1 = parent_pool[parents[0]]
                 parent2 = parent_pool[parents[1]]
@@ -525,11 +525,11 @@ class MOEADAlgorithm:
                 else:
                     offspring = parent1.copy()
 
-                # Mutation
+                    # Mutation
                 if np.random.random() < self.config.mutation_rate:
                     offspring = mutate(offspring)
 
-                # Evaluate
+                    # Evaluate
                 offspring = evaluate(offspring)
                 offspring.generation = gen
                 self.evaluations += 1
@@ -562,12 +562,12 @@ class MOEADAlgorithm:
                 self.evaluations += 1
             evaluated.append(sol)
 
-        # Update reference point
+            # Update reference point
         for sol in evaluated:
             self._update_reference_point(sol)
 
-        # Assign solutions to weight vectors
-        # Use simple distance-based assignment
+            # Assign solutions to weight vectors
+            # Use simple distance-based assignment
         for sol in evaluated:
             obj_vec = self._get_normalized_objectives(sol)
 
@@ -587,10 +587,10 @@ class MOEADAlgorithm:
                     best_wv.current_solution = sol
                     best_wv.subproblem_value = value
 
-            # Add to archive
+                    # Add to archive
             self.archive.add(sol)
 
-        # Fill remaining weight vectors with random copies
+            # Fill remaining weight vectors with random copies
         if evaluated:
             for wv in self.weight_vectors:
                 if wv.current_solution is None:
@@ -692,8 +692,9 @@ class MOEADAlgorithm:
         scored.sort(key=lambda x: x[0])
         return [sol for _, sol in scored[:top_k]]
 
+        # Convenience functions for common decomposition methods
 
-# Convenience functions for common decomposition methods
+
 def create_weighted_sum_moead(
     objectives: list[ObjectiveConfig],
     n_weight_vectors: int = 100,

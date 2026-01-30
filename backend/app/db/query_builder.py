@@ -89,7 +89,7 @@ class QueryBuilder(Generic[ModelType]):
     like all(), first(), count(), paginate(), etc.
     """
 
-    def __init__(self, model: type[ModelType], db: Session):
+    def __init__(self, model: type[ModelType], db: Session) -> None:
         """
         Initialize query builder.
 
@@ -383,7 +383,7 @@ class QueryBuilder(Generic[ModelType]):
         if not self._is_valid_relationship(relationship):
             raise ValueError(f"Invalid relationship: {relationship}")
 
-        # Get the related model class
+            # Get the related model class
         rel_property = inspect(self.model).relationships[relationship]
         related_model = rel_property.mapper.class_
 
@@ -392,7 +392,7 @@ class QueryBuilder(Generic[ModelType]):
             self._joins.add(relationship)
             self._query = self._query.join(getattr(self.model, relationship))
 
-        # Add filters on the related model
+            # Add filters on the related model
         for field, value in kwargs.items():
             if not hasattr(related_model, field):
                 raise ValueError(f"Invalid column {field} on {related_model.__name__}")
@@ -636,7 +636,7 @@ class QueryBuilder(Generic[ModelType]):
         if page_size < 1:
             page_size = 20
 
-        # Get total count before pagination
+            # Get total count before pagination
         total = self.count()
 
         # Calculate pagination

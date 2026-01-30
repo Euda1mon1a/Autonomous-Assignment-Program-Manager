@@ -134,7 +134,7 @@ class StaticPenaltyMethod(PenaltyMethod):
         self,
         hard_coefficient: float = 1000.0,
         soft_coefficient: float = 10.0,
-    ):
+    ) -> None:
         """
         Initialize static penalty.
 
@@ -175,7 +175,7 @@ class DynamicPenaltyMethod(PenaltyMethod):
         base_coefficient: float = 100.0,
         growth_rate: float = 2.0,
         violation_power: float = 2.0,
-    ):
+    ) -> None:
         """
         Initialize dynamic penalty.
 
@@ -200,7 +200,7 @@ class DynamicPenaltyMethod(PenaltyMethod):
         else:
             progress = (generation + 1) / max_generations
 
-        # Coefficient grows with generation
+            # Coefficient grows with generation
         current_coeff = self.base_coefficient * (progress**self.growth_rate)
 
         penalty = 0.0
@@ -226,7 +226,7 @@ class AdaptivePenaltyMethod(PenaltyMethod):
         initial_coefficient: float = 100.0,
         target_feasibility: float = 0.5,
         adaptation_rate: float = 0.1,
-    ):
+    ) -> None:
         """
         Initialize adaptive penalty.
 
@@ -251,7 +251,7 @@ class AdaptivePenaltyMethod(PenaltyMethod):
             # Too many feasible - increase penalty for convergence
             self.coefficient *= 1 + self.adaptation_rate
 
-        # Keep within reasonable bounds
+            # Keep within reasonable bounds
         self.coefficient = max(1.0, min(10000.0, self.coefficient))
 
     def calculate_penalty(
@@ -280,7 +280,7 @@ class ConstraintDominanceMethod(PenaltyMethod):
     This method returns a modified penalty suitable for ranking.
     """
 
-    def __init__(self, feasibility_weight: float = float("inf")):
+    def __init__(self, feasibility_weight: float = float("inf")) -> None:
         """
         Initialize constraint dominance.
 
@@ -357,7 +357,7 @@ class GreedyRepairOperator(RepairOperator):
         self,
         max_iterations: int = 100,
         repair_functions: dict[str, Callable] | None = None,
-    ):
+    ) -> None:
         """
         Initialize greedy repair.
 
@@ -393,7 +393,7 @@ class GreedyRepairOperator(RepairOperator):
             if not remaining_violations:
                 return repaired, True
 
-            # Pick violation with smallest magnitude (easier to fix)
+                # Pick violation with smallest magnitude (easier to fix)
             remaining_violations.sort(key=lambda v: v.magnitude)
             violation = remaining_violations[0]
 
@@ -423,7 +423,7 @@ class RandomRepairOperator(RepairOperator):
         self,
         max_attempts: int = 10,
         perturbation_strength: float = 0.1,
-    ):
+    ) -> None:
         """
         Initialize random repair.
 
@@ -460,7 +460,7 @@ class RandomRepairOperator(RepairOperator):
                     # Randomly reassign entity (implementation depends on problem)
                     pass
 
-            # Evaluate candidate
+                    # Evaluate candidate
             new_violations = self._evaluate_constraints(candidate, context)
             new_violation = sum(v.magnitude for v in new_violations)
 
@@ -492,7 +492,7 @@ class FeasibilityPreserver:
         self,
         feasibility_check: Callable[[Solution, Any], bool],
         max_attempts: int = 100,
-    ):
+    ) -> None:
         """
         Initialize feasibility preserver.
 
@@ -536,7 +536,7 @@ class FeasibilityPreserver:
             if self.feasibility_check(offspring, context):
                 return offspring
 
-        # Fallback: return best parent
+                # Fallback: return best parent
         if self.feasibility_check(parent1, context):
             return parent1.copy()
         if self.feasibility_check(parent2, context):
@@ -575,7 +575,7 @@ class ConstraintRelaxer:
         self,
         relaxation_rate: float = 0.1,
         recovery_rate: float = 0.05,
-    ):
+    ) -> None:
         """
         Initialize constraint relaxer.
 
@@ -678,7 +678,7 @@ class ConstraintRelaxer:
                         level.current_threshold, level.original_threshold
                     )
 
-                # Check if fully restored
+                    # Check if fully restored
                 if abs(level.current_threshold - level.original_threshold) < 0.01:
                     level.current_threshold = level.original_threshold
                     level.is_relaxed = False
@@ -728,7 +728,7 @@ class ConstraintHandler:
         repair_operator: RepairOperator | None = None,
         feasibility_preserver: FeasibilityPreserver | None = None,
         constraint_relaxer: ConstraintRelaxer | None = None,
-    ):
+    ) -> None:
         """
         Initialize constraint handler.
 
@@ -783,7 +783,7 @@ class ConstraintHandler:
             self.feasible_count += 1
             return solution
 
-        # Record violations
+            # Record violations
         solution.constraint_violations = [v.constraint_name for v in violations]
         solution.total_constraint_violation = sum(v.magnitude for v in violations)
         solution.is_feasible = not any(v.is_hard for v in violations)
@@ -809,7 +809,7 @@ class ConstraintHandler:
                     repaired.constraint_violations = []
                     return repaired
 
-            # Fallback to penalty
+                    # Fallback to penalty
             penalty = self.penalty_method.calculate_penalty(
                 violations, self.current_generation, self.max_generations
             )
@@ -828,7 +828,7 @@ class ConstraintHandler:
                     repaired.is_feasible = True
                     repaired.total_constraint_violation = 0.0
                     return repaired
-                # Partial repair - recalculate violations
+                    # Partial repair - recalculate violations
                 solution = repaired
 
             penalty = self.penalty_method.calculate_penalty(
@@ -857,7 +857,7 @@ class ConstraintHandler:
         if isinstance(self.penalty_method, AdaptivePenaltyMethod):
             self.penalty_method.update_feasibility(feasible_ratio)
 
-        # Update constraint relaxer
+            # Update constraint relaxer
         if self.constraint_relaxer:
             best_feasible = any(s.is_feasible for s in population)
             self.constraint_relaxer.update(best_feasible, feasible_ratio)
@@ -886,8 +886,9 @@ class ConstraintHandler:
             ),
         }
 
+        # Pre-configured constraint handlers for common scenarios
 
-# Pre-configured constraint handlers for common scenarios
+
 def create_acgme_constraint_handler() -> ConstraintHandler:
     """Create constraint handler for ACGME compliance (strict)."""
     return ConstraintHandler(

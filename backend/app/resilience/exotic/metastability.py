@@ -51,7 +51,7 @@ class MetastabilityDetector:
     - Barrier = difficulty of reorganization
     """
 
-    def __init__(self, temperature: float = 1.0):
+    def __init__(self, temperature: float = 1.0) -> None:
         """
         Initialize metastability detector.
 
@@ -96,7 +96,7 @@ class MetastabilityDetector:
                 stability_score=1.0,
             )
 
-        # Find nearest lower-energy state
+            # Find nearest lower-energy state
         lower_states = [e for e in energy_landscape if e < current_energy]
 
         if not lower_states:
@@ -111,7 +111,7 @@ class MetastabilityDetector:
                 nearest_stable_state=None,
             )
 
-        # Current state has lower-energy states available
+            # Current state has lower-energy states available
         global_min = min(lower_states)
         energy_difference = current_energy - global_min
 
@@ -223,7 +223,7 @@ class MetastabilityDetector:
                 }
             )
 
-        # Sort by energy change (prioritize downhill paths)
+            # Sort by energy change (prioritize downhill paths)
         paths.sort(key=lambda p: p["target_energy"])
 
         return paths[:num_paths]
@@ -265,7 +265,7 @@ class MetastabilityDetector:
             risk_score = 0.2
             interpretation = "System stable, low reorganization risk"
 
-        # Estimate time to reorganization
+            # Estimate time to reorganization
         if effective_barrier > 0:
             escape_rate = np.exp(-effective_barrier / system_temperature)
             time_to_event = 1.0 / escape_rate if escape_rate > 0 else float("inf")

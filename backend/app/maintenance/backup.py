@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 class BackupService:
     """Service for creating and managing schedule data backups."""
 
-    def __init__(self, db: Session, backup_dir: str = "backups"):
+    def __init__(self, db: Session, backup_dir: str = "backups") -> None:
         """
         Initialize backup service.
 
@@ -348,7 +348,7 @@ class BackupService:
                     f"Backup file '{metadata['filename']}' not found for backup ID {backup_id}"
                 )
 
-            # Read backup data
+                # Read backup data
             logger.debug(f"Reading backup file: {source_path}")
             if metadata["compressed"]:
                 with gzip.open(source_path, "rt", encoding="utf-8") as f:
@@ -357,7 +357,7 @@ class BackupService:
                 with open(source_path, encoding="utf-8") as f:
                     data = json.load(f)
 
-            # Write uncompressed JSON
+                    # Write uncompressed JSON
             export_filename = f"export_{backup_id}.json"
             export_path = self.backup_path / export_filename
 
@@ -458,7 +458,7 @@ class BackupService:
             else:
                 logger.warning(f"Backup file not found: {backup_file}")
 
-            # Delete metadata file
+                # Delete metadata file
             if metadata_file.exists():
                 logger.debug(f"Deleting metadata file: {metadata_file}")
                 metadata_file.unlink()
@@ -486,7 +486,7 @@ class BackupService:
             logger.error(f"Unexpected error deleting backup {backup_id}: {e}")
             raise BackupPermissionError(f"Unexpected error deleting backup: {e}") from e
 
-    # Private helper methods
+            # Private helper methods
 
     def _serialize_people(self) -> list[dict[str, Any]]:
         """Serialize all people to dictionaries."""
@@ -531,7 +531,9 @@ class BackupService:
                 result[column.name] = value
         return result
 
-    def _write_backup(self, filepath: Path, data: dict[str, Any], compress: bool):
+    def _write_backup(
+        self, filepath: Path, data: dict[str, Any], compress: bool
+    ) -> None:
         """
         Write backup data to file.
 
@@ -558,7 +560,7 @@ class BackupService:
             logger.error(f"Unexpected error writing backup file {filepath}: {e}")
             raise BackupWriteError(f"Unexpected error writing backup file: {e}") from e
 
-    def _save_metadata(self, backup_id: str, metadata: dict[str, Any]):
+    def _save_metadata(self, backup_id: str, metadata: dict[str, Any]) -> None:
         """
         Save backup metadata to file.
 
@@ -607,7 +609,7 @@ class BackupService:
             logger.error(f"Error reading metadata file {metadata_file}: {e}")
             raise BackupReadError(f"Failed to read metadata file: {e}") from e
 
-    def _validate_directory_permissions(self):
+    def _validate_directory_permissions(self) -> None:
         """
         Validate that the backup directory has proper read/write permissions.
 
@@ -624,7 +626,7 @@ class BackupService:
                 f"Backup directory '{self.backup_path}' is not writable"
             )
 
-    def _check_disk_space(self, min_free_mb: int = 100):
+    def _check_disk_space(self, min_free_mb: int = 100) -> None:
         """
         Check if there is sufficient disk space for backup operations.
 

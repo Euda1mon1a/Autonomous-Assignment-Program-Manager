@@ -58,10 +58,9 @@ try:
 except ImportError:
     HAS_SEABORN = False
 
-
-# =============================================================================
-# Visualization Functions
-# =============================================================================
+    # =============================================================================
+    # Visualization Functions
+    # =============================================================================
 
 
 class CatastropheVisualizer:
@@ -75,7 +74,7 @@ class CatastropheVisualizer:
     - Cusp points and fold lines
     """
 
-    def __init__(self, style: str = "default"):
+    def __init__(self, style: str = "default") -> None:
         """
         Initialize visualizer.
 
@@ -172,7 +171,7 @@ class CatastropheVisualizer:
                     linewidth=2,
                 )
 
-        # Add trajectory if available
+                # Add trajectory if available
         if trajectory:
             traj_demands = [p.demand for p in trajectory]
             traj_strictness = [p.strictness for p in trajectory]
@@ -192,7 +191,7 @@ class CatastropheVisualizer:
                 label="System Trajectory",
             )
 
-        # Labels and title
+            # Labels and title
         ax.set_xlabel("Coverage Demand", fontsize=12, labelpad=10)
         ax.set_ylabel("Constraint Strictness", fontsize=12, labelpad=10)
         ax.set_zlabel("Feasibility Score", fontsize=12, labelpad=10)
@@ -209,7 +208,7 @@ class CatastropheVisualizer:
         if cusp_analysis or trajectory:
             ax.legend(loc="upper left")
 
-        # View angle
+            # View angle
         ax.view_init(elev=20, azim=45)
 
         plt.tight_layout()
@@ -261,7 +260,7 @@ class CatastropheVisualizer:
                     )
                 )
 
-        # Add trajectory
+                # Add trajectory
         if trajectory:
             traj_demands = [p.demand for p in trajectory]
             traj_strictness = [p.strictness for p in trajectory]
@@ -282,7 +281,7 @@ class CatastropheVisualizer:
                 )
             )
 
-        # Layout
+            # Layout
         fig.update_layout(
             title="Schedule Feasibility Surface (Interactive 3D)",
             scene={
@@ -361,7 +360,7 @@ class CatastropheVisualizer:
                     alpha=0.7,
                 )
 
-            # Plot lower boundary
+                # Plot lower boundary
             if cusp_analysis.lower_boundary:
                 lower_d = [p[0] for p in cusp_analysis.lower_boundary]
                 lower_s = [p[1] for p in cusp_analysis.lower_boundary]
@@ -374,7 +373,7 @@ class CatastropheVisualizer:
                     alpha=0.7,
                 )
 
-            # Mark cusp point
+                # Mark cusp point
             if cusp_analysis.cusp_center:
                 ax.scatter(
                     [cusp_analysis.cusp_center[0]],
@@ -388,7 +387,7 @@ class CatastropheVisualizer:
                     zorder=5,
                 )
 
-        # Add trajectory
+                # Add trajectory
         if trajectory:
             traj_d = [p.demand for p in trajectory]
             traj_s = [p.strictness for p in trajectory]
@@ -411,7 +410,7 @@ class CatastropheVisualizer:
                     arrowprops={"arrowstyle": "->", "lw": 2, "color": "black"},
                 )
 
-        # Mark current state
+                # Mark current state
         if current_params:
             ax.scatter(
                 [current_params.demand],
@@ -425,7 +424,7 @@ class CatastropheVisualizer:
                 zorder=6,
             )
 
-        # Labels and title
+            # Labels and title
         ax.set_xlabel("Coverage Demand", fontsize=12)
         ax.set_ylabel("Constraint Strictness", fontsize=12)
         ax.set_title(
@@ -472,7 +471,7 @@ class CatastropheVisualizer:
             logger.error("matplotlib required for hysteresis plots")
             return None
 
-        # Find closest strictness index
+            # Find closest strictness index
         s_idx = np.argmin(np.abs(surface.strictness_values - strictness_level))
         actual_strictness = surface.strictness_values[s_idx]
 
@@ -669,10 +668,9 @@ class CatastropheVisualizer:
         logger.info(f"Dashboard created in {output_dir}")
         return figures
 
-
-# =============================================================================
-# Convenience Functions
-# =============================================================================
+        # =============================================================================
+        # Convenience Functions
+        # =============================================================================
 
 
 def visualize_catastrophe_surface(

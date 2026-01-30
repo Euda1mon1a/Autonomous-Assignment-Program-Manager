@@ -23,7 +23,7 @@ class RotationPreferenceRepository(AsyncBaseRepository[RotationPreference]):
     managing scheduling preferences in rotation templates.
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """Initialize repository with database session.
 
         Args:

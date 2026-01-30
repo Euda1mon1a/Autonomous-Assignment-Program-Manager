@@ -22,7 +22,7 @@ class DocumentationGenerator:
     comprehensive, developer-friendly API documentation.
     """
 
-    def __init__(self, app: FastAPI):
+    def __init__(self, app: FastAPI) -> None:
         """
         Initialize the documentation generator.
 

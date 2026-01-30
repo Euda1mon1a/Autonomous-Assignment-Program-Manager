@@ -72,7 +72,7 @@ class TableMetrics:
 class ConnectionPoolMonitor:
     """Monitor connection pool health."""
 
-    def __init__(self, engine: Engine):
+    def __init__(self, engine: Engine) -> None:
         """
         Initialize connection pool monitor.
 
@@ -153,7 +153,7 @@ class ConnectionPoolMonitor:
 class QueryLatencyTracker:
     """Track query execution latency."""
 
-    def __init__(self, slow_query_threshold_ms: float = 100.0):
+    def __init__(self, slow_query_threshold_ms: float = 100.0) -> None:
         """
         Initialize query latency tracker.
 
@@ -183,11 +183,11 @@ class QueryLatencyTracker:
                 }
             )
 
-        # Keep only last 1000 queries
+            # Keep only last 1000 queries
         if len(self.query_times) > 1000:
             self.query_times = self.query_times[-1000:]
 
-        # Keep only last 100 slow queries
+            # Keep only last 100 slow queries
         if len(self.slow_queries) > 100:
             self.slow_queries = self.slow_queries[-100:]
 
@@ -237,7 +237,7 @@ class QueryLatencyTracker:
 class DeadlockDetector:
     """Detect and track database deadlocks."""
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session) -> None:
         """
         Initialize deadlock detector.
 
@@ -298,7 +298,7 @@ class DeadlockDetector:
 class IndexUsageAnalyzer:
     """Analyze index usage and efficiency."""
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session) -> None:
         """
         Initialize index usage analyzer.
 
@@ -358,7 +358,7 @@ class IndexUsageAnalyzer:
 class TableSizeMonitor:
     """Monitor table sizes."""
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session) -> None:
         """
         Initialize table size monitor.
 
@@ -457,7 +457,7 @@ class TableSizeMonitor:
 class DatabaseHealthCheck:
     """Comprehensive database health check."""
 
-    def __init__(self, engine: Engine, session: Session):
+    def __init__(self, engine: Engine, session: Session) -> None:
         """
         Initialize health check.
 

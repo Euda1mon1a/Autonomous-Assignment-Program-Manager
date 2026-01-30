@@ -12,7 +12,7 @@ from app.repositories.base import BaseRepository
 class AbsenceRepository(BaseRepository[Absence]):
     """Repository for Absence entity operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(Absence, db)
 
     def get_by_id_with_person(self, id: UUID) -> Absence | None:

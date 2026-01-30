@@ -66,7 +66,7 @@ class SanitizationRule:
         field_matcher: Callable[[str], bool] | None = None,
         replacement: str = "[REDACTED]",
         enabled: bool = True,
-    ):
+    ) -> None:
         """
         Initialize sanitization rule.
 
@@ -132,7 +132,7 @@ class DataSanitizer:
         enable_pii_detection: bool = True,
         partial_mask: bool = False,
         mask_char: str = "*",
-    ):
+    ) -> None:
         """
         Initialize data sanitizer.
 
@@ -320,11 +320,11 @@ class DataSanitizer:
         if "message" in sanitized and isinstance(sanitized["message"], str):
             sanitized["message"] = self._sanitize_string(sanitized["message"])
 
-        # Sanitize extra fields
+            # Sanitize extra fields
         if "extra" in sanitized and isinstance(sanitized["extra"], dict):
             sanitized["extra"] = self.sanitize_dict(sanitized["extra"])
 
-        # Sanitize exception
+            # Sanitize exception
         if "exception" in sanitized and sanitized["exception"]:
             exc_info = sanitized["exception"]
             if isinstance(exc_info, dict) and "value" in exc_info:
@@ -332,8 +332,9 @@ class DataSanitizer:
 
         return sanitized
 
+        # Global sanitizer instance
 
-# Global sanitizer instance
+
 _global_sanitizer: DataSanitizer | None = None
 
 

@@ -186,7 +186,7 @@ class ResilienceHarness:
         start_date: date,
         end_date: date,
         generator_config: GeneratorConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize the test harness.
 
@@ -242,7 +242,7 @@ class ResilienceHarness:
                 )
             )
 
-        # N-1: Remove each resident
+            # N-1: Remove each resident
         for res in residents[:3]:
             scenarios.append(
                 AdversarialScenario(
@@ -253,7 +253,7 @@ class ResilienceHarness:
                 )
             )
 
-        # Unexpected leave (random person, random week)
+            # Unexpected leave (random person, random week)
         if faculty:
             random_faculty = random.choice(faculty)
             leave_start = self.start_date + timedelta(days=random.randint(0, 14))
@@ -271,7 +271,7 @@ class ResilienceHarness:
                 )
             )
 
-        # Holiday staffing shock (reduced capacity for period)
+            # Holiday staffing shock (reduced capacity for period)
         scenarios.append(
             AdversarialScenario(
                 type=ScenarioType.HOLIDAY_SHOCK,
@@ -343,7 +343,7 @@ class ResilienceHarness:
                 if candidate is None:
                     continue
 
-                # Evaluate
+                    # Evaluate
                 evaluation = self.evaluator.evaluate(
                     assignments=candidate.assignments,
                     start_date=self.start_date,
@@ -357,11 +357,11 @@ class ResilienceHarness:
                     best_candidate = candidate
                     best_evaluation = evaluation
 
-                # Early exit if feasible and good enough
+                    # Early exit if feasible and good enough
                 if evaluation.valid and evaluation.score >= baseline_score * 0.9:
                     break
 
-            # Revert scenario modifications
+                    # Revert scenario modifications
             self._revert_scenario(scenario)
 
             recovery_time = time.time() - start_time
@@ -442,7 +442,7 @@ class ResilienceHarness:
             else:
                 baseline_score = 0.0
 
-        # Generate and run scenarios
+                # Generate and run scenarios
         scenarios = self.generate_scenarios()
         results: list[ScenarioResult] = []
 
@@ -456,7 +456,7 @@ class ResilienceHarness:
                 f"degradation={result.score_degradation:.4f}"
             )
 
-        # Aggregate results
+            # Aggregate results
         passed = sum(1 for r in results if r.feasible)
         failed = len(results) - passed
         avg_degradation = (
@@ -550,7 +550,7 @@ class ResilienceHarness:
                 self.db.add(absence)
             self.db.flush()
 
-        # Clear generator cache after modifications
+            # Clear generator cache after modifications
         self.generator.clear_cache()
 
     def _revert_scenario(self, scenario: AdversarialScenario) -> None:
@@ -563,7 +563,7 @@ class ResilienceHarness:
             self._savepoint.rollback()
             self._savepoint = None
 
-        # Clear generator cache after revert
+            # Clear generator cache after revert
         self.generator.clear_cache()
 
 

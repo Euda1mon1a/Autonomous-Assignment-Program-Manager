@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class GapAnalyzer:
     """Analyzes coverage gaps and recommends fixes."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def find_gaps(

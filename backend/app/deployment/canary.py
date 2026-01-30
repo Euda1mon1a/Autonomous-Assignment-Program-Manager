@@ -124,19 +124,19 @@ class UserSegment:
         if not self.is_active:
             return False
 
-        # Check specific user IDs
+            # Check specific user IDs
         if self.user_ids and user_id in self.user_ids:
             return True
 
-        # Check role
+            # Check role
         if self.user_roles and user_role in self.user_roles:
             return True
 
-        # Check organization
+            # Check organization
         if self.organizations and organization_id in self.organizations:
             return True
 
-        # Check percentage-based assignment
+            # Check percentage-based assignment
         if self.percentage > 0.0 and user_hash is not None:
             threshold = int(self.percentage * 100)
             if (user_hash % 100) < threshold:
@@ -164,7 +164,7 @@ class TrafficSplit:
     # Safety limits
     max_ramp_percentage: float = 50.0  # Don't go above this during ramp
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate percentages sum to 100."""
         total = self.canary_percentage + self.baseline_percentage
         if not (99.9 <= total <= 100.1):  # Allow small floating point error
@@ -240,7 +240,7 @@ class CanaryMetrics:
     # Custom metrics
     custom_metrics: dict[str, float] = field(default_factory=dict)
 
-    def calculate_error_rates(self):
+    def calculate_error_rates(self) -> None:
         """Calculate error rates from counts."""
         if self.canary_request_count > 0:
             self.canary_error_rate = (
@@ -269,7 +269,7 @@ class MetricComparison:
     difference_percentage: float = 0.0
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculate differences and acceptability."""
         self.difference = self.canary_value - self.baseline_value
 
@@ -372,7 +372,7 @@ class CanaryRelease:
     # Event log
     events: list[dict[str, Any]] = field(default_factory=list)
 
-    def log_event(self, event_type: str, message: str, metadata: dict = None):
+    def log_event(self, event_type: str, message: str, metadata: dict = None) -> None:
         """
         Log an event in the release timeline.
 
@@ -409,7 +409,7 @@ class CanaryRelease:
         if not self.current_traffic.can_ramp_up():
             return False
 
-        # Check minimum observation time
+            # Check minimum observation time
         if self.last_ramp_at:
             min_interval = timedelta(minutes=self.config.ramp_interval_minutes)
             if datetime.utcnow() - self.last_ramp_at < min_interval:
@@ -455,7 +455,7 @@ class CanaryReleaseManager:
         status = manager.get_release_status(release.id)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.releases: dict[UUID, CanaryRelease] = {}
         self._event_handlers: dict[str, list[Callable]] = {}
         self._metric_collectors: list[Callable] = []
@@ -528,7 +528,7 @@ class CanaryReleaseManager:
         error: bool = False,
         latency_ms: float = 0.0,
         exception: bool = False,
-    ):
+    ) -> None:
         """
         Record a request to either canary or baseline.
 
@@ -551,7 +551,7 @@ class CanaryReleaseManager:
                 metrics.canary_error_count += 1
             if exception:
                 metrics.canary_exception_count += 1
-            # Update latency percentiles (simplified - use proper percentile tracking)
+                # Update latency percentiles (simplified - use proper percentile tracking)
             metrics.canary_p50_latency = max(metrics.canary_p50_latency, latency_ms)
         else:
             metrics.baseline_request_count += 1
@@ -577,14 +577,14 @@ class CanaryReleaseManager:
         if not release:
             raise ValueError(f"Release {release_id} not found")
 
-        # Call registered metric collectors
+            # Call registered metric collectors
         for collector in self._metric_collectors:
             try:
                 collector(release)
             except Exception as e:
                 logger.error(f"Metric collector error: {e}")
 
-        # Save current metrics to history
+                # Save current metrics to history
         metrics_snapshot = CanaryMetrics(
             timestamp=datetime.utcnow(),
             canary_request_count=release.current_metrics.canary_request_count,
@@ -651,7 +651,7 @@ class CanaryReleaseManager:
             )
             comparisons.append(latency_comp)
 
-        # Compare availability
+            # Compare availability
         availability_comp = MetricComparison(
             metric_name="availability",
             canary_value=metrics.canary_availability,
@@ -690,13 +690,13 @@ class CanaryReleaseManager:
         if metrics.canary_request_count < 10:
             return False, None
 
-        # Check error rate spike
+            # Check error rate spike
         if config.rollback_on_error_spike:
             error_rate_diff = metrics.canary_error_rate - metrics.baseline_error_rate
             if error_rate_diff > config.max_error_rate_increase:
                 return True, RollbackReason.ERROR_RATE_SPIKE
 
-        # Check latency degradation
+                # Check latency degradation
         if config.rollback_on_latency_degradation and metrics.baseline_p50_latency > 0:
             latency_increase = (
                 (metrics.canary_p50_latency - metrics.baseline_p50_latency)
@@ -706,7 +706,7 @@ class CanaryReleaseManager:
             if latency_increase > config.max_latency_increase_percentage:
                 return True, RollbackReason.LATENCY_DEGRADATION
 
-        # Check availability drop
+                # Check availability drop
         if config.rollback_on_availability_drop:
             availability_drop = (
                 metrics.baseline_availability - metrics.canary_availability
@@ -714,7 +714,7 @@ class CanaryReleaseManager:
             if availability_drop > config.max_availability_decrease:
                 return True, RollbackReason.AVAILABILITY_DROP
 
-        # Check exception rate
+                # Check exception rate
         if metrics.canary_request_count > 0:
             exception_rate = (
                 metrics.canary_exception_count / metrics.canary_request_count * 100.0
@@ -722,11 +722,11 @@ class CanaryReleaseManager:
             if exception_rate > config.max_exception_rate:
                 return True, RollbackReason.EXCEPTION_RATE
 
-        # Check timeout
+                # Check timeout
         if release.is_expired():
             return True, RollbackReason.TIMEOUT
 
-        # Check metric comparisons
+            # Check metric comparisons
         for comparison in release.metric_comparisons:
             if not comparison.is_acceptable:
                 return True, RollbackReason.METRIC_COMPARISON_FAILED
@@ -841,7 +841,7 @@ class CanaryReleaseManager:
         if not release:
             return {"error": "Release not found"}
 
-        # Collect current metrics
+            # Collect current metrics
         self.collect_metrics(release_id)
 
         # Compare metrics
@@ -858,7 +858,7 @@ class CanaryReleaseManager:
                 "state": release.state.value,
             }
 
-        # Check if we can ramp up
+            # Check if we can ramp up
         if release.can_ramp_up():
             # Verify minimum observation time
             if release.last_ramp_at:
@@ -872,7 +872,7 @@ class CanaryReleaseManager:
                         "state": release.state.value,
                     }
 
-            # All checks passed, ramp up
+                    # All checks passed, ramp up
             self.ramp_up(release_id)
             return {
                 "action": "ramp_up",
@@ -880,7 +880,7 @@ class CanaryReleaseManager:
                 "state": release.state.value,
             }
 
-        # Check if monitoring is complete
+            # Check if monitoring is complete
         if release.state == CanaryState.MONITORING:
             min_observation = timedelta(
                 minutes=release.config.minimum_observation_minutes
@@ -1061,7 +1061,7 @@ class CanaryReleaseManager:
         self,
         event_type: str,
         handler: Callable[[CanaryRelease], Any],
-    ):
+    ) -> None:
         """
         Register a handler for canary events.
 
@@ -1082,7 +1082,9 @@ class CanaryReleaseManager:
             self._event_handlers[event_type] = []
         self._event_handlers[event_type].append(handler)
 
-    def register_metric_collector(self, collector: Callable[[CanaryRelease], None]):
+    def register_metric_collector(
+        self, collector: Callable[[CanaryRelease], None]
+    ) -> None:
         """
         Register a custom metric collector.
 
@@ -1094,7 +1096,7 @@ class CanaryReleaseManager:
         """
         self._metric_collectors.append(collector)
 
-    def _emit_event(self, event_type: str, release: CanaryRelease):
+    def _emit_event(self, event_type: str, release: CanaryRelease) -> None:
         """Emit event to registered handlers."""
         handlers = self._event_handlers.get(event_type, [])
         for handler in handlers:
@@ -1154,13 +1156,13 @@ class CanaryReleaseManager:
         ):
             return "baseline"
 
-        # Check if user matches any target segment
+            # Check if user matches any target segment
         user_hash = hash(user_id) % 100
         for segment in release.config.target_segments:
             if segment.matches(user_id, user_role, organization_id, user_hash):
                 return "canary"
 
-        # Use traffic percentage for general population
+                # Use traffic percentage for general population
         if user_hash < int(release.current_traffic.canary_percentage):
             return "canary"
 

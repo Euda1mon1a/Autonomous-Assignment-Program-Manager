@@ -108,7 +108,7 @@ class RequestMatcher:
         headers: dict[str, str] | None = None,
         query_params: dict[str, Any] | None = None,
         body_contains: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """
         Initialize request matcher.
 
@@ -141,25 +141,25 @@ class RequestMatcher:
         if self.method and request.method != self.method:
             return False
 
-        # Check exact path
+            # Check exact path
         if self.path and request.path != self.path:
             return False
 
-        # Check path pattern
+            # Check path pattern
         if self.path_pattern and not self.path_pattern.match(request.path):
             return False
 
-        # Check headers
+            # Check headers
         for key, value in self.headers.items():
             if request.headers.get(key) != value:
                 return False
 
-        # Check query params
+                # Check query params
         for key, value in self.query_params.items():
             if request.query_params.get(key) != value:
                 return False
 
-        # Check body contains
+                # Check body contains
         if self.body_contains and request.body:
             if isinstance(request.body, dict):
                 for key, value in self.body_contains.items():
@@ -242,7 +242,7 @@ class MockAPIServer:
         ```
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize mock server."""
         self.endpoints: list[MockEndpoint] = []
         self.recorded_requests: list[MockRequest] = []
@@ -341,7 +341,7 @@ class MockAPIServer:
         if not self.enabled:
             return self.default_response
 
-        # Find matching endpoint
+            # Find matching endpoint
         for endpoint in self.endpoints:
             response = endpoint.get_response(request)
             if response:
@@ -349,13 +349,13 @@ class MockAPIServer:
                 if response.delay_ms > 0:
                     await asyncio.sleep(response.delay_ms / 1000.0)
 
-                # Raise error if configured
+                    # Raise error if configured
                 if response.error:
                     raise response.error
 
                 return response
 
-        # No match found
+                # No match found
         return self.default_response
 
     def get_requests(
@@ -609,7 +609,7 @@ class MockServerContext:
         ```
     """
 
-    def __init__(self, server: MockAPIServer = None):
+    def __init__(self, server: MockAPIServer = None) -> None:
         """
         Initialize context.
 
@@ -622,6 +622,6 @@ class MockServerContext:
         """Enter context and return server."""
         return self.server
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit context and reset server."""
         self.server.reset()

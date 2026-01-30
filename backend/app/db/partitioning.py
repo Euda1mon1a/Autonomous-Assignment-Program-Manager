@@ -93,7 +93,7 @@ class PartitionConfig:
     archive_location: str | None = None
     pruning_enabled: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate configuration."""
         if self.auto_archive and not self.archive_location:
             raise ValueError("archive_location required when auto_archive is True")
@@ -140,7 +140,7 @@ class PartitionStatistics:
     avg_partition_size_mb: float = 0.0
     partitions: list[PartitionInfo] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize partitions list."""
         if self.partitions is None:
             self.partitions = []
@@ -164,7 +164,7 @@ class PartitioningService:
     - Monitoring and statistics
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize partitioning service.
 
@@ -174,9 +174,9 @@ class PartitioningService:
         self.db = db
         self._partition_configs: dict[str, PartitionConfig] = {}
 
-    # =========================================================================
-    # Time-Based Partitioning
-    # =========================================================================
+        # =========================================================================
+        # Time-Based Partitioning
+        # =========================================================================
 
     def create_time_partitions(
         self,
@@ -229,17 +229,17 @@ class PartitioningService:
         if not end_date:
             end_date = now + timedelta(days=months_ahead * 30)
 
-        # Check if table is already partitioned
+            # Check if table is already partitioned
         if not self._is_table_partitioned(table_name):
             logger.info(f"Converting {table_name} to partitioned table")
             self._convert_to_partitioned_table(table_name, partition_column, strategy)
 
-        # Detach existing partitions if requested
+            # Detach existing partitions if requested
         if detach_existing:
             logger.info(f"Detaching existing partitions for {table_name}")
             self._detach_all_partitions(table_name)
 
-        # Generate partition ranges
+            # Generate partition ranges
         partition_ranges = self._generate_partition_ranges(
             start_date, end_date, strategy
         )
@@ -337,7 +337,7 @@ class PartitioningService:
             logger.debug(f"Partition {partition_name} already exists")
             return partition_name
 
-        # Create partition
+            # Create partition
         sql = text(
             f"""
             CREATE TABLE IF NOT EXISTS {partition_name}
@@ -433,9 +433,9 @@ class PartitioningService:
         else:
             return date.strftime("%Y_%m")
 
-    # =========================================================================
-    # Range Partitioning
-    # =========================================================================
+            # =========================================================================
+            # Range Partitioning
+            # =========================================================================
 
     def create_range_partitions(
         self,
@@ -477,7 +477,7 @@ class PartitioningService:
                 logger.debug(f"Partition {partition_name} already exists")
                 continue
 
-            # Handle unbounded ranges
+                # Handle unbounded ranges
             start_clause = f"'{range_start}'" if range_start is not None else "MINVALUE"
             end_clause = f"'{range_end}'" if range_end is not None else "MAXVALUE"
 
@@ -500,9 +500,9 @@ class PartitioningService:
 
         return created_partitions
 
-    # =========================================================================
-    # Hash Partitioning
-    # =========================================================================
+        # =========================================================================
+        # Hash Partitioning
+        # =========================================================================
 
     def create_hash_partitions(
         self,
@@ -564,9 +564,9 @@ class PartitioningService:
 
         return created_partitions
 
-    # =========================================================================
-    # Partition Management
-    # =========================================================================
+        # =========================================================================
+        # Partition Management
+        # =========================================================================
 
     def detach_partition(
         self, table_name: str, partition_name: str, concurrent: bool = True
@@ -677,9 +677,9 @@ class PartitioningService:
             logger.error(f"Failed to drop partition {partition_name}: {e}")
             return False
 
-    # =========================================================================
-    # Partition Archival and Cleanup
-    # =========================================================================
+            # =========================================================================
+            # Partition Archival and Cleanup
+            # =========================================================================
 
     def archive_old_partitions(
         self,
@@ -762,9 +762,9 @@ class PartitioningService:
         logger.info(f"Cleaned up {len(cleaned)} empty partitions")
         return cleaned
 
-    # =========================================================================
-    # Query Optimization
-    # =========================================================================
+        # =========================================================================
+        # Query Optimization
+        # =========================================================================
 
     def enable_partition_pruning(self, table_name: str, enable: bool = True) -> None:
         """
@@ -850,9 +850,9 @@ class PartitioningService:
         except Exception as e:
             logger.error(f"Failed to set partition-wise join: {e}")
 
-    # =========================================================================
-    # Statistics and Monitoring
-    # =========================================================================
+            # =========================================================================
+            # Statistics and Monitoring
+            # =========================================================================
 
     def get_partition_info(self, table_name: str) -> list[PartitionInfo]:
         """
@@ -984,7 +984,7 @@ class PartitioningService:
                         f"Consider re-partitioning or archiving {partition.partition_name}"
                     )
 
-        # Check for empty partitions
+                    # Check for empty partitions
         empty_count = sum(1 for p in stats.partitions if p.row_count == 0)
         if empty_count > 0:
             issues.append(f"{empty_count} empty partitions found")
@@ -992,7 +992,7 @@ class PartitioningService:
                 "Run cleanup_empty_partitions() to remove unused partitions"
             )
 
-        # Check partition size
+            # Check partition size
         large_partitions = [p for p in stats.partitions if p.size_gb > 10]
         if large_partitions:
             issues.append(f"{len(large_partitions)} partitions exceed 10GB")
@@ -1010,9 +1010,9 @@ class PartitioningService:
             "statistics": stats,
         }
 
-    # =========================================================================
-    # Automatic Partition Management
-    # =========================================================================
+        # =========================================================================
+        # Automatic Partition Management
+        # =========================================================================
 
     def auto_create_future_partitions(
         self,
@@ -1047,7 +1047,7 @@ class PartitioningService:
         else:
             start_date = datetime.now()
 
-        # Create future partitions
+            # Create future partitions
         end_date = start_date + timedelta(days=months_ahead * 30)
 
         # Determine partition column (would need to be stored in config)
@@ -1062,9 +1062,9 @@ class PartitioningService:
             end_date=end_date,
         )
 
-    # =========================================================================
-    # Helper Methods
-    # =========================================================================
+        # =========================================================================
+        # Helper Methods
+        # =========================================================================
 
     def _is_table_partitioned(self, table_name: str) -> bool:
         """Check if a table is partitioned."""
@@ -1156,7 +1156,7 @@ class PartitioningService:
                 logger.error(f"Failed to export partition: {e}")
                 return False
 
-        # For S3 or other locations, would need custom implementation
+                # For S3 or other locations, would need custom implementation
         logger.warning(f"Archive location {archive_location} not implemented")
         return False
 
@@ -1214,10 +1214,9 @@ class PartitioningService:
 
         return partitions
 
-
-# =============================================================================
-# Utility Functions
-# =============================================================================
+        # =============================================================================
+        # Utility Functions
+        # =============================================================================
 
 
 def get_recommended_partition_strategy(
@@ -1238,15 +1237,15 @@ def get_recommended_partition_strategy(
     if row_count > 10_000_000:
         return PartitionStrategy.MONTHLY
 
-    # For medium tables (1M-10M rows), use quarterly
+        # For medium tables (1M-10M rows), use quarterly
     elif row_count > 1_000_000:
         return PartitionStrategy.QUARTERLY
 
-    # For smaller tables with long retention, use yearly
+        # For smaller tables with long retention, use yearly
     elif data_retention_months > 36:
         return PartitionStrategy.YEARLY
 
-    # Default to monthly for most cases
+        # Default to monthly for most cases
     else:
         return PartitionStrategy.MONTHLY
 

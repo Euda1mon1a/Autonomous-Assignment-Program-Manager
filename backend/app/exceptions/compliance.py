@@ -27,7 +27,7 @@ class ACGMEComplianceError(AppException):
         violation_date: date | str | None = None,
         status_code: int = 422,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize ACGME compliance error.
 
         Args:
@@ -55,7 +55,7 @@ class WorkHourViolationError(ACGMEComplianceError):
         actual_hours: float | None = None,
         limit_hours: float = 80.0,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize work hour violation error.
 
         Args:
@@ -90,7 +90,7 @@ class RestRequirementViolationError(ACGMEComplianceError):
         period_end: date | str | None = None,
         consecutive_days: int | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize rest requirement violation error.
 
         Args:
@@ -123,7 +123,7 @@ class SupervisionViolationError(ACGMEComplianceError):
         actual_ratio: str | None = None,
         required_ratio: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize supervision violation error.
 
         Args:
@@ -155,7 +155,7 @@ class ShiftLengthViolationError(ACGMEComplianceError):
         actual_hours: float | None = None,
         max_hours: float | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize shift length violation error.
 
         Args:
@@ -188,7 +188,7 @@ class CallFrequencyViolationError(ACGMEComplianceError):
         actual_frequency: int | None = None,
         max_frequency: int | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize call frequency violation error.
 
         Args:

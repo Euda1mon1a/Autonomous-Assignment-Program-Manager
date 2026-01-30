@@ -40,7 +40,7 @@ class ThrottleDecision:
         reason: str | None = None,
         wait_time: float | None = None,
         retry_after: int | None = None,
-    ):
+    ) -> None:
         """
         Initialize throttle decision.
 
@@ -59,7 +59,7 @@ class ThrottleDecision:
 class ThrottleStrategy(ABC):
     """Base class for throttling strategies."""
 
-    def __init__(self, storage: ThrottleStorage):
+    def __init__(self, storage: ThrottleStorage) -> None:
         """
         Initialize strategy.
 
@@ -145,7 +145,7 @@ class QueuedThrottleStrategy(ThrottleStrategy):
                 reason="Capacity available",
             )
 
-        # Queue if space available
+            # Queue if space available
         if metrics.queue_utilization < 1.0:
             # Estimate wait time based on queue position
             wait_time = metrics.queued_requests * 0.5  # Assume 0.5s per request
@@ -156,7 +156,7 @@ class QueuedThrottleStrategy(ThrottleStrategy):
                 retry_after=int(wait_time) + 1,
             )
 
-        # Reject if both full
+            # Reject if both full
         return ThrottleDecision(
             action=ThrottleAction.REJECT,
             reason="Maximum capacity and queue size reached",
@@ -204,7 +204,7 @@ class PriorityThrottleStrategy(ThrottleStrategy):
                     retry_after=5,
                 )
 
-        # High priority - generous limits
+                # High priority - generous limits
         if priority == ThrottlePriority.HIGH:
             if utilization < 0.95:
                 return ThrottleDecision(
@@ -226,7 +226,7 @@ class PriorityThrottleStrategy(ThrottleStrategy):
                     retry_after=10,
                 )
 
-        # Normal priority - standard throttling
+                # Normal priority - standard throttling
         if priority == ThrottlePriority.NORMAL:
             if utilization < 0.85:
                 return ThrottleDecision(
@@ -248,7 +248,7 @@ class PriorityThrottleStrategy(ThrottleStrategy):
                     retry_after=15,
                 )
 
-        # Low priority - conservative limits
+                # Low priority - conservative limits
         if priority == ThrottlePriority.LOW:
             if utilization < 0.70:
                 return ThrottleDecision(
@@ -270,7 +270,7 @@ class PriorityThrottleStrategy(ThrottleStrategy):
                     retry_after=30,
                 )
 
-        # Background priority - strictest limits
+                # Background priority - strictest limits
         if utilization < 0.60:
             return ThrottleDecision(
                 action=ThrottleAction.ALLOW,
@@ -322,7 +322,7 @@ class AdaptiveThrottleStrategy(ThrottleStrategy):
                     retry_after=int(wait_time) + 1,
                 )
 
-        # Warning level (70-80% utilization)
+                # Warning level (70-80% utilization)
         elif utilization < DEGRADATION_THRESHOLDS["throttle"]:
             # Allow critical and high
             if priority in [ThrottlePriority.CRITICAL, ThrottlePriority.HIGH]:
@@ -339,7 +339,7 @@ class AdaptiveThrottleStrategy(ThrottleStrategy):
                         retry_after=3,
                     )
 
-            # Queue normal priority
+                    # Queue normal priority
             elif priority == ThrottlePriority.NORMAL:
                 if utilization < 0.75 and metrics.utilization < 1.0:
                     return ThrottleDecision(
@@ -354,14 +354,14 @@ class AdaptiveThrottleStrategy(ThrottleStrategy):
                         retry_after=10,
                     )
 
-            # Reject low/background
+                    # Reject low/background
             return ThrottleDecision(
                 action=ThrottleAction.REJECT,
                 reason="Low priority rejected in warning state",
                 retry_after=30,
             )
 
-        # Throttle level (80-90% utilization)
+            # Throttle level (80-90% utilization)
         elif utilization < DEGRADATION_THRESHOLDS["reject"]:
             # Critical: Allow or queue
             if priority == ThrottlePriority.CRITICAL:
@@ -378,7 +378,7 @@ class AdaptiveThrottleStrategy(ThrottleStrategy):
                         retry_after=2,
                     )
 
-            # High: Allow with limits
+                    # High: Allow with limits
             elif priority == ThrottlePriority.HIGH:
                 if utilization < 0.85:
                     return ThrottleDecision(
@@ -393,14 +393,14 @@ class AdaptiveThrottleStrategy(ThrottleStrategy):
                         retry_after=5,
                     )
 
-            # Reject normal and lower
+                    # Reject normal and lower
             return ThrottleDecision(
                 action=ThrottleAction.REJECT,
                 reason="System in throttle state - high priority only",
                 retry_after=20,
             )
 
-        # Reject level (90-95% utilization)
+            # Reject level (90-95% utilization)
         elif utilization < DEGRADATION_THRESHOLDS["critical"]:
             # Only critical and high priority
             if priority == ThrottlePriority.CRITICAL:
@@ -424,7 +424,7 @@ class AdaptiveThrottleStrategy(ThrottleStrategy):
                 retry_after=30,
             )
 
-        # Critical/Emergency level (> 95% utilization)
+            # Critical/Emergency level (> 95% utilization)
         else:
             # Only critical priority allowed
             if priority == ThrottlePriority.CRITICAL and utilization < 0.99:

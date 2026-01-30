@@ -221,7 +221,7 @@ class PerformancePredictor:
         ClinicalRiskLevel.SEVERE: 3.0,
     }
 
-    def __init__(self, model_version: str = "rule_based_v1"):
+    def __init__(self, model_version: str = "rule_based_v1") -> None:
         """
         Initialize performance predictor.
 
@@ -255,7 +255,7 @@ class PerformancePredictor:
         if not assignments:
             return features
 
-        # Sort assignments by date
+            # Sort assignments by date
         sorted_assignments = sorted(
             assignments,
             key=lambda a: a.get("date", date.min)
@@ -422,13 +422,13 @@ class PerformancePredictor:
         else:
             score += 0.15 * (features.hours_since_rest / 24)
 
-        # Consecutive duty days (strong penalty after 6 days)
+            # Consecutive duty days (strong penalty after 6 days)
         if features.consecutive_duty_days > 6:
             score += 0.12 * (1 + (features.consecutive_duty_days - 6) * 0.3)
         else:
             score += 0.12 * (features.consecutive_duty_days / 7)
 
-        # Night shifts (cumulative fatigue)
+            # Night shifts (cumulative fatigue)
         score += 0.11 * min(1.0, features.night_shifts_7d / 3.0)
 
         # WOCL exposure
@@ -443,7 +443,7 @@ class PerformancePredictor:
         else:
             score += 0.08 * (features.days_since_full_day_off / 7)
 
-        # Sleep deficit (inverse relationship)
+            # Sleep deficit (inverse relationship)
         sleep_deficit = max(0, 8 - features.average_sleep_hours)
         score += 0.07 * (sleep_deficit / 4)
 
@@ -460,7 +460,7 @@ class PerformancePredictor:
         if features.is_currently_night_shift:
             score += 0.04
 
-        # Weekend burden
+            # Weekend burden
         score += 0.03 * min(1.0, features.weekend_days_worked / 4.0)
 
         return score
@@ -599,7 +599,7 @@ class PerformancePredictor:
         if probability < 0.3:
             return None  # No break urgently needed
 
-        # Suggest break during next circadian peak
+            # Suggest break during next circadian peak
         current_hour = current_time.hour
 
         # Morning peak: 9-11 AM, Afternoon peak: 3-5 PM
@@ -620,9 +620,9 @@ class PerformancePredictor:
 
         return optimal_break
 
-    # =========================================================================
-    # Feature Extraction Helpers
-    # =========================================================================
+        # =========================================================================
+        # Feature Extraction Helpers
+        # =========================================================================
 
     def _count_consecutive_days(
         self, assignments: list[dict], current_date: date
@@ -756,7 +756,7 @@ class PerformancePredictor:
             if a_date and window_start <= a_date <= current_date:
                 relevant.append((a_date, a.get("rotation_type", "unknown")))
 
-        # Sort by date
+                # Sort by date
         relevant.sort(key=lambda x: x[0])
 
         # Count transitions

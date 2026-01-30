@@ -375,10 +375,9 @@ class ComplianceReport(BaseModel):
     class Config:
         json_encoders = {datetime: lambda v: v.isoformat()}
 
-
-# ============================================================================
-# Enhanced Audit Logger
-# ============================================================================
+        # ============================================================================
+        # Enhanced Audit Logger
+        # ============================================================================
 
 
 class EnhancedAuditLogger:
@@ -395,7 +394,7 @@ class EnhancedAuditLogger:
         self,
         db: Session | AsyncSession,
         policy_manager: RetentionPolicyManager | None = None,
-    ):
+    ) -> None:
         """
         Initialize enhanced audit logger.
 
@@ -567,7 +566,7 @@ class EnhancedAuditLogger:
         if filters.end_date:
             query_filters.append(("created_at", "<=", filters.end_date))
 
-        # Execute search (simplified - would use proper database query)
+            # Execute search (simplified - would use proper database query)
         results = await self._execute_search(
             query_filters, page, page_size, sort_by, sort_order
         )
@@ -654,26 +653,26 @@ class EnhancedAuditLogger:
                     }
                 )
 
-            # Critical changes
+                # Critical changes
             if log.severity == "critical":
                 critical_changes += 1
 
-            # Deletion events
+                # Deletion events
             if log.action == "delete":
                 deletion_events += 1
 
-            # After-hours changes (outside 8 AM - 6 PM)
+                # After-hours changes (outside 8 AM - 6 PM)
             hour = log.created_at.hour
             if hour < 8 or hour >= 18:
                 after_hours_changes += 1
 
-            # Integrity verification
+                # Integrity verification
             if verify_integrity:
                 if not log.verify_checksum():
                     integrity_failures += 1
                     logger.warning(f"Integrity check failed for log {log.id}")
 
-        # Find most active users
+                    # Find most active users
         most_active_users = [
             {"user_id": user_id, "change_count": count}
             for user_id, count in sorted(
@@ -728,7 +727,7 @@ class EnhancedAuditLogger:
             logger.warning(f"Audit log not found: {log_id}")
             return False
 
-        # Verify checksum
+            # Verify checksum
         is_valid = log.verify_checksum()
 
         if not is_valid:
@@ -758,9 +757,9 @@ class EnhancedAuditLogger:
 
         return results
 
-    # ========================================================================
-    # Private Helper Methods
-    # ========================================================================
+        # ========================================================================
+        # Private Helper Methods
+        # ========================================================================
 
     async def _get_user_details(self, user_id: str) -> dict[str, Any] | None:
         """
@@ -823,7 +822,7 @@ class EnhancedAuditLogger:
             if old_value == new_value:
                 continue
 
-            # Check if sensitive
+                # Check if sensitive
             is_sensitive = any(
                 sensitive in field_name.lower() for sensitive in self.sensitive_fields
             )
@@ -833,7 +832,7 @@ class EnhancedAuditLogger:
                 old_value = "[REDACTED]"
                 new_value = "[REDACTED]"
 
-            # Determine change magnitude
+                # Determine change magnitude
             magnitude = self._calculate_change_magnitude(old_value, new_value)
 
             changes.append(
@@ -897,7 +896,7 @@ class EnhancedAuditLogger:
         if action == "delete":
             return "warning"
 
-        # ACGME-related entities are more critical
+            # ACGME-related entities are more critical
         if entity_type in ("assignment", "schedule_run"):
             # Check if critical fields changed
             critical_fields = {"status", "override_reason", "acgme_compliant"}
@@ -905,7 +904,7 @@ class EnhancedAuditLogger:
                 return "critical"
             return "info"
 
-        # User changes are warnings
+            # User changes are warnings
         if entity_type == "user":
             return "warning"
 
@@ -942,7 +941,7 @@ class EnhancedAuditLogger:
         except Exception:
             pass
 
-        # For strings, use length difference
+            # For strings, use length difference
         if isinstance(old_value, str) and isinstance(new_value, str):
             len_diff = abs(len(new_value) - len(old_value))
 
@@ -1030,10 +1029,9 @@ class EnhancedAuditLogger:
         logger.debug(f"Executing search with {len(filters)} filters")
         return [], 0
 
-
-# ============================================================================
-# Convenience Functions
-# ============================================================================
+        # ============================================================================
+        # Convenience Functions
+        # ============================================================================
 
 
 async def create_audit_log(

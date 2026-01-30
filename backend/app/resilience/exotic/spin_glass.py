@@ -61,7 +61,7 @@ class SpinGlassModel:
         num_spins: int,
         temperature: float = 1.0,
         frustration_level: float = 0.3,
-    ):
+    ) -> None:
         """
         Initialize spin glass model.
 
@@ -201,7 +201,7 @@ class SpinGlassModel:
                 spins = new_spins
                 current_energy = new_energy
 
-        # Calculate final metrics
+                # Calculate final metrics
         frustration = self.calculate_frustration(spins)
         magnetization = float(np.mean(spins))
 
@@ -234,7 +234,7 @@ class SpinGlassModel:
             replica = self.generate_replica(num_iterations=num_iterations)
             replicas.append(replica)
 
-        # Calculate pairwise overlaps
+            # Calculate pairwise overlaps
         overlaps = []
         for i in range(len(replicas)):
             for j in range(i + 1, len(replicas)):

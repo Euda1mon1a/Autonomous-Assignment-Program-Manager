@@ -34,7 +34,7 @@ class ReplicaAwareSessionFactory:
         routing_policy: RoutingPolicy | None = None,
         enable_sticky_sessions: bool = False,
         enable_health_checks: bool = True,
-    ):
+    ) -> None:
         """Initialize session factory.
 
         Args:
@@ -68,7 +68,7 @@ class ReplicaAwareSessionFactory:
         else:
             self.balancer = None
 
-        # Initialize router
+            # Initialize router
         self.router = QueryRouter(
             primary_engine=primary_engine,
             balancer=self.balancer,
@@ -102,7 +102,7 @@ class ReplicaAwareSessionFactory:
         if session_id is None:
             session_id = str(uuid.uuid4())
 
-        # Create base session bound to primary
+            # Create base session bound to primary
         base_session = self.primary_session_maker()
 
         # Wrap in replica-aware session
@@ -176,7 +176,7 @@ class ReplicaAwareSession:
         routing_policy: RoutingPolicy,
         session_id: str,
         force_primary: bool = False,
-    ):
+    ) -> None:
         """Initialize replica-aware session.
 
         Args:
@@ -204,20 +204,21 @@ class ReplicaAwareSession:
 
         # Track transaction begin/end
         @event.listens_for(self._session, "after_transaction_create")
-        def track_transaction_start(session, transaction):
+        def track_transaction_start(session, transaction) -> None:
             if transaction.parent is None:  # Only track top-level transactions
                 self._in_transaction = True
                 logger.debug(f"Transaction started: session={self._session_id}")
 
         @event.listens_for(self._session, "after_transaction_end")
-        def track_transaction_end(session, transaction):
+        def track_transaction_end(session, transaction) -> None:
             if transaction.parent is None:
                 self._in_transaction = False
                 logger.debug(f"Transaction ended: session={self._session_id}")
 
-        # Track writes
+                # Track writes
+
         @event.listens_for(self._session, "after_flush")
-        def track_writes(session, flush_context):
+        def track_writes(session, flush_context) -> None:
             if session.new or session.dirty or session.deleted:
                 self._recent_write = True
                 logger.debug(f"Write detected: session={self._session_id}")
@@ -370,7 +371,7 @@ class ReplicaAwareSession:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Context manager exit."""
         if exc_type is not None:
             self.rollback()

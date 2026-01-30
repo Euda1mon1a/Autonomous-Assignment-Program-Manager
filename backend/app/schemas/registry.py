@@ -178,14 +178,14 @@ class SchemaEvolutionRule:
         if removed_fields:
             violations.append(f"Backward incompatible: Removed fields {removed_fields}")
 
-        # Check for new required fields
+            # Check for new required fields
         new_required_fields = new_required - old_required
         if new_required_fields:
             violations.append(
                 f"Backward incompatible: Added required fields {new_required_fields}"
             )
 
-        # Check for type narrowing
+            # Check for type narrowing
         for field_name in old_props:
             if field_name in new_props:
                 old_type = old_props[field_name].get("type")
@@ -237,7 +237,7 @@ class SchemaEvolutionRule:
         if new_fields:
             violations.append(f"Forward incompatible: Added fields {new_fields}")
 
-        # Check for removed required fields
+            # Check for removed required fields
         removed_required = old_required - new_required
         if removed_required:
             violations.append(
@@ -306,7 +306,7 @@ class SchemaRegistry:
     and lifecycle management.
     """
 
-    def __init__(self, db: Session | AsyncSession):
+    def __init__(self, db: Session | AsyncSession) -> None:
         """
         Initialize schema registry.
 
@@ -355,7 +355,7 @@ class SchemaRegistry:
         if existing:
             raise ValueError(f"Schema {name} version {version} already exists")
 
-        # Validate compatibility with previous version if exists
+            # Validate compatibility with previous version if exists
         if version > 1:
             previous_version = await self._get_schema_by_name_version(name, version - 1)
             if previous_version:
@@ -372,7 +372,7 @@ class SchemaRegistry:
                         f"{', '.join(compat_result.violations)}"
                     )
 
-        # Create new schema version
+                    # Create new schema version
         schema_version = SchemaVersion(
             name=name,
             version=version,
@@ -393,7 +393,7 @@ class SchemaRegistry:
         if make_default:
             await self._unset_default_versions(name, exclude_id=schema_version.id)
 
-        # Create change event
+            # Create change event
         change_event = SchemaChangeEvent(
             schema_version_id=schema_version.id,
             schema_name=name,
@@ -412,7 +412,7 @@ class SchemaRegistry:
             self.db.commit()
             self.db.refresh(schema_version)
 
-        # Trigger notification (async)
+            # Trigger notification (async)
         await self._notify_schema_change(change_event)
 
         logger.info(f"Registered schema {name} version {version}")
@@ -441,7 +441,7 @@ class SchemaRegistry:
         if version is not None:
             return await self._get_schema_by_name_version(name, version)
 
-        # Get default version or latest active
+            # Get default version or latest active
         if self.is_async:
             stmt = (
                 select(SchemaVersion)
@@ -592,7 +592,7 @@ class SchemaRegistry:
                         [f"v{version_schema.version}: {v}" for v in version_violations]
                     )
 
-        # Add suggestions for common issues
+                    # Add suggestions for common issues
         if violations:
             suggestions.append(
                 "Consider using a higher version number for breaking changes"
@@ -660,7 +660,7 @@ class SchemaRegistry:
         else:
             self.db.commit()
 
-        # Trigger notification
+            # Trigger notification
         await self._notify_schema_change(change_event)
 
         logger.info(f"Deprecated schema {name} version {version}")
@@ -714,7 +714,7 @@ class SchemaRegistry:
         else:
             self.db.commit()
 
-        # Trigger notification
+            # Trigger notification
         await self._notify_schema_change(change_event)
 
         logger.info(f"Archived schema {name} version {version}")
@@ -751,7 +751,7 @@ class SchemaRegistry:
                 f"(status: {schema.status})"
             )
 
-        # Unset other defaults
+            # Unset other defaults
         await self._unset_default_versions(name, exclude_id=schema.id)
 
         schema.is_default = True
@@ -773,7 +773,7 @@ class SchemaRegistry:
         else:
             self.db.commit()
 
-        # Trigger notification
+            # Trigger notification
         await self._notify_schema_change(change_event)
 
         logger.info(f"Set schema {name} version {version} as default")
@@ -805,7 +805,7 @@ class SchemaRegistry:
         if not schema:
             raise ValueError(f"Schema {name} not found")
 
-        # Get all versions for history
+            # Get all versions for history
         all_versions = await self._get_all_schema_versions(name)
 
         # Extract field information
@@ -829,7 +829,7 @@ class SchemaRegistry:
                 }
             )
 
-        # Build compatibility history
+            # Build compatibility history
         compatibility_history = [
             {
                 "version": v.version,
@@ -854,7 +854,7 @@ class SchemaRegistry:
                 "migration_notes": schema.migration_notes,
             }
 
-        # Build migration guides
+            # Build migration guides
         migration_guides = []
         for i, version_schema in enumerate(all_versions):
             if i > 0 and version_schema.migration_notes:
@@ -877,7 +877,7 @@ class SchemaRegistry:
             migration_guides=migration_guides,
         )
 
-    # Private helper methods
+        # Private helper methods
 
     async def _get_schema_by_name_version(
         self, name: str, version: int
@@ -987,7 +987,7 @@ class SchemaRegistry:
 
     async def notify_schema_change(
         self, schema_name: str, change_type: str, details: dict = None
-    ):
+    ) -> None:
         """
         Notify about schema changes via notification service.
 
@@ -1008,7 +1008,7 @@ class SchemaRegistry:
                 logger.warning("No admin users found to notify about schema change")
                 return
 
-            # Create notification data
+                # Create notification data
             message = f"Schema '{schema_name}' was {change_type}"
             if details:
                 if details.get("version"):
@@ -1016,7 +1016,7 @@ class SchemaRegistry:
                 if details.get("description"):
                     message += f": {details['description']}"
 
-            # Send notifications to all admins
+                    # Send notifications to all admins
             notification_data = {
                 "schema_name": schema_name,
                 "change_type": change_type,
@@ -1047,7 +1047,7 @@ class SchemaRegistry:
                         f"Failed to notify admin {admin_id} about schema change: {notify_error}"
                     )
 
-            # Commit all notifications
+                    # Commit all notifications
             if self.is_async:
                 await self.db.commit()
             else:
@@ -1101,8 +1101,7 @@ class SchemaRegistry:
             logger.error(f"Failed to get admin user IDs: {e}")
             return []
 
-
-# Convenience functions for common operations
+            # Convenience functions for common operations
 
 
 async def get_latest_schema(

@@ -84,8 +84,9 @@ class HTTPMethod(str, Enum):
     HEAD = "HEAD"
     OPTIONS = "OPTIONS"
 
+    # Type alias for dynamic response functions
 
-# Type alias for dynamic response functions
+
 DynamicResponseFn = Callable[["MockRequest"], dict[str, Any] | Any]
 
 
@@ -288,7 +289,7 @@ class RequestMatcher:
         query_params: dict[str, Any] | None = None,
         body_contains: dict[str, Any] | None = None,
         predicate: RequestPredicate | None = None,
-    ):
+    ) -> None:
         """
         Initialize request matcher.
 
@@ -323,26 +324,26 @@ class RequestMatcher:
         if self.method and request.method.upper() != self.method:
             return False
 
-        # Check exact path
+            # Check exact path
         if self.path and request.path != self.path:
             return False
 
-        # Check path pattern
+            # Check path pattern
         if self.path_pattern and not self.path_pattern.match(request.path):
             return False
 
-        # Check headers (subset matching)
+            # Check headers (subset matching)
         for key, value in self.headers.items():
             request_value = request.get_header(key)
             if request_value != value:
                 return False
 
-        # Check query params (subset matching)
+                # Check query params (subset matching)
         for key, value in self.query_params.items():
             if request.query_params.get(key) != value:
                 return False
 
-        # Check body contains (subset matching)
+                # Check body contains (subset matching)
         if self.body_contains and request.body:
             body_json = request.get_json()
             if not body_json:
@@ -351,7 +352,7 @@ class RequestMatcher:
                 if body_json.get(key) != value:
                     return False
 
-        # Check custom predicate
+                    # Check custom predicate
         if self.predicate and not request.matches_predicate(self.predicate):
             return False
 
@@ -405,7 +406,7 @@ class ResponseTemplate:
         body_template: Any = None,
         headers: dict[str, str] | None = None,
         delay_ms: int = 0,
-    ):
+    ) -> None:
         """
         Initialize response template.
 
@@ -533,7 +534,7 @@ class MockEndpoint:
         if not self.matcher.matches(request):
             return None
 
-        # Extract path params
+            # Extract path params
         request.path_params = self.matcher.extract_path_params(request)
 
         self.call_count += 1
@@ -554,11 +555,11 @@ class MockEndpoint:
                     body={"error": "Internal mock server error"},
                 )
 
-        # Template-based response
+                # Template-based response
         if self.template:
             return self.template.generate(request)
 
-        # Static responses
+            # Static responses
         if not self.responses:
             return MockResponse(status_code=200, body={})
 
@@ -644,7 +645,7 @@ class MockScenario:
         name: str,
         endpoints: list[dict[str, Any]] | None = None,
         initial_state: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """
         Initialize scenario.
 
@@ -760,15 +761,15 @@ class ErrorInjector:
             if rule["method"] and request.method != rule["method"]:
                 continue
 
-            # Check path pattern
+                # Check path pattern
             if rule["path_pattern"] and not rule["path_pattern"].match(request.path):
                 continue
 
-            # Check predicate
+                # Check predicate
             if rule["predicate"] and not request.matches_predicate(rule["predicate"]):
                 continue
 
-            # Check probability
+                # Check probability
             if random.random() <= rule["probability"]:
                 error: Exception = rule["error"]
                 return error
@@ -842,11 +843,11 @@ class ResponseDelaySimulator:
             if rule["method"] and request.method != rule["method"]:
                 continue
 
-            # Check path pattern
+                # Check path pattern
             if rule["path_pattern"] and not rule["path_pattern"].match(request.path):
                 continue
 
-            # Check predicate
+                # Check predicate
             if rule["predicate"] and not request.matches_predicate(rule["predicate"]):
                 continue
 
@@ -877,7 +878,7 @@ class MockVerifier:
         ```
     """
 
-    def __init__(self, server: "MockServer"):
+    def __init__(self, server: "MockServer") -> None:
         """
         Initialize verifier.
 
@@ -955,7 +956,7 @@ class MockVerifier:
                 if not headers_match:
                     continue
 
-            # Check query params
+                    # Check query params
             if query_params:
                 params_match = all(
                     request.query_params.get(k) == v for k, v in query_params.items()
@@ -963,7 +964,7 @@ class MockVerifier:
                 if not params_match:
                     continue
 
-            # Check body
+                    # Check body
             if body_contains:
                 body_json = request.get_json()
                 if not body_json:
@@ -974,10 +975,10 @@ class MockVerifier:
                 if not body_match:
                     continue
 
-            # Found matching request
+                    # Found matching request
             return
 
-        # No matching request
+            # No matching request
         raise AssertionError(f"No matching request found for {method} {path}")
 
     def assert_not_called(self, path: str, method: str | None = None) -> None:
@@ -1162,12 +1163,12 @@ class MockServer:
         if not self.enabled:
             return self.default_response
 
-        # Check error injection
+            # Check error injection
         error = self.error_injector.should_inject_error(request)
         if error:
             raise error
 
-        # Find matching endpoint
+            # Find matching endpoint
         for endpoint in self.endpoints:
             response = endpoint.get_response(request)
             if response:
@@ -1179,13 +1180,13 @@ class MockServer:
                 if total_delay > 0:
                     await asyncio.sleep(total_delay / 1000.0)
 
-                # Raise error if configured
+                    # Raise error if configured
                 if response.error:
                     raise response.error
 
                 return response
 
-        # No match found
+                # No match found
         return self.default_response
 
     def get_requests(

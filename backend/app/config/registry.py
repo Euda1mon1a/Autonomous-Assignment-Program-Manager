@@ -28,7 +28,7 @@ class ConfigChangeEvent:
         new_config: Settings,
         changed_fields: list[str],
         source: str = "unknown",
-    ):
+    ) -> None:
         """
         Initialize config change event.
 
@@ -69,7 +69,7 @@ class ConfigRegistry:
         validator: ConfigValidator | None = None,
         watcher: ConfigWatcher | None = None,
         enable_auto_reload: bool = True,
-    ):
+    ) -> None:
         """
         Initialize the configuration registry.
 
@@ -128,7 +128,7 @@ class ConfigRegistry:
             if env_file.exists():
                 self.watcher.add_file(env_file)
 
-            # Start file watcher
+                # Start file watcher
             if self.enable_auto_reload:
                 await self.watcher.start_async()
 
@@ -181,7 +181,7 @@ class ConfigRegistry:
                         old_config,
                     )
 
-                # Update current config
+                    # Update current config
                 self._update_config(new_config, old_config, source="file")
 
                 logger.info("Configuration reloaded successfully")
@@ -245,7 +245,7 @@ class ConfigRegistry:
                     merged_dict.update(processed_updates)
                     new_config = Settings(**merged_dict)
 
-                # Update current config
+                    # Update current config
                 self._update_config(new_config, old_config, source=source)
 
                 logger.info("Configuration updated successfully")
@@ -279,7 +279,7 @@ class ConfigRegistry:
             if len(self._config_history) > self._max_history:
                 self._config_history.pop(0)
 
-        # Update current config
+                # Update current config
         self._current_config = new_config
 
         # Detect changed fields
@@ -401,7 +401,7 @@ class ConfigRegistry:
                 )
                 return None
 
-            # Get previous config
+                # Get previous config
             previous_config = self._config_history[-(steps)]
 
             # Update current config
@@ -473,10 +473,11 @@ class ConfigRegistry:
         await self.initialize()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Async context manager exit."""
         await self.shutdown()
 
+        # Global registry instance
 
-# Global registry instance
+
 config_registry = ConfigRegistry()

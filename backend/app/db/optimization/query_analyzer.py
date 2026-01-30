@@ -77,7 +77,7 @@ class QueryAnalyzer:
         slow_query_threshold_ms: float = 100.0,
         n_plus_one_threshold: int = 10,
         enable_explain: bool = False,
-    ):
+    ) -> None:
         """
         Initialize query analyzer.
 
@@ -105,20 +105,20 @@ class QueryAnalyzer:
         @event.listens_for(engine, "before_cursor_execute")
         def before_cursor_execute(
             conn, cursor, statement, parameters, context, executemany
-        ):
+        ) -> None:
             """Track query start time."""
             context._query_start_time = time.perf_counter()
 
         @event.listens_for(engine, "after_cursor_execute")
         def after_cursor_execute(
             conn, cursor, statement, parameters, context, executemany
-        ):
+        ) -> None:
             """Track query completion and analyze."""
             query_context = _query_context.get()
             if not query_context:
                 return
 
-            # Calculate duration
+                # Calculate duration
             duration_ms = (time.perf_counter() - context._query_start_time) * 1000
 
             # Get stack trace (limited depth to avoid noise)
@@ -148,7 +148,7 @@ class QueryAnalyzer:
                 except Exception as e:
                     logger.debug(f"Failed to get EXPLAIN plan: {e}")
 
-            # Add to context
+                    # Add to context
             query_context.queries.append(query_info)
             query_context.total_duration_ms += duration_ms
 
@@ -192,7 +192,7 @@ class QueryAnalyzer:
             normalized = self._normalize_sql(query.sql)
             query_groups[normalized].append(query)
 
-        # Check for repeated queries (potential N+1)
+            # Check for repeated queries (potential N+1)
         for normalized_sql, queries in query_groups.items():
             if len(queries) >= self.n_plus_one_threshold:
                 # Check if queries are similar (same structure, different params)
@@ -226,7 +226,7 @@ class QueryAnalyzer:
         if not context:
             return {}
 
-        # Analyze N+1 patterns
+            # Analyze N+1 patterns
         n_plus_one_warnings = self.analyze_n_plus_one(context)
 
         # Calculate stats
@@ -239,7 +239,7 @@ class QueryAnalyzer:
             query_type = self._get_query_type(query.sql)
             query_types[query_type] += 1
 
-        # Find slowest queries
+            # Find slowest queries
         slowest_queries = sorted(
             context.queries, key=lambda q: q.duration_ms, reverse=True
         )[:5]
@@ -329,7 +329,7 @@ class QueryAnalyzer:
         if len(queries) < 2:
             return False
 
-        # Check if all queries have the same normalized SQL
+            # Check if all queries have the same normalized SQL
         first_normalized = self._normalize_sql(queries[0].sql)
         return all(self._normalize_sql(q.sql) == first_normalized for q in queries[1:])
 
@@ -354,19 +354,19 @@ class QueryAnalyzer:
                 f"Found {len(n_plus_one_warnings)} N+1 query patterns - use eager loading (joinedload/selectinload)"
             )
 
-        # Slow query recommendations
+            # Slow query recommendations
         if len(context.slow_queries) > 5:
             recommendations.append(
                 f"{len(context.slow_queries)} slow queries detected - consider adding indexes or optimizing queries"
             )
 
-        # High query count
+            # High query count
         if len(context.queries) > 100:
             recommendations.append(
                 f"High query count ({len(context.queries)}) - consider batching or reducing database calls"
             )
 
-        # Total duration
+            # Total duration
         if context.total_duration_ms > 1000:
             recommendations.append(
                 f"High total query time ({context.total_duration_ms:.0f}ms) - review query efficiency"
@@ -378,7 +378,7 @@ class QueryAnalyzer:
 class RequestTracker:
     """Context manager for tracking queries during a request."""
 
-    def __init__(self, analyzer: QueryAnalyzer, request_id: str):
+    def __init__(self, analyzer: QueryAnalyzer, request_id: str) -> None:
         """
         Initialize request tracker.
 
@@ -396,7 +396,7 @@ class RequestTracker:
         self.analyzer._request_contexts[self.request_id] = self.context
         return self.context
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Stop tracking and analyze queries."""
         _query_context.set(None)
 

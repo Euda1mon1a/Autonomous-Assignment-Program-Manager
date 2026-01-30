@@ -136,7 +136,7 @@ class ImportStagingService:
         modifications. Safe for use in multi-threaded environments.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize the ImportStagingService with a database session.
 
@@ -204,7 +204,7 @@ class ImportStagingService:
                     error_code="DUPLICATE_FILE",
                 )
 
-            # Parse Excel file
+                # Parse Excel file
             parsed_rows, parse_warnings, parse_errors = self._parse_excel(
                 file_bytes, sheet_name
             )
@@ -223,7 +223,7 @@ class ImportStagingService:
                     error_code="NO_DATA",
                 )
 
-            # Load caches for fuzzy matching
+                # Load caches for fuzzy matching
             await self._load_person_cache()
             await self._load_rotation_cache()
 
@@ -266,7 +266,7 @@ class ImportStagingService:
                     error_count += 1
                     warning_count += len(row_warnings)
 
-            # Update batch counts
+                    # Update batch counts
             batch.error_count = error_count
             batch.warning_count = warning_count
 
@@ -317,7 +317,7 @@ class ImportStagingService:
         if not batch:
             return None
 
-        # Get staged assignments with pagination
+            # Get staged assignments with pagination
         offset = (page - 1) * page_size
         staged_query = (
             self.db.query(ImportStagedAssignment)
@@ -381,7 +381,7 @@ class ImportStagingService:
             else:
                 new_count += 1
 
-        # Check ACGME compliance preview
+                # Check ACGME compliance preview
         acgme_violations = []
         if batch.target_start_date and batch.target_end_date:
             try:
@@ -458,7 +458,7 @@ class ImportStagingService:
                         error_code="INVALID_STATUS",
                     )
 
-                # Use override or batch's resolution mode
+                    # Use override or batch's resolution mode
                 resolution = conflict_resolution or batch.conflict_resolution
 
                 # Get all staged assignments that are pending or approved
@@ -522,7 +522,7 @@ class ImportStagingService:
                             }
                         )
 
-                # Update batch status
+                        # Update batch status
                 now = datetime.utcnow()
                 batch.status = ImportBatchStatus.APPLIED
                 batch.applied_at = now
@@ -621,7 +621,7 @@ class ImportStagingService:
                         error_code="INVALID_STATUS",
                     )
 
-                # Check rollback window
+                    # Check rollback window
                 if not batch.rollback_available:
                     return RollbackResult(
                         success=False,
@@ -643,7 +643,7 @@ class ImportStagingService:
                         error_code="ROLLBACK_WINDOW_EXPIRED",
                     )
 
-                # Get all applied staged assignments
+                    # Get all applied staged assignments
                 staged_assignments = (
                     self.db.query(ImportStagedAssignment)
                     .filter(
@@ -671,7 +671,7 @@ class ImportStagingService:
                                 self.db.delete(assignment)
                                 rolled_back_count += 1
 
-                        # Reset staged status
+                                # Reset staged status
                         staged.status = StagedAssignmentStatus.PENDING
                         staged.created_assignment_id = None
 
@@ -682,7 +682,7 @@ class ImportStagingService:
                         failed_count += 1
                         errors.append(str(e))
 
-                # Update batch status
+                        # Update batch status
                 batch.status = ImportBatchStatus.ROLLED_BACK
                 batch.rolled_back_at = datetime.utcnow()
                 batch.rolled_back_by_id = rolled_back_by_id
@@ -742,7 +742,7 @@ class ImportStagingService:
             if batch.status == ImportBatchStatus.REJECTED:
                 return True, "Batch already rejected"
 
-            # Delete staged assignments
+                # Delete staged assignments
             self.db.query(ImportStagedAssignment).filter(
                 ImportStagedAssignment.batch_id == batch_id
             ).delete(synchronize_session=False)
@@ -804,9 +804,9 @@ class ImportStagingService:
 
         return batches, total
 
-    # -------------------------------------------------------------------------
-    # Private helper methods
-    # -------------------------------------------------------------------------
+        # -------------------------------------------------------------------------
+        # Private helper methods
+        # -------------------------------------------------------------------------
 
     def _parse_excel(
         self,
@@ -839,7 +839,7 @@ class ImportStagingService:
                 if not ws:
                     ws = wb[wb.sheetnames[0]]
 
-            # Extract headers from first row
+                    # Extract headers from first row
             headers = []
             for cell in ws[1]:
                 if isinstance(cell, MergedCell):
@@ -851,7 +851,7 @@ class ImportStagingService:
                     else:
                         headers.append(f"Column_{len(headers) + 1}")
 
-            # Required columns check
+                        # Required columns check
             required = {"person_name", "assignment_date"}
             header_lower = {h.lower().replace(" ", "_") for h in headers}
             missing = required - header_lower
@@ -859,7 +859,7 @@ class ImportStagingService:
                 errors.append(f"Missing required columns: {missing}")
                 return rows, warnings, errors
 
-            # Parse data rows
+                # Parse data rows
             for row_idx, row in enumerate(ws.iter_rows(min_row=2), start=2):
                 row_data = {}
                 is_empty = True
@@ -927,7 +927,7 @@ class ImportStagingService:
         if normalized in self._person_cache:
             return self._person_cache[normalized]
 
-        # Fuzzy match
+            # Fuzzy match
         best_match = None
         best_score = 0
 
@@ -952,7 +952,7 @@ class ImportStagingService:
         if normalized in self._rotation_cache:
             return self._rotation_cache[normalized]
 
-        # Fuzzy match
+            # Fuzzy match
         best_match = None
         best_score = 0
 
@@ -1016,14 +1016,14 @@ class ImportStagingService:
             errors.append("Missing assignment date")
             return None, errors, warnings
 
-        # Fuzzy match person
+            # Fuzzy match person
         matched_person_id, person_confidence = self._fuzzy_match_person(person_name)
         if person_confidence < FUZZY_MATCH_THRESHOLD:
             warnings.append(
                 f"Low confidence person match: {person_name} ({person_confidence}%)"
             )
 
-        # Fuzzy match rotation
+            # Fuzzy match rotation
         matched_rotation_id = None
         rotation_confidence = 0
         if rotation_name:
@@ -1035,7 +1035,7 @@ class ImportStagingService:
                     f"Low confidence rotation match: {rotation_name} ({rotation_confidence}%)"
                 )
 
-        # Check for conflicts with existing assignments
+                # Check for conflicts with existing assignments
         conflict_type = None
         existing_assignment_id = None
 
@@ -1064,7 +1064,7 @@ class ImportStagingService:
                         conflict_type = "overwrite"
                     break
 
-        # Create staged assignment
+                    # Create staged assignment
         staged = ImportStagedAssignment(
             id=uuid4(),
             batch_id=batch_id,
@@ -1104,7 +1104,7 @@ class ImportStagingService:
         if not staged.matched_person_id:
             return None
 
-        # Find or create block for this date
+            # Find or create block for this date
         block = (
             self.db.query(Block).filter(Block.date == staged.assignment_date).first()
         )
@@ -1120,7 +1120,7 @@ class ImportStagingService:
             self.db.add(block)
             self.db.flush()
 
-        # Check for existing assignment
+            # Check for existing assignment
         existing = (
             self.db.query(Assignment)
             .filter(
@@ -1147,7 +1147,7 @@ class ImportStagingService:
                 self.db.delete(existing)
                 self.db.flush()
 
-        # Create new assignment
+                # Create new assignment
         assignment = Assignment(
             id=uuid4(),
             block_id=block.id,

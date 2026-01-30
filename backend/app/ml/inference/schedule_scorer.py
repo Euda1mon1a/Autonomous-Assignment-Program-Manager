@@ -37,7 +37,7 @@ class ScheduleScorer:
         workload_model_path: Path | None = None,
         conflict_model_path: Path | None = None,
         db: AsyncSession | None = None,
-    ):
+    ) -> None:
         """
         Initialize schedule scorer.
 
@@ -130,7 +130,7 @@ class ScheduleScorer:
                 "low_preference_count": 0,
             }
 
-        # Score each assignment
+            # Score each assignment
         scores = []
         for assignment in assignments:
             score = self.preference_predictor.predict(
@@ -141,7 +141,7 @@ class ScheduleScorer:
             )
             scores.append(score)
 
-        # Calculate statistics
+            # Calculate statistics
         avg_score = float(np.mean(scores))
         min_score = float(np.min(scores))
         max_score = float(np.max(scores))
@@ -184,7 +184,7 @@ class ScheduleScorer:
                 "overloaded_count": 0,
             }
 
-        # Calculate fairness metrics
+            # Calculate fairness metrics
         fairness = self.workload_optimizer.calculate_fairness_metric(people)
 
         # Identify overloaded people (above 85% utilization)
@@ -226,7 +226,7 @@ class ScheduleScorer:
                 "average_risk": 0.0,
             }
 
-        # Identify high-risk assignments
+            # Identify high-risk assignments
         high_risk = self.conflict_predictor.identify_high_risk_assignments(
             assignments, threshold=0.7
         )
@@ -252,7 +252,7 @@ class ScheduleScorer:
             penalty = min(0.3, len(high_risk) * 0.05)
             safety_score = max(0.0, safety_score - penalty)
 
-        # Risk distribution
+            # Risk distribution
         risk_distribution = {
             "critical": sum(1 for r in risks if r >= 0.8),
             "high": sum(1 for r in risks if 0.6 <= r < 0.8),
@@ -304,7 +304,7 @@ class ScheduleScorer:
                     }
                 )
 
-        # 2. High-risk conflict assignments
+                # 2. High-risk conflict assignments
         assignments = schedule.get("assignments", [])
         if assignments:
             high_risk = self.conflict_predictor.identify_high_risk_assignments(
@@ -326,7 +326,7 @@ class ScheduleScorer:
                     }
                 )
 
-        # 3. Low-preference assignments
+                # 3. Low-preference assignments
         for assignment in assignments:
             score = self.preference_predictor.predict(
                 person_data=assignment.get("person", {}),
@@ -349,7 +349,7 @@ class ScheduleScorer:
                     }
                 )
 
-        # Sort by priority (highest first)
+                # Sort by priority (highest first)
         suggestions.sort(key=lambda x: x["priority"], reverse=True)
 
         return suggestions[:max_suggestions]
@@ -386,7 +386,7 @@ class ScheduleScorer:
             winner = "tie"
             difference = 0.0
 
-        # Component comparison
+            # Component comparison
         components_comparison = {}
         for component in ["preference", "workload", "conflict"]:
             a_score = score_a["components"][component]

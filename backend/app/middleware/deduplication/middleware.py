@@ -54,7 +54,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
         app,
         redis_client: redis.Redis | None = None,
         enabled: bool = True,
-    ):
+    ) -> None:
         """
         Initialize deduplication middleware.
 
@@ -84,7 +84,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
         else:
             self.redis = redis_client
 
-        # Initialize storage and service
+            # Initialize storage and service
         self.storage = DeduplicationStorage(redis_client=self.redis)
         self.service = DeduplicationService(storage=self.storage)
 
@@ -103,8 +103,8 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
         if not self.enabled:
             return await call_next(request)
 
-        # Read body once and store in request state
-        # (so it can be consumed by both middleware and endpoint)
+            # Read body once and store in request state
+            # (so it can be consumed by both middleware and endpoint)
         await self._store_body(request)
 
         # Extract idempotency key
@@ -114,7 +114,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
         if not idempotency_key:
             return await call_next(request)
 
-        # Check for duplicate request
+            # Check for duplicate request
         is_duplicate, existing_record = await self.service.check_duplicate(
             idempotency_key
         )
@@ -127,7 +127,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
                 existing_record,
             )
 
-        # Start processing new request
+            # Start processing new request
         started, lock_id = await self.service.start_processing(idempotency_key)
 
         if not started:
@@ -155,7 +155,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
                     },
                 )
 
-        # Process request
+                # Process request
         try:
             # Add idempotency info to request state
             request.state.idempotency_key = idempotency_key
@@ -179,7 +179,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
                     f"Request failed with status {response.status_code}",
                 )
 
-            # Add deduplication headers
+                # Add deduplication headers
             response.headers["X-Idempotency-Key"] = idempotency_key
             response.headers["X-Idempotent-Replayed"] = "false"
 
@@ -248,7 +248,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
                     },
                 )
 
-        # If request failed, return error
+                # If request failed, return error
         if record.is_failed():
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -262,7 +262,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
                 },
             )
 
-        # Return cached response
+            # Return cached response
         if record.response_body is not None:
             # Build response headers
             headers = dict(record.response_headers or {})
@@ -275,7 +275,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
                 headers=headers,
             )
 
-        # No cached response (shouldn't happen)
+            # No cached response (shouldn't happen)
         logger.warning(f"No cached response for completed request: {idempotency_key}")
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -317,7 +317,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
 
                 response.body_iterator = body_iterator()
 
-            # Filter headers to cache (exclude hop-by-hop headers)
+                # Filter headers to cache (exclude hop-by-hop headers)
             headers_to_cache = {}
             skip_headers = {
                 "connection",
@@ -334,7 +334,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
                 if key.lower() not in skip_headers:
                     headers_to_cache[key] = value
 
-            # Complete processing with cached response
+                    # Complete processing with cached response
             await self.service.complete_processing(
                 idempotency_key=idempotency_key,
                 lock_id=lock_id,
@@ -352,7 +352,7 @@ class DeduplicationMiddleware(BaseHTTPMiddleware):
                 f"Failed to cache response: {str(e)}",
             )
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Clean up expired request records."""
         if self.enabled:
             cleaned = await self.service.cleanup_expired()

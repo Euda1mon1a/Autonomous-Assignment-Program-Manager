@@ -16,7 +16,7 @@ T = TypeVar("T")
 class ParallelExecutor:
     """Execute multiple async operations in parallel."""
 
-    def __init__(self, max_concurrent: int = 10):
+    def __init__(self, max_concurrent: int = 10) -> None:
         """Initialize parallel executor.
 
         Args:
@@ -169,7 +169,7 @@ class BatchedParallelExecutor:
         self,
         batch_size: int = 100,
         max_concurrent: int = 10,
-    ):
+    ) -> None:
         """Initialize batched parallel executor.
 
         Args:

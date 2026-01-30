@@ -35,7 +35,7 @@ class AnalyticsReportTemplate:
         >>> pdf_bytes = template.generate(request)
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize analytics report template.
 
@@ -100,7 +100,7 @@ class AnalyticsReportTemplate:
             elements.extend(self._create_fairness_section(fairness_metrics))
             elements.append(Spacer(1, 0.2 * inch))
 
-        # Rotation distribution
+            # Rotation distribution
         elements.append(PageBreak())
         elements.append(
             Paragraph("Rotation Distribution", self.generator.styles["SectionHeader"])
@@ -306,7 +306,7 @@ class AnalyticsReportTemplate:
             )
             return elements
 
-        # Sort by assignment count (descending)
+            # Sort by assignment count (descending)
         sorted_workload = sorted(
             workload_data.items(),
             key=lambda x: x[1]["assignments"],
@@ -390,7 +390,7 @@ class AnalyticsReportTemplate:
             )
             return elements
 
-        # Sort by count (descending)
+            # Sort by count (descending)
         sorted_rotations = sorted(
             rotation_data.items(), key=lambda x: x[1], reverse=True
         )

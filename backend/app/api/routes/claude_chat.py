@@ -81,12 +81,13 @@ class ChatSession(BaseModel):
     created_at: datetime
     last_activity: datetime
 
+    # =============================================================================
+    # Session Management (In-memory for now, could be Redis)
+    # =============================================================================
 
-# =============================================================================
-# Session Management (In-memory for now, could be Redis)
-# =============================================================================
+    # Active sessions: session_id -> ChatSession
 
-# Active sessions: session_id -> ChatSession
+
 _sessions: dict[str, ChatSession] = {}
 
 # Active WebSocket connections: session_id -> WebSocket
@@ -106,7 +107,7 @@ def get_or_create_session(user_id: str, session_id: str | None = None) -> ChatSe
         session.last_activity = datetime.utcnow()
         return session
 
-    # Create new session
+        # Create new session
     new_id = session_id or str(uuid.uuid4())
     session = ChatSession(
         session_id=new_id,
@@ -118,10 +119,10 @@ def get_or_create_session(user_id: str, session_id: str | None = None) -> ChatSe
     _sessions[new_id] = session
     return session
 
+    # =============================================================================
+    # MCP Tool Definitions (matches your MCP server tools)
+    # =============================================================================
 
-# =============================================================================
-# MCP Tool Definitions (matches your MCP server tools)
-# =============================================================================
 
 SCHEDULER_TOOLS = [
     {
@@ -339,7 +340,7 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
             else:
                 end_date = start_date + timedelta(days=30)
 
-            # Get faculty and assignments for the period
+                # Get faculty and assignments for the period
             faculty = (
                 (db.execute(select(Person).where(Person.type == "faculty")))
                 .scalars()
@@ -410,7 +411,7 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
             else:
                 end_date = start_date + timedelta(days=30)
 
-            # ConflictAnalyzer uses async session
+                # ConflictAnalyzer uses async session
             analyzer = ConflictAnalyzer(db)
             conflicts = await analyzer.analyze_schedule(
                 start_date=start_date,
@@ -469,10 +470,9 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
         # Return sanitized error (no stack traces or sensitive info)
         return {"error": f"Tool execution failed: {type(e).__name__}"}
 
-
-# =============================================================================
-# Claude API Integration
-# =============================================================================
+        # =============================================================================
+        # Claude API Integration
+        # =============================================================================
 
 
 async def stream_claude_response(
@@ -481,7 +481,7 @@ async def stream_claude_response(
     user_message: str,
     db,
     interrupt_event: asyncio.Event | None = None,
-):
+) -> None:
     """
     Stream Claude's response to the WebSocket client.
 
@@ -522,7 +522,7 @@ async def stream_claude_response(
         for msg in session.messages:
             messages.append({"role": msg.role, "content": msg.content})
 
-        # Add current user message
+            # Add current user message
         messages.append({"role": "user", "content": user_message})
 
         # System prompt with scheduler context
@@ -583,7 +583,7 @@ Be concise but thorough. If there are issues, suggest solutions."""
                     elif event.type == "message_stop":
                         break
 
-            # Only get final message if not interrupted
+                        # Only get final message if not interrupted
             if not interrupted:
                 final_message = await stream.get_final_message()
 
@@ -621,7 +621,7 @@ Be concise but thorough. If there are issues, suggest solutions."""
                             {"name": tool_name, "input": tool_input, "result": result}
                         )
 
-        # Store in session history (even partial responses if interrupted)
+                        # Store in session history (even partial responses if interrupted)
         session.messages.append(
             ChatMessage(
                 role="user",
@@ -640,7 +640,7 @@ Be concise but thorough. If there are issues, suggest solutions."""
                 )
             )
 
-        # Send appropriate completion message
+            # Send appropriate completion message
         if interrupted:
             await websocket.send_json(
                 {
@@ -676,10 +676,9 @@ Be concise but thorough. If there are issues, suggest solutions."""
         logger.exception("Claude streaming error")
         await websocket.send_json({"type": "error", "message": str(e)})
 
-
-# =============================================================================
-# WebSocket Endpoint
-# =============================================================================
+        # =============================================================================
+        # WebSocket Endpoint
+        # =============================================================================
 
 
 @router.websocket("/ws")
@@ -687,7 +686,7 @@ async def claude_chat_websocket(
     websocket: WebSocket,
     token: str = Query(..., description="JWT token for authentication"),
     session_id: str | None = Query(None, description="Existing session ID to resume"),
-):
+) -> None:
     """
     WebSocket endpoint for Claude chat.
 
@@ -714,7 +713,7 @@ async def claude_chat_websocket(
             await websocket.close(code=4001, reason="Invalid token")
             return
 
-        # Check admin role
+            # Check admin role
         if user.role not in ["ADMIN", "COORDINATOR"]:
             await websocket.close(code=4003, reason="Admin access required")
             return
@@ -724,7 +723,7 @@ async def claude_chat_websocket(
         await websocket.close(code=4001, reason="Authentication failed")
         return
 
-    # Accept connection
+        # Accept connection
     await websocket.accept()
 
     # Get or create session
@@ -787,7 +786,7 @@ async def claude_chat_websocket(
                             await task
                         except asyncio.CancelledError:
                             pass
-                    # Clean up
+                            # Clean up
                     del _active_streams[session.session_id]
                 else:
                     # No active stream, just acknowledge
@@ -813,23 +812,22 @@ async def claude_chat_websocket(
         if session.session_id in _interrupt_flags:
             del _interrupt_flags[session.session_id]
 
-        # Cancel any active stream
+            # Cancel any active stream
         if session.session_id in _active_streams:
             task = _active_streams[session.session_id]
             if not task.done():
                 task.cancel()
             del _active_streams[session.session_id]
 
-        # Cleanup connection
+            # Cleanup connection
         if session.session_id in _connections:
             del _connections[session.session_id]
         if db:
             db.close()
 
-
-# =============================================================================
-# REST Endpoints (for non-streaming use cases)
-# =============================================================================
+            # =============================================================================
+            # REST Endpoints (for non-streaming use cases)
+            # =============================================================================
 
 
 @router.get("/sessions")
@@ -873,7 +871,7 @@ async def get_session_history(
 async def delete_session(
     session_id: str,
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete a chat session."""
     if session_id not in _sessions:
         raise HTTPException(status_code=404, detail="Session not found")

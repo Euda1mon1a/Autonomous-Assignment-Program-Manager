@@ -173,7 +173,7 @@ async def get_experiment_stats(
         for exp in experiments:
             status_counts[exp.status] = status_counts.get(exp.status, 0) + 1
 
-        # Count total users and metrics across all experiments
+            # Count total users and metrics across all experiments
         total_users = 0
         total_metrics = 0
         for exp in experiments:
@@ -265,7 +265,7 @@ async def delete_experiment(
     key: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
-):
+) -> None:
     """
     Delete (cancel) an experiment.
 
@@ -285,8 +285,8 @@ async def delete_experiment(
             # Cancel running experiment
             await service.pause_experiment(key, paused_by=str(current_user.id))
 
-        # Note: The service doesn't have a delete method, so we'll just mark as cancelled
-        # In production, you might want to add a soft-delete mechanism
+            # Note: The service doesn't have a delete method, so we'll just mark as cancelled
+            # In production, you might want to add a soft-delete mechanism
     finally:
         await service.close()
 

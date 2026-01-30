@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class BatchProcessor:
     """Async processor for batch operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.assignment_repo = AssignmentRepository(db)
         self.block_repo = BlockRepository(db)
@@ -81,7 +81,7 @@ class BatchProcessor:
 
                 assignment_dicts.append(assignment_dict)
 
-            # Process assignments with batched operations
+                # Process assignments with batched operations
             for idx, assignment_dict in enumerate(assignment_dicts):
                 try:
                     assignment = self.assignment_repo.create(assignment_dict)
@@ -119,7 +119,7 @@ class BatchProcessor:
                             )
                         return results
 
-            # Performance: Single commit for all successful operations
+                        # Performance: Single commit for all successful operations
             if all(r.success for r in results) or not rollback_on_error:
                 self.db.commit()
                 # Performance: Batch refresh using db.expire_all() instead of individual refreshes
@@ -186,7 +186,7 @@ class BatchProcessor:
                             return results
                         continue
 
-                    # Check optimistic locking
+                        # Check optimistic locking
                     if existing.updated_at != assignment_data.updated_at:
                         results.append(
                             BatchOperationResult(
@@ -211,7 +211,7 @@ class BatchProcessor:
                             return results
                         continue
 
-                    # Build update dict
+                        # Build update dict
                     update_dict = {}
                     if assignment_data.rotation_template_id is not None:
                         update_dict["rotation_template_id"] = (
@@ -226,7 +226,7 @@ class BatchProcessor:
                     if assignment_data.notes is not None:
                         update_dict["notes"] = assignment_data.notes
 
-                    # Update assignment
+                        # Update assignment
                     assignment = self.assignment_repo.update(existing, update_dict)
                     updated_assignments.append(assignment)
 
@@ -262,7 +262,7 @@ class BatchProcessor:
                             )
                         return results
 
-            # Commit if all succeeded or if not rolling back on error
+                        # Commit if all succeeded or if not rolling back on error
             if all(r.success for r in results) or not rollback_on_error:
                 self.db.commit()
                 # Refresh all updated assignments
@@ -325,7 +325,7 @@ class BatchProcessor:
                             return results
                         continue
 
-                    # Delete assignment
+                        # Delete assignment
                     if assignment_data.soft_delete:
                         # Soft delete: mark as deleted without removing
                         # For now, we'll add a note indicating soft delete
@@ -367,7 +367,7 @@ class BatchProcessor:
                             )
                         return results
 
-            # Commit if all succeeded or if not rolling back on error
+                        # Commit if all succeeded or if not rolling back on error
             if all(r.success for r in results) or not rollback_on_error:
                 self.db.commit()
             else:

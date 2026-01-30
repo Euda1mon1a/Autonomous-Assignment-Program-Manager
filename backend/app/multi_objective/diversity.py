@@ -86,7 +86,7 @@ class CrowdingDistance:
     distances to neighbors in each objective dimension.
     """
 
-    def __init__(self, objectives: list[ObjectiveConfig]):
+    def __init__(self, objectives: list[ObjectiveConfig]) -> None:
         """
         Initialize crowding distance calculator.
 
@@ -111,11 +111,11 @@ class CrowdingDistance:
                 sol.crowding_distance = float("inf")
             return
 
-        # Reset distances
+            # Reset distances
         for sol in solutions:
             sol.crowding_distance = 0.0
 
-        # Calculate for each objective
+            # Calculate for each objective
         for obj in self.active_objectives:
             # Sort by this objective
             sorted_solutions = sorted(
@@ -135,7 +135,7 @@ class CrowdingDistance:
             if obj_range == 0:
                 continue
 
-            # Calculate crowding for intermediate solutions
+                # Calculate crowding for intermediate solutions
             for i in range(1, n - 1):
                 prev_val = sorted_solutions[i - 1].objective_values.get(obj.name, 0.0)
                 next_val = sorted_solutions[i + 1].objective_values.get(obj.name, 0.0)
@@ -207,7 +207,7 @@ class EpsilonDominance:
         self,
         objectives: list[ObjectiveConfig],
         epsilon: float | dict[str, float] | None = None,
-    ):
+    ) -> None:
         """
         Initialize epsilon-dominance.
 
@@ -292,7 +292,7 @@ class EpsilonDominance:
             if self.epsilon_dominates(sol, new_solution):
                 return archive  # Reject new solution
 
-        # Remove solutions epsilon-dominated by new solution
+                # Remove solutions epsilon-dominated by new solution
         updated = [
             sol for sol in archive if not self.epsilon_dominates(new_solution, sol)
         ]
@@ -331,7 +331,7 @@ class EpsilonDominance:
                 val_a = -val_a
                 val_b = -val_b
 
-            # Distance from grid corner
+                # Distance from grid corner
             cell_a = int(val_a / eps)
             cell_b = int(val_b / eps)
 
@@ -358,7 +358,7 @@ class EpsilonDominance:
         if len(archive) <= max_size:
             return archive
 
-        # Increase epsilon until archive fits
+            # Increase epsilon until archive fits
         current_archive = list(archive)
         scale = 1.0
 
@@ -403,7 +403,7 @@ class NichingOperator:
         objectives: list[ObjectiveConfig],
         niche_radius: float = 0.1,
         alpha: float = 1.0,
-    ):
+    ) -> None:
         """
         Initialize niching operator.
 
@@ -513,7 +513,7 @@ class ReferencePointAssociation:
         self,
         objectives: list[ObjectiveConfig],
         n_reference_points: int = 100,
-    ):
+    ) -> None:
         """
         Initialize reference point association.
 
@@ -640,14 +640,14 @@ class ReferencePointAssociation:
             if not candidate_refs:
                 break
 
-            # Randomly select from candidates
+                # Randomly select from candidates
             ref_idx = np.random.choice(candidate_refs)
             candidates = associations[ref_idx]
 
             if not candidates:
                 continue
 
-            # Select closest to reference point
+                # Select closest to reference point
             best = min(
                 candidates,
                 key=lambda s: self._perpendicular_distance(
@@ -676,7 +676,7 @@ class DiversityMechanism:
         primary_metric: DiversityMetric = DiversityMetric.CROWDING_DISTANCE,
         epsilon: float = 0.01,
         niche_radius: float = 0.1,
-    ):
+    ) -> None:
         """
         Initialize diversity mechanism.
 
@@ -785,7 +785,7 @@ class DiversityMechanism:
         for sol in new_solutions:
             combined = self.epsilon_dom.update_archive(combined, sol)
 
-        # Prune to max size if needed
+            # Prune to max size if needed
         if len(combined) > max_size:
             self.calculate_diversity(combined)
             combined = sorted(
@@ -824,7 +824,7 @@ class DiversityMechanism:
         if not distances:
             distances = [0.0]
 
-        # Calculate uniformity (inverse of distance variance)
+            # Calculate uniformity (inverse of distance variance)
         mean_dist = float(np.mean(distances))
         std_dist = float(np.std(distances))
         uniformity = 1.0 / (1.0 + std_dist / max(mean_dist, 1e-10))
@@ -861,7 +861,7 @@ class DiversityMechanism:
             if visited[i]:
                 continue
 
-            # BFS from this solution
+                # BFS from this solution
             clusters += 1
             queue = [i]
             while queue:

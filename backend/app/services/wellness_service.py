@@ -172,10 +172,9 @@ class SurveySubmissionResult:
     achievement_result: AchievementResult
     message: str
 
-
-# ============================================================================
-# Wellness Service
-# ============================================================================
+    # ============================================================================
+    # Wellness Service
+    # ============================================================================
 
 
 class WellnessService:
@@ -191,12 +190,12 @@ class WellnessService:
         - Leaderboard management
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    # ------------------------------------------------------------------------
-    # Account Management
-    # ------------------------------------------------------------------------
+        # ------------------------------------------------------------------------
+        # Account Management
+        # ------------------------------------------------------------------------
 
     async def get_or_create_account(self, person_id: UUID) -> WellnessAccount:
         """Get or create a wellness account for a person."""
@@ -251,9 +250,9 @@ class WellnessService:
         await self.db.flush()
         return account
 
-    # ------------------------------------------------------------------------
-    # Survey Management
-    # ------------------------------------------------------------------------
+        # ------------------------------------------------------------------------
+        # Survey Management
+        # ------------------------------------------------------------------------
 
     async def get_available_surveys(self, person_id: UUID) -> list[dict]:
         """Get surveys available for a person to take."""
@@ -275,7 +274,7 @@ class WellnessService:
             if target_roles and person_type not in target_roles:
                 continue
 
-            # Check availability/cooldown
+                # Check availability/cooldown
             availability = await self._get_survey_availability(person_id, survey.id)
             is_available = availability is None or (
                 availability.next_available_at is None
@@ -366,9 +365,9 @@ class WellnessService:
 
         await self.db.flush()
 
-    # ------------------------------------------------------------------------
-    # Survey Submission
-    # ------------------------------------------------------------------------
+        # ------------------------------------------------------------------------
+        # Survey Submission
+        # ------------------------------------------------------------------------
 
     async def submit_survey_response(
         self,
@@ -406,7 +405,7 @@ class WellnessService:
                 message="Survey not found",
             )
 
-        # Check role targeting - ensure caller's role is allowed for this survey
+            # Check role targeting - ensure caller's role is allowed for this survey
         if survey.target_roles_json:
             person_result = await self.db.execute(
                 select(Person).where(Person.id == person_id)
@@ -425,7 +424,7 @@ class WellnessService:
                     message=f"Survey '{survey.name}' is only available to: {allowed_roles}",
                 )
 
-        # Check availability
+                # Check availability
         availability = await self._get_survey_availability(person_id, survey_id)
         if availability and availability.next_available_at:
             if availability.next_available_at > datetime.utcnow():
@@ -440,7 +439,7 @@ class WellnessService:
                     message=f"Survey not available until {availability.next_available_at}",
                 )
 
-        # Get or create account
+                # Get or create account
         account = await self.get_or_create_account(person_id)
 
         # Calculate temporal scoping
@@ -449,7 +448,7 @@ class WellnessService:
             if block_info:
                 block_number, academic_year = block_info
 
-        # Calculate score
+                # Calculate score
         score, interpretation = self._calculate_score(survey, responses)
 
         # Create response
@@ -495,7 +494,7 @@ class WellnessService:
             points_result.new_balance = account.points_balance
             points_result.new_lifetime = account.points_lifetime
 
-        # Check achievements
+            # Check achievements
         achievement_result = await self._check_and_award_achievements(
             account, person_id
         )
@@ -530,11 +529,11 @@ class WellnessService:
                             total_score += opt.get("score", 0)
                             break
 
-            # Interpret based on survey type
+                            # Interpret based on survey type
             interpretation = self._interpret_score(survey.survey_type, total_score)
             return total_score, interpretation
 
-        # Custom scoring algorithm
+            # Custom scoring algorithm
         scoring = survey.scoring_json
         method = scoring.get("method", "sum")
 
@@ -582,9 +581,9 @@ class WellnessService:
                 return label
         return None
 
-    # ------------------------------------------------------------------------
-    # Points Management
-    # ------------------------------------------------------------------------
+        # ------------------------------------------------------------------------
+        # Points Management
+        # ------------------------------------------------------------------------
 
     async def _award_points(
         self,
@@ -632,7 +631,7 @@ class WellnessService:
         if not account:
             return [], 0
 
-        # Count total
+            # Count total
         count_result = await self.db.execute(
             select(func.count(WellnessPointTransaction.id)).where(
                 WellnessPointTransaction.account_id == account.id
@@ -653,9 +652,9 @@ class WellnessService:
 
         return list(transactions), total
 
-    # ------------------------------------------------------------------------
-    # Streak Management
-    # ------------------------------------------------------------------------
+        # ------------------------------------------------------------------------
+        # Streak Management
+        # ------------------------------------------------------------------------
 
     async def _update_streak(self, account: WellnessAccount) -> StreakResult:
         """Update streak based on activity.
@@ -698,9 +697,9 @@ class WellnessService:
                 # Gap of more than 1 week - reset streak
                 account.current_streak_weeks = 1
                 account.streak_start_date = today
-            # weeks_diff == 0 means same week - no streak change
+                # weeks_diff == 0 means same week - no streak change
 
-        # Update longest streak
+                # Update longest streak
         if account.current_streak_weeks > account.longest_streak_weeks:
             account.longest_streak_weeks = account.current_streak_weeks
 
@@ -714,9 +713,9 @@ class WellnessService:
             streak_bonus_awarded=streak_bonus,
         )
 
-    # ------------------------------------------------------------------------
-    # Achievement Management
-    # ------------------------------------------------------------------------
+        # ------------------------------------------------------------------------
+        # Achievement Management
+        # ------------------------------------------------------------------------
 
     async def _check_and_award_achievements(
         self, account: WellnessAccount, person_id: UUID
@@ -732,7 +731,7 @@ class WellnessService:
                 account, 10, "achievement", "First Check-In achievement"
             )
 
-        # Points milestones
+            # Points milestones
         if account.points_lifetime >= 100 and not account.has_achievement(
             AchievementType.POINTS_100.value
         ):
@@ -751,7 +750,7 @@ class WellnessService:
             account.add_achievement(AchievementType.POINTS_1000.value)
             newly_earned.append(AchievementType.POINTS_1000.value)
 
-        # Streak milestones
+            # Streak milestones
         if account.current_streak_weeks >= 4 and not account.has_achievement(
             AchievementType.WEEKLY_WARRIOR.value
         ):
@@ -770,7 +769,7 @@ class WellnessService:
             account.add_achievement(AchievementType.RESEARCH_CHAMPION.value)
             newly_earned.append(AchievementType.RESEARCH_CHAMPION.value)
 
-        # Check Data Hero (all surveys in a block)
+            # Check Data Hero (all surveys in a block)
         await self._check_data_hero_achievement(account, person_id)
         if account.has_achievement(
             AchievementType.DATA_HERO.value
@@ -791,7 +790,7 @@ class WellnessService:
         if account.has_achievement(AchievementType.DATA_HERO.value):
             return
 
-        # Get current block
+            # Get current block
         block_info = get_block_number_for_date(date.today())
         if not block_info:
             return
@@ -846,9 +845,9 @@ class WellnessService:
 
         return achievements
 
-    # ------------------------------------------------------------------------
-    # Leaderboard
-    # ------------------------------------------------------------------------
+        # ------------------------------------------------------------------------
+        # Leaderboard
+        # ------------------------------------------------------------------------
 
     async def get_leaderboard(
         self,
@@ -888,7 +887,7 @@ class WellnessService:
                 }
             )
 
-        # Get total participants
+            # Get total participants
         count_result = await self.db.execute(
             select(func.count(WellnessAccount.id)).where(
                 WellnessAccount.leaderboard_opt_in == True
@@ -935,9 +934,9 @@ class WellnessService:
 
         return snapshot
 
-    # ------------------------------------------------------------------------
-    # Hopfield Position
-    # ------------------------------------------------------------------------
+        # ------------------------------------------------------------------------
+        # Hopfield Position
+        # ------------------------------------------------------------------------
 
     async def submit_hopfield_position(
         self,
@@ -960,7 +959,7 @@ class WellnessService:
             if block_info:
                 block_number, academic_year = block_info
 
-        # Create position record
+                # Create position record
         position = HopfieldPosition(
             person_id=person_id,
             x_position=x_position,
@@ -1039,9 +1038,9 @@ class WellnessService:
             "academic_year": academic_year,
         }
 
-    # ------------------------------------------------------------------------
-    # Analytics (Admin)
-    # ------------------------------------------------------------------------
+        # ------------------------------------------------------------------------
+        # Analytics (Admin)
+        # ------------------------------------------------------------------------
 
     async def get_analytics_summary(
         self,
@@ -1055,7 +1054,7 @@ class WellnessService:
             if block_info:
                 block_number, academic_year = block_info
 
-        # Total participants
+                # Total participants
         total_result = await self.db.execute(select(func.count(WellnessAccount.id)))
         total_participants = total_result.scalar_one()
 

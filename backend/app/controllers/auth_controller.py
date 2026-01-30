@@ -17,7 +17,7 @@ from app.services.auth_service import AuthService
 class AuthController:
     """Controller for authentication endpoints."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.service = AuthService(db)
         self.lockout = get_account_lockout()
 
@@ -70,7 +70,7 @@ class AuthController:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Successful login - clear any lockout/failed attempts
+            # Successful login - clear any lockout/failed attempts
         self.lockout.clear_lockout(username)
 
         return Token(

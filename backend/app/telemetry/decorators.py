@@ -76,7 +76,7 @@ def traced(
                         for key, value in attributes.items():
                             span.set_attribute(key, value)
 
-                    # Capture arguments if enabled
+                            # Capture arguments if enabled
                     if capture_args:
                         _capture_function_args(span, func, args, kwargs)
 
@@ -111,7 +111,7 @@ def traced(
                         for key, value in attributes.items():
                             span.set_attribute(key, value)
 
-                    # Capture arguments if enabled
+                            # Capture arguments if enabled
                     if capture_args:
                         _capture_function_args(span, func, args, kwargs)
 
@@ -230,7 +230,7 @@ def trace_async_generator(
                         item_count += 1
                         yield item
 
-                    # Record total items yielded
+                        # Record total items yielded
                     span.set_attribute("generator.items_yielded", item_count)
                     span.set_status(Status(StatusCode.OK))
 
@@ -243,8 +243,7 @@ def trace_async_generator(
 
     return decorator
 
-
-# Helper functions
+    # Helper functions
 
 
 def _capture_function_args(
@@ -252,7 +251,7 @@ def _capture_function_args(
     func: Callable,
     args: tuple,
     kwargs: dict,
-):
+) -> None:
     """
     Capture function arguments as span attributes.
 
@@ -272,7 +271,7 @@ def _capture_function_args(
         if param_name in ("self", "cls"):
             continue
 
-        # Sanitize sensitive parameters
+            # Sanitize sensitive parameters
         if param_name.lower() in ("password", "secret", "token", "api_key"):
             param_value = "***REDACTED***"
         else:
@@ -282,7 +281,7 @@ def _capture_function_args(
         span.set_attribute(f"function.arg.{param_name}", param_value)
 
 
-def _capture_result(span: Span, result: Any):
+def _capture_result(span: Span, result: Any) -> None:
     """
     Capture function result as span attribute.
 
@@ -294,7 +293,7 @@ def _capture_result(span: Span, result: Any):
     if result is None:
         return
 
-    # Handle different result types
+        # Handle different result types
     if isinstance(result, (str, int, float, bool)):
         span.set_attribute("function.result", str(result)[:200])
     elif isinstance(result, (list, tuple)):
@@ -307,8 +306,7 @@ def _capture_result(span: Span, result: Any):
         # For other types, just record the type
         span.set_attribute("function.result.type", type(result).__name__)
 
-
-# Specialized decorators for common use cases
+        # Specialized decorators for common use cases
 
 
 def trace_service_method(

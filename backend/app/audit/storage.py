@@ -179,7 +179,7 @@ class LocalArchiveStorage(ArchiveStorageBackend):
                 archive-2024-12-31.json.gz
     """
 
-    def __init__(self, base_path: str | Path = "/var/audit/archives"):
+    def __init__(self, base_path: str | Path = "/var/audit/archives") -> None:
         """
         Initialize local archive storage.
 
@@ -213,7 +213,7 @@ class LocalArchiveStorage(ArchiveStorageBackend):
             if isinstance(created_at, str):
                 created_at = datetime.fromisoformat(created_at.replace("Z", ""))
 
-            # Create date-based directory structure
+                # Create date-based directory structure
             year_path = self.base_path / str(created_at.year)
             month_path = year_path / f"{created_at.month:02d}"
             month_path.mkdir(parents=True, exist_ok=True)
@@ -230,7 +230,7 @@ class LocalArchiveStorage(ArchiveStorageBackend):
             else:
                 data_bytes = json.dumps(archive_data, default=str).encode("utf-8")
 
-            # Calculate checksum
+                # Calculate checksum
             checksum = self._calculate_checksum(data_bytes)
 
             # Write file
@@ -336,7 +336,7 @@ class LocalArchiveStorage(ArchiveStorageBackend):
                 if not archive_path.is_file():
                     continue
 
-                # Extract metadata
+                    # Extract metadata
                 stat = archive_path.stat()
                 created_at = datetime.fromtimestamp(stat.st_mtime)
 
@@ -360,7 +360,7 @@ class LocalArchiveStorage(ArchiveStorageBackend):
                     }
                 )
 
-            # Sort by created_at descending
+                # Sort by created_at descending
             archives.sort(key=lambda x: x["created_at"], reverse=True)
             return archives
 
@@ -405,7 +405,7 @@ class S3ArchiveStorage(ArchiveStorageBackend):
         secret_key: str | None = None,
         endpoint_url: str | None = None,
         prefix: str = "audit-archives",
-    ):
+    ) -> None:
         """
         Initialize S3 archive storage.
 
@@ -472,7 +472,7 @@ class S3ArchiveStorage(ArchiveStorageBackend):
             if isinstance(created_at, str):
                 created_at = datetime.fromisoformat(created_at.replace("Z", ""))
 
-            # Create S3 key with date-based prefix
+                # Create S3 key with date-based prefix
             filename = f"{archive_id}.json"
             if compress:
                 filename += ".gz"
@@ -486,7 +486,7 @@ class S3ArchiveStorage(ArchiveStorageBackend):
             else:
                 data_bytes = json.dumps(archive_data, default=str).encode("utf-8")
 
-            # Calculate checksum
+                # Calculate checksum
             checksum = self._calculate_checksum(data_bytes)
 
             # Upload to S3
@@ -648,7 +648,7 @@ class S3ArchiveStorage(ArchiveStorageBackend):
                         }
                     )
 
-            # Sort by created_at descending
+                    # Sort by created_at descending
             archives.sort(key=lambda x: x["created_at"], reverse=True)
             return archives
 

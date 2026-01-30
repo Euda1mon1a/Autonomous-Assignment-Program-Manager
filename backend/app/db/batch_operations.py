@@ -19,7 +19,7 @@ T = TypeVar("T", bound=DeclarativeBase)
 class BatchOperations:
     """Utilities for batch database operations."""
 
-    def __init__(self, session: AsyncSession, batch_size: int = 1000):
+    def __init__(self, session: AsyncSession, batch_size: int = 1000) -> None:
         """Initialize batch operations handler.
 
         Args:

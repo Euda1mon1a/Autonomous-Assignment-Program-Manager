@@ -33,7 +33,7 @@ class ActivityService:
     execution contexts (production async, test sync).
     """
 
-    def __init__(self, db: AsyncSession | Session):
+    def __init__(self, db: AsyncSession | Session) -> None:
         """Initialize service with database session.
 
         Args:
@@ -52,30 +52,30 @@ class ActivityService:
         else:
             return self.db.execute(stmt)
 
-    async def _flush(self):
+    async def _flush(self) -> None:
         """Flush the session."""
         if self._is_async:
             await self.db.flush()
         else:
             self.db.flush()
 
-    async def _refresh(self, obj):
+    async def _refresh(self, obj) -> None:
         """Refresh an object."""
         if self._is_async:
             await self.db.refresh(obj)
         else:
             self.db.refresh(obj)
 
-    async def _delete(self, obj):
+    async def _delete(self, obj) -> None:
         """Delete an object."""
         if self._is_async:
             await self.db.delete(obj)
         else:
             self.db.delete(obj)
 
-    # =========================================================================
-    # Activity CRUD
-    # =========================================================================
+            # =========================================================================
+            # Activity CRUD
+            # =========================================================================
 
     async def list_activities(
         self,
@@ -147,7 +147,7 @@ class ActivityService:
         if existing_name.scalar_one_or_none():
             raise ValueError(f"Activity with name '{data.name}' already exists")
 
-        # Check for existing code
+            # Check for existing code
         existing_code = await self._execute(
             select(Activity).where(Activity.code == data.code)
         )
@@ -197,7 +197,7 @@ class ActivityService:
         if not activity:
             return None
 
-        # Check for name conflict if updating name
+            # Check for name conflict if updating name
         if data.name is not None and data.name != activity.name:
             existing = await self._execute(
                 select(Activity).where(
@@ -209,7 +209,7 @@ class ActivityService:
                 raise ValueError(f"Activity with name '{data.name}' already exists")
             activity.name = data.name
 
-        # Check for code conflict if updating code
+            # Check for code conflict if updating code
         if data.code is not None and data.code != activity.code:
             existing = await self._execute(
                 select(Activity).where(
@@ -221,7 +221,7 @@ class ActivityService:
                 raise ValueError(f"Activity with code '{data.code}' already exists")
             activity.code = data.code
 
-        # Update other fields if provided
+            # Update other fields if provided
         if data.display_abbreviation is not None:
             activity.display_abbreviation = data.display_abbreviation
         if data.activity_category is not None:
@@ -282,7 +282,7 @@ class ActivityService:
         if not activity:
             return False
 
-        # Check if in use by activity requirements
+            # Check if in use by activity requirements
         result = await self._execute(
             select(RotationActivityRequirement)
             .where(RotationActivityRequirement.activity_id == activity_id)
@@ -293,16 +293,16 @@ class ActivityService:
                 f"Activity '{activity.name}' is in use by rotation requirements"
             )
 
-        # Note: WeeklyPattern.activity_id FK has ondelete=RESTRICT
-        # so if any patterns use this activity, the delete will fail at DB level
+            # Note: WeeklyPattern.activity_id FK has ondelete=RESTRICT
+            # so if any patterns use this activity, the delete will fail at DB level
 
         await self._delete(activity)
         await self._flush()
         return True
 
-    # =========================================================================
-    # Activity Requirements for Rotation Templates
-    # =========================================================================
+        # =========================================================================
+        # Activity Requirements for Rotation Templates
+        # =========================================================================
 
     async def list_requirements_for_template(
         self,
@@ -367,7 +367,7 @@ class ActivityService:
         if not result.scalar_one_or_none():
             raise ValueError(f"Rotation template {template_id} not found")
 
-        # Verify activity exists
+            # Verify activity exists
         activity = await self.get_activity_by_id(data.activity_id)
         if not activity:
             raise ValueError(f"Activity {data.activity_id} not found")
@@ -416,13 +416,13 @@ class ActivityService:
         if not result.scalar_one_or_none():
             raise ValueError(f"Rotation template {template_id} not found")
 
-        # Verify all activities exist
+            # Verify all activities exist
         for req in requirements:
             activity = await self.get_activity_by_id(req.activity_id)
             if not activity:
                 raise ValueError(f"Activity {req.activity_id} not found")
 
-        # Delete existing requirements
+                # Delete existing requirements
         await self._execute(
             delete(RotationActivityRequirement).where(
                 RotationActivityRequirement.rotation_template_id == template_id

@@ -188,7 +188,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
         config: PSOConfig | None = None,
         seed: int | None = None,
         parameter_names: list[str] | None = None,
-    ):
+    ) -> None:
         """
         Initialize PSO solver.
 
@@ -266,15 +266,15 @@ class ParticleSwarmSolver(BioInspiredSolver):
                 logger.info(f"PSO timeout at iteration {iteration}")
                 break
 
-            # Update inertia weight
+                # Update inertia weight
             if self.config.adaptive_inertia:
                 self._adapt_inertia(iteration)
 
-            # Update each particle
+                # Update each particle
             for particle in self.swarm:
                 self._update_particle(particle, context)
 
-            # Track statistics
+                # Track statistics
             self._track_iteration(iteration)
 
             # Check convergence
@@ -282,14 +282,14 @@ class ParticleSwarmSolver(BioInspiredSolver):
                 logger.info(f"PSO converged at iteration {iteration}")
                 break
 
-            # Log progress
+                # Log progress
             if iteration % PSO_LOG_INTERVAL == 0:
                 logger.info(
                     f"PSO iter {iteration}: best={self.global_best_fitness:.4f}, "
                     f"inertia={self.current_inertia:.4f}"
                 )
 
-        # Convert best position to schedule
+                # Convert best position to schedule
         best_weights = self._normalize_weights(self.global_best)
         best_chromosome = self._generate_schedule(context, best_weights)
         best_fitness = self.evaluate_fitness(best_chromosome, context)
@@ -587,7 +587,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
                     fairness_score = 1.0 / (1.0 + resident_counts[r_idx])
                     score += weights[1] * fairness_score
 
-                # ACGME: respect weekly limits
+                    # ACGME: respect weekly limits
                 weekly_count = sum(
                     chromosome.genes[
                         r_idx, max(0, b_idx - PSO_WEEKLY_LOOKBACK_BLOCKS) : b_idx
@@ -599,7 +599,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
 
                 scores.append((r_idx, score))
 
-            # Select top residents
+                # Select top residents
             scores.sort(key=lambda x: x[1], reverse=True)
             for r_idx, _ in scores[:n_to_assign]:
                 template = random.randint(1, n_templates)
@@ -654,7 +654,7 @@ class ParticleSwarmSolver(BioInspiredSolver):
         else:
             diversity = 0.0
 
-        # Store in evolution history as PopulationStats
+            # Store in evolution history as PopulationStats
         stats = PopulationStats(
             generation=iteration,
             population_size=len(self.swarm),

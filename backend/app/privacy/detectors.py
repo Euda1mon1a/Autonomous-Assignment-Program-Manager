@@ -115,7 +115,7 @@ class PIIDetector:
         self,
         enable_name_detection: bool = False,
         custom_patterns: dict[str, re.Pattern] | None = None,
-    ):
+    ) -> None:
         """
         Initialize PII detector.
 
@@ -150,13 +150,13 @@ class PIIDetector:
         if self.enable_name_detection:
             matches.extend(self.detect_names(text))
 
-        # Detect custom patterns
+            # Detect custom patterns
         for pii_type, pattern in self.custom_patterns.items():
             matches.extend(
                 self._detect_pattern(text, pattern, PIIType.CUSTOM, pii_type)
             )
 
-        # Sort by position in text
+            # Sort by position in text
         matches.sort(key=lambda m: m.start)
 
         return matches
@@ -242,7 +242,7 @@ class PIIDetector:
         """
         results = {}
 
-        def scan_value(value: Any, path: str):
+        def scan_value(value: Any, path: str) -> None:
             if isinstance(value, str):
                 matches = self.detect_all(value)
                 if matches:
@@ -297,7 +297,7 @@ class PIIDetector:
         if not digits:
             return False
 
-        # Luhn algorithm
+            # Luhn algorithm
         checksum = 0
         reverse_digits = digits[::-1]
 
@@ -319,7 +319,7 @@ class PIIScanner:
     Provides convenient methods for scanning models, dictionaries, and lists.
     """
 
-    def __init__(self, detector: PIIDetector | None = None):
+    def __init__(self, detector: PIIDetector | None = None) -> None:
         """
         Initialize PII scanner.
 

@@ -35,7 +35,7 @@ class EmailTracker:
     - Privacy-preserving (no PII in URLs)
     """
 
-    def __init__(self, tracking_domain: str = "scheduler.local"):
+    def __init__(self, tracking_domain: str = "scheduler.local") -> None:
         """
         Initialize email tracker.
 

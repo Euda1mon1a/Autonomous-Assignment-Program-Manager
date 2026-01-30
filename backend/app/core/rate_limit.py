@@ -26,7 +26,7 @@ class RateLimiter:
     without the step-function behavior of fixed windows.
     """
 
-    def __init__(self, redis_client: redis.Redis | None = None):
+    def __init__(self, redis_client: redis.Redis | None = None) -> None:
         """
         Initialize the rate limiter.
 
@@ -184,8 +184,9 @@ class RateLimiter:
             logger.error(f"Error getting remaining requests for key {key}: {e}")
             return max_requests
 
+            # Global rate limiter instance
 
-# Global rate limiter instance
+
 _rate_limiter: RateLimiter | None = None
 
 
@@ -263,11 +264,11 @@ def get_client_ip(request: Request) -> str:
             # Take the first IP in the chain (original client IP)
             return forwarded_for.split(",")[0].strip()
 
-    # Use direct client IP (no trusted proxy or no X-Forwarded-For)
+            # Use direct client IP (no trusted proxy or no X-Forwarded-For)
     if direct_ip:
         return direct_ip
 
-    # Default fallback
+        # Default fallback
     return "unknown"
 
 
@@ -304,7 +305,7 @@ def create_rate_limit_dependency(
         ```
     """
 
-    async def rate_limit_dependency(request: Request):
+    async def rate_limit_dependency(request: Request) -> None:
         """Rate limit dependency that checks and enforces limits."""
         limiter = get_rate_limiter()
         client_ip = get_client_ip(request)
@@ -335,8 +336,8 @@ def create_rate_limit_dependency(
                 },
             )
 
-        # Add rate limit headers to response (even when not limited)
-        # Note: These will be visible in middleware/response processing
+            # Add rate limit headers to response (even when not limited)
+            # Note: These will be visible in middleware/response processing
         request.state.rate_limit_info = info
 
     return rate_limit_dependency
@@ -363,7 +364,7 @@ class AccountLockout:
     MAX_LOCKOUT_SECONDS: int = 3600  # Maximum lockout: 1 hour
     BACKOFF_MULTIPLIER: float = 2.0  # Double lockout time each failure
 
-    def __init__(self, redis_client: redis.Redis | None = None):
+    def __init__(self, redis_client: redis.Redis | None = None) -> None:
         """
         Initialize the account lockout handler.
 
@@ -419,7 +420,7 @@ class AccountLockout:
             if lockout_ttl > 0:
                 return True, 0, lockout_ttl
 
-            # Increment failed attempts
+                # Increment failed attempts
             pipe = self.redis.pipeline()
             pipe.incr(attempts_key)
             pipe.expire(attempts_key, 3600)  # Attempts expire after 1 hour
@@ -527,8 +528,9 @@ class AccountLockout:
             logger.error(f"Error getting failed attempts for {username}: {e}")
             return 0
 
+            # Global account lockout instance
 
-# Global account lockout instance
+
 _account_lockout: AccountLockout | None = None
 
 

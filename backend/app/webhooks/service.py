@@ -36,7 +36,7 @@ class WebhookService:
     Handles webhook CRUD operations, event dispatching, and monitoring.
     """
 
-    def __init__(self, delivery_manager: WebhookDeliveryManager | None = None):
+    def __init__(self, delivery_manager: WebhookDeliveryManager | None = None) -> None:
         """
         Initialize the webhook service.
 
@@ -45,9 +45,9 @@ class WebhookService:
         """
         self.delivery_manager = delivery_manager or WebhookDeliveryManager()
 
-    # =========================================================================
-    # Webhook Management
-    # =========================================================================
+        # =========================================================================
+        # Webhook Management
+        # =========================================================================
 
     async def create_webhook(
         self,
@@ -95,7 +95,7 @@ class WebhookService:
                 f"Valid types: {valid_event_types}"
             )
 
-        # Generate secret if not provided
+            # Generate secret if not provided
         if not secret:
             secret = secrets.token_urlsafe(32)
 
@@ -160,8 +160,8 @@ class WebhookService:
         if owner_id:
             query = query.where(Webhook.owner_id == owner_id)
 
-        # Note: event_type filtering requires array contains check
-        # This is PostgreSQL-specific and would need adjustment for other DBs
+            # Note: event_type filtering requires array contains check
+            # This is PostgreSQL-specific and would need adjustment for other DBs
 
         query = query.offset(skip).limit(limit).order_by(Webhook.created_at.desc())
 
@@ -186,7 +186,7 @@ class WebhookService:
         if not webhook:
             return None
 
-        # Apply updates
+            # Apply updates
         for key, value in updates.items():
             if hasattr(webhook, key) and value is not None:
                 setattr(webhook, key, value)
@@ -232,9 +232,9 @@ class WebhookService:
             db, webhook_id, status=WebhookStatus.ACTIVE.value
         )
 
-    # =========================================================================
-    # Event Triggering
-    # =========================================================================
+        # =========================================================================
+        # Event Triggering
+        # =========================================================================
 
     async def trigger_event(
         self,
@@ -283,7 +283,7 @@ class WebhookService:
             logger.debug(f"No active webhooks subscribed to event '{event_type}'")
             return 0
 
-        # Create delivery records for each webhook
+            # Create delivery records for each webhook
         deliveries_created = 0
 
         for webhook in subscribed_webhooks:
@@ -324,9 +324,9 @@ class WebhookService:
 
         return deliveries_created
 
-    # =========================================================================
-    # Delivery Monitoring
-    # =========================================================================
+        # =========================================================================
+        # Delivery Monitoring
+        # =========================================================================
 
     async def get_delivery_status(
         self, db: AsyncSession, delivery_id: UUID
@@ -403,9 +403,9 @@ class WebhookService:
 
         return await self.delivery_manager.deliver(db, str(delivery_id))
 
-    # =========================================================================
-    # Dead Letter Queue Management
-    # =========================================================================
+        # =========================================================================
+        # Dead Letter Queue Management
+        # =========================================================================
 
     async def list_dead_letters(
         self,
@@ -474,7 +474,7 @@ class WebhookService:
         if not dead_letter:
             return False
 
-        # Mark as resolved
+            # Mark as resolved
         dead_letter.resolved = True
         dead_letter.resolved_at = datetime.utcnow()
         dead_letter.resolved_by = resolved_by

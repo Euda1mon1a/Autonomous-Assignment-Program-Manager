@@ -28,7 +28,7 @@ class WorkerManager:
     - Worker pool information
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize worker manager."""
         self.app = celery_app
         self.inspect = self.app.control.inspect()

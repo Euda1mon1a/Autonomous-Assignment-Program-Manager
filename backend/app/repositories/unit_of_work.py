@@ -21,7 +21,7 @@ class UnitOfWork:
     - Repository registration and access
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize Unit of Work.
 

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class ComparisonData:
     """Provides period comparison data for dashboards."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
         self.comparator = PeriodComparison(db)
 

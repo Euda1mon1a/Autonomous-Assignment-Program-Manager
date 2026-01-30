@@ -93,7 +93,7 @@ class AuditArchiver:
         self,
         db: Session,
         storage_backend: ArchiveStorageBackend | None = None,
-    ):
+    ) -> None:
         """
         Initialize audit archiver.
 
@@ -170,7 +170,7 @@ class AuditArchiver:
         if policy is None:
             policy = self.policy_manager.get_policy()
 
-        # Calculate cutoff date
+            # Calculate cutoff date
         if days is not None:
             cutoff_date = datetime.utcnow() - timedelta(days=days)
         else:
@@ -192,7 +192,7 @@ class AuditArchiver:
             logger.warning("No logs found to archive")
             raise ValueError("No logs found to archive")
 
-        # Create archive
+            # Create archive
         archive_id = self._generate_archive_id(cutoff_date)
         archive_data = self._build_archive_data(
             archive_id=archive_id,
@@ -213,7 +213,7 @@ class AuditArchiver:
         if purge_after_archive:
             purged = await self._purge_archived_logs(logs_to_archive)
 
-        # Build result
+            # Build result
         result = ArchiveResult(
             archive_id=archive_id,
             record_count=len(logs_to_archive),
@@ -278,7 +278,7 @@ class AuditArchiver:
         if not logs_to_archive:
             raise ValueError("No logs found in date range")
 
-        # Create archive
+            # Create archive
         archive_id = self._generate_archive_id(start_date, end_date)
         archive_data = self._build_archive_data(
             archive_id=archive_id,
@@ -518,7 +518,7 @@ class AuditArchiver:
             entity_type = log["entity_type"]
             entity_type_counts[entity_type] = entity_type_counts.get(entity_type, 0) + 1
 
-        # Count by operation type
+            # Count by operation type
         operation_counts = {}
         operation_map = {0: "create", 1: "update", 2: "delete"}
         for log in logs:
@@ -562,7 +562,7 @@ class AuditArchiver:
                     logs_by_type[entity_type] = []
                 logs_by_type[entity_type].append(transaction_id)
 
-            # Delete from each version table
+                # Delete from each version table
             for entity_type, transaction_ids in logs_by_type.items():
                 table_name = f"{entity_type}_version"
 

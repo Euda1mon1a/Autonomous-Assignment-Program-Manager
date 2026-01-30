@@ -72,7 +72,7 @@ def with_correlation(func: Callable) -> Callable:
             # Context already exists, just call the function
             return await func(*args, **kwargs)
 
-        # No context, check if we have correlation data in kwargs
+            # No context, check if we have correlation data in kwargs
         correlation_id = kwargs.pop("_correlation_id", None)
         request_id = kwargs.pop("_request_id", None)
         parent_id = kwargs.pop("_parent_id", None)
@@ -102,7 +102,7 @@ def with_correlation(func: Callable) -> Callable:
             # Context already exists, just call the function
             return func(*args, **kwargs)
 
-        # No context, check if we have correlation data in kwargs
+            # No context, check if we have correlation data in kwargs
         correlation_id = kwargs.pop("_correlation_id", None)
         request_id = kwargs.pop("_request_id", None)
         parent_id = kwargs.pop("_parent_id", None)
@@ -123,7 +123,8 @@ def with_correlation(func: Callable) -> Callable:
             # Don't clear context if it was already set
             pass
 
-    # Return appropriate wrapper based on function type
+            # Return appropriate wrapper based on function type
+
     if asyncio.iscoroutinefunction(func):
         return async_wrapper
     else:
@@ -207,7 +208,7 @@ class CorrelatedHTTPXClient:
             # Request automatically includes correlation headers
     """
 
-    def __init__(self, **client_kwargs):
+    def __init__(self, **client_kwargs) -> None:
         """
         Initialize correlated HTTP client.
 
@@ -226,7 +227,7 @@ class CorrelatedHTTPXClient:
         self.client = httpx.AsyncClient(**self.client_kwargs)
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit async context manager."""
         if self.client:
             await self.client.aclose()
@@ -248,7 +249,7 @@ class CorrelatedHTTPXClient:
                 "Client not initialized. Use 'async with' context manager."
             )
 
-        # Merge correlation headers
+            # Merge correlation headers
         headers = kwargs.pop("headers", {})
         headers.update(get_propagation_headers())
 
@@ -359,15 +360,16 @@ def create_child_context() -> CorrelationContext:
         # No parent context, create root context
         return initialize_context()
 
-    # Create child context with same correlation ID but new request ID
+        # Create child context with same correlation ID but new request ID
     return initialize_context(
         correlation_id=parent_context.correlation_id,
         parent_id=parent_context.request_id,  # Parent's request ID becomes our parent ID
         user_id=parent_context.user_id,
     )
 
+    # Import asyncio for decorator
 
-# Import asyncio for decorator
+
 try:
     import asyncio
 except ImportError:

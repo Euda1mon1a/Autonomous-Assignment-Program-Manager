@@ -29,7 +29,7 @@ class NotificationContext:
         notification_id: UUID,
         recipient_id: UUID,
         metadata: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """
         Initialize notification context.
 

@@ -53,7 +53,7 @@ class NotificationQueueManager:
     - Off-peak delivery
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the queue manager."""
         # Separate queues for each priority level
         self._high_priority: list[QueuedNotification] = []
@@ -107,7 +107,7 @@ class NotificationQueueManager:
                 self._low_priority.append(notification)
                 queue_name = "low"
 
-            # Add to index
+                # Add to index
             self._index[notification.id] = notification
 
             logger.debug(
@@ -135,7 +135,7 @@ class NotificationQueueManager:
             if not queue:
                 return None
 
-            # Get oldest notification (FIFO within priority)
+                # Get oldest notification (FIFO within priority)
             notification = queue.pop(0)
 
             # Remove from index
@@ -241,7 +241,7 @@ class NotificationQueueManager:
                     queue.remove(notification)
                     break
 
-            # Remove from index
+                    # Remove from index
             del self._index[notification_id]
 
             logger.debug("Notification removed from queue: %s", notification_id)
@@ -293,7 +293,7 @@ class NotificationQueueManager:
             for notification in self._index.values():
                 type_counts[notification.notification_type] += 1
 
-            # Age statistics
+                # Age statistics
             now = datetime.utcnow()
             ages = [(now - n.queued_at).total_seconds() for n in self._index.values()]
 

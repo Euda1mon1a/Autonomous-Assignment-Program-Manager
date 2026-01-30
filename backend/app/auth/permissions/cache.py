@@ -35,7 +35,7 @@ class PermissionCache:
     ROLE_TTL = 86400  # 24 hours (roles change infrequently)
     USER_TTL = 3600  # 1 hour (user roles can change)
 
-    def __init__(self, redis_client: aioredis.Redis | None = None):
+    def __init__(self, redis_client: aioredis.Redis | None = None) -> None:
         """
         Initialize permission cache.
 
@@ -405,8 +405,9 @@ class PermissionCache:
         total = hits + misses
         return round(hits / total * 100, 2) if total > 0 else 0.0
 
+        # Global cache instance (singleton pattern)
 
-# Global cache instance (singleton pattern)
+
 _cache_instance: PermissionCache | None = None
 
 

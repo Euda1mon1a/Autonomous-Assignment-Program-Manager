@@ -13,7 +13,7 @@ class RetryError(Exception):
         message: str,
         attempts: int = 0,
         last_exception: Exception | None = None,
-    ):
+    ) -> None:
         """
         Initialize retry error.
 
@@ -35,7 +35,7 @@ class MaxRetriesExceeded(RetryError):
         attempts: int,
         last_exception: Exception | None = None,
         operation: str = "operation",
-    ):
+    ) -> None:
         """
         Initialize max retries exceeded error.
 
@@ -56,7 +56,7 @@ class NonRetryableError(RetryError):
         self,
         message: str,
         original_exception: Exception | None = None,
-    ):
+    ) -> None:
         """
         Initialize non-retryable error.
 
@@ -76,7 +76,7 @@ class RetryTimeoutError(RetryError):
         timeout_seconds: float,
         attempts: int = 0,
         last_exception: Exception | None = None,
-    ):
+    ) -> None:
         """
         Initialize retry timeout error.
 
@@ -95,7 +95,7 @@ class RetryTimeoutError(RetryError):
 class InvalidRetryConfigError(RetryError):
     """Raised when retry configuration is invalid."""
 
-    def __init__(self, message: str, config_field: str | None = None):
+    def __init__(self, message: str, config_field: str | None = None) -> None:
         """
         Initialize invalid config error.
 

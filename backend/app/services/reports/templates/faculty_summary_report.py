@@ -36,7 +36,7 @@ class FacultySummaryReportTemplate:
         >>> pdf_bytes = template.generate(request)
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize faculty summary report template.
 
@@ -80,7 +80,7 @@ class FacultySummaryReportTemplate:
             all_faculty = self.db.query(Person).filter(Person.type == "faculty").all()
             faculty_ids = [f.id for f in all_faculty]
 
-        # Generate report for each faculty member
+            # Generate report for each faculty member
         for faculty_id in faculty_ids:
             faculty_data = self._get_faculty_data(
                 faculty_id, request.start_date, request.end_date
@@ -89,7 +89,7 @@ class FacultySummaryReportTemplate:
             if not faculty_data:
                 continue
 
-            # Faculty header
+                # Faculty header
             elements.append(
                 Paragraph(
                     f"Faculty: {faculty_data['name']}",
@@ -103,7 +103,7 @@ class FacultySummaryReportTemplate:
                 elements.extend(self._create_workload_section(faculty_data))
                 elements.append(Spacer(1, 0.15 * inch))
 
-            # Rotation breakdown
+                # Rotation breakdown
             elements.extend(self._create_rotation_breakdown(faculty_data))
             elements.append(Spacer(1, 0.15 * inch))
 
@@ -112,11 +112,11 @@ class FacultySummaryReportTemplate:
                 elements.extend(self._create_swap_history(faculty_data))
                 elements.append(Spacer(1, 0.15 * inch))
 
-            # Page break between faculty
+                # Page break between faculty
             if len(faculty_ids) > 1:
                 elements.append(PageBreak())
 
-        # Generate PDF
+                # Generate PDF
         return self.generator.build(
             elements=elements,
             include_toc=request.include_toc,
@@ -145,7 +145,7 @@ class FacultySummaryReportTemplate:
             logger.warning(f"Faculty not found: {faculty_id}")
             return None
 
-        # Get assignments in date range
+            # Get assignments in date range
         assignment_list = (
             self.db.query(Assignment)
             .join(Block)
@@ -183,7 +183,7 @@ class FacultySummaryReportTemplate:
             )
             rotation_breakdown[rotation] = rotation_breakdown.get(rotation, 0) + 1
 
-        # Calculate total blocks (half-days)
+            # Calculate total blocks (half-days)
         total_blocks = len(assignment_list)
         total_weeks = total_blocks / 10  # Assuming 10 blocks (5 days) per week
 
@@ -258,7 +258,7 @@ class FacultySummaryReportTemplate:
             )
             return elements
 
-        # Create rotation table
+            # Create rotation table
         data = [["Rotation", "Blocks", "Percentage"]]
         total = faculty_data["total_blocks"]
 

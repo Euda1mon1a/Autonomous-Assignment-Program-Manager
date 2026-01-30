@@ -28,12 +28,12 @@ def _find_color_scheme_path() -> Path:
     if docker_path.exists():
         return docker_path
 
-    # Try 4 parents (host: project root)
+        # Try 4 parents (host: project root)
     host_path = base.parent / relative_path
     if host_path.exists():
         return host_path
 
-    # Fallback to Docker path (will log warning if not found)
+        # Fallback to Docker path (will log warning if not found)
     return docker_path
 
 
@@ -50,7 +50,7 @@ class TAMCColorScheme:
     - Rotation column colors
     """
 
-    def __init__(self, xml_path: Path | str | None = None):
+    def __init__(self, xml_path: Path | str | None = None) -> None:
         """
         Initialize color scheme from XML file.
 
@@ -102,13 +102,13 @@ class TAMCColorScheme:
                     if code:
                         self._code_colors[code] = hex_color
 
-            # Parse font colors (text colors with semantic meaning)
+                        # Parse font colors (text colors with semantic meaning)
             for font_group in root.findall(".//font_colors/font_color_group"):
                 hex_color = font_group.get("hex_color", "")
                 # Handle theme references (theme:1 → use actual_rgb)
                 if hex_color.startswith("theme:"):
                     hex_color = font_group.get("actual_rgb", "FF000000")
-                # Remove leading "FF" (alpha channel) for openpyxl
+                    # Remove leading "FF" (alpha channel) for openpyxl
                 if hex_color.startswith("FF") and len(hex_color) == 8:
                     hex_color = hex_color[2:]
 
@@ -117,7 +117,7 @@ class TAMCColorScheme:
                     if code:
                         self._font_colors[code] = hex_color
 
-            # Parse header colors
+                        # Parse header colors
             for header in root.findall(".//header_colors/header"):
                 name = header.get("name", "")
                 hex_color = header.get("hex_color", "")
@@ -126,7 +126,7 @@ class TAMCColorScheme:
                 if name:
                     self._header_colors[name] = hex_color
 
-            # Parse rotation column colors
+                    # Parse rotation column colors
             for rotation in root.findall(".//rotation_column_colors/rotation_type"):
                 name = rotation.get("name", "")
                 hex_color = rotation.get("hex_color", "")
@@ -135,7 +135,7 @@ class TAMCColorScheme:
                 if name:
                     self._rotation_colors[name] = hex_color
 
-            # Build rotation name → color type mapping
+                    # Build rotation name → color type mapping
             self._build_rotation_mappings()
 
             logger.info(
@@ -212,10 +212,10 @@ class TAMCColorScheme:
         # Tuesday (1) and Thursday (3) = light blue
         if day_of_week in (1, 3):
             return self._header_colors.get("tuesday_thursday")
-        # Saturday (5) and Sunday (6) = blue-gray
+            # Saturday (5) and Sunday (6) = blue-gray
         elif day_of_week in (5, 6):
             return self._header_colors.get("weekend")
-        # Other weekdays = white
+            # Other weekdays = white
         else:
             return self._header_colors.get("weekday")
 
@@ -239,8 +239,9 @@ class TAMCColorScheme:
         """Number of codes with color mappings."""
         return len(self._code_colors)
 
+        # Module-level singleton for convenience
 
-# Module-level singleton for convenience
+
 _color_scheme: TAMCColorScheme | None = None
 
 

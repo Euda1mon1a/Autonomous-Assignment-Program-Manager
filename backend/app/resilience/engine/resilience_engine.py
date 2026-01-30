@@ -51,7 +51,7 @@ class ResilienceEngine:
     5. SPC (statistical monitoring)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize resilience engine."""
         self.defense_calculator = DefenseLevelCalculator()
         self.utilization_monitor = UtilizationMonitor()
@@ -60,7 +60,7 @@ class ResilienceEngine:
         # Initialize default thresholds
         self._setup_default_thresholds()
 
-    def _setup_default_thresholds(self):
+    def _setup_default_thresholds(self) -> None:
         """Setup default resilience thresholds."""
         # Utilization thresholds (from queuing theory)
         self.threshold_manager.create_static_threshold(
@@ -201,7 +201,7 @@ class ResilienceEngine:
         if cascade_violation:
             violations.append(cascade_violation)
 
-        # Generate alerts
+            # Generate alerts
         alerts = self._generate_alerts(defense_level, violations)
 
         # Calculate overall risk score (0-1)
@@ -247,14 +247,14 @@ class ResilienceEngine:
         elif defense_level.level == DefenseLevel.YELLOW:
             alerts.append("🟡 CAUTION: System in YELLOW defense level - early warning")
 
-        # Threshold violation alerts
+            # Threshold violation alerts
         for violation in violations:
             if violation.severity == "critical":
                 alerts.append(f"🚨 CRITICAL: {violation.message}")
             elif violation.severity == "warning":
                 alerts.append(f"⚠️ WARNING: {violation.message}")
 
-        # Add recommendations from defense level
+                # Add recommendations from defense level
         for rec in defense_level.recommendations:
             alerts.append(f"💡 {rec}")
 

@@ -20,7 +20,7 @@ from app.scheduling.constraints.base import (
 class FairnessConstraintTemplate(SoftConstraint):
     """Template for fairness soft constraints."""
 
-    def __init__(self, weight: float = 2.0):
+    def __init__(self, weight: float = 2.0) -> None:
         super().__init__(
             name="FairnessConstraint",
             constraint_type=ConstraintType.EQUITY,
@@ -74,7 +74,7 @@ class FairnessConstraintTemplate(SoftConstraint):
             counts[person_id] = counts.get(person_id, 0) + 1
         return counts
 
-    def add_to_cpsat(self, model, variables, context):
+    def add_to_cpsat(self, model, variables, context) -> None:
         """
         Add fairness constraint to CP-SAT model.
 
@@ -85,7 +85,7 @@ class FairnessConstraintTemplate(SoftConstraint):
         if not x:
             return
 
-        # Count assignments per person
+            # Count assignments per person
         person_counts = {}
         for person in context.residents + context.faculty:
             p_i = context.resident_idx.get(person.id)
@@ -104,17 +104,17 @@ class FairnessConstraintTemplate(SoftConstraint):
         if not person_counts:
             return
 
-        # Create max count variable to minimize inequality
+            # Create max count variable to minimize inequality
         max_count = model.NewIntVar(0, len(context.blocks), "max_fairness_count")
         for p_i, vars_list in person_counts.items():
             model.Add(sum(vars_list) <= max_count)
 
-        # Add to objective (minimize max to promote fairness)
+            # Add to objective (minimize max to promote fairness)
         objective_vars = variables.get("objective_terms", [])
         objective_vars.append((max_count, int(self.weight)))
         variables["objective_terms"] = objective_vars
 
-    def add_to_pulp(self, model, variables, context):
+    def add_to_pulp(self, model, variables, context) -> None:
         """
         Add fairness constraint to PuLP model.
 
@@ -127,7 +127,7 @@ class FairnessConstraintTemplate(SoftConstraint):
         if not x:
             return
 
-        # Count assignments per person
+            # Count assignments per person
         person_counts = {}
         for person in context.residents + context.faculty:
             p_i = context.resident_idx.get(person.id)
@@ -146,7 +146,7 @@ class FairnessConstraintTemplate(SoftConstraint):
         if not person_counts:
             return
 
-        # Create max count variable
+            # Create max count variable
         max_count = pulp.LpVariable(
             "max_fairness_count", 0, len(context.blocks), cat="Integer"
         )
@@ -158,7 +158,7 @@ class FairnessConstraintTemplate(SoftConstraint):
                 f"fairness_max_{p_i}",
             )
 
-        # Add max count to objective (minimize)
+            # Add max count to objective (minimize)
         obj_terms = variables.get("objective_terms", [])
         obj_terms.append(self.weight * max_count)
         variables["objective_terms"] = obj_terms

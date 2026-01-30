@@ -47,7 +47,7 @@ class RetryConfig:
         on_retry: Callable[[RetryContext, Exception, float], None] | None = None,
         on_success: Callable[[RetryContext, Any], None] | None = None,
         on_failure: Callable[[RetryContext, Exception], None] | None = None,
-    ):
+    ) -> None:
         """
         Initialize retry configuration.
 
@@ -112,7 +112,7 @@ class RetryConfig:
 class RetryExecutor:
     """Executes retry logic for a callable."""
 
-    def __init__(self, config: RetryConfig):
+    def __init__(self, config: RetryConfig) -> None:
         """
         Initialize retry executor.
 
@@ -145,7 +145,7 @@ class RetryExecutor:
         if isinstance(exception, self.config.non_retryable_exceptions):
             return False
 
-        # Check if it matches retryable exceptions
+            # Check if it matches retryable exceptions
         return isinstance(exception, self.config.retryable_exceptions)
 
     def execute_sync(
@@ -193,7 +193,7 @@ class RetryExecutor:
                 context.trigger_failure_callback(error)
                 raise error
 
-            # Calculate delay for this attempt
+                # Calculate delay for this attempt
             if attempt > 0:
                 base_delay = self.strategy.get_delay(attempt - 1)
                 delay = self.jitter_strategy.apply(
@@ -211,7 +211,7 @@ class RetryExecutor:
             else:
                 delay = 0.0
 
-            # Execute the function
+                # Execute the function
             start_time = time.time()
             try:
                 result = func(*args, **kwargs)
@@ -256,7 +256,7 @@ class RetryExecutor:
                     )
                     context.trigger_retry_callback(e, next_delay)
 
-        # All retries exhausted
+                    # All retries exhausted
         error = MaxRetriesExceeded(
             attempts=attempt,
             last_exception=last_exception,
@@ -310,7 +310,7 @@ class RetryExecutor:
                 context.trigger_failure_callback(error)
                 raise error
 
-            # Calculate delay for this attempt
+                # Calculate delay for this attempt
             if attempt > 0:
                 base_delay = self.strategy.get_delay(attempt - 1)
                 delay = self.jitter_strategy.apply(
@@ -328,7 +328,7 @@ class RetryExecutor:
             else:
                 delay = 0.0
 
-            # Execute the function
+                # Execute the function
             start_time = time.time()
             try:
                 result = await func(*args, **kwargs)
@@ -373,7 +373,7 @@ class RetryExecutor:
                     )
                     context.trigger_retry_callback(e, next_delay)
 
-        # All retries exhausted
+                    # All retries exhausted
         error = MaxRetriesExceeded(
             attempts=attempt,
             last_exception=last_exception,

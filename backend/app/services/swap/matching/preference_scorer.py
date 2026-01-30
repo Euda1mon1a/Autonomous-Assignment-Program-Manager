@@ -44,7 +44,7 @@ class PreferenceScorer:
     - Workload balancing preferences
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize preference scorer.
 
@@ -158,7 +158,7 @@ class PreferenceScorer:
                 "message": "Insufficient historical data",
             }
 
-        # Analyze patterns
+            # Analyze patterns
         accepted_swaps = [s for s in swaps if s.status == SwapStatus.EXECUTED]
 
         rejected_swaps = [s for s in swaps if s.status == SwapStatus.REJECTED]
@@ -169,13 +169,13 @@ class PreferenceScorer:
         for month in set(accepted_months):
             month_preference[month] = accepted_months.count(month)
 
-        # Preferred days of week
+            # Preferred days of week
         accepted_days = [s.source_week.weekday() for s in accepted_swaps]
         day_preference = {}
         for day in set(accepted_days):
             day_preference[day] = accepted_days.count(day)
 
-        # Success rate
+            # Success rate
         total = len(swaps)
         success_rate = len(accepted_swaps) / total if total > 0 else 0.0
 
@@ -200,7 +200,7 @@ class PreferenceScorer:
             "analysis_period_days": days,
         }
 
-    # ===== Private Scoring Methods =====
+        # ===== Private Scoring Methods =====
 
     async def _score_explicit_preferences(
         self,
@@ -294,7 +294,7 @@ class PreferenceScorer:
         else:
             proximity_score = 0.4
 
-        # Same season/month bonus
+            # Same season/month bonus
         month_diff = abs(week_a.month - week_b.month)
 
         if month_diff <= 1:
@@ -304,7 +304,7 @@ class PreferenceScorer:
         else:
             season_score = 0.6
 
-        # Combine scores
+            # Combine scores
         return (proximity_score * 0.6) + (season_score * 0.4)
 
     async def _score_workload_fairness(

@@ -9,7 +9,7 @@ from app.repositories.base import BaseRepository
 class UserRepository(BaseRepository[User]):
     """Repository for User entity operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(User, db)
 
     def get_by_username(self, username: str) -> User | None:

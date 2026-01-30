@@ -74,21 +74,21 @@ def _calculate_internal_energy(assignments: list[Any]) -> float:
         if person_id:
             person_counts[person_id] += 1
 
-    # Energy contribution from workload imbalance
+            # Energy contribution from workload imbalance
     if person_counts:
         counts = list(person_counts.values())
         mean_count = sum(counts) / len(counts)
         variance = sum((c - mean_count) ** 2 for c in counts) / len(counts)
         energy += variance * 0.1  # Workload imbalance penalty
 
-    # Energy contribution from constraint violations
+        # Energy contribution from constraint violations
     for assignment in assignments:
         # Check for score field (lower score = higher energy)
         score = getattr(assignment, "score", None)
         if score is not None:
             energy += (1.0 - score) * 0.5  # Preference mismatch penalty
 
-        # Check for violation flags
+            # Check for violation flags
         has_violation = getattr(assignment, "has_violation", False)
         if has_violation:
             energy += 1.0  # Hard constraint violation
@@ -112,7 +112,7 @@ def _calculate_configuration_entropy(assignments: list[Any]) -> float:
     if not assignments:
         return 0.0
 
-    # Count unique configurations (person-rotation pairs)
+        # Count unique configurations (person-rotation pairs)
     configs: Counter = Counter()
     for assignment in assignments:
         person_id = str(getattr(assignment, "person_id", "unknown"))
@@ -122,7 +122,7 @@ def _calculate_configuration_entropy(assignments: list[Any]) -> float:
     if not configs:
         return 0.0
 
-    # Calculate Shannon entropy
+        # Calculate Shannon entropy
     total = sum(configs.values())
     entropy = 0.0
     for count in configs.values():
@@ -159,7 +159,7 @@ def calculate_free_energy(
     if temperature <= 0:
         temperature = 0.001  # Avoid division by zero
 
-    # Calculate components
+        # Calculate components
     internal_energy = _calculate_internal_energy(assignments)
     entropy = _calculate_configuration_entropy(assignments)
     entropy_term = temperature * entropy
@@ -196,7 +196,7 @@ class EnergyLandscapeAnalyzer:
     - Identifying robust configurations
     """
 
-    def __init__(self, sample_size: int = 100):
+    def __init__(self, sample_size: int = 100) -> None:
         """
         Initialize analyzer.
 
@@ -232,7 +232,7 @@ class EnergyLandscapeAnalyzer:
                 "estimated_basin_size": 0,
             }
 
-        # Calculate current energy
+            # Calculate current energy
         current_metrics = calculate_free_energy(assignments, temperature)
         current_energy = current_metrics.free_energy
 
@@ -249,7 +249,7 @@ class EnergyLandscapeAnalyzer:
             energies.append(perturbed_energy)
             gradients.append(perturbed_energy - current_energy)
 
-        # Analyze results
+            # Analyze results
         energy_array = np.array(energies)
         gradient_array = np.array(gradients)
 
@@ -302,7 +302,7 @@ class EnergyLandscapeAnalyzer:
         if len(assignments) <= 1:
             return assignments
 
-        # Create a shallow copy and randomly swap a few elements
+            # Create a shallow copy and randomly swap a few elements
         perturbed = list(assignments)
         num_swaps = max(1, len(perturbed) // 10)
 
@@ -343,7 +343,7 @@ class EnergyLandscapeAnalyzer:
                 current = candidate
                 current_energy = candidate_energy
 
-        # Record the found minimum
+                # Record the found minimum
         minima.append(
             {
                 "energy": current_energy,
@@ -435,7 +435,7 @@ def boltzmann_probability(energy_delta: float, temperature: float) -> float:
     if temperature <= 0:
         return 0.0  # Never accept worsening at T=0
 
-    # Boltzmann factor
+        # Boltzmann factor
     exponent = -energy_delta / temperature
     if exponent < -700:  # Avoid underflow
         return 0.0

@@ -60,7 +60,7 @@ class CompatibilityChecker:
         self,
         db: AsyncSession,
         min_compatibility_score: float = 0.6,
-    ):
+    ) -> None:
         """
         Initialize compatibility checker.
 
@@ -97,14 +97,14 @@ class CompatibilityChecker:
         if request_a.source_faculty_id == request_b.source_faculty_id:
             blocking_issues.append("Both requests from same faculty")
 
-        # Check status
+            # Check status
         if request_a.status != SwapStatus.PENDING:
             blocking_issues.append(f"Request A has status {request_a.status}")
 
         if request_b.status != SwapStatus.PENDING:
             blocking_issues.append(f"Request B has status {request_b.status}")
 
-        # If we have blocking issues, return early
+            # If we have blocking issues, return early
         if blocking_issues:
             return CompatibilityResult(
                 compatible=False,
@@ -122,7 +122,7 @@ class CompatibilityChecker:
                 recommendations=recommendations,
             )
 
-        # Calculate individual scores
+            # Calculate individual scores
         schedule_score = await self._score_schedule_compatibility(request_a, request_b)
         preference_score = await self._score_preference_alignment(request_a, request_b)
         workload_score = await self._score_workload_balance(request_a, request_b)
@@ -151,7 +151,7 @@ class CompatibilityChecker:
         if workload_score < 0.5:
             warnings.append("Significant workload imbalance")
 
-        # Generate recommendations
+            # Generate recommendations
         if preference_score > 0.8:
             recommendations.append("Strong preference alignment - highly recommended")
 
@@ -212,7 +212,7 @@ class CompatibilityChecker:
             result = await self.check_compatibility(request, candidate)
             results.append((candidate, result))
 
-        # Sort by overall score (highest first)
+            # Sort by overall score (highest first)
         results.sort(
             key=lambda x: x[1].score.overall_score,
             reverse=True,
@@ -220,7 +220,7 @@ class CompatibilityChecker:
 
         return results
 
-    # ===== Private Scoring Methods =====
+        # ===== Private Scoring Methods =====
 
     async def _score_schedule_compatibility(
         self,
@@ -385,7 +385,7 @@ class CompatibilityChecker:
         else:
             return 0.1
 
-    # ===== Helper Methods =====
+            # ===== Helper Methods =====
 
     async def _get_week_assignments(
         self,

@@ -53,7 +53,7 @@ class SAMLIdentityProvider:
         enabled: bool = True,
         priority: int = 0,
         domains: list[str] | None = None,
-    ):
+    ) -> None:
         """
         Initialize SAML Identity Provider configuration.
 
@@ -98,7 +98,7 @@ class SAMLIdentityProviderRegistry:
     selection.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize empty IdP registry."""
         self._idps: dict[str, SAMLIdentityProvider] = {}
 
@@ -211,8 +211,9 @@ class SAMLIdentityProviderRegistry:
             return True
         return False
 
+        # Global IdP registry
 
-# Global IdP registry
+
 _idp_registry = SAMLIdentityProviderRegistry()
 
 
@@ -220,10 +221,9 @@ def get_idp_registry() -> SAMLIdentityProviderRegistry:
     """Get global IdP registry instance."""
     return _idp_registry
 
-
-# ============================================================================
-# SAML Session Management
-# ============================================================================
+    # ============================================================================
+    # SAML Session Management
+    # ============================================================================
 
 
 class SAMLSession:
@@ -244,7 +244,7 @@ class SAMLSession:
         created_at: datetime | None = None,
         expires_at: datetime | None = None,
         attributes: dict[str, str] | None = None,
-    ):
+    ) -> None:
         """
         Initialize SAML session.
 
@@ -293,7 +293,7 @@ class SAMLSessionManager:
     In production, consider using Redis or database for distributed deployments.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize session manager."""
         self._sessions: dict[str, SAMLSession] = {}
         self._user_sessions: dict[UUID, list[str]] = {}
@@ -437,8 +437,9 @@ class SAMLSessionManager:
             self.destroy_session(session_id)
         return len(expired_ids)
 
+        # Global session manager
 
-# Global session manager
+
 _session_manager = SAMLSessionManager()
 
 
@@ -446,10 +447,9 @@ def get_session_manager() -> SAMLSessionManager:
     """Get global session manager instance."""
     return _session_manager
 
-
-# ============================================================================
-# SAML Authentication Service
-# ============================================================================
+    # ============================================================================
+    # SAML Authentication Service
+    # ============================================================================
 
 
 class SAMLAuthenticationService:
@@ -464,7 +464,7 @@ class SAMLAuthenticationService:
         self,
         idp_registry: SAMLIdentityProviderRegistry | None = None,
         session_manager: SAMLSessionManager | None = None,
-    ):
+    ) -> None:
         """
         Initialize SAML authentication service.
 
@@ -521,7 +521,7 @@ class SAMLAuthenticationService:
                 detail=f"Identity Provider '{idp.name}' is currently disabled",
             )
 
-        # Generate authentication request
+            # Generate authentication request
         request_id, redirect_url = idp.provider.generate_authn_request()
 
         logger.info(
@@ -562,7 +562,7 @@ class SAMLAuthenticationService:
                 detail="Invalid Identity Provider",
             )
 
-        # Parse and validate SAML response
+            # Parse and validate SAML response
         try:
             saml_data = idp.provider.parse_saml_response(
                 saml_response,
@@ -649,7 +649,7 @@ class SAMLAuthenticationService:
             # No SAML sessions, local logout only
             return None
 
-        # Use first session for SLO
+            # Use first session for SLO
         session = sessions[0]
 
         # Get IdP
@@ -659,7 +659,7 @@ class SAMLAuthenticationService:
             self.session_manager.destroy_user_sessions(user_id)
             return None
 
-        # Generate logout request
+            # Generate logout request
         request_id, redirect_url = idp.provider.generate_logout_request(
             name_id=session.name_id,
             session_index=session.session_index,
@@ -711,7 +711,7 @@ class SAMLAuthenticationService:
                 detail="Username or email required in SAML response",
             )
 
-        # Check if user exists
+            # Check if user exists
         result = await db.execute(select(User).where(User.email == email))
         user = result.scalar_one_or_none()
 
@@ -721,7 +721,7 @@ class SAMLAuthenticationService:
                 await self._update_user_attributes(db, user, attributes)
             return user
 
-        # Create new user (JIT provisioning)
+            # Create new user (JIT provisioning)
         if not self.sso_config.auto_provision_users:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -772,11 +772,11 @@ class SAMLAuthenticationService:
         if "email" in attributes and attributes["email"] != user.email:
             updates["email"] = attributes["email"]
 
-        # Update username if changed
+            # Update username if changed
         if "username" in attributes and attributes["username"] != user.username:
             updates["username"] = attributes["username"]
 
-        # Update role if provided
+            # Update role if provided
         if "role" in attributes and attributes["role"] != user.role:
             updates["role"] = attributes["role"]
 
@@ -800,10 +800,9 @@ class SAMLAuthenticationService:
         )
         await db.commit()
 
-
-# ============================================================================
-# Utility Functions
-# ============================================================================
+        # ============================================================================
+        # Utility Functions
+        # ============================================================================
 
 
 async def initialize_default_idp() -> SAMLIdentityProvider | None:
@@ -821,7 +820,7 @@ async def initialize_default_idp() -> SAMLIdentityProvider | None:
         logger.info("SAML SSO is not enabled")
         return None
 
-    # Validate required configuration
+        # Validate required configuration
     if not sso_config.saml.entity_id:
         logger.error("SAML entity_id not configured")
         return None
@@ -834,7 +833,7 @@ async def initialize_default_idp() -> SAMLIdentityProvider | None:
         logger.error("SAML idp_sso_url not configured")
         return None
 
-    # Register default IdP
+        # Register default IdP
     registry = get_idp_registry()
     idp = registry.register(
         idp_id="default",

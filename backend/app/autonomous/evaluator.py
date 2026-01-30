@@ -82,7 +82,7 @@ class ScoreComponent:
     weighted_value: float = 0.0
     details: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.weighted_value = self.raw_value * self.weight
 
 
@@ -232,7 +232,7 @@ class ScheduleEvaluator:
         self,
         db: Session,
         resilience_config: ResilienceConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize the evaluator.
 
@@ -285,7 +285,7 @@ class ScheduleEvaluator:
                 .all()
             )
 
-        # 1. ACGME Compliance (hard constraints)
+            # 1. ACGME Compliance (hard constraints)
         acgme_component, acgme_violations = self._evaluate_acgme(
             assignments, start_date, end_date
         )
@@ -324,7 +324,7 @@ class ScheduleEvaluator:
         if not hard_pass:
             total_score = 0.0
 
-        # Soft score (for comparing invalid schedules)
+            # Soft score (for comparing invalid schedules)
         soft_score = sum(
             c.weighted_value for c in components if c.name != "acgme_compliance"
         )
@@ -386,7 +386,7 @@ class ScheduleEvaluator:
                 )
             )
 
-        # Calculate score: start at 1.0, subtract penalties
+            # Calculate score: start at 1.0, subtract penalties
         raw_score = 1.0
         for v in violations:
             raw_score -= v.penalty
@@ -419,7 +419,7 @@ class ScheduleEvaluator:
                 details="No blocks in period",
             )
 
-        # Count unique blocks with assignments
+            # Count unique blocks with assignments
         assigned_blocks = {a.block_id for a in assignments}
 
         # Only count weekday blocks
@@ -474,7 +474,7 @@ class ScheduleEvaluator:
                     )
                 )
 
-            # N-2 compliance (pair faculty loss)
+                # N-2 compliance (pair faculty loss)
             if not health.n2_pass:
                 raw_score -= 0.15
                 violations.append(
@@ -486,7 +486,7 @@ class ScheduleEvaluator:
                     )
                 )
 
-            # Utilization level
+                # Utilization level
             util_rate = health.utilization.utilization_rate
             if util_rate > 0.95:
                 raw_score -= 0.30
@@ -557,7 +557,7 @@ class ScheduleEvaluator:
                 details="No assignments to balance",
             )
 
-        # Count assignments per person
+            # Count assignments per person
         counts: dict[UUID, int] = {}
         for a in assignments:
             counts[a.person_id] = counts.get(a.person_id, 0) + 1
@@ -570,7 +570,7 @@ class ScheduleEvaluator:
                 details="Only one person assigned",
             )
 
-        # Calculate coefficient of variation
+            # Calculate coefficient of variation
         values = list(counts.values())
         mean = sum(values) / len(values)
         if mean == 0:
@@ -580,8 +580,8 @@ class ScheduleEvaluator:
             std_dev = variance**0.5
             cv = std_dev / mean
 
-        # Convert CV to score: CV of 0 = perfect (1.0), CV of 1 = poor (0.0)
-        # CV > 1 is very unbalanced
+            # Convert CV to score: CV of 0 = perfect (1.0), CV of 1 = poor (0.0)
+            # CV > 1 is very unbalanced
         raw_score = max(0.0, 1.0 - cv)
 
         return ScoreComponent(
@@ -616,7 +616,7 @@ class ScheduleEvaluator:
                 details="No assignments or faculty to evaluate",
             )
 
-        # Get faculty IDs
+            # Get faculty IDs
         faculty_ids = {f.id for f in faculty}
 
         # Get faculty preferences
@@ -641,7 +641,7 @@ class ScheduleEvaluator:
                         (assignment, block)
                     )
 
-        # Score calculation
+                    # Score calculation
         total_checks = 0
         satisfied_checks = 0
         blocked_week_violations = 0
@@ -659,7 +659,7 @@ class ScheduleEvaluator:
                 if not block.date:
                     continue
 
-                # Get week start (ISO format for comparison)
+                    # Get week start (ISO format for comparison)
                 week_start = block.date.strftime("%Y-%m-%d")
 
                 total_checks += 1
@@ -675,7 +675,7 @@ class ScheduleEvaluator:
                     # Neutral - count as satisfied
                     satisfied_checks += 1
 
-        # Calculate raw score
+                    # Calculate raw score
         if total_checks == 0:
             raw_score = 1.0
             details = "No preference checks needed"

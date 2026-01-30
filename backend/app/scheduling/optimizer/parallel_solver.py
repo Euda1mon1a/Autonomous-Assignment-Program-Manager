@@ -149,7 +149,7 @@ class ParallelSolver:
         num_solvers: int = 4,
         timeout_seconds: int = 300,
         early_stop_threshold: float | None = None,
-    ):
+    ) -> None:
         """
         Initialize parallel solver with configuration.
 
@@ -236,7 +236,7 @@ class ParallelSolver:
             task = self._run_solver_instance(i, problem, solver_func)
             tasks.append(task)
 
-        # Run all solvers in parallel
+            # Run all solvers in parallel
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Process results
@@ -259,7 +259,7 @@ class ParallelSolver:
                 error="All solvers failed",
             )
 
-        # Return best solution (lowest objective value)
+            # Return best solution (lowest objective value)
         best_result = min(valid_results, key=lambda r: r.objective_value)
 
         logger.info(
@@ -549,7 +549,7 @@ class AdaptiveParallelSolver(ParallelSolver):
             )
             tasks.append(task)
 
-        # Monitor progress and adapt
+            # Monitor progress and adapt
         best_objective = float("inf")
         elapsed = 0
 
@@ -579,11 +579,11 @@ class AdaptiveParallelSolver(ParallelSolver):
                                     t.cancel()
                             break
 
-            # All tasks complete
+                            # All tasks complete
             if len(done_tasks) == len(tasks):
                 break
 
-        # Gather results
+                # Gather results
         results = []
         for task in tasks:
             if task.done() and not task.exception():
@@ -600,5 +600,5 @@ class AdaptiveParallelSolver(ParallelSolver):
                 error="No solutions found",
             )
 
-        # Return best result
+            # Return best result
         return min(results, key=lambda r: r.objective_value)

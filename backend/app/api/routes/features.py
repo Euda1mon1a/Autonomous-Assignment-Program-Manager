@@ -191,7 +191,7 @@ async def delete_feature_flag(
     reason: str | None = Query(None, description="Reason for deletion"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
-):
+) -> None:
     """
     Delete a feature flag.
 
@@ -361,7 +361,7 @@ async def _get_flags_by_environment(db: Session) -> dict[str, Any]:
             if flag.environments is None or env in flag.environments:
                 env_flags.append(flag)
 
-        # Categorize flags
+                # Categorize flags
         enabled = [f.key for f in env_flags if f.enabled]
         disabled = [f.key for f in env_flags if not f.enabled]
         rollout_percentages = {}

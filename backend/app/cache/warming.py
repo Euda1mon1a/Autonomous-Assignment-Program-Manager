@@ -272,7 +272,7 @@ class CacheWarmer:
         self,
         cache_namespace: str = "default",
         config: CacheWarmingConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize cache warmer.
 
@@ -399,7 +399,7 @@ class CacheWarmer:
             self.progress.start_time = datetime.utcnow()
             self.progress.errors.clear()
 
-        # Sort warming functions by priority
+            # Sort warming functions by priority
         sorted_functions = sorted(
             self._warming_functions.items(),
             key=lambda x: self._get_priority_value(x[1][1]),
@@ -538,7 +538,7 @@ class CacheWarmer:
             f"(priority >= {priority_threshold.value})"
         )
 
-        async def refresh_loop():
+        async def refresh_loop() -> None:
             """Periodic refresh loop."""
             while True:
                 try:
@@ -552,7 +552,8 @@ class CacheWarmer:
                 except Exception as e:
                     logger.error(f"Error in scheduled refresh: {e}", exc_info=True)
 
-        # Start scheduled task
+                    # Start scheduled task
+
         self._scheduled_task = asyncio.create_task(refresh_loop())
 
     async def on_cache_miss(
@@ -590,14 +591,15 @@ class CacheWarmer:
         with self._metrics_lock:
             self.metrics.cache_misses_detected += 1
 
-        # Track access pattern for prediction
+            # Track access pattern for prediction
         await self._track_access(cache_key)
 
         # Cancel pending lazy warm for this key (debouncing)
         if cache_key in self._pending_lazy_warms:
             self._pending_lazy_warms[cache_key].cancel()
 
-        # Schedule lazy warming
+            # Schedule lazy warming
+
         async def lazy_warm_task():
             """Lazy warming task with debounce delay."""
             try:
@@ -635,7 +637,8 @@ class CacheWarmer:
                 if cache_key in self._pending_lazy_warms:
                     del self._pending_lazy_warms[cache_key]
 
-        # Create and store task
+                    # Create and store task
+
         task = asyncio.create_task(lazy_warm_task())
         self._pending_lazy_warms[cache_key] = task
 
@@ -737,7 +740,7 @@ class CacheWarmer:
         with self._metrics_lock:
             metrics_dict = self.metrics.to_dict()
 
-        # Add cache statistics
+            # Add cache statistics
         cache_stats = self.cache.get_stats()
         metrics_dict["cache_stats"] = cache_stats
 
@@ -771,14 +774,14 @@ class CacheWarmer:
             logger.debug("Background warming is disabled")
             return
 
-        # Cancel existing background task
+            # Cancel existing background task
         if self._background_task and not self._background_task.done():
             logger.info("Background warming task already running")
             return
 
         logger.info("Starting background warming task")
 
-        async def background_loop():
+        async def background_loop() -> None:
             """Background warming loop."""
             while True:
                 try:
@@ -792,7 +795,8 @@ class CacheWarmer:
                 except Exception as e:
                     logger.error(f"Error in background warming: {e}", exc_info=True)
 
-        # Start background task
+                    # Start background task
+
         self._background_task = asyncio.create_task(background_loop())
 
     async def stop_background_warming(self) -> None:
@@ -811,7 +815,7 @@ class CacheWarmer:
             except asyncio.CancelledError:
                 pass
 
-    # Private methods
+                # Private methods
 
     async def _warm_entries(
         self,
@@ -847,7 +851,7 @@ class CacheWarmer:
                 task = self._warm_single_entry(key, entries[key], ttl)
                 tasks.append(task)
 
-            # Wait for batch with concurrency limit
+                # Wait for batch with concurrency limit
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             # Count successes and failures
@@ -859,7 +863,7 @@ class CacheWarmer:
                 else:
                     failed_count += 1
 
-        # Update metrics
+                    # Update metrics
         elapsed_ms = (time.time() - start_time) * 1000
         with self._metrics_lock:
             self.metrics.total_warmed += len(entries)
@@ -1062,8 +1066,9 @@ class CacheWarmer:
         }
         return priority_values.get(priority, 50)
 
+        # Global cache warmer instances by namespace
 
-# Global cache warmer instances by namespace
+
 _warmer_instances: dict[str, CacheWarmer] = {}
 _warmer_lock = RLock()
 

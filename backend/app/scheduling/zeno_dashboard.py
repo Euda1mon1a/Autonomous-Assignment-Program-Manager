@@ -306,7 +306,8 @@ class ZenoDashboard:
             "last_successful_evolution": (
                 (
                     timestamp.isoformat()
-                    if (timestamp := self.governor.solver_attempts[-1].get("timestamp")) is not None
+                    if (timestamp := self.governor.solver_attempts[-1].get("timestamp"))
+                    is not None
                     else None
                 )
                 if self.governor.solver_attempts

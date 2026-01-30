@@ -12,7 +12,7 @@ from typing import Any
 class MarkdownGenerator:
     """Generates Markdown documentation from OpenAPI schemas."""
 
-    def __init__(self, openapi_schema: dict[str, Any]):
+    def __init__(self, openapi_schema: dict[str, Any]) -> None:
         """
         Initialize the Markdown generator.
 
@@ -101,7 +101,7 @@ class MarkdownGenerator:
             for server in servers:
                 overview += f"- **{server.get('description', 'Server')}:** `{server.get('url', 'N/A')}`\n"
 
-        # Add compliance information
+                # Add compliance information
         compliance = self.schema.get("x-compliance", {})
         if compliance:
             overview += "\n### Compliance\n\n"
@@ -144,7 +144,7 @@ This API uses the following authentication methods:
             if description:
                 auth += f"\n{description}\n"
 
-            # Add example
+                # Add example
             if name == "bearerAuth":
                 auth += """
 **Example:**
@@ -222,7 +222,7 @@ When the rate limit is exceeded, the API returns a `429 Too Many Requests` statu
 
                 endpoints_by_tag[tag].append((path, method, operation))
 
-        # Generate documentation for each tag
+                # Generate documentation for each tag
         for tag, operations in sorted(endpoints_by_tag.items()):
             endpoints += f"### {tag.title()}\n\n"
 
@@ -258,7 +258,7 @@ When the rate limit is exceeded, the API returns a `429 Too Many Requests` statu
         if description:
             doc += f"{description}\n\n"
 
-        # Parameters
+            # Parameters
         parameters = operation.get("parameters", [])
         if parameters:
             doc += "**Parameters:**\n\n"
@@ -277,7 +277,7 @@ When the rate limit is exceeded, the API returns a `429 Too Many Requests` statu
 
             doc += "\n"
 
-        # Request body
+            # Request body
         request_body = operation.get("requestBody", {})
         if request_body:
             doc += "**Request Body:**\n\n"
@@ -292,7 +292,7 @@ When the rate limit is exceeded, the API returns a `429 Too Many Requests` statu
                     doc += json.dumps(example, indent=2)
                     doc += "\n```\n\n"
 
-        # Responses
+                    # Responses
         responses = operation.get("responses", {})
         if responses:
             doc += "**Responses:**\n\n"
@@ -311,7 +311,7 @@ When the rate limit is exceeded, the API returns a `429 Too Many Requests` statu
 
             doc += "\n"
 
-        # Code examples
+            # Code examples
         doc += "**Code Examples:**\n\n"
         doc += self._generate_code_examples(path, method)
 

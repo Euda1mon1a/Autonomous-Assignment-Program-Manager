@@ -105,7 +105,7 @@ class SecurityLogger:
     - Compliance audit trail
     """
 
-    def __init__(self, enable_alerts: bool = True):
+    def __init__(self, enable_alerts: bool = True) -> None:
         """
         Initialize security logger.
 
@@ -131,7 +131,7 @@ class SecurityLogger:
         else:
             log_level = "info"
 
-        # Log the event
+            # Log the event
         bound_logger = logger.bind(**bind_context_to_logger(), security=True)
         getattr(bound_logger, log_level)(
             f"Security event: {event.event_type.value}",
@@ -447,8 +447,9 @@ class SecurityLogger:
             **event.to_dict(),
         )
 
+        # Global security logger instance
 
-# Global security logger instance
+
 _global_security_logger: SecurityLogger | None = None
 
 
@@ -465,8 +466,7 @@ def set_security_logger(security_logger: SecurityLogger) -> None:
     global _global_security_logger
     _global_security_logger = security_logger
 
-
-# Convenience functions
+    # Convenience functions
 
 
 def log_auth_success(

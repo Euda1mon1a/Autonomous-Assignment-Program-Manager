@@ -39,7 +39,7 @@ class UserPreferences:
         timezone: str = "UTC",
         digest_enabled: bool = False,
         digest_frequency: str = "daily",
-    ):
+    ) -> None:
         """Initialize user preferences."""
         self.user_id = user_id
         self.enabled_channels = enabled_channels or ["in_app", "email"]
@@ -83,7 +83,7 @@ class PreferenceManager:
         digest_frequency="daily",
     )
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize preference manager.
 
@@ -107,7 +107,7 @@ class PreferenceManager:
         if user_id in self._cache:
             return self._cache[user_id]
 
-        # Load from database
+            # Load from database
         result = await self.db.execute(
             select(NotificationPreferenceRecord).where(
                 NotificationPreferenceRecord.user_id == user_id
@@ -139,7 +139,7 @@ class PreferenceManager:
                 digest_frequency=self.DEFAULT_PREFERENCES.digest_frequency,
             )
 
-        # Cache and return
+            # Cache and return
         self._cache[user_id] = preferences
         return preferences
 
@@ -156,7 +156,7 @@ class PreferenceManager:
         if not uncached_ids:
             return
 
-        # Bulk load from database
+            # Bulk load from database
         result = await self.db.execute(
             select(NotificationPreferenceRecord).where(
                 NotificationPreferenceRecord.user_id.in_(uncached_ids)
@@ -219,7 +219,7 @@ class PreferenceManager:
             )
             return False
 
-        # Check quiet hours
+            # Check quiet hours
         if await self._is_in_quiet_hours(preferences):
             # Allow critical notifications during quiet hours
             if notification_type == NotificationType.ACGME_WARNING:
@@ -239,8 +239,8 @@ class PreferenceManager:
         if preferences.quiet_hours_start is None or preferences.quiet_hours_end is None:
             return False
 
-        # Get current hour in user's timezone
-        # NOTE: For simplicity, using UTC. In production, use user's timezone
+            # Get current hour in user's timezone
+            # NOTE: For simplicity, using UTC. In production, use user's timezone
         current_hour = datetime.utcnow().hour
 
         start = preferences.quiet_hours_start

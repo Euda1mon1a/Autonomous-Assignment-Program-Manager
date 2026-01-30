@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class DashboardData:
     """Provides comprehensive dashboard data."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
         self.analytics_engine = AnalyticsEngine(db)
         self.kpi_calculator = KPICalculator(db)

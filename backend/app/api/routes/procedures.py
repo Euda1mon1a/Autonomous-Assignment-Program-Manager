@@ -104,7 +104,7 @@ async def delete_procedure(
     procedure_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete a procedure. Requires authentication."""
     controller = ProcedureController(db)
     controller.delete_procedure(procedure_id)

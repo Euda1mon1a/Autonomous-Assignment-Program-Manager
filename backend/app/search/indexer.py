@@ -387,7 +387,7 @@ class SearchIndexer:
         namespace: str = "search",
         key_prefix: str = "search",
         enable_metrics: bool = True,
-    ):
+    ) -> None:
         """
         Initialize search indexer service.
 
@@ -547,7 +547,7 @@ class SearchIndexer:
                 else:
                     version = 1
 
-            # Create index version
+                    # Create index version
             index_version = IndexVersion(
                 index_name=index_name,
                 version=version,
@@ -582,7 +582,7 @@ class SearchIndexer:
                 self._indices[index_version.versioned_name] = index_version
                 index_version.status = IndexStatus.ACTIVE
 
-            # Create/update alias to point to new version
+                # Create/update alias to point to new version
             await self._update_alias(index_name, index_version.versioned_name)
 
             # Initialize health monitoring
@@ -655,12 +655,12 @@ class SearchIndexer:
             else:
                 actual_index = index_name
 
-            # Get mapping for validation
+                # Get mapping for validation
             mapping = await self._get_mapping(actual_index)
             if mapping:
                 self._validate_document(document, mapping)
 
-            # Store document
+                # Store document
             doc_key = self._get_index_key(actual_index, doc_id)
             await redis_client.set(doc_key, json.dumps(document))
 
@@ -672,11 +672,11 @@ class SearchIndexer:
             if mapping:
                 await self._index_fields(actual_index, doc_id, document, mapping)
 
-            # Update document count
+                # Update document count
             if is_new:
                 await self._increment_doc_count(actual_index)
 
-            # Update metrics
+                # Update metrics
             duration_ms = (time.time() - start_time) * 1000
             if self.enable_metrics:
                 with self._metrics_lock:
@@ -686,7 +686,7 @@ class SearchIndexer:
                         self.metrics.total_updated += 1
                     self.metrics.total_index_time_ms += duration_ms
 
-            # Update health
+                    # Update health
             if actual_index in self._health:
                 health = self._health[actual_index]
                 health.last_index_time = datetime.utcnow()
@@ -770,7 +770,7 @@ class SearchIndexer:
             else:
                 actual_index = index_name
 
-            # Get mapping
+                # Get mapping
             mapping = await self._get_mapping(actual_index)
 
             indexed_count = 0
@@ -797,7 +797,7 @@ class SearchIndexer:
                                 error_count += 1
                                 continue
 
-                        # Store document
+                                # Store document
                         doc_key = self._get_index_key(actual_index, doc_id)
                         pipe.set(doc_key, json.dumps(document))
 
@@ -805,7 +805,7 @@ class SearchIndexer:
                         docs_set_key = self._get_index_docs_set_key(actual_index)
                         pipe.sadd(docs_set_key, doc_id)
 
-                    # Execute batch
+                        # Execute batch
                     await pipe.execute()
 
                     # Index fields (separate pass for simplicity)
@@ -838,7 +838,7 @@ class SearchIndexer:
                     )
                     error_count += len(batch)
 
-            # Update document count
+                    # Update document count
             total_docs = await redis_client.scard(
                 self._get_index_docs_set_key(actual_index)
             )
@@ -862,7 +862,7 @@ class SearchIndexer:
                     self.metrics.bulk_operations += 1
                     self.metrics.total_index_time_ms += duration_ms
 
-            # Update health
+                    # Update health
             if actual_index in self._health:
                 health = self._health[actual_index]
                 health.last_index_time = datetime.utcnow()
@@ -940,11 +940,11 @@ class SearchIndexer:
                 # Clear existing data
                 await self._clear_index(target_index)
 
-            # Update status to reindexing
+                # Update status to reindexing
             if target_index in self._health:
                 self._health[target_index].status = IndexStatus.REINDEXING
 
-            # Bulk index all documents
+                # Bulk index all documents
             batch = []
             total_indexed = 0
             total_errors = 0
@@ -963,7 +963,7 @@ class SearchIndexer:
                     total_errors += result["errors"]
                     batch = []
 
-            # Index remaining documents
+                    # Index remaining documents
             if batch:
                 result = await self.bulk_index(
                     target_index,
@@ -974,11 +974,11 @@ class SearchIndexer:
                 total_indexed += result["indexed"]
                 total_errors += result["errors"]
 
-            # Switch alias if new version was created
+                # Switch alias if new version was created
             if new_mapping:
                 await self._update_alias(index_name, target_index)
 
-            # Update status
+                # Update status
             if target_index in self._health:
                 health = self._health[target_index]
                 health.status = IndexStatus.ACTIVE
@@ -1053,7 +1053,7 @@ class SearchIndexer:
             else:
                 actual_index = index_name
 
-            # Tokenize query
+                # Tokenize query
             tokens = self._tokenize(query)
 
             # Get mapping to determine searchable fields
@@ -1066,7 +1066,7 @@ class SearchIndexer:
                     "duration_ms": 0.0,
                 }
 
-            # Determine which fields to search
+                # Determine which fields to search
             if fields is None:
                 # Search all text fields
                 search_fields = [
@@ -1077,7 +1077,7 @@ class SearchIndexer:
             else:
                 search_fields = fields
 
-            # Find matching documents
+                # Find matching documents
             doc_scores: dict[str, float] = defaultdict(float)
 
             for token in tokens:
@@ -1091,7 +1091,7 @@ class SearchIndexer:
                     for doc_id in doc_ids:
                         doc_scores[doc_id] += 1.0 * boost
 
-            # Sort by score
+                        # Sort by score
             sorted_docs = sorted(
                 doc_scores.items(),
                 key=lambda x: x[1],
@@ -1123,7 +1123,7 @@ class SearchIndexer:
                     self.metrics.total_searches += 1
                     self.metrics.total_search_time_ms += duration_ms
 
-            # Update health
+                    # Update health
             if actual_index in self._health:
                 health = self._health[actual_index]
                 health.search_count += 1
@@ -1191,7 +1191,7 @@ class SearchIndexer:
             else:
                 actual_index = index_name
 
-            # Delete document
+                # Delete document
             doc_key = self._get_index_key(actual_index, doc_id)
             deleted = await redis_client.delete(doc_key)
 
@@ -1205,7 +1205,7 @@ class SearchIndexer:
                     with self._metrics_lock:
                         self.metrics.total_deleted += 1
 
-                # Update document count
+                        # Update document count
                 await self._decrement_doc_count(actual_index)
 
                 logger.debug(f"Deleted document '{doc_id}' from index '{actual_index}'")
@@ -1250,7 +1250,7 @@ class SearchIndexer:
                 if not metadata:
                     return None
 
-                # Create health object
+                    # Create health object
                 health = IndexHealth(
                     index_name=actual_index,
                     status=IndexStatus(metadata.get("status", "active")),
@@ -1346,7 +1346,7 @@ class SearchIndexer:
             self.metrics = IndexingMetrics()
         logger.debug("Reset indexing metrics")
 
-    # Internal helper methods
+        # Internal helper methods
 
     async def _get_index_versions(self, index_name: str) -> list[IndexVersion]:
         """Get all versions of an index."""
@@ -1437,7 +1437,7 @@ class SearchIndexer:
             if target:
                 return target
 
-            # No alias, assume it's a direct index name
+                # No alias, assume it's a direct index name
             return index_name
 
         except (redis.ConnectionError, redis.RedisError) as e:
@@ -1497,7 +1497,7 @@ class SearchIndexer:
             if field not in document:
                 raise ValueError(f"Required field '{field}' missing from document")
 
-        # Check field types (basic validation)
+                # Check field types (basic validation)
         for field, value in document.items():
             if field in mapping.fields:
                 field_type = mapping.fields[field]
@@ -1542,7 +1542,7 @@ class SearchIndexer:
                     else:
                         tokens = [str(value).lower()]
 
-                    # Add to inverted index
+                        # Add to inverted index
                     for token in tokens:
                         field_key = self._get_field_index_key(index_name, field, token)
                         pipe.sadd(field_key, doc_id)
@@ -1574,13 +1574,13 @@ class SearchIndexer:
         if analyzer == FieldAnalyzer.KEYWORD:
             return [text.lower()]
 
-        # Standard tokenization: lowercase, split on non-alphanumeric
+            # Standard tokenization: lowercase, split on non-alphanumeric
         text = text.lower()
 
         if analyzer == FieldAnalyzer.WHITESPACE:
             return text.split()
 
-        # Standard: split on non-alphanumeric
+            # Standard: split on non-alphanumeric
         import re
 
         tokens = re.findall(r"\w+", text)
@@ -1666,24 +1666,25 @@ class SearchIndexer:
             error_penalty = min(health.error_count * 5, 30)
             score -= error_penalty
 
-        # Penalize for slow indexing
+            # Penalize for slow indexing
         if health.avg_index_time_ms > 100:
             speed_penalty = min((health.avg_index_time_ms - 100) / 10, 20)
             score -= speed_penalty
 
-        # Penalize for slow search
+            # Penalize for slow search
         if health.avg_search_time_ms > 50:
             search_penalty = min((health.avg_search_time_ms - 50) / 5, 20)
             score -= search_penalty
 
-        # Penalize for failed status
+            # Penalize for failed status
         if health.status == IndexStatus.FAILED:
             score = 0.0
 
         return max(0.0, min(100.0, score))
 
+        # Global service instance
 
-# Global service instance
+
 _search_indexer: SearchIndexer | None = None
 _indexer_lock = RLock()
 

@@ -19,7 +19,7 @@ class DatabaseError(AppException):
         table: str | None = None,
         status_code: int = 500,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize database error.
 
         Args:
@@ -44,7 +44,7 @@ class RecordNotFoundError(NotFoundError):
         model: str | None = None,
         record_id: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize record not found error.
 
         Args:
@@ -69,7 +69,7 @@ class DuplicateRecordError(ConflictError):
         field: str | None = None,
         value: Any = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize duplicate record error.
 
         Args:
@@ -96,7 +96,7 @@ class IntegrityConstraintError(DatabaseError):
         constraint_type: str | None = None,
         table: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize integrity constraint error.
 
         Args:
@@ -127,7 +127,7 @@ class ForeignKeyViolationError(IntegrityConstraintError):
         referenced_table: str | None = None,
         referenced_id: Any = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize foreign key violation error.
 
         Args:
@@ -160,7 +160,7 @@ class ConcurrentModificationError(ConflictError):
         expected_version: int | None = None,
         actual_version: int | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize concurrent modification error.
 
         Args:
@@ -187,7 +187,7 @@ class DatabaseConnectionError(DatabaseError):
         message: str = "Unable to connect to database",
         database: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize database connection error.
 
         Args:
@@ -212,7 +212,7 @@ class DatabaseTimeoutError(DatabaseError):
         operation: str | None = None,
         timeout_seconds: int | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize database timeout error.
 
         Args:
@@ -238,7 +238,7 @@ class TransactionError(DatabaseError):
         message: str = "Database transaction failed",
         reason: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize transaction error.
 
         Args:

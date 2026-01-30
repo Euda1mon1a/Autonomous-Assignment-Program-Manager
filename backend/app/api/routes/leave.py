@@ -81,7 +81,7 @@ async def verify_webhook_signature(
             detail="Missing X-Webhook-Timestamp header",
         )
 
-    # Validate timestamp to prevent replay attacks
+        # Validate timestamp to prevent replay attacks
     try:
         webhook_time = datetime.fromtimestamp(int(x_webhook_timestamp))
         current_time = datetime.utcnow()
@@ -99,7 +99,7 @@ async def verify_webhook_signature(
             detail="Invalid timestamp format",
         )
 
-    # Read the raw body for signature verification
+        # Read the raw body for signature verification
     body = await request.body()
 
     # Compute expected HMAC signature
@@ -333,7 +333,7 @@ async def delete_leave(
     leave_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete a leave record."""
     absence = (
         db.execute(select(Absence).where(Absence.id == leave_id))

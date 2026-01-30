@@ -87,7 +87,7 @@ class AbsenceOverlapService:
     - Audit-friendly detailed results
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """Initialize the service with database session."""
         self.db = db
 
@@ -147,7 +147,7 @@ class AbsenceOverlapService:
             if overlap_type == OverlapType.NONE:
                 continue
 
-            # Calculate overlap period
+                # Calculate overlap period
             overlap_start = max(start_date, existing.start_date)
             overlap_end = min(end_date, existing.end_date)
             overlap_days = (overlap_end - overlap_start).days + 1
@@ -192,7 +192,7 @@ class AbsenceOverlapService:
             elif severity == OverlapSeverity.WARNING:
                 validation_warnings.append(description)
 
-        # Determine primary overlap type (most significant)
+                # Determine primary overlap type (most significant)
         primary_overlap_type = self._get_primary_overlap_type(overlap_details)
 
         # Determine if auto-merge is possible
@@ -307,15 +307,15 @@ class AbsenceOverlapService:
         if new_start == existing_start and new_end == existing_end:
             return OverlapType.EXACT
 
-        # Check if new is fully contained within existing
+            # Check if new is fully contained within existing
         if new_start >= existing_start and new_end <= existing_end:
             return OverlapType.CONTAINED
 
-        # Check if new fully contains existing
+            # Check if new fully contains existing
         if new_start <= existing_start and new_end >= existing_end:
             return OverlapType.CONTAINS
 
-        # Check for any overlap (partial)
+            # Check for any overlap (partial)
         if new_start <= existing_end and new_end >= existing_start:
             return OverlapType.PARTIAL
 
@@ -342,14 +342,14 @@ class AbsenceOverlapService:
         if overlap_type == OverlapType.EXACT:
             return OverlapSeverity.CRITICAL
 
-        # Same absence type with significant overlap is critical
+            # Same absence type with significant overlap is critical
         if new_type == existing_type and overlap_type in (
             OverlapType.CONTAINED,
             OverlapType.CONTAINS,
         ):
             return OverlapSeverity.CRITICAL
 
-        # Different types with overlap is a warning
+            # Different types with overlap is a warning
         if overlap_type in (OverlapType.PARTIAL, OverlapType.CONTAINS):
             return OverlapSeverity.WARNING
 
@@ -418,7 +418,7 @@ class AbsenceOverlapService:
         if not overlap_details:
             return OverlapType.NONE
 
-        # Priority order: EXACT > CONTAINED > CONTAINS > PARTIAL
+            # Priority order: EXACT > CONTAINED > CONTAINS > PARTIAL
         priority = {
             OverlapType.EXACT: 4,
             OverlapType.CONTAINED: 3,
@@ -441,7 +441,7 @@ class AbsenceOverlapService:
         if not overlap_details:
             return False
 
-        # Can only auto-merge if single overlap with same type and partial/contains
+            # Can only auto-merge if single overlap with same type and partial/contains
         if len(overlap_details) != 1:
             return False
 

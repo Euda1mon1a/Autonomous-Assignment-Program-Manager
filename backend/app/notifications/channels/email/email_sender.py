@@ -26,7 +26,7 @@ class EmailSender:
     - Error handling and retries
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize email sender."""
         self.smtp_client = SMTPClient()
         self.html_builder = HTMLEmailBuilder()
@@ -75,7 +75,7 @@ class EmailSender:
             if cc:
                 msg["Cc"] = ", ".join(cc)
 
-            # Attach plain text
+                # Attach plain text
             msg.attach(MIMEText(body, "plain"))
 
             # Attach HTML if provided
@@ -86,7 +86,7 @@ class EmailSender:
                 html_body = self.html_builder.build_simple_html(subject, body)
                 msg.attach(MIMEText(html_body, "html"))
 
-            # Send via SMTP
+                # Send via SMTP
             message_id = await self.smtp_client.send(msg)
 
             logger.info("Email sent successfully to %s", to_address)

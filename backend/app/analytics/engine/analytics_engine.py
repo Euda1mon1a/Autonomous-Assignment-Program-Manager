@@ -47,7 +47,7 @@ class AnalyticsEngine:
         )
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize analytics engine.
 
@@ -243,7 +243,7 @@ class AnalyticsEngine:
         if not person:
             raise ValueError(f"Person {person_id} not found")
 
-        # Calculate person-specific metrics
+            # Calculate person-specific metrics
         metrics = await self.calculate_all_metrics(
             start_date, end_date, person_id=person_id
         )

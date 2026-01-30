@@ -166,7 +166,7 @@ class OutboxWriter:
             writer.write_message(...)  # Message not atomic with assignment
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize outbox writer.
 
@@ -211,7 +211,7 @@ class OutboxWriter:
         except (TypeError, ValueError) as e:
             raise ValueError(f"Payload must be JSON-serializable: {e}")
 
-        # Get next sequence number for this aggregate
+            # Get next sequence number for this aggregate
         sequence = self._get_next_sequence(aggregate_type, aggregate_id)
 
         # Create outbox message
@@ -342,7 +342,7 @@ class OutboxRelay:
         db: Session,
         celery_app: Celery | None = None,
         processing_timeout_minutes: int = 5,
-    ):
+    ) -> None:
         """
         Initialize outbox relay.
 
@@ -389,7 +389,7 @@ class OutboxRelay:
         if timeout_stuck_processing:
             self._timeout_stuck_processing()
 
-        # Fetch pending messages (ordered by creation time for FIFO)
+            # Fetch pending messages (ordered by creation time for FIFO)
         messages = self._fetch_pending_messages(batch_size)
 
         logger.info(f"Processing {len(messages)} pending outbox messages")
@@ -707,7 +707,7 @@ class OutboxCleaner:
         db: Session,
         archive_after_hours: int = 24,
         retention_days: int = 30,
-    ):
+    ) -> None:
         """
         Initialize outbox cleaner.
 

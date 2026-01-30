@@ -11,7 +11,7 @@ from uuid import uuid4
 from app.resilience.keystone_analysis import KeystoneAnalyzer
 
 
-def example_keystone_analysis():
+def example_keystone_analysis() -> None:
     """
     Example: Identify keystone faculty and create succession plans.
 
@@ -26,7 +26,7 @@ def example_keystone_analysis():
 
     # Mock data structures (in real use, fetch from database)
     class MockFaculty:
-        def __init__(self, fid, name):
+        def __init__(self, fid, name) -> None:
             self.id = fid
             self.name = name
 
@@ -89,7 +89,7 @@ def example_keystone_analysis():
         print(f"    - Single Point of Failure: {keystone.is_single_point_of_failure}")
         print()
 
-    # Step 2: Simulate cascade for most critical keystone
+        # Step 2: Simulate cascade for most critical keystone
     if keystones:
         print("=" * 80)
         print("STEP 2: Simulating Removal Cascade")
@@ -123,7 +123,7 @@ def example_keystone_analysis():
                 print(f"      Reason: {step['reason']}")
             print()
 
-    # Step 3: Create succession plans
+            # Step 3: Create succession plans
     if keystones:
         print("=" * 80)
         print("STEP 3: Creating Succession Plans")
@@ -165,7 +165,7 @@ def example_keystone_analysis():
                     print(f"    - {measure}")
                 print()
 
-    # Step 4: Summary statistics
+                # Step 4: Summary statistics
     print("=" * 80)
     print("STEP 4: Summary Statistics")
     print("=" * 80)

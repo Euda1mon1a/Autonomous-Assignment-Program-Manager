@@ -48,7 +48,7 @@ class KeystoneVisualizer:
     - Functional redundancy matrices
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.has_networkx = HAS_NETWORKX
         self.has_matplotlib = HAS_MATPLOTLIB
 
@@ -79,7 +79,7 @@ class KeystoneVisualizer:
             logger.warning("No graph provided for visualization")
             return None
 
-        # Create figure
+            # Create figure
         fig, ax = plt.subplots(figsize=(16, 12))
 
         # Build keystone ID set for coloring
@@ -118,7 +118,7 @@ class KeystoneVisualizer:
                 node_colors.append("#888888")
                 node_sizes.append(200)
 
-        # Highlight specific entity if requested
+                # Highlight specific entity if requested
         if highlight_entity:
             highlight_str = str(highlight_entity)
             if highlight_str in graph:
@@ -126,13 +126,13 @@ class KeystoneVisualizer:
                 node_colors[idx] = "#FFFF00"  # Yellow
                 node_sizes[idx] = 1000
 
-        # Layout
+                # Layout
         try:
             pos = nx.spring_layout(graph, k=2, iterations=50, seed=42)
         except Exception:
             pos = nx.circular_layout(graph)
 
-        # Draw edges
+            # Draw edges
         nx.draw_networkx_edges(
             graph,
             pos,
@@ -267,7 +267,7 @@ class KeystoneVisualizer:
                 }
             )
 
-        # Draw cascade levels
+            # Draw cascade levels
         level_height = 0.8 / max(max_level, 1)
 
         for i, level_data in enumerate(levels):
@@ -323,7 +323,7 @@ class KeystoneVisualizer:
                     ec="black",
                 )
 
-        # Summary statistics
+                # Summary statistics
         summary_text = (
             f"Total Affected: {cascade_analysis.total_affected}\n"
             f"Coverage Loss: {cascade_analysis.coverage_loss:.1%}\n"
@@ -415,7 +415,7 @@ class KeystoneVisualizer:
                     )
                     matrix[i, j] = alternatives
 
-        # Create heatmap
+                    # Create heatmap
         fig, ax = plt.subplots(figsize=(14, max(8, num_keystones * 0.5)))
 
         im = ax.imshow(matrix, cmap="RdYlGn", aspect="auto", vmin=0, vmax=5)
@@ -519,7 +519,7 @@ class KeystoneVisualizer:
             if not start_date or not end_date:
                 continue
 
-            # Calculate bar position
+                # Calculate bar position
             start_offset = (start_date - min_date).days
             duration = (end_date - start_date).days
 
@@ -568,7 +568,7 @@ class KeystoneVisualizer:
                         color="black",
                     )
 
-        # X-axis: dates
+                    # X-axis: dates
         ax.set_xlim(-10, date_range + 10)
         ax.set_ylim(-0.5, len(succession_plans) - 0.5)
 

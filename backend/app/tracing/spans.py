@@ -56,7 +56,7 @@ def trace_function(
                     for key, value in attributes.items():
                         span.set_attribute(key, value)
 
-                # Add function info
+                        # Add function info
                 span.set_attribute("function.name", func.__name__)
                 span.set_attribute("function.module", func.__module__)
 
@@ -79,7 +79,7 @@ def trace_function(
                     for key, value in attributes.items():
                         span.set_attribute(key, value)
 
-                # Add function info
+                        # Add function info
                 span.set_attribute("function.name", func.__name__)
                 span.set_attribute("function.module", func.__module__)
 
@@ -92,7 +92,8 @@ def trace_function(
                     span.record_exception(e)
                     raise
 
-        # Return appropriate wrapper based on function type
+                    # Return appropriate wrapper based on function type
+
         import asyncio
 
         if asyncio.iscoroutinefunction(func):
@@ -130,7 +131,7 @@ def create_span(name: str, attributes: dict[str, Any] | None = None):
     return span
 
 
-def add_span_attributes(**attributes):
+def add_span_attributes(**attributes) -> None:
     """
     Add attributes to current span.
 
@@ -149,7 +150,7 @@ def add_span_attributes(**attributes):
             span.set_attribute(key, value)
 
 
-def add_span_event(name: str, attributes: dict[str, Any] | None = None):
+def add_span_event(name: str, attributes: dict[str, Any] | None = None) -> None:
     """
     Add event to current span.
 
@@ -168,7 +169,7 @@ def add_span_event(name: str, attributes: dict[str, Any] | None = None):
         span.add_event(name, attributes=attributes or {})
 
 
-def record_exception(exception: Exception):
+def record_exception(exception: Exception) -> None:
     """
     Record exception in current span.
 

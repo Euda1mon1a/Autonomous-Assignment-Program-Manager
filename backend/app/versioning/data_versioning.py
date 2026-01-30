@@ -142,10 +142,10 @@ class PointInTimeQuery(TypedDict):
     data: dict[str, Any]
     existed_at_time: bool
 
+    # =============================================================================
+    # Entity Model Mapping
+    # =============================================================================
 
-# =============================================================================
-# Entity Model Mapping
-# =============================================================================
 
 ENTITY_MODEL_MAP = {
     "assignment": Assignment,
@@ -169,7 +169,7 @@ class DataVersioningService:
     track changes over time, and merge improvements.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize the data versioning service.
 
@@ -179,9 +179,9 @@ class DataVersioningService:
         self.db = db
         self._branch_registry: dict[str, VersionBranch] = {}
 
-    # =========================================================================
-    # Version History and Retrieval
-    # =========================================================================
+        # =========================================================================
+        # Version History and Retrieval
+        # =========================================================================
 
     async def get_version_history(
         self,
@@ -295,9 +295,9 @@ class DataVersioningService:
 
         return self._get_version_data(entity_type, entity_id, version_id)
 
-    # =========================================================================
-    # Point-in-Time Queries
-    # =========================================================================
+        # =========================================================================
+        # Point-in-Time Queries
+        # =========================================================================
 
     async def query_at_time(
         self,
@@ -422,9 +422,9 @@ class DataVersioningService:
 
         return results
 
-    # =========================================================================
-    # Version Comparison and Diff
-    # =========================================================================
+        # =========================================================================
+        # Version Comparison and Diff
+        # =========================================================================
 
     async def compare_versions(
         self,
@@ -451,14 +451,14 @@ class DataVersioningService:
         if entity_type not in ENTITY_MODEL_MAP:
             raise ValueError(f"Unsupported entity type: {entity_type}")
 
-        # Get both versions
+            # Get both versions
         from_data = self._get_version_data(entity_type, entity_id, from_version)
         to_data = self._get_version_data(entity_type, entity_id, to_version)
 
         if not from_data or not to_data:
             raise ValueError("One or both versions not found")
 
-        # Get timestamps
+            # Get timestamps
         from_timestamp = await self._get_version_timestamp(
             entity_type, entity_id, from_version
         )
@@ -513,7 +513,7 @@ class DataVersioningService:
                     }
                 )
 
-        # Generate summary
+                # Generate summary
         summary_parts = []
         if added_fields:
             summary_parts.append(f"{len(added_fields)} field(s) added")
@@ -538,9 +538,9 @@ class DataVersioningService:
             change_summary=change_summary,
         )
 
-    # =========================================================================
-    # Version Rollback
-    # =========================================================================
+        # =========================================================================
+        # Version Rollback
+        # =========================================================================
 
     async def rollback_to_version(
         self,
@@ -572,19 +572,19 @@ class DataVersioningService:
         if entity_type not in ENTITY_MODEL_MAP:
             raise ValueError(f"Unsupported entity type: {entity_type}")
 
-        # Get target version data
+            # Get target version data
         target_data = self._get_version_data(entity_type, entity_id, target_version)
         if not target_data:
             raise ValueError(f"Version {target_version} not found")
 
-        # Get current entity
+            # Get current entity
         model_class = ENTITY_MODEL_MAP[entity_type]
         entity = self.db.query(model_class).filter(model_class.id == entity_id).first()
 
         if not entity:
             raise ValueError(f"Entity {entity_id} not found")
 
-        # Apply target version data to entity
+            # Apply target version data to entity
         for field, value in target_data.items():
             # Skip internal fields
             if field in (
@@ -598,7 +598,7 @@ class DataVersioningService:
             if hasattr(entity, field):
                 setattr(entity, field, value)
 
-        # Add rollback metadata
+                # Add rollback metadata
         if hasattr(entity, "notes"):
             rollback_note = f"[Rollback to version {target_version}]"
             if reason:
@@ -606,7 +606,7 @@ class DataVersioningService:
             current_notes = getattr(entity, "notes", "") or ""
             entity.notes = f"{current_notes}\n{rollback_note}".strip()
 
-        # Commit the rollback
+            # Commit the rollback
         self.db.commit()
         self.db.refresh(entity)
 
@@ -620,9 +620,9 @@ class DataVersioningService:
             "reason": reason,
         }
 
-    # =========================================================================
-    # Branch and Fork Support
-    # =========================================================================
+        # =========================================================================
+        # Branch and Fork Support
+        # =========================================================================
 
     async def create_branch(
         self,
@@ -652,7 +652,7 @@ class DataVersioningService:
         if new_branch_name in self._branch_registry:
             raise ValueError(f"Branch '{new_branch_name}' already exists")
 
-        # Get parent branch info
+            # Get parent branch info
         parent_info = self._branch_registry.get(parent_branch)
         base_version_id = parent_info["head_version_id"] if parent_info else 0
 
@@ -692,9 +692,9 @@ class DataVersioningService:
         if not branch:
             return None
 
-        # Calculate statistics
-        # In a real implementation, this would query the database
-        # for actual version and entity counts
+            # Calculate statistics
+            # In a real implementation, this would query the database
+            # for actual version and entity counts
 
         return BranchInfo(
             branch=branch,
@@ -744,9 +744,9 @@ class DataVersioningService:
 
         return True
 
-    # =========================================================================
-    # Merge Conflict Detection
-    # =========================================================================
+        # =========================================================================
+        # Merge Conflict Detection
+        # =========================================================================
 
     async def detect_merge_conflicts(
         self,
@@ -774,7 +774,7 @@ class DataVersioningService:
         if not source or not target:
             raise ValueError("One or both branches not found")
 
-        # Find common ancestor
+            # Find common ancestor
         base_version = min(source["base_version_id"], target["base_version_id"])
 
         conflicts: list[MergeConflict] = []
@@ -820,9 +820,9 @@ class DataVersioningService:
 
         return True
 
-    # =========================================================================
-    # Version Metadata and Tagging
-    # =========================================================================
+        # =========================================================================
+        # Version Metadata and Tagging
+        # =========================================================================
 
     async def tag_version(
         self,
@@ -854,8 +854,8 @@ class DataVersioningService:
         if entity_type not in ENTITY_MODEL_MAP:
             raise ValueError(f"Unsupported entity type: {entity_type}")
 
-        # In a real implementation, this would store the tag in a
-        # version_metadata table
+            # In a real implementation, this would store the tag in a
+            # version_metadata table
 
         logger.info(
             f"Tagged version {version_id} of {entity_type} {entity_id} "
@@ -891,8 +891,8 @@ class DataVersioningService:
         if entity_type not in ENTITY_MODEL_MAP:
             raise ValueError(f"Unsupported entity type: {entity_type}")
 
-        # In a real implementation, this would store the comment in a
-        # version_comments table
+            # In a real implementation, this would store the comment in a
+            # version_comments table
 
         logger.info(
             f"Added comment to version {version_id} of {entity_type} "
@@ -901,9 +901,9 @@ class DataVersioningService:
 
         return True
 
-    # =========================================================================
-    # Internal Helper Methods
-    # =========================================================================
+        # =========================================================================
+        # Internal Helper Methods
+        # =========================================================================
 
     def _get_version_data(
         self,
@@ -937,7 +937,7 @@ class DataVersioningService:
         if not version:
             return None
 
-        # Convert to dictionary
+            # Convert to dictionary
         data = {}
         for column in version.__table__.columns:
             value = getattr(version, column.name, None)
@@ -981,13 +981,13 @@ class DataVersioningService:
         if not data:
             return ""
 
-        # Create deterministic JSON string
+            # Create deterministic JSON string
         json_str = json.dumps(data, sort_keys=True, default=str)
         return hashlib.sha256(json_str.encode()).hexdigest()
 
-    # =========================================================================
-    # Batch Operations
-    # =========================================================================
+        # =========================================================================
+        # Batch Operations
+        # =========================================================================
 
     async def get_entity_lineage(
         self,
@@ -1010,7 +1010,7 @@ class DataVersioningService:
         if entity_type not in ENTITY_MODEL_MAP:
             raise ValueError(f"Unsupported entity type: {entity_type}")
 
-        # Get version history
+            # Get version history
         history = await self.get_version_history(entity_type, entity_id)
 
         # Build lineage tree
@@ -1052,10 +1052,10 @@ class DataVersioningService:
         if not b1 or not b2:
             raise ValueError("One or both branches not found")
 
-        # In a real implementation, this would:
-        # 1. Find all entities modified in each branch
-        # 2. Compare their states
-        # 3. Generate a comprehensive diff
+            # In a real implementation, this would:
+            # 1. Find all entities modified in each branch
+            # 2. Compare their states
+            # 3. Generate a comprehensive diff
 
         comparison = {
             "branch1": branch1,

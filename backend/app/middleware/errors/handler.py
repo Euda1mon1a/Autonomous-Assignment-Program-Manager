@@ -43,7 +43,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
     RFC 7807 Problem Details specification.
     """
 
-    def __init__(self, app: FastAPI, enable_reporting: bool = True):
+    def __init__(self, app: FastAPI, enable_reporting: bool = True) -> None:
         """
         Initialize error handler middleware.
 
@@ -100,7 +100,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
         else:
             status_code = mapping.status_code
 
-        # Create error context
+            # Create error context
         context = ErrorContext(request, exc)
 
         # Generate error fingerprint
@@ -136,7 +136,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
         if self.enable_reporting and self.reporter:
             await self._report_error(exc, context, status_code, fingerprint)
 
-        # Return JSON response
+            # Return JSON response
         return JSONResponse(
             status_code=status_code,
             content=error_response,
@@ -277,7 +277,7 @@ class ErrorHandlingConfig:
         enable_rate_limiting: bool = True,
         max_errors_per_minute: int = 10,
         include_stack_trace_in_dev: bool = True,
-    ):
+    ) -> None:
         """
         Initialize error handling configuration.
 
@@ -294,8 +294,9 @@ class ErrorHandlingConfig:
         self.max_errors_per_minute = max_errors_per_minute
         self.include_stack_trace_in_dev = include_stack_trace_in_dev
 
+        # Global configuration
 
-# Global configuration
+
 _config: ErrorHandlingConfig | None = None
 
 
@@ -322,8 +323,9 @@ def set_config(config: ErrorHandlingConfig) -> None:
     global _config
     _config = config
 
+    # Convenience function for backward compatibility
 
-# Convenience function for backward compatibility
+
 async def app_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Legacy exception handler for AppException.

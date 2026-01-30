@@ -207,7 +207,7 @@ class HolographicExporter:
         CircadianPhase.PRE_SLEEP: "#8b5cf6",  # purple
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize exporter."""
         self.model = ThreeProcessModel()
         self.predictor = PerformancePredictor()
@@ -334,7 +334,7 @@ class HolographicExporter:
                     heatmap[key] = []
                 heatmap[key].append(effectiveness)
 
-        # Calculate circadian pattern
+                # Calculate circadian pattern
         circadian_pattern = []
         for hour in range(24):
             values = hourly_bins[hour]
@@ -351,7 +351,7 @@ class HolographicExporter:
                     }
                 )
 
-        # Calculate weekly pattern
+                # Calculate weekly pattern
         day_names = [
             "Monday",
             "Tuesday",
@@ -375,7 +375,7 @@ class HolographicExporter:
                     }
                 )
 
-        # Build heatmap matrix
+                # Build heatmap matrix
         heatmap_data = []
         for day in range(7):
             row = []
@@ -387,7 +387,7 @@ class HolographicExporter:
                     row.append(None)
             heatmap_data.append(row)
 
-        # Detect resonance patterns
+            # Detect resonance patterns
         resonance_patterns = self._detect_resonance_patterns(circadian_pattern)
 
         return TemporalDynamicsData(
@@ -465,7 +465,7 @@ class HolographicExporter:
             if x is None or y is None:
                 continue
 
-            # Get effectiveness
+                # Get effectiveness
             if effectiveness_data:
                 effectiveness = effectiveness_data.get(assignment.get("id"), 85.0)
             else:
@@ -638,7 +638,7 @@ class HolographicExporter:
                     }
                 )
 
-        # Find post-lunch dip
+                # Find post-lunch dip
         lunch_hours = [p for p in circadian_pattern if 13 <= p["hour"] < 16]
         if lunch_hours:
             lunch_avg = sum(p["avg_effectiveness"] for p in lunch_hours) / len(
@@ -694,7 +694,7 @@ class HolographicExporter:
                     }
                 )
 
-        # Close any open risk period
+                # Close any open risk period
         if in_risk and predictions:
             risk_periods.append(
                 {

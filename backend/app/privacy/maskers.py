@@ -64,7 +64,7 @@ class RedactionMasker(BaseMasker):
         - "555-1234" -> "[REDACTED]"
     """
 
-    def __init__(self, placeholder: str = "[REDACTED]"):
+    def __init__(self, placeholder: str = "[REDACTED]") -> None:
         """
         Initialize redaction masker.
 
@@ -86,7 +86,7 @@ class HashMasker(BaseMasker):
         - "john@example.com" -> "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
     """
 
-    def __init__(self, algorithm: str = "sha256", truncate: int | None = None):
+    def __init__(self, algorithm: str = "sha256", truncate: int | None = None) -> None:
         """
         Initialize hash masker.
 
@@ -125,7 +125,9 @@ class PartialMasker(BaseMasker):
         - "555-123-4567" (show_start=0, show_end=4) -> "***-***-4567"
     """
 
-    def __init__(self, show_start: int = 1, show_end: int = 4, mask_char: str = "*"):
+    def __init__(
+        self, show_start: int = 1, show_end: int = 4, mask_char: str = "*"
+    ) -> None:
         """
         Initialize partial masker.
 
@@ -161,7 +163,7 @@ class TokenMasker(BaseMasker):
 
     def __init__(
         self, token_length: int = 16, reversible: bool = False, prefix: str = "TOK_"
-    ):
+    ) -> None:
         """
         Initialize token masker.
 
@@ -182,7 +184,7 @@ class TokenMasker(BaseMasker):
         if self.reversible and value in self._reverse_map:
             return self._reverse_map[value]
 
-        # Generate new token
+            # Generate new token
         token_chars = string.ascii_uppercase + string.digits
         token = "".join(secrets.choice(token_chars) for _ in range(self.token_length))
         full_token = f"{self.prefix}{token}"
@@ -214,7 +216,7 @@ class FormatPreservingMasker(BaseMasker):
         - "ABC-1234" -> "XYZ-5678" (random chars/digits, same pattern)
     """
 
-    def __init__(self, preserve_special_chars: bool = True):
+    def __init__(self, preserve_special_chars: bool = True) -> None:
         """
         Initialize format-preserving masker.
 
@@ -253,7 +255,7 @@ class EmailMasker(BaseMasker):
     - domain_only: Redact username, preserve domain -> "[REDACTED]@example.com"
     """
 
-    def __init__(self, strategy: str = "partial"):
+    def __init__(self, strategy: str = "partial") -> None:
         """
         Initialize email masker.
 
@@ -302,7 +304,7 @@ class PhoneMasker(BaseMasker):
     Preserves format while masking digits.
     """
 
-    def __init__(self, show_last_digits: int = 4):
+    def __init__(self, show_last_digits: int = 4) -> None:
         """
         Initialize phone masker.
 
@@ -320,7 +322,7 @@ class PhoneMasker(BaseMasker):
             # Too short, mask entirely
             return re.sub(r"\d", "*", value)
 
-        # Mask all but last N digits
+            # Mask all but last N digits
         mask_count = len(digits) - self.show_last_digits
         masked_index = 0
 
@@ -376,7 +378,7 @@ class NameMasker(BaseMasker):
     - full: "John Doe" -> "[NAME REDACTED]"
     """
 
-    def __init__(self, strategy: str = "initial"):
+    def __init__(self, strategy: str = "initial") -> None:
         """
         Initialize name masker.
 
@@ -434,7 +436,9 @@ class MaskerFactory:
         "default": RedactionMasker,
     }
 
-    def __init__(self, custom_maskers: dict[str, type[BaseMasker]] | None = None):
+    def __init__(
+        self, custom_maskers: dict[str, type[BaseMasker]] | None = None
+    ) -> None:
         """
         Initialize masker factory.
 

@@ -17,7 +17,7 @@ from app.services.block_service import BlockService
 class BlockController:
     """Controller for block endpoints."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.service = BlockService(db)
 
     def list_blocks(

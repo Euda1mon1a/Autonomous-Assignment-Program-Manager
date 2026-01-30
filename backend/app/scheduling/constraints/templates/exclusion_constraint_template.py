@@ -20,7 +20,7 @@ from app.scheduling.constraints.base import (
 class ExclusionConstraintTemplate(HardConstraint):
     """Template for exclusion constraints."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="ExclusionConstraint",
             constraint_type=ConstraintType.CAPACITY,
@@ -66,7 +66,7 @@ class ExclusionConstraintTemplate(HardConstraint):
             if rotation.type in self.excluded_rotation_types:
                 return True
 
-        # Check specific combinations
+                # Check specific combinations
         for excluded_type, excluded_rotation in self.excluded_combinations:
             if self._matches_person_type(person, excluded_type):
                 if rotation.type == excluded_rotation:
@@ -97,7 +97,7 @@ class ExclusionConstraintTemplate(HardConstraint):
                 return rotation
         return None
 
-    def add_to_cpsat(self, model, variables, context):
+    def add_to_cpsat(self, model, variables, context) -> None:
         """
         Add exclusion constraint to CP-SAT model.
 
@@ -110,7 +110,7 @@ class ExclusionConstraintTemplate(HardConstraint):
         if not x and not template_vars:
             return
 
-        # For each person, check if they match excluded type
+            # For each person, check if they match excluded type
         for person in context.residents + context.faculty:
             if not self._matches_person_type(person):
                 continue
@@ -119,7 +119,7 @@ class ExclusionConstraintTemplate(HardConstraint):
             if p_i is None:
                 continue
 
-            # Exclude from specific rotation types
+                # Exclude from specific rotation types
             for block in context.blocks:
                 b_i = context.block_idx[block.id]
 
@@ -131,7 +131,7 @@ class ExclusionConstraintTemplate(HardConstraint):
                             if (p_i, b_i, template.id) in template_vars:
                                 model.Add(template_vars[p_i, b_i, template.id] == 0)
 
-                # Check general exclusions
+                                # Check general exclusions
                 if (p_i, b_i) in x:
                     # Check if block has excluded rotation type
                     if (
@@ -140,7 +140,7 @@ class ExclusionConstraintTemplate(HardConstraint):
                     ):
                         model.Add(x[p_i, b_i] == 0)
 
-            # Check specific exclusion combinations
+                        # Check specific exclusion combinations
             for excluded_type, excluded_rotation in self.excluded_combinations:
                 if self._matches_person_type(person, excluded_type):
                     for block in context.blocks:
@@ -154,7 +154,7 @@ class ExclusionConstraintTemplate(HardConstraint):
                                 ):
                                     model.Add(template_vars[p_i, b_i, template.id] == 0)
 
-    def add_to_pulp(self, model, variables, context):
+    def add_to_pulp(self, model, variables, context) -> None:
         """
         Add exclusion constraint to PuLP model.
 
@@ -169,7 +169,7 @@ class ExclusionConstraintTemplate(HardConstraint):
         if not x and not template_vars:
             return
 
-        # For each person, check if they match excluded type
+            # For each person, check if they match excluded type
         for person in context.residents + context.faculty:
             if not self._matches_person_type(person):
                 continue
@@ -178,7 +178,7 @@ class ExclusionConstraintTemplate(HardConstraint):
             if p_i is None:
                 continue
 
-            # Exclude from specific rotation types
+                # Exclude from specific rotation types
             for block in context.blocks:
                 b_i = context.block_idx[block.id]
 
@@ -193,7 +193,7 @@ class ExclusionConstraintTemplate(HardConstraint):
                                     f"exclude_{p_i}_{b_i}_{template.id}",
                                 )
 
-                # Check general exclusions
+                                # Check general exclusions
                 if (p_i, b_i) in x:
                     # Check if block has excluded rotation type
                     if (
@@ -205,7 +205,7 @@ class ExclusionConstraintTemplate(HardConstraint):
                             f"exclude_{p_i}_{b_i}",
                         )
 
-            # Check specific exclusion combinations
+                        # Check specific exclusion combinations
             for excluded_type, excluded_rotation in self.excluded_combinations:
                 if self._matches_person_type(person, excluded_type):
                     for block in context.blocks:

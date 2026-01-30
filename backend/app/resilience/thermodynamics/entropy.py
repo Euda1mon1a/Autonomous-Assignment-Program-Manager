@@ -77,7 +77,7 @@ def calculate_shannon_entropy(distribution: list[Any]) -> float:
     if not distribution:
         return 0.0
 
-    # Count occurrences
+        # Count occurrences
     counts = Counter(distribution)
     total = len(distribution)
 
@@ -120,7 +120,7 @@ def calculate_schedule_entropy(assignments: list[Any]) -> EntropyMetrics:
             mutual_information=0.0,
         )
 
-    # Extract distributions
+        # Extract distributions
     person_dist = [a.person_id for a in assignments if hasattr(a, "person_id")]
     rotation_dist = [
         a.rotation_template_id
@@ -145,8 +145,8 @@ def calculate_schedule_entropy(assignments: list[Any]) -> EntropyMetrics:
         H_joint = 0.0
         MI = 0.0
 
-    # Normalized entropy (relative to maximum possible)
-    # Maximum entropy occurs with uniform distribution
+        # Normalized entropy (relative to maximum possible)
+        # Maximum entropy occurs with uniform distribution
     max_person_entropy = math.log2(len(set(person_dist))) if person_dist else 1.0
     normalized = H_person / max_person_entropy if max_person_entropy > 0 else 0.0
 
@@ -191,7 +191,7 @@ def mutual_information(dist_X: list[Any], dist_Y: list[Any]) -> float:
     if not dist_X:
         return 0.0
 
-    # Individual entropies
+        # Individual entropies
     H_X = calculate_shannon_entropy(dist_X)
     H_Y = calculate_shannon_entropy(dist_Y)
 
@@ -232,7 +232,7 @@ def conditional_entropy(dist_X: list[Any], dist_Y: list[Any]) -> float:
     if not dist_X:
         return 0.0
 
-    # Joint and individual entropies
+        # Joint and individual entropies
     joint_dist = list(zip(dist_X, dist_Y))
     H_joint = calculate_shannon_entropy(joint_dist)
     H_Y = calculate_shannon_entropy(dist_Y)
@@ -294,7 +294,7 @@ class ScheduleEntropyMonitor:
         Use with HomeostasisMonitor for thermodynamic foundations.
     """
 
-    def __init__(self, history_window: int = 100):
+    def __init__(self, history_window: int = 100) -> None:
         """
         Initialize entropy monitor.
 
@@ -309,7 +309,7 @@ class ScheduleEntropyMonitor:
 
         logger.info(f"ScheduleEntropyMonitor initialized with window={history_window}")
 
-    def update(self, assignments: list[Any]):
+    def update(self, assignments: list[Any]) -> None:
         """
         Update with latest schedule.
 
@@ -332,7 +332,7 @@ class ScheduleEntropyMonitor:
                 production_rate = max(0.0, dS) / dt
                 self.production_rate_history.append(production_rate)
 
-        # Maintain window size
+                # Maintain window size
         if len(self.entropy_history) > self.history_window:
             self.entropy_history.pop(0)
             self.timestamp_history.pop(0)
@@ -351,14 +351,14 @@ class ScheduleEntropyMonitor:
         if len(self.entropy_history) < 2:
             return 0.0
 
-        # Linear regression
+            # Linear regression
         x = np.arange(len(self.entropy_history))
         y = np.array(self.entropy_history)
 
         if len(x) < 2:
             return 0.0
 
-        # Simple slope calculation
+            # Simple slope calculation
         slope = (y[-1] - y[0]) / (len(y) - 1) if len(y) > 1 else 0.0
 
         return slope
@@ -376,7 +376,7 @@ class ScheduleEntropyMonitor:
         if len(self.entropy_history) < 10:
             return False
 
-        # Calculate autocorrelation (increases near critical point)
+            # Calculate autocorrelation (increases near critical point)
         recent = self.entropy_history[-10:]
         autocorr = self._autocorrelation(recent, lag=1)
 

@@ -70,10 +70,9 @@ class ReplayTarget(str, Enum):
     EVENT_COUNT = "event_count"
     LATEST = "latest"  # Replay all available events
 
-
-# =============================================================================
-# Configuration Models
-# =============================================================================
+    # =============================================================================
+    # Configuration Models
+    # =============================================================================
 
 
 class ReplayFilterConfig(BaseModel):
@@ -132,7 +131,7 @@ class ReplayFilterConfig(BaseModel):
         ):
             return False
 
-        # Exclude filters (any match = exclude)
+            # Exclude filters (any match = exclude)
         if self.exclude_event_types and event.metadata.event_type in [
             et.value for et in self.exclude_event_types
         ]:
@@ -242,10 +241,9 @@ class ReplayConfig(BaseModel):
         1000, ge=1, description="Create checkpoint every N events"
     )
 
-
-# =============================================================================
-# Progress and State Models
-# =============================================================================
+    # =============================================================================
+    # Progress and State Models
+    # =============================================================================
 
 
 class ReplayCheckpoint(BaseModel):
@@ -328,10 +326,9 @@ class ReplayVerificationResult(BaseModel):
         default_factory=list, description="Metadata validation issues"
     )
 
-
-# =============================================================================
-# Event Replay Service
-# =============================================================================
+    # =============================================================================
+    # Event Replay Service
+    # =============================================================================
 
 
 class EventReplayService:
@@ -342,7 +339,7 @@ class EventReplayService:
     progress tracking, and verification.
     """
 
-    def __init__(self, db: Session, event_store: EventStore | None = None):
+    def __init__(self, db: Session, event_store: EventStore | None = None) -> None:
         """
         Initialize Event Replay Service.
 
@@ -434,23 +431,23 @@ class EventReplayService:
                 while self._pause_flags.get(replay_id, False):
                     await asyncio.sleep(0.1)
 
-                # Check for cancellation
+                    # Check for cancellation
                 if self._cancel_flags.get(replay_id, False):
                     progress.status = ReplayStatus.CANCELLED
                     logger.info(f"Replay {replay_id} cancelled by user")
                     return
 
-                # Apply filters
+                    # Apply filters
                 if config.filters and not config.filters.matches(event):
                     progress.events_filtered += 1
                     continue
 
-                # Apply transformations
+                    # Apply transformations
                 if config.transformer:
                     event = await self._transform_event(event, config.transformer)
                     progress.events_transformed += 1
 
-                # Process event
+                    # Process event
                 try:
                     if handler:
                         result = handler(event)
@@ -473,10 +470,10 @@ class EventReplayService:
                         f"{event.metadata.event_id}: {e}"
                     )
 
-                # Apply speed control
+                    # Apply speed control
                 await self._apply_speed_control(config.speed, event)
 
-            # Replay completed
+                # Replay completed
             progress.status = ReplayStatus.COMPLETED
             progress.completed_at = datetime.utcnow()
             progress.updated_at = datetime.utcnow()
@@ -525,14 +522,14 @@ class EventReplayService:
                 StoredEvent.sequence_number <= target.target_sequence_number
             )
 
-        # Order by sequence
+            # Order by sequence
         query = query.order_by(StoredEvent.sequence_number)
 
         # Apply event count limit if specified
         if target.target_type == ReplayTarget.EVENT_COUNT and target.target_event_count:
             query = query.limit(target.target_event_count)
 
-        # Process in batches
+            # Process in batches
         offset = 0
         while True:
             batch = query.offset(offset).limit(config.batch_size).all()
@@ -599,23 +596,23 @@ class EventReplayService:
             if old_field in event_dict:
                 event_dict[new_field] = event_dict.pop(old_field)
 
-        # Apply field transformations
+                # Apply field transformations
         for field, transform_func in transformer.field_transformations.items():
             if field in event_dict and callable(transform_func):
                 event_dict[field] = transform_func(event_dict[field])
 
-        # Override metadata
+                # Override metadata
         for key, value in transformer.metadata_overrides.items():
             if "metadata" in event_dict:
                 event_dict["metadata"][key] = value
 
-        # Map aggregate IDs
+                # Map aggregate IDs
         if event_dict.get("aggregate_id") in transformer.aggregate_id_mapping:
             event_dict["aggregate_id"] = transformer.aggregate_id_mapping[
                 event_dict["aggregate_id"]
             ]
 
-        # Reconstruct event
+            # Reconstruct event
         event_class = get_event_class(event.metadata.event_type)
         return event_class.from_dict(event_dict)
 
@@ -636,7 +633,7 @@ class EventReplayService:
         elif speed == ReplaySpeed.FAST:
             if hash(current_event.metadata.event_id) % 10 == 0:
                 await asyncio.sleep(0)  # Yield every 10th event
-        # MAXIMUM: no delays at all
+                # MAXIMUM: no delays at all
 
     async def _create_checkpoint(
         self, replay_id: str, progress: ReplayProgress
@@ -781,13 +778,13 @@ class EventReplayService:
             result.is_valid = False
             result.errors.append(f"Replay status is {progress.status}, not COMPLETED")
 
-        # Check for failed events
+            # Check for failed events
         if progress.events_failed > 0:
             result.warnings.append(
                 f"{progress.events_failed} events failed during replay"
             )
 
-        # Verify sequence continuity (if applicable)
+            # Verify sequence continuity (if applicable)
         await self._verify_sequence_continuity(config, result)
 
         # Verify timestamp ordering
@@ -907,10 +904,9 @@ class EventReplayService:
         """
         return list(self._active_replays.values())
 
-
-# =============================================================================
-# Helper Functions
-# =============================================================================
+        # =============================================================================
+        # Helper Functions
+        # =============================================================================
 
 
 async def create_replay_from_timestamp(

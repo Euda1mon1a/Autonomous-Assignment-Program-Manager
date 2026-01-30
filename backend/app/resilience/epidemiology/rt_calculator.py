@@ -55,7 +55,7 @@ class RtCalculator:
         self,
         serial_interval_mean: float = 7.0,  # Average time between successive cases
         serial_interval_std: float = 3.0,
-    ):
+    ) -> None:
         """
         Initialize Rt calculator.
 
@@ -153,13 +153,13 @@ class RtCalculator:
         if not incidence_window or sum(incidence_window) == 0:
             return 1.0, 0.5, 2.0  # Default if no data
 
-        # Calculate infectiousness (weighted sum of past cases)
+            # Calculate infectiousness (weighted sum of past cases)
         infectiousness = self._calculate_infectiousness(incidence_window)
 
         if infectiousness == 0:
             return 1.0, 0.5, 2.0
 
-        # Current new cases
+            # Current new cases
         current_cases = incidence_window[-1]
 
         # Rt estimate
@@ -227,7 +227,7 @@ class RtCalculator:
             )
             dist.append(prob)
 
-        # Normalize
+            # Normalize
         total = sum(dist)
         if total > 0:
             dist = [p / total for p in dist]

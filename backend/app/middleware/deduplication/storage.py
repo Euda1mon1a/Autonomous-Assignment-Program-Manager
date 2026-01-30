@@ -89,7 +89,7 @@ class DeduplicationStorage:
         self,
         redis_client: redis.Redis | None = None,
         default_ttl: int = DEFAULT_TTL,
-    ):
+    ) -> None:
         """
         Initialize deduplication storage.
 
@@ -267,7 +267,7 @@ class DeduplicationStorage:
             if record and not record.is_processing():
                 return record
 
-            # Wait before polling again
+                # Wait before polling again
             await asyncio.sleep(self.LOCK_POLLING_INTERVAL)
 
         logger.warning(f"Wait for completion timed out: {idempotency_key}")
@@ -350,7 +350,7 @@ class DeduplicationStorage:
             if data is None:
                 return None
 
-            # Deserialize record
+                # Deserialize record
             record = pickle.loads(data)
 
             # Check expiration
@@ -393,7 +393,7 @@ class DeduplicationStorage:
             logger.warning(f"Cannot update non-existent record: {idempotency_key}")
             return False
 
-        # Update record fields
+            # Update record fields
         record.status = status
         record.completed_at = time.time()
         record.response_status = response_status

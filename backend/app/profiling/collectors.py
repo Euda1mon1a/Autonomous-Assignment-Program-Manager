@@ -111,7 +111,7 @@ class MetricCollector:
     Provides common functionality for all collectors.
     """
 
-    def __init__(self, enabled: bool = True, max_items: int = 10000):
+    def __init__(self, enabled: bool = True, max_items: int = 10000) -> None:
         """
         Initialize metric collector.
 
@@ -123,7 +123,7 @@ class MetricCollector:
         self.max_items = max_items
         self.items: list[Any] = []
 
-    def add_item(self, item: Any):
+    def add_item(self, item: Any) -> None:
         """
         Add an item to the collection.
 
@@ -153,7 +153,7 @@ class MetricCollector:
             return self.items[-limit:]
         return self.items
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all collected items."""
         self.items.clear()
 
@@ -169,7 +169,7 @@ class SQLQueryCollector(MetricCollector):
     Captures all SQL queries executed through SQLAlchemy.
     """
 
-    def __init__(self, enabled: bool = True, max_queries: int = 10000):
+    def __init__(self, enabled: bool = True, max_queries: int = 10000) -> None:
         """
         Initialize SQL query collector.
 
@@ -181,7 +181,7 @@ class SQLQueryCollector(MetricCollector):
         self.active_queries: dict[str, SQLQuery] = {}
         self._listeners_registered = False
 
-    def register_listeners(self, engine: Engine):
+    def register_listeners(self, engine: Engine) -> None:
         """
         Register SQLAlchemy event listeners.
 
@@ -194,7 +194,7 @@ class SQLQueryCollector(MetricCollector):
         @event.listens_for(engine, "before_cursor_execute")
         def before_cursor_execute(
             conn, cursor, statement, parameters, context, executemany
-        ):
+        ) -> None:
             if not self.enabled:
                 return
 
@@ -217,7 +217,7 @@ class SQLQueryCollector(MetricCollector):
         @event.listens_for(engine, "after_cursor_execute")
         def after_cursor_execute(
             conn, cursor, statement, parameters, context, executemany
-        ):
+        ) -> None:
             if not self.enabled:
                 return
 
@@ -236,7 +236,7 @@ class SQLQueryCollector(MetricCollector):
             del self.active_queries[query_id]
 
         @event.listens_for(engine, "handle_error")
-        def handle_error(context):
+        def handle_error(context) -> None:
             if not self.enabled:
                 return
 
@@ -310,7 +310,7 @@ class RequestCollector(MetricCollector):
     Captures metrics for all HTTP requests.
     """
 
-    def __init__(self, enabled: bool = True, max_requests: int = 10000):
+    def __init__(self, enabled: bool = True, max_requests: int = 10000) -> None:
         """
         Initialize request collector.
 
@@ -368,7 +368,7 @@ class RequestCollector(MetricCollector):
         request_id: str,
         status_code: int,
         response_size_bytes: int = 0,
-    ):
+    ) -> None:
         """
         Finish tracking a request.
 
@@ -452,7 +452,7 @@ class TraceCollector(MetricCollector):
     Captures distributed traces for request flows.
     """
 
-    def __init__(self, enabled: bool = True, max_traces: int = 10000):
+    def __init__(self, enabled: bool = True, max_traces: int = 10000) -> None:
         """
         Initialize trace collector.
 
@@ -502,7 +502,7 @@ class TraceCollector(MetricCollector):
         self.active_traces[span_id] = trace
         return span_id
 
-    def end_span(self, span_id: str):
+    def end_span(self, span_id: str) -> None:
         """
         End a trace span.
 
@@ -519,7 +519,9 @@ class TraceCollector(MetricCollector):
         self.add_item(trace)
         del self.active_traces[span_id]
 
-    def add_log(self, span_id: str, message: str, fields: dict[str, Any] | None = None):
+    def add_log(
+        self, span_id: str, message: str, fields: dict[str, Any] | None = None
+    ) -> None:
         """
         Add a log entry to a span.
 

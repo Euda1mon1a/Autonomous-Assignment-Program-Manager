@@ -117,7 +117,7 @@ class UtilizationMonitor:
     def __init__(
         self,
         threshold: UtilizationThreshold | None = None,
-    ):
+    ) -> None:
         self.threshold = threshold or UtilizationThreshold()
         self._capacity_cache: dict[tuple[int, float, int], float] = {}
 
@@ -160,7 +160,7 @@ class UtilizationMonitor:
                 buffer_remaining=0.0,
             )
 
-        # Calculate utilization
+            # Calculate utilization
         utilization_rate = required_blocks / total_capacity
         level = self.threshold.get_level(utilization_rate)
 
@@ -323,7 +323,7 @@ class UtilizationMonitor:
             if level in (UtilizationLevel.RED, UtilizationLevel.BLACK):
                 factors.append("Critical staffing shortage")
 
-            # Build recommendations
+                # Build recommendations
             recommendations = []
             if level == UtilizationLevel.YELLOW:
                 recommendations.append("Monitor closely")

@@ -59,7 +59,7 @@ class SearchAnalytics:
     - Zero-result queries
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize analytics tracker."""
         self.query_log: list[dict[str, Any]] = []
         self.zero_result_queries: list[str] = []
@@ -168,7 +168,7 @@ class QueryTokenizer:
         "with",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize tokenizer."""
         self.phrase_pattern = re.compile(r'"([^"]+)"')
         self.word_pattern = re.compile(r"\b\w+\b")
@@ -211,7 +211,7 @@ class SpellCorrector:
     from a known vocabulary.
     """
 
-    def __init__(self, vocabulary: set[str] | None = None):
+    def __init__(self, vocabulary: set[str] | None = None) -> None:
         """
         Initialize spell corrector.
 
@@ -284,7 +284,7 @@ class SpellCorrector:
             if distance <= max_distance:
                 suggestions.append((vocab_word, distance))
 
-        # Sort by edit distance and return top 5
+                # Sort by edit distance and return top 5
         suggestions.sort(key=lambda x: x[1])
         return [word for word, _ in suggestions[:5]]
 
@@ -484,7 +484,7 @@ class TextHighlighter:
             if pos != -1 and (first_match == -1 or pos < first_match):
                 first_match = pos
 
-        # Extract snippet around match
+                # Extract snippet around match
         if first_match == -1:
             snippet = text[:max_length]
         else:
@@ -496,7 +496,7 @@ class TextHighlighter:
             if end < len(text):
                 snippet = snippet + "..."
 
-        # Highlight terms
+                # Highlight terms
         highlighted = snippet
         for term in terms:
             pattern = re.compile(re.escape(term), re.IGNORECASE)
@@ -572,7 +572,7 @@ class FullTextSearchService:
     - Analytics
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize search service.
 
@@ -657,7 +657,7 @@ class FullTextSearchService:
             swap_results = await self._search_swaps(parsed, search_request.filters)
             all_results.extend(swap_results)
 
-        # Sort by relevance score
+            # Sort by relevance score
         all_results.sort(key=lambda x: x.score, reverse=True)
 
         # Apply pagination
@@ -725,7 +725,7 @@ class FullTextSearchService:
         if conditions:
             query = query.filter(or_(*conditions))
 
-        # Apply filters
+            # Apply filters
         if filters.get("type"):
             query = query.filter(Person.type == filters["type"])
         if filters.get("pgy_level"):
@@ -756,7 +756,7 @@ class FullTextSearchService:
                         TextHighlighter.highlight(person.email, tokens)
                     ]
 
-            # Build subtitle
+                    # Build subtitle
             subtitle_parts = [person.type.title()]
             if person.pgy_level:
                 subtitle_parts.append(f"PGY-{person.pgy_level}")
@@ -818,7 +818,7 @@ class FullTextSearchService:
         if conditions:
             query = query.filter(or_(*conditions))
 
-        # Apply filters
+            # Apply filters
         if filters.get("rotation_type"):
             query = query.filter(
                 RotationTemplate.rotation_type == filters["rotation_type"]
@@ -895,7 +895,7 @@ class FullTextSearchService:
         if conditions:
             query = query.filter(or_(*conditions))
 
-        # Apply filters
+            # Apply filters
         if filters.get("category"):
             query = query.filter(Procedure.category == filters["category"])
 
@@ -970,7 +970,7 @@ class FullTextSearchService:
         if conditions:
             query = query.filter(or_(*conditions))
 
-        # Apply filters
+            # Apply filters
         if filters.get("role"):
             query = query.filter(Assignment.role == filters["role"])
 
@@ -1043,7 +1043,7 @@ class FullTextSearchService:
         if conditions:
             query = query.filter(or_(*conditions))
 
-        # Apply filters
+            # Apply filters
         if filters.get("status"):
             query = query.filter(SwapRecord.status == filters["status"])
 
@@ -1119,7 +1119,7 @@ class FullTextSearchService:
                 if entity.get("status"):
                     facets["status"][entity["status"]] += 1
 
-        # Convert defaultdict to regular dict
+                    # Convert defaultdict to regular dict
         return {
             key: dict(value_dict) for key, value_dict in facets.items() if value_dict
         }

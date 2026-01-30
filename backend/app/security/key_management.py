@@ -89,10 +89,9 @@ class AccessPolicy(str, Enum):
     USER_SPECIFIC = "user_specific"
     PUBLIC_READ = "public_read"
 
-
-# =============================================================================
-# Pydantic Schemas
-# =============================================================================
+    # =============================================================================
+    # Pydantic Schemas
+    # =============================================================================
 
 
 class KeyGenerationRequest(BaseModel):
@@ -158,10 +157,9 @@ class HSMConfig(BaseModel):
     key_wrapping_enabled: bool = True
     auto_backup_to_hsm: bool = False
 
-
-# =============================================================================
-# Database Models
-# =============================================================================
+    # =============================================================================
+    # Database Models
+    # =============================================================================
 
 
 class CryptographicKey(Base):
@@ -270,10 +268,9 @@ class KeyUsageLog(Base):
     def __repr__(self):
         return f"<KeyUsageLog(key='{self.key_name}', operation='{self.operation}', success={self.success})>"
 
-
-# =============================================================================
-# Key Encryption/Decryption Functions
-# =============================================================================
+        # =============================================================================
+        # Key Encryption/Decryption Functions
+        # =============================================================================
 
 
 def _derive_encryption_key(salt: bytes) -> bytes:
@@ -351,10 +348,9 @@ def _decrypt_key_material(
     decryptor = cipher.decryptor()
     return decryptor.update(encrypted_data) + decryptor.finalize()
 
-
-# =============================================================================
-# Key Management Service
-# =============================================================================
+    # =============================================================================
+    # Key Management Service
+    # =============================================================================
 
 
 class KeyManagementService:
@@ -372,7 +368,7 @@ class KeyManagementService:
     - Key revocation
     """
 
-    def __init__(self, hsm_config: HSMConfig | None = None):
+    def __init__(self, hsm_config: HSMConfig | None = None) -> None:
         """
         Initialize key management service.
 
@@ -381,9 +377,9 @@ class KeyManagementService:
         """
         self.hsm_config = hsm_config or HSMConfig()
 
-    # =========================================================================
-    # Key Generation
-    # =========================================================================
+        # =========================================================================
+        # Key Generation
+        # =========================================================================
 
     async def generate_key(
         self, db: AsyncSession, request: KeyGenerationRequest, created_by: str
@@ -407,7 +403,7 @@ class KeyManagementService:
         if existing:
             raise ValidationError(f"Key with name '{request.name}' already exists")
 
-        # Generate key material based on type
+            # Generate key material based on type
         if request.key_type == KeyType.SYMMETRIC:
             key_material = self._generate_symmetric_key()
             private_key_material = None
@@ -417,7 +413,7 @@ class KeyManagementService:
                 self._generate_asymmetric_key(request.key_type)
             )
 
-        # Encrypt key material
+            # Encrypt key material
         encrypted_key, salt, nonce, tag = _encrypt_key_material(key_material)
 
         # Encrypt private key if asymmetric
@@ -430,12 +426,12 @@ class KeyManagementService:
                 _encrypt_key_material(private_key_material)
             )
 
-        # Calculate expiration date
+            # Calculate expiration date
         expires_at = None
         if request.expires_in_days:
             expires_at = datetime.utcnow() + timedelta(days=request.expires_in_days)
 
-        # Create database record
+            # Create database record
         key_record = CryptographicKey(
             id=uuid.uuid4(),
             name=request.name,
@@ -517,7 +513,7 @@ class KeyManagementService:
         else:
             raise ValidationError(f"Asymmetric key type {key_type} not yet implemented")
 
-        # Generate RSA key pair
+            # Generate RSA key pair
         private_key = rsa.generate_private_key(
             public_exponent=65537, key_size=key_size, backend=default_backend()
         )
@@ -539,9 +535,9 @@ class KeyManagementService:
 
         return public_key_bytes, private_key_bytes, public_key_pem
 
-    # =========================================================================
-    # Key Retrieval
-    # =========================================================================
+        # =========================================================================
+        # Key Retrieval
+        # =========================================================================
 
     async def get_key(
         self, db: AsyncSession, key_id: str, user_id: str, decrypt: bool = False
@@ -571,11 +567,11 @@ class KeyManagementService:
         if not key_record:
             raise NotFoundError(f"Key with ID {key_id} not found")
 
-        # Check access policy
+            # Check access policy
         if not self._check_access(key_record, user_id):
             raise ForbiddenError(f"Access denied to key {key_record.name}")
 
-        # Update usage tracking
+            # Update usage tracking
         await self._record_usage(db, key_record, user_id, "read", True)
 
         # Prepare response
@@ -668,9 +664,9 @@ class KeyManagementService:
 
         return accessible_keys
 
-    # =========================================================================
-    # Key Lifecycle Management
-    # =========================================================================
+        # =========================================================================
+        # Key Lifecycle Management
+        # =========================================================================
 
     async def rotate_key(
         self, db: AsyncSession, key_id: str, user_id: str
@@ -705,7 +701,7 @@ class KeyManagementService:
         if old_key.status == KeyStatus.REVOKED.value:
             raise ValidationError("Cannot rotate revoked key")
 
-        # Mark old key as rotating
+            # Mark old key as rotating
         old_key.status = KeyStatus.ROTATING.value
         await db.commit()
 
@@ -828,9 +824,9 @@ class KeyManagementService:
 
         logger.warning(f"Deleted key {key_record.name} (force={force})")
 
-    # =========================================================================
-    # Key Usage Tracking
-    # =========================================================================
+        # =========================================================================
+        # Key Usage Tracking
+        # =========================================================================
 
     async def get_key_usage(
         self, db: AsyncSession, key_id: str, user_id: str, limit: int = 100
@@ -863,7 +859,7 @@ class KeyManagementService:
         if not self._check_access(key_record, user_id):
             raise ForbiddenError(f"Access denied to key {key_record.name}")
 
-        # Fetch usage logs
+            # Fetch usage logs
         result = await db.execute(
             select(KeyUsageLog)
             .where(KeyUsageLog.key_id == key_uuid)
@@ -884,9 +880,9 @@ class KeyManagementService:
             for log in logs
         ]
 
-    # =========================================================================
-    # Backup and Recovery
-    # =========================================================================
+        # =========================================================================
+        # Backup and Recovery
+        # =========================================================================
 
     async def backup_key(
         self, db: AsyncSession, key_id: str, user_id: str, backup_location: str
@@ -929,9 +925,9 @@ class KeyManagementService:
 
         return self._key_to_metadata(key_record)
 
-    # =========================================================================
-    # HSM Integration Hooks
-    # =========================================================================
+        # =========================================================================
+        # HSM Integration Hooks
+        # =========================================================================
 
     async def integrate_with_hsm(
         self, db: AsyncSession, key_id: str, user_id: str, hsm_key_id: str
@@ -978,9 +974,9 @@ class KeyManagementService:
 
         return self._key_to_metadata(key_record)
 
-    # =========================================================================
-    # Helper Methods
-    # =========================================================================
+        # =========================================================================
+        # Helper Methods
+        # =========================================================================
 
     async def _get_key_by_name(
         self, db: AsyncSession, name: str
@@ -1043,7 +1039,7 @@ class KeyManagementService:
         if success:
             key.last_used_at = datetime.utcnow()
 
-        # Create usage log
+            # Create usage log
         log = KeyUsageLog(
             key_id=key.id,
             key_name=key.name,
@@ -1101,10 +1097,9 @@ class KeyManagementService:
 
         return _decrypt_key_material(encrypted_data, salt, nonce, tag)
 
-
-# =============================================================================
-# Synchronous Wrapper for Backward Compatibility
-# =============================================================================
+        # =============================================================================
+        # Synchronous Wrapper for Backward Compatibility
+        # =============================================================================
 
 
 class SyncKeyManagementService:
@@ -1114,7 +1109,7 @@ class SyncKeyManagementService:
     Provides sync methods for use with non-async codebases.
     """
 
-    def __init__(self, hsm_config: HSMConfig | None = None):
+    def __init__(self, hsm_config: HSMConfig | None = None) -> None:
         """Initialize with optional HSM configuration."""
         self.async_service = KeyManagementService(hsm_config)
 

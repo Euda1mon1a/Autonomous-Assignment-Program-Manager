@@ -19,7 +19,7 @@ class EmailTemplateEngine:
     - Filters
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize template engine."""
         self._templates: dict[str, str] = {}
 

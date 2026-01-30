@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class AuditReporter:
     """Generates compliance audit reports."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
         self.violation_tracker = ViolationTracker(db)
         self.compliance_score = ComplianceScore(db)

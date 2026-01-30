@@ -28,7 +28,7 @@ class PermissionResolver:
     - Condition-based permissions
     """
 
-    def __init__(self, cache: PermissionCache | None = None):
+    def __init__(self, cache: PermissionCache | None = None) -> None:
         """
         Initialize permission resolver.
 
@@ -56,7 +56,7 @@ class PermissionResolver:
         visited = set()
         roles = []
 
-        def traverse(current_role: UserRole):
+        def traverse(current_role: UserRole) -> None:
             if current_role in visited:
                 return
             visited.add(current_role)
@@ -92,7 +92,7 @@ class PermissionResolver:
                 logger.debug(f"Cache hit for role {role}")
                 return cached
 
-        # Compute permissions with hierarchy
+                # Compute permissions with hierarchy
         all_permissions = set()
 
         # Get all roles in hierarchy
@@ -103,7 +103,7 @@ class PermissionResolver:
             role_perms = DEFAULT_ROLE_PERMISSIONS.get(inherited_role, set())
             all_permissions.update(role_perms)
 
-        # Cache the result
+            # Cache the result
         if use_cache:
             await cache.set_role_permissions(role, all_permissions)
 
@@ -137,7 +137,7 @@ class PermissionResolver:
                 logger.debug(f"Cache hit for user {user_id}")
                 return cached
 
-        # Get permissions from role
+                # Get permissions from role
         try:
             role = UserRole(user.role)
         except ValueError:
@@ -195,7 +195,7 @@ class PermissionResolver:
                 user, resource_str, action_str, resource_id, conditions
             )
 
-        # Build result
+            # Build result
         reason = None
         if not allowed:
             if permission_key not in user_permissions:
@@ -239,7 +239,7 @@ class PermissionResolver:
         if user.is_admin:
             return True
 
-        # Resource-specific checks
+            # Resource-specific checks
         if resource_type == ResourceType.USER.value:
             # Users can only modify their own account unless they're admin
             if action in ["update", "delete"]:
@@ -268,7 +268,7 @@ class PermissionResolver:
             if action == "approve_leave":
                 return user.can_manage_schedules
 
-        # Default: allow if base permission exists
+                # Default: allow if base permission exists
         return True
 
     async def has_permission(
@@ -364,7 +364,7 @@ class PermissionResolver:
                     by_resource[resource] = []
                 by_resource[resource].append(action)
 
-        # Get role hierarchy
+                # Get role hierarchy
         try:
             role = UserRole(user.role)
             hierarchy = self._resolve_role_hierarchy(role)
@@ -384,8 +384,9 @@ class PermissionResolver:
             "can_manage_schedules": user.can_manage_schedules,
         }
 
+        # Global resolver instance (singleton pattern)
 
-# Global resolver instance (singleton pattern)
+
 _resolver_instance: PermissionResolver | None = None
 
 

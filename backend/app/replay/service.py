@@ -138,16 +138,15 @@ class ReplayReport(BaseModel):
     status_code_distribution: dict[int, int] = Field(default_factory=dict)
     comparisons: list[ReplayComparison] = Field(default_factory=list)
 
-
-# =============================================================================
-# In-Memory Storage (for MVP - replace with DB models in production)
-# =============================================================================
+    # =============================================================================
+    # In-Memory Storage (for MVP - replace with DB models in production)
+    # =============================================================================
 
 
 class ReplayStorage:
     """In-memory storage for captured requests and replay results."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.requests: dict[str, CapturedRequest] = {}
         self.results: dict[str, list[ReplayResult]] = {}
         self.schedules: dict[str, ReplaySchedule] = {}
@@ -203,7 +202,7 @@ class ReplayStorage:
             else:
                 results = [r for r in results if r.response_status < 400]
 
-        # Sort by timestamp descending
+                # Sort by timestamp descending
         results.sort(key=lambda x: x.timestamp, reverse=True)
 
         # Apply limit
@@ -235,10 +234,9 @@ class ReplayStorage:
             schedules = [s for s in schedules if s.enabled]
         return schedules
 
-
-# =============================================================================
-# ReplayService Class
-# =============================================================================
+        # =============================================================================
+        # ReplayService Class
+        # =============================================================================
 
 
 class ReplayService:
@@ -258,7 +256,7 @@ class ReplayService:
         self,
         storage: ReplayStorage | None = None,
         base_url: str = "http://localhost:8000",
-    ):
+    ) -> None:
         """
         Initialize ReplayService.
 
@@ -270,13 +268,13 @@ class ReplayService:
         self.base_url = base_url
         self.client = httpx.AsyncClient(timeout=30.0)
 
-    async def close(self):
+    async def close(self) -> None:
         """Close HTTP client and cleanup resources."""
         await self.client.aclose()
 
-    # =========================================================================
-    # Request Capture
-    # =========================================================================
+        # =========================================================================
+        # Request Capture
+        # =========================================================================
 
     async def capture_request(
         self,
@@ -366,9 +364,9 @@ class ReplayService:
         """
         return await self.storage.search_requests(filters)
 
-    # =========================================================================
-    # Request Replay
-    # =========================================================================
+        # =========================================================================
+        # Request Replay
+        # =========================================================================
 
     async def replay_request(
         self,
@@ -399,11 +397,11 @@ class ReplayService:
         if not original:
             raise ValueError(f"Request {request_id} not found")
 
-        # Apply delay
+            # Apply delay
         if delay_ms > 0:
             await asyncio.sleep(delay_ms / 1000.0)
 
-        # Apply modifications
+            # Apply modifications
         modified_request = self._apply_modifications(original, modifications or {})
 
         # Execute request
@@ -417,7 +415,7 @@ class ReplayService:
             if not full_url.startswith("http"):
                 full_url = f"{self.base_url}{full_url}"
 
-            # Make request
+                # Make request
             response = await self.client.request(
                 method=modified_request.method,
                 url=full_url,
@@ -440,7 +438,7 @@ class ReplayService:
             except Exception:
                 result.response_body = {"text": response.text}
 
-            # Compare with original if requested
+                # Compare with original if requested
             if compare:
                 result.comparison = self._compare_responses(
                     original, result
@@ -456,7 +454,7 @@ class ReplayService:
             result.error_message = str(e)
             logger.error(f"Failed to replay request {request_id}: {e}")
 
-        # Store result
+            # Store result
         await self.storage.store_result(request_id, result)
 
         return result
@@ -489,19 +487,19 @@ class ReplayService:
         if "headers" in modifications:
             modified.headers.update(modifications["headers"])
 
-        # Update query params
+            # Update query params
         if "query_params" in modifications:
             modified.query_params.update(modifications["query_params"])
 
-        # Update body (deep merge)
+            # Update body (deep merge)
         if "body" in modifications and modified.body:
             modified.body = self._deep_merge(modified.body, modifications["body"])
 
-        # Update URL
+            # Update URL
         if "url" in modifications:
             modified.url = modifications["url"]
 
-        # Update method
+            # Update method
         if "method" in modifications:
             modified.method = modifications["method"].upper()
 
@@ -521,9 +519,9 @@ class ReplayService:
                 result[key] = value
         return result
 
-    # =========================================================================
-    # Response Comparison
-    # =========================================================================
+        # =========================================================================
+        # Response Comparison
+        # =========================================================================
 
     def _compare_responses(
         self,
@@ -614,7 +612,7 @@ class ReplayService:
                 }
             )
 
-        # Check for value differences
+            # Check for value differences
         for key in original_keys & replay_keys:
             field_path = f"{path}.{key}" if path else key
             orig_val = original[key]
@@ -637,9 +635,9 @@ class ReplayService:
 
         return differences
 
-    # =========================================================================
-    # Bulk Replay
-    # =========================================================================
+        # =========================================================================
+        # Bulk Replay
+        # =========================================================================
 
     async def bulk_replay(
         self,
@@ -696,7 +694,7 @@ class ReplayService:
                         if result.error_message:
                             report.errors.append(result.error_message)
 
-                    # Update status distribution
+                            # Update status distribution
                     if result.status_code > 0:
                         report.status_code_distribution[result.status_code] = (
                             report.status_code_distribution.get(result.status_code, 0)
@@ -712,7 +710,8 @@ class ReplayService:
                     if stop_on_error:
                         raise
 
-        # Execute replays
+                        # Execute replays
+
         tasks = [replay_with_semaphore(req) for req in requests]
         results = await asyncio.gather(*tasks, return_exceptions=not stop_on_error)
 
@@ -732,9 +731,9 @@ class ReplayService:
 
         return report
 
-    # =========================================================================
-    # Replay Scheduling
-    # =========================================================================
+        # =========================================================================
+        # Replay Scheduling
+        # =========================================================================
 
     async def create_schedule(
         self,
@@ -791,9 +790,9 @@ class ReplayService:
         """
         return await self.storage.list_schedules(enabled_only=enabled_only)
 
-    # =========================================================================
-    # Reporting
-    # =========================================================================
+        # =========================================================================
+        # Reporting
+        # =========================================================================
 
     async def generate_report(
         self,
@@ -832,7 +831,7 @@ class ReplayService:
             results = await self.storage.get_results(req.id)
             all_results.extend(results)
 
-        # Calculate statistics
+            # Calculate statistics
         for result in all_results:
             if result.success:
                 report.successful += 1
@@ -849,7 +848,7 @@ class ReplayService:
             if result.comparison:
                 report.comparisons.append(ReplayComparison(**result.comparison))
 
-        # Calculate average response time
+                # Calculate average response time
         valid_times = [
             r.response_time_ms for r in all_results if r.response_time_ms > 0
         ]
@@ -870,9 +869,9 @@ class ReplayService:
         """
         return await self.storage.get_results(request_id)
 
-    # =========================================================================
-    # Utility Methods
-    # =========================================================================
+        # =========================================================================
+        # Utility Methods
+        # =========================================================================
 
     async def delete_request(self, request_id: str) -> bool:
         """

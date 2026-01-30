@@ -36,7 +36,7 @@ class TracingConfig:
         sample_rate: float = 1.0,
         enable_jaeger: bool = True,
         enable_otlp: bool = False,
-    ):
+    ) -> None:
         """
         Initialize tracing configuration.
 
@@ -65,7 +65,7 @@ class TracingConfig:
 class TracingSetup:
     """Setup distributed tracing infrastructure."""
 
-    def __init__(self, config: TracingConfig):
+    def __init__(self, config: TracingConfig) -> None:
         """
         Initialize tracing setup.
 
@@ -110,7 +110,7 @@ class TracingSetup:
             except Exception as e:
                 self.logger.warning(f"Failed to configure Jaeger: {e}")
 
-        # Add OTLP exporter
+                # Add OTLP exporter
         if self.config.enable_otlp:
             try:
                 otlp_exporter = OTLPSpanExporter(endpoint=self.config.otlp_endpoint)
@@ -121,7 +121,7 @@ class TracingSetup:
             except Exception as e:
                 self.logger.warning(f"Failed to configure OTLP: {e}")
 
-        # Set global tracer provider
+                # Set global tracer provider
         trace.set_tracer_provider(tracer_provider)
         self.tracer_provider = tracer_provider
 
@@ -157,7 +157,7 @@ class TracingSetup:
             except Exception as e:
                 self.logger.warning(f"Failed to configure OTLP metrics: {e}")
 
-        # Create meter provider
+                # Create meter provider
         meter_provider = MeterProvider(resource=resource, metric_readers=readers)
 
         # Set global meter provider
@@ -236,10 +236,9 @@ class TracingSetup:
 
         self.logger.info(f"Tracing setup completed for {self.config.service_name}")
 
-
-# ============================================================================
-# SPAN HELPERS
-# ============================================================================
+        # ============================================================================
+        # SPAN HELPERS
+        # ============================================================================
 
 
 def get_tracer(name: str = "app") -> Any:
@@ -275,16 +274,15 @@ def create_span(name: str, attributes: dict[str, Any] | None = None) -> Any:
 
     return span
 
-
-# ============================================================================
-# TRACE CONTEXT MANAGEMENT
-# ============================================================================
+    # ============================================================================
+    # TRACE CONTEXT MANAGEMENT
+    # ============================================================================
 
 
 class TraceContext:
     """Manage trace context information."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize trace context."""
         self.logger = logging.getLogger("app.tracing")
 
@@ -337,16 +335,15 @@ class TraceContext:
             return format(span.get_span_context().span_id, "016x")
         return ""
 
-
-# ============================================================================
-# PERFORMANCE TRACING
-# ============================================================================
+        # ============================================================================
+        # PERFORMANCE TRACING
+        # ============================================================================
 
 
 class PerformanceTracer:
     """Trace performance metrics."""
 
-    def __init__(self, tracer_name: str = "performance"):
+    def __init__(self, tracer_name: str = "performance") -> None:
         """
         Initialize performance tracer.
 
@@ -378,7 +375,7 @@ class PerformanceTracer:
         with self.tracer.start_as_current_span("db.query", attributes=attributes):
             pass
 
-        # Log slow queries
+            # Log slow queries
         if query_time_ms > 500:
             self.logger.warning(
                 f"Slow database query: {operation} on {table} took {query_time_ms}ms"
@@ -436,10 +433,10 @@ class PerformanceTracer:
         with self.tracer.start_as_current_span("http.request", attributes=attributes):
             pass
 
+            # ============================================================================
+            # GLOBAL INSTANCES
+            # ============================================================================
 
-# ============================================================================
-# GLOBAL INSTANCES
-# ============================================================================
 
 trace_context = TraceContext()
 performance_tracer = PerformanceTracer()

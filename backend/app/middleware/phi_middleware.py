@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 class PHIMiddleware(BaseHTTPMiddleware):
     """Middleware for PHI tagging and auditing."""
 
-    def __init__(self, app: ASGIApp):
+    def __init__(self, app: ASGIApp) -> None:
         """Initialize the middleware."""
         super().__init__(app)
         # Endpoints that are known to return PHI

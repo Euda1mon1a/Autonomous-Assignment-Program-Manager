@@ -104,7 +104,7 @@ def with_delay(mock_server: MockAPIServer):
         ```
     """
 
-    def configure_delay(delay_ms: int = 100):
+    def configure_delay(delay_ms: int = 100) -> None:
         """Configure delay for all endpoints."""
         mock_server.simulate_timeout(delay_ms)
 
@@ -132,7 +132,7 @@ def with_errors(mock_server: MockAPIServer):
 
     def configure_errors(
         error: Exception, method: str = None, path_pattern: str = None
-    ):
+    ) -> None:
         """Configure error injection."""
         mock_server.simulate_errors(error, method=method, path_pattern=path_pattern)
 

@@ -41,7 +41,7 @@ class ScheduleCache:
         self,
         max_size: int = 1000,
         ttl_seconds: int = 3600,
-    ):
+    ) -> None:
         """
         Initialize cache.
 
@@ -90,7 +90,7 @@ class ScheduleCache:
         if cached is not None:
             return cached
 
-        # Build matrix
+            # Build matrix
         matrix = {}
         for person_id in person_ids:
             if person_id in availability_data:
@@ -100,7 +100,7 @@ class ScheduleCache:
                     if block_id in availability_data[person_id]
                 }
 
-        # Cache result
+                # Cache result
         self._put(cache_key, matrix)
         return matrix
 
@@ -129,7 +129,7 @@ class ScheduleCache:
         if cached is not None:
             return cached
 
-        # Calculate counts
+            # Calculate counts
         total = 0
         by_week = defaultdict(int)
         by_template = defaultdict(int)
@@ -152,7 +152,7 @@ class ScheduleCache:
         self._put(cache_key, result)
         return result
 
-    def invalidate(self, keys: list[str] | None = None):
+    def invalidate(self, keys: list[str] | None = None) -> None:
         """
         Invalidate cache entries.
 
@@ -184,7 +184,7 @@ class ScheduleCache:
         self,
         context,
         availability: dict,
-    ):
+    ) -> None:
         """
         Pre-populate cache with common queries.
 
@@ -210,7 +210,7 @@ class ScheduleCache:
                 availability,
             )
 
-        # Get approximate cache size from Redis
+            # Get approximate cache size from Redis
         pattern = f"{self.KEY_PREFIX}*"
         cursor, keys = self._redis.scan(0, match=pattern, count=1000)
         cache_size = len(keys)
@@ -252,7 +252,7 @@ class ScheduleCache:
                     self._misses += 1
                 return None
 
-            # Deserialize
+                # Deserialize
             value = pickle.loads(data)
 
             with self._lock:
@@ -265,7 +265,7 @@ class ScheduleCache:
                 self._misses += 1
             return None
 
-    def _put(self, key: str, value: Any):
+    def _put(self, key: str, value: Any) -> None:
         """Put value in cache with TTL."""
         prefixed_key = f"{self.KEY_PREFIX}{key}"
 
@@ -301,8 +301,9 @@ class ScheduleCache:
         id_string = ",".join(id_list)
         return hashlib.sha256(id_string.encode()).hexdigest()[:32]
 
+        # Global cache instance for module-level caching
 
-# Global cache instance for module-level caching
+
 _global_cache: ScheduleCache | None = None
 
 

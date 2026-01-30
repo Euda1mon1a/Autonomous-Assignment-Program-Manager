@@ -104,7 +104,7 @@ class RateLimitBypassDetector:
     BEHAVIORAL_ANOMALY_WINDOW = 300  # 5 minutes
     BLOCK_DURATION = 3600  # 1 hour block duration
 
-    def __init__(self, redis_client: redis.Redis | None = None):
+    def __init__(self, redis_client: redis.Redis | None = None) -> None:
         """
         Initialize the bypass detector.
 
@@ -127,7 +127,7 @@ class RateLimitBypassDetector:
         else:
             self.redis = redis_client
 
-        # In-memory cache for performance (temporary storage)
+            # In-memory cache for performance (temporary storage)
         self._fingerprint_cache: dict[str, str] = {}
         self._detection_cache: dict[str, list[BypassDetection]] = defaultdict(list)
 
@@ -151,7 +151,7 @@ class RateLimitBypassDetector:
         if self.redis is None:
             return None
 
-        # Extract request metadata
+            # Extract request metadata
         ip_address = self._get_client_ip(request)
         user_agent = request.headers.get("User-Agent", "")
         endpoint = request.url.path
@@ -175,7 +175,7 @@ class RateLimitBypassDetector:
                 should_block=True,
             )
 
-        # Run detection techniques in order of severity
+            # Run detection techniques in order of severity
         detections = []
 
         # 1. IP rotation detection
@@ -183,31 +183,31 @@ class RateLimitBypassDetector:
         if ip_rotation:
             detections.append(ip_rotation)
 
-        # 2. User agent spoofing detection
+            # 2. User agent spoofing detection
         ua_spoofing = self._detect_user_agent_spoofing(ip_address, user_id, user_agent)
         if ua_spoofing:
             detections.append(ua_spoofing)
 
-        # 3. Distributed attack detection
+            # 3. Distributed attack detection
         distributed = self._detect_distributed_attack(ip_address, endpoint)
         if distributed:
             detections.append(distributed)
 
-        # 4. Behavioral anomaly detection
+            # 4. Behavioral anomaly detection
         behavioral = self._detect_behavioral_anomaly(
             request, ip_address, user_id, fingerprint
         )
         if behavioral:
             detections.append(behavioral)
 
-        # 5. Fingerprint mismatch detection
+            # 5. Fingerprint mismatch detection
         fingerprint_mismatch = self._detect_fingerprint_mismatch(
             ip_address, user_id, fingerprint
         )
         if fingerprint_mismatch:
             detections.append(fingerprint_mismatch)
 
-        # Return highest severity detection
+            # Return highest severity detection
         if detections:
             # Sort by threat level (critical > high > medium > low)
             threat_order = {
@@ -434,14 +434,14 @@ class RateLimitBypassDetector:
                 suspicious_count += 1
                 behaviors.append("missing_accept_language")
 
-            # Check for unusual header patterns
+                # Check for unusual header patterns
             if request.headers.get("X-Forwarded-For"):
                 xff_ips = request.headers.get("X-Forwarded-For", "").split(",")
                 if len(xff_ips) > 5:  # Suspicious proxy chain
                     suspicious_count += 1
                     behaviors.append("suspicious_proxy_chain")
 
-            # Check for rapid sequential requests (store in Redis)
+                    # Check for rapid sequential requests (store in Redis)
             request_key = f"{key}:requests"
             self.redis.zadd(request_key, {str(current_time): current_time})
             self.redis.expire(request_key, 10)  # 10 second window
@@ -455,7 +455,7 @@ class RateLimitBypassDetector:
                 suspicious_count += 2
                 behaviors.append(f"rapid_requests:{request_count}")
 
-            # Store behavior count
+                # Store behavior count
             if suspicious_count > 0:
                 self.redis.zadd(
                     key, {f"{current_time}:{suspicious_count}": current_time}
@@ -591,7 +591,7 @@ class RateLimitBypassDetector:
             # Take the first IP in the chain (client IP)
             return forwarded_for.split(",")[0].strip()
 
-        # Fall back to direct client IP
+            # Fall back to direct client IP
         if request.client:
             return request.client.host
 
@@ -617,7 +617,7 @@ class RateLimitBypassDetector:
             if ip_blocked:
                 return True
 
-            # Check user block
+                # Check user block
             if user_id:
                 user_blocked = self.redis.get(f"bypass:block:user:{user_id}")
                 if user_blocked:
@@ -754,7 +754,7 @@ class RateLimitBypassDetector:
         except Exception as e:
             logger.error(f"Failed to store detection in Redis: {e}")
 
-        # Send alert notification for high/critical threats
+            # Send alert notification for high/critical threats
         if detection.threat_level in (ThreatLevel.HIGH, ThreatLevel.CRITICAL) and db:
             try:
                 # Get admin users to notify (would need to query from DB)
@@ -767,8 +767,9 @@ class RateLimitBypassDetector:
             except Exception as e:
                 logger.error(f"Failed to send security alert: {e}")
 
+                # Global bypass detector instance
 
-# Global bypass detector instance
+
 _bypass_detector: RateLimitBypassDetector | None = None
 
 

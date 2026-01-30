@@ -85,7 +85,7 @@ async def delete_faculty_schedule_preference(
     preference_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_admin_user),
-):
+) -> None:
     service = FacultySchedulePreferenceService(db)
     ok = service.delete_preference(preference_id)
     if not ok:

@@ -44,7 +44,7 @@ class BarcodeVisualization:
     more persistent (significant) features.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize barcode visualizer."""
         self.colors = {
             0: "rgb(31, 119, 180)",  # Blue for H0
@@ -82,7 +82,7 @@ class BarcodeVisualization:
             logger.info("No features to plot")
             return None
 
-        # Sort by dimension and then by birth time
+            # Sort by dimension and then by birth time
         all_features.sort(key=lambda x: (x[0], x[1].birth))
 
         # Create barcode bars
@@ -110,7 +110,7 @@ class BarcodeVisualization:
                 )
             )
 
-        # Add legend manually for dimensions
+            # Add legend manually for dimensions
         for dim, color in self.colors.items():
             fig.add_trace(
                 go.Scatter(
@@ -197,7 +197,7 @@ class BarcodeVisualization:
                     )
                 )
 
-            # Plot insignificant features (smaller markers)
+                # Plot insignificant features (smaller markers)
             if insig_features:
                 fig.add_trace(
                     go.Scatter(
@@ -221,7 +221,7 @@ class BarcodeVisualization:
                     )
                 )
 
-        # Add diagonal line
+                # Add diagonal line
         fig.add_trace(
             go.Scatter(
                 x=[0, max_val * 1.1],
@@ -259,7 +259,7 @@ class BarcodeVisualization:
         if not HAS_PLOTLY:
             return None
 
-        # Create subplots
+            # Create subplots
         fig = make_subplots(
             rows=1,
             cols=2,
@@ -293,7 +293,7 @@ class BarcodeVisualization:
                     col=1,
                 )
 
-        # Add diagonal to persistence diagram
+                # Add diagonal to persistence diagram
         fig.add_trace(
             go.Scatter(
                 x=[0, max_val * 1.1],
@@ -478,7 +478,7 @@ def create_tda_summary_report(analysis_result: dict[str, Any]) -> dict[str, Any]
             "High topological anomaly score - significant structural issues detected."
         )
 
-    # Coverage voids
+        # Coverage voids
     voids = analysis_result.get("coverage_voids", [])
     if voids:
         report["findings"].append(
@@ -490,7 +490,7 @@ def create_tda_summary_report(analysis_result: dict[str, Any]) -> dict[str, Any]
                 f"Address {len(high_severity_voids)} high-severity coverage voids immediately."
             )
 
-    # Cyclic patterns
+            # Cyclic patterns
     cycles = analysis_result.get("cyclic_patterns", [])
     if cycles:
         report["findings"].append(f"Detected {len(cycles)} cyclic rotation patterns.")
@@ -504,7 +504,7 @@ def create_tda_summary_report(analysis_result: dict[str, Any]) -> dict[str, Any]
             "No cyclic patterns detected - consider establishing regular rotation cycles."
         )
 
-    # Feature counts
+        # Feature counts
     h0 = analysis_result.get("persistence_diagram", {}).get("h0_features", 0)
     h1 = analysis_result.get("persistence_diagram", {}).get("h1_features", 0)
     h2 = analysis_result.get("persistence_diagram", {}).get("h2_features", 0)

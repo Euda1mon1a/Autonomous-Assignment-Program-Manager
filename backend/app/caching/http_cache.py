@@ -119,7 +119,7 @@ class CacheDirective:
         if not header_value:
             return directive
 
-        # Parse directives
+            # Parse directives
         parts = [part.strip() for part in header_value.split(",")]
 
         for part in parts:
@@ -168,7 +168,7 @@ class CacheDirective:
         if self.no_store:
             return False
 
-        # Must have public or max_age to be cacheable
+            # Must have public or max_age to be cacheable
         return self.public or self.max_age is not None
 
 
@@ -336,7 +336,7 @@ class HTTPCache:
         )
     """
 
-    def __init__(self, config: HTTPCacheConfig | None = None):
+    def __init__(self, config: HTTPCacheConfig | None = None) -> None:
         """
         Initialize HTTP cache service.
 
@@ -422,7 +422,7 @@ class HTTPCache:
                 logger.debug(f"Cache miss: {cache_key}")
                 return None
 
-            # Deserialize
+                # Deserialize
             cached_dict = pickle.loads(data)
             cached_response = CachedResponse.from_dict(cached_dict)
 
@@ -557,7 +557,7 @@ class HTTPCache:
             # No cached version, assume modified
             return True
 
-        # Check ETag (If-None-Match)
+            # Check ETag (If-None-Match)
         if etag and cached.etag:
             from app.caching.etag import ETagGenerator
 
@@ -568,7 +568,7 @@ class HTTPCache:
             if ETagGenerator.matches_any(cached.etag, etag_list):
                 return False
 
-        # Check Last-Modified (If-Modified-Since)
+                # Check Last-Modified (If-Modified-Since)
         if if_modified_since and cached.last_modified:
             # Round to seconds (HTTP dates don't include milliseconds)
             cached_timestamp = int(cached.last_modified.timestamp())
@@ -577,11 +577,11 @@ class HTTPCache:
             if cached_timestamp <= request_timestamp:
                 return False
 
-        # If we have either condition but reached here, it's modified
+                # If we have either condition but reached here, it's modified
         if etag or if_modified_since:
             return True
 
-        # No conditions provided, assume modified
+            # No conditions provided, assume modified
         return True
 
     async def invalidate_pattern(self, pattern: str) -> int:
@@ -609,7 +609,7 @@ class HTTPCache:
             async for key in redis_client.scan_iter(match=full_pattern):
                 keys.append(key)
 
-            # Delete keys
+                # Delete keys
             if keys:
                 deleted = await redis_client.delete(*keys)
                 logger.info(f"Invalidated {deleted} cache entries matching {pattern}")

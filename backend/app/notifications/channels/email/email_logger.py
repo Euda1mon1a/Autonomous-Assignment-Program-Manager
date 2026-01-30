@@ -48,7 +48,7 @@ class EmailLogger:
     - Analytics and reporting
     """
 
-    def __init__(self, max_entries: int = 10000):
+    def __init__(self, max_entries: int = 10000) -> None:
         """
         Initialize email logger.
 
@@ -132,7 +132,7 @@ class EmailLogger:
         if event_type:
             logs = [entry for entry in logs if entry.event_type == event_type]
 
-        # Sort by timestamp (most recent first)
+            # Sort by timestamp (most recent first)
         logs = sorted(logs, key=lambda e: e.timestamp, reverse=True)
 
         return logs[:limit]

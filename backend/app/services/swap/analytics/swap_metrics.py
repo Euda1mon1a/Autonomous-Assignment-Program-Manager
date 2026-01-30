@@ -60,7 +60,7 @@ class SwapMetricsCollector:
     system health and usage patterns.
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize metrics collector.
 
@@ -90,7 +90,7 @@ class SwapMetricsCollector:
         if not start_date:
             start_date = end_date - timedelta(days=30)
 
-        # Get all swaps in period
+            # Get all swaps in period
         result = await self.db.execute(
             select(SwapRecord).where(
                 and_(

@@ -53,7 +53,7 @@ class ExplainabilityService:
         constraint_manager: ConstraintManager | None = None,
         algorithm: str = "unknown",
         random_seed: int | None = None,
-    ):
+    ) -> None:
         self.context = context
         self.constraint_manager = constraint_manager
         self.algorithm = algorithm
@@ -202,7 +202,7 @@ class ExplainabilityService:
         if alternatives:
             margin = selected_score - alternatives[0].score
 
-        # Generate trade-off summary
+            # Generate trade-off summary
         trade_off_summary = self._generate_trade_off_summary(
             selected_person,
             block,
@@ -333,7 +333,7 @@ class ExplainabilityService:
                 )
             )
 
-        # Equity (soft constraint)
+            # Equity (soft constraint)
         evaluations.append(
             ConstraintEvaluation(
                 constraint_name="Workload Equity",
@@ -398,7 +398,7 @@ class ExplainabilityService:
             if not self._check_availability(candidate.id, block.id):
                 violations.append("Unavailable (blocking absence)")
 
-            # Check if they have more assignments (equity reason)
+                # Check if they have more assignments (equity reason)
             selected_count = assignment_counts.get(selected.id, 0)
             candidate_count = assignment_counts.get(candidate.id, 0)
             if candidate_count > selected_count:
@@ -448,7 +448,7 @@ class ExplainabilityService:
             score += 0.2
             factors.append("Only candidate available")
 
-        # Factor 2: Number of candidates
+            # Factor 2: Number of candidates
         if num_candidates == 1:
             score += 0.1
             factors.append("Single eligible candidate")
@@ -456,7 +456,7 @@ class ExplainabilityService:
             score += 0.1
             factors.append(f"Many candidates ({num_candidates}) to choose from")
 
-        # Factor 3: Hard constraint violations
+            # Factor 3: Hard constraint violations
         hard_violations = [
             c
             for c in constraints
@@ -469,13 +469,13 @@ class ExplainabilityService:
                 f"Hard constraint violation: {hard_violations[0].constraint_name}"
             )
 
-        # Factor 4: Soft constraint penalties
+            # Factor 4: Soft constraint penalties
         total_penalty = sum(c.penalty for c in constraints)
         if total_penalty > 50:
             score -= 0.1
             factors.append(f"High soft constraint penalties ({total_penalty:.0f})")
 
-        # Clamp to [0, 1]
+            # Clamp to [0, 1]
         score = max(0.0, min(1.0, score))
 
         # Convert to level
@@ -518,7 +518,7 @@ class ExplainabilityService:
             else:
                 parts.append(f"with {selected_count} current assignments")
 
-        # Constraint notes
+                # Constraint notes
         soft_violations = [
             c
             for c in constraints

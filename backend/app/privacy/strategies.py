@@ -66,7 +66,7 @@ class PseudonymizationStrategy(AnonymizationStrategy):
 
     def __init__(
         self, encryption_key: bytes | None = None, use_encryption: bool = True
-    ):
+    ) -> None:
         """
         Initialize pseudonymization strategy.
 
@@ -86,7 +86,7 @@ class PseudonymizationStrategy(AnonymizationStrategy):
         else:
             self.cipher = None
 
-        # Mapping for non-encrypted pseudonymization
+            # Mapping for non-encrypted pseudonymization
         self._pseudonym_map: dict[str, str] = {}
         self._reverse_map: dict[str, str] = {}
 
@@ -162,7 +162,7 @@ class PseudonymizationStrategy(AnonymizationStrategy):
             if value in self._pseudonym_map:
                 return self._pseudonym_map[value]
 
-            # Generate pseudonym
+                # Generate pseudonym
             pseudonym = f"PSEUDO_{secrets.token_hex(8)}"
             self._pseudonym_map[value] = pseudonym
             self._reverse_map[pseudonym] = value
@@ -191,7 +191,7 @@ class KAnonymityStrategy(AnonymizationStrategy):
     with respect to quasi-identifiers.
     """
 
-    def __init__(self, k: int = 5, suppression_threshold: float = 0.1):
+    def __init__(self, k: int = 5, suppression_threshold: float = 0.1) -> None:
         """
         Initialize k-anonymity strategy.
 
@@ -285,7 +285,7 @@ class KAnonymityStrategy(AnonymizationStrategy):
         if not records:
             return []
 
-        # Determine generalization for each quasi-identifier
+            # Determine generalization for each quasi-identifier
         generalizations = {}
 
         for qi in quasi_identifiers:
@@ -293,10 +293,10 @@ class KAnonymityStrategy(AnonymizationStrategy):
             if not values:
                 continue
 
-            # Generalize based on data type
+                # Generalize based on data type
             generalizations[qi] = self._generalize_field(values)
 
-        # Apply generalizations to all records in group
+            # Apply generalizations to all records in group
         anonymized_records = []
         for record in records:
             new_record = record.copy()
@@ -319,7 +319,7 @@ class KAnonymityStrategy(AnonymizationStrategy):
         if not values:
             return None
 
-        # Check data type
+            # Check data type
         sample = values[0]
 
         if isinstance(sample, (int, float)):
@@ -344,7 +344,7 @@ class KAnonymityStrategy(AnonymizationStrategy):
             if len(set(values)) == 1:
                 return values[0]
 
-            # Find common prefix
+                # Find common prefix
             common_prefix = self._find_common_prefix(values)
             if len(common_prefix) >= 2:
                 return f"{common_prefix}*"
@@ -399,7 +399,7 @@ class LDiversityStrategy(AnonymizationStrategy):
     well-represented values for sensitive attributes.
     """
 
-    def __init__(self, l: int = 3):
+    def __init__(self, l: int = 3) -> None:
         """
         Initialize l-diversity strategy.
 
@@ -447,7 +447,7 @@ class LDiversityStrategy(AnonymizationStrategy):
             key = tuple(record.get(qi) for qi in quasi_identifiers)
             groups[key].append(record)
 
-        # Check l-diversity within each group
+            # Check l-diversity within each group
         l_diverse_data = []
         for group_key, group_records in groups.items():
             sensitive_values = [r.get(sensitive_attribute) for r in group_records]
@@ -471,7 +471,7 @@ class GeneralizationStrategy(AnonymizationStrategy):
     Reduces precision of data while maintaining utility.
     """
 
-    def __init__(self, generalization_rules: dict[str, dict] | None = None):
+    def __init__(self, generalization_rules: dict[str, dict] | None = None) -> None:
         """
         Initialize generalization strategy.
 
@@ -562,7 +562,7 @@ class DataSuppressionStrategy(AnonymizationStrategy):
     Removes outlier records that cannot be adequately anonymized.
     """
 
-    def __init__(self, outlier_threshold: float = 0.05):
+    def __init__(self, outlier_threshold: float = 0.05) -> None:
         """
         Initialize suppression strategy.
 
@@ -591,13 +591,13 @@ class DataSuppressionStrategy(AnonymizationStrategy):
         if not data:
             return []
 
-        # Count frequency of each quasi-identifier combination
+            # Count frequency of each quasi-identifier combination
         frequency_map = defaultdict(int)
         for record in data:
             key = tuple(record.get(qi) for qi in quasi_identifiers)
             frequency_map[key] += 1
 
-        # Determine threshold for suppression
+            # Determine threshold for suppression
         total_records = len(data)
         min_frequency = max(1, int(total_records * self.outlier_threshold))
 

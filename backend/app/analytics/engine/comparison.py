@@ -26,7 +26,7 @@ class PeriodComparison:
     - Statistical significance testing
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize period comparison.
 
@@ -174,7 +174,7 @@ class PeriodComparison:
         else:
             percent_change = 0 if delta == 0 else float("inf")
 
-        # Determine direction
+            # Determine direction
         if abs(delta) < 0.01:
             direction = "stable"
         elif delta > 0:
@@ -182,7 +182,7 @@ class PeriodComparison:
         else:
             direction = "decrease"
 
-        # Determine magnitude
+            # Determine magnitude
         if abs(percent_change) < 5:
             magnitude = "minimal"
         elif abs(percent_change) < 20:
@@ -225,7 +225,7 @@ class PeriodComparison:
                     }
                 )
 
-        # Overall assessment
+                # Overall assessment
         if not significant_changes:
             overall_assessment = "stable"
         else:

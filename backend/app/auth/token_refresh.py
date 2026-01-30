@@ -184,11 +184,11 @@ class RefreshTokenData(BaseModel):
         if self.status != RefreshTokenStatus.ACTIVE:
             return False, f"Token status is {self.status}"
 
-        # Check expiration
+            # Check expiration
         if self.is_expired():
             return False, "Token has expired"
 
-        # Check device binding
+            # Check device binding
         if self.device_fingerprint and device_fingerprint:
             if self.device_fingerprint != device_fingerprint:
                 return False, "Device fingerprint mismatch"
@@ -255,7 +255,7 @@ class RefreshTokenService:
         rotation_threshold: float = 0.5,  # Rotate if >50% of lifetime used
         enable_device_binding: bool = True,
         enable_reuse_detection: bool = True,
-    ):
+    ) -> None:
         """
         Initialize refresh token service.
 
@@ -346,7 +346,7 @@ class RefreshTokenService:
             except ValueError:
                 pass
 
-        # Remove from user index
+                # Remove from user index
         if token_data.user_id in self._user_index:
             try:
                 self._user_index[token_data.user_id].remove(token_data.token_id)
@@ -386,7 +386,7 @@ class RefreshTokenService:
                 f"{request.user_id} (max: {self.max_tokens_per_user})"
             )
 
-        # Generate token identifiers
+            # Generate token identifiers
         token_id = self._generate_token_id()
         family_id = request.family_id or self._generate_family_id()
         token_string = self._generate_token_string()
@@ -401,7 +401,7 @@ class RefreshTokenService:
             device_fp_hash = device_fingerprint.generate_hash()
             device_info = device_fingerprint.model_dump()
 
-        # Create token data
+            # Create token data
         token_data = RefreshTokenData(
             token_id=token_id,
             family_id=family_id,
@@ -427,7 +427,7 @@ class RefreshTokenService:
                     stored_data.child_token_id = token_id
                     break
 
-        # Record metric
+                    # Record metric
         if obs_metrics:
             obs_metrics.record_token_issued("refresh")
 
@@ -471,7 +471,7 @@ class RefreshTokenService:
                 obs_metrics.record_auth_failure("invalid_refresh_token")
             return None, None, "Token not found"
 
-        # Check if token has already been used (potential reuse attack)
+            # Check if token has already been used (potential reuse attack)
         if self.enable_reuse_detection and token_data.status == RefreshTokenStatus.USED:
             # SECURITY: Token reuse detected - revoke entire family
             logger.warning(
@@ -487,7 +487,7 @@ class RefreshTokenService:
             if obs_metrics:
                 obs_metrics.record_auth_failure("refresh_token_reuse")
 
-            # Log security event
+                # Log security event
             logger.error(
                 f"Revoked {revoked_count} tokens in family {token_data.family_id} "
                 f"due to reuse detection"
@@ -495,7 +495,7 @@ class RefreshTokenService:
 
             return None, None, "Token reuse detected - family revoked"
 
-        # Validate token
+            # Validate token
         device_fp_hash = None
         if self.enable_device_binding and device_fingerprint:
             device_fp_hash = device_fingerprint.generate_hash()
@@ -513,7 +513,7 @@ class RefreshTokenService:
 
             return None, None, reason
 
-        # Update token usage
+            # Update token usage
         token_data.last_used_at = datetime.utcnow()
         token_data.refresh_count += 1
 
@@ -559,7 +559,7 @@ class RefreshTokenService:
 
             return new_token_data, new_token_string, "rotated"
 
-        # No rotation - return existing token
+            # No rotation - return existing token
         return token_data, None, "valid"
 
     async def revoke_token(
@@ -592,7 +592,7 @@ class RefreshTokenService:
         if not token_data:
             return False
 
-        # Update status
+            # Update status
         token_data.status = RefreshTokenStatus.REVOKED
         token_data.metadata["revoke_reason"] = reason
 
@@ -608,7 +608,7 @@ class RefreshTokenService:
             self.db.add(TokenBlacklist)
             self.db.commit()
 
-        # Remove from storage
+            # Remove from storage
         if token_string:
             del self._token_storage[token_string]
         self._unindex_token(token_data)
@@ -732,7 +732,7 @@ class RefreshTokenService:
             if token_data.token_id in token_ids:
                 tokens.append(token_data)
 
-        # Sort by creation time
+                # Sort by creation time
         tokens.sort(key=lambda t: t.created_at)
 
         return tokens
@@ -808,8 +808,9 @@ class RefreshTokenService:
             average_token_age_hours=avg_age,
         )
 
+        # Global service instance (singleton)
 
-# Global service instance (singleton)
+
 _refresh_token_service: RefreshTokenService | None = None
 
 

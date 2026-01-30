@@ -32,7 +32,7 @@ class TemplateRenderError(Exception):
         message: str,
         template_name: str | None = None,
         context: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """
         Initialize the template render error.
 
@@ -65,7 +65,7 @@ class TemplateEngine:
         template_dirs: list[str] | None = None,
         enable_sandbox: bool = True,
         locale: str = "en_US",
-    ):
+    ) -> None:
         """
         Initialize the template engine.
 
@@ -94,7 +94,7 @@ class TemplateEngine:
                 undefined=StrictUndefined,
             )
 
-        # Register custom filters and functions
+            # Register custom filters and functions
         self._register_custom_filters()
         self._register_custom_functions()
 
@@ -132,7 +132,7 @@ class TemplateEngine:
             else:
                 template = self.env.from_string(template_string)
 
-            # Add locale to context
+                # Add locale to context
             context_with_locale = {"locale": self.locale, **context}
 
             # Render template
@@ -349,7 +349,8 @@ class TemplateEngine:
                 return singular
             return plural if plural else f"{singular}s"
 
-        # Register filters
+            # Register filters
+
         self.env.filters["format_date"] = format_date
         self.env.filters["format_datetime"] = format_datetime
         self.env.filters["pluralize"] = pluralize
@@ -370,7 +371,8 @@ class TemplateEngine:
             """
             return self.get_translated_text(key, self.locale, **kwargs)
 
-        # Register global functions
+            # Register global functions
+
         self.env.globals["localize"] = localize
         self.env.globals["locale"] = self.locale
 
@@ -397,7 +399,7 @@ class TemplateEngine:
             for part in parts:
                 current = current[part]
 
-            # Substitute variables in the translated text
+                # Substitute variables in the translated text
             if not isinstance(current, str):
                 current = str(current)
             result: str = current
@@ -447,8 +449,9 @@ class TemplateEngine:
             logger.warning(f"Failed to load translations for {locale}: {e}")
             return {}
 
+            # Default global instance
 
-# Default global instance
+
 _default_engine: TemplateEngine | None = None
 
 

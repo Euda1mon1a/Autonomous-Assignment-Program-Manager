@@ -30,7 +30,7 @@ class TimeSeriesAnalyzer:
     - Moving averages
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize time series analyzer.
 
@@ -74,19 +74,19 @@ class TimeSeriesAnalyzer:
                 start_date, end_date, granularity
             )
 
-        # Get coverage rate over time
+            # Get coverage rate over time
         if "coverage_rate" in metrics:
             time_series["coverage_rate"] = await self._get_coverage_rate_series(
                 start_date, end_date, granularity
             )
 
-        # Get workload hours over time
+            # Get workload hours over time
         if "workload_hours" in metrics:
             time_series["workload_hours"] = await self._get_workload_series(
                 start_date, end_date, granularity
             )
 
-        # Get utilization over time
+            # Get utilization over time
         if "utilization" in metrics:
             time_series["utilization"] = await self._get_utilization_series(
                 start_date, end_date, granularity
@@ -231,7 +231,7 @@ class TimeSeriesAnalyzer:
                 "r_squared": 0,
             }
 
-        # Convert to numpy arrays
+            # Convert to numpy arrays
         x = np.arange(len(series))
         y = series.values
 
@@ -280,7 +280,7 @@ class TimeSeriesAnalyzer:
                 "strength": 0,
             }
 
-        # Simple autocorrelation at lag=period
+            # Simple autocorrelation at lag=period
         if len(series) > period:
             autocorr = series.autocorr(lag=period)
             has_seasonality = abs(autocorr) > 0.3

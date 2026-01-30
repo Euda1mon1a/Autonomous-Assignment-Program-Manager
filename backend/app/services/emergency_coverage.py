@@ -27,7 +27,7 @@ class EmergencyCoverageService:
     # Critical services that must be covered
     CRITICAL_ACTIVITIES = ["inpatient", "call", "emergency", "procedure"]
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     async def handle_emergency_absence(
@@ -163,7 +163,7 @@ class EmergencyCoverageService:
         if not block:
             return None
 
-        # Get current person's details
+            # Get current person's details
         current_person = (
             self.db.query(Person).filter(Person.id == assignment.person_id).first()
         )
@@ -204,7 +204,7 @@ class EmergencyCoverageService:
         if not candidates:
             return None
 
-        # Prefer same PGY level
+            # Prefer same PGY level
         if current_person and current_person.pgy_level:
             same_level = [
                 c for c in candidates if c.pgy_level == current_person.pgy_level
@@ -212,5 +212,5 @@ class EmergencyCoverageService:
             if same_level:
                 return same_level[0]
 
-        # Return first available
+                # Return first available
         return candidates[0]

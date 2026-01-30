@@ -15,7 +15,7 @@ class NotificationBuilder:
     with validation and defaults.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize builder."""
         self._recipient_id: UUID | None = None
         self._notification_type: NotificationType | None = None
@@ -64,7 +64,7 @@ class NotificationBuilder:
         if not self._notification_type:
             raise ValueError("Notification type required")
 
-        # Render template
+            # Render template
         rendered = render_notification(self._notification_type, self._data)
         if not rendered:
             raise ValueError(f"Template not found: {self._notification_type}")

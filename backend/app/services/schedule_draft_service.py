@@ -137,7 +137,7 @@ class ScheduleDraftService:
         modifications. Safe for use in multi-threaded environments.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize the ScheduleDraftService with a database session.
 
@@ -197,7 +197,7 @@ class ScheduleDraftService:
                     message="Using existing draft for this date range",
                 )
 
-            # Create new draft
+                # Create new draft
             draft = ScheduleDraft(
                 id=uuid4(),
                 created_at=datetime.utcnow(),
@@ -289,7 +289,7 @@ class ScheduleDraftService:
                 self.db.commit()
                 return existing.id
 
-            # Create new draft assignment
+                # Create new draft assignment
             draft_assignment = ScheduleDraftAssignment(
                 id=uuid4(),
                 draft_id=draft_id,
@@ -462,7 +462,7 @@ class ScheduleDraftService:
         if not draft:
             return None
 
-        # Count changes by type
+            # Count changes by type
         add_count = sum(
             1
             for a in draft.assignments
@@ -568,7 +568,7 @@ class ScheduleDraftService:
                         error_code="INVALID_STATUS",
                     )
 
-                # Check flags (Tier 1 must acknowledge or provide override comment)
+                    # Check flags (Tier 1 must acknowledge or provide override comment)
                 if draft.has_unacknowledged_flags and not override_comment:
                     return PublishResult(
                         success=False,
@@ -578,7 +578,7 @@ class ScheduleDraftService:
                         error_code="FLAGS_UNACKNOWLEDGED",
                     )
 
-                # Get all draft assignments
+                    # Get all draft assignments
                 draft_assignments = (
                     self.db.query(ScheduleDraftAssignment)
                     .filter(ScheduleDraftAssignment.draft_id == draft_id)
@@ -611,7 +611,7 @@ class ScheduleDraftService:
                             }
                         )
 
-                # Update draft status based on success
+                        # Update draft status based on success
                 now = datetime.utcnow()
 
                 if error_count > 0 and published_count == 0:
@@ -632,7 +632,7 @@ class ScheduleDraftService:
                         error_code="PUBLISH_FAILED",
                     )
 
-                # Partial or complete success - mark as PUBLISHED
+                    # Partial or complete success - mark as PUBLISHED
                 draft.status = ScheduleDraftStatus.PUBLISHED
                 draft.published_at = now
                 draft.published_by_id = published_by_id
@@ -650,7 +650,7 @@ class ScheduleDraftService:
                     draft.override_comment = override_comment
                     draft.override_by_id = published_by_id
 
-                # ACGME validation after publish
+                    # ACGME validation after publish
                 if validate_acgme and published_count > 0:
                     try:
                         validator = ACGMEValidator(self.db)
@@ -744,8 +744,8 @@ class ScheduleDraftService:
                     context="schedule_draft_service",
                 )
 
-        # Determine time slots to process
-        # Draft uses 'ALL' for full-day, HalfDayAssignment needs separate AM/PM
+                # Determine time slots to process
+                # Draft uses 'ALL' for full-day, HalfDayAssignment needs separate AM/PM
         time_slots = ["AM", "PM"] if da.time_of_day == "ALL" else [da.time_of_day]
 
         for time_slot in time_slots:
@@ -924,7 +924,7 @@ class ScheduleDraftService:
                         error_code="INVALID_STATUS",
                     )
 
-                # Check rollback window
+                    # Check rollback window
                 if not draft.rollback_available:
                     return RollbackResult(
                         success=False,
@@ -948,7 +948,7 @@ class ScheduleDraftService:
                         error_code="ROLLBACK_EXPIRED",
                     )
 
-                # Get all draft assignments that were published
+                    # Get all draft assignments that were published
                 draft_assignments = (
                     self.db.query(ScheduleDraftAssignment)
                     .filter(
@@ -1024,7 +1024,7 @@ class ScheduleDraftService:
                         failed_count += 1
                         errors.append(str(e))
 
-                # Update draft status based on success
+                        # Update draft status based on success
                 if rolled_back_count == 0 and failed_count > 0:
                     # Complete failure - stay in PUBLISHED
                     draft.notes = (
@@ -1046,7 +1046,7 @@ class ScheduleDraftService:
                         error_code="ROLLBACK_FAILED",
                     )
 
-                # Partial or complete success - mark as ROLLED_BACK
+                    # Partial or complete success - mark as ROLLED_BACK
                 draft.status = ScheduleDraftStatus.ROLLED_BACK
                 draft.rolled_back_at = datetime.utcnow()
                 draft.rolled_back_by_id = rolled_back_by_id
@@ -1211,7 +1211,7 @@ class ScheduleDraftService:
             if assignment.id and assignment.id in existing_ids:
                 continue
 
-            # Determine change type - new assignment = ADD
+                # Determine change type - new assignment = ADD
             change_type = DraftAssignmentChangeType.ADD
 
             # Check if there's an existing live assignment at this slot
@@ -1236,8 +1236,8 @@ class ScheduleDraftService:
             else:
                 existing_assignment_id = None
 
-            # Create draft assignment
-            # Access date/time_of_day via block relationship
+                # Create draft assignment
+                # Access date/time_of_day via block relationship
             draft_assignment = ScheduleDraftAssignment(
                 id=uuid4(),
                 draft_id=draft_id,
@@ -1254,7 +1254,7 @@ class ScheduleDraftService:
             self.db.add(draft_assignment)
             added_count += 1
 
-        # Update change summary in draft
+            # Update change summary in draft
         draft = (
             self.db.query(ScheduleDraft).filter(ScheduleDraft.id == draft_id).first()
         )
@@ -1315,7 +1315,7 @@ class ScheduleDraftService:
             else:
                 flag_type = DraftFlagType.MANUAL_REVIEW
 
-            # Map severity
+                # Map severity
             severity_str = str(violation.severity).upper()
             if severity_str in ("CRITICAL", "HIGH"):
                 severity = DraftFlagSeverity.ERROR
@@ -1324,7 +1324,7 @@ class ScheduleDraftService:
             else:
                 severity = DraftFlagSeverity.INFO
 
-            # Create flag
+                # Create flag
             flag = ScheduleDraftFlag(
                 id=uuid4(),
                 draft_id=draft_id,
@@ -1341,7 +1341,7 @@ class ScheduleDraftService:
             self.db.add(flag)
             flags_added += 1
 
-        # Update flags_total in draft
+            # Update flags_total in draft
         if flags_added > 0:
             draft = (
                 self.db.query(ScheduleDraft)
@@ -1356,9 +1356,9 @@ class ScheduleDraftService:
 
         return flags_added
 
-    # =========================================================================
-    # Sync versions for use from non-async contexts (e.g., scheduling engine)
-    # =========================================================================
+        # =========================================================================
+        # Sync versions for use from non-async contexts (e.g., scheduling engine)
+        # =========================================================================
 
     def create_draft_sync(
         self,
@@ -1398,7 +1398,7 @@ class ScheduleDraftService:
                     message="Using existing draft for this date range",
                 )
 
-            # Create new draft
+                # Create new draft
             draft = ScheduleDraft(
                 id=uuid4(),
                 created_at=datetime.utcnow(),
@@ -1457,7 +1457,7 @@ class ScheduleDraftService:
             if assignment.id and assignment.id in existing_ids:
                 continue
 
-            # Determine change type - new assignment = ADD
+                # Determine change type - new assignment = ADD
             change_type = DraftAssignmentChangeType.ADD
 
             # Check if there's an existing live assignment at this slot
@@ -1482,8 +1482,8 @@ class ScheduleDraftService:
             else:
                 existing_assignment_id = None
 
-            # Create draft assignment
-            # Access date/time_of_day via block relationship
+                # Create draft assignment
+                # Access date/time_of_day via block relationship
             draft_assignment = ScheduleDraftAssignment(
                 id=uuid4(),
                 draft_id=draft_id,
@@ -1499,7 +1499,7 @@ class ScheduleDraftService:
             self.db.add(draft_assignment)
             added_count += 1
 
-        # Update change summary in draft
+            # Update change summary in draft
         draft = (
             self.db.query(ScheduleDraft).filter(ScheduleDraft.id == draft_id).first()
         )
@@ -1555,7 +1555,7 @@ class ScheduleDraftService:
             else:
                 flag_type = DraftFlagType.MANUAL_REVIEW
 
-            # Map severity
+                # Map severity
             severity_str = str(violation.severity).upper()
             if severity_str in ("CRITICAL", "HIGH"):
                 severity = DraftFlagSeverity.ERROR
@@ -1564,7 +1564,7 @@ class ScheduleDraftService:
             else:
                 severity = DraftFlagSeverity.INFO
 
-            # Create flag
+                # Create flag
             flag = ScheduleDraftFlag(
                 id=uuid4(),
                 draft_id=draft_id,
@@ -1581,7 +1581,7 @@ class ScheduleDraftService:
             self.db.add(flag)
             flags_added += 1
 
-        # Update flags_total in draft
+            # Update flags_total in draft
         if flags_added > 0:
             draft = (
                 self.db.query(ScheduleDraft)

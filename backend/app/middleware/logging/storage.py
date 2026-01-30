@@ -64,7 +64,7 @@ class InMemoryLogStorage(LogStorage):
     Note: Logs are lost on application restart.
     """
 
-    def __init__(self, max_entries: int = 10000):
+    def __init__(self, max_entries: int = 10000) -> None:
         """
         Initialize in-memory storage.
 
@@ -88,7 +88,7 @@ class InMemoryLogStorage(LogStorage):
         if filters:
             logs = [log for log in logs if self._matches_filters(log, filters)]
 
-        # Apply limit
+            # Apply limit
         return logs[-limit:]
 
     def _matches_filters(self, log: dict[str, Any], filters: dict[str, Any]) -> bool:
@@ -133,7 +133,7 @@ class FileLogStorage(LogStorage):
         when: str = "midnight",
         interval: int = 1,
         use_compact_format: bool = False,
-    ):
+    ) -> None:
         """
         Initialize file-based storage.
 
@@ -173,7 +173,7 @@ class FileLogStorage(LogStorage):
                 backupCount=backup_count,
             )
 
-        # Set formatter
+            # Set formatter
         formatter = (
             CompactJSONFormatter() if use_compact_format else RequestResponseFormatter()
         )
@@ -273,7 +273,7 @@ class DatabaseLogStorage(LogStorage):
     - Compliance and audit trails
     """
 
-    def __init__(self, db_session_factory):
+    def __init__(self, db_session_factory) -> None:
         """
         Initialize database storage.
 
@@ -317,7 +317,7 @@ class MultiLogStorage(LogStorage):
     - Different retention policies per backend
     """
 
-    def __init__(self, backends: list[LogStorage]):
+    def __init__(self, backends: list[LogStorage]) -> None:
         """
         Initialize multi-backend storage.
 

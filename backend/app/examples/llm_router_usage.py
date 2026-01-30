@@ -12,7 +12,7 @@ from app.schemas.llm import LLMRequest
 from app.services.llm_router import LLMRouter
 
 
-async def example_basic_generation():
+async def example_basic_generation() -> None:
     """Example: Basic text generation with automatic routing."""
     print("\n=== Example: Basic Generation ===")
 
@@ -42,7 +42,7 @@ async def example_basic_generation():
         print(f"Tokens used: {response.usage.total_tokens}")
 
 
-async def example_explicit_provider():
+async def example_explicit_provider() -> None:
     """Example: Use specific provider (Ollama)."""
     print("\n=== Example: Explicit Provider ===")
 
@@ -63,7 +63,7 @@ async def example_explicit_provider():
     print(f"Content: {response.content[:100]}...")
 
 
-async def example_tool_calling():
+async def example_tool_calling() -> None:
     """Example: Tool calling with automatic provider selection."""
     print("\n=== Example: Tool Calling ===")
 
@@ -100,7 +100,7 @@ async def example_tool_calling():
             print(f"  - {call.name}: {call.arguments}")
 
 
-async def example_task_classification():
+async def example_task_classification() -> None:
     """Example: Task classification without generation."""
     print("\n=== Example: Task Classification ===")
 
@@ -125,7 +125,7 @@ async def example_task_classification():
         print(f"  Reasoning: {classification.reasoning}")
 
 
-async def example_health_monitoring():
+async def example_health_monitoring() -> None:
     """Example: Health check and statistics."""
     print("\n=== Example: Health Monitoring ===")
 
@@ -143,7 +143,7 @@ async def example_health_monitoring():
         if health.error_message:
             print(f"    Error: {health.error_message}")
 
-    # Check circuit breaker states
+            # Check circuit breaker states
     breaker_states = router.get_circuit_breaker_states()
 
     print("\nCircuit Breaker States:")
@@ -152,7 +152,7 @@ async def example_health_monitoring():
         if state.failure_count > 0:
             print(f"    Failures: {state.failure_count}")
 
-    # Get usage statistics
+            # Get usage statistics
     stats = router.get_stats()
 
     print("\nUsage Statistics:")
@@ -165,7 +165,7 @@ async def example_health_monitoring():
             print(f"    {provider}: {count}")
 
 
-async def example_airgap_mode():
+async def example_airgap_mode() -> None:
     """Example: Router in airgap mode (local only)."""
     print("\n=== Example: Airgap Mode ===")
 
@@ -190,7 +190,7 @@ async def example_airgap_mode():
     )
 
 
-async def example_fallback_behavior():
+async def example_fallback_behavior() -> None:
     """Example: Fallback behavior when primary provider fails."""
     print("\n=== Example: Fallback Behavior ===")
 
@@ -203,7 +203,7 @@ async def example_fallback_behavior():
     print("If primary provider fails, router will try:", router.fallback_chain[1:])
 
 
-async def main():
+async def main() -> None:
     """Run all examples."""
     print("=" * 70)
     print("LLM Router Usage Examples")

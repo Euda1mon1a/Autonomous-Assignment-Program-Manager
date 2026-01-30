@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class Connection:
     """Represents a single WebSocket connection."""
 
-    def __init__(self, websocket: WebSocket, user_id: UUID):
+    def __init__(self, websocket: WebSocket, user_id: UUID) -> None:
         """
         Initialize a WebSocket connection.
 
@@ -83,7 +83,7 @@ class ConnectionManager:
     - Graceful connection/disconnection handling
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the connection manager."""
         # Map of user_id -> list of connections (supports multiple tabs)
         self._connections: dict[UUID, list[Connection]] = defaultdict(list)
@@ -126,7 +126,7 @@ class ConnectionManager:
 
         return connection
 
-    async def disconnect(self, connection: Connection):
+    async def disconnect(self, connection: Connection) -> None:
         """
         Remove a WebSocket connection.
 
@@ -153,7 +153,7 @@ class ConnectionManager:
 
         logger.info(f"WebSocket disconnected: user_id={user_id}")
 
-    async def subscribe_to_schedule(self, user_id: UUID, schedule_id: UUID):
+    async def subscribe_to_schedule(self, user_id: UUID, schedule_id: UUID) -> None:
         """
         Subscribe a user to schedule updates.
 
@@ -166,7 +166,7 @@ class ConnectionManager:
 
         logger.debug(f"User {user_id} subscribed to schedule {schedule_id}")
 
-    async def unsubscribe_from_schedule(self, user_id: UUID, schedule_id: UUID):
+    async def unsubscribe_from_schedule(self, user_id: UUID, schedule_id: UUID) -> None:
         """
         Unsubscribe a user from schedule updates.
 
@@ -179,7 +179,7 @@ class ConnectionManager:
 
         logger.debug(f"User {user_id} unsubscribed from schedule {schedule_id}")
 
-    async def subscribe_to_person(self, user_id: UUID, person_id: UUID):
+    async def subscribe_to_person(self, user_id: UUID, person_id: UUID) -> None:
         """
         Subscribe a user to person-specific updates.
 
@@ -192,7 +192,7 @@ class ConnectionManager:
 
         logger.debug(f"User {user_id} subscribed to person {person_id}")
 
-    async def unsubscribe_from_person(self, user_id: UUID, person_id: UUID):
+    async def unsubscribe_from_person(self, user_id: UUID, person_id: UUID) -> None:
         """
         Unsubscribe a user from person updates.
 
@@ -332,7 +332,7 @@ class ConnectionManager:
 
         return sent_count
 
-    async def handle_ping(self, connection: Connection):
+    async def handle_ping(self, connection: Connection) -> None:
         """
         Handle ping message from client.
 
@@ -386,8 +386,9 @@ class ConnectionManager:
             "persons_watched": len(self._person_watchers),
         }
 
+        # Global connection manager instance
 
-# Global connection manager instance
+
 _manager: ConnectionManager | None = None
 
 
@@ -403,8 +404,7 @@ def get_connection_manager() -> ConnectionManager:
         _manager = ConnectionManager()
     return _manager
 
-
-# Convenience functions for broadcasting events
+    # Convenience functions for broadcasting events
 
 
 async def broadcast_schedule_updated(
@@ -414,7 +414,7 @@ async def broadcast_schedule_updated(
     update_type: str,
     affected_blocks_count: int = 0,
     message: str = "",
-):
+) -> None:
     """
     Broadcast a schedule updated event.
 
@@ -450,7 +450,7 @@ async def broadcast_assignment_changed(
     change_type: str,
     changed_by: UUID | None = None,
     message: str = "",
-):
+) -> None:
     """
     Broadcast an assignment changed event.
 
@@ -484,7 +484,7 @@ async def broadcast_swap_requested(
     swap_type: str,
     affected_assignments: list[UUID],
     message: str = "",
-):
+) -> None:
     """
     Broadcast a swap requested event.
 
@@ -521,7 +521,7 @@ async def broadcast_swap_approved(
     approved_by: UUID,
     affected_assignments: list[UUID],
     message: str = "",
-):
+) -> None:
     """
     Broadcast a swap approved event.
 
@@ -558,7 +558,7 @@ async def broadcast_conflict_detected(
     affected_blocks: list[UUID],
     conflict_id: UUID | None = None,
     message: str = "",
-):
+) -> None:
     """
     Broadcast a conflict detected event.
 
@@ -591,7 +591,7 @@ async def broadcast_resilience_alert(
     defense_level: str | None = None,
     affected_persons: list[UUID] | None = None,
     recommendations: list[str] | None = None,
-):
+) -> None:
     """
     Broadcast a resilience alert event.
 

@@ -63,7 +63,7 @@ class ControlChart:
         self,
         chart_type: ControlChartType = ControlChartType.XBAR,
         sigma_multiplier: float = 3.0,
-    ):
+    ) -> None:
         """
         Initialize control chart.
 
@@ -214,7 +214,7 @@ class ControlChart:
                 "interpretation": "no_variation",
             }
 
-        # Process capability
+            # Process capability
         cp = (self.limits.ucl - self.limits.lcl) / (6.0 * sigma)
 
         # Process mean
@@ -306,7 +306,7 @@ class CUSUMChart:
         sigma: float,
         k: float = 0.5,  # Allowable slack (0.5σ typical)
         h: float = 4.0,  # Decision interval (4-5σ typical)
-    ):
+    ) -> None:
         """
         Initialize CUSUM chart.
 
@@ -341,7 +341,7 @@ class CUSUMChart:
         if timestamp is None:
             timestamp = datetime.now()
 
-        # Update CUSUM for upward shift
+            # Update CUSUM for upward shift
         self.cusum_high = max(0, self.cusum_high + (value - self.target) - self.k)
 
         # Update CUSUM for downward shift
@@ -358,7 +358,7 @@ class CUSUMChart:
             is_in_control=is_in_control,
         )
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset CUSUM values."""
         self.cusum_high = 0.0
         self.cusum_low = 0.0
@@ -390,7 +390,7 @@ class EWMAChart:
         sigma: float,
         lambda_: float = 0.2,  # Weighting factor (0.2-0.3 typical)
         L: float = 3.0,  # Control limit multiplier
-    ):
+    ) -> None:
         """
         Initialize EWMA chart.
 

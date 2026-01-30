@@ -35,7 +35,7 @@ class ScheduleReportTemplate:
         >>> pdf_bytes = template.generate(request)
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize schedule report template.
 
@@ -104,7 +104,7 @@ class ScheduleReportTemplate:
                 self._create_assignment_details(assignments_data, people_data)
             )
 
-        # Generate PDF
+            # Generate PDF
         return self.generator.generate_pdf(
             elements=elements,
             title="Schedule Overview Report",
@@ -134,7 +134,7 @@ class ScheduleReportTemplate:
         if request.person_ids:
             query = query.filter(Assignment.person_id.in_(request.person_ids))
 
-        # Filter by rotation template IDs if specified
+            # Filter by rotation template IDs if specified
         if request.rotation_template_ids:
             query = query.filter(
                 Assignment.rotation_template_id.in_(request.rotation_template_ids)
@@ -224,7 +224,7 @@ class ScheduleReportTemplate:
             )
             return elements
 
-        # Coverage table
+            # Coverage table
         coverage_table_data = [
             ["Rotation/Activity", "Total Assignments", "Residents", "Faculty"]
         ]
@@ -259,13 +259,13 @@ class ScheduleReportTemplate:
             if assignment.person:
                 assignments_by_person[assignment.person.id].append(assignment)
 
-        # Create section for each person
+                # Create section for each person
         for person in people:
             person_assignments = assignments_by_person.get(person.id, [])
             if not person_assignments:
                 continue
 
-            # Person header
+                # Person header
             elements.append(
                 Paragraph(
                     f"{person.name} ({person.type.upper()})",

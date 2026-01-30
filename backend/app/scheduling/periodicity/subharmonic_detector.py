@@ -137,10 +137,9 @@ class TimeSeriesData:
                 f"Time series too short ({len(self.values)} points), need at least 4"
             )
 
-
-# =============================================================================
-# Core Detection Functions
-# =============================================================================
+            # =============================================================================
+            # Core Detection Functions
+            # =============================================================================
 
 
 def build_assignment_time_series(
@@ -178,13 +177,13 @@ def build_assignment_time_series(
     if not assignments:
         raise ValueError("Cannot build time series from empty assignment list")
 
-    # Filter by person if requested
+        # Filter by person if requested
     if person_id:
         assignments = [a for a in assignments if a.person_id == person_id]
         if not assignments:
             raise ValueError(f"No assignments found for person_id={person_id}")
 
-    # Group assignments by date
+            # Group assignments by date
     assignments_by_date: dict[date, list[Any]] = defaultdict(list)
     for assignment in assignments:
         if hasattr(assignment, "block") and hasattr(assignment.block, "date"):
@@ -198,7 +197,7 @@ def build_assignment_time_series(
     if not assignments_by_date:
         raise ValueError("No valid assignments with block dates found")
 
-    # Sort dates
+        # Sort dates
     sorted_dates = sorted(assignments_by_date.keys())
 
     # Build time series based on aggregation method
@@ -225,7 +224,7 @@ def build_assignment_time_series(
                 f"Choose from: count, hours, binary, unique_people"
             )
 
-        # Track person IDs
+            # Track person IDs
         person_ids_per_date.append([str(a.person_id) for a in day_assignments])
 
     values_array = np.array(values, dtype=np.float64)
@@ -284,14 +283,14 @@ def detect_subharmonics(
         logger.warning("No assignments provided, returning base period only")
         return [base_period]
 
-    # Build time series
+        # Build time series
     try:
         ts = build_assignment_time_series(assignments, aggregation="count")
     except ValueError as e:
         logger.warning(f"Failed to build time series: {e}, returning base period only")
         return [base_period]
 
-    # Compute autocorrelation
+        # Compute autocorrelation
     signal = ts.values - np.mean(ts.values)  # Center the signal
     autocorr = np.correlate(signal, signal, mode="full")
     autocorr = autocorr[len(autocorr) // 2 :]  # Take positive lags only
@@ -303,8 +302,8 @@ def detect_subharmonics(
     if max_period is None:
         max_period = min(len(ts.values) // 2, 90)  # Cap at ~3 months
 
-    # Find peaks in autocorrelation
-    # Use find_peaks with minimum height threshold
+        # Find peaks in autocorrelation
+        # Use find_peaks with minimum height threshold
     peaks, properties = find_peaks(
         autocorr[:max_period],
         height=min_significance,
@@ -315,7 +314,7 @@ def detect_subharmonics(
         logger.info(f"No significant peaks found, returning base period {base_period}")
         return [base_period]
 
-    # Filter to multiples of base period (with tolerance)
+        # Filter to multiples of base period (with tolerance)
     tolerance = 1  # Allow ±1 day tolerance
     subharmonics = []
 
@@ -336,11 +335,11 @@ def detect_subharmonics(
                     f"(ACF={autocorr[peak_lag]:.3f})"
                 )
 
-    # Always include base period if not already there
+                # Always include base period if not already there
     if base_period not in subharmonics:
         subharmonics.append(base_period)
 
-    # Sort and return
+        # Sort and return
     subharmonics.sort()
 
     logger.info(
@@ -395,7 +394,7 @@ def analyze_periodicity(
             metadata={"error": "empty_schedule"},
         )
 
-    # Build time series
+        # Build time series
     try:
         ts = build_assignment_time_series(assignments, aggregation="count")
     except ValueError as e:
@@ -410,7 +409,7 @@ def analyze_periodicity(
             metadata={"error": str(e)},
         )
 
-    # Detect subharmonics
+        # Detect subharmonics
     subharmonics = detect_subharmonics(assignments, base_period=base_period)
 
     # Compute full autocorrelation for report
@@ -438,7 +437,7 @@ def analyze_periodicity(
         logger.warning(f"Periodogram calculation failed: {e}")
         periodicity_strength = 0.5  # Default moderate strength
 
-    # Identify patterns based on detected subharmonics
+        # Identify patterns based on detected subharmonics
     patterns = []
     if 7 in subharmonics:
         patterns.append("Weekly pattern detected (7-day cycle)")
@@ -452,7 +451,7 @@ def analyze_periodicity(
         long_cycles = [s for s in subharmonics if s >= 56]
         patterns.append(f"Long-term cycles detected: {long_cycles} days")
 
-    # Generate recommendations
+        # Generate recommendations
     recommendations = _generate_periodicity_recommendations(
         subharmonics=subharmonics,
         base_period=base_period,
@@ -525,7 +524,7 @@ def _generate_periodicity_recommendations(
             "Good rigidity against perturbations."
         )
 
-    # Check for expected cycles
+        # Check for expected cycles
     if base_period not in subharmonics:
         recommendations.append(
             f"Missing {base_period}-day fundamental cycle. "
@@ -538,7 +537,7 @@ def _generate_periodicity_recommendations(
             "Consider aligning rotations with 4-week ACGME averaging windows."
         )
 
-    # Check for too many or too few subharmonics
+        # Check for too many or too few subharmonics
     if len(subharmonics) > 6:
         recommendations.append(
             f"Many cycles detected ({len(subharmonics)}). "
@@ -550,7 +549,7 @@ def _generate_periodicity_recommendations(
             "Schedule may be too rigid or lacking emergent patterns."
         )
 
-    # Check variance in assignment counts
+        # Check variance in assignment counts
     if len(ts.values) > 0:
         cv = np.std(ts.values) / np.mean(ts.values) if np.mean(ts.values) > 0 else 0
         if cv > 1.0:
@@ -561,10 +560,9 @@ def _generate_periodicity_recommendations(
 
     return recommendations
 
-
-# =============================================================================
-# Subharmonic Detector Class
-# =============================================================================
+    # =============================================================================
+    # Subharmonic Detector Class
+    # =============================================================================
 
 
 class SubharmonicDetector:
@@ -590,7 +588,7 @@ class SubharmonicDetector:
         self,
         base_period: int = 7,
         min_significance: float = 0.3,
-    ):
+    ) -> None:
         """
         Initialize subharmonic detector.
 
@@ -690,7 +688,7 @@ class SubharmonicDetector:
         if not self.history:
             return 0.0
 
-        # Average periodicity strength
+            # Average periodicity strength
         avg_strength = np.mean([r.periodicity_strength for r in self.history])
 
         # Consistency in subharmonic counts
@@ -702,10 +700,9 @@ class SubharmonicDetector:
 
         return float(np.clip(stability, 0.0, 1.0))
 
-
-# =============================================================================
-# Utility Functions
-# =============================================================================
+        # =============================================================================
+        # Utility Functions
+        # =============================================================================
 
 
 def visualize_autocorrelation(

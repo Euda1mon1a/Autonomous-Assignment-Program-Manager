@@ -9,7 +9,7 @@ from app.repositories.base import BaseRepository
 class ProcedureRepository(BaseRepository[Procedure]):
     """Repository for Procedure entity operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(Procedure, db)
 
     def get_by_name(self, name: str) -> Procedure | None:

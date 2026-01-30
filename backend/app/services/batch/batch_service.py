@@ -28,7 +28,7 @@ _batch_operations: dict[UUID, dict] = {}
 class BatchService:
     """Service for batch assignment operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.validator = BatchValidator(db)
         self.processor = BatchProcessor(db)
@@ -84,7 +84,7 @@ class BatchService:
                     created_at=start_time,
                 )
 
-            # If dry run, return validation results without processing
+                # If dry run, return validation results without processing
             if request.dry_run:
                 _batch_operations[operation_id]["status"] = (
                     BatchOperationStatus.COMPLETED
@@ -103,7 +103,7 @@ class BatchService:
                     completed_at=datetime.utcnow(),
                 )
 
-            # Process batch
+                # Process batch
             results = await self.processor.process_create_batch(
                 request.assignments,
                 created_by=created_by,
@@ -214,7 +214,7 @@ class BatchService:
                     created_at=start_time,
                 )
 
-            # If dry run, return validation results without processing
+                # If dry run, return validation results without processing
             if request.dry_run:
                 _batch_operations[operation_id]["status"] = (
                     BatchOperationStatus.COMPLETED
@@ -233,7 +233,7 @@ class BatchService:
                     completed_at=datetime.utcnow(),
                 )
 
-            # Process batch
+                # Process batch
             results = await self.processor.process_update_batch(
                 request.assignments,
                 rollback_on_error=request.rollback_on_error,
@@ -341,7 +341,7 @@ class BatchService:
                     created_at=start_time,
                 )
 
-            # If dry run, return validation results without processing
+                # If dry run, return validation results without processing
             if request.dry_run:
                 _batch_operations[operation_id]["status"] = (
                     BatchOperationStatus.COMPLETED
@@ -359,7 +359,7 @@ class BatchService:
                     completed_at=datetime.utcnow(),
                 )
 
-            # Process batch
+                # Process batch
             results = await self.processor.process_delete_batch(
                 request.assignments,
                 rollback_on_error=request.rollback_on_error,
@@ -433,7 +433,7 @@ class BatchService:
         if not operation:
             return None
 
-        # Calculate progress percentage
+            # Calculate progress percentage
         total = operation["total"]
         completed = operation["succeeded"] + operation["failed"]
         progress_percentage = (completed / total * 100) if total > 0 else 0

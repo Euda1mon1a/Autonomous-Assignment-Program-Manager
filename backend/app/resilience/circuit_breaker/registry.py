@@ -50,7 +50,7 @@ class CircuitBreakerRegistry:
         statuses = registry.get_all_statuses()
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the registry."""
         self._breakers: dict[str, CircuitBreaker] = {}
         self._default_config = CircuitBreakerConfig(
@@ -62,7 +62,7 @@ class CircuitBreakerRegistry:
         )
         logger.info("Circuit breaker registry initialized")
 
-    def set_default_config(self, config: CircuitBreakerConfig):
+    def set_default_config(self, config: CircuitBreakerConfig) -> None:
         """
         Set default configuration for new breakers.
 
@@ -107,7 +107,7 @@ class CircuitBreakerRegistry:
         if name in self._breakers:
             raise ValueError(f"Circuit breaker '{name}' already registered")
 
-        # Use provided config or build from params
+            # Use provided config or build from params
         if config:
             breaker_config = config
         else:
@@ -190,7 +190,7 @@ class CircuitBreakerRegistry:
         """
         return name in self._breakers
 
-    def unregister(self, name: str):
+    def unregister(self, name: str) -> None:
         """
         Remove a circuit breaker.
 
@@ -215,13 +215,13 @@ class CircuitBreakerRegistry:
         """
         return {name: breaker.get_status() for name, breaker in self._breakers.items()}
 
-    def reset_all(self):
+    def reset_all(self) -> None:
         """Reset all circuit breakers to initial state."""
         for breaker in self._breakers.values():
             breaker.reset()
         logger.info("All circuit breakers reset")
 
-    def open_all(self, reason: str = "Bulk manual override"):
+    def open_all(self, reason: str = "Bulk manual override") -> None:
         """
         Open all circuit breakers.
 
@@ -232,7 +232,7 @@ class CircuitBreakerRegistry:
             breaker.open(reason)
         logger.warning(f"All circuit breakers opened: {reason}")
 
-    def close_all(self, reason: str = "Bulk manual override"):
+    def close_all(self, reason: str = "Bulk manual override") -> None:
         """
         Close all circuit breakers.
 
@@ -316,8 +316,9 @@ class CircuitBreakerRegistry:
             ),
         }
 
+        # Global registry instance
 
-# Global registry instance
+
 _registry: CircuitBreakerRegistry | None = None
 
 

@@ -33,7 +33,7 @@ class SAMLProvider:
     SAMLP_NS = "urn:oasis:names:tc:SAML:2.0:protocol"
     DS_NS = "http://www.w3.org/2000/09/xmldsig#"
 
-    def __init__(self, config: SAMLConfig):
+    def __init__(self, config: SAMLConfig) -> None:
         """
         Initialize SAML provider.
 
@@ -102,13 +102,13 @@ class SAMLProvider:
         except Exception as e:
             raise ValueError(f"Failed to decode SAML response: {e}")
 
-        # Parse XML
+            # Parse XML
         try:
             root = ET.fromstring(decoded_response)
         except ET.ParseError as e:
             raise ValueError(f"Invalid SAML XML: {e}")
 
-        # Validate response status
+            # Validate response status
         self._validate_response_status(root)
 
         # Extract assertion
@@ -120,7 +120,7 @@ class SAMLProvider:
         ):
             self._validate_signature(root, assertion)
 
-        # Validate conditions (NotBefore, NotOnOrAfter, AudienceRestriction)
+            # Validate conditions (NotBefore, NotOnOrAfter, AudienceRestriction)
         self._validate_conditions(assertion)
 
         # Extract and map attributes
@@ -231,7 +231,7 @@ class SAMLProvider:
         except ET.ParseError as e:
             raise ValueError(f"Invalid IdP metadata XML: {e}")
 
-        # Define namespaces
+            # Define namespaces
         ns = {
             "md": "urn:oasis:names:tc:SAML:2.0:metadata",
             "ds": self.DS_NS,
@@ -242,7 +242,7 @@ class SAMLProvider:
         if not entity_id:
             raise ValueError("Missing entityID in IdP metadata")
 
-        # Extract SSO URL
+            # Extract SSO URL
         sso_element = root.find(
             ".//md:IDPSSODescriptor/md:SingleSignOnService[@Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect']",
             ns,
@@ -361,9 +361,9 @@ class SAMLProvider:
         if self.config.want_assertions_signed and assertion_sig is None:
             raise ValueError("Assertion signature required but not found")
 
-        # Note: Actual signature verification requires cryptographic validation
-        # This would typically be done using xmlsec library or similar
-        # For production use, integrate python3-saml or pysaml2
+            # Note: Actual signature verification requires cryptographic validation
+            # This would typically be done using xmlsec library or similar
+            # For production use, integrate python3-saml or pysaml2
         if not self.config.idp_x509_cert:
             raise ValueError("IdP X.509 certificate not configured")
 
@@ -392,7 +392,7 @@ class SAMLProvider:
             if now < not_before_dt:
                 raise ValueError("Assertion not yet valid (NotBefore)")
 
-        # Check NotOnOrAfter
+                # Check NotOnOrAfter
         not_on_or_after = conditions.get("NotOnOrAfter")
         if not_on_or_after:
             not_on_or_after_dt = datetime.strptime(
@@ -401,7 +401,7 @@ class SAMLProvider:
             if now >= not_on_or_after_dt:
                 raise ValueError("Assertion expired (NotOnOrAfter)")
 
-        # Check AudienceRestriction
+                # Check AudienceRestriction
         audience = conditions.find(".//saml:Audience", ns)
         if audience is not None and audience.text != self.config.entity_id:
             raise ValueError(

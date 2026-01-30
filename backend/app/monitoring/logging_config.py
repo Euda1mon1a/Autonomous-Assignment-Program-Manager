@@ -20,7 +20,7 @@ import structlog
 class CorrelationIdFilter(logging.Filter):
     """Add correlation ID to all log records."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize filter with context variable."""
         super().__init__()
         self.correlation_id = None
@@ -57,10 +57,9 @@ class CorrelationIdFilter(logging.Filter):
         """
         return str(uuid4())
 
-
-# ============================================================================
-# SENSITIVE DATA REDACTION (Task 16)
-# ============================================================================
+        # ============================================================================
+        # SENSITIVE DATA REDACTION (Task 16)
+        # ============================================================================
 
 
 class SensitiveDataRedactor:
@@ -160,10 +159,9 @@ class SensitiveDataRedactor:
 
         return redacted
 
-
-# ============================================================================
-# STRUCTURED LOGGING CONFIGURATION (Task 14)
-# ============================================================================
+        # ============================================================================
+        # STRUCTURED LOGGING CONFIGURATION (Task 14)
+        # ============================================================================
 
 
 class JSONFormatter(logging.Formatter):
@@ -194,7 +192,7 @@ class JSONFormatter(logging.Formatter):
                 context = SensitiveDataRedactor.redact_dict(context)
             log_data["context"] = context
 
-        # Add exception info
+            # Add exception info
         if record.exc_info:
             log_data["exception"] = {
                 "type": record.exc_info[0].__name__ if record.exc_info[0] else None,
@@ -202,7 +200,7 @@ class JSONFormatter(logging.Formatter):
                 "traceback": self.formatException(record.exc_info),
             }
 
-        # Add extra fields
+            # Add extra fields
         for key, value in record.__dict__.items():
             if key not in [
                 "name",
@@ -239,10 +237,9 @@ class JSONFormatter(logging.Formatter):
 
         return json.dumps(log_data)
 
-
-# ============================================================================
-# LOG ROTATION CONFIGURATION (Task 18)
-# ============================================================================
+        # ============================================================================
+        # LOG ROTATION CONFIGURATION (Task 18)
+        # ============================================================================
 
 
 def setup_rotating_handler(
@@ -306,10 +303,9 @@ def setup_timed_rotating_handler(
 
     return handler
 
-
-# ============================================================================
-# LOG LEVEL MANAGEMENT (Task 17)
-# ============================================================================
+    # ============================================================================
+    # LOG LEVEL MANAGEMENT (Task 17)
+    # ============================================================================
 
 
 class LogLevelManager:
@@ -378,10 +374,9 @@ class LogLevelManager:
         for logger_name in cls._loggers:
             cls.set_level(logger_name, level)
 
-
-# ============================================================================
-# COMPREHENSIVE LOGGING SETUP (Task 13)
-# ============================================================================
+            # ============================================================================
+            # COMPREHENSIVE LOGGING SETUP (Task 13)
+            # ============================================================================
 
 
 def configure_logging(
@@ -424,7 +419,7 @@ def configure_logging(
         console_handler.addFilter(CorrelationIdFilter())
         root_logger.addHandler(console_handler)
 
-    # Add file handlers
+        # Add file handlers
     if file:
         # General application logs
         app_handler = setup_rotating_handler(
@@ -443,7 +438,7 @@ def configure_logging(
         error_handler.addFilter(CorrelationIdFilter())
         root_logger.addHandler(error_handler)
 
-    # Setup category-specific loggers
+        # Setup category-specific loggers
     setup_category_loggers(log_dir, json_formatter)
 
     # Register loggers for management
@@ -477,16 +472,15 @@ def setup_category_loggers(log_dir: str, formatter: logging.Formatter) -> None:
 
         LogLevelManager.register_logger(f"app.{category}", logger)
 
-
-# ============================================================================
-# AUDIT TRAIL LOGGING (Task 19)
-# ============================================================================
+        # ============================================================================
+        # AUDIT TRAIL LOGGING (Task 19)
+        # ============================================================================
 
 
 class AuditLogger:
     """Log audit events for compliance."""
 
-    def __init__(self, logger_name: str = "app.audit"):
+    def __init__(self, logger_name: str = "app.audit") -> None:
         """Initialize audit logger."""
         self.logger = logging.getLogger(logger_name)
 
@@ -569,16 +563,15 @@ class AuditLogger:
 
         self.logger.info("CONFIG_CHANGE", extra={"context": log_data})
 
-
-# ============================================================================
-# PERFORMANCE LOGGING (Task 20)
-# ============================================================================
+        # ============================================================================
+        # PERFORMANCE LOGGING (Task 20)
+        # ============================================================================
 
 
 class PerformanceLogger:
     """Log performance metrics."""
 
-    def __init__(self, logger_name: str = "app.performance"):
+    def __init__(self, logger_name: str = "app.performance") -> None:
         """Initialize performance logger."""
         self.logger = logging.getLogger(logger_name)
 
@@ -639,16 +632,15 @@ class PerformanceLogger:
 
         self.logger.log(level, "ENDPOINT_PERFORMANCE", extra={"context": log_data})
 
-
-# ============================================================================
-# SECURITY EVENT LOGGING (Task 21)
-# ============================================================================
+        # ============================================================================
+        # SECURITY EVENT LOGGING (Task 21)
+        # ============================================================================
 
 
 class SecurityLogger:
     """Log security events."""
 
-    def __init__(self, logger_name: str = "app.security"):
+    def __init__(self, logger_name: str = "app.security") -> None:
         """Initialize security logger."""
         self.logger = logging.getLogger(logger_name)
 
@@ -723,10 +715,10 @@ class SecurityLogger:
 
         self.logger.warning("SUSPICIOUS_ACTIVITY", extra={"context": log_data})
 
+        # ============================================================================
+        # LOGGER INSTANCES
+        # ============================================================================
 
-# ============================================================================
-# LOGGER INSTANCES
-# ============================================================================
 
 audit_logger = AuditLogger()
 performance_logger = PerformanceLogger()

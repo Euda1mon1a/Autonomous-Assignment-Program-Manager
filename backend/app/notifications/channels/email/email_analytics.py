@@ -21,7 +21,7 @@ class EmailAnalytics:
     - Unsubscribe rate
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize analytics."""
         self._metrics: dict[str, Any] = defaultdict(int)
         self._campaigns: dict[str, dict[str, Any]] = {}

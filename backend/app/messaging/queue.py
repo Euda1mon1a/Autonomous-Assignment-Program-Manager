@@ -164,7 +164,7 @@ class Message:
     content_type: str = "application/json"
     content_encoding: str = "utf-8"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Set defaults after initialization."""
         if self.timestamp is None:
             self.timestamp = datetime.utcnow()
@@ -177,7 +177,7 @@ class Message:
 class MessageQueueAdapter(ABC):
     """Abstract base class for message queue adapters."""
 
-    def __init__(self, config: QueueConfig):
+    def __init__(self, config: QueueConfig) -> None:
         """
         Initialize message queue adapter.
 
@@ -346,7 +346,7 @@ class MessageQueueAdapter(ABC):
 class RabbitMQAdapter(MessageQueueAdapter):
     """RabbitMQ message queue adapter using aio_pika."""
 
-    def __init__(self, config: QueueConfig):
+    def __init__(self, config: QueueConfig) -> None:
         """
         Initialize RabbitMQ adapter.
 
@@ -419,7 +419,7 @@ class RabbitMQAdapter(MessageQueueAdapter):
                 except Exception as e:
                     logger.warning(f"Error canceling consumer {consumer_tag}: {e}")
 
-            # Close channel and connection
+                    # Close channel and connection
             if self._channel and not self._channel.is_closed:
                 await self._channel.close()
 
@@ -527,7 +527,7 @@ class RabbitMQAdapter(MessageQueueAdapter):
             queue_obj = self._queues[queue]
 
             # Define message handler
-            async def on_message(message):
+            async def on_message(message) -> None:
                 async with message.process(ignore_processed=ack_mode == AckMode.NONE):
                     try:
                         # Deserialize message body
@@ -561,7 +561,8 @@ class RabbitMQAdapter(MessageQueueAdapter):
                             await message.nack(requeue=False)
                         raise
 
-            # Start consuming
+                        # Start consuming
+
             no_ack = ack_mode == AckMode.NONE
             consumer = await queue_obj.consume(on_message, no_ack=no_ack)
             self._consumers[consumer.tag] = consumer
@@ -617,17 +618,17 @@ class RabbitMQAdapter(MessageQueueAdapter):
         if not self._connected:
             raise RuntimeError("Not connected to RabbitMQ")
 
-        # Add dead letter exchange to arguments if not present
+            # Add dead letter exchange to arguments if not present
         if arguments is None:
             arguments = {}
         if "x-dead-letter-exchange" not in arguments:
             arguments["x-dead-letter-exchange"] = self.config.dlx_exchange
 
-        # Add message TTL if configured
+            # Add message TTL if configured
         if self.config.message_ttl:
             arguments["x-message-ttl"] = self.config.message_ttl
 
-        # Add max priority if configured
+            # Add max priority if configured
         if self.config.max_priority:
             arguments["x-max-priority"] = self.config.max_priority
 
@@ -651,17 +652,17 @@ class RabbitMQAdapter(MessageQueueAdapter):
         if not self._connected:
             raise RuntimeError("Not connected to RabbitMQ")
 
-        # Ensure queue exists
+            # Ensure queue exists
         if queue not in self._queues:
             await self.declare_queue(queue)
 
-        # Ensure exchange exists
+            # Ensure exchange exists
         if exchange not in self._exchanges:
             self._exchanges[exchange] = await self._channel.declare_exchange(
                 exchange, type=self.config.exchange_type, durable=True
             )
 
-        # Bind queue to exchange
+            # Bind queue to exchange
         queue_obj = self._queues[queue]
         exchange_obj = self._exchanges[exchange]
         await queue_obj.bind(exchange_obj, routing_key=routing_key)
@@ -696,7 +697,7 @@ class RabbitMQAdapter(MessageQueueAdapter):
 class RedisQueueAdapter(MessageQueueAdapter):
     """Redis message queue adapter using redis-py."""
 
-    def __init__(self, config: QueueConfig):
+    def __init__(self, config: QueueConfig) -> None:
         """
         Initialize Redis adapter.
 
@@ -753,11 +754,11 @@ class RedisQueueAdapter(MessageQueueAdapter):
                 except asyncio.CancelledError:
                     pass
 
-            # Close pubsub if active
+                    # Close pubsub if active
             if self._pubsub:
                 await self._pubsub.close()
 
-            # Close Redis connection
+                # Close Redis connection
             if self._redis:
                 await self._redis.close()
 
@@ -853,12 +854,12 @@ class RedisQueueAdapter(MessageQueueAdapter):
         if not self._connected:
             raise RuntimeError("Not connected to Redis")
 
-        # Create Redis key
+            # Create Redis key
         redis_key = f"{self.config.exchange}:{queue}"
         processing_key = f"{redis_key}:processing"
         dlq_key = f"{self.config.dlx_exchange}:{self.config.dlx_queue}"
 
-        async def consumer_loop():
+        async def consumer_loop() -> None:
             """Consumer loop for processing messages."""
             retry_policy = RetryPolicy()
 
@@ -945,7 +946,8 @@ class RedisQueueAdapter(MessageQueueAdapter):
                     logger.error(f"Error in consumer loop: {e}", exc_info=True)
                     await asyncio.sleep(self.config.reconnect_delay)
 
-        # Start consumer task
+                    # Start consumer task
+
         task = asyncio.create_task(consumer_loop())
         self._consumer_tasks.append(task)
 

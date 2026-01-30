@@ -49,7 +49,7 @@ class ACGMEComplianceChecker:
     MAX_CONTINUOUS_HOURS = 24
     MIN_DAYS_OFF_PER_7 = 1
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize compliance checker.
 
@@ -156,7 +156,7 @@ class ACGMEComplianceChecker:
             check_start = datetime.utcnow().date()
             check_end = check_start + timedelta(days=28)
 
-        # Get assignments in this window
+            # Get assignments in this window
         result = await self.db.execute(
             select(Assignment)
             .join(Block, Assignment.block_id == Block.id)
@@ -181,7 +181,7 @@ class ACGMEComplianceChecker:
             # Would add assignments for new week
             # (simplified - in reality would clone assignments)
 
-        # Check 80-hour rule (rolling 4-week average)
+            # Check 80-hour rule (rolling 4-week average)
         weekly_hours = self._calculate_weekly_hours(assignments)
         avg_hours = sum(weekly_hours) / len(weekly_hours) if weekly_hours else 0
 
@@ -197,7 +197,7 @@ class ACGMEComplianceChecker:
                 f"Close to 80-hour limit: {avg_hours:.1f} hours/week average"
             )
 
-        # Check 1-in-7 rule
+            # Check 1-in-7 rule
         days_off = self._calculate_days_off(assignments)
         metrics["days_off_per_7"] = days_off
 

@@ -160,8 +160,9 @@ class TransitionEvent:
     data: dict[str, Any] = field(default_factory=dict)
     triggered_by_id: UUID | None = None
 
+    # Type aliases for callbacks
 
-# Type aliases for callbacks
+
 Guard = Callable[[StateMachineContext], bool]
 """Guard function type: takes context, returns True if transition is allowed."""
 
@@ -463,7 +464,7 @@ class StateMachine:
         states: list[State],
         transitions: list[Transition],
         parallel_regions: list[ParallelState] | None = None,
-    ):
+    ) -> None:
         """
         Initialize state machine definition.
 
@@ -517,7 +518,7 @@ class StateMachine:
         if len(initial_states) > 1:
             raise ValueError(f"State machine '{self.name}' has multiple initial states")
 
-        # Validate transitions reference valid states
+            # Validate transitions reference valid states
         for transition in self.transitions:
             if transition.from_state not in self.states:
                 raise ValueError(
@@ -528,7 +529,7 @@ class StateMachine:
                     f"Transition references unknown state: {transition.to_state}"
                 )
 
-        # Validate parallel regions
+                # Validate parallel regions
         for region in self.parallel_regions:
             if region.initial_state not in region.states:
                 raise ValueError(
@@ -666,7 +667,7 @@ class StateMachine:
             ]
             instance.parallel_states = parallel_state_data
 
-        # Execute entry action for initial state
+            # Execute entry action for initial state
         if initial_state.entry_action:
             ctx = StateMachineContext(
                 instance_id=instance.id,
@@ -757,19 +758,19 @@ class StateMachine:
                 f"Cannot trigger event on instance with status {instance.status}"
             )
 
-        # Parse event
+            # Parse event
         if isinstance(event, str):
             event_obj = TransitionEvent(name=event)
         else:
             event_obj = event
 
-        # Merge context updates
+            # Merge context updates
         if context_updates:
             instance.context.update(context_updates)
         if event_obj.data:
             instance.context.update(event_obj.data)
 
-        # Find matching transitions (sorted by priority descending)
+            # Find matching transitions (sorted by priority descending)
         matching_transitions = [
             t
             for t in self.transitions
@@ -783,7 +784,7 @@ class StateMachine:
                 f"on event '{event_obj.name}'"
             )
 
-        # Try transitions in priority order until one succeeds
+            # Try transitions in priority order until one succeeds
         transition = None
         guard_failed_name = None
 
@@ -811,7 +812,7 @@ class StateMachine:
                 f"'{event_obj.name}' failed guard conditions"
             )
 
-        # Execute the transition
+            # Execute the transition
         self._execute_transition_sync(
             db,
             instance,
@@ -881,13 +882,13 @@ class StateMachine:
             exit_action_name = from_state_obj.exit_action
             self._execute_action_sync(from_state_obj.exit_action, ctx)
 
-        # Execute transition action
+            # Execute transition action
         transition_action_name = None
         if transition.action:
             transition_action_name = transition.action
             self._execute_action_sync(transition.action, ctx)
 
-        # Update state
+            # Update state
         instance.current_state = transition.to_state
         instance.context = ctx.data
         instance.updated_at = datetime.utcnow()
@@ -899,12 +900,12 @@ class StateMachine:
             self._execute_action_sync(to_state_obj.entry_action, ctx)
             instance.context = ctx.data
 
-        # Check if reached final state
+            # Check if reached final state
         if to_state_obj.is_final:
             instance.status = StateMachineStatus.COMPLETED.value
             instance.completed_at = datetime.utcnow()
 
-        # Record transition in history
+            # Record transition in history
         transition_record = StateMachineTransition(
             instance_id=instance.id,
             from_state=transition.from_state,

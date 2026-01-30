@@ -63,7 +63,7 @@ class CPUProfiler:
     Provides detailed statistics about function calls and CPU time.
     """
 
-    def __init__(self, enabled: bool = True):
+    def __init__(self, enabled: bool = True) -> None:
         """
         Initialize CPU profiler.
 
@@ -103,7 +103,7 @@ class CPUProfiler:
             yield result
             return
 
-        # Start profiling
+            # Start profiling
         profiler = cProfile.Profile()
         process = psutil.Process()
         cpu_start = process.cpu_percent()
@@ -156,7 +156,7 @@ class CPUProfiler:
         stats.print_stats(stream=stream)
         return stream.getvalue()
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all profiling results."""
         self.results.clear()
 
@@ -168,7 +168,7 @@ class MemoryProfiler:
     Tracks memory allocation and peak usage during code execution.
     """
 
-    def __init__(self, enabled: bool = True):
+    def __init__(self, enabled: bool = True) -> None:
         """
         Initialize memory profiler.
 
@@ -208,7 +208,7 @@ class MemoryProfiler:
             yield result
             return
 
-        # Start memory tracking
+            # Start memory tracking
         if not self._tracking:
             tracemalloc.start()
             self._tracking = True
@@ -267,11 +267,11 @@ class MemoryProfiler:
 
         return [str(stat) for stat in top_stats[:limit]]
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all profiling results."""
         self.results.clear()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop memory tracking."""
         if self._tracking:
             tracemalloc.stop()
@@ -285,7 +285,7 @@ class ProfilerContext:
     Provides a unified interface for profiling both CPU and memory.
     """
 
-    def __init__(self, cpu_enabled: bool = True, memory_enabled: bool = True):
+    def __init__(self, cpu_enabled: bool = True, memory_enabled: bool = True) -> None:
         """
         Initialize profiler context.
 
@@ -338,7 +338,7 @@ class ProfilerContext:
             "memory_results": [r.to_dict() for r in self.memory_profiler.results],
         }
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all profiling results."""
         self.cpu_profiler.clear()
         self.memory_profiler.clear()
@@ -377,7 +377,7 @@ def profile_sync(
             with profiler.profile(func.__name__):
                 result = func(*args, **kwargs)
 
-            # Store profiler in function metadata
+                # Store profiler in function metadata
             if not hasattr(wrapper, "_profilers"):
                 wrapper._profilers = []
             wrapper._profilers.append(profiler)
@@ -422,7 +422,7 @@ def profile_async(
             async with profiler.profile_async(func.__name__):
                 result = await func(*args, **kwargs)
 
-            # Store profiler in function metadata
+                # Store profiler in function metadata
             if not hasattr(wrapper, "_profilers"):
                 wrapper._profilers = []
             wrapper._profilers.append(profiler)

@@ -34,7 +34,7 @@ class RedisHealthCheck:
     - Key space statistics
     """
 
-    def __init__(self, timeout: float = 5.0):
+    def __init__(self, timeout: float = 5.0) -> None:
         """
         Initialize Redis health check.
 
@@ -125,7 +125,7 @@ class RedisHealthCheck:
                     "error": "Redis PING failed",
                 }
 
-            # 2. Get server info
+                # 2. Get server info
             info = await self._redis_client.info()
 
             # 3. Get memory statistics
@@ -143,7 +143,7 @@ class RedisHealthCheck:
             except Exception as e:
                 logger.warning(f"Could not get key count: {e}")
 
-            # 6. Get Redis version
+                # 6. Get Redis version
             redis_version = info.get("redis_version", "unknown")
 
             # All checks passed
@@ -202,7 +202,7 @@ class RedisHealthCheck:
                     "error": "Value mismatch on read-write test",
                 }
 
-            # Delete test key
+                # Delete test key
             await client.delete(test_key)
 
             await client.close()

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class ConflictTrends:
     """Analyzes conflict trends and patterns."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def analyze_trends(self, start_date: date, end_date: date) -> dict[str, Any]:

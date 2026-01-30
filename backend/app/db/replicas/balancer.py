@@ -31,7 +31,7 @@ class LoadBalancer:
         replicas: dict[str, Engine],
         health_checker: HealthChecker | None = None,
         enable_health_checks: bool = True,
-    ):
+    ) -> None:
         """Initialize load balancer.
 
         Args:
@@ -70,7 +70,7 @@ class LoadBalancer:
             logger.debug("No replicas configured")
             return None
 
-        # Try each replica in round-robin order
+            # Try each replica in round-robin order
         num_replicas = len(self._replica_names)
         attempts = 0
 
@@ -93,7 +93,7 @@ class LoadBalancer:
                 logger.debug(f"Selected replica (no health check): {replica_name}")
                 return replica_name, engine
 
-        # No healthy replicas available
+                # No healthy replicas available
         logger.warning("No healthy replicas available for read query")
         return None
 
@@ -217,7 +217,7 @@ class StickySessionBalancer(LoadBalancer):
         health_checker: HealthChecker | None = None,
         enable_health_checks: bool = True,
         session_timeout_seconds: int = 300,
-    ):
+    ) -> None:
         """Initialize sticky session balancer.
 
         Args:
@@ -249,7 +249,7 @@ class StickySessionBalancer(LoadBalancer):
             # No session affinity requested, use normal round-robin
             return super().select_replica(session_id)
 
-        # Check if session already has a replica assignment
+            # Check if session already has a replica assignment
         with self._session_lock:
             assigned_replica = self._session_assignments.get(session_id)
 
@@ -275,8 +275,8 @@ class StickySessionBalancer(LoadBalancer):
                         f"reassigning session {session_id}"
                     )
 
-        # No assignment or assigned replica is unhealthy
-        # Select a new replica
+                    # No assignment or assigned replica is unhealthy
+                    # Select a new replica
         selection = super().select_replica(session_id)
 
         if selection:

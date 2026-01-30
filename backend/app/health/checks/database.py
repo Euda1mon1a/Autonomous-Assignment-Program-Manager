@@ -36,7 +36,7 @@ class DatabaseHealthCheck:
     - Database metadata
     """
 
-    def __init__(self, timeout: float = 5.0):
+    def __init__(self, timeout: float = 5.0) -> None:
         """
         Initialize database health check.
 

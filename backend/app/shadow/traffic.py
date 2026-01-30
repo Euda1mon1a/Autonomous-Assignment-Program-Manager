@@ -292,7 +292,7 @@ class ShadowTrafficManager:
         config: ShadowConfig,
         traffic_filter: ShadowTrafficFilter | None = None,
         alert_callback: Callable[[DiffReport], None] | None = None,
-    ):
+    ) -> None:
         """
         Initialize shadow traffic manager.
 
@@ -389,7 +389,7 @@ class ShadowTrafficManager:
         if self.filter.include_methods and method not in self.filter.include_methods:
             return True
 
-        # Check path filters (simple substring matching for now)
+            # Check path filters (simple substring matching for now)
         if self.filter.exclude_paths:
             for pattern in self.filter.exclude_paths:
                 if pattern in path:
@@ -404,7 +404,7 @@ class ShadowTrafficManager:
             if not matched:
                 return True
 
-        # Check user filters
+                # Check user filters
         if user_id:
             if self.filter.exclude_users and user_id in self.filter.exclude_users:
                 return True
@@ -412,7 +412,7 @@ class ShadowTrafficManager:
             if self.filter.include_users and user_id not in self.filter.include_users:
                 return True
 
-        # Check request size
+                # Check request size
         if body:
             body_size = len(body)
             if body_size < self.filter.min_request_size:
@@ -420,7 +420,7 @@ class ShadowTrafficManager:
             if body_size > self.filter.max_request_size:
                 return True
 
-        # Custom filter
+                # Custom filter
         if self.filter.custom_filter:
             filter_data = {
                 "method": method,
@@ -470,7 +470,7 @@ class ShadowTrafficManager:
         if not self.config.include_headers:
             return {}
 
-        # Filter out excluded headers
+            # Filter out excluded headers
         filtered_headers = {
             k: v
             for k, v in headers.items()
@@ -596,7 +596,7 @@ class ShadowTrafficManager:
             comparison.diff_details["shadow_failure"] = shadow_error or "No response"
             return comparison
 
-        # Compare status codes
+            # Compare status codes
         comparison.shadow_status = shadow_response.status_code
         comparison.status_match = primary_status == shadow_response.status_code
 
@@ -615,7 +615,7 @@ class ShadowTrafficManager:
             comparison.body_match = False
             comparison.diff_details["body_parse_error"] = str(e)
 
-        # Compare selected headers (content-type, etc.)
+            # Compare selected headers (content-type, etc.)
         important_headers = ["content-type", "content-length"]
         headers_match = True
         for header in important_headers:
@@ -676,7 +676,7 @@ class ShadowTrafficManager:
         ):
             return DiffSeverity.NONE
 
-        # Critical: Status code mismatch or errors
+            # Critical: Status code mismatch or errors
         if not comparison.status_match:
             # Both 2xx or both error is medium
             if (
@@ -686,11 +686,11 @@ class ShadowTrafficManager:
                 return DiffSeverity.MEDIUM
             return DiffSeverity.HIGH
 
-        # High: Body content mismatch
+            # High: Body content mismatch
         if not comparison.body_match:
             return DiffSeverity.HIGH
 
-        # Low: Only header differences
+            # Low: Only header differences
         if not comparison.headers_match:
             return DiffSeverity.LOW
 
@@ -715,7 +715,7 @@ class ShadowTrafficManager:
         if not self.config.alert_on_diff:
             return
 
-        # Check if severity meets threshold
+            # Check if severity meets threshold
         severity_order = [
             DiffSeverity.NONE,
             DiffSeverity.LOW,
@@ -729,7 +729,7 @@ class ShadowTrafficManager:
         ):
             return
 
-        # Create diff report
+            # Create diff report
         report = DiffReport(
             comparison=comparison,
             request_method=method,
@@ -866,16 +866,16 @@ class ShadowTrafficManager:
         if not self.config.enabled:
             return None
 
-        # Check sampling
+            # Check sampling
         if not self.should_sample():
             return None
 
-        # Check filters
+            # Check filters
         if self.should_filter(method, path, body, user_id):
             self._stats.skipped_requests += 1
             return None
 
-        # Generate request ID
+            # Generate request ID
         request_id = self._generate_request_id(method, path, body)
 
         # Track sampling
@@ -894,14 +894,14 @@ class ShadowTrafficManager:
                 method, path, shadow_headers, body, request_id
             )
 
-        # Update health metrics
+            # Update health metrics
         self._health.total_requests += 1
         if shadow_error:
             self._stats.failed_shadows += 1
         else:
             self._stats.successful_shadows += 1
 
-        # Track response times
+            # Track response times
         self._primary_response_times.append(primary_response_time)
         self._shadow_response_times.append(shadow_response_time)
 
@@ -924,7 +924,7 @@ class ShadowTrafficManager:
         if len(self._comparisons) > 1000:
             self._comparisons = self._comparisons[-1000:]
 
-        # Update diff stats
+            # Update diff stats
         if comparison.diff_severity != DiffSeverity.NONE:
             self._stats.diffs_detected += 1
             severity_key = comparison.diff_severity.value
@@ -971,7 +971,7 @@ class ShadowTrafficManager:
             self._health.status = "unhealthy"
             self._health.last_check = datetime.utcnow()
 
-        # Calculate success rate
+            # Calculate success rate
         if self._health.total_requests > 0:
             success_count = self._stats.successful_shadows
             self._health.success_rate = success_count / self._health.total_requests
@@ -1007,18 +1007,18 @@ class ShadowTrafficManager:
                 self._shadow_response_times
             )
 
-        # Calculate response time ratio
+            # Calculate response time ratio
         if metrics.primary_avg_response_time > 0:
             metrics.response_time_ratio = (
                 metrics.shadow_avg_response_time / metrics.primary_avg_response_time
             )
 
-        # Calculate error rates
+            # Calculate error rates
         total = self._stats.sampled_requests
         if total > 0:
             metrics.shadow_error_rate = self._stats.failed_shadows / total
 
-        # Calculate match rate
+            # Calculate match rate
         if self._comparisons:
             matches = sum(
                 1 for c in self._comparisons if c.diff_severity == DiffSeverity.NONE
@@ -1042,7 +1042,7 @@ class ShadowTrafficManager:
                 self._stats.sampled_requests / self._stats.total_requests
             )
 
-        # Calculate average shadow overhead
+            # Calculate average shadow overhead
         if self._shadow_response_times and self._primary_response_times:
             avg_shadow = sum(self._shadow_response_times) / len(
                 self._shadow_response_times

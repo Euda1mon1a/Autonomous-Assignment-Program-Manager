@@ -69,7 +69,7 @@ class ScheduleGenerationScenario(TestScenario):
     4. Validating ACGME compliance
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize schedule generation scenario."""
         super().__init__(
             name="Schedule Generation",
@@ -181,7 +181,7 @@ class SwapWorkflowScenario(TestScenario):
     5. Verifying updated assignments
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize swap workflow scenario."""
         super().__init__(
             name="Swap Workflow",
@@ -292,7 +292,7 @@ class ACGMEComplianceScenario(TestScenario):
     4. Supervision ratio violation
     """
 
-    def __init__(self, violation_type: str | None = None):
+    def __init__(self, violation_type: str | None = None) -> None:
         """
         Initialize ACGME compliance scenario.
 
@@ -376,7 +376,7 @@ class EmergencyCoverageScenario(TestScenario):
     5. Resilience check
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize emergency coverage scenario."""
         super().__init__(
             name="Emergency Coverage",
@@ -466,7 +466,7 @@ class ResilienceLoadScenario(TestScenario):
     Simulates progressive load increases and defense level changes.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize resilience load scenario."""
         super().__init__(
             name="Resilience Load",

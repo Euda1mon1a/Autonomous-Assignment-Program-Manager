@@ -54,7 +54,7 @@ class SwapTrendAnalyzer:
     - Improve user experience
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize trend analyzer.
 
@@ -218,12 +218,12 @@ class SwapTrendAnalyzer:
                 }
             )
 
-        # Check for low match rates
-        # (Would analyze match success)
+            # Check for low match rates
+            # (Would analyze match success)
 
         return bottlenecks
 
-    # ===== Private Helper Methods =====
+        # ===== Private Helper Methods =====
 
     def _group_by_week(
         self,
@@ -285,7 +285,7 @@ class SwapTrendAnalyzer:
             day = swap.requested_at.weekday()  # 0 = Monday
             day_counts[day] = day_counts.get(day, 0) + 1
 
-        # Get top 3 days
+            # Get top 3 days
         top_days = sorted(
             day_counts.items(),
             key=lambda x: x[1],

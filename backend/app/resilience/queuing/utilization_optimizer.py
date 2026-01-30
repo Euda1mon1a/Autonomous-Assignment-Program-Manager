@@ -48,7 +48,7 @@ class UtilizationOptimizer:
     - Service level (want high for quality)
     """
 
-    def __init__(self, erlang_calculator: ErlangC | None = None):
+    def __init__(self, erlang_calculator: ErlangC | None = None) -> None:
         """Initialize optimizer."""
         self.erlang = erlang_calculator or ErlangC()
 
@@ -109,8 +109,8 @@ class UtilizationOptimizer:
             if result.service_level < min_service_level:
                 continue  # Violates service level
 
-            # Score: balance high utilization with low wait time
-            # Score = utilization × (1 - normalized_wait_time)
+                # Score: balance high utilization with low wait time
+                # Score = utilization × (1 - normalized_wait_time)
             normalized_wait = min(1.0, result.avg_wait_time / max_wait_time)
             score = result.utilization * (1.0 - normalized_wait)
 
@@ -122,7 +122,7 @@ class UtilizationOptimizer:
             # No solution found, use minimum stable
             optimal_servers = servers_for_util
 
-        # Calculate final metrics
+            # Calculate final metrics
         final_result = self.erlang.calculate(
             arrival_rate, service_rate, optimal_servers
         )
@@ -136,7 +136,7 @@ class UtilizationOptimizer:
         else:
             cost_savings = 0.0
 
-        # Generate rationale
+            # Generate rationale
         if optimal_servers < current_servers:
             rationale = f"Reduce servers from {current_servers} to {optimal_servers} (over-staffed)"
         elif optimal_servers > current_servers:
@@ -239,8 +239,8 @@ class UtilizationOptimizer:
             risk_description = "CRITICAL - queue explosion imminent"
             color = "red"
 
-        # Estimate queue growth factor
-        # At ρ=0.9, queue is ~9x longer than at ρ=0.5
+            # Estimate queue growth factor
+            # At ρ=0.9, queue is ~9x longer than at ρ=0.5
         if utilization < 1.0:
             queue_multiplier = utilization / (1.0 - utilization)
         else:

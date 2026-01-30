@@ -19,7 +19,7 @@ class NotificationDispatcher:
     and result aggregation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the dispatcher."""
         self._channel_cache: dict[str, Any] = {}
 
@@ -44,7 +44,7 @@ class NotificationDispatcher:
             logger.warning("No channels specified for notification %s", payload.id)
             return []
 
-        # Create delivery tasks for each channel
+            # Create delivery tasks for each channel
         tasks = []
         for channel_name in channels:
             task = self._deliver_to_channel(
@@ -54,7 +54,7 @@ class NotificationDispatcher:
             )
             tasks.append(task)
 
-        # Execute all deliveries concurrently
+            # Execute all deliveries concurrently
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Handle any exceptions
@@ -77,7 +77,7 @@ class NotificationDispatcher:
             else:
                 final_results.append(result)
 
-        # Log summary
+                # Log summary
         success_count = sum(1 for r in final_results if r.success)
         logger.info(
             "Notification %s delivered: %d/%d channels successful",
@@ -115,7 +115,7 @@ class NotificationDispatcher:
                     message=f"Channel not found: {channel_name}",
                 )
 
-            # Deliver through channel
+                # Deliver through channel
             result = await channel.deliver(payload, db)
             return result
 

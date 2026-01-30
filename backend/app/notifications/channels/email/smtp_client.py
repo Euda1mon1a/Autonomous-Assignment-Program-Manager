@@ -18,7 +18,7 @@ class SMTPClient:
     Handles connection pooling, authentication, and error handling.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize SMTP client."""
         self.smtp_host = getattr(settings, "SMTP_HOST", "localhost")
         self.smtp_port = getattr(settings, "SMTP_PORT", 587)
@@ -47,11 +47,11 @@ class SMTPClient:
             else:
                 server = smtplib.SMTP(self.smtp_host, self.smtp_port)
 
-            # Authenticate if credentials provided
+                # Authenticate if credentials provided
             if self.smtp_user and self.smtp_password:
                 server.login(self.smtp_user, self.smtp_password)
 
-            # Send email
+                # Send email
             server.send_message(msg)
             server.quit()
 

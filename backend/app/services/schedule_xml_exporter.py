@@ -184,7 +184,7 @@ class ScheduleXMLExporter:
     ```
     """
 
-    def __init__(self, block_start: date, block_end: date):
+    def __init__(self, block_start: date, block_end: date) -> None:
         self.block_start = block_start
         self.block_end = block_end
 
@@ -276,16 +276,16 @@ class ScheduleXMLExporter:
         if is_last_wed:
             return ("LEC", "ADV")
 
-        # Rule 2: Rotation-specific patterns
-        # KAP (Kapiolani L&D) - special off-site pattern
+            # Rule 2: Rotation-specific patterns
+            # KAP (Kapiolani L&D) - special off-site pattern
         if rot_lower in ("kap", "kap-ld", "kapi-ld", "kapiolani l and d"):
             return self._get_kapiolani_codes(current_date)
 
-        # LDNF (L&D Night Float) - Friday AM clinic!
+            # LDNF (L&D Night Float) - Friday AM clinic!
         if rot_lower in ("ldnf", "l&d night float", "l and d night float"):
             return self._get_ldnf_codes(current_date)
 
-        # Rule 3: Weekend handling
+            # Rule 3: Weekend handling
         if is_weekend:
             if _is_inpatient(rotation):
                 # Inpatient rotations work weekends
@@ -293,13 +293,13 @@ class ScheduleXMLExporter:
             else:
                 return ("W", "W")
 
-        # Rule 4: Wednesday handling
+                # Rule 4: Wednesday handling
         if is_wednesday:
             am_code = self._get_wednesday_am(rotation, pgy)
             pm_code = self._get_wednesday_pm(rotation)
             return (am_code, pm_code)
 
-        # Rule 5: Inpatient continuity clinic (non-Wednesday)
+            # Rule 5: Inpatient continuity clinic (non-Wednesday)
         if rot_lower in ("im", "imw", "internal medicine"):
             return self._get_im_codes(current_date, pgy)
         if rot_lower in ("pedw", "peds ward"):
@@ -307,7 +307,7 @@ class ScheduleXMLExporter:
         if rot_lower in ("fmit", "fmit 2"):
             return self._get_fmit_codes(current_date, pgy)
 
-        # Rule 6: Default rotation pattern (case-insensitive)
+            # Rule 6: Default rotation pattern (case-insensitive)
         return _get_pattern(rotation)
 
     def _is_last_wednesday(self, current_date: date) -> bool:
@@ -426,12 +426,12 @@ class ScheduleXMLExporter:
         if pgy == 1 and not _is_intern_continuity_exempt(rotation):
             return "C"
 
-        # SM rotation gets aSM (Academic Sports Medicine) on Wed AM
+            # SM rotation gets aSM (Academic Sports Medicine) on Wed AM
         rot_lower = _normalize_rotation(rotation)
         if rot_lower in ("sm", "sports medicine", "sports medicine am"):
             return "aSM"
 
-        # Non-interns or exempt rotations use rotation's default AM
+            # Non-interns or exempt rotations use rotation's default AM
         return _get_pattern(rotation)[0]
 
     def _get_wednesday_pm(self, rotation: str) -> str:

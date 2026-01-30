@@ -33,7 +33,7 @@ class ExplainMetrics:
 class ExplainAnalyzer:
     """Analyzes SQL EXPLAIN plans for optimization opportunities."""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         """Initialize EXPLAIN analyzer.
 
         Args:
@@ -71,7 +71,7 @@ class ExplainAnalyzer:
         else:
             plan_data = explain_output
 
-        # Extract metrics
+            # Extract metrics
         return self._parse_plan(plan_data[0])
 
     def _parse_plan(self, plan_data: dict) -> ExplainMetrics:
@@ -132,7 +132,7 @@ class ExplainAnalyzer:
         if plan.get("Node Type") == node_type:
             return True
 
-        # Recursively check children
+            # Recursively check children
         for child in plan.get("Plans", []):
             if self._has_node_type(child, node_type):
                 return True
@@ -182,7 +182,7 @@ class ExplainAnalyzer:
                     )
                     suggestions.append(index_suggestion)
 
-        # Recursively check children
+                    # Recursively check children
         for child in plan.get("Plans", []):
             suggestions.extend(self._identify_missing_indexes(child))
 
@@ -226,20 +226,20 @@ class ExplainAnalyzer:
                 "large tables (cost > 1000)"
             )
 
-        # Slow execution time
+            # Slow execution time
         if metrics["execution_time"] > 1000:
             recommendations.append(
                 "Query execution time > 1 second - consider optimization or caching"
             )
 
-        # Check for nested loops without indexes
+            # Check for nested loops without indexes
         if self._has_nested_loop_without_index(plan):
             recommendations.append(
                 "Nested loop joins detected without index scans - add "
                 "indexes on join columns"
             )
 
-        # Check for sorts on large datasets
+            # Check for sorts on large datasets
         if self._has_expensive_sort(plan):
             recommendations.append(
                 "Expensive sort operation detected - consider adding "
@@ -263,7 +263,7 @@ class ExplainAnalyzer:
                 if child.get("Node Type") == "Seq Scan":
                     return True
 
-        # Recursively check children
+                    # Recursively check children
         for child in plan.get("Plans", []):
             if self._has_nested_loop_without_index(child):
                 return True
@@ -284,7 +284,7 @@ class ExplainAnalyzer:
             if plan.get("Actual Rows", 0) > 10000:
                 return True
 
-        # Recursively check children
+                # Recursively check children
         for child in plan.get("Plans", []):
             if self._has_expensive_sort(child):
                 return True

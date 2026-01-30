@@ -30,7 +30,7 @@ class DataAggregator:
     - Generate summary statistics
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize data aggregator.
 
@@ -212,7 +212,7 @@ class DataAggregator:
                 "percentage": 0,  # Will calculate after getting total
             }
 
-        # Calculate percentages
+            # Calculate percentages
         total = sum(data["count"] for data in aggregated.values())
         for rotation_name, data in aggregated.items():
             data["percentage"] = (data["count"] / total * 100) if total > 0 else 0

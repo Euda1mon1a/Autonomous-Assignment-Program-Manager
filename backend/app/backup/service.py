@@ -55,7 +55,7 @@ class BackupService:
         storage: BackupStorage | None = None,
         compression_enabled: bool = True,
         encryption_enabled: bool = False,
-    ):
+    ) -> None:
         """
         Initialize backup service.
 
@@ -128,7 +128,7 @@ class BackupService:
                 if strategy == "differential":
                     kwargs["last_full_backup_timestamp"] = last_backup["created_at"]
 
-            # Execute backup strategy
+                    # Execute backup strategy
             backup_data = await backup_strategy.execute(
                 db,
                 backup_metadata,
@@ -344,14 +344,14 @@ class BackupService:
                     )
                     continue
 
-                # Keep backups within retention period
+                    # Keep backups within retention period
                 if created_at >= cutoff_date:
                     logger.debug(
                         f"Keeping backup {backup_id} (within retention period)"
                     )
                     continue
 
-                # For old backups, keep one full backup per week
+                    # For old backups, keep one full backup per week
                 if backup_type == "full":
                     week_key = created_at.strftime("%Y-W%W")
 
@@ -363,7 +363,7 @@ class BackupService:
                         )
                         continue
 
-                # Delete this backup
+                        # Delete this backup
                 logger.info(
                     f"{'[DRY RUN] Would delete' if dry_run else 'Deleting'} "
                     f"backup {backup_id} (created: {created_at.isoformat()})"
@@ -405,7 +405,7 @@ class BackupService:
                     "newest_backup": None,
                 }
 
-            # Calculate statistics
+                # Calculate statistics
             total_size = sum(b.get("size_bytes", 0) for b in all_backups)
             by_type = {}
 
@@ -417,7 +417,7 @@ class BackupService:
                 by_type[backup_type]["count"] += 1
                 by_type[backup_type]["size_bytes"] += backup.get("size_bytes", 0)
 
-            # Sort by created_at
+                # Sort by created_at
             sorted_backups = sorted(all_backups, key=lambda x: x.get("created_at", ""))
 
             return {

@@ -23,7 +23,7 @@ T = TypeVar("T")
 class QueryCache:
     """Redis-based query result cache with automatic invalidation."""
 
-    def __init__(self, redis_client: redis.Redis | None = None):
+    def __init__(self, redis_client: redis.Redis | None = None) -> None:
         """Initialize query cache.
 
         Args:
@@ -66,7 +66,7 @@ class QueryCache:
             logger.debug(f"Cache hit for key: {key}")
             return deserializer(cached)
 
-        # Cache miss - fetch fresh data
+            # Cache miss - fetch fresh data
         self.metrics["misses"] += 1
         logger.debug(f"Cache miss for key: {key}")
 
@@ -144,7 +144,7 @@ class QueryCache:
             "total_queries": total,
         }
 
-    async def close(self):
+    async def close(self) -> None:
         """Close Redis connection."""
         await self.redis.close()
 
@@ -157,7 +157,7 @@ class CachedQuery:
         cache: QueryCache,
         ttl: timedelta | None = None,
         key_prefix: str | None = None,
-    ):
+    ) -> None:
         """Initialize cached query decorator.
 
         Args:
@@ -199,8 +199,9 @@ class CachedQuery:
 
         return wrapper
 
+        # Global cache instance
 
-# Global cache instance
+
 _cache_instance: QueryCache | None = None
 
 

@@ -41,7 +41,7 @@ class RequestLoggingConfig:
         log_levels: dict[str, str] | None = None,
         storage_backend: LogStorage | None = None,
         sensitive_filter: SensitiveDataFilter | None = None,
-    ):
+    ) -> None:
         """
         Initialize request logging configuration.
 
@@ -89,7 +89,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     - Multiple storage backends
     """
 
-    def __init__(self, app, config: RequestLoggingConfig | None = None):
+    def __init__(self, app, config: RequestLoggingConfig | None = None) -> None:
         """
         Initialize request logging middleware.
 
@@ -107,15 +107,15 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         if not self.config.enabled:
             return await call_next(request)
 
-        # Skip excluded paths
+            # Skip excluded paths
         if self._is_excluded(request.url.path):
             return await call_next(request)
 
-        # Apply sampling
+            # Apply sampling
         if not self._should_sample():
             return await call_next(request)
 
-        # Start timing
+            # Start timing
         start_time = time.perf_counter()
 
         # Get request ID (from RequestIDMiddleware or generate new)
@@ -197,14 +197,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             filtered_headers = self.config.filter.filter_headers(headers_dict)
             log_entry["headers"] = filtered_headers
 
-        # Log body (filtered and size-limited)
+            # Log body (filtered and size-limited)
         body_data = None
         if self.config.log_body and request.method in ["POST", "PUT", "PATCH"]:
             body_data = await self._read_request_body(request)
             if body_data:
                 log_entry["body"] = body_data
 
-        # Determine log level
+                # Determine log level
         log_level = self._get_log_level(request.url.path)
 
         # Log to logger
@@ -234,7 +234,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             if not self.config.filter.should_log_body(request.url.path, request.method):
                 return {"_note": "Body not logged for security"}
 
-            # Read body (this consumes the stream)
+                # Read body (this consumes the stream)
             body_bytes = await request.body()
 
             # Check size limit
@@ -243,7 +243,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     "_note": f"Body too large ({len(body_bytes)} bytes, max {self.config.max_body_size})"
                 }
 
-            # Parse JSON if content-type is application/json
+                # Parse JSON if content-type is application/json
             content_type = request.headers.get("content-type", "")
             if "application/json" in content_type:
                 try:
@@ -294,7 +294,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             filtered_headers = self.config.filter.filter_headers(headers_dict)
             log_entry["response_headers"] = filtered_headers
 
-        # Determine log level based on status code
+            # Determine log level based on status code
         if response.status_code >= 500:
             log_level = "ERROR"
         elif response.status_code >= 400:
@@ -302,7 +302,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         else:
             log_level = self._get_log_level(request.url.path)
 
-        # Log to logger
+            # Log to logger
         logger.log(
             logging.getLevelName(log_level),
             f"Response: {request.method} {request.url.path} -> {response.status_code} ({duration_ms:.2f}ms)",
@@ -355,9 +355,10 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             if path.startswith(prefix):
                 return level
 
-        # Default to INFO
+                # Default to INFO
         return "INFO"
 
+        # Default middleware instance
 
-# Default middleware instance
+
 default_middleware = RequestLoggingMiddleware

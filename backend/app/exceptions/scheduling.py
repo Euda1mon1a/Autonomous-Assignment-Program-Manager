@@ -17,7 +17,7 @@ class SchedulingError(AppException):
         message: str,
         status_code: int = 400,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize scheduling error.
 
         Args:
@@ -39,7 +39,7 @@ class ScheduleConflictError(ConflictError):
         requested_date: str | None = None,
         person_id: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize schedule conflict error.
 
         Args:
@@ -65,7 +65,7 @@ class ScheduleGenerationError(SchedulingError):
         reason: str | None = None,
         block_range: tuple[str, str] | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize schedule generation error.
 
         Args:
@@ -88,7 +88,7 @@ class SolverTimeoutError(SchedulingError):
         timeout_seconds: int | None = None,
         partial_solution: dict[str, Any] | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize solver timeout error.
 
         Args:
@@ -111,7 +111,7 @@ class ConstraintViolationError(SchedulingError):
         constraint_name: str | None = None,
         violated_rule: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize constraint violation error.
 
         Args:
@@ -133,7 +133,7 @@ class InfeasibleScheduleError(SchedulingError):
         message: str = "Schedule requirements cannot be satisfied",
         conflicting_constraints: list[str] | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize infeasible schedule error.
 
         Args:
@@ -153,7 +153,7 @@ class RotationTemplateError(SchedulingError):
         message: str = "Invalid rotation template",
         template_id: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize rotation template error.
 
         Args:
@@ -174,7 +174,7 @@ class BlockAssignmentError(SchedulingError):
         block_id: str | None = None,
         assignment_id: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize block assignment error.
 
         Args:

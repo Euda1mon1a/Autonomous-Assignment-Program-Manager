@@ -31,7 +31,7 @@ class DeliveryResult:
         email_sent: bool = False,
         s3_url: str | None = None,
         file_path: str | None = None,
-    ):
+    ) -> None:
         self.success = success
         self.message = message
         self.email_sent = email_sent
@@ -42,7 +42,7 @@ class DeliveryResult:
 class EmailDeliveryService:
     """Service for delivering exports via email."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize email delivery service."""
         self.smtp_host = (
             settings.SMTP_HOST if hasattr(settings, "SMTP_HOST") else "localhost"
@@ -143,7 +143,7 @@ class EmailDeliveryService:
 class S3DeliveryService:
     """Service for delivering exports to S3."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize S3 delivery service."""
         self.bucket = (
             settings.UPLOAD_S3_BUCKET if hasattr(settings, "UPLOAD_S3_BUCKET") else None
@@ -218,7 +218,7 @@ class S3DeliveryService:
             if metadata:
                 upload_params["Metadata"] = metadata
 
-            # Upload file
+                # Upload file
             if isinstance(file_data, bytes):
                 file_obj = io.BytesIO(file_data)
             else:
@@ -247,7 +247,7 @@ class S3DeliveryService:
 class ExportDeliveryService:
     """Main service for delivering exports via configured methods."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize delivery service."""
         self.email_service = EmailDeliveryService()
         self.s3_service = S3DeliveryService()
@@ -312,7 +312,7 @@ class ExportDeliveryService:
                     messages.append("Email delivery failed")
                     success = False
 
-        # S3 delivery
+                    # S3 delivery
         if delivery_method in ("s3", "both"):
             # Generate S3 key
             timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")

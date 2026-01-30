@@ -33,7 +33,7 @@ class AuditRepository:
         "swap_record": "swap_record_version",
     }
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """Initialize the audit repository with a database session."""
         self.db = db
 
@@ -54,8 +54,8 @@ class AuditRepository:
         if table_name not in self.VERSION_TABLES.values():
             raise ValueError(f"Invalid table name: {table_name}")
 
-        # Return quoted identifier (PostgreSQL uses double quotes)
-        # This prevents SQL injection even if allowlist is bypassed
+            # Return quoted identifier (PostgreSQL uses double quotes)
+            # This prevents SQL injection even if allowlist is bypassed
         return f'"{table_name}"'
 
     def get_audit_entries(
@@ -104,7 +104,7 @@ class AuditRepository:
                 if not table_name:
                     continue
 
-                # Build query with filters
+                    # Build query with filters
                 query = self._build_audit_query(
                     table_name=table_name,
                     model_name=model_name,
@@ -132,7 +132,7 @@ class AuditRepository:
                     logger.warning(f"Error querying {table_name}: {e}")
                     continue
 
-            # Sort entries
+                    # Sort entries
             all_entries = self._sort_entries(all_entries, sort_by, sort_direction)
 
             # Calculate pagination
@@ -237,7 +237,7 @@ class AuditRepository:
                 date_filter += " AND t.issued_at <= :end_date"
                 params["end_date"] = end_date
 
-            # Aggregate across all version tables
+                # Aggregate across all version tables
             for model_name, table_name in self.VERSION_TABLES.items():
                 try:
                     # Validate and quote table name to prevent SQL injection

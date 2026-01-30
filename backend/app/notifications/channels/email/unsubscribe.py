@@ -32,7 +32,7 @@ class UnsubscribeManager:
     - Compliance with CAN-SPAM
     """
 
-    def __init__(self, unsubscribe_domain: str = "scheduler.local"):
+    def __init__(self, unsubscribe_domain: str = "scheduler.local") -> None:
         """
         Initialize unsubscribe manager.
 
@@ -126,7 +126,7 @@ class UnsubscribeManager:
         if not record.notification_types:
             return True
 
-        # Check specific type
+            # Check specific type
         if notification_type:
             return notification_type in record.notification_types
 

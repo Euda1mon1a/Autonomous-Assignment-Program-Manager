@@ -30,7 +30,7 @@ def create(
         "", "--description", "-d", help="Migration description"
     ),
     batch_size: int = typer.Option(100, "--batch-size", "-b", help="Records per batch"),
-):
+) -> None:
     """
     Create a new migration record.
 
@@ -61,7 +61,7 @@ def create(
 def list(
     status: str = typer.Option(None, "--status", "-s", help="Filter by status"),
     limit: int = typer.Option(50, "--limit", "-l", help="Maximum records to show"),
-):
+) -> None:
     """
     List migrations with optional filtering.
 
@@ -92,7 +92,7 @@ def list(
             console.print("[yellow]No migrations found.[/yellow]")
             return
 
-        # Create table
+            # Create table
         table = Table(title="Migrations")
         table.add_column("ID", style="cyan", no_wrap=True)
         table.add_column("Name", style="magenta")
@@ -110,7 +110,7 @@ def list(
             else:
                 progress = "N/A"
 
-            # Format created date
+                # Format created date
             created = (
                 migration.created_at.strftime("%Y-%m-%d %H:%M")
                 if migration.created_at
@@ -143,7 +143,7 @@ def list(
 @app.command()
 def show(
     migration_id: str = typer.Argument(..., help="Migration ID"),
-):
+) -> None:
     """
     Show detailed information about a migration.
     """
@@ -165,7 +165,7 @@ def show(
             console.print(f"[red]Migration not found: {migration_id}[/red]")
             raise typer.Exit(1)
 
-        # Display migration details
+            # Display migration details
         console.print("\n[bold]Migration Details[/bold]")
         console.print(f"ID: {migration.id}")
         console.print(f"Name: {migration.name}")
@@ -197,7 +197,7 @@ def show(
 @app.command()
 def progress(
     migration_id: str = typer.Argument(..., help="Migration ID"),
-):
+) -> None:
     """
     Show progress information for a migration.
     """
@@ -246,7 +246,7 @@ def snapshot(
         "-m",
         help="Model import path (e.g., 'app.models.person:Person')",
     ),
-):
+) -> None:
     """
     Create a snapshot of data before migration.
 
@@ -273,14 +273,14 @@ def snapshot(
             console.print(f"[red]Error importing model: {e}[/red]")
             raise typer.Exit(1)
 
-        # Parse migration ID
+            # Parse migration ID
         try:
             mid = UUID(migration_id)
         except ValueError:
             console.print(f"[red]Invalid migration ID: {migration_id}[/red]")
             raise typer.Exit(1)
 
-        # Create snapshot
+            # Create snapshot
         rollback_mgr = RollbackManager(db)
         query = db.query(model_class)
 
@@ -309,7 +309,7 @@ def rollback(
         "-m",
         help="Model import path (e.g., 'app.models.person:Person')",
     ),
-):
+) -> None:
     """
     Rollback a migration using its most recent snapshot.
 
@@ -336,14 +336,14 @@ def rollback(
             console.print(f"[red]Error importing model: {e}[/red]")
             raise typer.Exit(1)
 
-        # Parse migration ID
+            # Parse migration ID
         try:
             mid = UUID(migration_id)
         except ValueError:
             console.print(f"[red]Invalid migration ID: {migration_id}[/red]")
             raise typer.Exit(1)
 
-        # Confirm rollback
+            # Confirm rollback
         confirm = typer.confirm(
             f"Are you sure you want to rollback migration {migration_id}?"
         )
@@ -351,7 +351,7 @@ def rollback(
             console.print("[yellow]Rollback cancelled.[/yellow]")
             return
 
-        # Execute rollback
+            # Execute rollback
         rollback_mgr = RollbackManager(db)
         result = rollback_mgr.rollback_migration(mid, model_class)
 
@@ -377,7 +377,7 @@ def rollback(
 @app.command()
 def list_snapshots(
     migration_id: str = typer.Argument(..., help="Migration ID"),
-):
+) -> None:
     """
     List snapshots for a migration.
     """
@@ -399,7 +399,7 @@ def list_snapshots(
             console.print("[yellow]No snapshots found for this migration.[/yellow]")
             return
 
-        # Create table
+            # Create table
         table = Table(title=f"Snapshots for Migration {migration_id[:8]}...")
         table.add_column("Snapshot ID", style="cyan", no_wrap=True)
         table.add_column("Table", style="magenta")
@@ -425,7 +425,7 @@ def cleanup(
     days: int = typer.Option(
         30, "--days", "-d", help="Delete snapshots older than N days"
     ),
-):
+) -> None:
     """
     Clean up old snapshots to save disk space.
     """
@@ -458,7 +458,7 @@ def history(
         None, "--migration", "-m", help="Filter by migration ID"
     ),
     limit: int = typer.Option(50, "--limit", "-l", help="Maximum records to show"),
-):
+) -> None:
     """
     Show rollback history.
     """
@@ -483,7 +483,7 @@ def history(
             console.print("[yellow]No rollback history found.[/yellow]")
             return
 
-        # Create table
+            # Create table
         table = Table(title="Rollback History")
         table.add_column("Rollback ID", style="cyan", no_wrap=True)
         table.add_column("Migration ID", style="magenta", no_wrap=True)
@@ -514,7 +514,7 @@ def history(
 
 
 @app.command()
-def stats():
+def stats() -> None:
     """
     Show migration statistics.
     """

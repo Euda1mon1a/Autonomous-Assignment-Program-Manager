@@ -264,7 +264,7 @@ class StateStore:
                 run.log          # Execution trace
     """
 
-    def __init__(self, base_path: str | Path = "runs"):
+    def __init__(self, base_path: str | Path = "runs") -> None:
         """
         Initialize state store.
 
@@ -478,12 +478,12 @@ class StateStore:
         if not records:
             return None
 
-        # Sort by score descending, then by valid flag
+            # Sort by score descending, then by valid flag
         valid_records = [r for r in records if r.valid]
         if valid_records:
             return max(valid_records, key=lambda r: r.score)
 
-        # If no valid records, return highest scoring invalid one
+            # If no valid records, return highest scoring invalid one
         return max(records, key=lambda r: r.score)
 
     def get_run_summary(self, run_id: str) -> dict[str, Any] | None:

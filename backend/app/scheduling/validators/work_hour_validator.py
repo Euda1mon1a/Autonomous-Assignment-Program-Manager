@@ -102,7 +102,7 @@ class WorkHourValidator:
         if not hours_by_date:
             return violations, warnings
 
-        # Integrate moonlighting hours
+            # Integrate moonlighting hours
         total_hours_by_date = dict(hours_by_date)
         if moonlighting_hours:
             for work_date, moonlight_hours in moonlighting_hours.items():
@@ -115,7 +115,7 @@ class WorkHourValidator:
         if not sorted_dates:
             return violations, warnings
 
-        # Check every possible 28-day rolling window
+            # Check every possible 28-day rolling window
         for start_date in sorted_dates:
             window_end = start_date + timedelta(days=self.rolling_days - 1)
 
@@ -265,13 +265,14 @@ class WorkHourValidator:
         if len(shift_data) < 2:
             return violations, warnings
 
-        # Sort by date then start_time for proper chronological order
+            # Sort by date then start_time for proper chronological order
+
         def shift_sort_key(shift: dict) -> tuple:
             shift_date = shift.get("date", date.min)
             start_time = shift.get("start_time", "00:00")
             if hasattr(start_time, "hour"):  # It's a time object
                 return (shift_date, start_time.hour, start_time.minute)
-            # Parse string time
+                # Parse string time
             try:
                 parts = str(start_time).split(":")
                 return (
@@ -292,7 +293,7 @@ class WorkHourValidator:
             if current_duration < MAX_CONSECUTIVE_HOURS:
                 continue  # No rest requirement after short shifts
 
-            # Calculate actual rest period between shifts
+                # Calculate actual rest period between shifts
             rest_hours = self._calculate_rest_hours(current_shift, next_shift)
 
             if rest_hours < MIN_REST_HOURS_AFTER_SHIFT:
@@ -367,7 +368,7 @@ class WorkHourValidator:
                 return max(0, days_diff * 24 - 12)
             return 0.0
 
-        # Parse end_time to datetime
+            # Parse end_time to datetime
         current_end_dt = self._parse_time_to_datetime(current_date, current_end)
         next_start_dt = self._parse_time_to_datetime(next_date, next_start)
 
@@ -386,7 +387,7 @@ class WorkHourValidator:
             days_diff = (next_date - current_date).days
             return max(0, days_diff * 24 - 12)
 
-        # Calculate rest period
+            # Calculate rest period
         rest_delta = next_start_dt - current_end_dt
         rest_hours = rest_delta.total_seconds() / 3600
 
@@ -433,7 +434,7 @@ class WorkHourValidator:
                 # It's already a time object
                 return datetime.combine(shift_date, time_value)
 
-            # Parse string time
+                # Parse string time
             time_str = str(time_value)
             parts = time_str.split(":")
             hour = int(parts[0])
@@ -475,7 +476,7 @@ class WorkHourValidator:
         if not moonlighting_hours:
             return violations, warnings
 
-        # Calculate total moonlighting per week
+            # Calculate total moonlighting per week
         weeks_data = {}
         for work_date, hours in moonlighting_hours.items():
             # Calculate week starting Monday
@@ -484,7 +485,7 @@ class WorkHourValidator:
                 weeks_data[week_start] = 0
             weeks_data[week_start] += hours
 
-        # Check weekly moonlighting
+            # Check weekly moonlighting
         for week_start, total_hours in weeks_data.items():
             if total_hours > MOONLIGHTING_HOURS_PER_WEEK_WARNING:
                 warnings.append(
@@ -573,7 +574,7 @@ class BlockBasedWorkHourCalculator:
     HOURS_PER_BLOCK = 6  # Standard assumption
     HOURS_PER_INTENSIVE_BLOCK = 12  # FMIT, Night Float, inpatient
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize calculator."""
         self.standard_hours = self.HOURS_PER_BLOCK
         self.intensive_hours = self.HOURS_PER_INTENSIVE_BLOCK
@@ -604,7 +605,7 @@ class BlockBasedWorkHourCalculator:
             if not block_date:
                 continue
 
-            # Determine hours based on rotation intensity
+                # Determine hours based on rotation intensity
             intensity = rotation_intensity_map.get(rotation_id, "standard")
             hours = (
                 self.intensive_hours

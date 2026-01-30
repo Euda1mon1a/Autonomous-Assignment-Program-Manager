@@ -102,7 +102,7 @@ async def _log_activity(
                 ip_address = request.client.host if request.client else None
             user_agent = request.headers.get("User-Agent", "")[:500]  # Truncate
 
-        # Map ActivityAction enum to action_type string
+            # Map ActivityAction enum to action_type string
         action_type = action.value.upper()
 
         # Create activity log entry
@@ -160,14 +160,14 @@ async def list_users(
     if role:
         query = query.where(User.role == role.value)
 
-    # Apply status filter
+        # Apply status filter
     if status:
         if status == UserStatus.ACTIVE:
             query = query.where(User.is_active == True)  # noqa: E712
         elif status == UserStatus.INACTIVE:
             query = query.where(User.is_active == False)  # noqa: E712
 
-    # Apply search filter
+            # Apply search filter
     if search:
         search_term = f"%{search}%"
         query = query.where(
@@ -177,7 +177,7 @@ async def list_users(
             )
         )
 
-    # Count total
+        # Count total
     count_query = select(func.count()).select_from(query.subquery())
     total = (db.execute(count_query)).scalar() or 0
 
@@ -225,12 +225,12 @@ async def create_user(
             detail="User with this email already exists",
         )
 
-    # Generate username from email if not provided
+        # Generate username from email if not provided
     username = user_data.username
     if not username:
         username = user_data.email.split("@")[0]
 
-    # Check if username already exists
+        # Check if username already exists
     existing_username = (
         db.execute(select(User).where(User.username == username))
     ).scalar_one_or_none()
@@ -238,7 +238,7 @@ async def create_user(
         # Append a random suffix
         username = f"{username}_{uuid.uuid4().hex[:6]}"
 
-    # Create user with temporary password (they'll reset via invite)
+        # Create user with temporary password (they'll reset via invite)
     temp_password = uuid.uuid4().hex
     new_user = User(
         id=uuid.uuid4(),
@@ -333,14 +333,14 @@ async def update_user(
             detail="User not found",
         )
 
-    # Prevent admin from deactivating themselves
+        # Prevent admin from deactivating themselves
     if user.id == current_user.id and user_data.is_active is False:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot deactivate your own account",
         )
 
-    # Prevent changing own role
+        # Prevent changing own role
     if (
         user.id == current_user.id
         and user_data.role
@@ -351,7 +351,7 @@ async def update_user(
             detail="Cannot change your own role",
         )
 
-    # Track changes for activity log
+        # Track changes for activity log
     changes = {}
 
     # Update fields
@@ -415,7 +415,7 @@ async def delete_user(
     request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
-):
+) -> None:
     """
     Delete a user.
 
@@ -434,14 +434,14 @@ async def delete_user(
             detail="User not found",
         )
 
-    # Prevent admin from deleting themselves
+        # Prevent admin from deleting themselves
     if user.id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot delete your own account",
         )
 
-    # Log activity before deletion (capture user info before it's gone)
+        # Log activity before deletion (capture user info before it's gone)
     await _log_activity(
         db=db,
         action=ActivityAction.USER_DELETED,
@@ -482,14 +482,14 @@ async def lock_user_account(
             detail="User not found",
         )
 
-    # Prevent admin from locking themselves
+        # Prevent admin from locking themselves
     if user.id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot lock your own account",
         )
 
-    # Check if model supports locking
+        # Check if model supports locking
     if not hasattr(user, "is_locked"):
         # Fall back to using is_active for locking
         if lock_data.locked:
@@ -524,7 +524,7 @@ async def lock_user_account(
             message=message,
         )
 
-    # Model supports explicit locking
+        # Model supports explicit locking
     user.is_locked = lock_data.locked
     if hasattr(user, "lock_reason"):
         user.lock_reason = lock_data.reason if lock_data.locked else None
@@ -589,14 +589,14 @@ async def resend_invite(
             detail="User not found",
         )
 
-    # Check if user already accepted invite
+        # Check if user already accepted invite
     if hasattr(user, "invite_accepted_at") and user.invite_accepted_at:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User has already accepted their invitation",
         )
 
-    # Update invite sent timestamp
+        # Update invite sent timestamp
     if hasattr(user, "invite_sent_at"):
         user.invite_sent_at = datetime.utcnow()
 
@@ -696,7 +696,7 @@ async def get_activity_log(
     if date_to:
         query = query.where(ActivityLog.created_at <= date_to)
 
-    # Count total
+        # Count total
     count_query = select(func.count()).select_from(query.subquery())
     total = (db.execute(count_query)).scalar() or 0
 
@@ -721,7 +721,7 @@ async def get_activity_log(
             if admin_user:
                 admin_email = admin_user.email
 
-        # Fetch target user email if available
+                # Fetch target user email if available
         target_email = None
         if log.target_id:
             try:
@@ -785,7 +785,7 @@ async def bulk_user_action(
             errors.append(f"Cannot perform action on your own account: {uid}")
             continue
 
-        # Fetch user
+            # Fetch user
         user = (db.execute(select(User).where(User.id == uid))).scalar_one_or_none()
 
         if not user:
@@ -812,7 +812,7 @@ async def bulk_user_action(
             errors.append(f"Failed to process user {uid}: {str(e)}")
             logger.error(f"Bulk action error for user {uid}: {e}", exc_info=True)
 
-    # Determine activity action
+            # Determine activity action
     activity_action = {
         BulkAction.ACTIVATE: ActivityAction.USER_UPDATED,
         BulkAction.DEACTIVATE: ActivityAction.USER_UPDATED,

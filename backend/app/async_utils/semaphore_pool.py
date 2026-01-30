@@ -20,7 +20,7 @@ class SemaphorePool:
         self,
         max_concurrent: int = 10,
         timeout: float | None = None,
-    ):
+    ) -> None:
         """Initialize semaphore pool.
 
         Args:
@@ -72,7 +72,7 @@ class SemaphorePool:
             logger.warning(f"Semaphore acquisition timeout after {timeout_val}s")
             raise
 
-    def _track_acquisition(self, start_time: float):
+    def _track_acquisition(self, start_time: float) -> None:
         """Track semaphore acquisition.
 
         Args:
@@ -87,7 +87,7 @@ class SemaphorePool:
         if self.stats["current_active"] > self.stats["max_active"]:
             self.stats["max_active"] = self.stats["current_active"]
 
-    def _track_release(self):
+    def _track_release(self) -> None:
         """Track semaphore release."""
         self.stats["current_active"] -= 1
 
@@ -120,7 +120,7 @@ class RateLimiter:
         rate: int,
         per: float = 1.0,
         burst: int | None = None,
-    ):
+    ) -> None:
         """Initialize rate limiter.
 
         Args:
@@ -164,7 +164,7 @@ class RateLimiter:
                 self.stats["throttled"] += 1
                 return False
 
-            # Wait for tokens to become available
+                # Wait for tokens to become available
             wait_time = (tokens - self.tokens) * (self.per / self.rate)
             await asyncio.sleep(wait_time)
 
@@ -173,7 +173,7 @@ class RateLimiter:
             self.stats["allowed"] += 1
             return True
 
-    def _update_tokens(self):
+    def _update_tokens(self) -> None:
         """Update token bucket based on elapsed time."""
         now = time.time()
         elapsed = now - self.last_update
@@ -236,7 +236,7 @@ class AdaptiveRateLimiter(RateLimiter):
         max_rate: int = 1000,
         error_threshold: float = 0.05,  # 5% error rate
         adjustment_factor: float = 0.5,
-    ):
+    ) -> None:
         """Initialize adaptive rate limiter.
 
         Args:
@@ -255,19 +255,19 @@ class AdaptiveRateLimiter(RateLimiter):
         self.errors = 0
         self.successes = 0
 
-    async def report_success(self):
+    async def report_success(self) -> None:
         """Report successful operation."""
         async with self.lock:
             self.successes += 1
             await self._adjust_rate()
 
-    async def report_error(self):
+    async def report_error(self) -> None:
         """Report failed operation."""
         async with self.lock:
             self.errors += 1
             await self._adjust_rate()
 
-    async def _adjust_rate(self):
+    async def _adjust_rate(self) -> None:
         """Adjust rate based on error rate."""
         total = self.errors + self.successes
 
@@ -285,12 +285,13 @@ class AdaptiveRateLimiter(RateLimiter):
                 self.rate = min(self.max_rate, new_rate)
                 logger.info(f"Rate increased to {self.rate}")
 
-            # Reset counters
+                # Reset counters
             self.errors = 0
             self.successes = 0
 
+            # Global instances
 
-# Global instances
+
 _semaphore_pools: dict[str, SemaphorePool] = {}
 _rate_limiters: dict[str, RateLimiter] = {}
 

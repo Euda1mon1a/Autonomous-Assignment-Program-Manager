@@ -113,7 +113,7 @@ class FairnessAuditReport:
 class FairnessAuditService:
     """Service for auditing faculty workload fairness."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def generate_audit_report(
@@ -150,7 +150,7 @@ class FairnessAuditService:
         if not eligible_faculty:
             return self._empty_report(start_date, end_date)
 
-        # Get blocks in date range
+            # Get blocks in date range
         block_query = select(Block).where(
             Block.date >= start_date,
             Block.date <= end_date,
@@ -162,7 +162,7 @@ class FairnessAuditService:
         if not block_ids:
             return self._empty_report(start_date, end_date)
 
-        # Get rotation templates for classification
+            # Get rotation templates for classification
         template_query = select(RotationTemplate)
         template_result = await self.db.execute(template_query)
         templates = {t.id: t for t in template_result.scalars().all()}
@@ -218,7 +218,7 @@ class FairnessAuditService:
             )
             fmit_weeks_seen[f.id] = set()
 
-        # Process assignments
+            # Process assignments
         for a in assignments:
             if a.person_id not in workloads:
                 continue
@@ -247,11 +247,11 @@ class FairnessAuditService:
                             fmit_weeks_seen[a.person_id].add(iso_week)
                             workload.fmit_weeks += 1
 
-                # Count clinic
+                            # Count clinic
                 if rotation_type == "outpatient":
                     workload.clinic_halfdays += 1
 
-                # Count admin
+                    # Count admin
                 if (
                     "GME" in template_name
                     or "DFM" in template_name
@@ -259,7 +259,7 @@ class FairnessAuditService:
                 ):
                     workload.admin_halfdays += 1
 
-                # Count academic
+                    # Count academic
                 if (
                     "LEC" in template_name
                     or "ADV" in template_name

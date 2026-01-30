@@ -39,7 +39,7 @@ class TrainingDataPipeline:
     - Generates training datasets for all ML models
     """
 
-    def __init__(self, db: AsyncSession | Session):
+    def __init__(self, db: AsyncSession | Session) -> None:
         """
         Initialize training data pipeline.
 
@@ -79,7 +79,7 @@ class TrainingDataPipeline:
         if start_date is None:
             start_date = end_date - timedelta(days=365)
 
-        # Query assignments with related data
+            # Query assignments with related data
         query = (
             select(Assignment, Person, Block, RotationTemplate)
             .join(Person, Assignment.person_id == Person.id)
@@ -99,7 +99,7 @@ class TrainingDataPipeline:
         if len(rows) < min_samples:
             logger.warning(f"Insufficient data: {len(rows)} < {min_samples} samples")
 
-        # Extract features and labels
+            # Extract features and labels
         features_list = []
         labels_list = []
 
@@ -148,7 +148,7 @@ class TrainingDataPipeline:
             features_list.append(features)
             labels_list.append(label)
 
-        # Convert to DataFrame and array
+            # Convert to DataFrame and array
         X = pd.DataFrame(features_list)
         y = np.array(labels_list)
 
@@ -183,7 +183,7 @@ class TrainingDataPipeline:
         if start_date is None:
             start_date = end_date - timedelta(days=365)
 
-        # Get all people
+            # Get all people
         people_query = select(Person)
         result = await self._execute(people_query)
         people = result.scalars().all()
@@ -207,7 +207,7 @@ class TrainingDataPipeline:
             if not assignment_rows:
                 continue
 
-            # Person data
+                # Person data
             person_data = {
                 "type": person.type,
                 "pgy_level": person.pgy_level,
@@ -229,7 +229,7 @@ class TrainingDataPipeline:
                     }
                 )
 
-            # Calculate historical workload data from database
+                # Calculate historical workload data from database
             historical_data = await self._calculate_workload_historical_data(
                 person.id, start_date, end_date
             )
@@ -255,7 +255,7 @@ class TrainingDataPipeline:
             else:
                 optimal = min(1.0, utilization)  # Current level is good
 
-            # Clip to reasonable range
+                # Clip to reasonable range
             optimal = np.clip(optimal, 0.0, 1.0)
 
             features_list.append(features)
@@ -293,7 +293,7 @@ class TrainingDataPipeline:
         if start_date is None:
             start_date = end_date - timedelta(days=365)
 
-        # Get all assignments
+            # Get all assignments
         query = (
             select(Assignment, Person, Block)
             .join(Person, Assignment.person_id == Person.id)
@@ -389,14 +389,14 @@ class TrainingDataPipeline:
         for role in ["pd", "apd", "oic", "dept_chief", "sports_med", "core"]:
             features[f"role_{role}"] = 1 if faculty_role == role else 0
 
-        # Rotation features
+            # Rotation features
         rotation_name = rotation_data.get("name", "")
         for rot_type in ["clinic", "inpatient", "procedures", "conference", "admin"]:
             features[f"rotation_{rot_type}"] = (
                 1 if rot_type in rotation_name.lower() else 0
             )
 
-        # Temporal features
+            # Temporal features
         block_date = block_data.get("date")
         if block_date:
             features["day_of_week"] = block_date.weekday()
@@ -415,7 +415,7 @@ class TrainingDataPipeline:
             features["quarter"] = 1
             features["week_of_year"] = 1
 
-        # Time of day
+            # Time of day
         features["is_am"] = 1 if block_data.get("time_of_day") == "AM" else 0
         features["is_pm"] = 1 if block_data.get("time_of_day") == "PM" else 0
         features["is_holiday"] = 1 if block_data.get("is_holiday", False) else 0
@@ -449,7 +449,7 @@ class TrainingDataPipeline:
         for role in ["pd", "apd", "oic", "dept_chief", "sports_med", "core"]:
             features[f"role_{role}"] = 1 if faculty_role == role else 0
 
-        # Workload metrics
+            # Workload metrics
         features["target_clinical_blocks"] = person_data.get(
             "target_clinical_blocks", 48
         )
@@ -479,7 +479,7 @@ class TrainingDataPipeline:
         for rot_type, count in rotation_counts.items():
             features[f"assignments_{rot_type}"] = count
 
-        # Workload concentration
+            # Workload concentration
         num_assignments = len(current_assignments)
         if num_assignments > 0:
             counts = [c for c in rotation_counts.values() if c > 0]
@@ -488,7 +488,7 @@ class TrainingDataPipeline:
         else:
             features["workload_concentration"] = 0.0
 
-        # Weekend burden
+            # Weekend burden
         weekend_count = sum(
             1 for a in current_assignments if a.get("is_weekend", False)
         )
@@ -581,7 +581,7 @@ class TrainingDataPipeline:
             features["actual_supervision_ratio"] = 0
             features["violates_supervision"] = 0
 
-        # Call counts
+            # Call counts
         features["call_count"] = person_data.get("weekday_call_count", 0)
         features["sunday_call_count"] = person_data.get("sunday_call_count", 0)
 

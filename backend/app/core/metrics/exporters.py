@@ -48,7 +48,7 @@ class MetricExporter(ABC):
     Exporters push metrics to external monitoring systems.
     """
 
-    def __init__(self, config: MetricExportConfig):
+    def __init__(self, config: MetricExportConfig) -> None:
         """
         Initialize metric exporter.
 
@@ -133,7 +133,7 @@ class PrometheusExporter(MetricExporter):
         push_gateway_url: str,
         job_name: str = "residency_scheduler",
         registry: CollectorRegistry | None = None,
-    ):
+    ) -> None:
         """
         Initialize Prometheus exporter.
 
@@ -190,7 +190,7 @@ class GrafanaCloudExporter(MetricExporter):
         remote_write_url: str,
         api_key: str,
         instance_id: str,
-    ):
+    ) -> None:
         """
         Initialize Grafana Cloud exporter.
 
@@ -268,7 +268,7 @@ class DatadogExporter(MetricExporter):
         api_key: str,
         app_key: str | None = None,
         site: str = "datadoghq.com",
-    ):
+    ) -> None:
         """
         Initialize Datadog exporter.
 
@@ -357,7 +357,7 @@ class CloudWatchExporter(MetricExporter):
         config: MetricExportConfig,
         namespace: str = "ResidencyScheduler",
         region: str = "us-east-1",
-    ):
+    ) -> None:
         """
         Initialize CloudWatch exporter.
 
@@ -420,8 +420,7 @@ class CloudWatchExporter(MetricExporter):
 
         return metric_data
 
-
-# Factory functions
+        # Factory functions
 
 
 def create_prometheus_exporter(

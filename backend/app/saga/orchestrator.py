@@ -36,14 +36,14 @@ logger = logging.getLogger(__name__)
 class SagaTimeoutError(AppException):
     """Raised when saga or step exceeds timeout."""
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         super().__init__(message, status_code=408)
 
 
 class SagaCompensationError(AppException):
     """Raised when saga compensation fails."""
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         super().__init__(message, status_code=500)
 
 
@@ -59,7 +59,7 @@ class SagaOrchestrator:
     6. Event logging for monitoring
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """Initialize saga orchestrator.
 
         Args:
@@ -277,7 +277,7 @@ class SagaOrchestrator:
                         failures = ", ".join(s.step_name for s in failed_steps)
                         raise RuntimeError(f"Parallel steps failed: {failures}")
 
-            # All steps completed successfully
+                        # All steps completed successfully
             result.status = SagaStatus.COMPLETED
             result.completed_at = datetime.utcnow()
             return result
@@ -329,7 +329,7 @@ class SagaOrchestrator:
                 current_group = []
                 current_parallel_group = None
 
-        # Add final group if exists
+                # Add final group if exists
         if current_group:
             groups.append(current_group)
 
@@ -495,7 +495,7 @@ class SagaOrchestrator:
 
                     return result
 
-        # Should not reach here
+                    # Should not reach here
         return result
 
     async def _execute_parallel_steps(
@@ -755,7 +755,7 @@ class SagaOrchestrator:
         if existing:
             return existing
 
-        # Create new step execution
+            # Create new step execution
         step_order = len(saga_exec.steps)
         timeout_at = datetime.utcnow() + timedelta(seconds=step_def.timeout_seconds)
 

@@ -144,7 +144,7 @@ class StreamEvent(Generic[T]):
         if self.retry is not None:
             lines.append(f"retry: {self.retry}")
 
-        # Data
+            # Data
         if self.data is not None:
             if data_format == StreamFormat.JSON:
                 if isinstance(self.data, BaseModel):
@@ -154,11 +154,11 @@ class StreamEvent(Generic[T]):
             else:
                 data_str = str(self.data)
 
-            # SSE format requires each line of data to be prefixed with "data: "
+                # SSE format requires each line of data to be prefixed with "data: "
             for line in data_str.split("\n"):
                 lines.append(f"data: {line}")
 
-        # Empty line to signal end of event
+                # Empty line to signal end of event
         lines.append("")
 
         return "\n".join(lines) + "\n"
@@ -172,7 +172,7 @@ class StreamConsumer(Generic[T]):
         consumer_id: str,
         buffer_size: int = 1000,
         backpressure_strategy: BackpressureStrategy = BackpressureStrategy.DROP_OLDEST,
-    ):
+    ) -> None:
         """
         Initialize stream consumer.
 
@@ -209,7 +209,7 @@ class StreamConsumer(Generic[T]):
         if not self.active:
             return False
 
-        # Handle backpressure
+            # Handle backpressure
         if len(self.buffer) >= self.buffer_size:
             if self.backpressure_strategy == BackpressureStrategy.DROP_OLDEST:
                 self.buffer.popleft()
@@ -243,7 +243,7 @@ class StreamConsumer(Generic[T]):
         if not self.active:
             return None
 
-        # Wait for message if buffer is empty
+            # Wait for message if buffer is empty
         if not self.buffer:
             try:
                 await asyncio.wait_for(self.event.wait(), timeout=timeout)
@@ -263,7 +263,7 @@ class StreamConsumer(Generic[T]):
 
         return message
 
-    def close(self):
+    def close(self) -> None:
         """Close the consumer and clear its buffer."""
         self.active = False
         self.buffer.clear()
@@ -281,7 +281,7 @@ class DataStream(Generic[T]):
         buffer_size: int = 1000,
         backpressure_strategy: BackpressureStrategy = BackpressureStrategy.DROP_OLDEST,
         heartbeat_interval: float | None = 30.0,
-    ):
+    ) -> None:
         """
         Initialize a data stream.
 
@@ -349,7 +349,7 @@ class DataStream(Generic[T]):
 
         return consumer_id
 
-    async def remove_consumer(self, consumer_id: str):
+    async def remove_consumer(self, consumer_id: str) -> None:
         """
         Remove a consumer from the stream.
 
@@ -367,7 +367,7 @@ class DataStream(Generic[T]):
             f"(remaining: {len(self.consumers)})"
         )
 
-    def add_filter(self, filter_func: FilterFunc):
+    def add_filter(self, filter_func: FilterFunc) -> None:
         """
         Add a filter function to the stream.
 
@@ -378,7 +378,7 @@ class DataStream(Generic[T]):
         """
         self.filters.append(filter_func)
 
-    def add_transformer(self, transform_func: TransformFunc):
+    def add_transformer(self, transform_func: TransformFunc) -> None:
         """
         Add a transformation function to the stream.
 
@@ -407,7 +407,7 @@ class DataStream(Generic[T]):
         if self._closed:
             raise RuntimeError("Cannot publish to closed stream")
 
-        # Apply filters
+            # Apply filters
         for filter_func in self.filters:
             try:
                 if not filter_func(data):
@@ -417,7 +417,7 @@ class DataStream(Generic[T]):
                 logger.error(f"Filter error in stream {self.stream_id}: {e}")
                 self.metrics.errors_count += 1
 
-        # Apply transformations
+                # Apply transformations
         transformed_data = data
         for transform_func in self.transformers:
             try:
@@ -432,7 +432,7 @@ class DataStream(Generic[T]):
                 # Continue with untransformed data
                 transformed_data = data
 
-        # Create event
+                # Create event
         event = StreamEvent[T](
             event_type=event_type,
             data=transformed_data,
@@ -517,7 +517,7 @@ class DataStream(Generic[T]):
         finally:
             await self.remove_consumer(consumer_id)
 
-    async def _heartbeat_loop(self):
+    async def _heartbeat_loop(self) -> None:
         """Send periodic heartbeat messages to all consumers."""
         while not self._closed:
             try:
@@ -541,7 +541,7 @@ class DataStream(Generic[T]):
         """
         return self.metrics.to_dict()
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the stream and all consumers."""
         self._closed = True
 
@@ -553,7 +553,7 @@ class DataStream(Generic[T]):
             except asyncio.CancelledError:
                 pass
 
-        # Close all consumers
+                # Close all consumers
         async with self._lock:
             for consumer in list(self.consumers.values()):
                 consumer.close()
@@ -566,7 +566,7 @@ class DataStream(Generic[T]):
 class SSEStreamManager:
     """Manager for Server-Sent Events streams."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize SSE stream manager."""
         self.streams: dict[str, DataStream] = {}
         self._lock = asyncio.Lock()
@@ -612,7 +612,7 @@ class SSEStreamManager:
         """
         return self.streams.get(stream_id)
 
-    async def delete_stream(self, stream_id: str):
+    async def delete_stream(self, stream_id: str) -> None:
         """
         Delete a stream and close all its consumers.
 
@@ -650,7 +650,7 @@ class SSEStreamManager:
         if not stream:
             raise ValueError(f"Stream {stream_id} not found")
 
-        # Add consumer to stream
+            # Add consumer to stream
         consumer_id = await stream.add_consumer(consumer_id=consumer_id)
 
         async def event_generator() -> AsyncGenerator[str, None]:
@@ -700,7 +700,7 @@ class WebSocketStreamWrapper:
         stream: DataStream,
         consumer_id: str | None = None,
         data_format: StreamFormat = StreamFormat.JSON,
-    ):
+    ) -> None:
         """
         Initialize WebSocket stream wrapper.
 
@@ -716,7 +716,7 @@ class WebSocketStreamWrapper:
         self.data_format = data_format
         self._active = False
 
-    async def start(self):
+    async def start(self) -> None:
         """
         Start streaming data over WebSocket.
 
@@ -739,7 +739,7 @@ class WebSocketStreamWrapper:
                 if not self._active:
                     break
 
-                # Serialize event
+                    # Serialize event
                 if self.data_format == StreamFormat.JSON:
                     if isinstance(event.data, BaseModel):
                         data = event.data.model_dump()
@@ -780,13 +780,14 @@ class WebSocketStreamWrapper:
             except Exception:
                 pass
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the WebSocket stream."""
         self._active = False
         await self.stream.remove_consumer(self.consumer_id)
 
+        # Global SSE stream manager
 
-# Global SSE stream manager
+
 _sse_manager: SSEStreamManager | None = None
 
 

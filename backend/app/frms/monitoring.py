@@ -199,7 +199,7 @@ class FatigueMonitor:
         self,
         alert_callback: Any | None = None,
         enable_notifications: bool = True,
-    ):
+    ) -> None:
         """
         Initialize fatigue monitor.
 
@@ -252,7 +252,7 @@ class FatigueMonitor:
             state = self.model.create_state(person_id, timestamp=current_time)
             self._resident_states[person_id] = state
 
-        # Calculate time since last update
+            # Calculate time since last update
         time_diff = (current_time - state.timestamp).total_seconds() / 3600.0
 
         if time_diff > 0:
@@ -260,7 +260,7 @@ class FatigueMonitor:
             state = self.model.update_wakefulness(state, time_diff)
             self._resident_states[person_id] = state
 
-        # Record effectiveness history
+            # Record effectiveness history
         if person_id not in self._effectiveness_history:
             self._effectiveness_history[person_id] = []
 
@@ -274,7 +274,7 @@ class FatigueMonitor:
                 (t, e) for t, e in self._effectiveness_history[person_id] if t >= cutoff
             ]
 
-        # Check for alerts
+            # Check for alerts
         if state.effectiveness:
             self._check_and_generate_alert(
                 person_id, person_name, state.effectiveness, current_time
@@ -312,7 +312,7 @@ class FatigueMonitor:
         else:
             return None  # No alert needed
 
-        # Check for deduplication (don't repeat same alert within 1 hour)
+            # Check for deduplication (don't repeat same alert within 1 hour)
         alert_key = f"{person_id}_{severity.value}"
         now = datetime.utcnow()
 
@@ -321,7 +321,7 @@ class FatigueMonitor:
             if now - last_alert_time < timedelta(hours=1):
                 return None
 
-        # Generate alert
+                # Generate alert
         alert = FatigueAlert(
             alert_id=f"alert_{person_id}_{current_time.timestamp():.0f}",
             person_id=person_id,
@@ -396,7 +396,7 @@ class FatigueMonitor:
                 ]
             )
 
-        # Add factor-specific recommendations
+            # Add factor-specific recommendations
         factors = effectiveness.factors
         if factors.get("in_wocl"):
             recommendations.append(
@@ -504,7 +504,7 @@ class FatigueMonitor:
             else:
                 at_critical += 1
 
-            # Trend
+                # Trend
             trend = self._calculate_trend(person_id)
             if trend > self.TREND_THRESHOLD:
                 improving += 1
@@ -513,7 +513,7 @@ class FatigueMonitor:
             else:
                 stable += 1
 
-            # Track highest risk
+                # Track highest risk
             if score < self.THRESHOLD_FAA_CAUTION:
                 highest_risk.append(
                     {
@@ -523,7 +523,7 @@ class FatigueMonitor:
                     }
                 )
 
-        # Sort highest risk
+                # Sort highest risk
         highest_risk.sort(key=lambda x: x["effectiveness"])
         highest_risk = highest_risk[:TOP_RISK_RESIDENTS_COUNT]  # Top N
 
@@ -579,7 +579,7 @@ class FatigueMonitor:
         if len(recent) < 2:
             return 0.0
 
-        # Calculate slope
+            # Calculate slope
         first_score = recent[0][1]
         last_score = recent[-1][1]
 

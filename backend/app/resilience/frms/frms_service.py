@@ -187,7 +187,7 @@ class FRMSService:
         sleep_model: SleepDebtModel | None = None,
         alertness_predictor: AlertnessPredictor | None = None,
         hazard_engine: HazardThresholdEngine | None = None,
-    ):
+    ) -> None:
         """
         Initialize FRMS service.
 
@@ -229,7 +229,7 @@ class FRMSService:
         if not resident:
             raise ValueError(f"Resident not found: {resident_id}")
 
-        # Get work history
+            # Get work history
         work_data = await self._get_work_history(resident_id, target_time)
 
         # Calculate fatigue metrics
@@ -318,7 +318,7 @@ class FRMSService:
             except Exception as e:
                 logger.error(f"Error scanning resident {resident.id}: {e}")
 
-        # Sort by hazard level (highest first)
+                # Sort by hazard level (highest first)
         profiles.sort(
             key=lambda p: (p.hazard_level.value, -p.current_alertness),
             reverse=True,
@@ -357,7 +357,7 @@ class FRMSService:
                 )
             )
 
-        # Get trajectory
+            # Get trajectory
         trajectory = self.alertness_predictor.predict_shift_trajectory(
             resident_id=resident_id,
             upcoming_shifts=shifts,
@@ -659,7 +659,7 @@ class FRMSService:
             },
         }
 
-    # Helper methods
+        # Helper methods
 
     async def _get_resident(self, resident_id: UUID) -> Person | None:
         """Get resident by ID."""
@@ -689,7 +689,7 @@ class FRMSService:
                 "consecutive_nights": 0,
             }
 
-        # Get assignments in last 7 days
+            # Get assignments in last 7 days
         week_ago = target_time - timedelta(days=7)
         today = target_time.date()
 

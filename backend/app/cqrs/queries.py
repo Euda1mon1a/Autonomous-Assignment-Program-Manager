@@ -352,7 +352,7 @@ class QueryHandler(ABC, Generic[TQuery]):
         TQuery: The type of query this handler processes
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize query handler.
 
@@ -414,7 +414,7 @@ class ReadModelProjector(ABC):
                 await self.db_read.commit()
     """
 
-    def __init__(self, db_write: Session, db_read: Session):
+    def __init__(self, db_write: Session, db_read: Session) -> None:
         """
         Initialize projector.
 
@@ -474,7 +474,7 @@ class QueryBus:
             print(f"Error: {result.error}")
     """
 
-    def __init__(self, db: Session, enable_cache: bool = False):
+    def __init__(self, db: Session, enable_cache: bool = False) -> None:
         """
         Initialize query bus.
 
@@ -543,7 +543,7 @@ class QueryBus:
                 cached_result.metadata["cache_hit"] = True
                 return cached_result
 
-        # Get handler
+                # Get handler
         if query_type not in self._handlers:
             error_msg = f"No handler registered for query type: {query_name}"
             logger.error(error_msg, query_type=query_name)
@@ -668,7 +668,7 @@ class ReadDatabaseConnectionManager:
         # Use db_read for queries
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize read database connection manager."""
         # Check if READ_DATABASE_URL is set in settings
         read_db_url = getattr(settings, "READ_DATABASE_URL", None)
@@ -720,8 +720,9 @@ class ReadDatabaseConnectionManager:
         finally:
             session.close()
 
+            # Example query implementations for reference
 
-# Example query implementations for reference
+
 @dataclass(frozen=True, kw_only=True)
 class ExampleGetByIdQuery(Query):
     """Example query for getting an entity by ID."""
@@ -745,8 +746,9 @@ class ExampleSearchQuery(Query):
     search_term: str
     filters: dict[str, Any] = field(default_factory=dict)
 
+    # Example read model for reference
 
-# Example read model for reference
+
 @dataclass
 class ExampleReadModel(ReadModel):
     """Example read model with denormalized data."""

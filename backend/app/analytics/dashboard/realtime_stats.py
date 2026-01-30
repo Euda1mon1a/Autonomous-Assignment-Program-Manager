@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class RealtimeStats:
     """Provides real-time statistics."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def get_stats(self) -> dict[str, Any]:

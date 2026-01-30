@@ -111,7 +111,7 @@ class PreloadService:
     (cannot be overwritten by solver).
     """
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self._activity_cache: dict[str, UUID] = {}
 
@@ -368,7 +368,7 @@ class PreloadService:
 
                 current += timedelta(days=1)
 
-            # Handle post-call if applicable
+                # Handle post-call if applicable
             if preload.includes_post_call:
                 pc_date = preload.end_date + timedelta(days=1)
                 if pc_date <= end_date:
@@ -536,7 +536,7 @@ class PreloadService:
         if assignment.secondary_rotation_template_id:
             return code
 
-        # Fallback: parse compound codes like NEURO-1ST-NF-2ND or NEURO/NF
+            # Fallback: parse compound codes like NEURO-1ST-NF-2ND or NEURO/NF
         if "-1ST-" in code and "-2ND" in code:
             first, second = code.split("-1ST-", 1)
             second = second.replace("-2ND", "")
@@ -617,7 +617,7 @@ class PreloadService:
         if rotation_code in ("NF", "PEDNF"):
             return self._get_nf_codes(rotation_code, current_date)
 
-        # Wednesday protected patterns (intern continuity only for outpatient rotations)
+            # Wednesday protected patterns (intern continuity only for outpatient rotations)
         if current_date.weekday() == 2:  # Wednesday
             am_code = None
             if (
@@ -806,7 +806,7 @@ class PreloadService:
             if not preload.person or preload.person.type != "faculty":
                 continue
 
-            # Friday and Saturday of FMIT week (within date range)
+                # Friday and Saturday of FMIT week (within date range)
             current = max(preload.start_date, start_date)
             fmit_end = min(preload.end_date, end_date)
 
@@ -869,7 +869,7 @@ class PreloadService:
             if not assignment.rotation_template:
                 continue
 
-            # Check if FMIT rotation
+                # Check if FMIT rotation
             rot_name = assignment.rotation_template.name or ""
             if "FMIT" not in rot_name.upper():
                 continue
@@ -881,7 +881,7 @@ class PreloadService:
             if not pgy:
                 continue
 
-            # Get C-I day based on PGY level
+                # Get C-I day based on PGY level
             if pgy == 1:
                 day_of_week = 2  # Wednesday
                 time_of_day = "AM"
@@ -894,7 +894,7 @@ class PreloadService:
             else:
                 continue
 
-            # Create C-I for each week of the block
+                # Create C-I for each week of the block
             current = block_dates.start_date
             while current <= block_dates.end_date:
                 if current.weekday() == day_of_week:
@@ -973,16 +973,16 @@ class PreloadService:
             if not ca.person or ca.person.type != "faculty":
                 continue
 
-            # Check if faculty is on FMIT - FMIT faculty don't get PCAT/DO
+                # Check if faculty is on FMIT - FMIT faculty don't get PCAT/DO
             if await self._is_on_fmit(ca.person_id, ca.date):
                 continue
 
-            # Post-call day
+                # Post-call day
             post_call_date = ca.date + timedelta(days=1)
             if post_call_date > end_date:
                 continue
 
-            # PCAT in AM
+                # PCAT in AM
             if pcat_activity:
                 await self._create_preload(
                     person_id=ca.person_id,
@@ -992,7 +992,7 @@ class PreloadService:
                 )
                 count += 1
 
-            # DO in PM
+                # DO in PM
             if do_activity:
                 await self._create_preload(
                     person_id=ca.person_id,
@@ -1050,8 +1050,9 @@ class PreloadService:
         # Protected time is typically assigned manually or from templates
         return 0
 
-    # Mapping from rotation types to activity codes
-    # Some rotation types don't match activity codes (e.g., HILO → TDY)
+        # Mapping from rotation types to activity codes
+        # Some rotation types don't match activity codes (e.g., HILO → TDY)
+
     ROTATION_TO_ACTIVITY = {
         "HILO": "TDY",  # Hilo off-island rotation → Temporary Duty
         "FMC": "fm_clinic",  # FM Clinic rotation → fm_clinic activity
@@ -1093,8 +1094,8 @@ class PreloadService:
             if day_of_week == 5 and code_upper in _SATURDAY_OFF_ROTATIONS:
                 return ("W", "W")
 
-        # Day-specific patterns for KAP (Kapiolani L&D)
-        # Mon PM=OFF (travel), Tue=OFF/OFF (recovery), Wed AM=C (continuity)
+                # Day-specific patterns for KAP (Kapiolani L&D)
+                # Mon PM=OFF (travel), Tue=OFF/OFF (recovery), Wed AM=C (continuity)
         if code_upper == "KAP":
             if day_of_week == 0:  # Monday
                 return ("KAP", "off")  # Travel back from Kapiolani
@@ -1105,8 +1106,8 @@ class PreloadService:
             else:  # Thu-Sun
                 return ("KAP", "KAP")  # On-site at Kapiolani
 
-        # Day-specific patterns for LDNF (L&D Night Float)
-        # CRITICAL: Friday clinic, NOT Wednesday!
+                # Day-specific patterns for LDNF (L&D Night Float)
+                # CRITICAL: Friday clinic, NOT Wednesday!
         if code_upper == "LDNF":
             if day_of_week == 4:  # Friday
                 return ("fm_clinic", "off")  # Friday morning clinic!
@@ -1115,22 +1116,22 @@ class PreloadService:
             else:  # Mon-Thu
                 return ("off", "LDNF")  # Working nights, sleeping days
 
-        # Day-specific patterns for NF (Night Float)
-        # AM = off (sleeping), PM = NF (working nights)
+                # Day-specific patterns for NF (Night Float)
+                # AM = off (sleeping), PM = NF (working nights)
         if code_upper == "NF":
             if day_of_week in (5, 6):  # Weekend
                 return ("W", "W")
             else:
                 return ("off", "NF")
 
-        # Day-specific patterns for PedNF (Peds Night Float)
+                # Day-specific patterns for PedNF (Peds Night Float)
         if code_upper == "PEDNF":
             if day_of_week == 5:  # Saturday off
                 return ("W", "W")
             else:
                 return ("off", "PedNF")
 
-        # Fixed patterns for other rotations (no day-specific rules)
+                # Fixed patterns for other rotations (no day-specific rules)
         codes = {
             "FMIT": ("FMIT", "FMIT"),
             "PEDW": ("PedW", "PedW"),
@@ -1159,7 +1160,7 @@ class PreloadService:
         if code in self._activity_cache:
             return self._activity_cache[code]
 
-        # Try exact code match first
+            # Try exact code match first
         stmt = select(Activity).where(Activity.code == code)
         result = await self.session.execute(stmt)
         activity = result.scalar_one_or_none()
@@ -1210,7 +1211,7 @@ class PreloadService:
             raise ActivityNotFoundError(
                 "<missing activity_id>", context="preload_service"
             )
-        # Build query for checking existence (reused after IntegrityError)
+            # Build query for checking existence (reused after IntegrityError)
         stmt = select(HalfDayAssignment).where(
             and_(
                 HalfDayAssignment.person_id == person_id,
@@ -1249,7 +1250,7 @@ class PreloadService:
                 await self.session.flush()
             return existing
 
-        # Create new preload
+            # Create new preload
         assignment = HalfDayAssignment(
             person_id=person_id,
             date=date_val,
@@ -1274,7 +1275,7 @@ class PreloadService:
                     f"person={person_id}, date={date_val}, time={time_of_day}"
                 )
                 return existing
-            # Re-raise if still not found (different integrity error)
+                # Re-raise if still not found (different integrity error)
             raise
 
         return assignment

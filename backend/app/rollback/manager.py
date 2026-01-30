@@ -176,14 +176,14 @@ class RollbackAuthorizationError(ForbiddenError):
 
     def __init__(
         self, message: str = "Insufficient permissions for rollback operation"
-    ):
+    ) -> None:
         super().__init__(message)
 
 
 class RollbackExpiredError(ValidationError):
     """Raised when attempting to use an expired rollback point."""
 
-    def __init__(self, message: str = "Rollback point has expired"):
+    def __init__(self, message: str = "Rollback point has expired") -> None:
         super().__init__(message)
 
 
@@ -212,7 +212,7 @@ class RollbackManager:
     # Roles authorized to create/execute rollbacks
     AUTHORIZED_ROLES = {"admin", "coordinator"}
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize rollback manager.
 
@@ -265,11 +265,11 @@ class RollbackManager:
                     f"Unsupported entity types: {', '.join(invalid_types)}"
                 )
 
-        # Default to all entity types if none specified
+                # Default to all entity types if none specified
         if not entity_types and not entity_ids:
             entity_types = list(self.SUPPORTED_ENTITY_TYPES.keys())
 
-        # Create rollback point
+            # Create rollback point
         rollback_id = uuid4()
         created_at = datetime.utcnow()
         expires_at = None
@@ -277,7 +277,7 @@ class RollbackManager:
             days = expires_in_days or self.DEFAULT_EXPIRATION_DAYS
             expires_at = created_at + timedelta(days=days)
 
-        # Capture entity snapshots
+            # Capture entity snapshots
         snapshots = self._capture_entity_snapshots(
             entity_types=entity_types,
             entity_ids=entity_ids,
@@ -291,7 +291,7 @@ class RollbackManager:
                 f"({len(snapshots)} > {self.MAX_ENTITIES_PER_ROLLBACK})"
             )
 
-        # Create rollback point object
+            # Create rollback point object
         rollback_point = RollbackPoint(
             id=rollback_id,
             name=name,
@@ -355,13 +355,13 @@ class RollbackManager:
         if not rollback_point:
             raise NotFoundError(f"Rollback point {rollback_point_id} not found")
 
-        # Check expiration
+            # Check expiration
         if rollback_point.expires_at and datetime.utcnow() > rollback_point.expires_at:
             raise RollbackExpiredError(
                 f"Rollback point expired at {rollback_point.expires_at}"
             )
 
-        # Determine scope
+            # Determine scope
         effective_scope = scope or rollback_point.scope
 
         # Determine entities to restore
@@ -394,7 +394,7 @@ class RollbackManager:
                 rollback_point.status = RollbackStatus.IN_PROGRESS
                 self._persist_rollback_point(rollback_point)
 
-            # Restore each entity
+                # Restore each entity
             for snapshot in snapshots_to_restore:
                 try:
                     if not dry_run:
@@ -413,13 +413,13 @@ class RollbackManager:
                         f"{snapshot.entity_id}: {error_msg}"
                     )
 
-            # Commit transaction if not dry run
+                    # Commit transaction if not dry run
             if not dry_run and not entities_failed:
                 self.db.commit()
             elif not dry_run:
                 self.db.rollback()
 
-            # Determine final status
+                # Determine final status
             if not entities_failed:
                 final_status = RollbackStatus.COMPLETED
                 success = True
@@ -430,12 +430,12 @@ class RollbackManager:
                 final_status = RollbackStatus.FAILED
                 success = False
 
-            # Update rollback point status
+                # Update rollback point status
             if not dry_run:
                 rollback_point.status = final_status
                 self._persist_rollback_point(rollback_point)
 
-            # Verify rollback if requested
+                # Verify rollback if requested
             verification_passed = True
             if verify_after and success and not dry_run:
                 verification_result = self.verify_rollback(
@@ -444,7 +444,7 @@ class RollbackManager:
                 )
                 verification_passed = verification_result.passed
 
-            # Build result
+                # Build result
             message = self._build_rollback_message(
                 success=success,
                 entities_restored=len(entities_restored),
@@ -527,7 +527,7 @@ class RollbackManager:
                 if (s.entity_type, s.entity_id) in entity_ids
             ]
 
-        # Verify each entity
+            # Verify each entity
         for snapshot in snapshots_to_verify:
             try:
                 current_state = self._get_entity_current_state(
@@ -546,7 +546,7 @@ class RollbackManager:
                     )
                     continue
 
-                # Compare states (ignore timestamps and audit fields)
+                    # Compare states (ignore timestamps and audit fields)
                 state_mismatches = self._compare_states(
                     snapshot.state,
                     current_state,
@@ -579,7 +579,7 @@ class RollbackManager:
                     f"{snapshot.entity_id}: {str(e)}"
                 )
 
-        # Determine verification result
+                # Determine verification result
         passed = len(mismatches) == 0
 
         # Update rollback point status
@@ -669,7 +669,7 @@ class RollbackManager:
         if entity_type not in self.SUPPORTED_ENTITY_TYPES:
             raise ValidationError(f"Unsupported entity type: {entity_type}")
 
-        # Query all rollback points that include this entity
+            # Query all rollback points that include this entity
         rollback_points = self._list_persisted_rollback_points(limit=1000)
 
         history = []
@@ -692,7 +692,7 @@ class RollbackManager:
                     )
                     break
 
-        # Sort by timestamp descending
+                    # Sort by timestamp descending
         history.sort(key=lambda x: x["created_at"], reverse=True)
 
         return history
@@ -726,7 +726,7 @@ class RollbackManager:
         if not rollback_point:
             raise NotFoundError(f"Rollback point {rollback_point_id} not found")
 
-        # Delete rollback point
+            # Delete rollback point
         self._delete_persisted_rollback_point(rollback_point_id)
 
         logger.info(
@@ -736,9 +736,9 @@ class RollbackManager:
 
         return True
 
-    # =========================================================================
-    # Private Helper Methods
-    # =========================================================================
+        # =========================================================================
+        # Private Helper Methods
+        # =========================================================================
 
     def _verify_authorization(self, user_id: UUID, operation: str) -> None:
         """
@@ -820,7 +820,7 @@ class RollbackManager:
                 logger.warning(f"Entity not found: {entity_type} {entity_id}")
                 return None
 
-            # Get current version ID if versioned
+                # Get current version ID if versioned
             version_id = None
             if HAS_CONTINUUM and version_class:
                 try:
@@ -836,7 +836,7 @@ class RollbackManager:
                 except Exception:
                     pass  # Entity may not be versioned
 
-            # Serialize entity state
+                    # Serialize entity state
             state = self._serialize_entity(entity)
 
             # Detect dependencies
@@ -941,7 +941,7 @@ class RollbackManager:
         if not model_class:
             raise ValidationError(f"Unsupported entity type: {snapshot.entity_type}")
 
-        # Get current entity
+            # Get current entity
         entity = (
             self.db.query(model_class)
             .filter(model_class.id == snapshot.entity_id)
@@ -953,12 +953,12 @@ class RollbackManager:
             entity = model_class(id=snapshot.entity_id)
             self.db.add(entity)
 
-        # Restore state
+            # Restore state
         for key, value in snapshot.state.items():
             if key == "id":
                 continue  # Don't overwrite ID
 
-            # Convert string back to proper type if needed
+                # Convert string back to proper type if needed
             column = getattr(model_class, key, None)
             if column is not None:
                 # Handle datetime conversion
@@ -969,7 +969,7 @@ class RollbackManager:
                         except Exception:
                             pass
 
-                # Handle UUID conversion
+                            # Handle UUID conversion
                 if "_id" in key and value:
                     try:
                         value = UUID(value) if isinstance(value, str) else value
@@ -978,7 +978,7 @@ class RollbackManager:
 
                 setattr(entity, key, value)
 
-        # Mark entity as modified
+                # Mark entity as modified
         self.db.flush()
 
     def _resolve_dependencies(
@@ -1125,11 +1125,12 @@ class RollbackManager:
             f"Failed: {len(result.entities_failed)}"
         )
 
-    # =========================================================================
-    # Persistence Methods (File-based storage with gzip compression)
-    # =========================================================================
+        # =========================================================================
+        # Persistence Methods (File-based storage with gzip compression)
+        # =========================================================================
 
-    # Default storage directory for rollback points
+        # Default storage directory for rollback points
+
     ROLLBACK_STORAGE_DIR = Path("/tmp/rollback_points")
 
     def _ensure_storage_dir(self) -> Path:
@@ -1301,7 +1302,7 @@ class RollbackManager:
                 logger.debug(f"Rollback point {rollback_point_id} not found in storage")
                 return None
 
-            # Read and decompress
+                # Read and decompress
             compressed = file_path.read_bytes()
             json_bytes = gzip.decompress(compressed)
             data = json.loads(json_bytes.decode("utf-8"))
@@ -1348,7 +1349,7 @@ class RollbackManager:
                     logger.warning(f"Skipping invalid rollback file {file_path}: {e}")
                     continue
 
-            # Sort by created_at descending (newest first)
+                    # Sort by created_at descending (newest first)
             rollback_points.sort(key=lambda p: p.created_at, reverse=True)
 
             return rollback_points[:limit]

@@ -113,7 +113,7 @@ class SOCAvalanchePredictor:
         variance_slope_threshold: float = 0.1,
         autocorrelation_threshold: float = 0.7,
         min_data_points: int = 30,
-    ):
+    ) -> None:
         """
         Initialize SOC predictor.
 
@@ -169,7 +169,7 @@ class SOCAvalanchePredictor:
                 analysis_id, timestamp, len(utilization_history)
             )
 
-        # Limit to lookback window
+            # Limit to lookback window
         data = utilization_history[-days_lookback:]
         data_points = len(data)
 
@@ -218,7 +218,7 @@ class SOCAvalanchePredictor:
             warning_level = WarningLevel.RED
             confidence = 0.95
 
-        # Calculate composite risk score
+            # Calculate composite risk score
         avalanche_risk = self._calculate_avalanche_risk(
             relaxation_time,
             variance_slope,
@@ -326,7 +326,7 @@ class SOCAvalanchePredictor:
             if len(perturbations) < 3:
                 return None, None, False
 
-            # Recent vs baseline relaxation time
+                # Recent vs baseline relaxation time
             split = len(perturbations) // 2
             baseline_tau = (
                 statistics.mean(perturbations[:split]) * 24
@@ -367,7 +367,7 @@ class SOCAvalanchePredictor:
             if len(variances) < 10:
                 return None, None, None, False
 
-            # Baseline vs current
+                # Baseline vs current
             split = len(variances) // 2
             baseline_var = statistics.mean(variances[:split])
             current_var = statistics.mean(variances[split:])
@@ -442,14 +442,14 @@ class SOCAvalanchePredictor:
             tau_risk = min(1.0, relaxation_time / (self.relaxation_threshold * 2))
             risk_components.append(tau_risk * 0.35)
 
-        # Variance risk
+            # Variance risk
         if variance_slope is not None:
             var_risk = min(
                 1.0, abs(variance_slope) / (self.variance_slope_threshold * 2)
             )
             risk_components.append(var_risk * 0.30)
 
-        # AC1 risk
+            # AC1 risk
         if ac1 is not None:
             ac1_risk = min(1.0, ac1 / 1.0)  # AC1 maxes at 1.0
             risk_components.append(ac1_risk * 0.35)
@@ -666,7 +666,7 @@ class SOCAvalanchePredictor:
         """Get cached result from last analysis."""
         return self._last_analysis
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear cached analysis results."""
         self._last_analysis = None
         self._last_analysis_time = None

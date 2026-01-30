@@ -108,7 +108,7 @@ class SyncPreloadService:
     (cannot be overwritten by solver).
     """
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session) -> None:
         self.session = session
         self._activity_cache: dict[str, UUID] = {}
 
@@ -208,7 +208,7 @@ class SyncPreloadService:
                 # AM slot
                 if self._create_preload(absence.person_id, current, "AM", lv_am_id):
                     count += 1
-                # PM slot
+                    # PM slot
                 if self._create_preload(absence.person_id, current, "PM", lv_pm_id):
                     count += 1
                 current += timedelta(days=1)
@@ -378,12 +378,12 @@ class SyncPreloadService:
                     current += timedelta(days=1)
                     continue
 
-                # AM slot
+                    # AM slot
                 if self._create_preload(
                     preload.person_id, current, "AM", am_activity_id
                 ):
                     count += 1
-                # PM slot
+                    # PM slot
                 if self._create_preload(
                     preload.person_id, current, "PM", pm_activity_id
                 ):
@@ -521,7 +521,7 @@ class SyncPreloadService:
         if assignment.secondary_rotation_template_id:
             return code
 
-        # Fallback: parse compound codes like NEURO-1ST-NF-2ND or NEURO/NF
+            # Fallback: parse compound codes like NEURO-1ST-NF-2ND or NEURO/NF
         if "-1ST-" in code and "-2ND" in code:
             first, second = code.split("-1ST-", 1)
             second = second.replace("-2ND", "")
@@ -602,7 +602,7 @@ class SyncPreloadService:
         if rotation_code in ("NF", "PEDNF"):
             return self._get_nf_codes(rotation_code, current_date)
 
-        # Wednesday protected patterns (intern continuity only for outpatient rotations)
+            # Wednesday protected patterns (intern continuity only for outpatient rotations)
         if current_date.weekday() == 2:  # Wednesday
             am_code = None
             if (
@@ -789,7 +789,7 @@ class SyncPreloadService:
             if dow == 5 and code_upper in _SATURDAY_OFF_ROTATIONS:
                 return ("W", "W")
 
-        # KAP (Kapiolani L&D - off-site)
+                # KAP (Kapiolani L&D - off-site)
         if code_upper == "KAP":
             if dow == 0:  # Monday
                 return ("KAP", "OFF")
@@ -800,7 +800,7 @@ class SyncPreloadService:
             else:  # Thu-Sun
                 return ("KAP", "KAP")
 
-        # LDNF (L&D Night Float - Friday clinic!)
+                # LDNF (L&D Night Float - Friday clinic!)
         if code_upper == "LDNF":
             if dow == 4:  # Friday
                 return ("C", "OFF")
@@ -809,22 +809,22 @@ class SyncPreloadService:
             else:  # Mon-Thu
                 return ("OFF", "LDNF")
 
-        # NF (Night Float) - off AM (sleeping), NF PM (working), weekends off
+                # NF (Night Float) - off AM (sleeping), NF PM (working), weekends off
         if code_upper == "NF":
             if dow >= 5:  # Weekend (Sat=5, Sun=6)
                 return ("W", "W")
             else:  # Mon-Fri
                 return ("OFF", "NF")
 
-        # PedNF (Peds Night Float) - Saturday off only
+                # PedNF (Peds Night Float) - Saturday off only
         if code_upper == "PEDNF":
             if dow == 5:  # Saturday
                 return ("W", "W")
             return ("OFF", "PedNF")
 
-        # Rotations that work all days including weekends:
-        # FMIT, PedW, IM - just use rotation code for both slots
-        # Default: use rotation type for both slots (after mapping to activity code)
+            # Rotations that work all days including weekends:
+            # FMIT, PedW, IM - just use rotation code for both slots
+            # Default: use rotation type for both slots (after mapping to activity code)
         mapped = _ROTATION_TO_ACTIVITY.get(code_upper, code_raw)
         return (mapped, mapped)
 
@@ -894,7 +894,7 @@ class SyncPreloadService:
             if pgy == 0:
                 continue  # Faculty don't get C-I
 
-            # Determine which day/time based on PGY
+                # Determine which day/time based on PGY
             if pgy == 1:
                 target_dow, target_time = 2, "AM"  # Wed AM
             elif pgy == 2:
@@ -904,7 +904,7 @@ class SyncPreloadService:
             else:
                 continue
 
-            # Find all matching days in the preload period
+                # Find all matching days in the preload period
             current = max(preload.start_date, start_date)
             end = min(preload.end_date, end_date)
 
@@ -960,9 +960,9 @@ class SyncPreloadService:
             if self._create_preload(call.person_id, call.date, "PM", call_id):
                 count += 1
 
-            # Next day: PCAT AM, DO PM (if not on FMIT)
-            # Note: Create PCAT/DO even if next_day is in the next block - we use actual
-            # dates, and preload source is locked so next block won't overwrite it
+                # Next day: PCAT AM, DO PM (if not on FMIT)
+                # Note: Create PCAT/DO even if next_day is in the next block - we use actual
+                # dates, and preload source is locked so next block won't overwrite it
             next_day = call.date + timedelta(days=1)
             if not self._is_on_fmit(call.person_id, next_day):
                 if self._create_preload(call.person_id, next_day, "AM", pcat_id):
@@ -981,7 +981,7 @@ class SyncPreloadService:
             # aSM might not exist in all deployments
             return 0
 
-        # Get SM faculty from block_assignments
+            # Get SM faculty from block_assignments
         stmt = (
             select(BlockAssignment)
             .options(selectinload(BlockAssignment.rotation_template))
@@ -1094,7 +1094,7 @@ class SyncPreloadService:
             if not first_half_no_weekend and not second_half_no_weekend:
                 continue
 
-            # Create W preloads for appropriate weekends
+                # Create W preloads for appropriate weekends
             current = start_date
             while current <= end_date:
                 is_weekend = current.weekday() >= 5  # Sat=5, Sun=6
@@ -1102,7 +1102,7 @@ class SyncPreloadService:
                     current += timedelta(days=1)
                     continue
 
-                # Determine which half this weekend falls in
+                    # Determine which half this weekend falls in
                 is_first_half = current < mid_block_date
 
                 # Create W preload if this half doesn't work weekends
@@ -1136,7 +1136,7 @@ class SyncPreloadService:
         if code in self._activity_cache:
             return self._activity_cache[code]
 
-        # Try exact code match
+            # Try exact code match
         stmt = select(Activity).where(Activity.code == code)
         result = self.session.execute(stmt)
         activity = result.scalars().first()
@@ -1245,7 +1245,7 @@ class SyncPreloadService:
                     return True
             return False
 
-        # Create new
+            # Create new
         assignment = HalfDayAssignment(
             person_id=person_id,
             date=date_val,
@@ -1276,7 +1276,7 @@ class SyncPreloadService:
                     f"date={date_val}, time_of_day={time_of_day}"
                 )
                 return False
-            # FK violation or other constraint error - fail loudly
+                # FK violation or other constraint error - fail loudly
             pgcode = getattr(e.orig, "pgcode", "unknown")
             logger.error(
                 f"Unexpected IntegrityError (pgcode={pgcode}): {e.orig}. "

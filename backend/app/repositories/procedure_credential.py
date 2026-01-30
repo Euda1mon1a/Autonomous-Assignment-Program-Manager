@@ -14,7 +14,7 @@ from app.repositories.base import BaseRepository
 class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
     """Repository for ProcedureCredential entity operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(ProcedureCredential, db)
 
     def get_by_person_and_procedure(

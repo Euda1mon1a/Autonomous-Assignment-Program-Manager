@@ -284,7 +284,7 @@ class ResilienceService:
         self,
         db: Session | None = None,
         config: ResilienceConfig | None = None,
-    ):
+    ) -> None:
         self.db = db
         self.config = config or ResilienceConfig()
 
@@ -334,7 +334,7 @@ class ResilienceService:
             self.tf_scheduler = None
             self._last_tf_decay = None
 
-        # State tracking
+            # State tracking
         self._last_health_check: datetime | None = None
         self._last_contingency_analysis: datetime | None = None
         self._last_homeostasis_check: datetime | None = None
@@ -370,7 +370,7 @@ class ResilienceService:
         if coverage_requirements is None:
             coverage_requirements = {b.id: 1 for b in blocks}
 
-        # 1. Check utilization
+            # 1. Check utilization
         required_blocks = sum(coverage_requirements.values())
         utilization_metrics = self.utilization.calculate_utilization(
             available_faculty=faculty,
@@ -678,7 +678,7 @@ class ResilienceService:
         self,
         event_type: str,
         handler: Callable[[dict], Any],
-    ):
+    ) -> None:
         """
         Register handler for resilience events.
 
@@ -693,7 +693,7 @@ class ResilienceService:
             self._event_handlers[event_type] = []
         self._event_handlers[event_type].append(handler)
 
-    def _emit_event(self, event_type: str, data: Any):
+    def _emit_event(self, event_type: str, data: Any) -> None:
         """Emit event to registered handlers."""
         handlers = self._event_handlers.get(event_type, [])
         for handler in handlers:
@@ -744,7 +744,7 @@ class ResilienceService:
         if defense_level == DefenseLevel.EMERGENCY:
             return "emergency"
 
-        # Check for critical conditions
+            # Check for critical conditions
         if utilization_level == UtilizationLevel.RED:
             return "critical"
         if defense_level == DefenseLevel.CONTAINMENT:
@@ -752,7 +752,7 @@ class ResilienceService:
         if vulnerability and vulnerability.phase_transition_risk == "critical":
             return "critical"
 
-        # Check for degraded conditions
+            # Check for degraded conditions
         if utilization_level == UtilizationLevel.ORANGE:
             return "degraded"
         if defense_level in (DefenseLevel.CONTROL, DefenseLevel.SAFETY_SYSTEMS):
@@ -760,7 +760,7 @@ class ResilienceService:
         if vulnerability and not vulnerability.n1_pass:
             return "degraded"
 
-        # Check for warning conditions
+            # Check for warning conditions
         if utilization_level == UtilizationLevel.YELLOW:
             return "warning"
         if vulnerability and not vulnerability.n2_pass:
@@ -793,7 +793,7 @@ class ResilienceService:
             immediate.append("Review and defer non-urgent commitments")
             immediate.append("Confirm backup coverage is in place")
 
-        # Based on utilization
+            # Based on utilization
         if utilization.level == UtilizationLevel.YELLOW:
             watch.append(
                 f"Utilization at {utilization.utilization_rate:.0%} - approaching threshold"
@@ -804,7 +804,7 @@ class ResilienceService:
                 f"Buffer critically low ({utilization.buffer_remaining:.0%})"
             )
 
-        # Based on vulnerability
+            # Based on vulnerability
         if vulnerability:
             for action in vulnerability.recommended_actions:
                 if "URGENT" in action.upper():
@@ -817,7 +817,7 @@ class ResilienceService:
 
         return immediate, watch
 
-    def _auto_activate_defense(self, recommended_level: DefenseLevel):
+    def _auto_activate_defense(self, recommended_level: DefenseLevel) -> None:
         """Auto-activate defense level if configured."""
         # Only auto-activate up to SAFETY_SYSTEMS level
         # Higher levels require manual confirmation
@@ -827,14 +827,14 @@ class ResilienceService:
                 if action.is_automated and action.activation_count == 0:
                     self.defense.activate_action(recommended_level, action.name)
 
-    def _initialize_default_zones(self):
+    def _initialize_default_zones(self) -> None:
         """Initialize default scheduling zones for blast radius isolation."""
         self.blast_radius.create_default_zones()
         logger.info("Initialized default scheduling zones for blast radius isolation")
 
-    # =========================================================================
-    # Tier 2: Homeostasis Methods
-    # =========================================================================
+        # =========================================================================
+        # Tier 2: Homeostasis Methods
+        # =========================================================================
 
     def check_homeostasis(
         self,
@@ -883,7 +883,7 @@ class ResilienceService:
                 },
             )
 
-        # Emit event if positive feedback risks detected
+            # Emit event if positive feedback risks detected
         if risks:
             self._emit_event(
                 "positive_feedback_detected",
@@ -942,9 +942,9 @@ class ResilienceService:
         """Get status of a specific feedback loop."""
         return self.homeostasis.get_feedback_loop(setpoint_name)
 
-    # =========================================================================
-    # Tier 2: Blast Radius Methods
-    # =========================================================================
+        # =========================================================================
+        # Tier 2: Blast Radius Methods
+        # =========================================================================
 
     def check_zone_health(self, zone_id: UUID) -> ZoneHealthReport | None:
         """
@@ -1099,7 +1099,7 @@ class ResilienceService:
         self,
         level: ContainmentLevel,
         reason: str,
-    ):
+    ) -> None:
         """Set system-wide containment level."""
         previous = self.blast_radius.global_containment
         self.blast_radius.set_global_containment(level, reason)
@@ -1113,9 +1113,9 @@ class ResilienceService:
             },
         )
 
-    # =========================================================================
-    # Tier 2: Le Chatelier / Equilibrium Methods
-    # =========================================================================
+        # =========================================================================
+        # Tier 2: Le Chatelier / Equilibrium Methods
+        # =========================================================================
 
     def apply_system_stress(
         self,
@@ -1288,7 +1288,7 @@ class ResilienceService:
         """Get comprehensive equilibrium analysis report."""
         return self.equilibrium.get_report()
 
-    def resolve_stress(self, stress_id: UUID, resolution_notes: str = ""):
+    def resolve_stress(self, stress_id: UUID, resolution_notes: str = "") -> None:
         """Mark a stress as resolved."""
         self.equilibrium.resolve_stress(stress_id, resolution_notes)
         self._emit_event(
@@ -1299,9 +1299,9 @@ class ResilienceService:
             },
         )
 
-    # =========================================================================
-    # Tier 2: Combined Status
-    # =========================================================================
+        # =========================================================================
+        # Tier 2: Combined Status
+        # =========================================================================
 
     def get_tier2_status(self, current_metrics: dict[str, float] = None) -> dict:
         """
@@ -1319,7 +1319,7 @@ class ResilienceService:
         else:
             homeostasis_status = self.homeostasis.get_status()
 
-        # Blast radius status
+            # Blast radius status
         blast_radius_report = self.check_all_zones()
 
         # Equilibrium status
@@ -1343,7 +1343,7 @@ class ResilienceService:
         else:
             tier2_status = "healthy"
 
-        # Build recommendations
+            # Build recommendations
         recommendations = []
         recommendations.extend(homeostasis_status.recommendations)
         recommendations.extend(blast_radius_report.recommendations)
@@ -1377,9 +1377,9 @@ class ResilienceService:
             "recommendations": recommendations[:10],  # Top 10 recommendations
         }
 
-    # =========================================================================
-    # Tier 3: Cognitive Load Methods
-    # =========================================================================
+        # =========================================================================
+        # Tier 3: Cognitive Load Methods
+        # =========================================================================
 
     def start_cognitive_session(self, user_id: UUID) -> CognitiveSession:
         """
@@ -1407,7 +1407,7 @@ class ResilienceService:
 
         return session
 
-    def end_cognitive_session(self, session_id: UUID):
+    def end_cognitive_session(self, session_id: UUID) -> None:
         """End a cognitive session."""
         self.cognitive_load.end_session(session_id)
 
@@ -1478,7 +1478,7 @@ class ResilienceService:
         chosen_option: str,
         decided_by: str,
         actual_time_seconds: float = None,
-    ):
+    ) -> None:
         """Record a decision that was made."""
         self.cognitive_load.record_decision(
             session_id, decision_id, chosen_option, decided_by, actual_time_seconds
@@ -1539,9 +1539,9 @@ class ResilienceService:
         """
         return self.cognitive_load.calculate_schedule_cognitive_load(schedule_changes)
 
-    # =========================================================================
-    # Tier 3: Stigmergy Methods
-    # =========================================================================
+        # =========================================================================
+        # Tier 3: Stigmergy Methods
+        # =========================================================================
 
     def record_preference(
         self,
@@ -1604,7 +1604,7 @@ class ResilienceService:
         slot_type: str = None,
         target_faculty_id: UUID = None,
         strength_change: float = None,
-    ):
+    ) -> None:
         """
         Record a behavioral signal that updates preference trails.
 
@@ -1708,13 +1708,13 @@ class ResilienceService:
         """Detect emergent patterns from collective trails."""
         return self.stigmergy.detect_patterns()
 
-    def evaporate_trails(self, force: bool = False):
+    def evaporate_trails(self, force: bool = False) -> None:
         """Apply evaporation to all preference trails."""
         self.stigmergy.evaporate_trails(force)
 
-    # =========================================================================
-    # Tier 3: Hub Analysis Methods
-    # =========================================================================
+        # =========================================================================
+        # Tier 3: Hub Analysis Methods
+        # =========================================================================
 
     def analyze_hubs(
         self,
@@ -1876,9 +1876,9 @@ class ResilienceService:
         """Get summary status of hub analysis."""
         return self.hub_analyzer.get_hub_status()
 
-    # =========================================================================
-    # Tier 3: Combined Status
-    # =========================================================================
+        # =========================================================================
+        # Tier 3: Combined Status
+        # =========================================================================
 
     def get_tier3_status(self) -> dict:
         """
@@ -1915,7 +1915,7 @@ class ResilienceService:
         else:
             tier3_status = "healthy"
 
-        # Build recommendations
+            # Build recommendations
         recommendations = []
         recommendations.extend(queue_status.recommendations)
         recommendations.extend(stigmergy_status.recommendations)
@@ -1941,9 +1941,9 @@ class ResilienceService:
             "recommendations": recommendations[:10],
         }
 
-    # =========================================================================
-    # Tier 4: Transcription Factor Scheduler Methods
-    # =========================================================================
+        # =========================================================================
+        # Tier 4: Transcription Factor Scheduler Methods
+        # =========================================================================
 
     def create_transcription_factor(
         self,
@@ -2017,7 +2017,7 @@ class ResilienceService:
         edge_strength: float = 1.0,
         base_weight: float = 1.0,
         activator_logic: BindingLogic = BindingLogic.OR,
-    ):
+    ) -> None:
         """
         Link a transcription factor to regulate a constraint.
 
@@ -2043,7 +2043,7 @@ class ResilienceService:
             logger.warning(f"Transcription factor '{tf_name}' not found")
             return
 
-        # Ensure promoter exists
+            # Ensure promoter exists
         if constraint_id not in self.tf_scheduler.promoters:
             self.tf_scheduler.create_promoter(
                 constraint_id=constraint_id,
@@ -2052,7 +2052,7 @@ class ResilienceService:
                 activator_logic=activator_logic,
             )
 
-        # Link TF to constraint
+            # Link TF to constraint
         self.tf_scheduler.link_tf_to_constraint(
             tf_id=tf.id,
             constraint_id=constraint_id,
@@ -2131,7 +2131,7 @@ class ResilienceService:
         if not self.tf_scheduler:
             return {}
 
-        # Apply TF decay if due
+            # Apply TF decay if due
         self._maybe_decay_tfs()
 
         return self.tf_scheduler.get_constraint_weights(constraint_ids)
@@ -2140,7 +2140,7 @@ class ResilienceService:
         self,
         constraint_id: UUID,
         state: ChromatinState,
-    ):
+    ) -> None:
         """
         Set the chromatin state (accessibility) for a constraint.
 
@@ -2167,7 +2167,7 @@ class ResilienceService:
             },
         )
 
-    def silence_constraints_for_crisis(self, constraint_ids: list[UUID]):
+    def silence_constraints_for_crisis(self, constraint_ids: list[UUID]) -> None:
         """
         Silence constraints during crisis mode.
 
@@ -2191,7 +2191,7 @@ class ResilienceService:
             },
         )
 
-    def restore_silenced_constraints(self, constraint_ids: list[UUID]):
+    def restore_silenced_constraints(self, constraint_ids: list[UUID]) -> None:
         """
         Restore silenced constraints after crisis.
 
@@ -2276,7 +2276,7 @@ class ResilienceService:
         status["enabled"] = True
         return status
 
-    def _maybe_decay_tfs(self):
+    def _maybe_decay_tfs(self) -> None:
         """Apply TF decay if enough time has passed."""
         if not self.tf_scheduler:
             return
@@ -2291,9 +2291,9 @@ class ResilienceService:
             self.tf_scheduler.decay_all_tfs(hours_since)
             self._last_tf_decay = now
 
-    # =========================================================================
-    # Tier 4: Combined Status
-    # =========================================================================
+            # =========================================================================
+            # Tier 4: Combined Status
+            # =========================================================================
 
     def get_tier4_status(self) -> dict:
         """

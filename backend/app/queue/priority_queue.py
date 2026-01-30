@@ -79,10 +79,9 @@ class FairSchedulingPolicy(str):
     STRICT_PRIORITY = "strict_priority"  # Strict priority order
     DEFICIT_ROUND_ROBIN = "deficit_round_robin"  # DRR for fairness
 
-
-# ============================================================================
-# Data Classes
-# ============================================================================
+    # ============================================================================
+    # Data Classes
+    # ============================================================================
 
 
 @dataclass
@@ -224,10 +223,9 @@ class DeadLetterRecord:
             "original_metadata": self.original_metadata,
         }
 
-
-# ============================================================================
-# Priority Queue Manager
-# ============================================================================
+        # ============================================================================
+        # Priority Queue Manager
+        # ============================================================================
 
 
 class PriorityQueueManager:
@@ -272,7 +270,7 @@ class PriorityQueueManager:
         fair_scheduling_policy: FairSchedulingPolicy = FairSchedulingPolicy.WEIGHTED,
         default_timeout: int = 600,
         dead_letter_retention_hours: int = 168,  # 7 days
-    ):
+    ) -> None:
         """
         Initialize priority queue manager.
 
@@ -352,11 +350,11 @@ class PriorityQueueManager:
         if not self.enable_deduplication:
             return None
 
-        # Use custom dedup key or generate one
+            # Use custom dedup key or generate one
         if dedup_key is None:
             dedup_key = self._generate_dedup_key(task_name, args, kwargs)
 
-        # Check if key exists and job is still active
+            # Check if key exists and job is still active
         if dedup_key in self._dedup_index:
             existing_job_id = self._dedup_index[dedup_key]
             if existing_job_id in self._job_metadata:
@@ -434,7 +432,7 @@ class PriorityQueueManager:
         if not task:
             raise ValidationError(f"Task {task_name} not found in registry")
 
-        # Check deduplication
+            # Check deduplication
         existing_job_id = self._check_deduplication(dedup_key, task_name, args, kwargs)
         if existing_job_id:
             # Update metadata state to indicate deduplication
@@ -446,18 +444,18 @@ class PriorityQueueManager:
                 )
             return existing_job_id
 
-        # Generate job ID
+            # Generate job ID
         job_id = str(uuid4())
 
         # Determine queue
         if queue is None:
             queue = self.PRIORITY_QUEUE_MAP.get(priority, "default")
 
-        # Determine timeout
+            # Determine timeout
         if timeout is None:
             timeout = self.default_timeout
 
-        # Create job metadata
+            # Create job metadata
         job_metadata = JobMetadata(
             job_id=job_id,
             task_name=task_name,
@@ -485,7 +483,7 @@ class PriorityQueueManager:
         if self.enable_deduplication and job_metadata.dedup_key:
             self._dedup_index[job_metadata.dedup_key] = job_id
 
-        # Submit to Celery
+            # Submit to Celery
         try:
             result = task.apply_async(
                 args=args,
@@ -564,11 +562,11 @@ class PriorityQueueManager:
                 elif new_state in [JobState.COMPLETED, JobState.FAILED]:
                     metadata.completed_at = datetime.utcnow()
 
-        # Update progress if available
+                    # Update progress if available
         if result.state == "PROGRESS" and result.info:
             metadata.progress = result.info
 
-        # Update result/error
+            # Update result/error
         if result.ready():
             if result.successful():
                 metadata.result = result.result
@@ -600,7 +598,7 @@ class PriorityQueueManager:
         if metadata.state == JobState.PROGRESS and metadata.progress:
             return metadata.progress
 
-        # Check Celery result
+            # Check Celery result
         result = AsyncResult(job_id, app=self.app)
         if result.state == "PROGRESS":
             return result.info
@@ -637,7 +635,7 @@ class PriorityQueueManager:
             logger.warning(f"Job {job_id} cannot be cancelled (state={metadata.state})")
             return False
 
-        # Revoke in Celery
+            # Revoke in Celery
         self.app.control.revoke(job_id, terminate=terminate, signal="SIGTERM")
 
         # Update metadata
@@ -646,7 +644,7 @@ class PriorityQueueManager:
         if reason:
             metadata.metadata["cancellation_reason"] = reason
 
-        # Clean up deduplication index
+            # Clean up deduplication index
         if self.enable_deduplication and metadata.dedup_key:
             self._dedup_index.pop(metadata.dedup_key, None)
 
@@ -688,7 +686,7 @@ class PriorityQueueManager:
                 f"Job {job_id} is not in failed state (state={metadata.state})"
             )
 
-        # Create new job with same parameters
+            # Create new job with same parameters
         new_job_id = self.enqueue(
             task_name=metadata.task_name,
             args=metadata.args,
@@ -863,7 +861,7 @@ class PriorityQueueManager:
                 if metadata.priority != prio:
                     continue
 
-                # Count by state
+                    # Count by state
                 if metadata.state == JobState.PENDING:
                     metrics.pending_count += 1
                     age = (datetime.utcnow() - metadata.created_at).total_seconds()
@@ -896,7 +894,7 @@ class PriorityQueueManager:
                 elif metadata.state == JobState.DEAD_LETTER:
                     metrics.dead_letter_count += 1
 
-            # Calculate averages
+                    # Calculate averages
             if wait_times:
                 metrics.avg_wait_time_seconds = sum(wait_times) / len(wait_times)
 
@@ -912,8 +910,8 @@ class PriorityQueueManager:
             if total_completed > 0:
                 metrics.success_rate = metrics.completed_count / total_completed
 
-            # Calculate throughput (jobs per minute in last hour)
-            # This is a simplified calculation
+                # Calculate throughput (jobs per minute in last hour)
+                # This is a simplified calculation
             one_hour_ago = datetime.utcnow() - timedelta(hours=1)
             recent_completions = sum(
                 1
@@ -927,7 +925,7 @@ class PriorityQueueManager:
 
             metrics_by_priority[prio.name.lower()] = metrics
 
-        # Add overall metrics
+            # Add overall metrics
         overall = {
             "by_priority": {k: v.to_dict() for k, v in metrics_by_priority.items()},
             "total_jobs": len(self._job_metadata),
@@ -964,11 +962,11 @@ class PriorityQueueManager:
                 continue
             jobs_to_purge.append(job_id)
 
-        # Revoke in Celery
+            # Revoke in Celery
         for job_id in jobs_to_purge:
             self.app.control.revoke(job_id, terminate=True)
 
-        # Remove from metadata
+            # Remove from metadata
         for job_id in jobs_to_purge:
             metadata = self._job_metadata.pop(job_id, None)
             if metadata and self.enable_deduplication and metadata.dedup_key:
@@ -1007,7 +1005,7 @@ class PriorityQueueManager:
                 if metadata.completed_at and metadata.completed_at < cutoff_time:
                     jobs_to_remove.append(job_id)
 
-        # Remove old jobs
+                    # Remove old jobs
         for job_id in jobs_to_remove:
             metadata = self._job_metadata.pop(job_id, None)
             if metadata and self.enable_deduplication and metadata.dedup_key:
@@ -1041,7 +1039,7 @@ class PriorityQueueManager:
             if record.failed_at < cutoff_time:
                 records_to_remove.append(job_id)
 
-        # Remove old records
+                # Remove old records
         for job_id in records_to_remove:
             self._dead_letter_queue.pop(job_id, None)
 

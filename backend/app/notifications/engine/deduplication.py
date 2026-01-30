@@ -51,7 +51,7 @@ class DeduplicationEngine:
         NotificationType.ABSENCE_REJECTED: ["absence_type", "start_date"],
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the deduplication engine."""
         # In-memory cache: fingerprint -> last_sent_timestamp
         self._cache: dict[str, datetime] = {}
@@ -85,7 +85,7 @@ class DeduplicationEngine:
         if window == 0:
             return False
 
-        # Generate fingerprint
+            # Generate fingerprint
         fingerprint = self._generate_fingerprint(recipient_id, notification_type, data)
 
         # Check if fingerprint exists and is within window
@@ -154,7 +154,7 @@ class DeduplicationEngine:
             if field in data:
                 fingerprint_data[field] = data[field]
 
-        # Generate hash
+                # Generate hash
         data_str = json.dumps(fingerprint_data, sort_keys=True)
         fingerprint = hashlib.sha256(data_str.encode()).hexdigest()
 

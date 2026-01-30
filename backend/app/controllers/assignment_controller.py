@@ -21,7 +21,7 @@ from app.services.assignment_service import AssignmentService
 class AssignmentController:
     """Controller for assignment endpoints."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.service = AssignmentService(db)
 
     def list_assignments(

@@ -59,7 +59,7 @@ class BlockScheduleExportService:
         self,
         session: AsyncSession,
         template_path: Path | str | None = None,
-    ):
+    ) -> None:
         self.session = session
         self.template_path = template_path
 
@@ -116,7 +116,7 @@ class BlockScheduleExportService:
             else:
                 logger.info("XML validation: PASSED (matches ROSETTA)")
 
-        # Convert XML to xlsx
+                # Convert XML to xlsx
         converter = XMLToXlsxConverter(template_path=self.template_path)
         xlsx_bytes = converter.convert_from_string(xml_string, output_path)
         logger.info(f"Generated xlsx ({len(xlsx_bytes)} bytes)")
@@ -205,7 +205,7 @@ class BlockScheduleExportService:
                 f"Found {len(validation_warnings)} validation warnings (export continues)"
             )
 
-        # Generate XML with faculty from DB
+            # Generate XML with faculty from DB
         xml_string = self._generate_full_xml(
             start_date, end_date, residents, faculty_schedules, call_assignments
         )
@@ -244,13 +244,13 @@ class BlockScheduleExportService:
                 night_elem.set("staff", ca.get("staff_name", ""))
                 night_elem.set("resident", ca.get("resident_name", ""))
 
-        # Residents section (use exporter for patterns)
+                # Residents section (use exporter for patterns)
         exporter = ScheduleXMLExporter(start_date, end_date)
         residents_elem = SubElement(root, "residents")
         for resident in residents:
             exporter._add_resident(residents_elem, resident)
 
-        # Faculty section (from DB assignments)
+            # Faculty section (from DB assignments)
         if faculty_schedules:
             faculty_elem = SubElement(root, "faculty")
             for name, schedule in sorted(faculty_schedules.items()):
@@ -328,7 +328,7 @@ class BlockScheduleExportService:
             if block_date not in faculty_schedules[name]:
                 faculty_schedules[name][block_date] = {"am": "", "pm": ""}
 
-            # Use display_abbreviation (clean codes like "C", "GME", "FMIT")
+                # Use display_abbreviation (clean codes like "C", "GME", "FMIT")
             abbrev = (
                 a.rotation_template.display_abbreviation
                 or a.rotation_template.abbreviation
@@ -399,7 +399,7 @@ class BlockScheduleExportService:
             if not assignment.resident:
                 continue
 
-            # Get rotation codes
+                # Get rotation codes
             rotation1 = ""
             rotation2 = None
 
@@ -411,7 +411,7 @@ class BlockScheduleExportService:
                     assignment.secondary_rotation_template
                 )
 
-            # Convert name to "Last, First" format
+                # Convert name to "Last, First" format
             name = self._convert_name_format(assignment.resident.name)
 
             residents.append(
@@ -435,8 +435,8 @@ class BlockScheduleExportService:
         if not rotation_template:
             return ""
 
-        # Use display_abbreviation first (clean codes)
-        # Fall back to abbreviation if display_abbreviation not set
+            # Use display_abbreviation first (clean codes)
+            # Fall back to abbreviation if display_abbreviation not set
         return (
             rotation_template.display_abbreviation
             or rotation_template.abbreviation
@@ -458,7 +458,7 @@ class BlockScheduleExportService:
         if ", " in name:
             return name
 
-        # Convert "First Last" to "Last, First"
+            # Convert "First Last" to "Last, First"
         parts = name.split()
         if len(parts) >= 2:
             # Assume last word is last name
@@ -513,7 +513,7 @@ class BlockScheduleExportService:
                         f"Internal code '{rot}' for resident {r.get('name', 'unknown')}"
                     )
 
-        # Check 2: Call coverage (20 nights expected: Sun-Thu)
+                    # Check 2: Call coverage (20 nights expected: Sun-Thu)
         call_dates = {ca["date"] for ca in call_assignments}
         expected_nights = 0
         current = start_date
@@ -531,8 +531,8 @@ class BlockScheduleExportService:
                 f"Call coverage: {len(call_assignments)}/{expected_nights} nights"
             )
 
-        # Check 3: Physical clinic cap (≤6 per slot)
-        # Clinical codes that count toward cap (NOT AT/PCAT)
+            # Check 3: Physical clinic cap (≤6 per slot)
+            # Clinical codes that count toward cap (NOT AT/PCAT)
         clinical_codes = {"C", "CV", "PR", "VAS", "VASC"}
 
         # Build per-slot counts from faculty schedules
@@ -548,8 +548,8 @@ class BlockScheduleExportService:
                         if code in clinical_codes:
                             count += 1
 
-                    # Count residents in clinic (would need block assignments)
-                    # For now, just warn if faculty alone exceeds cap
+                            # Count residents in clinic (would need block assignments)
+                            # For now, just warn if faculty alone exceeds cap
                     if count > 6:
                         warnings.append(
                             f"Clinic cap exceeded: {current} {slot.upper()} has {count} faculty in clinic (max 6)"

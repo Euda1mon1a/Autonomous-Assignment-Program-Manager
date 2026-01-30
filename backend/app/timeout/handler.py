@@ -26,7 +26,7 @@ class TimeoutError(Exception):
     This is a user-friendly exception safe to expose in API responses.
     """
 
-    def __init__(self, message: str = "Request timeout", timeout: float = 0):
+    def __init__(self, message: str = "Request timeout", timeout: float = 0) -> None:
         """
         Initialize timeout error.
 
@@ -55,7 +55,7 @@ class TimeoutHandler:
             remaining = handler.get_remaining_time()
     """
 
-    def __init__(self, timeout: float, error_message: str | None = None):
+    def __init__(self, timeout: float, error_message: str | None = None) -> None:
         """
         Initialize timeout handler.
 
@@ -83,7 +83,7 @@ class TimeoutHandler:
             self.timeout = min(self.timeout, existing_remaining)
             logger.debug(f"Nested timeout detected, using minimum: {self.timeout}s")
 
-        # Store timeout in context
+            # Store timeout in context
         self._token_remaining = timeout_ctx.set(self.timeout)
         self._token_start = timeout_start_ctx.set(self.start_time)
 
@@ -97,14 +97,14 @@ class TimeoutHandler:
         if self._token_start:
             timeout_start_ctx.reset(self._token_start)
 
-        # Handle asyncio.CancelledError as timeout
+            # Handle asyncio.CancelledError as timeout
         if exc_type is asyncio.CancelledError:
             logger.warning(
                 f"Operation cancelled (likely timeout): {self.error_message}"
             )
             raise TimeoutError(self.error_message, self.timeout) from exc_val
 
-        # Handle asyncio.TimeoutError
+            # Handle asyncio.TimeoutError
         if exc_type is asyncio.TimeoutError:
             logger.warning(f"Operation timed out: {self.error_message}")
             raise TimeoutError(self.error_message, self.timeout) from exc_val

@@ -117,7 +117,7 @@ class DecorrelatedJitter(JitterStrategy):
         https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
     """
 
-    def __init__(self, base_delay: float = 1.0):
+    def __init__(self, base_delay: float = 1.0) -> None:
         """
         Initialize decorrelated jitter.
 
@@ -142,7 +142,7 @@ class DecorrelatedJitter(JitterStrategy):
             # First attempt - use base delay with some jitter
             return random.uniform(self.base_delay, delay)
 
-        # Subsequent attempts - decorrelate from previous delay
+            # Subsequent attempts - decorrelate from previous delay
         upper_bound = previous_delay * 3
         return random.uniform(self.base_delay, upper_bound)
 

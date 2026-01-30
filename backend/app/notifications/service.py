@@ -175,7 +175,7 @@ class NotificationService:
     Now backed by database persistence for scheduled notifications and preferences.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize notification service.
 
@@ -215,7 +215,7 @@ class NotificationService:
                 )
             ]
 
-        # Determine which channels to use
+            # Determine which channels to use
         target_channels = channels or rendered.get("channels", ["in_app"])
 
         # Check user preferences
@@ -228,14 +228,14 @@ class NotificationService:
             )
             return []
 
-        # Filter channels by user preferences
+            # Filter channels by user preferences
         enabled_channels = preferences.enabled_channels
         target_channels = [c for c in target_channels if c in enabled_channels]
 
         if not target_channels:
             return []
 
-        # Create notification payload
+            # Create notification payload
         payload = NotificationPayload(
             recipient_id=recipient_id,
             notification_type=notification_type.value,
@@ -264,7 +264,7 @@ class NotificationService:
                     )
                 )
 
-        # Store notification record for in-app display
+                # Store notification record for in-app display
         if "in_app" in delivered_channels or any(r.success for r in results):
             notification_record = Notification(
                 recipient_id=recipient_id,
@@ -338,7 +338,7 @@ class NotificationService:
             )
             results[str(recipient_id)] = delivery_results
 
-        # Clear the cache after bulk operation
+            # Clear the cache after bulk operation
         self._preferences_cache = {}
 
         return results
@@ -479,7 +479,7 @@ class NotificationService:
 
             self.db.commit()
 
-        # Clear the cache after processing
+            # Clear the cache after processing
         self._preferences_cache = {}
 
         return sent_count
@@ -571,7 +571,7 @@ class NotificationService:
                 quiet_hours_end=record.quiet_hours_end,
             )
 
-        # Return default preferences if none exist
+            # Return default preferences if none exist
         return NotificationPreferences(user_id=user_id)
 
     def update_user_preferences(
@@ -632,7 +632,7 @@ class NotificationService:
         if not preferences.notification_types.get(notification_type.value, True):
             return False
 
-        # Check quiet hours
+            # Check quiet hours
         if (
             preferences.quiet_hours_start is not None
             and preferences.quiet_hours_end is not None
@@ -650,8 +650,7 @@ class NotificationService:
 
         return True
 
-
-# Convenience functions for common notification scenarios
+        # Convenience functions for common notification scenarios
 
 
 async def notify_schedule_published(

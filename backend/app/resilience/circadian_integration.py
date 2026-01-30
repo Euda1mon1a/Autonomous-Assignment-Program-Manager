@@ -90,7 +90,7 @@ class CircadianObjective:
         - 0.3: High priority (circadian health emphasized)
     """
 
-    def __init__(self, weight: float = 0.2):
+    def __init__(self, weight: float = 0.2) -> None:
         """
         Initialize circadian objective.
 
@@ -165,7 +165,7 @@ class CircadianObjective:
                     shifts_by_resident[resident_id] = []
                 shifts_by_resident[resident_id].append(shift)
 
-        # Analyze each resident
+                # Analyze each resident
         violations = []
         at_risk_residents = []
         quality_scores = []
@@ -186,7 +186,7 @@ class CircadianObjective:
                     f"quality={impact.quality_score:.2f}, level={impact.quality_level}"
                 )
 
-        # Calculate overall metrics
+                # Calculate overall metrics
         avg_quality = (
             sum(quality_scores) / len(quality_scores) if quality_scores else 1.0
         )
@@ -213,10 +213,9 @@ class CircadianObjective:
 
         return result
 
-
-# =============================================================================
-# Schedule Analysis Helpers
-# =============================================================================
+        # =============================================================================
+        # Schedule Analysis Helpers
+        # =============================================================================
 
 
 class CircadianScheduleOptimizer:
@@ -227,7 +226,7 @@ class CircadianScheduleOptimizer:
     circadian health is maintained.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize circadian schedule optimizer."""
         self.analyzer = CircadianScheduleAnalyzer()
         logger.info("Initialized CircadianScheduleOptimizer")
@@ -375,7 +374,7 @@ class CircadianScheduleOptimizer:
         if not candidate_shifts:
             return []
 
-        # Score each candidate
+            # Score each candidate
         scored_shifts = []
         for shift in candidate_shifts:
             # Create mini-schedule with just this shift
@@ -391,7 +390,7 @@ class CircadianScheduleOptimizer:
                 }
             )
 
-        # Sort by quality (descending)
+            # Sort by quality (descending)
         scored_shifts.sort(key=lambda x: x["quality_score"], reverse=True)
 
         # Return ranked shifts
@@ -429,10 +428,9 @@ class CircadianScheduleOptimizer:
 
         return recommendations
 
-
-# =============================================================================
-# Utility Functions
-# =============================================================================
+        # =============================================================================
+        # Utility Functions
+        # =============================================================================
 
 
 def classify_shift_type(shift_start: datetime, duration: float) -> CircadianShiftType:
@@ -485,7 +483,7 @@ def compute_schedule_regularity(schedule: list[dict]) -> float:
     if len(schedule) <= 1:
         return 1.0
 
-    # Check shift type consistency
+        # Check shift type consistency
     shift_types = [
         classify_shift_type(s["start_time"], s["duration"]) for s in schedule
     ]
@@ -496,7 +494,7 @@ def compute_schedule_regularity(schedule: list[dict]) -> float:
         if shift_types[i] != shift_types[i - 1]:
             transitions += 1
 
-    # Regularity decreases with transitions
+            # Regularity decreases with transitions
     max_transitions = len(shift_types) - 1
     regularity = 1.0 - (transitions / max_transitions) if max_transitions > 0 else 1.0
 
@@ -527,14 +525,14 @@ def get_circadian_recommendations(impact: CircadianImpact) -> list[str]:
             f"Recommend {impact.recovery_days_needed} days regular schedule for recovery."
         )
 
-    # Amplitude recommendations
+        # Amplitude recommendations
     if impact.amplitude_change < -0.2:
         recommendations.append(
             "⚠️ Circadian amplitude degradation detected. "
             "Reduce shift type variability and allow recovery periods."
         )
 
-    # Quality level recommendations
+        # Quality level recommendations
     if impact.quality_level == CircadianQualityLevel.CRITICAL:
         recommendations.append(
             "🚨 CRITICAL: Immediate circadian intervention needed. "
@@ -549,7 +547,7 @@ def get_circadian_recommendations(impact: CircadianImpact) -> list[str]:
             "Monitor circadian health. Consider reducing shift variability."
         )
 
-    # Misalignment recommendations
+        # Misalignment recommendations
     if impact.misalignment_hours > 4:
         recommendations.append(
             f"High circadian misalignment ({impact.misalignment_hours:.1f}h avg). "

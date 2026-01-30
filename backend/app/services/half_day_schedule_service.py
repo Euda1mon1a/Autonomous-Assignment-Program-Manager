@@ -38,7 +38,7 @@ class HalfDayScheduleService:
     half_day_assignments table.
     """
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def get_schedule_by_date_range(
@@ -477,18 +477,18 @@ class HalfDayScheduleService:
             if not assignment_requires_fmc_supervision(a):
                 continue
 
-            # Base clinic supervision demand by PGY
+                # Base clinic supervision demand by PGY
             pgy = a.person.pgy_level or 1
             if pgy == 1:
                 demand += 0.5
             else:
                 demand += 0.25
 
-            # PROC = +1.0 AT
+                # PROC = +1.0 AT
             if activity_is_proc_or_vas(a.activity):
                 demand += 1.0
 
-        # Calculate coverage (faculty providing supervision)
+                # Calculate coverage (faculty providing supervision)
         coverage = 0.0
         for a in assignments:
             if not a.person or a.person.type != "faculty":
@@ -496,7 +496,7 @@ class HalfDayScheduleService:
             if a.activity and a.activity.is_supervision:
                 coverage += 1.0
 
-        # Round up demand (can't have half a faculty)
+                # Round up demand (can't have half a faculty)
         import math
 
         demand_rounded = math.ceil(demand)

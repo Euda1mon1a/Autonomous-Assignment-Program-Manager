@@ -38,7 +38,7 @@ class RequestMetricsMiddleware(BaseHTTPMiddleware):
         app.add_middleware(RequestMetricsMiddleware)
     """
 
-    def __init__(self, app: ASGIApp):
+    def __init__(self, app: ASGIApp) -> None:
         """
         Initialize request metrics middleware.
 
@@ -67,7 +67,7 @@ class RequestMetricsMiddleware(BaseHTTPMiddleware):
         if not self.metrics._enabled:
             return await call_next(request)
 
-        # Extract route information
+            # Extract route information
         method = request.method
         path = request.url.path
 
@@ -78,7 +78,7 @@ class RequestMetricsMiddleware(BaseHTTPMiddleware):
         if path == "/metrics" or path == "/health":
             return await call_next(request)
 
-        # Track active connections and in-progress requests
+            # Track active connections and in-progress requests
         self.active_connections += 1
         self.metrics.http_active_connections.set(self.active_connections)
         self.metrics.http_requests_in_progress.labels(
@@ -94,7 +94,7 @@ class RequestMetricsMiddleware(BaseHTTPMiddleware):
                 endpoint=endpoint,
             ).observe(request_size)
 
-        # Time the request
+            # Time the request
         start_time = time.perf_counter()
         exception_raised = False
 
@@ -143,7 +143,7 @@ class RequestMetricsMiddleware(BaseHTTPMiddleware):
             self.active_connections -= 1
             self.metrics.http_active_connections.set(self.active_connections)
 
-        # Measure response size
+            # Measure response size
         if not exception_raised:
             response_size = self._get_response_size(response)
             if response_size > 0:
@@ -152,7 +152,7 @@ class RequestMetricsMiddleware(BaseHTTPMiddleware):
                     endpoint=endpoint,
                 ).observe(response_size)
 
-            # Record error metrics for 4xx and 5xx responses
+                # Record error metrics for 4xx and 5xx responses
             if status_code >= 400:
                 severity = "error" if status_code >= 500 else "warning"
                 error_type = f"http_{status_code}"
@@ -236,7 +236,7 @@ class RequestMetricsMiddleware(BaseHTTPMiddleware):
             if content_length:
                 return int(content_length)
 
-            # Try to estimate from body if available
+                # Try to estimate from body if available
             if hasattr(response, "body") and response.body:
                 return len(response.body)
         except (ValueError, TypeError, AttributeError):
@@ -256,7 +256,7 @@ class DatabaseMetricsMiddleware(BaseHTTPMiddleware):
     This middleware hooks into SQLAlchemy events to track queries.
     """
 
-    def __init__(self, app: ASGIApp):
+    def __init__(self, app: ASGIApp) -> None:
         """
         Initialize database metrics middleware.
 
@@ -297,7 +297,7 @@ class CacheMetricsMiddleware(BaseHTTPMiddleware):
     This middleware can be used to track Redis or in-memory cache performance.
     """
 
-    def __init__(self, app: ASGIApp):
+    def __init__(self, app: ASGIApp) -> None:
         """
         Initialize cache metrics middleware.
 

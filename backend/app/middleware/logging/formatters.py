@@ -48,7 +48,7 @@ class JSONFormatter(logging.Formatter):
         include_exception: bool = True,
         timestamp_format: str = "iso",
         extra_fields: list[str] | None = None,
-    ):
+    ) -> None:
         """
         Initialize JSON formatter.
 
@@ -115,22 +115,22 @@ class JSONFormatter(logging.Formatter):
             else:  # unix
                 log_data["timestamp"] = record.created
 
-        # Level
+                # Level
         if self.include_level:
             log_data["level"] = record.levelname
 
-        # Logger name
+            # Logger name
         if self.include_logger:
             log_data["logger"] = record.name
 
-        # Message
+            # Message
         log_data["message"] = record.getMessage()
 
         # Request ID (if available from context)
         if hasattr(record, "request_id"):
             log_data["request_id"] = record.request_id
 
-        # Source location (useful for debugging)
+            # Source location (useful for debugging)
         log_data["source"] = {
             "file": record.filename,
             "line": record.lineno,
@@ -145,7 +145,7 @@ class JSONFormatter(logging.Formatter):
                 "traceback": self._format_traceback(record.exc_info),
             }
 
-        # Extra fields (passed via logger.info("msg", extra={...}))
+            # Extra fields (passed via logger.info("msg", extra={...}))
         extra = self._extract_extra_fields(record)
         if extra:
             log_data["extra"] = extra
@@ -161,7 +161,7 @@ class JSONFormatter(logging.Formatter):
             if key not in self.reserved_fields and not key.startswith("_"):
                 extra[key] = value
 
-        # Always include specified extra fields (even if None)
+                # Always include specified extra fields (even if None)
         for field in self.extra_fields:
             if field not in extra and hasattr(record, field):
                 extra[field] = getattr(record, field)
@@ -202,7 +202,7 @@ class RequestResponseFormatter(JSONFormatter):
             else:
                 log_data["timestamp"] = record.created
 
-        # Level
+                # Level
         log_data["level"] = record.levelname
 
         # Logger
@@ -215,7 +215,7 @@ class RequestResponseFormatter(JSONFormatter):
         if hasattr(record, "request_id"):
             log_data["request_id"] = record.request_id
 
-        # HTTP-specific fields
+            # HTTP-specific fields
         http_data = {}
         if hasattr(record, "method"):
             http_data["method"] = record.method
@@ -233,7 +233,7 @@ class RequestResponseFormatter(JSONFormatter):
         if http_data:
             log_data["http"] = http_data
 
-        # Request/response data (if present)
+            # Request/response data (if present)
         if hasattr(record, "request_headers"):
             log_data["request_headers"] = record.request_headers
         if hasattr(record, "request_body"):
@@ -243,11 +243,11 @@ class RequestResponseFormatter(JSONFormatter):
         if hasattr(record, "response_body"):
             log_data["response_body"] = record.response_body
 
-        # User info (if available)
+            # User info (if available)
         if hasattr(record, "user_id"):
             log_data["user_id"] = record.user_id
 
-        # Extra fields
+            # Extra fields
         extra = self._extract_extra_fields(record)
         # Remove fields already included in http_data
         for field in [
@@ -259,7 +259,7 @@ class RequestResponseFormatter(JSONFormatter):
             "user_agent",
         ]:
             extra.pop(field, None)
-        # Remove fields at top level
+            # Remove fields at top level
         for field in [
             "request_headers",
             "request_body",
@@ -295,7 +295,7 @@ class CompactJSONFormatter(JSONFormatter):
         if hasattr(record, "request_id"):
             log_data["request_id"] = record.request_id
 
-        # Include only critical HTTP fields
+            # Include only critical HTTP fields
         if hasattr(record, "method"):
             log_data["method"] = record.method
         if hasattr(record, "path"):

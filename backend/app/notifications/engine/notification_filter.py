@@ -21,7 +21,7 @@ class NotificationFilter:
     - User status: Filter based on user attributes
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize filter."""
         # User-specific filters
         self._user_filters: dict[UUID, dict[str, Any]] = {}
@@ -50,7 +50,7 @@ class NotificationFilter:
                 return False, None
             return True, "Do not disturb hours"
 
-        # Content-based filter
+            # Content-based filter
         if self._is_content_filtered(recipient_id, data):
             return True, "Content filter"
 

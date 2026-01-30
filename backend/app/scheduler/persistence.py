@@ -29,7 +29,7 @@ class JobPersistence:
     - Query job statistics
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize persistence layer.
 
@@ -385,7 +385,7 @@ class JobPersistence:
         if not job:
             return {}
 
-        # Count executions by status
+            # Count executions by status
         executions = (
             self.db.query(
                 JobExecution.status, func.count(JobExecution.id).label("count")

@@ -187,7 +187,7 @@ class FeedbackLoop:
     value_history: list[tuple[datetime, float]] = field(default_factory=list)
     max_history_size: int = 100
 
-    def record_value(self, value: float, timestamp: datetime | None = None):
+    def record_value(self, value: float, timestamp: datetime | None = None) -> None:
         """Record a metric value for trend analysis."""
         ts = timestamp or datetime.now()
         self.value_history.append((ts, value))
@@ -208,7 +208,7 @@ class FeedbackLoop:
         if len(recent) < 3:
             return "insufficient_data"
 
-        # Check trend direction
+            # Check trend direction
         first_half = statistics.mean(recent[: len(recent) // 2])
         second_half = statistics.mean(recent[len(recent) // 2 :])
 
@@ -284,7 +284,7 @@ class FeedbackLoop:
         if len(recent_values) < 3:
             return 0.0
 
-        # Count direction changes
+            # Count direction changes
         direction_changes = 0
         for i in range(2, len(recent_values)):
             prev_delta = recent_values[i - 1] - recent_values[i - 2]
@@ -315,7 +315,7 @@ class FeedbackLoop:
         if len(recent) < 2:
             return 0.0
 
-        # Simple linear regression slope
+            # Simple linear regression slope
         n = len(recent)
         x_vals = list(range(n))
         y_vals = [v for _, v in recent]
@@ -360,7 +360,7 @@ class FeedbackLoop:
         if critical_threshold == 0:
             return 1.0
 
-        # Normalize: 0 = at critical threshold, 1 = at target
+            # Normalize: 0 = at critical threshold, 1 = at target
         distance = max(0.0, 1.0 - (deviation / critical_threshold))
         return distance
 
@@ -460,7 +460,7 @@ class AllostasisMetrics:
     warning_threshold: float = 50.0
     critical_threshold: float = 80.0
 
-    def calculate(self):
+    def calculate(self) -> None:
         """Calculate allostatic load from component factors."""
         # Acute stress (recent, higher weight)
         self.acute_stress_score = (
@@ -588,7 +588,7 @@ class HomeostasisMonitor:
     - Triggers corrective actions
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.feedback_loops: dict[UUID, FeedbackLoop] = {}
         self.setpoints: dict[UUID, Setpoint] = {}
         self.allostasis_metrics: dict[UUID, AllostasisMetrics] = {}
@@ -600,7 +600,7 @@ class HomeostasisMonitor:
         # Initialize default setpoints
         self._initialize_default_setpoints()
 
-    def _initialize_default_setpoints(self):
+    def _initialize_default_setpoints(self) -> None:
         """Initialize default setpoints for scheduling metrics."""
         default_setpoints = [
             Setpoint(
@@ -677,7 +677,7 @@ class HomeostasisMonitor:
         self,
         action_type: CorrectiveActionType,
         handler: Callable[[CorrectiveAction], bool],
-    ):
+    ) -> None:
         """Register a handler for a type of corrective action."""
         self.correction_handlers[action_type] = handler
         logger.info(f"Registered correction handler for {action_type.value}")
@@ -705,7 +705,7 @@ class HomeostasisMonitor:
         if setpoint.id not in self.setpoints:
             self.setpoints[setpoint.id] = setpoint
 
-        # Create the feedback loop
+            # Create the feedback loop
         loop = FeedbackLoop(
             id=uuid4(),
             name=name,
@@ -749,7 +749,7 @@ class HomeostasisMonitor:
         if not loop or not loop.is_active:
             return None
 
-        # Record value
+            # Record value
         loop.record_value(current_value)
 
         # Check deviation
@@ -765,7 +765,7 @@ class HomeostasisMonitor:
         if severity in (DeviationSeverity.MAJOR, DeviationSeverity.CRITICAL):
             return self._trigger_correction(loop, current_value, deviation, severity)
 
-        # For minor/moderate, check for persistent deviation
+            # For minor/moderate, check for persistent deviation
         if loop.consecutive_deviations >= 3:
             return self._trigger_correction(loop, current_value, deviation, severity)
 
@@ -969,7 +969,7 @@ class HomeostasisMonitor:
                     )
                 )
 
-        # Check for coverage gap spiral
+                # Check for coverage gap spiral
         coverage_rate = system_metrics.get("coverage_rate", 1.0)
         if coverage_rate < 0.85:
             risks.append(
@@ -992,7 +992,7 @@ class HomeostasisMonitor:
                 )
             )
 
-        # Check for attrition cascade
+            # Check for attrition cascade
         avg_load = (
             statistics.mean([m.total_allostatic_load for m in faculty_metrics])
             if faculty_metrics
@@ -1064,7 +1064,7 @@ class HomeostasisMonitor:
                         f"Rapid {direction}: {abs(metrics.momentum):.1f}x tolerance/interval"
                     )
 
-                # Determine severity and urgency
+                    # Determine severity and urgency
                 if metrics.level == VolatilityLevel.CRITICAL:
                     severity = DeviationSeverity.CRITICAL
                     urgency = "immediate"
@@ -1154,13 +1154,13 @@ class HomeostasisMonitor:
                 deviating += 1
             else:
                 healthy += 1
-            # Check volatility
+                # Check volatility
             if len(loop.value_history) >= 5:
                 vol_metrics = loop.get_volatility_metrics()
                 if vol_metrics.is_warning:
                     volatile += 1
 
-        # Calculate average allostatic load
+                    # Calculate average allostatic load
         if faculty_metrics:
             avg_load = statistics.mean(
                 [m.total_allostatic_load for m in faculty_metrics]
@@ -1174,7 +1174,7 @@ class HomeostasisMonitor:
                 else 0.0
             )
 
-        # Determine overall state (volatility can escalate state)
+            # Determine overall state (volatility can escalate state)
         if avg_load > 80:
             overall_state = AllostasisState.ALLOSTATIC_OVERLOAD
         elif avg_load > 50 or volatile > len(self.feedback_loops) // 2:
@@ -1184,7 +1184,7 @@ class HomeostasisMonitor:
         else:
             overall_state = AllostasisState.HOMEOSTASIS
 
-        # Build recommendations
+            # Build recommendations
         recommendations = []
         if overall_state == AllostasisState.ALLOSTATIC_OVERLOAD:
             recommendations.append(
@@ -1207,7 +1207,7 @@ class HomeostasisMonitor:
             if risk.urgency == "immediate":
                 recommendations.append(f"URGENT: {risk.intervention}")
 
-        # Add volatility-based recommendations
+                # Add volatility-based recommendations
         for alert in self.volatility_alerts:
             if alert.urgency == "immediate":
                 recommendations.append(f"VOLATILITY ALERT: {alert.intervention}")

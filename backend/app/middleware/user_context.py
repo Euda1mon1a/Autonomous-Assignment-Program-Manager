@@ -35,7 +35,7 @@ class UserContextMiddleware(BaseHTTPMiddleware):
         app,
         inject_logging_context: bool = True,
         track_user_activity: bool = True,
-    ):
+    ) -> None:
         """
         Initialize user context middleware.
 
@@ -79,11 +79,11 @@ class UserContextMiddleware(BaseHTTPMiddleware):
             if user_context.get("username"):
                 set_custom_field("username", user_context["username"])
 
-        # Track activity
+                # Track activity
         if self.track_user_activity and user_context.get("user_id"):
             self._track_activity(request, user_context)
 
-        # Process request
+            # Process request
         response = await call_next(request)
 
         return response
@@ -129,7 +129,7 @@ class UserContextMiddleware(BaseHTTPMiddleware):
             except Exception as e:
                 logger.debug(f"Failed to decode token: {e}")
 
-        # Alternative: Get from session cookie
+                # Alternative: Get from session cookie
         if not context["user_id"]:
             session_id = request.cookies.get("session_id")
             if session_id:
@@ -164,7 +164,7 @@ class RoleEnrichmentMiddleware(BaseHTTPMiddleware):
     Adds role-specific information to request state.
     """
 
-    def __init__(self, app):
+    def __init__(self, app) -> None:
         """Initialize role enrichment middleware."""
         super().__init__(app)
 
@@ -193,7 +193,7 @@ class RoleEnrichmentMiddleware(BaseHTTPMiddleware):
             set_custom_field("is_admin", request.state.is_admin)
             set_custom_field("is_faculty", request.state.is_faculty)
 
-        # Process request
+            # Process request
         response = await call_next(request)
 
         return response
@@ -255,7 +255,7 @@ def create_user_context_middleware(
     """
 
     class ConfiguredUserContextMiddleware(UserContextMiddleware):
-        def __init__(self, app):
+        def __init__(self, app) -> None:
             super().__init__(
                 app,
                 inject_logging_context=inject_logging_context,

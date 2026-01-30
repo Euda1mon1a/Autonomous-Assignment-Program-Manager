@@ -91,10 +91,9 @@ class UsageTier(str, Enum):
     PROFESSIONAL = "professional"
     ENTERPRISE = "enterprise"
 
-
-# =============================================================================
-# Data Classes
-# =============================================================================
+    # =============================================================================
+    # Data Classes
+    # =============================================================================
 
 
 @dataclass
@@ -187,10 +186,9 @@ class ForecastResult:
     model_accuracy: float
     metadata: dict[str, Any] = field(default_factory=dict)
 
-
-# =============================================================================
-# Pricing Configuration
-# =============================================================================
+    # =============================================================================
+    # Pricing Configuration
+    # =============================================================================
 
 
 class PricingConfig:
@@ -268,16 +266,15 @@ class PricingConfig:
                 volume_discount = discount
                 break
 
-        # Calculate final cost
+                # Calculate final cost
         cost_per_unit = base_price * tier_multiplier * (1 - volume_discount)
         total_cost = cost_per_unit * quantity
 
         return total_cost.quantize(Decimal("0.01"))
 
-
-# =============================================================================
-# Metering Service
-# =============================================================================
+        # =============================================================================
+        # Metering Service
+        # =============================================================================
 
 
 class MeteringService:
@@ -288,7 +285,7 @@ class MeteringService:
     aggregation, billing integration, and usage forecasting.
     """
 
-    def __init__(self, db: AsyncSession, redis_client: redis.Redis):
+    def __init__(self, db: AsyncSession, redis_client: redis.Redis) -> None:
         """
         Initialize metering service.
 
@@ -299,9 +296,9 @@ class MeteringService:
         self.db = db
         self.redis = redis_client
 
-    # =========================================================================
-    # Event Recording
-    # =========================================================================
+        # =========================================================================
+        # Event Recording
+        # =========================================================================
 
     async def record_event(
         self,
@@ -406,9 +403,9 @@ class MeteringService:
         self.redis.incrby(month_key, event.quantity)
         self.redis.expire(month_key, 365 * 24 * 3600)  # 1 year
 
-    # =========================================================================
-    # Usage Aggregation
-    # =========================================================================
+        # =========================================================================
+        # Usage Aggregation
+        # =========================================================================
 
     async def aggregate_usage(
         self,
@@ -488,7 +485,7 @@ class MeteringService:
         if not events:
             return None
 
-        # Aggregate data
+            # Aggregate data
         total_quantity = 0
         total_cost = Decimal("0")
         event_count = len(events)
@@ -509,9 +506,9 @@ class MeteringService:
             event_count=event_count,
         )
 
-    # =========================================================================
-    # Quota Enforcement
-    # =========================================================================
+        # =========================================================================
+        # Quota Enforcement
+        # =========================================================================
 
     async def check_quota(
         self,
@@ -582,7 +579,7 @@ class MeteringService:
             # For weekly/yearly, calculate from events
             return await self._calculate_period_usage(user_id, resource, period)
 
-        # Get counter from Redis
+            # Get counter from Redis
         usage = self.redis.get(key)
         return int(usage) if usage else 0
 
@@ -613,7 +610,7 @@ class MeteringService:
         else:
             start_date = now - timedelta(days=30)
 
-        # Aggregate from events
+            # Aggregate from events
         agg = await self._aggregate_resource_usage(
             user_id=user_id,
             resource=resource,
@@ -624,9 +621,9 @@ class MeteringService:
 
         return agg.total_quantity if agg else 0
 
-    # =========================================================================
-    # Overage Tracking
-    # =========================================================================
+        # =========================================================================
+        # Overage Tracking
+        # =========================================================================
 
     async def track_overage(
         self,
@@ -747,9 +744,9 @@ class MeteringService:
 
         return alerts
 
-    # =========================================================================
-    # Usage Reports
-    # =========================================================================
+        # =========================================================================
+        # Usage Reports
+        # =========================================================================
 
     async def generate_usage_report(
         self,
@@ -776,7 +773,7 @@ class MeteringService:
         if not start_date:
             start_date = end_date - timedelta(days=30)
 
-        # Aggregate by resource
+            # Aggregate by resource
         by_resource = {}
         total_cost = Decimal("0")
 
@@ -793,7 +790,7 @@ class MeteringService:
                 by_resource[resource.value] = agg
                 total_cost += agg.total_cost
 
-        # Get overage alerts
+                # Get overage alerts
         overages = await self.get_overage_alerts(user_id)
 
         # Generate forecast if requested
@@ -811,7 +808,7 @@ class MeteringService:
                     forecast_periods=7,  # 7 days ahead
                 )
 
-        # Aggregate by period (daily breakdown)
+                # Aggregate by period (daily breakdown)
         by_period = await self._aggregate_by_daily_periods(
             user_id=user_id,
             start_date=start_date,
@@ -888,9 +885,9 @@ class MeteringService:
 
         return by_period
 
-    # =========================================================================
-    # Billing Integration
-    # =========================================================================
+        # =========================================================================
+        # Billing Integration
+        # =========================================================================
 
     async def generate_billing_record(
         self,
@@ -938,7 +935,7 @@ class MeteringService:
                 )
                 subtotal += agg.total_cost
 
-        # Calculate taxes
+                # Calculate taxes
         taxes = (subtotal * tax_rate).quantize(Decimal("0.01"))
         total = subtotal + taxes
 
@@ -1006,9 +1003,9 @@ class MeteringService:
                 "currency": billing_record.currency,
             }
 
-    # =========================================================================
-    # Usage Forecasting
-    # =========================================================================
+            # =========================================================================
+            # Usage Forecasting
+            # =========================================================================
 
     async def forecast_usage(
         self,
@@ -1053,7 +1050,7 @@ class MeteringService:
 
             current += timedelta(days=1)
 
-        # Calculate simple moving average
+            # Calculate simple moving average
         if not historical_usage:
             predicted_usage = 0
             std_dev = 0
@@ -1066,8 +1063,8 @@ class MeteringService:
             )
             std_dev = int(variance**0.5)
 
-        # Calculate confidence interval (using normal distribution approximation)
-        # For 95% confidence, z-score is approximately 1.96
+            # Calculate confidence interval (using normal distribution approximation)
+            # For 95% confidence, z-score is approximately 1.96
         z_score = 1.96 if confidence_level == 0.95 else 2.576  # 99% confidence
 
         margin_of_error = int(z_score * std_dev)
@@ -1145,7 +1142,7 @@ class MeteringService:
 
             current += timedelta(days=1)
 
-        # Calculate statistics
+            # Calculate statistics
         usage_values = [d["usage"] for d in daily_usage]
 
         if usage_values:

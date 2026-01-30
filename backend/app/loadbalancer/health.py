@@ -50,7 +50,7 @@ class HealthCheckResult:
         response_time_ms: float = 0.0,
         error: str | None = None,
         details: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """
         Initialize health check result.
 
@@ -112,7 +112,7 @@ class HTTPHealthProbe(HealthProbe):
         timeout: float = 5.0,
         expected_status: int = 200,
         verify_ssl: bool = True,
-    ):
+    ) -> None:
         """
         Initialize HTTP health probe.
 
@@ -199,7 +199,7 @@ class TCPHealthProbe(HealthProbe):
     Checks if TCP port is open and accepting connections.
     """
 
-    def __init__(self, timeout: float = 5.0):
+    def __init__(self, timeout: float = 5.0) -> None:
         """
         Initialize TCP health probe.
 
@@ -281,7 +281,7 @@ class ServiceHealthChecker:
         probe: HealthProbe | None = None,
         check_interval: int = 30,
         initial_delay: int = 5,
-    ):
+    ) -> None:
         """
         Initialize service health checker.
 

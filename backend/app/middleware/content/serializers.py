@@ -69,7 +69,7 @@ class JSONSerializer(Serializer):
     Supports additional formatting options for development.
     """
 
-    def __init__(self, indent: int | None = None, ensure_ascii: bool = False):
+    def __init__(self, indent: int | None = None, ensure_ascii: bool = False) -> None:
         """
         Initialize JSON serializer.
 
@@ -126,7 +126,7 @@ class XMLSerializer(Serializer):
     Converts Python dicts to XML format.
     """
 
-    def __init__(self, root_tag: str = "response", pretty_print: bool = False):
+    def __init__(self, root_tag: str = "response", pretty_print: bool = False) -> None:
         """
         Initialize XML serializer.
 
@@ -182,7 +182,7 @@ class XMLSerializer(Serializer):
             else:
                 root = self._etree.Element(self.root_tag)
 
-            # Convert data to XML elements
+                # Convert data to XML elements
             self._dict_to_xml(root, data)
 
             # Convert to bytes
@@ -205,7 +205,7 @@ class XMLSerializer(Serializer):
         except Exception as e:
             raise SerializationError(f"XML serialization failed: {e}") from e
 
-    def _dict_to_xml(self, parent, data):
+    def _dict_to_xml(self, parent, data) -> None:
         """
         Convert dictionary to XML elements.
 
@@ -235,7 +235,7 @@ class YAMLSerializer(Serializer):
     Requires PyYAML package. Falls back gracefully if not available.
     """
 
-    def __init__(self, default_flow_style: bool = False):
+    def __init__(self, default_flow_style: bool = False) -> None:
         """
         Initialize YAML serializer.
 
@@ -304,7 +304,7 @@ class MessagePackSerializer(Serializer):
     that's more compact than JSON.
     """
 
-    def __init__(self, use_bin_type: bool = True):
+    def __init__(self, use_bin_type: bool = True) -> None:
         """
         Initialize MessagePack serializer.
 
@@ -373,12 +373,12 @@ class SerializerRegistry:
     serializer lookup by content type.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize serializer registry with default serializers."""
         self._serializers: dict[str, Serializer] = {}
         self._register_default_serializers()
 
-    def _register_default_serializers(self):
+    def _register_default_serializers(self) -> None:
         """Register default serializers (JSON, XML, YAML, MessagePack)."""
         # JSON (always available)
         self.register(JSONSerializer())
@@ -391,7 +391,7 @@ class SerializerRegistry:
         if yaml_serializer.available:
             self.register(yaml_serializer)
 
-        # MessagePack (if available)
+            # MessagePack (if available)
         msgpack_serializer = MessagePackSerializer()
         if msgpack_serializer.available:
             self.register(msgpack_serializer)
@@ -401,7 +401,7 @@ class SerializerRegistry:
             f"{list(self._serializers.keys())}"
         )
 
-    def register(self, serializer: Serializer):
+    def register(self, serializer: Serializer) -> None:
         """
         Register a serializer.
 
@@ -417,7 +417,7 @@ class SerializerRegistry:
         self._serializers[serializer.content_type] = serializer
         logger.debug(f"Registered serializer: {serializer.content_type}")
 
-    def unregister(self, content_type: str):
+    def unregister(self, content_type: str) -> None:
         """
         Unregister a serializer.
 
@@ -463,8 +463,9 @@ class SerializerRegistry:
         """
         return self.get_serializer(content_type) is not None
 
+        # Global registry instance
 
-# Global registry instance
+
 _global_registry = SerializerRegistry()
 
 
@@ -478,7 +479,7 @@ def get_serializer_registry() -> SerializerRegistry:
     return _global_registry
 
 
-def register_serializer(serializer: Serializer):
+def register_serializer(serializer: Serializer) -> None:
     """
     Register a custom serializer globally.
 

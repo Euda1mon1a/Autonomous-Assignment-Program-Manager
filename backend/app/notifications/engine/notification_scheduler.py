@@ -36,7 +36,7 @@ class NotificationScheduler:
     - Reminder sequences
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize scheduler."""
         self._scheduled: dict[UUID, ScheduledNotificationItem] = {}
 

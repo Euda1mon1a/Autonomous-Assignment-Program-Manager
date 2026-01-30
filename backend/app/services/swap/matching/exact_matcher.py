@@ -42,7 +42,7 @@ class ExactMatcher:
     - Faculty B wants to give week Y and get week X
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize exact matcher.
 
@@ -119,7 +119,7 @@ class ExactMatcher:
         if not request:
             return None
 
-        # Find matching request
+            # Find matching request
         matching_query = select(SwapRecord).where(
             and_(
                 SwapRecord.id != request_id,
@@ -170,7 +170,7 @@ class ExactMatcher:
         if not request_a.target_faculty_id or not request_b.target_faculty_id:
             return False
 
-        # Check if they want each other's weeks
+            # Check if they want each other's weeks
         a_wants_b = (
             request_a.target_faculty_id == request_b.source_faculty_id
             and request_a.target_week == request_b.source_week

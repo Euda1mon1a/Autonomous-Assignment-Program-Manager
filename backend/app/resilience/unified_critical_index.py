@@ -182,7 +182,7 @@ class UnifiedCriticalIndex:
         if self.hub_score.threshold_exceeded:
             critical_domains.append(CriticalityDomain.HUB_ANALYSIS)
 
-        # Map combination to pattern
+            # Map combination to pattern
         pattern_map = {
             frozenset(): RiskPattern.LOW_RISK,
             frozenset([CriticalityDomain.CONTINGENCY]): RiskPattern.ISOLATED_WORKHORSE,
@@ -238,7 +238,7 @@ class UnifiedCriticalIndex:
         else:
             self.domain_agreement = 1.0
 
-        # Detect conflicts (disagreement cases worth investigating)
+            # Detect conflicts (disagreement cases worth investigating)
         self.conflict_details = []
 
         # Case 1: High hub but low epidemiology - isolated workaholic
@@ -251,7 +251,7 @@ class UnifiedCriticalIndex:
                 "may be isolated or have strong personal boundaries"
             )
 
-        # Case 2: High epidemiology but low contingency - social but not critical
+            # Case 2: High epidemiology but low contingency - social but not critical
         if (
             self.epidemiology_score.normalized_score > 0.7
             and self.contingency_score.normalized_score < 0.3
@@ -261,7 +261,7 @@ class UnifiedCriticalIndex:
                 "focus on wellness rather than coverage"
             )
 
-        # Case 3: All scores similar - true consensus (not a conflict)
+            # Case 3: All scores similar - true consensus (not a conflict)
         if self.domain_agreement > 0.8:
             self.conflict_details.append(
                 "Strong domain consensus - high confidence in assessment"
@@ -390,7 +390,7 @@ class PopulationAnalysis:
             self.risk_concentration = 0.0
             return
 
-        # Gini coefficient calculation
+            # Gini coefficient calculation
         cumulative = 0.0
         for i, score in enumerate(scores):
             cumulative += (2 * (i + 1) - n - 1) * score
@@ -423,7 +423,7 @@ class PopulationAnalysis:
         for rank, idx in enumerate(sorted_indices, 1):
             idx.priority_rank = rank
 
-        # Top priority = top 20% or universal critical
+            # Top priority = top 20% or universal critical
         threshold = max(1, len(sorted_indices) // 5)
         self.top_priority = [idx.faculty_id for idx in sorted_indices[:threshold]]
 
@@ -459,7 +459,7 @@ class UnifiedCriticalIndexAnalyzer:
         contingency_weight: float = 0.40,
         hub_weight: float = 0.35,
         epidemiology_weight: float = 0.25,
-    ):
+    ) -> None:
         """
         Initialize the unified analyzer.
 
@@ -520,15 +520,15 @@ class UnifiedCriticalIndexAnalyzer:
                 name=getattr(fac, "name", str(fac.id)),
             )
 
-        # Build edge weights from shared assignments
-        # Group assignments by block
+            # Build edge weights from shared assignments
+            # Group assignments by block
         blocks_to_faculty: dict[UUID, set[UUID]] = {}
         for assignment in assignments:
             if assignment.block_id not in blocks_to_faculty:
                 blocks_to_faculty[assignment.block_id] = set()
             blocks_to_faculty[assignment.block_id].add(assignment.person_id)
 
-        # Count shared shifts between pairs
+            # Count shared shifts between pairs
         shared_shifts: dict[tuple[UUID, UUID], int] = {}
         for block_id, faculty_set in blocks_to_faculty.items():
             faculty_list = list(faculty_set)
@@ -537,7 +537,7 @@ class UnifiedCriticalIndexAnalyzer:
                     pair = tuple(sorted([fac1, fac2]))
                     shared_shifts[pair] = shared_shifts.get(pair, 0) + 1
 
-        # Add edges above threshold
+                    # Add edges above threshold
         for (fac1, fac2), count in shared_shifts.items():
             if count >= shared_shift_threshold:
                 self._network.add_edge(
@@ -629,11 +629,11 @@ class UnifiedCriticalIndexAnalyzer:
             if len(faculty_on_block) == 1:
                 sole_provider_blocks += 1
 
-            # Critical: removing this faculty drops below requirement
+                # Critical: removing this faculty drops below requirement
             if len(faculty_on_block) <= required:
                 critical_blocks += 1
 
-        # Calculate raw score
+                # Calculate raw score
         total_blocks = len(set(a.block_id for a in faculty_assignments))
         if total_blocks == 0:
             raw_score = 0.0
@@ -683,10 +683,10 @@ class UnifiedCriticalIndexAnalyzer:
                 is_critical=False,
             )
 
-        # Factors that increase transmission potential:
-        # 1. Degree (number of connections) - more contacts = more transmission
-        # 2. Betweenness (bridge between groups) - can spread across clusters
-        # 3. Current burnout state (if provided) - already infected
+            # Factors that increase transmission potential:
+            # 1. Degree (number of connections) - more contacts = more transmission
+            # 2. Betweenness (bridge between groups) - can spread across clusters
+            # 3. Current burnout state (if provided) - already infected
 
         centrality = self._centrality_cache.get(faculty_id, {})
         degree = centrality.get("degree", 0.0)
@@ -698,12 +698,12 @@ class UnifiedCriticalIndexAnalyzer:
             state = burnout_states.get(faculty_id, "susceptible")
             is_burned_out = state in ["burned_out", "at_risk"]
 
-        # Raw score combines network position with current state
+            # Raw score combines network position with current state
         raw_score = degree * 0.4 + betweenness * 0.4
         if is_burned_out:
             raw_score = min(1.0, raw_score * 1.5)  # Amplify if already burned out
 
-        # Critical if high degree and currently burning out
+            # Critical if high degree and currently burning out
         is_critical = degree > 0.5 and is_burned_out
 
         return DomainScore(
@@ -786,7 +786,7 @@ class UnifiedCriticalIndexAnalyzer:
             else:
                 score.normalized_score = 0.5  # All same, put in middle
 
-            # Percentile
+                # Percentile
             rank = sorted_values.index(score.raw_score)
             score.percentile = (rank / len(scores)) * 100
 
@@ -851,11 +851,11 @@ class UnifiedCriticalIndexAnalyzer:
         elif cont_blocks > 0:
             confidence += 0.15
 
-        # Hub: based on network connectivity
+            # Hub: based on network connectivity
         if self._network and hub.details:
             confidence += 0.35
 
-        # Epidemiology: based on burnout state data
+            # Epidemiology: based on burnout state data
         if epidemiology.details.get("is_burned_out") is not None:
             confidence += 0.30
 
@@ -886,7 +886,7 @@ class UnifiedCriticalIndexAnalyzer:
         if not self._network:
             self.build_network(faculty, assignments)
 
-        # Compute raw scores for all faculty
+            # Compute raw scores for all faculty
         indices = []
         contingency_scores = []
         epidemiology_scores = []
@@ -905,7 +905,7 @@ class UnifiedCriticalIndexAnalyzer:
             epidemiology_scores.append(idx.epidemiology_score)
             hub_scores.append(idx.hub_score)
 
-        # Normalize scores across population
+            # Normalize scores across population
         self.normalize_scores(contingency_scores)
         self.normalize_scores(epidemiology_scores)
         self.normalize_scores(hub_scores)
@@ -923,10 +923,9 @@ class UnifiedCriticalIndexAnalyzer:
             indices=indices,
         )
 
-
-# =============================================================================
-# Convenience Functions
-# =============================================================================
+        # =============================================================================
+        # Convenience Functions
+        # =============================================================================
 
 
 def quick_analysis(

@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 class ExportSchedulerService:
     """Service for managing export job scheduling and execution."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize export scheduler service.
 
@@ -94,12 +94,12 @@ class ExportSchedulerService:
         if not job:
             return None
 
-        # Update fields
+            # Update fields
         for field, value in update_data.items():
             if hasattr(job, field) and value is not None:
                 setattr(job, field, value)
 
-        # Recalculate next run time if schedule changed
+                # Recalculate next run time if schedule changed
         if "schedule_cron" in update_data or "schedule_enabled" in update_data:
             if job.schedule_enabled and job.schedule_cron:
                 job.next_run_at = self._calculate_next_run_time(job.schedule_cron)
@@ -167,7 +167,7 @@ class ExportSchedulerService:
         if enabled_only:
             query = query.where(ExportJob.enabled == True)
 
-        # Get total count
+            # Get total count
         count_query = select(func.count()).select_from(ExportJob)
         if enabled_only:
             count_query = count_query.where(ExportJob.enabled == True)
@@ -225,7 +225,7 @@ class ExportSchedulerService:
         if not job:
             raise ValueError(f"Export job not found: {job_id}")
 
-        # Create execution record
+            # Create execution record
         execution = ExportJobExecution(
             job_id=job.id,
             job_name=job.name,
@@ -299,7 +299,7 @@ class ExportSchedulerService:
             if not delivery_result.success:
                 execution.error_message = delivery_result.message
 
-            # Update job
+                # Update job
             job.last_run_at = execution.started_at
             job.run_count += 1
             if job.schedule_enabled and job.schedule_cron:
@@ -657,12 +657,12 @@ class ExportSchedulerService:
         else:
             start_row = 1
 
-        # Write data
+            # Write data
         for row_idx, row_data in enumerate(data, start_row):
             for col_idx, header in enumerate(headers, 1):
                 ws.cell(row=row_idx, column=col_idx, value=row_data.get(header))
 
-        # Save to bytes
+                # Save to bytes
         output = io.BytesIO()
         wb.save(output)
         output.seek(0)

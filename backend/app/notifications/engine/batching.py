@@ -75,7 +75,7 @@ class BatchingEngine:
         NotificationType.ABSENCE_REJECTED: 30,  # 30 minutes
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the batching engine."""
         # Active batches: batch_key -> NotificationBatch
         self._batches: dict[str, NotificationBatch] = {}
@@ -130,7 +130,7 @@ class BatchingEngine:
                     window_minutes,
                 )
 
-            # Add to batch
+                # Add to batch
             batch = self._batches[batch_key]
             batch.recipient_ids.append(payload.recipient_id)
             batch.payloads.append(payload)

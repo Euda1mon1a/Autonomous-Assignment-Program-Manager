@@ -95,7 +95,7 @@ class XMLToXlsxConverter:
         structure_xml_path: Path | str | None = None,
         use_block_template2: bool = True,
         strict_row_mapping: bool = False,
-    ):
+    ) -> None:
         """
         Initialize converter with optional template.
 
@@ -139,7 +139,7 @@ class XMLToXlsxConverter:
             if call_row_elem is not None:
                 self.call_row = int(call_row_elem.get("row", "4"))
 
-        # Load resident row mappings (name → row, pgy, template)
+                # Load resident row mappings (name → row, pgy, template)
         for resident in root.findall(".//resident"):
             name = resident.get("name", "")
             row = resident.get("row", "")
@@ -153,7 +153,7 @@ class XMLToXlsxConverter:
                     # Template code from PGY: R1, R2, R3
                     self.template_mappings[normalized] = f"R{pgy}"
 
-        # Load faculty row mappings
+                    # Load faculty row mappings
         for person in root.findall(".//faculty/person"):
             name = person.get("name", "")
             row = person.get("row", "")
@@ -211,7 +211,7 @@ class XMLToXlsxConverter:
             wb = self._create_new_workbook(block_start, block_end)
             sheet = wb.active
 
-        # Fill header row (always - helps with readability)
+            # Fill header row (always - helps with readability)
         self._fill_header_row(sheet, block_start, block_end)
 
         # Fill residents and faculty
@@ -230,7 +230,7 @@ class XMLToXlsxConverter:
         if call_rows:
             self._fill_call_row(sheet, call_rows, block_start, block_end)
 
-        # Save to bytes
+            # Save to bytes
         buffer = BytesIO()
         wb.save(buffer)
         xlsx_bytes = buffer.getvalue()
@@ -312,12 +312,12 @@ class XMLToXlsxConverter:
         if not self.apply_colors or not self.color_scheme:
             return
 
-        # Apply fill color
+            # Apply fill color
         hex_color = self.color_scheme.get_code_color(code)
         if hex_color:
             cell.fill = PatternFill(start_color=hex_color, fill_type="solid")
 
-        # Apply font color (priority: explicit mapping > contrast fallback)
+            # Apply font color (priority: explicit mapping > contrast fallback)
         font_color = self.color_scheme.get_font_color(code)
         if font_color:
             cell.font = Font(color=font_color)
@@ -452,7 +452,7 @@ class XMLToXlsxConverter:
             sheet.cell(row=ROW_HEADERS, column=ROSETTA_COL_NOTES).value = "Notes"
             col_schedule_start = ROSETTA_COL_SCHEDULE_START
 
-        # Schedule column headers (e.g., "Thu Mar 12 AM", "Thu Mar 12 PM")
+            # Schedule column headers (e.g., "Thu Mar 12 AM", "Thu Mar 12 PM")
         current = block_start
         col = col_schedule_start
         while current <= block_end:
@@ -612,7 +612,7 @@ class XMLToXlsxConverter:
                 if rotation2:
                     self._apply_rotation_color(rot2_cell, rotation2)
 
-            # Fill schedule columns from day elements
+                    # Fill schedule columns from day elements
             days = resident.get("days", []) or []
             sorted_days = sorted(days, key=lambda d: str(d.get("date", "")))
             for day in sorted_days:
@@ -665,7 +665,7 @@ class XMLToXlsxConverter:
             if staff_name:
                 call_lookup[night_date] = staff_name
 
-        # Write to call row, AM column only (col 6, 8, 10, ...)
+                # Write to call row, AM column only (col 6, 8, 10, ...)
         current = block_start
         col = COL_SCHEDULE_START  # Column 6
         while current <= block_end:

@@ -43,7 +43,7 @@ class TaskQueue:
         self,
         max_concurrent: int = 10,
         max_queue_size: int = 1000,
-    ):
+    ) -> None:
         """Initialize task queue.
 
         Args:
@@ -110,7 +110,7 @@ class TaskQueue:
         logger.debug(f"Enqueued task {task_id} with priority {priority.name}")
         return task_id
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the task queue worker."""
         if self._running:
             logger.warning("Task queue already running")
@@ -120,7 +120,7 @@ class TaskQueue:
         self._worker_task = asyncio.create_task(self._worker())
         logger.info(f"Task queue started (max_concurrent={self.max_concurrent})")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the task queue worker."""
         self._running = False
 
@@ -131,7 +131,7 @@ class TaskQueue:
             except asyncio.CancelledError:
                 pass
 
-        # Wait for active tasks to complete
+                # Wait for active tasks to complete
         if self.active_tasks:
             logger.info(
                 f"Waiting for {len(self.active_tasks)} active tasks to complete"
@@ -140,7 +140,7 @@ class TaskQueue:
 
         logger.info("Task queue stopped")
 
-    async def _worker(self):
+    async def _worker(self) -> None:
         """Worker loop to process tasks."""
         while self._running:
             try:
@@ -258,8 +258,9 @@ class TaskQueue:
             ),
         }
 
+        # Global task queue instance
 
-# Global task queue instance
+
 _task_queue: TaskQueue | None = None
 
 

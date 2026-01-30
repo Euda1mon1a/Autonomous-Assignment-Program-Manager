@@ -81,7 +81,7 @@ class AuditRestorer:
         self,
         db: Session,
         storage_backend: ArchiveStorageBackend | None = None,
-    ):
+    ) -> None:
         """
         Initialize audit restorer.
 
@@ -161,7 +161,7 @@ class AuditRestorer:
         if filters:
             records = self._apply_filters(records, filters)
 
-        # Apply limit
+            # Apply limit
         if limit:
             records = records[:limit]
 
@@ -210,7 +210,7 @@ class AuditRestorer:
         if restore_mode == "selective" and filters:
             records_to_restore = self._apply_filters(all_records, filters)
 
-        # Restore records
+            # Restore records
         restored_count = 0
         if not dry_run:
             restored_count = await self._restore_records_to_db(records_to_restore)
@@ -340,7 +340,7 @@ class AuditRestorer:
                 logger.warning(f"Error searching archive {archive_id}: {e}")
                 continue
 
-        # Apply final limit
+                # Apply final limit
         all_results = all_results[:limit]
 
         logger.info(
@@ -401,7 +401,7 @@ class AuditRestorer:
                         entity_type_counts.get(entity_type, 0) + count
                     )
 
-                # Aggregate operation counts
+                    # Aggregate operation counts
                 for operation, count in metadata.get("operation_counts", {}).items():
                     operation_counts[operation] = (
                         operation_counts.get(operation, 0) + count

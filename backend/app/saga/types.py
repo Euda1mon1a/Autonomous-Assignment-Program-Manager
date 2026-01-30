@@ -37,8 +37,9 @@ class StepType(str, Enum):
     SEQUENTIAL = "sequential"  # Execute one at a time
     PARALLEL = "parallel"  # Execute concurrently
 
+    # Type aliases for step functions
 
-# Type aliases for step functions
+
 StepFunction = Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]
 CompensationFunction = Callable[[dict[str, Any]], Awaitable[None]]
 
@@ -67,7 +68,7 @@ class SagaStepDefinition:
     idempotent: bool = True
     parallel_group: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate step definition."""
         if self.timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
@@ -95,19 +96,19 @@ class SagaDefinition:
     description: str = ""
     version: str = "1.0"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate saga definition."""
         if not self.steps:
             raise ValueError("Saga must have at least one step")
         if self.timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
 
-        # Check for duplicate step names
+            # Check for duplicate step names
         step_names = [step.name for step in self.steps]
         if len(step_names) != len(set(step_names)):
             raise ValueError("Step names must be unique")
 
-        # Validate parallel groups
+            # Validate parallel groups
         parallel_groups: dict[str, list[SagaStepDefinition]] = {}
         for step in self.steps:
             if step.parallel_group:
@@ -115,7 +116,7 @@ class SagaDefinition:
                     parallel_groups[step.parallel_group] = []
                 parallel_groups[step.parallel_group].append(step)
 
-        # All steps in a parallel group should be consecutive
+                # All steps in a parallel group should be consecutive
         for group_name, group_steps in parallel_groups.items():
             indices = [self.steps.index(step) for step in group_steps]
             if indices != list(range(min(indices), max(indices) + 1)):

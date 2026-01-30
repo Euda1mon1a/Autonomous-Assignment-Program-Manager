@@ -144,7 +144,7 @@ class PropagationAnalyzer:
         db: Session,
         constraint_manager: ConstraintManager,
         context: SchedulingContext,
-    ):
+    ) -> None:
         self.db = db
         self.constraint_manager = constraint_manager
         self.context = context
@@ -162,7 +162,7 @@ class PropagationAnalyzer:
         for block in self.context.blocks.values():
             G.add_node(block.id, date=block.date, session=block.session)
 
-        # Add edges for temporal constraints (consecutive days)
+            # Add edges for temporal constraints (consecutive days)
         for block in self.context.blocks.values():
             # Connect to next day's blocks
             next_date = block.date + timedelta(days=1)
@@ -176,8 +176,8 @@ class PropagationAnalyzer:
                         type="temporal",
                     )
 
-        # Add edges for supervision constraints
-        # (blocks on same day requiring same faculty)
+                    # Add edges for supervision constraints
+                    # (blocks on same day requiring same faculty)
         blocks_by_date = defaultdict(list)
         for block in self.context.blocks.values():
             blocks_by_date[block.date].append(block.id)
@@ -223,7 +223,7 @@ class PropagationAnalyzer:
             if depth >= max_depth:
                 continue
 
-            # Get neighbors in constraint graph
+                # Get neighbors in constraint graph
             if block_id not in self.constraint_graph:
                 continue
 
@@ -234,7 +234,7 @@ class PropagationAnalyzer:
                     depth_groups[new_depth].add(neighbor_id)
                     queue.append((neighbor_id, new_depth))
 
-        # Compute propagation steps with decay
+                    # Compute propagation steps with decay
         for depth in sorted(depth_groups.keys()):
             blocks_at_depth = depth_groups[depth]
 
@@ -248,7 +248,7 @@ class PropagationAnalyzer:
             for block_id in blocks_at_depth:
                 assignments_at_depth.update(self._get_assignments_for_block(block_id))
 
-            # Estimate constraint density at this depth
+                # Estimate constraint density at this depth
             constraint_density = self._estimate_constraint_density(blocks_at_depth)
 
             steps.append(
@@ -279,14 +279,14 @@ class PropagationAnalyzer:
         if not blocks:
             return 0.0
 
-        # Count constraints affecting these blocks
+            # Count constraints affecting these blocks
         constraint_count = 0
         for constraint in self.constraint_manager.hard_constraints:
             # Simple heuristic: count constraints that reference any block
             # In real implementation, would need constraint-specific logic
             constraint_count += 1
 
-        # Normalize by number of blocks
+            # Normalize by number of blocks
         density = min(1.0, constraint_count / (len(blocks) * 5))  # 5 = avg constraints
         return density
 
@@ -303,7 +303,7 @@ class AndersonLocalizer:
         self,
         db: Session,
         constraint_manager: ConstraintManager | None = None,
-    ):
+    ) -> None:
         self.db = db
         self.constraint_manager = (
             constraint_manager or ConstraintManager.create_default()
@@ -362,7 +362,7 @@ class AndersonLocalizer:
             affected_assignments.update(step.affected_assignments)
             total_depth = step.depth
 
-        # Compute localization metrics
+            # Compute localization metrics
         localization_length = self._compute_localization_length(propagation_steps)
         barrier_strength = self._compute_barrier_strength(propagation_steps)
         escape_probability = self._compute_escape_probability(
@@ -404,9 +404,9 @@ class AndersonLocalizer:
         if len(propagation_steps) < 2:
             return DEFAULT_LOCALIZATION_LENGTH
 
-        # Fit exponential decay
-        # ln(strength) = -depth / L
-        # L = -depth / ln(strength)
+            # Fit exponential decay
+            # ln(strength) = -depth / L
+            # L = -depth / ln(strength)
 
         total_weighted_length = 0.0
         total_weight = 0.0
@@ -434,7 +434,7 @@ class AndersonLocalizer:
         if not propagation_steps:
             return 0.0
 
-        # Average constraint density across all steps
+            # Average constraint density across all steps
         total_density = sum(step.constraint_density for step in propagation_steps)
         avg_density = total_density / len(propagation_steps)
 
@@ -457,7 +457,7 @@ class AndersonLocalizer:
         if not propagation_steps:
             return 1.0  # No containment
 
-        # Get total assignments in schedule
+            # Get total assignments in schedule
         total_assignments = len(schedule_context.blocks) * 2  # Estimate
 
         # Size factor: larger region = higher escape probability
@@ -474,7 +474,7 @@ class AndersonLocalizer:
         else:
             boundary_factor = 1.0
 
-        # Combine factors
+            # Combine factors
         escape_prob = size_factor * 0.4 + decay_factor * 0.3 + boundary_factor * 0.3
 
         return min(1.0, max(0.0, escape_prob))

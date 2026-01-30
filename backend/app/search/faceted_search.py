@@ -289,7 +289,7 @@ class FacetedSearchService:
     - Facet analytics tracking
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize faceted search service.
 
@@ -374,7 +374,7 @@ class FacetedSearchService:
         if facet_config is None:
             facet_config = FacetConfig()
 
-        # Check cache if enabled
+            # Check cache if enabled
         cache_key = self._get_cache_key(query, entity_types, facet_selections)
         if facet_config.cache_facets:
             cached_result = self._cache.get(cache_key)
@@ -382,7 +382,7 @@ class FacetedSearchService:
                 logger.debug(f"Facet cache hit for query: {query}")
                 return cached_result
 
-        # Execute search with filters
+                # Execute search with filters
         results = await self._execute_search(
             query=query,
             entity_types=entity_types,
@@ -422,7 +422,7 @@ class FacetedSearchService:
         if facet_config.cache_facets:
             self._cache.set(cache_key, response, ttl=facet_config.cache_ttl)
 
-        # Track analytics
+            # Track analytics
         await self._track_facet_usage(facet_selections, total, len(results))
 
         return response
@@ -496,7 +496,7 @@ class FacetedSearchService:
                 )
             )
 
-        # Apply facet filters
+            # Apply facet filters
         for selection in facet_selections:
             if selection.facet_name == "person_type" and selection.values:
                 if selection.operator == "OR":
@@ -568,7 +568,7 @@ class FacetedSearchService:
                 )
             )
 
-        # Apply facet filters
+            # Apply facet filters
         for selection in facet_selections:
             if selection.facet_name == "rotation_type" and selection.values:
                 query_obj = query_obj.filter(
@@ -623,7 +623,7 @@ class FacetedSearchService:
                 )
             )
 
-        # Apply facet filters
+            # Apply facet filters
         for selection in facet_selections:
             if selection.facet_name == "procedure_category" and selection.values:
                 query_obj = query_obj.filter(Procedure.category.in_(selection.values))
@@ -676,12 +676,12 @@ class FacetedSearchService:
                 )
             )
 
-        # Apply facet filters
+            # Apply facet filters
         for selection in facet_selections:
             if selection.facet_name == "assignment_role" and selection.values:
                 query_obj = query_obj.filter(Assignment.role.in_(selection.values))
 
-            # Date range filter for assignments
+                # Date range filter for assignments
             if selection.facet_name == "date_range":
                 if selection.date_start and selection.date_end:
                     # This would require joining with Block table
@@ -734,7 +734,7 @@ class FacetedSearchService:
                 )
             )
 
-        # Apply facet filters
+            # Apply facet filters
         for selection in facet_selections:
             if selection.facet_name == "status" and selection.values:
                 query_obj = query_obj.filter(SwapRecord.status.in_(selection.values))
@@ -818,7 +818,7 @@ class FacetedSearchService:
             if status_facet:
                 facets.append(status_facet)
 
-        # Generate date range facets
+                # Generate date range facets
         if (
             facet_config.enable_date_facets
             and "date_range" in facet_config.enabled_facets
@@ -829,7 +829,7 @@ class FacetedSearchService:
             if date_facet:
                 facets.append(date_facet)
 
-        # Generate hierarchical facets
+                # Generate hierarchical facets
         if (
             facet_config.enable_hierarchical
             and "specialty" in facet_config.enabled_facets
@@ -840,7 +840,7 @@ class FacetedSearchService:
             if specialty_facet:
                 facets.append(specialty_facet)
 
-        # Dynamic ordering
+                # Dynamic ordering
         if facet_config.dynamic_ordering:
             facets = self._apply_dynamic_facet_ordering(facets)
 
@@ -874,13 +874,13 @@ class FacetedSearchService:
         if not counts:
             return None
 
-        # Get selected values
+            # Get selected values
         selected_values = set()
         for selection in selections:
             if selection.facet_name == "person_type":
                 selected_values.update(selection.values)
 
-        # Create facet values
+                # Create facet values
         facet_values = [
             FacetValue(
                 value=person_type.title(),
@@ -937,13 +937,13 @@ class FacetedSearchService:
         if not counts:
             return None
 
-        # Get selected values
+            # Get selected values
         selected_values = set()
         for selection in selections:
             if selection.facet_name == "pgy_level":
                 selected_values.update(selection.values)
 
-        # Create facet values
+                # Create facet values
         facet_values = [
             FacetValue(
                 value=key,
@@ -996,13 +996,13 @@ class FacetedSearchService:
         if not counts:
             return None
 
-        # Get selected values
+            # Get selected values
         selected_values = set()
         for selection in selections:
             if selection.facet_name == "faculty_role":
                 selected_values.update(selection.values)
 
-        # Role labels
+                # Role labels
         role_labels = {
             "pd": "Program Director",
             "apd": "Associate Program Director",
@@ -1066,13 +1066,13 @@ class FacetedSearchService:
         if not counts:
             return None
 
-        # Get selected values
+            # Get selected values
         selected_values = set()
         for selection in selections:
             if selection.facet_name == "rotation_type":
                 selected_values.update(selection.values)
 
-        # Create facet values
+                # Create facet values
         facet_values = [
             FacetValue(
                 value=rotation_type.title(),
@@ -1126,13 +1126,13 @@ class FacetedSearchService:
         if not counts:
             return None
 
-        # Get selected values
+            # Get selected values
         selected_values = set()
         for selection in selections:
             if selection.facet_name == "status":
                 selected_values.update(selection.values)
 
-        # Create facet values
+                # Create facet values
         facet_values = [
             FacetValue(
                 value=status.title(),
@@ -1276,7 +1276,7 @@ class FacetedSearchService:
         if not hierarchy:
             return None
 
-        # Build hierarchical facet values
+            # Build hierarchical facet values
         facet_values = []
         for parent, children in hierarchy.items():
             total_count = children.get("_total", 0) + sum(
@@ -1304,7 +1304,7 @@ class FacetedSearchService:
 
             facet_values.append(parent_value)
 
-        # Sort by count
+            # Sort by count
         facet_values.sort(key=lambda x: x.count, reverse=True)
 
         return Facet(
@@ -1393,7 +1393,7 @@ class FacetedSearchService:
                 }
             return {}
 
-        # Return all analytics
+            # Return all analytics
         return {
             name: {
                 "facet_name": analytics.facet_name,

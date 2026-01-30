@@ -55,7 +55,7 @@ class BlockQualityReportService:
     Reports can be output as Pydantic models or formatted markdown.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def get_block_dates(self, block_number: int, academic_year: int) -> BlockDates:
@@ -488,7 +488,7 @@ class BlockQualityReportService:
                 )
             )
 
-        # Faculty
+            # Faculty
         result = self.db.execute(
             text("""
                 SELECT p.name, p.faculty_role, COUNT(a.id) as assigned_slots

@@ -141,7 +141,7 @@ class AutonomousLoop:
         config: LoopConfig,
         adapter: "ParameterAdapter | None" = None,
         advisor: "LLMAdvisor | None" = None,
-    ):
+    ) -> None:
         """
         Initialize the loop with all components.
 
@@ -221,7 +221,7 @@ class AutonomousLoop:
             )
             logger.info(f"Created new run {state.run_id}")
 
-        # Create generator
+            # Create generator
         generator = CandidateGenerator(
             db=db,
             start_date=start_date,
@@ -291,14 +291,14 @@ class AutonomousLoop:
                 if stop_reason != StopReason.RUNNING:
                     break
 
-                # Run one iteration
+                    # Run one iteration
                 self._run_iteration()
 
                 # Checkpoint periodically
                 if self.state.current_iteration % self.config.checkpoint_interval == 0:
                     self._checkpoint()
 
-                # Log progress periodically
+                    # Log progress periodically
                 if self.state.current_iteration % self.config.log_interval == 0:
                     self._log_progress()
 
@@ -307,7 +307,7 @@ class AutonomousLoop:
             self.store.log(self.state, f"ERROR: {e}")
             stop_reason = StopReason.ERROR
 
-        # Final save
+            # Final save
         self.state.status = (
             "completed" if stop_reason == StopReason.TARGET_REACHED else "exhausted"
         )
@@ -368,7 +368,7 @@ class AutonomousLoop:
             self.state.current_iteration += 1
             return
 
-        # 3. Evaluate each candidate
+            # 3. Evaluate each candidate
         best_this_iteration: tuple[ScheduleCandidate, EvaluationResult] | None = None
 
         for candidate in candidates:
@@ -404,7 +404,7 @@ class AutonomousLoop:
                 f"{evaluation.score:.4f} (valid={evaluation.valid})"
             )
 
-        # 6. Record iteration in history
+            # 6. Record iteration in history
         iteration_time = time.time() - iteration_start
         violation_types = list({v.type for v in evaluation.violations})
 
@@ -440,21 +440,21 @@ class AutonomousLoop:
         if self.state.best_score >= self.config.target_score:
             return StopReason.TARGET_REACHED
 
-        # Max iterations
+            # Max iterations
         if self.state.current_iteration >= self.config.max_iterations:
             return StopReason.MAX_ITERATIONS
 
-        # Stagnation
+            # Stagnation
         if self.state.iterations_since_improvement >= self.config.stagnation_limit:
             return StopReason.STAGNATION
 
-        # Time limit
+            # Time limit
         if self.config.time_limit_seconds:
             elapsed = time.time() - self._start_time
             if elapsed >= self.config.time_limit_seconds:
                 return StopReason.TIME_LIMIT
 
-        # User abort
+                # User abort
         if self._abort_requested:
             return StopReason.USER_ABORT
 
@@ -522,7 +522,7 @@ class AutonomousLoopWithAdvisor(AutonomousLoop):
                 logger.warning(f"LLM advisor error (continuing without): {e}")
                 llm_suggestion = None
 
-        # If LLM suggested parameters, use them
+                # If LLM suggested parameters, use them
         if llm_suggestion and llm_suggestion.params:
             self.state.current_params = llm_suggestion.params
             logger.info(
@@ -531,7 +531,7 @@ class AutonomousLoopWithAdvisor(AutonomousLoop):
             )
             logger.debug(f"LLM reasoning: {llm_suggestion.reasoning}")
 
-        # Run standard iteration
+            # Run standard iteration
         super()._run_iteration()
 
         # Log LLM usage if any

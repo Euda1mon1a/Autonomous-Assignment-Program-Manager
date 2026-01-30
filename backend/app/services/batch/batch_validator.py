@@ -22,7 +22,7 @@ from app.schemas.batch import (
 class BatchValidator:
     """Validator for batch operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.assignment_repo = AssignmentRepository(db)
         self.block_repo = BlockRepository(db)
@@ -55,7 +55,7 @@ class BatchValidator:
                 validation_errors=validation_errors,
             )
 
-        # Check for duplicates within batch
+            # Check for duplicates within batch
         seen_pairs = set()
         for idx, assignment in enumerate(assignments):
             pair = (str(assignment.block_id), str(assignment.person_id))
@@ -69,13 +69,13 @@ class BatchValidator:
                 )
             seen_pairs.add(pair)
 
-        # Validate each assignment
+            # Validate each assignment
         for idx, assignment in enumerate(assignments):
             result = self._validate_single_create(assignment, idx)
             if not result.success:
                 operation_errors.append(result)
 
-        # Validate ACGME compliance if requested
+                # Validate ACGME compliance if requested
         acgme_warnings = []
         if validate_acgme and not operation_errors:
             acgme_warnings = self._validate_acgme_batch(assignments)
@@ -117,7 +117,7 @@ class BatchValidator:
                 validation_errors=validation_errors,
             )
 
-        # Check for duplicate assignment IDs in batch
+            # Check for duplicate assignment IDs in batch
         seen_ids = set()
         for idx, assignment in enumerate(assignments):
             if assignment.assignment_id in seen_ids:
@@ -131,13 +131,13 @@ class BatchValidator:
                 )
             seen_ids.add(assignment.assignment_id)
 
-        # Validate each assignment
+            # Validate each assignment
         for idx, assignment in enumerate(assignments):
             result = self._validate_single_update(assignment, idx)
             if not result.success:
                 operation_errors.append(result)
 
-        # Validate ACGME compliance if requested (skip for now as updates are complex)
+                # Validate ACGME compliance if requested (skip for now as updates are complex)
         acgme_warnings = []
 
         is_valid = len(validation_errors) == 0 and len(operation_errors) == 0
@@ -175,7 +175,7 @@ class BatchValidator:
                 validation_errors=validation_errors,
             )
 
-        # Check for duplicate assignment IDs in batch
+            # Check for duplicate assignment IDs in batch
         seen_ids = set()
         for idx, assignment in enumerate(assignments):
             if assignment.assignment_id in seen_ids:
@@ -189,7 +189,7 @@ class BatchValidator:
                 )
             seen_ids.add(assignment.assignment_id)
 
-        # Validate each assignment exists
+            # Validate each assignment exists
         for idx, assignment in enumerate(assignments):
             result = self._validate_single_delete(assignment, idx)
             if not result.success:
@@ -219,7 +219,7 @@ class BatchValidator:
                 error=f"Block not found: {assignment.block_id}",
             )
 
-        # Check if person exists
+            # Check if person exists
         person = self.person_repo.get_by_id(assignment.person_id)
         if not person:
             return BatchOperationResult(
@@ -228,7 +228,7 @@ class BatchValidator:
                 error=f"Person not found: {assignment.person_id}",
             )
 
-        # Check if assignment already exists
+            # Check if assignment already exists
         existing = self.assignment_repo.get_by_block_and_person(
             assignment.block_id,
             assignment.person_id,
@@ -259,7 +259,7 @@ class BatchValidator:
                 error=f"Assignment not found: {assignment.assignment_id}",
             )
 
-        # Check optimistic locking
+            # Check optimistic locking
         if existing.updated_at != assignment.updated_at:
             return BatchOperationResult(
                 index=index,
@@ -311,7 +311,7 @@ class BatchValidator:
         if not assignments:
             return warnings
 
-        # Get date range from assignments
+            # Get date range from assignments
         block_ids = [a.block_id for a in assignments]
         blocks = [self.block_repo.get_by_id(bid) for bid in block_ids]
         blocks = [b for b in blocks if b is not None]

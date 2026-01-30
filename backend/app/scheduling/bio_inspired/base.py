@@ -320,7 +320,7 @@ class Chromosome:
 
     genes: np.ndarray  # Shape: (n_residents, n_blocks)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Ensure genes array is proper type."""
         if not isinstance(self.genes, np.ndarray):
             self.genes = np.array(self.genes, dtype=np.int32)
@@ -347,7 +347,7 @@ class Chromosome:
         if seed is not None:
             np.random.seed(seed)
 
-        # Generate random assignments
+            # Generate random assignments
         genes = np.zeros((n_residents, n_blocks), dtype=np.int32)
 
         for r in range(n_residents):
@@ -581,7 +581,7 @@ class BioInspiredSolver(BaseSolver, ABC):
         seed: int | None = None,
         objective_weights: dict[str, float] | None = None,
         track_evolution: bool = True,
-    ):
+    ) -> None:
         """
         Initialize bio-inspired solver.
 
@@ -687,7 +687,7 @@ class BioInspiredSolver(BaseSolver, ABC):
                 runtime_seconds=runtime,
             )
 
-        # Convert to assignments
+            # Convert to assignments
         assignments = best.chromosome.to_assignment_list(context)
 
         logger.info(
@@ -736,7 +736,7 @@ class BioInspiredSolver(BaseSolver, ABC):
         if n_residents == 0 or n_blocks == 0:
             return FitnessVector()
 
-        # Coverage: Proportion of possible assignments made
+            # Coverage: Proportion of possible assignments made
         total_possible = n_residents * n_blocks
         total_assigned = chromosome.count_assignments()
         coverage = total_assigned / total_possible if total_possible > 0 else 0.0
@@ -753,8 +753,8 @@ class BioInspiredSolver(BaseSolver, ABC):
         else:
             fairness = 1.0
 
-        # ACGME Compliance: Check 80-hour rule approximation
-        # Simplified: penalize if any resident exceeds threshold
+            # ACGME Compliance: Check 80-hour rule approximation
+            # Simplified: penalize if any resident exceeds threshold
         acgme_violations = 0
 
         for r in range(n_residents):
@@ -938,7 +938,7 @@ class BioInspiredSolver(BaseSolver, ABC):
         else:
             diversity = 0.0
 
-        # Selection pressure
+            # Selection pressure
         selection_pressure = best_fitness / mean_fitness if mean_fitness > 0 else 1.0
 
         # Best objectives
@@ -1006,7 +1006,7 @@ class BioInspiredSolver(BaseSolver, ABC):
         if not points:
             return 0.0
 
-        # Sort by first objective
+            # Sort by first objective
         sorted_points = sorted(points, key=lambda p: p[0], reverse=True)
 
         hypervolume = 0.0

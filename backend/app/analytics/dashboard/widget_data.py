@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class WidgetData:
     """Provides data for individual dashboard widgets."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def get_coverage_widget(self) -> dict[str, Any]:

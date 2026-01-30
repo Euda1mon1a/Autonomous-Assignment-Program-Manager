@@ -103,7 +103,7 @@ class ComplianceLogger:
     - Regulatory reporting support
     """
 
-    def __init__(self, enable_alerts: bool = True):
+    def __init__(self, enable_alerts: bool = True) -> None:
         """
         Initialize compliance logger.
 
@@ -129,7 +129,7 @@ class ComplianceLogger:
         else:
             log_level = "info"
 
-        # Log the event
+            # Log the event
         bound_logger = logger.bind(**bind_context_to_logger(), compliance=True)
         getattr(bound_logger, log_level)(
             f"Compliance event: {event.event_type.value}",
@@ -501,8 +501,9 @@ class ComplianceLogger:
             **event.to_dict(),
         )
 
+        # Global compliance logger instance
 
-# Global compliance logger instance
+
 _global_compliance_logger: ComplianceLogger | None = None
 
 
@@ -519,8 +520,7 @@ def set_compliance_logger(compliance_logger: ComplianceLogger) -> None:
     global _global_compliance_logger
     _global_compliance_logger = compliance_logger
 
-
-# Convenience functions
+    # Convenience functions
 
 
 def log_acgme_violation(

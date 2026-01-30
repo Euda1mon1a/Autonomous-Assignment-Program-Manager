@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class MaterializedViewManager:
     """Manager for PostgreSQL materialized views."""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         """Initialize materialized view manager.
 
         Args:
@@ -174,8 +174,7 @@ class MaterializedViewManager:
 
         return refreshed
 
-
-# Pre-defined materialized views for common queries
+        # Pre-defined materialized views for common queries
 
 
 async def create_schedule_summary_view(manager: MaterializedViewManager) -> None:

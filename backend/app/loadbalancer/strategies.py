@@ -62,7 +62,7 @@ class RoundRobinStrategy(LoadBalancingStrategy):
     in a circular order.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize round-robin strategy."""
         # Track current index per service
         self._current_index: dict[str, int] = defaultdict(int)
@@ -84,7 +84,7 @@ class RoundRobinStrategy(LoadBalancingStrategy):
         if not instances:
             return None
 
-        # Get service name from first instance
+            # Get service name from first instance
         service_name = instances[0].service_name
 
         # Select instance at current index
@@ -124,7 +124,7 @@ class WeightedRoundRobinStrategy(LoadBalancingStrategy):
     higher weights receive proportionally more requests.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize weighted round-robin strategy."""
         self._current_index: dict[str, int] = defaultdict(int)
         self._current_weight: dict[str, int] = defaultdict(int)
@@ -146,7 +146,7 @@ class WeightedRoundRobinStrategy(LoadBalancingStrategy):
         if not instances:
             return None
 
-        # Get service name
+            # Get service name
         service_name = instances[0].service_name
 
         # Calculate max weight
@@ -161,7 +161,7 @@ class WeightedRoundRobinStrategy(LoadBalancingStrategy):
             self._total_selections += 1
             return selected
 
-        # Weighted selection using smooth weighted round-robin algorithm
+            # Weighted selection using smooth weighted round-robin algorithm
         while True:
             # Increment index
             index = self._current_index[service_name] % len(instances)
@@ -183,14 +183,14 @@ class WeightedRoundRobinStrategy(LoadBalancingStrategy):
 
                 return instance
 
-            # Move to next instance
+                # Move to next instance
             self._current_index[service_name] = (index + 1) % len(instances)
 
             # Safety check to prevent infinite loop
             if self._current_index[service_name] == 0:
                 break
 
-        # Fallback: select first instance
+                # Fallback: select first instance
         self._total_selections += 1
         return instances[0]
 
@@ -217,7 +217,7 @@ class LeastConnectionsStrategy(LoadBalancingStrategy):
     Useful for long-lived connections or when request processing times vary.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize least connections strategy."""
         # Track active connections per instance
         self._connections: dict[str, int] = defaultdict(int)
@@ -239,7 +239,7 @@ class LeastConnectionsStrategy(LoadBalancingStrategy):
         if not instances:
             return None
 
-        # Find instance with minimum connections
+            # Find instance with minimum connections
         min_connections = float("inf")
         selected = None
 
@@ -314,7 +314,9 @@ class HealthBasedStrategy(LoadBalancingStrategy):
     instances before applying the underlying strategy.
     """
 
-    def __init__(self, underlying_strategy: LoadBalancingStrategy | None = None):
+    def __init__(
+        self, underlying_strategy: LoadBalancingStrategy | None = None
+    ) -> None:
         """
         Initialize health-based strategy.
 
@@ -342,7 +344,7 @@ class HealthBasedStrategy(LoadBalancingStrategy):
         if not instances:
             return None
 
-        # Filter to healthy instances only
+            # Filter to healthy instances only
         healthy_instances = [i for i in instances if i.healthy]
 
         if not healthy_instances:
@@ -353,7 +355,7 @@ class HealthBasedStrategy(LoadBalancingStrategy):
             )
             return None
 
-        # Track filtered count
+            # Track filtered count
         self._unhealthy_filtered += len(instances) - len(healthy_instances)
 
         # Use underlying strategy to select from healthy instances
@@ -394,7 +396,7 @@ class RandomStrategy(LoadBalancingStrategy):
     Selects a random instance from available instances.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize random strategy."""
         self._total_selections = 0
 
@@ -441,7 +443,7 @@ class IPHashStrategy(LoadBalancingStrategy):
     Useful for maintaining session affinity.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize IP hash strategy."""
         self._total_selections = 0
         self._cache: dict[str, str] = {}  # Maps client_ip -> instance_id
@@ -470,7 +472,7 @@ class IPHashStrategy(LoadBalancingStrategy):
             self._total_selections += 1
             return selected
 
-        # Check cache first
+            # Check cache first
         if client_ip in self._cache:
             cached_id = self._cache[client_ip]
             for instance in instances:
@@ -482,7 +484,7 @@ class IPHashStrategy(LoadBalancingStrategy):
                     self._total_selections += 1
                     return instance
 
-        # Calculate hash and select instance
+                    # Calculate hash and select instance
         hash_value = hash(client_ip)
         index = hash_value % len(instances)
         selected = instances[index]

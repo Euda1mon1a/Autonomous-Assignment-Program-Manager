@@ -31,7 +31,7 @@ class TaskScheduler:
     - Schedule inspection and modification
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize task scheduler."""
         self.app = celery_app
 
@@ -81,12 +81,12 @@ class TaskScheduler:
         if eta and countdown:
             raise ValueError("Cannot specify both eta and countdown")
 
-        # Get task from registry
+            # Get task from registry
         task = self.app.tasks.get(task_name)
         if not task:
             raise ValueError(f"Task {task_name} not found in registry")
 
-        # Schedule task
+            # Schedule task
         result = task.apply_async(
             args=args,
             kwargs=kwargs,
@@ -290,9 +290,9 @@ class TaskScheduler:
         if not task_name:
             raise ValueError(f"Task {task_id} not found or has no name")
 
-        # Create new scheduled task
-        # Note: We lose the original args/kwargs here
-        # In production, you'd want to store these in a database
+            # Create new scheduled task
+            # Note: We lose the original args/kwargs here
+            # In production, you'd want to store these in a database
         task = self.app.tasks.get(task_name)
         if not task:
             raise ValueError(f"Task {task_name} not found in registry")
@@ -391,7 +391,7 @@ class TaskScheduler:
         if name not in self.app.conf.beat_schedule:
             raise KeyError(f"Periodic task '{name}' not found")
 
-        # Remove 'enabled': False if present
+            # Remove 'enabled': False if present
         if "enabled" in self.app.conf.beat_schedule[name]:
             self.app.conf.beat_schedule[name]["enabled"] = True
 

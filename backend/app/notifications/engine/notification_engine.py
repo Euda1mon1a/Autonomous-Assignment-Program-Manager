@@ -49,7 +49,7 @@ class NotificationEngine:
         preference_manager: Manages user preferences
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize the notification engine.
 
@@ -103,7 +103,7 @@ class NotificationEngine:
                 )
             ]
 
-        # Step 2: Check deduplication
+            # Step 2: Check deduplication
         if self.deduplication.is_duplicate(
             recipient_id, notification_type, data, window_minutes=60
         ):
@@ -120,7 +120,7 @@ class NotificationEngine:
                 )
             ]
 
-        # Step 3: Get user preferences
+            # Step 3: Get user preferences
         preferences = await self.preference_manager.get_preferences(recipient_id)
         if not await self.preference_manager.should_send(
             preferences, notification_type
@@ -132,7 +132,7 @@ class NotificationEngine:
             )
             return []
 
-        # Step 4: Determine priority
+            # Step 4: Determine priority
         final_priority = priority or rendered.get("priority", "normal")
         priority_score = self.priority_handler.calculate_priority_score(
             notification_type, final_priority, data
@@ -149,7 +149,7 @@ class NotificationEngine:
             logger.debug("No enabled channels for user %s", recipient_id)
             return []
 
-        # Step 6: Check rate limits
+            # Step 6: Check rate limits
         if not await self.rate_limiter.check_rate_limit(
             recipient_id, notification_type
         ):
@@ -174,7 +174,7 @@ class NotificationEngine:
                 )
             ]
 
-        # Step 7: Create notification payload
+            # Step 7: Create notification payload
         payload = NotificationPayload(
             recipient_id=recipient_id,
             notification_type=notification_type.value,
@@ -204,7 +204,7 @@ class NotificationEngine:
                 )
             ]
 
-        # Step 9: Dispatch immediately
+            # Step 9: Dispatch immediately
         results = await self.dispatcher.dispatch(
             payload=payload,
             channels=target_channels,
@@ -220,7 +220,7 @@ class NotificationEngine:
                     error=result.message,
                 )
 
-        # Step 11: Record for deduplication
+                # Step 11: Record for deduplication
         self.deduplication.record_sent(recipient_id, notification_type, data)
 
         return results

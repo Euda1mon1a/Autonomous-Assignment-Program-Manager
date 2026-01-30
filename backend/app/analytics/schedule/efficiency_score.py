@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class EfficiencyScore:
     """Calculates schedule efficiency scores."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def calculate_efficiency(

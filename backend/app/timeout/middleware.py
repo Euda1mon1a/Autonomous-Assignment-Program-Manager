@@ -77,7 +77,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
         default_timeout: float = 30.0,
         timeout_header: bool = True,
         exclude_paths: list[str] | None = None,
-    ):
+    ) -> None:
         """
         Initialize timeout middleware.
 
@@ -113,7 +113,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
         if request.url.path in self.exclude_paths:
             return await call_next(request)
 
-        # Get endpoint-specific timeout if configured
+            # Get endpoint-specific timeout if configured
         timeout = self._get_endpoint_timeout(request) or self.default_timeout
 
         start_time = time.monotonic()
@@ -152,7 +152,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
                     method=request.method, path=request.url.path
                 ).observe(elapsed)
 
-            # Return timeout error response
+                # Return timeout error response
             from fastapi.responses import JSONResponse
 
             return JSONResponse(

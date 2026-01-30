@@ -36,7 +36,7 @@ class PriorityHandler:
         NotificationType.ABSENCE_REJECTED: 50,  # NORMAL
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the priority handler."""
         pass
 
@@ -66,7 +66,7 @@ class PriorityHandler:
         elif priority_level == "low":
             base_score = min(base_score, 30)
 
-        # Apply data-driven modifiers
+            # Apply data-driven modifiers
         modifiers = self._calculate_modifiers(notification_type, data)
         final_score = base_score + modifiers
 
@@ -106,13 +106,13 @@ class PriorityHandler:
             elif severity == "LOW":
                 modifiers -= 5
 
-        # Schedule published: Higher priority if violations present
+                # Schedule published: Higher priority if violations present
         elif notification_type == NotificationType.SCHEDULE_PUBLISHED:
             violations = data.get("violations_count", 0)
             if violations > 0:
                 modifiers += min(10, violations * 2)  # Cap at +10
 
-        # Assignment changes: Higher priority for immediate changes
+                # Assignment changes: Higher priority for immediate changes
         elif notification_type == NotificationType.ASSIGNMENT_CHANGED:
             # Check if change is for upcoming shifts
             days_until = data.get("days_until_shift", 999)
@@ -123,7 +123,7 @@ class PriorityHandler:
             elif days_until <= 7:
                 modifiers += 5
 
-        # Shift reminders: Increase priority closer to shift time
+                # Shift reminders: Increase priority closer to shift time
         elif notification_type == NotificationType.SHIFT_REMINDER_1H:
             modifiers += 20  # Very high priority for imminent shifts
 

@@ -231,13 +231,14 @@ class RotationActivityRequirement(Base):
         weeks_str = ",".join(map(str, sorted(self.applicable_weeks)))
         return uuid.uuid5(uuid.NAMESPACE_DNS, weeks_str)
 
+        # Event listener to auto-compute applicable_weeks_hash before insert/update
 
-# Event listener to auto-compute applicable_weeks_hash before insert/update
+
 from sqlalchemy import event
 
 
 @event.listens_for(RotationActivityRequirement, "before_insert")
 @event.listens_for(RotationActivityRequirement, "before_update")
-def compute_weeks_hash_before_save(mapper, connection, target):
+def compute_weeks_hash_before_save(mapper, connection, target) -> None:
     """Auto-compute applicable_weeks_hash before save."""
     target.applicable_weeks_hash = target.compute_weeks_hash()

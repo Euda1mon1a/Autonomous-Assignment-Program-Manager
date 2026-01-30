@@ -74,7 +74,7 @@ class N2Analyzer:
     - Calculates cascade probabilities
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize N-2 analyzer."""
         self.scenarios: list[N2FailureScenario] = []
 
@@ -120,7 +120,7 @@ class N2Analyzer:
             )
             total_affected += len(overlap) * 2  # Double penalty for overlap
 
-        # Determine interdependency type
+            # Determine interdependency type
         if correlation > CORRELATION_COUPLED_THRESHOLD:
             interdependency = "coupled"  # Failures likely to occur together
         elif correlation > CORRELATION_CORRELATED_THRESHOLD:
@@ -149,7 +149,7 @@ class N2Analyzer:
                 total_affected,
             )
 
-        # Calculate criticality (N-2 is inherently more critical)
+            # Calculate criticality (N-2 is inherently more critical)
         base_criticality = N2_BASE_CRITICALITY  # N-2 starts higher than N-1
         if total_affected > N2_HIGH_IMPACT_THRESHOLD:
             criticality = min(N2_HIGH_IMPACT_CRITICALITY, base_criticality + 0.4)
@@ -160,7 +160,7 @@ class N2Analyzer:
                 N2_HIGH_IMPACT_CRITICALITY, base_criticality + total_affected / 50.0
             )
 
-        # Add correlation penalty
+            # Add correlation penalty
         criticality = min(
             N2_HIGH_IMPACT_CRITICALITY,
             criticality + correlation * N2_CORRELATION_PENALTY,
@@ -177,7 +177,7 @@ class N2Analyzer:
                 + correlation * CASCADE_NO_BACKUP_CORRELATION_FACTOR
             )
 
-        # Recovery time
+            # Recovery time
         if has_backup:
             recovery_hours = (
                 total_affected * RECOVERY_WITH_BACKUP_MULTIPLIER
@@ -187,7 +187,7 @@ class N2Analyzer:
                 total_affected * RECOVERY_WITHOUT_BACKUP_MULTIPLIER
             )  # Serial recovery
 
-        # Mitigation strategy
+            # Mitigation strategy
         if has_backup:
             mitigation = f"Activate {len(viable_backups)} backup personnel"
         elif interdependency == "coupled":
@@ -252,7 +252,7 @@ class N2Analyzer:
             if not person1_slots and not person2_slots:
                 continue
 
-            # Estimate correlation based on assignment overlap
+                # Estimate correlation based on assignment overlap
             correlation = self._estimate_correlation(person1_slots, person2_slots)
 
             scenario = self.analyze_dual_person_failure(
@@ -267,7 +267,7 @@ class N2Analyzer:
 
             scenarios.append(scenario)
 
-        # Sort by criticality
+            # Sort by criticality
         scenarios.sort(key=lambda s: s.criticality_score, reverse=True)
         return scenarios
 
@@ -297,7 +297,7 @@ class N2Analyzer:
         if not slots1 or not slots2:
             return 0.0
 
-        # Calculate Jaccard similarity of rotations
+            # Calculate Jaccard similarity of rotations
         rotations1 = set(rot for _, rot in slots1)
         rotations2 = set(rot for _, rot in slots2)
 
@@ -359,7 +359,7 @@ class N2Analyzer:
         if not self.scenarios:
             return 1.0  # Perfect score if no scenarios analyzed
 
-        # Weight by cascade probability
+            # Weight by cascade probability
         weighted_sum = sum(
             s.criticality_score * (1.0 + s.cascade_probability) for s in self.scenarios
         )

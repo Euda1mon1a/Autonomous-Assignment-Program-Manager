@@ -24,7 +24,7 @@ class RepositoryFactory(Generic[ModelType]):
     - Type-safe repository access
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize repository factory.
 
@@ -103,7 +103,7 @@ class RepositoryProvider:
         person_repo = provider.get_repository(Person)
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize provider.
 

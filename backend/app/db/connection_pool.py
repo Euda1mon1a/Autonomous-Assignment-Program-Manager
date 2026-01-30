@@ -50,7 +50,7 @@ class OptimizedConnectionPool:
         pool_recycle: int = 3600,
         pool_pre_ping: bool = True,
         enable_monitoring: bool = True,
-    ):
+    ) -> None:
         """Initialize optimized connection pool.
 
         Args:
@@ -107,7 +107,7 @@ class OptimizedConnectionPool:
 
         return engine
 
-    def _add_monitoring_hooks(self, engine: AsyncEngine):
+    def _add_monitoring_hooks(self, engine: AsyncEngine) -> None:
         """Add event listeners for connection monitoring.
 
         Args:
@@ -116,12 +116,12 @@ class OptimizedConnectionPool:
         from sqlalchemy import event
 
         @event.listens_for(engine.sync_engine, "checkout")
-        def receive_checkout(dbapi_conn, connection_record, connection_proxy):
+        def receive_checkout(dbapi_conn, connection_record, connection_proxy) -> None:
             """Track connection checkout."""
             connection_record.info["checkout_time"] = time.time()
 
         @event.listens_for(engine.sync_engine, "checkin")
-        def receive_checkin(dbapi_conn, connection_record):
+        def receive_checkin(dbapi_conn, connection_record) -> None:
             """Track connection checkin and calculate checkout time."""
             if "checkout_time" in connection_record.info:
                 checkout_time = time.time() - connection_record.info["checkout_time"]
@@ -204,7 +204,7 @@ class OptimizedConnectionPool:
             },
         }
 
-    async def reset_metrics(self):
+    async def reset_metrics(self) -> None:
         """Reset metrics counters."""
         self.checkout_times.clear()
         self.checkout_count = 0
@@ -212,13 +212,14 @@ class OptimizedConnectionPool:
         self.last_metrics_reset = datetime.utcnow()
         logger.info("Connection pool metrics reset")
 
-    async def dispose(self):
+    async def dispose(self) -> None:
         """Dispose of the connection pool."""
         await self.engine.dispose()
         logger.info("Connection pool disposed")
 
+        # Global pool instance
 
-# Global pool instance
+
 _pool_instance: OptimizedConnectionPool | None = None
 
 

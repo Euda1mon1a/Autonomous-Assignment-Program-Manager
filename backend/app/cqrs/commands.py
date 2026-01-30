@@ -226,7 +226,7 @@ class DomainEvent:
     event_type: str = field(init=False)
     data: dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Set event_type to class name if not specified."""
         if not hasattr(self, "event_type") or not self.event_type:
             object.__setattr__(self, "event_type", self.__class__.__name__)
@@ -305,7 +305,7 @@ class CommandHandler(ABC, Generic[TCommand]):
         TCommand: The type of command this handler processes
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize command handler.
 
@@ -369,7 +369,7 @@ class CommandValidationMiddleware:
         # Validation happens automatically in CommandBus
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize validation middleware."""
         self._schemas: dict[type[Command], type[BaseModel]] = {}
 
@@ -454,7 +454,7 @@ class CommandBus:
             print(f"Error: {result.error}")
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize command bus.
 
@@ -544,7 +544,7 @@ class CommandBus:
                 )
                 return CommandResult.fail(error=str(e), error_code="VALIDATION_ERROR")
 
-        # Get handler
+                # Get handler
         if command_type not in self._handlers:
             error_msg = f"No handler registered for command type: {command_name}"
             logger.error(error_msg, command_type=command_name)
@@ -638,11 +638,10 @@ class CommandBus:
                     )
                     # Don't let event handler failures fail the command
 
-
-# Example command implementations for reference
-# Note: When creating commands that inherit from Command, all custom fields
-# must have defaults since Command has default fields. Alternatively, use
-# field(default=...) or don't use frozen=True and set in __post_init__.
+                    # Example command implementations for reference
+                    # Note: When creating commands that inherit from Command, all custom fields
+                    # must have defaults since Command has default fields. Alternatively, use
+                    # field(default=...) or don't use frozen=True and set in __post_init__.
 
 
 class ExampleCreateCommand(Command):
@@ -661,7 +660,7 @@ class ExampleCreateCommand(Command):
         email: str,
         user_id: str | None = None,
         metadata: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """Initialize create command with required fields."""
         # Use object.__setattr__ since dataclass is frozen
         object.__setattr__(self, "name", name)

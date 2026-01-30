@@ -121,11 +121,10 @@ async def create_rotation_template(
     db.refresh(template)
     return template
 
-
-# =============================================================================
-# Batch Operation Endpoints
-# These MUST come before /{template_id} routes to avoid path conflicts
-# =============================================================================
+    # =============================================================================
+    # Batch Operation Endpoints
+    # These MUST come before /{template_id} routes to avoid path conflicts
+    # =============================================================================
 
 
 @router.delete("/batch", response_model=BatchTemplateResponse)
@@ -677,11 +676,10 @@ async def batch_apply_preferences(
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-
-# =============================================================================
-# Single Template Endpoints (parametric paths)
-# These MUST come after /batch routes to avoid path conflicts
-# =============================================================================
+        # =============================================================================
+        # Single Template Endpoints (parametric paths)
+        # These MUST come after /batch routes to avoid path conflicts
+        # =============================================================================
 
 
 @router.get("/{template_id}", response_model=RotationTemplateResponse)
@@ -800,8 +798,8 @@ async def get_rotation_template_history(
     if not template:
         raise HTTPException(status_code=404, detail="Rotation template not found")
 
-    # Get version history
-    # Note: This requires the template to have __versioned__ = {} in the model
+        # Get version history
+        # Note: This requires the template to have __versioned__ = {} in the model
     versions = []
     try:
         # Access versions relationship created by SQLAlchemy-Continuum
@@ -867,7 +865,7 @@ async def delete_rotation_template(
     template_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete a rotation template. Requires authentication."""
     template = (
         db.execute(select(RotationTemplate).where(RotationTemplate.id == template_id))
@@ -878,10 +876,9 @@ async def delete_rotation_template(
     db.delete(template)
     db.commit()
 
-
-# =============================================================================
-# Weekly Pattern Endpoints
-# =============================================================================
+    # =============================================================================
+    # Weekly Pattern Endpoints
+    # =============================================================================
 
 
 @router.get("/{template_id}/patterns", response_model=list[WeeklyPatternResponse])
@@ -952,10 +949,9 @@ async def replace_weekly_patterns(
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-
-# =============================================================================
-# Half-Day Requirement Endpoints
-# =============================================================================
+        # =============================================================================
+        # Half-Day Requirement Endpoints
+        # =============================================================================
 
 
 @router.get(
@@ -1041,10 +1037,9 @@ async def upsert_halfday_requirements(
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-
-# =============================================================================
-# Rotation Preference Endpoints
-# =============================================================================
+        # =============================================================================
+        # Rotation Preference Endpoints
+        # =============================================================================
 
 
 @router.get(
@@ -1126,10 +1121,9 @@ async def replace_rotation_preferences(
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-
-# =============================================================================
-# Activity Requirement Endpoints (Dynamic per-activity requirements)
-# =============================================================================
+        # =============================================================================
+        # Activity Requirement Endpoints (Dynamic per-activity requirements)
+        # =============================================================================
 
 
 @router.get(
@@ -1266,7 +1260,7 @@ async def delete_activity_requirement(
     requirement_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete a single activity requirement.
 
     Args:

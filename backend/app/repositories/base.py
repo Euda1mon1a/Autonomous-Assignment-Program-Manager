@@ -18,7 +18,7 @@ class BaseRepository(Generic[ModelType]):
     and can override or extend these methods as needed.
     """
 
-    def __init__(self, model: type[ModelType], db: Session):
+    def __init__(self, model: type[ModelType], db: Session) -> None:
         self.model = model
         self.db = db
 

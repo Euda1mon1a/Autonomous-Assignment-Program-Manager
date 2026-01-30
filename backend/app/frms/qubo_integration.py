@@ -85,7 +85,7 @@ class FatigueQUBOIntegration:
         result = solver.solve(context)
     """
 
-    def __init__(self, config: FatigueQUBOConfig | None = None):
+    def __init__(self, config: FatigueQUBOConfig | None = None) -> None:
         """
         Initialize fatigue QUBO integration.
 
@@ -139,17 +139,17 @@ class FatigueQUBOIntegration:
                 Q, formulation, context
             )
 
-        # 3. Add night shift clustering bonus (quadratic, encourage grouping)
+            # 3. Add night shift clustering bonus (quadratic, encourage grouping)
         if self.config.enable_night_clustering:
             quadratic_terms_added += self._add_night_clustering_terms(
                 Q, formulation, context
             )
 
-        # 4. Add WOCL protection penalties
+            # 4. Add WOCL protection penalties
         if self.config.enable_circadian:
             linear_terms_added += self._add_wocl_penalties(Q, formulation, context)
 
-        # 5. Add recovery requirement penalties
+            # 5. Add recovery requirement penalties
         if self.config.enable_recovery_requirements:
             quadratic_terms_added += self._add_recovery_penalties(
                 Q, formulation, context
@@ -186,7 +186,7 @@ class FatigueQUBOIntegration:
                 if b_i is None:
                     continue
 
-                # Predict effectiveness for this assignment
+                    # Predict effectiveness for this assignment
                 effectiveness = self._predict_effectiveness(
                     resident.id, block.date, getattr(block, "time_of_day", "AM")
                 )
@@ -237,7 +237,7 @@ class FatigueQUBOIntegration:
             if r_i is None:
                 continue
 
-            # Look at pairs of consecutive days
+                # Look at pairs of consecutive days
             for i in range(len(sorted_dates) - 1):
                 date1 = sorted_dates[i]
                 date2 = sorted_dates[i + 1]
@@ -246,7 +246,7 @@ class FatigueQUBOIntegration:
                 if (date2 - date1).days != 1:
                     continue
 
-                # Get variable indices for blocks on these days
+                    # Get variable indices for blocks on these days
                 vars_day1 = self._get_person_block_vars(
                     formulation, context, r_i, blocks_by_date[date1]
                 )
@@ -305,7 +305,7 @@ class FatigueQUBOIntegration:
             if r_i is None:
                 continue
 
-            # Reward consecutive night shifts for same person
+                # Reward consecutive night shifts for same person
             for i in range(len(sorted_dates) - 1):
                 date1 = sorted_dates[i]
                 date2 = sorted_dates[i + 1]
@@ -356,7 +356,7 @@ class FatigueQUBOIntegration:
                 if b_i is None:
                     continue
 
-                # Check if block likely includes WOCL
+                    # Check if block likely includes WOCL
                 tod = getattr(block, "time_of_day", "AM")
                 has_wocl = tod == "PM"  # Night blocks include WOCL
 
@@ -404,7 +404,7 @@ class FatigueQUBOIntegration:
             if r_i is None:
                 continue
 
-            # Check pairs of blocks for recovery violations
+                # Check pairs of blocks for recovery violations
             for i, block1 in enumerate(blocks_ordered):
                 for block2 in blocks_ordered[i + 1 : i + 3]:  # Check next 2 blocks
                     # Calculate time gap
@@ -444,7 +444,7 @@ class FatigueQUBOIntegration:
         if cache_key in self._effectiveness_cache:
             return self._effectiveness_cache[cache_key]
 
-        # Calculate time of day as float
+            # Calculate time of day as float
         tod = 8.0 if time_of_day == "AM" else 14.0
 
         # Create temporary state and calculate
@@ -466,7 +466,7 @@ class FatigueQUBOIntegration:
             gap = self.config.effectiveness_threshold - effectiveness
             return self.config.fatigue_penalty_base * (gap / 10.0)
 
-        # Quadratic penalty below critical threshold
+            # Quadratic penalty below critical threshold
         gap = self.config.effectiveness_threshold - effectiveness
         return self.config.fatigue_penalty_base * ((gap / 10.0) ** 2)
 
@@ -579,7 +579,7 @@ def create_fatigue_qubo_solver(
     class FatigueAwareQUBOSolver:
         """Wrapper that adds fatigue penalties to QUBO solving."""
 
-        def __init__(self, solver, fatigue_integration):
+        def __init__(self, solver, fatigue_integration) -> None:
             self.solver = solver
             self.integration = fatigue_integration
 

@@ -74,7 +74,7 @@ class PerformanceLogger:
         self,
         slow_threshold_ms: float = 1000.0,
         enable_resource_tracking: bool = False,
-    ):
+    ) -> None:
         """
         Initialize performance logger.
 
@@ -296,7 +296,7 @@ class PerformanceTimer:
         perf_logger: PerformanceLogger,
         operation: str,
         metadata: dict[str, Any],
-    ):
+    ) -> None:
         """
         Initialize performance timer.
 
@@ -329,7 +329,7 @@ class PerformanceTimer:
             self.success = False
             self.error = str(exc_val) if exc_val else exc_type.__name__
 
-        # Log the operation
+            # Log the operation
         self.perf_logger.log_operation(
             operation=self.operation,
             duration_ms=duration_ms,
@@ -400,8 +400,9 @@ async def time_async_function(operation: str | None = None, **metadata):
 
     return decorator
 
+    # Global performance logger instance
 
-# Global performance logger instance
+
 _global_perf_logger: PerformanceLogger | None = None
 
 
@@ -418,8 +419,7 @@ def set_performance_logger(perf_logger: PerformanceLogger) -> None:
     global _global_perf_logger
     _global_perf_logger = perf_logger
 
-
-# Convenience functions for common operations
+    # Convenience functions for common operations
 
 
 def log_api_request(

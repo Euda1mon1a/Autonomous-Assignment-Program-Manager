@@ -88,14 +88,14 @@ class MetastabilitySolutionCallback(cp_model.CpSolverSolutionCallback):
         start_time: Solver start time for elapsed time calculation
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize callback."""
         cp_model.CpSolverSolutionCallback.__init__(self)
         self.trajectory: list[SolverState] = []
         self.iteration = 0
         self.start_time = time.time()
 
-    def on_solution_callback(self):
+    def on_solution_callback(self) -> None:
         """
         Called by CP-SAT solver whenever a new solution is found.
 
@@ -167,7 +167,7 @@ class MetastabilitySolverWrapper:
         plateau_window: int = 100,
         min_stagnation: int = 50,
         temperature: float = 1.0,
-    ):
+    ) -> None:
         """
         Initialize metastability solver wrapper.
 
@@ -256,7 +256,7 @@ class MetastabilitySolverWrapper:
                 logger.info("Strategy would apply basin hopping")
                 # In practice: perturb solution and restart
 
-        # Create enriched result
+                # Create enriched result
         enriched_result = EnrichedSolverResult(
             success=result.success,
             assignments=result.assignments,
@@ -443,7 +443,7 @@ def check_metastability_during_solve(
     if len(trajectory) % check_interval != 0:
         return False, None
 
-    # Analyze trajectory
+        # Analyze trajectory
     analysis = detector.analyze_solver_trajectory(trajectory)
 
     # Decide if intervention needed

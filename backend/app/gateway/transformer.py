@@ -78,7 +78,7 @@ class TransformationContext:
     response: Response | None = None
     metadata: dict[str, Any] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.metadata is None:
             self.metadata = {}
 
@@ -104,7 +104,7 @@ class Transformer(ABC):
 class HeaderTransformer(Transformer):
     """Transformer for HTTP headers."""
 
-    def __init__(self, rules: list[TransformationRule]):
+    def __init__(self, rules: list[TransformationRule]) -> None:
         """
         Initialize header transformer.
 
@@ -157,7 +157,7 @@ class HeaderTransformer(Transformer):
 class BodyTransformer(Transformer):
     """Transformer for request/response body."""
 
-    def __init__(self, rules: list[TransformationRule]):
+    def __init__(self, rules: list[TransformationRule]) -> None:
         """
         Initialize body transformer.
 
@@ -297,7 +297,9 @@ class BodyTransformer(Transformer):
 class CustomTransformer(Transformer):
     """Custom transformer using user-defined function."""
 
-    def __init__(self, transform_fn: Callable[[Any, TransformationContext], Any]):
+    def __init__(
+        self, transform_fn: Callable[[Any, TransformationContext], Any]
+    ) -> None:
         """
         Initialize custom transformer.
 
@@ -331,7 +333,7 @@ class RequestTransformer:
     Transforms incoming requests before routing to services.
     """
 
-    def __init__(self, rules: list[TransformationRule] | None = None):
+    def __init__(self, rules: list[TransformationRule] | None = None) -> None:
         """
         Initialize request transformer.
 
@@ -397,7 +399,7 @@ class ResponseTransformer:
     Transforms responses from services before returning to client.
     """
 
-    def __init__(self, rules: list[TransformationRule] | None = None):
+    def __init__(self, rules: list[TransformationRule] | None = None) -> None:
         """
         Initialize response transformer.
 
@@ -464,7 +466,7 @@ class TransformationPipeline:
     Executes multiple transformations in sequence.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         """
         Initialize transformation pipeline.
 

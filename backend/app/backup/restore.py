@@ -43,7 +43,7 @@ class RestoreService:
     - Selective table restoration
     """
 
-    def __init__(self, storage: BackupStorage | None = None):
+    def __init__(self, storage: BackupStorage | None = None) -> None:
         """
         Initialize restore service.
 
@@ -121,7 +121,7 @@ class RestoreService:
                 else:
                     chain_data = backup_data
 
-                # Restore tables from this backup
+                    # Restore tables from this backup
                 result = await self._restore_backup_data(
                     db,
                     chain_data,
@@ -190,7 +190,7 @@ class RestoreService:
                 }
             ]
 
-        # Incremental or differential - need to find base and build chain
+            # Incremental or differential - need to find base and build chain
         base_timestamp = backup_data.get("base_backup_timestamp")
         target_timestamp = backup_data.get("created_at")
 
@@ -199,7 +199,7 @@ class RestoreService:
                 f"Incremental backup {backup_id} missing base_backup_timestamp"
             )
 
-        # Get all backups
+            # Get all backups
         all_backups = self.storage.list_backups(limit=1000)
 
         # Find base full backup
@@ -231,7 +231,7 @@ class RestoreService:
             )
             return chain
 
-        # For incremental, add all incrementals between base and target
+            # For incremental, add all incrementals between base and target
         incrementals = []
         for backup in all_backups:
             if backup.get("backup_type") != "incremental":
@@ -242,7 +242,7 @@ class RestoreService:
             if base_backup["created_at"] < created_at <= target_timestamp:
                 incrementals.append(backup)
 
-        # Sort incrementals by created_at
+                # Sort incrementals by created_at
         incrementals.sort(key=lambda x: x.get("created_at", ""))
 
         chain.extend(incrementals)
@@ -280,7 +280,7 @@ class RestoreService:
             if tables and table_name not in tables:
                 continue
 
-            # Skip if table has errors
+                # Skip if table has errors
             if "error" in table_data:
                 logger.warning(f"Skipping table {table_name}: {table_data['error']}")
                 continue
@@ -343,9 +343,9 @@ class RestoreService:
         if not columns:
             raise ValueError(f"No column information for {table_name}")
 
-        # Build UPSERT query
-        # Note: This assumes tables have a primary key named 'id'
-        # For tables with different primary keys, we'd need schema introspection
+            # Build UPSERT query
+            # Note: This assumes tables have a primary key named 'id'
+            # For tables with different primary keys, we'd need schema introspection
 
         rows_restored = 0
 
@@ -435,7 +435,7 @@ class RestoreService:
                     f"Earliest backup: {min(b.get('created_at', '') for b in all_backups)}"
                 )
 
-            # Sort by created_at descending
+                # Sort by created_at descending
             suitable_backups.sort(key=lambda x: x.get("created_at", ""), reverse=True)
 
             # Use the most recent suitable backup
@@ -516,7 +516,7 @@ class RestoreService:
                         }
                     )
 
-            # Check if all backups in chain are valid
+                    # Check if all backups in chain are valid
             all_valid = all(r["valid"] for r in validation_results)
 
             logger.info(

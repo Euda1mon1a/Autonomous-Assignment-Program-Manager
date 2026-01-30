@@ -116,7 +116,9 @@ class ProblemDetail(BaseModel):
 class ErrorFormatter:
     """Formats exceptions into RFC 7807 Problem Details responses."""
 
-    def __init__(self, base_url: str = "https://api.residency-scheduler.example.com"):
+    def __init__(
+        self, base_url: str = "https://api.residency-scheduler.example.com"
+    ) -> None:
         """
         Initialize error formatter.
 
@@ -183,7 +185,7 @@ class ErrorFormatter:
         if isinstance(exc, PydanticValidationError):
             problem.errors = self._format_validation_errors(exc)
 
-        # Add stack trace in development mode
+            # Add stack trace in development mode
         if include_stack_trace:
             problem.stack_trace = self._format_stack_trace(exc)
 
@@ -204,11 +206,11 @@ class ErrorFormatter:
         if hasattr(exc, "message"):
             return cast(str, exc.message)
 
-        # For other exceptions, include details only if allowed
+            # For other exceptions, include details only if allowed
         if include_details:
             return str(exc) if str(exc) else "An error occurred"
 
-        # Generic message for exceptions that shouldn't expose details
+            # Generic message for exceptions that shouldn't expose details
         return "An internal error occurred. Please contact support."
 
     def _format_validation_errors(
@@ -258,7 +260,7 @@ class ErrorFormatter:
         if exc.__traceback__ is None:
             return []
 
-        # Format traceback
+            # Format traceback
         tb_lines = traceback.format_exception(type(exc), exc, exc.__traceback__)
 
         # Clean up and return as list
@@ -305,8 +307,9 @@ class SimpleErrorFormatter:
 
         return response
 
+        # Global formatter instance
 
-# Global formatter instance
+
 _formatter: ErrorFormatter | None = None
 
 

@@ -381,10 +381,9 @@ class LandscapePoint:
     constraint_penalties: dict[str, float]
     timestamp: float
 
-
-# =============================================================================
-# QUBO FORMULATION FOR CALL ASSIGNMENT
-# =============================================================================
+    # =============================================================================
+    # QUBO FORMULATION FOR CALL ASSIGNMENT
+    # =============================================================================
 
 
 class CallAssignmentQUBO:
@@ -427,7 +426,7 @@ class CallAssignmentQUBO:
         call_nights: list[CallNight],
         candidates: list[CallCandidate],
         equity_target: float | None = None,
-    ):
+    ) -> None:
         """
         Initialize QUBO formulation for call assignment.
 
@@ -447,7 +446,7 @@ class CallAssignmentQUBO:
         else:
             self.equity_target = equity_target
 
-        # Build variable indexing
+            # Build variable indexing
         self.var_index: dict[tuple[int, int], int] = {}
         self.index_to_var: dict[int, tuple[int, int]] = {}
         self._build_variable_index()
@@ -542,7 +541,7 @@ class CallAssignmentQUBO:
             for idx in night_vars:
                 self._add_linear(idx, -2 * self.HARD_CONSTRAINT_PENALTY + 1)
 
-            # Quadratic part: P * Σ_r Σ_s x[r,n]x[s,n] for r≠s
+                # Quadratic part: P * Σ_r Σ_s x[r,n]x[s,n] for r≠s
             for i, idx1 in enumerate(night_vars):
                 for idx2 in night_vars[i + 1 :]:
                     self._add_quadratic(idx1, idx2, 2 * self.HARD_CONSTRAINT_PENALTY)
@@ -591,8 +590,8 @@ class CallAssignmentQUBO:
             for idx in resident_vars:
                 self._add_linear(idx, -2 * mean_calls * self.EQUITY_PENALTY)
 
-            # Quadratic: x[r,n]*x[r,m] (penalizes exceeding mean)
-            # Scale penalty by 1/num_nights to avoid overwhelming other terms
+                # Quadratic: x[r,n]*x[r,m] (penalizes exceeding mean)
+                # Scale penalty by 1/num_nights to avoid overwhelming other terms
             scaled_penalty = self.EQUITY_PENALTY / max(len(resident_vars), 1)
             for i, idx1 in enumerate(resident_vars):
                 for idx2 in resident_vars[i + 1 :]:
@@ -620,7 +619,7 @@ class CallAssignmentQUBO:
             if not sunday_vars:
                 continue
 
-            # Similar to general equity but for Sunday subset
+                # Similar to general equity but for Sunday subset
             for idx in sunday_vars:
                 self._add_linear(idx, -2 * sunday_mean * sunday_penalty)
 
@@ -645,7 +644,7 @@ class CallAssignmentQUBO:
                 if weekday in candidate.avoid_days:
                     self._add_linear(idx, self.PREFERENCE_PENALTY * 10)
 
-                # Apply preference bonus (negative = encouraged)
+                    # Apply preference bonus (negative = encouraged)
                 if weekday in candidate.preference_bonus:
                     bonus = candidate.preference_bonus[weekday]
                     self._add_linear(idx, -bonus * self.PREFERENCE_PENALTY)
@@ -747,12 +746,12 @@ class CallAssignmentQUBO:
                 assignments_per_night[n_i] += 1
                 assignments_per_resident[r_i] += 1
 
-        # Coverage violations (nights with ≠1 assignment)
+                # Coverage violations (nights with ≠1 assignment)
         for n_i, count in assignments_per_night.items():
             if count != 1:
                 breakdown["coverage"] += self.HARD_CONSTRAINT_PENALTY * (count - 1) ** 2
 
-        # Equity (variance from mean)
+                # Equity (variance from mean)
         if assignments_per_resident:
             mean = sum(assignments_per_resident.values()) / len(
                 assignments_per_resident
@@ -764,10 +763,9 @@ class CallAssignmentQUBO:
 
         return breakdown
 
-
-# =============================================================================
-# QUANTUM-INSPIRED SIMULATED ANNEALING SOLVER
-# =============================================================================
+        # =============================================================================
+        # QUANTUM-INSPIRED SIMULATED ANNEALING SOLVER
+        # =============================================================================
 
 
 class QuantumTunnelingAnnealingSolver:
@@ -819,7 +817,7 @@ class QuantumTunnelingAnnealingSolver:
         seed: int | None = None,
         track_landscape: bool = True,
         landscape_sample_rate: int = 100,
-    ):
+    ) -> None:
         """
         Initialize quantum-inspired simulated annealing solver.
 
@@ -930,7 +928,7 @@ class QuantumTunnelingAnnealingSolver:
                         sample[i] = 1 - sample[i]
                         energy += delta_e
 
-                # Track landscape periodically
+                        # Track landscape periodically
                 if self.track_landscape and sweep % self.landscape_sample_rate == 0:
                     self.landscape_history.append(
                         LandscapePoint(
@@ -991,7 +989,7 @@ class QuantumTunnelingAnnealingSolver:
         if (flip_idx, flip_idx) in Q:
             energy_change += Q[(flip_idx, flip_idx)] * delta
 
-        # Quadratic terms
+            # Quadratic terms
         for (i, j), coef in Q.items():
             if i == j:
                 continue
@@ -1024,7 +1022,7 @@ class QuantumTunnelingAnnealingSolver:
             elif count > 1:
                 violations.append(f"Night {n_i} has {count} assignments (should be 1)")
 
-        # Check consecutive call constraint
+                # Check consecutive call constraint
         for r_i, candidate in enumerate(formulation.candidates):
             prev_assigned = False
             for n_i in range(formulation.num_nights):
@@ -1090,10 +1088,9 @@ class QuantumTunnelingAnnealingSolver:
             },
         }
 
-
-# =============================================================================
-# SOLUTION VALIDATOR
-# =============================================================================
+        # =============================================================================
+        # SOLUTION VALIDATOR
+        # =============================================================================
 
 
 class CallAssignmentValidator:
@@ -1112,7 +1109,7 @@ class CallAssignmentValidator:
         call_nights: list[CallNight],
         candidates: list[CallCandidate],
         equity_tolerance: float = 3.0,
-    ):
+    ) -> None:
         """
         Initialize validator.
 
@@ -1148,7 +1145,7 @@ class CallAssignmentValidator:
             by_night[(call_date, call_type)].append(person_id)
             by_resident[person_id].append((call_date, call_type))
 
-        # 1. Coverage validation
+            # 1. Coverage validation
         coverage_violations = self._validate_coverage(by_night)
         violations.extend(coverage_violations)
         metrics["coverage_violations"] = len(coverage_violations)
@@ -1201,7 +1198,7 @@ class CallAssignmentValidator:
             if not candidate:
                 continue
 
-            # Sort calls by date
+                # Sort calls by date
             sorted_calls = sorted(calls, key=lambda x: x[0])
 
             # Check consecutive calls
@@ -1214,8 +1211,8 @@ class CallAssignmentValidator:
                             f"{candidate.name}: Consecutive calls on {prev_date} and {curr_date}"
                         )
 
-            # Check weekly limit
-            # Group by ISO week
+                        # Check weekly limit
+                        # Group by ISO week
             by_week = defaultdict(int)
             for call_date, _ in sorted_calls:
                 week_key = call_date.isocalendar()[:2]
@@ -1256,7 +1253,7 @@ class CallAssignmentValidator:
                 f"(tolerance: ±{self.equity_tolerance})"
             )
 
-        # Check Sunday equity separately
+            # Check Sunday equity separately
         sunday_counts = {}
         for c in self.candidates:
             sunday_calls = [
@@ -1310,10 +1307,9 @@ class CallAssignmentValidator:
 
         return violations
 
-
-# =============================================================================
-# BENCHMARKING AGAINST OR-TOOLS
-# =============================================================================
+        # =============================================================================
+        # BENCHMARKING AGAINST OR-TOOLS
+        # =============================================================================
 
 
 class CallAssignmentBenchmark:
@@ -1331,7 +1327,7 @@ class CallAssignmentBenchmark:
         self,
         call_nights: list[CallNight],
         candidates: list[CallCandidate],
-    ):
+    ) -> None:
         self.call_nights = call_nights
         self.candidates = candidates
 
@@ -1386,11 +1382,11 @@ class CallAssignmentBenchmark:
             for n_i in range(n_nights):
                 x[r_i, n_i] = model.NewBoolVar(f"x_{r_i}_{n_i}")
 
-        # Constraint: Exactly one resident per night
+                # Constraint: Exactly one resident per night
         for n_i in range(n_nights):
             model.AddExactlyOne([x[r_i, n_i] for r_i in range(n_candidates)])
 
-        # Constraint: Max calls per week
+            # Constraint: Max calls per week
         for r_i, candidate in enumerate(self.candidates):
             # Group nights by week
             by_week = defaultdict(list)
@@ -1404,7 +1400,7 @@ class CallAssignmentBenchmark:
                     <= candidate.max_calls_per_week
                 )
 
-        # Constraint: No consecutive calls
+                # Constraint: No consecutive calls
         for r_i, candidate in enumerate(self.candidates):
             if candidate.max_consecutive_call_days <= 1:
                 for n_i in range(n_nights - 1):
@@ -1413,7 +1409,7 @@ class CallAssignmentBenchmark:
                     ).days == 1:
                         model.Add(x[r_i, n_i] + x[r_i, n_i + 1] <= 1)
 
-        # Objective: Minimize max calls (equity)
+                        # Objective: Minimize max calls (equity)
         max_calls = model.NewIntVar(0, n_nights, "max_calls")
         for r_i in range(n_candidates):
             model.Add(sum(x[r_i, n_i] for n_i in range(n_nights)) <= max_calls)
@@ -1495,10 +1491,9 @@ class CallAssignmentBenchmark:
 
         return comparison
 
-
-# =============================================================================
-# HIGH-LEVEL INTERFACE
-# =============================================================================
+        # =============================================================================
+        # HIGH-LEVEL INTERFACE
+        # =============================================================================
 
 
 def solve_call_assignment(

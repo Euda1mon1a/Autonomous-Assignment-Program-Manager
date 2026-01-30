@@ -77,7 +77,7 @@ class HealthAggregator:
         enable_history: bool = True,
         history_size: int = 100,
         timeout: float = 10.0,
-    ):
+    ) -> None:
         """
         Initialize health aggregator.
 
@@ -204,7 +204,7 @@ class HealthAggregator:
             else:
                 service_results[service_name] = result
 
-        # Determine overall status
+                # Determine overall status
         overall_status = self._aggregate_status(service_results)
 
         # Build summary
@@ -290,17 +290,17 @@ class HealthAggregator:
                 if result.status == HealthStatus.UNHEALTHY:
                     return HealthStatus.UNHEALTHY
 
-        # Check for any degraded services
+                    # Check for any degraded services
         for result in service_results.values():
             if result.status == HealthStatus.DEGRADED:
                 return HealthStatus.DEGRADED
 
-        # Check for any unhealthy non-critical services
+                # Check for any unhealthy non-critical services
         for result in service_results.values():
             if result.status == HealthStatus.UNHEALTHY:
                 return HealthStatus.DEGRADED
 
-        # All services healthy
+                # All services healthy
         return HealthStatus.HEALTHY
 
     def _build_summary(

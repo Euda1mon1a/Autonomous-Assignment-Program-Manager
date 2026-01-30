@@ -51,7 +51,7 @@ class HealthChecker:
         max_lag_seconds: float = 30.0,
         max_consecutive_failures: int = 3,
         health_check_timeout: float = 5.0,
-    ):
+    ) -> None:
         """Initialize health checker.
 
         Args:
@@ -182,7 +182,7 @@ class HealthChecker:
                 # This is the primary, not a replica
                 return None
 
-            # Get replay lag (time between last WAL received and applied)
+                # Get replay lag (time between last WAL received and applied)
             lag_result = connection.execute(
                 text(
                     """
@@ -202,8 +202,8 @@ class HealthChecker:
                 # Return time-based lag (more accurate)
                 return float(lag_result[1])
 
-            # Fallback: estimate lag from LSN difference
-            # This is less accurate but better than nothing
+                # Fallback: estimate lag from LSN difference
+                # This is less accurate but better than nothing
             if lag_result and lag_result[0] is not None:
                 # Rough estimate: assume 16MB/s replication speed
                 estimated_lag = float(lag_result[0]) / (16 * 1024 * 1024)

@@ -34,7 +34,7 @@ class CeleryHealthCheck:
     - Worker pool statistics
     """
 
-    def __init__(self, timeout: float = 5.0):
+    def __init__(self, timeout: float = 5.0) -> None:
         """
         Initialize Celery health check.
 

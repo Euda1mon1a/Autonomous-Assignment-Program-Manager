@@ -33,7 +33,7 @@ def parse_block(
     include_fmit: bool = typer.Option(
         True, "--fmit/--no-fmit", help="Include FMIT schedule"
     ),
-):
+) -> None:
     """
     Parse a block schedule from an Excel file.
 
@@ -62,7 +62,7 @@ def parse_block(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(1)
 
-    # Parse FMIT if requested
+        # Parse FMIT if requested
     fmit_weeks = None
     if include_fmit:
         try:
@@ -99,7 +99,7 @@ def parse_block(
         # Rich table output
         _render_block_summary(result, fmit_weeks)
 
-    # Generate markdown if requested
+        # Generate markdown if requested
     if markdown_file:
         content = generate_block_markdown(result, fmit_weeks=fmit_weeks)
         markdown_file.parent.mkdir(parents=True, exist_ok=True)
@@ -114,7 +114,7 @@ def show_roster(
     template: str | None = typer.Option(
         None, "--template", "-t", help="Filter by template (R1, R2, R3)"
     ),
-):
+) -> None:
     """
     Show resident roster grouped by rotation template.
 
@@ -170,7 +170,7 @@ def show_fmit(
     block: int | None = typer.Option(
         None, "--block", "-b", help="Filter by block number"
     ),
-):
+) -> None:
     """
     Show FMIT attending schedule.
 
@@ -222,7 +222,7 @@ def show_fmit(
     console.print(table)
 
 
-def _render_block_summary(result, fmit_weeks=None):
+def _render_block_summary(result, fmit_weeks=None) -> None:
     """Render block summary with Rich tables."""
     # Header
     console.print(f"\n[bold cyan]Block {result.block_number} Summary[/bold cyan]")
@@ -258,7 +258,7 @@ def _render_block_summary(result, fmit_weeks=None):
             console.print(table)
             console.print()
 
-    # FMIT schedule
+            # FMIT schedule
     if fmit_weeks:
         table = Table(title="FMIT Attending")
         table.add_column("Week", style="cyan")
@@ -270,7 +270,7 @@ def _render_block_summary(result, fmit_weeks=None):
         console.print(table)
         console.print()
 
-    # Warnings
+        # Warnings
     if result.warnings:
         console.print("[yellow]Warnings:[/yellow]")
         for w in result.warnings[:5]:  # Show first 5
@@ -279,7 +279,7 @@ def _render_block_summary(result, fmit_weeks=None):
             console.print(f"  ... and {len(result.warnings) - 5} more")
         console.print()
 
-    # Errors
+        # Errors
     if result.errors:
         console.print("[red]Errors:[/red]")
         for e in result.errors:

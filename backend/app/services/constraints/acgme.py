@@ -78,10 +78,9 @@ class ConstraintResult:
     violations: list[ConstraintViolation] = field(default_factory=list)
     penalty: float = 0.0  # For soft constraints
 
-
-# =============================================================================
-# Validator Protocol (interface compatibility)
-# =============================================================================
+    # =============================================================================
+    # Validator Protocol (interface compatibility)
+    # =============================================================================
 
 
 @runtime_checkable
@@ -142,10 +141,9 @@ class SchedulingContext:
             for block in self.blocks:
                 self.blocks_by_date[block.date].append(block)
 
-
-# =============================================================================
-# Base Constraint Class
-# =============================================================================
+                # =============================================================================
+                # Base Constraint Class
+                # =============================================================================
 
 
 class HardConstraint:
@@ -162,7 +160,7 @@ class HardConstraint:
         constraint_type: str,
         priority: int = ConstraintPriority.CRITICAL,
         enabled: bool = True,
-    ):
+    ) -> None:
         """
         Initialize hard constraint.
 
@@ -199,10 +197,9 @@ class HardConstraint:
         """Validate constraint against assignments."""
         raise NotImplementedError("Subclass must implement validate")
 
-
-# =============================================================================
-# ACGME Constraint Implementations
-# =============================================================================
+        # =============================================================================
+        # ACGME Constraint Implementations
+        # =============================================================================
 
 
 class AvailabilityConstraint(HardConstraint):
@@ -436,7 +433,7 @@ class EightyHourRuleConstraint(HardConstraint):
             if not window_blocks:
                 continue
 
-            # For each resident, sum of blocks in window <= max
+                # For each resident, sum of blocks in window <= max
             for resident in context.residents:
                 r_i = context.resident_idx[resident.id]
                 resident_preassigned = preassigned_blocks.get(resident.id, set())
@@ -571,7 +568,7 @@ class EightyHourRuleConstraint(HardConstraint):
             if not resident_assignments:
                 continue
 
-            # Get hours per date for this resident
+                # Get hours per date for this resident
             hours_by_date: defaultdict[date, int] = defaultdict(int)
             for a in resident_assignments:
                 for b in context.blocks:
@@ -682,7 +679,7 @@ class OneInSevenRuleConstraint(HardConstraint):
                 if len(consecutive_dates) < self.MAX_CONSECUTIVE_DAYS + 1:
                     continue
 
-                # Create indicator variables for each day
+                    # Create indicator variables for each day
                 day_worked_vars = []
                 preassigned_day_count = sum(
                     1 for d in consecutive_dates if d in resident_preassigned
@@ -711,7 +708,7 @@ class OneInSevenRuleConstraint(HardConstraint):
                         model.AddMaxEquality(day_worked, day_vars)
                         day_worked_vars.append(day_worked)
 
-                # At most 6 days worked in any 7-day window
+                        # At most 6 days worked in any 7-day window
                 if (
                     preassigned_day_count + len(day_worked_vars)
                     > self.MAX_CONSECUTIVE_DAYS
@@ -767,7 +764,7 @@ class OneInSevenRuleConstraint(HardConstraint):
                 if len(consecutive_dates) < self.MAX_CONSECUTIVE_DAYS + 1:
                     continue
 
-                # Sum of all blocks across 7 days <= 6 * 2 (max 2 blocks per day)
+                    # Sum of all blocks across 7 days <= 6 * 2 (max 2 blocks per day)
                 all_vars = []
                 for d in consecutive_dates[: self.MAX_CONSECUTIVE_DAYS + 1]:
                     for b in context.blocks_by_date[d]:
@@ -944,7 +941,7 @@ class SupervisionRatioConstraint(HardConstraint):
         for f in context.faculty:
             person_types[f.id] = "faculty"
 
-        # Group by block
+            # Group by block
         by_block: defaultdict[Any, dict[str, list[Any]]] = defaultdict(
             lambda: {"residents": [], "faculty": []}
         )
@@ -992,10 +989,9 @@ class SupervisionRatioConstraint(HardConstraint):
             violations=violations,
         )
 
-
-# =============================================================================
-# High-Level Validator
-# =============================================================================
+        # =============================================================================
+        # High-Level Validator
+        # =============================================================================
 
 
 class ACGMEConstraintValidator:

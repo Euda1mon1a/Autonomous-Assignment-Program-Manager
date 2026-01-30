@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class AssignmentPatterns:
     """Detects and analyzes assignment patterns."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def detect_patterns(self, start_date: date, end_date: date) -> dict[str, Any]:
@@ -100,7 +100,7 @@ class AssignmentPatterns:
                 "streak_distribution": {},
             }
 
-        # Group dates by person
+            # Group dates by person
         person_dates: dict[str, list[date]] = {}
         for person_id, work_date in rows:
             person_key = str(person_id)
@@ -108,7 +108,7 @@ class AssignmentPatterns:
                 person_dates[person_key] = []
             person_dates[person_key].append(work_date)
 
-        # Analyze streaks for each person
+            # Analyze streaks for each person
         all_streaks: list[int] = []
         max_consecutive = 0
         persons_with_long_streaks = 0
@@ -132,7 +132,7 @@ class AssignmentPatterns:
                     person_max_streak = max(person_max_streak, current_streak)
                     current_streak = 1
 
-            # Don't forget the last streak
+                    # Don't forget the last streak
             if current_streak > 1:
                 all_streaks.append(current_streak)
                 streak_distribution[current_streak] = (

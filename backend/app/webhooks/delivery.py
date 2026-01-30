@@ -41,7 +41,7 @@ class WebhookDeliveryManager:
         base_retry_delay_seconds: int = 60,
         max_retry_delay_seconds: int = 3600,
         timestamp_tolerance_seconds: int = 300,
-    ):
+    ) -> None:
         """
         Initialize the delivery manager.
 
@@ -83,7 +83,7 @@ class WebhookDeliveryManager:
             logger.error(f"Delivery {delivery_id} not found")
             return False
 
-        # Load webhook
+            # Load webhook
         result = await db.execute(
             select(Webhook).where(Webhook.id == delivery.webhook_id)
         )
@@ -95,7 +95,7 @@ class WebhookDeliveryManager:
             )
             return False
 
-        # Update delivery status
+            # Update delivery status
         delivery.status = WebhookDeliveryStatus.PROCESSING.value
         delivery.attempt_count += 1
         delivery.last_attempted_at = datetime.utcnow()
@@ -164,7 +164,7 @@ class WebhookDeliveryManager:
         if webhook.custom_headers:
             headers.update(webhook.custom_headers)
 
-        # Make request with timeout
+            # Make request with timeout
         start_time = datetime.utcnow()
 
         try:
@@ -173,7 +173,7 @@ class WebhookDeliveryManager:
                     webhook.url, json=delivery.payload, headers=headers
                 )
 
-            # Calculate response time
+                # Calculate response time
             response_time_ms = int(
                 (datetime.utcnow() - start_time).total_seconds() * 1000
             )

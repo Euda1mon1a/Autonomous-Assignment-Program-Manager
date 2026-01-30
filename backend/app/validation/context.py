@@ -24,7 +24,7 @@ class ValidationContext:
     and maintains locale settings for error messages.
     """
 
-    def __init__(self, locale: Locale = Locale.EN_US):
+    def __init__(self, locale: Locale = Locale.EN_US) -> None:
         """
         Initialize validation context.
 
@@ -191,7 +191,7 @@ class validation_scope:
         ...         raise ValueError("Validation failed")
     """
 
-    def __init__(self, locale: Locale = Locale.EN_US):
+    def __init__(self, locale: Locale = Locale.EN_US) -> None:
         """
         Initialize validation scope.
 

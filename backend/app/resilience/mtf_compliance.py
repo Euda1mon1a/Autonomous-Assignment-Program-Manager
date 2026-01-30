@@ -324,10 +324,9 @@ class PositiveFeedbackRiskDict(TypedDict):
     risk_type: NotRequired[str]
     description: NotRequired[str]
 
-
-# =============================================================================
-# Type-Safe Data Classes for MTF Compliance
-# =============================================================================
+    # =============================================================================
+    # Type-Safe Data Classes for MTF Compliance
+    # =============================================================================
 
 
 @dataclass
@@ -530,10 +529,9 @@ class IronDomeStatus:
             "locked_operations": self.locked_operations,
         }
 
-
-# =============================================================================
-# DRRS Translation Layer
-# =============================================================================
+        # =============================================================================
+        # DRRS Translation Layer
+        # =============================================================================
 
 
 class DRRSTranslator:
@@ -645,9 +643,9 @@ class DRRSTranslator:
         if required_faculty == 0:
             return PersonnelReadinessLevel.P4, 0.0
 
-        # Calculate effective availability accounting for degraded capacity of overloaded personnel
-        # Overloaded faculty count as 0.5 personnel (50% effective) due to fatigue/burnout
-        # This prevents gaming the system by overworking existing staff to appear "fully manned"
+            # Calculate effective availability accounting for degraded capacity of overloaded personnel
+            # Overloaded faculty count as 0.5 personnel (50% effective) due to fatigue/burnout
+            # This prevents gaming the system by overworking existing staff to appear "fully manned"
         effective_available = max(0, available_faculty - (overloaded_count * 0.5))
         percentage = (effective_available / required_faculty) * 100
 
@@ -702,21 +700,21 @@ class DRRSTranslator:
                 "Single Point of Failure: Any faculty loss causes service gaps"
             )
 
-        # Check for dual point vulnerabilities (N-2 failure)
+            # Check for dual point vulnerabilities (N-2 failure)
         if not n2_pass:
             deficiencies.append(
                 "Dual Point of Failure: Two faculty losses cause critical gaps"
             )
 
-        # Check for coverage degradation
+            # Check for coverage degradation
         if coverage_rate < 0.90:
             deficiencies.append(
                 f"Coverage degraded: {coverage_rate * 100:.0f}% vs 90% minimum"
             )
 
-        # Determine S-rating based on deficiency count and N-1 status
-        # N-1 failure is the critical threshold - if you can't survive ANY single loss,
-        # you're S4 regardless of anything else
+            # Determine S-rating based on deficiency count and N-1 status
+            # N-1 failure is the critical threshold - if you can't survive ANY single loss,
+            # you're S4 regardless of anything else
         if not deficiencies:
             return EquipmentReadinessLevel.S1, deficiencies  # Perfect - no deficiencies
         elif len(deficiencies) == 1 and n1_pass:
@@ -801,10 +799,9 @@ class DRRSTranslator:
 
         return template.strip()
 
-
-# =============================================================================
-# MFR (Memorandum for Record) Generator
-# =============================================================================
+        # =============================================================================
+        # MFR (Memorandum for Record) Generator
+        # =============================================================================
 
 
 @dataclass
@@ -1035,7 +1032,7 @@ class MFRGenerator:
             eq_state = system_state.get("equilibrium_state")
             phase_risk = system_state.get("phase_transition_risk", "low")
 
-        # N-1/N-2 analysis
+            # N-1/N-2 analysis
         if not n1_pass:
             findings.append(
                 "N-1 VULNERABILITY: System will fail to maintain coverage if ANY single "
@@ -1048,28 +1045,28 @@ class MFRGenerator:
                 "members are simultaneously unavailable. Fatal pairs identified."
             )
 
-        # Load shedding
+            # Load shedding
         if load_level and load_level not in ("NORMAL", LoadSheddingLevel.NORMAL):
             findings.append(
                 f"LOAD SHEDDING ACTIVE: Operating at {load_level} level. "
                 f"Non-essential services have been suspended."
             )
 
-        # Coverage
+            # Coverage
         if coverage < 0.90:
             findings.append(
                 f"COVERAGE DEGRADED: Current coverage at {coverage * 100:.0f}%, "
                 f"below 90% minimum standard."
             )
 
-        # Allostatic load
+            # Allostatic load
         if avg_load > 60:
             findings.append(
                 f"STAFF OVERLOAD: Average allostatic load at {avg_load:.0f}/100. "
                 f"Personnel are in chronic stress state."
             )
 
-        # Equilibrium
+            # Equilibrium
         if eq_state in (
             "unsustainable",
             "critical",
@@ -1081,7 +1078,7 @@ class MFRGenerator:
                 "be maintained. System will degrade further without intervention."
             )
 
-        # Phase transition risk
+            # Phase transition risk
         if phase_risk in ("high", "critical"):
             findings.append(
                 f"PHASE TRANSITION RISK: {phase_risk.upper()}. System is approaching "
@@ -1135,13 +1132,13 @@ class MFRGenerator:
             avg_load = system_state.get("average_allostatic_load", 0)
             eq_state = system_state.get("equilibrium_state", "stable")
 
-        # Contingency analysis failures (system resilience to personnel loss)
+            # Contingency analysis failures (system resilience to personnel loss)
         if not n1_pass:
             risk_score += 3  # Single point of failure exists
         if not n2_pass:
             risk_score += 2  # Dual point vulnerability exists
 
-        # Coverage degradation (how many shifts are filled)
+            # Coverage degradation (how many shifts are filled)
         if coverage < 0.70:
             risk_score += 4  # Critical: <70% coverage = major service gaps
         elif coverage < 0.80:
@@ -1149,19 +1146,19 @@ class MFRGenerator:
         elif coverage < 0.90:
             risk_score += 2  # Degraded: 80-90% coverage = minor gaps
 
-        # Staff burnout indicators (allostatic load)
+            # Staff burnout indicators (allostatic load)
         if avg_load > 80:
             risk_score += 3  # Burnout imminent, attrition risk high
         elif avg_load > 60:
             risk_score += 2  # Chronic stress, sustainability concerns
 
-        # System equilibrium state (can the system math work?)
+            # System equilibrium state (can the system math work?)
         if eq_state in ("critical", EquilibriumState.CRITICAL):
             risk_score += 4  # System mathematically unstable
         elif eq_state in ("unsustainable", EquilibriumState.UNSUSTAINABLE):
             risk_score += 3  # System cannot maintain current state
 
-        # Map total risk score to risk level
+            # Map total risk score to risk level
         if risk_score >= 10:
             return RiskLevel.CATASTROPHIC
         elif risk_score >= 7:
@@ -1271,7 +1268,7 @@ class MFRGenerator:
                 "IMMEDIATE: Initiate Safety Stand-Down protocol if not already active"
             )
 
-        # Handle both SystemHealthState and dict
+            # Handle both SystemHealthState and dict
         if isinstance(system_state, SystemHealthState):
             n1_pass = system_state.n1_pass
             coverage = system_state.coverage_rate
@@ -1301,10 +1298,9 @@ class MFRGenerator:
 
         return recs
 
-
-# =============================================================================
-# Circuit Breaker (Safety Stand-Down)
-# =============================================================================
+        # =============================================================================
+        # Circuit Breaker (Safety Stand-Down)
+        # =============================================================================
 
 
 @dataclass
@@ -1481,38 +1477,38 @@ class CircuitBreaker:
             trigger = CircuitBreakerTrigger.N1_VIOLATION
             details = "N-1 analysis failed: Any single faculty loss causes service gaps"
 
-        # Priority 2: N-2 failure combined with already degraded coverage
-        # Two vulnerabilities means system is brittle and degrading
+            # Priority 2: N-2 failure combined with already degraded coverage
+            # Two vulnerabilities means system is brittle and degrading
         elif not n2_pass and coverage_rate < self.THRESHOLDS["coverage_rate_warning"]:
             trigger = CircuitBreakerTrigger.N2_VIOLATION
             details = "N-2 analysis failed with degraded coverage"
 
-        # Priority 3: Coverage collapse - critical threshold breached
-        # Below 70% means significant service gaps already exist
+            # Priority 3: Coverage collapse - critical threshold breached
+            # Below 70% means significant service gaps already exist
         elif coverage_rate < self.THRESHOLDS["coverage_rate_critical"]:
             trigger = CircuitBreakerTrigger.COVERAGE_COLLAPSE
             details = f"Coverage rate ({coverage_rate * 100:.0f}%) below critical threshold (70%)"
 
-        # Priority 4: Allostatic overload - faculty burnout imminent
-        # Above 80 means personnel are in chronic stress, attrition risk high
+            # Priority 4: Allostatic overload - faculty burnout imminent
+            # Above 80 means personnel are in chronic stress, attrition risk high
         elif average_allostatic_load > self.THRESHOLDS["allostatic_load_critical"]:
             trigger = CircuitBreakerTrigger.ALLOSTATIC_OVERLOAD
             details = f"Average allostatic load ({average_allostatic_load:.0f}) exceeds critical threshold (80)"
 
-        # Priority 5: Critical volatility - phase transition risk
-        # System approaching bifurcation point where small changes cause catastrophic shifts
+            # Priority 5: Critical volatility - phase transition risk
+            # System approaching bifurcation point where small changes cause catastrophic shifts
         elif volatility_level in ("critical", "CRITICAL"):
             trigger = CircuitBreakerTrigger.VOLATILITY_CRITICAL
             details = "System volatility at critical level - phase transition risk"
 
-        # Priority 6: Compensation debt exceeded - unsustainable borrowing
-        # System has borrowed too much future capacity, will fail when debt comes due
+            # Priority 6: Compensation debt exceeded - unsustainable borrowing
+            # System has borrowed too much future capacity, will fail when debt comes due
         elif compensation_debt > self.THRESHOLDS["compensation_debt_critical"]:
             trigger = CircuitBreakerTrigger.COMPENSATION_DEBT_EXCEEDED
             details = f"Compensation debt ({compensation_debt:.0f}) exceeds sustainable threshold"
 
-        # Priority 7: Positive feedback cascade - death spiral detected
-        # Self-reinforcing failure cycle identified with high confidence
+            # Priority 7: Positive feedback cascade - death spiral detected
+            # Self-reinforcing failure cycle identified with high confidence
         elif positive_feedback_risks:
             # Handle both PositiveFeedbackRisk and dict
             high_confidence_risks = [
@@ -1529,21 +1525,21 @@ class CircuitBreaker:
                 trigger = CircuitBreakerTrigger.POSITIVE_FEEDBACK_CASCADE
                 details = f"High-confidence positive feedback risks detected: {len(high_confidence_risks)}"
 
-        # If any threshold was breached, trip the circuit breaker
+                # If any threshold was breached, trip the circuit breaker
         if trigger:
             self._trip(trigger, details)
             return True, trigger, details
 
-        # If in HALF_OPEN state, check if conditions have improved enough to fully close
-        # This allows gradual recovery after a trip
+            # If in HALF_OPEN state, check if conditions have improved enough to fully close
+            # This allows gradual recovery after a trip
         if self.state == CircuitBreakerState.HALF_OPEN:
             if self._conditions_safe(coverage_rate, average_allostatic_load, n1_pass):
                 self.close()
 
-        # No trip occurred
+                # No trip occurred
         return False, None, None
 
-    def _trip(self, trigger: CircuitBreakerTrigger, details: str):
+    def _trip(self, trigger: CircuitBreakerTrigger, details: str) -> None:
         """Trip the circuit breaker."""
         self.state = CircuitBreakerState.OPEN
         self.triggered_at = datetime.now()
@@ -1573,7 +1569,7 @@ class CircuitBreaker:
             return False
         return datetime.now() < self.override.expires_at
 
-    def close(self):
+    def close(self) -> None:
         """Close the circuit breaker (resume normal operations)."""
         self.state = CircuitBreakerState.CLOSED
         self.triggered_at = None
@@ -1582,7 +1578,7 @@ class CircuitBreaker:
         self.override = None
         logger.info("Circuit breaker CLOSED - normal operations resumed")
 
-    def half_open(self):
+    def half_open(self) -> None:
         """Set circuit breaker to half-open (limited operations)."""
         self.state = CircuitBreakerState.HALF_OPEN
         logger.info("Circuit breaker HALF-OPEN - limited operations")
@@ -1640,11 +1636,11 @@ class CircuitBreaker:
         if operation in self.ALWAYS_ALLOWED:
             return True, None
 
-        # If override is active, allow everything except patient-safety critical
+            # If override is active, allow everything except patient-safety critical
         if self._override_active():
             return True, None
 
-        # Check locked operations for current state
+            # Check locked operations for current state
         locked = self.LOCKED_OPERATIONS.get(self.state, [])
         if operation in locked:
             return False, (
@@ -1670,10 +1666,9 @@ class CircuitBreaker:
             allowed_operations=self.ALWAYS_ALLOWED.copy(),
         )
 
-
-# =============================================================================
-# RFF (Request for Forces) Drafter
-# =============================================================================
+        # =============================================================================
+        # RFF (Request for Forces) Drafter
+        # =============================================================================
 
 
 @dataclass
@@ -1896,7 +1891,7 @@ class RFFDrafter:
         for mission in missions:
             impact += f"      - {mission.value.replace('_', ' ').title()}\n"
 
-        # Handle both SystemHealthState and dict
+            # Handle both SystemHealthState and dict
         if isinstance(system_state, SystemHealthState):
             load_level = system_state.load_shedding_level
             eq_state = system_state.equilibrium_state
@@ -2023,7 +2018,7 @@ class RFFDrafter:
             outcomes.append(f"Day {days_to_fail + 7}: Estimated ACGME citation risk")
             mission_failure_likely = True
 
-        # Handle both SystemHealthState and dict
+            # Handle both SystemHealthState and dict
         if isinstance(system_state, SystemHealthState):
             load = system_state.average_allostatic_load
             n1_pass = system_state.n1_pass
@@ -2047,10 +2042,9 @@ class RFFDrafter:
             mission_failure_likely=mission_failure_likely,
         )
 
-
-# =============================================================================
-# Iron Dome Service (Unified Interface)
-# =============================================================================
+        # =============================================================================
+        # Iron Dome Service (Unified Interface)
+        # =============================================================================
 
 
 class IronDomeService:

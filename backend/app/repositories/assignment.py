@@ -13,7 +13,7 @@ from app.repositories.base import BaseRepository
 class AssignmentRepository(BaseRepository[Assignment]):
     """Repository for Assignment entity operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(Assignment, db)
 
     def get_by_id_with_relations(self, id: UUID) -> Assignment | None:
@@ -80,7 +80,7 @@ class AssignmentRepository(BaseRepository[Assignment]):
                 Assignment.rotation_template.has(rotation_type=rotation_type)
             )
 
-        # Get total count before pagination (using a subquery for efficiency)
+            # Get total count before pagination (using a subquery for efficiency)
         total = query.count()
 
         # Apply deterministic ordering for stable pagination
@@ -92,7 +92,7 @@ class AssignmentRepository(BaseRepository[Assignment]):
             # No block join, just order by id for deterministic results
             query = query.order_by(Assignment.id)
 
-        # Apply pagination at database level
+            # Apply pagination at database level
         if offset is not None:
             query = query.offset(offset)
         if limit is not None:

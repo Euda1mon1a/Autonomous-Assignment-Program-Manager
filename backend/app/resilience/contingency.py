@@ -134,7 +134,7 @@ class ContingencyAnalyzer:
     - Cascade failures (overload leading to more failures)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._cache = {}
 
     def analyze_n1(
@@ -190,7 +190,7 @@ class ContingencyAnalyzer:
                 assignments_by_block[assignment.block_id] = []
             assignments_by_block[assignment.block_id].append(assignment)
 
-        # For each faculty, simulate their absence
+            # For each faculty, simulate their absence
         for fac in faculty:
             fac_assignments = assignments_by_faculty.get(fac.id, [])
             if not fac_assignments:
@@ -228,7 +228,7 @@ class ContingencyAnalyzer:
                     )
                 )
 
-        # Sort by severity and affected blocks
+                # Sort by severity and affected blocks
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
         vulnerabilities.sort(
             key=lambda v: (severity_order[v.severity], -v.affected_blocks)
@@ -287,7 +287,7 @@ class ContingencyAnalyzer:
                 assignments_by_faculty[assignment.person_id] = []
             assignments_by_faculty[assignment.person_id].append(assignment)
 
-        # Determine which faculty to analyze
+            # Determine which faculty to analyze
         if critical_faculty_only:
             # First run N-1 to find critical faculty
             n1_vulns = self.analyze_n1(
@@ -309,7 +309,7 @@ class ContingencyAnalyzer:
         else:
             analysis_faculty = faculty
 
-        # Check all pairs
+            # Check all pairs
         for fac1, fac2 in combinations(analysis_faculty, 2):
             # Calculate combined absence impact
             combined_assignments = set()
@@ -318,7 +318,7 @@ class ContingencyAnalyzer:
             for a in assignments_by_faculty.get(fac2.id, []):
                 combined_assignments.add(a.block_id)
 
-            # Count uncoverable blocks
+                # Count uncoverable blocks
             uncoverable = 0
             for block_id in combined_assignments:
                 block_assignments = [
@@ -341,7 +341,7 @@ class ContingencyAnalyzer:
                     )
                 )
 
-        # Sort by severity
+                # Sort by severity
         fatal_pairs.sort(key=lambda p: -p.uncoverable_blocks)
 
         return fatal_pairs
@@ -420,7 +420,7 @@ class ContingencyAnalyzer:
             else:
                 replacement_difficulty = 0.0
 
-            # Workload share
+                # Workload share
             my_assignments = assignment_counts.get(fac.id, 0)
             workload_share = (
                 my_assignments / total_assignments if total_assignments > 0 else 0.0
@@ -492,7 +492,7 @@ class ContingencyAnalyzer:
                 name=fac.name,
             )
 
-        # Add block nodes
+            # Add block nodes
         for block in blocks:
             G.add_node(
                 f"block:{block.id}",
@@ -501,7 +501,7 @@ class ContingencyAnalyzer:
                 date=str(block.date),
             )
 
-        # Add service nodes
+            # Add service nodes
         for service_id in services:
             G.add_node(
                 f"service:{service_id}",
@@ -509,7 +509,7 @@ class ContingencyAnalyzer:
                 service_id=service_id,
             )
 
-        # Add assignment edges (faculty -> block)
+            # Add assignment edges (faculty -> block)
         for assignment in assignments:
             G.add_edge(
                 f"faculty:{assignment.person_id}",
@@ -517,7 +517,7 @@ class ContingencyAnalyzer:
                 type="assignment",
             )
 
-        # Add credential edges (faculty -> service)
+            # Add credential edges (faculty -> service)
         for service_id, faculty_ids in services.items():
             for fac_id in faculty_ids:
                 G.add_edge(
@@ -564,12 +564,12 @@ class ContingencyAnalyzer:
             logger.warning("NetworkX not available - using basic centrality")
             return self.calculate_centrality(faculty, assignments, services)
 
-        # Build graph
+            # Build graph
         G = self.build_scheduling_graph(faculty, blocks, assignments, services)
         if G is None:
             return self.calculate_centrality(faculty, assignments, services)
 
-        # Calculate NetworkX centrality metrics
+            # Calculate NetworkX centrality metrics
         try:
             betweenness = nx.betweenness_centrality(G)
             degree = nx.degree_centrality(G)
@@ -584,7 +584,7 @@ class ContingencyAnalyzer:
             logger.error(f"NetworkX centrality calculation failed: {e}")
             return self.calculate_centrality(faculty, assignments, services)
 
-        # Build scores
+            # Build scores
         scores = []
         total_assignments = len(assignments)
         assignment_counts = {}
@@ -711,7 +711,7 @@ class ContingencyAnalyzer:
         for a in assignments:
             assignment_counts[a.person_id] = assignment_counts.get(a.person_id, 0) + 1
 
-        # Track state
+            # Track state
         active_faculty = {fac.id: fac for fac in faculty}
         failed_ids = set(initial_failures)
         cascade_steps = []
@@ -721,7 +721,7 @@ class ContingencyAnalyzer:
             if fid in active_faculty:
                 del active_faculty[fid]
 
-        # Calculate initial load redistribution
+                # Calculate initial load redistribution
         total_load = sum(assignment_counts.get(fid, 0) for fid in failed_ids)
         remaining_capacity = len(active_faculty)
 
@@ -748,7 +748,7 @@ class ContingencyAnalyzer:
             if not new_failures:
                 break  # Stable
 
-            # Record cascade step
+                # Record cascade step
             cascade_steps.append(
                 {
                     "step": step,
@@ -771,7 +771,7 @@ class ContingencyAnalyzer:
             if step > len(faculty):
                 break
 
-        # Calculate final state
+                # Calculate final state
         total_assignments = len(assignments)
         covered = sum(1 for a in assignments if a.person_id in active_faculty)
         final_coverage = covered / total_assignments if total_assignments > 0 else 0.0
@@ -817,7 +817,7 @@ class ContingencyAnalyzer:
         else:
             centrality = self.calculate_centrality(faculty, assignments, services)
 
-        # For top centrality faculty, simulate cascade
+            # For top centrality faculty, simulate cascade
         for score in centrality[:10]:  # Top 10
             cascade = self.simulate_cascade_failure(
                 faculty,
@@ -848,7 +848,7 @@ class ContingencyAnalyzer:
                     }
                 )
 
-        # Sort by risk
+                # Sort by risk
         risk_order = {"critical": 0, "high": 1, "medium": 2}
         critical_points.sort(
             key=lambda x: (risk_order.get(x["risk_level"], 3), -x["centrality_score"])
@@ -890,7 +890,7 @@ class ContingencyAnalyzer:
         elif current_utilization > 0.85:
             indicators.append("Utilization above 85% - elevated risk")
 
-        # Check change frequency
+            # Check change frequency
         if recent_changes:
             # Count changes in last 7 days
             week_ago = date.today() - timedelta(days=7)
@@ -907,7 +907,7 @@ class ContingencyAnalyzer:
                     f"{recent_count} schedule changes in past week - elevated volatility"
                 )
 
-        # Check for patterns (simplified)
+                # Check for patterns (simplified)
         if len(indicators) >= 3:
             risk = "critical"
         elif len(indicators) >= 2:

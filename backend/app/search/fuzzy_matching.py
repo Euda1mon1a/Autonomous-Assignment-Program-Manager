@@ -42,7 +42,7 @@ class FuzzyMatcher:
     matching and deduplication use cases.
     """
 
-    def __init__(self, config: FuzzyMatchConfig | None = None):
+    def __init__(self, config: FuzzyMatchConfig | None = None) -> None:
         """
         Initialize the fuzzy matcher.
 
@@ -137,7 +137,7 @@ class FuzzyMatcher:
                     }
                 )
 
-        # Sort by score (descending)
+                # Sort by score (descending)
         matches.sort(key=lambda x: x["score"], reverse=True)
 
         # Limit results
@@ -189,7 +189,7 @@ class FuzzyMatcher:
         elif request.entity_type == "resident":
             db_query = db_query.filter(Person.type == "resident")
 
-        # Get all persons
+            # Get all persons
         persons = db_query.all()
 
         matches = []
@@ -209,7 +209,7 @@ class FuzzyMatcher:
                 score = 1.0
                 algorithm_scores = {"exact": 1.0}
 
-            # 2. Fuzzy match on full name
+                # 2. Fuzzy match on full name
             elif not match_type:
                 score, algorithm_scores = self._compute_similarity(
                     query, name, FuzzyMatchAlgorithm.COMBINED
@@ -217,7 +217,7 @@ class FuzzyMatcher:
                 if score >= request.threshold:
                     match_type = "fuzzy"
 
-            # 3. Phonetic match (if enabled)
+                    # 3. Phonetic match (if enabled)
             if request.include_phonetic and score < request.threshold:
                 phonetic_score = self._phonetic_similarity(query, name)
                 if phonetic_score >= request.threshold:
@@ -225,7 +225,7 @@ class FuzzyMatcher:
                     score = phonetic_score
                     algorithm_scores = {"phonetic": phonetic_score}
 
-            # 4. Nickname match (if enabled)
+                    # 4. Nickname match (if enabled)
             if request.include_nicknames and score < request.threshold:
                 nickname_score = self._nickname_similarity(query_tokens, name_tokens)
                 if nickname_score >= request.threshold:
@@ -233,7 +233,7 @@ class FuzzyMatcher:
                     score = nickname_score
                     algorithm_scores = {"nickname": nickname_score}
 
-            # 5. Partial name match (first or last name)
+                    # 5. Partial name match (first or last name)
             if score < request.threshold and len(query_tokens) == 1:
                 # Check if query matches any part of the name
                 for token in name_tokens:
@@ -246,7 +246,7 @@ class FuzzyMatcher:
                         algorithm_scores = token_algo_scores
                         break
 
-            # Add match if score meets threshold
+                        # Add match if score meets threshold
             if score >= request.threshold and match_type:
                 confidence = self._compute_confidence(
                     query, name, score, algorithm_scores
@@ -268,7 +268,7 @@ class FuzzyMatcher:
                     )
                 )
 
-        # Sort by score
+                # Sort by score
         matches.sort(key=lambda x: x.score, reverse=True)
 
         # Limit results
@@ -308,7 +308,7 @@ class FuzzyMatcher:
                 execution_time_ms=0.0,
             )
 
-        # Normalize items
+            # Normalize items
         items = [self._normalize(item) for item in request.items]
 
         # Track unique items and duplicate groups
@@ -320,7 +320,7 @@ class FuzzyMatcher:
             if i in processed_indices:
                 continue
 
-            # This item becomes a canonical representative
+                # This item becomes a canonical representative
             duplicates = []
             similarity_scores = {}
 
@@ -336,7 +336,7 @@ class FuzzyMatcher:
                     similarity_scores[items[j]] = score
                     processed_indices.add(j)
 
-            # Add to unique items
+                    # Add to unique items
             unique_items.append(item)
             processed_indices.add(i)
 
@@ -422,7 +422,7 @@ class FuzzyMatcher:
             avg_time_per_query_ms=avg_time,
         )
 
-    # ===== PRIVATE HELPER METHODS =====
+        # ===== PRIVATE HELPER METHODS =====
 
     def _normalize(self, text: str) -> str:
         """
@@ -529,7 +529,7 @@ class FuzzyMatcher:
         if not str1 or not str2:
             return 0.0
 
-        # Compute Levenshtein distance
+            # Compute Levenshtein distance
         len1, len2 = len(str1), len(str2)
         dp = [[0] * (len2 + 1) for _ in range(len1 + 1)]
 
@@ -581,7 +581,7 @@ class FuzzyMatcher:
         if not text:
             return ""
 
-        # Soundex digit mapping
+            # Soundex digit mapping
         soundex_map = {
             "B": "1",
             "F": "1",
@@ -620,7 +620,7 @@ class FuzzyMatcher:
             if len(soundex) == 4:
                 break
 
-        # Pad with zeros if needed
+                # Pad with zeros if needed
         soundex = soundex.ljust(4, "0")
 
         return soundex[:4]
@@ -649,7 +649,7 @@ class FuzzyMatcher:
         if soundex1 == soundex2:
             return 1.0
 
-        # Partial match on soundex codes
+            # Partial match on soundex codes
         matches = sum(c1 == c2 for c1, c2 in zip(soundex1, soundex2))
         return matches / 4.0
 
@@ -675,8 +675,8 @@ class FuzzyMatcher:
         if not text:
             return ""
 
-        # Simplified Metaphone implementation
-        # (Full implementation is complex; this is a basic version)
+            # Simplified Metaphone implementation
+            # (Full implementation is complex; this is a basic version)
         metaphone = ""
 
         # Handle leading characters
@@ -694,15 +694,15 @@ class FuzzyMatcher:
             if len(metaphone) >= 4:
                 break
 
-            # Skip duplicate letters (except C)
+                # Skip duplicate letters (except C)
             if char == prev_char and char != "C":
                 continue
 
-            # Vowels
+                # Vowels
             if char in "AEIOU":
                 if i == 0:
                     metaphone += char
-            # Consonants
+                    # Consonants
             elif char == "B":
                 if i == len(text) - 1 and prev_char == "M":
                     pass  # Silent B
@@ -803,7 +803,7 @@ class FuzzyMatcher:
         if metaphone1 == metaphone2:
             return 1.0
 
-        # Partial match on metaphone codes
+            # Partial match on metaphone codes
         max_len = max(len(metaphone1), len(metaphone2))
         matches = sum(c1 == c2 for c1, c2 in zip(metaphone1, metaphone2))
         return matches / max_len if max_len > 0 else 0.0
@@ -828,14 +828,14 @@ class FuzzyMatcher:
         if not str1 or not str2:
             return 0.0
 
-        # Generate n-grams
+            # Generate n-grams
         ngrams1 = self._generate_ngrams(str1, self.config.ngram_size)
         ngrams2 = self._generate_ngrams(str2, self.config.ngram_size)
 
         if not ngrams1 or not ngrams2:
             return 0.0
 
-        # Dice coefficient
+            # Dice coefficient
         intersection = ngrams1.intersection(ngrams2)
         dice = (2.0 * len(intersection)) / (len(ngrams1) + len(ngrams2))
 
@@ -901,12 +901,12 @@ class FuzzyMatcher:
                 if query_lower == name_lower:
                     return 1.0
 
-                # Check nickname map
+                    # Check nickname map
                 if name_lower in self.nickname_map:
                     if query_lower in self.nickname_map[name_lower]:
                         return 0.95  # High score but not perfect
 
-                # Reverse check (query is full name, name is nickname)
+                        # Reverse check (query is full name, name is nickname)
                 if query_lower in self.nickname_map:
                     if name_lower in self.nickname_map[query_lower]:
                         return 0.95
@@ -947,7 +947,7 @@ class FuzzyMatcher:
             len_penalty = (len_diff / max_len) * 0.1
             confidence -= len_penalty
 
-        # Phonetic bonus
+            # Phonetic bonus
         phonetic_score = (
             algorithm_scores.get("soundex", 0.0)
             + algorithm_scores.get("metaphone", 0.0)
@@ -955,7 +955,7 @@ class FuzzyMatcher:
         if phonetic_score >= 0.8:
             confidence += 0.05
 
-        # Prefix bonus
+            # Prefix bonus
         min_len = min(len(query), len(candidate))
         if min_len >= 3:
             prefix_len = 0
@@ -968,7 +968,7 @@ class FuzzyMatcher:
                 prefix_bonus = (prefix_len / min_len) * 0.1
                 confidence += prefix_bonus
 
-        # Exact token bonus
+                # Exact token bonus
         query_tokens = set(query.split())
         candidate_tokens = set(candidate.split())
         common_tokens = query_tokens.intersection(candidate_tokens)
@@ -978,11 +978,12 @@ class FuzzyMatcher:
             )
             confidence += token_ratio * 0.1
 
-        # Ensure confidence is in valid range
+            # Ensure confidence is in valid range
         return max(0.0, min(1.0, confidence))
 
+        # Singleton instance for dependency injection
 
-# Singleton instance for dependency injection
+
 _fuzzy_matcher_instance: FuzzyMatcher | None = None
 
 

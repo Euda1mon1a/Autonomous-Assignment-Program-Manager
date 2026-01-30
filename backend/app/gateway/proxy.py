@@ -237,7 +237,7 @@ class RateLimiter:
         if len(self.requests) >= self.max_requests:
             return False
 
-        # Record request
+            # Record request
         self.requests.append(now)
         return True
 
@@ -264,7 +264,7 @@ class ServiceProxy:
     and rate limiting.
     """
 
-    def __init__(self, config: ProxyConfig):
+    def __init__(self, config: ProxyConfig) -> None:
         """
         Initialize service proxy.
 
@@ -287,7 +287,7 @@ class ServiceProxy:
                 half_open_requests=config.circuit_breaker_half_open_requests,
             )
 
-        # Cache
+            # Cache
         self.cache: dict[str, CacheEntry] = {}
 
         # Rate limiter
@@ -330,7 +330,7 @@ class ServiceProxy:
                 f"for proxy '{self.config.name}'"
             )
 
-        # Check rate limiter
+            # Check rate limiter
         if self.rate_limiter and not self.rate_limiter.can_request():
             retry_after = self.rate_limiter.get_retry_after()
             raise ValueError(
@@ -338,7 +338,7 @@ class ServiceProxy:
                 f"Retry after {retry_after} seconds"
             )
 
-        # Check cache
+            # Check cache
         if self.config.cache_enabled:
             cache_key = self._get_cache_key(request.method, path)
             if cache_key in self.cache:
@@ -351,7 +351,7 @@ class ServiceProxy:
                     # Remove expired entry
                     del self.cache[cache_key]
 
-        # Execute request with retries
+                    # Execute request with retries
         last_error = None
         for attempt in range(self.config.retry_attempts):
             try:
@@ -361,7 +361,7 @@ class ServiceProxy:
                 if self.circuit_breaker:
                     self.circuit_breaker.record_success()
 
-                # Cache response
+                    # Cache response
                 if self.config.cache_enabled and request.method == "GET":
                     cache_key = self._get_cache_key(request.method, path)
                     self.cache[cache_key] = CacheEntry(
@@ -383,7 +383,7 @@ class ServiceProxy:
                 if self.circuit_breaker:
                     self.circuit_breaker.record_failure()
 
-                # Don't retry on last attempt
+                    # Don't retry on last attempt
                 if attempt < self.config.retry_attempts - 1:
                     # Exponential backoff
                     delay = (
@@ -392,7 +392,7 @@ class ServiceProxy:
                     ) / 1000
                     await asyncio.sleep(delay)
 
-        # All retries failed
+                    # All retries failed
         raise last_error
 
     async def _execute_request(
@@ -441,7 +441,7 @@ class ServiceProxy:
             parsed = urlparse(self.config.target_url)
             headers["host"] = parsed.netloc
 
-        # Execute request
+            # Execute request
         response = await self.client.request(
             method=request.method,
             url=target_url,

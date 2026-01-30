@@ -22,7 +22,7 @@ class ConfigFileHandler(FileSystemEventHandler):
         self,
         watched_files: set[Path],
         on_change_callback: Callable[[Path], None],
-    ):
+    ) -> None:
         """
         Initialize the file handler.
 
@@ -81,7 +81,7 @@ class ConfigFileHandler(FileSystemEventHandler):
         if file_path in self._debounce_timers:
             self._debounce_timers[file_path].cancel()
 
-        # Create new timer
+            # Create new timer
         timer = threading.Timer(
             self._debounce_delay,
             self._execute_change,
@@ -113,7 +113,7 @@ class ConfigWatcher:
         self,
         config_files: list[Path] | None = None,
         auto_reload: bool = True,
-    ):
+    ) -> None:
         """
         Initialize the configuration watcher.
 
@@ -226,7 +226,7 @@ class ConfigWatcher:
             if not self.config_files:
                 raise RuntimeError("No configuration files to watch")
 
-            # Create observer
+                # Create observer
             self.observer = Observer()
 
             # Get unique directories to watch
@@ -250,7 +250,7 @@ class ConfigWatcher:
                 else:
                     logger.warning(f"Directory does not exist: {directory}")
 
-            # Start observer
+                    # Start observer
             self.observer.start()
             self._running = True
             logger.info("Configuration watcher started")
@@ -304,7 +304,7 @@ class ConfigWatcher:
         self.start()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Context manager exit."""
         self.stop()
 
@@ -313,6 +313,6 @@ class ConfigWatcher:
         await self.start_async()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Async context manager exit."""
         await self.stop_async()

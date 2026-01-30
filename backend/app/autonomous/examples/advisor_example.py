@@ -31,7 +31,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-async def example_with_real_llm():
+async def example_with_real_llm() -> None:
     """Example using real Ollama LLM (requires Ollama running)."""
     logger.info("=== Example 1: Real LLM Advisor with Ollama ===")
 
@@ -148,7 +148,7 @@ async def example_with_real_llm():
         else:
             logger.warning("No suggestion received from LLM")
 
-        # Get explanation
+            # Get explanation
         logger.info("\nRequesting explanation from LLM advisor...")
         explanation = await advisor.explain(evaluation)
         logger.info(f"Explanation: {explanation}")
@@ -159,7 +159,7 @@ async def example_with_real_llm():
         await advisor.close()
 
 
-def example_with_mock_advisor():
+def example_with_mock_advisor() -> None:
     """Example using mock advisor (no LLM required)."""
     logger.info("\n=== Example 2: Mock Advisor (No LLM Required) ===")
 
@@ -205,7 +205,7 @@ def example_with_mock_advisor():
             logger.info(f"  Suggested Algorithm: {suggestion.params.algorithm}")
 
 
-async def example_router_health_check():
+async def example_router_health_check() -> None:
     """Example: Check LLM Router health status."""
     logger.info("\n=== Example 3: LLM Router Health Check ===")
 
@@ -234,7 +234,7 @@ async def example_router_health_check():
         await router.close()
 
 
-def main():
+def main() -> None:
     """Run all examples."""
     logger.info("LLM Advisor Examples")
     logger.info("=" * 60)
@@ -248,7 +248,7 @@ def main():
     except Exception as e:
         logger.warning(f"Router health check failed: {e}")
 
-    # Example 3: Real LLM advisor (requires Ollama)
+        # Example 3: Real LLM advisor (requires Ollama)
     try:
         asyncio.run(example_with_real_llm())
     except Exception as e:

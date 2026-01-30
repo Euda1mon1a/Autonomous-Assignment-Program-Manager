@@ -148,7 +148,7 @@ async def delete_absence(
     absence_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete an absence. Requires authentication."""
     controller = AbsenceController(db)
     await controller.delete_absence(absence_id)
@@ -163,10 +163,9 @@ async def delete_absence(
         message="Absence deleted",
     )
 
-
-# ============================================================================
-# Bulk Import Endpoints
-# ============================================================================
+    # ============================================================================
+    # Bulk Import Endpoints
+    # ============================================================================
 
 
 @router.post(
@@ -244,10 +243,9 @@ async def apply_bulk_absences(
 
     return result
 
-
-# ============================================================================
-# Away-From-Program Tracking Endpoints
-# ============================================================================
+    # ============================================================================
+    # Away-From-Program Tracking Endpoints
+    # ============================================================================
 
 
 @router.get(

@@ -32,8 +32,9 @@ class ValidationMessageType(str, Enum):
     CROSS_FIELD = "cross_field"
     CONDITIONAL = "conditional"
 
+    # Error message templates by locale
 
-# Error message templates by locale
+
 ERROR_MESSAGES: dict[Locale, dict[ValidationMessageType, str]] = {
     Locale.EN_US: {
         ValidationMessageType.REQUIRED: "{field} is required",
@@ -167,7 +168,7 @@ def format_field_name(field: str) -> str:
     if field.lower() in special_cases:
         return special_cases[field.lower()]
 
-    # Convert snake_case to Title Case
+        # Convert snake_case to Title Case
     return " ".join(word.capitalize() for word in field.split("_"))
 
 
@@ -180,7 +181,7 @@ class ValidationMessage:
         field: str,
         locale: Locale = Locale.EN_US,
         **params: Any,
-    ):
+    ) -> None:
         """
         Initialize validation message.
 
@@ -221,8 +222,9 @@ class ValidationMessage:
             "params": self.params,
         }
 
+        # Predefined common validation messages
 
-# Predefined common validation messages
+
 def required_field(field: str, locale: Locale = Locale.EN_US) -> ValidationMessage:
     """Create 'required field' validation message."""
     return ValidationMessage(ValidationMessageType.REQUIRED, field, locale)

@@ -109,7 +109,7 @@ class XMLParser(Parser):
     Converts XML to Python dicts.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize XML parser."""
         # Try to use lxml (more powerful)
         try:
@@ -156,7 +156,7 @@ class XMLParser(Parser):
             else:
                 root = self._etree.fromstring(data)
 
-            # Convert to dict
+                # Convert to dict
             return self._element_to_dict(root)
         except Exception as e:
             raise ParsingError(f"Invalid XML: {e}") from e
@@ -182,7 +182,7 @@ class XMLParser(Parser):
                 # No children, text is the value
                 return element.text.strip()
 
-        # Process children
+                # Process children
         children = {}
         for child in element:
             child_data = self._element_to_dict(child)
@@ -213,7 +213,7 @@ class YAMLParser(Parser):
     Requires PyYAML package. Falls back gracefully if not available.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize YAML parser."""
         # Try to import PyYAML
         try:
@@ -270,7 +270,7 @@ class MessagePackParser(Parser):
     that's more compact than JSON.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize MessagePack parser."""
         # Try to import msgpack
         try:
@@ -376,12 +376,12 @@ class ParserRegistry:
     parser lookup by content type.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize parser registry with default parsers."""
         self._parsers: dict[str, Parser] = {}
         self._register_default_parsers()
 
-    def _register_default_parsers(self):
+    def _register_default_parsers(self) -> None:
         """Register default parsers (JSON, XML, YAML, MessagePack, Form)."""
         # JSON (always available)
         self.register(JSONParser())
@@ -394,12 +394,12 @@ class ParserRegistry:
         if yaml_parser.available:
             self.register(yaml_parser)
 
-        # MessagePack (if available)
+            # MessagePack (if available)
         msgpack_parser = MessagePackParser()
         if msgpack_parser.available:
             self.register(msgpack_parser)
 
-        # Form data (always available)
+            # Form data (always available)
         self.register(FormDataParser())
 
         logger.info(
@@ -407,7 +407,7 @@ class ParserRegistry:
             f"{list(self._parsers.keys())}"
         )
 
-    def register(self, parser: Parser):
+    def register(self, parser: Parser) -> None:
         """
         Register a parser.
 
@@ -421,7 +421,7 @@ class ParserRegistry:
         self._parsers[parser.content_type] = parser
         logger.debug(f"Registered parser: {parser.content_type}")
 
-    def unregister(self, content_type: str):
+    def unregister(self, content_type: str) -> None:
         """
         Unregister a parser.
 
@@ -467,8 +467,9 @@ class ParserRegistry:
         """
         return self.get_parser(content_type) is not None
 
+        # Global registry instance
 
-# Global registry instance
+
 _global_registry = ParserRegistry()
 
 
@@ -482,7 +483,7 @@ def get_parser_registry() -> ParserRegistry:
     return _global_registry
 
 
-def register_parser(parser: Parser):
+def register_parser(parser: Parser) -> None:
     """
     Register a custom parser globally.
 

@@ -168,7 +168,7 @@ class BurnoutDangerRating:
         ffmc_target: float = 60.0,  # Target 60 hours/2 weeks
         dmc_target: float = 240.0,  # Target 240 hours/3 months
         dc_baseline: float = 1.0,  # Full satisfaction baseline
-    ):
+    ) -> None:
         """
         Initialize burnout danger rating system.
 
@@ -221,7 +221,7 @@ class BurnoutDangerRating:
         if target <= 0:
             raise ValueError("Target hours must be positive")
 
-        # Calculate excess workload as proportion of target
+            # Calculate excess workload as proportion of target
         excess = max(0, (recent_hours - target) / target)
 
         # Exponential scaling (FFMC rises quickly with excess hours)
@@ -270,7 +270,7 @@ class BurnoutDangerRating:
         if target <= 0:
             raise ValueError("Target monthly hours must be positive")
 
-        # Calculate sustained excess
+            # Calculate sustained excess
         excess = max(0, (monthly_load - target) / target)
 
         # Lower exponential constant (duff dries slower than fine fuels)
@@ -323,7 +323,7 @@ class BurnoutDangerRating:
         if not 0.0 <= yearly_satisfaction <= 1.0:
             raise ValueError("Yearly satisfaction must be between 0.0 and 1.0")
 
-        # Invert satisfaction (1.0 satisfaction = 0 drought)
+            # Invert satisfaction (1.0 satisfaction = 0 drought)
         dissatisfaction = 1.0 - yearly_satisfaction
 
         # Exponential to emphasize dissatisfaction
@@ -428,8 +428,8 @@ class BurnoutDangerRating:
         if dmc == 0 and dc == 0:
             return 0.0
 
-        # Van Wagner's BUI formula (adapted)
-        # Adjusted coefficients for burnout context
+            # Van Wagner's BUI formula (adapted)
+            # Adjusted coefficients for burnout context
         denominator = dmc + (0.4 * dc)
         if denominator == 0:
             return 0.0
@@ -486,8 +486,8 @@ class BurnoutDangerRating:
             # High BUI: exponential saturation
             fD = 1000.0 / (25.0 + 108.64 * (2.71828 ** (-0.023 * bui)))
 
-        # Final FWI calculation (calibrated for burnout context)
-        # Scale factor to keep FWI in 0-100+ range with reasonable distribution
+            # Final FWI calculation (calibrated for burnout context)
+            # Scale factor to keep FWI in 0-100+ range with reasonable distribution
         fwi = 0.12 * isi * fD
 
         logger.debug(f"FWI: isi={isi:.1f}, bui={bui:.1f}, fD={fD:.2f}, fwi={fwi:.1f}")
@@ -713,7 +713,7 @@ class BurnoutDangerRating:
                     f"{resident_data.get('resident_id')}: {e}"
                 )
 
-        # Sort by FWI (highest risk first)
+                # Sort by FWI (highest risk first)
         reports.sort(key=lambda r: r.fwi_score, reverse=True)
 
         logger.info(f"Calculated burnout danger for {len(reports)} residents")

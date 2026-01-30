@@ -15,7 +15,7 @@ from starlette.datastructures import Headers
 class ErrorContext:
     """Captures and manages error context information."""
 
-    def __init__(self, request: Request, exc: Exception):
+    def __init__(self, request: Request, exc: Exception) -> None:
         """
         Initialize error context from request and exception.
 
@@ -50,16 +50,16 @@ class ErrorContext:
                 "port": self.request.client.port,
             }
 
-        # Add headers if requested (sanitized)
+            # Add headers if requested (sanitized)
         if include_headers:
             info["headers"] = self._sanitize_headers(self.request.headers)
 
-        # Add request ID if available
+            # Add request ID if available
         request_id = self.request.headers.get("X-Request-ID")
         if request_id:
             info["request_id"] = request_id
 
-        # Add user information if authenticated
+            # Add user information if authenticated
         if hasattr(self.request.state, "user"):
             user = self.request.state.user
             info["user"] = {
@@ -118,7 +118,7 @@ class ErrorContext:
             # Filter out potentially sensitive args
             info["args"] = [self._sanitize_arg(arg) for arg in self.exc.args]
 
-        # Add custom exception attributes
+            # Add custom exception attributes
         if hasattr(self.exc, "status_code"):
             info["status_code"] = self.exc.status_code
 
@@ -152,7 +152,7 @@ class ErrorContext:
         if any(pattern in arg_str.lower() for pattern in sensitive_patterns):
             return "[REDACTED]"
 
-        # Truncate long arguments
+            # Truncate long arguments
         if len(arg_str) > 200:
             return arg_str[:200] + "..."
 
@@ -241,7 +241,7 @@ class ErrorFingerprinter:
             if normalized_message:
                 components.append(normalized_message)
 
-        # Generate hash
+                # Generate hash
         fingerprint_data = ":".join(components)
         return hashlib.sha256(fingerprint_data.encode()).hexdigest()[:16]
 
@@ -320,7 +320,7 @@ class ErrorRateLimiter:
     Prevents notification spam when errors occur rapidly.
     """
 
-    def __init__(self, max_errors: int = 10, window_seconds: int = 60):
+    def __init__(self, max_errors: int = 10, window_seconds: int = 60) -> None:
         """
         Initialize error rate limiter.
 
@@ -383,8 +383,9 @@ class ErrorRateLimiter:
 
         return len(timestamps)
 
+        # Global rate limiter instance
 
-# Global rate limiter instance
+
 _rate_limiter: ErrorRateLimiter | None = None
 
 

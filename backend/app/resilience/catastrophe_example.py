@@ -20,7 +20,7 @@ from app.resilience.catastrophe_detector import (
 from app.resilience.defense_in_depth import DefenseInDepth, DefenseLevel
 
 
-def example_deployment_season_monitoring():
+def example_deployment_season_monitoring() -> None:
     """
     Example: Monitor scheduling system during deployment season.
 
@@ -172,7 +172,7 @@ def example_deployment_season_monitoring():
     print("=" * 70)
 
 
-def example_hysteresis_demonstration():
+def example_hysteresis_demonstration() -> None:
     """
     Example: Demonstrate hysteresis in schedule recovery.
 
@@ -206,7 +206,7 @@ def example_hysteresis_demonstration():
     print()
 
 
-def example_multi_scenario_comparison():
+def example_multi_scenario_comparison() -> None:
     """
     Example: Compare different scheduling scenarios.
 

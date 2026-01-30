@@ -100,7 +100,7 @@ class DeprecationManager:
     and enforces sunset policies.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize deprecation manager with default warnings."""
         self._deprecations: dict[str, DeprecationWarning] = {}
         self._version_status: dict[str, VersionStatus] = {
@@ -112,7 +112,7 @@ class DeprecationManager:
         # Register default deprecations
         self._register_defaults()
 
-    def _register_defaults(self):
+    def _register_defaults(self) -> None:
         """Register default deprecation warnings."""
         # Example: Deprecate legacy swap endpoint
         self.register_deprecation(
@@ -143,7 +143,7 @@ class DeprecationManager:
         replacement: str | None = None,
         message: str | None = None,
         documentation_url: str | None = None,
-    ):
+    ) -> None:
         """
         Register a deprecated endpoint or version.
 
@@ -209,7 +209,7 @@ class DeprecationManager:
         """
         return self._version_status.get(version, VersionStatus.STABLE)
 
-    def set_version_status(self, version: str, status: VersionStatus):
+    def set_version_status(self, version: str, status: VersionStatus) -> None:
         """
         Update status of an API version.
 
@@ -249,7 +249,7 @@ class DeprecationManager:
         if not deprecation:
             return response
 
-        # Deprecation header (RFC 8594)
+            # Deprecation header (RFC 8594)
         response.headers["Deprecation"] = "true"
 
         # Sunset header with date (RFC 8594)
@@ -263,18 +263,18 @@ class DeprecationManager:
             if days is not None:
                 response.headers["X-Days-Until-Sunset"] = str(days)
 
-        # Warning header (RFC 7234)
+                # Warning header (RFC 7234)
         if deprecation.message:
             warning_msg = f'299 - "Deprecated API" "{deprecation.message}"'
             response.headers["Warning"] = warning_msg
 
-        # Link to replacement (RFC 8288)
+            # Link to replacement (RFC 8288)
         if deprecation.replacement:
             response.headers["Link"] = (
                 f'<{deprecation.replacement}>; rel="alternate"; title="Replacement API"'
             )
 
-        # Documentation link
+            # Documentation link
         if deprecation.documentation_url:
             link_header = response.headers.get("Link", "")
             if link_header:
@@ -285,7 +285,7 @@ class DeprecationManager:
             )
             response.headers["Link"] = link_header
 
-        # Custom header with structured data
+            # Custom header with structured data
         response.headers["X-API-Deprecation"] = deprecation.to_header_value()
 
         # Log the deprecation access for monitoring
@@ -313,7 +313,7 @@ class DeprecationManager:
         if not deprecation:
             return None
 
-        # Block if past sunset date
+            # Block if past sunset date
         if deprecation.is_past_sunset():
             error = {
                 "detail": (
@@ -359,7 +359,7 @@ class DeprecationManager:
                 }
             )
 
-        # Sort by sunset date (soonest first)
+            # Sort by sunset date (soonest first)
         result.sort(key=lambda x: x["sunset_date"] if x["sunset_date"] else "9999")
 
         return result
@@ -391,8 +391,9 @@ class DeprecationManager:
         }
         return descriptions.get(status, "Unknown status")
 
+        # Global deprecation manager instance
 
-# Global deprecation manager instance
+
 _deprecation_manager: DeprecationManager | None = None
 
 

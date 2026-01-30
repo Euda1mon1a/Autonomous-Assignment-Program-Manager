@@ -29,7 +29,7 @@ class ConfigLoader:
         self,
         env_file: Path | None = None,
         env_file_encoding: str = "utf-8",
-    ):
+    ) -> None:
         """
         Initialize the configuration loader.
 
@@ -60,7 +60,7 @@ class ConfigLoader:
                 return env_path
             current_dir = current_dir.parent
 
-        # Default to backend/.env
+            # Default to backend/.env
         backend_root = Path(__file__).resolve().parent.parent.parent
         default_path = backend_root / ".env"
         logger.warning(f".env file not found, using default path: {default_path}")
@@ -190,18 +190,18 @@ class ConfigLoader:
         if value.lower() in ("true", "false"):
             return value.lower() == "true"
 
-        # Integer values
+            # Integer values
         if value.isdigit():
             return int(value)
 
-        # Float values
+            # Float values
         try:
             if "." in value:
                 return float(value)
         except ValueError:
             pass
 
-        # List values (comma-separated)
+            # List values (comma-separated)
         if key in [
             "CORS_ORIGINS",
             "TRUSTED_HOSTS",
@@ -209,7 +209,7 @@ class ConfigLoader:
         ]:
             return [item.strip() for item in value.split(",") if item.strip()]
 
-        # String value (default)
+            # String value (default)
         return value
 
     def has_changed(self) -> bool:

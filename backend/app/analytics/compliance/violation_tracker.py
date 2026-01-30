@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class ViolationTracker:
     """Tracks and analyzes ACGME compliance violations."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def track_violations(
@@ -90,7 +90,7 @@ class ViolationTracker:
                     weeks[week_num] = []
                 weeks[week_num].append(assignment)
 
-        # Check 4-week rolling windows
+                # Check 4-week rolling windows
         week_nums = sorted(weeks.keys())
         for i in range(len(week_nums) - 3):
             window_assignments = []

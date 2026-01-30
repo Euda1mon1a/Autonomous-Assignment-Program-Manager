@@ -46,13 +46,12 @@ class EventBusMode(str, Enum):
 class EventBusException(AppException):
     """Base exception for event bus errors."""
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         super().__init__(message, status_code=500)
 
-
-# =============================================================================
-# Event Models
-# =============================================================================
+        # =============================================================================
+        # Event Models
+        # =============================================================================
 
 
 class EventMetadata(BaseModel):
@@ -113,10 +112,9 @@ class Event(BaseModel):
             datetime: lambda v: v.isoformat(),
         }
 
-
-# =============================================================================
-# Event Filtering and Transformation
-# =============================================================================
+        # =============================================================================
+        # Event Filtering and Transformation
+        # =============================================================================
 
 
 EventHandler = Callable[[Event], Coroutine[Any, Any, None]]
@@ -135,7 +133,7 @@ class EventFilter:
     - Custom filter functions
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize event filter."""
         self._filters: list[EventFilterFunc] = []
 
@@ -209,7 +207,7 @@ class EventTransformer:
     - Transform event structure
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize event transformer."""
         self._transformers: list[EventTransformFunc] = []
 
@@ -250,10 +248,9 @@ class EventTransformer:
             event = transformer(event)
         return event
 
-
-# =============================================================================
-# Event Subscription
-# =============================================================================
+        # =============================================================================
+        # Event Subscription
+        # =============================================================================
 
 
 class EventSubscription(BaseModel):
@@ -301,7 +298,7 @@ class EventSubscription(BaseModel):
         if self.topic_pattern == topic:
             return True
 
-        # Convert glob pattern to regex
+            # Convert glob pattern to regex
         if "*" in self.topic_pattern:
             # Replace * with appropriate regex
             pattern = self.topic_pattern.replace(".", r"\.")
@@ -310,16 +307,15 @@ class EventSubscription(BaseModel):
             pattern = f"^{pattern}$"
             return bool(re.match(pattern, topic))
 
-        # Try as direct regex
+            # Try as direct regex
         try:
             return bool(re.match(self.topic_pattern, topic))
         except re.error:
             return False
 
-
-# =============================================================================
-# Dead Letter Queue
-# =============================================================================
+            # =============================================================================
+            # Dead Letter Queue
+            # =============================================================================
 
 
 class DeadLetterEvent(BaseModel):
@@ -345,7 +341,7 @@ class DeadLetterQueue:
     - TTL-based expiration
     """
 
-    def __init__(self, redis_client: redis.Redis | None = None):
+    def __init__(self, redis_client: redis.Redis | None = None) -> None:
         """
         Initialize dead letter queue.
 
@@ -447,7 +443,7 @@ class DeadLetterQueue:
                 removed = True
                 break
 
-        # Remove from Redis if available
+                # Remove from Redis if available
         if self._redis_client and removed:
             try:
                 # This is inefficient but Redis lists don't support removal by value easily
@@ -484,10 +480,9 @@ class DeadLetterQueue:
         logger.info(f"Cleared {count} events from dead letter queue")
         return count
 
-
-# =============================================================================
-# Event Persistence
-# =============================================================================
+        # =============================================================================
+        # Event Persistence
+        # =============================================================================
 
 
 class EventStore:
@@ -500,7 +495,7 @@ class EventStore:
     - Event replay capability
     """
 
-    def __init__(self, redis_client: redis.Redis):
+    def __init__(self, redis_client: redis.Redis) -> None:
         """
         Initialize event store.
 
@@ -576,7 +571,7 @@ class EventStore:
             else:
                 index_key = f"{self._index_key_prefix}:time"
 
-            # Determine time range
+                # Determine time range
             min_score = from_timestamp.timestamp() if from_timestamp else "-inf"
             max_score = to_timestamp.timestamp() if to_timestamp else "+inf"
 
@@ -632,10 +627,9 @@ class EventStore:
             logger.error(f"Failed to get event {event_id}: {e}")
             return None
 
-
-# =============================================================================
-# Main Event Bus
-# =============================================================================
+            # =============================================================================
+            # Main Event Bus
+            # =============================================================================
 
 
 class EventBus:
@@ -679,7 +673,7 @@ class EventBus:
         enable_persistence: bool = False,
         enable_dead_letter: bool = True,
         max_retries: int = 3,
-    ):
+    ) -> None:
         """
         Initialize event bus.
 
@@ -729,17 +723,17 @@ class EventBus:
         if self._mode in (EventBusMode.DISTRIBUTED, EventBusMode.HYBRID):
             await self._init_redis()
 
-        # Initialize event store if persistence is enabled
+            # Initialize event store if persistence is enabled
         if self._enable_persistence and self._redis_client:
             self._event_store = EventStore(self._redis_client)
             logger.info("Event persistence enabled")
 
-        # Initialize dead letter queue
+            # Initialize dead letter queue
         if self._enable_dead_letter:
             self._dead_letter_queue = DeadLetterQueue(self._redis_client)
             logger.info("Dead letter queue enabled")
 
-        # Start pub/sub listener for distributed mode
+            # Start pub/sub listener for distributed mode
         if self._mode in (EventBusMode.DISTRIBUTED, EventBusMode.HYBRID):
             await self._start_pubsub_listener()
 
@@ -765,7 +759,7 @@ class EventBus:
             except asyncio.CancelledError:
                 pass
 
-        # Close Redis connections
+                # Close Redis connections
         if self._redis_pubsub:
             await self._redis_pubsub.close()
 
@@ -894,11 +888,11 @@ class EventBus:
             if should_persist and self._event_store:
                 await self._event_store.store(event)
 
-            # Publish to in-memory subscribers (in-memory and hybrid modes)
+                # Publish to in-memory subscribers (in-memory and hybrid modes)
             if self._mode in (EventBusMode.IN_MEMORY, EventBusMode.HYBRID):
                 await self._publish_in_memory(event)
 
-            # Publish to Redis (distributed and hybrid modes)
+                # Publish to Redis (distributed and hybrid modes)
             if self._mode in (EventBusMode.DISTRIBUTED, EventBusMode.HYBRID):
                 await self._publish_to_redis(event)
 
@@ -1059,7 +1053,7 @@ class EventBus:
         if not self._dead_letter_queue:
             return False
 
-        # Get all dead letter events
+            # Get all dead letter events
         dead_letters = await self._dead_letter_queue.get_all()
 
         # Find the event
@@ -1117,7 +1111,7 @@ class EventBus:
             "dead_letter_enabled": self._enable_dead_letter,
         }
 
-    # Private methods
+        # Private methods
 
     async def _init_redis(self) -> None:
         """Initialize Redis client and pub/sub."""
@@ -1156,7 +1150,7 @@ class EventBus:
                         if isinstance(data, bytes):
                             data = data.decode()
 
-                        # Deserialize event
+                            # Deserialize event
                         event = Event.from_json(data)
 
                         # Process in-memory
@@ -1183,7 +1177,7 @@ class EventBus:
             logger.debug(f"No subscribers for topic '{event.topic}'")
             return
 
-        # Process all matching subscriptions concurrently
+            # Process all matching subscriptions concurrently
         tasks = [
             self._handle_subscription(subscription, event)
             for subscription in matching_subscriptions
@@ -1248,11 +1242,11 @@ class EventBus:
             )
             return
 
-        # Apply transformer if present
+            # Apply transformer if present
         if subscription.transformer:
             event = subscription.transformer.transform(event)
 
-        # Try to process with retries
+            # Try to process with retries
         retry_count = 0
         last_error = None
 
@@ -1279,7 +1273,7 @@ class EventBus:
                     # Exponential backoff
                     await asyncio.sleep(2**retry_count)
 
-        # All retries failed - add to dead letter queue
+                    # All retries failed - add to dead letter queue
         logger.error(
             f"Failed to process event {event.metadata.event_id} after "
             f"{retry_count} attempts. Error: {last_error}"
@@ -1290,10 +1284,9 @@ class EventBus:
                 event, last_error, subscription.subscription_id
             )
 
-
-# =============================================================================
-# Global Event Bus Instance
-# =============================================================================
+            # =============================================================================
+            # Global Event Bus Instance
+            # =============================================================================
 
 
 _event_bus_instance: EventBus | None = None

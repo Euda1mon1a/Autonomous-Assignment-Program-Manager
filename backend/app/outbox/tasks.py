@@ -126,7 +126,7 @@ class OutboxTask(Task):
         custom error handling (e.g., sending to external monitoring).
     """
 
-    def on_failure(self, exc, task_id, args, kwargs, einfo):
+    def on_failure(self, exc, task_id, args, kwargs, einfo) -> None:
         """Log structured error when task fails after all retries exhausted.
 
         Args:
@@ -147,7 +147,7 @@ class OutboxTask(Task):
             exc_info=True,
         )
 
-    def on_retry(self, exc, task_id, args, kwargs, einfo):
+    def on_retry(self, exc, task_id, args, kwargs, einfo) -> None:
         """Log warning when task is being retried.
 
         Args:
