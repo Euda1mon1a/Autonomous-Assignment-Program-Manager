@@ -234,6 +234,23 @@ Remaining faculty-specific gaps:
 - [ ] Excel round-trip import creates overrides only (no hard deletes)
 - [ ] Resilience-driven cascade scoring (blast radius + contingency)
 
+### Phase 6 — CP-SAT Hardening + Equity + Excel Staging (Planned)
+**Status:** Planned (post‑merge)
+**Doc:** [`docs/planning/CP_SAT_PIPELINE_REFINEMENT_PHASE6.md`](planning/CP_SAT_PIPELINE_REFINEMENT_PHASE6.md)
+
+**Highlights:**
+1. ACGME compliance truth alignment (remove stub, validator‑driven)
+2. External rotation time‑off intake (FMIT/IMW/Peds patterns)
+   - Temporary default: Saturday off for external/inpatient rotations until refined
+3. Excel staging + diff metrics (measure manual vs automated changes)
+4. Institutional events table (USAFP/holidays/retreats)
+5. Equity + preferences:
+   - Faculty equity by role (GME/DFM/AT/C)
+   - LEC/ADV + Sunday/weekday call equity across the board
+   - Holiday equity for FMIT + call
+   - Resident equity across all assignments (block/week/assignment)
+   - 2 soft preferences per faculty (clinic + call)
+
 ### 7. Pre-commit Hook Failures (Session 128) - MYPY PROGRESS
 **Updated:** 2026-01-24 (Session 139)
 

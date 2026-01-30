@@ -17,6 +17,8 @@ from sqlalchemy import select, func, text
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
+from app.analytics.metrics import calculate_acgme_compliance_rate
+from app.scheduling.validator import ACGMEValidator
 from app.utils.academic_blocks import get_block_dates as get_block_dates_util
 from app.schemas.block_quality_report import (
     BlockDates,
@@ -665,15 +667,29 @@ class BlockQualityReportService:
             else f"SOFT ({call_before_leave_gap_count})"
         )
 
+        # ACGME compliance (use validator as source of truth)
+        # The validator checks: 80-hour rule (per resident), 1-in-7 rule (per resident),
+        # and supervision ratios (per slot). Use statistics to derive proper total_checks.
+        acgme_result = ACGMEValidator(self.db).validate_all(start_date, end_date)
+        stats = acgme_result.statistics
+        residents_checked = stats.get("residents_scheduled", 0)
+        blocks_checked = stats.get("total_blocks", 0)
+        # Each resident: 2 checks (80-hour, 1-in-7). Each block: 1 supervision check.
+        # Ensure total_checks >= violations + 1 to avoid negative compliance rates.
+        computed_checks = residents_checked * 2 + blocks_checked
+        total_checks = max(computed_checks, acgme_result.total_violations + 1, 1)
+        acgme_metric = calculate_acgme_compliance_rate(
+            violations=acgme_result.total_violations,
+            total_checks=total_checks,
+        )
+
         executive = ExecutiveSummary(
             block_number=block_number,
             date_range=f"{start_date} to {end_date}",
             total_assignments=section_c.grand_total,
             resident_assignments=resident_total,
             faculty_assignments=faculty_total,
-            # Placeholder: ACGME compliance is not yet calculated in this report.
-            # Use ACGMEValidator/validate_schedule for authoritative compliance.
-            acgme_compliance_rate=100.0,
+            acgme_compliance_rate=acgme_metric["value"],
             double_bookings=0,
             call_coverage=f"{call_coverage.total_nights}/{block_dates.days}",
             nf_one_in_seven=f"PASS ({nf_pass}/{nf_total})" if nf_total else "N/A",
