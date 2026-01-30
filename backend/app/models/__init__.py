@@ -36,6 +36,7 @@ from app.models.export_job import (
     ExportTemplate,
 )
 from app.models.faculty_preference import FacultyPreference
+from app.models.faculty_schedule_preference import FacultySchedulePreference
 from app.models.faculty_weekly_template import FacultyWeeklyTemplate
 from app.models.faculty_weekly_override import FacultyWeeklyOverride
 from app.models.feature_flag import (
@@ -58,6 +59,11 @@ from app.models.inpatient_preload import (
     InpatientPreload,
     InpatientRotationType,
     PreloadAssignedBy,
+)
+from app.models.institutional_event import (
+    InstitutionalEvent,
+    InstitutionalEventScope,
+    InstitutionalEventType,
 )
 from app.models.resident_call_preload import (
     ResidentCallPreload,
@@ -247,6 +253,7 @@ __all__ = [
     # Credentialing models
     "Procedure",
     "ProcedureCredential",
+    "FacultySchedulePreference",
     # Certification models
     "CertificationType",
     "PersonCertification",
@@ -358,6 +365,9 @@ __all__ = [
     "InpatientPreload",
     "InpatientRotationType",
     "PreloadAssignedBy",
+    "InstitutionalEvent",
+    "InstitutionalEventScope",
+    "InstitutionalEventType",
     "ResidentCallPreload",
     "ResidentCallType",
     # PKCE Auth models

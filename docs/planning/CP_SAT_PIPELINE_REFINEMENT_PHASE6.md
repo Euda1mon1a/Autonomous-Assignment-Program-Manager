@@ -88,6 +88,12 @@ making equity/preferences **data‑driven and measurable**.
 **Actions**
 - New `institutional_events` table.
 - Events injected as blocking time or special activities.
+- Admin endpoints:
+  - `POST /admin/institutional-events`
+  - `GET /admin/institutional-events`
+  - `GET /admin/institutional-events/{id}`
+  - `PUT /admin/institutional-events/{id}`
+  - `DELETE /admin/institutional-events/{id}` (soft deactivate)
 
 **Acceptance Criteria**
 - Events appear in schedule views and exports.
@@ -115,6 +121,16 @@ making equity/preferences **data‑driven and measurable**.
 #### Preferences (Soft)
 **Requirement**
 - Each faculty has **2 soft preferences**, applied to **clinic or call**.
+
+**Implementation (current)**
+- Activity solver: resident clinic equity (weekly + block) + faculty admin/academic/supervision equity
+- Call solver: Sunday/weekday/holiday equity across call-eligible faculty
+- Preferences table (`faculty_schedule_preferences`) + admin endpoints
+- Admin API: `GET/POST/PUT/DELETE /admin/faculty-schedule-preferences`
+- Call preferences: day-of-week penalties/bonuses (prefer/avoid)
+- Clinic preferences: applied to clinical non-supervision activities (C/CV/PROC/VAS/etc.)
+- FMIT holiday equity: tracked via call holiday flags; FMIT-specific holiday equity still manual (preloaded)
+- Temporary smoke-test preferences (notes "P6-5 preference smoke check*") were deactivated after validation
 
 **Acceptance Criteria**
 - Equity metrics visible in solver output and reports.

@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-30T04:51:52Z
+ * Generated at: 2026-01-30T08:27:32Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -6384,6 +6384,80 @@ export interface paths {
          * @description Admin-only: deactivate a call override (soft delete).
          */
         delete: operations["deactivate_call_override_api_v1_admin_call_overrides__override_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/institutional-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Institutional Events */
+        get: operations["list_institutional_events_api_v1_admin_institutional_events_get"];
+        put?: never;
+        /** Create Institutional Event */
+        post: operations["create_institutional_event_api_v1_admin_institutional_events_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/institutional-events/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Institutional Event */
+        get: operations["get_institutional_event_api_v1_admin_institutional_events__event_id__get"];
+        /** Update Institutional Event */
+        put: operations["update_institutional_event_api_v1_admin_institutional_events__event_id__put"];
+        post?: never;
+        /** Delete Institutional Event */
+        delete: operations["delete_institutional_event_api_v1_admin_institutional_events__event_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/faculty-schedule-preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Faculty Schedule Preferences */
+        get: operations["list_faculty_schedule_preferences_api_v1_admin_faculty_schedule_preferences_get"];
+        put?: never;
+        /** Create Faculty Schedule Preference */
+        post: operations["create_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/faculty-schedule-preferences/{preference_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Faculty Schedule Preference */
+        get: operations["get_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences__preference_id__get"];
+        /** Update Faculty Schedule Preference */
+        put: operations["update_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences__preference_id__put"];
+        post?: never;
+        /** Delete Faculty Schedule Preference */
+        delete: operations["delete_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences__preference_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -22374,8 +22448,11 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
-            /** Person Id */
-            personId?: string | null;
+            /**
+             * Template Id
+             * Format: uuid
+             */
+            templateId: string;
             /** Success */
             success: boolean;
             /** Error */
@@ -22615,7 +22692,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__person__BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -22924,7 +23001,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -23143,7 +23220,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["app__schemas__block_assignment_import__ExportFormat"];
+            format: components["schemas"]["ExportFormat"];
             /**
              * Academic Year
              * @description Academic year to export
@@ -23817,7 +23894,7 @@ export interface components {
             /** Residents With Leave */
             residentsWithLeave: number;
             /** Coverage Gaps */
-            coverageGaps: components["schemas"]["app__schemas__block_assignment__CoverageGap"][];
+            coverageGaps: components["schemas"]["CoverageGap"][];
             /** Leave Conflicts */
             leaveConflicts: components["schemas"]["LeaveConflict"][];
             /** Rotation Capacities */
@@ -26085,15 +26162,29 @@ export interface components {
         };
         /**
          * ConflictCheckResponse
-         * @description Response for conflict check.
+         * @description Response for conflict checking before assignment.
          */
         ConflictCheckResponse: {
-            /** Has Conflicts */
-            hasConflicts: boolean;
-            /** Conflicts */
-            conflicts: components["schemas"]["TemplateConflict"][];
-            /** Can Proceed */
-            canProceed: boolean;
+            /**
+             * Can Assign
+             * @description Whether assignment can proceed
+             */
+            canAssign: boolean;
+            /**
+             * Conflicts
+             * @description Detected conflicts
+             */
+            conflicts?: components["schemas"]["ConflictDetail"][];
+            /**
+             * Warnings
+             * @description Warnings
+             */
+            warnings?: string[];
+            /**
+             * Suggestions
+             * @description Alternative suggestions
+             */
+            suggestions?: string[];
         };
         /**
          * ConflictDetail
@@ -26472,34 +26563,24 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap with details.
+         * @description Identified coverage gap.
          */
         CoverageGap: {
-            /** Gap Id */
-            gapId: string;
             /**
-             * Date
-             * Format: date
+             * Rotation Template Id
+             * Format: uuid
              */
-            date: string;
-            /** Time Of Day */
-            timeOfDay: string;
-            /** Block Id */
-            blockId: string;
+            rotationTemplateId: string;
+            /** Rotation Name */
+            rotationName: string;
+            /** Required Coverage */
+            requiredCoverage: number;
+            /** Assigned Coverage */
+            assignedCoverage: number;
+            /** Gap */
+            gap: number;
             /** Severity */
             severity: string;
-            /** Days Until */
-            daysUntil: number;
-            /** Affected Area */
-            affectedArea: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            currentAssignments: number;
-            /** Required Assignments */
-            requiredAssignments: number;
-            /** Gap Size */
-            gapSize: number;
         };
         /**
          * CoverageGapsResponse
@@ -26526,7 +26607,7 @@ export interface components {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["CoverageGap"][];
+            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
@@ -29269,7 +29350,7 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            person: components["schemas"]["app__schemas__certification__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             certificationType: components["schemas"]["CertificationTypeSummary"];
             /**
              * Expiration Date
@@ -29301,10 +29382,10 @@ export interface components {
         ExportDeliveryMethod: "email" | "s3" | "both";
         /**
          * ExportFormat
-         * @description Export file formats.
+         * @description Supported export formats.
          * @enum {string}
          */
-        ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        ExportFormat: "csv" | "xlsx";
         /**
          * ExportFormat
          * @description Export file formats.
@@ -29332,7 +29413,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["ExportFormat"];
+            format: components["schemas"]["app__models__export_job__ExportFormat"];
             /**
              * @description Delivery method
              * @default email
@@ -29631,7 +29712,7 @@ export interface components {
             /** Description */
             description?: string | null;
             template?: components["schemas"]["ExportTemplate"] | null;
-            format?: components["schemas"]["ExportFormat"] | null;
+            format?: components["schemas"]["app__models__export_job__ExportFormat"] | null;
             deliveryMethod?: components["schemas"]["ExportDeliveryMethod"] | null;
             /** Email Recipients */
             emailRecipients?: string[] | null;
@@ -30394,6 +30475,18 @@ export interface components {
             total: number;
         };
         /**
+         * FacultyPreferenceDirection
+         * @description Preference direction (prefer or avoid).
+         * @enum {string}
+         */
+        FacultyPreferenceDirection: "prefer" | "avoid";
+        /**
+         * FacultyPreferenceType
+         * @description Preference category (clinic or call).
+         * @enum {string}
+         */
+        FacultyPreferenceType: "clinic" | "call";
+        /**
          * FacultyPreferencesResponse
          * @description Response for faculty preferences.
          */
@@ -30413,6 +30506,95 @@ export interface components {
          * @enum {string}
          */
         FacultyRoleSchema: "pd" | "apd" | "oic" | "dept_chief" | "sports_med" | "core" | "adjunct";
+        /** FacultySchedulePreferenceCreate */
+        FacultySchedulePreferenceCreate: {
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            personId: string;
+            preferenceType: components["schemas"]["FacultyPreferenceType"];
+            direction: components["schemas"]["FacultyPreferenceDirection"];
+            /** Rank */
+            rank: number;
+            /** Day Of Week */
+            dayOfWeek: number;
+            /** Time Of Day */
+            timeOfDay?: ("AM" | "PM") | null;
+            /**
+             * Weight
+             * @default 6
+             */
+            weight: number;
+            /**
+             * Is Active
+             * @default true
+             */
+            isActive: boolean;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** FacultySchedulePreferenceListResponse */
+        FacultySchedulePreferenceListResponse: {
+            /** Items */
+            items: components["schemas"]["FacultySchedulePreferenceResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            pageSize: number;
+        };
+        /** FacultySchedulePreferenceResponse */
+        FacultySchedulePreferenceResponse: {
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            personId: string;
+            preferenceType: components["schemas"]["FacultyPreferenceType"];
+            direction: components["schemas"]["FacultyPreferenceDirection"];
+            /** Rank */
+            rank: number;
+            /** Day Of Week */
+            dayOfWeek: number;
+            /** Time Of Day */
+            timeOfDay?: ("AM" | "PM") | null;
+            /**
+             * Weight
+             * @default 6
+             */
+            weight: number;
+            /**
+             * Is Active
+             * @default true
+             */
+            isActive: boolean;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /** FacultySchedulePreferenceUpdate */
+        FacultySchedulePreferenceUpdate: {
+            preferenceType?: components["schemas"]["FacultyPreferenceType"] | null;
+            direction?: components["schemas"]["FacultyPreferenceDirection"] | null;
+            /** Rank */
+            rank?: number | null;
+            /** Day Of Week */
+            dayOfWeek?: number | null;
+            /** Time Of Day */
+            timeOfDay?: ("AM" | "PM") | null;
+            /** Weight */
+            weight?: number | null;
+            /** Is Active */
+            isActive?: boolean | null;
+            /** Notes */
+            notes?: string | null;
+        };
         /**
          * FacultySummaryReportRequest
          * @description Request schema for faculty summary report.
@@ -33599,6 +33781,129 @@ export interface components {
              */
             message: string;
         };
+        /** InstitutionalEventCreate */
+        InstitutionalEventCreate: {
+            /** Name */
+            name: string;
+            eventType: components["schemas"]["InstitutionalEventType"];
+            /**
+             * Start Date
+             * Format: date
+             */
+            startDate: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            endDate: string;
+            /** Time Of Day */
+            timeOfDay?: ("AM" | "PM") | null;
+            /** @default all */
+            appliesTo: components["schemas"]["InstitutionalEventScope"];
+            /**
+             * Applies To Inpatient
+             * @default false
+             */
+            appliesToInpatient: boolean;
+            /**
+             * Activity Id
+             * Format: uuid
+             */
+            activityId: string;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Is Active
+             * @default true
+             */
+            isActive: boolean;
+        };
+        /** InstitutionalEventListResponse */
+        InstitutionalEventListResponse: {
+            /** Items */
+            items: components["schemas"]["InstitutionalEventResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            pageSize: number;
+        };
+        /** InstitutionalEventResponse */
+        InstitutionalEventResponse: {
+            /** Name */
+            name: string;
+            eventType: components["schemas"]["InstitutionalEventType"];
+            /**
+             * Start Date
+             * Format: date
+             */
+            startDate: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            endDate: string;
+            /** Time Of Day */
+            timeOfDay?: ("AM" | "PM") | null;
+            /** @default all */
+            appliesTo: components["schemas"]["InstitutionalEventScope"];
+            /**
+             * Applies To Inpatient
+             * @default false
+             */
+            appliesToInpatient: boolean;
+            /**
+             * Activity Id
+             * Format: uuid
+             */
+            activityId: string;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Is Active
+             * @default true
+             */
+            isActive: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /**
+         * InstitutionalEventScope
+         * @description Who the event applies to.
+         * @enum {string}
+         */
+        InstitutionalEventScope: "all" | "faculty" | "resident";
+        /**
+         * InstitutionalEventType
+         * @description High-level classification for institutional events.
+         * @enum {string}
+         */
+        InstitutionalEventType: "holiday" | "conference" | "retreat" | "training" | "closure" | "other";
+        /** InstitutionalEventUpdate */
+        InstitutionalEventUpdate: {
+            /** Name */
+            name?: string | null;
+            eventType?: components["schemas"]["InstitutionalEventType"] | null;
+            /** Start Date */
+            startDate?: string | null;
+            /** End Date */
+            endDate?: string | null;
+            /** Time Of Day */
+            timeOfDay?: ("AM" | "PM") | null;
+            appliesTo?: components["schemas"]["InstitutionalEventScope"] | null;
+            /** Applies To Inpatient */
+            appliesToInpatient?: boolean | null;
+            /** Activity Id */
+            activityId?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Is Active */
+            isActive?: boolean | null;
+        };
         /**
          * JobActionResponseSchema
          * @description Schema for job action response.
@@ -35718,7 +36023,7 @@ export interface components {
          * @description Certification compliance for a single person.
          */
         PersonComplianceResponse: {
-            person: components["schemas"]["app__schemas__certification__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /** Total Required */
             totalRequired: number;
             /** Total Current */
@@ -35997,7 +36302,7 @@ export interface components {
         };
         /**
          * PersonSummary
-         * @description Minimal person info for embedding in credential responses.
+         * @description Minimal person info for certification reports.
          */
         PersonSummary: {
             /**
@@ -36009,6 +36314,8 @@ export interface components {
             name: string;
             /** Type */
             type: string;
+            /** Email */
+            email?: string | null;
         };
         /**
          * PersonType
@@ -37073,7 +37380,7 @@ export interface components {
             /** Procedure Name */
             procedureName: string;
             /** Qualified Faculty */
-            qualifiedFaculty: components["schemas"]["PersonSummary"][];
+            qualifiedFaculty: components["schemas"]["app__schemas__procedure_credential__PersonSummary"][];
             /** Total */
             total: number;
         };
@@ -37189,14 +37496,13 @@ export interface components {
             queueName: string;
             /**
              * Confirm
-             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
         };
         /**
          * QueuePurgeResponse
-         * @description Response to queue purge request.
+         * @description Response after purging a queue.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -46659,6 +46965,43 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
+         * CoverageGap
+         * @description Represents a coverage gap with details.
+         */
+        app__api__routes__fmit_health__CoverageGap: {
+            /** Gap Id */
+            gapId: string;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Time Of Day */
+            timeOfDay: string;
+            /** Block Id */
+            blockId: string;
+            /** Severity */
+            severity: string;
+            /** Days Until */
+            daysUntil: number;
+            /** Affected Area */
+            affectedArea: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            currentAssignments: number;
+            /** Required Assignments */
+            requiredAssignments: number;
+            /** Gap Size */
+            gapSize: number;
+        };
+        /**
+         * ExportFormat
+         * @description Export file formats.
+         * @enum {string}
+         */
+        app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        /**
          * ConflictSummary
          * @description Summary statistics for a set of conflicts.
          *
@@ -46784,50 +47127,6 @@ export interface components {
             total: number;
         };
         /**
-         * CoverageGap
-         * @description Identified coverage gap.
-         */
-        app__schemas__block_assignment__CoverageGap: {
-            /**
-             * Rotation Template Id
-             * Format: uuid
-             */
-            rotationTemplateId: string;
-            /** Rotation Name */
-            rotationName: string;
-            /** Required Coverage */
-            requiredCoverage: number;
-            /** Assigned Coverage */
-            assignedCoverage: number;
-            /** Gap */
-            gap: number;
-            /** Severity */
-            severity: string;
-        };
-        /**
-         * ExportFormat
-         * @description Supported export formats.
-         * @enum {string}
-         */
-        app__schemas__block_assignment_import__ExportFormat: "csv" | "xlsx";
-        /**
-         * PersonSummary
-         * @description Minimal person info for certification reports.
-         */
-        app__schemas__certification__PersonSummary: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /** Type */
-            type: string;
-            /** Email */
-            email?: string | null;
-        };
-        /**
          * PersonSummary
          * @description Summary of person for manifest display.
          */
@@ -46846,49 +47145,10 @@ export interface components {
             pgyLevel?: number | null;
         };
         /**
-         * ConflictCheckResponse
-         * @description Response for conflict checking before assignment.
-         */
-        app__schemas__fmit_assignments__ConflictCheckResponse: {
-            /**
-             * Can Assign
-             * @description Whether assignment can proceed
-             */
-            canAssign: boolean;
-            /**
-             * Conflicts
-             * @description Detected conflicts
-             */
-            conflicts?: components["schemas"]["ConflictDetail"][];
-            /**
-             * Warnings
-             * @description Warnings
-             */
-            warnings?: string[];
-            /**
-             * Suggestions
-             * @description Alternative suggestions
-             */
-            suggestions?: string[];
-        };
-        /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
-         */
-        app__schemas__jobs__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
-            /**
-             * Confirm
-             * @default false
-             */
-            confirm: boolean;
-        };
-        /**
          * QueuePurgeResponse
-         * @description Response after purging a queue.
+         * @description Response to queue purge request.
          */
-        app__schemas__queue__QueuePurgeResponse: {
+        app__schemas__jobs__QueuePurgeResponse: {
             /** Queuename */
             queueName: string;
             /** Taskspurged */
@@ -46900,21 +47160,59 @@ export interface components {
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
-        app__schemas__rotation_template__BatchOperationResult: {
+        app__schemas__person__BatchOperationResult: {
             /**
              * Index
              * @description Index of the operation in the batch
              */
             index: number;
-            /**
-             * Template Id
-             * Format: uuid
-             */
-            templateId: string;
+            /** Person Id */
+            personId?: string | null;
             /** Success */
             success: boolean;
             /** Error */
             error?: string | null;
+        };
+        /**
+         * PersonSummary
+         * @description Minimal person info for embedding in credential responses.
+         */
+        app__schemas__procedure_credential__PersonSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+        };
+        /**
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
+         */
+        app__schemas__queue__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
+            /**
+             * Confirm
+             * @description Must be true to confirm purge
+             * @default false
+             */
+            confirm: boolean;
+        };
+        /**
+         * ConflictCheckResponse
+         * @description Response for conflict check.
+         */
+        app__schemas__rotation_template__ConflictCheckResponse: {
+            /** Has Conflicts */
+            hasConflicts: boolean;
+            /** Conflicts */
+            conflicts: components["schemas"]["TemplateConflict"][];
+            /** Can Proceed */
+            canProceed: boolean;
         };
         /**
          * SuggestionResponse
@@ -49636,7 +49934,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictCheckResponse"];
+                    "application/json": components["schemas"]["app__schemas__rotation_template__ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -54783,6 +55081,346 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["CallOverrideResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_institutional_events_api_v1_admin_institutional_events_get: {
+        parameters: {
+            query?: {
+                /** @description Filter events overlapping start */
+                start_date?: string | null;
+                /** @description Filter events overlapping end */
+                end_date?: string | null;
+                /** @description Filter by event type */
+                event_type?: string | null;
+                /** @description Filter by scope */
+                applies_to?: string | null;
+                /** @description Filter by active status */
+                is_active?: boolean | null;
+                /** @description Page number (1-indexed) */
+                page?: number;
+                /** @description Items per page */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionalEventListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_institutional_event_api_v1_admin_institutional_events_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstitutionalEventCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionalEventResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_institutional_event_api_v1_admin_institutional_events__event_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionalEventResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_institutional_event_api_v1_admin_institutional_events__event_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstitutionalEventUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionalEventResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_institutional_event_api_v1_admin_institutional_events__event_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_faculty_schedule_preferences_api_v1_admin_faculty_schedule_preferences_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by faculty person_id */
+                person_id?: string | null;
+                /** @description Filter by preference type */
+                preference_type?: components["schemas"]["FacultyPreferenceType"] | null;
+                /** @description Filter by active status */
+                is_active?: boolean | null;
+                /** @description Page number (1-indexed) */
+                page?: number;
+                /** @description Items per page */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacultySchedulePreferenceListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacultySchedulePreferenceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacultySchedulePreferenceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences__preference_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                preference_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacultySchedulePreferenceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences__preference_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                preference_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacultySchedulePreferenceUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacultySchedulePreferenceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_faculty_schedule_preference_api_v1_admin_faculty_schedule_preferences__preference_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                preference_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -65062,7 +65700,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__fmit_assignments__ConflictCheckResponse"];
+                    "application/json": components["schemas"]["ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -66534,7 +67172,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -66544,7 +67182,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -66901,7 +67539,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -66911,7 +67549,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */

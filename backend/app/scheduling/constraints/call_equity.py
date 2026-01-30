@@ -11,6 +11,7 @@ Equity Constraints (track cumulative counts, minimize deviation):
     - WeekdayCallEquityConstraint: Mon-Thurs tracked together
 
 Preference Constraints (soft penalties/bonuses):
+    - FacultyCallPreferenceConstraint: Faculty day-of-week call preferences
     - TuesdayCallPreferenceConstraint: PD/APD avoid Tuesday (academics)
     - DeptChiefWednesdayPreferenceConstraint: Dept Chief prefers Wednesday
 
@@ -32,6 +33,10 @@ from .base import (
     ConstraintViolation,
     SchedulingContext,
     SoftConstraint,
+)
+from app.models.faculty_schedule_preference import (
+    FacultyPreferenceDirection,
+    FacultyPreferenceType,
 )
 
 logger = logging.getLogger(__name__)
@@ -247,6 +252,186 @@ class SundayCallEquityConstraint(SoftConstraint):
         )
 
 
+class HolidayCallEquityConstraint(SoftConstraint):
+    """
+    Ensures fair distribution of holiday overnight call.
+
+    Holiday call is tracked separately because it carries extra burden and
+    should be balanced across the call-eligible pool.
+    """
+
+    def __init__(self, weight: float = 7.0) -> None:
+        super().__init__(
+            name="HolidayCallEquity",
+            constraint_type=ConstraintType.EQUITY,
+            weight=weight,
+            priority=ConstraintPriority.MEDIUM,
+        )
+
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        holiday_blocks = [b for b in context.blocks if getattr(b, "is_holiday", False)]
+        if not holiday_blocks:
+            return
+
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
+        faculty_holiday_counts = {}
+        for faculty in call_eligible_faculty:
+            f_i = call_faculty_idx.get(faculty.id)
+            if f_i is None:
+                continue
+            holiday_vars = []
+            for block in holiday_blocks:
+                b_i = context.block_idx[block.id]
+                if (f_i, b_i, "overnight") in call_vars:
+                    holiday_vars.append(call_vars[f_i, b_i, "overnight"])
+            if holiday_vars:
+                faculty_holiday_counts[f_i] = holiday_vars
+
+        if not faculty_holiday_counts:
+            return
+
+        max_holiday = model.NewIntVar(0, len(holiday_blocks), "max_holiday_calls")
+        for f_i, vars_list in faculty_holiday_counts.items():
+            model.Add(sum(vars_list) <= max_holiday)
+
+        objective_vars = variables.get("objective_terms", [])
+        objective_vars.append((max_holiday, int(self.weight)))
+        variables["objective_terms"] = objective_vars
+
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        import pulp
+
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        holiday_blocks = [b for b in context.blocks if getattr(b, "is_holiday", False)]
+        if not holiday_blocks:
+            return
+
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
+        faculty_counts = []
+        for faculty in call_eligible_faculty:
+            f_i = call_faculty_idx.get(faculty.id)
+            if f_i is None:
+                continue
+            holiday_vars = []
+            for block in holiday_blocks:
+                b_i = context.block_idx[block.id]
+                if (f_i, b_i, "overnight") in call_vars:
+                    holiday_vars.append(call_vars[f_i, b_i, "overnight"])
+            if holiday_vars:
+                faculty_counts.append(pulp.lpSum(holiday_vars))
+
+        if faculty_counts:
+            max_calls = pulp.LpVariable("max_holiday_calls", lowBound=0, cat="Integer")
+            for count in faculty_counts:
+                model += count <= max_calls, f"holiday_max_{len(faculty_counts)}"
+            if "objective" in variables:
+                variables["objective"] += self.weight * max_calls
+
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
+        faculty_by_id: dict[Any, Any] = {f.id: f for f in context.faculty}
+        block_by_id: dict[Any, Any] = {b.id: b for b in context.blocks}
+
+        holiday_counts = defaultdict(int)
+        for a in assignments:
+            if a.person_id not in faculty_by_id:
+                continue
+
+            is_holiday = False
+            if hasattr(a, "is_holiday") and a.is_holiday:
+                is_holiday = True
+            elif hasattr(a, "block_id"):
+                block = block_by_id.get(a.block_id)
+                is_holiday = (
+                    bool(getattr(block, "is_holiday", False)) if block else False
+                )
+            elif hasattr(a, "date"):
+                block = next((b for b in context.blocks if b.date == a.date), None)
+                is_holiday = (
+                    bool(getattr(block, "is_holiday", False)) if block else False
+                )
+
+            if not is_holiday:
+                continue
+
+            if hasattr(a, "call_type") and a.call_type in {"overnight", "weekend"}:
+                holiday_counts[a.person_id] += 1
+
+        if not holiday_counts:
+            return ConstraintResult(satisfied=True, penalty=0.0)
+
+        counts = list(holiday_counts.values())
+        mean_count = sum(counts) / len(counts) if counts else 0
+        variance = (
+            sum((c - mean_count) ** 2 for c in counts) / len(counts) if counts else 0
+        )
+
+        penalty = variance * self.weight
+
+        violations = []
+        max_count = max(counts) if counts else 0
+        min_count = min(counts) if counts else 0
+        if max_count - min_count > 1:
+            violations.append(
+                ConstraintViolation(
+                    constraint_name=self.name,
+                    constraint_type=self.constraint_type,
+                    severity="LOW",
+                    message=(
+                        f"Holiday call imbalance: range {min_count}-{max_count} "
+                        f"(variance: {variance:.2f})"
+                    ),
+                    details={
+                        "min_count": min_count,
+                        "max_count": max_count,
+                        "variance": variance,
+                    },
+                )
+            )
+
+        return ConstraintResult(
+            satisfied=True,
+            violations=violations,
+            penalty=penalty,
+        )
+
+
 class WeekdayCallEquityConstraint(SoftConstraint):
     """
     Ensures fair distribution of Mon-Thurs overnight call.
@@ -428,6 +613,198 @@ class WeekdayCallEquityConstraint(SoftConstraint):
                     },
                 )
             )
+
+        return ConstraintResult(
+            satisfied=True,
+            violations=violations,
+            penalty=penalty,
+        )
+
+
+class FacultyCallPreferenceConstraint(SoftConstraint):
+    """
+    Soft preferences for faculty call based on day of week.
+
+    Preferences are stored per faculty (rank 1-2) and apply to overnight call.
+    - direction=avoid: adds penalty if assigned on that weekday
+    - direction=prefer: adds bonus (negative penalty) if assigned on that weekday
+    """
+
+    def __init__(self, weight: float = 1.0) -> None:
+        super().__init__(
+            name="FacultyCallPreference",
+            constraint_type=ConstraintType.PREFERENCE,
+            weight=weight,
+            priority=ConstraintPriority.LOW,
+        )
+
+    def _call_preferences(self, context: SchedulingContext) -> list[Any]:
+        preferences = getattr(context, "faculty_schedule_preferences", [])
+        return [
+            pref
+            for pref in preferences
+            if pref.is_active and pref.preference_type == FacultyPreferenceType.CALL
+        ]
+
+    def add_to_cpsat(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        preferences = self._call_preferences(context)
+        if not preferences:
+            return
+
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
+        blocks_by_weekday: dict[int, list[Any]] = defaultdict(list)
+        for block in context.blocks:
+            blocks_by_weekday[block.date.weekday()].append(block)
+
+        objective_vars = variables.get("objective_terms", [])
+        for pref in preferences:
+            f_i = call_faculty_idx.get(pref.person_id)
+            if f_i is None:
+                continue
+
+            pref_blocks = blocks_by_weekday.get(pref.day_of_week, [])
+            if not pref_blocks:
+                continue
+
+            pref_weight = int(pref.weight) if pref.weight is not None else 0
+            if pref_weight <= 0:
+                continue
+            weight = int(self.weight) * pref_weight
+            if pref.direction == FacultyPreferenceDirection.PREFER:
+                weight = -weight
+
+            for block in pref_blocks:
+                b_i = context.block_idx[block.id]
+                var = call_vars.get((f_i, b_i, "overnight"))
+                if var is not None:
+                    objective_vars.append((var, weight))
+
+        variables["objective_terms"] = objective_vars
+
+    def add_to_pulp(
+        self,
+        model: Any,
+        variables: dict[str, Any],
+        context: SchedulingContext,
+    ) -> None:
+        import pulp
+
+        call_vars = variables.get("call_assignments", {})
+        if not call_vars:
+            return
+
+        preferences = self._call_preferences(context)
+        if not preferences or "objective" not in variables:
+            return
+
+        call_eligible_faculty = getattr(
+            context, "call_eligible_faculty", context.faculty
+        )
+        call_faculty_idx = getattr(
+            context,
+            "call_eligible_faculty_idx",
+            {f.id: i for i, f in enumerate(call_eligible_faculty)},
+        )
+
+        blocks_by_weekday: dict[int, list[Any]] = defaultdict(list)
+        for block in context.blocks:
+            blocks_by_weekday[block.date.weekday()].append(block)
+
+        terms: list[Any] = []
+        for pref in preferences:
+            f_i = call_faculty_idx.get(pref.person_id)
+            if f_i is None:
+                continue
+
+            pref_blocks = blocks_by_weekday.get(pref.day_of_week, [])
+            if not pref_blocks:
+                continue
+
+            pref_weight = int(pref.weight) if pref.weight is not None else 0
+            if pref_weight <= 0:
+                continue
+            weight = int(self.weight) * pref_weight
+            if pref.direction == FacultyPreferenceDirection.PREFER:
+                weight = -weight
+
+            for block in pref_blocks:
+                b_i = context.block_idx[block.id]
+                var = call_vars.get((f_i, b_i, "overnight"))
+                if var is not None:
+                    terms.append(var * weight)
+
+        if terms:
+            variables["objective"] += pulp.lpSum(terms)
+
+    def validate(
+        self,
+        assignments: list[Any],
+        context: SchedulingContext,
+    ) -> ConstraintResult:
+        preferences = self._call_preferences(context)
+        if not preferences:
+            return ConstraintResult(satisfied=True, penalty=0.0)
+
+        prefs_by_person: dict[Any, list[Any]] = defaultdict(list)
+        for pref in preferences:
+            prefs_by_person[pref.person_id].append(pref)
+
+        violations = []
+        penalty = 0.0
+        for assignment in assignments:
+            if not hasattr(assignment, "date"):
+                continue
+            if not hasattr(assignment, "call_type"):
+                continue
+            if assignment.call_type == "backup":
+                continue
+
+            prefs = prefs_by_person.get(assignment.person_id, [])
+            if not prefs:
+                continue
+
+            weekday = assignment.date.weekday()
+            for pref in prefs:
+                if pref.day_of_week != weekday:
+                    continue
+                if pref.direction != FacultyPreferenceDirection.AVOID:
+                    continue
+                pref_weight = int(pref.weight) if pref.weight is not None else 0
+                if pref_weight <= 0:
+                    continue
+                penalty += pref_weight * self.weight
+                violations.append(
+                    ConstraintViolation(
+                        constraint_name=self.name,
+                        constraint_type=self.constraint_type,
+                        severity="LOW",
+                        message=(
+                            f"Call assigned on avoided day (weekday {weekday}) "
+                            f"for {assignment.person_id}"
+                        ),
+                        details={
+                            "person_id": assignment.person_id,
+                            "weekday": weekday,
+                        },
+                    )
+                )
 
         return ConstraintResult(
             satisfied=True,
