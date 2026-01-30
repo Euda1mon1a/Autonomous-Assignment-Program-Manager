@@ -6,6 +6,10 @@
 - **Codex working on:** Phase 6 (P6-0 gate ✅, P6-1 ACGME wiring ✅)
 - **My research:** Emergency Deployment Service ("oh shit" button)
 
+## Update (2026-01-30)
+- **PR #784 merged** — GUI time-off patterns now applied to inpatient preloads.
+- **P6-2** is now **in progress**; remaining work is confirming ICU/NICU/L&D day-off rules.
+
 ---
 
 ## Completed This Session
@@ -47,7 +51,7 @@
 - Wired to `ACGMEValidator.validate_all()`
 - File: `backend/app/services/block_quality_report_service.py`
 
-### P6-2 External Time-Off: PENDING
+### P6-2 External Time-Off: IN PROGRESS (PR #784)
 Needs authoritative list of day-off rules:
 - FMIT: PGY-1/2 Sat off, PGY-3 Sun off ✅
 - IMW: Sat off ✅
