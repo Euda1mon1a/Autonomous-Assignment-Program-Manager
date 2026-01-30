@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-01-29T22:24:30Z
+ * Generated at: 2026-01-30T00:58:07Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -6319,6 +6319,26 @@ export interface paths {
          * @description Admin-only: build and optionally apply cascade overrides for a deployment.
          */
         post: operations["create_cascade_overrides_api_v1_admin_schedule_overrides_cascade_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/schedule-overrides/emergency": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Emergency deployment response
+         * @description Admin-only: 'Oh shit' button for emergency deployments. Assesses fragility and executes tiered repair strategy: incremental → cascade → fallback. Set dry_run=true to assess only.
+         */
+        post: operations["handle_emergency_deployment_api_v1_admin_schedule_overrides_emergency_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -19691,7 +19711,7 @@ export interface components {
          *     Shows who is absent and why (vacation, sick, deployment, etc.)
          */
         AbsenceInfo: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Absence Type
              * @description Type of absence (vacation, sick, deployment)
@@ -21306,7 +21326,7 @@ export interface components {
          * @description Summary of an assignment for manifest display.
          */
         AssignmentSummary: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Role
              * @description primary, supervising, or backup
@@ -21442,9 +21462,9 @@ export interface components {
          */
         AttendingInfo: {
             /** @description AM attending */
-            am?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            am?: components["schemas"]["PersonSummary"] | null;
             /** @description PM attending */
-            pm?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            pm?: components["schemas"]["PersonSummary"] | null;
         };
         /**
          * AttractorInfoResponse
@@ -22317,8 +22337,11 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
-            /** Person Id */
-            personId?: string | null;
+            /**
+             * Template Id
+             * Format: uuid
+             */
+            templateId: string;
             /** Success */
             success: boolean;
             /** Error */
@@ -22558,7 +22581,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__person__BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -22867,7 +22890,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -23086,7 +23109,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["app__schemas__block_assignment_import__ExportFormat"];
+            format: components["schemas"]["ExportFormat"];
             /**
              * Academic Year
              * @description Academic year to export
@@ -23504,24 +23527,19 @@ export interface components {
         };
         /**
          * BlockListResponse
-         * @description Response for listing academic blocks.
+         * @description Schema for list of blocks.
          */
         BlockListResponse: {
             /**
-             * Blocks
-             * @description List of academic blocks
+             * Items
+             * @description List of block responses
              */
-            blocks: components["schemas"]["BlockSummary"][];
+            items: components["schemas"]["BlockResponse"][];
             /**
-             * Academic Year
-             * @description Academic year
-             */
-            academicYear: string;
-            /**
-             * Total Blocks
+             * Total
              * @description Total number of blocks
              */
-            totalBlocks: number;
+            total: number;
         };
         /**
          * BlockMatrixResponse
@@ -26013,15 +26031,29 @@ export interface components {
         };
         /**
          * ConflictCheckResponse
-         * @description Response for conflict check.
+         * @description Response for conflict checking before assignment.
          */
         ConflictCheckResponse: {
-            /** Has Conflicts */
-            hasConflicts: boolean;
-            /** Conflicts */
-            conflicts: components["schemas"]["TemplateConflict"][];
-            /** Can Proceed */
-            canProceed: boolean;
+            /**
+             * Can Assign
+             * @description Whether assignment can proceed
+             */
+            canAssign: boolean;
+            /**
+             * Conflicts
+             * @description Detected conflicts
+             */
+            conflicts?: components["schemas"]["ConflictDetail"][];
+            /**
+             * Warnings
+             * @description Warnings
+             */
+            warnings?: string[];
+            /**
+             * Suggestions
+             * @description Alternative suggestions
+             */
+            suggestions?: string[];
         };
         /**
          * ConflictDetail
@@ -26168,93 +26200,15 @@ export interface components {
         };
         /**
          * ConflictSummary
-         * @description Summary statistics for a set of conflicts.
-         *
-         *     Used for dashboard displays and reporting.
-         * @example {
-         *       "affectedPeopleCount": 8,
-         *       "autoResolvableCount": 6,
-         *       "averageImpactScore": 0.65,
-         *       "criticalCount": 3,
-         *       "highCount": 5,
-         *       "lowCount": 3,
-         *       "mediumCount": 4,
-         *       "totalConflicts": 15
-         *     }
+         * @description Summary of conflicts found.
          */
         ConflictSummary: {
-            /**
-             * Total Conflicts
-             * @default 0
-             */
+            /** Total Conflicts */
             totalConflicts: number;
-            /**
-             * Critical Count
-             * @default 0
-             */
-            criticalCount: number;
-            /**
-             * High Count
-             * @default 0
-             */
-            highCount: number;
-            /**
-             * Medium Count
-             * @default 0
-             */
-            mediumCount: number;
-            /**
-             * Low Count
-             * @default 0
-             */
-            lowCount: number;
-            /** By Category */
-            byCategory?: {
-                [key: string]: number | undefined;
-            };
-            /** By Type */
-            byType?: {
-                [key: string]: number | undefined;
-            };
-            /**
-             * Affected People Count
-             * @default 0
-             */
-            affectedPeopleCount: number;
-            /**
-             * Affected Blocks Count
-             * @default 0
-             */
-            affectedBlocksCount: number;
-            /**
-             * Auto Resolvable Count
-             * @default 0
-             */
-            autoResolvableCount: number;
-            /**
-             * Requires Manual Count
-             * @default 0
-             */
-            requiresManualCount: number;
-            /**
-             * Average Impact Score
-             * @default 0
-             */
-            averageImpactScore: number;
-            /**
-             * Average Urgency Score
-             * @default 0
-             */
-            averageUrgencyScore: number;
-            /**
-             * Average Complexity Score
-             * @default 0
-             */
-            averageComplexityScore: number;
-            /** Earliest Date */
-            earliestDate?: string | null;
-            /** Latest Date */
-            latestDate?: string | null;
+            /** Errors */
+            errors: number;
+            /** Warnings */
+            warnings: number;
         };
         /**
          * ConflictType
@@ -26478,34 +26432,36 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap with details.
+         * @description Represents a coverage gap in the schedule.
+         * @example {
+         *       "date": "2024-01-15",
+         *       "rotation": "FMIT Inpatient",
+         *       "severity": "high",
+         *       "timeOfDay": "PM"
+         *     }
          */
         CoverageGap: {
-            /** Gap Id */
-            gapId: string;
             /**
              * Date
              * Format: date
+             * @description Date of the gap
              */
             date: string;
-            /** Time Of Day */
+            /**
+             * Time Of Day
+             * @description AM or PM
+             */
             timeOfDay: string;
-            /** Block Id */
-            blockId: string;
-            /** Severity */
+            /**
+             * Rotation
+             * @description Rotation with gap
+             */
+            rotation?: string | null;
+            /**
+             * Severity
+             * @description low, medium, high
+             */
             severity: string;
-            /** Days Until */
-            daysUntil: number;
-            /** Affected Area */
-            affectedArea: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            currentAssignments: number;
-            /** Required Assignments */
-            requiredAssignments: number;
-            /** Gap Size */
-            gapSize: number;
         };
         /**
          * CoverageGapsResponse
@@ -26532,7 +26488,7 @@ export interface components {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["CoverageGap"][];
+            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
@@ -26584,7 +26540,7 @@ export interface components {
              * Gaps
              * @description List of coverage gaps
              */
-            gaps?: components["schemas"]["app__schemas__visualization__CoverageGap"][];
+            gaps?: components["schemas"]["CoverageGap"][];
             /**
              * Title
              * @description Title for the heatmap
@@ -27952,6 +27908,102 @@ export interface components {
             slots: components["schemas"]["EffectiveSlot"][];
         };
         /**
+         * EmergencyDeploymentRequest
+         * @description Request emergency deployment response for a person.
+         */
+        EmergencyDeploymentRequest: {
+            /**
+             * Person Id
+             * Format: uuid
+             * @description Deployed person ID
+             */
+            personId: string;
+            /**
+             * Start Date
+             * Format: date
+             * @description Deployment start date (inclusive)
+             */
+            startDate: string;
+            /**
+             * End Date
+             * Format: date
+             * @description Deployment end date (inclusive)
+             */
+            endDate: string;
+            /**
+             * Reason
+             * @description Reason (deployment, emergency_leave, etc.)
+             * @default deployment
+             */
+            reason: string;
+            /**
+             * Notes
+             * @description Optional notes for audit
+             */
+            notes?: string | null;
+            /**
+             * Dry Run
+             * @description If true, assess and plan only; don't apply
+             * @default true
+             */
+            dryRun: boolean;
+            /** @description Force a specific strategy (overrides auto-selection) */
+            forceStrategy?: components["schemas"]["EmergencyStrategy"] | null;
+        };
+        /**
+         * EmergencyDeploymentResponse
+         * @description Response from emergency deployment handler.
+         */
+        EmergencyDeploymentResponse: {
+            /**
+             * Request Id
+             * Format: uuid
+             * @description Unique ID for this emergency response
+             */
+            requestId: string;
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            personId: string;
+            /**
+             * Start Date
+             * Format: date
+             */
+            startDate: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            endDate: string;
+            /** Dry Run */
+            dryRun: boolean;
+            assessment: components["schemas"]["FragilityAssessment"];
+            repairOutcome?: components["schemas"]["RepairOutcome"] | null;
+            healthCheck?: components["schemas"]["HealthVerification"] | null;
+            /**
+             * Overall Success
+             * @description True if schedule is healthy after response
+             */
+            overallSuccess: boolean;
+            /**
+             * Total Time Ms
+             * @description Total response time
+             */
+            totalTimeMs: number;
+            /** Recommendations */
+            recommendations?: string[];
+            /** Warnings */
+            warnings?: string[];
+            /** Errors */
+            errors?: string[];
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp?: string;
+        };
+        /**
          * EmergencyRequest
          * @description Request schema for emergency coverage.
          */
@@ -27997,6 +28049,12 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        /**
+         * EmergencyStrategy
+         * @description Strategy used to handle emergency deployment.
+         * @enum {string}
+         */
+        EmergencyStrategy: "incremental" | "cascade" | "fallback";
         /**
          * EndImpersonationResponse
          * @description Response after ending an impersonation session.
@@ -29173,7 +29231,7 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__certification__PersonSummary"];
             certificationType: components["schemas"]["CertificationTypeSummary"];
             /**
              * Expiration Date
@@ -29205,10 +29263,10 @@ export interface components {
         ExportDeliveryMethod: "email" | "s3" | "both";
         /**
          * ExportFormat
-         * @description Export file formats.
+         * @description Supported export formats.
          * @enum {string}
          */
-        ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        ExportFormat: "csv" | "xlsx";
         /**
          * ExportFormat
          * @description Export file formats.
@@ -29236,7 +29294,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["ExportFormat"];
+            format: components["schemas"]["app__models__export_job__ExportFormat"];
             /**
              * @description Delivery method
              * @default email
@@ -29535,7 +29593,7 @@ export interface components {
             /** Description */
             description?: string | null;
             template?: components["schemas"]["ExportTemplate"] | null;
-            format?: components["schemas"]["ExportFormat"] | null;
+            format?: components["schemas"]["app__models__export_job__ExportFormat"] | null;
             deliveryMethod?: components["schemas"]["ExportDeliveryMethod"] | null;
             /** Email Recipients */
             emailRecipients?: string[] | null;
@@ -30026,12 +30084,12 @@ export interface components {
          */
         FMITSection: {
             /** @description Attending physician for inpatient */
-            attending?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            attending?: components["schemas"]["PersonSummary"] | null;
             /**
              * Residents
              * @description Residents on FMIT
              */
-            residents?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"][];
+            residents?: components["schemas"]["PersonSummary"][];
         };
         /**
          * FMITWeekInfo
@@ -31398,6 +31456,38 @@ export interface components {
             warnings?: string[];
         };
         /**
+         * FragilityAssessment
+         * @description Fragility assessment result before repair attempt.
+         */
+        FragilityAssessment: {
+            /**
+             * Fragility Score
+             * @description 0=resilient, 1=brittle
+             */
+            fragilityScore: number;
+            /**
+             * Rd Mean
+             * @description Average recovery distance
+             */
+            rdMean: number;
+            /**
+             * Rd Max
+             * @description Maximum recovery distance
+             */
+            rdMax: number;
+            /**
+             * Affected Slots
+             * @description Number of slots affected by deployment
+             */
+            affectedSlots: number;
+            recommendedStrategy: components["schemas"]["EmergencyStrategy"];
+            /**
+             * Assessment Time Ms
+             * @description Assessment time in milliseconds
+             */
+            assessmentTimeMs: number;
+        };
+        /**
          * FreeEnergyRequest
          * @description Request for free energy calculation.
          */
@@ -31958,6 +32048,33 @@ export interface components {
          * @enum {string}
          */
         HealthStatus: "healthy" | "degraded" | "unhealthy";
+        /**
+         * HealthVerification
+         * @description Health verification after repair.
+         */
+        HealthVerification: {
+            /**
+             * Coverage Rate
+             * @description Post-repair coverage rate
+             */
+            coverageRate: number;
+            /**
+             * Is Healthy
+             * @description Coverage >= 95%
+             */
+            isHealthy: boolean;
+            /**
+             * Escalated
+             * @description Whether crisis mode was activated
+             * @default false
+             */
+            escalated: boolean;
+            /**
+             * Escalation Severity
+             * @description Crisis severity if escalated
+             */
+            escalationSeverity?: string | null;
+        };
         /**
          * HeatmapData
          * @description Heatmap data structure.
@@ -32810,7 +32927,7 @@ export interface components {
              * @default []
              */
             recommendations: components["schemas"]["Recommendation"][];
-            summary?: components["schemas"]["app__schemas__schedule__ConflictSummary"] | null;
+            summary?: components["schemas"]["ConflictSummary"] | null;
         };
         /**
          * ImportApplyError
@@ -34716,7 +34833,7 @@ export interface components {
          *     Shows who is on night call so staff know they're unavailable during day.
          */
         NightCallInfo: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Call Type
              * @description Type of call (night, backup)
@@ -35426,7 +35543,7 @@ export interface components {
          *     Shows person with their AM and PM assignments (if any).
          */
         PersonClinicCoverage: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /** @description AM assignment */
             am?: components["schemas"]["AssignmentInfo"] | null;
             /** @description PM assignment */
@@ -35437,7 +35554,7 @@ export interface components {
          * @description Certification compliance for a single person.
          */
         PersonComplianceResponse: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__certification__PersonSummary"];
             /** Total Required */
             totalRequired: number;
             /** Total Current */
@@ -35716,7 +35833,7 @@ export interface components {
         };
         /**
          * PersonSummary
-         * @description Minimal person info for certification reports.
+         * @description Summary of person for manifest display.
          */
         PersonSummary: {
             /**
@@ -35726,10 +35843,11 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /** Type */
-            type: string;
-            /** Email */
-            email?: string | null;
+            /**
+             * Pgy Level
+             * @description PGY level for residents
+             */
+            pgyLevel?: number | null;
         };
         /**
          * PersonType
@@ -36910,13 +37028,14 @@ export interface components {
             queueName: string;
             /**
              * Confirm
+             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
         };
         /**
          * QueuePurgeResponse
-         * @description Response after purging a queue.
+         * @description Response to queue purge request.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -37777,14 +37896,14 @@ export interface components {
          *     Shows who is away at a remote site and their local surrogate/proxy.
          */
         RemoteAssignment: {
-            person: components["schemas"]["app__schemas__daily_manifest__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /**
              * Location
              * @description Remote location name
              */
             location: string;
             /** @description Local proxy/surrogate if assigned */
-            surrogate?: components["schemas"]["app__schemas__daily_manifest__PersonSummary"] | null;
+            surrogate?: components["schemas"]["PersonSummary"] | null;
         };
         /**
          * RenewalRequest
@@ -37867,6 +37986,39 @@ export interface components {
              * @default backend
              */
             source: string;
+        };
+        /**
+         * RepairOutcome
+         * @description Outcome of a repair attempt.
+         */
+        RepairOutcome: {
+            /** Success */
+            success: boolean;
+            strategyUsed: components["schemas"]["EmergencyStrategy"];
+            /**
+             * Slots Repaired
+             * @default 0
+             */
+            slotsRepaired: number;
+            /**
+             * Slots Remaining
+             * @default 0
+             */
+            slotsRemaining: number;
+            /**
+             * Cascade Steps
+             * @default 0
+             */
+            cascadeSteps: number;
+            /** Fallback Activated */
+            fallbackActivated?: string | null;
+            /**
+             * Execution Time Ms
+             * @description Execution time in milliseconds
+             */
+            executionTimeMs: number;
+            /** Details */
+            details?: string[];
         };
         /**
          * ReportFormat
@@ -46346,6 +46498,154 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
+         * CoverageGap
+         * @description Represents a coverage gap with details.
+         */
+        app__api__routes__fmit_health__CoverageGap: {
+            /** Gap Id */
+            gapId: string;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Time Of Day */
+            timeOfDay: string;
+            /** Block Id */
+            blockId: string;
+            /** Severity */
+            severity: string;
+            /** Days Until */
+            daysUntil: number;
+            /** Affected Area */
+            affectedArea: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            currentAssignments: number;
+            /** Required Assignments */
+            requiredAssignments: number;
+            /** Gap Size */
+            gapSize: number;
+        };
+        /**
+         * ExportFormat
+         * @description Export file formats.
+         * @enum {string}
+         */
+        app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        /**
+         * ConflictSummary
+         * @description Summary statistics for a set of conflicts.
+         *
+         *     Used for dashboard displays and reporting.
+         * @example {
+         *       "affectedPeopleCount": 8,
+         *       "autoResolvableCount": 6,
+         *       "averageImpactScore": 0.65,
+         *       "criticalCount": 3,
+         *       "highCount": 5,
+         *       "lowCount": 3,
+         *       "mediumCount": 4,
+         *       "totalConflicts": 15
+         *     }
+         */
+        app__scheduling__conflicts__types__ConflictSummary: {
+            /**
+             * Total Conflicts
+             * @default 0
+             */
+            totalConflicts: number;
+            /**
+             * Critical Count
+             * @default 0
+             */
+            criticalCount: number;
+            /**
+             * High Count
+             * @default 0
+             */
+            highCount: number;
+            /**
+             * Medium Count
+             * @default 0
+             */
+            mediumCount: number;
+            /**
+             * Low Count
+             * @default 0
+             */
+            lowCount: number;
+            /** By Category */
+            byCategory?: {
+                [key: string]: number | undefined;
+            };
+            /** By Type */
+            byType?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Affected People Count
+             * @default 0
+             */
+            affectedPeopleCount: number;
+            /**
+             * Affected Blocks Count
+             * @default 0
+             */
+            affectedBlocksCount: number;
+            /**
+             * Auto Resolvable Count
+             * @default 0
+             */
+            autoResolvableCount: number;
+            /**
+             * Requires Manual Count
+             * @default 0
+             */
+            requiresManualCount: number;
+            /**
+             * Average Impact Score
+             * @default 0
+             */
+            averageImpactScore: number;
+            /**
+             * Average Urgency Score
+             * @default 0
+             */
+            averageUrgencyScore: number;
+            /**
+             * Average Complexity Score
+             * @default 0
+             */
+            averageComplexityScore: number;
+            /** Earliest Date */
+            earliestDate?: string | null;
+            /** Latest Date */
+            latestDate?: string | null;
+        };
+        /**
+         * BlockListResponse
+         * @description Response for listing academic blocks.
+         */
+        app__schemas__academic_blocks__BlockListResponse: {
+            /**
+             * Blocks
+             * @description List of academic blocks
+             */
+            blocks: components["schemas"]["BlockSummary"][];
+            /**
+             * Academic Year
+             * @description Academic year
+             */
+            academicYear: string;
+            /**
+             * Total Blocks
+             * @description Total number of blocks
+             */
+            totalBlocks: number;
+        };
+        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
@@ -46363,22 +46663,6 @@ export interface components {
             error?: string | null;
             /** Warnings */
             warnings?: string[];
-        };
-        /**
-         * BlockListResponse
-         * @description Schema for list of blocks.
-         */
-        app__schemas__block__BlockListResponse: {
-            /**
-             * Items
-             * @description List of block responses
-             */
-            items: components["schemas"]["BlockResponse"][];
-            /**
-             * Total
-             * @description Total number of blocks
-             */
-            total: number;
         };
         /**
          * CoverageGap
@@ -46402,16 +46686,10 @@ export interface components {
             severity: string;
         };
         /**
-         * ExportFormat
-         * @description Supported export formats.
-         * @enum {string}
-         */
-        app__schemas__block_assignment_import__ExportFormat: "csv" | "xlsx";
-        /**
          * PersonSummary
-         * @description Summary of person for manifest display.
+         * @description Minimal person info for certification reports.
          */
-        app__schemas__daily_manifest__PersonSummary: {
+        app__schemas__certification__PersonSummary: {
             /**
              * Id
              * Format: uuid
@@ -46419,49 +46697,40 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-            /**
-             * Pgy Level
-             * @description PGY level for residents
-             */
-            pgyLevel?: number | null;
+            /** Type */
+            type: string;
+            /** Email */
+            email?: string | null;
         };
         /**
-         * ConflictCheckResponse
-         * @description Response for conflict checking before assignment.
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
          */
-        app__schemas__fmit_assignments__ConflictCheckResponse: {
-            /**
-             * Can Assign
-             * @description Whether assignment can proceed
-             */
-            canAssign: boolean;
-            /**
-             * Conflicts
-             * @description Detected conflicts
-             */
-            conflicts?: components["schemas"]["ConflictDetail"][];
-            /**
-             * Warnings
-             * @description Warnings
-             */
-            warnings?: string[];
-            /**
-             * Suggestions
-             * @description Alternative suggestions
-             */
-            suggestions?: string[];
-        };
-        /**
-         * QueuePurgeResponse
-         * @description Response to queue purge request.
-         */
-        app__schemas__jobs__QueuePurgeResponse: {
+        app__schemas__jobs__QueuePurgeRequest: {
             /** Queuename */
             queueName: string;
-            /** Taskspurged */
-            tasksPurged: number;
-            /** Timestamp */
-            timestamp: string;
+            /**
+             * Confirm
+             * @default false
+             */
+            confirm: boolean;
+        };
+        /**
+         * BatchOperationResult
+         * @description Result for a single operation in a batch.
+         */
+        app__schemas__person__BatchOperationResult: {
+            /**
+             * Index
+             * @description Index of the operation in the batch
+             */
+            index: number;
+            /** Person Id */
+            personId?: string | null;
+            /** Success */
+            success: boolean;
+            /** Error */
+            error?: string | null;
         };
         /**
          * PersonSummary
@@ -46479,50 +46748,28 @@ export interface components {
             type: string;
         };
         /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
+         * QueuePurgeResponse
+         * @description Response after purging a queue.
          */
-        app__schemas__queue__QueuePurgeRequest: {
+        app__schemas__queue__QueuePurgeResponse: {
             /** Queuename */
             queueName: string;
-            /**
-             * Confirm
-             * @description Must be true to confirm purge
-             * @default false
-             */
-            confirm: boolean;
+            /** Taskspurged */
+            tasksPurged: number;
+            /** Timestamp */
+            timestamp: string;
         };
         /**
-         * BatchOperationResult
-         * @description Result for a single operation in a batch.
+         * ConflictCheckResponse
+         * @description Response for conflict check.
          */
-        app__schemas__rotation_template__BatchOperationResult: {
-            /**
-             * Index
-             * @description Index of the operation in the batch
-             */
-            index: number;
-            /**
-             * Template Id
-             * Format: uuid
-             */
-            templateId: string;
-            /** Success */
-            success: boolean;
-            /** Error */
-            error?: string | null;
-        };
-        /**
-         * ConflictSummary
-         * @description Summary of conflicts found.
-         */
-        app__schemas__schedule__ConflictSummary: {
-            /** Total Conflicts */
-            totalConflicts: number;
-            /** Errors */
-            errors: number;
-            /** Warnings */
-            warnings: number;
+        app__schemas__rotation_template__ConflictCheckResponse: {
+            /** Has Conflicts */
+            hasConflicts: boolean;
+            /** Conflicts */
+            conflicts: components["schemas"]["TemplateConflict"][];
+            /** Can Proceed */
+            canProceed: boolean;
         };
         /**
          * SuggestionResponse
@@ -46544,39 +46791,6 @@ export interface components {
              * @description Entity type
              */
             entityType: string;
-        };
-        /**
-         * CoverageGap
-         * @description Represents a coverage gap in the schedule.
-         * @example {
-         *       "date": "2024-01-15",
-         *       "rotation": "FMIT Inpatient",
-         *       "severity": "high",
-         *       "timeOfDay": "PM"
-         *     }
-         */
-        app__schemas__visualization__CoverageGap: {
-            /**
-             * Date
-             * Format: date
-             * @description Date of the gap
-             */
-            date: string;
-            /**
-             * Time Of Day
-             * @description AM or PM
-             */
-            timeOfDay: string;
-            /**
-             * Rotation
-             * @description Rotation with gap
-             */
-            rotation?: string | null;
-            /**
-             * Severity
-             * @description low, medium, high
-             */
-            severity: string;
         };
     };
     responses: never;
@@ -48623,7 +48837,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -48750,7 +48964,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__block__BlockListResponse"];
+                    "application/json": components["schemas"]["BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -48816,7 +49030,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BlockListResponse"];
+                    "application/json": components["schemas"]["app__schemas__academic_blocks__BlockListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -49244,7 +49458,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictCheckResponse"];
+                    "application/json": components["schemas"]["app__schemas__rotation_template__ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -54253,6 +54467,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CascadeOverridePlanResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    handle_emergency_deployment_api_v1_admin_schedule_overrides_emergency_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmergencyDeploymentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmergencyDeploymentResponse"];
                 };
             };
             /** @description Validation Error */
@@ -64637,7 +64884,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__fmit_assignments__ConflictCheckResponse"];
+                    "application/json": components["schemas"]["ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -64832,7 +65079,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictSummary"];
+                    "application/json": components["schemas"]["app__scheduling__conflicts__types__ConflictSummary"];
                 };
             };
             /** @description Validation Error */
@@ -66109,7 +66356,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -66119,7 +66366,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -66476,7 +66723,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -66486,7 +66733,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
