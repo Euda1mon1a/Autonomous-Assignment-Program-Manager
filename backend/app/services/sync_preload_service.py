@@ -20,7 +20,7 @@ Order of Operations (per TAMC skill):
 from datetime import date, timedelta
 from uuid import UUID
 
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -37,7 +37,7 @@ from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.weekly_pattern import WeeklyPattern
 from app.models.resident_call_preload import ResidentCallPreload
-from app.utils.academic_blocks import get_block_dates
+from app.utils.academic_blocks import get_block_dates, get_block_number_for_date
 from app.utils.fmc_capacity import activity_counts_toward_fmc_capacity
 
 logger = get_logger(__name__)
@@ -85,6 +85,7 @@ _SATURDAY_OFF_ROTATIONS = {
     "NIC",
     "NBN",
     "LAD",
+    "LND",
     "LD",
     "L&D",
     "KAP",
@@ -111,6 +112,7 @@ class SyncPreloadService:
     def __init__(self, session: Session) -> None:
         self.session = session
         self._activity_cache: dict[str, UUID] = {}
+        self._template_cache: dict[str, RotationTemplate | None] = {}
 
     def load_all_preloads(
         self,
@@ -345,6 +347,10 @@ class SyncPreloadService:
             # Get activity for this rotation
             activity_id = self._get_activity_id(activity_code)
 
+            # Look up template for GUI day-off patterns
+            template = self._get_template_for_rotation_type(rotation_type, person)
+            has_time_off_patterns = self._template_has_time_off_patterns(template)
+
             # Create preloads for each day
             current = max(preload.start_date, start_date)
             end = min(preload.end_date, end_date)
@@ -352,8 +358,17 @@ class SyncPreloadService:
             while current <= end:
                 # Get day-specific codes for special rotations
                 am_code, pm_code = self._get_rotation_codes(
-                    rotation_type, current, person=person
+                    rotation_type,
+                    current,
+                    person=person,
+                    has_time_off_patterns=has_time_off_patterns,
                 )
+                if has_time_off_patterns:
+                    time_off_codes = self._get_time_off_codes_for_date(
+                        template, current
+                    )
+                    am_code = time_off_codes.get("AM", am_code)
+                    pm_code = time_off_codes.get("PM", pm_code)
 
                 am_activity_id = self._get_activity_id(am_code)
                 pm_activity_id = self._get_activity_id(pm_code)
@@ -477,6 +492,9 @@ class SyncPreloadService:
                         start_date,
                     )
 
+                has_time_off_patterns = self._template_has_time_off_patterns(
+                    active_template
+                )
                 am_code, pm_code = self._get_rotation_preload_codes(
                     rotation_code,
                     current,
@@ -484,6 +502,7 @@ class SyncPreloadService:
                     end_date,
                     pgy,
                     is_outpatient,
+                    has_time_off_patterns,
                 )
 
                 if am_code:
@@ -577,6 +596,7 @@ class SyncPreloadService:
         block_end: date,
         pgy_level: int,
         is_outpatient: bool,
+        has_time_off_patterns: bool = False,
     ) -> tuple[str | None, str | None]:
         """Return AM/PM activity codes that should be preloaded for this slot."""
         if not rotation_code:
@@ -585,7 +605,11 @@ class SyncPreloadService:
         if self._is_last_wednesday(current_date, block_end):
             return ("LEC", "ADV")
 
-        if current_date.weekday() == 5 and rotation_code in _SATURDAY_OFF_ROTATIONS:
+        if (
+            current_date.weekday() == 5
+            and rotation_code in _SATURDAY_OFF_ROTATIONS
+            and not has_time_off_patterns
+        ):
             return ("W", "W")
 
         if rotation_code in _OFFSITE_ROTATIONS:
@@ -687,6 +711,45 @@ class SyncPreloadService:
         """Convert Python weekday (Mon=0..Sun=6) to weekly_pattern (Sun=0..Sat=6)."""
         return (current_date.weekday() + 1) % 7
 
+    def _template_has_time_off_patterns(
+        self, template: RotationTemplate | None
+    ) -> bool:
+        if not template:
+            return False
+        patterns = template.weekly_patterns or []
+        return any(
+            self._is_time_off_pattern_activity(pattern.activity) for pattern in patterns
+        )
+
+    def _get_time_off_codes_for_date(
+        self, template: RotationTemplate | None, current_date: date
+    ) -> dict[str, str]:
+        if not template:
+            return {}
+
+        block_number, academic_year = get_block_number_for_date(current_date)
+        block_dates = get_block_dates(block_number, academic_year)
+        target_week = self._pattern_week_number(current_date, block_dates.start_date)
+        target_dow = self._pattern_day_of_week(current_date)
+
+        codes: dict[str, str] = {}
+        for pattern in template.weekly_patterns or []:
+            if pattern.day_of_week != target_dow:
+                continue
+            if pattern.week_number is not None and pattern.week_number != target_week:
+                continue
+            if not self._is_time_off_pattern_activity(pattern.activity):
+                continue
+            activity = pattern.activity
+            if not activity:
+                continue
+            code = (activity.code or activity.display_abbreviation or "").strip()
+            if not code:
+                continue
+            codes[pattern.time_of_day.upper()] = code
+
+        return codes
+
     def _is_clinic_pattern_activity(self, activity: Activity | None) -> bool:
         if not activity:
             return False
@@ -702,6 +765,87 @@ class SyncPreloadService:
             return True
         code = (activity.code or "").strip().upper()
         return code in {"OFF", "W"}
+
+    def _get_template_for_rotation_type(
+        self, rotation_type: InpatientRotationType | str | None, person: Person | None
+    ) -> RotationTemplate | None:
+        """Look up RotationTemplate by rotation_type abbreviation (cached)."""
+        if rotation_type is None:
+            return None
+        # Get string abbreviation
+        abbrev = (
+            (
+                rotation_type.value
+                if hasattr(rotation_type, "value")
+                else (rotation_type or "")
+            )
+            .strip()
+            .upper()
+        )
+        if not abbrev:
+            return None
+        pgy_level = (
+            getattr(person, "pgy_level", None)
+            if getattr(person, "type", None) == "resident"
+            else None
+        )
+        cache_key = f"{abbrev}:{pgy_level}"
+        # Check cache
+        if cache_key in self._template_cache:
+            return self._template_cache[cache_key]
+
+        candidates: list[str] = []
+        if pgy_level:
+            if abbrev == "FMIT":
+                candidates.append(f"FMIT-PGY{pgy_level}")
+            if abbrev == "IM":
+                candidates.append(f"IM-PGY{pgy_level}")
+            if abbrev == "PEDW":
+                candidates.append(f"PEDS-WARD-PGY{pgy_level}")
+            if abbrev == "PEDNF":
+                candidates.append(f"NF-PEDS-PGY{pgy_level}")
+            if abbrev == "KAP" and pgy_level == 1:
+                candidates.append("KAPI-LD-PGY1")
+
+        alias_map = {
+            "PEDW": ["PEDSW", "PEDS-W"],
+            "PEDNF": ["PNF"],
+            "LDNF": ["NF-LD"],
+            "KAP": ["KAP-LD"],
+        }
+        candidates.extend(alias_map.get(abbrev, []))
+        candidates.append(abbrev)
+
+        wildcard_map = {
+            "FMIT": "FMIT-%",
+            "IM": "IM-PGY%",
+            "PEDW": "PEDS-WARD-%",
+            "PEDNF": "NF-PEDS-%",
+            "KAP": "KAPI-LD-%",
+        }
+        if abbrev in wildcard_map:
+            candidates.append(wildcard_map[abbrev])
+
+        template = None
+        for candidate in candidates:
+            stmt = (
+                select(RotationTemplate)
+                .options(selectinload(RotationTemplate.weekly_patterns))
+                .where(
+                    or_(
+                        RotationTemplate.abbreviation.ilike(candidate),
+                        RotationTemplate.display_abbreviation.ilike(candidate),
+                    )
+                )
+                .limit(1)
+            )
+            result = self.session.execute(stmt)
+            template = result.scalars().first()
+            if template:
+                break
+
+        self._template_cache[cache_key] = template
+        return template
 
     def _is_last_wednesday(self, current_date: date, block_end: date) -> bool:
         """Return True if the date is the last Wednesday of the block."""
@@ -761,6 +905,7 @@ class SyncPreloadService:
         current_date: date,
         *,
         person: Person | None = None,
+        has_time_off_patterns: bool = False,
     ) -> tuple[str, str]:
         """Get AM/PM activity codes for special rotations based on day of week."""
         if rotation_type is None:
@@ -780,7 +925,8 @@ class SyncPreloadService:
         )
 
         # Resident-only Saturday/Sunday off rules (temporary P6-2 defaults).
-        if person_type == "resident":
+        # GUI patterns override these defaults when has_time_off_patterns=True.
+        if person_type == "resident" and not has_time_off_patterns:
             if code_upper == "FMIT":
                 if dow == 5 and pgy_level in (1, 2):
                     return ("W", "W")
@@ -805,21 +951,30 @@ class SyncPreloadService:
             if dow == 4:  # Friday
                 return ("C", "OFF")
             elif dow >= 5:  # Weekend
-                return ("W", "W")
+                if not has_time_off_patterns:
+                    return ("W", "W")
+                # GUI patterns exist - skip hardcoded time-off
+                return ("OFF", "LDNF")
             else:  # Mon-Thu
                 return ("OFF", "LDNF")
 
                 # NF (Night Float) - off AM (sleeping), NF PM (working), weekends off
         if code_upper == "NF":
             if dow >= 5:  # Weekend (Sat=5, Sun=6)
-                return ("W", "W")
+                if not has_time_off_patterns:
+                    return ("W", "W")
+                # GUI patterns exist - skip hardcoded time-off
+                return ("OFF", "NF")
             else:  # Mon-Fri
                 return ("OFF", "NF")
 
                 # PedNF (Peds Night Float) - Saturday off only
         if code_upper == "PEDNF":
             if dow == 5:  # Saturday
-                return ("W", "W")
+                if not has_time_off_patterns:
+                    return ("W", "W")
+                # GUI patterns exist - skip hardcoded time-off
+                return ("OFF", "PedNF")
             return ("OFF", "PedNF")
 
             # Rotations that work all days including weekends:
