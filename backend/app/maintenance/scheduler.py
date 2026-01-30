@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class BackupScheduler:
     """Service for scheduling and managing automated backups."""
 
-    def __init__(self, db: Session, backup_dir: str = "backups"):
+    def __init__(self, db: Session, backup_dir: str = "backups") -> None:
         """
         Initialize backup scheduler.
 
@@ -119,7 +119,7 @@ class BackupScheduler:
                 f"day_of_week must be an integer between 0 (Monday) and 6 (Sunday), got {day_of_week}"
             )
 
-        # Validate backup_time
+            # Validate backup_time
         if not isinstance(backup_time, time):
             logger.error(f"Invalid backup_time type: {type(backup_time)}")
             raise ScheduleConfigurationError(
@@ -184,7 +184,7 @@ class BackupScheduler:
                 f"Retention days must be a positive integer, got {days}"
             )
 
-        # Validate count
+            # Validate count
         if count is not None and (not isinstance(count, int) or count <= 0):
             logger.error(f"Invalid retention count: {count}")
             raise ScheduleConfigurationError(
@@ -240,7 +240,7 @@ class BackupScheduler:
                 }
             )
 
-        # Check weekly backup
+            # Check weekly backup
         if self.config.get("weekly_backup", {}).get("enabled"):
             weekly = self.config["weekly_backup"]
             backup_time = time.fromisoformat(weekly["time"])
@@ -270,7 +270,7 @@ class BackupScheduler:
         if not next_backups:
             return None
 
-        # Return the soonest scheduled backup
+            # Return the soonest scheduled backup
         return min(next_backups, key=lambda x: x["scheduled_time"])
 
     def run_pending_backups(self) -> list[dict[str, Any]]:
@@ -344,7 +344,7 @@ class BackupScheduler:
                     }
                 )
 
-        # Check and run weekly backup
+                # Check and run weekly backup
         weekly = self.config.get("weekly_backup", {})
         if weekly.get("enabled") and self._should_run_backup(weekly, now):
             logger.info("Running scheduled weekly backup")
@@ -400,7 +400,7 @@ class BackupScheduler:
                     }
                 )
 
-        # Apply retention policy after backups
+                # Apply retention policy after backups
         if results:
             logger.info("Applying retention policy after scheduled backups")
             try:
@@ -481,7 +481,7 @@ class BackupScheduler:
             return True
         return False
 
-    # Private helper methods
+        # Private helper methods
 
     def _load_config(self) -> dict[str, Any]:
         """
@@ -515,7 +515,7 @@ class BackupScheduler:
             )
             return {}
 
-    def _save_config(self):
+    def _save_config(self) -> None:
         """
         Save scheduler configuration to file.
 
@@ -586,7 +586,7 @@ class BackupScheduler:
                     if self.backup_service.delete_backup(backup["backup_id"]):
                         deleted_count += 1
 
-        # Apply count-based retention
+                        # Apply count-based retention
         if keep_count:
             backups = (
                 self.backup_service.list_backups()

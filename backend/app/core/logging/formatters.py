@@ -29,7 +29,7 @@ class JSONFormatter:
         indent: int | None = None,
         include_extra: bool = True,
         timestamp_format: str = "iso",
-    ):
+    ) -> None:
         """
         Initialize JSON formatter.
 
@@ -69,7 +69,7 @@ class JSONFormatter:
                 if key not in entry:  # Avoid overwriting core fields
                     entry[key] = value
 
-        # Add exception info if present
+                    # Add exception info if present
         if record["exception"]:
             entry["exception"] = {
                 "type": (
@@ -83,7 +83,7 @@ class JSONFormatter:
                 "traceback": record["exception"].traceback is not None,
             }
 
-        # Add process/thread info
+            # Add process/thread info
         entry["process"] = {
             "id": record["process"].id,
             "name": record["process"].name,
@@ -116,7 +116,7 @@ class GELFFormatter:
         self,
         facility: str = "app",
         include_extra: bool = True,
-    ):
+    ) -> None:
         """
         Initialize GELF formatter.
 
@@ -161,7 +161,7 @@ class GELFFormatter:
                 gelf_key = f"_{key}" if not key.startswith("_") else key
                 gelf_entry[gelf_key] = value
 
-        # Add exception info
+                # Add exception info
         if record["exception"]:
             gelf_entry["_exception_type"] = (
                 record["exception"].type.__name__ if record["exception"].type else None
@@ -204,7 +204,7 @@ class LogfmtFormatter:
     Logfmt is a human-readable and machine-parseable log format.
     """
 
-    def __init__(self, include_extra: bool = True):
+    def __init__(self, include_extra: bool = True) -> None:
         """
         Initialize logfmt formatter.
 
@@ -245,7 +245,7 @@ class LogfmtFormatter:
             for key, value in record["extra"].items():
                 pairs.append(f"{key}={self._quote(str(value))}")
 
-        # Exception
+                # Exception
         if record["exception"]:
             exc_type = (
                 record["exception"].type.__name__
@@ -276,7 +276,7 @@ class CloudWatchFormatter:
     Formats logs for optimal CloudWatch Logs Insights queries.
     """
 
-    def __init__(self, include_extra: bool = True):
+    def __init__(self, include_extra: bool = True) -> None:
         """
         Initialize CloudWatch formatter.
 
@@ -314,7 +314,7 @@ class CloudWatchFormatter:
             for key, value in record["extra"].items():
                 entry[key] = value
 
-        # Exception
+                # Exception
         if record["exception"]:
             entry["@exception"] = {
                 "type": (
@@ -350,7 +350,7 @@ class ColoredTextFormatter:
         "RESET": "\033[0m",  # Reset
     }
 
-    def __init__(self, include_colors: bool = True, include_extra: bool = True):
+    def __init__(self, include_colors: bool = True, include_extra: bool = True) -> None:
         """
         Initialize colored text formatter.
 
@@ -399,8 +399,7 @@ class ColoredTextFormatter:
 
         return " | ".join(parts)
 
-
-# Factory functions
+        # Factory functions
 
 
 def create_json_formatter(

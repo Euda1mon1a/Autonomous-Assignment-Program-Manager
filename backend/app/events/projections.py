@@ -81,10 +81,9 @@ class ProjectionCheckpoint(Base):
     checkpoint_data: Column = Column(JSONType())
     created_at: Column = Column(DateTime, default=datetime.utcnow)
 
-
-# =============================================================================
-# Base Projection
-# =============================================================================
+    # =============================================================================
+    # Base Projection
+    # =============================================================================
 
 
 class EventProjection(ABC):
@@ -94,7 +93,7 @@ class EventProjection(ABC):
     Projections subscribe to events and build read models.
     """
 
-    def __init__(self, db: Session, projection_name: str):
+    def __init__(self, db: Session, projection_name: str) -> None:
         """
         Initialize projection.
 
@@ -228,7 +227,7 @@ class EventProjection(ABC):
                         f"processed {i}/{len(events)} events"
                     )
 
-            # Mark as active
+                    # Mark as active
             self.status = "active"
             self.last_event_sequence = len(events)
             self._save_state()
@@ -248,10 +247,9 @@ class EventProjection(ABC):
         """Reset projection data (called before rebuild)."""
         pass
 
-
-# =============================================================================
-# Schedule Projection
-# =============================================================================
+        # =============================================================================
+        # Schedule Projection
+        # =============================================================================
 
 
 class ScheduleProjection(EventProjection):
@@ -261,7 +259,7 @@ class ScheduleProjection(EventProjection):
     Maintains a denormalized view of schedules for fast queries.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(db, "schedule_summary")
         self.schedules: dict[str, dict] = {}
 
@@ -297,10 +295,9 @@ class ScheduleProjection(EventProjection):
         """Get all schedule summaries."""
         return list(self.schedules.values())
 
-
-# =============================================================================
-# Assignment Projection
-# =============================================================================
+        # =============================================================================
+        # Assignment Projection
+        # =============================================================================
 
 
 class AssignmentProjection(EventProjection):
@@ -310,7 +307,7 @@ class AssignmentProjection(EventProjection):
     Maintains current state of all assignments.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(db, "assignment_current_state")
         self.assignments: dict[str, dict] = {}
 
@@ -369,10 +366,9 @@ class AssignmentProjection(EventProjection):
             if a["block_id"] == block_id and a["status"] == "active"
         ]
 
-
-# =============================================================================
-# Audit Projection
-# =============================================================================
+        # =============================================================================
+        # Audit Projection
+        # =============================================================================
 
 
 class AuditProjection(EventProjection):
@@ -382,7 +378,7 @@ class AuditProjection(EventProjection):
     Maintains summary of all changes for compliance reporting.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(db, "audit_summary")
         self.audit_entries: list[dict] = []
         self.statistics = {
@@ -392,7 +388,7 @@ class AuditProjection(EventProjection):
             "events_by_aggregate_type": defaultdict(int),
         }
 
-    async def handle_event(self, event: BaseEvent):
+    async def handle_event(self, event: BaseEvent) -> None:
         """Handle all events for audit trail."""
         # Add to audit entries
         entry = {
@@ -413,7 +409,7 @@ class AuditProjection(EventProjection):
             self.statistics["events_by_user"][event.metadata.user_id] += 1
         self.statistics["events_by_aggregate_type"][event.aggregate_type] += 1
 
-    async def reset(self):
+    async def reset(self) -> None:
         """Reset audit data."""
         self.audit_entries.clear()
         self.statistics = {
@@ -439,7 +435,7 @@ class AuditProjection(EventProjection):
         if event_type:
             entries = [e for e in entries if e["event_type"] == event_type]
 
-        # Sort by timestamp descending
+            # Sort by timestamp descending
         entries = sorted(entries, key=lambda x: x["timestamp"], reverse=True)
 
         # Apply pagination
@@ -456,10 +452,9 @@ class AuditProjection(EventProjection):
             ),
         }
 
-
-# =============================================================================
-# ACGME Compliance Projection
-# =============================================================================
+        # =============================================================================
+        # ACGME Compliance Projection
+        # =============================================================================
 
 
 class ACGMEComplianceProjection(EventProjection):
@@ -469,12 +464,12 @@ class ACGMEComplianceProjection(EventProjection):
     Tracks compliance history for reporting.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(db, "acgme_compliance")
         self.violations: dict[str, dict] = {}
         self.overrides: dict[str, dict] = {}
 
-    async def handle_event(self, event: BaseEvent):
+    async def handle_event(self, event: BaseEvent) -> None:
         """Handle ACGME compliance events."""
         if isinstance(event, ACGMEViolationDetectedEvent):
             self.violations[event.violation_id] = {
@@ -498,7 +493,7 @@ class ACGMEComplianceProjection(EventProjection):
                 "applied_at": event.metadata.timestamp,
             }
 
-    async def reset(self):
+    async def reset(self) -> None:
         """Reset compliance data."""
         self.violations.clear()
         self.overrides.clear()
@@ -512,10 +507,9 @@ class ACGMEComplianceProjection(EventProjection):
         # This would need to join with assignments
         return list(self.overrides.values())
 
-
-# =============================================================================
-# Projection Manager
-# =============================================================================
+        # =============================================================================
+        # Projection Manager
+        # =============================================================================
 
 
 class ProjectionManager:
@@ -525,17 +519,17 @@ class ProjectionManager:
     Coordinates updates and rebuilds across all projections.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """Initialize projection manager."""
         self.db = db
         self.projections: dict[str, EventProjection] = {}
 
-    def register_projection(self, projection: EventProjection):
+    def register_projection(self, projection: EventProjection) -> None:
         """Register a projection."""
         self.projections[projection.projection_name] = projection
         logger.info(f"Registered projection: {projection.projection_name}")
 
-    async def process_event(self, event: BaseEvent, event_sequence: int):
+    async def process_event(self, event: BaseEvent, event_sequence: int) -> None:
         """Process event in all projections."""
         for projection in self.projections.values():
             try:
@@ -543,7 +537,7 @@ class ProjectionManager:
             except Exception as e:
                 logger.error(f"Error in projection {projection.projection_name}: {e}")
 
-    async def rebuild_all(self, event_store):
+    async def rebuild_all(self, event_store) -> None:
         """Rebuild all projections."""
         for projection in self.projections.values():
             await projection.rebuild(event_store)

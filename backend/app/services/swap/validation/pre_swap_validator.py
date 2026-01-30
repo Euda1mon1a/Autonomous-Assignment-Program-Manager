@@ -43,7 +43,7 @@ class PreSwapValidator:
     safely executed without causing schedule problems.
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize pre-swap validator.
 
@@ -76,7 +76,7 @@ class PreSwapValidator:
         if not target_faculty:
             errors.append(f"Target faculty {swap.target_faculty_id} not found")
 
-        # Check 2: Week validity
+            # Check 2: Week validity
         checks_performed.append("week_validity")
         if swap.source_week < datetime.utcnow().date():
             errors.append("Cannot swap weeks in the past")
@@ -84,7 +84,7 @@ class PreSwapValidator:
         if swap.target_week and swap.target_week < datetime.utcnow().date():
             errors.append("Target week is in the past")
 
-        # Check 3: Freeze horizon
+            # Check 3: Freeze horizon
         checks_performed.append("freeze_horizon")
         days_until_swap = (swap.source_week - datetime.utcnow().date()).days
         if days_until_swap < 7:
@@ -92,7 +92,7 @@ class PreSwapValidator:
                 f"Swap is only {days_until_swap} days away - very short notice"
             )
 
-        # Check 4: Assignment existence
+            # Check 4: Assignment existence
         checks_performed.append("assignment_existence")
         source_assignments = await self._get_week_assignments(
             swap.source_faculty_id,
@@ -104,13 +104,13 @@ class PreSwapValidator:
                 f"No assignments found for source faculty on week {swap.source_week}"
             )
 
-        # Check 5: No conflicting swaps
+            # Check 5: No conflicting swaps
         checks_performed.append("conflicting_swaps")
         conflicting = await self._check_conflicting_swaps(swap)
         if conflicting:
             errors.append(f"Conflicting swap exists: {conflicting[0].id}")
 
-        # Check 6: Faculty availability
+            # Check 6: Faculty availability
         checks_performed.append("faculty_availability")
         # Check if target faculty has leave/TDY during source week
         if target_faculty:
@@ -123,7 +123,7 @@ class PreSwapValidator:
                     f"Target faculty not available for week {swap.source_week}"
                 )
 
-        # Check 7: Reciprocal availability (for one-to-one swaps)
+                # Check 7: Reciprocal availability (for one-to-one swaps)
         if swap.target_week:
             checks_performed.append("reciprocal_availability")
             if source_faculty:
@@ -175,13 +175,13 @@ class PreSwapValidator:
         if not (source_exists and target_exists):
             return False
 
-        # Check week not in past
+            # Check week not in past
         if swap.source_week < datetime.utcnow().date():
             return False
 
         return True
 
-    # ===== Private Helper Methods =====
+        # ===== Private Helper Methods =====
 
     async def _get_faculty(self, faculty_id: UUID) -> Person | None:
         """Get faculty member by ID."""

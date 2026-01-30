@@ -56,9 +56,10 @@ class CircadianPhase(str, Enum):
     EVENING = "evening"  # 6-9 PM: Declining alertness
     NIGHT = "night"  # 9 PM-2 AM: Pre-sleep decline
 
+    # Circadian alertness multipliers (1.0 = baseline)
+    # Values < 1.0 indicate reduced alertness
 
-# Circadian alertness multipliers (1.0 = baseline)
-# Values < 1.0 indicate reduced alertness
+
 CIRCADIAN_MULTIPLIERS = {
     CircadianPhase.NADIR: 0.6,  # Significant impairment
     CircadianPhase.EARLY_MORNING: 0.85,
@@ -98,7 +99,7 @@ class SleepOpportunity:
     interruptions: int = 0
     environment_factor: float = 1.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculate duration from start and end times."""
         delta = self.end_time - self.start_time
         self.duration_hours = max(0, delta.total_seconds() / 3600)
@@ -123,7 +124,7 @@ class SleepOpportunity:
         if not self.circadian_aligned:
             base *= 0.8
 
-        # Each interruption reduces value by 5%
+            # Each interruption reduces value by 5%
         interruption_penalty = 1 - (self.interruptions * 0.05)
         base *= max(0.5, interruption_penalty)
 
@@ -203,7 +204,7 @@ class SleepDebtModel:
         self,
         baseline_sleep_need: float = BASELINE_SLEEP_NEED,
         individual_variability: float = 0.0,
-    ):
+    ) -> None:
         """
         Initialize sleep debt model.
 
@@ -291,7 +292,7 @@ class SleepDebtModel:
                 new_debt = max(0, current_debt - recovery_applied)
             deficit_days = 0
 
-        # Clamp to valid range
+            # Clamp to valid range
         new_debt = max(0, min(new_debt, self.MAX_DEBT_HOURS))
 
         # Update caches
@@ -510,13 +511,13 @@ class SleepDebtModel:
         if current_debt <= 0:
             return 0
 
-        # Extra sleep per night above baseline
+            # Extra sleep per night above baseline
         extra_per_night = recovery_sleep_per_night - self.baseline_sleep_need
 
         if extra_per_night <= 0:
             return -1  # Cannot recover without extra sleep
 
-        # Recovery per night (accounting for efficiency)
+            # Recovery per night (accounting for efficiency)
         recovery_per_night = extra_per_night / self.DEBT_RECOVERY_RATIO
 
         nights = math.ceil(current_debt / recovery_per_night)

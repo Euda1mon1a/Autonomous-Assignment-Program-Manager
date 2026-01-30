@@ -43,7 +43,7 @@ class InvalidationStrategy(ABC):
     caching patterns and requirements.
     """
 
-    def __init__(self, namespace: str):
+    def __init__(self, namespace: str) -> None:
         """
         Initialize invalidation strategy.
 
@@ -114,7 +114,7 @@ class TTLStrategy(InvalidationStrategy):
         await strategy.set_ttl(redis_client, "my_key", ttl=600)
     """
 
-    def __init__(self, namespace: str, default_ttl: int = 300):
+    def __init__(self, namespace: str, default_ttl: int = 300) -> None:
         """
         Initialize TTL strategy.
 
@@ -142,7 +142,7 @@ class TTLStrategy(InvalidationStrategy):
         if trigger == InvalidationTrigger.TTL_EXPIRED:
             return True
 
-        # Check remaining TTL if provided
+            # Check remaining TTL if provided
         ttl_remaining: int = kwargs.get("ttl_remaining", -1)
         return bool(ttl_remaining <= 0)
 
@@ -165,8 +165,8 @@ class TTLStrategy(InvalidationStrategy):
             self._record_invalidation(deleted)
             return deleted
 
-        # For pattern-based TTL invalidation, we'd need to scan
-        # but Redis handles TTL automatically, so this is rarely needed
+            # For pattern-based TTL invalidation, we'd need to scan
+            # but Redis handles TTL automatically, so this is rarely needed
         return 0
 
     async def set_ttl(
@@ -203,7 +203,7 @@ class TagBasedStrategy(InvalidationStrategy):
         # Invalidates all entries tagged with "user:123"
     """
 
-    def __init__(self, namespace: str):
+    def __init__(self, namespace: str) -> None:
         """
         Initialize tag-based strategy.
 
@@ -276,7 +276,7 @@ class TagBasedStrategy(InvalidationStrategy):
         if not keys:
             return 0
 
-        # Delete all keys and the tag set
+            # Delete all keys and the tag set
         count: int = await cache_client.delete(*keys, tag_key)
         self._record_invalidation(count)
 
@@ -316,7 +316,7 @@ class PatternStrategy(InvalidationStrategy):
         await strategy.invalidate_by_pattern(redis_client, "user:*:profile")
     """
 
-    def __init__(self, namespace: str):
+    def __init__(self, namespace: str) -> None:
         """
         Initialize pattern-based strategy.
 
@@ -416,7 +416,7 @@ class WriteThroughStrategy(InvalidationStrategy):
         # Write to database...
     """
 
-    def __init__(self, namespace: str, invalidate_before_write: bool = True):
+    def __init__(self, namespace: str, invalidate_before_write: bool = True) -> None:
         """
         Initialize write-through strategy.
 

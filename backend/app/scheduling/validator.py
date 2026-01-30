@@ -166,9 +166,7 @@ class ACGMEValidator:
             violations.extend(self._check_1_in_7_rule(resident, resident_assignments))
 
         # Check supervision ratios
-        violations.extend(
-            self._check_supervision_ratios(start_date, end_date)
-        )
+        violations.extend(self._check_supervision_ratios(start_date, end_date))
 
         # Calculate coverage rate
         total_blocks = (
@@ -335,9 +333,7 @@ class ACGMEValidator:
             else:
                 consecutive = 1
 
-        fixed_max_consecutive = self._max_consecutive_days(
-            fixed_dates_with_assignments
-        )
+        fixed_max_consecutive = self._max_consecutive_days(fixed_dates_with_assignments)
         fixed_exempt = fixed_max_consecutive > self.MAX_CONSECUTIVE_DAYS
 
         if max_consecutive > 6:
@@ -644,7 +640,11 @@ class ACGMEValidator:
             cat = (category or "").lower()
             code_norm = (code or "").strip().upper()
             display_norm = (display or "").strip().upper()
-            if cat == "time_off" or code_norm in self._time_off_codes or display_norm in self._time_off_codes:
+            if (
+                cat == "time_off"
+                or code_norm in self._time_off_codes
+                or display_norm in self._time_off_codes
+            ):
                 slots.add((str(person_id), slot_date, time_of_day))
 
         return slots

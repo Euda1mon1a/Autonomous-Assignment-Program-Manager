@@ -76,7 +76,7 @@ class N2ContingencyScenario:
     without cascading failures or zone coverage dropping below minimum thresholds.
     """
 
-    def __init__(self, config: N2ScenarioConfig):
+    def __init__(self, config: N2ScenarioConfig) -> None:
         self.config = config
         self._faculty: list[dict] = []  # Each: {id, zones, skills}
         self._zones: list[
@@ -105,7 +105,7 @@ class N2ContingencyScenario:
                 }
             )
 
-        # Initialize faculty with zone assignments
+            # Initialize faculty with zone assignments
         for faculty_id in range(self.config.faculty_count):
             # Each faculty member is assigned to 2-4 zones (with some randomness)
             num_zones = self._rng.randint(2, 4)
@@ -127,8 +127,8 @@ class N2ContingencyScenario:
             for zone_id in assigned_zones:
                 self._zones[zone_id]["faculty"].add(faculty_id)
 
-        # Ensure each zone has at least minimum_zone_coverage + 1 faculty
-        # (otherwise any 2 losses could trivially fail it)
+                # Ensure each zone has at least minimum_zone_coverage + 1 faculty
+                # (otherwise any 2 losses could trivially fail it)
         self._ensure_minimum_redundancy()
 
     def _generate_zone_skills(self, zone_id: int) -> set[str]:
@@ -234,7 +234,7 @@ class N2ContingencyScenario:
             if shortfall <= 0:
                 continue
 
-            # Try to find faculty from other zones who have the needed skills
+                # Try to find faculty from other zones who have the needed skills
             needed_skills = zone["required_skills"]
 
             for _ in range(shortfall):
@@ -290,7 +290,7 @@ class N2ContingencyScenario:
                 sorted(self._rng.sample(range(self.config.faculty_count), 2))
             )
 
-        # Create available faculty set (all except the lost pair)
+            # Create available faculty set (all except the lost pair)
         available_faculty = set(range(self.config.faculty_count)) - set(faculty_pair)
 
         # Check zone sufficiency
@@ -317,8 +317,8 @@ class N2ContingencyScenario:
                 failed_zones + degraded_zones, available_for_borrowing
             )
 
-        # Determine if this iteration passed
-        # After borrowing, re-check only if we had successes
+            # Determine if this iteration passed
+            # After borrowing, re-check only if we had successes
         if borrowing_successes > 0:
             # Simple heuristic: each success covers one shortfall
             remaining_failures = max(0, len(failed_zones) - borrowing_successes)
@@ -326,7 +326,7 @@ class N2ContingencyScenario:
         else:
             passed = len(failed_zones) == 0
 
-        # Determine failure mode
+            # Determine failure mode
         failure_mode = None
         recovery_time = None
 
@@ -368,13 +368,13 @@ class N2ContingencyScenario:
         if not self._faculty:
             self.setup()
 
-        # Run iterations
+            # Run iterations
         self._results = []
         for i in range(self.config.iterations):
             result = self._run_iteration(i)
             self._results.append(result)
 
-        # Aggregate and return results
+            # Aggregate and return results
         return self._aggregate_results()
 
     def _aggregate_results(self) -> N2ScenarioResult:
@@ -415,7 +415,7 @@ class N2ContingencyScenario:
                     if lost_faculty_in_zone:
                         zones_affected[zone["id"]] += 1
 
-        # Generate recommendations
+                        # Generate recommendations
         recommendations = self._generate_recommendations(
             failure_modes=dict(failure_modes),
             vulnerable_pairs=[pair for pair, _ in most_vulnerable],
@@ -475,7 +475,7 @@ class N2ContingencyScenario:
                 f"System meets reliability standards."
             )
 
-        # Skill gap recommendations
+            # Skill gap recommendations
         if failure_modes.get("skill_gap", 0) > 0:
             skill_gap_rate = failure_modes["skill_gap"] / len(self._results)
             recommendations.append(
@@ -483,7 +483,7 @@ class N2ContingencyScenario:
                 f"Cross-train faculty in critical skills or add specialists."
             )
 
-        # Cascade failure recommendations
+            # Cascade failure recommendations
         if failure_modes.get("cascade", 0) > 0:
             cascade_count = failure_modes["cascade"]
             recommendations.append(
@@ -491,7 +491,7 @@ class N2ContingencyScenario:
                 f"Review zone interdependencies and add circuit breakers."
             )
 
-        # Capacity recommendations
+            # Capacity recommendations
         if failure_modes.get("capacity", 0) > 0:
             capacity_rate = failure_modes["capacity"] / len(self._results)
             recommendations.append(
@@ -499,7 +499,7 @@ class N2ContingencyScenario:
                 f"Increase borrowing pool or add float faculty."
             )
 
-        # Vulnerable pair recommendations
+            # Vulnerable pair recommendations
         if vulnerable_pairs:
             recommendations.append(
                 f"Found {len(vulnerable_pairs)} critical faculty pairs. "
@@ -507,7 +507,7 @@ class N2ContingencyScenario:
                 f"unique skill combinations. Avoid simultaneous leave."
             )
 
-        # Zone-specific recommendations
+            # Zone-specific recommendations
         if zones_affected:
             most_affected = max(zones_affected.items(), key=lambda x: x[1])
             zone_id, failure_count = most_affected
@@ -516,7 +516,7 @@ class N2ContingencyScenario:
                 f"Add dedicated backup faculty or reduce minimum requirements."
             )
 
-        # Borrowing effectiveness
+            # Borrowing effectiveness
         total_borrow_attempts = sum(r.borrowing_attempts for r in self._results)
         total_borrow_success = sum(r.borrowing_successes for r in self._results)
         if total_borrow_attempts > 0:

@@ -23,7 +23,7 @@ class RateLimitBucket:
         last_refill: Last refill timestamp
     """
 
-    def __init__(self, capacity: int, refill_rate: float):
+    def __init__(self, capacity: int, refill_rate: float) -> None:
         """
         Initialize rate limit bucket.
 
@@ -102,7 +102,7 @@ class NotificationRateLimiter:
         "webhook": 50,
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the rate limiter."""
         # User-level buckets: user_id -> RateLimitBucket
         self._user_buckets: dict[UUID, RateLimitBucket] = {}
@@ -143,7 +143,7 @@ class NotificationRateLimiter:
                 logger.warning("Global rate limit hit for user %s", user_id)
                 return False
 
-            # Check per-type limit
+                # Check per-type limit
             if not self._check_type_limit(user_id, notification_type):
                 self._stats["type_limits_hit"] += 1
                 logger.warning(
@@ -153,7 +153,7 @@ class NotificationRateLimiter:
                 )
                 return False
 
-            # Check per-channel limit
+                # Check per-channel limit
             if not self._check_channel_limit(user_id, channel):
                 self._stats["channel_limits_hit"] += 1
                 logger.warning(
@@ -219,12 +219,12 @@ class NotificationRateLimiter:
             if user_id in self._user_buckets:
                 del self._user_buckets[user_id]
 
-            # Remove type buckets
+                # Remove type buckets
             type_keys = [k for k in self._type_buckets.keys() if k[0] == user_id]
             for key in type_keys:
                 del self._type_buckets[key]
 
-            # Remove channel buckets
+                # Remove channel buckets
             channel_keys = [k for k in self._channel_buckets.keys() if k[0] == user_id]
             for key in channel_keys:
                 del self._channel_buckets[key]
@@ -255,7 +255,7 @@ class NotificationRateLimiter:
             else:
                 quota["global"] = self.GLOBAL_LIMIT_PER_HOUR
 
-            # Type-specific quota
+                # Type-specific quota
             if notification_type:
                 key = (user_id, notification_type.value)
                 if key in self._type_buckets:
@@ -329,7 +329,7 @@ class NotificationRateLimiter:
                 del self._user_buckets[user_id]
                 cleaned += 1
 
-            # Clean type buckets
+                # Clean type buckets
             expired_types = [
                 key
                 for key, bucket in self._type_buckets.items()
@@ -339,7 +339,7 @@ class NotificationRateLimiter:
                 del self._type_buckets[key]
                 cleaned += 1
 
-            # Clean channel buckets
+                # Clean channel buckets
             expired_channels = [
                 key
                 for key, bucket in self._channel_buckets.items()

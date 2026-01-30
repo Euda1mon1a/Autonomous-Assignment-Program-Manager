@@ -11,7 +11,7 @@ from app.repositories.person import PersonRepository
 class PersonService:
     """Service for person business logic."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.person_repo = PersonRepository(db)
 
@@ -259,9 +259,9 @@ class PersonService:
         self.person_repo.commit()
         return {"success": True, "error": None}
 
-    # =========================================================================
-    # Batch Operations
-    # =========================================================================
+        # =========================================================================
+        # Batch Operations
+        # =========================================================================
 
     def batch_create(self, people_data: list[dict], dry_run: bool = False) -> dict:
         """
@@ -309,7 +309,7 @@ class PersonService:
             if email:
                 seen_emails.add(email)
 
-        # Phase 1: Validate all people
+                # Phase 1: Validate all people
         for idx, person_data in enumerate(people_data):
             try:
                 # Validate resident requirements
@@ -326,7 +326,7 @@ class PersonService:
                     )
                     continue
 
-                # Check for duplicate email in database
+                    # Check for duplicate email in database
                 email = person_data.get("email")
                 if email:
                     existing = (
@@ -363,7 +363,7 @@ class PersonService:
                     }
                 )
 
-        # Check for failures
+                # Check for failures
         failures = [r for r in results if not r["success"]]
         if failures:
             return {
@@ -376,7 +376,7 @@ class PersonService:
                 "created_ids": [],
             }
 
-        # Phase 2: Create people (if not dry run)
+            # Phase 2: Create people (if not dry run)
         if not dry_run:
             for idx, person_data in people_to_create:
                 person = self.person_repo.create(person_data)
@@ -451,7 +451,7 @@ class PersonService:
                     }
                 )
 
-        # Check for failures
+                # Check for failures
         failures = [r for r in results if not r["success"]]
         if failures:
             return {
@@ -463,7 +463,7 @@ class PersonService:
                 "dry_run": dry_run,
             }
 
-        # Phase 2: Apply updates (if not dry run)
+            # Phase 2: Apply updates (if not dry run)
         if not dry_run:
             for idx, person_id, person, update_data in people_to_update:
                 for field, value in update_data.items():
@@ -529,7 +529,7 @@ class PersonService:
                     }
                 )
 
-        # Check for failures
+                # Check for failures
         failures = [r for r in results if not r["success"]]
         if failures:
             return {
@@ -541,7 +541,7 @@ class PersonService:
                 "dry_run": dry_run,
             }
 
-        # Phase 2: Execute deletions (if not dry run)
+            # Phase 2: Execute deletions (if not dry run)
         if not dry_run:
             for idx, person_id, person in people_to_delete:
                 self.person_repo.delete(person)

@@ -17,7 +17,7 @@ def scan_conflicts(
     output: str = typer.Option(
         "table", "--output", "-o", help="Output format: table, json"
     ),
-):
+) -> None:
     """
     Scan for schedule conflicts between leave and FMIT assignments.
 
@@ -73,7 +73,7 @@ def list_swaps(
         None, "--faculty", "-f", help="Filter by faculty ID"
     ),
     limit: int = typer.Option(20, "--limit", "-l", help="Maximum records to show"),
-):
+) -> None:
     """
     List swap records with optional filters.
 
@@ -145,7 +145,7 @@ def list_alerts(
     include_resolved: bool = typer.Option(
         False, "--include-resolved", "-r", help="Include resolved alerts"
     ),
-):
+) -> None:
     """
     List conflict alerts.
 
@@ -208,7 +208,7 @@ def list_alerts(
 
 
 @app.command()
-def stats():
+def stats() -> None:
     """
     Show FMIT scheduling statistics.
 
@@ -296,7 +296,7 @@ def create_alert(
     ),
     severity: str = typer.Option("warning", "--severity", "-s", help="Severity level"),
     description: str = typer.Option("Manual alert", "--desc", "-d", help="Description"),
-):
+) -> None:
     """
     Manually create a conflict alert.
 

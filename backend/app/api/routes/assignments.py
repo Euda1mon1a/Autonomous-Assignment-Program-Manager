@@ -215,7 +215,7 @@ async def delete_assignment(
     assignment_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_scheduler_user),
-):
+) -> None:
     """Delete an assignment. Requires scheduler role (admin or coordinator)."""
     controller = AssignmentController(db)
     await controller.delete_assignment(assignment_id)
@@ -237,7 +237,7 @@ async def delete_assignments_bulk(
     end_date: date = Query(..., description="Delete assignments until this date"),
     db=Depends(get_db),
     current_user: User = Depends(get_scheduler_user),
-):
+) -> None:
     """Delete all assignments in a date range. Requires scheduler role (admin or coordinator)."""
     controller = AssignmentController(db)
     await controller.delete_assignments_bulk(start_date, end_date)

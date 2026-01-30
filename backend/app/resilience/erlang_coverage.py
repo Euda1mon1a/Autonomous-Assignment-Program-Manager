@@ -69,7 +69,7 @@ class ErlangCCalculator:
     - Servers = Number of specialists on duty
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Erlang C calculator."""
         self._erlang_b_cache = {}
         self._erlang_c_cache = {}
@@ -100,13 +100,13 @@ class ErlangCCalculator:
         if offered_load <= 0:
             return 0.0
 
-        # Check cache
+            # Check cache
         cache_key = (offered_load, servers)
         if cache_key in self._erlang_b_cache:
             return self._erlang_b_cache[cache_key]
 
-        # Calculate using recursive formula for numerical stability
-        # B(A, c) = (A * B(A, c-1)) / (c + A * B(A, c-1))
+            # Calculate using recursive formula for numerical stability
+            # B(A, c) = (A * B(A, c-1)) / (c + A * B(A, c-1))
         b = 1.0
         for i in range(1, servers + 1):
             b = (offered_load * b) / (i + offered_load * b)
@@ -143,19 +143,19 @@ class ErlangCCalculator:
         if offered_load <= 0:
             return 0.0
 
-        # Check stability: offered_load must be < servers
+            # Check stability: offered_load must be < servers
         if offered_load >= servers:
             raise ValueError(
                 f"Unstable queue: offered_load ({offered_load:.2f}) >= "
                 f"servers ({servers}). Queue will grow indefinitely."
             )
 
-        # Check cache
+            # Check cache
         cache_key = (offered_load, servers)
         if cache_key in self._erlang_c_cache:
             return self._erlang_c_cache[cache_key]
 
-        # Calculate Erlang C
+            # Calculate Erlang C
         b = self.erlang_b(offered_load, servers)
         rho = offered_load / servers  # Utilization per server
 
@@ -426,7 +426,7 @@ class ErlangCCalculator:
                 # Unstable configuration, try more servers
                 continue
 
-        # Target not achievable
+                # Target not achievable
         raise ValueError(
             f"Cannot meet target wait probability {target_wait_prob:.2%} "
             f"for {specialty} with up to {max_servers} specialists. "

@@ -108,7 +108,7 @@ class FeedbackProcessor:
         objectives: list[ObjectiveConfig],
         learning_rate: float = 0.1,
         decay_factor: float = 0.95,
-    ):
+    ) -> None:
         """
         Initialize feedback processor.
 
@@ -165,7 +165,7 @@ class FeedbackProcessor:
         elif event.feedback_type == FeedbackType.PRIORITY:
             deltas = self._process_priority(event)
 
-        # Update cumulative signals
+            # Update cumulative signals
         for obj_name, delta in deltas.items():
             self.adjustment_signals[obj_name] = (
                 self.decay_factor * self.adjustment_signals.get(obj_name, 0.0)
@@ -306,7 +306,7 @@ class ObjectiveAdjuster:
         objectives: list[ObjectiveConfig],
         min_weight: float = 0.05,
         max_weight: float = 0.5,
-    ):
+    ) -> None:
         """
         Initialize objective adjuster.
 
@@ -357,7 +357,7 @@ class ObjectiveAdjuster:
                 new_weight = max(self.min_weight, min(self.max_weight, new_weight))
                 self.weights[obj_name] = new_weight
 
-        # Normalize
+                # Normalize
         self._normalize_weights()
 
         # Record state
@@ -439,7 +439,7 @@ class ContextualReweighter:
     applies appropriate weight modifications.
     """
 
-    def __init__(self, objectives: list[ObjectiveConfig]):
+    def __init__(self, objectives: list[ObjectiveConfig]) -> None:
         """
         Initialize contextual reweighter.
 
@@ -543,7 +543,7 @@ class ContextualReweighter:
             multiplier = profile.weight_multipliers.get(obj_name, 1.0)
             adjusted[obj_name] = weight * multiplier
 
-        # Normalize
+            # Normalize
         total = sum(adjusted.values())
         if total > 0:
             adjusted = {k: v / total for k, v in adjusted.items()}
@@ -572,7 +572,7 @@ class TemporalReweighter:
     - Phase-based optimization
     """
 
-    def __init__(self, objectives: list[ObjectiveConfig]):
+    def __init__(self, objectives: list[ObjectiveConfig]) -> None:
         """
         Initialize temporal reweighter.
 
@@ -664,7 +664,7 @@ class DynamicReweighter:
         self,
         objectives: list[ObjectiveConfig],
         learning_rate: float = 0.1,
-    ):
+    ) -> None:
         """
         Initialize dynamic reweighter.
 

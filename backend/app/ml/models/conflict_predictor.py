@@ -40,7 +40,7 @@ class ConflictPredictor:
         max_depth: int = 5,
         learning_rate: float = 0.1,
         random_state: int = 42,
-    ):
+    ) -> None:
         """
         Initialize conflict predictor.
 
@@ -151,7 +151,7 @@ class ConflictPredictor:
         else:
             features["max_consecutive_days"] = 0
 
-        # Proposed assignment characteristics
+            # Proposed assignment characteristics
         proposed_date = proposed_assignment.get("date")
         features["proposed_is_weekend"] = (
             1 if proposed_assignment.get("is_weekend", False) else 0
@@ -171,7 +171,7 @@ class ConflictPredictor:
         else:
             features["proposed_day_of_week"] = 0
 
-        # Rotation type conflicts
+            # Rotation type conflicts
         proposed_rotation = proposed_assignment.get("rotation_name", "").lower()
         features["proposed_is_clinic"] = 1 if "clinic" in proposed_rotation else 0
         features["proposed_is_inpatient"] = (
@@ -208,7 +208,7 @@ class ConflictPredictor:
             features["actual_supervision_ratio"] = 0
             features["violates_supervision"] = 0
 
-        # Call/night shift patterns
+            # Call/night shift patterns
         features["call_count"] = person_data.get("weekday_call_count", 0)
         features["sunday_call_count"] = person_data.get("sunday_call_count", 0)
 
@@ -222,7 +222,7 @@ class ConflictPredictor:
             features["historical_conflict_rate"] = 0.0
             features["recent_swap_count"] = 0
 
-        # Coverage level on proposed date
+            # Coverage level on proposed date
         if context_data:
             features["coverage_level"] = context_data.get("coverage_level", 1.0)
             features["understaffed"] = (
@@ -232,7 +232,7 @@ class ConflictPredictor:
             features["coverage_level"] = 1.0
             features["understaffed"] = 0
 
-        # Workload concentration
+            # Workload concentration
         rotation_types = [
             a.get("rotation_name", "").lower() for a in existing_assignments
         ]
@@ -351,7 +351,7 @@ class ConflictPredictor:
             logger.warning("Model not trained, returning default probability")
             return 0.0
 
-        # Extract features
+            # Extract features
         X = self.extract_features(
             person_data, proposed_assignment, existing_assignments, context_data
         )
@@ -361,7 +361,7 @@ class ConflictPredictor:
             if col not in X.columns:
                 X[col] = 0
 
-        # Reorder columns
+                # Reorder columns
         X = X[self.feature_names]
 
         # Scale and predict probability
@@ -433,7 +433,7 @@ class ConflictPredictor:
                     }
                 )
 
-        # Sort by probability (highest risk first)
+                # Sort by probability (highest risk first)
         high_risk.sort(key=lambda x: x["conflict_probability"], reverse=True)
 
         return high_risk
@@ -485,7 +485,7 @@ class ConflictPredictor:
                     }
                 )
 
-        # Sort by importance
+                # Sort by importance
         risk_factors.sort(key=lambda x: x["importance"], reverse=True)
 
         return {

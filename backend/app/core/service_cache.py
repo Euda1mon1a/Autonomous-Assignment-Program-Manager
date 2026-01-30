@@ -92,7 +92,7 @@ class ServiceCache:
         redis_url: str | None = None,
         default_ttl: int = CacheTTL.LONG,
         enabled: bool = True,
-    ):
+    ) -> None:
         """
         Initialize the service cache.
 
@@ -158,7 +158,7 @@ class ServiceCache:
                     self._misses += 1
                 return None
 
-            # Deserialize
+                # Deserialize
             value = pickle.loads(data)
             with self._lock:
                 self._hits += 1
@@ -361,13 +361,13 @@ class ServiceCache:
                 else:
                     cache_key = self._build_cache_key(prefix.value, func, args, kwargs)
 
-                # Try to get from cache
+                    # Try to get from cache
                 cached_value = self.get(cache_key)
                 if cached_value is not None:
                     logger.debug(f"Cache hit for {cache_key}")
                     return cached_value
 
-                # Execute function and cache result
+                    # Execute function and cache result
                 result = func(*args, **kwargs)
 
                 # Cache the result
@@ -377,7 +377,8 @@ class ServiceCache:
 
                 return result
 
-            # Add cache management methods to the wrapper
+                # Add cache management methods to the wrapper
+
             wrapper.cache_invalidate = lambda: self.invalidate_pattern(  # type: ignore
                 f"{prefix.value}:{func.__name__}:*"
             )
@@ -407,7 +408,7 @@ class ServiceCache:
                 continue
             key_parts.append(self._serialize_arg(arg))
 
-        # Process keyword arguments (sorted for consistency)
+            # Process keyword arguments (sorted for consistency)
         for k in sorted(kwargs.keys()):
             v = kwargs[k]
             # Skip db session
@@ -415,7 +416,7 @@ class ServiceCache:
                 continue
             key_parts.append(f"{k}={self._serialize_arg(v)}")
 
-        # Join and hash if too long
+            # Join and hash if too long
         key = ":".join(key_parts)
         if len(key) > 200:
             # Hash long keys to keep them manageable
@@ -453,8 +454,9 @@ class ServiceCache:
             # For other types, use hash of string representation
             return hashlib.md5(str(arg).encode()).hexdigest()[:8]
 
+            # Global cache instance
 
-# Global cache instance
+
 _service_cache: ServiceCache | None = None
 _cache_lock = RLock()
 

@@ -37,7 +37,7 @@ class PoolSnapshot:
     waiting: int = 0
     utilization: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculate derived metrics."""
         if self.total_connections > 0:
             self.utilization = self.checked_out / self.total_connections
@@ -71,7 +71,7 @@ class PoolStatistics:
     peak_utilization: float = 0.0
     checkout_durations: list[float] = field(default_factory=list)
 
-    def update_avg_checkout_duration(self, duration: float):
+    def update_avg_checkout_duration(self, duration: float) -> None:
         """Update average checkout duration with new sample.
 
         Args:
@@ -94,7 +94,7 @@ class PoolMonitor:
     statistics over time. Thread-safe for concurrent access.
     """
 
-    def __init__(self, pool: Pool):
+    def __init__(self, pool: Pool) -> None:
         """Initialize pool monitor.
 
         Args:
@@ -140,7 +140,7 @@ class PoolMonitor:
             if len(self._snapshots) > self._max_snapshots:
                 self._snapshots.pop(0)
 
-            # Update peak metrics
+                # Update peak metrics
             if total_connections > self._stats.peak_connections:
                 self._stats.peak_connections = total_connections
             if snapshot.utilization > self._stats.peak_utilization:
@@ -171,7 +171,7 @@ class PoolMonitor:
             pass
         return 0
 
-    def record_checkout(self, connection_id: int):
+    def record_checkout(self, connection_id: int) -> None:
         """Record connection checkout event.
 
         Args:
@@ -181,7 +181,7 @@ class PoolMonitor:
             self._checkout_times[connection_id] = time.time()
             self._stats.total_checkouts += 1
 
-    def record_checkin(self, connection_id: int):
+    def record_checkin(self, connection_id: int) -> None:
         """Record connection checkin event.
 
         Args:
@@ -194,22 +194,22 @@ class PoolMonitor:
                 self._stats.update_avg_checkout_duration(duration)
                 del self._checkout_times[connection_id]
 
-    def record_connect(self):
+    def record_connect(self) -> None:
         """Record new connection creation."""
         with self._lock:
             self._stats.total_connects += 1
 
-    def record_disconnect(self):
+    def record_disconnect(self) -> None:
         """Record connection closure."""
         with self._lock:
             self._stats.total_disconnects += 1
 
-    def record_timeout(self):
+    def record_timeout(self) -> None:
         """Record connection timeout error."""
         with self._lock:
             self._stats.total_timeouts += 1
 
-    def record_overflow(self):
+    def record_overflow(self) -> None:
         """Record overflow connection usage."""
         with self._lock:
             self._stats.total_overflows += 1
@@ -278,7 +278,7 @@ class PoolMonitor:
             },
         }
 
-    def reset_statistics(self):
+    def reset_statistics(self) -> None:
         """Reset all statistics counters."""
         with self._lock:
             self._stats = PoolStatistics()

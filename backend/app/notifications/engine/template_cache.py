@@ -18,7 +18,7 @@ class TemplateCache:
     - Invalidate on template updates
     """
 
-    def __init__(self, max_size: int = 1000):
+    def __init__(self, max_size: int = 1000) -> None:
         """
         Initialize template cache.
 

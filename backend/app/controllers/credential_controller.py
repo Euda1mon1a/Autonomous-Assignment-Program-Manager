@@ -20,7 +20,7 @@ from app.services.credential_service import CredentialService
 class CredentialController:
     """Controller for credential endpoints."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.service = CredentialService(db)
 
     def get_credential(self, credential_id: UUID) -> CredentialResponse:

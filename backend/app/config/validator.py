@@ -38,7 +38,7 @@ class ConfigValidator:
         "RESILIENCE_CRITICAL_THRESHOLD",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the configuration validator."""
         self.validation_errors: list[str] = []
 
@@ -70,7 +70,7 @@ class ConfigValidator:
             if current_config:
                 self._validate_immutable_fields(new_config, current_config)
 
-            # Validate critical fields
+                # Validate critical fields
             self._validate_critical_fields(new_config)
 
             # Validate resilience thresholds
@@ -148,7 +148,7 @@ class ConfigValidator:
                 "SECRET_KEY must be at least 32 characters long"
             )
 
-        # Validate WEBHOOK_SECRET
+            # Validate WEBHOOK_SECRET
         webhook_secret = config.get("WEBHOOK_SECRET", "")
         if webhook_secret and len(webhook_secret) < 32:
             self.validation_errors.append(
@@ -183,7 +183,7 @@ class ConfigValidator:
                     f"{name} must be between 0.0 and 1.0, got {value}"
                 )
 
-        # Validate ordering
+                # Validate ordering
         if not (warning <= max_util <= critical <= emergency):
             self.validation_errors.append(
                 f"Resilience thresholds must be in ascending order: "
@@ -191,7 +191,7 @@ class ConfigValidator:
                 f"CRITICAL ({critical}) <= EMERGENCY ({emergency})"
             )
 
-        # Warn about dangerous values
+            # Warn about dangerous values
         if max_util > 0.85:
             logger.warning(
                 f"RESILIENCE_MAX_UTILIZATION ({max_util}) is above recommended "
@@ -218,7 +218,7 @@ class ConfigValidator:
                 "RATE_LIMIT_REGISTER_ATTEMPTS must be at least 1"
             )
 
-        # Warn about overly permissive settings
+            # Warn about overly permissive settings
         if login_attempts > 20:
             logger.warning(
                 f"RATE_LIMIT_LOGIN_ATTEMPTS ({login_attempts}) is very high. "
@@ -249,7 +249,7 @@ class ConfigValidator:
                 f"UPLOAD_STORAGE_BACKEND must be 'local' or 's3', got '{backend}'"
             )
 
-        # Validate S3 settings if S3 backend is configured
+            # Validate S3 settings if S3 backend is configured
         if backend == "s3":
             required_s3_fields = ["UPLOAD_S3_BUCKET", "UPLOAD_S3_REGION"]
             for field in required_s3_fields:

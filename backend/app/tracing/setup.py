@@ -60,7 +60,7 @@ class TracingConfig:
         otlp_endpoint: str | None = None,
         sample_rate: float = 1.0,
         console_export: bool = False,
-    ):
+    ) -> None:
         """Initialize tracing configuration."""
         self.enabled = enabled
         self.service_name = service_name
@@ -88,7 +88,7 @@ def setup_tracing(config: TracingConfig, app: Any | None = None) -> None:
         logger.error("OpenTelemetry not available - cannot enable tracing")
         return
 
-    # Create resource with service information
+        # Create resource with service information
     resource = Resource.create(
         {
             SERVICE_NAME: config.service_name,
@@ -124,7 +124,7 @@ def setup_tracing(config: TracingConfig, app: Any | None = None) -> None:
         provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
         logger.info(f"Added OTLP exporter: {config.otlp_endpoint}")
 
-    # Set global tracer provider
+        # Set global tracer provider
     trace.set_tracer_provider(provider)
 
     # Instrument frameworks
@@ -148,28 +148,28 @@ def _instrument_frameworks(app: Any | None) -> None:
         FastAPIInstrumentor.instrument_app(app)
         logger.debug("Instrumented FastAPI")
 
-    # Instrument SQLAlchemy
+        # Instrument SQLAlchemy
     try:
         SQLAlchemyInstrumentor().instrument()
         logger.debug("Instrumented SQLAlchemy")
     except Exception as e:
         logger.warning(f"Failed to instrument SQLAlchemy: {e}")
 
-    # Instrument Redis
+        # Instrument Redis
     try:
         RedisInstrumentor().instrument()
         logger.debug("Instrumented Redis")
     except Exception as e:
         logger.warning(f"Failed to instrument Redis: {e}")
 
-    # Instrument HTTPX
+        # Instrument HTTPX
     try:
         HTTPXClientInstrumentor().instrument()
         logger.debug("Instrumented HTTPX")
     except Exception as e:
         logger.warning(f"Failed to instrument HTTPX: {e}")
 
-    # Instrument logging
+        # Instrument logging
     try:
         LoggingInstrumentor().instrument()
         logger.debug("Instrumented logging")

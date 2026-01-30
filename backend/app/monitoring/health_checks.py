@@ -34,10 +34,9 @@ class DependencyType(str, Enum):
     MESSAGE_QUEUE = "message_queue"
     FILE_SYSTEM = "file_system"
 
-
-# ============================================================================
-# HEALTH CHECK RESULT
-# ============================================================================
+    # ============================================================================
+    # HEALTH CHECK RESULT
+    # ============================================================================
 
 
 class HealthCheckResult:
@@ -50,7 +49,7 @@ class HealthCheckResult:
         response_time_ms: float,
         details: dict[str, Any] | None = None,
         error: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize health check result.
 
@@ -83,7 +82,7 @@ class HealthCheckResult:
 class OverallHealthResult:
     """Overall health check result."""
 
-    def __init__(self, results: list[HealthCheckResult]):
+    def __init__(self, results: list[HealthCheckResult]) -> None:
         """
         Initialize overall result.
 
@@ -130,10 +129,9 @@ class OverallHealthResult:
             },
         }
 
-
-# ============================================================================
-# DATABASE HEALTH CHECK (Task 44)
-# ============================================================================
+        # ============================================================================
+        # DATABASE HEALTH CHECK (Task 44)
+        # ============================================================================
 
 
 async def check_database_health(db: AsyncSession) -> HealthCheckResult:
@@ -187,10 +185,9 @@ async def check_database_health(db: AsyncSession) -> HealthCheckResult:
             error=f"Database error: {str(e)}",
         )
 
-
-# ============================================================================
-# REDIS/CACHE HEALTH CHECK (Task 45)
-# ============================================================================
+        # ============================================================================
+        # REDIS/CACHE HEALTH CHECK (Task 45)
+        # ============================================================================
 
 
 async def check_redis_health(redis_client: redis.Redis) -> HealthCheckResult:
@@ -219,7 +216,7 @@ async def check_redis_health(redis_client: redis.Redis) -> HealthCheckResult:
                 error="No response from Redis",
             )
 
-        # Check memory usage
+            # Check memory usage
         info = await redis_client.info("memory")
         memory_used_mb = info.get("used_memory", 0) / (1024 * 1024)
         memory_max_mb = (
@@ -261,10 +258,9 @@ async def check_redis_health(redis_client: redis.Redis) -> HealthCheckResult:
             error=f"Connection error: {str(e)}",
         )
 
-
-# ============================================================================
-# EXTERNAL SERVICE HEALTH CHECKS (Task 46)
-# ============================================================================
+        # ============================================================================
+        # EXTERNAL SERVICE HEALTH CHECKS (Task 46)
+        # ============================================================================
 
 
 async def check_external_service(
@@ -326,10 +322,9 @@ async def check_external_service(
             error=f"Network error: {str(e)}",
         )
 
-
-# ============================================================================
-# DEPENDENCY HEALTH CHECKS (Task 47)
-# ============================================================================
+        # ============================================================================
+        # DEPENDENCY HEALTH CHECKS (Task 47)
+        # ============================================================================
 
 
 async def check_disk_space(
@@ -509,16 +504,15 @@ async def check_cpu_usage(max_percent: float = 80.0) -> HealthCheckResult:
             error=f"System error: {str(e)}",
         )
 
-
-# ============================================================================
-# HEALTH CHECK COORDINATOR
-# ============================================================================
+        # ============================================================================
+        # HEALTH CHECK COORDINATOR
+        # ============================================================================
 
 
 class HealthCheckCoordinator:
     """Coordinate health checks across system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize coordinator."""
         self.checks: dict[str, Callable] = {}
         self.logger = logging.getLogger("app.health")
@@ -619,9 +613,9 @@ class HealthCheckCoordinator:
             },
         }
 
+        # ============================================================================
+        # GLOBAL HEALTH CHECK COORDINATOR
+        # ============================================================================
 
-# ============================================================================
-# GLOBAL HEALTH CHECK COORDINATOR
-# ============================================================================
 
 health_check_coordinator = HealthCheckCoordinator()

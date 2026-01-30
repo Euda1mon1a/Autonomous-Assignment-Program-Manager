@@ -186,10 +186,9 @@ class DeploymentStatus:
             check.is_healthy for check in self.health_checks[-3:] if check
         )
 
-
-# =============================================================================
-# Database Models
-# =============================================================================
+        # =============================================================================
+        # Database Models
+        # =============================================================================
 
 
 class DeploymentRecord(Base):
@@ -296,16 +295,17 @@ class TrafficSwitchEvent(Base):
     def __repr__(self):
         return f"<TrafficSwitchEvent(from='{self.from_slot}', to='{self.to_slot}', {self.to_percent}%)>"
 
-
-# =============================================================================
-# Health Check Implementations
-# =============================================================================
+        # =============================================================================
+        # Health Check Implementations
+        # =============================================================================
 
 
 class HealthCheck:
     """Health check executor for deployment verification."""
 
-    def __init__(self, base_url: str, timeout: int = HEALTH_CHECK_TIMEOUT_SECONDS):
+    def __init__(
+        self, base_url: str, timeout: int = HEALTH_CHECK_TIMEOUT_SECONDS
+    ) -> None:
         """
         Initialize health checker.
 
@@ -604,10 +604,9 @@ class HealthCheck:
 
         return results
 
-
-# =============================================================================
-# Blue-Green Deployment Manager
-# =============================================================================
+        # =============================================================================
+        # Blue-Green Deployment Manager
+        # =============================================================================
 
 
 class BlueGreenDeploymentManager:
@@ -644,7 +643,7 @@ class BlueGreenDeploymentManager:
         db: Session | None = None,
         config: DeploymentConfig | None = None,
         slot_urls: dict[DeploymentSlot, str] | None = None,
-    ):
+    ) -> None:
         """
         Initialize deployment manager.
 
@@ -778,7 +777,7 @@ class BlueGreenDeploymentManager:
                 )
                 self.db.add(health_record)
 
-            # Update deployment record
+                # Update deployment record
             deployment = (
                 self.db.query(DeploymentRecord).filter_by(id=deployment_id).first()
             )
@@ -791,14 +790,14 @@ class BlueGreenDeploymentManager:
 
             self.db.commit()
 
-        # Determine overall health
+            # Determine overall health
         all_healthy = all(result.is_healthy for result in health_results)
         if all_healthy:
             self._slot_states[slot] = DeploymentState.HEALTHY
         else:
             self._slot_states[slot] = DeploymentState.DEGRADED
 
-        # Create deployment status
+            # Create deployment status
         status = DeploymentStatus(
             deployment_id=deployment_id or uuid.uuid4(),
             slot=slot,
@@ -862,7 +861,7 @@ class BlueGreenDeploymentManager:
                 logger.error(f"Unsupported traffic strategy: {strategy}")
                 return False
 
-            # Update active slot
+                # Update active slot
             self._active_slot = to_slot
 
             # Update deployment record
@@ -876,7 +875,7 @@ class BlueGreenDeploymentManager:
                     deployment.state = DeploymentState.HEALTHY.value
                 self.db.commit()
 
-            # Emit event
+                # Emit event
             self._emit_event(
                 "traffic_switched",
                 {
@@ -931,7 +930,7 @@ class BlueGreenDeploymentManager:
         to_slot: DeploymentSlot,
         deployment_id: UUID | None,
         triggered_by: str,
-    ):
+    ) -> None:
         """Perform instant 100% traffic switch."""
         self._traffic_distribution[from_slot] = 0.0
         self._traffic_distribution[to_slot] = 100.0
@@ -957,7 +956,7 @@ class BlueGreenDeploymentManager:
         to_slot: DeploymentSlot,
         deployment_id: UUID | None,
         triggered_by: str,
-    ):
+    ) -> None:
         """Perform gradual canary traffic switch."""
         import asyncio
 
@@ -983,7 +982,7 @@ class BlueGreenDeploymentManager:
                 self.db.add(event)
                 self.db.commit()
 
-            # Wait before next stage (except for last stage)
+                # Wait before next stage (except for last stage)
             if stage_percent < 100:
                 await asyncio.sleep(self.config.canary_stage_duration_seconds)
 
@@ -1000,7 +999,7 @@ class BlueGreenDeploymentManager:
         to_slot: DeploymentSlot,
         deployment_id: UUID | None,
         triggered_by: str,
-    ):
+    ) -> None:
         """Perform progressive linear traffic switch."""
         import asyncio
 
@@ -1124,7 +1123,7 @@ class BlueGreenDeploymentManager:
                     logger.warning(f"Could not get session count from Redis: {e}")
                     await client.close()
 
-            # Fall back to database query for active sessions
+                    # Fall back to database query for active sessions
             if self.db:
                 from sqlalchemy import func, select
                 from app.models.user import User
@@ -1149,7 +1148,7 @@ class BlueGreenDeploymentManager:
         except Exception as e:
             logger.warning(f"Error getting session count: {e}")
 
-        # Default fallback - assume moderate activity
+            # Default fallback - assume moderate activity
         return 50
 
     async def rollback_deployment(
@@ -1205,7 +1204,7 @@ class BlueGreenDeploymentManager:
                 logger.error("Rollback traffic switch failed")
                 return False
 
-            # Update deployment record
+                # Update deployment record
             if self.db:
                 deployment.rolled_back_at = datetime.utcnow()
                 deployment.rollback_reason = reason.value
@@ -1214,7 +1213,7 @@ class BlueGreenDeploymentManager:
                 deployment.state = DeploymentState.STOPPED.value
                 self.db.commit()
 
-            # Emit event
+                # Emit event
             self._emit_event(
                 "deployment_rolled_back",
                 {
@@ -1246,7 +1245,7 @@ class BlueGreenDeploymentManager:
         self,
         deployment_id: UUID,
         is_successful: bool = True,
-    ):
+    ) -> None:
         """
         Mark a deployment as complete.
 
@@ -1268,7 +1267,7 @@ class BlueGreenDeploymentManager:
                 )
                 self.db.commit()
 
-        # Emit event
+                # Emit event
         self._emit_event(
             "deployment_completed",
             {
@@ -1328,7 +1327,7 @@ class BlueGreenDeploymentManager:
                 logger.error(f"Migration failed: {error_msg}")
                 raise RuntimeError(f"Migration failed: {error_msg}")
 
-            # Get current migration version
+                # Get current migration version
             version_result = await asyncio.create_subprocess_exec(
                 "alembic",
                 "current",
@@ -1414,7 +1413,7 @@ class BlueGreenDeploymentManager:
         self,
         event_type: str,
         handler: Callable[[dict], Any],
-    ):
+    ) -> None:
         """
         Register handler for deployment events.
 
@@ -1432,7 +1431,7 @@ class BlueGreenDeploymentManager:
             self._event_handlers[event_type] = []
         self._event_handlers[event_type].append(handler)
 
-    def _emit_event(self, event_type: str, data: dict):
+    def _emit_event(self, event_type: str, data: dict) -> None:
         """
         Emit event to registered handlers.
 
@@ -1452,7 +1451,7 @@ class BlueGreenDeploymentManager:
         subject: str,
         message: str,
         level: str = "info",
-    ):
+    ) -> None:
         """
         Send deployment notification.
 
@@ -1500,7 +1499,7 @@ class BlueGreenDeploymentManager:
             except Exception as e:
                 logger.warning(f"Unexpected error sending Slack notification: {e}")
 
-        # Log recipients for email notifications (actual email sending would use email service)
+                # Log recipients for email notifications (actual email sending would use email service)
         if self.config.notification_recipients:
             recipients = self.config.notification_recipients
             logger.info(

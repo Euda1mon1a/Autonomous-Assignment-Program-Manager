@@ -54,7 +54,7 @@ class HalfDayXMLExporter:
     ```
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """Initialize exporter with database session.
 
         Args:
@@ -106,7 +106,7 @@ class HalfDayXMLExporter:
                 by_person[pid] = []
             by_person[pid].append(assignment)
 
-        # Get person details and block assignments for rotation info
+            # Get person details and block assignments for rotation info
         person_map = self._fetch_people(list(by_person.keys()))
         rotation_map = self._fetch_rotations(
             list(by_person.keys()), block_start, block_end
@@ -133,7 +133,7 @@ class HalfDayXMLExporter:
             if call_assignments:
                 self._add_call_section(root, call_assignments)
 
-        # Format and return XML
+                # Format and return XML
         xml_str = tostring(root, encoding="unicode")
         return minidom.parseString(xml_str).toprettyxml(indent="  ")
 
@@ -434,7 +434,7 @@ class HalfDayXMLExporter:
         for a in assignments:
             assignment_index[(a.date, a.time_of_day)] = a
 
-        # Generate day elements for each day in range
+            # Generate day elements for each day in range
         current = block_start
         while current <= block_end:
             am_assignment = assignment_index.get((current, "AM"))
@@ -516,7 +516,7 @@ class HalfDayXMLExporter:
             )
             return ""  # NULL activity - empty for ROSETTA compatibility
 
-        # Use display_abbreviation if available, else code
+            # Use display_abbreviation if available, else code
         activity = assignment.activity
         return activity.display_abbreviation or activity.code or ""
 

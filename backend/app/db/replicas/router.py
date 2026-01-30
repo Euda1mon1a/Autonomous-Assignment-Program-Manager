@@ -77,7 +77,7 @@ class QueryRouter:
         primary_engine: Engine,
         balancer: LoadBalancer | None = None,
         fallback_to_primary: bool = True,
-    ):
+    ) -> None:
         """Initialize query router.
 
         Args:
@@ -117,11 +117,11 @@ class QueryRouter:
             logger.debug("Routing to primary (forced)")
             return self.primary_engine
 
-        # Determine query type
+            # Determine query type
         if query_type is None and query is not None:
             query_type = self.classify_query(query)
 
-        # Route based on query type
+            # Route based on query type
         if query_type == QueryType.READ:
             return self._route_read_query(session_id)
         else:
@@ -142,7 +142,7 @@ class QueryRouter:
             logger.debug("No balancer configured, routing read to primary")
             return self.primary_engine
 
-        # Try to select a healthy replica
+            # Try to select a healthy replica
         selection = self.balancer.select_replica(session_id)
 
         if selection:
@@ -150,7 +150,7 @@ class QueryRouter:
             logger.debug(f"Routing read to replica: {replica_name}")
             return engine
 
-        # No healthy replicas available
+            # No healthy replicas available
         if self.fallback_to_primary:
             logger.debug("No healthy replicas, falling back to primary")
             return self.primary_engine
@@ -173,7 +173,7 @@ class QueryRouter:
         if not query or not isinstance(query, str):
             return QueryType.UNKNOWN
 
-        # Normalize whitespace
+            # Normalize whitespace
         normalized_query = " ".join(query.split())
 
         # Check patterns in order of specificity
@@ -193,7 +193,7 @@ class QueryRouter:
             if pattern.match(normalized_query):
                 return QueryType.READ
 
-        # Default to unknown (will route to primary)
+                # Default to unknown (will route to primary)
         logger.debug(f"Could not classify query: {query[:100]}")
         return QueryType.UNKNOWN
 
@@ -243,7 +243,7 @@ class RoutingPolicy:
         force_primary_in_transaction: bool = True,
         allow_stale_reads: bool = False,
         max_acceptable_lag_seconds: float = 30.0,
-    ):
+    ) -> None:
         """Initialize routing policy.
 
         Args:
@@ -277,11 +277,11 @@ class RoutingPolicy:
         if query_type in (QueryType.WRITE, QueryType.DDL, QueryType.TRANSACTION):
             return True
 
-        # Force primary in transactions for consistency
+            # Force primary in transactions for consistency
         if in_transaction and self.force_primary_in_transaction:
             return True
 
-        # Force primary after recent write for read-your-writes consistency
+            # Force primary after recent write for read-your-writes consistency
         if recent_write and self.force_primary_for_user_writes:
             return True
 

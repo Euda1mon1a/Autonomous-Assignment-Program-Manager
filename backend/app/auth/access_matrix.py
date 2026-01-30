@@ -164,10 +164,9 @@ class PermissionAuditEntry(BaseModel):
     result: bool
     reason: str | None = None
 
-
-# ============================================================================
-# Role Hierarchy
-# ============================================================================
+    # ============================================================================
+    # Role Hierarchy
+    # ============================================================================
 
 
 class RoleHierarchy:
@@ -293,17 +292,16 @@ class RoleHierarchy:
         if manager_role == UserRole.ADMIN:
             return True
 
-        # Coordinator can manage all except Admin and Coordinator
+            # Coordinator can manage all except Admin and Coordinator
         if manager_role == UserRole.COORDINATOR:
             return target_role not in {UserRole.ADMIN, UserRole.COORDINATOR}
 
-        # All other roles cannot manage others
+            # All other roles cannot manage others
         return False
 
-
-# ============================================================================
-# Access Control Matrix
-# ============================================================================
+        # ============================================================================
+        # Access Control Matrix
+        # ============================================================================
 
 
 class AccessControlMatrix:
@@ -544,7 +542,7 @@ class AccessControlMatrix:
         },
     }
 
-    def __init__(self, enable_audit: bool = True):
+    def __init__(self, enable_audit: bool = True) -> None:
         """
         Initialize the Access Control Matrix.
 
@@ -625,7 +623,7 @@ class AccessControlMatrix:
                 )
                 return False
 
-        # Check static permissions in matrix
+                # Check static permissions in matrix
         has_static_permission = self._check_static_permission(role, resource, action)
 
         # Check inherited permissions from role hierarchy
@@ -636,7 +634,7 @@ class AccessControlMatrix:
                     has_static_permission = True
                     break
 
-        # Apply context-aware checks if context is provided
+                    # Apply context-aware checks if context is provided
         if context and has_static_permission:
             has_permission = self._check_context_permission(
                 role, resource, action, context
@@ -644,7 +642,7 @@ class AccessControlMatrix:
         else:
             has_permission = has_static_permission
 
-        # Audit the permission check
+            # Audit the permission check
         self._audit_permission_check(
             role,
             resource,
@@ -700,7 +698,7 @@ class AccessControlMatrix:
             if not self._validate_approval_context(role, resource, action, context):
                 return False
 
-        # Own resource rule: Users with limited permissions can modify their own resources
+                # Own resource rule: Users with limited permissions can modify their own resources
         if role in {UserRole.RESIDENT, UserRole.FACULTY}:
             if action in {PermissionAction.UPDATE, PermissionAction.DELETE}:
                 if resource in {
@@ -741,21 +739,21 @@ class AccessControlMatrix:
         if role == UserRole.ADMIN:
             return True
 
-        # Validate resource owner is set for approvals
+            # Validate resource owner is set for approvals
         if context.resource_owner_id is None:
             logger.warning(
                 f"APPROVAL DENIED: No resource_owner_id for {action} on {resource}"
             )
             return False
 
-        # Validate resource metadata exists
+            # Validate resource metadata exists
         if not context.resource_metadata:
             logger.warning(
                 f"APPROVAL DENIED: No resource_metadata for {action} on {resource}"
             )
             return False
 
-        # Resource-specific validation
+            # Resource-specific validation
         if resource in {ResourceType.ABSENCE, ResourceType.LEAVE}:
             # Must specify department/unit for leave approvals
             if "department" not in context.resource_metadata:
@@ -775,7 +773,7 @@ class AccessControlMatrix:
                 )
                 return False
 
-            # Coordinator role check for swap approvals
+                # Coordinator role check for swap approvals
             if role != UserRole.COORDINATOR:
                 # Faculty can only approve swaps they're involved in
                 if role == UserRole.FACULTY:
@@ -790,7 +788,7 @@ class AccessControlMatrix:
                         )
                         return False
 
-        # Check supervisor relationship for non-admin approvals
+                        # Check supervisor relationship for non-admin approvals
         if role == UserRole.COORDINATOR:
             # Coordinators must be supervisor of the resource owner
             if not self._context_evaluators["is_supervisor"](context):
@@ -853,13 +851,13 @@ class AccessControlMatrix:
         if isinstance(role, str):
             role = UserRole(role)
 
-        # Start with direct permissions
+            # Start with direct permissions
         permissions = {}
         if role in self.PERMISSION_MATRIX:
             for resource, actions in self.PERMISSION_MATRIX[role].items():
                 permissions[resource] = actions.copy()
 
-        # Add inherited permissions
+                # Add inherited permissions
         inherited_roles = RoleHierarchy.get_inherited_roles(role)
         for inherited_role in inherited_roles:
             if inherited_role == role:
@@ -996,13 +994,13 @@ class AccessControlMatrix:
         """Clear the audit log."""
         self.audit_log.clear()
 
+        # ============================================================================
+        # Global Instance and Helpers
+        # ============================================================================
 
-# ============================================================================
-# Global Instance and Helpers
-# ============================================================================
+        # Global ACM instance
 
 
-# Global ACM instance
 _acm_instance: AccessControlMatrix | None = None
 
 
@@ -1044,7 +1042,7 @@ class PermissionDenied(HTTPException):
         resource: ResourceType | str,
         action: PermissionAction | str,
         detail: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize permission denied exception.
 
@@ -1091,12 +1089,12 @@ def require_permission(
                     resource, action, detail="Authentication required"
                 )
 
-            # Build context if builder provided
+                # Build context if builder provided
             context = None
             if context_builder:
                 context = context_builder(*args, **kwargs)
 
-            # Check permission
+                # Check permission
             if not has_permission(user.role, resource, action, context):
                 raise PermissionDenied(resource, action)
 

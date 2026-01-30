@@ -175,7 +175,7 @@ class AutocompleteService:
     MIN_QUERY_LENGTH = 2
     MAX_QUERY_LENGTH = 100
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize autocomplete service.
 
@@ -236,7 +236,7 @@ class AutocompleteService:
         if not query or len(query) < self.MIN_QUERY_LENGTH:
             return []
 
-        # Check cache first
+            # Check cache first
         cache_key = self._build_cache_key(query, context, user_id)
         cached = self.cache.get(cache_key)
         if cached:
@@ -254,7 +254,7 @@ class AutocompleteService:
             if db_suggestions:
                 sources_used.append("database")
 
-            # Add popular queries
+                # Add popular queries
             popular_suggestions = await self._get_popular_suggestions(
                 query, context, limit
             )
@@ -262,7 +262,7 @@ class AutocompleteService:
             if popular_suggestions:
                 sources_used.append("popular")
 
-            # Add personalized suggestions
+                # Add personalized suggestions
             if user_id:
                 personalized = await self._get_personalized_suggestions(
                     query, user_id, context, limit
@@ -271,7 +271,7 @@ class AutocompleteService:
                 if personalized:
                     sources_used.append("personalized")
 
-            # Add typo-tolerant suggestions if enabled
+                    # Add typo-tolerant suggestions if enabled
             if include_typo_tolerance and len(suggestions) < limit:
                 typo_suggestions = await self._get_typo_tolerant_suggestions(
                     query, context, limit - len(suggestions)
@@ -280,7 +280,7 @@ class AutocompleteService:
                 if typo_suggestions:
                     sources_used.append("typo_corrected")
 
-            # Sort by score and deduplicate
+                    # Sort by score and deduplicate
             suggestions = self._rank_and_deduplicate(suggestions, limit)
 
             # Cache the results
@@ -290,11 +290,11 @@ class AutocompleteService:
                 ttl=self.CACHE_TTL_MEDIUM,
             )
 
-        # Track query if it has results
+            # Track query if it has results
         if suggestions and user_id:
             await self._track_query(query, user_id, context)
 
-        # Record analytics
+            # Record analytics
         response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
         await self._record_analytics(
             query=query,
@@ -547,21 +547,21 @@ class AutocompleteService:
         if not text:
             return 0.0
 
-        # Exact match
+            # Exact match
         if query == text:
             return self.SCORE_EXACT_MATCH
 
-        # Prefix match
+            # Prefix match
         if text.startswith(query):
             return self.SCORE_PREFIX_MATCH
 
-        # Word start match
+            # Word start match
         words = text.split()
         for word in words:
             if word.startswith(query):
                 return self.SCORE_WORD_START
 
-        # Substring match
+                # Substring match
         if query in text:
             # Boost score if match is closer to start
             position = text.index(query)
@@ -601,7 +601,7 @@ class AutocompleteService:
                 if q.lower().startswith(query.lower()):
                     matching_queries.append((q, score))
 
-            # Sort by score and take top N
+                    # Sort by score and take top N
             matching_queries.sort(key=lambda x: x[1], reverse=True)
             matching_queries = matching_queries[:limit]
 
@@ -668,7 +668,7 @@ class AutocompleteService:
                 if q.lower().startswith(query.lower()):
                     matching.append(q)
 
-            # Deduplicate while preserving order (most recent first)
+                    # Deduplicate while preserving order (most recent first)
             seen = set()
             unique_matching = []
             for q in matching:
@@ -762,7 +762,7 @@ class AutocompleteService:
                     )
                     suggestions.append(suggestion)
 
-            # Sort by score and limit
+                    # Sort by score and limit
             suggestions.sort(key=lambda s: s.score, reverse=True)
             return suggestions[:limit]
 
@@ -830,7 +830,7 @@ class AutocompleteService:
             if key not in seen or suggestion.score > seen[key].score:
                 seen[key] = suggestion
 
-        # Sort by score
+                # Sort by score
         unique_suggestions = list(seen.values())
         unique_suggestions.sort(key=lambda s: s.score, reverse=True)
 
@@ -973,7 +973,7 @@ class AutocompleteService:
 
                 current_date += timedelta(days=1)
 
-            # Compute summary statistics
+                # Compute summary statistics
             total_queries = len(all_analytics)
             cache_hits = sum(1 for a in all_analytics if a.get("cache_hit"))
             avg_response_time = (
@@ -993,7 +993,7 @@ class AutocompleteService:
             for a in all_analytics:
                 context_counts[a.get("context", "unknown")] += 1
 
-            # Count by source
+                # Count by source
             source_counts = defaultdict(int)
             for a in all_analytics:
                 for source in a.get("sources_used", []):
@@ -1055,7 +1055,7 @@ class AutocompleteService:
         if not query:
             return ""
 
-        # Trim whitespace
+            # Trim whitespace
         query = query.strip()
 
         # Truncate if too long
@@ -1084,8 +1084,9 @@ class AutocompleteService:
         user_part = user_id if user_id else "anon"
         return f"{self.SUGGESTION_CACHE_PREFIX}:{query.lower()}:{context.value}:{user_part}"
 
+        # Global service instance
 
-# Global service instance
+
 _autocomplete_service: AutocompleteService | None = None
 
 

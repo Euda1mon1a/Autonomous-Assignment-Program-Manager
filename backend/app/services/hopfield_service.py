@@ -111,10 +111,9 @@ class SpuriousAttractorInfo:
     probability_of_capture: float
     mitigation_strategy: str
 
-
-# =============================================================================
-# Hopfield Service
-# =============================================================================
+    # =============================================================================
+    # Hopfield Service
+    # =============================================================================
 
 
 class HopfieldService:
@@ -149,7 +148,7 @@ class HopfieldService:
         },
     }
 
-    def __init__(self, num_spins: int = 100, temperature: float = 1.0):
+    def __init__(self, num_spins: int = 100, temperature: float = 1.0) -> None:
         """
         Initialize Hopfield service.
 
@@ -220,7 +219,7 @@ class HopfieldService:
                 ["Add assignments to analyze schedule stability"],
             )
 
-        # Build state vector from assignments
+            # Build state vector from assignments
         state_vector = self._build_state_vector(assignments)
         model = self._get_spin_glass()
 
@@ -307,7 +306,7 @@ class HopfieldService:
                 ["Add assignments to analyze attractors"],
             )
 
-        # Build state vector
+            # Build state vector
         state_vector = self._build_state_vector(assignments)
         model = self._get_spin_glass()
         current_energy = model.calculate_energy(state_vector)
@@ -346,7 +345,7 @@ class HopfieldService:
                     else:
                         attractor_type = AttractorType.METASTABLE
 
-                    # Estimate basin properties
+                        # Estimate basin properties
                     basin_depth = abs(current_energy - attractor_energy)
                     basin_volume = int(100 * (basin_depth / 10))  # Rough estimate
 
@@ -365,7 +364,7 @@ class HopfieldService:
                         )
                     )
 
-        # Sort by energy (best first)
+                    # Sort by energy (best first)
         attractors.sort(key=lambda a: a.energy_level)
 
         # Generate interpretation
@@ -433,7 +432,7 @@ class HopfieldService:
                 ["Add assignments to measure basin depth"],
             )
 
-        # Build state vector
+            # Build state vector
         state_vector = self._build_state_vector(assignments)
         model = self._get_spin_glass()
         current_energy = model.calculate_energy(state_vector)
@@ -455,7 +454,7 @@ class HopfieldService:
             if perturbed_energy > current_energy:
                 escape_energies.append(perturbed_energy - current_energy)
 
-            # Run gradient descent to see if we return to same attractor
+                # Run gradient descent to see if we return to same attractor
             final_state, final_energy, _ = self._gradient_descent(
                 model, perturbed, max_steps=30
             )
@@ -467,7 +466,7 @@ class HopfieldService:
             else:
                 max_basin_radius = max(max_basin_radius, pert_size)
 
-        # Calculate metrics
+                # Calculate metrics
         if escape_energies:
             min_escape = float(np.min(escape_energies))
             avg_escape = float(np.mean(escape_energies))
@@ -475,7 +474,7 @@ class HopfieldService:
         else:
             min_escape = avg_escape = max_escape = 10.0  # Very stable
 
-        # Basin stability index (normalize avg escape energy)
+            # Basin stability index (normalize avg escape energy)
         basin_stability_index = min(1.0, avg_escape / 15.0)
 
         # Critical perturbation size
@@ -580,7 +579,7 @@ class HopfieldService:
                 )
                 total_basin_coverage += confidence * 0.1
 
-        # Check if current state is in a spurious basin
+                # Check if current state is in a spurious basin
         if any(s.probability_of_capture > 0.3 for s in spurious_attractors):
             is_current_spurious = True
 
@@ -597,9 +596,9 @@ class HopfieldService:
             recommendations,
         )
 
-    # =========================================================================
-    # Helper Methods
-    # =========================================================================
+        # =========================================================================
+        # Helper Methods
+        # =========================================================================
 
     def _build_state_vector(self, assignments: list) -> np.ndarray:
         """Build binary state vector from assignments."""
@@ -615,7 +614,7 @@ class HopfieldService:
             )
             state[idx] = 1
 
-        # Convert to +1/-1 encoding
+            # Convert to +1/-1 encoding
         return 2 * state - 1
 
     def _perturb_state(self, state: np.ndarray, num_flips: int) -> np.ndarray:

@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 
-async def on_schedule_created(event: ScheduleCreatedEvent):
+async def on_schedule_created(event: ScheduleCreatedEvent) -> None:
     """
     Handle schedule creation.
 
@@ -73,7 +73,7 @@ async def on_schedule_created(event: ScheduleCreatedEvent):
     logger.info(f"[AUDIT] Schedule created: {event.schedule_id} by {event.created_by}")
 
 
-async def on_schedule_updated(event: ScheduleUpdatedEvent):
+async def on_schedule_updated(event: ScheduleUpdatedEvent) -> None:
     """
     Handle schedule updates.
 
@@ -99,7 +99,7 @@ async def on_schedule_updated(event: ScheduleUpdatedEvent):
     )
 
 
-async def on_schedule_published(event: SchedulePublishedEvent):
+async def on_schedule_published(event: SchedulePublishedEvent) -> None:
     """
     Handle schedule publication.
 
@@ -125,13 +125,12 @@ async def on_schedule_published(event: SchedulePublishedEvent):
         f"[CALENDAR] Syncing schedule {event.schedule_id} to calendar integrations"
     )
 
+    # =============================================================================
+    # Assignment Event Handlers
+    # =============================================================================
 
-# =============================================================================
-# Assignment Event Handlers
-# =============================================================================
 
-
-async def on_assignment_created(event: AssignmentCreatedEvent):
+async def on_assignment_created(event: AssignmentCreatedEvent) -> None:
     """
     Handle assignment creation.
 
@@ -154,7 +153,7 @@ async def on_assignment_created(event: AssignmentCreatedEvent):
     except ImportError:
         logger.debug("[ACGME] Validator not available")
 
-    # Invalidate person's schedule cache
+        # Invalidate person's schedule cache
     await invalidate_cache(f"person:{event.person_id}:schedule")
     await invalidate_cache(f"person:{event.person_id}:assignments")
 
@@ -162,7 +161,7 @@ async def on_assignment_created(event: AssignmentCreatedEvent):
     logger.info(f"[CONFLICT] Checking conflicts for assignment {event.assignment_id}")
 
 
-async def on_assignment_updated(event: AssignmentUpdatedEvent):
+async def on_assignment_updated(event: AssignmentUpdatedEvent) -> None:
     """
     Handle assignment updates.
 
@@ -176,7 +175,7 @@ async def on_assignment_updated(event: AssignmentUpdatedEvent):
     if event.reason:
         logger.info(f"Update reason: {event.reason}")
 
-    # Re-validate ACGME compliance if schedule changed
+        # Re-validate ACGME compliance if schedule changed
     try:
         from app.scheduling.acgme_validator import ACGMEValidator
 
@@ -185,14 +184,14 @@ async def on_assignment_updated(event: AssignmentUpdatedEvent):
     except ImportError:
         logger.debug("[ACGME] Validator not available")
 
-    # Invalidate caches
+        # Invalidate caches
     await invalidate_cache(f"assignment:{event.assignment_id}")
     logger.info(
         f"[AUDIT] Assignment updated: {event.assignment_id} by {event.updated_by}"
     )
 
 
-async def on_assignment_deleted(event: AssignmentDeletedEvent):
+async def on_assignment_deleted(event: AssignmentDeletedEvent) -> None:
     """
     Handle assignment deletion.
 
@@ -206,7 +205,7 @@ async def on_assignment_deleted(event: AssignmentDeletedEvent):
     if event.reason:
         logger.info(f"Deletion reason: {event.reason}")
 
-    # Check for coverage gaps
+        # Check for coverage gaps
     logger.info(
         f"[COVERAGE] Checking for gaps after deleting assignment {event.assignment_id}"
     )
@@ -218,13 +217,12 @@ async def on_assignment_deleted(event: AssignmentDeletedEvent):
         priority="high",
     )
 
+    # =============================================================================
+    # Swap Event Handlers
+    # =============================================================================
 
-# =============================================================================
-# Swap Event Handlers
-# =============================================================================
 
-
-async def on_swap_requested(event: SwapRequestedEvent):
+async def on_swap_requested(event: SwapRequestedEvent) -> None:
     """
     Handle swap request.
 
@@ -249,7 +247,7 @@ async def on_swap_requested(event: SwapRequestedEvent):
             f"[SWAP] Finding compatible matches for absorb swap {event.swap_id}"
         )
 
-    # Check ACGME pre-validation
+        # Check ACGME pre-validation
     try:
         from app.scheduling.acgme_validator import ACGMEValidator
 
@@ -259,7 +257,7 @@ async def on_swap_requested(event: SwapRequestedEvent):
         logger.debug("[ACGME] Validator not available")
 
 
-async def on_swap_approved(event: SwapApprovedEvent):
+async def on_swap_approved(event: SwapApprovedEvent) -> None:
     """
     Handle swap approval.
 
@@ -285,7 +283,7 @@ async def on_swap_approved(event: SwapApprovedEvent):
     logger.info(f"[SWAP] Scheduling automatic execution for swap {event.swap_id}")
 
 
-async def on_swap_executed(event: SwapExecutedEvent):
+async def on_swap_executed(event: SwapExecutedEvent) -> None:
     """
     Handle swap execution.
 
@@ -314,13 +312,12 @@ async def on_swap_executed(event: SwapExecutedEvent):
     for change in event.assignment_changes:
         await invalidate_cache(f"assignment:{change}")
 
+        # =============================================================================
+        # Absence Event Handlers
+        # =============================================================================
 
-# =============================================================================
-# Absence Event Handlers
-# =============================================================================
 
-
-async def on_absence_created(event: AbsenceCreatedEvent):
+async def on_absence_created(event: AbsenceCreatedEvent) -> None:
     """
     Handle absence creation.
 
@@ -348,7 +345,7 @@ async def on_absence_created(event: AbsenceCreatedEvent):
     )
 
 
-async def on_absence_approved(event: AbsenceApprovedEvent):
+async def on_absence_approved(event: AbsenceApprovedEvent) -> None:
     """
     Handle absence approval.
 
@@ -376,13 +373,12 @@ async def on_absence_approved(event: AbsenceApprovedEvent):
         priority="normal",
     )
 
+    # =============================================================================
+    # ACGME Compliance Event Handlers
+    # =============================================================================
 
-# =============================================================================
-# ACGME Compliance Event Handlers
-# =============================================================================
 
-
-async def on_acgme_violation_detected(event: ACGMEViolationDetectedEvent):
+async def on_acgme_violation_detected(event: ACGMEViolationDetectedEvent) -> None:
     """
     Handle ACGME violation detection.
 
@@ -414,7 +410,7 @@ async def on_acgme_violation_detected(event: ACGMEViolationDetectedEvent):
     )
 
 
-async def on_acgme_override_applied(event: ACGMEOverrideAppliedEvent):
+async def on_acgme_override_applied(event: ACGMEOverrideAppliedEvent) -> None:
     """
     Handle ACGME override application.
 
@@ -446,18 +442,17 @@ async def on_acgme_override_applied(event: ACGMEOverrideAppliedEvent):
             priority="urgent",
         )
 
-    # Track for accreditation reporting
+        # Track for accreditation reporting
     logger.warning(
         f"[ACCREDITATION] Tracking override {event.override_id} for accreditation reporting"
     )
 
+    # =============================================================================
+    # Cross-cutting Concerns
+    # =============================================================================
 
-# =============================================================================
-# Cross-cutting Concerns
-# =============================================================================
 
-
-async def on_any_event(event):
+async def on_any_event(event) -> None:
     """
     Handle all events for cross-cutting concerns.
 
@@ -474,13 +469,12 @@ async def on_any_event(event):
         f"[WEBSOCKET] Broadcasting event {event.__class__.__name__} to connected clients"
     )
 
+    # =============================================================================
+    # Handler Registration
+    # =============================================================================
 
-# =============================================================================
-# Handler Registration
-# =============================================================================
 
-
-def register_schedule_handlers(event_bus: EventBus, db: Session):
+def register_schedule_handlers(event_bus: EventBus, db: Session) -> None:
     """
     Register all schedule-related event handlers.
 
@@ -563,13 +557,14 @@ def register_schedule_handlers(event_bus: EventBus, db: Session):
 
     logger.info("Schedule event handlers registered successfully")
 
+    # =============================================================================
+    # Helper Functions
+    # =============================================================================
 
-# =============================================================================
-# Helper Functions
-# =============================================================================
 
-
-async def send_notification(user_id: str, message: str, priority: str = "normal"):
+async def send_notification(
+    user_id: str, message: str, priority: str = "normal"
+) -> None:
     """
     Send notification to a user.
 
@@ -592,7 +587,7 @@ async def send_notification(user_id: str, message: str, priority: str = "normal"
         logger.error(f"[NOTIFICATION] Failed to send notification: {e}")
 
 
-async def invalidate_cache(cache_key: str):
+async def invalidate_cache(cache_key: str) -> None:
     """
     Invalidate cache entry.
 
@@ -610,7 +605,7 @@ async def invalidate_cache(cache_key: str):
         logger.warning(f"[CACHE] Failed to invalidate {cache_key}: {e}")
 
 
-async def update_metrics(metric_name: str, value: float):
+async def update_metrics(metric_name: str, value: float) -> None:
     """
     Update application metrics.
 

@@ -38,7 +38,7 @@ class GraphMatcher:
     maximum weight matching to find the best overall pairing.
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize graph matcher.
 
@@ -78,14 +78,14 @@ class GraphMatcher:
                 },
             )
 
-        # Build weighted graph
+            # Build weighted graph
         graph = nx.Graph()
 
         # Add nodes
         for request in requests:
             graph.add_node(str(request.id), request=request)
 
-        # Add edges with weights
+            # Add edges with weights
         for i, request_a in enumerate(requests):
             for request_b in requests[i + 1 :]:
                 # Calculate compatibility score
@@ -107,7 +107,7 @@ class GraphMatcher:
                         weight=score,
                     )
 
-        # Find maximum weight matching
+                    # Find maximum weight matching
         matching = nx.max_weight_matching(graph, maxcardinality=False)
 
         # Convert matching to result format
@@ -127,7 +127,7 @@ class GraphMatcher:
             weight = graph[edge[0]][edge[1]]["weight"]
             total_weight += weight
 
-        # Find unmatched requests
+            # Find unmatched requests
         unmatched = [r.id for r in requests if r.id not in matched_request_ids]
 
         graph_stats = {
@@ -175,8 +175,8 @@ class GraphMatcher:
         if not preferences:
             preferences = await self._build_preference_lists(requests)
 
-        # Implement Gale-Shapley algorithm
-        # (Simplified version for demonstration)
+            # Implement Gale-Shapley algorithm
+            # (Simplified version for demonstration)
 
         matched_pairs = []
         matched = set()
@@ -234,7 +234,7 @@ class GraphMatcher:
         elif days_apart <= 60:
             score += 0.1
 
-        # Check if specific target matches
+            # Check if specific target matches
         if request_a.target_faculty_id == request_b.source_faculty_id:
             score += 0.2
 

@@ -145,7 +145,7 @@ class AnomalyReport:
     severity: str  # "low", "medium", "high", "critical"
     description: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Determine severity based on anomaly score."""
         if self.anomaly_score > 2.0:
             self.severity = "critical"
@@ -206,7 +206,7 @@ class ScheduleImmuneSystem:
         feature_dims: int,
         detector_count: int = 100,
         detection_radius: float = 0.1,
-    ):
+    ) -> None:
         """
         Initialize the immune system.
 
@@ -340,7 +340,7 @@ class ScheduleImmuneSystem:
 
         return features_array
 
-    def train(self, valid_schedules: list[dict], max_attempts: int = 1000):
+    def train(self, valid_schedules: list[dict], max_attempts: int = 1000) -> None:
         """
         Train the immune system on valid schedules using Negative Selection.
 
@@ -369,7 +369,7 @@ class ScheduleImmuneSystem:
             logger.warning("No training features extracted!")
             return
 
-        # Calculate feature space bounds
+            # Calculate feature space bounds
         features_array = np.array(self.training_features)
         min_vals = features_array.min(axis=0)
         max_vals = features_array.max(axis=0)
@@ -392,7 +392,7 @@ class ScheduleImmuneSystem:
                     matches_self = True
                     break
 
-            # Negative selection: only keep detectors that DON'T match self
+                    # Negative selection: only keep detectors that DON'T match self
             if not matches_self:
                 detector = Detector(
                     id=uuid4(),
@@ -466,8 +466,8 @@ class ScheduleImmuneSystem:
             distance = detector.get_distance(features)
             min_distance = min(min_distance, distance)
 
-        # Invert: closer to detector = higher anomaly score
-        # Normalize by detection radius
+            # Invert: closer to detector = higher anomaly score
+            # Normalize by detection radius
         if min_distance < self.detection_radius:
             # Inside detection radius: high anomaly score
             score = 2.0 * (1.0 - min_distance / self.detection_radius)
@@ -538,7 +538,7 @@ class ScheduleImmuneSystem:
         affinity_pattern: dict | None = None,
         affinity_radius: float = 1.0,
         description: str = "",
-    ):
+    ) -> None:
         """
         Register a repair strategy (antibody).
 
@@ -598,7 +598,7 @@ class ScheduleImmuneSystem:
             affinity_adjusted = affinity * (1.0 + 0.5 * antibody.success_rate)
             affinities.append((affinity_adjusted, name, antibody))
 
-        # Select highest affinity
+            # Select highest affinity
         affinities.sort(reverse=True, key=lambda x: x[0])
 
         if affinities[0][0] > 0:
@@ -731,7 +731,7 @@ class ScheduleImmuneSystem:
             },
         }
 
-    def reset_statistics(self):
+    def reset_statistics(self) -> None:
         """Reset detection and repair statistics."""
         self.anomalies_detected = 0
         self.repairs_applied = 0

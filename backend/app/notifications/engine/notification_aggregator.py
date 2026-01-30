@@ -20,7 +20,7 @@ class NotificationAggregator:
     - Reduce notification fatigue
     """
 
-    def __init__(self, aggregation_window_minutes: int = 5):
+    def __init__(self, aggregation_window_minutes: int = 5) -> None:
         """
         Initialize aggregator.
 
@@ -59,7 +59,7 @@ class NotificationAggregator:
                 logger.debug("Added to aggregation: %s", key)
                 return True
 
-        # Start new aggregation window
+                # Start new aggregation window
         self._pending[key] = [data]
         self._last_aggregation[key] = datetime.utcnow()
 

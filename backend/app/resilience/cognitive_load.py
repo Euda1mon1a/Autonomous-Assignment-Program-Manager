@@ -268,7 +268,7 @@ class CognitiveLoadManager:
         max_decisions_per_session: int = 7,
         auto_decide_when_fatigued: bool = True,
         batch_similar_decisions: bool = True,
-    ):
+    ) -> None:
         self.max_decisions_per_session = max_decisions_per_session
         self.auto_decide_when_fatigued = auto_decide_when_fatigued
         self.batch_similar_decisions = batch_similar_decisions
@@ -392,7 +392,7 @@ class CognitiveLoadManager:
         if not session:
             raise ValueError(f"Session {session_id} not found")
 
-        # Check if we should auto-decide
+            # Check if we should auto-decide
         if self.auto_decide_when_fatigued:
             if session.current_state == CognitiveState.DEPLETED:
                 if decision.has_safe_default:
@@ -401,15 +401,15 @@ class CognitiveLoadManager:
             if session.should_take_break and decision.can_defer:
                 return self._defer_decision(decision, "break_recommended")
 
-        # Check decision limit
+                # Check decision limit
         if len(session.decisions_made) >= session.max_decisions_before_break:
             if decision.has_safe_default:
                 return self._auto_decide(decision, "limit_reached")
             elif decision.can_defer:
                 return self._defer_decision(decision, "limit_reached")
 
-        # Present to user (in actual implementation, this would be async)
-        # For now, we return a pending state
+                # Present to user (in actual implementation, this would be async)
+                # For now, we return a pending state
         return None, DecisionOutcome.DECIDED
 
     def record_decision(
@@ -504,7 +504,7 @@ class CognitiveLoadManager:
         if not session:
             return None
 
-        # Calculate remaining capacity
+            # Calculate remaining capacity
         max_cost = self.max_decisions_per_session * 1.5  # Rough estimate
         remaining = max(0, (max_cost - session.total_cognitive_cost) / max_cost)
 
@@ -576,18 +576,18 @@ class CognitiveLoadManager:
             if decision.is_urgent:
                 urgent_count += 1
 
-            # Can auto-decide
+                # Can auto-decide
             if decision.has_safe_default:
                 can_auto += 1
 
-            # Cost
+                # Cost
             total_cost += decision.get_cognitive_cost()
 
             # Oldest
             if oldest is None or decision.created_at < oldest:
                 oldest = decision.created_at
 
-        # Build recommendations
+                # Build recommendations
         recommendations = []
 
         if urgent_count > 3:
@@ -703,7 +703,7 @@ class CognitiveLoadManager:
             elif "cross" in change_type.lower():
                 cross_coverage += 1
 
-        # Calculate load score
+                # Calculate load score
         base_score = len(schedule_changes) * 0.5
         complexity_score = (
             exceptions * 1.0 + conflicts * 2.0 + overrides * 1.5 + cross_coverage * 1.0

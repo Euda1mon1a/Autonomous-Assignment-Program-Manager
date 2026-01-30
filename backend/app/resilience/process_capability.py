@@ -93,7 +93,7 @@ class ScheduleCapabilityAnalyzer:
         print(f"Cpk: {report.cpk:.3f}")
     """
 
-    def __init__(self, min_sample_size: int = 30):
+    def __init__(self, min_sample_size: int = 30) -> None:
         """
         Initialize the capability analyzer.
 
@@ -343,8 +343,8 @@ class ScheduleCapabilityAnalyzer:
         if cpk <= 0:
             return 0.0
 
-        # Linear approximation: sigma_level = 3 * Cpk
-        # This is accurate enough for practical purposes
+            # Linear approximation: sigma_level = 3 * Cpk
+            # This is accurate enough for practical purposes
         sigma_level = 3.0 * cpk
 
         return sigma_level
@@ -416,11 +416,11 @@ class ScheduleCapabilityAnalyzer:
                 f"Invalid specification limits: LSL ({min_hours}) must be < USL ({max_hours})"
             )
 
-        # Default target to midpoint if not specified
+            # Default target to midpoint if not specified
         if target_hours is None:
             target_hours = (min_hours + max_hours) / 2
 
-        # Calculate all capability indices
+            # Calculate all capability indices
         cp = self.calculate_cp(weekly_hours, min_hours, max_hours)
         cpk = self.calculate_cpk(weekly_hours, min_hours, max_hours)
         pp = self.calculate_pp(weekly_hours, min_hours, max_hours)
@@ -561,7 +561,7 @@ class ScheduleCapabilityAnalyzer:
                 ]
             )
 
-        # Centering recommendations
+            # Centering recommendations
         if report.cp > 0:
             centering_ratio = report.cpk / report.cp
             if centering_ratio < 0.85:
@@ -570,7 +570,7 @@ class ScheduleCapabilityAnalyzer:
                     f"(target mean closer to {report.target})"
                 )
 
-        # Taguchi recommendations
+                # Taguchi recommendations
         if report.target and report.cpm < report.cp * 0.9:
             recommendations.append(
                 "High off-target loss - aim for target value, not just spec limits"

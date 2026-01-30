@@ -96,10 +96,9 @@ async def create_activity(
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-
-# =============================================================================
-# Single Activity Endpoints
-# =============================================================================
+        # =============================================================================
+        # Single Activity Endpoints
+        # =============================================================================
 
 
 @router.get("/{activity_id}", response_model=ActivityResponse)
@@ -167,7 +166,7 @@ async def delete_activity(
     activity_id: UUID,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Hard delete an activity.
 
     Note: This will fail if the activity is in use by weekly patterns

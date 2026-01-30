@@ -117,7 +117,7 @@ class RollbackResult:
         records_restored: int = 0,
         records_failed: int = 0,
         error_message: str | None = None,
-    ):
+    ) -> None:
         self.rollback_id = rollback_id
         self.success = success
         self.records_restored = records_restored
@@ -139,7 +139,7 @@ class RollbackManager:
     Provides snapshot creation, restoration, and rollback tracking.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize the rollback manager.
 
@@ -195,7 +195,7 @@ class RollbackManager:
 
                 snapshot_data.append(record_dict)
 
-            # Create snapshot record
+                # Create snapshot record
             snapshot = SnapshotRecord(
                 id=uuid.uuid4(),
                 migration_id=migration_id,
@@ -273,7 +273,7 @@ class RollbackManager:
         if not snapshot:
             raise ValueError(f"Snapshot {snapshot_id} not found")
 
-        # Create rollback record
+            # Create rollback record
         rollback_record = RollbackRecord(
             id=uuid.uuid4(),
             migration_id=snapshot.migration_id,
@@ -308,11 +308,11 @@ class RollbackManager:
                         records_failed += 1
                         continue
 
-                    # Convert UUID strings back to UUID
+                        # Convert UUID strings back to UUID
                     if isinstance(record_id, str):
                         record_id = UUID(record_id)
 
-                    # Find existing record
+                        # Find existing record
                     existing = (
                         self.db.query(model_class)
                         .filter(model_class.id == record_id)
@@ -348,7 +348,7 @@ class RollbackManager:
                     if not error_message:
                         error_message = str(e)
 
-            # Commit restoration
+                        # Commit restoration
             self.db.commit()
 
             # Update rollback record
@@ -500,7 +500,7 @@ class RollbackManager:
         if not snapshot:
             raise ValueError(f"Snapshot {snapshot_id} not found")
 
-        # Rough estimates (adjust based on your system)
+            # Rough estimates (adjust based on your system)
         RECORDS_PER_SECOND = 100
 
         estimated_seconds = snapshot.record_count / RECORDS_PER_SECOND

@@ -90,7 +90,7 @@ except ImportError:
     HAS_PYWT = False
     pywt = None  # type: ignore
 
-# Try to import statsmodels for STL decomposition
+    # Try to import statsmodels for STL decomposition
 try:
     from statsmodels.tsa.seasonal import STL
 
@@ -138,8 +138,7 @@ class FrequencyBand(str, Enum):
     MONTHLY = "monthly"  # ~30 days
     QUARTERLY = "quarterly"  # ~90 days
 
-
-# TypedDict definitions for JSON-serializable outputs
+    # TypedDict definitions for JSON-serializable outputs
 
 
 class WaveletCoefficients(TypedDict):
@@ -248,10 +247,9 @@ class ChangePointAnalysisResult(TypedDict):
     segmentation_quality: float  # 0-1, higher is better
     algorithm_parameters: dict
 
-
-# =============================================================================
-# Dataclasses for Internal Processing
-# =============================================================================
+    # =============================================================================
+    # Dataclasses for Internal Processing
+    # =============================================================================
 
 
 @dataclass
@@ -305,10 +303,9 @@ class FrequencyConstraint:
     description: str
     severity: str = "warning"  # "info", "warning", "error"
 
-
-# =============================================================================
-# Core Signal Processing Functions
-# =============================================================================
+    # =============================================================================
+    # Core Signal Processing Functions
+    # =============================================================================
 
 
 def _ensure_power_of_two(n: int) -> int:
@@ -346,10 +343,9 @@ def _detrend_signal(
 
     return signal - trend, trend
 
-
-# =============================================================================
-# Main Signal Processor Class
-# =============================================================================
+    # =============================================================================
+    # Main Signal Processor Class
+    # =============================================================================
 
 
 class WorkloadSignalProcessor:
@@ -430,7 +426,7 @@ class WorkloadSignalProcessor:
         lta_window: int = 20,
         sta_lta_threshold: float = 3.0,
         constraints: list[FrequencyConstraint] | None = None,
-    ):
+    ) -> None:
         """
         Initialize the signal processor.
 
@@ -455,9 +451,9 @@ class WorkloadSignalProcessor:
             f"STA={sta_window}d, LTA={lta_window}d, threshold={sta_lta_threshold}"
         )
 
-    # =========================================================================
-    # Wavelet Transform Methods
-    # =========================================================================
+        # =========================================================================
+        # Wavelet Transform Methods
+        # =========================================================================
 
     def discrete_wavelet_transform(
         self,
@@ -492,14 +488,14 @@ class WorkloadSignalProcessor:
                 "frequency_bands": [],
             }
 
-        # Auto-calculate level if not specified
+            # Auto-calculate level if not specified
         if level is None:
             level = self.decomposition_level or min(
                 pywt.dwt_max_level(len(ts.values), self.wavelet),
                 5,  # Cap at 5 levels for interpretability
             )
 
-        # Perform wavelet decomposition
+            # Perform wavelet decomposition
         coeffs = pywt.wavedec(ts.values, self.wavelet, level=level)
 
         # Extract approximation and details
@@ -566,7 +562,7 @@ class WorkloadSignalProcessor:
                 "power": [],
             }
 
-        # Generate scales if not provided (logarithmic spacing)
+            # Generate scales if not provided (logarithmic spacing)
         if scales is None:
             # Scales corresponding to periods from 2 days to half the signal length
             min_scale = 1
@@ -576,7 +572,7 @@ class WorkloadSignalProcessor:
                 np.log10(min_scale), np.log10(max_scale), num_scales
             ).astype(np.float64)
 
-        # Perform CWT
+            # Perform CWT
         coefficients, frequencies = pywt.cwt(
             ts.values, scales, wavelet, sampling_period=1.0 / ts.sample_rate_per_day
         )
@@ -622,7 +618,7 @@ class WorkloadSignalProcessor:
             logger.warning("PyWavelets not installed, cannot reconstruct")
             return np.array(coeffs["approximation"])
 
-        # Prepare coefficients for reconstruction
+            # Prepare coefficients for reconstruction
         approx = np.array(coeffs["approximation"])
         details = [np.array(d) for d in coeffs["details"]]
 
@@ -632,15 +628,15 @@ class WorkloadSignalProcessor:
                 if i not in keep_levels:
                     details[i] = np.zeros_like(details[i])
 
-        # Reconstruct
+                    # Reconstruct
         all_coeffs = [approx] + details
         reconstructed = pywt.waverec(all_coeffs, self.wavelet)
 
         return reconstructed
 
-    # =========================================================================
-    # FFT Methods
-    # =========================================================================
+        # =========================================================================
+        # FFT Methods
+        # =========================================================================
 
     def fft_analysis(
         self,
@@ -718,7 +714,7 @@ class WorkloadSignalProcessor:
                     }
                 )
 
-        # Check if periodicity is detected (strong peaks)
+                # Check if periodicity is detected (strong peaks)
         periodicity_detected = any(d["normalized_magnitude"] > 0.5 for d in dominant)
 
         logger.debug(
@@ -771,7 +767,7 @@ class WorkloadSignalProcessor:
             for freq in remove_frequencies:
                 mask &= np.abs(np.abs(frequencies) - freq) >= bandwidth
 
-        # Always keep DC component
+                # Always keep DC component
         mask[0] = True
 
         # Apply filter
@@ -782,9 +778,9 @@ class WorkloadSignalProcessor:
 
         return filtered
 
-    # =========================================================================
-    # STA/LTA Anomaly Detection
-    # =========================================================================
+        # =========================================================================
+        # STA/LTA Anomaly Detection
+        # =========================================================================
 
     def sta_lta_detector(
         self,
@@ -828,7 +824,7 @@ class WorkloadSignalProcessor:
             lta_window = len(ts.values) // 2
             sta_window = max(1, lta_window // 4)
 
-        # Calculate characteristic function (absolute values for energy detection)
+            # Calculate characteristic function (absolute values for energy detection)
         signal = np.abs(ts.values - np.mean(ts.values))
 
         # Calculate STA and LTA using uniform filter
@@ -863,7 +859,7 @@ class WorkloadSignalProcessor:
                         break
                     event_end = idx
 
-                # Determine anomaly type based on signal characteristics
+                    # Determine anomaly type based on signal characteristics
                 event_values = ts.values[start_idx : event_end + 1]
                 pre_event = ts.values[max(0, start_idx - lta_window) : start_idx]
 
@@ -926,9 +922,9 @@ class WorkloadSignalProcessor:
             "detection_rate": detection_rate,
         }
 
-    # =========================================================================
-    # Spectral Decomposition
-    # =========================================================================
+        # =========================================================================
+        # Spectral Decomposition
+        # =========================================================================
 
     def spectral_decomposition(
         self,
@@ -1000,7 +996,7 @@ class WorkloadSignalProcessor:
             )
             method = "simple"
 
-        # Calculate strength metrics
+            # Calculate strength metrics
         var_residual = np.var(residual)
         var_detrended = np.var(ts.values - trend)
         var_deseasoned = np.var(ts.values - seasonal_component)
@@ -1049,7 +1045,7 @@ class WorkloadSignalProcessor:
         else:
             trend = uniform_filter1d(values, period, mode="nearest")
 
-        # Detrended
+            # Detrended
         detrended = values - trend
 
         # Seasonal: average of detrended values at each seasonal position
@@ -1058,14 +1054,14 @@ class WorkloadSignalProcessor:
             seasonal_positions = detrended[i::period]
             seasonal[i::period] = np.mean(seasonal_positions)
 
-        # Residual
+            # Residual
         residual = values - trend - seasonal
 
         return trend, seasonal, residual
 
-    # =========================================================================
-    # Frequency-Based Constraint Validation
-    # =========================================================================
+        # =========================================================================
+        # Frequency-Based Constraint Validation
+        # =========================================================================
 
     def validate_frequency_constraints(
         self,
@@ -1133,7 +1129,7 @@ class WorkloadSignalProcessor:
                         )
                         break  # One violation per constraint
 
-        # Also check for rapid alternation using run length
+                        # Also check for rapid alternation using run length
         alternation_violations = self._check_rapid_alternation(ts)
         violations.extend(alternation_violations)
 
@@ -1183,9 +1179,9 @@ class WorkloadSignalProcessor:
 
         return violations
 
-    # =========================================================================
-    # Adaptive Filtering
-    # =========================================================================
+        # =========================================================================
+        # Adaptive Filtering
+        # =========================================================================
 
     def adaptive_filter(
         self,
@@ -1220,8 +1216,8 @@ class WorkloadSignalProcessor:
                 residual = np.abs(np.diff(ts.values))
                 noise_estimate = float(np.median(residual) * 1.4826)  # MAD to std
 
-            # Wiener filter
-            # Using scipy's built-in wiener filter
+                # Wiener filter
+                # Using scipy's built-in wiener filter
             try:
                 filtered = scipy_signal.wiener(ts.values, mysize=window_size)
             except Exception:
@@ -1255,7 +1251,7 @@ class WorkloadSignalProcessor:
             # Default: uniform filter
             filtered = uniform_filter1d(ts.values, window_size, mode="nearest")
 
-        # Calculate quality metrics
+            # Calculate quality metrics
         noise_reduction = 1 - (np.std(filtered) / np.std(ts.values))
         correlation = float(np.corrcoef(ts.values, filtered)[0, 1])
         mse = float(np.mean((ts.values - filtered) ** 2))
@@ -1273,9 +1269,9 @@ class WorkloadSignalProcessor:
             },
         }
 
-    # =========================================================================
-    # Harmonic Analysis
-    # =========================================================================
+        # =========================================================================
+        # Harmonic Analysis
+        # =========================================================================
 
     def harmonic_analysis(
         self,
@@ -1311,7 +1307,7 @@ class WorkloadSignalProcessor:
                 "total_harmonic_distortion": 0.0,
             }
 
-        # Identify fundamental frequency
+            # Identify fundamental frequency
         if fundamental_period is not None:
             fundamental = 1.0 / fundamental_period
         else:
@@ -1349,7 +1345,7 @@ class WorkloadSignalProcessor:
                     )
                     break
 
-        # Detect resonances (harmonics with unusual phase relationships)
+                    # Detect resonances (harmonics with unusual phase relationships)
         resonances = []
         if len(harmonics) >= 2:
             for i, h1 in enumerate(harmonics[:-1]):
@@ -1372,7 +1368,7 @@ class WorkloadSignalProcessor:
                             }
                         )
 
-                    # Anti-phase resonance (destructive)
+                        # Anti-phase resonance (destructive)
                     elif abs(phase_diff - math.pi) < 0.3:
                         resonances.append(
                             {
@@ -1388,7 +1384,7 @@ class WorkloadSignalProcessor:
                             }
                         )
 
-        # Calculate total harmonic distortion (THD)
+                        # Calculate total harmonic distortion (THD)
         if harmonics and harmonics[0]["magnitude"] > 0:
             fundamental_power = harmonics[0]["magnitude"] ** 2
             harmonic_power = sum(h["magnitude"] ** 2 for h in harmonics[1:])
@@ -1408,9 +1404,9 @@ class WorkloadSignalProcessor:
             "total_harmonic_distortion": float(thd),
         }
 
-    # =========================================================================
-    # Change Point Detection
-    # =========================================================================
+        # =========================================================================
+        # Change Point Detection
+        # =========================================================================
 
     def detect_change_points_cusum(
         self,
@@ -1443,7 +1439,7 @@ class WorkloadSignalProcessor:
             logger.warning("Series too short for CUSUM analysis")
             return []
 
-        # Compute mean and std for reference
+            # Compute mean and std for reference
         mean = np.mean(series)
         std = np.std(series)
 
@@ -1551,7 +1547,7 @@ class WorkloadSignalProcessor:
             logger.warning("Series too short for PELT analysis")
             return []
 
-        # Try using ruptures library if available
+            # Try using ruptures library if available
         try:
             import ruptures as rpt
 
@@ -1604,7 +1600,7 @@ class WorkloadSignalProcessor:
                             f"std {pre_std:.1f}→{post_std:.1f}"
                         )
 
-                    # Estimate confidence based on effect size
+                        # Estimate confidence based on effect size
                     effect_size = mean_change / ((pre_std + post_std) / 2 + 1e-10)
                     confidence = min(1.0, effect_size / 3.0)
 
@@ -1652,7 +1648,8 @@ class WorkloadSignalProcessor:
             segment = series[start:end]
             return float(np.var(segment) * (end - start))
 
-        # Greedy search for change points
+            # Greedy search for change points
+
         change_points_idx: list[int] = []
         current_pos = 0
 
@@ -1680,7 +1677,7 @@ class WorkloadSignalProcessor:
             else:
                 break
 
-        # Convert to ChangePoint format
+                # Convert to ChangePoint format
         change_points: list[ChangePoint] = []
         for cp_idx in change_points_idx:
             segment_start = max(0, cp_idx - min_segment_length)
@@ -1740,7 +1737,7 @@ class WorkloadSignalProcessor:
                 if cp["index"] < len(ts.dates):
                     cp["timestamp"] = ts.dates[cp["index"]].isoformat()
 
-            # Compute segmentation quality (variance reduction)
+                    # Compute segmentation quality (variance reduction)
             quality = self._compute_segmentation_quality(ts.values, cusum_cps)
 
             results["cusum"] = {
@@ -1751,7 +1748,7 @@ class WorkloadSignalProcessor:
                 "algorithm_parameters": {"threshold": 5.0, "drift": 0.0},
             }
 
-        # PELT analysis
+            # PELT analysis
         if "pelt" in methods or "both" in methods:
             pelt_cps = self.detect_change_points_pelt(
                 ts.values, penalty=1.0, min_segment_length=5
@@ -1794,12 +1791,12 @@ class WorkloadSignalProcessor:
         if not change_points:
             return 0.0
 
-        # Variance of original series
+            # Variance of original series
         total_var = np.var(series)
         if total_var < 1e-10:
             return 0.0
 
-        # Variance within segments
+            # Variance within segments
         breakpoints = [0] + [cp["index"] for cp in change_points] + [len(series)]
         breakpoints = sorted(set(breakpoints))
 
@@ -1815,9 +1812,9 @@ class WorkloadSignalProcessor:
         quality = 1.0 - (segment_var / total_var)
         return float(max(0.0, min(1.0, quality)))
 
-    # =========================================================================
-    # Main Analysis Pipeline
-    # =========================================================================
+        # =========================================================================
+        # Main Analysis Pipeline
+        # =========================================================================
 
     def analyze_workload_patterns(
         self,
@@ -1907,7 +1904,7 @@ class WorkloadSignalProcessor:
         if "changepoint" in analysis_types:
             result["changepoint_analysis"] = self.analyze_schedule_changepoints(ts)
 
-        # Generate recommendations based on analysis
+            # Generate recommendations based on analysis
         result["recommendations"] = self._generate_recommendations(result)
 
         logger.info(
@@ -1935,7 +1932,7 @@ class WorkloadSignalProcessor:
                 elif v["severity"] == "warning":
                     recommendations.append(f"Warning: {v['description']}")
 
-        # Check STA/LTA anomalies
+                    # Check STA/LTA anomalies
         sta_lta = result.get("sta_lta_analysis")
         if sta_lta:
             anomalies = sta_lta.get("anomalies", [])
@@ -1946,7 +1943,7 @@ class WorkloadSignalProcessor:
                     f"Review dates: {', '.join(a['date'] for a in high_severity[:3])}"
                 )
 
-        # Check spectral decomposition
+                # Check spectral decomposition
         spectral = result.get("spectral_decomposition")
         if spectral:
             stats = spectral.get("statistics", {})
@@ -1961,7 +1958,7 @@ class WorkloadSignalProcessor:
                     "Check if workload is consistently increasing or decreasing."
                 )
 
-        # Check harmonic analysis
+                # Check harmonic analysis
         harmonic = result.get("harmonic_analysis")
         if harmonic:
             resonances = harmonic.get("resonances", [])
@@ -1972,7 +1969,7 @@ class WorkloadSignalProcessor:
                     f"schedule patterns. These may cause irregular workload fluctuations."
                 )
 
-        # Check change point analysis
+                # Check change point analysis
         changepoint = result.get("changepoint_analysis")
         if changepoint:
             # Combine change points from all methods
@@ -1980,7 +1977,7 @@ class WorkloadSignalProcessor:
             for method_name, method_result in changepoint.items():
                 all_cps.extend(method_result.get("change_points", []))
 
-            # High-confidence change points
+                # High-confidence change points
             high_conf_cps = [cp for cp in all_cps if cp.get("confidence", 0) > 0.7]
             if high_conf_cps:
                 recommendations.append(
@@ -1989,7 +1986,7 @@ class WorkloadSignalProcessor:
                     f"{', '.join(cp.get('timestamp', 'unknown')[:10] for cp in high_conf_cps[:3])}"
                 )
 
-            # Mean shift warnings
+                # Mean shift warnings
             mean_shifts = [
                 cp
                 for cp in all_cps
@@ -2010,9 +2007,9 @@ class WorkloadSignalProcessor:
 
         return recommendations
 
-    # =========================================================================
-    # Export Methods
-    # =========================================================================
+        # =========================================================================
+        # Export Methods
+        # =========================================================================
 
     def export_to_holographic_format(
         self,
@@ -2043,7 +2040,7 @@ class WorkloadSignalProcessor:
         if result.get("adaptive_filtered"):
             time_domain["filtered"] = result["adaptive_filtered"]["filtered_values"]
 
-        # Frequency domain data
+            # Frequency domain data
         frequency_domain = {}
         if result.get("fft_analysis"):
             fft = result["fft_analysis"]
@@ -2054,7 +2051,7 @@ class WorkloadSignalProcessor:
                 "dominant_peaks": fft["dominant_frequencies"],
             }
 
-        # Wavelet domain data
+            # Wavelet domain data
         wavelet_domain = {}
         if result.get("cwt_analysis"):
             cwt = result["cwt_analysis"]
@@ -2072,7 +2069,7 @@ class WorkloadSignalProcessor:
                 "frequency_bands": dwt["frequency_bands"],
             }
 
-        # Anomalies
+            # Anomalies
         anomalies = []
         if result.get("sta_lta_analysis"):
             for a in result["sta_lta_analysis"].get("anomalies", []):
@@ -2086,7 +2083,7 @@ class WorkloadSignalProcessor:
                     }
                 )
 
-        # Add constraint violations
+                # Add constraint violations
         for v in result.get("constraint_violations", []):
             anomalies.append(
                 {
@@ -2100,7 +2097,7 @@ class WorkloadSignalProcessor:
                 }
             )
 
-        # Add change points
+            # Add change points
         if result.get("changepoint_analysis"):
             for method_name, method_result in result["changepoint_analysis"].items():
                 for cp in method_result.get("change_points", []):
@@ -2115,7 +2112,7 @@ class WorkloadSignalProcessor:
                         }
                     )
 
-        # Metadata
+                    # Metadata
         metadata = {
             "analysis_id": result["analysis_id"],
             "generated_at": result["generated_at"],
@@ -2131,7 +2128,7 @@ class WorkloadSignalProcessor:
             time_domain["residual"] = spectral["residual"]
             metadata["spectral_statistics"] = spectral["statistics"]
 
-        # Add harmonic analysis if available
+            # Add harmonic analysis if available
         if result.get("harmonic_analysis"):
             harmonic = result["harmonic_analysis"]
             frequency_domain["harmonics"] = harmonic.get("harmonics", [])
@@ -2151,10 +2148,9 @@ class WorkloadSignalProcessor:
             "metadata": metadata,
         }
 
-
-# =============================================================================
-# Convenience Functions
-# =============================================================================
+        # =============================================================================
+        # Convenience Functions
+        # =============================================================================
 
 
 def analyze_resident_workload(

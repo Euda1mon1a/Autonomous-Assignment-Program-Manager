@@ -28,7 +28,7 @@ from app.models.schedule_run import ScheduleRun
 class ReportGenerator:
     """Generate various types of schedule reports."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize report generator.
 
@@ -55,7 +55,7 @@ class ReportGenerator:
         else:
             end_date = date(year, month + 1, 1) - timedelta(days=1)
 
-        # Get blocks and assignments
+            # Get blocks and assignments
         blocks = (
             self.db.query(Block)
             .filter(and_(Block.date >= start_date, Block.date <= end_date))
@@ -166,7 +166,7 @@ class ReportGenerator:
         if not person:
             return {"error": "Person not found"}
 
-        # Get assignments
+            # Get assignments
         assignments = (
             self.db.query(Assignment)
             .join(Block)
@@ -200,7 +200,7 @@ class ReportGenerator:
         for assignment in assignments:
             rotation_counts[assignment.activity_name] += 1
 
-        # Calculate workload
+            # Calculate workload
         target_blocks = person.target_clinical_blocks or 48
         actual_blocks = len(assignments)
         utilization = (actual_blocks / target_blocks * 100) if target_blocks > 0 else 0
@@ -327,7 +327,7 @@ class ReportGenerator:
 
             blocks_checked.add(assignment.block_id)
 
-        # Recommendations
+            # Recommendations
         recommendations = []
         if total_violations > 0:
             recommendations.append(f"Address {total_violations} ACGME violations")
@@ -423,7 +423,7 @@ class ReportGenerator:
                 }
             )
 
-        # Calculate fairness
+            # Calculate fairness
         assignment_dicts = [
             {"person_id": item["person_id"]}
             for item in workload_data

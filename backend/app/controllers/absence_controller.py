@@ -26,7 +26,7 @@ from app.services.absence_service import AbsenceService
 class AbsenceController:
     """Controller for absence endpoints."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.service = AbsenceService(db)
         self.person_repo = PersonRepository(db)
@@ -140,9 +140,9 @@ class AbsenceController:
                 detail=result["error"],
             )
 
-    # =========================================================================
-    # Bulk Operations
-    # =========================================================================
+            # =========================================================================
+            # Bulk Operations
+            # =========================================================================
 
     def preview_bulk_absences(self, bulk_data: AbsenceBulkCreate) -> AbsenceBulkPreview:
         """Preview bulk absences before applying.
@@ -171,9 +171,9 @@ class AbsenceController:
         """
         return self.service.apply_bulk_absences(bulk_data)
 
-    # =========================================================================
-    # Away-From-Program Tracking
-    # =========================================================================
+        # =========================================================================
+        # Away-From-Program Tracking
+        # =========================================================================
 
     def get_away_from_program_summary(
         self,
@@ -200,12 +200,12 @@ class AbsenceController:
                 detail="Person not found",
             )
 
-        # Get academic year start date
+            # Get academic year start date
         academic_year_start = None
         if academic_year:
             academic_year_start = date(academic_year, 7, 1)
 
-        # Get summary from service
+            # Get summary from service
         summary = self.service.get_away_from_program_summary(
             person_id=person_id,
             academic_year_start=academic_year_start,
@@ -293,7 +293,7 @@ class AbsenceController:
         else:
             academic_year_start, _ = self.service.get_academic_year_bounds()
 
-        # Get all residents
+            # Get all residents
         residents = self.person_repo.list_residents()
 
         summaries = []

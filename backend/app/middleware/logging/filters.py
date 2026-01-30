@@ -77,7 +77,7 @@ class SensitiveDataFilter:
         show_prefix_chars: int = 0,
         show_suffix_chars: int = 0,
         custom_patterns: list[tuple[str, str]] | None = None,
-    ):
+    ) -> None:
         """
         Initialize sensitive data filter.
 
@@ -116,16 +116,16 @@ class SensitiveDataFilter:
         if not value:
             return value
 
-        # For known sensitive fields, use configured masking strategy
+            # For known sensitive fields, use configured masking strategy
         if field_name and field_name.lower() in self.sensitive_fields:
             return self._partial_mask(value)
 
-        # Apply pattern-based masking
+            # Apply pattern-based masking
         masked = value
         for pattern, replacement in self.SENSITIVE_PATTERNS:
             masked = pattern.sub(replacement, masked)
 
-        # Apply custom patterns
+            # Apply custom patterns
         for pattern, replacement in self.custom_patterns:
             masked = pattern.sub(replacement, masked)
 
@@ -145,7 +145,7 @@ class SensitiveDataFilter:
         if length <= (self.show_prefix_chars + self.show_suffix_chars):
             return self.mask_char * min(length, 8)
 
-        # Partial mask
+            # Partial mask
         prefix = value[: self.show_prefix_chars] if self.show_prefix_chars > 0 else ""
         suffix = value[-self.show_suffix_chars :] if self.show_suffix_chars > 0 else ""
         mask_length = length - self.show_prefix_chars - self.show_suffix_chars
@@ -264,8 +264,9 @@ class SensitiveDataFilter:
 
         return True
 
+        # Global filter instance with sensible defaults
 
-# Global filter instance with sensible defaults
+
 default_filter = SensitiveDataFilter(
     show_prefix_chars=0,  # Full masking by default
     show_suffix_chars=0,

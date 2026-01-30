@@ -26,7 +26,7 @@ class HealthMonitor:
     MAX_LATENCY_SECONDS = 60.0
     MAX_DEAD_LETTER_SIZE = 100
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize health monitor."""
         self._last_check = datetime.utcnow()
         self._health_status = "healthy"
@@ -50,14 +50,14 @@ class HealthMonitor:
         if queue_size > self.MAX_QUEUE_SIZE:
             issues.append(f"Queue size critical: {queue_size}")
 
-        # Check retry/dead letter
+            # Check retry/dead letter
         retry_count = await engine.retry_handler.get_pending_count()
         dead_letter_count = await engine.retry_handler.get_dead_letter_count()
 
         if dead_letter_count > self.MAX_DEAD_LETTER_SIZE:
             issues.append(f"Dead letter queue critical: {dead_letter_count}")
 
-        # Determine overall status
+            # Determine overall status
         if issues:
             self._health_status = "unhealthy"
             self._issues = issues

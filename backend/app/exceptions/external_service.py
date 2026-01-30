@@ -19,7 +19,7 @@ class ExternalServiceError(AppException):
         service_name: str | None = None,
         status_code: int = 502,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize external service error.
 
         Args:
@@ -42,7 +42,7 @@ class ServiceUnavailableError(ExternalServiceError):
         service_name: str | None = None,
         retry_after: int | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize service unavailable error.
 
         Args:
@@ -69,7 +69,7 @@ class ServiceTimeoutError(ExternalServiceError):
         service_name: str | None = None,
         timeout_seconds: int | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize service timeout error.
 
         Args:
@@ -98,7 +98,7 @@ class ExternalAPIError(ExternalServiceError):
         api_error_code: str | None = None,
         api_error_message: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize external API error.
 
         Args:
@@ -129,7 +129,7 @@ class EmailServiceError(ExternalServiceError):
         recipient: str | None = None,
         error_reason: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize email service error.
 
         Args:
@@ -157,7 +157,7 @@ class SMSServiceError(ExternalServiceError):
         phone_number: str | None = None,
         error_reason: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize SMS service error.
 
         Args:
@@ -185,7 +185,7 @@ class NotificationServiceError(ExternalServiceError):
         notification_type: str | None = None,
         channel: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize notification service error.
 
         Args:
@@ -213,7 +213,7 @@ class CloudStorageError(ExternalServiceError):
         operation: str | None = None,
         file_path: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize cloud storage error.
 
         Args:
@@ -241,7 +241,7 @@ class PaymentServiceError(ExternalServiceError):
         transaction_id: str | None = None,
         error_code: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize payment service error.
 
         Args:
@@ -269,7 +269,7 @@ class WebhookDeliveryError(ExternalServiceError):
         webhook_url: str | None = None,
         attempt_count: int | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize webhook delivery error.
 
         Args:

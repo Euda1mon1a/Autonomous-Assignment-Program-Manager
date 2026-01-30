@@ -114,7 +114,7 @@ class TradeOffAnalyzer:
     objective in terms of degradation in others.
     """
 
-    def __init__(self, objectives: list[ObjectiveConfig]):
+    def __init__(self, objectives: list[ObjectiveConfig]) -> None:
         """
         Initialize trade-off analyzer.
 
@@ -167,7 +167,7 @@ class TradeOffAnalyzer:
                 elif diff > 0:
                     degradations.append((obj.name, diff, abs(norm_diff)))
 
-        # Create trade-off pairs
+                    # Create trade-off pairs
         trade_offs = []
         for imp_name, imp_val, imp_norm in improvements:
             for deg_name, deg_val, deg_norm in degradations:
@@ -210,7 +210,7 @@ class TradeOffAnalyzer:
         if obj_config is None:
             return []
 
-        # Find current best in objective
+            # Find current best in objective
         solutions = list(frontier.solutions)
         if obj_config.direction == ObjectiveDirection.MAXIMIZE:
             solutions.sort(
@@ -300,7 +300,7 @@ class SolutionExplorer:
         self,
         frontier: ParetoFrontier,
         objectives: list[ObjectiveConfig],
-    ):
+    ) -> None:
         """
         Initialize solution explorer.
 
@@ -421,7 +421,7 @@ class SolutionExplorer:
             if not better:
                 return None
 
-            # Return nearest better solution
+                # Return nearest better solution
             return min(better, key=lambda s: self._calculate_distance(current, s))
 
         elif direction == NavigationDirection.AWAY_FROM_OBJECTIVE and objective:
@@ -477,7 +477,7 @@ class SolutionExplorer:
                     candidates, key=lambda s: self._calculate_distance(current, s)
                 )
 
-            # Move toward the extreme
+                # Move toward the extreme
             return min(
                 candidates,
                 key=lambda s: self._calculate_distance(s, nearest_extreme),
@@ -592,7 +592,7 @@ class SolutionExplorer:
                     val_b = sol_b.objective_values.get(obj.name, 0.0)
                     differences[obj.name] = val_a - val_b
 
-                # Recommend based on dominance
+                    # Recommend based on dominance
                 if dominance == DominanceRelation.DOMINATES:
                     recommended = sol_a
                     reason = f"{sol_a.id} dominates {sol_b.id}"
@@ -625,7 +625,7 @@ class PreferenceElicitor:
     Learns weights and reference points from comparisons and selections.
     """
 
-    def __init__(self, objectives: list[ObjectiveConfig]):
+    def __init__(self, objectives: list[ObjectiveConfig]) -> None:
         """
         Initialize preference elicitor.
 
@@ -689,7 +689,7 @@ class PreferenceElicitor:
                 elif val_p > val_o:
                     self.inferred_weights[obj.name] *= 0.9
 
-        # Normalize weights
+                    # Normalize weights
         total = sum(self.inferred_weights.values())
         if total > 0:
             self.inferred_weights = {
@@ -762,7 +762,7 @@ class WhatIfAnalyzer:
         self,
         objectives: list[ObjectiveConfig],
         evaluate_fn: Callable[[Solution, dict[str, float]], Solution],
-    ):
+    ) -> None:
         """
         Initialize what-if analyzer.
 
@@ -795,12 +795,12 @@ class WhatIfAnalyzer:
             modified = self.evaluate_fn(sol, scenario.objective_adjustments)
             modified_solutions.append(modified)
 
-        # Create modified frontier
+            # Create modified frontier
         modified_frontier = ParetoFrontier(objectives=self.objectives)
         for sol in modified_solutions:
             modified_frontier.add(sol)
 
-        # Calculate metrics
+            # Calculate metrics
         orig_hv = self.hv_indicator.calculate(original_frontier)
         mod_hv = self.hv_indicator.calculate(modified_frontier)
         hv_change = mod_hv - orig_hv
@@ -844,7 +844,7 @@ class DecisionMaker:
         self,
         frontier: ParetoFrontier,
         objectives: list[ObjectiveConfig],
-    ):
+    ) -> None:
         """
         Initialize decision maker.
 
@@ -897,7 +897,7 @@ class DecisionMaker:
         if not self.preference_elicitor.selections:
             return self.frontier.get_knee_solution()
 
-        # Use learned preferences
+            # Use learned preferences
         articulator = self.preference_elicitor.get_preference_model()
         ranked = articulator.rank_solutions(list(self.frontier.solutions))
 

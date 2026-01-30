@@ -75,7 +75,7 @@ class ParetoFront:
                 if existing.fitness.dominates(individual.fitness):
                     return  # Dominated, don't add
 
-        # Remove any existing members dominated by new individual
+                    # Remove any existing members dominated by new individual
         self.individuals = [
             ind
             for ind in self.individuals
@@ -131,7 +131,7 @@ class ParetoFront:
         if len(self.individuals) < 3:
             return self.individuals[0] if self.individuals else None
 
-        # Use coverage and fairness for 2D knee detection
+            # Use coverage and fairness for 2D knee detection
         points = [
             (ind.fitness.coverage, ind.fitness.fairness)
             for ind in self.individuals
@@ -141,7 +141,7 @@ class ParetoFront:
         if len(points) < 3:
             return self.individuals[0]
 
-        # Sort by first objective
+            # Sort by first objective
         sorted_indices = sorted(range(len(points)), key=lambda i: points[i][0])
 
         # Find point with maximum perpendicular distance from line
@@ -179,7 +179,7 @@ class ParetoFront:
         if len(self.individuals) < 2:
             return 0.0
 
-        # Get objective arrays
+            # Get objective arrays
         objectives = np.array(
             [ind.fitness.to_array() for ind in self.individuals if ind.fitness]
         )
@@ -187,7 +187,7 @@ class ParetoFront:
         if len(objectives) < 2:
             return 0.0
 
-        # Compute range in each objective
+            # Compute range in each objective
         ranges = np.max(objectives, axis=0) - np.min(objectives, axis=0)
         return float(np.mean(ranges))
 
@@ -253,11 +253,11 @@ class CrowdingDistance:
                 "continuity",
             ]
 
-        # Initialize distances
+            # Initialize distances
         for ind in individuals:
             ind.crowding_distance = 0.0
 
-        # Compute for each objective
+            # Compute for each objective
         for obj in objectives:
             # Sort by this objective
             sorted_inds = sorted(
@@ -280,7 +280,7 @@ class CrowdingDistance:
             if obj_range < 1e-10:
                 continue
 
-            # Compute distances for middle points
+                # Compute distances for middle points
             for i in range(1, len(sorted_inds) - 1):
                 if not math.isinf(sorted_inds[i].crowding_distance):
                     if sorted_inds[i - 1].fitness and sorted_inds[i + 1].fitness:
@@ -331,7 +331,7 @@ class NSGA2Solver(BioInspiredSolver):
         config: NSGA2Config | None = None,
         seed: int | None = None,
         objectives: list[str] | None = None,
-    ):
+    ) -> None:
         """
         Initialize NSGA-II solver.
 
@@ -414,7 +414,7 @@ class NSGA2Solver(BioInspiredSolver):
                 logger.info(f"NSGA-II timeout at generation {generation}")
                 break
 
-            # Create offspring population
+                # Create offspring population
             offspring = self._create_offspring(context, generation)
 
             # Combine parent and offspring
@@ -454,7 +454,7 @@ class NSGA2Solver(BioInspiredSolver):
                 logger.info(f"NSGA-II converged at generation {generation}")
                 break
 
-            # Log progress
+                # Log progress
             if generation % NSGA2_LOG_INTERVAL == 0:
                 logger.info(
                     f"NSGA-II gen {generation}: fronts={len(self.fronts)}, "
@@ -462,7 +462,7 @@ class NSGA2Solver(BioInspiredSolver):
                     f"hypervolume={stats.hypervolume:.4f}"
                 )
 
-        # Return knee point of final Pareto front
+                # Return knee point of final Pareto front
         final_pareto = ParetoFront(
             individuals=self.fronts[0] if self.fronts else [],
             generation=len(self.evolution_history),
@@ -504,12 +504,12 @@ class NSGA2Solver(BioInspiredSolver):
                     elif ind_j.fitness.dominates(ind_i.fitness):
                         domination_count[i] += 1
 
-            # If not dominated by anyone, it's in front 0
+                        # If not dominated by anyone, it's in front 0
             if domination_count[i] == 0:
                 population[i].rank = 0
                 fronts[0].append(population[i])
 
-        # Build subsequent fronts
+                # Build subsequent fronts
         current_front = 0
         while fronts[current_front]:
             next_front = []
@@ -523,7 +523,7 @@ class NSGA2Solver(BioInspiredSolver):
             current_front += 1
             fronts.append(next_front)
 
-        # Remove empty last front
+            # Remove empty last front
         if not fronts[-1]:
             fronts.pop()
 
@@ -668,7 +668,7 @@ class NSGA2Solver(BioInspiredSolver):
         if len(self.evolution_history) < self.config.early_stop_generations:
             return False
 
-        # Check hypervolume stability
+            # Check hypervolume stability
         recent_hv = [
             s.hypervolume
             for s in self.evolution_history[-self.config.early_stop_generations :]

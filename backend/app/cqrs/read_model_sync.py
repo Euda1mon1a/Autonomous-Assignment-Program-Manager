@@ -292,8 +292,9 @@ class SyncPriority(str, Enum):
     NORMAL = "normal"
     LOW = "low"
 
+    # Thresholds for sync lag warnings
 
-# Thresholds for sync lag warnings
+
 SYNC_LAG_WARNING_SECONDS = 60  # 1 minute
 SYNC_LAG_CRITICAL_SECONDS = 300  # 5 minutes
 
@@ -425,10 +426,9 @@ class BatchProcessingStats:
     started_at: datetime = field(default_factory=datetime.utcnow)
     completed_at: datetime | None = None
 
-
-# =============================================================================
-# Read Model Sync Service
-# =============================================================================
+    # =============================================================================
+    # Read Model Sync Service
+    # =============================================================================
 
 
 class ReadModelSyncService:
@@ -473,7 +473,7 @@ class ReadModelSyncService:
         conflict_resolution_strategy: ConflictResolutionStrategy = (
             ConflictResolutionStrategy.LAST_WRITE_WINS
         ),
-    ):
+    ) -> None:
         """
         Initialize read model sync service.
 
@@ -526,9 +526,9 @@ class ReadModelSyncService:
 
         logger.info("Read model sync service initialized")
 
-    # =========================================================================
-    # Projector Registration
-    # =========================================================================
+        # =========================================================================
+        # Projector Registration
+        # =========================================================================
 
     async def register_projector(
         self,
@@ -575,18 +575,18 @@ class ReadModelSyncService:
             logger.warning(f"Projector '{name}' not found for unregistration")
             return
 
-        # Unsubscribe from events
+            # Unsubscribe from events
         if name in self._subscription_ids:
             self.event_bus.unsubscribe(self._subscription_ids[name])
             del self._subscription_ids[name]
 
-        # Remove projector
+            # Remove projector
         del self._projectors[name]
         logger.info(f"Unregistered projector: {name}")
 
-    # =========================================================================
-    # Real-time Event Subscription
-    # =========================================================================
+        # =========================================================================
+        # Real-time Event Subscription
+        # =========================================================================
 
     async def _subscribe_to_events(self, projector_name: str) -> None:
         """
@@ -609,7 +609,8 @@ class ReadModelSyncService:
                 # Process immediately
                 await self._process_single_event(projector_name, event)
 
-        # Subscribe to all events (projector will filter)
+                # Subscribe to all events (projector will filter)
+
         subscription_id = self.event_bus.subscribe(
             event_type="*",  # Subscribe to all event types
             handler=event_handler,
@@ -660,15 +661,15 @@ class ReadModelSyncService:
             except asyncio.CancelledError:
                 pass
 
-        # Process any remaining events in batch
+                # Process any remaining events in batch
         if self._event_batch:
             await self._flush_batch()
 
         logger.info("Real-time sync stopped")
 
-    # =========================================================================
-    # Batch Event Processing
-    # =========================================================================
+        # =========================================================================
+        # Batch Event Processing
+        # =========================================================================
 
     async def _add_to_batch(self, projector_name: str, event: DomainEvent) -> None:
         """
@@ -716,7 +717,7 @@ class ReadModelSyncService:
             for projector_name, event in self._event_batch:
                 events_by_projector[projector_name].append(event)
 
-            # Process each projector's events
+                # Process each projector's events
             for projector_name, events in events_by_projector.items():
                 for event in events:
                     try:
@@ -734,7 +735,7 @@ class ReadModelSyncService:
                             exc_info=True,
                         )
 
-            # Clear batch
+                        # Clear batch
             self._event_batch.clear()
 
             # Update stats
@@ -783,14 +784,14 @@ class ReadModelSyncService:
             if projector_name in self._paused_projectors:
                 continue
 
-            # Get starting sequence
+                # Get starting sequence
             start_sequence = from_sequence
             if start_sequence is None and projector_name in self._checkpoints:
                 start_sequence = (
                     self._checkpoints[projector_name].last_processed_sequence + 1
                 )
 
-            # Fetch events from store
+                # Fetch events from store
             try:
                 events = await self.event_store.get_events(
                     from_version=start_sequence,
@@ -804,7 +805,7 @@ class ReadModelSyncService:
                 )
                 continue
 
-            # Process events
+                # Process events
             for event in events:
                 try:
                     await self._process_single_event(projector_name, event)
@@ -821,9 +822,9 @@ class ReadModelSyncService:
 
         return events_processed
 
-    # =========================================================================
-    # Single Event Processing
-    # =========================================================================
+        # =========================================================================
+        # Single Event Processing
+        # =========================================================================
 
     async def _process_single_event(
         self, projector_name: str, event: DomainEvent
@@ -871,7 +872,7 @@ class ReadModelSyncService:
                     event.metadata.event_id,
                 )
 
-            # Conflict detection
+                # Conflict detection
             if self.enable_conflict_detection:
                 await self._check_consistency(projector_name, event)
 
@@ -904,9 +905,9 @@ class ReadModelSyncService:
             # Re-raise for retry logic
             raise
 
-    # =========================================================================
-    # Consistency Verification
-    # =========================================================================
+            # =========================================================================
+            # Consistency Verification
+            # =========================================================================
 
     async def _check_consistency(self, projector_name: str, event: DomainEvent) -> None:
         """
@@ -937,7 +938,7 @@ class ReadModelSyncService:
         if not aggregate_id:
             return
 
-        # Check consistency between write and read state
+            # Check consistency between write and read state
         is_consistent, conflict = await self.verify_consistency(
             projector_name, aggregate_id
         )
@@ -991,8 +992,8 @@ class ReadModelSyncService:
         if not sync_state:
             return True, None
 
-        # Check if there are unprocessed events for this aggregate
-        # by comparing the last synced sequence with the event store
+            # Check if there are unprocessed events for this aggregate
+            # by comparing the last synced sequence with the event store
         try:
             # Get latest events for this aggregate from event store
             event_store = await get_event_store()
@@ -1022,7 +1023,7 @@ class ReadModelSyncService:
                     )
                     return False, conflict
 
-            # Check metrics for processing errors
+                    # Check metrics for processing errors
             metrics = self._metrics.get(projector_name)
             if metrics and metrics.events_processed_failure > 0:
                 error_rate = metrics.events_processed_failure / max(
@@ -1051,9 +1052,9 @@ class ReadModelSyncService:
             # On error, assume consistent to avoid false positives
             return True, None
 
-    # =========================================================================
-    # Conflict Resolution
-    # =========================================================================
+            # =========================================================================
+            # Conflict Resolution
+            # =========================================================================
 
     async def resolve_conflict(
         self,
@@ -1092,14 +1093,14 @@ class ReadModelSyncService:
         elif strategy == ConflictResolutionStrategy.MANUAL:
             if not resolved_by:
                 raise ValidationError("Manual resolution requires 'resolved_by'")
-            # Wait for manual resolution
+                # Wait for manual resolution
             logger.info(f"Conflict {conflict.conflict_id} marked for manual resolution")
         elif strategy == ConflictResolutionStrategy.REJECT:
             raise ConflictError(f"Conflict rejected: {conflict.conflict_type}")
         elif strategy == ConflictResolutionStrategy.MERGE:
             await self._merge_values(conflict)
 
-        # Mark as resolved
+            # Mark as resolved
         conflict.resolved = True
         conflict.resolved_at = datetime.utcnow()
         conflict.resolved_by = resolved_by
@@ -1114,9 +1115,9 @@ class ReadModelSyncService:
         # Implementation would merge the values intelligently
         logger.debug(f"Merged values for conflict: {conflict.conflict_id}")
 
-    # =========================================================================
-    # Checkpointing and Resume
-    # =========================================================================
+        # =========================================================================
+        # Checkpointing and Resume
+        # =========================================================================
 
     def _update_checkpoint(
         self, projector_name: str, sequence: int, event_id: str
@@ -1182,9 +1183,9 @@ class ReadModelSyncService:
         # Implementation would load from database
         return self._checkpoints.get(projector_name)
 
-    # =========================================================================
-    # Sync Control
-    # =========================================================================
+        # =========================================================================
+        # Sync Control
+        # =========================================================================
 
     async def pause_sync(self, projector_name: str) -> None:
         """
@@ -1250,7 +1251,7 @@ class ReadModelSyncService:
         if projector_name in self._checkpoints:
             del self._checkpoints[projector_name]
 
-        # Reset metrics
+            # Reset metrics
         self._metrics[projector_name] = SyncMetrics(read_model_name=projector_name)
 
         # Replay all events
@@ -1266,9 +1267,9 @@ class ReadModelSyncService:
 
         return events_replayed
 
-    # =========================================================================
-    # Metrics and Monitoring
-    # =========================================================================
+        # =========================================================================
+        # Metrics and Monitoring
+        # =========================================================================
 
     def get_sync_metrics(self, projector_name: str) -> SyncMetrics | None:
         """
@@ -1374,7 +1375,7 @@ class ReadModelSyncService:
                     }
                 )
 
-            # Check for critical lag
+                # Check for critical lag
             if metrics.current_sync_lag_seconds >= SYNC_LAG_CRITICAL_SECONDS:
                 health["healthy"] = False
                 health["issues"].append(
@@ -1385,7 +1386,7 @@ class ReadModelSyncService:
                     }
                 )
 
-        # Check for unresolved conflicts
+                # Check for unresolved conflicts
         unresolved = [c for c in self._conflicts if not c.resolved]
         if len(unresolved) > 10:  # Threshold
             health["healthy"] = False
@@ -1398,10 +1399,9 @@ class ReadModelSyncService:
 
         return health
 
-
-# =============================================================================
-# Convenience Functions
-# =============================================================================
+        # =============================================================================
+        # Convenience Functions
+        # =============================================================================
 
 
 async def create_sync_service(

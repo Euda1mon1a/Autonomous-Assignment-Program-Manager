@@ -59,7 +59,7 @@ class TenantContext:
         tenant_id: UUID | None = None,
         tenant_slug: str | None = None,
         bypass: bool = False,
-    ):
+    ) -> None:
         """
         Initialize tenant context.
 
@@ -82,7 +82,7 @@ class TenantContext:
         self._bypass_token = _bypass_tenant_filter.set(self.bypass)
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit the context and restore previous values."""
         if self._tenant_id_token is not None:
             _tenant_id.reset(self._tenant_id_token)
@@ -304,7 +304,7 @@ async def require_admin_for_cross_tenant(
             detail="Insufficient permissions for cross-tenant operations",
         )
 
-    # Check if user has permission
+        # Check if user has permission
     has_permission = await check_user_permission(
         db=db, user_id=current_user_id, resource="tenant", action="admin"
     )
@@ -345,12 +345,12 @@ async def check_user_permission(
             logger.warning(f"User not found: {user_id}")
             return False
 
-        # Check if user is active
+            # Check if user is active
         if not user_obj.is_active:
             logger.warning(f"Inactive user attempted access: {user_id}")
             return False
 
-        # Check role-based permissions
+            # Check role-based permissions
         role_permissions = _get_role_permissions(user_obj.role)
 
         # Check if role has permission for this resource/action

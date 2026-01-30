@@ -45,7 +45,7 @@ class AcceptHeader:
     Format: "type1;q=0.9, type2, type3;q=0.5"
     """
 
-    def __init__(self, header_value: str):
+    def __init__(self, header_value: str) -> None:
         """
         Initialize Accept header parser.
 
@@ -67,13 +67,13 @@ class AcceptHeader:
         if not self.header_value:
             return media_types
 
-        # Split by comma to get individual media types
+            # Split by comma to get individual media types
         for part in self.header_value.split(","):
             part = part.strip()
             if not part:
                 continue
 
-            # Split by semicolon to separate media type from parameters
+                # Split by semicolon to separate media type from parameters
             components = [c.strip() for c in part.split(";")]
             media_type = components[0].lower()
 
@@ -94,7 +94,7 @@ class AcceptHeader:
 
             media_types.append((media_type, quality))
 
-        # Sort by quality (highest first), then by specificity
+            # Sort by quality (highest first), then by specificity
         media_types.sort(key=lambda x: (-x[1], self._specificity(x[0])))
 
         return media_types
@@ -121,11 +121,11 @@ class AcceptHeader:
         if type_part == "*" and subtype_part == "*":
             return 0
 
-        # type/* is more specific
+            # type/* is more specific
         if subtype_part == "*":
             return 1
 
-        # type/subtype is most specific
+            # type/subtype is most specific
         return 2
 
     def get_preferred_types(self) -> list[str]:
@@ -154,11 +154,11 @@ class AcceptHeader:
             if quality == 0:
                 continue
 
-            # Exact match
+                # Exact match
             if accepted_type == media_type_lower:
                 return True
 
-            # Wildcard matching
+                # Wildcard matching
             if "/" in accepted_type:
                 type_part, subtype_part = accepted_type.split("/", 1)
 
@@ -188,11 +188,11 @@ class AcceptHeader:
             if quality == 0:
                 continue
 
-            # Check for exact match
+                # Check for exact match
             if accepted_type in available_types:
                 return accepted_type
 
-            # Check for wildcard match
+                # Check for wildcard match
             if "/" in accepted_type:
                 type_part, subtype_part = accepted_type.split("/", 1)
 
@@ -233,7 +233,7 @@ class ContentNegotiationMiddleware(BaseHTTPMiddleware):
         default_content_type: str = "application/json",
         parser_registry: ParserRegistry | None = None,
         serializer_registry: SerializerRegistry | None = None,
-    ):
+    ) -> None:
         """
         Initialize content negotiation middleware.
 
@@ -270,7 +270,7 @@ class ContentNegotiationMiddleware(BaseHTTPMiddleware):
         if request.method in ("POST", "PUT", "PATCH"):
             await self._parse_request_body(request)
 
-        # Process request
+            # Process request
         response = await call_next(request)
 
         # Negotiate response content type
@@ -278,7 +278,7 @@ class ContentNegotiationMiddleware(BaseHTTPMiddleware):
 
         return response
 
-    async def _parse_request_body(self, request: Request):
+    async def _parse_request_body(self, request: Request) -> None:
         """
         Parse request body based on Content-Type header.
 
@@ -292,7 +292,7 @@ class ContentNegotiationMiddleware(BaseHTTPMiddleware):
         if not content_type:
             return
 
-        # Get parser for content type
+            # Get parser for content type
         parser = self.parser_registry.get_parser(content_type)
 
         if not parser:
@@ -306,7 +306,7 @@ class ContentNegotiationMiddleware(BaseHTTPMiddleware):
             if not body:
                 return
 
-            # Parse body
+                # Parse body
             parsed_data = parser.parse(body)
 
             # Store in request state
@@ -338,16 +338,16 @@ class ContentNegotiationMiddleware(BaseHTTPMiddleware):
         if "content-encoding" in response.headers:
             return response
 
-        # Skip negotiation if response has no body
+            # Skip negotiation if response has no body
         if not hasattr(response, "body") or not response.body:
             return response
 
-        # Skip negotiation for non-serializable responses
+            # Skip negotiation for non-serializable responses
         current_content_type = response.headers.get("content-type", "")
         if not self._should_negotiate(current_content_type):
             return response
 
-        # Parse Accept header
+            # Parse Accept header
         accept_header = request.headers.get("accept", "")
         accept = AcceptHeader(accept_header)
 
@@ -369,7 +369,7 @@ class ContentNegotiationMiddleware(BaseHTTPMiddleware):
                 # Fall back to default anyway (better than 406)
             best_match = self.default_content_type
 
-        # Get serializer
+            # Get serializer
         serializer = self.serializer_registry.get_serializer(best_match)
 
         if not serializer:
@@ -377,7 +377,7 @@ class ContentNegotiationMiddleware(BaseHTTPMiddleware):
             logger.error(f"Serializer not found for type: {best_match}")
             return response
 
-        # Skip if already in correct format
+            # Skip if already in correct format
         if current_content_type.startswith(best_match):
             return response
 
@@ -432,7 +432,7 @@ class ContentNegotiationMiddleware(BaseHTTPMiddleware):
         if not content_type:
             return True
 
-        # Only negotiate for JSON responses
+            # Only negotiate for JSON responses
         negotiable_types = [
             "application/json",
             "text/json",
@@ -453,7 +453,7 @@ class ContentNegotiationStats:
     - Negotiation failures
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize content negotiation statistics."""
         self.total_requests = 0
         self.request_content_types: dict[str, int] = {}
@@ -462,7 +462,7 @@ class ContentNegotiationStats:
         self.parsing_errors = 0
         self.serialization_errors = 0
 
-    def record_request(self, content_type: str | None):
+    def record_request(self, content_type: str | None) -> None:
         """
         Record incoming request.
 
@@ -476,7 +476,7 @@ class ContentNegotiationStats:
                 self.request_content_types.get(base_type, 0) + 1
             )
 
-    def record_response(self, content_type: str):
+    def record_response(self, content_type: str) -> None:
         """
         Record response content type.
 
@@ -488,15 +488,15 @@ class ContentNegotiationStats:
             self.response_content_types.get(base_type, 0) + 1
         )
 
-    def record_negotiation_failure(self):
+    def record_negotiation_failure(self) -> None:
         """Record failed content negotiation."""
         self.negotiation_failures += 1
 
-    def record_parsing_error(self):
+    def record_parsing_error(self) -> None:
         """Record request parsing error."""
         self.parsing_errors += 1
 
-    def record_serialization_error(self):
+    def record_serialization_error(self) -> None:
         """Record response serialization error."""
         self.serialization_errors += 1
 
@@ -516,6 +516,6 @@ class ContentNegotiationStats:
             "serialization_errors": self.serialization_errors,
         }
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset all statistics."""
         self.__init__()

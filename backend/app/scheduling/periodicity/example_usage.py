@@ -26,7 +26,7 @@ from app.scheduling.periodicity import (
 )
 
 
-async def example_basic_usage():
+async def example_basic_usage() -> None:
     """
     Example 1: Basic stroboscopic state management.
 
@@ -110,7 +110,7 @@ async def example_basic_usage():
     await redis_client.close()
 
 
-async def example_concurrent_draft_and_observe():
+async def example_concurrent_draft_and_observe() -> None:
     """
     Example 2: Concurrent draft proposals and observations.
 
@@ -133,7 +133,7 @@ async def example_concurrent_draft_and_observe():
         initialize_empty=True,
     )
 
-    async def observer_task():
+    async def observer_task() -> None:
         """Simulates an observer reading state."""
         for i in range(5):
             state = await manager.get_observable_state()
@@ -143,7 +143,7 @@ async def example_concurrent_draft_and_observe():
             )
             await asyncio.sleep(0.1)
 
-    async def draft_proposer_task():
+    async def draft_proposer_task() -> None:
         """Simulates a process proposing draft changes."""
         for i in range(3):
             await asyncio.sleep(0.15)
@@ -156,7 +156,8 @@ async def example_concurrent_draft_and_observe():
                 f"({len(draft.assignments)} assignments)"
             )
 
-    # Run observer and proposer concurrently
+            # Run observer and proposer concurrently
+
     print("\n1. Running concurrent observer and draft proposer:")
     await asyncio.gather(observer_task(), draft_proposer_task())
 
@@ -165,7 +166,7 @@ async def example_concurrent_draft_and_observe():
     await redis_client.close()
 
 
-async def example_checkpoint_history():
+async def example_checkpoint_history() -> None:
     """
     Example 3: Checkpoint history and time-travel debugging.
 
@@ -207,7 +208,7 @@ async def example_checkpoint_history():
         )
         print(f"   Checkpoint {i + 1}: {i + 1} assignments")
 
-    # Review history
+        # Review history
     print("\n2. Checkpoint History:")
     history = await manager.get_checkpoint_history(limit=10)
     for idx, state in enumerate(history):
@@ -222,7 +223,7 @@ async def example_checkpoint_history():
     await redis_client.close()
 
 
-async def example_metrics_monitoring():
+async def example_metrics_monitoring() -> None:
     """
     Example 4: Monitoring and observability.
 
@@ -262,7 +263,7 @@ async def example_metrics_monitoring():
     await redis_client.close()
 
 
-async def run_all_examples():
+async def run_all_examples() -> None:
     """Run all examples sequentially."""
     print("\n" + "=" * 80)
     print("STROBOSCOPIC SCHEDULE MANAGER - USAGE EXAMPLES")

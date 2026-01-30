@@ -59,7 +59,7 @@ class AvailabilityConstraint(HardConstraint):
     are forbidden.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize availability constraint."""
         super().__init__(
             name="Availability",
@@ -67,7 +67,7 @@ class AvailabilityConstraint(HardConstraint):
             priority=ConstraintPriority.CRITICAL,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Add availability constraint to OR-Tools CP-SAT model.
 
@@ -102,7 +102,7 @@ class AvailabilityConstraint(HardConstraint):
                             if (r_i, b_i) in x:
                                 model.Add(x[r_i, b_i] == 0)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Add availability constraint to PuLP model.
 
@@ -219,7 +219,7 @@ class EightyHourRuleConstraint(HardConstraint):
     ROLLING_WEEKS = 4
     ROLLING_DAYS = 28  # 4 weeks * 7 days = 28 days (STRICT)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize the 80-hour rule constraint.
 
@@ -262,7 +262,7 @@ class EightyHourRuleConstraint(HardConstraint):
 
         return total_hours / self.ROLLING_WEEKS
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Enforce 80-hour rule via block count limits in CP-SAT model.
 
@@ -308,7 +308,7 @@ class EightyHourRuleConstraint(HardConstraint):
             if not window_blocks:
                 continue
 
-            # For each resident, sum of blocks in window <= max
+                # For each resident, sum of blocks in window <= max
             for resident in context.residents:
                 r_i = context.resident_idx[resident.id]
                 resident_preassigned = preassigned_blocks.get(resident.id, set())
@@ -345,7 +345,7 @@ class EightyHourRuleConstraint(HardConstraint):
                         <= self.max_blocks_per_window
                     )
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Enforce 80-hour rule via block count limits in PuLP model.
 
@@ -460,7 +460,7 @@ class EightyHourRuleConstraint(HardConstraint):
             if not resident_assignments:
                 continue
 
-            # Get hours per date for this resident
+                # Get hours per date for this resident
             hours_by_date = defaultdict(int)
             for a in resident_assignments:
                 for b in context.blocks:
@@ -522,7 +522,7 @@ class OneInSevenRuleConstraint(HardConstraint):
 
     MAX_CONSECUTIVE_DAYS = 6
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize 1-in-7 rule constraint."""
         super().__init__(
             name="1in7Rule",
@@ -530,7 +530,7 @@ class OneInSevenRuleConstraint(HardConstraint):
             priority=ConstraintPriority.CRITICAL,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Enforce max consecutive days in CP-SAT model.
 
@@ -581,7 +581,7 @@ class OneInSevenRuleConstraint(HardConstraint):
                 if len(consecutive_dates) < self.MAX_CONSECUTIVE_DAYS + 1:
                     continue
 
-                # Create indicator variables for each day
+                    # Create indicator variables for each day
                 day_worked_vars = []
                 preassigned_day_count = sum(
                     1 for d in consecutive_dates if d in resident_preassigned
@@ -610,7 +610,7 @@ class OneInSevenRuleConstraint(HardConstraint):
                         model.AddMaxEquality(day_worked, day_vars)
                         day_worked_vars.append(day_worked)
 
-                # At most 6 days worked in any 7-day window
+                        # At most 6 days worked in any 7-day window
                 if (
                     preassigned_day_count + len(day_worked_vars)
                     > self.MAX_CONSECUTIVE_DAYS
@@ -629,7 +629,7 @@ class OneInSevenRuleConstraint(HardConstraint):
                         <= self.MAX_CONSECUTIVE_DAYS
                     )
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Enforce max consecutive days in PuLP model (linear approximation).
 
@@ -679,7 +679,7 @@ class OneInSevenRuleConstraint(HardConstraint):
                 if len(consecutive_dates) < self.MAX_CONSECUTIVE_DAYS + 1:
                     continue
 
-                # Sum of all blocks across 7 days <= 6 * 2 (max 2 blocks per day)
+                    # Sum of all blocks across 7 days <= 6 * 2 (max 2 blocks per day)
                 all_vars = []
                 for d in consecutive_dates[: self.MAX_CONSECUTIVE_DAYS + 1]:
                     for b in context.blocks_by_date[d]:
@@ -801,7 +801,7 @@ class SupervisionRatioConstraint(HardConstraint):
     PGY1_RATIO = 2  # 1 faculty per 2 PGY-1
     OTHER_RATIO = 4  # 1 faculty per 4 PGY-2/3
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize supervision ratio constraint."""
         super().__init__(
             name="SupervisionRatio",
@@ -832,7 +832,7 @@ class SupervisionRatioConstraint(HardConstraint):
         supervision_units = (pgy1_count * 2) + other_count
         return (supervision_units + 3) // 4 if supervision_units > 0 else 0
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Add supervision ratio constraints to CP-SAT model.
 
@@ -853,7 +853,7 @@ class SupervisionRatioConstraint(HardConstraint):
         """
         pass
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Add supervision ratio constraints to PuLP model.
 
@@ -906,7 +906,7 @@ class SupervisionRatioConstraint(HardConstraint):
         for f in context.faculty:
             person_types[f.id] = "faculty"
 
-        # Group by block
+            # Group by block
         by_block = defaultdict(lambda: {"residents": [], "faculty": []})
         for a in assignments:
             ptype = person_types.get(a.person_id)
@@ -952,9 +952,10 @@ class SupervisionRatioConstraint(HardConstraint):
             violations=violations,
         )
 
+        # Re-export ACGMEConstraintValidator from services
+        # This enables using the high-level validator from the old import path
 
-# Re-export ACGMEConstraintValidator from services
-# This enables using the high-level validator from the old import path
+
 try:
     from app.services.constraints.acgme import ACGMEConstraintValidator
 except ImportError:
@@ -962,7 +963,7 @@ except ImportError:
     class ACGMEConstraintValidator:
         """Placeholder for backward compatibility during module initialization."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             self.constraints = [
                 AvailabilityConstraint(),
                 EightyHourRuleConstraint(),

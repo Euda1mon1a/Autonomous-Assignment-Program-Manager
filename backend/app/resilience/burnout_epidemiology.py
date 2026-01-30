@@ -48,10 +48,9 @@ except ImportError:
     HAS_NETWORKX = False
     logger.warning("NetworkX not installed - burnout epidemiology requires NetworkX")
 
-
-# =============================================================================
-# Enums and Constants
-# =============================================================================
+    # =============================================================================
+    # Enums and Constants
+    # =============================================================================
 
 
 class BurnoutState(str, Enum):
@@ -80,10 +79,9 @@ class InterventionLevel(str, Enum):
     AGGRESSIVE = "aggressive"  # Rt > 2, spreading rapidly
     EMERGENCY = "emergency"  # Rt > 3, crisis intervention needed
 
-
-# =============================================================================
-# Data Classes
-# =============================================================================
+    # =============================================================================
+    # Data Classes
+    # =============================================================================
 
 
 @dataclass
@@ -106,7 +104,7 @@ class BurnoutSIRModel:
     gamma: float  # Recovery rate (0.0 - 1.0)
     initial_infected: set[UUID]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate parameters."""
         if not 0 <= self.beta <= 1:
             raise ValueError(f"beta must be in [0, 1], got {self.beta}")
@@ -168,10 +166,9 @@ class EpiReport:
             "high_risk_contacts": [str(cid) for cid in self.high_risk_contacts],
         }
 
-
-# =============================================================================
-# Burnout Epidemiology Analyzer
-# =============================================================================
+        # =============================================================================
+        # Burnout Epidemiology Analyzer
+        # =============================================================================
 
 
 class BurnoutEpidemiology:
@@ -186,7 +183,7 @@ class BurnoutEpidemiology:
     - Recommend interventions
     """
 
-    def __init__(self, social_network: nx.Graph):
+    def __init__(self, social_network: nx.Graph) -> None:
         """
         Initialize burnout epidemiology analyzer.
 
@@ -219,7 +216,7 @@ class BurnoutEpidemiology:
 
     def record_burnout_state(
         self, resident_id: UUID, state: BurnoutState, timestamp: datetime = None
-    ):
+    ) -> None:
         """
         Record a burnout state change for a resident.
 
@@ -260,7 +257,7 @@ class BurnoutEpidemiology:
             logger.warning(f"Resident {resident_id} not in social network")
             return set()
 
-        # Get neighbors in the network (1-hop connections)
+            # Get neighbors in the network (1-hop connections)
         contacts = set(self.network.neighbors(resident_id))
 
         # Could extend to 2-hop for weak ties
@@ -320,7 +317,7 @@ class BurnoutEpidemiology:
             if not index_burnout_time:
                 continue
 
-            # Count contacts who became burned out within time_window after index case
+                # Count contacts who became burned out within time_window after index case
             for contact in contacts:
                 contact_burnout_time = self._get_burnout_onset(contact)
                 if contact_burnout_time:
@@ -331,7 +328,7 @@ class BurnoutEpidemiology:
 
             secondary_case_counts[str(index_case)] = secondary_count
 
-        # Calculate Rt (average secondary cases)
+            # Calculate Rt (average secondary cases)
         if secondary_case_counts:
             rt = statistics.mean(secondary_case_counts.values())
         else:
@@ -339,7 +336,7 @@ class BurnoutEpidemiology:
             # assume at least R=1 (conservative estimate)
             rt = 1.0
 
-        # Determine status
+            # Determine status
         if rt < 0.5:
             status = "declining"
             intervention_level = InterventionLevel.NONE
@@ -356,7 +353,7 @@ class BurnoutEpidemiology:
             status = "crisis"
             intervention_level = InterventionLevel.EMERGENCY
 
-        # Identify super-spreaders (high secondary case counts)
+            # Identify super-spreaders (high secondary case counts)
         super_spreaders = [
             UUID(uid) for uid, count in secondary_case_counts.items() if count >= 3
         ]
@@ -450,12 +447,12 @@ class BurnoutEpidemiology:
                     if self._random_transmission(beta):
                         new_infections.add(contact)
 
-            # Recovery: Each infected person recovers with probability gamma
+                        # Recovery: Each infected person recovers with probability gamma
             for infected_node in infected:
                 if self._random_transmission(gamma):
                     new_recoveries.add(infected_node)
 
-            # Update populations
+                    # Update populations
             susceptible -= new_infections
             infected.update(new_infections)
             infected -= new_recoveries
@@ -609,7 +606,7 @@ class BurnoutEpidemiology:
                 ]
             )
 
-        # Add super-spreader specific interventions
+            # Add super-spreader specific interventions
         super_spreaders = self.identify_super_spreaders()
         if super_spreaders and rt >= 1.0:
             interventions.append(
@@ -622,9 +619,9 @@ class BurnoutEpidemiology:
 
         return interventions
 
-    # -------------------------------------------------------------------------
-    # Helper Methods
-    # -------------------------------------------------------------------------
+        # -------------------------------------------------------------------------
+        # Helper Methods
+        # -------------------------------------------------------------------------
 
     def _get_burnout_onset(self, resident_id: UUID) -> datetime | None:
         """Get when a resident first became burned out."""
@@ -693,5 +690,5 @@ class BurnoutEpidemiology:
         if not history:
             return BurnoutState.SUSCEPTIBLE
 
-        # Return most recent state
+            # Return most recent state
         return history[-1][1]

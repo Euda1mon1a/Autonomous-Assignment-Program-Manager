@@ -23,7 +23,7 @@ class DistributedLock:
         name: str,
         timeout: int = 10,
         retry_interval: float = 0.1,
-    ):
+    ) -> None:
         """Initialize distributed lock.
 
         Args:
@@ -73,7 +73,7 @@ class DistributedLock:
                 logger.warning(f"Lock acquisition timeout: {self.name}")
                 return False
 
-            # Wait before retrying
+                # Wait before retrying
             await asyncio.sleep(self.retry_interval)
 
     async def release(self) -> bool:
@@ -191,7 +191,7 @@ class DistributedLock:
 class LockManager:
     """Manager for multiple distributed locks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize lock manager."""
         self.locks: dict[str, DistributedLock] = {}
 
@@ -240,8 +240,9 @@ class LockManager:
         async with lock(blocking=blocking, timeout=timeout):
             yield lock
 
+            # Global lock manager
 
-# Global lock manager
+
 _lock_manager: LockManager | None = None
 
 

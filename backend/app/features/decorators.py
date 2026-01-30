@@ -57,7 +57,7 @@ def require_feature_flag(
                     detail="Database session not available",
                 )
 
-            # Evaluate feature flag
+                # Evaluate feature flag
             service = FeatureFlagService(db)
             user_id = str(current_user.id) if current_user else None
             user_role = current_user.role if current_user else None
@@ -74,7 +74,7 @@ def require_feature_flag(
                 error_detail = detail or "Feature not available"
                 raise HTTPException(status_code=status_code, detail=error_detail)
 
-            # Flag check passed, execute function
+                # Flag check passed, execute function
             return await func(*args, **kwargs)
 
         return wrapper
@@ -113,7 +113,7 @@ def feature_flag_gate(flag_key: str, default_value: Any = None):
                 # No DB available, execute function normally
                 return await func(*args, **kwargs)
 
-            # Evaluate feature flag
+                # Evaluate feature flag
             service = FeatureFlagService(db)
             user_id = str(current_user.id) if current_user else None
             user_role = current_user.role if current_user else None
@@ -186,7 +186,7 @@ def ab_test_variant(flag_key: str, variants: dict[str, Callable]):
                     detail="Database session not available for A/B test",
                 )
 
-            # Evaluate feature flag to get variant
+                # Evaluate feature flag to get variant
             service = FeatureFlagService(db)
             user_id = str(current_user.id) if current_user else None
             user_role = current_user.role if current_user else None
@@ -208,7 +208,7 @@ def ab_test_variant(flag_key: str, variants: dict[str, Callable]):
                 # No variant assigned and no control, use original function
                 return await func(*args, **kwargs)
 
-            # Execute variant implementation
+                # Execute variant implementation
             return await implementation(*args, **kwargs)
 
         return wrapper
@@ -230,7 +230,7 @@ class FeatureFlagContext:
                 do_old_thing()
     """
 
-    def __init__(self, db: Any, flag_key: str, user: User | None = None):
+    def __init__(self, db: Any, flag_key: str, user: User | None = None) -> None:
         """
         Initialize feature flag context.
 

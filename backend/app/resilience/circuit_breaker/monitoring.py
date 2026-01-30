@@ -46,7 +46,7 @@ class CircuitBreakerMetrics:
     - circuit_breaker_consecutive_failures: Consecutive failures
     """
 
-    def __init__(self, registry: Optional["CollectorRegistry"] = None):
+    def __init__(self, registry: Optional["CollectorRegistry"] = None) -> None:
         """
         Initialize circuit breaker metrics.
 
@@ -133,7 +133,7 @@ class CircuitBreakerMetrics:
 
         logger.info("Circuit breaker Prometheus metrics initialized")
 
-    def update_breaker_metrics(self, breaker_name: str):
+    def update_breaker_metrics(self, breaker_name: str) -> None:
         """
         Update metrics for a specific breaker.
 
@@ -176,7 +176,7 @@ class CircuitBreakerMetrics:
         except Exception as e:
             logger.error(f"Error updating metrics for breaker '{breaker_name}': {e}")
 
-    def update_all_breakers(self):
+    def update_all_breakers(self) -> None:
         """Update metrics for all registered breakers."""
         if not self._enabled:
             return
@@ -192,7 +192,7 @@ class CircuitBreakerMetrics:
         self,
         breaker_name: str,
         result: str,  # "success", "failure", "rejected"
-    ):
+    ) -> None:
         """
         Record a request result.
 
@@ -213,7 +213,7 @@ class CircuitBreakerMetrics:
         breaker_name: str,
         from_state: str,
         to_state: str,
-    ):
+    ) -> None:
         """
         Record a state transition.
 
@@ -239,7 +239,7 @@ class CircuitBreakerMetrics:
         self,
         breaker_name: str,
         success: bool,
-    ):
+    ) -> None:
         """
         Record a fallback execution.
 
@@ -283,8 +283,9 @@ class CircuitBreakerMetrics:
             logger.error(f"Error getting breaker summary: {e}")
             return {}
 
+            # Global metrics instance
 
-# Global metrics instance
+
 _metrics: CircuitBreakerMetrics | None = None
 
 
@@ -320,7 +321,7 @@ def setup_metrics(
     return _metrics
 
 
-def collect_metrics_for_all_breakers():
+def collect_metrics_for_all_breakers() -> None:
     """
     Collect metrics for all registered circuit breakers.
 
@@ -329,8 +330,9 @@ def collect_metrics_for_all_breakers():
     metrics = get_metrics()
     metrics.update_all_breakers()
 
+    # Auto-update integration
 
-# Auto-update integration
+
 class MetricsCollector:
     """
     Background metrics collector for circuit breakers.
@@ -338,7 +340,7 @@ class MetricsCollector:
     Can be used as a Celery task or standalone background job.
     """
 
-    def __init__(self, interval_seconds: float = 15.0):
+    def __init__(self, interval_seconds: float = 15.0) -> None:
         """
         Initialize collector.
 
@@ -348,7 +350,7 @@ class MetricsCollector:
         self.interval = interval_seconds
         self.metrics = get_metrics()
 
-    async def run_async(self):
+    async def run_async(self) -> None:
         """Run async collection loop."""
         import asyncio
 
@@ -360,7 +362,7 @@ class MetricsCollector:
 
             await asyncio.sleep(self.interval)
 
-    def run_sync(self):
+    def run_sync(self) -> None:
         """Run sync collection loop."""
         import time
 
@@ -372,7 +374,7 @@ class MetricsCollector:
 
             time.sleep(self.interval)
 
-    def collect_once(self):
+    def collect_once(self) -> None:
         """Collect metrics once (for scheduled tasks)."""
         try:
             self.metrics.update_all_breakers()

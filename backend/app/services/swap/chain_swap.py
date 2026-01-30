@@ -62,7 +62,7 @@ class ChainSwapCoordinator:
     requests, enabling complex multi-way swaps.
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize chain swap coordinator.
 
@@ -97,7 +97,7 @@ class ChainSwapCoordinator:
                 execution_plan=[],
             )
 
-        # Build directed graph of swap preferences
+            # Build directed graph of swap preferences
         graph = nx.DiGraph()
 
         for request in pending_requests:
@@ -111,7 +111,7 @@ class ChainSwapCoordinator:
                     target_week=request.target_week,
                 )
 
-        # Find cycles (most valuable chain type)
+                # Find cycles (most valuable chain type)
         chains = []
 
         # Find all simple cycles
@@ -125,19 +125,19 @@ class ChainSwapCoordinator:
             if len(cycle) > max_chain_length:
                 continue
 
-            # Build chain from cycle
+                # Build chain from cycle
             chain = await self._build_chain_from_cycle(cycle, graph, pending_requests)
             if chain and chain.is_valid:
                 chains.append(chain)
 
-        # Also find linear chains (A->B->C but not back to A)
+                # Also find linear chains (A->B->C but not back to A)
         linear_chains = self._find_linear_chains(graph, max_chain_length)
         for lc in linear_chains:
             chain = await self._build_chain_from_path(lc, graph, pending_requests)
             if chain and chain.is_valid:
                 chains.append(chain)
 
-        # Generate execution plan
+                # Generate execution plan
         execution_plan = self._create_execution_plan(chains)
 
         total_participants = sum(len(chain.nodes) for chain in chains)
@@ -229,7 +229,7 @@ class ChainSwapCoordinator:
         if len(chain.nodes) < 2:
             errors.append("Chain must have at least 2 participants")
 
-        # Verify chain closure (for cycles)
+            # Verify chain closure (for cycles)
         if chain.chain_type == "cycle":
             first_node = chain.nodes[0]
             last_node = chain.nodes[-1]
@@ -237,14 +237,14 @@ class ChainSwapCoordinator:
             if last_node.receives_week != first_node.gives_week:
                 errors.append("Cycle does not close properly")
 
-        # Check for conflicting weeks
+                # Check for conflicting weeks
         weeks_in_use = set()
         for node in chain.nodes:
             if node.gives_week in weeks_in_use:
                 errors.append(f"Week {node.gives_week} used multiple times")
             weeks_in_use.add(node.gives_week)
 
-        # Validate each faculty member can do the swap
+            # Validate each faculty member can do the swap
         for node in chain.nodes:
             faculty = await self._get_faculty(node.faculty_id)
             if not faculty:
@@ -252,7 +252,7 @@ class ChainSwapCoordinator:
 
         return len(errors) == 0, errors
 
-    # ===== Private Helper Methods =====
+        # ===== Private Helper Methods =====
 
     async def _build_chain_from_cycle(
         self,

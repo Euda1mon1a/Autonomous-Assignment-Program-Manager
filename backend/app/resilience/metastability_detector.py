@@ -187,7 +187,7 @@ class MetastabilityDetector:
         plateau_window: int = 100,
         min_stagnation: int = 50,
         temperature: float = 1.0,
-    ):
+    ) -> None:
         """
         Initialize metastability detector.
 
@@ -237,7 +237,7 @@ class MetastabilityDetector:
             # Not enough data
             return False
 
-        # Get recent window
+            # Get recent window
         recent = solver_trajectory[-window:]
 
         # Check if all values are identical (perfect plateau)
@@ -245,7 +245,7 @@ class MetastabilityDetector:
             logger.debug("Perfect plateau detected (all values identical)")
             return True
 
-        # Calculate coefficient of variation
+            # Calculate coefficient of variation
         mean_val = np.mean(recent)
         std_val = np.std(recent)
 
@@ -302,7 +302,7 @@ class MetastabilityDetector:
             # In practice, would sample nearby solutions
             barrier = 5.0
 
-        # Normalize by objective scale
+            # Normalize by objective scale
         if current_state.objective_value > 1e-10:
             barrier = barrier * (1.0 + math.log10(abs(current_state.objective_value)))
 
@@ -343,19 +343,19 @@ class MetastabilityDetector:
         if temperature is None:
             temperature = self.temperature
 
-        # Avoid division by zero
+            # Avoid division by zero
         if temperature < 1e-10:
             return 0.0
 
-        # Boltzmann factor: exp(-E/kT)
-        # Using k=1 for simplicity (dimensionless units)
+            # Boltzmann factor: exp(-E/kT)
+            # Using k=1 for simplicity (dimensionless units)
         try:
             probability = math.exp(-barrier_height / temperature)
         except OverflowError:
             # Barrier too high
             probability = 0.0
 
-        # Clamp to [0, 1]
+            # Clamp to [0, 1]
         probability = max(0.0, min(1.0, probability))
 
         logger.debug(
@@ -465,7 +465,7 @@ class MetastabilityDetector:
                 stagnation_duration=0,
             )
 
-        # Extract objective values
+            # Extract objective values
         objectives = [state.objective_value for state in trajectory]
 
         # Find best solution
@@ -523,7 +523,7 @@ class MetastabilityDetector:
                 iteration=current_state.iteration,
             )
 
-        # Recommend strategy
+            # Recommend strategy
         if metastable_state:
             strategy = self.recommend_escape_strategy(metastable_state)
         else:

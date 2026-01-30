@@ -104,7 +104,7 @@ class HypervolumeIndicator(QualityIndicator):
     meaning a front A has higher HV than B if and only if A dominates B.
     """
 
-    def __init__(self, reference_point: np.ndarray | None = None):
+    def __init__(self, reference_point: np.ndarray | None = None) -> None:
         """
         Initialize hypervolume indicator.
 
@@ -131,7 +131,7 @@ class HypervolumeIndicator(QualityIndicator):
         if not front.solutions:
             return 0.0
 
-        # Get objective matrix (normalized to minimization)
+            # Get objective matrix (normalized to minimization)
         points = self._get_normalized_points(front)
 
         # Determine reference point
@@ -170,7 +170,7 @@ class HypervolumeIndicator(QualityIndicator):
         if self._reference_point is not None:
             return self._reference_point
 
-        # Use nadir point + small offset
+            # Use nadir point + small offset
         nadir = np.max(points, axis=0)
         result: np.ndarray = nadir + 0.1 * np.abs(nadir)
         return result
@@ -194,7 +194,7 @@ class HypervolumeIndicator(QualityIndicator):
             # 2D case: efficient sweep algorithm
             return self._hv_2d(points, ref_point)
 
-        # General case: WFG recursive algorithm
+            # General case: WFG recursive algorithm
         return self._hv_wfg(points, ref_point)
 
     def _hv_2d(self, points: np.ndarray, ref_point: np.ndarray) -> float:
@@ -232,7 +232,7 @@ class HypervolumeIndicator(QualityIndicator):
         if len(points) == 1:
             return float(np.prod(ref_point - points[0]))
 
-        # Sort by first objective
+            # Sort by first objective
         sorted_indices = np.argsort(points[:, 0])
         sorted_points = points[sorted_indices]
 
@@ -282,7 +282,7 @@ class GenerationalDistance(QualityIndicator):
     or best known approximation).
     """
 
-    def __init__(self, p: float = 2.0):
+    def __init__(self, p: float = 2.0) -> None:
         """
         Initialize generational distance.
 
@@ -308,7 +308,7 @@ class GenerationalDistance(QualityIndicator):
         if not front.solutions or not reference_front or not reference_front.solutions:
             return float("inf")
 
-        # Get point matrices
+            # Get point matrices
         approx_points = self._get_normalized_points(front)
         ref_points = self._get_normalized_points(reference_front)
 
@@ -321,7 +321,7 @@ class GenerationalDistance(QualityIndicator):
                 min_dist = min(min_dist, dist)
             distances.append(min_dist**self.p)
 
-        # Average distance
+            # Average distance
         return float((sum(distances) / len(distances)) ** (1.0 / self.p))
 
     def _get_normalized_points(self, front: ParetoFrontier) -> np.ndarray:
@@ -361,7 +361,7 @@ class InvertedGenerationalDistance(QualityIndicator):
     convergence.
     """
 
-    def __init__(self, p: float = 2.0):
+    def __init__(self, p: float = 2.0) -> None:
         """
         Initialize inverted generational distance.
 
@@ -387,7 +387,7 @@ class InvertedGenerationalDistance(QualityIndicator):
         if not front.solutions or not reference_front or not reference_front.solutions:
             return float("inf")
 
-        # Get point matrices
+            # Get point matrices
         approx_points = self._get_normalized_points(front)
         ref_points = self._get_normalized_points(reference_front)
 
@@ -453,14 +453,14 @@ class SpreadIndicator(QualityIndicator):
         if len(front.solutions) < 2:
             return float("inf")
 
-        # Get points
+            # Get points
         points = self._get_normalized_points(front)
 
         # For 2D, use simple consecutive distance spread
         if points.shape[1] == 2:
             return self._spread_2d(points)
 
-        # General case: use crowding-based spread
+            # General case: use crowding-based spread
         return self._spread_general(points)
 
     def _spread_2d(self, points: np.ndarray) -> float:
@@ -485,7 +485,7 @@ class SpreadIndicator(QualityIndicator):
         if d_mean == 0:
             return 0.0
 
-        # Calculate spread
+            # Calculate spread
         numerator = sum(abs(d - d_mean) for d in distances)
         denominator = (n - 1) * d_mean
 
@@ -510,7 +510,7 @@ class SpreadIndicator(QualityIndicator):
         if d_mean == 0:
             return 0.0
 
-        # Calculate spread
+            # Calculate spread
         variance = sum((d - d_mean) ** 2 for d in distances_to_nearest)
         return float(np.sqrt(variance / n) / d_mean)
 
@@ -551,7 +551,7 @@ class EpsilonIndicator(QualityIndicator):
     Lower epsilon = closer to dominance relationship.
     """
 
-    def __init__(self, additive: bool = True):
+    def __init__(self, additive: bool = True) -> None:
         """
         Initialize epsilon indicator.
 
@@ -726,7 +726,7 @@ class MaximumSpread(QualityIndicator):
             extent = np.max(points[:, j]) - np.min(points[:, j])
             extents.append(extent)
 
-        # Maximum spread is the Euclidean norm of extents
+            # Maximum spread is the Euclidean norm of extents
         return float(np.sqrt(sum(e**2 for e in extents)))
 
     def _get_normalized_points(self, front: ParetoFrontier) -> np.ndarray:
@@ -781,7 +781,7 @@ class QualityEvaluator:
         self,
         indicators: list[QualityIndicator] | None = None,
         reference_point: np.ndarray | None = None,
-    ):
+    ) -> None:
         """
         Initialize quality evaluator.
 
@@ -828,7 +828,7 @@ class QualityEvaluator:
         if front.nadir_point is not None:
             report.nadir_point = front.nadir_point.tolist()
 
-        # Calculate each indicator
+            # Calculate each indicator
         for indicator in self.indicators:
             try:
                 value = indicator.calculate(front, reference_front)

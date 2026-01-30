@@ -136,7 +136,7 @@ async def delete_credential(
     credential_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete a credential. Requires authentication."""
     controller = CredentialController(db)
     await controller.delete_credential(credential_id)

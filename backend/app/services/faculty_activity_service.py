@@ -37,7 +37,7 @@ class FacultyActivityService:
     - Priority: Soft preference for solver optimization
     """
 
-    def __init__(self, db: AsyncSession | Session):
+    def __init__(self, db: AsyncSession | Session) -> None:
         """Initialize service with database session.
 
         Args:
@@ -56,30 +56,30 @@ class FacultyActivityService:
         else:
             return self.db.execute(stmt)
 
-    async def _flush(self):
+    async def _flush(self) -> None:
         """Flush the session."""
         if self._is_async:
             await self.db.flush()
         else:
             self.db.flush()
 
-    async def _refresh(self, obj):
+    async def _refresh(self, obj) -> None:
         """Refresh an object."""
         if self._is_async:
             await self.db.refresh(obj)
         else:
             self.db.refresh(obj)
 
-    async def _delete(self, obj):
+    async def _delete(self, obj) -> None:
         """Delete an object."""
         if self._is_async:
             await self.db.delete(obj)
         else:
             self.db.delete(obj)
 
-    # =========================================================================
-    # Faculty Weekly Template CRUD
-    # =========================================================================
+            # =========================================================================
+            # Faculty Weekly Template CRUD
+            # =========================================================================
 
     async def get_template(
         self,
@@ -279,9 +279,9 @@ class FacultyActivityService:
             return True
         return False
 
-    # =========================================================================
-    # Faculty Weekly Override CRUD
-    # =========================================================================
+        # =========================================================================
+        # Faculty Weekly Override CRUD
+        # =========================================================================
 
     async def get_overrides(
         self,
@@ -388,7 +388,7 @@ class FacultyActivityService:
                 raise ActivityNotFoundError("off", context="faculty_weekly_overrides")
             activity_id = activity.id
 
-        # Create new override
+            # Create new override
         override = FacultyWeeklyOverride(
             person_id=person_id,
             effective_date=week_start,
@@ -422,9 +422,9 @@ class FacultyActivityService:
             return True
         return False
 
-    # =========================================================================
-    # Effective Week Computation
-    # =========================================================================
+        # =========================================================================
+        # Effective Week Computation
+        # =========================================================================
 
     async def get_effective_week(
         self,
@@ -464,7 +464,7 @@ class FacultyActivityService:
             key = f"{ovr.day_of_week}_{ovr.time_of_day}"
             override_map[key] = ovr
 
-        # Build effective slots
+            # Build effective slots
         effective = []
 
         # Build template map (week-specific takes precedence over all-weeks)
@@ -475,7 +475,7 @@ class FacultyActivityService:
             if key not in template_map or tmpl.week_number is not None:
                 template_map[key] = tmpl
 
-        # Generate all 14 slots (7 days x 2 time periods)
+                # Generate all 14 slots (7 days x 2 time periods)
         for day in range(7):
             for time in ["AM", "PM"]:
                 key = f"{day}_{time}"
@@ -499,7 +499,7 @@ class FacultyActivityService:
                     slot["is_locked"] = ovr.is_locked
                     slot["source"] = "override"
                     slot["notes"] = ovr.override_reason
-                # Fall back to template
+                    # Fall back to template
                 elif key in template_map:
                     tmpl = template_map[key]
                     slot["activity_id"] = tmpl.activity_id
@@ -513,9 +513,9 @@ class FacultyActivityService:
 
         return effective
 
-    # =========================================================================
-    # Permission Lookups
-    # =========================================================================
+        # =========================================================================
+        # Permission Lookups
+        # =========================================================================
 
     async def get_permitted_activities(
         self,
@@ -622,9 +622,9 @@ class FacultyActivityService:
 
         return activities
 
-    # =========================================================================
-    # Matrix View (All Faculty)
-    # =========================================================================
+        # =========================================================================
+        # Matrix View (All Faculty)
+        # =========================================================================
 
     async def get_faculty_matrix(
         self,
@@ -673,7 +673,7 @@ class FacultyActivityService:
             weeks.append(current)
             current += timedelta(days=7)
 
-        # Build matrix
+            # Build matrix
         matrix = []
         for faculty in faculty_list:
             faculty_data = {

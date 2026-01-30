@@ -166,7 +166,7 @@ class RecoveryDistanceCalculator:
         max_depth: int = 5,
         timeout_seconds: float = 30.0,
         enable_caching: bool = True,
-    ):
+    ) -> None:
         """
         Initialize calculator with search parameters.
 
@@ -224,7 +224,7 @@ class RecoveryDistanceCalculator:
         if self.enable_caching and cache_key in self._cache:
             return self._cache[cache_key]
 
-        # Extract schedule components
+            # Extract schedule components
         assignments = schedule.get("assignments", [])
         blocks = schedule.get("blocks", [])
         people = schedule.get("people", [])
@@ -246,7 +246,7 @@ class RecoveryDistanceCalculator:
                 self._cache[cache_key] = result
             return result
 
-        # Step 3: Bounded DFS for minimum edits
+            # Step 3: Bounded DFS for minimum edits
         for depth in range(1, self.max_depth + 1):
             # Check timeout
             if (time.time() - start_time) > self.timeout_seconds:
@@ -256,7 +256,7 @@ class RecoveryDistanceCalculator:
                 )
                 break
 
-            # Try all edit combinations at this depth
+                # Try all edit combinations at this depth
             edit_sequence = self._search_at_depth(
                 post_event_assignments, blocks, people, schedule, depth
             )
@@ -274,7 +274,7 @@ class RecoveryDistanceCalculator:
                     self._cache[cache_key] = result
                 return result
 
-        # No solution found within depth/time limits
+                # No solution found within depth/time limits
         result = RecoveryResult(
             event=event,
             recovery_distance=self.max_depth + 1,
@@ -328,7 +328,7 @@ class RecoveryDistanceCalculator:
                 events_tested=0,
             )
 
-        # Calculate RD for each event
+            # Calculate RD for each event
         results = [self.calculate_for_event(schedule, event) for event in events]
 
         # Extract recovery distances
@@ -354,7 +354,7 @@ class RecoveryDistanceCalculator:
         else:
             rd_p95 = 0.0
 
-        # Breakdown by event type
+            # Breakdown by event type
         by_event_type: dict[str, dict[str, float]] = {}
         event_types = {e.event_type for e in events}
         for event_type in event_types:
@@ -423,7 +423,7 @@ class RecoveryDistanceCalculator:
             if end_date is None:
                 end_date = max(b.date for b in blocks)
 
-        # Build assignment index
+                # Build assignment index
         assignments_by_person: dict[UUID, list] = {}
         for assignment in assignments:
             person_id = assignment.person_id
@@ -431,7 +431,7 @@ class RecoveryDistanceCalculator:
                 assignments_by_person[person_id] = []
             assignments_by_person[person_id].append(assignment)
 
-        # Generate faculty absence events
+            # Generate faculty absence events
         faculty = [p for p in people if getattr(p, "role", None) == "FACULTY"]
         for fac in faculty:
             affected = assignments_by_person.get(fac.id, [])
@@ -445,7 +445,7 @@ class RecoveryDistanceCalculator:
                     )
                 )
 
-        # Generate resident sick day events
+                # Generate resident sick day events
         residents = [p for p in people if getattr(p, "role", None) == "RESIDENT"]
         for resident in residents:
             affected = assignments_by_person.get(resident.id, [])
@@ -482,9 +482,9 @@ class RecoveryDistanceCalculator:
 
         return events
 
-    # =========================================================================
-    # Private Helper Methods
-    # =========================================================================
+        # =========================================================================
+        # Private Helper Methods
+        # =========================================================================
 
     def _make_cache_key(self, event: N1Event) -> str:
         """Create cache key for event."""
@@ -534,13 +534,13 @@ class RecoveryDistanceCalculator:
             block_id = assignment.block_id
             coverage[block_id] = coverage.get(block_id, 0) + 1
 
-        # Check minimum coverage (at least 1 per block for now)
-        # In production, use schedule.get("coverage_requirements", {})
+            # Check minimum coverage (at least 1 per block for now)
+            # In production, use schedule.get("coverage_requirements", {})
         for block in blocks:
             if coverage.get(block.id, 0) < 1:
                 return False
 
-        # Check for double-booking
+                # Check for double-booking
         person_blocks: dict[UUID, set[UUID]] = {}
         for assignment in assignments:
             person_id = assignment.person_id
@@ -551,12 +551,12 @@ class RecoveryDistanceCalculator:
                 return False  # Double-booked
             person_blocks[person_id].add(block_id)
 
-        # If schedule provides constraint validator, use it
+            # If schedule provides constraint validator, use it
         validator = schedule.get("constraint_validator")
         if validator:
             return validator(assignments, blocks, people)
 
-        # Basic checks passed
+            # Basic checks passed
         return True
 
     def _search_at_depth(
@@ -605,8 +605,8 @@ class RecoveryDistanceCalculator:
                         )
                         return [edit]
 
-        # For deeper searches, use recursive DFS (simplified for now)
-        # In production, implement full combinatorial search with pruning
+                        # For deeper searches, use recursive DFS (simplified for now)
+                        # In production, implement full combinatorial search with pruning
         logger.debug(f"Depth {depth} search not fully implemented - returning None")
         return None
 
@@ -625,7 +625,7 @@ class RecoveryDistanceCalculator:
 
         # Create a simple mock object with required attributes
         class MockAssignment:
-            def __init__(self, pid: UUID, bid: UUID):
+            def __init__(self, pid: UUID, bid: UUID) -> None:
                 self.id = uuid4()
                 self.person_id = pid
                 self.block_id = bid

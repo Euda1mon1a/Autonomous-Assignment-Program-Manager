@@ -257,7 +257,7 @@ class HubAnalyzer:
         hub_threshold: float = 0.4,
         critical_hub_threshold: float = 0.6,
         use_networkx: bool = True,
-    ):
+    ) -> None:
         self.hub_threshold = hub_threshold
         self.critical_hub_threshold = critical_hub_threshold
         self.use_networkx = use_networkx and HAS_NETWORKX
@@ -309,19 +309,19 @@ class HubAnalyzer:
                 f"faculty_{f.id}", type="faculty", name=getattr(f, "name", str(f.id))
             )
 
-        # Add service nodes
+            # Add service nodes
         for service_id, capable_faculty in services.items():
             G.add_node(f"service_{service_id}", type="service")
             for fac_id in capable_faculty:
                 G.add_edge(f"faculty_{fac_id}", f"service_{service_id}")
 
-        # Add assignment edges with weight
+                # Add assignment edges with weight
         assignment_counts = {}
         for a in assignments:
             key = str(getattr(a, "faculty_id", a.get("faculty_id")))
             assignment_counts[key] = assignment_counts.get(key, 0) + 1
 
-        # Calculate centrality measures
+            # Calculate centrality measures
         try:
             degree_cent = nx.degree_centrality(G)
         except Exception:
@@ -342,7 +342,7 @@ class HubAnalyzer:
         except Exception:
             pagerank_cent = {}
 
-        # Build centrality objects
+            # Build centrality objects
         results = []
 
         for f in faculty:
@@ -441,7 +441,7 @@ class HubAnalyzer:
                     difficulties.append(diff)
                 replacement_diff = statistics.mean(difficulties)
 
-            # Assignment-based influence
+                # Assignment-based influence
             num_assignments = assignment_counts.get(str(fac_id), 0)
             pagerank = num_assignments / max_assignments if max_assignments > 0 else 0.0
 
@@ -516,7 +516,7 @@ class HubAnalyzer:
                 elif len(capable) <= 3:
                     high_demand.append(service_name)
 
-        # Identify backup faculty
+                    # Identify backup faculty
         backup_faculty = []
         for sid, capable in services.items():
             if faculty_id in capable:
@@ -524,7 +524,7 @@ class HubAnalyzer:
                     if backup_id != faculty_id and backup_id not in backup_faculty:
                         backup_faculty.append(backup_id)
 
-        # Build risk factors
+                        # Build risk factors
         risk_factors = []
         if centrality.unique_services > 0:
             risk_factors.append(
@@ -535,7 +535,7 @@ class HubAnalyzer:
         if centrality.replacement_difficulty > 0.7:
             risk_factors.append("Very difficult to replace")
 
-        # Mitigation actions
+            # Mitigation actions
         mitigation = []
         if unique_skills:
             mitigation.append(f"Cross-train backup for: {', '.join(unique_skills)}")
@@ -544,7 +544,7 @@ class HubAnalyzer:
         if not backup_faculty:
             mitigation.append("URGENT: Train at least one backup faculty member")
 
-        # Cross-training candidates
+            # Cross-training candidates
         cross_training = []
         for skill in unique_skills:
             # Find faculty who could learn this skill (simplified)
@@ -642,7 +642,7 @@ class HubAnalyzer:
                 )
                 recommendations.append(rec)
 
-        # Sort by priority
+                # Sort by priority
         priority_order = {
             CrossTrainingPriority.URGENT: 0,
             CrossTrainingPriority.HIGH: 1,
@@ -750,7 +750,7 @@ class HubAnalyzer:
         else:
             concentration = 0.0
 
-        # Single points of failure
+            # Single points of failure
         spof = sum(1 for c in centrality_list if c.unique_services > 0)
 
         # Service categorization
@@ -767,7 +767,7 @@ class HubAnalyzer:
             elif len(capable) >= 3:
                 well_covered.append(name)
 
-        # Build recommendations
+                # Build recommendations
         recommendations = []
 
         if catastrophic > 0:
@@ -791,7 +791,7 @@ class HubAnalyzer:
         if not recommendations:
             recommendations.append("Hub distribution is healthy - continue monitoring")
 
-        # Generate cross-training priorities
+            # Generate cross-training priorities
         cross_training = self.generate_cross_training_recommendations(
             services, service_names, [c.faculty_id for c in centrality_list]
         )

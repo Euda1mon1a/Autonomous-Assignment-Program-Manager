@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class PermissionDenied(HTTPException):
     """Custom exception for permission denied errors."""
 
-    def __init__(self, detail: str = "Permission denied"):
+    def __init__(self, detail: str = "Permission denied") -> None:
         super().__init__(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=detail,
@@ -132,12 +132,12 @@ def require_permission(
                     detail="Authentication required",
                 )
 
-            # Get resource ID if specified
+                # Get resource ID if specified
             resource_id = None
             if resource_id_param and resource_id_param in kwargs:
                 resource_id = str(kwargs[resource_id_param])
 
-            # Check permission
+                # Check permission
             resolver = await get_permission_resolver()
             result = await resolver.check_permission(
                 user=current_user,
@@ -154,7 +154,7 @@ def require_permission(
                 )
                 raise PermissionDenied(detail=result.reason or "Permission denied")
 
-            # Call the actual route handler
+                # Call the actual route handler
             return await func(*args, **kwargs)
 
         return wrapper
@@ -197,7 +197,7 @@ def require_any_permission(
                     detail="Authentication required",
                 )
 
-            # Check if user has any of the permissions
+                # Check if user has any of the permissions
             resolver = await get_permission_resolver()
             has_permission = await resolver.has_any_permission(
                 user=current_user,
@@ -215,7 +215,7 @@ def require_any_permission(
                     detail=f"Requires any of: {', '.join(perm_strs)}"
                 )
 
-            # Call the actual route handler
+                # Call the actual route handler
             return await func(*args, **kwargs)
 
         return wrapper
@@ -260,7 +260,7 @@ def require_all_permissions(
                     detail="Authentication required",
                 )
 
-            # Check if user has all of the permissions
+                # Check if user has all of the permissions
             resolver = await get_permission_resolver()
             has_permissions = await resolver.has_all_permissions(
                 user=current_user,
@@ -278,7 +278,7 @@ def require_all_permissions(
                     detail=f"Requires all of: {', '.join(perm_strs)}"
                 )
 
-            # Call the actual route handler
+                # Call the actual route handler
             return await func(*args, **kwargs)
 
         return wrapper
@@ -344,8 +344,9 @@ def require_role(roles: list[str] | str, allow_admin: bool = True) -> Callable:
 
     return role_checker
 
+    # Convenience dependencies for common permission checks
 
-# Convenience dependencies for common permission checks
+
 RequireScheduleRead = Depends(
     lambda: check_permission_dependency(ResourceType.SCHEDULE, PermissionAction.READ)
 )

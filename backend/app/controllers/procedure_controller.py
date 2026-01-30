@@ -18,7 +18,7 @@ from app.services.procedure_service import ProcedureService
 class ProcedureController:
     """Controller for procedure endpoints."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.service = ProcedureService(db)
 
     def list_procedures(

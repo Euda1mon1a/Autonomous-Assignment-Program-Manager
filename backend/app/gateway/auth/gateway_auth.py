@@ -66,7 +66,7 @@ class APIKeyManager:
     Handles creation, validation, rotation, and revocation of API keys.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def generate_api_key(self) -> tuple[str, str, str]:
@@ -161,7 +161,7 @@ class APIKeyManager:
             logger.warning(f"Invalid API key attempt with prefix: {api_key[:16]}")
             return None
 
-        # Check expiration
+            # Check expiration
         if db_key.is_expired:
             logger.warning(f"Expired API key used: {db_key.name}")
             return None
@@ -193,7 +193,7 @@ class APIKeyManager:
         if old_key.rotated_to_id:
             raise ValueError("API key has already been rotated")
 
-        # Create new key with same settings
+            # Create new key with same settings
         new_key_data = APIKeyCreate(
             name=new_name or f"{old_key.name} (rotated)",
             scopes=old_key.scopes,
@@ -276,7 +276,7 @@ class OAuth2Manager:
     Handles client creation, token issuance, and validation.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def generate_client_credentials(self) -> tuple[str, str, str]:
@@ -354,7 +354,7 @@ class OAuth2Manager:
             logger.warning(f"Invalid OAuth2 client_id: {client_id}")
             return None
 
-        # Verify client secret
+            # Verify client secret
         if not verify_password(client_secret, client.client_secret_hash):
             logger.warning(f"Invalid OAuth2 client_secret for client: {client_id}")
             return None
@@ -387,7 +387,7 @@ class OAuth2Manager:
         else:
             granted_scopes = client_scopes
 
-        # Create JWT token
+            # Create JWT token
         expires_delta = timedelta(seconds=client.access_token_lifetime_seconds)
         expires_at = datetime.utcnow() + expires_delta
 
@@ -427,7 +427,7 @@ class IPFilterManager:
     Handles IP-based access control with support for CIDR ranges.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def _ip_in_range(self, ip: str, range_spec: str) -> bool:
@@ -549,7 +549,7 @@ class IPFilterManager:
         if is_blacklisted:
             return False, f"IP blacklisted: {blacklist_entry.reason}"
 
-        # Check allowed IPs list (for API key restrictions)
+            # Check allowed IPs list (for API key restrictions)
         if allowed_ips:
             ip_allowed = any(
                 self._ip_in_range(ip_address, allowed_ip) for allowed_ip in allowed_ips
@@ -557,7 +557,7 @@ class IPFilterManager:
             if not ip_allowed:
                 return False, "IP not in allowed list for this API key"
 
-        # Check whitelist (informational, doesn't block)
+                # Check whitelist (informational, doesn't block)
         await self.is_ip_whitelisted(ip_address, applies_to)
 
         return True, None
@@ -570,7 +570,7 @@ class RequestSignatureValidator:
     Prevents replay attacks and ensures request integrity.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def _generate_signature(
@@ -637,7 +637,7 @@ class RequestSignatureValidator:
                     f"Request timestamp outside tolerance window ({SIGNATURE_TOLERANCE_SECONDS}s)",
                 )
 
-            # Check for signature replay
+                # Check for signature replay
             signature_hash = hashlib.sha256(request_data.signature.encode()).hexdigest()
             existing = self.db.execute(
                 select(RequestSignature).where(
@@ -656,10 +656,10 @@ class RequestSignatureValidator:
                 )
                 return False, "Signature has already been used (replay attack)"
 
-            # Generate expected signature
-            # Note: In production, you'd use the actual API key value, not the hash
-            # This is a simplified example - actual implementation would need
-            # to store a signing secret separately or derive it from the key
+                # Generate expected signature
+                # Note: In production, you'd use the actual API key value, not the hash
+                # This is a simplified example - actual implementation would need
+                # to store a signing secret separately or derive it from the key
             expected_signature = self._generate_signature(
                 secret=api_key.key_hash,  # In reality, use actual key or separate signing secret
                 method=request_data.method,
@@ -718,7 +718,7 @@ class GatewayAuthenticator:
     Coordinates all authentication mechanisms and provides unified validation.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.api_key_manager = APIKeyManager(db)
         self.oauth2_manager = OAuth2Manager(db)
@@ -771,21 +771,21 @@ class GatewayAuthenticator:
                 is_valid=False, error_message=f"Access denied: {blacklist_entry.reason}"
             )
 
-        # Try API key authentication
+            # Try API key authentication
         if api_key:
             return await self._validate_api_key(api_key, client_ip, signature_data)
 
-        # Try JWT token authentication
+            # Try JWT token authentication
         if jwt_token:
             return await self._validate_jwt(jwt_token, client_ip)
 
-        # Try OAuth2 client credentials
+            # Try OAuth2 client credentials
         if client_id and client_secret:
             return await self._validate_oauth2_client(
                 client_id, client_secret, client_ip
             )
 
-        # No valid authentication method provided
+            # No valid authentication method provided
         return GatewayAuthValidationResponse(
             is_valid=False, error_message="No valid authentication credentials provided"
         )
@@ -804,7 +804,7 @@ class GatewayAuthenticator:
                 is_valid=False, auth_type="api_key", error_message="Invalid API key"
             )
 
-        # Check IP restrictions
+            # Check IP restrictions
         allowed_ips = db_key.get_allowed_ips()
         is_allowed, reason = await self.ip_filter_manager.check_ip_allowed(
             client_ip,
@@ -816,7 +816,7 @@ class GatewayAuthenticator:
                 is_valid=False, auth_type="api_key", error_message=reason
             )
 
-        # Verify signature if provided
+            # Verify signature if provided
         if signature_data:
             is_valid, error = await self.signature_validator.verify_signature(
                 db_key, signature_data, client_ip
@@ -828,7 +828,7 @@ class GatewayAuthenticator:
                     error_message=f"Signature verification failed: {error}",
                 )
 
-        # Check rate limits
+                # Check rate limits
         rate_limit_key = f"api_key:{db_key.id}"
         rate_limit_info = await self._check_rate_limit(
             rate_limit_key, db_key.rate_limit_per_minute, 60
@@ -843,7 +843,7 @@ class GatewayAuthenticator:
                 error_message="Rate limit exceeded",
             )
 
-        # Update usage statistics
+            # Update usage statistics
         await self.api_key_manager.update_key_usage(db_key, client_ip)
 
         return GatewayAuthValidationResponse(
@@ -867,7 +867,7 @@ class GatewayAuthenticator:
                 error_message="Invalid or expired JWT token",
             )
 
-        # Check IP whitelist/blacklist
+            # Check IP whitelist/blacklist
         is_allowed, reason = await self.ip_filter_manager.check_ip_allowed(
             client_ip, applies_to="all"
         )
@@ -876,7 +876,7 @@ class GatewayAuthenticator:
                 is_valid=False, auth_type="jwt", error_message=reason
             )
 
-        # Get user
+            # Get user
         user = self.db.get(User, UUID(token_data.user_id))
         if not user or not user.is_active:
             return GatewayAuthValidationResponse(
@@ -904,7 +904,7 @@ class GatewayAuthenticator:
                 error_message="Invalid client credentials",
             )
 
-        # Check IP whitelist/blacklist
+            # Check IP whitelist/blacklist
         is_allowed, reason = await self.ip_filter_manager.check_ip_allowed(
             client_ip, applies_to="oauth2"
         )
@@ -913,7 +913,7 @@ class GatewayAuthenticator:
                 is_valid=False, auth_type="oauth2", error_message=reason
             )
 
-        # Check rate limits
+            # Check rate limits
         rate_limit_key = f"oauth2_client:{client.id}"
         rate_limit_info = await self._check_rate_limit(
             rate_limit_key, client.rate_limit_per_minute, 60
@@ -963,14 +963,13 @@ class GatewayAuthenticator:
         if forwarded_for:
             return forwarded_for.split(",")[0].strip()
 
-        # Fall back to direct client IP
+            # Fall back to direct client IP
         if request.client:
             return request.client.host
 
         return "unknown"
 
-
-# Utility functions for FastAPI dependencies
+        # Utility functions for FastAPI dependencies
 
 
 async def get_gateway_authenticator(db: Session) -> GatewayAuthenticator:
@@ -996,7 +995,7 @@ async def require_api_key(request: Request, db: Session) -> APIKey:
             headers={"WWW-Authenticate": "ApiKey"},
         )
 
-    # Validate
+        # Validate
     authenticator = GatewayAuthenticator(db)
     validation = await authenticator._validate_api_key(
         api_key_header, authenticator._get_client_ip(request)
@@ -1009,7 +1008,7 @@ async def require_api_key(request: Request, db: Session) -> APIKey:
             headers={"WWW-Authenticate": "ApiKey"},
         )
 
-    # Get and return the API key object
+        # Get and return the API key object
     key_hash = hashlib.sha256(api_key_header.encode()).hexdigest()
     result = db.execute(select(APIKey).where(APIKey.key_hash == key_hash))
     return result.scalar_one()

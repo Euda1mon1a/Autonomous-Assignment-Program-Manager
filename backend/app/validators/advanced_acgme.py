@@ -37,7 +37,7 @@ class AdvancedACGMEValidator:
     PGY1_MAX_SHIFT_LENGTH = 16  # First year limit (without supervision)
     PGY2_PLUS_MAX_SHIFT_LENGTH = 24  # Upper level limit
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """Initialize validator with database session."""
         self.db = db
 
@@ -133,7 +133,7 @@ class AdvancedACGMEValidator:
         if not person or not person.is_resident:
             return violations
 
-        # Get all assignments for the person
+            # Get all assignments for the person
         assignments = (
             self.db.query(Assignment)
             .join(Block)
@@ -159,7 +159,7 @@ class AdvancedACGMEValidator:
         if not night_dates:
             return violations
 
-        # Check for consecutive night shifts
+            # Check for consecutive night shifts
         sorted_nights = sorted(night_dates)
         consecutive = 1
         start_sequence = sorted_nights[0]
@@ -214,7 +214,7 @@ class AdvancedACGMEValidator:
         if not person or not person.is_resident:
             return violations
 
-        # Calculate internal duty hours
+            # Calculate internal duty hours
         assignments = (
             self.db.query(Assignment)
             .join(Block)

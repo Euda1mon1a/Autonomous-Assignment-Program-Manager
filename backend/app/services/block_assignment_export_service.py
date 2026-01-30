@@ -40,7 +40,7 @@ class BlockAssignmentExportService:
     - Admin-only (full names exported, no PERSEC anonymization)
     """
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def export(
@@ -101,7 +101,7 @@ class BlockAssignmentExportService:
         if request.resident_ids:
             query = query.where(BlockAssignment.resident_id.in_(request.resident_ids))
 
-        # Order by block number, then resident name
+            # Order by block number, then resident name
         query = query.order_by(
             BlockAssignment.block_number,
             BlockAssignment.resident_id,
@@ -200,7 +200,7 @@ class BlockAssignmentExportService:
             cell.font = header_font_white
             cell.fill = header_fill
 
-        # Write data rows
+            # Write data rows
         for row_num, assignment in enumerate(assignments, 2):
             ws.cell(row=row_num, column=1, value=assignment.block_number)
 
@@ -224,7 +224,7 @@ class BlockAssignmentExportService:
                 ws.cell(row=row_num, column=col_offset, value=assignment.has_leave)
                 ws.cell(row=row_num, column=col_offset + 1, value=assignment.leave_days)
 
-            # Apply rotation type coloring to rotation cell
+                # Apply rotation type coloring to rotation cell
             if assignment.rotation_template:
                 rotation_type = assignment.rotation_template.rotation_type
                 if rotation_type and rotation_type.lower() in activity_colors:
@@ -233,7 +233,7 @@ class BlockAssignmentExportService:
                         start_color=color, end_color=color, fill_type="solid"
                     )
 
-        # Auto-size columns
+                    # Auto-size columns
         for col in ws.columns:
             max_length = 0
             column = col[0].column_letter
@@ -246,7 +246,7 @@ class BlockAssignmentExportService:
             adjusted_width = min(max_length + 2, 50)
             ws.column_dimensions[column].width = adjusted_width
 
-        # Save to bytes
+            # Save to bytes
         output = io.BytesIO()
         wb.save(output)
         return output.getvalue()
@@ -270,8 +270,9 @@ class BlockAssignmentExportService:
 
         return "_".join(parts) + f".{extension}"
 
+        # Factory function for dependency injection
 
-# Factory function for dependency injection
+
 def get_block_assignment_export_service(
     session: AsyncSession,
 ) -> BlockAssignmentExportService:

@@ -96,10 +96,9 @@ class ForecastResult(TypedDict):
     confidence_level: float
     generated_at: str
 
-
-# =============================================================================
-# Dataclasses
-# =============================================================================
+    # =============================================================================
+    # Dataclasses
+    # =============================================================================
 
 
 @dataclass
@@ -140,10 +139,9 @@ class ARIMAConfig:
     confidence_level: float = 0.95  # For prediction intervals
     seasonal: bool = False  # Seasonal ARIMA (SARIMA) - not implemented yet
 
-
-# =============================================================================
-# Core ARIMA Forecaster Class
-# =============================================================================
+    # =============================================================================
+    # Core ARIMA Forecaster Class
+    # =============================================================================
 
 
 class ARIMAForecaster:
@@ -170,7 +168,7 @@ class ARIMAForecaster:
         auto_order: bool = True,
         order: tuple[int, int, int] | None = None,
         config: ARIMAConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize ARIMA forecaster.
 
@@ -221,7 +219,7 @@ class ARIMAForecaster:
             self._fit_fallback()
             return self
 
-        # Determine differencing order (d) if auto
+            # Determine differencing order (d) if auto
         if self.auto_order:
             d = self._determine_differencing_order()
             p, q = self._select_arma_order(d)
@@ -229,7 +227,7 @@ class ARIMAForecaster:
         else:
             self.order_ = self.manual_order or (1, 1, 1)
 
-        # Fit ARIMA model
+            # Fit ARIMA model
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             try:
@@ -277,7 +275,7 @@ class ARIMAForecaster:
             if len(series) < 10:
                 return max(0, d - 1)
 
-            # ADF test for stationarity
+                # ADF test for stationarity
             try:
                 result = adfuller(series, autolag="AIC")
                 p_value = result[1]
@@ -407,7 +405,7 @@ class ARIMAForecaster:
             # Fallback forecast
             forecasts = self._forecast_fallback(periods, alpha)
 
-        # Build diagnostics
+            # Build diagnostics
         diagnostics = self._get_diagnostics()
 
         return {
@@ -471,7 +469,7 @@ class ARIMAForecaster:
             aic = n * np.log(rss / n) + 2 * k
             bic = n * np.log(rss / n) + k * np.log(n)
 
-        # Check stationarity
+            # Check stationarity
         is_stationary = True
         if HAS_STATSMODELS and self._series is not None:
             try:
@@ -508,10 +506,9 @@ class ARIMAForecaster:
         """Return model residuals."""
         return self.residuals_
 
-
-# =============================================================================
-# Convenience Functions
-# =============================================================================
+        # =============================================================================
+        # Convenience Functions
+        # =============================================================================
 
 
 def forecast_workload(

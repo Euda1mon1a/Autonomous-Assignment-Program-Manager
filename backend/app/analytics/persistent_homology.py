@@ -50,7 +50,7 @@ except ImportError:
         "Install with: pip install ripser persim"
     )
 
-# Try to import dimensionality reduction for embeddings
+    # Try to import dimensionality reduction for embeddings
 try:
     from sklearn.decomposition import PCA
     from sklearn.manifold import MDS, TSNE
@@ -81,7 +81,7 @@ class TopologicalFeature:
     persistence: float
     interpretation: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Compute derived fields."""
         if self.persistence == 0:
             self.persistence = self.death - self.birth
@@ -199,7 +199,7 @@ class PersistentScheduleAnalyzer:
     - Coverage gaps (H2)
     """
 
-    def __init__(self, db: Session, max_dimension: int = 2):
+    def __init__(self, db: Session, max_dimension: int = 2) -> None:
         """
         Initialize the analyzer.
 
@@ -236,13 +236,13 @@ class PersistentScheduleAnalyzer:
         if not assignments:
             raise ValueError("Cannot embed empty assignment list")
 
-        # Extract features from assignments
+            # Extract features from assignments
         features = self._extract_assignment_features(assignments)
 
         if features.size == 0:
             raise ValueError("Failed to extract features from assignments")
 
-        # Standardize features
+            # Standardize features
         if HAS_SKLEARN:
             scaler = StandardScaler()
             features_scaled = scaler.fit_transform(features)
@@ -252,7 +252,7 @@ class PersistentScheduleAnalyzer:
             std = np.std(features, axis=0) + 1e-8  # Avoid division by zero
             features_scaled = (features - mean) / std
 
-        # Apply dimensionality reduction
+            # Apply dimensionality reduction
         if method == "pca" and HAS_SKLEARN:
             reducer = PCA(n_components=n_components)
             point_cloud = reducer.fit_transform(features_scaled)
@@ -329,7 +329,7 @@ class PersistentScheduleAnalyzer:
                 # Skip assignments without valid blocks
                 continue
 
-            # Feature vector for this assignment
+                # Feature vector for this assignment
             feature_vec = [
                 # Categorical encodings
                 person_to_idx.get(assignment.person_id, -1),
@@ -381,7 +381,7 @@ class PersistentScheduleAnalyzer:
             logger.warning("Using mock persistence computation (ripser not available)")
             return self._mock_persistence_diagram(point_cloud)
 
-        # Compute persistent homology using ripser
+            # Compute persistent homology using ripser
         logger.info(
             f"Computing persistent homology (max_dim={self.max_dimension}) "
             f"for {len(point_cloud)} points in {point_cloud.shape[1]}D"
@@ -410,7 +410,7 @@ class PersistentScheduleAnalyzer:
                             )
                         )
 
-            # H1 (loops/cycles)
+                        # H1 (loops/cycles)
             if len(dgms) > 1:
                 for birth, death in dgms[1]:
                     if not np.isinf(death):
@@ -424,7 +424,7 @@ class PersistentScheduleAnalyzer:
                             )
                         )
 
-            # H2 (voids)
+                        # H2 (voids)
             if len(dgms) > 2:
                 for birth, death in dgms[2]:
                     if not np.isinf(death):
@@ -518,7 +518,7 @@ class PersistentScheduleAnalyzer:
             logger.info("No significant coverage voids detected")
             return []
 
-        # Get date range from assignments
+            # Get date range from assignments
         from app.models.block import Block
 
         blocks = (
@@ -593,7 +593,7 @@ class PersistentScheduleAnalyzer:
             logger.info("No significant cyclic patterns detected")
             return []
 
-        # Common cycle lengths in medical residency (days)
+            # Common cycle lengths in medical residency (days)
         common_cycles = [7, 14, 21, 28]  # Weekly, biweekly, 3-week, 4-week
 
         for idx, feature in enumerate(significant_h1):
@@ -703,7 +703,7 @@ class PersistentScheduleAnalyzer:
             )
             return distance
 
-        # Compute bottleneck distance for each dimension
+            # Compute bottleneck distance for each dimension
         distances = []
 
         try:
@@ -714,21 +714,21 @@ class PersistentScheduleAnalyzer:
                 dist_h0 = bottleneck(dgm_a_h0, dgm_b_h0)
                 distances.append(dist_h0)
 
-            # H1 distance
+                # H1 distance
             if dgm_a.h1_features and dgm_b.h1_features:
                 dgm_a_h1 = np.array([[f.birth, f.death] for f in dgm_a.h1_features])
                 dgm_b_h1 = np.array([[f.birth, f.death] for f in dgm_b.h1_features])
                 dist_h1 = bottleneck(dgm_a_h1, dgm_b_h1)
                 distances.append(dist_h1)
 
-            # H2 distance
+                # H2 distance
             if dgm_a.h2_features and dgm_b.h2_features:
                 dgm_a_h2 = np.array([[f.birth, f.death] for f in dgm_a.h2_features])
                 dgm_b_h2 = np.array([[f.birth, f.death] for f in dgm_b.h2_features])
                 dist_h2 = bottleneck(dgm_a_h2, dgm_b_h2)
                 distances.append(dist_h2)
 
-            # Combined distance (weighted average across dimensions)
+                # Combined distance (weighted average across dimensions)
             if distances:
                 total_distance = float(np.mean(distances))
             else:
@@ -777,7 +777,7 @@ class PersistentScheduleAnalyzer:
                 "total_assignments": 0,
             }
 
-        # Perform TDA analysis
+            # Perform TDA analysis
         point_cloud = self.embed_assignments(assignments, method="pca")
         diagram = self.compute_persistence_diagram(point_cloud)
         voids = self.extract_schedule_voids(diagram, assignments)

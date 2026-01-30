@@ -91,7 +91,7 @@ class TemplateRegistry:
     - Custom template registration
     """
 
-    def __init__(self, engine: TemplateEngine | None = None):
+    def __init__(self, engine: TemplateEngine | None = None) -> None:
         """
         Initialize the template registry.
 
@@ -128,7 +128,7 @@ class TemplateRegistry:
         except Exception as e:
             raise ValueError(f"Template validation failed: {str(e)}") from e
 
-        # Add to registry
+            # Add to registry
         if template.template_id not in self._templates:
             self._templates[template.template_id] = []
 
@@ -167,7 +167,7 @@ class TemplateRegistry:
         if template_id not in self._templates:
             return None
 
-        # Get all versions for this template
+            # Get all versions for this template
         versions = self._templates[template_id]
 
         # Filter by locale if specified
@@ -176,11 +176,11 @@ class TemplateRegistry:
             if locale_versions:
                 versions = locale_versions
 
-        # If no version specified, return active version
+                # If no version specified, return active version
         if version is None:
             return self._active_versions.get(template_id)
 
-        # Find specific version
+            # Find specific version
         for template_version in versions:
             if template_version.version == version:
                 return template_version
@@ -228,11 +228,11 @@ class TemplateRegistry:
         else:
             templates = [v for versions in self._templates.values() for v in versions]
 
-        # Filter by locale
+            # Filter by locale
         if locale:
             templates = [t for t in templates if t.locale == locale]
 
-        # Filter by tags
+            # Filter by tags
         if tags:
             templates = [t for t in templates if any(tag in t.tags for tag in tags)]
 
@@ -294,7 +294,7 @@ class TemplateRegistry:
         if not current:
             return None
 
-        # Create new version
+            # Create new version
         new_version = TemplateVersion(
             id=uuid4(),
             template_id=current.template_id,
@@ -396,7 +396,7 @@ class TemplateRegistry:
         if template_id not in self._templates:
             return False
 
-        # Find and remove the version
+            # Find and remove the version
         versions = self._templates[template_id]
         for i, template_version in enumerate(versions):
             if template_version.version == version:
@@ -417,8 +417,9 @@ class TemplateRegistry:
 
         return False
 
+        # Global registry instance
 
-# Global registry instance
+
 _global_registry: TemplateRegistry | None = None
 
 

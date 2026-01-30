@@ -31,7 +31,7 @@ class PoolManager:
     - Graceful shutdown
     """
 
-    def __init__(self, database_url: str, config: PoolConfig | None = None):
+    def __init__(self, database_url: str, config: PoolConfig | None = None) -> None:
         """Initialize pool manager.
 
         Args:
@@ -91,7 +91,7 @@ class PoolManager:
             self._monitor = PoolMonitor(self._pool)
             self._setup_pool_events()
 
-        # Initialize health checker
+            # Initialize health checker
         self._health_checker = PoolHealthChecker(self._session_factory, self._config)
 
         # Initialize auto recovery
@@ -101,7 +101,7 @@ class PoolManager:
         if self._config.pool_size > 0:
             self._prewarm_connections()
 
-        # Start health check thread
+            # Start health check thread
         if self._config.enable_monitoring:
             self._start_health_checks()
 
@@ -113,13 +113,13 @@ class PoolManager:
 
         return self._engine
 
-    def _setup_pool_events(self):
+    def _setup_pool_events(self) -> None:
         """Set up SQLAlchemy pool event listeners for monitoring."""
         if not self._monitor:
             return
 
         @event.listens_for(self._pool, "connect")
-        def receive_connect(dbapi_conn, connection_record):
+        def receive_connect(dbapi_conn, connection_record) -> None:
             """Track connection creation."""
             # Store connect time in connection record
             connection_record.info["connect_time"] = time.time()
@@ -127,31 +127,31 @@ class PoolManager:
             logger.debug(f"New connection created: {id(dbapi_conn)}")
 
         @event.listens_for(self._pool, "checkout")
-        def receive_checkout(dbapi_conn, connection_record, connection_proxy):
+        def receive_checkout(dbapi_conn, connection_record, connection_proxy) -> None:
             """Track connection checkout."""
             self._monitor.record_checkout(id(dbapi_conn))
             logger.debug(f"Connection checked out: {id(dbapi_conn)}")
 
         @event.listens_for(self._pool, "checkin")
-        def receive_checkin(dbapi_conn, connection_record):
+        def receive_checkin(dbapi_conn, connection_record) -> None:
             """Track connection checkin."""
             self._monitor.record_checkin(id(dbapi_conn))
             logger.debug(f"Connection checked in: {id(dbapi_conn)}")
 
         @event.listens_for(self._pool, "reset")
-        def receive_reset(dbapi_conn, connection_record):
+        def receive_reset(dbapi_conn, connection_record) -> None:
             """Track connection reset."""
             logger.debug(f"Connection reset: {id(dbapi_conn)}")
 
         @event.listens_for(self._pool, "invalidate")
-        def receive_invalidate(dbapi_conn, connection_record, exception):
+        def receive_invalidate(dbapi_conn, connection_record, exception) -> None:
             """Track connection invalidation."""
             self._monitor.record_disconnect()
             logger.warning(
                 f"Connection invalidated: {id(dbapi_conn)}, reason: {exception}"
             )
 
-    def _prewarm_connections(self):
+    def _prewarm_connections(self) -> None:
         """Pre-warm the connection pool by creating initial connections.
 
         This reduces latency for the first few requests by establishing
@@ -180,7 +180,7 @@ class PoolManager:
                 except Exception as e:
                     logger.error(f"Error closing pre-warmed connection: {e}")
 
-    def _start_health_checks(self):
+    def _start_health_checks(self) -> None:
         """Start background health check thread."""
         if self._health_check_thread and self._health_check_thread.is_alive():
             return
@@ -192,7 +192,7 @@ class PoolManager:
         self._health_check_thread.start()
         logger.info("Health check thread started")
 
-    def _health_check_loop(self):
+    def _health_check_loop(self) -> None:
         """Background loop for periodic health checks."""
         while not self._shutdown_event.is_set():
             try:
@@ -210,7 +210,7 @@ class PoolManager:
                     for error in result.errors:
                         logger.error(f"Health check error: {error}")
 
-                    # Attempt recovery if configured
+                        # Attempt recovery if configured
                     if self._auto_recovery:
                         recovery_success = self._auto_recovery.attempt_recovery(result)
                         if recovery_success:
@@ -218,17 +218,17 @@ class PoolManager:
                         else:
                             logger.error("Pool recovery failed")
 
-                # Check if dynamic sizing is needed
+                            # Check if dynamic sizing is needed
                 if self._config.enable_dynamic_sizing:
                     self._adjust_pool_size()
 
             except Exception as e:
                 logger.error(f"Error in health check loop: {e}", exc_info=True)
 
-            # Wait for next check interval
+                # Wait for next check interval
             self._shutdown_event.wait(self._config.health_check_interval)
 
-    def _adjust_pool_size(self):
+    def _adjust_pool_size(self) -> None:
         """Dynamically adjust pool size based on utilization.
 
         This implements automatic pool scaling based on current load.
@@ -250,7 +250,7 @@ class PoolManager:
                 )
                 self._update_pool_size(new_size)
 
-        # Scale down if utilization is low
+                # Scale down if utilization is low
         elif utilization <= self._config.scale_down_threshold:
             new_size = max(current_size - 5, self._config.min_pool_size)
             if new_size < current_size:
@@ -260,7 +260,7 @@ class PoolManager:
                 )
                 self._update_pool_size(new_size)
 
-    def _update_pool_size(self, new_size: int):
+    def _update_pool_size(self, new_size: int) -> None:
         """Update the pool size dynamically.
 
         Note: SQLAlchemy's QueuePool doesn't support runtime size changes,
@@ -287,7 +287,7 @@ class PoolManager:
                 logger.debug("Disposing old engine and pool")
                 self._engine.dispose()
 
-            # Create new engine with updated pool size
+                # Create new engine with updated pool size
             self._engine = create_engine(
                 self._database_url,
                 poolclass=QueuePool,
@@ -313,11 +313,11 @@ class PoolManager:
             if self._config.enable_monitoring and self._monitor:
                 self._setup_pool_events()
 
-            # Update monitor reference
+                # Update monitor reference
             if self._monitor:
                 self._monitor._pool = self._pool
 
-            # Update auto-recovery reference
+                # Update auto-recovery reference
             if self._auto_recovery:
                 self._auto_recovery._pool = self._pool
 
@@ -407,7 +407,7 @@ class PoolManager:
             "warnings": last_result.warnings,
         }
 
-    def shutdown(self, timeout: int = 30):
+    def shutdown(self, timeout: int = 30) -> None:
         """Gracefully shutdown the pool manager.
 
         Args:
@@ -426,7 +426,7 @@ class PoolManager:
             if self._health_check_thread.is_alive():
                 logger.warning("Health check thread did not stop within timeout")
 
-        # Dispose of pool
+                # Dispose of pool
         if self._engine:
             logger.info("Disposing database engine and connection pool")
             self._engine.dispose()
@@ -438,12 +438,13 @@ class PoolManager:
         self.initialize()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Context manager exit."""
         self.shutdown()
 
+        # Global pool manager instance
 
-# Global pool manager instance
+
 _pool_manager: PoolManager | None = None
 
 
@@ -486,7 +487,7 @@ def initialize_pool_manager(
     return _pool_manager
 
 
-def shutdown_pool_manager():
+def shutdown_pool_manager() -> None:
     """Shutdown the global pool manager."""
     global _pool_manager
     if _pool_manager:

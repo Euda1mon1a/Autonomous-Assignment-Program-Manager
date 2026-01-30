@@ -36,7 +36,7 @@ class VersionedRoute(APIRoute):
         min_version: APIVersion | None = None,
         max_version: APIVersion | None = None,
         **kwargs,
-    ):
+    ) -> None:
         """
         Initialize versioned route.
 
@@ -87,7 +87,7 @@ class VersionedRoute(APIRoute):
                     ),
                 )
 
-            # Check maximum version (sunset)
+                # Check maximum version (sunset)
             if self.max_version and current_version > self.max_version:
                 raise HTTPException(
                     status_code=410,  # Gone
@@ -98,7 +98,7 @@ class VersionedRoute(APIRoute):
                     ),
                 )
 
-            # Check for retired endpoints
+                # Check for retired endpoints
             deprecation_mgr = get_deprecation_manager()
             sunset_error = deprecation_mgr.check_sunset_enforcement(request)
             if sunset_error:
@@ -107,7 +107,7 @@ class VersionedRoute(APIRoute):
                     detail=sunset_error["detail"],
                 )
 
-            # Process request
+                # Process request
             response = await original_handler(request)
 
             # Add deprecation headers if applicable
@@ -136,7 +136,7 @@ class VersionedAPIRouter(APIRouter):
         min_version: APIVersion | None = None,
         max_version: APIVersion | None = None,
         **kwargs,
-    ):
+    ) -> None:
         """
         Initialize versioned router.
 
@@ -177,7 +177,7 @@ class VersionedAPIRouter(APIRouter):
         if max_version is None:
             max_version = self.max_version
 
-        # Pass version requirements to route
+            # Pass version requirements to route
         if self.route_class == VersionedRoute:
             kwargs["min_version"] = min_version
             kwargs["max_version"] = max_version
@@ -234,8 +234,7 @@ class VersionedAPIRouter(APIRouter):
 
         return decorator
 
-
-# Utility functions for version-aware routing
+        # Utility functions for version-aware routing
 
 
 def version_route(
@@ -346,7 +345,7 @@ def version_dispatch(handlers: dict[APIVersion, Callable]):
             handler = handlers[current_version]
             return await handler(*args, **kwargs)
 
-        # Fall back to highest version <= current
+            # Fall back to highest version <= current
         compatible_versions = [v for v in handlers if v <= current_version]
 
         if compatible_versions:
@@ -357,7 +356,7 @@ def version_dispatch(handlers: dict[APIVersion, Callable]):
             )
             return await handler(*args, **kwargs)
 
-        # No compatible handler found
+            # No compatible handler found
         raise HTTPException(
             status_code=400,
             detail=f"No handler available for API version {current_version.value}",
@@ -365,8 +364,7 @@ def version_dispatch(handlers: dict[APIVersion, Callable]):
 
     return dispatcher
 
-
-# Deprecation route utilities
+    # Deprecation route utilities
 
 
 async def deprecated_endpoint_handler(

@@ -41,7 +41,7 @@ class WorkloadOptimizer:
         max_depth: int = 6,
         learning_rate: float = 0.1,
         random_state: int = 42,
-    ):
+    ) -> None:
         """
         Initialize workload optimizer.
 
@@ -114,7 +114,7 @@ class WorkloadOptimizer:
         for role in ["pd", "apd", "oic", "dept_chief", "sports_med", "core"]:
             features[f"role_{role}"] = 1 if faculty_role == role else 0
 
-        # Target workload capacity
+            # Target workload capacity
         features["target_clinical_blocks"] = (
             person_data.get("target_clinical_blocks", 48) or 48
         )
@@ -147,7 +147,7 @@ class WorkloadOptimizer:
         for rot_type, count in rotation_counts.items():
             features[f"assignments_{rot_type}"] = count
 
-        # Workload concentration (diversity measure)
+            # Workload concentration (diversity measure)
         if num_assignments > 0:
             counts = list(rotation_counts.values())
             counts = [c for c in counts if c > 0]
@@ -157,7 +157,7 @@ class WorkloadOptimizer:
         else:
             features["workload_concentration"] = 0.0
 
-        # Weekend/holiday burden
+            # Weekend/holiday burden
         weekend_count = sum(
             1 for a in current_assignments if a.get("is_weekend", False)
         )
@@ -186,7 +186,7 @@ class WorkloadOptimizer:
             features["historical_swap_rate"] = 0.0
             features["historical_conflict_rate"] = 0.0
 
-        # Workload utilization ratio
+            # Workload utilization ratio
         target = features["target_clinical_blocks"]
         if target > 0:
             features["workload_utilization"] = num_assignments / target
@@ -279,7 +279,7 @@ class WorkloadOptimizer:
             logger.warning("Model not trained, returning default optimal workload")
             return 0.8  # Default to 80% utilization (resilience framework)
 
-        # Extract features
+            # Extract features
         X = self.extract_features(person_data, current_assignments, historical_data)
 
         # Ensure all expected features are present
@@ -287,7 +287,7 @@ class WorkloadOptimizer:
             if col not in X.columns:
                 X[col] = 0
 
-        # Reorder columns
+                # Reorder columns
         X = X[self.feature_names]
 
         # Scale and predict
@@ -333,7 +333,7 @@ class WorkloadOptimizer:
                     }
                 )
 
-        # Sort by overload amount (most overloaded first)
+                # Sort by overload amount (most overloaded first)
         overloaded.sort(key=lambda x: x["overload_amount"], reverse=True)
 
         return overloaded
@@ -371,7 +371,7 @@ class WorkloadOptimizer:
                 }
             )
 
-        # Sort by workload
+            # Sort by workload
         workloads.sort(key=lambda x: x["workload"])
 
         # Find underutilized and overutilized
@@ -404,7 +404,7 @@ class WorkloadOptimizer:
                         }
                     )
 
-        # Sort suggestions by priority
+                    # Sort suggestions by priority
         suggestions.sort(key=lambda x: x["priority"], reverse=True)
 
         return suggestions[:10]  # Return top 10 suggestions
@@ -429,7 +429,7 @@ class WorkloadOptimizer:
         if self.clusterer is None or self.scaler is None:
             return 0
 
-        # Extract features
+            # Extract features
         X = self.extract_features(person_data, current_assignments, historical_data)
 
         # Ensure all expected features are present
@@ -437,7 +437,7 @@ class WorkloadOptimizer:
             if col not in X.columns:
                 X[col] = 0
 
-        # Reorder columns
+                # Reorder columns
         X = X[self.feature_names]
 
         # Scale and predict cluster

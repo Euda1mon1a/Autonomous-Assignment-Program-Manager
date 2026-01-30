@@ -49,7 +49,7 @@ class BounceHandler:
     SOFT_BOUNCE_THRESHOLD = 3  # Suppress after 3 soft bounces
     COMPLAINT_THRESHOLD = 1  # Suppress after 1 complaint
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize bounce handler."""
         self._events: list[BounceEvent] = []
         self._suppression_list: set[str] = set()

@@ -139,7 +139,7 @@ class DataAnonymizer:
         db: Session | None = None,
         pii_detector: PIIDetector | None = None,
         masker_factory: MaskerFactory | None = None,
-    ):
+    ) -> None:
         """
         Initialize data anonymizer.
 
@@ -178,13 +178,13 @@ class DataAnonymizer:
             if config.detect_pii:
                 pii_detected = self.pii_detector.detect_in_dict(record)
 
-            # Determine fields to anonymize
+                # Determine fields to anonymize
             fields_to_anonymize = config.fields or []
             if config.detect_pii and not fields_to_anonymize:
                 # Use detected PII fields
                 fields_to_anonymize = list(pii_detected.keys())
 
-            # Apply anonymization
+                # Apply anonymization
             if config.method == AnonymizationMethod.MASK:
                 anonymized = self._mask_record(
                     record, fields_to_anonymize, pii_detected
@@ -204,7 +204,7 @@ class DataAnonymizer:
                     errors=[f"Method {config.method} requires batch processing"],
                 )
 
-            # Create audit trail
+                # Create audit trail
             audit_id = None
             if config.audit_trail and self.db:
                 audit_id = self._create_audit_entry(
@@ -312,7 +312,7 @@ class DataAnonymizer:
                     errors=[f"Unknown method: {config.method}"],
                 )
 
-            # Create audit trail
+                # Create audit trail
             audit_id = None
             if config.audit_trail and self.db:
                 audit_id = self._create_audit_entry(
@@ -354,12 +354,12 @@ class DataAnonymizer:
             if not isinstance(value, str):
                 continue
 
-            # Determine PII type for this field
+                # Determine PII type for this field
             pii_type = None
             if field in pii_detected and pii_detected[field]:
                 pii_type = pii_detected[field][0].type.value
 
-            # Get appropriate masker
+                # Get appropriate masker
             masker = self.masker_factory.get_masker(pii_type or "default")
             result[field] = masker.mask(value)
 
@@ -462,7 +462,7 @@ class BatchAnonymizer:
     Useful for anonymizing large datasets with memory efficiency.
     """
 
-    def __init__(self, anonymizer: DataAnonymizer, batch_size: int = 100):
+    def __init__(self, anonymizer: DataAnonymizer, batch_size: int = 100) -> None:
         """
         Initialize batch anonymizer.
 
@@ -504,7 +504,7 @@ class BatchAnonymizer:
             else:
                 all_errors.extend(result.errors)
 
-            # Progress callback
+                # Progress callback
             if progress_callback:
                 progress_callback(i + len(batch), total_records)
 

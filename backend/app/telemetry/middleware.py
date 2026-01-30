@@ -40,7 +40,7 @@ class TracingMiddleware(BaseHTTPMiddleware):
         capture_headers: bool = True,
         capture_query_params: bool = True,
         header_allowlist: list[str] | None = None,
-    ):
+    ) -> None:
         """
         Initialize tracing middleware.
 
@@ -87,10 +87,10 @@ class TracingMiddleware(BaseHTTPMiddleware):
         if request.url.path in self.excluded_paths:
             return await call_next(request)
 
-        # Extract trace context from headers (for distributed tracing)
-        # Context propagation is handled automatically by OpenTelemetry
+            # Extract trace context from headers (for distributed tracing)
+            # Context propagation is handled automatically by OpenTelemetry
 
-        # Create span for this request
+            # Create span for this request
         span_name = f"{request.method} {request.url.path}"
 
         with self.tracer.start_as_current_span(
@@ -104,11 +104,11 @@ class TracingMiddleware(BaseHTTPMiddleware):
             if self.capture_headers:
                 self._set_header_attributes(span, request)
 
-            # Capture query parameters if enabled
+                # Capture query parameters if enabled
             if self.capture_query_params:
                 self._set_query_attributes(span, request)
 
-            # Capture baggage attributes
+                # Capture baggage attributes
             self._set_baggage_attributes(span)
 
             # Process request
@@ -127,7 +127,7 @@ class TracingMiddleware(BaseHTTPMiddleware):
                 else:
                     span.set_status(Status(StatusCode.OK))
 
-                # Add response timing
+                    # Add response timing
                 duration_ms = (time.time() - start_time) * 1000
                 span.set_attribute("http.response_time_ms", duration_ms)
 
@@ -145,7 +145,7 @@ class TracingMiddleware(BaseHTTPMiddleware):
 
                 raise
 
-    def _set_http_attributes(self, span: Span, request: Request):
+    def _set_http_attributes(self, span: Span, request: Request) -> None:
         """
         Set standard HTTP semantic convention attributes.
 
@@ -163,7 +163,7 @@ class TracingMiddleware(BaseHTTPMiddleware):
         if request.client:
             span.set_attribute(SpanAttributes.HTTP_CLIENT_IP, request.client.host)
 
-    def _set_header_attributes(self, span: Span, request: Request):
+    def _set_header_attributes(self, span: Span, request: Request) -> None:
         """
         Set request header attributes.
 
@@ -180,7 +180,7 @@ class TracingMiddleware(BaseHTTPMiddleware):
                 )
                 span.set_attribute(attr_name, header_value)
 
-    def _set_query_attributes(self, span: Span, request: Request):
+    def _set_query_attributes(self, span: Span, request: Request) -> None:
         """
         Set query parameter attributes.
 
@@ -197,7 +197,7 @@ class TracingMiddleware(BaseHTTPMiddleware):
             for key, value in list(request.query_params.items())[:10]:
                 span.set_attribute(f"http.query.{key}", value)
 
-    def _set_baggage_attributes(self, span: Span):
+    def _set_baggage_attributes(self, span: Span) -> None:
         """
         Set attributes from baggage context.
 
@@ -228,7 +228,7 @@ class DatabaseTracingMiddleware:
         query: str,
         params: dict | None = None,
         table_name: str | None = None,
-    ):
+    ) -> None:
         """
         Add database query attributes to a span.
 
@@ -303,7 +303,7 @@ class ExternalServiceTracingHelper:
 
 def add_custom_span_attributes(
     attributes: dict[str, str | int | float | bool],
-):
+) -> None:
     """
     Add custom attributes to the current span.
 
@@ -327,7 +327,7 @@ def add_custom_span_attributes(
 def add_span_event(
     name: str,
     attributes: dict[str, str | int | float | bool] | None = None,
-):
+) -> None:
     """
     Add an event to the current span.
 
@@ -349,7 +349,7 @@ def add_span_event(
         current_span.add_event(name, attributes or {})
 
 
-def set_baggage(key: str, value: str):
+def set_baggage(key: str, value: str) -> None:
     """
     Set a baggage item for cross-service propagation.
 

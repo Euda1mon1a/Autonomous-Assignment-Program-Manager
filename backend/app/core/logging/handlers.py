@@ -41,7 +41,7 @@ class AsyncLogHandler(ABC):
         buffer_size: int = 100,
         flush_interval: float = 5.0,
         max_retries: int = 3,
-    ):
+    ) -> None:
         """
         Initialize async log handler.
 
@@ -96,7 +96,7 @@ class AsyncLogHandler(ABC):
             if not self._buffer:
                 return
 
-            # Get current buffer contents
+                # Get current buffer contents
             entries = list(self._buffer)
             self._buffer.clear()
             self._last_flush = datetime.utcnow()
@@ -130,7 +130,7 @@ class DatabaseLogHandler(AsyncLogHandler):
         db_session_factory,
         table_name: str = "audit_logs",
         **kwargs,
-    ):
+    ) -> None:
         """
         Initialize database log handler.
 
@@ -172,7 +172,7 @@ class RedisLogHandler(AsyncLogHandler):
         channel: str = "app:logs",
         ttl: int = 86400,  # 24 hours
         **kwargs,
-    ):
+    ) -> None:
         """
         Initialize Redis log handler.
 
@@ -194,7 +194,7 @@ class RedisLogHandler(AsyncLogHandler):
             for entry in entries:
                 await self.redis.publish(self.channel, json.dumps(entry))
 
-            # Also store in list with TTL for historical access
+                # Also store in list with TTL for historical access
             key = f"logs:{datetime.utcnow().strftime('%Y-%m-%d:%H')}"
             await self.redis.rpush(key, *[json.dumps(e) for e in entries])
             await self.redis.expire(key, self.ttl)
@@ -220,7 +220,7 @@ class WebhookLogHandler(AsyncLogHandler):
         headers: dict[str, str] | None = None,
         min_level: str = "WARNING",
         **kwargs,
-    ):
+    ) -> None:
         """
         Initialize webhook log handler.
 
@@ -287,7 +287,7 @@ class CompressedRotatingFileHandler:
         max_bytes: int = 100 * 1024 * 1024,  # 100 MB
         backup_count: int = 7,
         compress: bool = True,
-    ):
+    ) -> None:
         """
         Initialize compressed rotating file handler.
 
@@ -317,9 +317,9 @@ class CompressedRotatingFileHandler:
         if not self.filepath.exists():
             return
 
-        # Close current file handler (would be done by loguru)
+            # Close current file handler (would be done by loguru)
 
-        # Rotate existing backups
+            # Rotate existing backups
         for i in range(self.backup_count - 1, 0, -1):
             old_file = self.filepath.with_suffix(
                 f".{i}.gz" if self.compress else f".{i}"
@@ -334,14 +334,14 @@ class CompressedRotatingFileHandler:
                 else:
                     shutil.move(str(old_file), str(new_file))
 
-        # Rotate current file
+                    # Rotate current file
         if self.compress:
             # Compress current file to .1.gz
             with open(self.filepath, "rb") as f_in:
                 with gzip.open(self.filepath.with_suffix(".1.gz"), "wb") as f_out:
                     shutil.copyfileobj(f_in, f_out)
 
-            # Remove uncompressed file
+                    # Remove uncompressed file
             self.filepath.unlink()
         else:
             # Just rename to .1
@@ -349,8 +349,7 @@ class CompressedRotatingFileHandler:
 
         logger.info(f"Rotated log file: {self.filepath}")
 
-
-# Factory functions for handler creation
+        # Factory functions for handler creation
 
 
 def create_database_handler(

@@ -311,7 +311,7 @@ class ContractVerifier:
         app: FastAPI | None = None,
         base_url: str | None = None,
         provider_states: dict[str, Callable] | None = None,
-    ):
+    ) -> None:
         """
         Initialize the contract verifier.
 
@@ -362,12 +362,12 @@ class ContractVerifier:
                 errors=errors,
             )
 
-        # Verify each interaction
+            # Verify each interaction
         for interaction in contract.interactions:
             result = await self._verify_interaction(interaction, setup_db)
             interaction_results.append(result)
 
-        # Calculate summary statistics
+            # Calculate summary statistics
         passed_count = sum(1 for r in interaction_results if r.passed)
         failed_count = len(interaction_results) - passed_count
         all_passed = passed_count == len(interaction_results)
@@ -426,7 +426,7 @@ class ContractVerifier:
                     f"Provider state '{interaction.provider_state}' not configured"
                 )
 
-        # Make the request
+                # Make the request
         try:
             actual_response = await self._make_request(interaction.request)
         except Exception as e:
@@ -441,7 +441,7 @@ class ContractVerifier:
                 warnings=warnings,
             )
 
-        # Verify response
+            # Verify response
         response_matched, response_errors = self._verify_response(
             interaction.response, actual_response
         )
@@ -520,7 +520,7 @@ class ContractVerifier:
                 f"Status code mismatch: expected {expected.status}, got {actual['status']}"
             )
 
-        # Check headers
+            # Check headers
         for key, value in expected.headers.items():
             actual_value = actual["headers"].get(key)
             if actual_value != value:
@@ -528,14 +528,14 @@ class ContractVerifier:
                     f"Header '{key}' mismatch: expected '{value}', got '{actual_value}'"
                 )
 
-        # Check body with schema if provided
+                # Check body with schema if provided
         if expected.body_schema and actual["body"]:
             try:
                 expected.body_schema(**actual["body"])
             except Exception as e:
                 errors.append(f"Response body validation failed: {str(e)}")
 
-        # Check body structure if no schema
+                # Check body structure if no schema
         elif expected.body is not None:
             if not self._compare_structures(expected.body, actual["body"]):
                 errors.append(
@@ -544,7 +544,7 @@ class ContractVerifier:
                     f"Actual: {actual['body']}"
                 )
 
-        # Apply custom matchers
+                # Apply custom matchers
         for json_path, matcher in expected.body_matchers.items():
             try:
                 value = self._extract_json_path(actual["body"], json_path)
@@ -576,7 +576,7 @@ class ContractVerifier:
         if isinstance(expected, list):
             if len(expected) == 0:
                 return True  # Empty list matches any list
-            # Check if actual list items match expected structure
+                # Check if actual list items match expected structure
             if len(actual) == 0:
                 return False
             return all(self._compare_structures(expected[0], item) for item in actual)
@@ -604,7 +604,7 @@ class ContractTester:
     Helps consumers generate contracts from their test cases.
     """
 
-    def __init__(self, consumer: str, provider: str, version: str = "1.0.0"):
+    def __init__(self, consumer: str, provider: str, version: str = "1.0.0") -> None:
         """
         Initialize contract tester.
 
@@ -654,7 +654,7 @@ class ContractTester:
         with open(filepath) as f:
             data = json.load(f)
 
-        # Convert from Pact format to our Contract model
+            # Convert from Pact format to our Contract model
         contract = Contract(
             consumer=data["consumer"]["name"],
             provider=data["provider"]["name"],
@@ -708,7 +708,7 @@ class ContractPublisher:
     Supports Pact Broker API for centralized contract management.
     """
 
-    def __init__(self, broker_url: str, auth_token: str | None = None):
+    def __init__(self, broker_url: str, auth_token: str | None = None) -> None:
         """
         Initialize contract publisher.
 
@@ -755,7 +755,7 @@ class ContractPublisher:
         if git_branch:
             pact_data["metadata"]["git_branch"] = git_branch
 
-        # Publish to broker
+            # Publish to broker
         url = (
             f"{self.broker_url}/pacts/provider/{contract.provider}/"
             f"consumer/{contract.consumer}/version/{contract.version}"
@@ -948,7 +948,7 @@ class ContractCompatibilityChecker:
                 )
                 continue
 
-            # Check for changes in existing endpoints
+                # Check for changes in existing endpoints
             new_interaction = new_interactions[key]
             endpoint_changes = self._check_interaction_compatibility(
                 old_interaction, new_interaction, key
@@ -978,14 +978,14 @@ class ContractCompatibilityChecker:
                 )
             )
 
-        # Check response body structure
+            # Check response body structure
         if old.response.body and new.response.body:
             body_changes = self._check_body_compatibility(
                 old.response.body, new.response.body, f"{path}.response.body"
             )
             changes.extend(body_changes)
 
-        # Check if response body was removed
+            # Check if response body was removed
         if old.response.body and not new.response.body:
             changes.append(
                 BreakingChange(
@@ -1022,7 +1022,7 @@ class ContractCompatibilityChecker:
                     )
                     continue
 
-                # Check for type changes
+                    # Check for type changes
                 old_value = old_body[key]
                 new_value = new_body[key]
 

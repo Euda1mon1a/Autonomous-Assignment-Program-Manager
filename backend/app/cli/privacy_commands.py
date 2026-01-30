@@ -14,7 +14,7 @@ def detect_pii(
     enable_names: bool = typer.Option(
         False, "--names", "-n", help="Enable name detection"
     ),
-):
+) -> None:
     """
     Detect PII in provided text.
 
@@ -56,7 +56,7 @@ def scan_file(
     output: str = typer.Option(
         "table", "--output", "-o", help="Output format: table, json"
     ),
-):
+) -> None:
     """
     Scan a file for PII.
 
@@ -76,7 +76,7 @@ def scan_file(
     with open(path) as f:
         content = f.read()
 
-    # Try to parse as JSON
+        # Try to parse as JSON
     try:
         data = json.loads(content)
         if isinstance(data, dict):
@@ -101,7 +101,7 @@ def scan_file(
         # Not JSON, treat as plain text
         pass
 
-    # Scan as plain text
+        # Scan as plain text
     matches = detector.detect_all(content)
 
     if not matches:
@@ -123,7 +123,7 @@ def mask_text(
     strategy: str = typer.Option(
         "partial", "--strategy", "-s", help="Masking strategy"
     ),
-):
+) -> None:
     """
     Mask PII in text.
 
@@ -156,7 +156,7 @@ def anonymize_json(
     detect_auto: bool = typer.Option(
         True, "--auto-detect/--no-auto-detect", help="Auto-detect PII"
     ),
-):
+) -> None:
     """
     Anonymize data in JSON file.
 
@@ -173,7 +173,7 @@ def anonymize_json(
     with open(input_path) as f:
         data = json.load(f)
 
-    # Prepare config
+        # Prepare config
     field_list = fields.split(",") if fields else None
 
     try:
@@ -201,7 +201,7 @@ def anonymize_json(
         typer.echo(f"Error during anonymization: {result.errors}", err=True)
         raise typer.Exit(1)
 
-    # Write output
+        # Write output
     output_path = Path(output_file)
     with open(output_path, "w") as f:
         json.dump(result.anonymized_data, f, indent=2, default=str)
@@ -223,7 +223,7 @@ def test_k_anonymity(
     sample_size: int = typer.Option(
         100, "--size", "-s", help="Number of sample records"
     ),
-):
+) -> None:
     """
     Test k-anonymity with sample data.
 
@@ -281,7 +281,7 @@ def test_k_anonymity(
 def audit_history(
     limit: int = typer.Option(20, "--limit", "-l", help="Number of entries to show"),
     method: str = typer.Option(None, "--method", "-m", help="Filter by method"),
-):
+) -> None:
     """
     Show anonymization audit history.
 
@@ -320,7 +320,7 @@ def benchmark(
         1000, "--count", "-c", help="Number of records to benchmark"
     ),
     method: str = typer.Option("mask", "--method", "-m", help="Anonymization method"),
-):
+) -> None:
     """
     Benchmark anonymization performance.
 
@@ -367,7 +367,7 @@ def benchmark(
         typer.echo(f"Error: {result.errors}", err=True)
         raise typer.Exit(1)
 
-    # Display results
+        # Display results
     records_per_sec = record_count / elapsed_time
 
     typer.echo(f"{typer.style('Benchmark Complete', fg=typer.colors.GREEN)}\n")
@@ -377,7 +377,7 @@ def benchmark(
 
 
 @app.command()
-def generate_key():
+def generate_key() -> None:
     """
     Generate encryption key for pseudonymization.
 

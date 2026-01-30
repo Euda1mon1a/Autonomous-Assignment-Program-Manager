@@ -79,10 +79,9 @@ class MTLSMode(str, Enum):
     PERMISSIVE = "permissive"  # Accept both mTLS and plaintext
     DISABLED = "disabled"  # No mTLS
 
-
-# ============================================================================
-# Pydantic Models (Configuration)
-# ============================================================================
+    # ============================================================================
+    # Pydantic Models (Configuration)
+    # ============================================================================
 
 
 class ServiceEndpoint(BaseModel):
@@ -285,7 +284,7 @@ class MTLSConfig(BaseModel):
                 and self.client_key_path
             )
 
-        # Permissive mode
+            # Permissive mode
         return bool(self.cert_path and self.key_path)
 
     class Config:
@@ -617,10 +616,9 @@ class SidecarConfig(BaseModel):
     class Config:
         use_enum_values = True
 
-
-# ============================================================================
-# Dataclasses (Runtime State)
-# ============================================================================
+        # ============================================================================
+        # Dataclasses (Runtime State)
+        # ============================================================================
 
 
 @dataclass
@@ -673,7 +671,7 @@ class TrafficSplit:
     created_at: datetime = field(default_factory=datetime.utcnow)
     expires_at: datetime | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate weights sum to 100."""
         total = sum(w.weight for w in self.weights)
         if total != 100:
@@ -702,7 +700,7 @@ class TrafficSplit:
                 if match:
                     return weight.service_version
 
-        # Fall back to weighted random selection
+                    # Fall back to weighted random selection
         import random
 
         rand = random.randint(1, 100)
@@ -791,7 +789,7 @@ class ObservabilityHeaders:
         if self.parent_span_id:
             headers["x-b3-parentspanid"] = self.parent_span_id
 
-        # W3C Trace Context format
+            # W3C Trace Context format
         headers["traceparent"] = (
             f"00-{self.trace_id}-{self.span_id}-{'01' if self.sampling_decision else '00'}"
         )
@@ -819,10 +817,9 @@ class ObservabilityHeaders:
             baggage=self.baggage.copy(),
         )
 
-
-# ============================================================================
-# Service Discovery
-# ============================================================================
+        # ============================================================================
+        # Service Discovery
+        # ============================================================================
 
 
 class ServiceDiscovery:
@@ -832,7 +829,7 @@ class ServiceDiscovery:
     Manages service registry and provides service lookup capabilities.
     """
 
-    def __init__(self, heartbeat_timeout_seconds: int = 60):
+    def __init__(self, heartbeat_timeout_seconds: int = 60) -> None:
         """
         Initialize service discovery.
 
@@ -942,15 +939,15 @@ class ServiceDiscovery:
                 if service.name != name:
                     continue
 
-                # Check version if specified
+                    # Check version if specified
                 if version and service.version != version:
                     continue
 
-                # Check tags if specified
+                    # Check tags if specified
                 if tags and not all(tag in service.tags for tag in tags):
                     continue
 
-                # Check health
+                    # Check health
                 if service.is_healthy(self.heartbeat_timeout):
                     results.append(service)
 
@@ -1006,10 +1003,9 @@ class ServiceDiscovery:
         """
         return list(self.services.values())
 
-
-# ============================================================================
-# Service Health Reporter
-# ============================================================================
+        # ============================================================================
+        # Service Health Reporter
+        # ============================================================================
 
 
 class ServiceHealthReporter:
@@ -1019,7 +1015,7 @@ class ServiceHealthReporter:
     Provides health check endpoints and reporting.
     """
 
-    def __init__(self, service_name: str, version: str):
+    def __init__(self, service_name: str, version: str) -> None:
         """
         Initialize health reporter.
 
@@ -1061,13 +1057,13 @@ class ServiceHealthReporter:
             self.health_status = HealthStatus.UNKNOWN
             return
 
-        # All checks must pass for healthy
+            # All checks must pass for healthy
         if all(self.checks.values()):
             self.health_status = HealthStatus.HEALTHY
-        # Some checks passing = degraded
+            # Some checks passing = degraded
         elif any(self.checks.values()):
             self.health_status = HealthStatus.DEGRADED
-        # All checks failing = unhealthy
+            # All checks failing = unhealthy
         else:
             self.health_status = HealthStatus.UNHEALTHY
 
@@ -1107,10 +1103,9 @@ class ServiceHealthReporter:
         """
         return self.health_status in (HealthStatus.HEALTHY, HealthStatus.DEGRADED)
 
-
-# ============================================================================
-# Main Service Mesh Class
-# ============================================================================
+        # ============================================================================
+        # Main Service Mesh Class
+        # ============================================================================
 
 
 class ServiceMesh:
@@ -1125,7 +1120,7 @@ class ServiceMesh:
         service_name: str,
         service_version: str = "v1",
         sidecar_config: SidecarConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize service mesh.
 
@@ -1259,7 +1254,7 @@ class ServiceMesh:
             if not uri_match:
                 continue
 
-            # Check header match
+                # Check header match
             if rule.match_headers:
                 headers_match = all(
                     headers.get(k) == v for k, v in rule.match_headers.items()
@@ -1267,7 +1262,7 @@ class ServiceMesh:
                 if not headers_match:
                     continue
 
-            # Rule matched
+                    # Rule matched
             return (rule.destination, rule.destination_subset)
 
         return None

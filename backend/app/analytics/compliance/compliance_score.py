@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class ComplianceScore:
     """Calculates compliance scores and ratings."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
         self.violation_tracker = ViolationTracker(db)
 
@@ -33,7 +33,7 @@ class ComplianceScore:
         else:
             score = 100
 
-        # Rating
+            # Rating
         if score >= 95:
             rating = "excellent"
         elif score >= 85:

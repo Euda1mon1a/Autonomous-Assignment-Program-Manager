@@ -49,7 +49,7 @@ class FacultyPreferenceCache:
     KEY_PREFIX = "faculty_pref:"
     DEFAULT_TTL = 900  # 15 minutes
 
-    def __init__(self, ttl_seconds: int = DEFAULT_TTL):
+    def __init__(self, ttl_seconds: int = DEFAULT_TTL) -> None:
         """
         Initialize the cache.
 
@@ -71,7 +71,7 @@ class FacultyPreferenceCache:
             self._redis = None
             self._available = False
 
-        # Local LRU cache fallback when Redis is unavailable
+            # Local LRU cache fallback when Redis is unavailable
         self._local_cache: dict[str, tuple[Any, datetime]] = {}
 
     @property
@@ -189,7 +189,7 @@ class FacultyPreferenceCache:
             except redis.RedisError as e:
                 logger.error(f"Cache invalidation error: {e}")
 
-        # Also clear from local cache
+                # Also clear from local cache
         with self._lock:
             to_delete = [k for k in self._local_cache if str(faculty_id) in k]
             for k in to_delete:
@@ -224,7 +224,7 @@ class FacultyPreferenceCache:
             except redis.RedisError as e:
                 logger.error(f"Cache clear error: {e}")
 
-        # Clear local cache
+                # Clear local cache
         with self._lock:
             deleted_count += len(self._local_cache)
             self._local_cache.clear()
@@ -244,7 +244,7 @@ class FacultyPreferenceCache:
                 logger.warning(f"Redis get error: {e}")
                 self._available = False
 
-        # Fallback to local cache
+                # Fallback to local cache
         with self._lock:
             if key in self._local_cache:
                 value, expiry = self._local_cache[key]
@@ -267,7 +267,7 @@ class FacultyPreferenceCache:
                 logger.warning(f"Redis put error: {e}")
                 self._available = False
 
-        # Fallback to local cache
+                # Fallback to local cache
         with self._lock:
             expiry = datetime.utcnow() + timedelta(seconds=self.ttl_seconds)
             self._local_cache[key] = (value, expiry)
@@ -281,8 +281,9 @@ class FacultyPreferenceCache:
                 for k in sorted_keys[:200]:
                     del self._local_cache[k]
 
+                    # Global cache instance
 
-# Global cache instance
+
 _faculty_pref_cache: FacultyPreferenceCache | None = None
 
 
@@ -306,7 +307,7 @@ class CachedFacultyPreferenceService:
     - Validates faculty_id access against authenticated user
     """
 
-    def __init__(self, db, cache: FacultyPreferenceCache | None = None):
+    def __init__(self, db, cache: FacultyPreferenceCache | None = None) -> None:
         """
         Initialize the service.
 
@@ -335,7 +336,7 @@ class CachedFacultyPreferenceService:
             # Reconstruct a FacultyPreference-like object from cached data
             return self._dict_to_preference(cached)
 
-        # Query database
+            # Query database
         preferences = (
             self.db.query(FacultyPreference)
             .filter(FacultyPreference.faculty_id == faculty_id)
@@ -364,14 +365,14 @@ class CachedFacultyPreferenceService:
         if cached is not None:
             return cached
 
-        # Query database
+            # Query database
         preferences = self.get_preferences(faculty_id)
         if not preferences or not preferences.blocked_weeks:
             result = False
         else:
             result = week_date.isoformat() in preferences.blocked_weeks
 
-        # Cache result
+            # Cache result
         self.cache.set_week_blocked(faculty_id, week_date, result)
         return result
 
@@ -391,14 +392,14 @@ class CachedFacultyPreferenceService:
         if cached is not None:
             return cached
 
-        # Query database
+            # Query database
         preferences = self.get_preferences(faculty_id)
         if not preferences or not preferences.preferred_weeks:
             result = False
         else:
             result = week_date.isoformat() in preferences.preferred_weeks
 
-        # Cache result
+            # Cache result
         self.cache.set_week_preferred(faculty_id, week_date, result)
         return result
 
@@ -447,7 +448,7 @@ class FacultyConstraintService:
     - get_authorized_faculty_id() safely retrieves faculty ID from user context
     """
 
-    def __init__(self, db):
+    def __init__(self, db) -> None:
         """
         Initialize the service.
 
@@ -507,7 +508,7 @@ class FacultyConstraintService:
         if user.role == "admin":
             return True
 
-        # Non-admin users can only access their own data
+            # Non-admin users can only access their own data
         authorized_faculty_id = self.get_authorized_faculty_id(user)
         if authorized_faculty_id is None:
             return False

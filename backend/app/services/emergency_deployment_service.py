@@ -70,7 +70,7 @@ class EmergencyDeploymentService:
             print(f"Manual intervention needed: {response.errors}")
     """
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.cascade_service = CascadeOverrideService(session)
 
@@ -110,7 +110,7 @@ class EmergencyDeploymentService:
                 ["Emergency deployment service currently supports faculty only"],
             )
 
-        # Phase 1: ASSESS
+            # Phase 1: ASSESS
         assessment = await self._assess_fragility(
             request.person_id,
             request.start_date,
@@ -143,7 +143,7 @@ class EmergencyDeploymentService:
                 errors=errors,
             )
 
-        # Phase 2: EXECUTE
+            # Phase 2: EXECUTE
         repair_outcome = await self._execute_repair(
             request,
             assessment,
@@ -155,7 +155,7 @@ class EmergencyDeploymentService:
                 "Fallback schedule activated - review and deactivate when resolved"
             )
 
-        # Phase 3: VERIFY
+            # Phase 3: VERIFY
         health_check = await self._verify_health(
             request.start_date,
             request.end_date,
@@ -241,11 +241,11 @@ class EmergencyDeploymentService:
         else:
             fragility_score = 0.75
 
-        # Boost fragility if many call assignments (higher stakes)
+            # Boost fragility if many call assignments (higher stakes)
         if call_count >= 3:
             fragility_score = min(fragility_score + 0.1, 1.0)
 
-        # Select strategy
+            # Select strategy
         if force_strategy:
             recommended_strategy = force_strategy
         elif fragility_score < FRAGILITY_INCREMENTAL_THRESHOLD:
@@ -405,7 +405,7 @@ class EmergencyDeploymentService:
             ]
             details.extend([f"Error: {e}" for e in filtered_errors])
 
-        # Count successful coverage steps (excluding already-overridden)
+            # Count successful coverage steps (excluding already-overridden)
         coverage_steps = [
             s
             for s in plan.steps
@@ -498,7 +498,7 @@ class EmergencyDeploymentService:
             else:
                 escalation_severity = "minor"
 
-            # Log escalation (in production, would activate ResilienceService crisis mode)
+                # Log escalation (in production, would activate ResilienceService crisis mode)
             logger.warning(
                 f"Emergency repair incomplete - escalating to crisis mode. "
                 f"Coverage: {coverage_rate:.1%}, Severity: {escalation_severity}, "

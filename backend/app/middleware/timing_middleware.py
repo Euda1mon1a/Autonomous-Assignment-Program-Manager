@@ -37,7 +37,7 @@ class TimingMiddleware(BaseHTTPMiddleware):
         warn_threshold_ms: float = 5000.0,
         enable_performance_logger: bool = True,
         excluded_paths: set[str] | None = None,
-    ):
+    ) -> None:
         """
         Initialize timing middleware.
 
@@ -77,7 +77,7 @@ class TimingMiddleware(BaseHTTPMiddleware):
         if self._is_excluded(request.url.path):
             return await call_next(request)
 
-        # Start timing
+            # Start timing
         start_time = time.perf_counter()
         start_timestamp = time.time()
 
@@ -211,7 +211,7 @@ class DetailedTimingMiddleware(TimingMiddleware):
         if self._is_excluded(request.url.path):
             return await call_next(request)
 
-        # Timing markers
+            # Timing markers
         request_start = time.perf_counter()
 
         # Process request
@@ -288,7 +288,7 @@ def create_timing_middleware(
     """
 
     class ConfiguredTimingMiddleware(TimingMiddleware):
-        def __init__(self, app):
+        def __init__(self, app) -> None:
             super().__init__(
                 app,
                 slow_threshold_ms=slow_threshold_ms,

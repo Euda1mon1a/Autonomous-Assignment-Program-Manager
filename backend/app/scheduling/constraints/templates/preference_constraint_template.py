@@ -21,7 +21,7 @@ from app.scheduling.constraints.base import (
 class PreferenceConstraintTemplate(SoftConstraint):
     """Template for preference soft constraints."""
 
-    def __init__(self, weight: float = 1.0):
+    def __init__(self, weight: float = 1.0) -> None:
         super().__init__(
             name="PreferenceConstraint",
             constraint_type=ConstraintType.PREFERENCE,
@@ -64,7 +64,7 @@ class PreferenceConstraintTemplate(SoftConstraint):
         """Check if assignment violates preference."""
         return False
 
-    def add_to_cpsat(self, model, variables, context):
+    def add_to_cpsat(self, model, variables, context) -> None:
         """
         Add preference to CP-SAT objective as soft constraint.
 
@@ -84,7 +84,7 @@ class PreferenceConstraintTemplate(SoftConstraint):
         if not x or not self.preference_type:
             return
 
-        # Identify blocks that violate the preference
+            # Identify blocks that violate the preference
         violation_vars = []
 
         for block in context.blocks:
@@ -112,14 +112,14 @@ class PreferenceConstraintTemplate(SoftConstraint):
                     if key[1] == b_i:
                         violation_vars.append(x[key])
 
-        # Add weighted violations to soft objectives
+                        # Add weighted violations to soft objectives
         if violation_vars:
             penalty_weight = int(self.weight * self.penalty_for_violation)
             if "soft_objectives" not in variables:
                 variables["soft_objectives"] = []
             variables["soft_objectives"].append((penalty_weight, sum(violation_vars)))
 
-    def add_to_pulp(self, model, variables, context):
+    def add_to_pulp(self, model, variables, context) -> None:
         """
         Add preference to PuLP objective as soft constraint.
 
@@ -136,7 +136,7 @@ class PreferenceConstraintTemplate(SoftConstraint):
         if not x or not self.preference_type:
             return
 
-        # Identify blocks that violate the preference
+            # Identify blocks that violate the preference
         violation_vars = []
 
         for block in context.blocks:
@@ -164,7 +164,7 @@ class PreferenceConstraintTemplate(SoftConstraint):
                     if key[1] == b_i:
                         violation_vars.append(x[key])
 
-        # Add weighted violations to soft objectives
+                        # Add weighted violations to soft objectives
         if violation_vars:
             penalty_weight = self.weight * self.penalty_for_violation
             if "soft_objectives" not in variables:

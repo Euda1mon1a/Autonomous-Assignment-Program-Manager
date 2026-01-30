@@ -90,14 +90,14 @@ def example_program_screening():
             f"{report.fwi_score:<8.1f} {intervention}"
         )
 
-    # Identify critical cases
+        # Identify critical cases
     critical_cases = [r for r in reports if r.requires_intervention]
     print(f"\n⚠️  {len(critical_cases)} residents require immediate intervention")
 
     return reports
 
 
-def example_component_analysis():
+def example_component_analysis() -> None:
     """Analyze individual FWI components."""
     rating = BurnoutDangerRating()
 
@@ -109,19 +109,19 @@ def example_component_analysis():
         ffmc = rating.calculate_fine_fuel_moisture_code(hours, target=60.0)
         print(f"   {hours}h → FFMC={ffmc:5.1f}")
 
-    # DMC - Duff Moisture Code (3-month sustained load)
+        # DMC - Duff Moisture Code (3-month sustained load)
     print("\n2. DMC (Monthly Hours vs 240h target):")
     for monthly in [220, 240, 260, 280, 300]:
         dmc = rating.calculate_duff_moisture_code(monthly, target=240.0)
         print(f"   {monthly}h → DMC={dmc:5.1f}")
 
-    # DC - Drought Code (yearly satisfaction)
+        # DC - Drought Code (yearly satisfaction)
     print("\n3. DC (Job Satisfaction):")
     for satisfaction in [1.0, 0.8, 0.6, 0.4, 0.2, 0.0]:
         dc = rating.calculate_drought_code(satisfaction)
         print(f"   {satisfaction:.1f} → DC={dc:5.1f}")
 
-    # ISI - Initial Spread Index (FFMC + velocity)
+        # ISI - Initial Spread Index (FFMC + velocity)
     print("\n4. ISI (Spread Rate):")
     ffmc = 70.0
     for velocity in [-5, 0, 5, 10, 15]:
@@ -129,7 +129,7 @@ def example_component_analysis():
         print(f"   FFMC={ffmc}, velocity={velocity:+3.0f}h/wk → ISI={isi:5.1f}")
 
 
-def example_custom_targets():
+def example_custom_targets() -> None:
     """Use custom targets for different specialties or programs."""
     # Some specialties may have different sustainable workload targets
 
@@ -153,7 +153,7 @@ def example_custom_targets():
     )
 
 
-def example_danger_thresholds():
+def example_danger_thresholds() -> None:
     """Show all danger classification thresholds."""
     rating = BurnoutDangerRating()
 
@@ -166,7 +166,7 @@ def example_danger_thresholds():
         print(f"FWI={fwi:3.0f} → {danger_class.value.upper()}")
 
 
-def example_temporal_integration():
+def example_temporal_integration() -> None:
     """Demonstrate multi-temporal integration concept."""
     rating = BurnoutDangerRating()
 

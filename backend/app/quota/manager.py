@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class QuotaExceededError(Exception):
     """Raised when quota is exceeded."""
 
-    def __init__(self, message: str, daily_limit: int, monthly_limit: int):
+    def __init__(self, message: str, daily_limit: int, monthly_limit: int) -> None:
         self.message = message
         self.daily_limit = daily_limit
         self.monthly_limit = monthly_limit
@@ -38,7 +38,7 @@ class QuotaManager:
     - Usage reports
     """
 
-    def __init__(self, redis_client: redis.Redis):
+    def __init__(self, redis_client: redis.Redis) -> None:
         """
         Initialize quota manager.
 
@@ -94,7 +94,7 @@ class QuotaManager:
                 logger.error(f"Failed to parse custom policy for user {user_id}: {e}")
                 # Fall through to role-based policy
 
-        # Return role-based policy
+                # Return role-based policy
         return get_policy_for_role(user_role)
 
     def set_custom_policy(

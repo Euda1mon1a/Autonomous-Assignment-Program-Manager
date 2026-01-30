@@ -56,7 +56,7 @@ class HomeostasisService:
         self,
         db: Session,
         config: ResilienceConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize the homeostasis service.
 
@@ -129,9 +129,9 @@ class HomeostasisService:
         if not metrics:
             logger.warning("check_homeostasis called with empty metrics dict")
 
-        # Use the resilience service's check_homeostasis method
-        # which handles all the feedback loop checking, corrections,
-        # and positive feedback risk detection
+            # Use the resilience service's check_homeostasis method
+            # which handles all the feedback loop checking, corrections,
+            # and positive feedback risk detection
         status: HomeostasisStatus = self.resilience_service.check_homeostasis(
             current_values=metrics,
         )

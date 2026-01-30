@@ -73,8 +73,9 @@ class EndpointLimit:
     requests_per_hour: int | None = None
     burst_size: int | None = None
 
+    # Tier configurations
 
-# Tier configurations
+
 TIER_CONFIGS = {
     RateLimitTier.FREE: RateLimitConfig(
         requests_per_minute=10,
@@ -194,7 +195,7 @@ def get_endpoint_limit(endpoint: str) -> EndpointLimit | None:
     if endpoint in ENDPOINT_LIMITS:
         return ENDPOINT_LIMITS[endpoint]
 
-    # Pattern matching (e.g., "/api/schedule/*")
+        # Pattern matching (e.g., "/api/schedule/*")
     for pattern, limit in ENDPOINT_LIMITS.items():
         if pattern.endswith("*"):
             prefix = pattern[:-1]
@@ -222,7 +223,7 @@ class TokenBucket:
         key: str,
         capacity: int,
         refill_rate: float,
-    ):
+    ) -> None:
         """
         Initialize token bucket.
 
@@ -331,7 +332,7 @@ class SlidingWindowCounter:
         key: str,
         window_seconds: int,
         max_requests: int,
-    ):
+    ) -> None:
         """
         Initialize sliding window counter.
 

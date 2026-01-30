@@ -106,7 +106,7 @@ class MigrationResult:
         failed_records: int = 0,
         error_message: str | None = None,
         dry_run: bool = False,
-    ):
+    ) -> None:
         self.migration_id = migration_id
         self.success = success
         self.total_records = total_records
@@ -133,7 +133,7 @@ class DataMigrator:
     for database migrations.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize the data migrator.
 
@@ -274,7 +274,7 @@ class DataMigrator:
         if not migration:
             raise ValueError(f"Migration {migration_id} not found")
 
-        # Update status
+            # Update status
         status = MigrationStatus.DRY_RUN if dry_run else MigrationStatus.RUNNING
         self.update_status(migration_id, status)
 
@@ -305,7 +305,7 @@ class DataMigrator:
                 if not batch:
                     break
 
-                # Process each record in batch
+                    # Process each record in batch
                 for record in batch:
                     try:
                         # Transform record
@@ -327,13 +327,13 @@ class DataMigrator:
                         if not error_message:
                             error_message = str(e)
 
-                # Commit batch if not dry run
+                            # Commit batch if not dry run
                 if not dry_run:
                     self.db.commit()
                 else:
                     self.db.rollback()
 
-                # Update progress
+                    # Update progress
                 migration.processed_records = processed_records
                 migration.failed_records = failed_records
                 self.db.commit()
@@ -344,7 +344,7 @@ class DataMigrator:
 
                 offset += batch_size
 
-            # Mark as completed if no failures
+                # Mark as completed if no failures
             success = failed_records == 0
             final_status = (
                 MigrationStatus.COMPLETED if success else MigrationStatus.FAILED

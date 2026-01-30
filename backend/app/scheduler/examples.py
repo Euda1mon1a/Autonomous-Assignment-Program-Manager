@@ -18,7 +18,7 @@ from app.scheduler.advanced_scheduler import (
 
 
 # Example 1: Simple task with priority
-def example_simple_task():
+def example_simple_task() -> None:
     """Example of scheduling a simple task with priority."""
     scheduler = get_advanced_scheduler()
 
@@ -38,9 +38,10 @@ def example_simple_task():
 
     print(f"Scheduled task with execution_id: {execution_id}")
 
+    # Example 2: Task with retry configuration
 
-# Example 2: Task with retry configuration
-def example_task_with_retry():
+
+def example_task_with_retry() -> None:
     """Example of a task with exponential backoff retry."""
     scheduler = get_advanced_scheduler()
 
@@ -67,9 +68,10 @@ def example_task_with_retry():
 
     print(f"Scheduled resilient task: {execution_id}")
 
+    # Example 3: Task dependencies (DAG)
 
-# Example 3: Task dependencies (DAG)
-def example_task_dependencies():
+
+def example_task_dependencies() -> None:
     """Example of tasks with dependencies (directed acyclic graph)."""
     scheduler = get_advanced_scheduler()
 
@@ -119,9 +121,10 @@ def example_task_dependencies():
 
     print("Scheduled task dependency chain: fetch -> process -> report")
 
+    # Example 4: Task with distributed lock
 
-# Example 4: Task with distributed lock
-def example_distributed_lock():
+
+def example_distributed_lock() -> None:
     """Example of a task that requires exclusive execution."""
     scheduler = get_advanced_scheduler()
 
@@ -139,9 +142,10 @@ def example_distributed_lock():
 
     print(f"Scheduled exclusive task with lock: {execution_id}")
 
+    # Example 5: Cron-scheduled task
 
-# Example 5: Cron-scheduled task
-def example_cron_task():
+
+def example_cron_task() -> None:
     """Example of scheduling a task with a cron expression."""
     scheduler = get_advanced_scheduler()
 
@@ -163,9 +167,10 @@ def example_cron_task():
 
     print(f"Scheduled cron task(s): {execution_ids}")
 
+    # Example 6: Multi-priority task queue
 
-# Example 6: Multi-priority task queue
-def example_multi_priority():
+
+def example_multi_priority() -> None:
     """Example demonstrating priority-based task execution."""
     scheduler = get_advanced_scheduler()
 
@@ -190,9 +195,10 @@ def example_multi_priority():
 
     print("Scheduled tasks with varying priorities (CRITICAL to BACKGROUND)")
 
+    # Example 7: Task with timeout
 
-# Example 7: Task with timeout
-def example_task_timeout():
+
+def example_task_timeout() -> None:
     """Example of a task with execution timeout."""
     scheduler = get_advanced_scheduler()
 
@@ -209,9 +215,10 @@ def example_task_timeout():
 
     print(f"Scheduled task with 5-minute timeout: {execution_id}")
 
+    # Example 8: Monitoring and health checks
 
-# Example 8: Monitoring and health checks
-async def example_health_monitoring():
+
+async def example_health_monitoring() -> None:
     """Example of monitoring scheduler health."""
     scheduler = get_advanced_scheduler()
 
@@ -234,9 +241,10 @@ async def example_health_monitoring():
     # Stop scheduler
     await scheduler.stop()
 
+    # Example 9: Complex workflow with multiple features
 
-# Example 9: Complex workflow with multiple features
-async def example_complex_workflow():
+
+async def example_complex_workflow() -> None:
     """
     Example of a complex workflow combining multiple features.
 
@@ -333,9 +341,10 @@ async def example_complex_workflow():
 
     await scheduler.stop()
 
+    # Example 10: Scheduled task status tracking
 
-# Example 10: Scheduled task status tracking
-def example_task_status_tracking():
+
+def example_task_status_tracking() -> None:
     """Example of tracking task execution status."""
     scheduler = get_advanced_scheduler()
 

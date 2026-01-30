@@ -100,10 +100,9 @@ class FailoverReason(str, Enum):
     DISASTER = "disaster"
     TESTING = "testing"
 
-
-# ============================================================================
-# Data Models
-# ============================================================================
+    # ============================================================================
+    # Data Models
+    # ============================================================================
 
 
 class RecoveryPointObjective(BaseModel):
@@ -335,10 +334,9 @@ class RecoveryConfig:
     notify_on_failover: bool = True
     notification_recipients: list[str] = field(default_factory=list)
 
-
-# ============================================================================
-# Disaster Recovery Service
-# ============================================================================
+    # ============================================================================
+    # Disaster Recovery Service
+    # ============================================================================
 
 
 class DisasterRecoveryService:
@@ -360,7 +358,7 @@ class DisasterRecoveryService:
         result = await service.execute_recovery_plan(plan)
     """
 
-    def __init__(self, config: RecoveryConfig | None = None):
+    def __init__(self, config: RecoveryConfig | None = None) -> None:
         """
         Initialize disaster recovery service.
 
@@ -394,7 +392,7 @@ class DisasterRecoveryService:
 
         logger.info("Disaster Recovery Service initialized")
 
-    def _initialize_default_objectives(self):
+    def _initialize_default_objectives(self) -> None:
         """Initialize default RPO and RTO objectives."""
         # Database RPO/RTO
         self.register_rpo(
@@ -448,11 +446,11 @@ class DisasterRecoveryService:
             )
         )
 
-    # ========================================================================
-    # RPO Management
-    # ========================================================================
+        # ========================================================================
+        # RPO Management
+        # ========================================================================
 
-    def register_rpo(self, rpo: RecoveryPointObjective):
+    def register_rpo(self, rpo: RecoveryPointObjective) -> None:
         """
         Register a Recovery Point Objective.
 
@@ -499,7 +497,7 @@ class DisasterRecoveryService:
             else:
                 rpo.is_compliant = lag <= rpo.max_data_loss_minutes
 
-            # Track violations
+                # Track violations
             if not rpo.is_compliant:
                 rpo.violation_count += 1
                 if self.config.notify_on_rpo_violation:
@@ -546,11 +544,11 @@ class DisasterRecoveryService:
             logger.error(f"Error checking replication lag for {resource}: {e}")
             return float("inf")  # Return infinite lag on error
 
-    # ========================================================================
-    # RTO Management
-    # ========================================================================
+            # ========================================================================
+            # RTO Management
+            # ========================================================================
 
-    def register_rto(self, rto: RecoveryTimeObjective):
+    def register_rto(self, rto: RecoveryTimeObjective) -> None:
         """
         Register a Recovery Time Objective.
 
@@ -596,7 +594,7 @@ class DisasterRecoveryService:
                             f"RTO '{rto_name}' at risk due to dependency '{dep}'"
                         )
 
-            # Notify if RTO at risk
+                        # Notify if RTO at risk
             if not rto.is_achievable and self.config.notify_on_rto_risk:
                 await self._emit_event(
                     "rto_at_risk",
@@ -611,9 +609,9 @@ class DisasterRecoveryService:
 
         return results
 
-    # ========================================================================
-    # Failover Management
-    # ========================================================================
+        # ========================================================================
+        # Failover Management
+        # ========================================================================
 
     async def initiate_failover(
         self,
@@ -647,13 +645,13 @@ class DisasterRecoveryService:
         if self._failover_in_progress:
             raise RuntimeError("Failover already in progress")
 
-        # Check auto-approval permission
+            # Check auto-approval permission
         if auto_approve and not self.config.auto_failover_enabled:
             raise PermissionError(
                 "Auto-failover not enabled. Manual approval required."
             )
 
-        # Create failover event
+            # Create failover event
         event = FailoverEvent(
             trigger=trigger,
             reason=reason,
@@ -709,7 +707,7 @@ class DisasterRecoveryService:
         await self._execute_failover(self._failover_in_progress)
         return True
 
-    async def _execute_failover(self, event: FailoverEvent):
+    async def _execute_failover(self, event: FailoverEvent) -> None:
         """
         Execute the failover operation.
 
@@ -727,7 +725,7 @@ class DisasterRecoveryService:
             if not replica_healthy:
                 raise RuntimeError("Target replica is not healthy")
 
-            # Step 2: Verify data synchronization
+                # Step 2: Verify data synchronization
             event.status = FailoverStatus.VERIFYING_REPLICA
             logger.info("Verifying data synchronization...")
             sync_results = await self.verify_sync(event.services_affected)
@@ -739,7 +737,7 @@ class DisasterRecoveryService:
                         f"Data loss detected in {service}: {result.lag_seconds}s lag"
                     )
 
-            # Step 3: Promote replica
+                    # Step 3: Promote replica
             event.status = FailoverStatus.PROMOTING_REPLICA
             logger.info("Promoting replica to primary...")
             await self._promote_replica(event.target_region, event.services_affected)
@@ -757,7 +755,7 @@ class DisasterRecoveryService:
             if not health_ok:
                 raise RuntimeError("Post-failover health checks failed")
 
-            # Success!
+                # Success!
             event.status = FailoverStatus.COMPLETED
             event.successful = True
             event.services_restored = event.services_affected.copy()
@@ -785,7 +783,7 @@ class DisasterRecoveryService:
                     event.actual_downtime_minutes <= event.rto_target_minutes
                 )
 
-            # Update state
+                # Update state
             self._failover_history.append(event)
             self._failover_in_progress = None
             self._current_status = (
@@ -812,7 +810,7 @@ class DisasterRecoveryService:
         logger.info(f"Replica in {region} is healthy")
         return True
 
-    async def _promote_replica(self, region: str, services: list[str]):
+    async def _promote_replica(self, region: str, services: list[str]) -> None:
         """
         Promote replica to primary.
 
@@ -824,7 +822,7 @@ class DisasterRecoveryService:
         await asyncio.sleep(2)  # Simulate promotion
         logger.info(f"Promoted replica in {region} to primary")
 
-    async def _update_traffic_routes(self, from_region: str, to_region: str):
+    async def _update_traffic_routes(self, from_region: str, to_region: str) -> None:
         """
         Update traffic routing from one region to another.
 
@@ -851,7 +849,7 @@ class DisasterRecoveryService:
         logger.info(f"Post-failover health in {region} verified")
         return True
 
-    async def _rollback_failover(self, event: FailoverEvent):
+    async def _rollback_failover(self, event: FailoverEvent) -> None:
         """
         Rollback a failed failover.
 
@@ -873,9 +871,9 @@ class DisasterRecoveryService:
             logger.error(f"Rollback failed: {e}", exc_info=True)
             event.resolution_notes = f"Rollback failed: {e}"
 
-    # ========================================================================
-    # Data Synchronization Verification
-    # ========================================================================
+            # ========================================================================
+            # Data Synchronization Verification
+            # ========================================================================
 
     async def verify_sync(
         self, resources: list[str] | None = None
@@ -928,7 +926,7 @@ class DisasterRecoveryService:
             else:
                 status = SyncStatus.OUT_OF_SYNC
 
-            # Check if healthy
+                # Check if healthy
             is_healthy = status in [SyncStatus.IN_SYNC, SyncStatus.LAG]
 
             return SyncVerificationResult(
@@ -949,9 +947,9 @@ class DisasterRecoveryService:
                 error=str(e),
             )
 
-    # ========================================================================
-    # Recovery Plan Management
-    # ========================================================================
+            # ========================================================================
+            # Recovery Plan Management
+            # ========================================================================
 
     def create_recovery_plan(
         self,
@@ -1067,7 +1065,7 @@ class DisasterRecoveryService:
         if self._active_recovery:
             raise RuntimeError("Recovery already in progress")
 
-        # Initialize metrics
+            # Initialize metrics
         metrics = RecoveryMetrics(
             rto_target_minutes=plan.rto_minutes,
             rpo_target_minutes=plan.rpo_minutes,
@@ -1090,7 +1088,7 @@ class DisasterRecoveryService:
                 if not step.validation_result and step.is_critical:
                     raise RuntimeError(f"Critical step '{step.name}' failed")
 
-            # Plan completed successfully
+                    # Plan completed successfully
             plan.status = RecoveryPlanStatus.COMPLETED
             plan.last_execution_successful = True
             metrics.rto_achieved = True
@@ -1131,7 +1129,7 @@ class DisasterRecoveryService:
 
     async def _execute_recovery_step(
         self, step: RecoveryStep, plan: RecoveryPlan, executed_by: str
-    ):
+    ) -> None:
         """
         Execute a single recovery step.
 
@@ -1155,7 +1153,7 @@ class DisasterRecoveryService:
                         f"Dependency step '{dep_step.name}' not completed successfully"
                     )
 
-            # Execute step (simulated for now)
+                    # Execute step (simulated for now)
             await asyncio.sleep(step.estimated_duration_minutes * 0.1)  # Simulate work
 
             # Validate if required
@@ -1198,7 +1196,7 @@ class DisasterRecoveryService:
         await asyncio.sleep(0.5)
         return True
 
-    async def _rollback_recovery_steps(self, plan: RecoveryPlan):
+    async def _rollback_recovery_steps(self, plan: RecoveryPlan) -> None:
         """
         Rollback completed recovery steps.
 
@@ -1220,9 +1218,9 @@ class DisasterRecoveryService:
                 except Exception as e:
                     logger.error(f"Rollback of '{step.name}' failed: {e}")
 
-    # ========================================================================
-    # Testing
-    # ========================================================================
+                    # ========================================================================
+                    # Testing
+                    # ========================================================================
 
     async def test_recovery_plan(
         self, plan_id: UUID, test_mode: bool = True
@@ -1267,9 +1265,9 @@ class DisasterRecoveryService:
             # Restore original setting
             self.config.test_mode_enabled = original_test_mode
 
-    # ========================================================================
-    # Health Monitoring
-    # ========================================================================
+            # ========================================================================
+            # Health Monitoring
+            # ========================================================================
 
     async def monitor_health(self) -> dict[str, Any]:
         """
@@ -1344,9 +1342,9 @@ class DisasterRecoveryService:
 
         return health
 
-    # ========================================================================
-    # Documentation Generation
-    # ========================================================================
+        # ========================================================================
+        # Documentation Generation
+        # ========================================================================
 
     def generate_recovery_documentation(self, plan_id: UUID) -> str:
         """
@@ -1365,7 +1363,7 @@ class DisasterRecoveryService:
         if not plan:
             raise ValueError(f"Recovery plan {plan_id} not found")
 
-        # Build documentation
+            # Build documentation
         doc = f"""# Disaster Recovery Plan: {plan.name}
 
 **Version:** {plan.version}
@@ -1454,13 +1452,13 @@ class DisasterRecoveryService:
 
         return doc
 
-    # ========================================================================
-    # Event Handling
-    # ========================================================================
+        # ========================================================================
+        # Event Handling
+        # ========================================================================
 
     def register_event_handler(
         self, event_type: str, handler: Callable[[dict[str, Any]], Any]
-    ):
+    ) -> None:
         """
         Register an event handler.
 
@@ -1472,7 +1470,7 @@ class DisasterRecoveryService:
             self._event_handlers[event_type] = []
         self._event_handlers[event_type].append(handler)
 
-    async def _emit_event(self, event_type: str, data: dict[str, Any]):
+    async def _emit_event(self, event_type: str, data: dict[str, Any]) -> None:
         """
         Emit an event to registered handlers.
 
@@ -1490,9 +1488,9 @@ class DisasterRecoveryService:
             except Exception as e:
                 logger.error(f"Event handler error ({event_type}): {e}", exc_info=True)
 
-    # ========================================================================
-    # Status and Reporting
-    # ========================================================================
+                # ========================================================================
+                # Status and Reporting
+                # ========================================================================
 
     def get_status(self) -> dict[str, Any]:
         """

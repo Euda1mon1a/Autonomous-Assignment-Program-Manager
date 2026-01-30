@@ -134,7 +134,7 @@ class OutboxMetricsCollector:
                     statsd.gauge(f'outbox.{name}', value)
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize metrics collector.
 
@@ -480,24 +480,24 @@ class OutboxMetricsCollector:
         if stuck_count > 0:
             issues.append(f"{stuck_count} messages stuck in processing state")
 
-        # Check for high dead letter count
+            # Check for high dead letter count
         dead_letter_count = self.count_dead_letters()
         if dead_letter_count > 10:
             issues.append(f"{dead_letter_count} messages in dead letter queue")
 
-        # Check for old pending messages
+            # Check for old pending messages
         max_age = self.get_max_pending_age()
         if max_age > 300:  # 5 minutes
             issues.append(
                 f"Oldest pending message is {max_age:.0f}s old (threshold: 300s)"
             )
 
-        # Check for high pending count
+            # Check for high pending count
         pending_count = self.count_by_status(OutboxStatus.PENDING)
         if pending_count > 1000:
             issues.append(f"{pending_count} pending messages (threshold: 1000)")
 
-        # Determine overall status
+            # Determine overall status
         if not issues:
             status = "healthy"
         elif len(issues) == 1:
@@ -571,7 +571,7 @@ class OutboxMonitor:
                         slack_notify(monitor.get_alert_message())
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """Initialize outbox monitor.
 
         Args:
@@ -605,7 +605,7 @@ class OutboxMonitor:
                 }
             )
 
-        # Anomaly: Growing dead letter queue
+            # Anomaly: Growing dead letter queue
         if metrics["dead_letter_count"] > 0:
             anomalies.append(
                 {
@@ -616,7 +616,7 @@ class OutboxMonitor:
                 }
             )
 
-        # Anomaly: Stuck processing messages
+            # Anomaly: Stuck processing messages
         if metrics["stuck_processing_count"] > 0:
             anomalies.append(
                 {
@@ -627,7 +627,7 @@ class OutboxMonitor:
                 }
             )
 
-        # Anomaly: Low throughput
+            # Anomaly: Low throughput
         if metrics["published_last_hour"] == 0 and metrics["pending_count"] > 0:
             anomalies.append(
                 {

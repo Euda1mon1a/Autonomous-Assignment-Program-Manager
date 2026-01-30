@@ -56,7 +56,7 @@ class ThresholdManager:
     - Gradual drift is accommodated
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize threshold manager."""
         self.thresholds: dict[str, Threshold] = {}
         self._historical_data: dict[str, list[float]] = {}
@@ -180,7 +180,7 @@ class ThresholdManager:
         if not threshold.is_adaptive:
             raise ValueError(f"Threshold {name} is not adaptive")
 
-        # Add new samples to history
+            # Add new samples to history
         history = self._historical_data.get(name, [])
         history.extend(new_samples)
 
@@ -247,7 +247,7 @@ class ThresholdManager:
                 message=f"{name}={value:.2f} above critical upper bound {threshold.critical_upper:.2f}",
             )
 
-        # Check warning bounds
+            # Check warning bounds
         if threshold.warning_lower is not None and value < threshold.warning_lower:
             return ThresholdViolation(
                 threshold_name=name,
@@ -268,7 +268,7 @@ class ThresholdManager:
                 message=f"{name}={value:.2f} above warning upper bound {threshold.warning_upper:.2f}",
             )
 
-        # Check hard bounds
+            # Check hard bounds
         if threshold.lower_bound is not None and value < threshold.lower_bound:
             return ThresholdViolation(
                 threshold_name=name,

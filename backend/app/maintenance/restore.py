@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 class RestoreService:
     """Service for restoring schedule data from backups."""
 
-    def __init__(self, db: Session, backup_dir: str = "backups"):
+    def __init__(self, db: Session, backup_dir: str = "backups") -> None:
         """
         Initialize restore service.
 
@@ -117,7 +117,7 @@ class RestoreService:
                 logger.info(f"Dry run completed for backup {backup_id}")
                 return self._preview_restore_result(backup_data, mode)
 
-            # Create restore point for rollback
+                # Create restore point for rollback
             logger.debug("Creating restore point for rollback")
             rollback_data = self._create_restore_point(restore_id)
 
@@ -129,7 +129,7 @@ class RestoreService:
                 logger.info(f"Performing merge restore from backup {backup_id}")
                 result = self._merge_restore(backup_data)
 
-            # Commit transaction
+                # Commit transaction
             self.db.commit()
             logger.debug("Database transaction committed")
 
@@ -340,7 +340,7 @@ class RestoreService:
                     "error": f"Missing required keys: {missing_keys}",
                 }
 
-            # Validate backup_id matches
+                # Validate backup_id matches
             if backup_data.get("backup_id") != backup_id:
                 logger.warning(
                     f"Backup {backup_id} validation failed: "
@@ -352,7 +352,7 @@ class RestoreService:
                     f"found {backup_data.get('backup_id')}",
                 }
 
-            # Validate data structure
+                # Validate data structure
             validation_results = {
                 "valid": True,
                 "backup_id": backup_id,
@@ -423,7 +423,7 @@ class RestoreService:
                     f"No rollback data available for restore '{restore_id}'"
                 )
 
-            # Restore the rollback data
+                # Restore the rollback data
             logger.debug("Restoring rollback data")
             self._restore_data(rollback_data)
             self.db.commit()
@@ -459,7 +459,7 @@ class RestoreService:
             )
             raise RestoreRollbackError(f"Unexpected error during rollback: {e}") from e
 
-    # Private helper methods
+            # Private helper methods
 
     def _load_backup(self, backup_id: str) -> dict[str, Any]:
         """
@@ -721,7 +721,7 @@ class RestoreService:
 
     def _save_restore_metadata(
         self, restore_id: str, metadata: dict[str, Any], rollback_data: dict[str, Any]
-    ):
+    ) -> None:
         """
         Save restore metadata and rollback data.
 

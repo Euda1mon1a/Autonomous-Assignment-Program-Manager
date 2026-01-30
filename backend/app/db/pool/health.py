@@ -49,7 +49,7 @@ class PoolHealthChecker:
     and can trigger automatic recovery actions.
     """
 
-    def __init__(self, session_factory, config: PoolConfig):
+    def __init__(self, session_factory, config: PoolConfig) -> None:
         """Initialize health checker.
 
         Args:
@@ -132,7 +132,7 @@ class PoolHealthChecker:
             errors.append(f"Failed to acquire connection: {str(e)}")
             logger.error(f"Health check connection error: {e}", exc_info=True)
 
-        # Calculate metrics
+            # Calculate metrics
         avg_ping_time = sum(ping_times) / len(ping_times) if ping_times else 0.0
         is_healthy = failed_pings == 0 and len(errors) == 0
 
@@ -179,7 +179,7 @@ class PoolHealthChecker:
                 "This may consume excessive database resources."
             )
 
-        # Check overflow
+            # Check overflow
         if self._config.max_overflow > self._config.pool_size * 3:
             warnings.append(
                 f"Max overflow ({self._config.max_overflow}) is very high "
@@ -187,14 +187,14 @@ class PoolHealthChecker:
                 "This may indicate pool size is too small."
             )
 
-        # Check timeout
+            # Check timeout
         if self._config.timeout < 10:
             warnings.append(
                 f"Pool timeout ({self._config.timeout}s) is low. "
                 "This may cause timeout errors under load."
             )
 
-        # Check recycle time
+            # Check recycle time
         if self._config.recycle < 600:
             warnings.append(
                 f"Connection recycle time ({self._config.recycle}s) is low. "
@@ -296,7 +296,7 @@ class AutoRecovery:
     health checks detect problems.
     """
 
-    def __init__(self, pool, config: PoolConfig):
+    def __init__(self, pool, config: PoolConfig) -> None:
         """Initialize auto recovery.
 
         Args:
@@ -347,6 +347,6 @@ class AutoRecovery:
             logger.error(f"Pool recovery failed: {e}", exc_info=True)
             return False
 
-    def reset_recovery_counter(self):
+    def reset_recovery_counter(self) -> None:
         """Reset recovery attempt counter after successful health check."""
         self._recovery_attempts = 0

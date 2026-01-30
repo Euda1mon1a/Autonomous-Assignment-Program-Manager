@@ -175,7 +175,7 @@ class ObservabilityMetrics:
             registry=REGISTRY,
         )
 
-    # === AUTH METHODS ===
+        # === AUTH METHODS ===
 
     def record_token_issued(self, token_type: str = "access") -> None:
         """Record a token being issued."""
@@ -192,7 +192,7 @@ class ObservabilityMetrics:
         if self._enabled:
             self.auth_failures.labels(reason=reason).inc()
 
-    # === IDEMPOTENCY METHODS ===
+            # === IDEMPOTENCY METHODS ===
 
     def record_idempotency_hit(self) -> None:
         """Record a cache hit (returning cached response)."""
@@ -223,7 +223,7 @@ class ObservabilityMetrics:
         """Context manager to time idempotency lookups."""
         return IdempotencyTimer(self)
 
-    # === SCHEDULING METHODS ===
+        # === SCHEDULING METHODS ===
 
     def record_schedule_success(self, algorithm: str, assignments: int = 0) -> None:
         """Record successful schedule generation."""
@@ -254,7 +254,7 @@ class ObservabilityMetrics:
 class IdempotencyTimer:
     """Context manager for timing idempotency lookups."""
 
-    def __init__(self, metrics: ObservabilityMetrics):
+    def __init__(self, metrics: ObservabilityMetrics) -> None:
         self.metrics = metrics
         self.start_time: float | None = None
 
@@ -272,7 +272,7 @@ class IdempotencyTimer:
 class ScheduleTimer:
     """Context manager for timing schedule generation."""
 
-    def __init__(self, metrics: ObservabilityMetrics, algorithm: str):
+    def __init__(self, metrics: ObservabilityMetrics, algorithm: str) -> None:
         self.metrics = metrics
         self.algorithm = algorithm
         self.start_time: float | None = None
@@ -289,8 +289,9 @@ class ScheduleTimer:
             )
         return False
 
+        # Global metrics instance
 
-# Global metrics instance
+
 metrics = ObservabilityMetrics()
 
 
@@ -323,11 +324,11 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
             if not request_id or len(request_id) > self.MAX_REQUEST_ID_LENGTH:
                 request_id = None
 
-        # Generate new UUID if no valid request ID provided
+                # Generate new UUID if no valid request ID provided
         if not request_id:
             request_id = str(uuid.uuid4())
 
-        # Store in context variable for observability metrics
+            # Store in context variable for observability metrics
         token = request_id_ctx.set(request_id)
 
         # Also set in logging context for structured logging

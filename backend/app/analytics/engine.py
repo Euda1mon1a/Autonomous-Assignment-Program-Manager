@@ -28,7 +28,7 @@ from app.models.schedule_run import ScheduleRun
 class AnalyticsEngine:
     """Core analytics engine for schedule analysis and reporting."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize analytics engine.
 
@@ -160,7 +160,7 @@ class AnalyticsEngine:
         if end_date:
             query = query.filter(Block.date <= end_date)
 
-        # Only residents
+            # Only residents
         query = query.filter(Person.type == "resident")
 
         # Group by person
@@ -185,7 +185,7 @@ class AnalyticsEngine:
                 }
             )
 
-        # Calculate statistics
+            # Calculate statistics
         if workload_data:
             assignments = [w["assignments"] for w in workload_data]
             avg_assignments = sum(assignments) / len(assignments)
@@ -253,7 +253,7 @@ class AnalyticsEngine:
                 }
             )
 
-        # Group by rotation type
+            # Group by rotation type
         by_rotation_type = defaultdict(int)
         for item in coverage_data:
             by_rotation_type[item["rotation_type"]] += item["total_assignments"]
@@ -328,7 +328,7 @@ class AnalyticsEngine:
         if not run1 or not run2:
             return {"error": "One or both schedule runs not found"}
 
-        # Get assignments for each run's date range
+            # Get assignments for each run's date range
         assignments1 = (
             self.db.query(Assignment)
             .join(Block)

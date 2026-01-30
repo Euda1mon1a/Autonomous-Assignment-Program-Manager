@@ -225,7 +225,7 @@ class ThreeProcessModel:
     WEIGHT_CIRCADIAN = 0.35  # 35% weight on circadian rhythm
     WEIGHT_INERTIA = 0.10  # 10% weight on sleep inertia (when applicable)
 
-    def __init__(self, calibration: dict[str, float] | None = None):
+    def __init__(self, calibration: dict[str, float] | None = None) -> None:
         """
         Initialize Three-Process Model with optional calibration.
 
@@ -238,9 +238,9 @@ class ThreeProcessModel:
                     setattr(self, key.upper(), value)
                     logger.info(f"Calibrated {key.upper()} = {value}")
 
-    # =========================================================================
-    # State Management
-    # =========================================================================
+                    # =========================================================================
+                    # State Management
+                    # =========================================================================
 
     def create_state(
         self,
@@ -301,7 +301,7 @@ class ThreeProcessModel:
         if hours <= 0:
             return state
 
-        # Update timestamp
+            # Update timestamp
         new_timestamp = state.timestamp + timedelta(hours=hours)
 
         # Process S: Sleep reservoir depletion during waking
@@ -317,7 +317,7 @@ class ThreeProcessModel:
         else:
             new_debt = max(0, state.cumulative_debt - hours * 0.5)  # Slow recovery
 
-        # Update circadian phase
+            # Update circadian phase
         time_of_day = new_timestamp.hour + new_timestamp.minute / 60.0
         new_phase = self._get_circadian_phase(time_of_day)
 
@@ -420,9 +420,9 @@ class ThreeProcessModel:
 
         return new_state
 
-    # =========================================================================
-    # Effectiveness Calculation
-    # =========================================================================
+        # =========================================================================
+        # Effectiveness Calculation
+        # =========================================================================
 
     def calculate_effectiveness(
         self,
@@ -449,7 +449,7 @@ class ThreeProcessModel:
         if time_of_day is None:
             time_of_day = state.timestamp.hour + state.timestamp.minute / 60.0
 
-        # Process S: Homeostatic component (normalized 0-100)
+            # Process S: Homeostatic component (normalized 0-100)
         homeostatic = state.sleep_reservoir
 
         # Apply cumulative debt penalty
@@ -457,7 +457,7 @@ class ThreeProcessModel:
             debt_penalty = min(20, state.cumulative_debt * 0.5)
             homeostatic = max(0, homeostatic - debt_penalty)
 
-        # Process C: Circadian component (normalized 0-100)
+            # Process C: Circadian component (normalized 0-100)
         circadian = self._circadian_component(time_of_day)
 
         # Process W: Sleep inertia penalty
@@ -553,7 +553,7 @@ class ThreeProcessModel:
         if minutes_since_wake >= self.INERTIA_DURATION:
             return 0.0
 
-        # Linear decay of inertia over INERTIA_DURATION minutes
+            # Linear decay of inertia over INERTIA_DURATION minutes
         inertia_fraction = 1.0 - (minutes_since_wake / self.INERTIA_DURATION)
 
         # Base penalty scaled by inertia fraction
@@ -614,9 +614,9 @@ class ThreeProcessModel:
         else:
             return "critical"
 
-    # =========================================================================
-    # WOCL and Time-of-Day Analysis
-    # =========================================================================
+            # =========================================================================
+            # WOCL and Time-of-Day Analysis
+            # =========================================================================
 
     def is_in_wocl(self, time_of_day: float) -> bool:
         """
@@ -648,7 +648,7 @@ class ThreeProcessModel:
         if not self.is_in_wocl(time_of_day):
             return 1.0
 
-        # Peak risk at 4:00 AM (center of WOCL)
+            # Peak risk at 4:00 AM (center of WOCL)
         wocl_center = 4.0
         distance_from_center = abs(time_of_day - wocl_center)
         max_distance = (self.WOCL_END - self.WOCL_START) / 2.0
@@ -681,17 +681,17 @@ class ThreeProcessModel:
         if 6.0 <= start_hour < 18.0:
             return base_duration
 
-        # Moderately unfavorable: 6 PM - 10 PM
+            # Moderately unfavorable: 6 PM - 10 PM
         elif 18.0 <= start_hour < 22.0:
             return base_duration - 2.0
 
-        # Highly unfavorable: 10 PM - 6 AM (includes WOCL)
+            # Highly unfavorable: 10 PM - 6 AM (includes WOCL)
         else:
             return base_duration - 4.0
 
-    # =========================================================================
-    # Shift Prediction
-    # =========================================================================
+            # =========================================================================
+            # Shift Prediction
+            # =========================================================================
 
     def predict_shift_effectiveness(
         self,
@@ -723,7 +723,7 @@ class ThreeProcessModel:
             pre_shift_hours = (shift_start - state.timestamp).total_seconds() / 3600.0
             current_state = self.update_wakefulness(current_state, pre_shift_hours)
 
-        # Sample throughout shift
+            # Sample throughout shift
         current_time = shift_start
         end_time = shift_start + timedelta(hours=shift_duration_hours)
         interval_hours = sample_interval_minutes / 60.0
@@ -764,7 +764,7 @@ class ThreeProcessModel:
         for level in risk_levels:
             risk_time[level] = risk_time.get(level, 0) + 1
 
-        # Calculate time in WOCL
+            # Calculate time in WOCL
         wocl_samples = sum(
             1 for t, _ in predictions if self.is_in_wocl(t.hour + t.minute / 60.0)
         )

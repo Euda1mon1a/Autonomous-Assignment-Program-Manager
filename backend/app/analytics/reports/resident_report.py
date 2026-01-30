@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class ResidentReport:
     """Generates resident hours report."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
         self.analytics_engine = AnalyticsEngine(db)
         self.violation_tracker = ViolationTracker(db)

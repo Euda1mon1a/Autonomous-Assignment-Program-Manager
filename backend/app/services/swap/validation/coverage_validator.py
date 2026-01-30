@@ -48,7 +48,7 @@ class CoverageValidator:
         "call": 1,  # At least 1 faculty on call
     }
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize coverage validator.
 
@@ -151,10 +151,10 @@ class CoverageValidator:
         if removing_faculty:
             assignments = [a for a in assignments if a.person_id != removing_faculty]
 
-        # Would add assignments for adding_faculty
-        # (simplified - actual implementation would create new assignments)
+            # Would add assignments for adding_faculty
+            # (simplified - actual implementation would create new assignments)
 
-        # Group assignments by rotation type and count faculty
+            # Group assignments by rotation type and count faculty
         rotation_counts = {}
 
         for assignment in assignments:
@@ -165,7 +165,7 @@ class CoverageValidator:
 
             rotation_counts[rotation_type].add(assignment.person_id)
 
-        # Check against minimum requirements
+            # Check against minimum requirements
         for rotation_type, min_count in self.MIN_COVERAGE.items():
             actual_count = len(rotation_counts.get(rotation_type, set()))
 

@@ -46,7 +46,7 @@ class QueueManager:
     # Dead letter queue
     DEAD_LETTER_QUEUE = "dead_letter"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize queue manager."""
         self.app = celery_app
 
@@ -96,12 +96,12 @@ class QueueManager:
         if queue is None:
             queue = self.QUEUE_PRIORITY_MAP.get(priority, "default")
 
-        # Get task from registry
+            # Get task from registry
         task = self.app.tasks.get(task_name)
         if not task:
             raise ValueError(f"Task {task_name} not found in registry")
 
-        # Submit task
+            # Submit task
         result = task.apply_async(
             args=args,
             kwargs=kwargs,
@@ -157,13 +157,13 @@ class QueueManager:
             # No dependencies, submit normally
             return self.submit_task(task_name, args, kwargs, priority)
 
-        # Wait for all dependencies to complete
-        # Use chord: (group of dependencies) | callback task
+            # Wait for all dependencies to complete
+            # Use chord: (group of dependencies) | callback task
         task = self.app.tasks.get(task_name)
         if not task:
             raise ValueError(f"Task {task_name} not found in registry")
 
-        # Create dependency group (empty tasks that just return AsyncResult)
+            # Create dependency group (empty tasks that just return AsyncResult)
         dep_results = [AsyncResult(dep_id, app=self.app) for dep_id in dependencies]
 
         # Create a chord: wait for all dependencies, then execute task
@@ -208,7 +208,7 @@ class QueueManager:
                 raise ValueError(f"Task {task_name} not found in registry")
             signatures.append(task.s(*args, **kwargs))
 
-        # Create chain
+            # Create chain
         workflow = chain(*signatures)
         result = workflow.apply_async(priority=int(priority))
 
@@ -245,7 +245,7 @@ class QueueManager:
                 raise ValueError(f"Task {task_name} not found in registry")
             signatures.append(task.s(*args, **kwargs))
 
-        # Create group
+            # Create group
         workflow = group(*signatures)
         result = workflow.apply_async(priority=int(priority))
 
@@ -280,7 +280,7 @@ class QueueManager:
             elif result.state == TaskStatus.PROGRESS:
                 status["progress"] = result.info
 
-        # Add result or error
+                # Add result or error
         if result.ready():
             if result.successful():
                 status["result"] = result.result
@@ -414,7 +414,7 @@ class QueueManager:
             except Exception as redis_error:
                 logger.warning(f"Redis DLQ failed, using file fallback: {redis_error}")
 
-            # Fallback to file storage
+                # Fallback to file storage
             dlq_dir = os.getenv("DLQ_DIR", "/tmp/dlq")
             os.makedirs(dlq_dir, exist_ok=True)
 

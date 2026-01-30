@@ -43,7 +43,7 @@ from app.scheduling.validator import ACGMEValidator
 class ComplianceReportData:
     """Data container for compliance report metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize compliance report data structure."""
         self.acgme_violations: list[dict[str, Any]] = []
         self.work_hour_summary: dict[str, Any] = {}
@@ -89,7 +89,7 @@ class ComplianceReportGenerator:
     HOURS_PER_HALF_DAY = 6
     ROLLING_WINDOW_WEEKS = 4
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize compliance report generator.
 
@@ -193,7 +193,7 @@ class ComplianceReportGenerator:
             # Collect violations
             report_data.acgme_violations.extend(resident_summary["violations"])
 
-        # Generate aggregate metrics
+            # Generate aggregate metrics
         report_data.work_hour_summary = self._calculate_work_hour_summary(
             report_data.resident_summaries
         )
@@ -268,7 +268,7 @@ class ComplianceReportGenerator:
         for absence in resident_absences:
             absence_by_type[absence.absence_type] += absence.duration_days
 
-        # Determine max weekly hours
+            # Determine max weekly hours
         max_weekly_hours = max(hours_by_week.values()) if hours_by_week else 0
         avg_weekly_hours = (
             sum(hours_by_week.values()) / len(hours_by_week) if hours_by_week else 0
@@ -323,7 +323,7 @@ class ComplianceReportGenerator:
             if block_date < start_date or block_date > end_date:
                 continue
 
-            # Get Monday of the week (ISO week start)
+                # Get Monday of the week (ISO week start)
             week_start = block_date - timedelta(days=block_date.weekday())
             week_key = week_start.isoformat()
 
@@ -346,7 +346,7 @@ class ComplianceReportGenerator:
         if not assignments:
             return []
 
-        # Get hours by date
+            # Get hours by date
         hours_by_date = defaultdict(float)
         for assignment in assignments:
             if assignment.block:
@@ -472,7 +472,7 @@ class ComplianceReportGenerator:
             if not residents:
                 continue
 
-            # Calculate required faculty
+                # Calculate required faculty
             pgy1_count = sum(1 for r in residents if r.pgy_level == 1)
             other_count = len(residents) - pgy1_count
 
@@ -541,7 +541,7 @@ class ComplianceReportGenerator:
                 absence_by_type[absence.absence_type] += days
                 absence_by_person[str(absence.person_id)] += days
 
-        # Calculate average per resident
+                # Calculate average per resident
         avg_absence_days = total_absence_days / len(residents) if residents else 0
 
         # Period length in days
@@ -839,7 +839,7 @@ class ComplianceReportGenerator:
                 story.append(Paragraph(viol_text, styles["Normal"]))
                 story.append(Spacer(1, 0.1 * inch))
 
-        # Work Hour Summary
+                # Work Hour Summary
         story.append(PageBreak())
         story.append(Paragraph("Work Hour Analysis", heading_style))
 
@@ -899,7 +899,7 @@ class ComplianceReportGenerator:
                 story.append(Paragraph(res_text, styles["Normal"]))
                 story.append(Spacer(1, 0.15 * inch))
 
-        # Build PDF
+                # Build PDF
         doc.build(story)
         buffer.seek(0)
         return buffer.getvalue()
@@ -1063,7 +1063,7 @@ class ComplianceReportGenerator:
         for col in ["B", "C", "D", "E", "F", "G"]:
             ws_residents.column_dimensions[col].width = 12
 
-        # Supervision Sheet
+            # Supervision Sheet
         ws_supervision = wb.create_sheet("Supervision")
         ws_supervision.append(
             ["Block Date", "Residents", "PGY-1", "Faculty", "Required", "Deficit"]
@@ -1090,7 +1090,7 @@ class ComplianceReportGenerator:
         for col in ["A", "B", "C", "D", "E", "F"]:
             ws_supervision.column_dimensions[col].width = 15
 
-        # Leave Sheet
+            # Leave Sheet
         ws_leave = wb.create_sheet("Leave Utilization")
         ws_leave.append(["Absence Type", "Total Days"])
 
@@ -1116,7 +1116,7 @@ class ComplianceReportGenerator:
             ws_trends[cell].font = header_font_white
             ws_trends[cell].fill = header_fill
 
-        # Combine trend data
+            # Combine trend data
         hours_trends = report_data.trend_data.get("weekly_hours", [])
         coverage_trends = report_data.trend_data.get("coverage", [])
         absence_trends = report_data.trend_data.get("absences", [])
@@ -1139,7 +1139,7 @@ class ComplianceReportGenerator:
         for col in ["A", "B", "C", "D", "E"]:
             ws_trends.column_dimensions[col].width = 15
 
-        # Save to bytes
+            # Save to bytes
         output = io.BytesIO()
         wb.save(output)
         output.seek(0)
@@ -1164,7 +1164,7 @@ class ComplianceReportGenerator:
             # Return empty image
             return b""
 
-        # Extract data based on chart type
+            # Extract data based on chart type
         if chart_type == "weekly_hours":
             x = [d["week_start"] for d in trend_data]
             y = [d["total_hours"] for d in trend_data]
@@ -1183,7 +1183,7 @@ class ComplianceReportGenerator:
         else:
             return b""
 
-        # Create Plotly figure
+            # Create Plotly figure
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=x, y=y, mode="lines+markers", name=chart_type))
 

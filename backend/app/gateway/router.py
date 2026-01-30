@@ -108,7 +108,7 @@ class DynamicRouter:
     Supports multiple routing strategies and load balancing algorithms.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the dynamic router."""
         self._routes: list[RouteRule] = []
         self._route_cache: dict[str, RouteRule] = {}
@@ -128,7 +128,7 @@ class DynamicRouter:
         if any(r.config.name == config.name for r in self._routes):
             raise ValueError(f"Route with name '{config.name}' already exists")
 
-        # Create matcher based on strategy
+            # Create matcher based on strategy
         matcher = self._create_matcher(config)
 
         # Initialize connection tracking
@@ -220,7 +220,7 @@ class DynamicRouter:
             if rule.config.enabled:
                 return self._select_service(rule, request)
 
-        # Find matching route
+                # Find matching route
         for rule in self._routes:
             if not rule.config.enabled:
                 continue
@@ -314,7 +314,7 @@ class DynamicRouter:
             if config.pattern:
                 matchers.append(lambda req: req.url.path.startswith(config.pattern))
 
-            # Headers
+                # Headers
             if config.headers:
                 matchers.append(
                     lambda req: all(
@@ -323,7 +323,7 @@ class DynamicRouter:
                     )
                 )
 
-            # Methods
+                # Methods
             if config.methods:
                 methods = {m.upper() for m in config.methods}
                 matchers.append(lambda req: req.method.upper() in methods)

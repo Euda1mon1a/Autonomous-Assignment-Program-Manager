@@ -173,7 +173,7 @@ class FieldRenameTransformer(ResponseTransformer):
     backward compatibility.
     """
 
-    def __init__(self, field_mappings: dict[APIVersion, dict[str, str]]):
+    def __init__(self, field_mappings: dict[APIVersion, dict[str, str]]) -> None:
         """
         Initialize field rename transformer.
 
@@ -200,13 +200,13 @@ class FieldRenameTransformer(ResponseTransformer):
         if not isinstance(data, dict):
             return data
 
-        # Get field mapping for target version
+            # Get field mapping for target version
         mapping = self.field_mappings.get(target_version, {})
 
         if not mapping:
             return data
 
-        # Apply field renames
+            # Apply field renames
         transformed = {}
         for key, value in data.items():
             # Get target field name (or use original)
@@ -242,7 +242,7 @@ class TransformRegistry:
     automatically based on API version.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize transform registry."""
         self._transformers: dict[str, ResponseTransformer] = {}
         self._global_transformers: list[ResponseTransformer] = []
@@ -250,7 +250,7 @@ class TransformRegistry:
         # Register default transformers
         self._register_defaults()
 
-    def _register_defaults(self):
+    def _register_defaults(self) -> None:
         """Register default transformers."""
         # Date format transformer (global)
         self.register_global(DateFormatTransformer())
@@ -276,7 +276,7 @@ class TransformRegistry:
             FieldRenameTransformer(assignment_field_mapping),
         )
 
-    def register(self, name: str, transformer: ResponseTransformer):
+    def register(self, name: str, transformer: ResponseTransformer) -> None:
         """
         Register a named transformer.
 
@@ -287,7 +287,7 @@ class TransformRegistry:
         self._transformers[name] = transformer
         logger.debug(f"Registered transformer: {name}")
 
-    def register_global(self, transformer: ResponseTransformer):
+    def register_global(self, transformer: ResponseTransformer) -> None:
         """
         Register a global transformer applied to all responses.
 
@@ -367,8 +367,9 @@ class TransformRegistry:
         # Apply transformations
         return self.transform(data, target_version, transformer_name)
 
+        # Global transform registry instance
 
-# Global transform registry instance
+
 _transform_registry: TransformRegistry | None = None
 
 
@@ -458,8 +459,7 @@ def transform_response(
     registry = get_transform_registry()
     return registry.transform(data, version, transformer)
 
-
-# Version-aware response helpers
+    # Version-aware response helpers
 
 
 def version_aware_response(

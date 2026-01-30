@@ -19,7 +19,7 @@ class RateLimitExceededError(AppException):
         retry_after: int | None = None,
         endpoint: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize rate limit exceeded error.
 
         Args:
@@ -49,7 +49,7 @@ class QuotaExceededError(AppException):
         quota_limit: int | float | None = None,
         reset_at: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize quota exceeded error.
 
         Args:
@@ -78,7 +78,7 @@ class ConcurrencyLimitError(AppException):
         current_count: int | None = None,
         max_concurrent: int | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize concurrency limit error.
 
         Args:
@@ -105,7 +105,7 @@ class BandwidthLimitError(AppException):
         limit_bytes: int | None = None,
         reset_at: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize bandwidth limit error.
 
         Args:
@@ -131,7 +131,7 @@ class StorageQuotaExceededError(QuotaExceededError):
         current_usage_bytes: int | None = None,
         quota_bytes: int | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize storage quota exceeded error.
 
         Args:

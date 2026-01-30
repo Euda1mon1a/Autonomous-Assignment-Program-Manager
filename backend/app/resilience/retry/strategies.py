@@ -25,7 +25,7 @@ class RetryStrategy(ABC):
     def __init__(
         self,
         max_delay: float | None = None,
-    ):
+    ) -> None:
         """
         Initialize retry strategy.
 
@@ -77,7 +77,7 @@ class FixedDelayStrategy(RetryStrategy):
         self,
         delay: float = 1.0,
         max_delay: float | None = None,
-    ):
+    ) -> None:
         """
         Initialize fixed delay strategy.
 
@@ -116,7 +116,7 @@ class LinearBackoffStrategy(RetryStrategy):
         base_delay: float = 1.0,
         increment: float = 1.0,
         max_delay: float | None = None,
-    ):
+    ) -> None:
         """
         Initialize linear backoff strategy.
 
@@ -164,7 +164,7 @@ class ExponentialBackoffStrategy(RetryStrategy):
         base_delay: float = 1.0,
         multiplier: float = 2.0,
         max_delay: float | None = None,
-    ):
+    ) -> None:
         """
         Initialize exponential backoff strategy.
 
@@ -206,7 +206,7 @@ class ExponentialBackoffWithCeiling(RetryStrategy):
         base_delay: float = 1.0,
         multiplier: float = 2.0,
         max_delay: float = 60.0,
-    ):
+    ) -> None:
         """
         Initialize exponential backoff with ceiling.
 

@@ -28,7 +28,7 @@ from app.services.call_assignment_service import CallAssignmentService
 class CallAssignmentController:
     """Controller for call assignment endpoints."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.service = CallAssignmentService(db)
 
     async def list_call_assignments(

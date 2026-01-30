@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class KPICalculator:
     """Calculates key performance indicators."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def calculate_kpis(self, days_back: int = 30) -> dict[str, Any]:

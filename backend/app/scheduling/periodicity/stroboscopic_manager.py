@@ -87,8 +87,9 @@ class StateStatus(str, Enum):
     AUTHORITATIVE = "authoritative"  # Current observable state
     ARCHIVED = "archived"  # Historical checkpoint
 
+    # Lock configuration
 
-# Lock configuration
+
 CHECKPOINT_LOCK_TIMEOUT = 60  # Checkpoint operations must complete in 60s
 CHECKPOINT_LOCK_NAME = "schedule_checkpoint"
 
@@ -131,7 +132,7 @@ class ScheduleState(BaseModel):
         frozen = True  # Immutable after creation
         json_encoders = {datetime: lambda v: v.isoformat() + "Z"}
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         """Initialize state and calculate hash."""
         super().__init__(**data)
         if self.state_hash is None:
@@ -187,23 +188,22 @@ class CheckpointEvent(BaseEvent):
     assignments_changed: int = 0
     acgme_compliant: bool = True
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         """Initialize with event metadata."""
         if "metadata" not in data:
             data["metadata"] = EventMetadata(
                 event_type="ScheduleCheckpointAdvanced",
                 event_version=1,
             )
-        # BaseEvent expects aggregate_id
+            # BaseEvent expects aggregate_id
         if "aggregate_id" not in data:
             data["aggregate_id"] = data.get("new_state_id", str(uuid.uuid4()))
 
         super().__init__(**data)
 
-
-# =============================================================================
-# Stroboscopic Schedule Manager
-# =============================================================================
+        # =============================================================================
+        # Stroboscopic Schedule Manager
+        # =============================================================================
 
 
 class StroboscopicScheduleManager:
@@ -249,7 +249,7 @@ class StroboscopicScheduleManager:
         event_bus: EventBus,
         redis_client: redis.Redis,
         schedule_id: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize stroboscopic schedule manager.
 
@@ -351,14 +351,14 @@ class StroboscopicScheduleManager:
         if self._authoritative_state is None:
             raise RuntimeError("Manager not initialized. Call initialize() first.")
 
-        # Use current authoritative state as base if no assignments provided
+            # Use current authoritative state as base if no assignments provided
         if assignments is None:
             assignments = self._authoritative_state.assignments
 
         if metadata is None:
             metadata = {}
 
-        # Create draft state
+            # Create draft state
         draft = ScheduleState(
             checkpoint_boundary=CheckpointBoundary.MANUAL,
             status=StateStatus.DRAFT,
@@ -402,7 +402,7 @@ class StroboscopicScheduleManager:
                 if not assignments:
                     validation_warnings.append("No assignments in draft state")
 
-            # Update draft with validation results
+                    # Update draft with validation results
             draft = ScheduleState(
                 **draft.to_dict(),
                 acgme_compliant=acgme_compliant,
@@ -478,12 +478,12 @@ class StroboscopicScheduleManager:
         if self._authoritative_state is None:
             raise RuntimeError("Manager not initialized. Call initialize() first.")
 
-        # Check if draft exists
+            # Check if draft exists
         if self._draft_state is None and not force:
             logger.debug("No draft state to promote, skipping checkpoint")
             return False
 
-        # Use current authoritative state if no draft and force=True
+            # Use current authoritative state if no draft and force=True
         new_state_source = (
             self._draft_state if self._draft_state else self._authoritative_state
         )
@@ -519,7 +519,7 @@ class StroboscopicScheduleManager:
             if len(self._checkpoint_history) > self._max_history_size:
                 self._checkpoint_history.pop(0)
 
-            # Promote draft to authoritative
+                # Promote draft to authoritative
             new_authoritative = ScheduleState(
                 **new_state_source.to_dict(),
                 checkpoint_boundary=boundary,
@@ -677,7 +677,7 @@ class StroboscopicScheduleManager:
         ):
             return 0
 
-        # Convert assignments to sets for comparison
+            # Convert assignments to sets for comparison
         old_assignments = {self._assignment_key(a) for a in old_state.assignments}
         new_assignments = {self._assignment_key(a) for a in new_state.assignments}
 
@@ -705,10 +705,9 @@ class StroboscopicScheduleManager:
 
         return f"{person_id}:{block_id}:{rotation_id}:{role}"
 
-
-# =============================================================================
-# Factory Functions
-# =============================================================================
+        # =============================================================================
+        # Factory Functions
+        # =============================================================================
 
 
 async def create_stroboscopic_manager(
@@ -743,10 +742,9 @@ async def create_stroboscopic_manager(
 
     return manager
 
-
-# =============================================================================
-# Checkpoint Scheduler (Helper)
-# =============================================================================
+    # =============================================================================
+    # Checkpoint Scheduler (Helper)
+    # =============================================================================
 
 
 class CheckpointScheduler:
@@ -765,7 +763,7 @@ class CheckpointScheduler:
         self,
         manager: StroboscopicScheduleManager,
         enable_auto_checkpoints: bool = True,
-    ):
+    ) -> None:
         """
         Initialize checkpoint scheduler.
 
@@ -798,7 +796,7 @@ class CheckpointScheduler:
             ):
                 return CheckpointBoundary.WEEK_START
 
-        # Check for ACGME window (every 28 days)
+                # Check for ACGME window (every 28 days)
         if (
             self._last_acgme_checkpoint is None
             or (now - self._last_acgme_checkpoint).days >= 28

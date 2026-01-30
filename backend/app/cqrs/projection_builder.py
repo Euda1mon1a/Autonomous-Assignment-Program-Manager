@@ -274,10 +274,9 @@ class BuildMode(str, Enum):
     FULL = "full"  # Rebuild from scratch
     CATCHUP = "catchup"  # Catch up from last checkpoint
 
-
-# =============================================================================
-# Database Models
-# =============================================================================
+    # =============================================================================
+    # Database Models
+    # =============================================================================
 
 
 class ProjectionMetadata(Base):
@@ -392,10 +391,9 @@ class ProjectionBuildLog(Base):
         Index("idx_build_log_projection", "projection_name", "started_at"),
     )
 
-
-# =============================================================================
-# Projection Definition
-# =============================================================================
+    # =============================================================================
+    # Projection Definition
+    # =============================================================================
 
 
 @dataclass
@@ -455,7 +453,7 @@ class BaseProjection(ABC):
     batch_size: int = 50
     parallel_enabled: bool = False
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize projection.
 
@@ -548,10 +546,9 @@ class BaseProjection(ABC):
         """
         pass
 
-
-# =============================================================================
-# Projection Builder
-# =============================================================================
+        # =============================================================================
+        # Projection Builder
+        # =============================================================================
 
 
 @dataclass
@@ -586,7 +583,7 @@ class ProjectionBuilder:
         db: Session,
         event_store: EventStore | None = None,
         max_workers: int = 4,
-    ):
+    ) -> None:
         """
         Initialize projection builder.
 
@@ -712,11 +709,11 @@ class ProjectionBuilder:
                 metadata.last_event_sequence = 0
                 self.db.commit()
 
-            # Determine sequence range
+                # Determine sequence range
             if from_sequence is None:
                 from_sequence = metadata.last_event_sequence + 1
 
-            # Get events
+                # Get events
             events = await self.event_store.get_events(
                 from_version=from_sequence,
                 to_version=to_sequence,
@@ -1020,7 +1017,7 @@ class ProjectionBuilder:
             metadata = self._get_metadata(projection_name)
             return self._format_projection_status(metadata)
 
-        # Get all projections
+            # Get all projections
         statuses = {}
         for name in self._projections.keys():
             metadata = self._get_metadata(name)
@@ -1189,10 +1186,9 @@ class ProjectionBuilder:
         """Cleanup resources."""
         self._executor.shutdown(wait=True)
 
-
-# =============================================================================
-# Projection Exceptions
-# =============================================================================
+        # =============================================================================
+        # Projection Exceptions
+        # =============================================================================
 
 
 class ProjectionError(AppException):
@@ -1204,7 +1200,7 @@ class ProjectionError(AppException):
 class ProjectionNotFoundError(ProjectionError):
     """Projection not found."""
 
-    def __init__(self, projection_name: str):
+    def __init__(self, projection_name: str) -> None:
         super().__init__(
             f"Projection not found: {projection_name}",
             status_code=404,

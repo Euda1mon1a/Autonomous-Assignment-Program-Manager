@@ -42,7 +42,7 @@ class WesternElectricRules:
     Detects patterns indicating out-of-control process.
     """
 
-    def __init__(self, center_line: float, sigma: float):
+    def __init__(self, center_line: float, sigma: float) -> None:
         """
         Initialize rules checker.
 
@@ -72,38 +72,38 @@ class WesternElectricRules:
             logger.warning("Rule 1 violations detected: %d points beyond 3σ", len(v1))
             violations.extend(v1)
 
-        # Rule 2: Two of three consecutive beyond 2σ
+            # Rule 2: Two of three consecutive beyond 2σ
         v2 = self._rule_2_two_of_three_beyond_2sigma(data)
         if v2:
             logger.warning("Rule 2 violations detected: %d instances", len(v2))
             violations.extend(v2)
 
-        # Rule 3: Four of five consecutive beyond 1σ
+            # Rule 3: Four of five consecutive beyond 1σ
         v3 = self._rule_3_four_of_five_beyond_1sigma(data)
         if v3:
             violations.extend(v3)
 
-        # Rule 4: Eight consecutive on same side
+            # Rule 4: Eight consecutive on same side
         v4 = self._rule_4_eight_same_side(data)
         if v4:
             violations.extend(v4)
 
-        # Rule 5: Six consecutive trending
+            # Rule 5: Six consecutive trending
         v5 = self._rule_5_six_trending(data)
         if v5:
             violations.extend(v5)
 
-        # Rule 6: Fifteen consecutive within 1σ
+            # Rule 6: Fifteen consecutive within 1σ
         v6 = self._rule_6_fifteen_within_1sigma(data)
         if v6:
             violations.extend(v6)
 
-        # Rule 7: Fourteen alternating
+            # Rule 7: Fourteen alternating
         v7 = self._rule_7_fourteen_alternating(data)
         if v7:
             violations.extend(v7)
 
-        # Rule 8: Eight beyond 1σ both sides
+            # Rule 8: Eight beyond 1σ both sides
         v8 = self._rule_8_eight_beyond_1sigma(data)
         if v8:
             violations.extend(v8)

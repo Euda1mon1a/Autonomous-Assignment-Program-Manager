@@ -171,7 +171,7 @@ class WeightedSum(PreferenceMethod):
     regions of the Pareto front.
     """
 
-    def __init__(self, weights: dict[str, float]):
+    def __init__(self, weights: dict[str, float]) -> None:
         """
         Initialize weighted sum.
 
@@ -232,7 +232,7 @@ class AchievementScalarizing(PreferenceMethod):
         reference_point: ReferencePoint,
         weights: dict[str, float] | None = None,
         rho: float = 0.0001,
-    ):
+    ) -> None:
         """
         Initialize achievement scalarizing function.
 
@@ -275,7 +275,7 @@ class AchievementScalarizing(PreferenceMethod):
             max_deviation = max(max_deviation, deviation)
             sum_deviation += deviation
 
-        # ASF with augmentation
+            # ASF with augmentation
         return max_deviation + self.rho * sum_deviation
 
 
@@ -295,7 +295,7 @@ class WierzbickiASF(PreferenceMethod):
         aspiration: ReferencePoint,
         reservation: ReferencePoint | None = None,
         rho: float = 0.0001,
-    ):
+    ) -> None:
         """
         Initialize Wierzbicki ASF.
 
@@ -333,7 +333,7 @@ class WierzbickiASF(PreferenceMethod):
                 value = -value
                 aspiration = -aspiration
 
-            # Calculate deviation
+                # Calculate deviation
             deviation = value - aspiration
 
             # If reservation point exists, use relative scaling
@@ -363,7 +363,7 @@ class LexicographicOrdering(PreferenceMethod):
     Useful when objectives have a clear priority ordering.
     """
 
-    def __init__(self, priority_order: list[str], epsilon: float = 0.01):
+    def __init__(self, priority_order: list[str], epsilon: float = 0.01) -> None:
         """
         Initialize lexicographic ordering.
 
@@ -405,7 +405,7 @@ class LexicographicOrdering(PreferenceMethod):
             if obj.reference_point is not None and obj.nadir_point is not None:
                 value = obj.normalize(value)
 
-            # Convert to minimization
+                # Convert to minimization
             if obj.direction == ObjectiveDirection.MAXIMIZE:
                 value = -value
 
@@ -465,7 +465,7 @@ class LightBeamSearch(PreferenceMethod):
         reference_point: ReferencePoint,
         ideal_point: dict[str, float],
         beam_width: float = 0.1,
-    ):
+    ) -> None:
         """
         Initialize light beam search.
 
@@ -547,7 +547,7 @@ class InteractivePreferenceElicitor:
         objectives: list[ObjectiveConfig],
         initial_samples: int = 5,
         max_iterations: int = 10,
-    ):
+    ) -> None:
         """
         Initialize interactive elicitor.
 
@@ -642,7 +642,7 @@ class InteractivePreferenceElicitor:
         if not ratings:
             return self._select_representatives(frontier, self.initial_samples)
 
-        # Find best-rated solution
+            # Find best-rated solution
         best_id = max(ratings.keys(), key=lambda k: ratings[k])
         best_solution = next(
             (s for s in frontier.solutions if str(s.id) == best_id), None
@@ -696,12 +696,12 @@ class InteractivePreferenceElicitor:
                         if val_p < val_o:
                             inferred_weights[obj.name] *= 1.2
 
-        # Normalize weights
+                            # Normalize weights
         total = sum(inferred_weights.values())
         if total > 0:
             inferred_weights = {k: v / total for k, v in inferred_weights.items()}
 
-        # Use weighted sum to find new representatives
+            # Use weighted sum to find new representatives
         scorer = WeightedSum(inferred_weights)
         scored = scorer.rank_solutions(list(frontier.solutions), self.objectives)
 
@@ -752,7 +752,7 @@ class InteractivePreferenceElicitor:
             # No solutions in bounds - return closest
             return self._select_representatives(frontier, self.initial_samples)
 
-        # Return diverse subset of valid solutions
+            # Return diverse subset of valid solutions
         temp_frontier = ParetoFrontier(
             solutions=valid_solutions, objectives=self.objectives
         )
@@ -778,7 +778,7 @@ class InteractivePreferenceElicitor:
         if not current_solution:
             return self._select_representatives(frontier, self.initial_samples)
 
-        # Build reference based on classifications
+            # Build reference based on classifications
         reference_values = {}
         for obj in self.active_objectives:
             current_val = current_solution.objective_values.get(obj.name, 0.0)
@@ -815,7 +815,7 @@ class InteractivePreferenceElicitor:
         if len(frontier.solutions) <= n:
             return list(frontier.solutions)
 
-        # Include extreme solutions
+            # Include extreme solutions
         extremes = frontier.get_extreme_solutions()
         selected = list(extremes)
 
@@ -824,7 +824,7 @@ class InteractivePreferenceElicitor:
         if knee and knee not in selected:
             selected.append(knee)
 
-        # Fill remaining with diverse solutions
+            # Fill remaining with diverse solutions
         remaining = [s for s in frontier.solutions if s not in selected]
 
         while len(selected) < n and remaining:
@@ -910,7 +910,7 @@ class PreferenceArticulator:
         self,
         objectives: list[ObjectiveConfig],
         method: PreferenceMethod | None = None,
-    ):
+    ) -> None:
         """
         Initialize preference articulator.
 

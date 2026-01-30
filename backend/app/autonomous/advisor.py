@@ -115,13 +115,13 @@ class SuggestionSchema:
             if params["algorithm"] not in cls.VALID_ALGORITHMS:
                 errors.append(f"Invalid algorithm: {params['algorithm']}")
 
-        # Validate timeout
+                # Validate timeout
         if "timeout_seconds" in params:
             timeout = params["timeout_seconds"]
             if not cls.TIMEOUT_RANGE[0] <= timeout <= cls.TIMEOUT_RANGE[1]:
                 errors.append(f"Timeout {timeout} out of range {cls.TIMEOUT_RANGE}")
 
-        # Validate diversification
+                # Validate diversification
         if "diversification_factor" in params:
             div = params["diversification_factor"]
             if not cls.DIVERSIFICATION_RANGE[0] <= div <= cls.DIVERSIFICATION_RANGE[1]:
@@ -129,7 +129,7 @@ class SuggestionSchema:
                     f"Diversification {div} out of range {cls.DIVERSIFICATION_RANGE}"
                 )
 
-        # Validate constraint weights
+                # Validate constraint weights
         if "constraint_weights" in params:
             for name, weight in params["constraint_weights"].items():
                 if name not in cls.VALID_CONSTRAINTS:
@@ -177,7 +177,7 @@ class LLMAdvisor:
         max_tokens: int = 1024,
         temperature: float = 0.3,
         airgap_mode: bool = True,
-    ):
+    ) -> None:
         """
         Initialize the LLM advisor.
 
@@ -257,7 +257,7 @@ class LLMAdvisor:
             logger.debug("Suggestion rejected: no reasoning provided")
             return False  # Require reasoning
 
-        # Validate parameters if present
+            # Validate parameters if present
         if suggestion.params:
             is_valid, error = self.schema.validate_params(suggestion.params.to_dict())
             if not is_valid:
@@ -410,7 +410,7 @@ class LLMAdvisor:
         if self.llm_router is None:
             raise ValueError("No LLM router configured")
 
-        # Build LLM request
+            # Build LLM request
         request = LLMRequest(
             prompt=prompt,
             system=SCHEDULING_ASSISTANT_SYSTEM_PROMPT,
@@ -478,7 +478,7 @@ class LLMAdvisor:
 
         return " ".join(lines)
 
-    async def close(self):
+    async def close(self) -> None:
         """Close LLM router connections."""
         if self.llm_router:
             await self.llm_router.close()
@@ -492,7 +492,7 @@ class MockLLMAdvisor(LLMAdvisor):
     Useful for testing the advisor integration without LLM costs.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize mock advisor without LLM router."""
         # Don't call super().__init__ to avoid creating router
         self.llm_router = None
@@ -512,7 +512,7 @@ class MockLLMAdvisor(LLMAdvisor):
         if last_evaluation is None:
             return None
 
-        # Simple heuristic-based suggestions
+            # Simple heuristic-based suggestions
         if last_evaluation.critical_violations > 0:
             return Suggestion(
                 type=SuggestionType.ALGORITHM_SWITCH,
@@ -539,6 +539,6 @@ class MockLLMAdvisor(LLMAdvisor):
 
         return None
 
-    async def close(self):
+    async def close(self) -> None:
         """No-op for mock advisor."""
         pass

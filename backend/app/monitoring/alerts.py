@@ -41,10 +41,9 @@ class AlertCategory(str, Enum):
     PERFORMANCE = "performance"
     SWAP = "swap"
 
-
-# ============================================================================
-# ALERT DEFINITION FRAMEWORK (Task 24)
-# ============================================================================
+    # ============================================================================
+    # ALERT DEFINITION FRAMEWORK (Task 24)
+    # ============================================================================
 
 
 class AlertDefinition:
@@ -59,7 +58,7 @@ class AlertDefinition:
         condition: Callable[[dict[str, Any]], bool],
         threshold: float | None = None,
         window_minutes: int = 5,
-    ):
+    ) -> None:
         """
         Initialize alert definition.
 
@@ -125,7 +124,7 @@ class Alert:
         definition: AlertDefinition,
         triggered_at: datetime | None = None,
         details: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """
         Initialize alert.
 
@@ -190,10 +189,10 @@ class Alert:
             "notification_count": self.notification_count,
         }
 
+        # ============================================================================
+        # ALERT DEFINITIONS (Task 25-27)
+        # ============================================================================
 
-# ============================================================================
-# ALERT DEFINITIONS (Task 25-27)
-# ============================================================================
 
 CRITICAL_ALERTS = {
     "database_unavailable": AlertDefinition(
@@ -335,7 +334,7 @@ INFO_ALERTS = {
 class AlertRouter:
     """Route alerts to appropriate channels."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize router."""
         self.routes: dict[AlertSeverity, list[str]] = {
             AlertSeverity.CRITICAL: ["email", "sms", "slack", "pagerduty"],
@@ -384,7 +383,7 @@ class AlertRouter:
 class EscalationPolicy:
     """Define alert escalation policy."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize escalation policy."""
         self.policies: dict[str, list[dict[str, Any]]] = {}
 
@@ -451,16 +450,15 @@ class EscalationPolicy:
 
         return None
 
-
-# ============================================================================
-# ALERT MANAGER (Task 23, 30-31)
-# ============================================================================
+        # ============================================================================
+        # ALERT MANAGER (Task 23, 30-31)
+        # ============================================================================
 
 
 class AlertManager:
     """Manage alert definitions, instances, and history."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize alert manager."""
         self.definitions: dict[str, AlertDefinition] = {}
         self.active_alerts: dict[str, Alert] = {}
@@ -687,9 +685,9 @@ class AlertManager:
             "history_age_hours": 24,
         }
 
+        # ============================================================================
+        # GLOBAL ALERT MANAGER INSTANCE
+        # ============================================================================
 
-# ============================================================================
-# GLOBAL ALERT MANAGER INSTANCE
-# ============================================================================
 
 alert_manager = AlertManager()

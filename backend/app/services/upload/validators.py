@@ -96,7 +96,7 @@ class FileValidator:
         max_size_mb: int = 50,
         allowed_mime_types: set[str] | None = None,
         enable_virus_scan: bool = False,
-    ):
+    ) -> None:
         """
         Initialize file validator.
 
@@ -150,7 +150,7 @@ class FileValidator:
                 f"(max: {self.max_size_bytes / (1024 * 1024):.0f}MB)"
             )
 
-        # Sanitize filename
+            # Sanitize filename
         sanitized_filename = self._sanitize_filename(filename)
         extension = Path(sanitized_filename).suffix.lower()
 
@@ -164,7 +164,7 @@ class FileValidator:
                 f"Allowed types: {', '.join(sorted(self.allowed_mime_types))}"
             )
 
-        # Validate extension matches MIME type
+            # Validate extension matches MIME type
         if detected_mime in self.ALLOWED_EXTENSIONS_MAP:
             allowed_extensions = self.ALLOWED_EXTENSIONS_MAP[detected_mime]
             if extension not in allowed_extensions:
@@ -173,20 +173,20 @@ class FileValidator:
                     f"Expected: {', '.join(allowed_extensions)}"
                 )
 
-        # Verify magic bytes
+                # Verify magic bytes
         if not self._verify_magic_bytes(file_content, detected_mime):
             errors.append(
                 f"File content does not match expected format for '{detected_mime}'"
             )
 
-        # Check expected MIME type if provided
+            # Check expected MIME type if provided
         if expected_mime_type and detected_mime != expected_mime_type:
             raise UploadValidationError(
                 f"MIME type mismatch: expected '{expected_mime_type}', "
                 f"detected '{detected_mime}'"
             )
 
-        # Virus scan (if enabled)
+            # Virus scan (if enabled)
         if self.enable_virus_scan:
             scan_result = self._scan_for_viruses(file_content, sanitized_filename)
             if not scan_result["clean"]:
@@ -194,7 +194,7 @@ class FileValidator:
                     f"Virus detected: {scan_result.get('threat', 'Unknown threat')}"
                 )
 
-        # Calculate checksum
+                # Calculate checksum
         checksum = hashlib.sha256(file_content).hexdigest()
 
         return {
@@ -225,12 +225,12 @@ class FileValidator:
             except Exception as e:
                 logger.warning(f"Failed to detect MIME type with magic: {e}")
 
-        # Fallback: detect based on magic bytes signatures
+                # Fallback: detect based on magic bytes signatures
         for mime_type, signatures in self.MAGIC_SIGNATURES.items():
             if any(file_content.startswith(sig) for sig in signatures):
                 return mime_type
 
-        # Default fallback
+                # Default fallback
         return "application/octet-stream"
 
     def _verify_magic_bytes(self, file_content: bytes, mime_type: str) -> bool:
@@ -276,7 +276,7 @@ class FileValidator:
         if not filename:
             raise UploadValidationError("Filename cannot be empty")
 
-        # Get just the filename without path components
+            # Get just the filename without path components
         safe_name = Path(filename).name
 
         # Remove dangerous characters - only allow alphanumeric, dots, underscores, hyphens
@@ -286,11 +286,11 @@ class FileValidator:
         if safe_name.startswith("."):
             safe_name = "_" + safe_name[1:]
 
-        # Ensure we still have a filename
+            # Ensure we still have a filename
         if not safe_name or safe_name in {".", ".."}:
             raise UploadValidationError("Invalid filename after sanitization")
 
-        # Limit filename length
+            # Limit filename length
         if len(safe_name) > 255:
             # Keep extension but truncate the name part
             name_part = Path(safe_name).stem[:240]

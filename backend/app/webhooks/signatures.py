@@ -28,7 +28,7 @@ class WebhookSignatureGenerator:
     EVENT_TYPE_HEADER = "X-Webhook-Event"
     DELIVERY_ID_HEADER = "X-Webhook-Delivery"
 
-    def __init__(self, timestamp_tolerance_seconds: int = 300):
+    def __init__(self, timestamp_tolerance_seconds: int = 300) -> None:
         """
         Initialize the signature generator.
 
@@ -62,7 +62,7 @@ class WebhookSignatureGenerator:
         if timestamp is None:
             timestamp = int(datetime.utcnow().timestamp())
 
-        # Create signing string: timestamp.payload_json
+            # Create signing string: timestamp.payload_json
         payload_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
         signing_string = f"{timestamp}.{payload_json}"
 
@@ -101,7 +101,7 @@ class WebhookSignatureGenerator:
                 f"{timestamp_diff}s > {self.timestamp_tolerance_seconds}s"
             )
 
-        # Generate expected signature
+            # Generate expected signature
         expected_signature, _ = self.generate_signature(payload, secret, timestamp)
 
         # Constant-time comparison to prevent timing attacks

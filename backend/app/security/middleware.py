@@ -48,7 +48,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         debug: bool = False,
         enable_csp: bool = True,
         api_only: bool = True,
-    ):
+    ) -> None:
         """
         Initialize security headers middleware.
 
@@ -97,7 +97,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         for header_name, header_value in self._static_headers.items():
             response.headers[header_name] = header_value
 
-        # Add Content-Security-Policy if enabled
+            # Add Content-Security-Policy if enabled
         if self.enable_csp:
             csp_header, csp_value = ContentSecurityPolicy.get_header(
                 debug=self.debug, api_only=self.api_only
@@ -125,7 +125,7 @@ class SecurityHeadersConfig:
         enable_permissions_policy: bool = True,
         enable_csp: bool = True,
         csp_api_only: bool = True,
-    ):
+    ) -> None:
         """
         Initialize security headers configuration.
 
@@ -219,7 +219,7 @@ def create_security_headers_middleware(
 
     # Create a configured middleware class
     class ConfiguredSecurityHeadersMiddleware(SecurityHeadersMiddleware):
-        def __init__(self, app: ASGIApp):
+        def __init__(self, app: ASGIApp) -> None:
             super().__init__(
                 app=app,
                 debug=debug,

@@ -46,7 +46,7 @@ LOCK_OWNER_PREFIX = "lock_owner"
 class LockError(AppException):
     """Base exception for lock-related errors."""
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         super().__init__(message, status_code=500)
 
 
@@ -59,7 +59,7 @@ class LockAcquisitionError(LockError):
 class LockTimeoutError(LockAcquisitionError):
     """Lock acquisition timed out."""
 
-    def __init__(self, lock_name: str, timeout: float):
+    def __init__(self, lock_name: str, timeout: float) -> None:
         super().__init__(
             f"Failed to acquire lock '{lock_name}' within {timeout} seconds"
         )
@@ -70,10 +70,9 @@ class LockRenewalError(LockError):
 
     pass
 
-
-# ============================================================================
-# Lock Metrics
-# ============================================================================
+    # ============================================================================
+    # Lock Metrics
+    # ============================================================================
 
 
 @dataclass
@@ -123,7 +122,9 @@ class LockMetrics:
                 "acquisition_duration": duration,
             }
 
-    def record_acquisition_failure(self, lock_name: str, timed_out: bool = False):
+    def record_acquisition_failure(
+        self, lock_name: str, timed_out: bool = False
+    ) -> None:
         """
         Record failed lock acquisition.
 
@@ -209,8 +210,9 @@ class LockMetrics:
                 "max_hold_time": self.max_hold_time,
             }
 
+            # Global metrics instance
 
-# Global metrics instance
+
 _lock_metrics: LockMetrics | None = None
 _metrics_lock = RLock()
 
@@ -229,10 +231,9 @@ def get_lock_metrics() -> LockMetrics:
             _lock_metrics = LockMetrics()
         return _lock_metrics
 
-
-# ============================================================================
-# Distributed Lock Implementation
-# ============================================================================
+        # ============================================================================
+        # Distributed Lock Implementation
+        # ============================================================================
 
 
 class DistributedLock:
@@ -262,7 +263,7 @@ class DistributedLock:
         name: str,
         timeout: float = DEFAULT_LOCK_TIMEOUT,
         redis_client: redis.Redis | None = None,
-    ):
+    ) -> None:
         """
         Initialize distributed lock.
 
@@ -381,18 +382,18 @@ class DistributedLock:
 
                     return True
 
-                # Lock not acquired
+                    # Lock not acquired
                 if not blocking:
                     metrics.record_acquisition_failure(self.name, timed_out=False)
                     return False
 
-                # Check if we've exceeded acquisition timeout
+                    # Check if we've exceeded acquisition timeout
                 elapsed = time.time() - start_time
                 if elapsed >= acquisition_timeout:
                     metrics.record_acquisition_failure(self.name, timed_out=True)
                     raise LockTimeoutError(self.name, acquisition_timeout)
 
-                # Wait a bit before retrying (exponential backoff)
+                    # Wait a bit before retrying (exponential backoff)
                 wait_time = min(0.1 * (2 ** min(elapsed, 5)), 1.0)
                 await asyncio.sleep(wait_time)
 
@@ -434,8 +435,8 @@ class DistributedLock:
                     pass
                 self._renewal_task = None
 
-            # Use Lua script to atomically check token and delete
-            # This ensures we only delete our own lock
+                # Use Lua script to atomically check token and delete
+                # This ensures we only delete our own lock
             lua_script = """
             if redis.call("get", KEYS[1]) == ARGV[1] then
                 redis.call("del", KEYS[1])
@@ -672,10 +673,9 @@ class DistributedLock:
         if self._redis is not None and self._redis_client is None:
             await self._redis.close()
 
-
-# ============================================================================
-# Reentrant Lock Implementation
-# ============================================================================
+            # ============================================================================
+            # Reentrant Lock Implementation
+            # ============================================================================
 
 
 class ReentrantLock(DistributedLock):
@@ -704,7 +704,7 @@ class ReentrantLock(DistributedLock):
         owner_id: str,
         timeout: float = DEFAULT_LOCK_TIMEOUT,
         redis_client: redis.Redis | None = None,
-    ):
+    ) -> None:
         """
         Initialize reentrant lock.
 
@@ -757,7 +757,7 @@ class ReentrantLock(DistributedLock):
 
             return True
 
-        # We don't own the lock - try to acquire normally
+            # We don't own the lock - try to acquire normally
         acquired = await super().acquire(blocking, acquisition_timeout)
 
         if acquired:
@@ -805,10 +805,9 @@ class ReentrantLock(DistributedLock):
             await redis_conn.delete(self._reentrant_key)
             return await super().release()
 
-
-# ============================================================================
-# Fair Lock Implementation (FIFO Queue)
-# ============================================================================
+            # ============================================================================
+            # Fair Lock Implementation (FIFO Queue)
+            # ============================================================================
 
 
 class FairLock(DistributedLock):
@@ -831,7 +830,7 @@ class FairLock(DistributedLock):
         name: str,
         timeout: float = DEFAULT_LOCK_TIMEOUT,
         redis_client: redis.Redis | None = None,
-    ):
+    ) -> None:
         """
         Initialize fair lock.
 
@@ -902,12 +901,12 @@ class FairLock(DistributedLock):
 
                         return True
 
-                # Not our turn yet or lock not available
+                        # Not our turn yet or lock not available
                 if not blocking:
                     await redis_conn.zrem(self.queue_key, self._token)
                     return False
 
-                # Check timeout
+                    # Check timeout
                 elapsed = time.time() - start_time
                 if elapsed >= acquisition_timeout:
                     await redis_conn.zrem(self.queue_key, self._token)
@@ -915,7 +914,7 @@ class FairLock(DistributedLock):
                     metrics.record_acquisition_failure(self.name, timed_out=True)
                     raise LockTimeoutError(self.name, acquisition_timeout)
 
-                # Wait before checking again
+                    # Wait before checking again
                 await asyncio.sleep(0.1)
 
         except Exception:
@@ -923,10 +922,9 @@ class FairLock(DistributedLock):
             await redis_conn.zrem(self.queue_key, self._token)
             raise
 
-
-# ============================================================================
-# Deadlock Detection
-# ============================================================================
+            # ============================================================================
+            # Deadlock Detection
+            # ============================================================================
 
 
 @dataclass
@@ -956,7 +954,7 @@ class DeadlockDetector:
                 logger.warning(f"Deadlock cycle: {cycle}")
     """
 
-    def __init__(self, redis_client: redis.Redis | None = None):
+    def __init__(self, redis_client: redis.Redis | None = None) -> None:
         """
         Initialize deadlock detector.
 
@@ -1001,7 +999,7 @@ class DeadlockDetector:
             if not key.startswith(f"{LOCK_OWNER_PREFIX}:"):
                 lock_keys.append(key)
 
-        # Get lock info for each key
+                # Get lock info for each key
         active_locks = []
 
         for lock_key in lock_keys:

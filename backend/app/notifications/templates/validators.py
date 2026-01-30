@@ -24,7 +24,7 @@ class ValidationError(Exception):
         message: str,
         field: str | None = None,
         details: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """
         Initialize validation error.
 
@@ -71,7 +71,7 @@ class TemplateValidator:
         "import",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the template validator."""
         self.env = Environment()
 
@@ -122,7 +122,7 @@ class TemplateValidator:
                 },
             )
 
-        # Validate syntax
+            # Validate syntax
         self.validate_template_syntax(subject_template)
 
         # Check for newlines (subjects should be single line)
@@ -163,7 +163,7 @@ class TemplateValidator:
                 },
             )
 
-        # Validate syntax
+            # Validate syntax
         self.validate_template_syntax(body_template)
 
         # Validate HTML if needed
@@ -232,7 +232,7 @@ class TemplateValidator:
                     details={"forbidden_filter": forbidden_filter},
                 )
 
-        # Check for forbidden tags
+                # Check for forbidden tags
         for forbidden_tag in self.FORBIDDEN_TAGS:
             pattern = rf"{{% *{re.escape(forbidden_tag)} *%}}"
             if re.search(pattern, template_string):
@@ -268,7 +268,7 @@ class TemplateValidator:
                     "HTML template contains script tags - ensure auto-escaping is enabled"
                 )
 
-        # Check for dangerous attributes
+                # Check for dangerous attributes
         dangerous_attrs = ["onerror", "onload", "onclick", "onmouseover"]
         for attr in dangerous_attrs:
             if re.search(rf"{attr}\s*=", html_template, re.IGNORECASE):
@@ -342,8 +342,9 @@ class TemplateValidator:
             logger.error("Failed to extract variables: %s", e, exc_info=True)
             return []
 
+            # Convenience function
 
-# Convenience function
+
 def validate_template_syntax(template_string: str) -> bool:
     """
     Validate template syntax (convenience function).

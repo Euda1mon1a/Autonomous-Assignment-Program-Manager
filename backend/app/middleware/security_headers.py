@@ -42,7 +42,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         hsts_preload: bool = False,
         content_security_policy: str | None = None,
         permissions_policy: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize the security headers middleware.
 
@@ -99,8 +99,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 hsts_value += "; preload"
             response.headers["Strict-Transport-Security"] = hsts_value
 
-        # Content Security Policy
-        # Default is restrictive for API-only applications
+            # Content Security Policy
+            # Default is restrictive for API-only applications
         if self.content_security_policy:
             csp = self.content_security_policy
         else:

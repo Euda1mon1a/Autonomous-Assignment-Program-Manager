@@ -81,7 +81,7 @@ class PostgreSQLSearchBackend(SearchBackend):
         self,
         db: Session,
         analyzer: SearchAnalyzer | None = None,
-    ):
+    ) -> None:
         """
         Initialize PostgreSQL search backend.
 
@@ -154,7 +154,7 @@ class PostgreSQLSearchBackend(SearchBackend):
                     for k, v in value.items():
                         facets[key][k] = facets[key].get(k, 0) + v
 
-        # Sort by relevance score (if available)
+                        # Sort by relevance score (if available)
         results.sort(key=lambda x: x.get("score", 0), reverse=True)
 
         return {
@@ -198,7 +198,7 @@ class PostgreSQLSearchBackend(SearchBackend):
         if "faculty_role" in filters:
             conditions.append(Person.faculty_role == filters["faculty_role"])
 
-        # Full-text search on name and email
+            # Full-text search on name and email
         if query:
             # Use PostgreSQL ILIKE for simple pattern matching
             # In production, consider using tsvector for better performance
@@ -211,7 +211,7 @@ class PostgreSQLSearchBackend(SearchBackend):
         if conditions:
             stmt = stmt.where(and_(*conditions))
 
-        # Count total
+            # Count total
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total_result = await self.db.execute(count_stmt)
         total = total_result.scalar() or 0
@@ -230,7 +230,7 @@ class PostgreSQLSearchBackend(SearchBackend):
         else:
             stmt = stmt.order_by(Person.name)
 
-        # Apply pagination
+            # Apply pagination
         stmt = stmt.limit(limit).offset(offset)
 
         # Execute query
@@ -285,7 +285,7 @@ class PostgreSQLSearchBackend(SearchBackend):
         if conditions:
             stmt = stmt.where(and_(*conditions))
 
-        # Count total
+            # Count total
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total_result = await self.db.execute(count_stmt)
         total = total_result.scalar() or 0
@@ -349,7 +349,7 @@ class PostgreSQLSearchBackend(SearchBackend):
         if conditions:
             stmt = stmt.where(and_(*conditions))
 
-        # Count total
+            # Count total
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total_result = await self.db.execute(count_stmt)
         total = total_result.scalar() or 0
@@ -401,7 +401,7 @@ class PostgreSQLSearchBackend(SearchBackend):
         if conditions:
             stmt = stmt.where(and_(*conditions))
 
-        # Count total
+            # Count total
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total_result = await self.db.execute(count_stmt)
         total = total_result.scalar() or 0
@@ -541,15 +541,15 @@ class PostgreSQLSearchBackend(SearchBackend):
         if text_lower == query_lower:
             return 1.0
 
-        # Starts with query
+            # Starts with query
         if text_lower.startswith(query_lower):
             return 0.9
 
-        # Contains query
+            # Contains query
         if query_lower in text_lower:
             return 0.7
 
-        # Fuzzy match (simple word overlap)
+            # Fuzzy match (simple word overlap)
         text_words = set(text_lower.split())
         query_words = set(query_lower.split())
         overlap = len(text_words & query_words)
@@ -572,7 +572,7 @@ class PostgreSQLSearchBackend(SearchBackend):
         if not query or not text:
             return {}
 
-        # Find query position in text (case-insensitive)
+            # Find query position in text (case-insensitive)
         text_lower = text.lower()
         query_lower = query.lower()
 
@@ -584,7 +584,7 @@ class PostgreSQLSearchBackend(SearchBackend):
             if pos == -1:
                 break
 
-            # Extract fragment with context (20 chars before/after)
+                # Extract fragment with context (20 chars before/after)
             fragment_start = max(0, pos - 20)
             fragment_end = min(len(text), pos + len(query) + 20)
             fragment = text[fragment_start:fragment_end]

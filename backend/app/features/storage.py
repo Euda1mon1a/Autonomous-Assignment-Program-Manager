@@ -82,7 +82,7 @@ class DatabaseStorageBackend(FeatureFlagStorageBackend):
     Production-ready backend with full ACID guarantees.
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize database storage backend.
 
@@ -199,7 +199,7 @@ class RedisStorageBackend(FeatureFlagStorageBackend):
     Uses Redis for caching with optional TTL and fallback to database.
     """
 
-    def __init__(self, redis_client: Any, ttl: int = 300):
+    def __init__(self, redis_client: Any, ttl: int = 300) -> None:
         """
         Initialize Redis storage backend.
 
@@ -270,7 +270,7 @@ class InMemoryStorageBackend(FeatureFlagStorageBackend):
     WARNING: Not suitable for production. Data is lost on restart.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize in-memory storage."""
         self._flags: dict[str, dict[str, Any]] = {}
 
@@ -312,7 +312,7 @@ class CachedDatabaseStorageBackend(FeatureFlagStorageBackend):
     - Automatic cache warming on miss
     """
 
-    def __init__(self, db: AsyncSession, redis_client: Any, ttl: int = 300):
+    def __init__(self, db: AsyncSession, redis_client: Any, ttl: int = 300) -> None:
         """
         Initialize cached database storage backend.
 
@@ -331,7 +331,7 @@ class CachedDatabaseStorageBackend(FeatureFlagStorageBackend):
         if data is not None:
             return data
 
-        # Cache miss, try database
+            # Cache miss, try database
         data = await self.db_backend.get_flag(key)
         if data is not None:
             # Warm the cache

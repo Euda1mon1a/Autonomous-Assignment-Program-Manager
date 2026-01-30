@@ -133,7 +133,7 @@ class RedisSessionStorage:
 
     def __init__(
         self, key_prefix: str = "session", user_index_prefix: str = "user_sessions"
-    ):
+    ) -> None:
         """
         Initialize Redis session storage.
 
@@ -241,7 +241,7 @@ class RedisSessionStorage:
             if session_json is None:
                 return None
 
-            # Deserialize session data
+                # Deserialize session data
             session = SessionData.model_validate_json(session_json)
 
             # Check if expired
@@ -283,13 +283,13 @@ class RedisSessionStorage:
                 )
                 return False
 
-            # Calculate TTL
+                # Calculate TTL
             if ttl_seconds is None and session.expires_at:
                 ttl_seconds = int(
                     (session.expires_at - datetime.utcnow()).total_seconds()
                 )
 
-            # Serialize session data
+                # Serialize session data
             session_json = session.model_dump_json()
 
             # Update session
@@ -554,8 +554,9 @@ class InMemorySessionStorage:
 
         return len(expired_ids)
 
+        # Global storage instance
 
-# Global storage instance
+
 _storage: SessionStorage | None = None
 
 

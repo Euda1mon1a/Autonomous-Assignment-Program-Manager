@@ -44,7 +44,7 @@ class FatigueTracker:
     BASE_RECOVERY_HOURS = 24  # Base recovery time
     RECOVERY_PER_FATIGUE_POINT = 0.5  # Additional hours per fatigue point
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """Initialize tracker with database session."""
         self.db = db
 
@@ -78,7 +78,7 @@ class FatigueTracker:
                 "error": "Person not found or not a resident",
             }
 
-        # Look back 14 days to calculate fatigue
+            # Look back 14 days to calculate fatigue
         lookback_start = target_date - timedelta(days=14)
 
         assignments = (
@@ -211,7 +211,7 @@ class FatigueTracker:
                 }
             )
 
-        # Calculate trend
+            # Calculate trend
         if len(predictions) >= 2:
             trend_direction = (
                 "INCREASING"
@@ -252,7 +252,7 @@ class FatigueTracker:
         if threshold is None:
             threshold = self.FATIGUE_THRESHOLD_HIGH
 
-        # Get all residents
+            # Get all residents
         residents = self.db.query(Person).filter(Person.type == "resident").all()
 
         high_risk = []
@@ -276,7 +276,7 @@ class FatigueTracker:
                     }
                 )
 
-        # Sort by fatigue score (highest first)
+                # Sort by fatigue score (highest first)
         high_risk.sort(key=lambda x: x["fatigue_score"], reverse=True)
 
         return high_risk
@@ -288,14 +288,14 @@ class FatigueTracker:
         if not assignments:
             return 0
 
-        # Get dates with assignments
+            # Get dates with assignments
         dates_worked = set()
         for assignment in assignments:
             block = self.db.query(Block).filter(Block.id == assignment.block_id).first()
             if block:
                 dates_worked.add(block.date)
 
-        # Count backwards from target date
+                # Count backwards from target date
         consecutive = 0
         check_date = target_date
 
@@ -334,14 +334,14 @@ class FatigueTracker:
         if not assignments:
             return 0
 
-        # Get all dates with assignments
+            # Get all dates with assignments
         dates_worked = set()
         for assignment in assignments:
             block = self.db.query(Block).filter(Block.id == assignment.block_id).first()
             if block:
                 dates_worked.add(block.date)
 
-        # Check backwards from target date to find last day off
+                # Check backwards from target date to find last day off
         days_since_off = 0
         check_date = target_date
 

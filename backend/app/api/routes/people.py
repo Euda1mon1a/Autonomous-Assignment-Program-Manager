@@ -237,15 +237,14 @@ async def delete_person(
     person_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete a person. Requires authentication."""
     controller = PersonController(db)
     controller.delete_person(person_id)
 
-
-# ============================================================================
-# Credential-related endpoints for faculty
-# ============================================================================
+    # ============================================================================
+    # Credential-related endpoints for faculty
+    # ============================================================================
 
 
 @router.get("/{person_id}/credentials", response_model=CredentialListResponse)
@@ -287,10 +286,9 @@ async def get_person_procedures(
     result = service.list_procedures_for_faculty(person_id)
     return ProcedureListResponse(items=result["items"], total=result["total"])
 
-
-# ============================================================================
-# Batch operations for people
-# ============================================================================
+    # ============================================================================
+    # Batch operations for people
+    # ============================================================================
 
 
 @router.post("/batch", response_model=BatchPersonResponse, status_code=201)

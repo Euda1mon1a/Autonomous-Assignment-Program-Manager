@@ -232,10 +232,9 @@ async def export_rotation_calendar(
             status_code=500, detail="An error occurred generating the calendar"
         )
 
-
-# =============================================================================
-# Webcal Subscription Endpoints
-# =============================================================================
+        # =============================================================================
+        # Webcal Subscription Endpoints
+        # =============================================================================
 
 
 def _get_base_url(request: Request) -> str:
@@ -345,7 +344,7 @@ async def get_subscription_feed(
                 detail="Invalid or expired subscription token. Please generate a new subscription.",
             )
 
-        # Generate calendar: today through 6 months ahead
+            # Generate calendar: today through 6 months ahead
         start_date = date.today()
         end_date = (datetime.now() + timedelta(days=180)).date()
 
@@ -435,7 +434,7 @@ async def revoke_subscription(
     token: str,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """
     Revoke a calendar subscription.
 
@@ -464,8 +463,9 @@ async def revoke_subscription(
     if not success:
         raise HTTPException(status_code=500, detail="Failed to revoke subscription")
 
+        # Legacy endpoint for backward compatibility
 
-# Legacy endpoint for backward compatibility
+
 @router.get("/feed/{token}")
 async def get_subscription_feed_legacy(
     token: str,

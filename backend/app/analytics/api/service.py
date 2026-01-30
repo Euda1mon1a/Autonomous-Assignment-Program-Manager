@@ -156,10 +156,9 @@ class RequestRecord(TypedDict, total=False):
     api_version: str | None
     custom_dimensions: dict[str, str] | None
 
-
-# =============================================================================
-# API Analytics Service
-# =============================================================================
+    # =============================================================================
+    # API Analytics Service
+    # =============================================================================
 
 
 class APIAnalyticsService:
@@ -173,7 +172,7 @@ class APIAnalyticsService:
     - HyperLogLog for unique user tracking
     """
 
-    def __init__(self, redis_client: redis.Redis | None = None):
+    def __init__(self, redis_client: redis.Redis | None = None) -> None:
         """
         Initialize API analytics service.
 
@@ -209,9 +208,9 @@ class APIAnalyticsService:
         if self.redis:
             await self.redis.close()
 
-    # =========================================================================
-    # Request Recording
-    # =========================================================================
+            # =========================================================================
+            # Request Recording
+            # =========================================================================
 
     async def record_request(
         self,
@@ -275,7 +274,7 @@ class APIAnalyticsService:
                 pipe.sadd(f"{error_key}:endpoints", f"{method}:{endpoint}")
                 pipe.expire(error_key, self._retention_days * 86400)
 
-            # 3. Record latency in sorted set for percentile calculations
+                # 3. Record latency in sorted set for percentile calculations
             latency_key = f"{self._prefix_latency}:{hour_key}"
             pipe.zadd(latency_key, {f"{endpoint}:{timestamp_str}": latency_ms})
             pipe.expire(latency_key, self._retention_days * 86400)
@@ -295,7 +294,7 @@ class APIAnalyticsService:
                 # Track endpoint-specific unique users
                 pipe.pfadd(f"{endpoint_key}:unique_users", user_id)
 
-            # 5. Record API version usage
+                # 5. Record API version usage
             if api_version:
                 version_key = f"{self._prefix_versions}:{day_key}:{api_version}"
                 pipe.incr(version_key)
@@ -304,7 +303,7 @@ class APIAnalyticsService:
                     pipe.pfadd(f"{version_key}:unique_users", user_id)
                 pipe.expire(version_key, self._retention_days * 86400)
 
-            # 6. Record geographic distribution (from IP address)
+                # 6. Record geographic distribution (from IP address)
             if ip_address:
                 # Simple country/region extraction (in production, use GeoIP database)
                 country, region = self._extract_geo_info(ip_address)
@@ -320,7 +319,7 @@ class APIAnalyticsService:
                     pipe.hincrby(geo_key, "errors", 1)
                 pipe.expire(geo_key, self._retention_days * 86400)
 
-            # 7. Record custom dimensions
+                # 7. Record custom dimensions
             if custom_dimensions:
                 for dim_name, dim_value in custom_dimensions.items():
                     custom_key = (
@@ -333,16 +332,16 @@ class APIAnalyticsService:
                         pipe.pfadd(f"{custom_key}:unique_users", user_id)
                     pipe.expire(custom_key, self._retention_days * 86400)
 
-            # Execute pipeline
+                    # Execute pipeline
             await pipe.execute()
 
         except Exception as e:
             logger.error(f"Error recording API request metrics: {e}", exc_info=True)
             # Don't raise - metrics collection should not break the API
 
-    # =========================================================================
-    # Metrics Retrieval
-    # =========================================================================
+            # =========================================================================
+            # Metrics Retrieval
+            # =========================================================================
 
     async def get_endpoint_stats(
         self,
@@ -373,7 +372,7 @@ class APIAnalyticsService:
             if not start_date:
                 start_date = end_date - timedelta(days=7)
 
-            # Aggregate stats across date range
+                # Aggregate stats across date range
             endpoint_data: dict[str, dict[str, Any]] = defaultdict(
                 lambda: {
                     "count": 0,
@@ -424,7 +423,7 @@ class APIAnalyticsService:
                         endpoint_data[endpoint_id]["method"] = key_method
                         endpoint_data[endpoint_id]["endpoint"] = key_endpoint
 
-                    # Get latency data
+                        # Get latency data
                     latency_key = f"{key}:latencies"
                     latencies = await redis_client.zrange(latency_key, 0, -1)
                     endpoint_data[endpoint_id]["latencies"].extend(
@@ -433,7 +432,7 @@ class APIAnalyticsService:
 
                 current += timedelta(days=1)
 
-            # Build result list
+                # Build result list
             results: list[EndpointStats] = []
             for endpoint_id, data in endpoint_data.items():
                 if data["count"] == 0:
@@ -472,7 +471,7 @@ class APIAnalyticsService:
                     )
                 )
 
-            # Sort by request count and limit
+                # Sort by request count and limit
             results.sort(key=lambda x: x["total_requests"], reverse=True)
             return results[:limit]
 
@@ -536,11 +535,11 @@ class APIAnalyticsService:
                     if user_id and key_user_id != user_id:
                         continue
 
-                    # Skip endpoint sets
+                        # Skip endpoint sets
                     if key.endswith(":endpoints"):
                         continue
 
-                    # Get user stats
+                        # Get user stats
                     data = await redis_client.hgetall(key)
                     if data:
                         user_data[key_user_id]["count"] += int(data.get("count", 0))
@@ -557,14 +556,14 @@ class APIAnalyticsService:
                             if not user_data[key_user_id]["first_seen"]:
                                 user_data[key_user_id]["first_seen"] = last_active
 
-                    # Get unique endpoints
+                                # Get unique endpoints
                     endpoint_set = await redis_client.smembers(f"{key}:endpoints")
                     if endpoint_set:
                         user_data[key_user_id]["endpoints"].update(endpoint_set)
 
                 current += timedelta(days=1)
 
-            # Build results
+                # Build results
             results: list[UserActivityMetrics] = []
             for uid, data in user_data.items():
                 if data["count"] == 0:
@@ -591,7 +590,7 @@ class APIAnalyticsService:
                     )
                 )
 
-            # Sort by request count
+                # Sort by request count
             results.sort(key=lambda x: x["total_requests"], reverse=True)
             return results[:limit]
 
@@ -657,14 +656,14 @@ class APIAnalyticsService:
                             geo_data[country]["success"] + geo_data[country]["errors"]
                         )
 
-                    # Get latency
+                        # Get latency
                     latency_data = await redis_client.hgetall(f"{key}:latency")
                     if latency_data:
                         geo_data[country]["total_latency"] += float(
                             latency_data.get("total", 0.0)
                         )
 
-                    # Get unique users
+                        # Get unique users
                     user_count = await redis_client.pfcount(f"{key}:unique_users")
                     geo_data[country]["users"] = max(
                         geo_data[country]["users"], user_count
@@ -672,7 +671,7 @@ class APIAnalyticsService:
 
                 current += timedelta(days=1)
 
-            # Build results
+                # Build results
             results: list[GeographicDistribution] = []
             for country, data in geo_data.items():
                 if data["count"] == 0:
@@ -760,12 +759,12 @@ class APIAnalyticsService:
                     if count:
                         version_data[version]["count"] += int(count)
 
-                    # Get endpoints
+                        # Get endpoints
                     endpoints = await redis_client.smembers(f"{key}:endpoints")
                     if endpoints:
                         version_data[version]["endpoints"].update(endpoints)
 
-                    # Get unique users
+                        # Get unique users
                     users = await redis_client.pfcount(f"{key}:unique_users")
                     version_data[version]["users"] = max(
                         version_data[version]["users"], users
@@ -773,7 +772,7 @@ class APIAnalyticsService:
 
                 current += timedelta(days=1)
 
-            # Build results
+                # Build results
             results: list[APIVersionStats] = []
             for version, data in version_data.items():
                 if data["count"] == 0:
@@ -855,14 +854,14 @@ class APIAnalyticsService:
                     if count:
                         dimension_data[dim_value]["count"] += int(count)
 
-                    # Get latency
+                        # Get latency
                     latency_data = await redis_client.hgetall(f"{key}:latency")
                     if latency_data:
                         dimension_data[dim_value]["total_latency"] += float(
                             latency_data.get("total", 0.0)
                         )
 
-                    # Get unique users
+                        # Get unique users
                     users = await redis_client.pfcount(f"{key}:unique_users")
                     dimension_data[dim_value]["users"] = max(
                         dimension_data[dim_value]["users"], users
@@ -870,7 +869,7 @@ class APIAnalyticsService:
 
                 current += timedelta(days=1)
 
-            # Build results
+                # Build results
             results: list[CustomDimensionStats] = []
             for dim_value, data in dimension_data.items():
                 if data["count"] == 0:
@@ -938,7 +937,7 @@ class APIAnalyticsService:
                 if day_total:
                     total_requests += int(day_total)
 
-                # Collect unique users key for pfcount
+                    # Collect unique users key for pfcount
                 unique_users_sets.append(
                     f"{self._prefix_requests}:{day_key}:unique_users"
                 )
@@ -960,14 +959,14 @@ class APIAnalyticsService:
                             error_codes[status_code]["count"] += int(count)
                             total_errors += int(count)
 
-                        # Get endpoints for this error
+                            # Get endpoints for this error
                         endpoints = await redis_client.smembers(f"{key}:endpoints")
                         if endpoints:
                             error_codes[status_code]["endpoints"].update(endpoints)
                     except (ValueError, IndexError):
                         continue
 
-                # Get latency data
+                        # Get latency data
                 for hour in range(24):
                     hour_key = current.strftime(f"%Y-%m-%d-{hour:02d}")
                     latency_key = f"{self._prefix_latency}:{hour_key}"
@@ -978,7 +977,7 @@ class APIAnalyticsService:
 
                 current += timedelta(days=1)
 
-            # Calculate latency percentiles
+                # Calculate latency percentiles
             sorted_latencies = sorted(all_latencies)
             latency_percentiles = LatencyPercentiles(
                 p50=round(self._percentile(sorted_latencies, 50), 2),
@@ -1022,7 +1021,7 @@ class APIAnalyticsService:
             if unique_users_sets:
                 unique_users = await redis_client.pfcount(*unique_users_sets)
 
-            # Calculate requests per minute
+                # Calculate requests per minute
             duration_minutes = (end_date - start_date).total_seconds() / 60
             requests_per_minute = (
                 round(total_requests / duration_minutes, 2)
@@ -1073,9 +1072,9 @@ class APIAnalyticsService:
                 requests_per_minute=0.0,
             )
 
-    # =========================================================================
-    # Helper Methods
-    # =========================================================================
+            # =========================================================================
+            # Helper Methods
+            # =========================================================================
 
     @staticmethod
     def _percentile(data: list[float], percentile: float) -> float:
@@ -1123,10 +1122,9 @@ class APIAnalyticsService:
         else:
             return ("UNKNOWN", None)
 
-
-# =============================================================================
-# Factory Function
-# =============================================================================
+            # =============================================================================
+            # Factory Function
+            # =============================================================================
 
 
 _service_instance: APIAnalyticsService | None = None

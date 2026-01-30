@@ -270,13 +270,13 @@ def build_rag_prompt(
         parts.append("\n## CURRENT TASK\n")
         parts.append(task_prompt)
 
-    # Inject RAG context
+        # Inject RAG context
     if context and context.strip():
         parts.append("\n--- RELEVANT CONTEXT ---\n")
         parts.append(context)
         parts.append("\n--- END CONTEXT ---\n")
 
-    # Add user query
+        # Add user query
     parts.append(f"\n## USER REQUEST\n\n{query}")
 
     # Add instruction to respond
@@ -345,10 +345,10 @@ def build_tool_response_prompt(
 
     return "".join(prompt_parts)
 
+    # =============================================================================
+    # FEW-SHOT EXAMPLES
+    # =============================================================================
 
-# =============================================================================
-# FEW-SHOT EXAMPLES
-# =============================================================================
 
 FEW_SHOT_EXAMPLES = {
     "swap_request": {
@@ -507,7 +507,7 @@ class PromptManager:
         >>> print(prompt)
     """
 
-    def __init__(self, version: str = "v1"):
+    def __init__(self, version: str = "v1") -> None:
         """
         Initialize the PromptManager.
 
@@ -725,10 +725,9 @@ class PromptManager:
         """
         return list(self.task_prompts.keys())
 
-
-# =============================================================================
-# CONVENIENCE FUNCTIONS
-# =============================================================================
+        # =============================================================================
+        # CONVENIENCE FUNCTIONS
+        # =============================================================================
 
 
 def get_default_prompt_manager() -> PromptManager:
@@ -786,10 +785,10 @@ def format_schedule_data_for_context(schedule_data: dict) -> str:
 
     return "\n".join(lines)
 
+    # =============================================================================
+    # MODULE METADATA
+    # =============================================================================
 
-# =============================================================================
-# MODULE METADATA
-# =============================================================================
 
 __all__ = [
     # Main prompts

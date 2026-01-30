@@ -144,7 +144,7 @@ class ScenarioAnalyzer:
         print(report.impact_summary)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize scenario analyzer."""
         self.model = ThreeProcessModel()
         self.predictor = PerformancePredictor()
@@ -246,7 +246,7 @@ class ScenarioAnalyzer:
             report = self.analyze(baseline_assignments, scenario, persons, blocks)
             reports.append(report)
 
-        # Sort by overall fatigue score (lower is better)
+            # Sort by overall fatigue score (lower is better)
         reports.sort(
             key=lambda r: r.proposed_metrics.get("avg_fatigue_score", float("inf"))
         )
@@ -315,7 +315,7 @@ class ScenarioAnalyzer:
                 }
             )
 
-        # Sort by fatigue impact (lowest impact first)
+            # Sort by fatigue impact (lowest impact first)
         results.sort(key=lambda r: r["fatigue_impact"])
 
         return results
@@ -360,7 +360,7 @@ class ScenarioAnalyzer:
                     state.effectiveness.overall if state.effectiveness else 100
                 )
 
-            # Extract features for predictor
+                # Extract features for predictor
             features = self.predictor.extract_features(
                 person_assignments, datetime.now()
             )
@@ -392,7 +392,7 @@ class ScenarioAnalyzer:
             metrics["min_effectiveness"] = 100
             metrics["max_effectiveness"] = 100
 
-        # Calculate overall fatigue score (inverse of effectiveness)
+            # Calculate overall fatigue score (inverse of effectiveness)
         metrics["avg_fatigue_score"] = 100 - metrics["avg_effectiveness"]
 
         # Risk distribution

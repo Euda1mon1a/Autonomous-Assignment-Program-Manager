@@ -32,7 +32,7 @@ class CacheConfig(BaseModel):
 class CacheManager:
     """Central cache manager with Redis backend."""
 
-    def __init__(self, config: CacheConfig | None = None):
+    def __init__(self, config: CacheConfig | None = None) -> None:
         """Initialize cache manager.
 
         Args:
@@ -192,7 +192,7 @@ class CacheManager:
         if value is not None:
             return value
 
-        # Fetch fresh data
+            # Fetch fresh data
         value = await fetch_fn()
 
         # Cache it
@@ -374,8 +374,9 @@ class CacheManager:
                 "error": str(e),
             }
 
+            # Global cache instance
 
-# Global cache instance
+
 _cache_instance: CacheManager | None = None
 
 

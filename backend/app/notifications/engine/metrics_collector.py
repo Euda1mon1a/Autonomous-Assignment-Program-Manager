@@ -22,7 +22,7 @@ class NotificationMetrics:
     - Priority distribution
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize metrics collector."""
         # Counters
         self._sent_count = 0
@@ -118,7 +118,7 @@ class NotificationMetrics:
                 "p99": self._percentile(self._latencies, 99),
             }
 
-        # Calculate uptime
+            # Calculate uptime
         uptime_seconds = (datetime.utcnow() - self._start_time).total_seconds()
 
         return {

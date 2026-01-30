@@ -109,7 +109,7 @@ class PhaseTransitionDetector:
     transitions earlier than traditional bifurcation methods.
     """
 
-    def __init__(self, window_size: int = 50):
+    def __init__(self, window_size: int = 50) -> None:
         """
         Initialize phase transition detector.
 
@@ -122,7 +122,7 @@ class PhaseTransitionDetector:
 
         logger.info(f"PhaseTransitionDetector initialized with window={window_size}")
 
-    def update(self, metrics: dict[str, float]):
+    def update(self, metrics: dict[str, float]) -> None:
         """
         Update with latest metrics.
 
@@ -153,27 +153,27 @@ class PhaseTransitionDetector:
             if len(values) < 10:
                 continue
 
-            # 1. Increasing Variance
+                # 1. Increasing Variance
             signal = self._detect_variance_trend(metric_name, values)
             if signal:
                 all_signals.append(signal)
 
-            # 2. Increasing Autocorrelation (Critical Slowing Down)
+                # 2. Increasing Autocorrelation (Critical Slowing Down)
             signal = self._detect_autocorrelation(metric_name, values)
             if signal:
                 all_signals.append(signal)
 
-            # 3. Flickering (rapid state changes)
+                # 3. Flickering (rapid state changes)
             signal = self._detect_flickering(metric_name, values)
             if signal:
                 all_signals.append(signal)
 
-            # 4. Skewness change
+                # 4. Skewness change
             signal = self._detect_skewness(metric_name, values)
             if signal:
                 all_signals.append(signal)
 
-        # Assess overall severity
+                # Assess overall severity
         overall_severity = self._assess_overall_severity(all_signals)
 
         # Estimate time to transition
@@ -204,7 +204,7 @@ class PhaseTransitionDetector:
         if len(values) < 20:
             return None
 
-        # Split into early and recent halves
+            # Split into early and recent halves
         mid = len(values) // 2
         var_early = np.var(values[:mid])
         var_recent = np.var(values[mid:])
@@ -212,7 +212,7 @@ class PhaseTransitionDetector:
         if var_early == 0:
             return None
 
-        # Percentage increase
+            # Percentage increase
         variance_increase = (var_recent - var_early) / var_early
 
         # Thresholds
@@ -244,7 +244,7 @@ class PhaseTransitionDetector:
         if len(values) < 10:
             return None
 
-        # Calculate autocorrelation at lag=1
+            # Calculate autocorrelation at lag=1
         autocorr = self._autocorrelation(values, lag=1)
 
         # High autocorrelation indicates critical slowing
@@ -276,7 +276,7 @@ class PhaseTransitionDetector:
         if len(values) < 5:
             return None
 
-        # Calculate flicker rate
+            # Calculate flicker rate
         flicker_rate = self._calculate_flicker_rate(values)
 
         if flicker_rate > 0.3:  # 30% of samples show flickering
@@ -307,7 +307,7 @@ class PhaseTransitionDetector:
         if len(values) < 20:
             return None
 
-        # Calculate skewness
+            # Calculate skewness
         skewness = stats.skew(values)
 
         if abs(skewness) > 1.0:
@@ -347,7 +347,7 @@ class PhaseTransitionDetector:
         if len(values) < 3:
             return 0.0
 
-        # Threshold for significant change
+            # Threshold for significant change
         threshold = np.std(values) * 0.5 if np.std(values) > 0 else 0.1
 
         # Count direction changes
@@ -370,7 +370,7 @@ class PhaseTransitionDetector:
         if not signals:
             return TransitionSeverity.NORMAL
 
-        # Count by severity
+            # Count by severity
         critical_count = sum(
             1 for s in signals if s.severity == TransitionSeverity.CRITICAL
         )
@@ -415,8 +415,8 @@ class PhaseTransitionDetector:
         if distance < 0.05:
             return 0.0  # Imminent
 
-        # Rough estimate: time constant ∝ 1 / (1 - r)
-        # This is a simplified model
+            # Rough estimate: time constant ∝ 1 / (1 - r)
+            # This is a simplified model
         time_constant = 1.0 / distance
 
         # Convert to hours (calibration factor)
@@ -458,7 +458,7 @@ class PhaseTransitionDetector:
                 ]
             )
 
-        # Signal-specific recommendations
+            # Signal-specific recommendations
         for signal in signals:
             if signal.signal_type == "increasing_variance":
                 recommendations.append(
@@ -480,7 +480,7 @@ class PhaseTransitionDetector:
         if not signals:
             return 0.0
 
-        # Count distinct metric names (independent evidence)
+            # Count distinct metric names (independent evidence)
         unique_metrics = len(set(s.metric_name for s in signals))
 
         # Count distinct signal types
@@ -500,7 +500,7 @@ class CriticalPhenomenaMonitor:
     phase transition risk assessment.
     """
 
-    def __init__(self, window_size: int = 50):
+    def __init__(self, window_size: int = 50) -> None:
         """
         Initialize critical phenomena monitor.
 
@@ -513,7 +513,7 @@ class CriticalPhenomenaMonitor:
 
         logger.info("CriticalPhenomenaMonitor initialized")
 
-    def add_alert_callback(self, callback: callable):
+    def add_alert_callback(self, callback: callable) -> None:
         """Register callback for critical alerts."""
         self.alert_callbacks.append(callback)
 
@@ -538,7 +538,7 @@ class CriticalPhenomenaMonitor:
         if len(self.risk_history) > 100:
             self.risk_history.pop(0)
 
-        # Trigger alerts if critical
+            # Trigger alerts if critical
         if risk.overall_severity in (
             TransitionSeverity.CRITICAL,
             TransitionSeverity.IMMINENT,

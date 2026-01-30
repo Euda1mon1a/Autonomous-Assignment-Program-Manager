@@ -47,10 +47,9 @@ except ImportError:
     HAS_NDLIB = False
     logger.warning("ndlib not installed - burnout contagion modeling unavailable")
 
-
-# =============================================================================
-# Enums and Constants
-# =============================================================================
+    # =============================================================================
+    # Enums and Constants
+    # =============================================================================
 
 
 class BurnoutState(str, Enum):
@@ -79,10 +78,9 @@ class ContagionRisk(str, Enum):
     HIGH = "high"  # 25-50% infected
     CRITICAL = "critical"  # >50% infected, cascade likely
 
-
-# =============================================================================
-# Data Classes
-# =============================================================================
+    # =============================================================================
+    # Data Classes
+    # =============================================================================
 
 
 @dataclass
@@ -185,10 +183,9 @@ class ContagionReport:
     # Warnings
     warnings: list[str] = field(default_factory=list)
 
-
-# =============================================================================
-# Burnout Contagion Model
-# =============================================================================
+    # =============================================================================
+    # Burnout Contagion Model
+    # =============================================================================
 
 
 class BurnoutContagionModel:
@@ -204,7 +201,7 @@ class BurnoutContagionModel:
     can recur even after recovery.
     """
 
-    def __init__(self, social_graph: nx.Graph):
+    def __init__(self, social_graph: nx.Graph) -> None:
         """
         Initialize burnout contagion model.
 
@@ -240,7 +237,7 @@ class BurnoutContagionModel:
         self,
         infection_rate: float = 0.05,
         recovery_rate: float = 0.01,
-    ):
+    ) -> None:
         """
         Configure SIS model parameters.
 
@@ -276,7 +273,7 @@ class BurnoutContagionModel:
         self,
         provider_ids: list[str],
         burnout_scores: dict[str, float],
-    ):
+    ) -> None:
         """
         Set initial burnout state for providers.
 
@@ -309,7 +306,7 @@ class BurnoutContagionModel:
                 # Low burnout = susceptible
                 self.config.add_node_configuration("status", provider_id, 0)
 
-        # If no nodes are infected, seed at least one to enable simulation
+                # If no nodes are infected, seed at least one to enable simulation
         if infected_count == 0 and len(provider_ids) > 0:
             # Find node with highest burnout (even if below threshold)
             max_burnout_id = max(
@@ -377,7 +374,7 @@ class BurnoutContagionModel:
             else:
                 mean_burnout = max_burnout = std_burnout = 0.0
 
-            # Create snapshot
+                # Create snapshot
             snapshot = BurnoutSnapshot(
                 iteration=i,
                 timestamp=datetime.now(),
@@ -521,7 +518,7 @@ class BurnoutContagionModel:
             else:
                 risk_level = "low"
 
-            # Count direct contacts
+                # Count direct contacts
             direct_contacts = self.social_graph.degree(provider_id)
 
             # Estimate cascade size (simplified)
@@ -544,7 +541,7 @@ class BurnoutContagionModel:
 
             profiles.append(profile)
 
-        # Sort by superspreader score
+            # Sort by superspreader score
         profiles.sort(key=lambda p: p.superspreader_score, reverse=True)
 
         return profiles
@@ -577,7 +574,7 @@ class BurnoutContagionModel:
             logger.info("No superspreaders identified - no interventions needed")
             return interventions
 
-        # Intervention 1: Workload reduction for critical superspreaders
+            # Intervention 1: Workload reduction for critical superspreaders
         for provider_id in superspreaders[:3]:  # Top 3 superspreaders
             burnout = self.burnout_scores.get(provider_id, 0.0)
 
@@ -593,7 +590,7 @@ class BurnoutContagionModel:
                 )
                 interventions.append(intervention)
 
-        # Intervention 2: Edge removal for high-burnout pairs
+                # Intervention 2: Edge removal for high-burnout pairs
         high_burnout_edges = []
         for edge in self.social_graph.edges():
             source, target = str(edge[0]), str(edge[1])
@@ -605,7 +602,7 @@ class BurnoutContagionModel:
                 combined_burnout = (source_burnout + target_burnout) / 2
                 high_burnout_edges.append((source, target, combined_burnout))
 
-        # Sort by combined burnout
+                # Sort by combined burnout
         high_burnout_edges.sort(key=lambda x: x[2], reverse=True)
 
         for source, target, combined_burnout in high_burnout_edges[:5]:
@@ -621,7 +618,7 @@ class BurnoutContagionModel:
             )
             interventions.append(intervention)
 
-        # Intervention 3: Quarantine for extreme superspreaders
+            # Intervention 3: Quarantine for extreme superspreaders
         for provider_id in superspreaders:
             burnout = self.burnout_scores.get(provider_id, 0.0)
 
@@ -638,7 +635,7 @@ class BurnoutContagionModel:
                 )
                 interventions.append(intervention)
 
-        # Sort by priority, then by estimated impact
+                # Sort by priority, then by estimated impact
         interventions.sort(key=lambda x: (x.priority, -x.estimated_infection_reduction))
 
         return interventions[:max_interventions]
@@ -653,7 +650,7 @@ class BurnoutContagionModel:
         if not self.snapshots:
             raise RuntimeError("Must run simulate() before generating report")
 
-        # Get current state
+            # Get current state
         current_snapshot = self.snapshots[-1]
 
         # Calculate peak infection
@@ -670,7 +667,7 @@ class BurnoutContagionModel:
         else:
             risk = ContagionRisk.CRITICAL
 
-        # Get superspreaders
+            # Get superspreaders
         superspreader_profiles = self.get_superspreader_profiles()
 
         # Get interventions
@@ -713,7 +710,7 @@ class BurnoutContagionModel:
 
         return report
 
-    def _calculate_centrality(self):
+    def _calculate_centrality(self) -> None:
         """Calculate and cache centrality measures for all nodes."""
         logger.info("Calculating network centrality measures...")
 
@@ -733,7 +730,7 @@ class BurnoutContagionModel:
         except Exception:
             eigen_cent = {}
 
-        # Build cache
+            # Build cache
         for node_id in self.social_graph.nodes():
             node_id_str = str(node_id)
             self._centrality_cache[node_id_str] = {

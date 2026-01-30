@@ -199,7 +199,7 @@ class MultiLevelCache:
         default_ttl: int = 300,
         key_prefix: str = "cache",
         version: str = "v1",
-    ):
+    ) -> None:
         """
         Initialize multi-level cache.
 
@@ -285,7 +285,7 @@ class MultiLevelCache:
                     return value
                 self._record_l1_miss()
 
-            # Try L2 cache (Redis)
+                # Try L2 cache (Redis)
             if self.l2_enabled and use_l2:
                 value = await self._get_from_l2(key)
                 if value is not None:
@@ -340,7 +340,7 @@ class MultiLevelCache:
             entry = CacheEntry(value=value, ttl=ttl, tags=tags)
             self._set_in_l1(key, entry)
 
-        # Set in L2
+            # Set in L2
         if self.l2_enabled and use_l2:
             success = await self._set_in_l2(key, value, ttl, tags)
 
@@ -388,13 +388,13 @@ class MultiLevelCache:
         if value is not None:
             return value
 
-        # Cache miss - fetch value
+            # Cache miss - fetch value
         if asyncio.iscoroutinefunction(fetch_func):
             value = await fetch_func(*args, **kwargs)
         else:
             value = fetch_func(*args, **kwargs)
 
-        # Cache the fetched value
+            # Cache the fetched value
         if value is not None:
             await self.set(key, value, ttl=ttl, tags=tags)
 
@@ -419,7 +419,7 @@ class MultiLevelCache:
         if self.l1_enabled:
             deleted = self._delete_from_l1(key) or deleted
 
-        # Delete from L2
+            # Delete from L2
         if self.l2_enabled:
             deleted = await self._delete_from_l2(key) or deleted
 
@@ -501,7 +501,7 @@ class MultiLevelCache:
             count += len(self._l1_cache)
             self._clear_l1()
 
-        # Clear L2
+            # Clear L2
         if self.l2_enabled:
             pattern = self.key_generator.generate_pattern()
             redis_client = await self._get_redis()
@@ -587,7 +587,7 @@ class MultiLevelCache:
             logger.error(f"Failed to persist cache stats: {e}")
             return False
 
-    # L1 cache operations
+            # L1 cache operations
 
     def _get_from_l1(self, key: str) -> Any | None:
         """
@@ -610,7 +610,7 @@ class MultiLevelCache:
                 del self._l1_cache[key]
                 return None
 
-            # Touch for LRU
+                # Touch for LRU
             entry.touch()
 
             # Move to end for LRU
@@ -631,7 +631,7 @@ class MultiLevelCache:
             if not isinstance(value, CacheEntry):
                 value = CacheEntry(value=value)
 
-            # Check size limit and evict oldest if needed
+                # Check size limit and evict oldest if needed
             if len(self._l1_cache) >= self.l1_max_size:
                 oldest_key, _ = self._l1_cache.popitem(last=False)
                 self._record_eviction()
@@ -660,7 +660,7 @@ class MultiLevelCache:
         with self._l1_lock:
             self._l1_cache.clear()
 
-    # L2 cache operations
+            # L2 cache operations
 
     async def _get_from_l2(self, key: str) -> Any | None:
         """
@@ -680,7 +680,7 @@ class MultiLevelCache:
             if data is None:
                 return None
 
-            # Deserialize
+                # Deserialize
             value = pickle.loads(data)
             return value
 
@@ -751,7 +751,7 @@ class MultiLevelCache:
             logger.error(f"L2 cache delete error for key {key}: {e}")
             return False
 
-    # Statistics tracking
+            # Statistics tracking
 
     def _record_l1_hit(self) -> None:
         """Record L1 cache hit."""
@@ -793,8 +793,9 @@ class MultiLevelCache:
         with self._stats_lock:
             self.stats.total_time_ms += elapsed_ms
 
+            # Global cache instances by namespace
 
-# Global cache instances by namespace
+
 _cache_instances: dict[str, MultiLevelCache] = {}
 _cache_lock = RLock()
 

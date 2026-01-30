@@ -64,8 +64,9 @@ class ShiftType(str, Enum):
     OFF = "off"  # Day off
     HALF_DAY = "half_day"  # Half-day clinic or education
 
+    # Shift characteristics for fatigue modeling
 
-# Shift characteristics for fatigue modeling
+
 SHIFT_CHARACTERISTICS = {
     ShiftType.DAY: {
         "typical_start_hour": 7,
@@ -149,7 +150,7 @@ class ShiftPattern:
     prior_sleep_hours: float = 7.0
     prior_sleep_quality: float = 0.9
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculate derived fields."""
         delta = self.end_time - self.start_time
         self.duration_hours = delta.total_seconds() / 3600
@@ -257,7 +258,7 @@ class AlertnessPredictor:
     SLEEP_INERTIA_DURATION_MINUTES = 30  # Duration of post-wake grogginess
     SLEEP_INERTIA_IMPACT = 0.15  # Reduction in alertness
 
-    def __init__(self, sleep_model: SleepDebtModel | None = None):
+    def __init__(self, sleep_model: SleepDebtModel | None = None) -> None:
         """
         Initialize alertness predictor.
 
@@ -429,7 +430,7 @@ class AlertnessPredictor:
                 )
                 sleep_history.append(sleep_opp)
 
-            # Predict at shift midpoint (when fatigue often peaks)
+                # Predict at shift midpoint (when fatigue often peaks)
             if shift.shift_type != ShiftType.OFF:
                 midpoint = shift.start_time + timedelta(hours=shift.duration_hours / 2)
                 prediction = self.predict_alertness(
@@ -441,7 +442,7 @@ class AlertnessPredictor:
                 )
                 predictions.append(prediction)
 
-            # Update running debt
+                # Update running debt
             if shift.shift_type == ShiftType.OFF:
                 # Recovery on off day
                 extra_sleep = sleep_per_off_day - self.sleep_model.baseline_sleep_need
@@ -499,7 +500,7 @@ class AlertnessPredictor:
             # Default assumption: 8 hours if no history
             return 8.0
 
-        # Find most recent sleep end time
+            # Find most recent sleep end time
         most_recent = max(sleep_history, key=lambda s: s.end_time)
         delta = target_time - most_recent.end_time
 
@@ -531,7 +532,7 @@ class AlertnessPredictor:
         ):
             return 0.0
 
-        # Linear decay of inertia
+            # Linear decay of inertia
         inertia_fraction = 1.0 - (
             minutes_since_wake / self.SLEEP_INERTIA_DURATION_MINUTES
         )
@@ -546,21 +547,21 @@ class AlertnessPredictor:
         if not recent_shifts:
             return 0.0
 
-        # Look at shifts in last 7 days
+            # Look at shifts in last 7 days
         lookback = target_time - timedelta(days=7)
         recent = [s for s in recent_shifts if s.start_time >= lookback]
 
         if not recent:
             return 0.0
 
-        # Sum fatigue factors weighted by recency
+            # Sum fatigue factors weighted by recency
         total_impact = 0.0
         for shift in recent:
             days_ago = (target_time - shift.start_time).days
             recency_weight = max(0.1, 1.0 - (days_ago * 0.1))
             total_impact += shift.fatigue_factor * recency_weight * 0.05
 
-        # Cap at 0.4 (40% reduction)
+            # Cap at 0.4 (40% reduction)
         return min(0.4, total_impact)
 
     def _estimate_sleep_debt(self, sleep_history: list[SleepOpportunity]) -> float:
@@ -627,7 +628,7 @@ class AlertnessPredictor:
         if sleep_debt > 15:
             return "high"
 
-        # Moderate risk
+            # Moderate risk
         if alertness < self.MODERATE_ALERT_THRESHOLD:
             return "moderate"
         if hours_awake > 16:
@@ -635,7 +636,7 @@ class AlertnessPredictor:
         if sleep_debt > 8:
             return "moderate"
 
-        # Low risk
+            # Low risk
         if alertness < self.HIGH_ALERT_THRESHOLD:
             return "low"
 
@@ -684,7 +685,7 @@ class AlertnessPredictor:
             if sleep_debt > 10:
                 recommendations.append("Plan recovery sleep within 24 hours")
 
-        # Circadian-specific advice
+                # Circadian-specific advice
         phase = self.sleep_model.get_circadian_phase(target_time)
         if phase == CircadianPhase.NADIR:
             recommendations.append(

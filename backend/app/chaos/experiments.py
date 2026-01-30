@@ -79,10 +79,9 @@ except ImportError:
     PROMETHEUS_AVAILABLE = False
     logger.warning("prometheus_client not available - chaos metrics disabled")
 
-
-# =============================================================================
-# Enums and Constants
-# =============================================================================
+    # =============================================================================
+    # Enums and Constants
+    # =============================================================================
 
 
 class InjectorType(str, enum.Enum):
@@ -119,10 +118,9 @@ class BlastRadiusScope(str, enum.Enum):
     ZONE_ISOLATED = "zone_isolated"  # Within scheduling zone
     GLOBAL = "global"  # Entire system (use with caution!)
 
-
-# =============================================================================
-# Data Models
-# =============================================================================
+    # =============================================================================
+    # Data Models
+    # =============================================================================
 
 
 @dataclass
@@ -204,10 +202,9 @@ class ExperimentResult:
             return 0.0
         return self.successful_injections / self.total_injections
 
-
-# =============================================================================
-# Database Models
-# =============================================================================
+        # =============================================================================
+        # Database Models
+        # =============================================================================
 
 
 class ChaosExperimentRecord(Base):
@@ -262,10 +259,9 @@ class ChaosExperimentRecord(Base):
     def __repr__(self):
         return f"<ChaosExperiment(name='{self.name}', status='{self.status}')>"
 
-
-# =============================================================================
-# SLO Monitoring
-# =============================================================================
+        # =============================================================================
+        # SLO Monitoring
+        # =============================================================================
 
 
 class SLOMonitor:
@@ -275,7 +271,7 @@ class SLOMonitor:
     Tracks metrics and triggers automatic rollback if SLOs are breached.
     """
 
-    def __init__(self, thresholds: list[SLOThreshold]):
+    def __init__(self, thresholds: list[SLOThreshold]) -> None:
         """
         Initialize SLO monitor.
 
@@ -335,10 +331,9 @@ class SLOMonitor:
             return "No SLO breaches"
         return f"SLO breaches: {', '.join(self.breached_slos)}"
 
-
-# =============================================================================
-# Chaos Injectors
-# =============================================================================
+        # =============================================================================
+        # Chaos Injectors
+        # =============================================================================
 
 
 class LatencyInjector:
@@ -354,7 +349,7 @@ class LatencyInjector:
         max_ms: int = 1000,
         probability: float = 1.0,
         target_function: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize latency injector.
 
@@ -430,7 +425,7 @@ class ErrorInjector:
         error_message: str = "Chaos engineering: injected error",
         probability: float = 0.1,
         target_operations: list[str] | None = None,
-    ):
+    ) -> None:
         """
         Initialize error injector.
 
@@ -505,7 +500,7 @@ class CPUStressor:
         cpu_percent: int = 50,
         duration_seconds: int = 10,
         num_processes: int | None = None,
-    ):
+    ) -> None:
         """
         Initialize CPU stressor.
 
@@ -535,7 +530,7 @@ class CPUStressor:
             work_start = time.time()
             while time.time() - work_start < work_ratio:
                 _ = sum(i * i for i in range(1000))
-            # Sleep period
+                # Sleep period
             if work_ratio < 1.0:
                 time.sleep(1.0 - work_ratio)
 
@@ -596,7 +591,7 @@ class MemoryStressor:
     Allocates memory to test behavior under memory constraints.
     """
 
-    def __init__(self, size_mb: int = 100, duration_seconds: int = 10):
+    def __init__(self, size_mb: int = 100, duration_seconds: int = 10) -> None:
         """
         Initialize memory stressor.
 
@@ -669,7 +664,7 @@ class ResourceStressor:
         cpu_percent: int = 0,
         memory_mb: int = 0,
         duration_seconds: int = 10,
-    ):
+    ) -> None:
         """
         Initialize resource stressor.
 
@@ -712,7 +707,7 @@ class NetworkPartitioner:
         self,
         blocked_services: list[str],
         probability: float = 1.0,
-    ):
+    ) -> None:
         """
         Initialize network partitioner.
 
@@ -773,7 +768,7 @@ class ServiceFailureSimulator:
         failure_mode: str = "unavailable",
         probability: float = 1.0,
         latency_ms: int = 0,
-    ):
+    ) -> None:
         """
         Initialize service failure simulator.
 
@@ -827,10 +822,9 @@ class ServiceFailureSimulator:
         finally:
             self.active = False
 
-
-# =============================================================================
-# Chaos Experiment Orchestration
-# =============================================================================
+            # =============================================================================
+            # Chaos Experiment Orchestration
+            # =============================================================================
 
 
 class ChaosExperiment:
@@ -844,7 +838,7 @@ class ChaosExperiment:
         self,
         config: ChaosExperimentConfig,
         db: Session | None = None,
-    ):
+    ) -> None:
         """
         Initialize chaos experiment.
 
@@ -973,7 +967,7 @@ class ChaosExperiment:
                 experiment_type=self.config.injector_type, status="started"
             ).inc()
 
-        # Persist to database if session provided
+            # Persist to database if session provided
         if self.db:
             self._save_to_db()
 
@@ -1114,10 +1108,9 @@ class ChaosExperiment:
         self.stop()
         return False
 
-
-# =============================================================================
-# Experiment Scheduler
-# =============================================================================
+        # =============================================================================
+        # Experiment Scheduler
+        # =============================================================================
 
 
 class ChaosExperimentScheduler:
@@ -1127,7 +1120,7 @@ class ChaosExperimentScheduler:
     Supports scheduled experiments and experiment campaigns.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize scheduler.
 
@@ -1180,7 +1173,7 @@ class ChaosExperimentScheduler:
         if experiment_id in self.active_experiments:
             raise ValueError(f"Experiment {experiment_id} is already running")
 
-        # Load from database
+            # Load from database
         record = (
             self.db.query(ChaosExperimentRecord)
             .filter(ChaosExperimentRecord.id == experiment_id)
@@ -1190,7 +1183,7 @@ class ChaosExperimentScheduler:
         if not record:
             raise ValueError(f"Experiment {experiment_id} not found")
 
-        # Reconstruct config
+            # Reconstruct config
         config = ChaosExperimentConfig(
             name=record.name,
             description=record.description or "",

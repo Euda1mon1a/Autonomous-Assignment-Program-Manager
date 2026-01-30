@@ -155,7 +155,7 @@ class PreferenceTrail:
         if days_elapsed <= 0:
             return
 
-        # Exponential decay
+            # Exponential decay
         decay_factor = math.exp(-self.evaporation_rate * days_elapsed)
         old_strength = self.strength
         self.strength = max(self.min_strength, self.strength * decay_factor)
@@ -283,7 +283,7 @@ class StigmergicScheduler:
         evaporation_rate: float = 0.1,
         reinforcement_amount: float = 0.1,
         evaporation_interval_hours: float = 24.0,
-    ):
+    ) -> None:
         self.evaporation_rate = evaporation_rate
         self.reinforcement_amount = reinforcement_amount
         self.evaporation_interval_hours = evaporation_interval_hours
@@ -340,7 +340,7 @@ class StigmergicScheduler:
             )
             return existing
 
-        # Create new trail
+            # Create new trail
         trail = PreferenceTrail(
             id=uuid4(),
             faculty_id=faculty_id,
@@ -411,7 +411,7 @@ class StigmergicScheduler:
             trail_type = TrailType.PREFERENCE
             strengthen = True
 
-        # Find or create trail
+            # Find or create trail
         trail = self._find_trail(
             faculty_id,
             trail_type,
@@ -497,7 +497,7 @@ class StigmergicScheduler:
         if not relevant_trails:
             return None
 
-        # Aggregate
+            # Aggregate
         preference_strength = 0.0
         avoidance_strength = 0.0
         faculty_ids = set()
@@ -509,7 +509,7 @@ class StigmergicScheduler:
             elif trail.trail_type == TrailType.AVOIDANCE:
                 avoidance_strength += trail.strength
 
-        # Normalize
+                # Normalize
         faculty_count = len(faculty_ids)
         if faculty_count > 0:
             preference_strength /= faculty_count
@@ -642,7 +642,7 @@ class StigmergicScheduler:
                 score += max_pref * 0.3
                 reasons.append(f"preference trail strength: {max_pref:.2f}")
 
-            # Check avoidance trails
+                # Check avoidance trails
             avoid_trails = [
                 t
                 for t in self.get_faculty_preferences(faculty_id, TrailType.AVOIDANCE)
@@ -653,7 +653,7 @@ class StigmergicScheduler:
                 score -= max_avoid * 0.4  # Avoidance counts more
                 reasons.append(f"avoidance trail strength: {max_avoid:.2f}")
 
-            # Clamp score
+                # Clamp score
             score = max(0.0, min(1.0, score))
 
             reason = "; ".join(reasons) if reasons else "no preference signals"
@@ -688,7 +688,7 @@ class StigmergicScheduler:
                 slot_preferences[trail.slot_type]["avoid"] += trail.strength
             slot_preferences[trail.slot_type]["count"] += 1
 
-        # Normalize and categorize
+            # Normalize and categorize
         popular = []
         unpopular = []
         neutral = []
@@ -704,7 +704,7 @@ class StigmergicScheduler:
             else:
                 neutral.append((slot_type, net))
 
-        # Find swap cliques
+                # Find swap cliques
         swap_network = self.get_swap_network()
         strong_pairs = [
             (f1, f2, s) for (f1, f2), s in swap_network.edges.items() if s > 0.6
@@ -813,7 +813,7 @@ class StigmergicScheduler:
             if trail.trail_type != trail_type:
                 continue
 
-            # Match criteria
+                # Match criteria
             if slot_id and trail.slot_id != slot_id:
                 continue
             if slot_type and trail.slot_type != slot_type:
@@ -825,7 +825,7 @@ class StigmergicScheduler:
             if target_faculty_id and trail.target_faculty_id != target_faculty_id:
                 continue
 
-            # For swap affinity, need exact slot_type match or both None
+                # For swap affinity, need exact slot_type match or both None
             if trail_type == TrailType.SWAP_AFFINITY:
                 if slot_type != trail.slot_type:
                     continue
@@ -847,7 +847,7 @@ class StigmergicScheduler:
                 self._trails_by_slot[trail.slot_id] = []
             self._trails_by_slot[trail.slot_id].append(trail.id)
 
-        # By type
+            # By type
         if trail.trail_type not in self._trails_by_type:
             self._trails_by_type[trail.trail_type] = []
         self._trails_by_type[trail.trail_type].append(trail.id)

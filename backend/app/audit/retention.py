@@ -135,8 +135,8 @@ class RetentionPolicy(BaseModel):
         """
         return datetime.utcnow() - timedelta(days=self.archive_retention_years * 365)
 
+        # Predefined retention policies for common use cases
 
-# Predefined retention policies for common use cases
 
 STANDARD_POLICY = RetentionPolicy(
     level=RetentionLevel.STANDARD,
@@ -195,7 +195,7 @@ class RetentionPolicyManager:
     Provides policy selection, validation, and enforcement.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize retention policy manager with default policies."""
         self.policies: dict[str, RetentionPolicy] = {
             "standard": STANDARD_POLICY,
@@ -296,8 +296,9 @@ class RetentionPolicyManager:
             "default_policy": "standard",
         }
 
+        # Global policy manager instance
 
-# Global policy manager instance
+
 _policy_manager: RetentionPolicyManager | None = None
 
 

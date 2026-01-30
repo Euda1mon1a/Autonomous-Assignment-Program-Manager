@@ -375,7 +375,7 @@ async def get_resolution_suggestions(
     ),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """
     Get resolution suggestions for a specific conflict.
 
@@ -442,7 +442,7 @@ async def batch_analyze_conflicts(
             )
             all_conflicts.extend(conflicts)
 
-        # Remove duplicates (conflicts affecting multiple people)
+            # Remove duplicates (conflicts affecting multiple people)
         unique_conflicts = {c.conflict_id: c for c in all_conflicts}.values()
         unique_conflicts_list = list(unique_conflicts)
 

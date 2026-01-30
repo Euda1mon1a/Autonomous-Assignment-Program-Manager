@@ -184,7 +184,7 @@ async def delete_assignment(
     assignment_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete a block assignment."""
     controller = BlockSchedulerController(db)
     controller.delete_assignment(assignment_id)

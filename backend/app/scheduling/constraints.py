@@ -98,7 +98,7 @@ class Constraint(ABC):
         constraint_type: ConstraintType,
         priority: ConstraintPriority = ConstraintPriority.MEDIUM,
         enabled: bool = True,
-    ):
+    ) -> None:
         self.name = name
         self.constraint_type = constraint_type
         self.priority = priority
@@ -158,7 +158,7 @@ class SoftConstraint(Constraint):
         weight: float = 1.0,
         priority: ConstraintPriority = ConstraintPriority.MEDIUM,
         enabled: bool = True,
-    ):
+    ) -> None:
         super().__init__(name, constraint_type, priority, enabled)
         self.weight = weight
 
@@ -235,7 +235,7 @@ class SchedulingContext:
     # Target utilization for buffer constraint (default 80%)
     target_utilization: float = 0.80
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """
         Build lookup dictionaries and indices for fast constraint evaluation.
 
@@ -344,10 +344,9 @@ class SchedulingContext:
         faculty_prefs = self.preference_trails.get(faculty_id, {})
         return faculty_prefs.get(slot_type, 0.5)
 
-
-# =============================================================================
-# HARD CONSTRAINTS - ACGME Compliance
-# =============================================================================
+        # =============================================================================
+        # HARD CONSTRAINTS - ACGME Compliance
+        # =============================================================================
 
 
 class AvailabilityConstraint(HardConstraint):
@@ -356,14 +355,14 @@ class AvailabilityConstraint(HardConstraint):
     Respects absences (vacation, deployment, TDY, etc.)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="Availability",
             constraint_type=ConstraintType.AVAILABILITY,
             priority=ConstraintPriority.CRITICAL,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Add availability constraint to OR-Tools CP-SAT model.
 
@@ -395,7 +394,7 @@ class AvailabilityConstraint(HardConstraint):
                             if (r_i, b_i) in x:
                                 model.Add(x[r_i, b_i] == 0)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Add availability constraint to PuLP linear programming model.
 
@@ -490,7 +489,7 @@ class OnePersonPerBlockConstraint(HardConstraint):
     (Faculty supervision is separate)
     """
 
-    def __init__(self, max_per_block: int = 1):
+    def __init__(self, max_per_block: int = 1) -> None:
         super().__init__(
             name="OnePersonPerBlock",
             constraint_type=ConstraintType.CAPACITY,
@@ -498,7 +497,7 @@ class OnePersonPerBlockConstraint(HardConstraint):
         )
         self.max_per_block = max_per_block
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """At most max_per_block residents per block."""
         x = variables.get("assignments", {})
 
@@ -512,7 +511,7 @@ class OnePersonPerBlockConstraint(HardConstraint):
             if resident_vars:
                 model.Add(sum(resident_vars) <= self.max_per_block)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """At most max_per_block residents per block."""
         import pulp
 
@@ -589,7 +588,7 @@ class EightyHourRuleConstraint(HardConstraint):
     MAX_WEEKLY_HOURS = 80
     ROLLING_WEEKS = 4
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize the 80-hour rule constraint.
 
@@ -606,7 +605,7 @@ class EightyHourRuleConstraint(HardConstraint):
             self.MAX_WEEKLY_HOURS * self.ROLLING_WEEKS
         ) // self.HOURS_PER_BLOCK
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """Enforce 80-hour rule via block count limits."""
         x = variables.get("assignments", {})
         dates = sorted(context.blocks_by_date.keys())
@@ -614,7 +613,7 @@ class EightyHourRuleConstraint(HardConstraint):
         if not dates:
             return
 
-        # For each possible 28-day window starting point
+            # For each possible 28-day window starting point
         for window_start in dates:
             window_end = window_start + timedelta(days=self.ROLLING_WEEKS * 7 - 1)
 
@@ -626,7 +625,7 @@ class EightyHourRuleConstraint(HardConstraint):
             if not window_blocks:
                 continue
 
-            # For each resident, sum of blocks in window <= max
+                # For each resident, sum of blocks in window <= max
             for resident in context.residents:
                 r_i = context.resident_idx[resident.id]
                 window_vars = [
@@ -637,7 +636,7 @@ class EightyHourRuleConstraint(HardConstraint):
                 if window_vars:
                     model.Add(sum(window_vars) <= self.max_blocks_per_window)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Enforce 80-hour rule via block count limits."""
         import pulp
 
@@ -688,7 +687,7 @@ class EightyHourRuleConstraint(HardConstraint):
             if not resident_assignments:
                 continue
 
-            # Get dates for this resident
+                # Get dates for this resident
             dates_with_blocks = defaultdict(int)
             for a in resident_assignments:
                 # Find block date
@@ -745,14 +744,14 @@ class OneInSevenRuleConstraint(HardConstraint):
 
     MAX_CONSECUTIVE_DAYS = 6
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="1in7Rule",
             constraint_type=ConstraintType.CONSECUTIVE_DAYS,
             priority=ConstraintPriority.CRITICAL,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """Enforce max consecutive days."""
 
         x = variables.get("assignments", {})
@@ -778,7 +777,7 @@ class OneInSevenRuleConstraint(HardConstraint):
                 if len(consecutive_dates) < self.MAX_CONSECUTIVE_DAYS + 1:
                     continue
 
-                # Create indicator variables for each day
+                    # Create indicator variables for each day
                 day_worked_vars = []
                 for d in consecutive_dates[: self.MAX_CONSECUTIVE_DAYS + 1]:
                     day_blocks = context.blocks_by_date[d]
@@ -793,11 +792,11 @@ class OneInSevenRuleConstraint(HardConstraint):
                         model.AddMaxEquality(day_worked, day_vars)
                         day_worked_vars.append(day_worked)
 
-                # At most 6 days worked in any 7-day window
+                        # At most 6 days worked in any 7-day window
                 if len(day_worked_vars) == self.MAX_CONSECUTIVE_DAYS + 1:
                     model.Add(sum(day_worked_vars) <= self.MAX_CONSECUTIVE_DAYS)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Enforce max consecutive days (linear approximation)."""
         import pulp
 
@@ -823,8 +822,8 @@ class OneInSevenRuleConstraint(HardConstraint):
                 if len(consecutive_dates) < self.MAX_CONSECUTIVE_DAYS + 1:
                     continue
 
-                # Sum of all blocks across 7 days <= 6 * 2 (max 2 blocks per day)
-                # This is a relaxation, but works for most cases
+                    # Sum of all blocks across 7 days <= 6 * 2 (max 2 blocks per day)
+                    # This is a relaxation, but works for most cases
                 all_vars = []
                 for d in consecutive_dates[: self.MAX_CONSECUTIVE_DAYS + 1]:
                     for b in context.blocks_by_date[d]:
@@ -920,7 +919,7 @@ class SupervisionRatioConstraint(HardConstraint):
     PGY1_RATIO = 2  # 1 faculty per 2 PGY-1
     OTHER_RATIO = 4  # 1 faculty per 4 PGY-2/3
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize supervision ratio constraint.
 
@@ -956,13 +955,13 @@ class SupervisionRatioConstraint(HardConstraint):
         from_other = (other_count + self.OTHER_RATIO - 1) // self.OTHER_RATIO
         return max(1, from_pgy1 + from_other) if (pgy1_count + other_count) > 0 else 0
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """Supervision ratio is typically handled post-hoc for residents."""
         # This constraint is usually enforced during faculty assignment phase
         # The CP-SAT model focuses on resident assignment
         pass
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Supervision ratio is typically handled post-hoc for residents."""
         pass
 
@@ -981,7 +980,7 @@ class SupervisionRatioConstraint(HardConstraint):
         for f in context.faculty:
             person_types[f.id] = "faculty"
 
-        # Group by block
+            # Group by block
         by_block = defaultdict(lambda: {"residents": [], "faculty": []})
         for a in assignments:
             ptype = person_types.get(a.person_id)
@@ -1031,14 +1030,14 @@ class ClinicCapacityConstraint(HardConstraint):
     Each rotation template may have a max_residents limit.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="ClinicCapacity",
             constraint_type=ConstraintType.CAPACITY,
             priority=ConstraintPriority.HIGH,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """Enforce template capacity limits per block."""
         variables.get("assignments", {})
         template_vars = variables.get("template_assignments", {})  # (r, b, t) -> var
@@ -1046,7 +1045,7 @@ class ClinicCapacityConstraint(HardConstraint):
         if not template_vars:
             return  # No template-specific variables
 
-        # Group by (block, template)
+            # Group by (block, template)
         for block in context.blocks:
             b_i = context.block_idx[block.id]
             for template in context.templates:
@@ -1063,7 +1062,7 @@ class ClinicCapacityConstraint(HardConstraint):
                     if template_block_vars:
                         model.Add(sum(template_block_vars) <= template.max_residents)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Enforce template capacity limits per block."""
         import pulp
 
@@ -1140,7 +1139,7 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
     Default: 6 physicians maximum per clinic session (AM or PM).
     """
 
-    def __init__(self, max_physicians: int = 6):
+    def __init__(self, max_physicians: int = 6) -> None:
         """
         Initialize the constraint.
 
@@ -1155,7 +1154,7 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
         )
         self.max_physicians = max_physicians
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """Enforce maximum physicians per clinic block."""
         x = variables.get("assignments", {})
         template_vars = variables.get("template_assignments", {})
@@ -1163,7 +1162,7 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
         if not x and not template_vars:
             return
 
-        # Identify clinic templates
+            # Identify clinic templates
         clinic_template_ids = {
             t.id
             for t in context.templates
@@ -1173,7 +1172,7 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
         if not clinic_template_ids:
             return  # No clinic templates defined
 
-        # For each block, sum all clinic assignments (residents + faculty)
+            # For each block, sum all clinic assignments (residents + faculty)
         for block in context.blocks:
             b_i = context.block_idx[block.id]
             clinic_vars = []
@@ -1188,8 +1187,8 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
                             if (r_i, b_i, t_i) in template_vars:
                                 clinic_vars.append(template_vars[r_i, b_i, t_i])
 
-            # Faculty assignments are typically handled post-hoc,
-            # but if faculty variables exist, include them
+                                # Faculty assignments are typically handled post-hoc,
+                                # but if faculty variables exist, include them
             faculty_vars = variables.get("faculty_assignments", {})
             if faculty_vars:
                 for f in context.faculty:
@@ -1200,7 +1199,7 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
             if clinic_vars:
                 model.Add(sum(clinic_vars) <= self.max_physicians)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Enforce maximum physicians per clinic block using PuLP."""
         import pulp
 
@@ -1254,13 +1253,13 @@ class MaxPhysiciansInClinicConstraint(HardConstraint):
         if not clinic_template_ids:
             return ConstraintResult(satisfied=True, violations=[])
 
-        # Count all persons (faculty + residents) per clinic block
+            # Count all persons (faculty + residents) per clinic block
         by_block = defaultdict(int)
         for a in assignments:
             if a.rotation_template_id in clinic_template_ids:
                 by_block[a.block_id] += 1
 
-        # Check limits
+                # Check limits
         block_dates = {b.id: (b.date, b.time_of_day) for b in context.blocks}
 
         for block_id, count in by_block.items():
@@ -1299,7 +1298,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
 
     WEDNESDAY = 2  # Python weekday: Monday=0, Tuesday=1, Wednesday=2
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the constraint."""
         super().__init__(
             name="WednesdayAMInternOnly",
@@ -1315,14 +1314,14 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
             and block.time_of_day == "AM"
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """Prevent non-intern assignments on Wednesday AM."""
         template_vars = variables.get("template_assignments", {})
 
         if not template_vars:
             return
 
-        # Identify clinic templates
+            # Identify clinic templates
         clinic_template_ids = {
             t.id
             for t in context.templates
@@ -1332,7 +1331,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
         if not clinic_template_ids:
             return
 
-        # Get PGY levels for residents
+            # Get PGY levels for residents
         pgy_levels = {r.id: r.pgy_level for r in context.residents}
 
         # For Wednesday AM blocks, prevent non-PGY-1 clinic assignments
@@ -1358,7 +1357,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
                         # Force non-intern to 0 on Wednesday AM clinic
                         model.Add(template_vars[r_i, b_i, t_i] == 0)
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Prevent non-intern assignments on Wednesday AM using PuLP."""
         template_vars = variables.get("template_assignments", {})
 
@@ -1424,7 +1423,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
             if a.rotation_template_id not in clinic_template_ids:
                 continue
 
-            # Only check resident assignments (not faculty)
+                # Only check resident assignments (not faculty)
             if a.person_id not in pgy_levels:
                 continue
 
@@ -1432,7 +1431,7 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
             if not block or not self._is_wednesday_am(block):
                 continue
 
-            # Check if resident is NOT PGY-1
+                # Check if resident is NOT PGY-1
             pgy = pgy_levels.get(a.person_id)
             if pgy and pgy != 1:
                 violations.append(
@@ -1452,10 +1451,9 @@ class WednesdayAMInternOnlyConstraint(HardConstraint):
             violations=violations,
         )
 
-
-# =============================================================================
-# SOFT CONSTRAINTS - Optimization
-# =============================================================================
+        # =============================================================================
+        # SOFT CONSTRAINTS - Optimization
+        # =============================================================================
 
 
 class EquityConstraint(SoftConstraint):
@@ -1470,7 +1468,7 @@ class EquityConstraint(SoftConstraint):
     to work the same number of blocks.
     """
 
-    def __init__(self, weight: float = 10.0):
+    def __init__(self, weight: float = 10.0) -> None:
         super().__init__(
             name="Equity",
             constraint_type=ConstraintType.EQUITY,
@@ -1478,14 +1476,14 @@ class EquityConstraint(SoftConstraint):
             priority=ConstraintPriority.MEDIUM,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """Add equity objective to model with support for individual targets."""
         x = variables.get("assignments", {})
 
         if not x:
             return
 
-        # Check if residents have individual targets
+            # Check if residents have individual targets
         has_individual_targets = any(
             hasattr(r, "target_clinical_blocks")
             and r.target_clinical_blocks is not None
@@ -1532,7 +1530,7 @@ class EquityConstraint(SoftConstraint):
 
             variables["equity_penalty"] = max_assigns
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Add equity objective to model with support for individual targets."""
         import pulp
 
@@ -1541,7 +1539,7 @@ class EquityConstraint(SoftConstraint):
         if not x:
             return
 
-        # Check if residents have individual targets
+            # Check if residents have individual targets
         has_individual_targets = any(
             hasattr(r, "target_clinical_blocks")
             and r.target_clinical_blocks is not None
@@ -1665,7 +1663,7 @@ class CoverageConstraint(SoftConstraint):
     Primary optimization objective.
     """
 
-    def __init__(self, weight: float = 1000.0):
+    def __init__(self, weight: float = 1000.0) -> None:
         super().__init__(
             name="Coverage",
             constraint_type=ConstraintType.CAPACITY,
@@ -1673,7 +1671,7 @@ class CoverageConstraint(SoftConstraint):
             priority=ConstraintPriority.HIGH,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """Add coverage to objective."""
         x = variables.get("assignments", {})
 
@@ -1683,7 +1681,7 @@ class CoverageConstraint(SoftConstraint):
         total = sum(x.values())
         variables["coverage_bonus"] = total
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Add coverage to objective."""
         import pulp
 
@@ -1730,7 +1728,7 @@ class ContinuityConstraint(SoftConstraint):
     for consecutive blocks when appropriate.
     """
 
-    def __init__(self, weight: float = 5.0):
+    def __init__(self, weight: float = 5.0) -> None:
         super().__init__(
             name="Continuity",
             constraint_type=ConstraintType.CONTINUITY,
@@ -1738,13 +1736,13 @@ class ContinuityConstraint(SoftConstraint):
             priority=ConstraintPriority.LOW,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """Continuity is complex for CP-SAT, handled via preference."""
         # This would require tracking template assignments across consecutive blocks
         # For simplicity, we handle this in post-processing or validation
         pass
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Continuity is complex for PuLP, handled via preference."""
         pass
 
@@ -1786,7 +1784,7 @@ class PreferenceConstraint(SoftConstraint):
         self,
         preferences: dict[UUID, dict[UUID, float]] = None,
         weight: float = 2.0,
-    ):
+    ) -> None:
         super().__init__(
             name="Preferences",
             constraint_type=ConstraintType.PREFERENCE,
@@ -1795,12 +1793,12 @@ class PreferenceConstraint(SoftConstraint):
         )
         self.preferences = preferences or {}
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """Add preference bonus to objective."""
         # Would require template-specific assignment variables
         pass
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Add preference bonus to objective."""
         pass
 
@@ -1832,10 +1830,9 @@ class PreferenceConstraint(SoftConstraint):
             penalty=penalty,
         )
 
-
-# =============================================================================
-# RESILIENCE-AWARE SOFT CONSTRAINTS
-# =============================================================================
+        # =============================================================================
+        # RESILIENCE-AWARE SOFT CONSTRAINTS
+        # =============================================================================
 
 
 class HubProtectionConstraint(SoftConstraint):
@@ -1861,7 +1858,7 @@ class HubProtectionConstraint(SoftConstraint):
     HIGH_HUB_THRESHOLD = 0.4  # Above this = significant hub
     CRITICAL_HUB_THRESHOLD = 0.6  # Above this = critical hub (2x penalty)
 
-    def __init__(self, weight: float = 15.0):
+    def __init__(self, weight: float = 15.0) -> None:
         super().__init__(
             name="HubProtection",
             constraint_type=ConstraintType.HUB_PROTECTION,
@@ -1869,7 +1866,7 @@ class HubProtectionConstraint(SoftConstraint):
             priority=ConstraintPriority.MEDIUM,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Add hub protection penalty to CP-SAT model objective function.
 
@@ -1917,7 +1914,7 @@ class HubProtectionConstraint(SoftConstraint):
             if hub_score < self.HIGH_HUB_THRESHOLD:
                 continue  # Not a hub, no penalty
 
-            # Count assignments to this faculty
+                # Count assignments to this faculty
             faculty_vars = [
                 x[f_i, context.block_idx[b.id]]
                 for b in context.blocks
@@ -1927,7 +1924,7 @@ class HubProtectionConstraint(SoftConstraint):
             if not faculty_vars:
                 continue
 
-            # Penalty multiplier based on hub criticality
+                # Penalty multiplier based on hub criticality
             multiplier = 2.0 if hub_score >= self.CRITICAL_HUB_THRESHOLD else 1.0
 
             # Create penalty variable
@@ -1939,7 +1936,7 @@ class HubProtectionConstraint(SoftConstraint):
         if total_hub_penalty:
             variables["hub_penalty"] = total_hub_penalty
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Add hub protection penalty to PuLP model."""
         import pulp
 
@@ -1989,12 +1986,12 @@ class HubProtectionConstraint(SoftConstraint):
         if not context.hub_scores:
             return ConstraintResult(satisfied=True, penalty=0.0)
 
-        # Count assignments per faculty
+            # Count assignments per faculty
         faculty_counts = defaultdict(int)
         for a in assignments:
             faculty_counts[a.person_id] += 1
 
-        # Calculate average assignments
+            # Calculate average assignments
         if faculty_counts:
             avg_assignments = sum(faculty_counts.values()) / len(faculty_counts)
         else:
@@ -2061,7 +2058,7 @@ class UtilizationBufferConstraint(SoftConstraint):
     - Penalty increases sharply above threshold (quadratic)
     """
 
-    def __init__(self, weight: float = 20.0, target_utilization: float = 0.80):
+    def __init__(self, weight: float = 20.0, target_utilization: float = 0.80) -> None:
         super().__init__(
             name="UtilizationBuffer",
             constraint_type=ConstraintType.UTILIZATION_BUFFER,
@@ -2070,7 +2067,7 @@ class UtilizationBufferConstraint(SoftConstraint):
         )
         self.target_utilization = target_utilization
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Add utilization buffer constraint to CP-SAT model.
 
@@ -2116,9 +2113,9 @@ class UtilizationBufferConstraint(SoftConstraint):
         if not x:
             return
 
-        # Calculate maximum safe assignments
-        # Max capacity = faculty * blocks_per_faculty
-        # Safe capacity = max_capacity * target_utilization
+            # Calculate maximum safe assignments
+            # Max capacity = faculty * blocks_per_faculty
+            # Safe capacity = max_capacity * target_utilization
         max_blocks_per_faculty = len(context.blocks)
         max_capacity = len(context.faculty) * max_blocks_per_faculty
         safe_capacity = int(max_capacity * context.target_utilization)
@@ -2135,7 +2132,7 @@ class UtilizationBufferConstraint(SoftConstraint):
         # Use linear approximation with higher weight for large overages
         variables["utilization_penalty"] = over_util
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Add utilization buffer constraint to PuLP model."""
         import pulp
 
@@ -2192,7 +2189,7 @@ class UtilizationBufferConstraint(SoftConstraint):
         if available_faculty == 0 or workday_blocks == 0:
             return ConstraintResult(satisfied=True, penalty=0.0)
 
-        # Simplified: each faculty can cover 1 block per day on average
+            # Simplified: each faculty can cover 1 block per day on average
         max_capacity = available_faculty * workday_blocks
         utilization = total_assignments / max_capacity if max_capacity > 0 else 0
 
@@ -2243,10 +2240,9 @@ class UtilizationBufferConstraint(SoftConstraint):
             penalty=penalty,
         )
 
-
-# =============================================================================
-# TIER 2: STRATEGIC RESILIENCE CONSTRAINTS
-# =============================================================================
+        # =============================================================================
+        # TIER 2: STRATEGIC RESILIENCE CONSTRAINTS
+        # =============================================================================
 
 
 class ZoneBoundaryConstraint(SoftConstraint):
@@ -2278,7 +2274,7 @@ class ZoneBoundaryConstraint(SoftConstraint):
         "admin": 0.5,  # Most flexible
     }
 
-    def __init__(self, weight: float = 12.0):
+    def __init__(self, weight: float = 12.0) -> None:
         super().__init__(
             name="ZoneBoundary",
             constraint_type=ConstraintType.ZONE_BOUNDARY,
@@ -2286,7 +2282,7 @@ class ZoneBoundaryConstraint(SoftConstraint):
             priority=ConstraintPriority.MEDIUM,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Add zone boundary penalty to CP-SAT model.
 
@@ -2317,7 +2313,7 @@ class ZoneBoundaryConstraint(SoftConstraint):
                 if not block_zone:
                     continue  # Block not in a zone
 
-                # Penalty if zones don't match
+                    # Penalty if zones don't match
                 if faculty_zone != block_zone:
                     penalty_factor = 10  # Base penalty for cross-zone
                     total_zone_penalty += x[f_i, b_i] * penalty_factor
@@ -2325,7 +2321,7 @@ class ZoneBoundaryConstraint(SoftConstraint):
         if total_zone_penalty:
             variables["zone_penalty"] = total_zone_penalty
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Add zone boundary penalty to PuLP model."""
         import pulp
 
@@ -2447,7 +2443,7 @@ class PreferenceTrailConstraint(SoftConstraint):
     STRONG_TRAIL_THRESHOLD = 0.6  # Above this = strong signal
     WEAK_TRAIL_THRESHOLD = 0.3  # Below this = ignore
 
-    def __init__(self, weight: float = 8.0):
+    def __init__(self, weight: float = 8.0) -> None:
         super().__init__(
             name="PreferenceTrail",
             constraint_type=ConstraintType.PREFERENCE_TRAIL,
@@ -2455,7 +2451,7 @@ class PreferenceTrailConstraint(SoftConstraint):
             priority=ConstraintPriority.LOW,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Add preference trail bonus/penalty to CP-SAT model.
 
@@ -2482,7 +2478,7 @@ class PreferenceTrailConstraint(SoftConstraint):
                 if (f_i, b_i) not in x:
                     continue
 
-                # Determine slot type from block
+                    # Determine slot type from block
                 slot_type = (
                     f"{block.date.strftime('%A').lower()}_{block.time_of_day.lower()}"
                 )
@@ -2502,7 +2498,7 @@ class PreferenceTrailConstraint(SoftConstraint):
         if total_trail_score:
             variables["trail_bonus"] = total_trail_score
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Add preference trail bonus/penalty to PuLP model."""
         import pulp
 
@@ -2570,7 +2566,7 @@ class PreferenceTrailConstraint(SoftConstraint):
             if not faculty_prefs:
                 continue
 
-            # Get block for slot type
+                # Get block for slot type
             block = None
             for b in context.blocks:
                 if b.id == assignment.block_id:
@@ -2640,7 +2636,7 @@ class N1VulnerabilityConstraint(SoftConstraint):
     - Identifies faculty who are sole coverage providers
     """
 
-    def __init__(self, weight: float = 25.0):
+    def __init__(self, weight: float = 25.0) -> None:
         super().__init__(
             name="N1Vulnerability",
             constraint_type=ConstraintType.N1_VULNERABILITY,
@@ -2648,7 +2644,7 @@ class N1VulnerabilityConstraint(SoftConstraint):
             priority=ConstraintPriority.HIGH,
         )
 
-    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext):
+    def add_to_cpsat(self, model, variables: dict, context: SchedulingContext) -> None:
         """
         Add N-1 vulnerability penalty to CP-SAT model.
 
@@ -2660,8 +2656,8 @@ class N1VulnerabilityConstraint(SoftConstraint):
         if not x:
             return
 
-        # For each block, count how many faculty could cover it
-        # If only 1 faculty assigned and no alternatives, that's N-1 vulnerable
+            # For each block, count how many faculty could cover it
+            # If only 1 faculty assigned and no alternatives, that's N-1 vulnerable
         total_n1_penalty = 0
 
         for block in context.blocks:
@@ -2674,7 +2670,7 @@ class N1VulnerabilityConstraint(SoftConstraint):
                 if f_i is None:
                     continue
 
-                # Check availability
+                    # Check availability
                 is_available = (
                     context.availability.get(faculty.id, {})
                     .get(block.id, {})
@@ -2684,7 +2680,7 @@ class N1VulnerabilityConstraint(SoftConstraint):
                 if is_available and (f_i, b_i) in x:
                     available_for_block.append((f_i, faculty.id))
 
-            # If only 1-2 faculty available, add penalty for assignments
+                    # If only 1-2 faculty available, add penalty for assignments
             if len(available_for_block) <= 2:
                 for f_i, _ in available_for_block:
                     # Penalty scaled by scarcity: 1 available = high, 2 = medium
@@ -2694,7 +2690,7 @@ class N1VulnerabilityConstraint(SoftConstraint):
         if total_n1_penalty:
             variables["n1_penalty"] = total_n1_penalty
 
-    def add_to_pulp(self, model, variables: dict, context: SchedulingContext):
+    def add_to_pulp(self, model, variables: dict, context: SchedulingContext) -> None:
         """Add N-1 vulnerability penalty to PuLP model."""
         import pulp
 
@@ -2761,18 +2757,18 @@ class N1VulnerabilityConstraint(SoftConstraint):
                 sole_providers[providers[0]] += 1
                 total_penalty += self.weight
 
-        # Also check faculty in n1_vulnerable_faculty set
+                # Also check faculty in n1_vulnerable_faculty set
         for faculty_id in context.n1_vulnerable_faculty:
             if faculty_id in sole_providers:
                 # Already counted in sole_providers
                 continue
-            # Check how many assignments this faculty has
+                # Check how many assignments this faculty has
             faculty_assignments = [a for a in assignments if a.person_id == faculty_id]
             if faculty_assignments:
                 # Add extra penalty for known N-1 vulnerable faculty
                 total_penalty += len(faculty_assignments) * self.weight * 0.5
 
-        # Report violations
+                # Report violations
         if n1_vulnerable_blocks:
             vulnerability_rate = (
                 len(n1_vulnerable_blocks) / len(context.blocks) if context.blocks else 0
@@ -2801,7 +2797,7 @@ class N1VulnerabilityConstraint(SoftConstraint):
                 )
             )
 
-        # Report sole providers
+            # Report sole providers
         for faculty_id, sole_count in sole_providers.items():
             faculty_name = "Unknown"
             for f in context.faculty:
@@ -2830,10 +2826,9 @@ class N1VulnerabilityConstraint(SoftConstraint):
             penalty=total_penalty,
         )
 
-
-# =============================================================================
-# CONSTRAINT MANAGER
-# =============================================================================
+        # =============================================================================
+        # CONSTRAINT MANAGER
+        # =============================================================================
 
 
 class ConstraintManager:
@@ -2847,7 +2842,7 @@ class ConstraintManager:
     - Validation aggregation
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.constraints: list[Constraint] = []
         self._hard_constraints: list[HardConstraint] = []
         self._soft_constraints: list[SoftConstraint] = []

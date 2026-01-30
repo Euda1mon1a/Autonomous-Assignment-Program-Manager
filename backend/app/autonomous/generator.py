@@ -113,7 +113,7 @@ class CandidateGenerator:
         config: GeneratorConfig | None = None,
         constraint_manager: ConstraintManager | None = None,
         resilience_config: ResilienceConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize the candidate generator.
 
@@ -237,7 +237,7 @@ class CandidateGenerator:
             if not residents:
                 return None
 
-            # Build context
+                # Build context
             context = engine._build_context(
                 residents=residents,
                 faculty=faculty,
@@ -268,7 +268,7 @@ class CandidateGenerator:
                 if not solver_result.success:
                     return None
 
-            # Convert solver results to assignments (without saving)
+                    # Convert solver results to assignments (without saving)
             assignments: list[Assignment] = []
             for person_id, block_id, template_id in solver_result.assignments:
                 assignment = Assignment(
@@ -279,7 +279,7 @@ class CandidateGenerator:
                 )
                 assignments.append(assignment)
 
-            # Add faculty assignments
+                # Add faculty assignments
             engine.assignments = assignments
             engine._assign_faculty(faculty, blocks)
             assignments = engine.assignments
@@ -435,12 +435,12 @@ class GeneratorWithVariation(CandidateGenerator):
         if not residents or not blocks:
             return None
 
-        # Randomly modify some assignments
+            # Randomly modify some assignments
         for _ in range(num_to_perturb):
             if not assignments:
                 break
 
-            # Pick random assignment to modify
+                # Pick random assignment to modify
             idx = random.randint(0, len(assignments) - 1)
             old_assignment = assignments[idx]
 

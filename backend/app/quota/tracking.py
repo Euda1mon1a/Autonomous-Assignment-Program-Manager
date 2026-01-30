@@ -23,7 +23,7 @@ class QuotaTracker:
     Uses Redis for fast, distributed tracking with automatic expiration.
     """
 
-    def __init__(self, redis_client: redis.Redis):
+    def __init__(self, redis_client: redis.Redis) -> None:
         """
         Initialize quota tracker.
 
@@ -194,7 +194,7 @@ class QuotaTracker:
             daily_limit = policy.daily_limit
             monthly_limit = policy.monthly_limit
 
-        # Calculate remaining with overage
+            # Calculate remaining with overage
         if policy.allow_overage:
             daily_limit_with_overage = int(
                 daily_limit * (1 + policy.overage_percentage)
@@ -246,19 +246,19 @@ class QuotaTracker:
             daily_limit = policy.daily_limit
             monthly_limit = policy.monthly_limit
 
-        # Apply overage if allowed
+            # Apply overage if allowed
         if policy.allow_overage:
             daily_limit = int(daily_limit * (1 + policy.overage_percentage))
             monthly_limit = int(monthly_limit * (1 + policy.overage_percentage))
 
-        # Check daily quota
+            # Check daily quota
         if daily_usage + amount > daily_limit:
             return (
                 False,
                 f"Daily {resource_type} quota exceeded ({daily_limit} per day)",
             )
 
-        # Check monthly quota
+            # Check monthly quota
         if monthly_usage + amount > monthly_limit:
             return (
                 False,

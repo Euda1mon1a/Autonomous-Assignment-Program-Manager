@@ -49,7 +49,7 @@ class VerificationResult:
         valid: bool,
         failure_reason: str | None = None,
         metadata: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """
         Initialize verification result.
 
@@ -88,7 +88,7 @@ class WebhookVerificationService:
         enable_ip_whitelist: bool = True,
         enable_retry_detection: bool = True,
         max_payload_size_bytes: int = 1048576,  # 1MB default
-    ):
+    ) -> None:
         """
         Initialize webhook verification service.
 
@@ -106,9 +106,9 @@ class WebhookVerificationService:
         self.enable_retry_detection = enable_retry_detection
         self.max_payload_size = max_payload_size_bytes
 
-    # =========================================================================
-    # Main Verification Methods
-    # =========================================================================
+        # =========================================================================
+        # Main Verification Methods
+        # =========================================================================
 
     async def verify_webhook(
         self,
@@ -158,7 +158,7 @@ class WebhookVerificationService:
                 )
                 return ip_result
 
-        # Step 2: Validate required headers
+                # Step 2: Validate required headers
         if required_headers:
             headers_result = self._verify_required_headers(request, required_headers)
             if not headers_result:
@@ -167,7 +167,7 @@ class WebhookVerificationService:
                 )
                 return headers_result
 
-        # Step 3: Extract and parse payload
+                # Step 3: Extract and parse payload
         try:
             body = await request.body()
             payload = json.loads(body) if body else {}
@@ -178,7 +178,7 @@ class WebhookVerificationService:
             logger.error(f"Error reading webhook payload: {e}", exc_info=True)
             return VerificationResult(False, f"Error reading payload: {e}")
 
-        # Step 4: Validate payload size
+            # Step 4: Validate payload size
         payload_size = len(body) if body else 0
         if payload_size > self.max_payload_size:
             logger.warning(
@@ -190,7 +190,7 @@ class WebhookVerificationService:
                 f"Payload too large: {payload_size} bytes exceeds maximum {self.max_payload_size}",
             )
 
-        # Step 5: Load webhook secret if webhook_id provided
+            # Step 5: Load webhook secret if webhook_id provided
         if webhook_id and not secret:
             webhook = await self._get_webhook(db, webhook_id)
             if not webhook:
@@ -202,7 +202,7 @@ class WebhookVerificationService:
             logger.error("No secret provided for webhook verification")
             return VerificationResult(False, "No secret available for verification")
 
-        # Step 6: Extract signature and timestamp from headers
+            # Step 6: Extract signature and timestamp from headers
         signature = request.headers.get("X-Webhook-Signature") or request.headers.get(
             "X-Hub-Signature-256"
         )
@@ -216,7 +216,7 @@ class WebhookVerificationService:
             logger.warning("Webhook request missing timestamp header")
             return VerificationResult(False, "Missing timestamp header")
 
-        # Step 7: Parse timestamp
+            # Step 7: Parse timestamp
         try:
             timestamp = int(timestamp_str)
         except ValueError:
@@ -225,7 +225,7 @@ class WebhookVerificationService:
                 False, f"Invalid timestamp format: {timestamp_str}"
             )
 
-        # Step 8: Verify timestamp freshness
+            # Step 8: Verify timestamp freshness
         timestamp_result = self._verify_timestamp(timestamp)
         if not timestamp_result:
             logger.warning(
@@ -233,7 +233,7 @@ class WebhookVerificationService:
             )
             return timestamp_result
 
-        # Step 9: Verify signature
+            # Step 9: Verify signature
         signature_result = self._verify_signature(
             payload=payload,
             signature=signature,
@@ -248,7 +248,7 @@ class WebhookVerificationService:
             )
             return signature_result
 
-        # Step 10: Detect retries/duplicates if enabled
+            # Step 10: Detect retries/duplicates if enabled
         if self.enable_retry_detection:
             delivery_id = request.headers.get("X-Webhook-Delivery")
             if delivery_id:
@@ -259,7 +259,7 @@ class WebhookVerificationService:
                     signature_result.metadata["is_retry"] = True
                     signature_result.metadata["retry_info"] = retry_result.metadata
 
-        # Step 11: All checks passed
+                    # Step 11: All checks passed
         logger.info(
             f"Webhook verification successful from {request.client.host} "
             f"(payload_size={payload_size} bytes)"
@@ -315,13 +315,13 @@ class WebhookVerificationService:
                 detail=f"Webhook verification failed: {result.failure_reason}",
             )
 
-        # Extract payload from request
+            # Extract payload from request
         body = await request.body()
         return json.loads(body) if body else {}
 
-    # =========================================================================
-    # Individual Verification Methods
-    # =========================================================================
+        # =========================================================================
+        # Individual Verification Methods
+        # =========================================================================
 
     def _verify_signature(
         self,
@@ -361,7 +361,7 @@ class WebhookVerificationService:
                         f"Algorithm mismatch: expected {algorithm.value}, got {sig_algo}",
                     )
 
-            # Constant-time comparison to prevent timing attacks
+                    # Constant-time comparison to prevent timing attacks
             if not hmac.compare_digest(signature_value, expected_sig):
                 return VerificationResult(
                     False, "Signature mismatch - invalid secret or tampered payload"
@@ -396,7 +396,7 @@ class WebhookVerificationService:
                     f"(potential replay attack)",
                 )
 
-            # Calculate when the webhook was sent
+                # Calculate when the webhook was sent
             webhook_time = datetime.fromtimestamp(timestamp)
 
             return VerificationResult(
@@ -543,9 +543,9 @@ class WebhookVerificationService:
             # Don't fail verification on retry detection errors
             return VerificationResult(True, metadata={"retry_detection_error": str(e)})
 
-    # =========================================================================
-    # Helper Methods
-    # =========================================================================
+            # =========================================================================
+            # Helper Methods
+            # =========================================================================
 
     def _generate_signature(
         self,
@@ -602,9 +602,9 @@ class WebhookVerificationService:
             logger.error(f"Error fetching webhook {webhook_id}: {e}", exc_info=True)
             return None
 
-    # =========================================================================
-    # Secret Management
-    # =========================================================================
+            # =========================================================================
+            # Secret Management
+            # =========================================================================
 
     @staticmethod
     def generate_webhook_secret(length: int = 32) -> str:
@@ -669,9 +669,9 @@ class WebhookVerificationService:
 
         return new_secret, metadata
 
-    # =========================================================================
-    # Logging and Monitoring
-    # =========================================================================
+        # =========================================================================
+        # Logging and Monitoring
+        # =========================================================================
 
     def log_verification_failure(
         self,

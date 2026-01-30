@@ -126,10 +126,9 @@ class BaseEvent(BaseModel):
         """Reconstruct event from dictionary."""
         return cls(**data)
 
-
-# =============================================================================
-# Schedule Events
-# =============================================================================
+        # =============================================================================
+        # Schedule Events
+        # =============================================================================
 
 
 class ScheduleCreatedEvent(BaseEvent):
@@ -143,7 +142,7 @@ class ScheduleCreatedEvent(BaseEvent):
     algorithm_version: str | None = None
     constraint_set: dict[str, Any] | None = None
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.SCHEDULE_CREATED)
         super().__init__(**data)
@@ -158,7 +157,7 @@ class ScheduleUpdatedEvent(BaseEvent):
     changes: dict[str, Any]
     reason: str | None = None
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.SCHEDULE_UPDATED)
         super().__init__(**data)
@@ -172,15 +171,14 @@ class SchedulePublishedEvent(BaseEvent):
     published_by: str
     notification_sent: bool = False
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.SCHEDULE_PUBLISHED)
         super().__init__(**data)
 
-
-# =============================================================================
-# Assignment Events
-# =============================================================================
+        # =============================================================================
+        # Assignment Events
+        # =============================================================================
 
 
 class AssignmentCreatedEvent(BaseEvent):
@@ -195,7 +193,7 @@ class AssignmentCreatedEvent(BaseEvent):
     created_by: str
     schedule_id: str | None = None
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.ASSIGNMENT_CREATED)
         super().__init__(**data)
@@ -211,7 +209,7 @@ class AssignmentUpdatedEvent(BaseEvent):
     previous_values: dict[str, Any]
     reason: str | None = None
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.ASSIGNMENT_UPDATED)
         super().__init__(**data)
@@ -226,15 +224,14 @@ class AssignmentDeletedEvent(BaseEvent):
     reason: str | None = None
     soft_delete: bool = True
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.ASSIGNMENT_DELETED)
         super().__init__(**data)
 
-
-# =============================================================================
-# Swap Events
-# =============================================================================
+        # =============================================================================
+        # Swap Events
+        # =============================================================================
 
 
 class SwapRequestedEvent(BaseEvent):
@@ -248,7 +245,7 @@ class SwapRequestedEvent(BaseEvent):
     swap_type: str  # "one_to_one" or "absorb"
     reason: str | None = None
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.SWAP_REQUESTED)
         super().__init__(**data)
@@ -262,7 +259,7 @@ class SwapApprovedEvent(BaseEvent):
     approved_by: str
     approval_notes: str | None = None
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.SWAP_APPROVED)
         super().__init__(**data)
@@ -277,15 +274,14 @@ class SwapExecutedEvent(BaseEvent):
     assignment_changes: list[dict[str, Any]]
     acgme_validated: bool = True
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.SWAP_EXECUTED)
         super().__init__(**data)
 
-
-# =============================================================================
-# Absence Events
-# =============================================================================
+        # =============================================================================
+        # Absence Events
+        # =============================================================================
 
 
 class AbsenceCreatedEvent(BaseEvent):
@@ -300,7 +296,7 @@ class AbsenceCreatedEvent(BaseEvent):
     reason: str | None = None
     created_by: str
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.ABSENCE_CREATED)
         super().__init__(**data)
@@ -315,15 +311,14 @@ class AbsenceApprovedEvent(BaseEvent):
     approval_notes: str | None = None
     coverage_assigned: bool = False
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.ABSENCE_APPROVED)
         super().__init__(**data)
 
-
-# =============================================================================
-# ACGME Compliance Events
-# =============================================================================
+        # =============================================================================
+        # ACGME Compliance Events
+        # =============================================================================
 
 
 class ACGMEViolationDetectedEvent(BaseEvent):
@@ -337,7 +332,7 @@ class ACGMEViolationDetectedEvent(BaseEvent):
     detected_at: datetime
     details: dict[str, Any]
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(
                 event_type=EventType.ACGME_VIOLATION_DETECTED
@@ -358,17 +353,16 @@ class ACGMEOverrideAppliedEvent(BaseEvent):
     justification: str
     approval_level: str  # "coordinator", "program_director"
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(
                 event_type=EventType.ACGME_OVERRIDE_APPLIED
             )
         super().__init__(**data)
 
-
-# =============================================================================
-# Person Events
-# =============================================================================
+        # =============================================================================
+        # Person Events
+        # =============================================================================
 
 
 class PersonCreatedEvent(BaseEvent):
@@ -381,7 +375,7 @@ class PersonCreatedEvent(BaseEvent):
     role: str
     created_by: str
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.PERSON_CREATED)
         super().__init__(**data)
@@ -395,15 +389,14 @@ class PersonUpdatedEvent(BaseEvent):
     updated_by: str
     changes: dict[str, Any]
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.PERSON_UPDATED)
         super().__init__(**data)
 
-
-# =============================================================================
-# Resilience Events
-# =============================================================================
+        # =============================================================================
+        # Resilience Events
+        # =============================================================================
 
 
 class ResilienceLevelChangedEvent(BaseEvent):
@@ -415,17 +408,16 @@ class ResilienceLevelChangedEvent(BaseEvent):
     utilization: float
     trigger_reason: str
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(
                 event_type=EventType.RESILIENCE_LEVEL_CHANGED
             )
         super().__init__(**data)
 
-
-# =============================================================================
-# Snapshot Events
-# =============================================================================
+        # =============================================================================
+        # Snapshot Events
+        # =============================================================================
 
 
 class SnapshotCreatedEvent(BaseEvent):
@@ -437,15 +429,14 @@ class SnapshotCreatedEvent(BaseEvent):
     event_count: int
     data_size_bytes: int
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         if "metadata" not in data:
             data["metadata"] = EventMetadata(event_type=EventType.SNAPSHOT_CREATED)
         super().__init__(**data)
 
-
-# =============================================================================
-# Event Version Migration Support
-# =============================================================================
+        # =============================================================================
+        # Event Version Migration Support
+        # =============================================================================
 
 
 class EventVersionMigrator:

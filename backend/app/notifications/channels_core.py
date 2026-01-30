@@ -211,7 +211,7 @@ class EmailChannel(NotificationChannel):
     sending should be handled by a separate email service (e.g., Celery task).
     """
 
-    def __init__(self, from_address: str = "noreply@schedule.mil"):
+    def __init__(self, from_address: str = "noreply@schedule.mil") -> None:
         """
         Initialize email channel.
 
@@ -321,7 +321,7 @@ class WebhookChannel(NotificationChannel):
     services like Slack, Teams, or custom monitoring systems.
     """
 
-    def __init__(self, webhook_url: str | None = None):
+    def __init__(self, webhook_url: str | None = None) -> None:
         """
         Initialize webhook channel.
 
@@ -383,8 +383,9 @@ class WebhookChannel(NotificationChannel):
                 message=f"Failed to prepare webhook: {str(e)}",
             )
 
+            # Channel registry
 
-# Channel registry
+
 AVAILABLE_CHANNELS = {
     "in_app": InAppChannel,
     "email": EmailChannel,

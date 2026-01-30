@@ -58,7 +58,7 @@ class SwapEngine:
     the various swap subsystems (matching, validation, execution, etc.).
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize swap engine.
 
@@ -107,7 +107,7 @@ class SwapEngine:
                     error_code="FACULTY_NOT_FOUND",
                 )
 
-            # Validate target faculty if specified
+                # Validate target faculty if specified
             if target_faculty_id:
                 target_faculty = await self._get_faculty(target_faculty_id)
                 if not target_faculty:
@@ -117,7 +117,7 @@ class SwapEngine:
                         error_code="FACULTY_NOT_FOUND",
                     )
 
-            # Create swap record
+                    # Create swap record
             swap_record = SwapRecord(
                 source_faculty_id=source_faculty_id,
                 source_week=source_week,
@@ -260,7 +260,7 @@ class SwapEngine:
                     error_code="SWAP_NOT_FOUND",
                 )
 
-            # Check status
+                # Check status
             if swap.status != SwapStatus.PENDING:
                 return SwapEngineResult(
                     success=False,
@@ -268,7 +268,7 @@ class SwapEngine:
                     error_code="INVALID_STATUS",
                 )
 
-            # Validate before execution
+                # Validate before execution
             validation_result = await self.validate_swap(swap_id, comprehensive=True)
             if not validation_result.success:
                 return SwapEngineResult(
@@ -286,7 +286,7 @@ class SwapEngine:
                     metadata={"dry_run": True},
                 )
 
-            # Execute the swap
+                # Execute the swap
             execution_time = datetime.utcnow()
 
             # Update assignments
@@ -359,7 +359,7 @@ class SwapEngine:
                     error_code="INVALID_STATUS",
                 )
 
-            # Check rollback window
+                # Check rollback window
             if not await self._can_rollback(swap):
                 return SwapEngineResult(
                     success=False,
@@ -367,7 +367,7 @@ class SwapEngine:
                     error_code="ROLLBACK_WINDOW_EXPIRED",
                 )
 
-            # Reverse the assignments
+                # Reverse the assignments
             await self._reverse_assignments(swap)
 
             # Update swap status
@@ -458,7 +458,7 @@ class SwapEngine:
             estimated_duration_seconds=2.5,  # Estimated
         )
 
-    # ===== Private Helper Methods =====
+        # ===== Private Helper Methods =====
 
     async def _get_swap(self, swap_id: UUID) -> SwapRecord | None:
         """Get swap record by ID."""

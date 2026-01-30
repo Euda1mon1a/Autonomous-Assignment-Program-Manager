@@ -39,7 +39,7 @@ PROCEDURE_CODES = {"VAS", "VASC", "SM", "BTX", "COLPO"}
 class CascadeOverrideService:
     """Build and optionally apply cascade overrides."""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.schedule_override_service = ScheduleOverrideService(session)
         self.call_override_service = CallOverrideService(session)
@@ -442,14 +442,14 @@ class CascadeOverrideService:
                 )
                 score += 1.0
 
-            # Call-before-leave penalty
+                # Call-before-leave penalty
             if await self._has_absence(
                 candidate.person_id, target.date + timedelta(days=1)
             ):
                 warnings.append("Replacement has leave the next day")
                 score += 1.0
 
-            # Back-to-back call penalty
+                # Back-to-back call penalty
             if await self._has_call_adjacent(candidate.person_id, target.date):
                 warnings.append("Replacement has adjacent call assignment")
                 score += 1.0

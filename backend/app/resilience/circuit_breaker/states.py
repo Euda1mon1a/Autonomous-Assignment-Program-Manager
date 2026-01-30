@@ -75,7 +75,7 @@ class CircuitMetrics:
             return 0.0
         return self.successful_requests / self.total_requests
 
-    def reset_consecutive_counters(self):
+    def reset_consecutive_counters(self) -> None:
         """Reset consecutive failure/success counters."""
         self.consecutive_failures = 0
         self.consecutive_successes = 0
@@ -94,7 +94,7 @@ class StateMachine:
         success_threshold: int = 2,
         timeout_seconds: float = 60.0,
         half_open_max_calls: int = 3,
-    ):
+    ) -> None:
         """
         Initialize state machine.
 
@@ -157,7 +157,7 @@ class StateMachine:
 
         return self.current_state
 
-    def record_rejection(self):
+    def record_rejection(self) -> None:
         """Record a rejected call (circuit open)."""
         self.metrics.rejected_requests += 1
 
@@ -190,7 +190,7 @@ class StateMachine:
             return False
         return datetime.utcnow() >= self.opened_at + self.timeout
 
-    def _transition_to_closed(self, reason: str):
+    def _transition_to_closed(self, reason: str) -> None:
         """Transition to CLOSED state."""
         old_state = self.current_state
         self.current_state = CircuitState.CLOSED
@@ -211,7 +211,7 @@ class StateMachine:
             f"Reason: {reason}"
         )
 
-    def _transition_to_open(self, reason: str):
+    def _transition_to_open(self, reason: str) -> None:
         """Transition to OPEN state."""
         old_state = self.current_state
         self.current_state = CircuitState.OPEN
@@ -231,7 +231,7 @@ class StateMachine:
             f"Reason: {reason}. Consecutive failures: {self.metrics.consecutive_failures}"
         )
 
-    def _transition_to_half_open(self, reason: str):
+    def _transition_to_half_open(self, reason: str) -> None:
         """Transition to HALF_OPEN state."""
         old_state = self.current_state
         self.current_state = CircuitState.HALF_OPEN
@@ -251,7 +251,7 @@ class StateMachine:
             f"Reason: {reason}"
         )
 
-    def force_open(self, reason: str = "Manual override"):
+    def force_open(self, reason: str = "Manual override") -> None:
         """
         Manually force circuit to OPEN state.
 
@@ -261,7 +261,7 @@ class StateMachine:
         if self.current_state != CircuitState.OPEN:
             self._transition_to_open(reason)
 
-    def force_closed(self, reason: str = "Manual override"):
+    def force_closed(self, reason: str = "Manual override") -> None:
         """
         Manually force circuit to CLOSED state.
 
@@ -271,7 +271,7 @@ class StateMachine:
         if self.current_state != CircuitState.CLOSED:
             self._transition_to_closed(reason)
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset circuit breaker to initial state."""
         self.current_state = CircuitState.CLOSED
         self.metrics = CircuitMetrics()

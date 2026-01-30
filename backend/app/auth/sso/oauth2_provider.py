@@ -31,7 +31,7 @@ class OAuth2Provider:
     and OpenID Connect ID token validation.
     """
 
-    def __init__(self, config: OAuth2Config):
+    def __init__(self, config: OAuth2Config) -> None:
         """
         Initialize OAuth2 provider.
 
@@ -158,7 +158,7 @@ class OAuth2Provider:
         except JWTError as e:
             raise ValueError(f"Invalid ID token header: {e}")
 
-        # Get signing key from JWKS
+            # Get signing key from JWKS
         signing_key = await self._get_signing_key(kid)
 
         # Verify and decode token
@@ -173,7 +173,7 @@ class OAuth2Provider:
         except JWTError as e:
             raise ValueError(f"ID token validation failed: {e}")
 
-        # Additional validation
+            # Additional validation
         now = datetime.utcnow().timestamp()
 
         # Check expiration
@@ -181,12 +181,12 @@ class OAuth2Provider:
         if exp and now >= exp:
             raise ValueError("ID token has expired")
 
-        # Check not before
+            # Check not before
         nbf = claims.get("nbf")
         if nbf and now < nbf:
             raise ValueError("ID token not yet valid")
 
-        # Check email verification if required
+            # Check email verification if required
         if self.config.require_email_verified:
             email_verified = claims.get("email_verified", False)
             if not email_verified:
@@ -367,7 +367,7 @@ class OAuth2Provider:
             self._jwks_cache = jwks
             self._jwks_cache_time = datetime.utcnow()
 
-        # Find matching key
+            # Find matching key
         keys = jwks.get("keys", [])
         matching_key = None
 
@@ -379,7 +379,7 @@ class OAuth2Provider:
         if not matching_key:
             raise ValueError(f"Signing key not found for kid: {kid}")
 
-        # Convert JWK to PEM
+            # Convert JWK to PEM
         try:
             key_obj = jwk.construct(matching_key)
             return str(key_obj)

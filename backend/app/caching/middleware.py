@@ -73,7 +73,7 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
         cache_methods: list[str] | None = None,
         exclude_paths: list[str] | None = None,
         vary_headers: list[str] | None = None,
-    ):
+    ) -> None:
         """
         Initialize HTTP cache middleware.
 
@@ -125,19 +125,19 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
         if not self.config.enabled:
             return await call_next(request)
 
-        # Skip excluded paths
+            # Skip excluded paths
         if self._is_excluded_path(request.url.path):
             return await call_next(request)
 
-        # Handle cacheable methods (GET, HEAD)
+            # Handle cacheable methods (GET, HEAD)
         if request.method in self.cache_methods:
             return await self._handle_cacheable_request(request, call_next)
 
-        # Handle mutation methods (POST, PUT, PATCH, DELETE)
+            # Handle mutation methods (POST, PUT, PATCH, DELETE)
         if request.method in self.mutation_methods:
             return await self._handle_mutation_request(request, call_next)
 
-        # Other methods - pass through
+            # Other methods - pass through
         return await call_next(request)
 
     async def _handle_cacheable_request(self, request: Request, call_next):
@@ -171,7 +171,7 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
                     f"Invalid If-Modified-Since header: {if_modified_since_header}"
                 )
 
-        # Check if resource has been modified
+                # Check if resource has been modified
         if if_none_match or if_modified_since:
             is_modified = await self.http_cache.is_modified(
                 key=cache_key,
@@ -185,14 +185,14 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
                 logger.debug(f"Returning 304 Not Modified for {cache_key}")
                 return Response(status_code=304)
 
-        # Try to get from cache
+                # Try to get from cache
         cached = await self.http_cache.get(cache_key, vary_values)
 
         if cached:
             logger.debug(f"Serving from cache: {cache_key}")
             return self._create_response_from_cache(cached)
 
-        # Cache miss - get fresh response
+            # Cache miss - get fresh response
         response = await call_next(request)
 
         # Cache successful responses
@@ -243,7 +243,7 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
         if not hasattr(response, "body") or not response.body:
             return
 
-        # Check if response is cacheable
+            # Check if response is cacheable
         cache_control = response.headers.get("Cache-Control")
         if cache_control:
             directive = CacheDirective.from_header(cache_control)
@@ -251,13 +251,13 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
                 logger.debug(f"Response not cacheable: {cache_control}")
                 return
 
-        # Generate ETag if enabled
+                # Generate ETag if enabled
         etag = None
         if self.enable_etag:
             etag = self.etag_generator.generate(response.body)
             response.headers["ETag"] = etag
 
-        # Add Last-Modified if enabled
+            # Add Last-Modified if enabled
         last_modified = None
         if self.enable_last_modified:
             last_modified = datetime.utcnow()
@@ -265,14 +265,14 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
                 "%a, %d %b %Y %H:%M:%S GMT"
             )
 
-        # Add Vary header
+            # Add Vary header
         if self.vary_headers:
             existing_vary = response.headers.get("Vary", "")
             vary_set = set(existing_vary.split(", ")) if existing_vary else set()
             vary_set.update(self.vary_headers)
             response.headers["Vary"] = ", ".join(sorted(vary_set))
 
-        # Add Cache-Control if not present
+            # Add Cache-Control if not present
         if not cache_control:
             directive = CacheDirective(
                 public=self.config.default_public,
@@ -280,7 +280,7 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
             )
             response.headers["Cache-Control"] = directive.to_header()
 
-        # Create cached response
+            # Create cached response
         cached_response = CachedResponse(
             status_code=response.status_code,
             headers=dict(response.headers),
@@ -340,7 +340,7 @@ class HTTPCacheMiddleware(BaseHTTPMiddleware):
             logger.debug(f"Could not extract resource from path: {path}")
             return
 
-        # Determine invalidation reason
+            # Determine invalidation reason
         reason_map = {
             "POST": InvalidationReason.CREATE,
             "PUT": InvalidationReason.UPDATE,

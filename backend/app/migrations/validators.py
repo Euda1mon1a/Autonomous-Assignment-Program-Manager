@@ -59,7 +59,7 @@ class ValidationIssue:
 class ValidationResult:
     """Result of validation checks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.issues: list[ValidationIssue] = []
         self.checks_run: int = 0
         self.checks_passed: int = 0
@@ -149,7 +149,7 @@ class MigrationValidator:
     Provides pre-built validation checks and framework for custom checks.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize the validator.
 
@@ -291,7 +291,7 @@ class MigrationValidator:
             logger.error(f"Failed to save validation record: {e}")
             self.db.rollback()
 
-    # Built-in validation checks
+            # Built-in validation checks
 
     @staticmethod
     def check_no_null_values(

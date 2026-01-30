@@ -42,10 +42,9 @@ def get_webhook_service() -> WebhookService:
     """Dependency for webhook service."""
     return WebhookService()
 
-
-# ============================================================================
-# Webhook Management Endpoints
-# ============================================================================
+    # ============================================================================
+    # Webhook Management Endpoints
+    # ============================================================================
 
 
 @router.post("", response_model=WebhookResponse, status_code=status.HTTP_201_CREATED)
@@ -179,7 +178,7 @@ async def delete_webhook(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     service: WebhookService = Depends(get_webhook_service),
-):
+) -> None:
     """
     Delete a webhook and all associated deliveries.
 
@@ -242,10 +241,9 @@ async def resume_webhook(
 
     return webhook
 
-
-# ============================================================================
-# Event Trigger Endpoints
-# ============================================================================
+    # ============================================================================
+    # Event Trigger Endpoints
+    # ============================================================================
 
 
 @router.post("/events/trigger", response_model=WebhookEventTriggerResponse)
@@ -276,10 +274,9 @@ async def trigger_event(
         message=f"Event '{event_data.event_type}' triggered for {count} webhook(s)",
     )
 
-
-# ============================================================================
-# Delivery Monitoring Endpoints
-# ============================================================================
+    # ============================================================================
+    # Delivery Monitoring Endpoints
+    # ============================================================================
 
 
 @router.get("/deliveries", response_model=WebhookDeliveryListResponse)
@@ -365,14 +362,13 @@ async def retry_delivery(
             detail="Unable to retry delivery (not found or in final state)",
         )
 
-    # Return updated delivery status
+        # Return updated delivery status
     delivery = await service.get_delivery_status(db, retry_data.delivery_id)
     return delivery
 
-
-# ============================================================================
-# Dead Letter Queue Endpoints
-# ============================================================================
+    # ============================================================================
+    # Dead Letter Queue Endpoints
+    # ============================================================================
 
 
 @router.get("/dead-letters", response_model=WebhookDeadLetterListResponse)
@@ -445,7 +441,7 @@ async def resolve_dead_letter(
             detail=f"Dead letter {dead_letter_id} not found",
         )
 
-    # Return updated dead letter
+        # Return updated dead letter
     dead_letters = await service.list_dead_letters(db, skip=0, limit=1)
     if dead_letters:
         return dead_letters[0]

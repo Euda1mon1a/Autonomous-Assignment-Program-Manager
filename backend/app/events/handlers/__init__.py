@@ -29,7 +29,7 @@ from app.events.event_bus import EventBus
 logger = logging.getLogger(__name__)
 
 
-def register_all_handlers(event_bus: EventBus, db: Session):
+def register_all_handlers(event_bus: EventBus, db: Session) -> None:
     """
     Register all event handlers with the event bus.
 

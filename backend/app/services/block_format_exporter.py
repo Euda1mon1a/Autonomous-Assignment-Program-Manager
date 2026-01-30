@@ -52,7 +52,7 @@ class BlockFormatExporter:
         session: AsyncSession,
         template_path: Path | str | None = None,
         mapping_path: Path | str | None = None,
-    ):
+    ) -> None:
         self.session = session
         self.template_path = (
             Path(template_path) if template_path else DEFAULT_TEMPLATE_PATH
@@ -211,8 +211,8 @@ class BlockFormatExporter:
                 key = (a.person.id, a.block.date, a.block.time_of_day)
                 assignment_lookup[key] = a
 
-        # Build row lookup: person_name -> row number
-        # Template uses "Last, First" format; normalize to match DB "First Last"
+                # Build row lookup: person_name -> row number
+                # Template uses "Last, First" format; normalize to match DB "First Last"
         row_lookup: dict[str, int] = {}
         data_start = mapping["structure"]["data_start_row"]
         data_end = mapping["structure"]["data_end_row"]
@@ -237,7 +237,8 @@ class BlockFormatExporter:
                 return f"{parts[-1]}, {' '.join(parts[:-1])}"  # "first last" -> "last, first"
             return name
 
-        # Build lookups: full name and last-name-only fallback
+            # Build lookups: full name and last-name-only fallback
+
         last_name_lookup: dict[str, int] = {}
         for row in range(data_start, data_end + 1):
             cell_value = ws.cell(row, 5).value  # Column E
@@ -248,8 +249,8 @@ class BlockFormatExporter:
                 last_name = get_last_name(str(cell_value))
                 last_name_lookup[last_name] = row
 
-        # Build date column map relative to start_date
-        # Template mapping has hardcoded dates; we map by day offset instead
+                # Build date column map relative to start_date
+                # Template mapping has hardcoded dates; we map by day offset instead
         date_col_map: dict[date, tuple[int, int]] = {}
         col_mapping = mapping.get("column_mapping", {})
         template_dates = sorted(
@@ -270,13 +271,13 @@ class BlockFormatExporter:
                     actual_date = start_date + timedelta(days=day_offset)
                     date_col_map[actual_date] = (col_info["am_col"], col_info["pm_col"])
 
-        # Fill in assignments
+                    # Fill in assignments
         filled_count = 0
         for a in assignments:
             if not a.person or not a.block:
                 continue
 
-            # Find row by normalized name (convert DB "First Last" to template "last, first")
+                # Find row by normalized name (convert DB "First Last" to template "last, first")
             person_name = normalize_db_name(a.person.name)
             row = row_lookup.get(person_name)
             if not row:
@@ -294,7 +295,7 @@ class BlockFormatExporter:
                 logger.debug(f"No row found for {a.person.name}")
                 continue
 
-            # Find column using relative date mapping
+                # Find column using relative date mapping
             block_date = a.block.date
             if block_date not in date_col_map:
                 logger.debug(f"No column for date {block_date}")

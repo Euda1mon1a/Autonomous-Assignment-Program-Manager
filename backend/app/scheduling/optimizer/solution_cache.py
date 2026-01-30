@@ -431,7 +431,7 @@ class IncrementalSolutionBuilder:
         >>> solution = await builder.finalize()
     """
 
-    def __init__(self, solution_cache: SolutionCache):
+    def __init__(self, solution_cache: SolutionCache) -> None:
         """
         Initialize incremental solution builder.
 
@@ -560,8 +560,9 @@ class IncrementalSolutionBuilder:
         logger.info("Finalized and cached complete solution")
         return self.current_solution
 
+        # Global solution cache
 
-# Global solution cache
+
 _solution_cache: SolutionCache | None = None
 
 

@@ -87,7 +87,7 @@ class WorkloadControlChart:
         self,
         target_hours: float = 60.0,
         sigma: float = 5.0,
-    ):
+    ) -> None:
         """
         Initialize workload control chart.
 
@@ -149,7 +149,7 @@ class WorkloadControlChart:
         if not weekly_hours:
             raise ValueError("weekly_hours cannot be empty")
 
-        # Validate data
+            # Validate data
         for i, hours in enumerate(weekly_hours):
             if hours < 0:
                 raise ValueError(
@@ -295,7 +295,7 @@ class WorkloadControlChart:
                 )
                 break  # Only report first occurrence
 
-            # Check lower 2σ
+                # Check lower 2σ
             lower_violations = [h for h in window if h < self.lcl_2sigma]
             if len(lower_violations) >= 2:
                 alerts.append(
@@ -375,7 +375,7 @@ class WorkloadControlChart:
                 )
                 break  # Only report first occurrence
 
-            # Check lower 1σ
+                # Check lower 1σ
             lower_violations = [h for h in window if h < self.lcl_1sigma]
             if len(lower_violations) >= 4:
                 alerts.append(
@@ -456,7 +456,7 @@ class WorkloadControlChart:
                 )
                 break  # Only report first occurrence
 
-            # Check if all points are below centerline
+                # Check if all points are below centerline
             below_center = [h for h in window if h < self.target_hours]
             if len(below_center) == 8:
                 mean_hours = statistics.mean(window)
@@ -633,7 +633,7 @@ def calculate_process_capability(
                 "interpretation": "Process outside specifications with no variation",
             }
 
-    # Cp: Potential capability (if perfectly centered)
+            # Cp: Potential capability (if perfectly centered)
     cp = (usl - lsl) / (6 * sigma)
 
     # Cpk: Actual capability (accounts for centering)

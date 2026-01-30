@@ -82,12 +82,12 @@ class DeduplicationConfig:
         if method not in cls.IDEMPOTENT_METHODS:
             return False
 
-        # Check exclusions first
+            # Check exclusions first
         for pattern in cls.EXCLUDE_ENDPOINTS:
             if re.match(pattern, path):
                 return False
 
-        # Check if endpoint is in supported list
+                # Check if endpoint is in supported list
         for pattern in cls.DEDUP_ENDPOINTS:
             if re.match(pattern, path):
                 return True
@@ -108,7 +108,7 @@ class DeduplicationService:
         redis_client: redis.Redis | None = None,
         storage: DeduplicationStorage | None = None,
         config: DeduplicationConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize deduplication service.
 
@@ -144,14 +144,14 @@ class DeduplicationService:
         if not self.config.is_endpoint_supported(request.url.path, request.method):
             return None
 
-        # 1. Try to get from header
+            # 1. Try to get from header
         header_key = request.headers.get(self.config.IDEMPOTENCY_HEADER)
         if header_key:
             logger.debug(f"Idempotency key from header: {header_key}")
             return header_key
 
-        # 2. Try to get from request body (if available in state)
-        # Note: Body is consumed by middleware, stored in request.state
+            # 2. Try to get from request body (if available in state)
+            # Note: Body is consumed by middleware, stored in request.state
         if hasattr(request.state, "body_bytes"):
             try:
                 body = request.state.body_bytes
@@ -165,8 +165,8 @@ class DeduplicationService:
             except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
                 pass
 
-        # 3. Auto-generate from request fingerprint
-        # (only for specific endpoints where it's safe)
+                # 3. Auto-generate from request fingerprint
+                # (only for specific endpoints where it's safe)
         if self._should_auto_generate(request):
             fingerprint = self._generate_request_fingerprint(request)
             logger.debug(f"Auto-generated idempotency key: {fingerprint}")
@@ -222,7 +222,7 @@ class DeduplicationService:
         if hasattr(request.state, "body_bytes"):
             components.append(request.state.body_bytes.decode("utf-8", errors="ignore"))
 
-        # Generate hash
+            # Generate hash
         fingerprint_data = "|".join(components)
         fingerprint_hash = hashlib.sha256(fingerprint_data.encode("utf-8")).hexdigest()
 
@@ -248,7 +248,7 @@ class DeduplicationService:
         if record is None:
             return False, None
 
-        # Check if record is still valid
+            # Check if record is still valid
         if record.is_expired():
             await self.storage.delete_record(idempotency_key)
             return False, None
@@ -297,7 +297,7 @@ class DeduplicationService:
 
             return completed_record
 
-        # Request already completed, return cached record
+            # Request already completed, return cached record
         return record
 
     async def start_processing(
@@ -328,7 +328,7 @@ class DeduplicationService:
             logger.warning(f"Failed to acquire lock: {idempotency_key}")
             return False, None
 
-        # Create processing record
+            # Create processing record
         try:
             await self.storage.create_record(idempotency_key, ttl=ttl)
             logger.debug(f"Started processing: {idempotency_key}")

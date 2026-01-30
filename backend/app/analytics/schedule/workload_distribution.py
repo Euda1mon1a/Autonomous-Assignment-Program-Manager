@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class WorkloadDistribution:
     """Analyzes workload distribution and equity."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def analyze_distribution(

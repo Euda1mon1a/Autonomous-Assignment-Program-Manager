@@ -64,7 +64,7 @@ class IndexAdvisor:
         unused = advisor.find_unused_indexes()
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize index advisor.
 
@@ -92,7 +92,7 @@ class IndexAdvisor:
         for table_info in seq_scan_tables:
             recommendations.extend(self._recommend_indexes_for_table(table_info))
 
-        # Analyze slow query patterns
+            # Analyze slow query patterns
         recommendations.extend(self._analyze_slow_query_patterns())
 
         # Sort by priority

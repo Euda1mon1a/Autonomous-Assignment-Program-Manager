@@ -77,7 +77,7 @@ class SIRModel:
         self,
         transmission_rate: float = 0.3,  # β - burnout contagion rate
         recovery_rate: float = 0.1,  # γ - recovery rate (1/10 = 10 days avg)
-    ):
+    ) -> None:
         """
         Initialize SIR model.
 
@@ -137,7 +137,7 @@ class SIRModel:
                 total_cases=0,
             )
 
-        # Initial conditions [S, I, R]
+            # Initial conditions [S, I, R]
         y0 = [initial_susceptible, initial_infected, initial_recovered]
 
         # Time vector
@@ -225,7 +225,7 @@ class SIRModel:
         if total_population == 0:
             return 0
 
-        # Simulate to equilibrium
+            # Simulate to equilibrium
         forecast = self.simulate(
             initial_susceptible=total_population - initial_infected,
             initial_infected=initial_infected,

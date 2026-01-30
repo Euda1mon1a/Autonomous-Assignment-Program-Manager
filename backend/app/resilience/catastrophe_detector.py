@@ -62,10 +62,9 @@ except ImportError:
     HAS_SCIPY_INTERPOLATE = False
     logger.warning("scipy.interpolate not available - some features limited")
 
-
-# =============================================================================
-# Enums and Constants
-# =============================================================================
+    # =============================================================================
+    # Enums and Constants
+    # =============================================================================
 
 
 class CatastropheRegion(str, Enum):
@@ -86,8 +85,9 @@ class SystemState(str, Enum):
     MARGINAL = "marginal"  # Schedule barely feasible
     INFEASIBLE = "infeasible"  # No valid schedule exists
 
+    # Default parameter ranges for grid search
 
-# Default parameter ranges for grid search
+
 DEFAULT_DEMAND_RANGE = (0.5, 1.2)  # 50% to 120% of nominal demand
 DEFAULT_STRICTNESS_RANGE = (0.0, 1.0)  # 0 = relaxed, 1 = maximum strictness
 
@@ -111,7 +111,7 @@ class ParameterState:
     feasibility_score: float | None = None  # 0.0 = infeasible, 1.0 = easily feasible
     metadata: dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate parameters."""
         if self.demand < 0:
             raise ValueError(f"demand must be >= 0, got {self.demand}")
@@ -141,7 +141,7 @@ class FeasibilitySurface:
     grid_resolution: tuple[int, int] = field(default=(20, 20))
     computation_time_seconds: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate grid dimensions."""
         expected_shape = (len(self.strictness_values), len(self.demand_values))
         if self.feasibility_grid.shape != expected_shape:
@@ -167,7 +167,7 @@ class FeasibilitySurface:
             s_idx = np.argmin(np.abs(self.strictness_values - strictness))
             return float(self.feasibility_grid[s_idx, d_idx])
 
-        # Use bilinear interpolation
+            # Use bilinear interpolation
         interp_func = interpolate.RectBivariateSpline(
             self.strictness_values,
             self.demand_values,
@@ -285,10 +285,9 @@ class CatastropheAlert:
     triggered_at: datetime = field(default_factory=datetime.now)
     metadata: dict[str, Any] = field(default_factory=dict)
 
-
-# =============================================================================
-# Catastrophe Detector
-# =============================================================================
+    # =============================================================================
+    # Catastrophe Detector
+    # =============================================================================
 
 
 class CatastropheDetector:
@@ -311,7 +310,7 @@ class CatastropheDetector:
         feasibility_function: Callable[[float, float], float] | None = None,
         demand_range: tuple[float, float] = DEFAULT_DEMAND_RANGE,
         strictness_range: tuple[float, float] = DEFAULT_STRICTNESS_RANGE,
-    ):
+    ) -> None:
         """
         Initialize catastrophe detector.
 
@@ -358,7 +357,7 @@ class CatastropheDetector:
             # Near boundary - marginal
             feasibility = 0.5 + 0.3 * np.tanh(-discriminant * 2)
 
-        # Add noise for realism
+            # Add noise for realism
         noise = np.random.normal(0, 0.05)
         return float(np.clip(feasibility + noise, 0.0, 1.0))
 
@@ -463,7 +462,7 @@ class CatastropheDetector:
                 hysteresis_gap=0.0,
             )
 
-        # Find cusp point: maximum curvature on boundary
+            # Find cusp point: maximum curvature on boundary
         cusp_score = 0.0
         cusp_idx = None
         max_curvature = 0.0
@@ -493,7 +492,7 @@ class CatastropheDetector:
             cusp_center = None
             cusp_score = 0.0
 
-        # Measure hysteresis gap
+            # Measure hysteresis gap
         hysteresis_gap = self._measure_hysteresis(surface, boundary_indices)
 
         # Extract upper and lower boundaries
@@ -536,7 +535,7 @@ class CatastropheDetector:
         if len(boundary_indices) < 5:
             return 0.0
 
-        # For each strictness level, find min and max demand on boundary
+            # For each strictness level, find min and max demand on boundary
         strictness_levels = {}
         for s_idx, d_idx in boundary_indices:
             strictness = surface.strictness_values[s_idx]
@@ -546,7 +545,7 @@ class CatastropheDetector:
                 strictness_levels[strictness] = []
             strictness_levels[strictness].append(demand)
 
-        # Measure average gap
+            # Measure average gap
         gaps = []
         for demands in strictness_levels.values():
             if len(demands) > 1:
@@ -562,7 +561,7 @@ class CatastropheDetector:
         if len(boundary_indices) < 5:
             return [], []
 
-        # Sort by demand, then by strictness
+            # Sort by demand, then by strictness
         points = [
             (surface.demand_values[d_idx], surface.strictness_values[s_idx])
             for s_idx, d_idx in boundary_indices
@@ -599,7 +598,7 @@ class CatastropheDetector:
             # No cusp detected, assume safe
             return 1.0
 
-        # Distance to cusp center
+            # Distance to cusp center
         cusp_point = np.array(cusp_analysis.cusp_center)
         current_point = current_params.to_array()
         distance_to_cusp = euclidean(current_point, cusp_point)
@@ -612,7 +611,7 @@ class CatastropheDetector:
                 distances = [euclidean(current_point, np.array(p)) for p in boundary]
                 min_boundary_distance = min(min_boundary_distance, min(distances))
 
-        # Normalize to 0-1 scale (assume max safe distance is 0.3 in parameter space)
+                # Normalize to 0-1 scale (assume max safe distance is 0.3 in parameter space)
         normalized_distance = min(1.0, min_boundary_distance / 0.3)
 
         return float(normalized_distance)
@@ -639,7 +638,7 @@ class CatastropheDetector:
         if len(boundary_points) < 5:
             return 0.0
 
-        # Group by strictness levels
+            # Group by strictness levels
         strictness_groups = {}
         for demand, strictness in boundary_points:
             # Round strictness to group nearby points
@@ -648,7 +647,7 @@ class CatastropheDetector:
                 strictness_groups[s_key] = []
             strictness_groups[s_key].append(demand)
 
-        # Measure gap at each strictness level
+            # Measure gap at each strictness level
         gaps = []
         for demands in strictness_groups.values():
             if len(demands) > 1:
@@ -734,7 +733,7 @@ class CatastropheDetector:
         else:
             direction = "unknown"
 
-        # Predict failure
+            # Predict failure
         will_fail = False
         time_to_failure = None
         failure_mode = "stable"
@@ -760,7 +759,7 @@ class CatastropheDetector:
             failure_mode = "proximity_critical"
             confidence = 1.0 - distance / 0.15
 
-        # Determine current and predicted states
+            # Determine current and predicted states
         if current.feasibility_score is not None:
             if current.feasibility_score > 0.8:
                 current_state = SystemState.FEASIBLE
@@ -839,7 +838,7 @@ class CatastropheDetector:
                     max_safe_demand = safe_demand
                     max_safe_strictness = strictness
 
-        # Find cusp point (minimum feasibility on boundary)
+                    # Find cusp point (minimum feasibility on boundary)
         min_feasibility = 1.0
         cusp_demand = 0.0
         cusp_strictness = 0.0

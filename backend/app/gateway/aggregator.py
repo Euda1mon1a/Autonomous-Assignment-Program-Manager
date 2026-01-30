@@ -84,7 +84,7 @@ class ResponseAggregator:
     Aggregates responses from multiple services using configurable strategies.
     """
 
-    def __init__(self, config: AggregationConfig | None = None):
+    def __init__(self, config: AggregationConfig | None = None) -> None:
         """
         Initialize response aggregator.
 
@@ -126,7 +126,7 @@ class ResponseAggregator:
                 f"Errors: {'; '.join(error_details)}"
             )
 
-        # Apply aggregation strategy
+            # Apply aggregation strategy
         strategy = self.config.strategy
 
         if strategy == AggregationStrategy.MERGE:
@@ -266,7 +266,7 @@ class ResponseAggregator:
         if not responses:
             return {"data": [], "metadata": {"count": 0}}
 
-        # Extract array key if specified
+            # Extract array key if specified
         if self.config.array_key:
             data = []
             for response in responses:
@@ -350,7 +350,7 @@ class ResponseAggregator:
         if not responses:
             raise ValueError("No successful responses")
 
-        # Count identical responses
+            # Count identical responses
         import json
         from collections import Counter
 
@@ -367,7 +367,7 @@ class ResponseAggregator:
                 f"(threshold: {threshold_count:.1f})"
             )
 
-        # Find matching response
+            # Find matching response
         consensus_data = json.loads(most_common[0])
         matching_response = next(r for r in responses if r.data == consensus_data)
 

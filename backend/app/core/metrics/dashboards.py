@@ -69,7 +69,7 @@ class GrafanaDashboardBuilder:
     Creates dashboard configurations compatible with Grafana API.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Grafana dashboard builder."""
         self.dashboards: list[Dashboard] = []
 
@@ -333,8 +333,7 @@ class GrafanaDashboardBuilder:
         colors = ["yellow", "orange", "red"]
         return colors[min(index, len(colors) - 1)]
 
-
-# Pre-built dashboard configurations
+        # Pre-built dashboard configurations
 
 
 def get_overview_dashboard() -> dict[str, Any]:
@@ -354,8 +353,7 @@ def get_security_dashboard() -> dict[str, Any]:
     builder = GrafanaDashboardBuilder()
     return builder.build_security_dashboard()
 
-
-# Dashboard management
+    # Dashboard management
 
 
 async def create_dashboards_in_grafana(

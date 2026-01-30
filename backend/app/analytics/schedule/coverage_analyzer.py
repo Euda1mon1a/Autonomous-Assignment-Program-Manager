@@ -30,7 +30,7 @@ class CoverageAnalyzer:
     - Redundancy analysis
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize coverage analyzer.
 
@@ -191,7 +191,7 @@ class CoverageAnalyzer:
             dow = day_date.weekday()  # 0 = Monday, 6 = Sunday
             dow_coverage[dow].append(assignment_count)
 
-        # Calculate stats for each day
+            # Calculate stats for each day
         dow_names = [
             "Monday",
             "Tuesday",

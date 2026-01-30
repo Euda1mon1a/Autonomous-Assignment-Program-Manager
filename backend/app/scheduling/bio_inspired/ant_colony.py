@@ -127,7 +127,7 @@ class PheromoneMatrix:
         evaporation_rate: float = ACO_DEFAULT_EVAPORATION_RATE,
         min_pheromone: float = ACO_MIN_PHEROMONE,
         max_pheromone: float = ACO_MAX_PHEROMONE,
-    ):
+    ) -> None:
         """
         Initialize pheromone matrix.
 
@@ -190,7 +190,7 @@ class PheromoneMatrix:
                 self.transition[prev_template, template] += deposit_amount
                 prev_template = template
 
-        # Apply maximum
+                # Apply maximum
         self.assignment = np.minimum(self.assignment, self.max_pheromone)
         self.transition = np.minimum(self.transition, self.max_pheromone)
 
@@ -220,7 +220,7 @@ class PheromoneMatrix:
         if heuristic is None:
             heuristic = np.ones(self.n_templates)
 
-        # Combine pheromone and heuristic
+            # Combine pheromone and heuristic
         combined = (pheromone**alpha) * (heuristic**beta)
 
         # Normalize to probability
@@ -331,7 +331,7 @@ class AntColonySolver(BioInspiredSolver):
         timeout_seconds: float = 300.0,
         config: ACOConfig | None = None,
         seed: int | None = None,
-    ):
+    ) -> None:
         """
         Initialize ACO solver.
 
@@ -407,7 +407,7 @@ class AntColonySolver(BioInspiredSolver):
                 logger.info(f"ACO timeout at iteration {iteration}")
                 break
 
-            # Construct solutions with all ants
+                # Construct solutions with all ants
             ant_solutions = []
             for ant_id in range(self.config.colony_size):
                 chromosome = self._construct_solution(context, n_residents, n_blocks)
@@ -423,7 +423,7 @@ class AntColonySolver(BioInspiredSolver):
                     best_fitness = weighted
                     best_chromosome = chromosome.copy()
 
-            # Apply local search to best solutions
+                    # Apply local search to best solutions
             if self.config.local_search:
                 top_k = sorted(ant_solutions, key=lambda x: x[2], reverse=True)[
                     :ACO_TOP_K_FOR_LOCAL_SEARCH
@@ -436,7 +436,7 @@ class AntColonySolver(BioInspiredSolver):
                         best_fitness = new_weighted
                         best_chromosome = improved.copy()
 
-            # Evaporate pheromone
+                        # Evaporate pheromone
             self.pheromone.evaporate()
 
             # Deposit pheromone
@@ -449,7 +449,7 @@ class AntColonySolver(BioInspiredSolver):
                     path.pheromone_contribution = best_fitness
                 self.pheromone.deposit(elite_path, self.config.elite_factor)
 
-            # Track statistics
+                # Track statistics
             self._track_iteration(iteration, ant_solutions, best_fitness)
 
             # Check convergence
@@ -458,14 +458,14 @@ class AntColonySolver(BioInspiredSolver):
                 logger.info(f"ACO converged at iteration {iteration}")
                 break
 
-            # Log progress
+                # Log progress
             if iteration % ACO_LOG_INTERVAL == 0:
                 logger.info(
                     f"ACO iter {iteration}: best={best_fitness:.4f}, "
                     f"pheromone_mean={np.mean(self.pheromone.assignment):.4f}"
                 )
 
-        # Create best individual
+                # Create best individual
         if best_chromosome is not None:
             best_fit = self.evaluate_fitness(best_chromosome, context)
             self.best_individual = Individual(
@@ -517,7 +517,7 @@ class AntColonySolver(BioInspiredSolver):
                         ACO_UNAVAILABLE_SLOT_HEURISTIC
                     )
 
-        # Boost unassigned to prevent over-scheduling
+                    # Boost unassigned to prevent over-scheduling
         self.heuristic_matrix[:, :, 0] *= ACO_UNASSIGNED_BOOST
 
     def _construct_solution(
@@ -564,7 +564,7 @@ class AntColonySolver(BioInspiredSolver):
                 if total > 0:
                     combined_prob /= total
 
-                # Select template
+                    # Select template
                 template = np.random.choice(len(combined_prob), p=combined_prob)
 
                 genes[r_idx, b_idx] = template
@@ -606,7 +606,7 @@ class AntColonySolver(BioInspiredSolver):
                     best = candidate
                     best_fitness = new_fitness
 
-            # Try random flip
+                    # Try random flip
             r_idx = random.randint(0, n_residents - 1)
             b_idx = random.randint(0, n_blocks - 1)
             old_val = best.genes[r_idx, b_idx]
@@ -739,7 +739,7 @@ class AntColonySolver(BioInspiredSolver):
         if self.pheromone is None:
             return {}
 
-        # Find hotspots (high pheromone)
+            # Find hotspots (high pheromone)
         threshold = np.percentile(self.pheromone.assignment, ACO_HOTSPOT_PERCENTILE)
         hotspots = np.argwhere(self.pheromone.assignment > threshold)
 

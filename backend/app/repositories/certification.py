@@ -12,7 +12,7 @@ from app.repositories.base import BaseRepository
 class CertificationTypeRepository(BaseRepository[CertificationType]):
     """Repository for CertificationType entity operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(CertificationType, db)
 
     def get_by_id(self, id: UUID) -> CertificationType | None:
@@ -118,7 +118,7 @@ class CertificationTypeRepository(BaseRepository[CertificationType]):
 class PersonCertificationRepository(BaseRepository[PersonCertification]):
     """Repository for PersonCertification entity operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(PersonCertification, db)
 
     def get_by_id(self, id: UUID) -> PersonCertification | None:
@@ -396,7 +396,7 @@ class PersonCertificationRepository(BaseRepository[PersonCertification]):
                 f"Person type must be one of {valid_person_types}, got '{person_type}'"
             )
 
-        # Get required cert types
+            # Get required cert types
         cert_type_repo = CertificationTypeRepository(self.db)
         required_types = cert_type_repo.list_required_for_person_type(person_type)
 

@@ -82,8 +82,9 @@ class VoxelColor:
         b = int(hex_color[4:6], 16) / 255
         return cls(r, g, b)
 
+        # Rotation type color palette (matches frontend ScheduleCell colors)
 
-# Rotation type color palette (matches frontend ScheduleCell colors)
+
 ROTATION_COLORS: dict[RotationLayer, VoxelColor] = {
     RotationLayer.CLINIC: VoxelColor.from_hex("#3B82F6"),  # blue
     RotationLayer.INPATIENT: VoxelColor.from_hex("#8B5CF6"),  # purple
@@ -260,7 +261,7 @@ class ScheduleVoxelGrid:
                     v.is_conflict = True
                     self.total_conflicts += 1
 
-                # Return pairs
+                    # Return pairs
                 for i, v1 in enumerate(voxels_at_pos):
                     for v2 in voxels_at_pos[i + 1 :]:
                         conflicts.append((v1, v2))
@@ -356,7 +357,7 @@ class ScheduleVoxelTransformer:
     This is the bridge between the database models and the 3D visualization.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._person_index_map: dict[str, int] = {}
         self._block_index_map: dict[str, int] = {}
         self._rotation_index_map: dict[str, int] = {}
@@ -411,13 +412,13 @@ class ScheduleVoxelTransformer:
                 grid.start_date = min(dates)
                 grid.end_date = max(dates)
 
-        # Transform each assignment to a voxel
+                # Transform each assignment to a voxel
         for assignment in assignments:
             voxel = self._assignment_to_voxel(assignment, blocks)
             if voxel:
                 grid.add_voxel(voxel)
 
-        # Detect conflicts
+                # Detect conflicts
         grid.detect_conflicts()
 
         # Calculate coverage
@@ -523,7 +524,7 @@ class ScheduleVoxelTransformer:
         if x is None or y is None:
             return None
 
-        # Find block for date info
+            # Find block for date info
         block_info = next((b for b in blocks if b.get("id") == block_id), {})
 
         # Determine color based on rotation type
@@ -533,7 +534,7 @@ class ScheduleVoxelTransformer:
         except (KeyError, ValueError):
             color = VoxelColor(0.5, 0.5, 0.5)
 
-        # Create voxel
+            # Create voxel
         voxel = ScheduleVoxel(
             x=x,
             y=y,
@@ -560,8 +561,9 @@ class ScheduleVoxelTransformer:
 
         return voxel
 
+        # Convenience function for quick transformation
 
-# Convenience function for quick transformation
+
 def transform_schedule_to_voxels(
     assignments: list[dict],
     persons: list[dict],

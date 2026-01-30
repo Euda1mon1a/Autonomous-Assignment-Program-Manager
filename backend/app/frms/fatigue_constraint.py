@@ -96,10 +96,9 @@ class FatigueViolation:
             },
         )
 
-
-# =============================================================================
-# Hard Fatigue Constraint
-# =============================================================================
+        # =============================================================================
+        # Hard Fatigue Constraint
+        # =============================================================================
 
 
 class FatigueConstraint(HardConstraint):
@@ -122,7 +121,7 @@ class FatigueConstraint(HardConstraint):
         self,
         threshold: float = FRA_HIGH_RISK_THRESHOLD,
         enabled: bool = True,
-    ):
+    ) -> None:
         """
         Initialize fatigue hard constraint.
 
@@ -187,18 +186,18 @@ class FatigueConstraint(HardConstraint):
         if not state:
             return 100.0  # Assume optimal if no state
 
-        # Calculate time of day as float
+            # Calculate time of day as float
         if time_of_day == "AM":
             tod = 8.0  # 8:00 AM
         else:
             tod = 14.0  # 2:00 PM
 
-        # Update state for hours worked today
+            # Update state for hours worked today
         if hours_worked_prior > 0:
             state = self.model.update_wakefulness(state, hours_worked_prior)
             self._alertness_states[person_id] = state
 
-        # Calculate effectiveness
+            # Calculate effectiveness
         score = self.model.calculate_effectiveness(state, tod)
         return score.overall
 
@@ -235,7 +234,7 @@ class FatigueConstraint(HardConstraint):
             )
             return
 
-        # Initialize states if not done
+            # Initialize states if not done
         if not self._alertness_states:
             self.initialize_states(
                 context, datetime.combine(context.start_date, datetime.min.time())
@@ -254,7 +253,7 @@ class FatigueConstraint(HardConstraint):
                 if b_idx is None:
                     continue
 
-                # Predict effectiveness for this assignment
+                    # Predict effectiveness for this assignment
                 effectiveness = self.predict_effectiveness(
                     person_id=resident.id,
                     block_date=block.date,
@@ -271,7 +270,7 @@ class FatigueConstraint(HardConstraint):
                             model.Add(x[r_idx, b_idx, t_idx] == 0)
                             blocked_count += 1
 
-                # If below critical threshold, log warning
+                            # If below critical threshold, log warning
                 if effectiveness < self.CRITICAL_THRESHOLD:
                     logger.warning(
                         f"Critical fatigue risk for {resident.id} on {block.date}: "
@@ -294,8 +293,8 @@ class FatigueConstraint(HardConstraint):
         if not self.enabled:
             return
 
-        # PuLP implementation follows same logic as CP-SAT
-        # Force variables to 0 for assignments below threshold
+            # PuLP implementation follows same logic as CP-SAT
+            # Force variables to 0 for assignments below threshold
         x = variables.get("x")
         if x is None:
             return
@@ -381,10 +380,9 @@ class FatigueConstraint(HardConstraint):
             penalty=float("inf") if violations else 0.0,
         )
 
-
-# =============================================================================
-# Soft Fatigue Constraint (Optimization Objective)
-# =============================================================================
+        # =============================================================================
+        # Soft Fatigue Constraint (Optimization Objective)
+        # =============================================================================
 
 
 class FatigueSoftConstraint(SoftConstraint):
@@ -407,7 +405,7 @@ class FatigueSoftConstraint(SoftConstraint):
         self,
         weight: float = 100.0,
         enabled: bool = True,
-    ):
+    ) -> None:
         """
         Initialize soft fatigue constraint.
 
@@ -443,7 +441,7 @@ class FatigueSoftConstraint(SoftConstraint):
             gap = self.FAA_CAUTION_THRESHOLD - effectiveness
             return self.weight * (gap / 10.0)  # 0.7 weight per percent below 77
 
-        # Quadratic penalty below FRA threshold
+            # Quadratic penalty below FRA threshold
         gap = self.FAA_CAUTION_THRESHOLD - effectiveness
         linear_part = (self.FAA_CAUTION_THRESHOLD - self.FRA_HIGH_RISK_THRESHOLD) / 10.0
         quadratic_part = ((self.FRA_HIGH_RISK_THRESHOLD - effectiveness) / 10.0) ** 2
@@ -481,7 +479,7 @@ class FatigueSoftConstraint(SoftConstraint):
                 if b_idx is None:
                     continue
 
-                # Get or predict effectiveness
+                    # Get or predict effectiveness
                 state = self._alertness_states.get(resident.id)
                 if not state:
                     state = self.model.create_state(resident.id)
@@ -512,8 +510,8 @@ class FatigueSoftConstraint(SoftConstraint):
         if not self.enabled:
             return
 
-        # PuLP implementation similar to CP-SAT
-        # Add penalty coefficients to objective
+            # PuLP implementation similar to CP-SAT
+            # Add penalty coefficients to objective
         pass  # Implementation follows CP-SAT pattern
 
     def validate(
@@ -564,10 +562,9 @@ class FatigueSoftConstraint(SoftConstraint):
             penalty=total_penalty,
         )
 
-
-# =============================================================================
-# Circadian Protection Constraint
-# =============================================================================
+        # =============================================================================
+        # Circadian Protection Constraint
+        # =============================================================================
 
 
 class CircadianConstraint(SoftConstraint):
@@ -597,7 +594,7 @@ class CircadianConstraint(SoftConstraint):
         weight: float = 50.0,
         wocl_penalty_multiplier: float = 2.0,
         enabled: bool = True,
-    ):
+    ) -> None:
         """
         Initialize circadian constraint.
 
@@ -672,7 +669,7 @@ class CircadianConstraint(SoftConstraint):
                 ]:
                     penalty *= self.wocl_multiplier
 
-        # Shift duration penalty
+                    # Shift duration penalty
         max_duration = self.calculate_max_shift_duration(shift_start_hour)
         if shift_duration > max_duration:
             excess = shift_duration - max_duration
@@ -689,7 +686,7 @@ class CircadianConstraint(SoftConstraint):
             # Shift wraps past midnight
             return (start_hour < self.WOCL_END) or (end_hour % 24 > self.WOCL_START)
 
-        # Normal shift
+            # Normal shift
         return not (end_hour <= self.WOCL_START or start_hour >= self.WOCL_END)
 
     def _calculate_wocl_hours(self, start_hour: float, duration: float) -> float:
@@ -728,7 +725,7 @@ class CircadianConstraint(SoftConstraint):
         if not self.enabled:
             return
 
-        # Similar to FatigueSoftConstraint - add penalty terms to objective
+            # Similar to FatigueSoftConstraint - add penalty terms to objective
         pass
 
     def add_to_pulp(
@@ -760,7 +757,7 @@ class CircadianConstraint(SoftConstraint):
             if not block:
                 continue
 
-            # Get shift timing
+                # Get shift timing
             tod = getattr(block, "time_of_day", "AM")
             start_hour = 7.0 if tod == "AM" else 13.0
             duration = 6.0  # Half-day block
@@ -796,10 +793,9 @@ class CircadianConstraint(SoftConstraint):
             penalty=total_penalty,
         )
 
-
-# =============================================================================
-# Constraint Factory
-# =============================================================================
+        # =============================================================================
+        # Constraint Factory
+        # =============================================================================
 
 
 def create_fatigue_constraints(

@@ -29,7 +29,7 @@ class CacheCompression:
         algorithm: CompressionAlgorithm = CompressionAlgorithm.GZIP,
         compression_level: int = 6,
         min_size_bytes: int = 1024,  # Only compress if > 1KB
-    ):
+    ) -> None:
         """Initialize cache compression.
 
         Args:
@@ -56,14 +56,14 @@ class CacheCompression:
         else:
             json_data = json.dumps(data).encode()
 
-        # Check if compression is worthwhile
+            # Check if compression is worthwhile
         if (
             len(json_data) < self.min_size_bytes
             or self.algorithm == CompressionAlgorithm.NONE
         ):
             return json_data, False
 
-        # Compress based on algorithm
+            # Compress based on algorithm
         try:
             if self.algorithm == CompressionAlgorithm.GZIP:
                 compressed = gzip.compress(
@@ -74,7 +74,7 @@ class CacheCompression:
             else:
                 compressed = json_data
 
-            # Only use compression if it actually reduces size
+                # Only use compression if it actually reduces size
             if len(compressed) < len(json_data):
                 logger.debug(
                     f"Compressed {len(json_data)} -> {len(compressed)} bytes "
@@ -105,7 +105,7 @@ class CacheCompression:
             except (json.JSONDecodeError, TypeError):
                 return data.decode() if isinstance(data, bytes) else data
 
-        # Decompress based on algorithm
+                # Decompress based on algorithm
         try:
             if self.algorithm == CompressionAlgorithm.GZIP:
                 decompressed = gzip.decompress(data)
@@ -114,7 +114,7 @@ class CacheCompression:
             else:
                 decompressed = data
 
-            # Try to parse as JSON
+                # Try to parse as JSON
             try:
                 return json.loads(decompressed)
             except json.JSONDecodeError:
@@ -158,7 +158,7 @@ class CompressedCacheWrapper:
         self,
         cache,
         compressor: CacheCompression | None = None,
-    ):
+    ) -> None:
         """Initialize compressed cache wrapper.
 
         Args:
@@ -197,7 +197,7 @@ class CompressedCacheWrapper:
         else:
             original_size = len(json.dumps(value).encode())
 
-        # Compress
+            # Compress
         compressed_data, was_compressed = self.compressor.compress(value)
         compressed_size = len(compressed_data)
 
@@ -264,8 +264,9 @@ class CompressedCacheWrapper:
             "compression_count": self.stats["compression_count"],
         }
 
+        # Global compressed cache
 
-# Global compressed cache
+
 _compressed_cache: CompressedCacheWrapper | None = None
 
 

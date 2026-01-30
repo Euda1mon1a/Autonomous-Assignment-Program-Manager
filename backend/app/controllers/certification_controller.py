@@ -28,12 +28,12 @@ from app.services.certification_service import CertificationService
 class CertificationController:
     """Controller for certification endpoints."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.service = CertificationService(db)
 
-    # ========================================================================
-    # Certification Type Endpoints
-    # ========================================================================
+        # ========================================================================
+        # Certification Type Endpoints
+        # ========================================================================
 
     def list_certification_types(
         self,
@@ -101,9 +101,9 @@ class CertificationController:
             )
         return result["certification_type"]
 
-    # ========================================================================
-    # Person Certification Endpoints
-    # ========================================================================
+        # ========================================================================
+        # Person Certification Endpoints
+        # ========================================================================
 
     def list_certifications_for_person(
         self,
@@ -199,9 +199,9 @@ class CertificationController:
                 detail=result["error"],
             )
 
-    # ========================================================================
-    # Expiration & Compliance Endpoints
-    # ========================================================================
+            # ========================================================================
+            # Expiration & Compliance Endpoints
+            # ========================================================================
 
     def get_expiring_certifications(
         self,

@@ -77,7 +77,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
         require_tenant: bool = False,
         fallback_tenant_slug: str | None = None,
         excluded_paths: list[str] | None = None,
-    ):
+    ) -> None:
         """
         Initialize tenant middleware.
 
@@ -119,7 +119,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
         if request.url.path in self.excluded_paths:
             return await call_next(request)
 
-        # Clear any previous tenant context (shouldn't happen, but defensive)
+            # Clear any previous tenant context (shouldn't happen, but defensive)
         clear_current_tenant()
 
         # Identify tenant from request
@@ -175,11 +175,11 @@ class TenantMiddleware(BaseHTTPMiddleware):
         elif self.identification_method == TenantIdentificationMethod.QUERY:
             tenant_slug = self._extract_from_query(request)
 
-        # Fallback to default tenant if configured
+            # Fallback to default tenant if configured
         if not tenant_id and not tenant_slug and self.fallback_tenant_slug:
             tenant_slug = self.fallback_tenant_slug
 
-        # Look up tenant in database
+            # Look up tenant in database
         if tenant_id or tenant_slug:
             return await self._lookup_tenant(tenant_id, tenant_slug)
 
@@ -210,7 +210,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
             except ValueError:
                 logger.warning(f"Invalid tenant ID in header: {tenant_id_str}")
 
-        # Try X-Tenant-Slug header
+                # Try X-Tenant-Slug header
         tenant_slug = request.headers.get("X-Tenant-Slug")
 
         return tenant_id, tenant_slug
@@ -233,7 +233,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
         if not host:
             return None
 
-        # Split host into parts
+            # Split host into parts
         parts = host.split(".")
 
         # If we have at least 3 parts (subdomain.domain.tld), use first as tenant
@@ -314,7 +314,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
             else:
                 return None
 
-            # Execute query
+                # Execute query
             result = await db.execute(query)
             tenant = result.scalar_one_or_none()
 

@@ -21,7 +21,7 @@ from app.schemas.absence import (
 class AbsenceService:
     """Service for absence business logic."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """Initialize absence service.
 
         Args:
@@ -165,9 +165,9 @@ class AbsenceService:
         """
         return self.absence_repo.has_absence_on_date(person_id, on_date)
 
-    # =========================================================================
-    # Bulk Operations
-    # =========================================================================
+        # =========================================================================
+        # Bulk Operations
+        # =========================================================================
 
     def preview_bulk_absences(self, bulk_data: AbsenceBulkCreate) -> AbsenceBulkPreview:
         """Validate bulk absences and return a preview.
@@ -218,7 +218,7 @@ class AbsenceService:
                 if is_batch_duplicate:
                     continue
 
-                # Check for conflicts with existing absences in DB
+                    # Check for conflicts with existing absences in DB
                 existing = self.absence_repo.get_by_person_and_date_range(
                     person_id=absence.person_id,
                     start_date=absence.start_date,
@@ -240,7 +240,7 @@ class AbsenceService:
                     )
                     continue
 
-                # Mark as seen
+                    # Mark as seen
                 seen_absences[person_key].append((absence.start_date, absence.end_date))
                 valid_absences.append(absence)
 
@@ -265,7 +265,7 @@ class AbsenceService:
                     )
                 )
 
-        # Build summary
+                # Build summary
         summary = self._build_bulk_summary(valid_absences)
 
         return AbsenceBulkPreview(
@@ -334,7 +334,7 @@ class AbsenceService:
                 )
                 skipped += 1
 
-        # Commit all changes
+                # Commit all changes
         if created > 0:
             self.absence_repo.commit()
 
@@ -407,11 +407,12 @@ class AbsenceService:
                 return idx
         return None
 
-    # =========================================================================
-    # Away-From-Program Tracking
-    # =========================================================================
+        # =========================================================================
+        # Away-From-Program Tracking
+        # =========================================================================
 
-    # Constants for away-from-program threshold
+        # Constants for away-from-program threshold
+
     AWAY_FROM_PROGRAM_MAX_DAYS = 28  # Days per academic year before training extension
     AWAY_FROM_PROGRAM_WARNING_DAYS = 21  # 75% threshold for warning
 
@@ -431,7 +432,7 @@ class AbsenceService:
         if target_date is None:
             target_date = date.today()
 
-        # Academic year starts July 1
+            # Academic year starts July 1
         if target_date.month >= 7:
             # We're in the second half of calendar year, so academic year started this July
             start = date(target_date.year, 7, 1)
@@ -477,7 +478,7 @@ class AbsenceService:
         if academic_year_start is None:
             academic_year_start, _ = self.get_academic_year_bounds()
 
-        # Get academic year end
+            # Get academic year end
         academic_year_end = date(academic_year_start.year + 1, 6, 30)
 
         # Get all absences for this person that overlap with the academic year
@@ -493,11 +494,11 @@ class AbsenceService:
             if not absence.is_away_from_program:
                 continue
 
-            # Skip if this is the excluded absence (for edit scenarios)
+                # Skip if this is the excluded absence (for edit scenarios)
             if exclude_absence_id and absence.id == exclude_absence_id:
                 continue
 
-            # Calculate days within academic year bounds
+                # Calculate days within academic year bounds
             effective_start = max(absence.start_date, academic_year_start)
             effective_end = min(absence.end_date, academic_year_end)
 

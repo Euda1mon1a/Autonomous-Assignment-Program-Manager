@@ -24,7 +24,7 @@ class EmailThrottler:
     DAILY_LIMIT = 1000
     PER_RECIPIENT_HOURLY_LIMIT = 5
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize throttler."""
         self._hourly_count = 0
         self._daily_count = 0
@@ -48,11 +48,11 @@ class EmailThrottler:
         if self._hourly_count >= self.HOURLY_LIMIT:
             return False, "Hourly limit exceeded"
 
-        # Check daily limit
+            # Check daily limit
         if self._daily_count >= self.DAILY_LIMIT:
             return False, "Daily limit exceeded"
 
-        # Check per-recipient limit
+            # Check per-recipient limit
         if not self._check_recipient_limit(recipient):
             return False, f"Per-recipient limit exceeded for {recipient}"
 
@@ -77,7 +77,7 @@ class EmailThrottler:
             self._hourly_count = 0
             self._hour_start = now
 
-        # Reset daily
+            # Reset daily
         if now - self._day_start >= timedelta(days=1):
             self._daily_count = 0
             self._day_start = now
@@ -87,7 +87,7 @@ class EmailThrottler:
         if recipient not in self._recipient_counts:
             return True
 
-        # Count sends in last hour
+            # Count sends in last hour
         one_hour_ago = datetime.utcnow() - timedelta(hours=1)
         recent_sends = [
             ts for ts in self._recipient_counts[recipient] if ts >= one_hour_ago

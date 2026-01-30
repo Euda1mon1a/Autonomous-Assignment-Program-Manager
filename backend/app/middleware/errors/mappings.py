@@ -34,7 +34,7 @@ class ExceptionMapping:
         error_code: ErrorCode,
         default_title: str,
         include_details: bool = True,
-    ):
+    ) -> None:
         """
         Initialize exception mapping.
 
@@ -49,8 +49,9 @@ class ExceptionMapping:
         self.default_title = default_title
         self.include_details = include_details
 
+        # Exception type to mapping configuration
 
-# Exception type to mapping configuration
+
 EXCEPTION_MAPPINGS: dict[type[Exception], ExceptionMapping] = {
     # Application exceptions (custom hierarchy)
     NotFoundError: ExceptionMapping(
@@ -183,12 +184,12 @@ def get_exception_mapping(exc: Exception) -> ExceptionMapping:
     if exc_type in EXCEPTION_MAPPINGS:
         return EXCEPTION_MAPPINGS[exc_type]
 
-    # Walk the MRO to find closest parent class with mapping
+        # Walk the MRO to find closest parent class with mapping
     for base_class in exc_type.__mro__:
         if base_class in EXCEPTION_MAPPINGS:
             return EXCEPTION_MAPPINGS[base_class]
 
-    # Fallback to generic Exception mapping
+            # Fallback to generic Exception mapping
     return EXCEPTION_MAPPINGS[Exception]
 
 

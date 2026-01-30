@@ -28,7 +28,7 @@ class JobChain:
         >>> chain.execute()
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize an empty job chain."""
         self.jobs: list[dict[str, Any]] = []
 
@@ -126,7 +126,8 @@ def scheduled_job(
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
 
-        # Add scheduling metadata
+            # Add scheduling metadata
+
         wrapper._scheduled_job = True
         wrapper._job_name = name or func.__name__
         wrapper._job_description = description or func.__doc__
@@ -159,8 +160,7 @@ def get_job_function(func_path: str) -> Callable:
         logger.error(f"Failed to import job function '{func_path}': {e}")
         raise
 
-
-# Example job functions that can be scheduled
+        # Example job functions that can be scheduled
 
 
 @scheduled_job(name="heartbeat", description="Scheduler heartbeat check")

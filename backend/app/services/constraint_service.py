@@ -149,7 +149,7 @@ class ConstraintService:
         self,
         db: Session,
         constraint_manager: ConstraintManager | None = None,
-    ):
+    ) -> None:
         """
         Initialize ConstraintService.
 
@@ -194,7 +194,7 @@ class ConstraintService:
         if not isinstance(schedule_id, str):
             raise ScheduleIdValidationError("schedule_id must be a string")
 
-        # Strip whitespace
+            # Strip whitespace
         schedule_id = schedule_id.strip()
 
         if len(schedule_id) == 0:
@@ -207,7 +207,7 @@ class ConstraintService:
                 f"schedule_id too long: {len(schedule_id)} chars (max 64)"
             )
 
-        # Check for dangerous patterns
+            # Check for dangerous patterns
         for pattern in cls.DANGEROUS_PATTERNS:
             if pattern in schedule_id:
                 logger.warning(
@@ -218,7 +218,7 @@ class ConstraintService:
                     "schedule_id contains invalid characters"
                 )
 
-        # Validate format: must be either UUID or alphanumeric
+                # Validate format: must be either UUID or alphanumeric
         if not cls.UUID_PATTERN.match(schedule_id) and not cls.ALPHANUM_PATTERN.match(
             schedule_id
         ):
@@ -244,8 +244,8 @@ class ConstraintService:
         if person_id is None:
             return None
 
-        # Use first 8 chars of UUID as anonymous reference
-        # This allows correlation without exposing PII
+            # Use first 8 chars of UUID as anonymous reference
+            # This allows correlation without exposing PII
         return f"entity-{str(person_id)[:8]}"
 
     def _severity_from_constraint(
@@ -376,7 +376,7 @@ class ConstraintService:
         if block_id is None:
             return None
 
-        # Query block for date information only
+            # Query block for date information only
         block = self.db.query(Block).filter(Block.id == block_id).first()
         if block:
             return f"{block.date.isoformat()}-{block.session.value}"
@@ -506,14 +506,14 @@ class ConstraintService:
                 .all()
             )
 
-        # FIX: Raise ScheduleNotFoundError when no assignments are found
-        # This prevents returning a false "valid" result for non-existent schedules
+            # FIX: Raise ScheduleNotFoundError when no assignments are found
+            # This prevents returning a false "valid" result for non-existent schedules
         if not assignments:
             raise ScheduleNotFoundError(
                 f"Schedule '{validated_id}' not found or has no assignments"
             )
 
-        # Step 4: Build scheduling context
+            # Step 4: Build scheduling context
         context = self._build_scheduling_context(assignments)
 
         # Step 5: Run validation

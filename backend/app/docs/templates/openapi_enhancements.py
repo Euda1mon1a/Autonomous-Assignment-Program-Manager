@@ -13,7 +13,7 @@ from fastapi.openapi.utils import get_openapi
 class OpenAPIEnhancer:
     """Enhances OpenAPI schemas with additional documentation and examples."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the OpenAPI enhancer."""
         self.custom_examples: dict[str, dict[str, Any]] = {}
         self.error_codes: dict[str, dict[str, str]] = {}
@@ -122,7 +122,7 @@ class OpenAPIEnhancer:
                 self.security_schemes
             )
 
-        # Add JWT bearer auth by default
+            # Add JWT bearer auth by default
         if "components" not in openapi_schema:
             openapi_schema["components"] = {}
         if "securitySchemes" not in openapi_schema["components"]:
@@ -157,7 +157,7 @@ class OpenAPIEnhancer:
                                             "request"
                                         ]
 
-                        # Add response examples
+                                        # Add response examples
                         if "response" in self.custom_examples[key]:
                             if "responses" in operation:
                                 for status_code in operation["responses"]:
@@ -171,13 +171,13 @@ class OpenAPIEnhancer:
                                                 "example"
                                             ] = self.custom_examples[key]["response"]
 
-        # Add error codes documentation
+                                            # Add error codes documentation
         if self.error_codes:
             if "components" not in openapi_schema:
                 openapi_schema["components"] = {}
             openapi_schema["components"]["x-error-codes"] = self.error_codes
 
-        # Add API versioning information
+            # Add API versioning information
         openapi_schema["x-api-version"] = {
             "current": "v1",
             "supported": ["v1"],

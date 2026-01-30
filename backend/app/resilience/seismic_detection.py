@@ -63,7 +63,7 @@ class SeismicAlert:
     resident_id: UUID | None = None
     context: dict = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize context if not provided."""
         if self.context is None:
             self.context = {}
@@ -92,7 +92,7 @@ class BurnoutEarlyWarning:
         )
     """
 
-    def __init__(self, short_window: int = 5, long_window: int = 30):
+    def __init__(self, short_window: int = 5, long_window: int = 30) -> None:
         """
         Initialize the burnout early warning detector.
 
@@ -138,7 +138,7 @@ class BurnoutEarlyWarning:
             )
             return np.zeros_like(data)
 
-        # Ensure float dtype for division
+            # Ensure float dtype for division
         data = np.asarray(data, dtype=float)
 
         # Initialize output
@@ -259,7 +259,7 @@ class BurnoutEarlyWarning:
                     is_triggered = False
                     triggers.append((trigger_start, i))
 
-        # Handle case where trigger is still active at end
+                    # Handle case where trigger is still active at end
         if is_triggered:
             triggers.append((trigger_start, len(sta_lta) - 1))
 
@@ -299,7 +299,7 @@ class BurnoutEarlyWarning:
             )
             return []
 
-        # Convert to numpy array
+            # Convert to numpy array
         data = np.array(time_series, dtype=float)
 
         # Compute STA/LTA using recursive method (more efficient)
@@ -314,7 +314,7 @@ class BurnoutEarlyWarning:
             )
             return []
 
-        # Generate alerts for each trigger
+            # Generate alerts for each trigger
         alerts = []
         for start_idx, end_idx in triggers:
             # Maximum STA/LTA ratio during this trigger
@@ -330,7 +330,7 @@ class BurnoutEarlyWarning:
             else:
                 severity = "low"
 
-            # Estimate signal growth rate (for time-to-event prediction)
+                # Estimate signal growth rate (for time-to-event prediction)
             if end_idx > start_idx:
                 growth_rate = (sta_lta[end_idx] - sta_lta[start_idx]) / (
                     end_idx - start_idx
@@ -338,7 +338,7 @@ class BurnoutEarlyWarning:
             else:
                 growth_rate = 0.0
 
-            # Predict burnout magnitude
+                # Predict burnout magnitude
             magnitude = self._estimate_magnitude(max_ratio, signal_type)
 
             # Estimate time to burnout event
@@ -397,14 +397,14 @@ class BurnoutEarlyWarning:
         if not precursor_signals:
             return 0.0
 
-        # Analyze each signal
+            # Analyze each signal
         signal_magnitudes = []
 
         for signal_type, time_series in precursor_signals.items():
             if len(time_series) < self.long_window:
                 continue
 
-            # Compute STA/LTA
+                # Compute STA/LTA
             data = np.array(time_series, dtype=float)
             sta_lta = self.recursive_sta_lta(data, self.short_window, self.long_window)
 
@@ -418,8 +418,8 @@ class BurnoutEarlyWarning:
         if not signal_magnitudes:
             return 0.0
 
-        # Combine using weighted average and maximum
-        # (Multiple signals increase confidence)
+            # Combine using weighted average and maximum
+            # (Multiple signals increase confidence)
         avg_magnitude = np.mean(signal_magnitudes)
         max_magnitude = np.max(signal_magnitudes)
 
@@ -431,7 +431,7 @@ class BurnoutEarlyWarning:
         if len(signal_magnitudes) >= 3:
             combined_magnitude *= 1.2  # 20% increase for multi-signal confirmation
 
-        # Clamp to 1-10 range
+            # Clamp to 1-10 range
         combined_magnitude = np.clip(combined_magnitude, 1.0, 10.0)
 
         logger.info(
@@ -473,7 +473,7 @@ class BurnoutEarlyWarning:
             # Already at critical threshold
             return timedelta(days=1)
 
-        # Linear extrapolation (conservative)
+            # Linear extrapolation (conservative)
         days_to_critical = (critical_threshold - sta_lta_ratio) / signal_growth_rate
 
         # Clamp to reasonable range (1-365 days)

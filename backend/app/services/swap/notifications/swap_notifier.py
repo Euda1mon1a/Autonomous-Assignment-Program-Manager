@@ -41,7 +41,7 @@ class SwapNotifier:
     - SMS (for urgent)
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize swap notifier.
 
@@ -79,7 +79,7 @@ class SwapNotifier:
                 message="Faculty not found",
             )
 
-        # Send email to target faculty
+            # Send email to target faculty
         email_sent = await self._send_email(
             recipient=target_faculty.email
             if hasattr(target_faculty, "email")
@@ -99,7 +99,7 @@ class SwapNotifier:
         else:
             failed_channels.append("email")
 
-        # Send in-app notification
+            # Send in-app notification
         in_app_sent = await self._send_in_app_notification(
             user_id=swap.target_faculty_id,
             title="New Swap Request",
@@ -147,7 +147,7 @@ class SwapNotifier:
                 message="Faculty not found",
             )
 
-        # Send email to both parties
+            # Send email to both parties
         for faculty in [source_faculty, target_faculty]:
             email_sent = await self._send_email(
                 recipient=faculty.email if hasattr(faculty, "email") else None,
@@ -196,7 +196,7 @@ class SwapNotifier:
                 message="Faculty not found",
             )
 
-        # Send urgent notifications
+            # Send urgent notifications
         for faculty in [source_faculty, target_faculty]:
             email_sent = await self._send_email(
                 recipient=faculty.email if hasattr(faculty, "email") else None,
@@ -247,7 +247,7 @@ class SwapNotifier:
                 message="Faculty not found",
             )
 
-        # Get matching swap
+            # Get matching swap
         match_result = await self.db.execute(
             select(SwapRecord).where(SwapRecord.id == match_id)
         )
@@ -271,7 +271,7 @@ class SwapNotifier:
                 message="Match faculty not found",
             )
 
-        # Send notification
+            # Send notification
         email_sent = await self._send_email(
             recipient=source_faculty.email
             if hasattr(source_faculty, "email")
@@ -295,7 +295,7 @@ class SwapNotifier:
             message="Match notification sent",
         )
 
-    # ===== Private Helper Methods =====
+        # ===== Private Helper Methods =====
 
     async def _get_faculty(self, faculty_id: UUID) -> Person | None:
         """Get faculty member by ID."""
@@ -323,7 +323,7 @@ class SwapNotifier:
             logger.warning("No recipient email provided")
             return False
 
-        # In real implementation, would use email service
+            # In real implementation, would use email service
         logger.info(f"Sending email to {recipient}: {subject}")
 
         return True

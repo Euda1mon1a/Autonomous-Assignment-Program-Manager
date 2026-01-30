@@ -45,7 +45,7 @@ class CompressionStats:
     - Bytes saved
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize compression statistics."""
         self.total_requests = 0
         self.compressed_requests = 0
@@ -59,7 +59,7 @@ class CompressionStats:
         original_size: int,
         compressed_size: int,
         compression_time: float,
-    ):
+    ) -> None:
         """
         Record successful compression.
 
@@ -74,11 +74,11 @@ class CompressionStats:
         self.total_compressed_bytes += compressed_size
         self.total_compression_time += compression_time
 
-    def record_skip(self):
+    def record_skip(self) -> None:
         """Record request that was not compressed."""
         self.total_requests += 1
 
-    def record_error(self):
+    def record_error(self) -> None:
         """Record compression error."""
         self.total_requests += 1
         self.compression_errors += 1
@@ -133,7 +133,7 @@ class CompressionStats:
             "compression_errors": self.compression_errors,
         }
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset all statistics."""
         self.__init__()
 
@@ -161,7 +161,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
         self,
         app: ASGIApp,
         config: CompressionConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize compression middleware.
 
@@ -198,13 +198,13 @@ class CompressionMiddleware(BaseHTTPMiddleware):
         if not self.config.enabled:
             return await call_next(request)
 
-        # Check if path is excluded
+            # Check if path is excluded
         if should_exclude_path(request.url.path, self.config):
             if self.stats:
                 self.stats.record_skip()
             return await call_next(request)
 
-        # Get client's accepted encodings
+            # Get client's accepted encodings
         accept_encoding = request.headers.get("Accept-Encoding", "")
 
         # Get encoder for this request
@@ -216,7 +216,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
                 self.stats.record_skip()
             return await call_next(request)
 
-        # Process request
+            # Process request
         response = await call_next(request)
 
         # Check if response should be compressed
@@ -225,7 +225,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
                 self.stats.record_skip()
             return response
 
-        # Compress response
+            # Compress response
         try:
             compressed_response = await self._compress_response(response, encoder)
             if self.stats:
@@ -256,11 +256,11 @@ class CompressionMiddleware(BaseHTTPMiddleware):
         if "content-encoding" in response.headers:
             return False
 
-        # Check if response has body
+            # Check if response has body
         if not hasattr(response, "body") or not response.body:
             return False
 
-        # Check minimum size
+            # Check minimum size
         if len(response.body) < self.config.min_size:
             logger.debug(
                 f"Response too small for compression: "
@@ -268,7 +268,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
             )
             return False
 
-        # Check content type
+            # Check content type
         content_type = response.headers.get("content-type", "")
         if not is_compressible_content_type(content_type, self.config):
             logger.debug(f"Content type not compressible: {content_type}")
@@ -318,7 +318,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
         else:
             response.headers["Vary"] = "Accept-Encoding"
 
-        # Log compression results
+            # Log compression results
         ratio = original_size / compressed_size if compressed_size > 0 else 0
         logger.debug(
             f"Compressed response: "
@@ -344,7 +344,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
             return None
         return self.stats.get_stats()
 
-    def reset_stats(self):
+    def reset_stats(self) -> None:
         """Reset compression statistics."""
         if self.stats:
             self.stats.reset()

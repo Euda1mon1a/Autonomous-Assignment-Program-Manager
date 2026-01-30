@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 class CallOverrideService:
     """Create and manage call overrides for released schedules."""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def list_overrides(

@@ -196,12 +196,12 @@ class CompoundStressScenario:
     FMIT must continue.
     """
 
-    def __init__(self, config: CompoundStressConfig):
+    def __init__(self, config: CompoundStressConfig) -> None:
         self.config = config
         self._rng = random.Random(config.seed)
         self._reset()
 
-    def _reset(self):
+    def _reset(self) -> None:
         """Reset simulation state."""
         self._day = 0
         self._states: list[DailyState] = []
@@ -259,7 +259,7 @@ class CompoundStressScenario:
         if physicians <= 0:
             return 0.0
 
-        # Total available screeners (dedicated + activated fallback)
+            # Total available screeners (dedicated + activated fallback)
         total_screeners = self._screener_dedicated
 
         # Activate RN fallback if below minimum
@@ -297,7 +297,7 @@ class CompoundStressScenario:
         if physicians <= 0:
             return float("inf")
 
-        # Base clinic workload
+            # Base clinic workload
         clinic_workload = self.config.clinic_sessions_per_week / 5  # Daily
 
         # Normalize to expected staffing
@@ -349,10 +349,10 @@ class CompoundStressScenario:
         if self._day % 7 != 0:
             return True, False  # Not a week boundary
 
-        # FMIT requires:
-        # 1. One faculty for the weekend block (Fri AM - Sun noon)
-        # 2. Faculty available for overnight calls rest of week
-        # 3. The FMIT attending is BLOCKED from clinic that week
+            # FMIT requires:
+            # 1. One faculty for the weekend block (Fri AM - Sun noon)
+            # 2. Faculty available for overnight calls rest of week
+            # 3. The FMIT attending is BLOCKED from clinic that week
 
         available_for_fmit = self._faculty - self._faculty_onboarding
 
@@ -390,14 +390,14 @@ class CompoundStressScenario:
             else:
                 return False, False  # FMIT FAILED
 
-    def _process_burnout_contagion(self, workload: float):
+    def _process_burnout_contagion(self, workload: float) -> None:
         """Process burnout spreading through team."""
         if workload <= self.config.burnout_threshold:
             # Recovery when workload is sustainable
             self._team_burnout = max(0, self._team_burnout - 0.5)
             return
 
-        # Burnout accumulates
+            # Burnout accumulates
         burnout_increase = (workload - self.config.burnout_threshold) * 2.0
 
         # Contagion effect - burnout spreads
@@ -424,14 +424,14 @@ class CompoundStressScenario:
                 ratio = workload / self.config.burnout_threshold
                 departure_prob *= self.config.workload_burnout_multiplier * ratio
 
-            # Call frequency multiplier
+                # Call frequency multiplier
             if call_interval < self.config.sustainable_call_interval_days:
                 call_stress = self.config.sustainable_call_interval_days / max(
                     1, call_interval
                 )
                 departure_prob *= self.config.call_burnout_multiplier * call_stress
 
-            # Team burnout contagion
+                # Team burnout contagion
             departure_prob += self._team_burnout * 0.001
 
             for _ in range(self._faculty):
@@ -441,7 +441,7 @@ class CompoundStressScenario:
 
             self._faculty -= departures["faculty"]
 
-        # Screener departures (higher base turnover)
+            # Screener departures (higher base turnover)
         screener_base_rate = self.config.screener_turnover_rate / 365
 
         for _ in range(self._screener_dedicated):
@@ -484,12 +484,12 @@ class CompoundStressScenario:
         ):
             self._faculty_onboarding = max(0, self._faculty_onboarding - 1)
 
-        # Try to hire replacements
+            # Try to hire replacements
         self._attempt_hiring()
 
         return arrivals
 
-    def _attempt_hiring(self):
+    def _attempt_hiring(self) -> None:
         """Attempt to hire replacements."""
         # Faculty hiring
         faculty_deficit = (
@@ -500,7 +500,7 @@ class CompoundStressScenario:
                 arrival_day = self._day + self.config.faculty_arrival_lag_days
                 self._faculty_arriving.append((arrival_day, True))  # With onboarding
 
-        # Screener hiring (faster)
+                # Screener hiring (faster)
         screener_deficit = 4 - self._screener_dedicated - len(self._screener_arriving)
         if screener_deficit > 0 and len(self._screener_arriving) < 2:
             if self._rng.random() < 0.05:  # 5% daily
@@ -541,7 +541,7 @@ class CompoundStressScenario:
         elif state.fmit_turfed_to_ob:
             score -= 10.0  # Penalty but surviving
 
-        # Defense level penalties
+            # Defense level penalties
         level_penalties = {
             DefenseLevel.GREEN: 0,
             DefenseLevel.YELLOW: 5,
@@ -557,7 +557,7 @@ class CompoundStressScenario:
         elif state.workload_per_physician > self.config.burnout_threshold:
             score -= 10
 
-        # Screener ratio penalty
+            # Screener ratio penalty
         if state.screener_ratio < self.config.minimum_screener_ratio:
             score -= 10
 
@@ -583,7 +583,7 @@ class CompoundStressScenario:
             else:
                 self._fmit_failed += 1
 
-        # Process burnout contagion
+                # Process burnout contagion
         self._process_burnout_contagion(workload)
 
         # Process departures and arrivals
@@ -654,7 +654,7 @@ class CompoundStressScenario:
                 "Workload reduction critical to retain remaining staff."
             )
 
-        # Screener recommendations
+            # Screener recommendations
         if self._screener_dedicated < 2:
             recs.append(
                 "🟠 Screener shortage. Activate RN/EMT fallback. "
@@ -680,7 +680,7 @@ class CompoundStressScenario:
             if self._faculty < self.config.minimum_faculty_for_fmit - 2:
                 break  # Below minimum viable
 
-        # Calculate summary metrics
+                # Calculate summary metrics
         states = self._states
 
         days_in_crisis = sum(
@@ -747,7 +747,7 @@ def run_compound_monte_carlo(config: CompoundStressConfig, n_runs: int = 100) ->
         scenario = CompoundStressScenario(cfg)
         results.append(scenario.run())
 
-    # Aggregate
+        # Aggregate
     survived_count = sum(1 for r in results if r.survived)
     fmit_survived_count = sum(1 for r in results if r.fmit_survived)
 

@@ -144,7 +144,7 @@ class BlastRadiusService:
         self,
         db: Session,
         config: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         self.db = db
         self.config = config or {}
 
@@ -206,7 +206,7 @@ class BlastRadiusService:
                     }
                 )
 
-            # Determine severity
+                # Determine severity
             severity = self._determine_severity(report)
 
             # Auto-escalate containment if configured
@@ -453,7 +453,7 @@ class BlastRadiusService:
                     error_code="ZONE_NOT_FOUND",
                 )
 
-            # Check if containment was activated
+                # Check if containment was activated
             zone = self._manager.zones.get(zone_id)
             containment_activated = (
                 zone and zone.containment_level != ContainmentLevel.NONE

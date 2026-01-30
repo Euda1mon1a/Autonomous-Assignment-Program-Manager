@@ -64,7 +64,7 @@ class NotificationEventLogger:
     - Compliance reporting
     """
 
-    def __init__(self, max_events: int = 10000):
+    def __init__(self, max_events: int = 10000) -> None:
         """
         Initialize event logger.
 
@@ -148,7 +148,7 @@ class NotificationEventLogger:
         if event_type:
             events = [e for e in events if e.event_type == event_type]
 
-        # Return most recent first
+            # Return most recent first
         events = sorted(events, key=lambda e: e.timestamp, reverse=True)
 
         return events[:limit]

@@ -91,7 +91,7 @@ class ConstraintConfig:
         if not self.enabled:
             return False
 
-        # Check dependencies
+            # Check dependencies
         for dep in self.dependencies:
             if not context.get(f"{dep}_enabled", False):
                 logger.debug(
@@ -110,7 +110,7 @@ class ConstraintConfigManager:
     including enable/disable state, priorities, and weights.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize constraint configuration manager."""
         self._configs: dict[str, ConstraintConfig] = {}
         self._initialize_default_configs()
@@ -558,8 +558,9 @@ class ConstraintConfigManager:
 
         return "\n".join(lines)
 
+        # Global singleton instance
 
-# Global singleton instance
+
 _constraint_config_manager = None
 
 

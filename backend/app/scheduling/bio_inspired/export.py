@@ -264,7 +264,7 @@ class ParetoExporter:
     solution is strictly better than another in all objectives.
     """
 
-    def __init__(self, algorithm_name: str = "bio_inspired"):
+    def __init__(self, algorithm_name: str = "bio_inspired") -> None:
         """
         Initialize Pareto exporter.
 
@@ -321,7 +321,7 @@ class ParetoExporter:
                 }
                 solution["weighted_sum"] = ind.fitness.weighted_sum()
 
-            # Optionally include chromosome
+                # Optionally include chromosome
             if include_chromosomes:
                 solution["chromosome"] = {
                     "shape": list(ind.chromosome.genes.shape),
@@ -331,7 +331,7 @@ class ParetoExporter:
 
             solutions.append(solution)
 
-        # Sort by first objective for easier visualization
+            # Sort by first objective for easier visualization
         solutions.sort(key=lambda s: s.get("objectives", {}).get(objectives[0], 0))
 
         # Compute front statistics
@@ -375,7 +375,7 @@ class ParetoExporter:
                 stats["ideal_point"][obj] = float(max(values))
                 stats["nadir_point"][obj] = float(min(values))
 
-        # Hypervolume (2D approximation)
+                # Hypervolume (2D approximation)
         if len(objectives) >= 2:
             obj1, obj2 = objectives[0], objectives[1]
             points = [
@@ -396,7 +396,7 @@ class ParetoExporter:
         if len(points) < 2:
             return 0.0
 
-        # Sort by first objective (descending)
+            # Sort by first objective (descending)
         sorted_points = sorted(points, key=lambda p: p[0], reverse=True)
 
         hypervolume = 0.0
@@ -435,7 +435,7 @@ class EvolutionExporter:
     visualization and analysis.
     """
 
-    def __init__(self, algorithm_name: str = "bio_inspired"):
+    def __init__(self, algorithm_name: str = "bio_inspired") -> None:
         """Initialize evolution exporter."""
         self.algorithm_name = algorithm_name
 
@@ -481,7 +481,7 @@ class EvolutionExporter:
                 "n_assignments": best_individual.chromosome.count_assignments(),
             }
 
-        # Pareto front evolution (summarized)
+            # Pareto front evolution (summarized)
         pareto_data = None
         if pareto_history:
             pareto_data = [
@@ -633,7 +633,7 @@ class HolographicExporter:
     - Surface data (fitness landscape)
     """
 
-    def __init__(self, algorithm_name: str = "bio_inspired"):
+    def __init__(self, algorithm_name: str = "bio_inspired") -> None:
         """Initialize holographic exporter."""
         self.algorithm_name = algorithm_name
         self.pareto_exporter = ParetoExporter(algorithm_name)
@@ -711,7 +711,7 @@ class HolographicExporter:
                     }
                 )
 
-        # Animation frames from population snapshots
+                # Animation frames from population snapshots
         frames = []
         for gen, pop in enumerate(population_snapshots[:50]):  # Limit frames
             frame_nodes = []
@@ -739,7 +739,7 @@ class HolographicExporter:
                 }
             )
 
-        # Pareto surface (3D mesh)
+            # Pareto surface (3D mesh)
         surface = self._build_pareto_surface(pareto_front)
 
         return {
@@ -778,7 +778,7 @@ class HolographicExporter:
         if len(pareto_front) < 3:
             return {"vertices": [], "faces": []}
 
-        # Extract 3D coordinates
+            # Extract 3D coordinates
         vertices = []
         for ind in pareto_front:
             if ind.fitness:
@@ -790,7 +790,7 @@ class HolographicExporter:
                     ]
                 )
 
-        # Simple triangulation (would use scipy.spatial.Delaunay for real impl)
+                # Simple triangulation (would use scipy.spatial.Delaunay for real impl)
         faces = []
         for i in range(len(vertices) - 2):
             faces.append([i, i + 1, i + 2])

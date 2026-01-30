@@ -113,7 +113,7 @@ def setup_telemetry(app: FastAPI) -> bool:
         return False
 
 
-def shutdown_telemetry():
+def shutdown_telemetry() -> None:
     """
     Shutdown telemetry and flush all pending spans.
 
@@ -133,8 +133,7 @@ def shutdown_telemetry():
     except Exception as e:
         logger.error(f"Error shutting down telemetry: {e}", exc_info=True)
 
-
-# Example usage patterns
+        # Example usage patterns
 
 
 def example_fastapi_integration():
@@ -149,14 +148,15 @@ def example_fastapi_integration():
 
     # Setup telemetry during application startup
     @app.on_event("startup")
-    async def startup():
+    async def startup() -> None:
         setup_telemetry(app)
 
     @app.on_event("shutdown")
-    async def shutdown():
+    async def shutdown() -> None:
         shutdown_telemetry()
 
-    # Now all requests will be automatically traced
+        # Now all requests will be automatically traced
+
     @app.get("/users/{user_id}")
     async def get_user(user_id: int):
         # This request is automatically traced by the middleware
@@ -177,7 +177,8 @@ def example_manual_tracing():
         # Function execution is automatically traced
         return {"processed": True}
 
-    # Service method tracing
+        # Service method tracing
+
     class MyService:
         @trace_service_method()
         async def create_item(self, item_data: dict):
@@ -185,7 +186,7 @@ def example_manual_tracing():
             return {"id": 1}
 
 
-def example_custom_spans():
+def example_custom_spans() -> None:
     """
     Example of creating custom spans.
 
@@ -197,7 +198,7 @@ def example_custom_spans():
 
     tracer = get_tracer(__name__)
 
-    async def complex_operation():
+    async def complex_operation() -> None:
         # Create a parent span
         with tracer.start_as_current_span("complex_operation") as parent_span:
             parent_span.set_attribute("operation.type", "complex")
@@ -208,14 +209,14 @@ def example_custom_spans():
                 # ... fetch data
                 child_span.set_status(Status(StatusCode.OK))
 
-            # Create another child span
+                # Create another child span
             with tracer.start_as_current_span("process_data") as child_span:
                 child_span.set_attribute("records.count", 100)
                 # ... process data
                 child_span.set_status(Status(StatusCode.OK))
 
 
-def example_baggage_propagation():
+def example_baggage_propagation() -> None:
     """
     Example of using baggage for cross-service context propagation.
 
@@ -223,7 +224,7 @@ def example_baggage_propagation():
     """
     from app.telemetry import get_baggage, set_baggage
 
-    async def handle_request(user_id: str, tenant_id: str):
+    async def handle_request(user_id: str, tenant_id: str) -> None:
         # Set baggage that will be propagated to downstream services
         set_baggage("user.id", user_id)
         set_baggage("tenant.id", tenant_id)
@@ -231,7 +232,7 @@ def example_baggage_propagation():
         # Call other services - baggage is automatically propagated
         await call_external_service()
 
-    async def downstream_handler():
+    async def downstream_handler() -> None:
         # Retrieve baggage from upstream service
         user_id = get_baggage("user.id")
         tenant_id = get_baggage("tenant.id")

@@ -110,7 +110,7 @@ class StabilityMetrics:
         if self.new_violations > 0:
             return "F"  # New violations are always bad
 
-        # Calculate weighted score (0-100)
+            # Calculate weighted score (0-100)
         churn_score = max(0, 100 - (self.churn_rate * 100))
         ripple_score = max(0, 100 - (self.ripple_factor * 20))
         vulnerability_score = max(0, 100 - (self.n1_vulnerability_score * 100))
@@ -139,7 +139,7 @@ class StabilityMetricsComputer:
     and assess the stability and cascading effects of changes.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def compute_stability_metrics(
@@ -184,7 +184,7 @@ class StabilityMetricsComputer:
                 computed_at=datetime.utcnow(),
             )
 
-        # Get previous version for comparison
+            # Get previous version for comparison
         previous_assignments = self._get_previous_assignments(
             current_assignments, start_date, end_date
         )
@@ -374,7 +374,7 @@ class StabilityMetricsComputer:
                 changes=[],
             )
 
-        # Build lookup maps by (block_id, person_id) tuple
+            # Build lookup maps by (block_id, person_id) tuple
         old_map = {(a.block_id, a.person_id): a for a in old_assignments}
         new_map = {(a.block_id, a.person_id): a for a in new_assignments}
 
@@ -391,7 +391,7 @@ class StabilityMetricsComputer:
                     ("removed", old_assignment.person_id, old_assignment.block_id)
                 )
 
-        # Find added and modified assignments
+                # Find added and modified assignments
         for key, new_assignment in new_map.items():
             if key not in old_map:
                 added.append(new_assignment)
@@ -461,7 +461,7 @@ class StabilityMetricsComputer:
             # No changes or no NetworkX - return baseline
             return 0.0
 
-        # Build dependency graph
+            # Build dependency graph
         G = self._build_dependency_graph(current_assignments)
 
         # For each change, calculate how many hops it can cascade
@@ -474,7 +474,7 @@ class StabilityMetricsComputer:
             if node not in G:
                 continue
 
-            # Calculate shortest paths from this node to all other nodes
+                # Calculate shortest paths from this node to all other nodes
             try:
                 paths = nx.single_source_shortest_path_length(G, node)
                 # Get distances to all reachable nodes
@@ -523,8 +523,8 @@ class StabilityMetricsComputer:
                 role=assignment.role,
             )
 
-        # Add edges based on dependencies
-        # Group assignments by person and block for dependency analysis
+            # Add edges based on dependencies
+            # Group assignments by person and block for dependency analysis
         assignments_by_person = defaultdict(list)
         assignments_by_block = defaultdict(list)
 
@@ -532,13 +532,13 @@ class StabilityMetricsComputer:
             assignments_by_person[assignment.person_id].append(assignment)
             # Note: Would need block.date from relationship, skipping for now
 
-        # Add person-person dependencies (coverage overlap)
+            # Add person-person dependencies (coverage overlap)
         for person_id, person_assignments in assignments_by_person.items():
             for other_person_id, other_assignments in assignments_by_person.items():
                 if person_id == other_person_id:
                     continue
 
-                # Check if they cover similar rotations (potential swap candidates)
+                    # Check if they cover similar rotations (potential swap candidates)
                 person_rotations = {
                     a.rotation_template_id
                     for a in person_assignments
@@ -579,7 +579,7 @@ class StabilityMetricsComputer:
         if not assignments:
             return 0.0
 
-        # Count assignments and unique rotations per person
+            # Count assignments and unique rotations per person
         person_stats = defaultdict(
             lambda: {
                 "assignment_count": 0,
@@ -602,7 +602,7 @@ class StabilityMetricsComputer:
                 )
                 rotation_coverage[assignment.rotation_template_id].add(person_id)
 
-        # Calculate vulnerability factors
+                # Calculate vulnerability factors
         vulnerability_scores = []
 
         for person_id, stats in person_stats.items():
@@ -613,7 +613,7 @@ class StabilityMetricsComputer:
                     # Only this person covers this rotation
                     unique_rotations += 1
 
-            # Factor 2: What percentage of total assignments are theirs?
+                    # Factor 2: What percentage of total assignments are theirs?
             assignment_concentration = stats["assignment_count"] / len(assignments)
 
             # Factor 3: Unique rotation concentration
@@ -627,8 +627,8 @@ class StabilityMetricsComputer:
             )
             vulnerability_scores.append(person_vulnerability)
 
-        # Overall N-1 vulnerability is the maximum single-person vulnerability
-        # (worst case: losing the most critical person)
+            # Overall N-1 vulnerability is the maximum single-person vulnerability
+            # (worst case: losing the most critical person)
         if vulnerability_scores:
             max_vulnerability = max(vulnerability_scores)
             avg_vulnerability = sum(vulnerability_scores) / len(vulnerability_scores)
@@ -671,7 +671,7 @@ class StabilityMetricsComputer:
             if not blocks_for_new:
                 return 0
 
-            # Query blocks to get date range
+                # Query blocks to get date range
             blocks = self.db.query(Block).filter(Block.id.in_(blocks_for_new)).all()
             if not blocks:
                 return 0
@@ -693,12 +693,12 @@ class StabilityMetricsComputer:
                 logger.info(f"First version: {new_violations} violations found")
                 return new_violations
 
-            # Create a temporary way to validate old assignments
-            # Since old_assignments are version objects, we need to check if they were valid at that time
-            # For simplicity, we'll compare violation counts
-            # A more sophisticated approach would recreate the old state and validate it
+                # Create a temporary way to validate old assignments
+                # Since old_assignments are version objects, we need to check if they were valid at that time
+                # For simplicity, we'll compare violation counts
+                # A more sophisticated approach would recreate the old state and validate it
 
-            # Get unique violation types and affected entities from current violations
+                # Get unique violation types and affected entities from current violations
             new_violation_set = set()
             for violation in new_result.violations:
                 # Create a hashable identifier for this violation
@@ -709,9 +709,9 @@ class StabilityMetricsComputer:
                 )
                 new_violation_set.add(key)
 
-            # Since we can't easily validate historical state (old assignments are version objects),
-            # we'll use a heuristic: if churn rate is low (<15%) but violations exist,
-            # they're likely not new. If churn is high and violations exist, count them as new.
+                # Since we can't easily validate historical state (old assignments are version objects),
+                # we'll use a heuristic: if churn rate is low (<15%) but violations exist,
+                # they're likely not new. If churn is high and violations exist, count them as new.
             churn_data = self._calculate_churn_rate(old_assignments, new_assignments)
             churn_rate = churn_data.churn_rate
 
@@ -783,7 +783,7 @@ class StabilityMetricsComputer:
                 logger.info("Not enough transaction history to determine major changes")
                 return 0
 
-            # Get the version class for detailed analysis
+                # Get the version class for detailed analysis
             AssignmentVersion = version_class(Assignment)
 
             # Analyze each transaction to find major changes
@@ -816,7 +816,7 @@ class StabilityMetricsComputer:
                 if not current_assignments or not previous_assignments:
                     continue
 
-                # Calculate churn rate for this transaction
+                    # Calculate churn rate for this transaction
                 churn_data = self._calculate_churn_rate(
                     previous_assignments, current_assignments
                 )
@@ -841,8 +841,8 @@ class StabilityMetricsComputer:
                     )
                     return max(0, days_since)
 
-            # No major changes found in recent history
-            # Return days since the oldest transaction we checked
+                    # No major changes found in recent history
+                    # Return days since the oldest transaction we checked
             if transactions:
                 oldest_tx = transactions[-1]
                 oldest_date = oldest_tx[1]

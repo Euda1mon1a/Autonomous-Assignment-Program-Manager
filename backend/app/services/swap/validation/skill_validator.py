@@ -50,7 +50,7 @@ class SkillValidator:
         "clinic": ["BLS", "HIPAA"],
     }
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize skill validator.
 
@@ -98,7 +98,7 @@ class SkillValidator:
         if source_check["expiring"]:
             expiring_soon.extend(source_check["expiring"])
 
-        # Check target faculty can do source's duties
+            # Check target faculty can do source's duties
         target_check = await self._check_faculty_credentials(
             swap.source_faculty_id,  # Check source's current duties
             swap.target_faculty_id,  # Against target's credentials
@@ -120,7 +120,7 @@ class SkillValidator:
         if target_check["expiring"]:
             expiring_soon.extend(target_check["expiring"])
 
-        # Generate warnings
+            # Generate warnings
         if expiring_soon:
             warnings.append(f"{len(expiring_soon)} credentials expiring within 30 days")
 
@@ -160,7 +160,7 @@ class SkillValidator:
             creds = self.REQUIRED_CREDENTIALS.get(rotation_type, [])
             required_creds.update(creds)
 
-        # Check if checking_faculty has these credentials
+            # Check if checking_faculty has these credentials
         faculty_creds = await self._get_faculty_credentials(checking_faculty_id)
 
         for cred_name in required_creds:

@@ -204,7 +204,7 @@ class LocalStorage(BackupStorage):
                 backup_<id>.meta.json
     """
 
-    def __init__(self, backup_dir: str = "/tmp/backups"):
+    def __init__(self, backup_dir: str = "/tmp/backups") -> None:
         """
         Initialize local storage.
 
@@ -216,7 +216,7 @@ class LocalStorage(BackupStorage):
 
         logger.info(f"Initialized LocalStorage at {self.backup_dir}")
 
-    def _ensure_directories(self):
+    def _ensure_directories(self) -> None:
         """Create backup directories if they don't exist."""
         for subdir in ["full", "incremental", "differential"]:
             (self.backup_dir / subdir).mkdir(parents=True, exist_ok=True)
@@ -402,7 +402,7 @@ class LocalStorage(BackupStorage):
             if not type_dir.exists():
                 continue
 
-            # Find all metadata files
+                # Find all metadata files
             for meta_file in type_dir.glob("*.meta.json"):
                 try:
                     metadata = json.loads(meta_file.read_text())
@@ -411,7 +411,7 @@ class LocalStorage(BackupStorage):
                     logger.warning(f"Error reading metadata {meta_file}: {e}")
                     continue
 
-        # Sort by created_at descending
+                    # Sort by created_at descending
         backups.sort(key=lambda x: x.get("created_at", ""), reverse=True)
 
         return backups[:limit]
@@ -444,7 +444,7 @@ class LocalStorage(BackupStorage):
                         logger.warning(f"No checksum in metadata for {backup_id}")
                         return False
 
-                    # Calculate actual checksum
+                        # Calculate actual checksum
                     compressed_data = backup_path.read_bytes()
                     actual_checksum = self._calculate_checksum(compressed_data)
 
@@ -504,7 +504,7 @@ class S3Storage(BackupStorage):
         access_key: str | None = None,
         secret_key: str | None = None,
         endpoint_url: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize S3 storage.
 
@@ -710,7 +710,7 @@ class S3Storage(BackupStorage):
                 except Exception:
                     pass
 
-                # Delete metadata
+                    # Delete metadata
                 try:
                     self.s3_client.delete_object(Bucket=self.bucket, Key=metadata_key)
                 except Exception:
@@ -761,7 +761,7 @@ class S3Storage(BackupStorage):
             if "Contents" not in response:
                 continue
 
-            # Get metadata files
+                # Get metadata files
             for obj in response["Contents"]:
                 key = obj["Key"]
 
@@ -782,7 +782,7 @@ class S3Storage(BackupStorage):
                     logger.warning(f"Error reading S3 metadata {key}: {e}")
                     continue
 
-        # Sort by created_at descending
+                    # Sort by created_at descending
         backups.sort(key=lambda x: x.get("created_at", ""), reverse=True)
 
         return backups[:limit]
@@ -820,7 +820,7 @@ class S3Storage(BackupStorage):
                         logger.warning(f"No checksum in metadata for {backup_id}")
                         return False
 
-                    # Get backup data
+                        # Get backup data
                     backup_response = self.s3_client.get_object(
                         Bucket=self.bucket,
                         Key=s3_key,

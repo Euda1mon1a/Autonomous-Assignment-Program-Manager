@@ -67,7 +67,7 @@ async def list_resident_weekly_requirements(
     if rotation_type:
         query = query.where(RotationTemplate.rotation_type == rotation_type)
 
-    # Exclude requirements for archived templates
+        # Exclude requirements for archived templates
     query = query.where(RotationTemplate.is_archived == False)
 
     result = db.execute(query)
@@ -106,7 +106,7 @@ async def create_resident_weekly_requirement(
     if not template:
         raise HTTPException(status_code=404, detail="Rotation template not found")
 
-    # Check if requirement already exists
+        # Check if requirement already exists
     existing = db.execute(
         select(ResidentWeeklyRequirement).where(
             ResidentWeeklyRequirement.rotation_template_id
@@ -119,7 +119,7 @@ async def create_resident_weekly_requirement(
             detail="Weekly requirement already exists for this template. Use PUT to update.",
         )
 
-    # Create requirement
+        # Create requirement
     requirement = ResidentWeeklyRequirement(**requirement_in.model_dump())
     db.add(requirement)
     db.commit()
@@ -132,10 +132,9 @@ async def create_resident_weekly_requirement(
 
     return ResidentWeeklyRequirementResponse.from_orm_with_computed(requirement)
 
-
-# =============================================================================
-# By Template endpoints
-# =============================================================================
+    # =============================================================================
+    # By Template endpoints
+    # =============================================================================
 
 
 @router.get(
@@ -178,7 +177,7 @@ async def get_requirement_by_template(
             detail="No weekly requirement configured for this template",
         )
 
-    # Build response with template info
+        # Build response with template info
     base = ResidentWeeklyRequirementResponse.from_orm_with_computed(requirement)
     return ResidentWeeklyRequirementWithTemplate(
         **base.model_dump(),
@@ -219,7 +218,7 @@ async def upsert_requirement_by_template(
     if not template:
         raise HTTPException(status_code=404, detail="Rotation template not found")
 
-    # Check for existing requirement
+        # Check for existing requirement
     result = db.execute(
         select(ResidentWeeklyRequirement).where(
             ResidentWeeklyRequirement.rotation_template_id == template_id
@@ -262,7 +261,7 @@ async def delete_requirement_by_template(
     template_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete weekly requirement for a rotation template.
 
     Args:
@@ -299,10 +298,9 @@ async def delete_requirement_by_template(
         extra={"template_id": str(template.id), "user_id": str(current_user.id)},
     )
 
-
-# =============================================================================
-# Single Requirement endpoints (by ID)
-# =============================================================================
+    # =============================================================================
+    # Single Requirement endpoints (by ID)
+    # =============================================================================
 
 
 @router.get("/{requirement_id}", response_model=ResidentWeeklyRequirementResponse)
@@ -376,7 +374,7 @@ async def delete_resident_weekly_requirement(
     requirement_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete a resident weekly requirement.
 
     Args:
@@ -399,10 +397,9 @@ async def delete_resident_weekly_requirement(
         extra={"requirement_id": str(requirement_id), "user_id": str(current_user.id)},
     )
 
-
-# =============================================================================
-# Bulk Operations
-# =============================================================================
+    # =============================================================================
+    # Bulk Operations
+    # =============================================================================
 
 
 @router.post("/bulk/outpatient-defaults", response_model=dict)

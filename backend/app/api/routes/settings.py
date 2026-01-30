@@ -108,7 +108,7 @@ async def patch_settings(
 async def reset_settings(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
-):
+) -> None:
     """Reset settings to defaults."""
     settings = await get_or_create_settings(db)
 

@@ -73,7 +73,7 @@ class N1Analyzer:
     4. Backup availability
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize N-1 analyzer."""
         self.scenarios: list[N1FailureScenario] = []
 
@@ -119,7 +119,7 @@ class N1Analyzer:
                 num_affected,
             )
 
-        # Calculate criticality
+            # Calculate criticality
         if num_affected == 0:
             criticality = 0.0
         elif has_backup:
@@ -146,7 +146,7 @@ class N1Analyzer:
                 num_affected * RECOVERY_TIME_PER_SLOT_NO_BACKUP
             )  # Need to find coverage
 
-        # Cascade potential - higher if no backups
+            # Cascade potential - higher if no backups
         cascade_potential = (
             CASCADE_POTENTIAL_WITH_BACKUP
             if has_backup
@@ -161,7 +161,7 @@ class N1Analyzer:
         else:
             mitigation = "Activate emergency staffing protocol"
 
-        # Use first slot date as failure date
+            # Use first slot date as failure date
         failure_date = assigned_slots[0][0] if assigned_slots else date.today()
 
         scenario = N1FailureScenario(
@@ -338,7 +338,7 @@ class N1Analyzer:
         if num_assignments == 0:
             return 1.0  # Perfect redundancy (not needed)
 
-        # Estimate required backups (1 per 10 shifts)
+            # Estimate required backups (1 per 10 shifts)
         required_backups = max(1, num_assignments // 10)
 
         redundancy = available_backups / required_backups

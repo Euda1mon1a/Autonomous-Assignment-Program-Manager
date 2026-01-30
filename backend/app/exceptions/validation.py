@@ -19,7 +19,7 @@ class InputValidationError(BaseValidationError):
         field: str | None = None,
         value: Any = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize input validation error.
 
         Args:
@@ -45,7 +45,7 @@ class DateValidationError(InputValidationError):
         min_date: date | datetime | None = None,
         max_date: date | datetime | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize date validation error.
 
         Args:
@@ -77,7 +77,7 @@ class DateRangeError(DateValidationError):
         min_date: date | datetime | None = None,
         max_date: date | datetime | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize date range error.
 
         Args:
@@ -107,7 +107,7 @@ class FutureDateError(DateValidationError):
         field: str | None = None,
         value: date | datetime | str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize future date error.
 
         Args:
@@ -134,7 +134,7 @@ class PastDateError(DateValidationError):
         field: str | None = None,
         value: date | datetime | str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize past date error.
 
         Args:
@@ -161,7 +161,7 @@ class SchemaValidationError(InputValidationError):
         schema: str | None = None,
         errors: list[dict[str, Any]] | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize schema validation error.
 
         Args:
@@ -183,7 +183,7 @@ class RequiredFieldError(InputValidationError):
         message: str | None = None,
         field: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize required field error.
 
         Args:
@@ -212,7 +212,7 @@ class InvalidFormatError(InputValidationError):
         field: str | None = None,
         expected_format: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize invalid format error.
 
         Args:
@@ -238,7 +238,7 @@ class BusinessRuleViolationError(BaseValidationError):
         rule_name: str | None = None,
         rule_description: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize business rule violation error.
 
         Args:
@@ -263,7 +263,7 @@ class InvalidStateTransitionError(BusinessRuleViolationError):
         requested_state: str | None = None,
         allowed_states: list[str] | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize invalid state transition error.
 
         Args:
@@ -290,7 +290,7 @@ class ValueRangeError(InputValidationError):
         min_value: Any = None,
         max_value: Any = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize value range error.
 
         Args:

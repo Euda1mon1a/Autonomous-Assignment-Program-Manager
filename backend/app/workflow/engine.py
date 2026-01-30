@@ -164,7 +164,7 @@ class WorkflowEngine:
     - Graceful cancellation
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize workflow engine.
 
@@ -174,9 +174,9 @@ class WorkflowEngine:
         self.db = db
         self._handler_cache: dict[str, Callable] = {}
 
-    # ========================================================================
-    # Template Management
-    # ========================================================================
+        # ========================================================================
+        # Template Management
+        # ========================================================================
 
     def create_template(
         self,
@@ -294,7 +294,7 @@ class WorkflowEngine:
         if not template:
             raise ValueError(f"Template {template_id} not found")
 
-        # If definition changed, create new version
+            # If definition changed, create new version
         if definition and definition != template.definition:
             return self.create_template(
                 name=template.name,
@@ -303,7 +303,7 @@ class WorkflowEngine:
                 tags=tags or template.tags,
             )
 
-        # Otherwise update in place
+            # Otherwise update in place
         if description is not None:
             template.description = description
         if tags is not None:
@@ -316,9 +316,9 @@ class WorkflowEngine:
 
         return template
 
-    # ========================================================================
-    # Workflow Instance Management
-    # ========================================================================
+        # ========================================================================
+        # Workflow Instance Management
+        # ========================================================================
 
     def create_instance(
         self,
@@ -359,7 +359,7 @@ class WorkflowEngine:
                 f"Template {template.name} v{template.version} is inactive"
             )
 
-        # Calculate timeout
+            # Calculate timeout
         default_timeout = template.definition.get("default_timeout_seconds", 3600)
         timeout = timeout_seconds or default_timeout
         timeout_at = datetime.utcnow() + timedelta(seconds=timeout)
@@ -452,9 +452,9 @@ class WorkflowEngine:
         logger.info(f"Cancelled workflow instance {instance_id}: {reason}")
         return instance
 
-    # ========================================================================
-    # Workflow Execution
-    # ========================================================================
+        # ========================================================================
+        # Workflow Execution
+        # ========================================================================
 
     async def execute_workflow(
         self,
@@ -484,7 +484,7 @@ class WorkflowEngine:
                 f"Workflow instance {instance_id} is already in terminal state {instance.status}"
             )
 
-        # Start workflow
+            # Start workflow
         instance.status = WorkflowStatus.RUNNING.value
         instance.started_at = datetime.utcnow()
         self.db.commit()
@@ -528,7 +528,7 @@ class WorkflowEngine:
                     logger.info(f"Workflow {instance_id} was cancelled")
                     return instance
 
-                # Check for timeout
+                    # Check for timeout
                 if instance.timeout_at and datetime.utcnow() > instance.timeout_at:
                     instance.status = WorkflowStatus.TIMED_OUT.value
                     instance.completed_at = datetime.utcnow()
@@ -536,10 +536,10 @@ class WorkflowEngine:
                     self.db.commit()
                     raise WorkflowTimeoutError("Workflow execution timed out")
 
-                # Execute step group (parallel or sequential)
+                    # Execute step group (parallel or sequential)
                 await self._execute_step_group(instance, step_group)
 
-            # Workflow completed successfully
+                # Workflow completed successfully
             instance.status = WorkflowStatus.COMPLETED.value
             instance.completed_at = datetime.utcnow()
             self.db.commit()
@@ -618,7 +618,7 @@ class WorkflowEngine:
         for step_def in step_group:
             tasks.append(self._execute_step(instance, step_def))
 
-        # Execute all steps in group concurrently
+            # Execute all steps in group concurrently
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Check for failures
@@ -657,7 +657,7 @@ class WorkflowEngine:
             if not should_execute:
                 return self._skip_step(instance, step_def)
 
-        # Try to execute step with retries
+                # Try to execute step with retries
         for attempt in range(1, max_attempts + 1):
             try:
                 step_exec = await self._execute_step_attempt(
@@ -676,7 +676,7 @@ class WorkflowEngine:
                     self.db.commit()
                     return step_exec
 
-                # Step failed, check if we should retry
+                    # Step failed, check if we should retry
                 if attempt < max_attempts:
                     # Calculate backoff delay
                     backoff_multiplier = retry_policy.get("backoff_multiplier", 2.0)
@@ -791,7 +791,7 @@ class WorkflowEngine:
             else:
                 output_data = await handler(input_data)
 
-            # Step completed successfully
+                # Step completed successfully
             step_exec.status = StepStatus.COMPLETED.value
             step_exec.output_data = output_data
             step_exec.completed_at = datetime.utcnow()
@@ -865,9 +865,9 @@ class WorkflowEngine:
         logger.info(f"Step {step_def['id']} skipped due to condition")
         return step_exec
 
-    # ========================================================================
-    # Helper Methods
-    # ========================================================================
+        # ========================================================================
+        # Helper Methods
+        # ========================================================================
 
     def _evaluate_condition(
         self,
@@ -963,9 +963,9 @@ class WorkflowEngine:
         except Exception as e:
             raise ImportError(f"Failed to load handler '{handler_path}': {str(e)}")
 
-    # ========================================================================
-    # Query Methods
-    # ========================================================================
+            # ========================================================================
+            # Query Methods
+            # ========================================================================
 
     def query_instances(
         self,
@@ -1010,7 +1010,7 @@ class WorkflowEngine:
         if priority_max is not None:
             query = query.filter(WorkflowInstance.priority <= priority_max)
 
-        # Get total count
+            # Get total count
         total = query.count()
 
         # Apply pagination and ordering

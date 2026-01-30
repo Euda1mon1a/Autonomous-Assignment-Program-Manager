@@ -20,7 +20,7 @@ from app.scheduling.constraints.base import (
 class CoverageConstraintTemplate(SoftConstraint):
     """Template for coverage constraints."""
 
-    def __init__(self, weight: float = 1.5):
+    def __init__(self, weight: float = 1.5) -> None:
         super().__init__(
             name="CoverageConstraint",
             constraint_type=ConstraintType.COVERAGE,
@@ -44,7 +44,7 @@ class CoverageConstraintTemplate(SoftConstraint):
             slot_key = (assignment.block_id, assignment.rotation_id)
             coverage[slot_key] = coverage.get(slot_key, 0) + 1
 
-        # Check each required slot
+            # Check each required slot
         uncovered_count = 0
         for slot in self.required_slots or []:
             if coverage.get(slot, 0) < self.min_coverage:
@@ -64,7 +64,7 @@ class CoverageConstraintTemplate(SoftConstraint):
             penalty=penalty,
         )
 
-    def add_to_cpsat(self, model, variables, context):
+    def add_to_cpsat(self, model, variables, context) -> None:
         """
         Add coverage constraint to CP-SAT model.
 
@@ -77,7 +77,7 @@ class CoverageConstraintTemplate(SoftConstraint):
         if not x and not template_vars:
             return
 
-        # For each required slot, ensure minimum coverage
+            # For each required slot, ensure minimum coverage
         uncovered_penalties = []
 
         for slot in self.required_slots or []:
@@ -87,7 +87,7 @@ class CoverageConstraintTemplate(SoftConstraint):
             if b_i is None:
                 continue
 
-            # Collect variables for this slot
+                # Collect variables for this slot
             slot_vars = []
 
             # Check regular assignments
@@ -96,7 +96,7 @@ class CoverageConstraintTemplate(SoftConstraint):
                 if p_i is not None and (p_i, b_i) in x:
                     slot_vars.append(x[p_i, b_i])
 
-            # Check template-specific assignments
+                    # Check template-specific assignments
             if template_vars:
                 for person in context.residents + context.faculty:
                     p_i = context.resident_idx.get(person.id)
@@ -119,14 +119,14 @@ class CoverageConstraintTemplate(SoftConstraint):
                 # Penalty for not being covered
                 uncovered_penalties.append(is_covered.Not())
 
-        # Add penalties to objective
+                # Add penalties to objective
         if uncovered_penalties:
             objective_vars = variables.get("objective_terms", [])
             for penalty_var in uncovered_penalties:
                 objective_vars.append((penalty_var, int(self.weight)))
             variables["objective_terms"] = objective_vars
 
-    def add_to_pulp(self, model, variables, context):
+    def add_to_pulp(self, model, variables, context) -> None:
         """
         Add coverage constraint to PuLP model.
 
@@ -141,7 +141,7 @@ class CoverageConstraintTemplate(SoftConstraint):
         if not x and not template_vars:
             return
 
-        # For each required slot, add coverage penalty
+            # For each required slot, add coverage penalty
         total_penalty = 0
 
         for slot in self.required_slots or []:
@@ -151,7 +151,7 @@ class CoverageConstraintTemplate(SoftConstraint):
             if b_i is None:
                 continue
 
-            # Collect variables for this slot
+                # Collect variables for this slot
             slot_vars = []
 
             # Check regular assignments
@@ -160,7 +160,7 @@ class CoverageConstraintTemplate(SoftConstraint):
                 if p_i is not None and (p_i, b_i) in x:
                     slot_vars.append(x[p_i, b_i])
 
-            # Check template-specific assignments
+                    # Check template-specific assignments
             if template_vars:
                 for person in context.residents + context.faculty:
                     p_i = context.resident_idx.get(person.id)
@@ -192,7 +192,7 @@ class CoverageConstraintTemplate(SoftConstraint):
 
                 total_penalty += is_uncovered
 
-        # Add total penalty to objective
+                # Add total penalty to objective
         if total_penalty:
             obj_terms = variables.get("objective_terms", [])
             obj_terms.append(self.weight * total_penalty)

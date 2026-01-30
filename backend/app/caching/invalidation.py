@@ -73,7 +73,7 @@ class InvalidationEvent:
     metadata: dict[str, Any] = field(default_factory=dict)  # Additional context
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Generate patterns if not provided."""
         if not self.patterns and self.resource:
             # Generate default patterns
@@ -130,7 +130,7 @@ class CacheInvalidator:
         invalidator.register_hook("users", on_user_update)
     """
 
-    def __init__(self, http_cache: HTTPCache | None = None):
+    def __init__(self, http_cache: HTTPCache | None = None) -> None:
         """
         Initialize cache invalidator.
 
@@ -173,7 +173,7 @@ class CacheInvalidator:
             total_invalidated += count
             logger.debug(f"Invalidated {count} entries for pattern: {pattern}")
 
-        # Run hooks
+            # Run hooks
         await self._run_hooks(event)
 
         # Update metrics
@@ -379,7 +379,7 @@ class CacheInvalidator:
                     f"/api/{related_resource}?{event.resource}_id={event.resource_id}"
                 )
 
-            # Invalidate collection (might be affected)
+                # Invalidate collection (might be affected)
             patterns.append(f"/api/{related_resource}")
 
             for pattern in patterns:
@@ -415,8 +415,9 @@ class CacheInvalidator:
             },
         }
 
+        # Global invalidator instance
 
-# Global invalidator instance
+
 _invalidator: CacheInvalidator | None = None
 
 

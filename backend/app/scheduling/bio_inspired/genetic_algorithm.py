@@ -76,7 +76,7 @@ class SelectionOperator:
         method: SelectionMethod = SelectionMethod.TOURNAMENT,
         tournament_size: int = 3,
         pressure: float = 1.5,
-    ):
+    ) -> None:
         """
         Initialize selection operator.
 
@@ -180,7 +180,7 @@ class SelectionOperator:
             ) / n
             probabilities.append(max(0.001, prob))
 
-        # Normalize
+            # Normalize
         total = sum(probabilities)
         probabilities = [p / total for p in probabilities]
 
@@ -210,7 +210,7 @@ class CrossoverOperator:
         self,
         method: CrossoverMethod = CrossoverMethod.UNIFORM,
         crossover_rate: float = 0.8,
-    ):
+    ) -> None:
         """
         Initialize crossover operator.
 
@@ -351,7 +351,7 @@ class MutationOperator:
         adaptive: bool = True,
         min_rate: float = 0.01,
         max_rate: float = 0.5,
-    ):
+    ) -> None:
         """
         Initialize mutation operator.
 
@@ -473,7 +473,7 @@ class MutationOperator:
         if len(self._improvement_history) > 10:
             self._improvement_history.pop(0)
 
-        # Calculate improvement rate over last 10 generations
+            # Calculate improvement rate over last 10 generations
         improvement_rate = sum(self._improvement_history) / len(
             self._improvement_history
         )
@@ -483,7 +483,7 @@ class MutationOperator:
         else:
             self._stagnation_counter += 1
 
-        # Adapt rate
+            # Adapt rate
         if self._stagnation_counter > 10:
             # Strong stagnation: increase rate significantly
             self.current_rate = min(self.max_rate, self.current_rate * 1.5)
@@ -497,7 +497,7 @@ class MutationOperator:
             # Poor progress: increase rate to explore
             self.current_rate = min(self.max_rate, self.current_rate * 1.1)
 
-        # Consider diversity
+            # Consider diversity
         if diversity < 0.1:
             # Very low diversity: increase rate
             self.current_rate = min(self.max_rate, self.current_rate * 1.2)
@@ -543,7 +543,7 @@ class GeneticAlgorithmSolver(BioInspiredSolver):
         timeout_seconds: float = 300.0,
         config: GAConfig | None = None,
         seed: int | None = None,
-    ):
+    ) -> None:
         """
         Initialize Genetic Algorithm solver.
 
@@ -619,7 +619,7 @@ class GeneticAlgorithmSolver(BioInspiredSolver):
                 logger.info(f"GA timeout at generation {generation}")
                 break
 
-            # Evolve one generation
+                # Evolve one generation
             improved = self._evolve_generation(context, generation)
 
             # Adaptive mutation
@@ -635,7 +635,7 @@ class GeneticAlgorithmSolver(BioInspiredSolver):
                 logger.info(f"GA converged at generation {generation}")
                 break
 
-            # Log progress
+                # Log progress
             if generation % 20 == 0:
                 best_fit = (
                     self.best_individual.fitness.weighted_sum()
@@ -718,7 +718,7 @@ class GeneticAlgorithmSolver(BioInspiredSolver):
             if len(new_population) < self.population_size:
                 new_population.append(child2)
 
-        # Apply niching if enabled
+                # Apply niching if enabled
         if self.config.niching:
             new_population = self._apply_niching(new_population)
 
@@ -737,7 +737,7 @@ class GeneticAlgorithmSolver(BioInspiredSolver):
         ):
             self.best_individual = current_best.copy()
 
-        # Track statistics
+            # Track statistics
         stats = self.compute_population_stats(
             self.population,
             generation,
@@ -769,7 +769,7 @@ class GeneticAlgorithmSolver(BioInspiredSolver):
             if ind.fitness is None:
                 continue
 
-            # Count neighbors within niche radius
+                # Count neighbors within niche radius
             niche_count = 0
             for other in population:
                 if ind is other or other.fitness is None:
@@ -778,7 +778,7 @@ class GeneticAlgorithmSolver(BioInspiredSolver):
                 if similarity > (1 - self.config.niche_radius):
                     niche_count += 1
 
-            # Share fitness with niche members
+                    # Share fitness with niche members
             if niche_count > 0:
                 share_factor = 1.0 / (niche_count + 1)
                 # Apply to weighted sum (stored separately for display)

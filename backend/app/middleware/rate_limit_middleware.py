@@ -54,7 +54,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     - Graceful degradation on Redis failure
     """
 
-    def __init__(self, app, redis_client: redis.Redis | None = None):
+    def __init__(self, app, redis_client: redis.Redis | None = None) -> None:
         """
         Initialize rate limiting middleware.
 
@@ -130,7 +130,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if user_id:
             return f"user:{user_id}"
 
-        # Fall back to IP address
+            # Fall back to IP address
         forwarded_for = request.headers.get("X-Forwarded-For")
         if forwarded_for:
             return f"ip:{forwarded_for.split(',')[0].strip()}"
@@ -160,7 +160,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             ]  # Use part of secret as internal key
             return internal_key == expected_key
 
-        # Check if request is from localhost/internal network
+            # Check if request is from localhost/internal network
         if request.client:
             internal_ips = ["127.0.0.1", "localhost", "::1"]
             if request.client.host in internal_ips:
@@ -185,11 +185,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if not settings.RATE_LIMIT_ENABLED:
             return True
 
-        # Skip internal services
+            # Skip internal services
         if self._is_internal_service(request):
             return True
 
-        # Skip health check endpoints
+            # Skip health check endpoints
         skip_paths = ["/health", "/metrics", "/docs", "/openapi.json", "/redoc"]
         if request.url.path in skip_paths:
             return True
@@ -246,7 +246,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if self._should_skip_rate_limit(request):
             return await call_next(request)
 
-        # Extract user information
+            # Extract user information
         user_id, role = self._extract_user_info(request)
         client_id = self._get_client_identifier(request, user_id)
 
@@ -269,7 +269,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         else:
             rpm, rph, burst, refill = self._get_effective_limits(tier, request.url.path)
 
-        # Apply rate limiting
+            # Apply rate limiting
         rate_limit_info = {
             "tier": tier.value,
             "allowed": True,
@@ -342,7 +342,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             rate_limit_info["remaining_hour"] = hour_info.get("remaining", 0)
             rate_limit_info["reset_hour"] = hour_info.get("reset_at", 0)
 
-        # Process request
+            # Process request
         response = await call_next(request)
 
         # Add rate limit headers to response

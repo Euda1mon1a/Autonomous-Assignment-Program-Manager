@@ -36,7 +36,7 @@ class OptimizedQueryBuilder:
         )
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize query builder.
 
@@ -92,7 +92,7 @@ class OptimizedQueryBuilder:
         if filters:
             query = query.where(and_(*filters))
 
-        # Order by date
+            # Order by date
         query = query.order_by(Block.date, Block.session)
 
         if limit:

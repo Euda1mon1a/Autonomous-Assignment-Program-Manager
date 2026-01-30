@@ -40,7 +40,7 @@ class TransformationPipeline:
     Each step is a function that takes a record and returns a dict of updates.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize empty pipeline."""
         self.steps: list[Callable[[Any], dict[str, Any]]] = []
 
@@ -127,7 +127,7 @@ class DataTransformer:
         if not hasattr(record, "name") or not record.name:
             return {}
 
-        # Handle special cases like "McDonald", "O'Brien"
+            # Handle special cases like "McDonald", "O'Brien"
         name = record.name.strip()
         capitalized = name.title()
 
@@ -152,7 +152,7 @@ class DataTransformer:
         if not phone:
             return {}
 
-        # Remove all non-digits
+            # Remove all non-digits
         digits = re.sub(r"\D", "", phone)
 
         # Format if 10 digits
@@ -183,7 +183,7 @@ class DataTransformer:
         if isinstance(value, UUID):
             return {}
 
-        # Try to parse string as UUID
+            # Try to parse string as UUID
         try:
             uuid_value = UUID(str(value))
             return {field: uuid_value}
@@ -212,11 +212,11 @@ class DataTransformer:
         if isinstance(value, datetime):
             return {}
 
-        # If date, convert to datetime
+            # If date, convert to datetime
         if isinstance(value, date):
             return {field: datetime.combine(value, datetime.min.time())}
 
-        # Try to parse string
+            # Try to parse string
         if isinstance(value, str):
             try:
                 dt = datetime.fromisoformat(value)
@@ -293,7 +293,7 @@ class DataTransformer:
         if isinstance(value, bool):
             return {}
 
-        # String values
+            # String values
         if isinstance(value, str):
             lower = value.lower().strip()
             if lower in ("true", "yes", "1", "y", "t"):
@@ -301,7 +301,7 @@ class DataTransformer:
             elif lower in ("false", "no", "0", "n", "f"):
                 return {field: False}
 
-        # Numeric values
+                # Numeric values
         if isinstance(value, (int, float)):
             return {field: bool(value)}
 
@@ -474,8 +474,9 @@ class DataTransformer:
         value = getattr(record, old_field)
         return {new_field: value, old_field: None}
 
+        # Convenience functions for common transformations
 
-# Convenience functions for common transformations
+
 def create_email_normalizer() -> TransformationPipeline:
     """
     Create pipeline for email normalization.

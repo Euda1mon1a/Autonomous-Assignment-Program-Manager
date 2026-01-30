@@ -97,7 +97,7 @@ class ForecastGenerator:
             if tid:
                 template_counts[tid] = template_counts.get(tid, 0) + 1
 
-        # Normalize to probabilities
+                # Normalize to probabilities
         total = sum(template_counts.values()) if template_counts else 1
         predicted_coverage = {
             tid: count / total for tid, count in template_counts.items()
@@ -118,7 +118,7 @@ class ForecastGenerator:
         else:
             predicted_complexity = 0.5
 
-        # Confidence based on sample size
+            # Confidence based on sample size
         confidence = min(1.0, len(historical_assignments) / 100)
 
         forecast_horizon_days = (end_date - start_date).days
@@ -246,7 +246,7 @@ class FreeEnergySolverAdapter:
         lambda_complexity: float = 0.1,
         learning_rate: float = 0.1,
         active_inference_enabled: bool = True,
-    ):
+    ) -> None:
         """
         Initialize adapter.
 
@@ -302,7 +302,7 @@ class FreeEnergySolverAdapter:
             except Exception as e:
                 logger.warning(f"Failed to generate forecast from history: {e}")
 
-        # Create solver
+                # Create solver
         solver = FreeEnergyScheduler(
             constraint_manager=self.constraint_manager,
             lambda_complexity=self.lambda_complexity,
@@ -355,7 +355,7 @@ class FreeEnergySolverAdapter:
         if not context.start_date:
             raise ValueError("Context must have start_date for historical training")
 
-        # Generate historical outcomes
+            # Generate historical outcomes
         outcomes = await self.forecast_generator.generate_outcomes_from_history(
             start_date=context.start_date - timedelta(days=lookback_days),
             end_date=context.start_date,
@@ -393,7 +393,7 @@ class HybridFreeEnergySolver:
         constraint_manager: ConstraintManager | None = None,
         fep_config: dict[str, Any] | None = None,
         classical_solver: str = "cp_sat",
-    ):
+    ) -> None:
         """
         Initialize hybrid solver.
 
@@ -499,7 +499,7 @@ class HybridFreeEnergySolver:
             final_result = fep_result
             refinement_time = 0.0
 
-        # Add hybrid metadata
+            # Add hybrid metadata
         if final_result.statistics is None:
             final_result.statistics = {}
 
@@ -515,8 +515,7 @@ class HybridFreeEnergySolver:
 
         return final_result
 
-
-# Utility functions for integration
+        # Utility functions for integration
 
 
 async def get_default_forecast(
@@ -547,7 +546,7 @@ async def get_default_forecast(
         except Exception as e:
             logger.warning(f"Failed to generate historical forecast: {e}")
 
-    # Fall back to uniform prior
+            # Fall back to uniform prior
     return DemandForecast.from_uniform_prior(
         templates=list(context.templates),
     )

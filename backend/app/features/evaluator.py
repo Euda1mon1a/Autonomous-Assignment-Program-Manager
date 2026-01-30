@@ -22,7 +22,7 @@ class FeatureFlagEvaluator:
     the same user always gets the same result.
     """
 
-    def __init__(self, environment: str | None = None):
+    def __init__(self, environment: str | None = None) -> None:
         """
         Initialize feature flag evaluator.
 
@@ -56,23 +56,23 @@ class FeatureFlagEvaluator:
         if not flag_data.get("enabled", False):
             return False, None, "Flag is globally disabled"
 
-        # Check environment targeting
+            # Check environment targeting
         if not self._check_environment(flag_data):
             return False, None, f"Environment {self.environment} not targeted"
 
-        # Check dependencies (prerequisite flags must be enabled)
-        # Note: This would require access to other flags, so we skip for now
-        # In a full implementation, we'd recursively evaluate dependencies
+            # Check dependencies (prerequisite flags must be enabled)
+            # Note: This would require access to other flags, so we skip for now
+            # In a full implementation, we'd recursively evaluate dependencies
 
-        # Check user ID targeting
+            # Check user ID targeting
         if not self._check_user_targeting(flag_data, user_id):
             return False, None, "User not in target list"
 
-        # Check role targeting
+            # Check role targeting
         if not self._check_role_targeting(flag_data, user_role):
             return False, None, "User role not in target list"
 
-        # Evaluate based on flag type
+            # Evaluate based on flag type
         flag_type = flag_data.get("flag_type", "boolean")
 
         if flag_type == "boolean":
@@ -181,7 +181,7 @@ class FeatureFlagEvaluator:
             # Combine user ID and flag key for deterministic hashing
             hash_input = f"{user_id}:{flag_key}"
 
-        # Hash the input
+            # Hash the input
         hash_value = hashlib.md5(hash_input.encode()).hexdigest()
 
         # Convert first 8 hex chars to integer (0 to 2^32-1)
@@ -216,7 +216,7 @@ class FeatureFlagEvaluator:
         if not variants:
             return None
 
-        # Hash user + flag to get consistent variant assignment
+            # Hash user + flag to get consistent variant assignment
         if user_id is None:
             hash_input = flag_key
         else:
@@ -233,7 +233,7 @@ class FeatureFlagEvaluator:
             if hash_normalized < cumulative_weight:
                 return variant_name
 
-        # Fallback to last variant (handles floating point errors)
+                # Fallback to last variant (handles floating point errors)
         return list(variants.keys())[-1] if variants else None
 
     def evaluate_dependencies(
@@ -268,7 +268,7 @@ class FeatureFlagEvaluator:
                 if dep_flag is None:
                     return False, None, f"Dependency flag '{dep_key}' not found"
 
-                # Recursively evaluate dependency
+                    # Recursively evaluate dependency
                 dep_enabled, _, dep_reason = self.evaluate_dependencies(
                     dep_flag, all_flags, user_id, user_role, context
                 )
@@ -280,5 +280,5 @@ class FeatureFlagEvaluator:
                         f"Dependency '{dep_key}' not enabled: {dep_reason}",
                     )
 
-        # All dependencies satisfied, evaluate this flag
+                    # All dependencies satisfied, evaluate this flag
         return self.evaluate(flag_data, user_id, user_role, context)

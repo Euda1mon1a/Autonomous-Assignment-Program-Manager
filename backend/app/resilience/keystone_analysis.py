@@ -178,7 +178,7 @@ class CascadeAnalysis:
         affected_entities: list[UUID],
         affected_types: dict[EntityType, int],
         reason: str,
-    ):
+    ) -> None:
         """Record a cascade propagation step."""
         self.cascade_steps.append(
             {
@@ -245,7 +245,7 @@ class KeystoneAnalyzer:
         self,
         keystone_threshold: float = 0.6,
         use_networkx: bool = True,
-    ):
+    ) -> None:
         """
         Initialize keystone analyzer.
 
@@ -305,7 +305,7 @@ class KeystoneAnalyzer:
                 entity_type=EntityType.FACULTY,
             )
 
-        # Add resident nodes
+            # Add resident nodes
         for res in residents:
             res_id = res.id if hasattr(res, "id") else res["id"]
             res_name = getattr(res, "name", str(res_id))
@@ -316,7 +316,7 @@ class KeystoneAnalyzer:
                 entity_type=EntityType.RESIDENT,
             )
 
-        # Add service nodes
+            # Add service nodes
         for service_id in services:
             G.add_node(
                 f"service:{service_id}",
@@ -325,7 +325,7 @@ class KeystoneAnalyzer:
                 entity_type=EntityType.SERVICE,
             )
 
-        # Add rotation nodes
+            # Add rotation nodes
         for rot_id, rot_data in rotations.items():
             G.add_node(
                 f"rotation:{rot_id}",
@@ -334,8 +334,8 @@ class KeystoneAnalyzer:
                 entity_type=EntityType.ROTATION,
             )
 
-        # Add dependency edges
-        # Faculty/Residents -> Services they enable
+            # Add dependency edges
+            # Faculty/Residents -> Services they enable
         for service_id, capable_ids in services.items():
             for provider_id in capable_ids:
                 G.add_edge(
@@ -345,7 +345,7 @@ class KeystoneAnalyzer:
                     weight=1.0 / len(capable_ids),  # Weight by replaceability
                 )
 
-        # Services -> Rotations that require them
+                # Services -> Rotations that require them
         for rot_id, rot_data in rotations.items():
             required_services = rot_data.get("required_services", [])
             for service_id in required_services:
@@ -357,7 +357,7 @@ class KeystoneAnalyzer:
                         weight=1.0,
                     )
 
-        # Assignments create dependencies: Rotation -> Person (person is assigned)
+                    # Assignments create dependencies: Rotation -> Person (person is assigned)
         assignment_counts = defaultdict(int)
         for a in assignments:
             person_id = str(getattr(a, "person_id", a.get("person_id")))
@@ -407,7 +407,7 @@ class KeystoneAnalyzer:
         if not graph or entity_id not in graph:
             return 0.0
 
-        # Calculate impact metrics
+            # Calculate impact metrics
         out_degree = graph.out_degree(entity_id)  # What depends on this
         in_degree = graph.in_degree(entity_id)  # What this depends on
 
@@ -417,7 +417,7 @@ class KeystoneAnalyzer:
         except Exception:
             betweenness = 0.0
 
-        # Abundance: normalized presence
+            # Abundance: normalized presence
         total_nodes = graph.number_of_nodes()
         total_edges = graph.number_of_edges()
 
@@ -474,7 +474,7 @@ class KeystoneAnalyzer:
         except (ValueError, AttributeError):
             return 0.0
 
-        # Count services this entity can provide
+            # Count services this entity can provide
         my_services = [
             sid for sid, providers in services.items() if entity_uuid in providers
         ]
@@ -482,7 +482,7 @@ class KeystoneAnalyzer:
         if not my_services:
             return 1.0  # Not providing services, fully redundant
 
-        # For each service, count alternatives
+            # For each service, count alternatives
         redundancy_scores = []
         for service_id in my_services:
             providers = services.get(service_id, [])
@@ -500,7 +500,7 @@ class KeystoneAnalyzer:
 
             redundancy_scores.append(service_redundancy)
 
-        # Average redundancy across services
+            # Average redundancy across services
         return statistics.mean(redundancy_scores)
 
     def identify_keystone_resources(
@@ -557,7 +557,7 @@ class KeystoneAnalyzer:
             if keystoneness < threshold:
                 continue
 
-            # Dependency analysis
+                # Dependency analysis
             out_degree = graph.out_degree(entity_str)
             in_degree = graph.in_degree(entity_str)
 
@@ -594,7 +594,7 @@ class KeystoneAnalyzer:
             else:
                 risk_level = KeystoneRiskLevel.LOW
 
-            # Build risk factors
+                # Build risk factors
             risk_factors = []
             if len(unique_caps) > 0:
                 risk_factors.append(f"Sole provider for {len(unique_caps)} service(s)")
@@ -605,7 +605,7 @@ class KeystoneAnalyzer:
             if impact > 0.3:
                 risk_factors.append(f"Removal causes {impact:.0%} coverage loss")
 
-            # Create keystone resource
+                # Create keystone resource
             keystone = KeystoneResource(
                 entity_id=entity_id,
                 entity_name=entity_name,
@@ -631,7 +631,7 @@ class KeystoneAnalyzer:
             self.keystone_cache[entity_id] = keystone
             keystones.append(keystone)
 
-        # Sort by keystoneness score
+            # Sort by keystoneness score
         keystones.sort(key=lambda k: -k.keystoneness_score)
 
         logger.info(f"Identified {len(keystones)} keystone resources")
@@ -731,7 +731,7 @@ class KeystoneAnalyzer:
                 reason=f"Services have no remaining providers after {entity_name} removal",
             )
 
-        # Level 2: Rotations affected
+            # Level 2: Rotations affected
         affected_rotations = []
         for rot_id, rot_data in rotations.items():
             required_services = rot_data.get("required_services", [])
@@ -749,7 +749,7 @@ class KeystoneAnalyzer:
                 reason="Rotations cannot run without required services",
             )
 
-        # Level 3: Assignments lost
+            # Level 3: Assignments lost
         affected_assignments = 0
         total_assignments = len(assignments)
 
@@ -785,7 +785,7 @@ class KeystoneAnalyzer:
         else:
             cascade.recovery_time_days = 1  # Quick fix
 
-        # Amplification factor
+            # Amplification factor
         initial_impact = 1  # One entity removed
         final_impact = cascade.total_affected
         cascade.amplification_factor = final_impact / max(initial_impact, 1)
@@ -839,8 +839,8 @@ class KeystoneAnalyzer:
             if entity_id == keystone.entity_id:
                 continue
 
-            # Calculate suitability score
-            # How many of keystone's services can they already do?
+                # Calculate suitability score
+                # How many of keystone's services can they already do?
             entity_services = [
                 sid for sid, providers in services.items() if entity_id in providers
             ]
@@ -851,7 +851,7 @@ class KeystoneAnalyzer:
             else:
                 suitability = 0.0
 
-            # Bonus for already providing related services
+                # Bonus for already providing related services
             if overlap > 0:
                 suitability += 0.2
 
@@ -860,7 +860,7 @@ class KeystoneAnalyzer:
             if suitability > 0.0:
                 backup_candidates.append((entity_id, entity_name, suitability))
 
-        # Sort by suitability
+                # Sort by suitability
         backup_candidates.sort(key=lambda x: -x[2])
 
         # Identify training needs (services keystone provides but candidate doesn't)
@@ -876,7 +876,7 @@ class KeystoneAnalyzer:
                 str(sid) for sid in keystone_services if sid not in candidate_services
             ]
 
-        # Estimate training hours (rough heuristic)
+            # Estimate training hours (rough heuristic)
         estimated_hours = len(training_needed) * 40  # 40 hours per skill
 
         # Determine priority based on risk level
@@ -905,7 +905,7 @@ class KeystoneAnalyzer:
                 year=date.today().year + 1
             )
 
-        # Interim measures
+            # Interim measures
         interim = []
         if len(keystone.unique_capabilities) > 0:
             interim.append("Document procedures for unique capabilities")
@@ -914,7 +914,7 @@ class KeystoneAnalyzer:
         if keystone.cascade_depth > 1:
             interim.append("Create fallback rotations that don't require this resource")
 
-        # Risk reduction estimate
+            # Risk reduction estimate
         if backup_candidates:
             risk_reduction = min(backup_candidates[0][2] * 0.8, 0.9)
         else:

@@ -119,8 +119,9 @@ class SnapshotConfig(BaseModel):
     class Config:
         frozen = True
 
+        # Default configuration
 
-# Default configuration
+
 DEFAULT_SNAPSHOT_CONFIG = SnapshotConfig()
 
 
@@ -175,10 +176,9 @@ class SnapshotValidationResult(BaseModel):
     checksum_verified: bool = False
     schema_version_compatible: bool = False
 
-
-# =============================================================================
-# Snapshot Store Service
-# =============================================================================
+    # =============================================================================
+    # Snapshot Store Service
+    # =============================================================================
 
 
 class SnapshotStore:
@@ -189,7 +189,7 @@ class SnapshotStore:
     and managing snapshots for event-sourced aggregates.
     """
 
-    def __init__(self, db: Session, config: SnapshotConfig | None = None):
+    def __init__(self, db: Session, config: SnapshotConfig | None = None) -> None:
         """
         Initialize Snapshot Store.
 
@@ -228,7 +228,7 @@ class SnapshotStore:
         if not state_data:
             raise ValueError("Cannot create snapshot with empty state data")
 
-        # Check if snapshot is needed (unless forced)
+            # Check if snapshot is needed (unless forced)
         if not force and not await self._should_create_snapshot(
             aggregate_id, aggregate_type
         ):
@@ -240,10 +240,10 @@ class SnapshotStore:
             latest = await self.get_latest_snapshot_metadata(aggregate_id)
             if latest:
                 return latest.snapshot_id
-            # If no snapshot exists, continue with creation
+                # If no snapshot exists, continue with creation
             logger.info("No existing snapshot found, creating first snapshot")
 
-        # Get current aggregate version and event count
+            # Get current aggregate version and event count
         current_version = self.event_store._get_aggregate_version(
             aggregate_id, aggregate_type
         )
@@ -279,7 +279,7 @@ class SnapshotStore:
                 snapshot_data = state_data
                 is_compressed = False
 
-        # Calculate checksum
+                # Calculate checksum
         checksum = self._calculate_checksum(serialized_data)
 
         # Create snapshot record
@@ -356,7 +356,7 @@ class SnapshotStore:
         if not snapshot:
             return None
 
-        # Validate if requested
+            # Validate if requested
         if validate and self.config.validate_on_restore:
             validation = await self.validate_snapshot(str(snapshot.id))
             if not validation.is_valid:
@@ -365,7 +365,7 @@ class SnapshotStore:
                     f"{', '.join(validation.errors)}"
                 )
 
-        # Extract and decompress data
+                # Extract and decompress data
         snapshot_data = snapshot.snapshot_data
         metadata = snapshot_data.get("_metadata", {})
 
@@ -568,7 +568,7 @@ class SnapshotStore:
                 warnings=warnings,
             )
 
-        # Extract metadata
+            # Extract metadata
         snapshot_data = snapshot.snapshot_data
         metadata = snapshot_data.get("_metadata", {})
 
@@ -580,7 +580,7 @@ class SnapshotStore:
         if snapshot.aggregate_version < 0:
             errors.append("Invalid aggregate_version")
 
-        # Validate schema version compatibility
+            # Validate schema version compatibility
         snapshot_version = metadata.get("snapshot_version", 1)
         if snapshot_version > self.config.snapshot_version:
             errors.append(
@@ -597,7 +597,7 @@ class SnapshotStore:
         else:
             schema_compatible = True
 
-        # Validate checksum if available
+            # Validate checksum if available
         stored_checksum = metadata.get("checksum")
         if stored_checksum:
             try:
@@ -628,7 +628,7 @@ class SnapshotStore:
         else:
             warnings.append("No checksum available for verification")
 
-        # Validate data can be deserialized
+            # Validate data can be deserialized
         try:
             await self._deserialize_snapshot(snapshot)
         except Exception as e:
@@ -721,7 +721,7 @@ class SnapshotStore:
                 "average_events_per_snapshot": 0.0,
             }
 
-        # Aggregate statistics
+            # Aggregate statistics
         oldest_snapshot = query.order_by(EventSnapshot.snapshot_timestamp).first()
         newest_snapshot = query.order_by(desc(EventSnapshot.snapshot_timestamp)).first()
 
@@ -751,9 +751,9 @@ class SnapshotStore:
             "average_events_per_snapshot": float(avg_events),
         }
 
-    # =========================================================================
-    # Private Helper Methods
-    # =========================================================================
+        # =========================================================================
+        # Private Helper Methods
+        # =========================================================================
 
     async def _should_create_snapshot(
         self,
@@ -785,7 +785,7 @@ class SnapshotStore:
         if not latest_snapshot:
             return current_event_count >= self.config.min_events_for_snapshot
 
-        # Check event count threshold
+            # Check event count threshold
         events_since_snapshot = current_event_count - latest_snapshot.event_count
         if events_since_snapshot >= self.config.snapshot_frequency_events:
             logger.debug(
@@ -794,7 +794,7 @@ class SnapshotStore:
             )
             return True
 
-        # Check time threshold
+            # Check time threshold
         time_since_snapshot = datetime.utcnow() - latest_snapshot.snapshot_timestamp
         hours_since_snapshot = time_since_snapshot.total_seconds() / 3600
         if hours_since_snapshot >= self.config.snapshot_frequency_time_hours:
@@ -837,7 +837,7 @@ class SnapshotStore:
                 self.db.delete(snapshot)
                 deleted_count += 1
 
-        # Time-based cleanup: Delete snapshots older than retention period
+                # Time-based cleanup: Delete snapshots older than retention period
         cutoff_date = datetime.utcnow() - timedelta(
             days=self.config.snapshot_retention_days
         )
@@ -939,10 +939,9 @@ class SnapshotStore:
             "data": actual_data,
         }
 
-
-# =============================================================================
-# Factory Function
-# =============================================================================
+        # =============================================================================
+        # Factory Function
+        # =============================================================================
 
 
 def get_snapshot_store(
@@ -960,10 +959,9 @@ def get_snapshot_store(
     """
     return SnapshotStore(db, config)
 
-
-# =============================================================================
-# Utility Functions
-# =============================================================================
+    # =============================================================================
+    # Utility Functions
+    # =============================================================================
 
 
 async def auto_snapshot_aggregate(

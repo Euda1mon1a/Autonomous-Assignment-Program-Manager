@@ -41,7 +41,7 @@ class LoadBalancer:
         health_check_interval: int = 30,
         enable_failover: bool = True,
         max_retries: int = 3,
-    ):
+    ) -> None:
         """
         Initialize load balancer.
 
@@ -68,7 +68,7 @@ class LoadBalancer:
                 check_interval=health_check_interval,
             )
 
-        # Statistics
+            # Statistics
         self._total_requests = 0
         self._failed_requests = 0
         self._failover_count = 0
@@ -90,7 +90,7 @@ class LoadBalancer:
         if self.health_checker:
             await self.health_checker.stop()
 
-        # Stop registry cleanup
+            # Stop registry cleanup
         await self.registry.stop_cleanup_task()
 
         logger.info("Load balancer stopped")
@@ -174,7 +174,7 @@ class LoadBalancer:
                 self._failed_requests += 1
                 return None
 
-            # Use strategy to select instance
+                # Use strategy to select instance
             selected = await self.strategy.select_instance(instances)
 
             if selected:
@@ -215,7 +215,7 @@ class LoadBalancer:
             if not instance:
                 break
 
-            # Check if we've already tried this instance
+                # Check if we've already tried this instance
             if instance.id in tried_instances:
                 # No more unique instances to try
                 break
@@ -227,12 +227,12 @@ class LoadBalancer:
             if instance.healthy:
                 return instance
 
-            # Instance is unhealthy, try another
+                # Instance is unhealthy, try another
             logger.debug(f"Instance {instance.endpoint} unhealthy, trying alternative")
             self._failover_count += 1
             attempts += 1
 
-        # No healthy instance found
+            # No healthy instance found
         self._failed_requests += 1
         logger.warning(
             f"Failed to find healthy instance for {service_name} "
@@ -281,7 +281,7 @@ class LoadBalancer:
             if not instance:
                 break
 
-            # Check if we've already tried this instance
+                # Check if we've already tried this instance
             if instance.id in tried_instances:
                 break
 
@@ -306,7 +306,7 @@ class LoadBalancer:
                 self._failover_count += 1
                 attempts += 1
 
-        # All attempts failed
+                # All attempts failed
         self._failed_requests += 1
         error_msg = f"All retry attempts failed for {service_name}"
         if last_error:
@@ -444,6 +444,6 @@ class LoadBalancer:
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Async context manager exit."""
         await self.stop()

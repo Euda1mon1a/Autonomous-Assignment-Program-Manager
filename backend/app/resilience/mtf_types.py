@@ -53,7 +53,7 @@ class StaffingLevel:
     available: int
     deficit: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculate deficit from required and available."""
         self.deficit = max(0, self.required - self.available)
 
@@ -69,7 +69,7 @@ class CoverageGap:
     assigned_staff: int
     gap_size: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculate gap size from required and assigned."""
         self.gap_size = max(0, self.required_staff - self.assigned_staff)
 

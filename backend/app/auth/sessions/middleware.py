@@ -36,7 +36,7 @@ class SessionMiddleware(BaseHTTPMiddleware):
         session_cookie_name: str = "session_id",
         session_header_name: str = "X-Session-ID",
         exempt_paths: list[str] | None = None,
-    ):
+    ) -> None:
         """
         Initialize session middleware.
 
@@ -92,12 +92,12 @@ class SessionMiddleware(BaseHTTPMiddleware):
         if session_id:
             return session_id
 
-        # Check header
+            # Check header
         session_id = request.headers.get(self.session_header_name)
         if session_id:
             return session_id
 
-        # Check query param (for websockets)
+            # Check query param (for websockets)
         session_id = request.query_params.get("session_id")
         if session_id:
             return session_id
@@ -126,7 +126,7 @@ class SessionMiddleware(BaseHTTPMiddleware):
         if real_ip:
             return real_ip
 
-        # Fall back to direct connection
+            # Fall back to direct connection
         if request.client:
             return request.client.host
 
@@ -147,7 +147,7 @@ class SessionMiddleware(BaseHTTPMiddleware):
         if self._is_path_exempt(request.url.path):
             return await call_next(request)
 
-        # Get session ID
+            # Get session ID
         session_id = self._get_session_id(request)
 
         # Validate and update session
@@ -170,7 +170,7 @@ class SessionMiddleware(BaseHTTPMiddleware):
             else:
                 logger.debug(f"Session {session_id} validation failed")
 
-        # Process request
+                # Process request
         response = await call_next(request)
 
         # Optionally set session cookie if not present

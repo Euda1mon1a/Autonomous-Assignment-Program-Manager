@@ -33,7 +33,7 @@ class EmailQueue:
     and implements FIFO within each priority.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize email queue."""
         self._high: deque[QueuedEmail] = deque()
         self._normal: deque[QueuedEmail] = deque()

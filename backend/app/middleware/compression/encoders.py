@@ -73,7 +73,7 @@ class GzipEncoder(CompressionEncoder):
     Always available as it's part of the standard library.
     """
 
-    def __init__(self, level: int = 6):
+    def __init__(self, level: int = 6) -> None:
         """
         Initialize gzip encoder.
 
@@ -144,7 +144,7 @@ class BrotliEncoder(CompressionEncoder):
     Note: Falls back gracefully if brotli is not installed.
     """
 
-    def __init__(self, quality: int = 4):
+    def __init__(self, quality: int = 4) -> None:
         """
         Initialize brotli encoder.
 
@@ -229,7 +229,7 @@ class BrotliEncoder(CompressionEncoder):
                 output.write(compressed_chunk)
             offset += chunk_size
 
-        # Flush any remaining data
+            # Flush any remaining data
         final_chunk = compressor.flush()
         if final_chunk:
             output.write(final_chunk)
@@ -244,7 +244,7 @@ class EncoderFactory:
     Handles encoder selection based on client preferences and availability.
     """
 
-    def __init__(self, gzip_level: int = 6, brotli_quality: int = 4):
+    def __init__(self, gzip_level: int = 6, brotli_quality: int = 4) -> None:
         """
         Initialize encoder factory.
 
@@ -282,8 +282,8 @@ class EncoderFactory:
         if not accept_encoding:
             return None
 
-        # Parse Accept-Encoding header
-        # Format: "encoding1;q=0.9, encoding2, encoding3;q=0.5"
+            # Parse Accept-Encoding header
+            # Format: "encoding1;q=0.9, encoding2, encoding3;q=0.5"
         encodings = self._parse_accept_encoding(accept_encoding)
 
         # Try encoders in order of preference
@@ -292,12 +292,12 @@ class EncoderFactory:
             logger.debug("Selected brotli encoder")
             return self._brotli_encoder
 
-        # Gzip fallback
+            # Gzip fallback
         if "gzip" in encodings and self._gzip_encoder.available:
             logger.debug("Selected gzip encoder")
             return self._gzip_encoder
 
-        # No suitable encoder
+            # No suitable encoder
         logger.debug("No suitable encoder found")
         return None
 

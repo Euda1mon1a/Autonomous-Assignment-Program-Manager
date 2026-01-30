@@ -49,7 +49,7 @@ class SystemResourceCollector(Collector):
     are always current without needing background updates.
     """
 
-    def __init__(self, process: Optional["psutil.Process"] = None):
+    def __init__(self, process: Optional["psutil.Process"] = None) -> None:
         """
         Initialize system resource collector.
 
@@ -249,9 +249,9 @@ class SystemResourceCollector(Collector):
                     value=disk_io.write_count,
                 )
 
-            # ================================================================
-            # NETWORK METRICS
-            # ================================================================
+                # ================================================================
+                # NETWORK METRICS
+                # ================================================================
 
             net_io = psutil.net_io_counters()
             if net_io:
@@ -291,11 +291,11 @@ class SystemResourceCollector(Collector):
                     value=net_io.errout,
                 )
 
-            # ================================================================
-            # PROCESS METRICS
-            # ================================================================
+                # ================================================================
+                # PROCESS METRICS
+                # ================================================================
 
-            # Process threads
+                # Process threads
             num_threads = self._process.num_threads()
             yield GaugeMetricFamily(
                 "process_threads_count",
@@ -317,7 +317,7 @@ class SystemResourceCollector(Collector):
                 # num_fds() not available on Windows
                 pass
 
-            # Process connections
+                # Process connections
             try:
                 connections = len(self._process.connections())
                 yield GaugeMetricFamily(
@@ -328,7 +328,7 @@ class SystemResourceCollector(Collector):
             except (psutil.AccessDenied, psutil.NoSuchProcess):
                 pass
 
-            # Process uptime
+                # Process uptime
             create_time = self._process.create_time()
             uptime = psutil.time.time() - create_time
             yield GaugeMetricFamily(
@@ -372,7 +372,7 @@ class DatabasePoolCollector(Collector):
     This integrates with SQLAlchemy's connection pool statistics.
     """
 
-    def __init__(self, engine=None):
+    def __init__(self, engine=None) -> None:
         """
         Initialize database pool collector.
 
@@ -421,7 +421,7 @@ class DatabasePoolCollector(Collector):
                     value=pool.overflow(),
                 )
 
-            # Pool statistics
+                # Pool statistics
             if hasattr(pool, "_overflow"):
                 yield GaugeMetricFamily(
                     "db_pool_overflow_count",
@@ -447,7 +447,7 @@ class ApplicationMetricsCollector(Collector):
     This collector should be registered carefully to avoid performance impact.
     """
 
-    def __init__(self, db_session_factory=None):
+    def __init__(self, db_session_factory=None) -> None:
         """
         Initialize application metrics collector.
 
@@ -513,19 +513,19 @@ def register_custom_collectors(registry=None, engine=None, db_session_factory=No
         collectors.append(system_collector)
         logger.info("Registered SystemResourceCollector")
 
-    # Database pool collector
+        # Database pool collector
     if engine:
         db_collector = DatabasePoolCollector(engine)
         target_registry.register(db_collector)
         collectors.append(db_collector)
         logger.info("Registered DatabasePoolCollector")
 
-    # Application metrics collector (disabled by default for performance)
-    # Uncomment to enable:
-    # if db_session_factory:
-    #     app_collector = ApplicationMetricsCollector(db_session_factory)
-    #     target_registry.register(app_collector)
-    #     collectors.append(app_collector)
-    #     logger.info("Registered ApplicationMetricsCollector")
+        # Application metrics collector (disabled by default for performance)
+        # Uncomment to enable:
+        # if db_session_factory:
+        #     app_collector = ApplicationMetricsCollector(db_session_factory)
+        #     target_registry.register(app_collector)
+        #     collectors.append(app_collector)
+        #     logger.info("Registered ApplicationMetricsCollector")
 
     return collectors

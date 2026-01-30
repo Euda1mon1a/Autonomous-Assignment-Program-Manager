@@ -73,7 +73,7 @@ class PerformanceAnalyzer:
         cpu_threshold_percent: float = 80.0,
         memory_threshold_mb: float = 1000.0,
         duration_threshold_ms: float = 1000.0,
-    ):
+    ) -> None:
         """
         Initialize performance analyzer.
 
@@ -130,7 +130,7 @@ class PerformanceAnalyzer:
                 )
             )
 
-        # Analyze memory usage
+            # Analyze memory usage
         memory_usage = [r.memory_peak_mb for r in results]
         avg_memory = statistics.mean(memory_usage)
         max_memory = max(memory_usage)
@@ -157,7 +157,7 @@ class PerformanceAnalyzer:
                 )
             )
 
-        # Analyze execution time
+            # Analyze execution time
         durations = [r.duration_seconds * 1000 for r in results]
         avg_duration = statistics.mean(durations)
         max_duration = max(durations)
@@ -263,7 +263,7 @@ class BottleneckDetector:
         sql_slow_threshold_ms: float = 100.0,
         request_slow_threshold_ms: float = 1000.0,
         n_plus_one_threshold: int = 10,
-    ):
+    ) -> None:
         """
         Initialize bottleneck detector.
 
@@ -291,7 +291,7 @@ class BottleneckDetector:
         if not queries:
             return bottlenecks
 
-        # Detect slow queries
+            # Detect slow queries
         slow_queries = [
             q
             for q in queries
@@ -320,7 +320,7 @@ class BottleneckDetector:
                 )
             )
 
-        # Detect N+1 queries
+            # Detect N+1 queries
         query_patterns = defaultdict(list)
         for query in queries:
             # Normalize SQL to detect patterns
@@ -347,7 +347,7 @@ class BottleneckDetector:
                     )
                 )
 
-        # Detect missing indexes
+                # Detect missing indexes
         full_scan_keywords = ["FULL SCAN", "TABLE SCAN", "ALL ROWS"]
         potential_missing_indexes = [
             q
@@ -390,7 +390,7 @@ class BottleneckDetector:
         if not requests:
             return bottlenecks
 
-        # Detect slow requests
+            # Detect slow requests
         slow_requests = [
             r
             for r in requests
@@ -419,7 +419,7 @@ class BottleneckDetector:
                 )
             )
 
-        # Detect high error rates
+            # Detect high error rates
         failed_requests = [
             r for r in requests if r.status_code and r.status_code >= 500
         ]
@@ -469,12 +469,12 @@ class BottleneckDetector:
         if not traces:
             return bottlenecks
 
-        # Group traces by trace_id
+            # Group traces by trace_id
         trace_groups = defaultdict(list)
         for trace in traces:
             trace_groups[trace.trace_id].append(trace)
 
-        # Detect long trace chains
+            # Detect long trace chains
         for trace_id, spans in trace_groups.items():
             total_duration = sum(
                 s.duration_ms for s in spans if s.duration_ms is not None
@@ -544,13 +544,13 @@ class QueryAnalyzer:
         if not queries:
             return {}
 
-        # Group by query pattern
+            # Group by query pattern
         patterns = defaultdict(list)
         for query in queries:
             normalized = self._normalize_sql(query.sql)
             patterns[normalized].append(query)
 
-        # Calculate statistics per pattern
+            # Calculate statistics per pattern
         pattern_stats = []
         for pattern, pattern_queries in patterns.items():
             durations = [q.duration_ms for q in pattern_queries if q.duration_ms]
@@ -565,7 +565,7 @@ class QueryAnalyzer:
                 }
             )
 
-        # Sort by total duration
+            # Sort by total duration
         pattern_stats.sort(key=lambda x: x["total_duration_ms"], reverse=True)
 
         return {

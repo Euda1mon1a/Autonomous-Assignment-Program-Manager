@@ -11,7 +11,7 @@ from app.repositories.base import BaseRepository
 class PersonRepository(BaseRepository[Person]):
     """Repository for Person entity operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(Person, db)
 
     def list_with_filters(
@@ -86,7 +86,7 @@ class PersonRepository(BaseRepository[Person]):
         if assigned_ids:
             query = query.filter(~Person.id.in_(assigned_ids))
 
-        # Exclude absent people
+            # Exclude absent people
         if absent_ids:
             query = query.filter(~Person.id.in_(absent_ids))
 

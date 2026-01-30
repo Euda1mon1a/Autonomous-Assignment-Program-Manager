@@ -78,7 +78,7 @@ class RetryHandler:
         "template_not_found",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the retry handler."""
         # Pending retries: retry_id -> RetryAttempt
         self._retries: dict[UUID, RetryAttempt] = {}

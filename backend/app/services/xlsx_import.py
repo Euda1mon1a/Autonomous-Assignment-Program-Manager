@@ -157,7 +157,7 @@ class ProviderSchedule:
         if len(weeks) < 3:
             return False
 
-        # Check for alternating pattern (gap of exactly 1 week between FMIT weeks)
+            # Check for alternating pattern (gap of exactly 1 week between FMIT weeks)
         gaps = []
         for i in range(1, len(weeks)):
             prev_end = weeks[i - 1][1]
@@ -165,7 +165,7 @@ class ProviderSchedule:
             gap_days = (curr_start - prev_end).days
             gaps.append(gap_days)
 
-        # Alternating = gaps of ~7 days (1 week off between FMIT weeks)
+            # Alternating = gaps of ~7 days (1 week off between FMIT weeks)
         alternating_count = sum(1 for g in gaps if 6 <= g <= 8)
         return alternating_count >= 2  # At least 2 alternating gaps
 
@@ -324,13 +324,13 @@ class ClinicScheduleImporter:
         if value is None:
             return SlotType.OFF
 
-        # Normalize: lowercase, strip whitespace
+            # Normalize: lowercase, strip whitespace
         clean = str(value).strip().lower()
 
         if not clean:
             return SlotType.OFF
 
-        # 1. Handle compound codes like "PC/OFF" or "C/CV"
+            # 1. Handle compound codes like "PC/OFF" or "C/CV"
         if "/" in clean:
             parts = clean.split("/")
             # Prioritize restrictive types (safety first)
@@ -340,26 +340,26 @@ class ClinicScheduleImporter:
                     slot_type = self.SLOT_TYPE_MAPPING[part]
                     if slot_type in (SlotType.FMIT, SlotType.OFF, SlotType.VACATION):
                         return slot_type
-            # Otherwise classify first part
+                        # Otherwise classify first part
             first_part = parts[0].strip()
             if first_part:
                 return self.classify_slot(first_part)
 
-        # 2. Direct lookup
+                # 2. Direct lookup
         if clean in self.SLOT_TYPE_MAPPING:
             return self.SLOT_TYPE_MAPPING[clean]
 
-        # 3. Strip trailing numbers (e.g., "C30" -> "C", "FMIT2" -> "FMIT")
+            # 3. Strip trailing numbers (e.g., "C30" -> "C", "FMIT2" -> "FMIT")
         clean_no_nums = "".join(c for c in clean if not c.isdigit())
         if clean_no_nums and clean_no_nums in self.SLOT_TYPE_MAPPING:
             return self.SLOT_TYPE_MAPPING[clean_no_nums]
 
-        # 4. Prefix matching - only for keys with 2+ chars to avoid false positives
+            # 4. Prefix matching - only for keys with 2+ chars to avoid false positives
         for key, slot_type in self.SLOT_TYPE_MAPPING.items():
             if len(key) >= 2 and clean.startswith(key):
                 return slot_type
 
-        # 5. Fallback heuristics for common terms
+                # 5. Fallback heuristics for common terms
         if "call" in clean:
             return SlotType.FMIT
         if "clinic" in clean:
@@ -376,13 +376,13 @@ class ClinicScheduleImporter:
         if value is None:
             return None
 
-        # Already a date/datetime
+            # Already a date/datetime
         if isinstance(value, datetime):
             return value.date()
         if isinstance(value, date):
             return value
 
-        # String formats
+            # String formats
         text = str(value).strip()
 
         # Try common formats
@@ -464,7 +464,7 @@ class ClinicScheduleImporter:
                     "date_rows": found_dates,
                 }
 
-        # Find provider column (usually leftmost non-date column)
+                # Find provider column (usually leftmost non-date column)
         provider_col = 1
         for col_idx in range(1, min(6, ws.max_column + 1)):
             cell = ws.cell(row=date_row + 1 if date_row else 2, column=col_idx)
@@ -478,7 +478,7 @@ class ClinicScheduleImporter:
                     provider_col = col_idx
                     break
 
-        # Detect AM/PM columns (dates might have 2 columns each)
+                    # Detect AM/PM columns (dates might have 2 columns each)
         expanded_date_cols = []
         for i, (col_idx, d) in enumerate(date_cols):
             # Check if next column is also for same date (AM/PM split)
@@ -489,7 +489,7 @@ class ClinicScheduleImporter:
                     expanded_date_cols.append((next_col, d, "PM"))
                     continue
 
-            # Check row above or below for AM/PM labels
+                    # Check row above or below for AM/PM labels
             am_pm_row = date_row - 1 if date_row > 1 else date_row + 1
             time_label = ws.cell(row=am_pm_row, column=col_idx).value
             if time_label and str(time_label).lower().strip() in ["am", "pm"]:
@@ -545,7 +545,7 @@ class ClinicScheduleImporter:
             if not provider_name or provider_name.lower() in ["", "none", "null"]:
                 continue
 
-            # Get or create provider schedule
+                # Get or create provider schedule
             if provider_name not in result.providers:
                 result.providers[provider_name] = ProviderSchedule(name=provider_name)
 
@@ -574,7 +574,7 @@ class ClinicScheduleImporter:
                 elif slot_type == SlotType.FMIT:
                     result.fmit_slots += 1
 
-                # Track date range
+                    # Track date range
                 if min_date is None or slot_date < min_date:
                     min_date = slot_date
                 if max_date is None or slot_date > max_date:
@@ -662,7 +662,7 @@ class ClinicScheduleImporter:
                     success=False, errors=["No file path or bytes provided"]
                 )
 
-            # Get worksheet
+                # Get worksheet
             if sheet_name:
                 if sheet_name not in wb.sheetnames:
                     return ImportResult(
@@ -804,7 +804,7 @@ class ConflictDetector:
         fmit_schedule: ImportResult,
         clinic_schedule: ImportResult,
         specialty_providers: dict[str, list[str]] | None = None,
-    ):
+    ) -> None:
         """
         Initialize conflict detector.
 
@@ -922,7 +922,7 @@ class SwapFinder:
         faculty_targets: dict[str, FacultyTarget] | None = None,
         external_conflicts: list[ExternalConflict] | None = None,
         schedule_release_date: date | None = None,
-    ):
+    ) -> None:
         self.fmit = fmit_schedule
         self.faculty_targets = faculty_targets or {}
         self.external_conflicts = external_conflicts or []
@@ -973,7 +973,7 @@ class SwapFinder:
         if has_back_to_back_conflict(test_weeks):
             return False, "back_to_back_conflict"
 
-        # Check external conflicts
+            # Check external conflicts
         if conflict := self._check_external_conflict(faculty, week_to_take):
             return False, f"{conflict.conflict_type}: {conflict.description}"
 
@@ -1000,7 +1000,7 @@ class SwapFinder:
             if faculty == target_faculty:
                 continue
 
-            # Get faculty metadata
+                # Get faculty metadata
             meta = self.faculty_targets.get(
                 faculty, FacultyTarget(name=faculty, current_weeks=len(weeks))
             )
@@ -1009,7 +1009,7 @@ class SwapFinder:
             if meta.flexibility == "unreliable":
                 continue
 
-            # Check if can take the target week (absorb scenario)
+                # Check if can take the target week (absorb scenario)
             can_take, reason = self._can_take_week(faculty, target_week)
 
             # Find potential give-back weeks for 1:1 swap
@@ -1020,7 +1020,7 @@ class SwapFinder:
                     if w <= self.schedule_release_date:
                         continue
 
-                    # Check if target can take this week
+                        # Check if target can take this week
                     target_current = self.faculty_weeks.get(target_faculty, [])
                     target_test = [tw for tw in target_current if tw != target_week]
                     target_test.append(w)
@@ -1030,7 +1030,7 @@ class SwapFinder:
                         if not self._check_external_conflict(target_faculty, w):
                             give_weeks.append(w)
 
-            # Check external conflicts for target week
+                            # Check external conflicts for target week
             ext_conflict = self._check_external_conflict(faculty, target_week)
 
             candidates.append(
@@ -1047,7 +1047,7 @@ class SwapFinder:
                 )
             )
 
-        # Sort by viability (best candidates first)
+            # Sort by viability (best candidates first)
         return sorted(
             candidates,
             key=lambda c: (
@@ -1109,7 +1109,7 @@ class SwapFinder:
         if not result.success:
             raise ValueError(f"Failed to import schedule: {result.errors}")
 
-        # Build external conflicts list
+            # Build external conflicts list
         all_conflicts = list(external_conflicts or [])
 
         # Add absence-based conflicts if requested
@@ -1185,7 +1185,7 @@ def analyze_schedule_conflicts(
             "error": f"Failed to import FMIT schedule: {fmit_result.errors}",
         }
 
-    # Import clinic schedule if provided
+        # Import clinic schedule if provided
     clinic_result = None
     if clinic_file or clinic_bytes:
         clinic_result = importer.import_file(
@@ -1198,7 +1198,7 @@ def analyze_schedule_conflicts(
                 "error": f"Failed to import clinic schedule: {clinic_result.errors}",
             }
 
-    # Detect conflicts
+            # Detect conflicts
     conflicts = []
     if clinic_result:
         detector = ConflictDetector(
@@ -1223,7 +1223,7 @@ def analyze_schedule_conflicts(
                     )
                 )
 
-    # Build recommendations
+                # Build recommendations
     recommendations = []
 
     alternating = [c for c in conflicts if c.conflict_type == "consecutive_weeks"]
@@ -1345,7 +1345,7 @@ def load_external_conflicts_from_absences(
     if end_date is None:
         end_date = date.today() + timedelta(days=365)
 
-    # Query blocking absences within the date range
+        # Query blocking absences within the date range
     absences = (
         db.query(AbsenceModel)
         .join(Person)
@@ -1362,7 +1362,7 @@ def load_external_conflicts_from_absences(
         if not absence.should_block_assignment:
             continue
 
-        # Map absence_type to conflict_type
+            # Map absence_type to conflict_type
         conflict_type_map = {
             "vacation": "leave",
             "deployment": "deployment",
@@ -1426,10 +1426,9 @@ def absence_to_external_conflict(absence: AbsenceModel) -> ExternalConflict | No
         description=description,
     )
 
-
-# =============================================================================
-# BLOCK SCHEDULE PARSER - Fuzzy-tolerant parsing for rotation spreadsheets
-# =============================================================================
+    # =============================================================================
+    # BLOCK SCHEDULE PARSER - Fuzzy-tolerant parsing for rotation spreadsheets
+    # =============================================================================
 
 
 @dataclass
@@ -1591,18 +1590,18 @@ class BlockScheduleParser:
             result.errors.append("Could not find PROVIDER column header")
             return result
 
-        # Step 2: Find date columns by scanning for datetime values
+            # Step 2: Find date columns by scanning for datetime values
         date_cols = self._find_date_columns(ws)
         if not date_cols:
             result.warnings.append("Could not find date columns - roster-only mode")
 
-        # Update date range
+            # Update date range
         if date_cols:
             all_dates = sorted(date_cols.values())
             result.start_date = all_dates[0]
             result.end_date = all_dates[-1]
 
-        # Step 3: Find person rows and extract roster
+            # Step 3: Find person rows and extract roster
         person_rows = self._find_person_rows(ws, anchors)
 
         for row_info in person_rows:
@@ -1616,7 +1615,7 @@ class BlockScheduleParser:
                     f"'{raw_name}' -> '{matched_name}' ({confidence:.0%})"
                 )
 
-            # Add to roster
+                # Add to roster
             result.residents.append(
                 {
                     "name": matched_name or raw_name,
@@ -1721,7 +1720,7 @@ class BlockScheduleParser:
             if not name_val:
                 continue
 
-            # Check if it looks like a name (Last, First pattern)
+                # Check if it looks like a name (Last, First pattern)
             name_str = str(name_val).strip().replace("*", "")
             if not self.NAME_PATTERN.match(name_str):
                 continue
@@ -1756,11 +1755,11 @@ class BlockScheduleParser:
         if not self.known_people:
             return raw_name, 1.0
 
-        # Check cache
+            # Check cache
         if raw_name in self._name_cache:
             return self._name_cache[raw_name]
 
-        # Normalize for comparison
+            # Normalize for comparison
         normalized = raw_name.lower().replace(",", "").replace("*", "").strip()
 
         best_match = None
@@ -1774,7 +1773,7 @@ class BlockScheduleParser:
                 self._name_cache[raw_name] = (known, 1.0)
                 return known, 1.0
 
-            # Fuzzy match using SequenceMatcher
+                # Fuzzy match using SequenceMatcher
             score = SequenceMatcher(None, normalized, known_norm).ratio()
             if score > best_score:
                 best_score = score
@@ -1784,7 +1783,7 @@ class BlockScheduleParser:
             self._name_cache[raw_name] = (best_match, best_score)
             return best_match, best_score
 
-        # No good match - return original
+            # No good match - return original
         self._name_cache[raw_name] = (raw_name, 1.0)
         return raw_name, 1.0
 
@@ -1829,12 +1828,12 @@ class BlockScheduleParser:
         if match:
             return int(match.group(1))
 
-        # Just a number
+            # Just a number
         match = re.search(r"^(\d+)", sheet_name.strip())
         if match:
             return int(match.group(1))
 
-        # Try cells A1, B1, B2 for block number
+            # Try cells A1, B1, B2 for block number
         for row, col in [(1, 1), (1, 2), (2, 2)]:
             val = self._get_cell_value(ws, row, col)
             if val:
@@ -1878,7 +1877,7 @@ def parse_block_schedule(
         if name in wb.sheetnames:
             return parser.parse_block_sheet(filepath, name, expected_block=block_number)
 
-    # Fuzzy match sheet name
+            # Fuzzy match sheet name
     for sheet in wb.sheetnames:
         if str(block_number) in sheet:
             return parser.parse_block_sheet(

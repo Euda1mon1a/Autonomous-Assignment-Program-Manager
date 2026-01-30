@@ -52,7 +52,7 @@ class SessionManager:
         default_timeout_minutes: int = 1440,  # 24 hours
         activity_timeout_minutes: int = 30,
         enable_activity_logging: bool = True,
-    ):
+    ) -> None:
         """
         Initialize session manager.
 
@@ -101,7 +101,7 @@ class SessionManager:
         else:
             platform = "web"
 
-        # Detect browser
+            # Detect browser
         browser = "unknown"
         if "firefox" in user_agent_lower:
             browser = "firefox"
@@ -112,7 +112,7 @@ class SessionManager:
         elif "edg" in user_agent_lower:
             browser = "edge"
 
-        # Detect OS
+            # Detect OS
         os_name = "unknown"
         if "windows" in user_agent_lower:
             os_name = "windows"
@@ -140,7 +140,7 @@ class SessionManager:
         if not request:
             return DeviceInfo()
 
-        # Get user agent
+            # Get user agent
         user_agent = request.headers.get("user-agent")
 
         # Get IP address (check for proxy headers)
@@ -151,7 +151,7 @@ class SessionManager:
         else:
             ip_address = request.client.host if request.client else None
 
-        # Parse user agent
+            # Parse user agent
         parsed = self._parse_user_agent(user_agent)
 
         # Determine device type
@@ -218,7 +218,7 @@ class SessionManager:
                 f"(max sessions: {self.max_sessions_per_user})"
             )
 
-        # Generate session ID
+            # Generate session ID
         session_id = self._generate_session_id()
 
         # Extract device info
@@ -250,7 +250,7 @@ class SessionManager:
         if not success:
             raise RuntimeError(f"Failed to create session for user {user_id_str}")
 
-        # Log activity
+            # Log activity
         if self.enable_activity_logging:
             await self._log_activity(
                 session_id=session_id,
@@ -310,7 +310,7 @@ class SessionManager:
         if session.status != SessionStatus.ACTIVE:
             return None
 
-        # Check activity timeout
+            # Check activity timeout
         if self.activity_timeout_minutes > 0:
             inactive_duration = datetime.utcnow() - session.last_activity
             if inactive_duration > timedelta(minutes=self.activity_timeout_minutes):
@@ -321,7 +321,7 @@ class SessionManager:
                 )
                 return None
 
-        # Update activity
+                # Update activity
         if update_activity:
             session.update_activity(ip_address)
             await self.storage.update(session)
@@ -356,7 +356,7 @@ class SessionManager:
         if not session or session.status != SessionStatus.ACTIVE:
             return None
 
-        # Extend expiration
+            # Extend expiration
         extend = extend_minutes or self.default_timeout_minutes
         new_expiration = datetime.utcnow() + timedelta(minutes=extend)
         session.expires_at = new_expiration
@@ -369,7 +369,7 @@ class SessionManager:
         if not success:
             return None
 
-        # Log activity
+            # Log activity
         if self.enable_activity_logging:
             await self._log_activity(
                 session_id=session_id,
@@ -397,7 +397,7 @@ class SessionManager:
         if not session:
             return False
 
-        # Update status
+            # Update status
         session.status = SessionStatus.LOGGED_OUT
         await self.storage.update(session)
 
@@ -432,7 +432,7 @@ class SessionManager:
         if not session:
             return False
 
-        # Update status
+            # Update status
         session.status = SessionStatus.REVOKED
         session.metadata["revoke_reason"] = reason
         await self.storage.update(session)
@@ -468,7 +468,7 @@ class SessionManager:
         if not session:
             return False
 
-        # Update status
+            # Update status
         session.status = SessionStatus.EXPIRED
         await self.storage.update(session)
 
@@ -573,7 +573,7 @@ class SessionManager:
             if await self.revoke_session(session.session_id, reason="force_logout"):
                 revoked += 1
 
-        # Log activity
+                # Log activity
         if self.enable_activity_logging and revoked > 0:
             await self._log_activity(
                 session_id="admin",
@@ -654,8 +654,9 @@ class SessionManager:
             f"(session={session_id}, user={user_id})"
         )
 
+        # Global session manager instance
 
-# Global session manager instance
+
 _session_manager: SessionManager | None = None
 
 

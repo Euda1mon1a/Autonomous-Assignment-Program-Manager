@@ -81,8 +81,9 @@ class MitigationType(str, Enum):
     MANDATORY_REST = "mandatory_rest"  # Required rest period
     IMMEDIATE_RELIEF = "immediate_relief"  # Immediate coverage by backup
 
+    # Hazard level thresholds
 
-# Hazard level thresholds
+
 THRESHOLDS = {
     HazardLevel.GREEN: {
         "alertness_min": 0.7,
@@ -251,7 +252,7 @@ class HazardThresholdEngine:
         self,
         acgme_weekly_limit: float = 80.0,
         acgme_daily_limit: float = 24.0,
-    ):
+    ) -> None:
         """
         Initialize hazard threshold engine.
 
@@ -299,7 +300,7 @@ class HazardThresholdEngine:
             hours_awake = hours_awake or prediction.hours_awake
             samn_perelli = samn_perelli or prediction.samn_perelli_estimate
 
-        # Collect triggers and find highest hazard level
+            # Collect triggers and find highest hazard level
         triggers = []
         highest_level = HazardLevel.GREEN
 
@@ -334,7 +335,7 @@ class HazardThresholdEngine:
                 highest_level = level
                 triggers.append(TriggerType.CONSECUTIVE_NIGHTS)
 
-        # Check ACGME compliance
+                # Check ACGME compliance
         acgme_risk = False
         if hours_worked_week > 0:
             if hours_worked_week >= self.acgme_weekly_limit:
@@ -347,7 +348,7 @@ class HazardThresholdEngine:
                     highest_level = HazardLevel.ORANGE
                 acgme_risk = True
 
-        # Get required mitigations for this level
+                # Get required mitigations for this level
         required_mits = LEVEL_MITIGATIONS.get(highest_level, [])
 
         # Calculate escalation time

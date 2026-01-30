@@ -147,7 +147,7 @@ class BurnoutCascadeScenario:
     recovery impossible without external intervention.
     """
 
-    def __init__(self, config: CascadeConfig):
+    def __init__(self, config: CascadeConfig) -> None:
         """
         Initialize cascade scenario with configuration.
 
@@ -195,7 +195,7 @@ class BurnoutCascadeScenario:
         if workload <= self.config.sustainable_workload:
             return self.config.base_departure_rate
 
-        # Exponential increase based on how far above sustainable
+            # Exponential increase based on how far above sustainable
         ratio = workload / self.config.sustainable_workload
         k = 1.0  # steepness factor
         exponential_factor = math.exp(k * (ratio - 1))
@@ -250,7 +250,7 @@ class BurnoutCascadeScenario:
             if self._rng.random() < departure_prob:
                 departed += 1
 
-        # Track if departures happened during burnout
+                # Track if departures happened during burnout
         if workload > self.config.burnout_threshold:
             self._departures_in_burnout += departed
 
@@ -343,7 +343,7 @@ class BurnoutCascadeScenario:
             if not snapshot.in_critical_zone:
                 continue
 
-            # Look at trend over last 30 days
+                # Look at trend over last 30 days
             recent_snapshots = self._snapshots[i - 30 : i]
             faculty_counts = [s.faculty_count for s in recent_snapshots]
 
@@ -395,7 +395,7 @@ class BurnoutCascadeScenario:
                 "Multiple interventions needed: reduce workload, accelerate hiring, improve retention."
             )
 
-        # Hiring queue recommendations
+            # Hiring queue recommendations
         if len(self._hiring_queue) == 0:
             recommendations.append(
                 "No active hiring pipeline. Start recruitment immediately to prevent future shortfalls."
@@ -406,7 +406,7 @@ class BurnoutCascadeScenario:
                 "Consider expanding recruitment efforts."
             )
 
-        # Time-based recommendations
+            # Time-based recommendations
         time_in_burnout = sum(1 for s in self._snapshots if s.in_burnout_zone)
         burnout_pct = (
             (time_in_burnout / len(self._snapshots) * 100) if self._snapshots else 0
@@ -418,7 +418,7 @@ class BurnoutCascadeScenario:
                 "Structural workload reduction needed to achieve sustainability."
             )
 
-        # Departure analysis
+            # Departure analysis
         total_departures = sum(s.departures for s in self._snapshots)
         if self._departures_in_burnout > 0 and total_departures > 0:
             burnout_departure_pct = self._departures_in_burnout / total_departures * 100
@@ -459,7 +459,7 @@ class BurnoutCascadeScenario:
                 days_to_collapse = self._day
                 break
 
-        # Calculate statistics
+                # Calculate statistics
         peak_workload = max(
             (s.workload_per_person for s in self._snapshots), default=0.0
         )

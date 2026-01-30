@@ -67,7 +67,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
         app,
         redis_client: redis.Redis | None = None,
         strategy: str = "adaptive",
-    ):
+    ) -> None:
         """
         Initialize throttling middleware.
 
@@ -95,7 +95,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
         else:
             self.redis = redis_client
 
-        # Initialize storage
+            # Initialize storage
         self.storage = ThrottleStorage(self.redis)
 
         # Initialize strategy
@@ -180,7 +180,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
         if request.url.path in skip_paths:
             return True
 
-        # Skip static files
+            # Skip static files
         if request.url.path.startswith("/static/"):
             return True
 
@@ -200,7 +200,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
         if user_id:
             return f"user:{user_id}"
 
-        # Fall back to IP address
+            # Fall back to IP address
         forwarded_for = request.headers.get("X-Forwarded-For")
         if forwarded_for:
             return f"ip:{forwarded_for.split(',')[0].strip()}"
@@ -241,7 +241,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
             if acquired:
                 return True
 
-            # Wait a bit before retrying
+                # Wait a bit before retrying
             await asyncio.sleep(0.1)
 
         return False
@@ -261,7 +261,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
         if self._should_skip_throttling(request):
             return await call_next(request)
 
-        # Generate unique request ID
+            # Generate unique request ID
         request_id = str(uuid.uuid4())
 
         # Extract user information
@@ -285,7 +285,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
             max_queue_size = config.max_queue_size
             timeout = config.queue_timeout_seconds
 
-        # Get current metrics
+            # Get current metrics
         metrics = await self.storage.get_metrics(max_concurrent, max_queue_size)
 
         # Make throttling decision
@@ -317,7 +317,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
                 )
                 return create_throttle_response(decision)
 
-            # Wait for slot
+                # Wait for slot
             logger.info(
                 f"Throttle QUEUED: {request.method} {endpoint} "
                 f"(priority={priority.value}, queue_size={metrics.queued_requests})"
@@ -337,7 +337,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
                 decision.retry_after = 10
                 return create_throttle_response(decision)
 
-        # Try to acquire slot (for ALLOW action or after queue)
+                # Try to acquire slot (for ALLOW action or after queue)
         acquired, reason = await self.storage.acquire_slot(
             request_id=request_id,
             user_id=user_id,
@@ -357,7 +357,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
             decision.retry_after = 5
             return create_throttle_response(decision)
 
-        # Track active request
+            # Track active request
         self._active_requests.add(request_id)
 
         # Process request
@@ -410,7 +410,7 @@ class ThrottlingMiddleware(BaseHTTPMiddleware):
                 f"(total_time={total_time:.3f}s)"
             )
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Clean up expired requests and release resources."""
         if self.storage:
             active_cleaned, queue_cleaned = await self.storage.cleanup_expired()

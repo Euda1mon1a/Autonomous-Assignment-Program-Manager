@@ -84,7 +84,7 @@ class CircuitBreaker:
             return await api_client.get("/data")
     """
 
-    def __init__(self, config: CircuitBreakerConfig):
+    def __init__(self, config: CircuitBreakerConfig) -> None:
         """
         Initialize circuit breaker.
 
@@ -141,7 +141,7 @@ class CircuitBreaker:
                 f"Circuit breaker '{self.name}' is OPEN. Service is unavailable."
             )
 
-        # If half-open, track in-flight calls
+            # If half-open, track in-flight calls
         if self.state == CircuitState.HALF_OPEN:
             self.state_machine.half_open_calls_in_flight += 1
 
@@ -164,7 +164,7 @@ class CircuitBreaker:
             else:
                 result = func(*args, **kwargs)
 
-            # Success
+                # Success
             self.state_machine.record_success()
             return result
 
@@ -176,7 +176,7 @@ class CircuitBreaker:
                 )
                 raise
 
-            # Record failure
+                # Record failure
             self.state_machine.record_failure()
             logger.error(
                 f"Circuit breaker '{self.name}' recorded failure: {type(e).__name__}"
@@ -234,7 +234,7 @@ class CircuitBreaker:
                 f"Circuit breaker '{self.name}' is OPEN. Service is unavailable."
             )
 
-        # If half-open, track in-flight calls
+            # If half-open, track in-flight calls
         if self.state == CircuitState.HALF_OPEN:
             self.state_machine.half_open_calls_in_flight += 1
 
@@ -253,7 +253,7 @@ class CircuitBreaker:
             else:
                 result = await func(*args, **kwargs)
 
-            # Success
+                # Success
             async with self._lock:
                 self.state_machine.record_success()
             return result
@@ -266,7 +266,7 @@ class CircuitBreaker:
                 )
                 raise
 
-            # Record failure
+                # Record failure
             async with self._lock:
                 self.state_machine.record_failure()
 
@@ -351,7 +351,7 @@ class CircuitBreaker:
             if self.state == CircuitState.HALF_OPEN:
                 self.state_machine.half_open_calls_in_flight -= 1
 
-    def open(self, reason: str = "Manual override"):
+    def open(self, reason: str = "Manual override") -> None:
         """
         Manually open the circuit.
 
@@ -360,7 +360,7 @@ class CircuitBreaker:
         """
         self.state_machine.force_open(reason)
 
-    def close(self, reason: str = "Manual override"):
+    def close(self, reason: str = "Manual override") -> None:
         """
         Manually close the circuit.
 
@@ -369,7 +369,7 @@ class CircuitBreaker:
         """
         self.state_machine.force_closed(reason)
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset circuit breaker to initial state."""
         self.state_machine.reset()
 

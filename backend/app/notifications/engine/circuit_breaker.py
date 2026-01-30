@@ -35,7 +35,7 @@ class CircuitBreaker:
         failure_threshold: int = 5,
         recovery_timeout_seconds: int = 60,
         success_threshold: int = 2,
-    ):
+    ) -> None:
         """
         Initialize circuit breaker.
 
@@ -64,7 +64,7 @@ class CircuitBreaker:
                 self._close_circuit(channel)
                 logger.info("Circuit breaker closed for channel: %s", channel)
 
-        # Reset failure count on success
+                # Reset failure count on success
         state["failure_count"] = 0
 
     def record_failure(self, channel: str) -> None:

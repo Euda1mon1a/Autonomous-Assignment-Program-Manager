@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class ACGMEAnnualReport:
     """Generates ACGME annual compliance report."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
         self.analytics_engine = AnalyticsEngine(db)
         self.compliance_score = ComplianceScore(db)

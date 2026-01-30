@@ -63,7 +63,7 @@ class TracerConfig:
         exporter_endpoint: str = "http://localhost:4317",
         exporter_insecure: bool = True,
         exporter_headers: dict[str, str] | None = None,
-    ):
+    ) -> None:
         self.service_name = service_name
         self.service_version = service_version
         self.environment = environment
@@ -89,7 +89,7 @@ class TracerManager:
     - Propagator configuration
     """
 
-    def __init__(self, config: TracerConfig):
+    def __init__(self, config: TracerConfig) -> None:
         """
         Initialize tracer manager.
 
@@ -113,7 +113,7 @@ class TracerManager:
         if self._is_initialized:
             raise RuntimeError("Tracer already initialized")
 
-        # Create resource with service metadata
+            # Create resource with service metadata
         resource = Resource.create(
             {
                 SERVICE_NAME: self.config.service_name,
@@ -139,13 +139,13 @@ class TracerManager:
                 f"endpoint={self.config.exporter_endpoint}"
             )
 
-        # Add console exporter for debugging if enabled
+            # Add console exporter for debugging if enabled
         if self.config.console_export:
             console_processor = BatchSpanProcessor(ConsoleSpanExporter())
             self._tracer_provider.add_span_processor(console_processor)
             logger.info("Console span exporter enabled")
 
-        # Set as global tracer provider
+            # Set as global tracer provider
         trace.set_tracer_provider(self._tracer_provider)
 
         # Configure propagators for context propagation
@@ -269,7 +269,7 @@ class TracerManager:
                 f"Supported types: otlp_grpc, otlp_http, jaeger, zipkin, console"
             )
 
-    def _setup_propagators(self):
+    def _setup_propagators(self) -> None:
         """
         Set up trace context propagators.
 
@@ -289,7 +289,7 @@ class TracerManager:
         )
         logger.info("Trace propagators configured: W3C TraceContext, B3, W3C Baggage")
 
-    def _setup_instrumentation(self):
+    def _setup_instrumentation(self) -> None:
         """Set up auto-instrumentation for common libraries."""
         # SQLAlchemy instrumentation for database tracing
         if self.config.enable_sqlalchemy:
@@ -302,7 +302,7 @@ class TracerManager:
             except Exception as e:
                 logger.warning(f"Failed to instrument SQLAlchemy: {e}")
 
-        # Redis instrumentation
+                # Redis instrumentation
         if self.config.enable_redis:
             try:
                 RedisInstrumentor().instrument()
@@ -310,7 +310,7 @@ class TracerManager:
             except Exception as e:
                 logger.warning(f"Failed to instrument Redis: {e}")
 
-        # HTTP client instrumentation
+                # HTTP client instrumentation
         if self.config.enable_http:
             try:
                 RequestsInstrumentor().instrument()
@@ -319,7 +319,7 @@ class TracerManager:
             except Exception as e:
                 logger.warning(f"Failed to instrument HTTP clients: {e}")
 
-    def add_span_processor(self, processor: BatchSpanProcessor):
+    def add_span_processor(self, processor: BatchSpanProcessor) -> None:
         """
         Add a span processor to the tracer provider.
 
@@ -353,7 +353,7 @@ class TracerManager:
 
         return trace.get_tracer(name, version)
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """
         Shutdown tracer provider and flush all spans.
 
@@ -365,8 +365,9 @@ class TracerManager:
             logger.info("Tracer provider shutdown complete")
             self._is_initialized = False
 
+            # Global tracer manager instance
 
-# Global tracer manager instance
+
 _tracer_manager: TracerManager | None = None
 
 
@@ -422,7 +423,7 @@ def get_tracer(name: str, version: str | None = None) -> trace.Tracer:
     return get_tracer_manager().get_tracer(name, version)
 
 
-def shutdown_tracer():
+def shutdown_tracer() -> None:
     """Shutdown the global tracer manager."""
     global _tracer_manager
 

@@ -142,7 +142,7 @@ class DistributedTaskLock:
     end
     """
 
-    def __init__(self, redis_client: redis.Redis | None = None):
+    def __init__(self, redis_client: redis.Redis | None = None) -> None:
         """
         Initialize distributed lock.
 
@@ -194,7 +194,7 @@ class DistributedTaskLock:
                 logger.debug(f"Acquired lock for task {task_id}")
                 return lock_id
 
-            # Lock held by another process, wait and retry
+                # Lock held by another process, wait and retry
             time.sleep(retry_delay)
 
         logger.warning(f"Failed to acquire lock for task {task_id} within {max_wait}s")
@@ -268,7 +268,7 @@ class TaskDependencyGraph:
     Detects circular dependencies and provides topological sorting.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize empty dependency graph."""
         self.graph: dict[str, set[str]] = defaultdict(set)
         self.reverse_graph: dict[str, set[str]] = defaultdict(set)
@@ -289,7 +289,7 @@ class TaskDependencyGraph:
         if task_id not in self.graph:
             self.graph[task_id] = set()
 
-        # Add dependencies
+            # Add dependencies
         for dep in dependencies:
             self.graph[task_id].add(dep.task_id)
             self.reverse_graph[dep.task_id].add(task_id)
@@ -302,7 +302,7 @@ class TaskDependencyGraph:
                 "timeout": dep.timeout,
             }
 
-        # Validate no cycles
+            # Validate no cycles
         if self.has_cycle():
             # Rollback changes
             for dep in dependencies:
@@ -326,14 +326,14 @@ class TaskDependencyGraph:
                 self.reverse_graph[dep_id].discard(task_id)
             del self.graph[task_id]
 
-        # Remove reverse graph entry
+            # Remove reverse graph entry
         if task_id in self.reverse_graph:
             # Remove forward edges
             for dependent_id in self.reverse_graph[task_id]:
                 self.graph[dependent_id].discard(task_id)
             del self.reverse_graph[task_id]
 
-        # Remove metadata
+            # Remove metadata
         self.task_metadata.pop(task_id, None)
 
     def has_cycle(self) -> bool:
@@ -433,7 +433,7 @@ class PriorityTaskQueue:
     Within the same priority level, tasks are executed FIFO.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize priority queue."""
         self.queues: dict[TaskPriority, list[TaskExecution]] = {
             priority: [] for priority in TaskPriority
@@ -552,7 +552,7 @@ class TaskRetryManager:
     with optional jitter to prevent thundering herd problems.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize retry manager."""
         self.retry_history: dict[str, list[datetime]] = defaultdict(list)
 
@@ -605,7 +605,7 @@ class TaskRetryManager:
         else:
             delay = config.initial_delay
 
-        # Apply max delay cap
+            # Apply max delay cap
         delay = min(delay, config.max_delay)
 
         # Add jitter if enabled (±20% random variation)
@@ -656,7 +656,7 @@ class SchedulerHealthMonitor:
     and provides health status reporting.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize health monitor."""
         self.start_time = datetime.utcnow()
         self.metrics = {
@@ -795,7 +795,7 @@ class AdvancedTaskScheduler:
         self,
         redis_client: redis.Redis | None = None,
         max_concurrent_tasks: int = 10,
-    ):
+    ) -> None:
         """
         Initialize advanced scheduler.
 
@@ -830,7 +830,7 @@ class AdvancedTaskScheduler:
         if task_def.task_id in self.task_definitions:
             raise ValueError(f"Task {task_def.task_id} already registered")
 
-        # Add to dependency graph
+            # Add to dependency graph
         self.dependency_graph.add_task(task_def.task_id, task_def.dependencies)
 
         # Store definition
@@ -851,7 +851,7 @@ class AdvancedTaskScheduler:
         if task_id not in self.task_definitions:
             return False
 
-        # Remove from dependency graph
+            # Remove from dependency graph
         self.dependency_graph.remove_task(task_id)
 
         # Remove definition
@@ -936,7 +936,7 @@ class AdvancedTaskScheduler:
         except Exception as e:
             raise ValueError(f"Invalid cron expression: {e}")
 
-        # Schedule next occurrence
+            # Schedule next occurrence
         next_run = cron.get_next(datetime)
 
         if end_time and next_run > end_time:
@@ -973,7 +973,7 @@ class AdvancedTaskScheduler:
             logger.info(f"Cancelled queued task {execution_id}")
             return True
 
-        # Check if running
+            # Check if running
         for task_id, execution in self.running_tasks.items():
             if execution.execution_id == execution_id:
                 execution.status = TaskStatus.CANCELLED
@@ -1023,28 +1023,28 @@ class AdvancedTaskScheduler:
                     await asyncio.sleep(0.1)
                     continue
 
-                # Get next task
+                    # Get next task
                 task_execution = self.task_queue.dequeue()
 
                 if not task_execution:
                     await asyncio.sleep(0.1)
                     continue
 
-                # Check if scheduled time has arrived
+                    # Check if scheduled time has arrived
                 if task_execution.scheduled_time > datetime.utcnow():
                     # Re-queue for later
                     self.task_queue.enqueue(task_execution)
                     await asyncio.sleep(1)
                     continue
 
-                # Check dependencies
+                    # Check dependencies
                 if not self._check_dependencies(task_execution):
                     # Re-queue and wait for dependencies
                     self.task_queue.enqueue(task_execution)
                     await asyncio.sleep(1)
                     continue
 
-                # Execute task
+                    # Execute task
                 asyncio.create_task(self._execute_task(task_execution))
 
             except Exception as e:
@@ -1064,7 +1064,7 @@ class AdvancedTaskScheduler:
         if not task_execution.dependencies:
             return True
 
-        # Check each dependency
+            # Check each dependency
         for dep in task_execution.dependencies:
             # Find dependency in history
             dep_execution = None
@@ -1076,7 +1076,7 @@ class AdvancedTaskScheduler:
             if not dep_execution:
                 return False  # Dependency not executed yet
 
-            # Check dependency type
+                # Check dependency type
             if dep.dependency_type == "completion":
                 if dep_execution.status not in [
                     TaskStatus.COMPLETED,
@@ -1124,7 +1124,7 @@ class AdvancedTaskScheduler:
                 task_execution.lock_id = lock_id
                 self.health_monitor.record_lock_acquisition(True)
 
-            # Get function to execute
+                # Get function to execute
             func = get_job_function(task_def.func_path)
 
             # Execute with timeout if configured
@@ -1138,7 +1138,7 @@ class AdvancedTaskScheduler:
                     func, *task_def.args, **task_def.kwargs
                 )
 
-            # Record success
+                # Record success
             task_execution.status = TaskStatus.COMPLETED
             task_execution.result = result
             task_execution.completed_time = datetime.utcnow()
@@ -1194,7 +1194,7 @@ class AdvancedTaskScheduler:
             if lock_id:
                 self.lock_manager.release(task_execution.task_id, lock_id)
 
-            # Record metrics
+                # Record metrics
             execution_time = time.time() - start_time
             task_execution.metrics["execution_time"] = execution_time
             self.health_monitor.record_execution(task_execution, execution_time)
@@ -1246,12 +1246,12 @@ class AdvancedTaskScheduler:
             if execution.execution_id == execution_id:
                 return self._execution_to_dict(execution)
 
-        # Check history
+                # Check history
         for execution in self.task_history:
             if execution.execution_id == execution_id:
                 return self._execution_to_dict(execution)
 
-        # Check queue
+                # Check queue
         for execution in self.task_queue.task_index.values():
             if execution.execution_id == execution_id:
                 return self._execution_to_dict(execution)
@@ -1288,8 +1288,9 @@ class AdvancedTaskScheduler:
             "metrics": execution.metrics,
         }
 
+        # Global scheduler instance
 
-# Global scheduler instance
+
 _advanced_scheduler: AdvancedTaskScheduler | None = None
 
 

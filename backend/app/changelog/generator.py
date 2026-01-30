@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class VersionHistory:
     """Manages version history storage and retrieval."""
 
-    def __init__(self, storage_path: str = "/tmp/api_versions"):
+    def __init__(self, storage_path: str = "/tmp/api_versions") -> None:
         """
         Initialize version history manager.
 
@@ -105,7 +105,7 @@ class VersionHistory:
             except Exception as e:
                 logger.error(f"Error reading {version_file}: {e}")
 
-        # Sort by saved_at timestamp (newest first)
+                # Sort by saved_at timestamp (newest first)
         versions.sort(key=lambda v: v.get("saved_at", ""), reverse=True)
 
         return versions
@@ -142,7 +142,7 @@ class ChangelogGenerator:
     - Version history tracking
     """
 
-    def __init__(self, storage_path: str = "/tmp/api_versions"):
+    def __init__(self, storage_path: str = "/tmp/api_versions") -> None:
         """
         Initialize changelog generator.
 
@@ -215,7 +215,7 @@ class ChangelogGenerator:
             logger.error(f"New version {new_version} not found")
             return None
 
-        # Generate changelog
+            # Generate changelog
         return self.generate_changelog(
             old_data["schema"],
             new_data["schema"],
@@ -244,7 +244,7 @@ class ChangelogGenerator:
         if version is None:
             version = current_schema.get("info", {}).get("version", "unknown")
 
-        # Save version
+            # Save version
         self.version_history.save_version(version, current_schema, metadata)
 
         return version
@@ -329,14 +329,14 @@ class ChangelogGenerator:
                 )
                 lines.append("")
 
-            # Migration guide
+                # Migration guide
             if change.migration_guide:
                 lines.append("**Action Required:**")
                 lines.append("")
                 lines.append(change.migration_guide)
                 lines.append("")
 
-            # Technical details
+                # Technical details
             if change.old_value is not None or change.new_value is not None:
                 lines.append("<details>")
                 lines.append("<summary>Technical Details</summary>")
@@ -350,7 +350,7 @@ class ChangelogGenerator:
                 lines.append("</details>")
                 lines.append("")
 
-        # Testing recommendations
+                # Testing recommendations
         lines.append("## Testing Recommendations")
         lines.append("")
         lines.append("After completing the migration, ensure you:")

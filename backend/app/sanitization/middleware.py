@@ -59,7 +59,7 @@ class SanitizationConfig:
         excluded_paths: set[str] | None = None,
         excluded_fields: set[str] | None = None,
         detect_only: bool = False,
-    ):
+    ) -> None:
         """
         Initialize sanitization configuration.
 
@@ -136,7 +136,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
         self,
         app: ASGIApp,
         config: SanitizationConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize sanitization middleware.
 
@@ -162,7 +162,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
         if not self.config.enabled:
             return await call_next(request)
 
-        # Skip excluded paths
+            # Skip excluded paths
         if self._is_excluded_path(request.url.path):
             return await call_next(request)
 
@@ -222,11 +222,11 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
         if self.config.sanitize_query_params and request.query_params:
             await self._sanitize_query_params(request)
 
-        # Sanitize path parameters
+            # Sanitize path parameters
         if self.config.sanitize_path_params and hasattr(request, "path_params"):
             await self._sanitize_path_params(request)
 
-        # Sanitize request body
+            # Sanitize request body
         if self.config.sanitize_body and request.method in {"POST", "PUT", "PATCH"}:
             await self._sanitize_body(request)
 
@@ -246,7 +246,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
                     sanitized_value = self._sanitize_value(key, value)
                     sanitized_params[key] = sanitized_value
 
-            # Update query params (note: this modifies the request scope)
+                    # Update query params (note: this modifies the request scope)
             request._query_params = sanitized_params
         except Exception as e:
             logger.error(f"Error sanitizing query params: {e}")
@@ -285,14 +285,14 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
             if not body:
                 return
 
-            # Try to parse as JSON
+                # Try to parse as JSON
             try:
                 data = json.loads(body)
             except json.JSONDecodeError:
                 # Not JSON, skip sanitization
                 return
 
-            # Sanitize data
+                # Sanitize data
             sanitized_data = self._sanitize_dict(data)
 
             # Update request body
@@ -370,7 +370,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
         if not isinstance(value, str) or not value:
             return value
 
-        # Check for attacks first
+            # Check for attacks first
         threats_detected = []
 
         if detect_xss(value, strict=self.config.strict_mode):
@@ -379,7 +379,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
         if detect_sql_injection(value, strict=self.config.strict_mode):
             threats_detected.append("SQL Injection")
 
-        # Log threats
+            # Log threats
         if threats_detected:
             logger.warning(
                 f"Potential threats detected in field '{field_name}': "
@@ -395,11 +395,11 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
             if self.config.detect_only:
                 return value
 
-        # Normalize Unicode
+                # Normalize Unicode
         if self.config.normalize_unicode:
             value = normalize_unicode(value)
 
-        # Truncate if too long
+            # Truncate if too long
         if len(value) > self.config.max_string_length:
             value = value[: self.config.max_string_length]
             logger.warning(
@@ -407,7 +407,7 @@ class SanitizationMiddleware(BaseHTTPMiddleware):
                 f"{self.config.max_string_length} characters"
             )
 
-        # Sanitize based on field type
+            # Sanitize based on field type
         allow_html = field_name.lower() in {
             f.lower() for f in self.config.allowed_html_fields
         }

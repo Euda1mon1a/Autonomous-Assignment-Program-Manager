@@ -55,7 +55,7 @@ class PerformanceReporter:
     comprehensive reports.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize performance reporter."""
         pass
 
@@ -149,7 +149,7 @@ class PerformanceReporter:
                 "max_memory_mb": max(memory_usage),
             }
 
-        # SQL queries summary
+            # SQL queries summary
         if sql_queries:
             query_durations = [q.duration_ms for q in sql_queries if q.duration_ms]
             failed = [q for q in sql_queries if q.error]
@@ -163,7 +163,7 @@ class PerformanceReporter:
                 "failed_queries": len(failed),
             }
 
-        # Requests summary
+            # Requests summary
         if requests:
             request_durations = [r.duration_ms for r in requests if r.duration_ms]
             failed = [r for r in requests if r.status_code and r.status_code >= 400]
@@ -180,7 +180,7 @@ class PerformanceReporter:
                 ),
             }
 
-        # Traces summary
+            # Traces summary
         if traces:
             trace_durations = [t.duration_ms for t in traces if t.duration_ms]
 
@@ -374,7 +374,7 @@ class FlameGraphGenerator:
     Creates data structures suitable for flame graph visualization.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize flame graph generator."""
         pass
 
@@ -391,7 +391,7 @@ class FlameGraphGenerator:
         if not result.stats:
             return {}
 
-        # Extract call stack from pstats
+            # Extract call stack from pstats
         flame_data = {
             "name": result.function_name,
             "value": result.duration_seconds * 1000,
@@ -415,14 +415,14 @@ class FlameGraphGenerator:
         if not traces:
             return {}
 
-        # Group traces by trace_id
+            # Group traces by trace_id
         from collections import defaultdict
 
         trace_groups = defaultdict(list)
         for trace in traces:
             trace_groups[trace.trace_id].append(trace)
 
-        # Build tree structure for the first trace
+            # Build tree structure for the first trace
         first_trace_id = next(iter(trace_groups))
         spans = trace_groups[first_trace_id]
 

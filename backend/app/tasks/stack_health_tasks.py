@@ -149,7 +149,7 @@ def check_migration_state() -> dict[str, Any]:
     if not BACKEND_DIR.exists():
         return {"status": "skip", "message": "Backend directory not found", "count": 0}
 
-    # Check heads
+        # Check heads
     code_heads, stdout_heads, stderr_heads = run_command(
         ["alembic", "heads"], cwd=BACKEND_DIR, timeout=30
     )
@@ -170,7 +170,7 @@ def check_migration_state() -> dict[str, Any]:
             "count": len(heads) - 1,
         }
 
-    # Check current (may fail if DB not running)
+        # Check current (may fail if DB not running)
     code_current, stdout_current, _ = run_command(
         ["alembic", "current"], cwd=BACKEND_DIR, timeout=30
     )
@@ -197,7 +197,7 @@ def check_docker_health() -> dict[str, Any]:
     if code != 0:
         return {"status": "warn", "message": "Docker not running", "count": 0}
 
-    # Parse container statuses
+        # Parse container statuses
     unhealthy = 0
     total = 0
 
@@ -300,12 +300,12 @@ def stack_health_check(self, write_report: bool = True) -> dict[str, Any]:
             logger.warning(f"Failed to write report: {e}")
             result["report_error"] = str(e)
 
-    # Log summary
+            # Log summary
     logger.info(f"Stack health check complete: {status}")
     for name, check in checks.items():
         logger.info(f"  {name}: {check.get('status')} ({check.get('count', 0)} issues)")
 
-    # Alert on RED status
+        # Alert on RED status
     if status == "RED":
         logger.warning(
             "Stack health is RED - errors detected in codebase/infrastructure"
@@ -398,8 +398,9 @@ def quick_stack_check(self) -> dict[str, Any]:
         "checks": checks,
     }
 
+    # Beat schedule for stack health tasks
 
-# Beat schedule for stack health tasks
+
 STACK_HEALTH_BEAT_SCHEDULE = {
     # Stack health check every 4 hours
     "stack-health-periodic": {
@@ -435,7 +436,7 @@ def get_stack_health_beat_schedule() -> dict:
     return STACK_HEALTH_BEAT_SCHEDULE
 
 
-def configure_celery_for_stack_health(celery_app_instance):
+def configure_celery_for_stack_health(celery_app_instance) -> None:
     """
     Configure Celery app with stack health tasks.
 

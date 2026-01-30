@@ -54,12 +54,12 @@ class APIVersion(str, Enum):
         if not version:
             return None
 
-        # Normalize: remove 'v' prefix and get major version
+            # Normalize: remove 'v' prefix and get major version
         version = version.lower().strip()
         if version.startswith("v"):
             version = version[1:]
 
-        # Extract major version number
+            # Extract major version number
         major = version.split(".")[0]
 
         # Map to enum
@@ -92,8 +92,9 @@ class APIVersion(str, Enum):
             return NotImplemented
         return self.numeric <= other.numeric
 
+        # Default version when none specified
 
-# Default version when none specified
+
 DEFAULT_VERSION = APIVersion.V1
 
 # Latest stable version
@@ -120,7 +121,7 @@ class VersioningMiddleware(BaseHTTPMiddleware):
         app,
         default_version: APIVersion = DEFAULT_VERSION,
         latest_version: APIVersion = LATEST_VERSION,
-    ):
+    ) -> None:
         """
         Initialize versioning middleware.
 
@@ -164,7 +165,7 @@ class VersioningMiddleware(BaseHTTPMiddleware):
                     f"method={request.method}, path={request.url.path}"
                 )
 
-            # Process request
+                # Process request
             response = await call_next(request)
 
             # Add version information to response headers
@@ -198,17 +199,17 @@ class VersioningMiddleware(BaseHTTPMiddleware):
         if url_version:
             return url_version
 
-        # 2. Check Accept-Version header
+            # 2. Check Accept-Version header
         header_version = self._extract_from_header(request.headers)
         if header_version:
             return header_version
 
-        # 3. Check query parameter
+            # 3. Check query parameter
         query_version = self._extract_from_query(request.query_params)
         if query_version:
             return query_version
 
-        # 4. Default version
+            # 4. Default version
         return self.default_version
 
     def _extract_from_url(self, path: str) -> APIVersion | None:

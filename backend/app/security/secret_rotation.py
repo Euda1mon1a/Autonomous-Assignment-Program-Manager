@@ -231,7 +231,7 @@ class SecretRotationService:
         ),
     }
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize secret rotation service.
 
@@ -289,7 +289,7 @@ class SecretRotationService:
             logger.info(f"Rotation not needed for {secret_type.value}")
             raise ValueError(f"Rotation not due for {secret_type.value}")
 
-        # Generate new secret
+            # Generate new secret
         new_secret = self._generate_secret(secret_type)
         old_secret = await self._get_current_secret(secret_type)
 
@@ -316,7 +316,7 @@ class SecretRotationService:
             if not handler:
                 raise NotImplementedError(f"No handler for {secret_type.value}")
 
-            # Perform rotation
+                # Perform rotation
             await handler(old_secret, new_secret, config)
 
             # If grace period is configured, enter grace period
@@ -339,7 +339,7 @@ class SecretRotationService:
                 history.status = RotationStatus.COMPLETED
                 self._active_secrets[secret_type] = [new_secret]
 
-            # Record completion
+                # Record completion
             completed_at = datetime.utcnow()
             history.completed_at = completed_at
             self.db.commit()
@@ -413,7 +413,7 @@ class SecretRotationService:
                         f"{secret_type.value}"
                     ) from e
 
-            # Send failure notification
+                    # Send failure notification
             await self._send_rotation_notification(
                 secret_type=secret_type,
                 status="failed",
@@ -464,7 +464,7 @@ class SecretRotationService:
         if not history:
             raise ValueError(f"No active grace period for {secret_type.value}")
 
-        # Check if grace period has ended
+            # Check if grace period has ended
         if history.grace_period_ends and datetime.utcnow() < history.grace_period_ends:
             logger.warning(
                 f"Grace period for {secret_type.value} has not ended yet "
@@ -479,7 +479,7 @@ class SecretRotationService:
                     self._active_secrets[secret_type][-1]
                 ]
 
-            # Update status
+                # Update status
             history.status = RotationStatus.COMPLETED
             self.db.commit()
 
@@ -541,7 +541,7 @@ class SecretRotationService:
                 }
                 continue
 
-            # Calculate days since last rotation
+                # Calculate days since last rotation
             days_since = (datetime.utcnow() - last_rotation.started_at).days
             days_until_due = config.rotation_interval_days - days_since
 
@@ -651,7 +651,7 @@ class SecretRotationService:
         if not config:
             return False
 
-        # Get last rotation
+            # Get last rotation
         last_rotation = (
             self.db.query(SecretRotationHistory)
             .filter(
@@ -670,7 +670,7 @@ class SecretRotationService:
         if not last_rotation:
             return True  # Never rotated
 
-        # Check if rotation interval has passed
+            # Check if rotation interval has passed
         days_since = (datetime.utcnow() - last_rotation.started_at).days
         return days_since >= config.rotation_interval_days
 
@@ -783,7 +783,7 @@ class SecretRotationService:
             if details.get("action_required"):
                 message += f"\nAction Required: {details['action_required']}"
 
-            # Log structured data for monitoring
+                # Log structured data for monitoring
             logger.info(
                 "Secret rotation result notification",
                 extra={
@@ -834,7 +834,7 @@ class SecretRotationService:
         except Exception as e:
             logger.warning(f"Failed to send rotation notification: {e}", exc_info=True)
 
-    # Rotation handlers for each secret type
+            # Rotation handlers for each secret type
 
     async def _rotate_jwt_key(
         self,
@@ -1010,8 +1010,7 @@ class SecretRotationService:
 
         pass
 
-
-# Convenience functions for common operations
+        # Convenience functions for common operations
 
 
 async def rotate_jwt_key(

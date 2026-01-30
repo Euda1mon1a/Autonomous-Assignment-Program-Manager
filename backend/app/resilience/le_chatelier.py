@@ -249,7 +249,7 @@ class LeChatelierAnalyzer:
         base_compensation_rate: float = 0.5,  # 50% natural compensation
         compensation_cost_multiplier: float = 1.5,  # 50% surcharge for stress
         sustainability_threshold: float = 0.7,
-    ):
+    ) -> None:
         self.base_compensation_rate = base_compensation_rate
         self.compensation_cost_multiplier = compensation_cost_multiplier
         self.sustainability_threshold = sustainability_threshold
@@ -454,7 +454,7 @@ class LeChatelierAnalyzer:
         else:
             burnout_risk = 0.0
 
-        # Days until exhaustion
+            # Days until exhaustion
         if active_compensations:
             min_sustainability = min(
                 c.sustainability_days for c in active_compensations
@@ -466,7 +466,7 @@ class LeChatelierAnalyzer:
         else:
             days_until_exhaustion = -1  # No limit
 
-        # Determine equilibrium state
+            # Determine equilibrium state
         if new_coverage >= 0.9 and burnout_risk < 0.3:
             equilibrium_state = EquilibriumState.STABLE
         elif new_coverage >= 0.8 and burnout_risk < 0.5:
@@ -571,7 +571,7 @@ class LeChatelierAnalyzer:
         else:
             additional_intervention = 0.0
 
-        # Build recommendations
+            # Build recommendations
         recommendations = []
 
         if predicted_coverage < 0.7:
@@ -603,7 +603,7 @@ class LeChatelierAnalyzer:
             )
             recommendations.append("Consider external support or service reduction")
 
-        # Sustainability assessment
+            # Sustainability assessment
         if predicted_coverage >= 0.9 and burnout_increase < 0.2:
             sustainability = "System can absorb this stress sustainably"
         elif predicted_coverage >= 0.8 and burnout_increase < 0.4:
@@ -730,7 +730,7 @@ class LeChatelierAnalyzer:
         else:
             current_state = EquilibriumState.CRITICAL
 
-        # Get latest shift
+            # Get latest shift
         latest_shift = self.shifts[-1] if self.shifts else None
 
         # Calculate sustainability
@@ -745,7 +745,7 @@ class LeChatelierAnalyzer:
         else:
             days_until_exhaustion = -1
 
-        # Sustainability score
+            # Sustainability score
         if current_state == EquilibriumState.STABLE:
             sustainability_score = 1.0
         elif current_state == EquilibriumState.COMPENSATING:
@@ -755,7 +755,7 @@ class LeChatelierAnalyzer:
         else:
             sustainability_score = 0.2
 
-        # Build recommendations
+            # Build recommendations
         recommendations = []
 
         if current_state == EquilibriumState.CRITICAL:

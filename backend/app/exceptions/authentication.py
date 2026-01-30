@@ -16,7 +16,7 @@ class AuthenticationError(UnauthorizedError):
         self,
         message: str = "Authentication failed",
         **context: Any,
-    ):
+    ) -> None:
         """Initialize authentication error.
 
         Args:
@@ -35,7 +35,7 @@ class InvalidCredentialsError(AuthenticationError):
         message: str = "Invalid email or password",
         username: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize invalid credentials error.
 
         Args:
@@ -56,7 +56,7 @@ class TokenExpiredError(AuthenticationError):
         token_type: str = "access",
         expired_at: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize token expired error.
 
         Args:
@@ -79,7 +79,7 @@ class InvalidTokenError(AuthenticationError):
         token_type: str = "access",
         reason: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize invalid token error.
 
         Args:
@@ -102,7 +102,7 @@ class TokenRevokededError(AuthenticationError):
         token_type: str = "access",
         revoked_at: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize token revoked error.
 
         Args:
@@ -125,7 +125,7 @@ class PermissionDeniedError(ForbiddenError):
         required_permission: str | None = None,
         user_role: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize permission denied error.
 
         Args:
@@ -149,7 +149,7 @@ class InsufficientRoleError(PermissionDeniedError):
         required_role: str | None = None,
         user_role: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize insufficient role error.
 
         Args:
@@ -175,7 +175,7 @@ class AccountDisabledError(AuthenticationError):
         user_id: str | None = None,
         disabled_at: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize account disabled error.
 
         Args:
@@ -197,7 +197,7 @@ class MFARequiredError(AuthenticationError):
         message: str = "Multi-factor authentication required",
         mfa_methods: list[str] | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize MFA required error.
 
         Args:
@@ -217,7 +217,7 @@ class MFAInvalidError(AuthenticationError):
         message: str = "Invalid multi-factor authentication code",
         mfa_method: str | None = None,
         **context: Any,
-    ):
+    ) -> None:
         """Initialize MFA invalid error.
 
         Args:

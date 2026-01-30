@@ -48,7 +48,7 @@ class MetricsCollector:
     - Events: timestamped occurrences with metadata
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize empty metrics storage."""
         self._time_series: dict[str, list[TimeSeriesPoint]] = {}
         self._counters: dict[str, int] = {}
@@ -192,7 +192,7 @@ class MetricsCollector:
                 p99=val,
             )
 
-        # Calculate statistics
+            # Calculate statistics
         mean_val = statistics.mean(values)
         std_val = statistics.stdev(values)
         min_val = min(values)
@@ -294,7 +294,7 @@ class SimulationMetrics:
     like faculty counts, coverage rates, zone status, and cascade events.
     """
 
-    def __init__(self, collector: MetricsCollector):
+    def __init__(self, collector: MetricsCollector) -> None:
         """
         Initialize simulation metrics.
 

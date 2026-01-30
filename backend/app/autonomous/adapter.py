@@ -95,7 +95,7 @@ class ParameterAdapter:
     # Algorithm rotation order
     ALGORITHM_ORDER = ["greedy", "cp_sat", "pulp", "hybrid"]
 
-    def __init__(self, custom_rules: list[AdaptationRule] | None = None):
+    def __init__(self, custom_rules: list[AdaptationRule] | None = None) -> None:
         """
         Initialize adapter with default and custom rules.
 
@@ -105,7 +105,7 @@ class ParameterAdapter:
         self.rules = self._build_default_rules()
         if custom_rules:
             self.rules.extend(custom_rules)
-        # Sort by priority (highest first)
+            # Sort by priority (highest first)
         self.rules.sort(key=lambda r: -r.priority)
 
     def adapt(
@@ -134,7 +134,7 @@ class ParameterAdapter:
                 # Rule evaluation failed, skip it
                 continue
 
-        # No rule matched, return unchanged
+                # No rule matched, return unchanged
         return current_params
 
     def _apply_rule(
@@ -288,7 +288,7 @@ class ParameterAdapter:
 
         return rules
 
-    # Condition functions
+        # Condition functions
 
     def _is_stagnating(
         self,
@@ -299,7 +299,7 @@ class ParameterAdapter:
         if len(history) < 5:
             return False
 
-        # Check if last 5 iterations have similar scores
+            # Check if last 5 iterations have similar scores
         recent_scores = [r.score for r in history[-5:]]
         score_range = max(recent_scores) - min(recent_scores)
         return score_range < 0.01  # Less than 1% variation
@@ -373,7 +373,7 @@ class ParameterAdapter:
         if len(history) < 10:
             return False
 
-        # Check if last 10 iterations had no improvement
+            # Check if last 10 iterations had no improvement
         if history:
             recent_best = max(r.score for r in history[-10:])
             older_best = max((r.score for r in history[:-10]), default=0)
@@ -393,7 +393,7 @@ class BayesianAdapter(ParameterAdapter):
     It requires scipy for Gaussian process implementation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Bayesian adapter."""
         super().__init__()
         self._observations: list[tuple[dict, float]] = []
@@ -421,7 +421,7 @@ class BayesianAdapter(ParameterAdapter):
         if len(self._observations) < 10:
             return super().adapt(current_params, evaluation, history)
 
-        # Try Bayesian optimization
+            # Try Bayesian optimization
         try:
             return self._bayesian_suggest(current_params)
         except Exception:

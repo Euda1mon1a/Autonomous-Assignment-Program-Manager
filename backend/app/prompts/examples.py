@@ -14,7 +14,7 @@ from app.prompts import (
 )
 
 
-def example_swap_request():
+def example_swap_request() -> None:
     """Example: User requests a schedule swap."""
     print("=" * 80)
     print("EXAMPLE 1: Swap Request")
@@ -48,7 +48,7 @@ Potential swap candidates:
     print("\n")
 
 
-def example_compliance_check():
+def example_compliance_check() -> None:
     """Example: User checks work hour compliance."""
     print("=" * 80)
     print("EXAMPLE 2: Compliance Check")
@@ -123,7 +123,7 @@ def example_compliance_check():
     print(f"FIRST 500 CHARS:\n{prompt[:500]}...\n")
 
 
-def example_coverage_gap():
+def example_coverage_gap() -> None:
     """Example: Checking for coverage gaps."""
     print("=" * 80)
     print("EXAMPLE 3: Coverage Gap Analysis")
@@ -163,7 +163,7 @@ ACGME Concerns:
     print(f"GENERATED PROMPT:\n{prompt}\n")
 
 
-def example_error_handling():
+def example_error_handling() -> None:
     """Example: Error handling prompts."""
     print("=" * 80)
     print("EXAMPLE 4: Error Handling")
@@ -196,7 +196,7 @@ def example_error_handling():
     print(f"{error3}\n")
 
 
-def example_few_shot():
+def example_few_shot() -> None:
     """Example: Using few-shot examples."""
     print("=" * 80)
     print("EXAMPLE 5: Few-Shot Examples")
@@ -226,7 +226,7 @@ def example_few_shot():
     print("Examples are included in the prompt to guide the model.\n")
 
 
-def example_tool_response():
+def example_tool_response() -> None:
     """Example: Building a prompt to synthesize tool results."""
     print("=" * 80)
     print("EXAMPLE 6: Tool Response Synthesis")
@@ -270,7 +270,7 @@ def example_tool_response():
     print(f"\nRESPONSE SYNTHESIS PROMPT:\n{response_prompt}\n")
 
 
-def example_custom_task():
+def example_custom_task() -> None:
     """Example: Adding a custom task type."""
     print("=" * 80)
     print("EXAMPLE 7: Custom Task Prompt")
@@ -306,7 +306,7 @@ When responding:
     print("Generated prompt includes custom task instructions.\n")
 
 
-def main():
+def main() -> None:
     """Run all examples."""
     print("\n")
     print("=" * 80)

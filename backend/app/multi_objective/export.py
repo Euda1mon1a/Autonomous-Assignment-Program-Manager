@@ -217,7 +217,7 @@ class HolographicExporter:
     and interactive decision support interfaces.
     """
 
-    def __init__(self, objectives: list[ObjectiveConfig]):
+    def __init__(self, objectives: list[ObjectiveConfig]) -> None:
         """
         Initialize exporter.
 
@@ -329,7 +329,7 @@ class HolographicExporter:
                 )
             )
 
-        # Export solutions
+            # Export solutions
         sol_exports = []
         for i, sol in enumerate(frontier.solutions):
             sol_export = self._build_solution_export(sol)
@@ -342,7 +342,7 @@ class HolographicExporter:
                     sol.objective_values.get(self.active_objectives[2].name, 0.0),
                 ]
 
-            # Color based on feasibility and rank
+                # Color based on feasibility and rank
             if not sol.is_feasible:
                 sol_export.color = "#EF4444"  # Red
             elif sol.rank == 0:
@@ -352,7 +352,7 @@ class HolographicExporter:
 
             sol_exports.append(sol_export)
 
-        # Find frontier, extremes, knee
+            # Find frontier, extremes, knee
         frontier_indices = list(range(len(frontier.solutions)))  # All on Pareto front
         extreme_sols = frontier.get_extreme_solutions()
         extreme_indices = [
@@ -373,7 +373,7 @@ class HolographicExporter:
         if format == ExportFormat.FULL:
             edges = self._build_tradeoff_edges(frontier)
 
-        # Quality metrics
+            # Quality metrics
         quality = self.quality_evaluator.evaluate(frontier)
 
         # Ideal and nadir
@@ -509,20 +509,20 @@ class HolographicExporter:
             else:
                 colors.append("#6B7280")
 
-            # Size based on crowding distance
+                # Size based on crowding distance
             if sol.crowding_distance == float("inf"):
                 sizes.append(1.5)  # Boundary solutions larger
             else:
                 sizes.append(1.0)
 
-            # Label
+                # Label
             label_parts = [f"ID: {str(sol.id)[:8]}"]
             for obj in self.active_objectives[:3]:
                 val = sol.objective_values.get(obj.name, 0.0)
                 label_parts.append(f"{obj.display_name}: {val:.3f}")
             labels.append("\n".join(label_parts))
 
-        # Calculate ranges
+            # Calculate ranges
         if points:
             points_array = np.array(points)
             x_range = [float(points_array[:, 0].min()), float(points_array[:, 0].max())]

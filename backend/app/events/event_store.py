@@ -126,10 +126,9 @@ class EventSnapshot(Base):
         Index("idx_aggregate_snapshot", "aggregate_id", "aggregate_version"),
     )
 
-
-# =============================================================================
-# Event Store Service
-# =============================================================================
+    # =============================================================================
+    # Event Store Service
+    # =============================================================================
 
 
 class EventStore:
@@ -139,7 +138,7 @@ class EventStore:
     This is the main interface for working with the event log.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize Event Store.
 
@@ -178,7 +177,7 @@ class EventStore:
                 f"but current version is {current_version}"
             )
 
-        # Create stored event
+            # Create stored event
         stored_event = StoredEvent(
             event_id=event.metadata.event_id,
             event_type=event.metadata.event_type,
@@ -232,7 +231,7 @@ class EventStore:
         if not events:
             return []
 
-        # Verify all events are for same aggregate
+            # Verify all events are for same aggregate
         aggregate_ids = {e.aggregate_id for e in events}
         if len(aggregate_ids) > 1:
             raise ValueError("All events must be for the same aggregate")
@@ -294,7 +293,7 @@ class EventStore:
         if to_timestamp:
             query = query.filter(StoredEvent.timestamp <= to_timestamp)
 
-        # Order by sequence
+            # Order by sequence
         query = query.order_by(StoredEvent.sequence_number)
 
         if limit:
@@ -533,10 +532,9 @@ class EventStore:
         # Reconstruct event
         return event_class.from_dict(event_data)
 
-
-# =============================================================================
-# Exceptions
-# =============================================================================
+        # =============================================================================
+        # Exceptions
+        # =============================================================================
 
 
 class ConcurrencyError(Exception):
@@ -544,10 +542,9 @@ class ConcurrencyError(Exception):
 
     pass
 
-
-# =============================================================================
-# Singleton Access
-# =============================================================================
+    # =============================================================================
+    # Singleton Access
+    # =============================================================================
 
 
 _event_store_instance: EventStore | None = None
@@ -565,10 +562,9 @@ def get_event_store(db: Session) -> EventStore:
     """
     return EventStore(db)
 
-
-# =============================================================================
-# Event Store Statistics
-# =============================================================================
+    # =============================================================================
+    # Event Store Statistics
+    # =============================================================================
 
 
 async def get_event_statistics(db: Session) -> dict[str, Any]:
@@ -594,7 +590,7 @@ async def get_event_statistics(db: Session) -> dict[str, Any]:
     for event_type, count in results:
         event_counts[event_type] = count
 
-    # Recent events
+        # Recent events
     recent_events = (
         db.query(StoredEvent).order_by(desc(StoredEvent.timestamp)).limit(10).all()
     )

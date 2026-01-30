@@ -37,7 +37,7 @@ class BatchProcessor:
         batch_size: int = 100,
         max_concurrent_batches: int = 5,
         stop_on_error: bool = False,
-    ):
+    ) -> None:
         """Initialize batch processor.
 
         Args:
@@ -109,7 +109,8 @@ class BatchProcessor:
                 batches_processed += 1
                 return batch_results, batch_errors
 
-        # Process all batches
+                # Process all batches
+
         batch_tasks = [process_batch(idx, batch) for idx, batch in enumerate(batches)]
 
         batch_outputs = await asyncio.gather(*batch_tasks, return_exceptions=True)
@@ -125,7 +126,7 @@ class BatchProcessor:
                 results.extend(batch_results)
                 errors.extend(batch_errors)
 
-        # Calculate duration
+                # Calculate duration
         duration = (datetime.utcnow() - start_time).total_seconds()
 
         logger.info(
@@ -186,7 +187,7 @@ class StreamingBatchProcessor:
         batch_size: int = 100,
         max_queue_size: int = 1000,
         flush_interval: float = 5.0,
-    ):
+    ) -> None:
         """Initialize streaming batch processor.
 
         Args:
@@ -202,7 +203,7 @@ class StreamingBatchProcessor:
         self._running = False
         self._worker_task: asyncio.Task | None = None
 
-    async def start(self, processor: Callable[[Sequence[T]], Any]):
+    async def start(self, processor: Callable[[Sequence[T]], Any]) -> None:
         """Start the streaming processor.
 
         Args:
@@ -218,7 +219,7 @@ class StreamingBatchProcessor:
 
         logger.info("Streaming batch processor started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the streaming processor."""
         self._running = False
 
@@ -226,7 +227,7 @@ class StreamingBatchProcessor:
         if self.current_batch:
             await self._flush_batch()
 
-        # Wait for worker to finish
+            # Wait for worker to finish
         if self._worker_task:
             self._worker_task.cancel()
             try:
@@ -236,7 +237,7 @@ class StreamingBatchProcessor:
 
         logger.info("Streaming batch processor stopped")
 
-    async def add(self, item: T):
+    async def add(self, item: T) -> None:
         """Add item to processing queue.
 
         Args:
@@ -244,7 +245,7 @@ class StreamingBatchProcessor:
         """
         await self.queue.put(item)
 
-    async def _worker(self):
+    async def _worker(self) -> None:
         """Worker loop to collect and process batches."""
         last_flush = datetime.utcnow()
 
@@ -260,7 +261,7 @@ class StreamingBatchProcessor:
                 except TimeoutError:
                     pass
 
-                # Check if batch is full or flush interval reached
+                    # Check if batch is full or flush interval reached
                 now = datetime.utcnow()
                 batch_full = len(self.current_batch) >= self.batch_size
                 time_to_flush = (
@@ -276,7 +277,7 @@ class StreamingBatchProcessor:
             except Exception as e:
                 logger.error(f"Streaming processor error: {e}", exc_info=True)
 
-    async def _flush_batch(self):
+    async def _flush_batch(self) -> None:
         """Flush current batch."""
         if not self.current_batch or not self.processor:
             return

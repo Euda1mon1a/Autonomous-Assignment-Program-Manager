@@ -11,7 +11,7 @@ from app.repositories.base import BaseRepository
 class BlockAssignmentRepository(BaseRepository[BlockAssignment]):
     """Repository for BlockAssignment entity operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(BlockAssignment, db)
 
     def get_by_id_with_relations(self, id: UUID) -> BlockAssignment | None:

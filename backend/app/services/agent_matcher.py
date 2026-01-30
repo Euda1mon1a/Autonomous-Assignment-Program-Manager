@@ -71,7 +71,7 @@ class AgentMatcher:
         self,
         agents_dir: Path | None = None,
         similarity_threshold: float = 0.3,
-    ):
+    ) -> None:
         """Initialize agent matcher.
 
         Args:
@@ -145,14 +145,14 @@ class AgentMatcher:
                 archetype = line.split(":")[-1].strip().strip("*")
                 break
 
-        # Extract authority level
+                # Extract authority level
         authority_level = "Propose-Only"  # Default
         for line in content.split("\n"):
             if "Authority Level:" in line:
                 authority_level = line.split(":")[-1].strip().strip("*")
                 break
 
-        # Extract capabilities from charter and responsibilities sections
+                # Extract capabilities from charter and responsibilities sections
         capabilities_parts = []
 
         # Get role description
@@ -162,7 +162,7 @@ class AgentMatcher:
                 capabilities_parts.append(role)
                 break
 
-        # Get primary responsibilities
+                # Get primary responsibilities
         in_responsibilities = False
         for line in content.split("\n"):
             if "Primary Responsibilities:" in line:
@@ -208,7 +208,7 @@ class AgentMatcher:
             logger.warning("No agents loaded, cannot match task")
             return []
 
-        # Get task embedding (cached for repeated queries)
+            # Get task embedding (cached for repeated queries)
         task_embedding = np.array(
             get_cached_embedding(task_description), dtype=np.float32
         )
@@ -233,7 +233,7 @@ class AgentMatcher:
                     )
                 )
 
-        # Sort by similarity (descending)
+                # Sort by similarity (descending)
         matches.sort(key=lambda m: m.similarity_score, reverse=True)
 
         return matches[:top_k]
@@ -320,8 +320,9 @@ class AgentMatcher:
             else "low",
         }
 
+        # Module-level singleton for convenience
 
-# Module-level singleton for convenience
+
 _matcher: AgentMatcher | None = None
 
 

@@ -13,7 +13,7 @@ class AppException(Exception):
     handler to return appropriate HTTP error responses.
     """
 
-    def __init__(self, message: str, status_code: int = 400):
+    def __init__(self, message: str, status_code: int = 400) -> None:
         """Initialize application exception.
 
         Args:
@@ -28,7 +28,7 @@ class AppException(Exception):
 class NotFoundError(AppException):
     """Resource not found error (HTTP 404)."""
 
-    def __init__(self, message: str = "Resource not found"):
+    def __init__(self, message: str = "Resource not found") -> None:
         """Initialize not found error.
 
         Args:
@@ -40,7 +40,7 @@ class NotFoundError(AppException):
 class ValidationError(AppException):
     """Validation error for invalid input (HTTP 422)."""
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         """Initialize validation error.
 
         Args:
@@ -52,7 +52,7 @@ class ValidationError(AppException):
 class ConflictError(AppException):
     """Resource conflict error (HTTP 409)."""
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         """Initialize conflict error.
 
         Args:
@@ -64,7 +64,7 @@ class ConflictError(AppException):
 class UnauthorizedError(AppException):
     """Unauthorized access error (HTTP 401)."""
 
-    def __init__(self, message: str = "Authentication required"):
+    def __init__(self, message: str = "Authentication required") -> None:
         """Initialize unauthorized error.
 
         Args:
@@ -76,7 +76,7 @@ class UnauthorizedError(AppException):
 class ForbiddenError(AppException):
     """Forbidden access error (HTTP 403)."""
 
-    def __init__(self, message: str = "Access forbidden"):
+    def __init__(self, message: str = "Access forbidden") -> None:
         """Initialize forbidden error.
 
         Args:
@@ -97,7 +97,7 @@ class ActivityNotFoundError(AppException):
         This verifies all required activity codes exist before generation.
     """
 
-    def __init__(self, code: str, context: str = ""):
+    def __init__(self, code: str, context: str = "") -> None:
         """Initialize activity not found error.
 
         Args:

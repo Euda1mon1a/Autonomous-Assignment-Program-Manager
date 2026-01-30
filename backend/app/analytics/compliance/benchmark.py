@@ -15,11 +15,12 @@ logger = logging.getLogger(__name__)
 class ComplianceBenchmark:
     """Benchmarks compliance against standards."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
         self.compliance_score = ComplianceScore(db)
 
-    # Industry benchmarks (example values)
+        # Industry benchmarks (example values)
+
     BENCHMARKS = {
         "excellent": {"min_score": 95, "percentile": 90},
         "good": {"min_score": 85, "percentile": 75},

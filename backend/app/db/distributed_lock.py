@@ -68,7 +68,7 @@ class DistributedLock:
         redis_client: redis.Redis,
         lock_key: str,
         ttl_seconds: int = 30,
-    ):
+    ) -> None:
         """
         Initialize distributed lock.
 
@@ -122,12 +122,12 @@ class DistributedLock:
                 )
                 return True
 
-            # If non-blocking, return immediately
+                # If non-blocking, return immediately
             if not blocking:
                 logger.debug(f"Failed to acquire lock (non-blocking): {self.lock_key}")
                 return False
 
-            # Check timeout
+                # Check timeout
             if timeout is not None:
                 elapsed = time.time() - start_time
                 if elapsed >= timeout:
@@ -138,10 +138,10 @@ class DistributedLock:
                         f"Could not acquire lock {self.lock_key} within {timeout}s"
                     )
 
-            # Wait before retry
+                    # Wait before retry
             time.sleep(retry_interval)
 
-    def release(self):
+    def release(self) -> None:
         """
         Release the distributed lock.
 
@@ -156,9 +156,9 @@ class DistributedLock:
             )
             return
 
-        # Use Lua script to atomically check ownership and delete
-        # This prevents releasing a lock that was acquired by another process
-        # after this one's TTL expired
+            # Use Lua script to atomically check ownership and delete
+            # This prevents releasing a lock that was acquired by another process
+            # after this one's TTL expired
         lua_script = """
         if redis.call("get", KEYS[1]) == ARGV[1] then
             return redis.call("del", KEYS[1])
@@ -183,7 +183,7 @@ class DistributedLock:
                 f"Lock {self.lock_key} is not held by this instance or has expired"
             )
 
-    def extend(self, additional_ttl: int | None = None):
+    def extend(self, additional_ttl: int | None = None) -> None:
         """
         Extend the lock TTL.
 
@@ -320,7 +320,7 @@ class IdempotencyManager:
         idem.mark_completed("swap_execute_123", result, ttl=3600)
     """
 
-    def __init__(self, redis_client: redis.Redis):
+    def __init__(self, redis_client: redis.Redis) -> None:
         self.redis = redis_client
 
     def is_duplicate(self, operation_id: str) -> bool:
@@ -341,7 +341,7 @@ class IdempotencyManager:
         operation_id: str,
         result: Any = None,
         ttl: int = 3600,
-    ):
+    ) -> None:
         """
         Mark operation as completed.
 
@@ -368,8 +368,9 @@ class IdempotencyManager:
         key = f"idempotency:{operation_id}"
         return self.redis.get(key)
 
+        # Global Redis client for distributed locking
 
-# Global Redis client for distributed locking
+
 _redis_client = None
 
 

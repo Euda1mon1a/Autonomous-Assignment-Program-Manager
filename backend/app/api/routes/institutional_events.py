@@ -87,7 +87,7 @@ async def delete_institutional_event(
     event_id: UUID,
     db=Depends(get_db),
     current_user: User = Depends(get_admin_user),
-):
+) -> None:
     service = InstitutionalEventService(db)
     ok = service.delete_event(event_id)
     if not ok:

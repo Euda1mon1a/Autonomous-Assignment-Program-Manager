@@ -276,7 +276,7 @@ def initialize_context(
     if not request_id:
         request_id = generate_request_id()
 
-    # Calculate depth and chain
+        # Calculate depth and chain
     depth = 0
     chain = []
 
@@ -292,7 +292,7 @@ def initialize_context(
         # This is a root request
         chain = [request_id]
 
-    # Set context variables
+        # Set context variables
     set_correlation_id(correlation_id)
     set_request_id(request_id)
     set_parent_id(parent_id)
@@ -344,7 +344,7 @@ class CorrelationContextManager:
         request_id: str | None = None,
         parent_id: str | None = None,
         user_id: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize context manager.
 

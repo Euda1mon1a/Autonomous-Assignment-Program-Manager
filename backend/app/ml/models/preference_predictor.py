@@ -38,7 +38,7 @@ class PreferencePredictor:
         n_estimators: int = 100,
         max_depth: int = 10,
         random_state: int = 42,
-    ):
+    ) -> None:
         """
         Initialize preference predictor.
 
@@ -108,14 +108,14 @@ class PreferencePredictor:
         for role in ["pd", "apd", "oic", "dept_chief", "sports_med", "core"]:
             features[f"role_{role}"] = 1 if faculty_role == role else 0
 
-        # Rotation features
+            # Rotation features
         rotation_name = rotation_data.get("name", "")
         for rot_type in ["clinic", "inpatient", "procedures", "conference", "admin"]:
             features[f"rotation_{rot_type}"] = (
                 1 if rot_type in rotation_name.lower() else 0
             )
 
-        # Temporal features from block
+            # Temporal features from block
         block_date = block_data.get("date")
         if isinstance(block_date, str):
             block_date = pd.to_datetime(block_date).date()
@@ -142,7 +142,7 @@ class PreferencePredictor:
             features["quarter"] = 1
             features["week_of_year"] = 1
 
-        # Time of day
+            # Time of day
         features["is_am"] = 1 if block_data.get("time_of_day") == "AM" else 0
         features["is_pm"] = 1 if block_data.get("time_of_day") == "PM" else 0
 
@@ -165,7 +165,7 @@ class PreferencePredictor:
             features["swap_rate"] = 0.0
             features["workload_current"] = 0.0
 
-        # Convert to DataFrame
+            # Convert to DataFrame
         df = pd.DataFrame([features])
         return df
 
@@ -251,7 +251,7 @@ class PreferencePredictor:
             logger.warning("Model not trained, returning default score")
             return 0.5
 
-        # Extract features
+            # Extract features
         X = self.extract_features(
             person_data, rotation_data, block_data, historical_stats
         )
@@ -261,7 +261,7 @@ class PreferencePredictor:
             if col not in X.columns:
                 X[col] = 0
 
-        # Reorder columns to match training
+                # Reorder columns to match training
         X = X[self.feature_names]
 
         # Scale and predict

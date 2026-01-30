@@ -105,10 +105,9 @@ class MetricType(str, Enum):
     NUMERIC = "numeric"  # Continuous values (latency, count)
     REVENUE = "revenue"  # Monetary values
 
-
-# =============================================================================
-# Pydantic Models
-# =============================================================================
+    # =============================================================================
+    # Pydantic Models
+    # =============================================================================
 
 
 class Variant(BaseModel):
@@ -253,12 +252,12 @@ class Experiment(BaseModel):
                 f"Variant allocations must sum to 100, got {total_allocation}"
             )
 
-        # Ensure unique variant keys
+            # Ensure unique variant keys
         keys = [variant.key for variant in v]
         if len(keys) != len(set(keys)):
             raise ValueError("Variant keys must be unique")
 
-        # Ensure at most one control
+            # Ensure at most one control
         controls = [v for v in v if v.is_control]
         if len(controls) > 1:
             raise ValueError("Only one variant can be marked as control")
@@ -387,10 +386,9 @@ class ExperimentLifecycle(BaseModel):
     notes: str = Field(default="", description="Additional notes")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Event metadata")
 
-
-# =============================================================================
-# Utility Functions
-# =============================================================================
+    # =============================================================================
+    # Utility Functions
+    # =============================================================================
 
 
 def consistent_hash(key: str, seed: str = "") -> int:
@@ -440,7 +438,7 @@ def assign_variant_by_hash(
             f"Variant allocations must sum to 100, got {total_allocation}"
         )
 
-    # Generate hash and get bucket (0-99)
+        # Generate hash and get bucket (0-99)
     hash_value = consistent_hash(f"{user_id}:{experiment_key}")
     bucket = hash_value % 100
 
@@ -451,7 +449,7 @@ def assign_variant_by_hash(
         if bucket < cumulative:
             return variant.key
 
-    # Fallback (should never reach here if allocations sum to 100)
+            # Fallback (should never reach here if allocations sum to 100)
     return variants[0].key
 
 
@@ -484,7 +482,7 @@ def calculate_statistical_significance(
     if len(control_data) < 10 or len(treatment_data) < 10:
         return False, 1.0, "Insufficient sample size (minimum 10 per group)"
 
-    # Calculate means
+        # Calculate means
     control_mean = sum(control_data) / len(control_data)
     treatment_mean = sum(treatment_data) / len(treatment_data)
 
@@ -506,7 +504,7 @@ def calculate_statistical_significance(
     if s1_sq == 0 and s2_sq == 0:
         return False, 1.0, "No variance in data"
 
-    # Calculate t-statistic
+        # Calculate t-statistic
     t_stat = (treatment_mean - control_mean) / math.sqrt(s1_sq / n1 + s2_sq / n2)
 
     # Calculate degrees of freedom (Welch-Satterthwaite equation)
@@ -532,7 +530,7 @@ def calculate_statistical_significance(
             # For small df, use conservative estimate
             p_value = 0.5  # Conservative middle ground
 
-    # Determine significance
+            # Determine significance
     alpha = 1 - confidence_level
     is_significant = p_value < alpha
 
@@ -557,10 +555,9 @@ def calculate_statistical_significance(
 
     return is_significant, p_value, interpretation
 
-
-# =============================================================================
-# Experiment Service
-# =============================================================================
+    # =============================================================================
+    # Experiment Service
+    # =============================================================================
 
 
 class ExperimentService:
@@ -579,7 +576,7 @@ class ExperimentService:
         results = await service.get_results(exp_key)
     """
 
-    def __init__(self, redis_client: redis.Redis | None = None):
+    def __init__(self, redis_client: redis.Redis | None = None) -> None:
         """
         Initialize experiment service.
 
@@ -602,9 +599,9 @@ class ExperimentService:
             await self._redis.close()
             self._redis = None
 
-    # =========================================================================
-    # Experiment Management
-    # =========================================================================
+            # =========================================================================
+            # Experiment Management
+            # =========================================================================
 
     async def create_experiment(self, experiment: Experiment) -> Experiment:
         """
@@ -626,11 +623,11 @@ class ExperimentService:
         if existing:
             raise ValidationError(f"Experiment '{experiment.key}' already exists")
 
-        # Validate variants
+            # Validate variants
         if len(experiment.variants) < 2:
             raise ValidationError("Experiment must have at least 2 variants")
 
-        # Store experiment
+            # Store experiment
         experiment.created_at = datetime.utcnow()
         experiment.updated_at = datetime.utcnow()
         await r.set(
@@ -700,7 +697,7 @@ class ExperimentService:
                     "Cannot modify variants or key of running experiment"
                 )
 
-        # Apply updates
+                # Apply updates
         for field, value in updates.items():
             if hasattr(experiment, field):
                 setattr(experiment, field, value)
@@ -877,13 +874,13 @@ class ExperimentService:
                 if status is None or exp.status == status:
                     experiments.append(exp)
 
-        # Sort by created_at descending
+                    # Sort by created_at descending
         experiments.sort(key=lambda e: e.created_at, reverse=True)
         return experiments
 
-    # =========================================================================
-    # User Assignment
-    # =========================================================================
+        # =========================================================================
+        # User Assignment
+        # =========================================================================
 
     async def assign_user(
         self,
@@ -919,7 +916,7 @@ class ExperimentService:
                 f"Cannot assign users to {experiment.status} experiment"
             )
 
-        # Check for existing assignment (sticky bucketing)
+            # Check for existing assignment (sticky bucketing)
         r = await self._get_redis()
         assignment_key = f"assignment:{experiment_key}:{user_id}"
 
@@ -928,12 +925,12 @@ class ExperimentService:
             if existing:
                 return VariantAssignment.model_validate_json(existing)
 
-        # Check targeting rules
+                # Check targeting rules
         user_attributes = user_attributes or {}
         if not self._check_targeting(experiment.targeting, user_id, user_attributes):
             raise ValidationError("User does not match targeting criteria")
 
-        # Assign variant
+            # Assign variant
         if force_variant:
             # Manual override
             variant_keys = [v.key for v in experiment.variants]
@@ -948,7 +945,7 @@ class ExperimentService:
             )
             is_override = False
 
-        # Create assignment
+            # Create assignment
         assignment = VariantAssignment(
             experiment_key=experiment_key,
             user_id=user_id,
@@ -1020,19 +1017,19 @@ class ExperimentService:
         if targeting.user_ids and user_id not in targeting.user_ids:
             return False
 
-        # Check role targeting
+            # Check role targeting
         if targeting.roles:
             user_role = user_attributes.get("role")
             if user_role not in targeting.roles:
                 return False
 
-        # Check environment targeting
+                # Check environment targeting
         if targeting.environments:
             env = user_attributes.get("environment", "production")
             if env not in targeting.environments:
                 return False
 
-        # Check percentage-based targeting
+                # Check percentage-based targeting
         if targeting.percentage < 100:
             # Use consistent hash for percentage targeting
             hash_val = consistent_hash(f"targeting:{user_id}")
@@ -1040,7 +1037,7 @@ class ExperimentService:
             if bucket >= targeting.percentage:
                 return False
 
-        # Check custom targeting rules
+                # Check custom targeting rules
         for rule in targeting.rules:
             if not self._evaluate_targeting_rule(rule, user_attributes):
                 return False
@@ -1094,9 +1091,9 @@ class ExperimentService:
 
         return False
 
-    # =========================================================================
-    # Metric Tracking
-    # =========================================================================
+        # =========================================================================
+        # Metric Tracking
+        # =========================================================================
 
     async def track_metric(
         self,
@@ -1211,7 +1208,7 @@ class ExperimentService:
                     metric_name, stat = parts
                     metrics[metric_name][stat] = float(value)
 
-        # Calculate means and std devs
+                    # Calculate means and std devs
         for metric_name in metrics:
             if "count" in metrics[metric_name] and "sum" in metrics[metric_name]:
                 count = metrics[metric_name]["count"]
@@ -1222,9 +1219,9 @@ class ExperimentService:
             variant_key=variant_key, user_count=user_count, metrics=dict(metrics)
         )
 
-    # =========================================================================
-    # Results and Analysis
-    # =========================================================================
+        # =========================================================================
+        # Results and Analysis
+        # =========================================================================
 
     async def get_results(self, experiment_key: str) -> ExperimentResults:
         """
@@ -1250,13 +1247,13 @@ class ExperimentService:
             variant_metrics.append(metrics)
             total_users += metrics.user_count
 
-        # Calculate duration
+            # Calculate duration
         duration_days = 0.0
         if experiment.start_date:
             end = experiment.end_date or datetime.utcnow()
             duration_days = (end - experiment.start_date).total_seconds() / 86400
 
-        # Perform statistical analysis
+            # Perform statistical analysis
         is_significant = False
         p_value = None
         winning_variant = None
@@ -1384,9 +1381,9 @@ class ExperimentService:
 
         return values
 
-    # =========================================================================
-    # Lifecycle Management
-    # =========================================================================
+        # =========================================================================
+        # Lifecycle Management
+        # =========================================================================
 
     async def _record_lifecycle_event(
         self,
@@ -1450,13 +1447,13 @@ class ExperimentService:
                 event = ExperimentLifecycle.model_validate_json(data)
                 events.append(event)
 
-        # Sort by timestamp
+                # Sort by timestamp
         events.sort(key=lambda e: e.timestamp)
         return events
 
-    # =========================================================================
-    # Feature Flag Integration
-    # =========================================================================
+        # =========================================================================
+        # Feature Flag Integration
+        # =========================================================================
 
     async def get_feature_flag_value(
         self, experiment_key: str, user_id: str, default_value: Any = None
@@ -1483,7 +1480,7 @@ class ExperimentService:
                 except (NotFoundError, ValidationError):
                     return default_value
 
-            # Get variant config
+                    # Get variant config
             experiment = await self.get_experiment(experiment_key)
             variant = next(
                 (v for v in experiment.variants if v.key == assignment.variant_key),

@@ -102,7 +102,7 @@ class ServiceRegistry:
         cleanup_interval: int = 60,
         failure_threshold: int = 3,
         stale_threshold_seconds: int = 300,
-    ):
+    ) -> None:
         """
         Initialize service registry.
 
@@ -360,13 +360,13 @@ class ServiceRegistry:
                     ):
                         to_remove.append(instance_id)
 
-                # Remove stale instances
+                        # Remove stale instances
                 for instance_id in to_remove:
                     instances.pop(instance_id)
                     removed_count += 1
                     logger.info(f"Removed stale instance: {instance_id}")
 
-                # Clean up empty service entries
+                    # Clean up empty service entries
                 if not instances:
                     del self._instances[service_name]
 

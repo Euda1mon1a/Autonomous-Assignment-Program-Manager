@@ -18,7 +18,7 @@ from app.services.person_service import PersonService
 class PersonController:
     """Controller for person endpoints."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.service = PersonService(db)
 
     def list_people(
@@ -115,9 +115,9 @@ class PersonController:
                 detail=result["error"],
             )
 
-    # =========================================================================
-    # Batch Operations
-    # =========================================================================
+            # =========================================================================
+            # Batch Operations
+            # =========================================================================
 
     def batch_create_people(
         self, people_data: list[dict], dry_run: bool = False

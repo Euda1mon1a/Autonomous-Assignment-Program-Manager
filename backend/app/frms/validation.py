@@ -173,7 +173,7 @@ class ValidationStudy:
         study_name: str,
         effectiveness_threshold: float = 77.0,  # FAA caution
         fatigue_threshold: float = 6.0,  # Self-report threshold (1-10 scale)
-    ):
+    ) -> None:
         """
         Initialize validation study.
 
@@ -253,7 +253,7 @@ class ValidationStudy:
             logger.warning("No data points for accuracy calculation")
             return PredictionAccuracy()
 
-        # Filter to points with actual reports
+            # Filter to points with actual reports
         with_actual = [
             dp for dp in self.data_points if dp.actual_fatigue_score is not None
         ]
@@ -324,7 +324,7 @@ class ValidationStudy:
         if len(data_points) < 2:
             return 0.0
 
-        # Extract values
+            # Extract values
         predicted = [dp.predicted_effectiveness for dp in data_points]
         actual = [100 - (dp.actual_fatigue_score - 1) * (100 / 9) for dp in data_points]
 
@@ -371,7 +371,7 @@ class ValidationStudy:
             else:  # not predicted_at_risk and actual_fatigued
                 accuracy.false_negatives += 1
 
-        # Calculate derived metrics
+                # Calculate derived metrics
         total = (
             accuracy.true_positives
             + accuracy.true_negatives
@@ -447,7 +447,7 @@ class ValidationStudy:
         if len(data_points) < 2:
             return 0.5
 
-        # Sort by predicted effectiveness (descending = higher risk first)
+            # Sort by predicted effectiveness (descending = higher risk first)
         sorted_points = sorted(data_points, key=lambda dp: dp.predicted_effectiveness)
 
         # Calculate TPR and FPR at each threshold
@@ -474,7 +474,7 @@ class ValidationStudy:
             fpr = fp / n_negative
             roc_points.append((fpr, tpr))
 
-        # Calculate AUC using trapezoidal rule
+            # Calculate AUC using trapezoidal rule
         auc = 0.0
         for i in range(1, len(roc_points)):
             x1, y1 = roc_points[i - 1]
@@ -534,7 +534,7 @@ class ValidationStudy:
         if not with_actual:
             return {}
 
-        # Sort by predicted effectiveness
+            # Sort by predicted effectiveness
         sorted_points = sorted(with_actual, key=lambda dp: dp.predicted_effectiveness)
 
         # Create decile bins

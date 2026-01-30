@@ -143,7 +143,7 @@ class CPSATActivitySolver:
         session: Session,
         timeout_seconds: float = 60.0,
         num_workers: int = 4,
-    ):
+    ) -> None:
         self.session = session
         self.timeout_seconds = timeout_seconds
         self.num_workers = num_workers
@@ -340,8 +340,8 @@ class CPSATActivitySolver:
                 "message": "All slots are locked or no slots exist",
             }
 
-        # Build assignment rotation map BEFORE filtering
-        # (needed for _get_active_rotation_template fallback path)
+            # Build assignment rotation map BEFORE filtering
+            # (needed for _get_active_rotation_template fallback path)
         person_ids = {slot.person_id for slot in candidate_slots}
         self._assignment_rotation_map = self._load_assignment_rotation_map(
             start_date, end_date, person_ids
@@ -404,7 +404,7 @@ class CPSATActivitySolver:
             if pref.preference_type == FacultyPreferenceType.CLINIC:
                 clinic_preferences_by_person[pref.person_id].append(pref)
 
-        # Load activity requirements for templates in scope
+                # Load activity requirements for templates in scope
         requirements_by_template = self._load_activity_requirements(
             set(templates_by_id.keys())
         )
@@ -472,7 +472,7 @@ class CPSATActivitySolver:
                 ),
             }
 
-        # Load activities after any default creation
+            # Load activities after any default creation
         all_activities = self._load_activities()
         if not all_activities:
             self._write_failure_snapshot(
@@ -560,7 +560,7 @@ class CPSATActivitySolver:
                     "No active sports medicine credentials found; SM clinic assignments will be disabled."
                 )
 
-        # Candidate activities for solver: exclude preloaded/protected/time_off
+                # Candidate activities for solver: exclude preloaded/protected/time_off
         assignable_activities = [
             a for a in all_activities if not is_activity_preloaded(a)
         ]
@@ -593,7 +593,7 @@ class CPSATActivitySolver:
                 "message": "No assignable activities (all locked/preloaded)",
             }
 
-        # Get key activities
+            # Get key activities
         clinic_activity = self._get_activity_by_code(
             "fm_clinic"
         ) or self._get_activity_by_code("C")
@@ -689,7 +689,7 @@ class CPSATActivitySolver:
                     and self._activity_matches_template(req.activity, template)
                 ):
                     allowed_ids.append(req.activity_id)
-            # Deduplicate while preserving order
+                    # Deduplicate while preserving order
             seen = set()
             deduped = []
             for act_id in allowed_ids:
@@ -699,7 +699,7 @@ class CPSATActivitySolver:
             if deduped:
                 allowed_by_template[template_id] = deduped
 
-        # Fallback: if a template has no requirements, allow all assignables
+                # Fallback: if a template has no requirements, allow all assignables
         fallback_allowed = sorted(
             assignable_ids,
             key=lambda act_id: activity_by_id.get(act_id).code
@@ -726,10 +726,10 @@ class CPSATActivitySolver:
                 "message": "Missing assignable activities for faculty (AT/C)",
             }
 
-        # ==================================================
-        # DECISION VARIABLES
-        # a[slot_idx, activity_id] = 1 if slot gets activity
-        # ==================================================
+            # ==================================================
+            # DECISION VARIABLES
+            # a[slot_idx, activity_id] = 1 if slot gets activity
+            # ==================================================
         a: dict[tuple[int, UUID], Any] = {}
         slot_allowed: dict[int, list[UUID]] = {}
         faculty_admin_activity_by_slot: dict[int, UUID] = {}
@@ -932,8 +932,8 @@ class CPSATActivitySolver:
                         pref_weight = int(pref.weight) if pref.weight is not None else 0
                         if pref_weight <= 0:
                             continue
-                        # PREFER: negative weight so subtracting penalty = reward
-                        # AVOID: positive weight so subtracting penalty = penalize
+                            # PREFER: negative weight so subtracting penalty = reward
+                            # AVOID: positive weight so subtracting penalty = penalize
                         weight = (
                             -pref_weight
                             if pref.direction == FacultyPreferenceDirection.PREFER
@@ -962,15 +962,15 @@ class CPSATActivitySolver:
             slot_capacity_ids[s_i] = capacity_ids
             slot_sm_capacity_ids[s_i] = sm_ids
 
-        # ==================================================
-        # CONSTRAINTS
-        # ==================================================
+            # ==================================================
+            # CONSTRAINTS
+            # ==================================================
 
-        # Constraint 1: Exactly one activity per slot
+            # Constraint 1: Exactly one activity per slot
         for s_i, allowed in slot_allowed.items():
             model.Add(sum(a[s_i, act_id] for act_id in allowed) == 1)
 
-        # Constraint 2: Activity requirements (per week, per person, per rotation)
+            # Constraint 2: Activity requirements (per week, per person, per rotation)
         slots_by_key: dict[tuple[UUID, UUID, int], list[int]] = defaultdict(list)
         for s_i, meta in slot_meta.items():
             template_id = meta["template_id"]
@@ -1174,7 +1174,7 @@ class CPSATActivitySolver:
             if not req_entries:
                 continue
 
-            # If per-activity max totals don't cover all slots, relax max to fill
+                # If per-activity max totals don't cover all slots, relax max to fill
             total_max = sum(entry["max"] for entry in req_entries)
             slack = len(slot_indices) - total_max
             if slack > 0:
@@ -1188,7 +1188,7 @@ class CPSATActivitySolver:
                             entry["max"] += bump
                             slack -= bump
                         break
-                # If still slack, distribute to any activity with room
+                        # If still slack, distribute to any activity with room
                 if slack > 0:
                     for entry in req_entries:
                         room = len(entry["vars"]) - entry["max"]
@@ -1232,7 +1232,7 @@ class CPSATActivitySolver:
                         hard_min = min(1, len(vars_for_req))
                         model.Add(sum(vars_for_req) >= hard_min)
 
-                # Soft mins for all activities (including clinic above hard floor)
+                        # Soft mins for all activities (including clinic above hard floor)
                 if min_target > hard_min:
                     shortfall_max = min_target - hard_min
                     shortfall = model.NewIntVar(
@@ -1259,9 +1259,9 @@ class CPSATActivitySolver:
         if constraint_count:
             logger.info(f"Added {constraint_count} activity requirement constraints")
 
-        # ==================================================
-        # FACULTY CLINIC CAPS (min/max per week)
-        # ==================================================
+            # ==================================================
+            # FACULTY CLINIC CAPS (min/max per week)
+            # ==================================================
         faculty_clinic_shortfalls: list[Any] = []
         faculty_clinic_overages: list[Any] = []
         if faculty_slots and clinic_activity:
@@ -1301,12 +1301,12 @@ class CPSATActivitySolver:
                 model.Add(sum(clinic_vars) <= max_allowed + over_max)
                 faculty_clinic_overages.append(over_max)
 
-        # ==================================================
-        # FACULTY EQUITY (admin/academic/supervision)
-        # - Admin (GME/DFM) by role
-        # - Supervision (AT/PCAT) by role
-        # - Academic (LEC/ADV) across all faculty
-        # ==================================================
+                # ==================================================
+                # FACULTY EQUITY (admin/academic/supervision)
+                # - Admin (GME/DFM) by role
+                # - Supervision (AT/PCAT) by role
+                # - Academic (LEC/ADV) across all faculty
+                # ==================================================
         faculty_admin_equity_ranges: list[Any] = []
         faculty_academic_equity_ranges: list[Any] = []
         faculty_supervision_equity_ranges: list[Any] = []
@@ -1414,9 +1414,9 @@ class CPSATActivitySolver:
                 groups=role_groups,
             )
 
-        # ==================================================
-        # RESIDENT CLINIC EQUITY (outpatient) per week + block
-        # ==================================================
+            # ==================================================
+            # RESIDENT CLINIC EQUITY (outpatient) per week + block
+            # ==================================================
         resident_clinic_equity_ranges: list[Any] = []
         if resident_slots and resident_clinic_equity_ids:
             resident_by_id: dict[UUID, Person] = {}
@@ -1452,7 +1452,8 @@ class CPSATActivitySolver:
                 model.Add(range_var == max_var - min_var)
                 resident_clinic_equity_ranges.append(range_var)
 
-            # Weekly equity
+                # Weekly equity
+
             for week in week_numbers:
                 counts = []
                 max_possible = 0
@@ -1487,7 +1488,7 @@ class CPSATActivitySolver:
                     label=f"res_clinic_week_{week}",
                 )
 
-            # Block-level equity
+                # Block-level equity
             block_counts = []
             max_possible = 0
             for resident_id in resident_by_id:
@@ -1527,10 +1528,10 @@ class CPSATActivitySolver:
                 label="res_clinic_block",
             )
 
-        # ==================================================
-        # CV TARGET (faculty + PGY-3) per week
-        # Applies to FMC clinic assignments only
-        # ==================================================
+            # ==================================================
+            # CV TARGET (faculty + PGY-3) per week
+            # Applies to FMC clinic assignments only
+            # ==================================================
         cv_target_shortfalls: list[Any] = []
         cv_day_shortfalls: list[Any] = []
         if cv_activity and clinic_activity:
@@ -1633,9 +1634,9 @@ class CPSATActivitySolver:
                 )
                 cv_day_shortfalls.append(shortfall)
 
-        # ==================================================
-        # ACGME AT COVERAGE (faculty supervision)
-        # ==================================================
+                # ==================================================
+                # ACGME AT COVERAGE (faculty supervision)
+                # ==================================================
         at_shortfalls: list[Any] = []
         if resident_slots and faculty_slots and at_activity:
             resident_slots_by_key: dict[tuple[date, str], list[int]] = defaultdict(list)
@@ -1700,10 +1701,10 @@ class CPSATActivitySolver:
                 model.Add(total_coverage * 4 + shortfall >= total_demand)
                 at_shortfalls.append(shortfall)
 
-        # ==================================================
-        # SPORTS MEDICINE ALIGNMENT
-        # SM residents must align with SM faculty SM clinic
-        # ==================================================
+                # ==================================================
+                # SPORTS MEDICINE ALIGNMENT
+                # SM residents must align with SM faculty SM clinic
+                # ==================================================
         if sm_clinic_activity:
             sm_template_ids = {
                 t.id for t in templates_by_id.values() if self._is_sm_template(t)
@@ -1783,10 +1784,10 @@ class CPSATActivitySolver:
         elif sm_template_ids and sm_clinic_activity and disable_sm_alignment:
             logger.warning("Skipping SM alignment constraints (DISABLE_SM_ALIGNMENT)")
 
-        # ==================================================
-        # VASECTOMY ALIGNMENT
-        # VAS residents must align with VAS faculty, and faculty VAS requires resident
-        # ==================================================
+            # ==================================================
+            # VASECTOMY ALIGNMENT
+            # VAS residents must align with VAS faculty, and faculty VAS requires resident
+            # ==================================================
         vas_shortfalls: list[Any] = []
         if vas_activity_ids:
             vas_resident_vars_by_slot: dict[tuple[date, str], list[Any]] = defaultdict(
@@ -1846,7 +1847,7 @@ class CPSATActivitySolver:
                         sum(faculty_vars) + baseline_faculty + shortfall >= any_resident
                     )
 
-                # Faculty VAS requires resident presence.
+                    # Faculty VAS requires resident presence.
                 if baseline_faculty > 0:
                     model.Add(sum(resident_vars) + baseline_resident + shortfall >= 1)
                 elif faculty_vars:
@@ -1861,11 +1862,11 @@ class CPSATActivitySolver:
 
                 vas_shortfalls.append(shortfall)
 
-        # ==================================================
-        # CONSTRAINT: Physical Capacity (Soft 6, Hard 8 per slot)
-        # Session 136: Clinic has limited exam rooms
-        # Includes baseline occupancy from locked/preloaded slots.
-        # ==================================================
+                # ==================================================
+                # CONSTRAINT: Physical Capacity (Soft 6, Hard 8 per slot)
+                # Session 136: Clinic has limited exam rooms
+                # Includes baseline occupancy from locked/preloaded slots.
+                # ==================================================
         SOFT_PHYSICAL_CAPACITY = 6
         HARD_PHYSICAL_CAPACITY = 8
 
@@ -1875,7 +1876,7 @@ class CPSATActivitySolver:
             key = (slot.date, slot.time_of_day)
             slot_groups[key].append(s_i)
 
-        # Baseline occupancy from locked/preloaded slots not in solver
+            # Baseline occupancy from locked/preloaded slots not in solver
         slot_ids = {slot.id for slot in slots}
         baseline_non_sm: dict[tuple[date, str], int] = defaultdict(int)
         baseline_sm_present: dict[tuple[date, str], int] = defaultdict(int)
@@ -1902,7 +1903,7 @@ class CPSATActivitySolver:
                 activity_capacity_units(assignment.activity)
             )
 
-        # For each time slot, sum(clinical activities) + baseline <= HARD
+            # For each time slot, sum(clinical activities) + baseline <= HARD
         has_capacity = (
             any(slot_capacity_ids.values())
             or any(baseline_non_sm.values())
@@ -1919,7 +1920,7 @@ class CPSATActivitySolver:
                 if slot_date.weekday() >= 5:
                     continue
 
-                # Sum of non-SM clinical assignments for this slot
+                    # Sum of non-SM clinical assignments for this slot
                 slot_non_sm_sum = sum(
                     a[s_i, act_id] * activity_capacity_units(activity_by_id.get(act_id))
                     for s_i in slot_indices
@@ -1986,7 +1987,7 @@ class CPSATActivitySolver:
                 if sm_vars:
                     total_clinic += sm_present
 
-                # Hard constraint: at most 8 in clinic per slot
+                    # Hard constraint: at most 8 in clinic per slot
                 model.Add(total_clinic <= HARD_PHYSICAL_CAPACITY)
 
                 # Soft constraint: penalize clinic counts above 6
@@ -2052,11 +2053,11 @@ class CPSATActivitySolver:
                 "Skipping physical capacity constraints (DISABLE_PHYSICAL_CAPACITY)"
             )
 
-        # ==================================================
-        # OBJECTIVE: Maximize clinic (C) assignments
-        # (Most slots should be clinic for outpatient rotations)
-        # Constraint above limits this to respect physical capacity
-        # ==================================================
+            # ==================================================
+            # OBJECTIVE: Maximize clinic (C) assignments
+            # (Most slots should be clinic for outpatient rotations)
+            # Constraint above limits this to respect physical capacity
+            # ==================================================
         objective_expr = None
         if clinic_activity and clinic_activity.id in assignable_ids:
             clinic_id = clinic_activity.id
@@ -2227,9 +2228,9 @@ class CPSATActivitySolver:
         if objective_expr is not None:
             model.Maximize(objective_expr)
 
-        # ==================================================
-        # SOLVE
-        # ==================================================
+            # ==================================================
+            # SOLVE
+            # ==================================================
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = self.timeout_seconds
         solver.parameters.num_search_workers = self.num_workers
@@ -2373,9 +2374,9 @@ class CPSATActivitySolver:
                 "runtime_seconds": runtime,
             }
 
-        # ==================================================
-        # EXTRACT SOLUTION & UPDATE DATABASE
-        # ==================================================
+            # ==================================================
+            # EXTRACT SOLUTION & UPDATE DATABASE
+            # ==================================================
         updated = 0
         for s_i, slot in enumerate(slots):
             for act_id in slot_allowed[s_i]:
@@ -2834,7 +2835,7 @@ class CPSATActivitySolver:
         max_c = getattr(faculty, "max_clinic_halfdays_per_week", 4) or 0
         if max_c < 0:
             max_c = 0
-        # Policy: no minimum clinic requirement to preserve AT capacity.
+            # Policy: no minimum clinic requirement to preserve AT capacity.
         return 0, max_c
 
     def _get_admin_activity_for_faculty(

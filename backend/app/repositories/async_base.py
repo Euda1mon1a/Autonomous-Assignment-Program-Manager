@@ -28,7 +28,7 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 class PaginationParams:
     """Pagination parameters."""
 
-    def __init__(self, skip: int = 0, limit: int = 100):
+    def __init__(self, skip: int = 0, limit: int = 100) -> None:
         """Initialize pagination params."""
         self.skip = max(0, skip)
         self.limit = max(1, min(limit, 1000))  # Cap at 1000
@@ -45,7 +45,7 @@ class PaginationParams:
 class FilterParams:
     """Base filter parameters for querying."""
 
-    def __init__(self, **kwargs: Any):
+    def __init__(self, **kwargs: Any) -> None:
         """Initialize filters from kwargs."""
         self.filters = kwargs
 
@@ -84,7 +84,7 @@ class AsyncBaseRepository(Generic[ModelType]):
     All entity-specific repositories inherit from this class.
     """
 
-    def __init__(self, model: type[ModelType], db: AsyncSession):
+    def __init__(self, model: type[ModelType], db: AsyncSession) -> None:
         """
         Initialize async repository.
 
@@ -95,7 +95,7 @@ class AsyncBaseRepository(Generic[ModelType]):
         self.model = model
         self.db = db
 
-    # ============= Basic CRUD Operations =============
+        # ============= Basic CRUD Operations =============
 
     async def create(self, obj_in: CreateSchemaType) -> ModelType:
         """
@@ -150,7 +150,7 @@ class AsyncBaseRepository(Generic[ModelType]):
                 if hasattr(self.model, field):
                     query = query.options(selectinload(getattr(self.model, field)))
 
-        # Add pagination
+                    # Add pagination
         if pagination:
             query = query.offset(pagination.offset()).limit(pagination.count())
 
@@ -203,7 +203,7 @@ class AsyncBaseRepository(Generic[ModelType]):
             return True
         return False
 
-    # ============= Pagination Operations =============
+        # ============= Pagination Operations =============
 
     async def get_paginated(
         self,
@@ -232,7 +232,7 @@ class AsyncBaseRepository(Generic[ModelType]):
                 if value is not None and hasattr(self.model, field):
                     query = query.where(getattr(self.model, field) == value)
 
-        # Count total before pagination
+                    # Count total before pagination
         count_query = select(func.count()).select_from(self.model)
         if filters:
             for field, value in filters.items():
@@ -247,7 +247,7 @@ class AsyncBaseRepository(Generic[ModelType]):
                 if hasattr(self.model, field):
                     query = query.options(selectinload(getattr(self.model, field)))
 
-        # Add sorting
+                    # Add sorting
         if order_by:
             if order_by.startswith("-"):
                 field_name = order_by[1:]
@@ -257,7 +257,7 @@ class AsyncBaseRepository(Generic[ModelType]):
                 if hasattr(self.model, order_by):
                     query = query.order_by(getattr(self.model, order_by))
 
-        # Add pagination
+                    # Add pagination
         query = query.offset(pagination.offset()).limit(pagination.count())
 
         result = await self.db.execute(query)
@@ -273,7 +273,7 @@ class AsyncBaseRepository(Generic[ModelType]):
             pages=pages,
         )
 
-    # ============= Filtering Operations =============
+        # ============= Filtering Operations =============
 
     async def get_by_filters(
         self,
@@ -304,13 +304,13 @@ class AsyncBaseRepository(Generic[ModelType]):
         if conditions:
             query = query.where(and_(*conditions))
 
-        # Add eager loading
+            # Add eager loading
         if eager_fields:
             for field in eager_fields:
                 if hasattr(self.model, field):
                     query = query.options(selectinload(getattr(self.model, field)))
 
-        # Add sorting
+                    # Add sorting
         if order_by:
             if order_by.startswith("-"):
                 field_name = order_by[1:]
@@ -347,7 +347,7 @@ class AsyncBaseRepository(Generic[ModelType]):
         result = await self.db.execute(query)
         return result.scalars().first()
 
-    # ============= Eager Loading Operations =============
+        # ============= Eager Loading Operations =============
 
     async def get_by_id_with_relations(
         self, id: UUID | str, relations: list[str]
@@ -398,7 +398,7 @@ class AsyncBaseRepository(Generic[ModelType]):
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    # ============= Counting and Existence Operations =============
+        # ============= Counting and Existence Operations =============
 
     async def count(self, filters: dict[str, Any] | None = None) -> int:
         """
@@ -433,7 +433,7 @@ class AsyncBaseRepository(Generic[ModelType]):
         count = await self.count(filters)
         return count > 0
 
-    # ============= Bulk Operations =============
+        # ============= Bulk Operations =============
 
     async def bulk_create(self, objects_in: list[CreateSchemaType]) -> list[ModelType]:
         """
@@ -482,7 +482,7 @@ class AsyncBaseRepository(Generic[ModelType]):
                 count += 1
         return count
 
-    # ============= Transaction Management =============
+        # ============= Transaction Management =============
 
     async def commit(self) -> None:
         """Commit current transaction."""
@@ -505,7 +505,7 @@ class AsyncBaseRepository(Generic[ModelType]):
         await self.db.refresh(db_obj)
         return db_obj
 
-    # ============= Utility Operations =============
+        # ============= Utility Operations =============
 
     def detach(self, db_obj: ModelType) -> ModelType:
         """
@@ -533,7 +533,7 @@ class AsyncBaseRepository(Generic[ModelType]):
         obj = await self.get_by_id(id)
         return obj is not None
 
-    # ============= Advanced Querying =============
+        # ============= Advanced Querying =============
 
     async def get_with_custom_query(self, query: Any) -> list[ModelType]:
         """

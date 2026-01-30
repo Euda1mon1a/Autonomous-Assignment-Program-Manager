@@ -55,10 +55,9 @@ class DeadLetterEvent(BaseModel):
     retry_count: int
     failed_at: datetime
 
-
-# =============================================================================
-# Event Bus
-# =============================================================================
+    # =============================================================================
+    # Event Bus
+    # =============================================================================
 
 
 class EventBus:
@@ -68,7 +67,7 @@ class EventBus:
     Implements the pub/sub pattern for loose coupling between components.
     """
 
-    def __init__(self, enable_retry: bool = True, max_retries: int = 3):
+    def __init__(self, enable_retry: bool = True, max_retries: int = 3) -> None:
         """
         Initialize Event Bus.
 
@@ -150,7 +149,7 @@ class EventBus:
 
         return subscriber_id
 
-    def unsubscribe(self, subscriber_id: str, event_type: str | None = None):
+    def unsubscribe(self, subscriber_id: str, event_type: str | None = None) -> None:
         """
         Unsubscribe from events.
 
@@ -175,7 +174,7 @@ class EventBus:
                 ]
             logger.info(f"Unsubscribed {subscriber_id} from all events")
 
-    async def publish(self, event: BaseEvent, async_mode: bool = True):
+    async def publish(self, event: BaseEvent, async_mode: bool = True) -> None:
         """
         Publish an event to all subscribers.
 
@@ -209,7 +208,7 @@ class EventBus:
             for sub in subscribers:
                 await self._handle_event_with_retry(sub, event)
 
-    async def publish_batch(self, events: list[BaseEvent]):
+    async def publish_batch(self, events: list[BaseEvent]) -> None:
         """
         Publish multiple events.
 
@@ -223,7 +222,7 @@ class EventBus:
         self,
         subscription: EventSubscription,
         event: BaseEvent,
-    ):
+    ) -> None:
         """
         Handle event with retry logic.
 
@@ -258,7 +257,7 @@ class EventBus:
                 else:
                     break
 
-        # All retries failed
+                    # All retries failed
         logger.error(
             f"Failed to handle {event.metadata.event_type} "
             f"by {subscription.subscriber_id} after {retry_count} attempts: "
@@ -297,7 +296,7 @@ class EventBus:
                 for sub in subs
             ]
 
-        # All subscriptions
+            # All subscriptions
         all_subs = []
         for event_type, subs in self._subscriptions.items():
             for sub in subs:
@@ -314,7 +313,7 @@ class EventBus:
         """Get events that failed processing."""
         return self._dead_letter_queue.copy()
 
-    def clear_dead_letter_queue(self):
+    def clear_dead_letter_queue(self) -> None:
         """Clear the dead letter queue."""
         count = len(self._dead_letter_queue)
         self._dead_letter_queue.clear()
@@ -341,7 +340,7 @@ class EventBus:
             logger.warning(f"Event {event_id} not found in dead letter queue")
             return False
 
-        # Reconstruct event
+            # Reconstruct event
         from app.events.event_types import get_event_class
 
         try:
@@ -361,10 +360,9 @@ class EventBus:
             logger.error(f"Failed to replay event {event_id}: {e}")
             return False
 
-
-# =============================================================================
-# Global Event Bus Instance
-# =============================================================================
+            # =============================================================================
+            # Global Event Bus Instance
+            # =============================================================================
 
 
 _event_bus_instance: EventBus | None = None
@@ -382,10 +380,9 @@ def get_event_bus() -> EventBus:
         _event_bus_instance = EventBus()
     return _event_bus_instance
 
-
-# =============================================================================
-# Convenience Decorators
-# =============================================================================
+    # =============================================================================
+    # Convenience Decorators
+    # =============================================================================
 
 
 def event_handler(event_type: str | EventType):
@@ -405,10 +402,9 @@ def event_handler(event_type: str | EventType):
 
     return decorator
 
-
-# =============================================================================
-# Event Bus Statistics
-# =============================================================================
+    # =============================================================================
+    # Event Bus Statistics
+    # =============================================================================
 
 
 def get_event_bus_stats(bus: EventBus | None = None) -> dict[str, Any]:

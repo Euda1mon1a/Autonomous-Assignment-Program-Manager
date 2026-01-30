@@ -168,7 +168,7 @@ class SwapExecutor:
 
     ROLLBACK_WINDOW_HOURS = 24
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         """
         Initialize the SwapExecutor with a database session.
 
@@ -240,7 +240,7 @@ class SwapExecutor:
             else:
                 swap_type_enum = swap_type
 
-            # Execute in transactional context with retry on deadlock
+                # Execute in transactional context with retry on deadlock
             with transactional_with_retry(self.db, max_retries=3, timeout_seconds=30.0):
                 # Persist SwapRecord to database
                 swap_record = SwapRecord(
@@ -268,7 +268,7 @@ class SwapExecutor:
                 if target_week:
                     self._update_call_cascade(target_week, source_faculty_id)
 
-                # Transaction auto-commits on success, rolls back on exception
+                    # Transaction auto-commits on success, rolls back on exception
 
             logger.info(
                 f"Swap executed successfully: {swap_id} "
@@ -354,7 +354,7 @@ class SwapExecutor:
                         error_code="SWAP_NOT_FOUND",
                     )
 
-                # Check if swap is in a state that can be rolled back
+                    # Check if swap is in a state that can be rolled back
                 if swap_record.status != SwapStatus.EXECUTED:
                     logger.warning(
                         "Rollback failed: swap %s has invalid status %s",
@@ -367,7 +367,7 @@ class SwapExecutor:
                         error_code="INVALID_STATUS",
                     )
 
-                # Check if rollback is within the allowed time window
+                    # Check if rollback is within the allowed time window
                 if not self._check_rollback_window(swap_record):
                     time_since = (
                         datetime.utcnow() - swap_record.executed_at
@@ -385,7 +385,7 @@ class SwapExecutor:
                         error_code="ROLLBACK_WINDOW_EXPIRED",
                     )
 
-                # Reverse the schedule assignments
+                    # Reverse the schedule assignments
                 self._update_schedule_assignments(
                     swap_record.target_faculty_id,
                     swap_record.source_week,
@@ -402,7 +402,7 @@ class SwapExecutor:
                         swap_record.target_week, swap_record.target_faculty_id
                     )
 
-                # Update swap record status
+                    # Update swap record status
                 swap_record.status = SwapStatus.ROLLED_BACK
                 swap_record.rolled_back_at = datetime.utcnow()
                 swap_record.rolled_back_by_id = rolled_back_by_id
@@ -490,7 +490,7 @@ class SwapExecutor:
             logger.debug("can_rollback(%s): no executed_at timestamp", swap_id)
             return False
 
-        # Check if within rollback window
+            # Check if within rollback window
         time_since_execution = datetime.utcnow() - swap_record.executed_at
         rollback_window = timedelta(hours=self.ROLLBACK_WINDOW_HOURS)
 
@@ -580,7 +580,7 @@ class SwapExecutor:
                     }
                 )
 
-            # Handle target week for one-to-one swaps
+                # Handle target week for one-to-one swaps
             if target_week and target_week_end:
                 target_assignments = (
                     self.db.query(HalfDayAssignment)
@@ -611,7 +611,7 @@ class SwapExecutor:
                     error_code="NO_ASSIGNMENTS",
                 )
 
-            # Create draft
+                # Create draft
             draft_id = uuid4()
             draft = ScheduleDraft(
                 id=draft_id,
@@ -733,7 +733,7 @@ class SwapExecutor:
                 f"Swapped from faculty {source_faculty_id} via swap execution"
             )
 
-        # If this is a one-to-one swap, update target week assignments
+            # If this is a one-to-one swap, update target week assignments
         if target_week:
             target_week_end = target_week + timedelta(days=6)
 

@@ -20,7 +20,7 @@ from app.scheduling.constraints.base import (
 class SequenceConstraintTemplate(HardConstraint):
     """Template for sequence constraints."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="SequenceConstraint",
             constraint_type=ConstraintType.ROTATION,
@@ -46,7 +46,7 @@ class SequenceConstraintTemplate(HardConstraint):
                 person_assignments[person_id] = []
             person_assignments[person_id].append(assignment)
 
-        # Check sequences
+            # Check sequences
         for person_id, person_assigns in person_assignments.items():
             sorted_assigns = sorted(person_assigns, key=lambda a: a.date)
 
@@ -87,7 +87,7 @@ class SequenceConstraintTemplate(HardConstraint):
         """Check if assignment is required sequence."""
         return assignment.rotation_type == self.required_rotation
 
-    def add_to_cpsat(self, model, variables, context):
+    def add_to_cpsat(self, model, variables, context) -> None:
         """
         Add sequence constraint to CP-SAT model.
 
@@ -100,13 +100,13 @@ class SequenceConstraintTemplate(HardConstraint):
         if not x and not template_vars:
             return
 
-        # For each person, check sequence requirements
+            # For each person, check sequence requirements
         for person in context.residents + context.faculty:
             p_i = context.resident_idx.get(person.id)
             if p_i is None:
                 continue
 
-            # Find prerequisite blocks
+                # Find prerequisite blocks
             for i, block in enumerate(context.blocks):
                 b_i = context.block_idx[block.id]
 
@@ -129,7 +129,7 @@ class SequenceConstraintTemplate(HardConstraint):
                     ):
                         has_prerequisite = x[p_i, b_i]
 
-                # If prerequisite found, ensure required rotation follows
+                        # If prerequisite found, ensure required rotation follows
                 if has_prerequisite is not None:
                     # Find blocks within max_gap_days
                     following_blocks = []
@@ -150,7 +150,7 @@ class SequenceConstraintTemplate(HardConstraint):
                                         template_vars[p_i, next_b_i, template.id]
                                     )
 
-                    # Enforce: if has_prerequisite, then at least one following block
+                                    # Enforce: if has_prerequisite, then at least one following block
                     if following_blocks:
                         model.Add(sum(following_blocks) >= 1).OnlyEnforceIf(
                             has_prerequisite
@@ -170,7 +170,7 @@ class SequenceConstraintTemplate(HardConstraint):
             and template.rotation_type == self.required_rotation
         ) or (hasattr(template, "type") and template.type == self.required_rotation)
 
-    def add_to_pulp(self, model, variables, context):
+    def add_to_pulp(self, model, variables, context) -> None:
         """
         Add sequence constraint to PuLP model.
 
@@ -185,13 +185,13 @@ class SequenceConstraintTemplate(HardConstraint):
         if not x and not template_vars:
             return
 
-        # For each person, check sequence requirements
+            # For each person, check sequence requirements
         for person in context.residents + context.faculty:
             p_i = context.resident_idx.get(person.id)
             if p_i is None:
                 continue
 
-            # Find prerequisite blocks
+                # Find prerequisite blocks
             for i, block in enumerate(context.blocks):
                 b_i = context.block_idx[block.id]
 
@@ -213,7 +213,7 @@ class SequenceConstraintTemplate(HardConstraint):
                     ):
                         prereq_vars.append(x[p_i, b_i])
 
-                # If prerequisite found, ensure required rotation follows
+                        # If prerequisite found, ensure required rotation follows
                 for prereq_var in prereq_vars:
                     # Find blocks within max_gap_days
                     following_blocks = []
@@ -234,8 +234,8 @@ class SequenceConstraintTemplate(HardConstraint):
                                         template_vars[p_i, next_b_i, template.id]
                                     )
 
-                    # Enforce: if prereq_var = 1, then sum(following) >= 1
-                    # Linearized: sum(following) >= prereq_var
+                                    # Enforce: if prereq_var = 1, then sum(following) >= 1
+                                    # Linearized: sum(following) >= prereq_var
                     if following_blocks:
                         model += (
                             pulp.lpSum(following_blocks) >= prereq_var,

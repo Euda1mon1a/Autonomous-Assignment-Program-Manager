@@ -106,7 +106,7 @@ class DemandForecast:
             tid = assignment.rotation_template_id
             template_counts[tid] = template_counts.get(tid, 0) + 1
 
-        # Normalize to probabilities
+            # Normalize to probabilities
         total = sum(template_counts.values()) if template_counts else 1
         predicted_coverage = {
             tid: count / total for tid, count in template_counts.items()
@@ -125,7 +125,7 @@ class DemandForecast:
         else:
             predicted_complexity = 0.5
 
-        # Confidence based on sample size
+            # Confidence based on sample size
         confidence = min(1.0, len(historical_assignments) / 100)
 
         return cls(
@@ -230,7 +230,7 @@ class GenerativeModel:
         n_templates: int,
         learning_rate: float = 0.1,
         prior_strength: float = 1.0,
-    ):
+    ) -> None:
         """
         Initialize generative model.
 
@@ -269,7 +269,7 @@ class GenerativeModel:
         if actual_sum > 0:
             actual_vector = actual_vector / actual_sum
 
-        # Bayesian update with exponential moving average
+            # Bayesian update with exponential moving average
         self.learned_weights = (
             1 - self.learning_rate
         ) * self.learned_weights + self.learning_rate * actual_vector
@@ -376,7 +376,7 @@ class FreeEnergyScheduler(BioInspiredSolver):
         learning_rate: float = 0.1,
         active_inference_enabled: bool = True,
         seed: int | None = None,
-    ):
+    ) -> None:
         """
         Initialize Free Energy scheduler.
 
@@ -440,7 +440,7 @@ class FreeEnergyScheduler(BioInspiredSolver):
             if template_id in template_counts:
                 template_counts[template_id] += 1
 
-        # Normalize to distribution
+                # Normalize to distribution
         total = sum(template_counts.values())
         actual_vector = np.array(
             [template_counts[tid] / total if total > 0 else 0 for tid in template_order]
@@ -542,7 +542,7 @@ class FreeEnergyScheduler(BioInspiredSolver):
                     candidate.genes[r, b1],
                 )
 
-            # Evaluate
+                # Evaluate
             candidate_energy = self.compute_free_energy(candidate, forecast, context)
 
             # Accept if better
@@ -550,7 +550,7 @@ class FreeEnergyScheduler(BioInspiredSolver):
                 current = candidate
                 best_energy = candidate_energy
 
-            # Early stopping if converged
+                # Early stopping if converged
             if iteration > 10 and best_energy < 0.01:
                 break
 
@@ -708,7 +708,7 @@ class FreeEnergyScheduler(BioInspiredSolver):
                 logger.warning("Free energy optimization timeout")
                 break
 
-            # Active inference on best individual
+                # Active inference on best individual
             if self.active_inference_enabled:
                 updated_schedule, updated_forecast = self.active_inference_step(
                     schedule=best_individual.chromosome,
@@ -725,7 +725,7 @@ class FreeEnergyScheduler(BioInspiredSolver):
                 # Update forecast
                 self.current_forecast = updated_forecast
 
-            # Compute free energy for tracking
+                # Compute free energy for tracking
             free_energy = self.compute_free_energy(
                 schedule=best_individual.chromosome,
                 forecast=self.current_forecast,
@@ -771,7 +771,7 @@ class FreeEnergyScheduler(BioInspiredSolver):
                     n_templates = len(context.templates)
                     child_chromosome.genes[r, b] = np.random.randint(0, n_templates + 1)
 
-                # Evaluate
+                    # Evaluate
                 child_fitness = self.evaluate_fitness(child_chromosome, context)
                 child = Individual(
                     chromosome=child_chromosome,
@@ -798,7 +798,7 @@ class FreeEnergyScheduler(BioInspiredSolver):
             ):
                 best_individual = current_best
 
-            # Track evolution
+                # Track evolution
             if self.track_evolution and generation % 10 == 0:
                 stats = self.compute_population_stats(self.population, generation)
                 self.evolution_history.append(stats)

@@ -42,7 +42,7 @@ class ErrorReporter(ABC):
 class LoggingReporter(ErrorReporter):
     """Reports errors to application logs."""
 
-    def __init__(self, logger_name: str = "app.errors"):
+    def __init__(self, logger_name: str = "app.errors") -> None:
         """
         Initialize logging reporter.
 
@@ -120,7 +120,7 @@ class LoggingReporter(ErrorReporter):
 class NotificationReporter(ErrorReporter):
     """Reports errors via the notification system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize notification reporter."""
         self.error_thresholds = {
             "critical": 1,  # Notify on first critical error
@@ -156,7 +156,7 @@ class NotificationReporter(ErrorReporter):
             if severity != "critical":
                 return False
 
-            # Get notification service
+                # Get notification service
             db = next(get_db())
             notification_service = get_notification_service(db)
 
@@ -170,7 +170,7 @@ class NotificationReporter(ErrorReporter):
                 logger.warning("No alert recipients configured for error notifications")
                 return False
 
-            # Build notification data
+                # Build notification data
             request_info = context.get_request_info()
             notification_data = {
                 "error_type": type(exc).__name__,
@@ -264,7 +264,7 @@ class SentryReporter(ErrorReporter):
     Note: Requires sentry-sdk to be installed.
     """
 
-    def __init__(self, dsn: str | None = None):
+    def __init__(self, dsn: str | None = None) -> None:
         """
         Initialize Sentry reporter.
 
@@ -322,7 +322,7 @@ class SentryReporter(ErrorReporter):
                 if "user" in request_info:
                     scope.set_user(request_info["user"])
 
-                # Set tags
+                    # Set tags
                 scope.set_tag("severity", severity)
                 scope.set_tag("request_method", request_info["method"])
                 scope.set_tag("request_path", request_info["path"])
@@ -347,7 +347,7 @@ class CompositeReporter(ErrorReporter):
     Allows reporting errors to multiple destinations (logs, metrics, Sentry, etc.).
     """
 
-    def __init__(self, reporters: list[ErrorReporter] | None = None):
+    def __init__(self, reporters: list[ErrorReporter] | None = None) -> None:
         """
         Initialize composite reporter.
 
@@ -421,33 +421,34 @@ class ErrorSeverityClassifier:
             # Database errors are critical
             if "database" in type(exc).__name__.lower():
                 return "critical"
-            # Generic 500 errors are critical
+                # Generic 500 errors are critical
             if status_code == 500:
                 return "critical"
-            # Service unavailable is critical
+                # Service unavailable is critical
             if status_code == 503:
                 return "critical"
             return "error"
 
-        # Client errors (4xx)
+            # Client errors (4xx)
         if status_code >= 400:
             # Authentication/authorization errors
             if status_code in (401, 403):
                 return "warning"
-            # Not found is info (normal)
+                # Not found is info (normal)
             if status_code == 404:
                 return "info"
-            # Validation errors are info (normal user errors)
+                # Validation errors are info (normal user errors)
             if status_code == 422:
                 return "info"
-            # Other client errors are warnings
+                # Other client errors are warnings
             return "warning"
 
-        # Default to error
+            # Default to error
         return "error"
 
+        # Global reporter instance
 
-# Global reporter instance
+
 _reporter: ErrorReporter | None = None
 
 

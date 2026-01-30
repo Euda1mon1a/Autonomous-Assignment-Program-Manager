@@ -11,7 +11,7 @@ from app.repositories.procedure import ProcedureRepository
 class ProcedureService:
     """Service for procedure business logic."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.procedure_repo = ProcedureRepository(db)
 
@@ -114,7 +114,7 @@ class ProcedureService:
         if not procedure:
             return {"procedure": None, "error": "Procedure not found"}
 
-        # Check for duplicate name if name is being changed
+            # Check for duplicate name if name is being changed
         if "name" in update_data and update_data["name"] != procedure.name:
             existing = self.procedure_repo.get_by_name(update_data["name"])
             if existing:

@@ -34,7 +34,7 @@ class ResponseLogger:
         max_body_size: int = 10 * 1024,  # 10 KB
         filter_sensitive: bool = True,
         sensitive_filter: SensitiveDataFilter | None = None,
-    ):
+    ) -> None:
         """
         Initialize response logger.
 
@@ -91,13 +91,13 @@ class ResponseLogger:
         if content_length:
             log_entry["content_length"] = int(content_length)
 
-        # Attempt to read response body (if possible)
+            # Attempt to read response body (if possible)
         if hasattr(response, "body") and response.body:
             body_data = self._parse_response_body(response.body, content_type)
             if body_data:
                 log_entry["body"] = body_data
 
-        # Performance categorization
+                # Performance categorization
         log_entry["performance"] = self._categorize_performance(duration_ms)
 
         # Determine log level
@@ -108,7 +108,7 @@ class ResponseLogger:
         else:
             log_level = logging.INFO
 
-        # Log
+            # Log
         logger.log(
             log_level,
             f"Response: {request.method} {request.url.path} -> "
@@ -137,7 +137,7 @@ class ResponseLogger:
                 "_note": f"Body too large ({len(body)} bytes, max {self.max_body_size})"
             }
 
-        # Parse JSON responses
+            # Parse JSON responses
         if "application/json" in content_type:
             try:
                 body_json = json.loads(body)
@@ -150,14 +150,14 @@ class ResponseLogger:
                     "_raw": body[:200].decode("utf-8", errors="ignore"),
                 }
 
-        # For text responses, include truncated content
+                # For text responses, include truncated content
         elif "text/" in content_type:
             return {
                 "_text": body[:500].decode("utf-8", errors="ignore"),
                 "_size": len(body),
             }
 
-        # For other content types, just log metadata
+            # For other content types, just log metadata
         else:
             return {"_content_type": content_type, "_size": len(body)}
 
@@ -191,7 +191,7 @@ class StreamingResponseLogger:
     using background tasks to log after response is sent.
     """
 
-    def __init__(self, response_logger: ResponseLogger | None = None):
+    def __init__(self, response_logger: ResponseLogger | None = None) -> None:
         """
         Initialize streaming response logger.
 
@@ -255,7 +255,7 @@ class ResponseMetrics:
     - Endpoint-specific metrics
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize response metrics tracker."""
         self.metrics: dict[str, Any] = {
             "total_requests": 0,
@@ -308,7 +308,7 @@ class ResponseMetrics:
         else:
             self.metrics["response_times"]["critical"] += 1
 
-        # Track per-endpoint metrics
+            # Track per-endpoint metrics
         endpoint_key = f"{method} {path}"
         if endpoint_key not in self.metrics["endpoints"]:
             self.metrics["endpoints"][endpoint_key] = {
@@ -336,6 +336,7 @@ class ResponseMetrics:
         """Reset all metrics."""
         self.__init__()
 
+        # Global metrics instance
 
-# Global metrics instance
+
 global_metrics = ResponseMetrics()

@@ -51,7 +51,7 @@ class ExporterConfig:
         headers: dict[str, str] | None = None,
         insecure: bool = True,
         timeout: int = 10,
-    ):
+    ) -> None:
         self.exporter_type = exporter_type
         self.endpoint = endpoint
         self.service_name = service_name
@@ -320,8 +320,7 @@ def create_multi_exporter_processor(
     logger.info(f"Created {len(processors)} span processor(s)")
     return processors
 
-
-# Convenience functions for common configurations
+    # Convenience functions for common configurations
 
 
 def create_jaeger_processor(

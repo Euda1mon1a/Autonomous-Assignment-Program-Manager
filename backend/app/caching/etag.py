@@ -39,7 +39,7 @@ class ETagGenerator:
         # Returns: W/"abc123def456"
     """
 
-    def __init__(self, algorithm: str = "sha256"):
+    def __init__(self, algorithm: str = "sha256") -> None:
         """
         Initialize ETag generator.
 
@@ -66,7 +66,7 @@ class ETagGenerator:
         if isinstance(content, str):
             content = content.encode("utf-8")
 
-        # Generate hash
+            # Generate hash
         hasher = hashlib.new(self.algorithm)
         hasher.update(content)
         hash_value = hasher.hexdigest()
@@ -199,7 +199,7 @@ class ETagGenerator:
             if ETagGenerator.is_weak(etag1) or ETagGenerator.is_weak(etag2):
                 return False
 
-        # Strip weak prefixes for comparison
+                # Strip weak prefixes for comparison
         etag1_stripped = ETagGenerator.strip_weak_prefix(etag1)
         etag2_stripped = ETagGenerator.strip_weak_prefix(etag2)
 
@@ -224,7 +224,7 @@ class ETagGenerator:
         if header_value.strip() == "*":
             return ["*"]
 
-        # Split by comma and strip whitespace
+            # Split by comma and strip whitespace
         etags = [etag.strip() for etag in header_value.split(",")]
         return [etag for etag in etags if etag]
 
@@ -250,7 +250,7 @@ class ETagGenerator:
         if "*" in etag_list:
             return True
 
-        # Check each ETag
+            # Check each ETag
         for candidate in etag_list:
             if ETagGenerator.matches(etag, candidate):
                 return True

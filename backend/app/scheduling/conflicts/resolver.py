@@ -36,7 +36,7 @@ class ResolutionSuggestion:
         confidence: float,
         estimated_time_minutes: int,
         requires_approval: bool = True,
-    ):
+    ) -> None:
         """
         Initialize a resolution suggestion.
 
@@ -111,7 +111,7 @@ class ConflictResolver:
             # Generic suggestions
             suggestions = await self._generic_resolutions(conflict)
 
-        # Sort by confidence and return top suggestions
+            # Sort by confidence and return top suggestions
         suggestions.sort(key=lambda s: s.confidence, reverse=True)
         return suggestions[:max_suggestions]
 
@@ -155,7 +155,7 @@ class ConflictResolver:
                 )
             )
 
-        # Strategy 2: Reassign to different person
+            # Strategy 2: Reassign to different person
         suggestions.append(
             ResolutionSuggestion(
                 suggestion_id=f"{conflict.conflict_id}_reassign",
@@ -278,7 +278,7 @@ class ConflictResolver:
                 )
             )
 
-        # Strategy 3: Use backup faculty
+            # Strategy 3: Use backup faculty
         suggestions.append(
             ResolutionSuggestion(
                 suggestion_id=f"{conflict.conflict_id}_backup_faculty",

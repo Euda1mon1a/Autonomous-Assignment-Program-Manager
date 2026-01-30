@@ -37,7 +37,7 @@ class ExternalServiceHealthCheck:
         timeout: float = 10.0,
         expected_status: int = 200,
         check_ssl: bool = True,
-    ):
+    ) -> None:
         """
         Initialize external service health check.
 
@@ -220,7 +220,7 @@ class DNSHealthCheck:
     Verifies that DNS resolution is working for critical domains.
     """
 
-    def __init__(self, hostname: str, timeout: float = 5.0):
+    def __init__(self, hostname: str, timeout: float = 5.0) -> None:
         """
         Initialize DNS health check.
 

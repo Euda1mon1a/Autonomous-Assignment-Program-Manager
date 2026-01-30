@@ -62,7 +62,7 @@ class PenroseVisualizer:
         >>> plt.close(fig)
     """
 
-    def __init__(self, config: VisualizationConfig | None = None):
+    def __init__(self, config: VisualizationConfig | None = None) -> None:
         """
         Initialize Penrose visualizer.
 
@@ -100,7 +100,7 @@ class PenroseVisualizer:
             ax.set_title(title)
             return fig
 
-        # Sort ergospheres by start time
+            # Sort ergospheres by start time
         sorted_ergospheres = sorted(ergospheres, key=lambda e: e.start_time)
 
         # Calculate time range
@@ -155,7 +155,7 @@ class PenroseVisualizer:
                 fontweight="bold",
             )
 
-        # Set axis properties
+            # Set axis properties
         ax.set_xlim(0, time_range)
         ax.set_ylim(-0.5, len(boundary_type_positions) - 0.5)
         ax.set_xlabel("Time (hours from start)", fontsize=self.config.font_size)
@@ -237,7 +237,7 @@ class PenroseVisualizer:
             ax1.set_title(title)
             return fig
 
-        # Calculate cumulative extraction
+            # Calculate cumulative extraction
         cumulative_extraction = []
         cumulative_value = 0
         swap_numbers = list(range(1, len(executed_swaps) + 1))
@@ -246,7 +246,7 @@ class PenroseVisualizer:
             cumulative_value += swap.net_extraction
             cumulative_extraction.append(cumulative_value)
 
-        # Plot 1: Cumulative extraction
+            # Plot 1: Cumulative extraction
         ax1.plot(
             swap_numbers,
             cumulative_extraction,
@@ -332,7 +332,7 @@ class PenroseVisualizer:
             ax.set_title(title)
             return fig
 
-        # Build network graph
+            # Build network graph
         G = nx.Graph()
 
         # Add nodes (assignments)
@@ -344,7 +344,7 @@ class PenroseVisualizer:
         for assignment_id in assignment_ids:
             G.add_node(str(assignment_id)[:8])  # Use first 8 chars for readability
 
-        # Add edges (swaps)
+            # Add edges (swaps)
         edge_weights = []
         edge_colors = []
 
@@ -364,7 +364,7 @@ class PenroseVisualizer:
 
             G.add_edge(node_a, node_b, weight=weight, swap=swap)
 
-        # Layout
+            # Layout
         pos = nx.spring_layout(G, seed=42, k=1.5)
 
         # Draw network
@@ -469,14 +469,14 @@ class PenroseVisualizer:
             ax.set_title(title)
             return fig
 
-        # Group phases by assignment
+            # Group phases by assignment
         phases_by_assignment: dict[UUID, list[PhaseComponent]] = {}
         for phase in phases:
             if phase.assignment_id not in phases_by_assignment:
                 phases_by_assignment[phase.assignment_id] = []
             phases_by_assignment[phase.assignment_id].append(phase)
 
-        # Sort assignments
+            # Sort assignments
         sorted_assignments = sorted(phases_by_assignment.keys())
 
         # Plot each assignment's phases
@@ -497,7 +497,7 @@ class PenroseVisualizer:
                 else:
                     color = "gray"
 
-                # Width proportional to phase duration
+                    # Width proportional to phase duration
                 duration = (phase.phase_end - phase.phase_start).total_seconds() / 3600
                 width = duration / 24  # Normalize to 24-hour scale
 
@@ -530,7 +530,7 @@ class PenroseVisualizer:
 
             y_position += 1
 
-        # Set axis properties
+            # Set axis properties
         ax.set_xlim(0, 3)  # Three phases
         ax.set_ylim(-0.5, len(sorted_assignments) - 0.5)
         ax.set_xlabel("Phase Progression", fontsize=self.config.font_size)
@@ -660,7 +660,7 @@ class PenroseVisualizer:
                 "Further optimization may yield diminishing returns."
             )
 
-        # Check for high-potential ergospheres
+            # Check for high-potential ergospheres
         high_potential = [e for e in ergospheres if e.is_high_potential]
         if high_potential:
             recommendations.append(
@@ -668,7 +668,7 @@ class PenroseVisualizer:
                 "Focus optimization efforts on these periods."
             )
 
-        # Check for underutilized swaps
+            # Check for underutilized swaps
         unexecuted = [s for s in swaps if not s.executed and s.is_beneficial]
         if unexecuted:
             total_potential = sum(s.net_extraction for s in unexecuted)
@@ -677,7 +677,7 @@ class PenroseVisualizer:
                 f"Potential additional extraction: {total_potential:.2f}"
             )
 
-        # Check for low extraction efficiency
+            # Check for low extraction efficiency
         if efficiency < 0.05:
             recommendations.append(
                 "⚠️ Low extraction efficiency. Consider relaxing constraints "

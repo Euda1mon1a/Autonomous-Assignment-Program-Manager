@@ -42,7 +42,7 @@ class JobScheduler:
     - Job chaining support
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the job scheduler."""
         self.scheduler = BackgroundScheduler(
             timezone="UTC",
@@ -155,7 +155,7 @@ class JobScheduler:
                     except Exception as e:
                         logger.error(f"Failed to add job '{job.name}': {e}")
 
-            # Remove deleted jobs
+                        # Remove deleted jobs
             for job_id, job in scheduler_jobs.items():
                 if job_id not in db_job_names:
                     try:
@@ -263,7 +263,7 @@ class JobScheduler:
             except Exception as e:
                 logger.warning(f"Job not in scheduler: {e}")
 
-            # Delete from database
+                # Delete from database
             return persistence.delete_job(job_id)
 
         finally:

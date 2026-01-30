@@ -59,7 +59,7 @@ class ThrottleStorage:
     and provides metrics for monitoring.
     """
 
-    def __init__(self, redis_client: redis.Redis | None = None):
+    def __init__(self, redis_client: redis.Redis | None = None) -> None:
         """
         Initialize throttle storage.
 

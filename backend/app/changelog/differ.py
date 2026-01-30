@@ -57,7 +57,7 @@ class APIChange:
     breaking: bool = False
     migration_guide: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Automatically determine if change is breaking."""
         self.breaking = self.change_type in {
             ChangeType.ENDPOINT_REMOVED,
@@ -114,7 +114,7 @@ class APIDiff:
         if self.has_breaking_changes:
             return f"{major + 1}.0.0"
 
-        # Check for new features (minor bump)
+            # Check for new features (minor bump)
         new_features = [
             c
             for c in self.changes
@@ -129,11 +129,11 @@ class APIDiff:
         if new_features:
             return f"{major}.{minor + 1}.0"
 
-        # Patch-level changes only
+            # Patch-level changes only
         if len(self.changes) > 0:
             return f"{major}.{minor}.{patch + 1}"
 
-        # No changes
+            # No changes
         return current_version
 
 
@@ -148,7 +148,7 @@ class APIDiffer:
     - Breaking vs non-breaking changes
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the API differ."""
         self.changes: list[APIChange] = []
 
@@ -219,7 +219,7 @@ class APIDiffer:
                 )
                 continue
 
-            # Endpoint added
+                # Endpoint added
             if path not in old_paths and path in new_paths:
                 methods = [
                     m
@@ -236,7 +236,7 @@ class APIDiffer:
                 )
                 continue
 
-            # Compare methods for this path
+                # Compare methods for this path
             self._compare_methods(path, old_path_item, new_path_item)
 
     def _compare_methods(
@@ -262,7 +262,7 @@ class APIDiffer:
                 )
             )
 
-        # Method added (non-breaking)
+            # Method added (non-breaking)
         for method in new_methods - old_methods:
             self.changes.append(
                 APIChange(
@@ -273,7 +273,7 @@ class APIDiffer:
                 )
             )
 
-        # Compare existing methods
+            # Compare existing methods
         for method in old_methods & new_methods:
             old_operation = old_path_item[method]
             new_operation = new_path_item[method]
@@ -300,7 +300,7 @@ class APIDiffer:
                 )
             )
 
-        # Compare parameters
+            # Compare parameters
         old_params = old_op.get("parameters", [])
         new_params = new_op.get("parameters", [])
         self._compare_parameters(path, method_upper, old_params, new_params)
@@ -311,7 +311,7 @@ class APIDiffer:
         if old_body or new_body:
             self._compare_request_body(path, method_upper, old_body, new_body)
 
-        # Compare responses
+            # Compare responses
         old_responses = old_op.get("responses", {})
         new_responses = new_op.get("responses", {})
         self._compare_responses(path, method_upper, old_responses, new_responses)
@@ -355,7 +355,7 @@ class APIDiffer:
                 )
             )
 
-        # Added parameters
+            # Added parameters
         for name in set(new_param_map.keys()) - set(old_param_map.keys()):
             param = new_param_map[name]
             is_required = param.get("required", False)
@@ -379,7 +379,7 @@ class APIDiffer:
                 )
             )
 
-        # Changed parameters
+            # Changed parameters
         for name in set(old_param_map.keys()) & set(new_param_map.keys()):
             old_param = old_param_map[name]
             new_param = new_param_map[name]
@@ -447,7 +447,7 @@ class APIDiffer:
                 )
             )
 
-        # Added response status (non-breaking)
+            # Added response status (non-breaking)
         for status in new_statuses - old_statuses:
             self.changes.append(
                 APIChange(

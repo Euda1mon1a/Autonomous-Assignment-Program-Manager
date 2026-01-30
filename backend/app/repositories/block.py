@@ -12,7 +12,7 @@ from app.repositories.base import BaseRepository
 class BlockRepository(BaseRepository[Block]):
     """Repository for Block entity operations."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         super().__init__(Block, db)
 
     def list_with_filters(

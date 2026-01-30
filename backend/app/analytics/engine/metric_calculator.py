@@ -35,7 +35,7 @@ class MetricCalculator:
     - Resilience metrics: Utilization, N-1 status
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Initialize metric calculator.
 
@@ -284,11 +284,11 @@ class MetricCalculator:
                 if utilization > 0.8:
                     high_util_count += 1
 
-                # N-1 vulnerable if losing 1 person would exceed capacity
+                    # N-1 vulnerable if losing 1 person would exceed capacity
                 if utilization > 0.9:
                     n1_vulnerable_count += 1
 
-        # Get swap count
+                    # Get swap count
         swap_query = select(func.count(SwapRecord.id)).where(
             and_(
                 SwapRecord.requested_at >= start_date,
@@ -331,14 +331,14 @@ class MetricCalculator:
                     weeks[week_num] = []
                 weeks[week_num].append(assignment)
 
-        # Check each 4-week rolling window
+                # Check each 4-week rolling window
         week_nums = sorted(weeks.keys())
         for i in range(len(week_nums) - 3):
             window_assignments = []
             for j in range(4):
                 window_assignments.extend(weeks[week_nums[i + j]])
 
-            # Estimate hours (4 per half-day block)
+                # Estimate hours (4 per half-day block)
             total_hours = len(window_assignments) * 4
 
             if total_hours > 80 * 4:  # 80 hours/week * 4 weeks
@@ -363,7 +363,7 @@ class MetricCalculator:
         if not assignments:
             return violations
 
-        # Sort by date
+            # Sort by date
         sorted_assignments = sorted(
             assignments, key=lambda a: a.block.date if a.block else date.min
         )
@@ -409,7 +409,7 @@ class MetricCalculator:
                 week_num = assignment.block.date.isocalendar()[1]
                 weeks[week_num] = weeks.get(week_num, 0) + 1
 
-        # Convert block counts to hours (4 hours per half-day)
+                # Convert block counts to hours (4 hours per half-day)
         return [count * 4 for count in weeks.values()]
 
     def _is_placeholder_assignment(self, assignment: Assignment) -> bool:

@@ -64,7 +64,7 @@ class ResilienceMetrics:
         metrics.record_crisis_activation("moderate", "PCS season")
     """
 
-    def __init__(self, registry: Optional["CollectorRegistry"] = None):
+    def __init__(self, registry: Optional["CollectorRegistry"] = None) -> None:
         """
         Initialize metrics.
 
@@ -232,7 +232,7 @@ class ResilienceMetrics:
         level: str,
         buffer: float = 0.0,
         component: str = "overall",
-    ):
+    ) -> None:
         """Update utilization metrics."""
         if not self._enabled:
             return
@@ -243,20 +243,20 @@ class ResilienceMetrics:
         self.utilization_level.set(level_map.get(level.lower(), 0))
         self.buffer_remaining.set(buffer)
 
-    def update_defense_level(self, level: int):
+    def update_defense_level(self, level: int) -> None:
         """Update defense in depth level (1-5)."""
         if not self._enabled:
             return
         self.defense_level.set(level)
 
-    def update_load_shedding(self, level: int, suspended_count: int = 0):
+    def update_load_shedding(self, level: int, suspended_count: int = 0) -> None:
         """Update load shedding metrics."""
         if not self._enabled:
             return
         self.load_shedding_level.set(level)
         self.suspended_activities.set(suspended_count)
 
-    def update_contingency_status(self, n1_pass: bool, n2_pass: bool):
+    def update_contingency_status(self, n1_pass: bool, n2_pass: bool) -> None:
         """Update contingency analysis status."""
         if not self._enabled:
             return
@@ -268,7 +268,7 @@ class ResilienceMetrics:
         total: int,
         on_duty: int = 0,
         on_leave: int = 0,
-    ):
+    ) -> None:
         """Update faculty availability metrics."""
         if not self._enabled:
             return
@@ -276,13 +276,13 @@ class ResilienceMetrics:
         self.faculty_available.labels(type="on_duty").set(on_duty)
         self.faculty_available.labels(type="on_leave").set(on_leave)
 
-    def update_coverage(self, rate: float):
+    def update_coverage(self, rate: float) -> None:
         """Update coverage rate."""
         if not self._enabled:
             return
         self.coverage_rate.set(rate)
 
-    def update_redundancy(self, service: str, level: int):
+    def update_redundancy(self, service: str, level: int) -> None:
         """
         Update redundancy level for a service.
 
@@ -292,26 +292,26 @@ class ResilienceMetrics:
             return
         self.redundancy_level.labels(service=service).set(level)
 
-    def update_active_fallbacks(self, count: int):
+    def update_active_fallbacks(self, count: int) -> None:
         """Update count of active fallback schedules."""
         if not self._enabled:
             return
         self.active_fallbacks.set(count)
 
-    def record_crisis_activation(self, severity: str, reason: str = ""):
+    def record_crisis_activation(self, severity: str, reason: str = "") -> None:
         """Record a crisis activation event."""
         if not self._enabled:
             return
         self.crisis_activations.labels(severity=severity).inc()
         logger.info(f"Metrics: Crisis activation recorded (severity={severity})")
 
-    def record_fallback_activation(self, scenario: str):
+    def record_fallback_activation(self, scenario: str) -> None:
         """Record a fallback schedule activation."""
         if not self._enabled:
             return
         self.fallback_activations.labels(scenario=scenario).inc()
 
-    def record_load_shedding_change(self, from_level: int, to_level: int):
+    def record_load_shedding_change(self, from_level: int, to_level: int) -> None:
         """Record a load shedding level change."""
         if not self._enabled:
             return
@@ -320,7 +320,7 @@ class ResilienceMetrics:
             to_level=str(to_level),
         ).inc()
 
-    def record_defense_activation(self, level: int, action: str):
+    def record_defense_activation(self, level: int, action: str) -> None:
         """Record a defense action activation."""
         if not self._enabled:
             return
@@ -329,7 +329,7 @@ class ResilienceMetrics:
             action=action,
         ).inc()
 
-    def record_health_check_failure(self, reason: str):
+    def record_health_check_failure(self, reason: str) -> None:
         """Record a health check failure."""
         if not self._enabled:
             return
@@ -357,8 +357,9 @@ class ResilienceMetrics:
             return nullcontext()
         return self.contingency_analysis_duration.time()
 
+        # Global metrics instance
 
-# Global metrics instance
+
 _metrics: ResilienceMetrics | None = None
 
 

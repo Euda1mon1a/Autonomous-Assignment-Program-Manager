@@ -65,7 +65,7 @@ class ParsedSlot:
 class HalfDayImportService:
     """Stage Excel schedule and compute diffs vs current schedule."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self._activity_map: dict[str, str] = {}
         self._person_map: dict[str, UUID] = {}
@@ -122,7 +122,7 @@ class HalfDayImportService:
                 )
             )
 
-        # Load current schedule (include overrides)
+            # Load current schedule (include overrides)
         current_assignments = self._get_current_schedule(
             start_date=start_date,
             end_date=end_date,
@@ -135,7 +135,7 @@ class HalfDayImportService:
                     (assignment.person_id, assignment.date, assignment.time_of_day)
                 ] = assignment
 
-        # Compute diffs and stage
+                # Compute diffs and stage
         diff_entries: list[HalfDayDiffEntry] = []
         metrics = HalfDayDiffMetrics()
         metrics.total_slots = sum(1 for slot in normalized_slots if slot.person_id)
@@ -210,7 +210,7 @@ class HalfDayImportService:
                     metrics.by_activity.get(existing_code, 0) + 1
                 )
 
-            # Stage diff row
+                # Stage diff row
             staged = ImportStagedAssignment(
                 id=uuid4(),
                 batch_id=batch.id,
@@ -232,7 +232,7 @@ class HalfDayImportService:
             )
             self.db.add(staged)
 
-        # Finalize metrics
+            # Finalize metrics
         if metrics.total_slots > 0:
             metrics.percent_changed = round(
                 (metrics.changed_slots / metrics.total_slots) * 100, 2
@@ -469,7 +469,7 @@ class HalfDayImportService:
         if not date_cols:
             raise ValueError("Could not find date columns in row 3")
 
-        # Verify date range if possible
+            # Verify date range if possible
         parsed_start = date_cols[0][1]
         parsed_end = date_cols[-1][1]
         if parsed_start != start_date or parsed_end != end_date:
@@ -551,7 +551,7 @@ class HalfDayImportService:
         if token in SPECIAL_CODE_MAP:
             return SPECIAL_CODE_MAP[token].get(time_of_day, token)
 
-        # Strip AM/PM suffixes
+            # Strip AM/PM suffixes
         if token.endswith("-AM") or token.endswith("-PM"):
             token = token[:-3]
 

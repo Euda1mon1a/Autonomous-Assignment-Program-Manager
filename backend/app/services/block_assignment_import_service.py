@@ -138,7 +138,7 @@ class BlockAssignmentImportService:
     - PERSEC compliance (no PII in logs)
     """
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self._rotation_cache: dict[str, tuple[uuid.UUID, str]] = {}
         self._resident_cache: dict[str, tuple[uuid.UUID, str]] = {}
@@ -210,7 +210,7 @@ class BlockAssignmentImportService:
             first_anon = first[0] + "*" * max(0, len(first) - 1) if first else "***"
             return f"{last_anon}, {first_anon}"
 
-        # Single name or other format
+            # Single name or other format
         parts = name.split()
         anon_parts = []
         for part in parts:
@@ -237,7 +237,7 @@ class BlockAssignmentImportService:
             rot_id, rot_name = self._rotation_cache[key]
             return rot_id, rot_name, 1.0
 
-        # Try common variations
+            # Try common variations
         variations = [
             key.replace(" ", "-"),
             key.replace("-", " "),
@@ -275,7 +275,7 @@ class BlockAssignmentImportService:
                 pgy = self._resident_pgy_cache.get(resident_id)
             if pgy in (1, 2, 3):
                 return f"FMIT-PGY{pgy}"
-            # Fallback to a deterministic template to avoid unknown-rotation noise
+                # Fallback to a deterministic template to avoid unknown-rotation noise
             return "FMIT-PGY1"
 
         return key
@@ -309,7 +309,7 @@ class BlockAssignmentImportService:
                 )
                 return rot_id, rot_name, 1.0
 
-        # Try variations of the keys
+                # Try variations of the keys
         variations = [
             (primary.upper().replace(" ", "-"), secondary.upper().replace(" ", "-")),
             (primary.upper().replace("-", " "), secondary.upper().replace("-", " ")),
@@ -403,7 +403,7 @@ class BlockAssignmentImportService:
         if not lines:
             return rows
 
-        # Parse CSV
+            # Parse CSV
         reader = csv.DictReader(io.StringIO("\n".join(lines)))
 
         if reader.fieldnames:
@@ -491,7 +491,7 @@ class BlockAssignmentImportService:
             if not rotation_id:
                 unknown_rotation_counts[rotation_input.upper()] += 1
 
-            # Check for duplicate
+                # Check for duplicate
             is_duplicate = False
             existing_assignment_id = None
             if rotation_id and resident_id:
@@ -499,7 +499,7 @@ class BlockAssignmentImportService:
                     block_number, academic_year, resident_id
                 )
 
-            # Determine match status
+                # Determine match status
             if errors:
                 match_status = MatchStatus.INVALID
             elif not rotation_id:
@@ -511,7 +511,7 @@ class BlockAssignmentImportService:
             else:
                 match_status = MatchStatus.MATCHED
 
-            # Add low confidence warnings
+                # Add low confidence warnings
             if rotation_conf > 0 and rotation_conf < 1.0:
                 row_warnings.append(
                     f"Rotation matched with {rotation_conf * 100:.0f}% confidence"
@@ -543,7 +543,7 @@ class BlockAssignmentImportService:
                 )
             )
 
-        # Build unknown rotations list
+            # Build unknown rotations list
         unknown_rotations = [
             UnknownRotationItem(
                 abbreviation=abbrev,
@@ -671,7 +671,7 @@ class BlockAssignmentImportService:
                 skipped_count += 1
                 continue
 
-            # Skip unknown rotations/residents
+                # Skip unknown rotations/residents
             if match_status == MatchStatus.UNKNOWN_ROTATION.value:
                 skipped_count += 1
                 continue
@@ -680,7 +680,7 @@ class BlockAssignmentImportService:
                 skipped_count += 1
                 continue
 
-            # Handle duplicates
+                # Handle duplicates
             if match_status == MatchStatus.DUPLICATE.value:
                 # Check row-specific override
                 row_action = request.row_overrides.get(row_num, DuplicateAction.SKIP)
@@ -719,7 +719,7 @@ class BlockAssignmentImportService:
                     skipped_count += 1
                 continue
 
-            # Create new assignment
+                # Create new assignment
             try:
                 # Parse secondary rotation ID if present
                 secondary_rot_id = None
@@ -743,7 +743,7 @@ class BlockAssignmentImportService:
                 failed_rows.append(row_num)
                 error_messages.append(f"Row {row_num}: Import failed")
 
-        # Commit transaction
+                # Commit transaction
         try:
             await self.session.commit()
             logger.info(
@@ -767,7 +767,7 @@ class BlockAssignmentImportService:
                 completed_at=datetime.utcnow(),
             )
 
-        # Clean up preview cache
+            # Clean up preview cache
         del self._preview_cache[request.preview_id]
 
         return BlockAssignmentImportResult(
@@ -902,7 +902,7 @@ class BlockAssignmentImportService:
                 warnings=["No resident assignments found in file"],
             )
 
-        # Load caches for matching
+            # Load caches for matching
         await self.load_caches()
 
         preview_id = str(uuid.uuid4())
@@ -938,7 +938,7 @@ class BlockAssignmentImportService:
                         f"Combined: {a.rotation_template} + {a.secondary_rotation} -> {combined_name}"
                     )
 
-            # Fall back to matching primary rotation separately
+                    # Fall back to matching primary rotation separately
             if not rotation_id:
                 rotation_id, rotation_name, rotation_conf = self._match_rotation(
                     a.rotation_template
@@ -946,7 +946,7 @@ class BlockAssignmentImportService:
                 if not rotation_id and a.rotation_template:
                     unknown_rotation_counts[a.rotation_template.upper()] += 1
 
-            # Match secondary rotation separately (if not using combined)
+                    # Match secondary rotation separately (if not using combined)
             if a.secondary_rotation and not used_combined:
                 secondary_id, secondary_name, secondary_conf = self._match_rotation(
                     a.secondary_rotation
@@ -957,7 +957,7 @@ class BlockAssignmentImportService:
                         f"Secondary rotation '{a.secondary_rotation}' not found"
                     )
 
-            # Match resident
+                    # Match resident
             resident_id, resident_name, resident_conf = self._match_resident(
                 a.person_name
             )
@@ -970,7 +970,7 @@ class BlockAssignmentImportService:
                     a.block_number, academic_year, resident_id
                 )
 
-            # Determine match status
+                # Determine match status
             if not rotation_id:
                 match_status = MatchStatus.UNKNOWN_ROTATION
             elif not resident_id:
@@ -980,7 +980,7 @@ class BlockAssignmentImportService:
             else:
                 match_status = MatchStatus.MATCHED
 
-            # Add low confidence warnings
+                # Add low confidence warnings
             if rotation_conf > 0 and rotation_conf < 1.0:
                 row_warnings.append(
                     f"Rotation matched with {rotation_conf * 100:.0f}% confidence"
@@ -1016,7 +1016,7 @@ class BlockAssignmentImportService:
                 )
             )
 
-        # Build unknown rotations list
+            # Build unknown rotations list
         unknown_rotations = [
             UnknownRotationItem(
                 abbreviation=abbrev,
@@ -1084,8 +1084,9 @@ class BlockAssignmentImportService:
             warnings=warnings,
         )
 
+        # Factory function for dependency injection
 
-# Factory function for dependency injection
+
 def get_block_assignment_import_service(
     session: AsyncSession,
 ) -> BlockAssignmentImportService:

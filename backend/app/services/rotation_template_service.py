@@ -42,7 +42,7 @@ class RotationTemplateService:
     execution contexts (production async, test sync).
     """
 
-    def __init__(self, db: AsyncSession | Session):
+    def __init__(self, db: AsyncSession | Session) -> None:
         """Initialize service with database session.
 
         Args:
@@ -63,21 +63,21 @@ class RotationTemplateService:
         else:
             return self.db.execute(stmt)
 
-    async def _delete(self, obj):
+    async def _delete(self, obj) -> None:
         """Delete an object, handling both sync and async sessions."""
         if self._is_async:
             await self.db.delete(obj)
         else:
             self.db.delete(obj)
 
-    async def _flush(self):
+    async def _flush(self) -> None:
         """Flush the session, handling both sync and async sessions."""
         if self._is_async:
             await self.db.flush()
         else:
             self.db.flush()
 
-    async def _refresh(self, obj):
+    async def _refresh(self, obj) -> None:
         """Refresh an object, handling both sync and async sessions."""
         if self._is_async:
             await self.db.refresh(obj)
@@ -128,9 +128,9 @@ class RotationTemplateService:
         self.db.add(activity)
         await self._flush()
 
-    # =========================================================================
-    # Template Operations
-    # =========================================================================
+        # =========================================================================
+        # Template Operations
+        # =========================================================================
 
     async def get_template_by_id(self, template_id: UUID) -> RotationTemplate | None:
         """Get rotation template by ID.
@@ -167,9 +167,9 @@ class RotationTemplateService:
         )
         return result.scalar_one_or_none()
 
-    # =========================================================================
-    # Weekly Pattern Operations
-    # =========================================================================
+        # =========================================================================
+        # Weekly Pattern Operations
+        # =========================================================================
 
     async def get_patterns_by_template_id(
         self, template_id: UUID
@@ -214,7 +214,7 @@ class RotationTemplateService:
         if not template:
             raise ValueError(f"Template with ID {template_id} not found")
 
-        # Validate patterns
+            # Validate patterns
         self._validate_patterns(patterns)
 
         # Delete existing patterns
@@ -267,7 +267,7 @@ class RotationTemplateService:
         if len(patterns) > 14:
             raise ValueError("Maximum 14 patterns allowed (7 days x 2 time periods)")
 
-        # Check for duplicate day/time combinations
+            # Check for duplicate day/time combinations
         seen = set()
         for pattern in patterns:
             key = (pattern.day_of_week, pattern.time_of_day)
@@ -280,13 +280,13 @@ class RotationTemplateService:
             if not pattern.activity_type or not pattern.activity_type.strip():
                 raise ValueError("activity_type is required for weekly pattern slots")
 
-            # Validate day of week
+                # Validate day of week
             if pattern.day_of_week < 0 or pattern.day_of_week > 6:
                 raise ValueError(
                     f"Invalid day_of_week: {pattern.day_of_week}. Must be 0-6."
                 )
 
-            # Validate time of day
+                # Validate time of day
             if pattern.time_of_day not in ("AM", "PM"):
                 raise ValueError(
                     f"Invalid time_of_day: {pattern.time_of_day}. Must be 'AM' or 'PM'."
@@ -329,9 +329,9 @@ class RotationTemplateService:
             )
         return activity
 
-    # =========================================================================
-    # Half-Day Requirement Operations
-    # =========================================================================
+        # =========================================================================
+        # Half-Day Requirement Operations
+        # =========================================================================
 
     async def get_halfday_requirements(
         self, template_id: UUID
@@ -374,7 +374,7 @@ class RotationTemplateService:
         if not template:
             raise ValueError(f"Template with ID {template_id} not found")
 
-        # Check if requirements already exist
+            # Check if requirements already exist
         existing = await self.get_halfday_requirements(template_id)
 
         now = datetime.utcnow()
@@ -411,9 +411,9 @@ class RotationTemplateService:
             await self._refresh(requirements)
             return requirements
 
-    # =========================================================================
-    # Rotation Preference Operations
-    # =========================================================================
+            # =========================================================================
+            # Rotation Preference Operations
+            # =========================================================================
 
     async def get_preferences_by_template_id(
         self, template_id: UUID
@@ -458,7 +458,7 @@ class RotationTemplateService:
         if not template:
             raise ValueError(f"Template with ID {template_id} not found")
 
-        # Validate preferences
+            # Validate preferences
         self._validate_preferences(preferences)
 
         # Delete existing preferences
@@ -529,15 +529,15 @@ class RotationTemplateService:
                     f"Must be one of {valid_types}"
                 )
 
-            # Validate weight
+                # Validate weight
             if pref.weight not in valid_weights:
                 raise ValueError(
                     f"Invalid weight: {pref.weight}. Must be one of {valid_weights}"
                 )
 
-    # =========================================================================
-    # Utility Methods
-    # =========================================================================
+                # =========================================================================
+                # Utility Methods
+                # =========================================================================
 
     async def commit(self) -> None:
         """Commit the current transaction.
@@ -559,9 +559,9 @@ class RotationTemplateService:
             if result is not None:
                 await result
 
-    # =========================================================================
-    # Batch Operations
-    # =========================================================================
+                # =========================================================================
+                # Batch Operations
+                # =========================================================================
 
     async def batch_delete(
         self, template_ids: list[UUID], dry_run: bool = False
@@ -613,7 +613,7 @@ class RotationTemplateService:
                     }
                 )
 
-        # Check for failures
+                # Check for failures
         failures = [r for r in results if not r["success"]]
         if failures:
             return {
@@ -625,7 +625,7 @@ class RotationTemplateService:
                 "dry_run": dry_run,
             }
 
-        # Phase 2: Execute deletions (if not dry run)
+            # Phase 2: Execute deletions (if not dry run)
         if not dry_run:
             for idx, template_id, template in templates_to_delete:
                 await self._delete(template)
@@ -695,7 +695,7 @@ class RotationTemplateService:
                     }
                 )
 
-        # Check for failures
+                # Check for failures
         failures = [r for r in results if not r["success"]]
         if failures:
             return {
@@ -707,7 +707,7 @@ class RotationTemplateService:
                 "dry_run": dry_run,
             }
 
-        # Phase 2: Apply updates (if not dry run)
+            # Phase 2: Apply updates (if not dry run)
         if not dry_run:
             for idx, template_id, template, update_data in templates_to_update:
                 for field, value in update_data.items():
@@ -765,7 +765,7 @@ class RotationTemplateService:
             else:
                 seen_names.add(name)
 
-        # If duplicates found, fail early
+                # If duplicates found, fail early
         if results:
             return {
                 "operation_type": "create",
@@ -777,7 +777,7 @@ class RotationTemplateService:
                 "created_ids": None,
             }
 
-        # Check for name collisions with existing templates
+            # Check for name collisions with existing templates
         for idx, template_data in enumerate(templates_data):
             name = template_data.get("name", "").strip()
             existing = await self._execute(
@@ -803,7 +803,7 @@ class RotationTemplateService:
                     }
                 )
 
-        # Check for failures
+                # Check for failures
         failures = [r for r in results if not r["success"]]
         if failures:
             return {
@@ -816,7 +816,7 @@ class RotationTemplateService:
                 "created_ids": None,
             }
 
-        # Phase 2: Create templates (if not dry run)
+            # Phase 2: Create templates (if not dry run)
         if not dry_run:
             now = datetime.utcnow()
             for idx, template_data in templates_to_create:
@@ -867,7 +867,7 @@ class RotationTemplateService:
             if not template:
                 continue
 
-            # Check for existing assignments
+                # Check for existing assignments
             if operation in ("delete", "archive"):
                 assignment_count = await self._execute(
                     select(Assignment).where(
@@ -976,9 +976,9 @@ class RotationTemplateService:
             "total": len(templates_data),
         }
 
-    # =========================================================================
-    # Archive/Restore Operations
-    # =========================================================================
+        # =========================================================================
+        # Archive/Restore Operations
+        # =========================================================================
 
     async def archive_template(
         self, template_id: UUID, user_id: str
@@ -1099,7 +1099,7 @@ class RotationTemplateService:
                     }
                 )
 
-        # Check for failures
+                # Check for failures
         failures = [r for r in results if not r["success"]]
         if failures:
             return {
@@ -1111,7 +1111,7 @@ class RotationTemplateService:
                 "dry_run": dry_run,
             }
 
-        # Phase 2: Archive templates (if not dry run)
+            # Phase 2: Archive templates (if not dry run)
         if not dry_run:
             now = datetime.utcnow()
             for idx, template_id, template in templates_to_archive:
@@ -1188,7 +1188,7 @@ class RotationTemplateService:
                     }
                 )
 
-        # Check for failures
+                # Check for failures
         failures = [r for r in results if not r["success"]]
         if failures:
             return {
@@ -1200,7 +1200,7 @@ class RotationTemplateService:
                 "dry_run": dry_run,
             }
 
-        # Phase 2: Restore templates (if not dry run)
+            # Phase 2: Restore templates (if not dry run)
         if not dry_run:
             for idx, template_id, template in templates_to_restore:
                 template.is_archived = False
@@ -1263,7 +1263,7 @@ class RotationTemplateService:
                 "dry_run": dry_run,
             }
 
-        # Phase 1: Validate all templates exist
+            # Phase 1: Validate all templates exist
         for idx, template_id in enumerate(template_ids):
             template = await self.get_template_by_id(template_id)
             if not template:
@@ -1286,7 +1286,7 @@ class RotationTemplateService:
                     }
                 )
 
-        # Check for failures
+                # Check for failures
         failures = [r for r in results if not r["success"]]
         if failures:
             return {
@@ -1298,7 +1298,7 @@ class RotationTemplateService:
                 "dry_run": dry_run,
             }
 
-        # Phase 2: Apply patterns (if not dry run)
+            # Phase 2: Apply patterns (if not dry run)
         if not dry_run:
             for idx, template_id in templates_to_update:
                 await self.replace_patterns(template_id, patterns)
@@ -1358,7 +1358,7 @@ class RotationTemplateService:
                 "dry_run": dry_run,
             }
 
-        # Phase 1: Validate all templates exist
+            # Phase 1: Validate all templates exist
         for idx, template_id in enumerate(template_ids):
             template = await self.get_template_by_id(template_id)
             if not template:
@@ -1381,7 +1381,7 @@ class RotationTemplateService:
                     }
                 )
 
-        # Check for failures
+                # Check for failures
         failures = [r for r in results if not r["success"]]
         if failures:
             return {
@@ -1393,7 +1393,7 @@ class RotationTemplateService:
                 "dry_run": dry_run,
             }
 
-        # Phase 2: Apply preferences (if not dry run)
+            # Phase 2: Apply preferences (if not dry run)
         if not dry_run:
             for idx, template_id in templates_to_update:
                 await self.replace_preferences(template_id, preferences)
@@ -1459,7 +1459,7 @@ class RotationTemplateService:
                     }
                 )
 
-        # Check for failures in validation
+                # Check for failures in validation
         failed_count = sum(1 for r in results if not r["success"])
         if failed_count > 0:
             return {
@@ -1469,7 +1469,7 @@ class RotationTemplateService:
                 "results": results,
             }
 
-        # Phase 2: Apply pattern updates (if not dry run)
+            # Phase 2: Apply pattern updates (if not dry run)
         if not dry_run:
             for idx, template in enumerate(templates_found):
                 try:
@@ -1484,7 +1484,7 @@ class RotationTemplateService:
                     results[idx]["success"] = False
                     results[idx]["error"] = str(e)
 
-        # Recalculate success/failure counts
+                    # Recalculate success/failure counts
         successful = sum(1 for r in results if r["success"])
         failed = sum(1 for r in results if not r["success"])
 
@@ -1530,7 +1530,7 @@ class RotationTemplateService:
                 )
                 await self._execute(stmt)
 
-        # Apply each slot
+                # Apply each slot
         for slot_data in slots:
             day_of_week = slot_data["day_of_week"]
             time_of_day = slot_data["time_of_day"]
@@ -1549,7 +1549,7 @@ class RotationTemplateService:
                 if activity_type_value is None:
                     activity_type_value = resolved_activity.code
 
-            # Determine which weeks to apply to
+                    # Determine which weeks to apply to
             target_weeks = week_numbers if week_numbers else [None]
 
             for week_num in target_weeks:

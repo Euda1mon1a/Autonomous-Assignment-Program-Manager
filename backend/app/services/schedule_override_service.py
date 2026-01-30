@@ -24,7 +24,7 @@ PROTECTED_OVERRIDE_CODES = {"FMIT", "PCAT", "DO"}
 class ScheduleOverrideService:
     """Create and manage schedule overrides for released schedules."""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def list_overrides(

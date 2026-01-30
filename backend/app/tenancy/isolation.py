@@ -110,7 +110,7 @@ class TenantScope:
         tenant_id: UUID | None = None,
         use_schema: bool = False,
         bypass: bool = False,
-    ):
+    ) -> None:
         """
         Initialize tenant scope.
 
@@ -150,7 +150,7 @@ class TenantScope:
 
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit async context and restore original state."""
         if self.use_schema and self._original_schema:
             # Restore original schema
@@ -175,12 +175,12 @@ class TenantScope:
 
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit sync context."""
         if self.use_schema and self._original_schema:
             self._restore_schema_sync()
 
-    async def _set_schema(self):
+    async def _set_schema(self) -> None:
         """Set PostgreSQL search_path to tenant schema."""
         schema_name = get_tenant_schema(self.tenant_id)
         validate_schema_name(schema_name)
@@ -193,14 +193,14 @@ class TenantScope:
         await self.session.execute(text(f"SET search_path TO {schema_name}, public"))
         logger.debug(f"Set search_path to schema: {schema_name}")
 
-    async def _restore_schema(self):
+    async def _restore_schema(self) -> None:
         """Restore original search_path."""
         if self._original_schema:
             await self.session.execute(
                 text(f"SET search_path TO {self._original_schema}")
             )
 
-    def _set_schema_sync(self):
+    def _set_schema_sync(self) -> None:
         """Set PostgreSQL search_path to tenant schema (sync)."""
         schema_name = get_tenant_schema(self.tenant_id)
         validate_schema_name(schema_name)
@@ -213,12 +213,12 @@ class TenantScope:
         self.session.execute(text(f"SET search_path TO {schema_name}, public"))
         logger.debug(f"Set search_path to schema: {schema_name}")
 
-    def _restore_schema_sync(self):
+    def _restore_schema_sync(self) -> None:
         """Restore original search_path (sync)."""
         if self._original_schema:
             self.session.execute(text(f"SET search_path TO {self._original_schema}"))
 
-    def _apply_row_level_filter(self):
+    def _apply_row_level_filter(self) -> None:
         """
         Apply row-level tenant filtering.
 
@@ -270,7 +270,7 @@ class TenantFilter:
         return query
 
     @staticmethod
-    def enable_for_session(session: Session, tenant_id: UUID):
+    def enable_for_session(session: Session, tenant_id: UUID) -> None:
         """
         Enable automatic tenant filtering for all queries in a session.
 
@@ -283,7 +283,7 @@ class TenantFilter:
 
         # Register query event listener
         @event.listens_for(session, "before_flush")
-        def receive_before_flush(session, flush_context, instances):
+        def receive_before_flush(session, flush_context, instances) -> None:
             """Ensure all objects have tenant_id set."""
             tenant_id = session.info.get("tenant_id")
             if not tenant_id:
@@ -295,7 +295,7 @@ class TenantFilter:
                     obj.tenant_id = tenant_id
 
     @staticmethod
-    def disable_for_session(session: Session):
+    def disable_for_session(session: Session) -> None:
         """
         Disable automatic tenant filtering for a session.
 
@@ -575,10 +575,9 @@ async def migrate_tenant_to_row_level(
 
     logger.info(f"Migrated tenant {tenant_id} to row-level isolation")
 
-
-# =============================================================================
-# Row-Level Security (RLS) Policies
-# =============================================================================
+    # =============================================================================
+    # Row-Level Security (RLS) Policies
+    # =============================================================================
 
 
 class RowLevelSecurityManager:
@@ -592,7 +591,7 @@ class RowLevelSecurityManager:
     or compromised application code cannot bypass tenant boundaries.
     """
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session) -> None:
         """
         Initialize RLS manager.
 
@@ -709,10 +708,9 @@ class RowLevelSecurityManager:
             logger.error(f"Failed to disable RLS: {e}")
             raise RuntimeError(f"Failed to disable RLS: {e}")
 
-
-# =============================================================================
-# Tenant Data Encryption
-# =============================================================================
+            # =============================================================================
+            # Tenant Data Encryption
+            # =============================================================================
 
 
 class TenantEncryptionService:
@@ -734,7 +732,7 @@ class TenantEncryptionService:
     - Cryptographic separation even if database isolation fails
     """
 
-    def __init__(self, master_key: bytes | None = None):
+    def __init__(self, master_key: bytes | None = None) -> None:
         """
         Initialize encryption service.
 
@@ -877,10 +875,9 @@ class TenantEncryptionService:
         plaintext_bytes = await self.decrypt_data(tenant_id, ciphertext)
         return plaintext_bytes.decode("utf-8")
 
-
-# =============================================================================
-# Tenant-Specific Connection Pools
-# =============================================================================
+        # =============================================================================
+        # Tenant-Specific Connection Pools
+        # =============================================================================
 
 
 class TenantConnectionPoolManager:
@@ -898,7 +895,7 @@ class TenantConnectionPoolManager:
     - Monitoring: Track connection usage per tenant
     """
 
-    def __init__(self, database_url: str, default_pool_size: int = 5):
+    def __init__(self, database_url: str, default_pool_size: int = 5) -> None:
         """
         Initialize connection pool manager.
 
@@ -1026,7 +1023,7 @@ class TenantConnectionPoolManager:
             logger.warning(f"No pool to dispose for tenant {tenant_id}")
             return
 
-        # Get engine and dispose
+            # Get engine and dispose
         session_factory = self._pools[tenant_id]
         engine = session_factory.kw["bind"]
         engine.dispose()
@@ -1037,10 +1034,9 @@ class TenantConnectionPoolManager:
 
         logger.info(f"Disposed connection pool for tenant {tenant_id}")
 
-
-# =============================================================================
-# Resource Quota Enforcement
-# =============================================================================
+        # =============================================================================
+        # Resource Quota Enforcement
+        # =============================================================================
 
 
 class TenantQuotaService:
@@ -1057,7 +1053,7 @@ class TenantQuotaService:
     Quotas are stored in the Tenant model's resource_limits JSON field.
     """
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session) -> None:
         """
         Initialize quota service.
 
@@ -1096,7 +1092,7 @@ class TenantQuotaService:
         if not tenant:
             raise RuntimeError(f"Tenant {tenant_id} not found")
 
-        # Get quota limit
+            # Get quota limit
         limits = tenant.resource_limits or {}
         quota_limit = limits.get(quota_name)
 
@@ -1104,7 +1100,7 @@ class TenantQuotaService:
             # No limit set, allow
             return True
 
-        # Check if under limit
+            # Check if under limit
         under_quota = current_count < quota_limit
 
         if not under_quota:
@@ -1196,10 +1192,9 @@ class QuotaExceededError(Exception):
 
     pass
 
-
-# =============================================================================
-# Comprehensive Tenant Isolation Service
-# =============================================================================
+    # =============================================================================
+    # Comprehensive Tenant Isolation Service
+    # =============================================================================
 
 
 class TenantIsolationService:
@@ -1222,7 +1217,7 @@ class TenantIsolationService:
         session: Session,
         master_encryption_key: bytes | None = None,
         database_url: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize isolation service.
 
@@ -1264,7 +1259,7 @@ class TenantIsolationService:
             if use_schema_isolation:
                 await create_tenant_schema(self.session, tenant_id)
 
-            # Enable RLS policies if requested
+                # Enable RLS policies if requested
             if enable_rls:
                 # Enable RLS on common tables
                 tables_to_protect = [
@@ -1284,11 +1279,11 @@ class TenantIsolationService:
                     except Exception as e:
                         logger.warning(f"Could not enable RLS for {table}: {e}")
 
-            # Create connection pool if requested
+                        # Create connection pool if requested
             if create_connection_pool and self.pool_manager:
                 self.pool_manager.create_tenant_pool(tenant_id)
 
-            # Log provisioning
+                # Log provisioning
             await self._log_audit(
                 tenant_id=tenant_id,
                 action="provision_tenant",
@@ -1321,11 +1316,11 @@ class TenantIsolationService:
             if drop_schema:
                 await drop_tenant_schema(self.session, tenant_id, cascade=True)
 
-            # Dispose connection pool
+                # Dispose connection pool
             if self.pool_manager:
                 self.pool_manager.dispose_tenant_pool(tenant_id)
 
-            # Log deprovisioning
+                # Log deprovisioning
             await self._log_audit(
                 tenant_id=tenant_id,
                 action="deprovision_tenant",

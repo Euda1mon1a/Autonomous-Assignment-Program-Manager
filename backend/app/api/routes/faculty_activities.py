@@ -59,10 +59,9 @@ async def get_faculty_or_404(db: AsyncSession, person_id: UUID) -> Person:
         raise HTTPException(status_code=404, detail="Faculty member not found")
     return person
 
-
-# =============================================================================
-# Template Endpoints
-# =============================================================================
+    # =============================================================================
+    # Template Endpoints
+    # =============================================================================
 
 
 @router.get(
@@ -240,7 +239,7 @@ async def delete_template_slot(
     week_number: int | None = Query(None, ge=1, le=4),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete a specific template slot."""
     await get_faculty_or_404(db, person_id)
     service = FacultyActivityService(db)
@@ -254,10 +253,9 @@ async def delete_template_slot(
 
     await db.commit()
 
-
-# =============================================================================
-# Override Endpoints
-# =============================================================================
+    # =============================================================================
+    # Override Endpoints
+    # =============================================================================
 
 
 @router.get(
@@ -361,7 +359,7 @@ async def delete_faculty_override(
     override_id: UUID,
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),
-):
+) -> None:
     """Delete an override by ID."""
     await get_faculty_or_404(db, person_id)
     service = FacultyActivityService(db)
@@ -373,10 +371,9 @@ async def delete_faculty_override(
 
     await db.commit()
 
-
-# =============================================================================
-# Effective Week Endpoint
-# =============================================================================
+    # =============================================================================
+    # Effective Week Endpoint
+    # =============================================================================
 
 
 @router.get(
@@ -424,10 +421,9 @@ async def get_effective_week(
         ],
     )
 
-
-# =============================================================================
-# Permission Endpoint
-# =============================================================================
+    # =============================================================================
+    # Permission Endpoint
+    # =============================================================================
 
 
 @router.get(
@@ -465,10 +461,9 @@ async def get_permitted_activities(
         default_activities=[ActivityResponse.model_validate(a) for a in defaults],
     )
 
-
-# =============================================================================
-# Matrix View Endpoint
-# =============================================================================
+    # =============================================================================
+    # Matrix View Endpoint
+    # =============================================================================
 
 
 @router.get(

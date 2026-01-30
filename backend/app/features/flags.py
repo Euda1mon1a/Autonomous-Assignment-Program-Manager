@@ -45,7 +45,7 @@ class FeatureFlagService:
         db: AsyncSession,
         storage_backend: FeatureFlagStorageBackend | None = None,
         environment: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize feature flag service.
 
@@ -106,7 +106,7 @@ class FeatureFlagService:
         if existing.scalar_one_or_none():
             raise ValueError(f"Feature flag with key '{key}' already exists")
 
-        # Create flag
+            # Create flag
         flag = FeatureFlag(
             id=uuid.uuid4(),
             key=key,
@@ -169,7 +169,7 @@ class FeatureFlagService:
         if flag is None:
             raise ValueError(f"Feature flag with key '{key}' not found")
 
-        # Track changes for audit
+            # Track changes for audit
         changes = {}
         for field, new_value in updates.items():
             if hasattr(flag, field):
@@ -215,7 +215,7 @@ class FeatureFlagService:
         if flag is None:
             return False
 
-        # Log deletion before actually deleting
+            # Log deletion before actually deleting
         await self._log_audit(
             flag_id=flag.id,
             user_id=deleted_by,
@@ -299,7 +299,7 @@ class FeatureFlagService:
         if flag is None:
             return False, None, f"Flag '{key}' not found"
 
-        # Convert to dict for evaluator
+            # Convert to dict for evaluator
         flag_data = {
             "key": flag.key,
             "enabled": flag.enabled,

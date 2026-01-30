@@ -36,7 +36,7 @@ class CacheKeyGenerator:
         version: str = "v1",
         prefix: str = "cache",
         separator: str = ":",
-    ):
+    ) -> None:
         """
         Initialize cache key generator.
 
@@ -179,7 +179,7 @@ class CacheKeyGenerator:
             # Fallback for non-serializable types
             param_str = str(sorted_params)
 
-        # Generate hash (MD5 is fast and sufficient for cache keys)
+            # Generate hash (MD5 is fast and sufficient for cache keys)
         hash_obj = hashlib.md5(param_str.encode())
         return hash_obj.hexdigest()[:12]
 

@@ -25,7 +25,7 @@ class WeeklyPatternRepository(AsyncBaseRepository[WeeklyPattern]):
     managing weekly pattern grids in rotation templates.
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """Initialize repository with database session.
 
         Args:
