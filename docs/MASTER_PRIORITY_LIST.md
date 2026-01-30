@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-29 (Phase 5 override layer + test quirks audit)
+> **Last Updated:** 2026-01-30 (PR #784 merged: GUI time-off patterns applied to inpatient preloads)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -234,14 +234,16 @@ Remaining faculty-specific gaps:
 - [ ] Excel round-trip import creates overrides only (no hard deletes)
 - [ ] Resilience-driven cascade scoring (blast radius + contingency)
 
-### Phase 6 — CP-SAT Hardening + Equity + Excel Staging (Planned)
-**Status:** Planned (post‑merge)
+### Phase 6 — CP-SAT Hardening + Equity + Excel Staging (In Progress)
+**Status:** In progress (PR #784 merged; time-off patterns now applied to inpatient preloads)
 **Doc:** [`docs/planning/CP_SAT_PIPELINE_REFINEMENT_PHASE6.md`](planning/CP_SAT_PIPELINE_REFINEMENT_PHASE6.md)
 
 **Highlights:**
 1. ACGME compliance truth alignment (remove stub, validator‑driven)
-2. External rotation time‑off intake (FMIT/IMW/Peds patterns)
+2. External rotation time‑off intake (FMIT/IMW/Peds patterns) — **In progress** (PR #784)
+   - GUI time‑off patterns now applied to inpatient preloads (#784)
    - Temporary default: Saturday off for external/inpatient rotations until refined
+   - Remaining: confirm ICU/NICU/L&D authoritative day‑off rules
 3. Excel staging + diff metrics (measure manual vs automated changes)
    - In progress: half-day Block Template2 staging + diff preview endpoints
 4. Institutional events table (USAFP/holidays/retreats)

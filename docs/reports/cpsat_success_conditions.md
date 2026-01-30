@@ -81,7 +81,8 @@ Soft constraints (penalized, not enforced):
 - **CV ratio below 30%** in some weeks due to preloaded C slots; solver hits
   30% on solver slots but cannot move locked C without policy change.
 - Post-call PCAT/DO gap reported (locked-slot exceptions).
-- 1-in-7 violations remain because time-off templates are not in solver context.
+- **Resolved (2026-01-30):** 1-in-7/rest warnings cleared after time-off templates
+  are preloaded into solver context (validated clean for 2026-03-12 → 2026-04-08).
 
 ## Notes
 - Any schema/code changes affecting `weekly_patterns.activity_id` or activity resolution must preserve the above invariants before re‑running CP‑SAT.

@@ -47,11 +47,19 @@ making equity/preferences **data‑driven and measurable**.
 ### P6-2 — External Rotation Time‑Off Intake
 **Goal:** Encode external day‑off patterns as explicit data.
 
+**Status:** In progress (PR #784 merged — GUI time‑off patterns now applied to inpatient preloads)
+
 **Examples**
 - FMIT: PGY‑1/2 Saturdays off; PGY‑3 Sundays off
 - IMW: Saturdays off
 - Peds Ward/NF: Saturdays off
 - **Temporary default:** Saturday off for all external/inpatient rotations until refined
+
+**Completed**
+- Apply GUI time‑off patterns to inpatient preloads (PR #784)
+
+**Remaining**
+- Confirm ICU/NICU/L&D authoritative day‑off rules and encode in DB patterns
 
 **Acceptance Criteria**
 - External rotation time‑off is represented in DB.
