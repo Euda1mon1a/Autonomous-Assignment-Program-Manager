@@ -28,8 +28,10 @@ from sqlalchemy.orm import selectinload
 
 from app.core.logging import get_logger
 from app.models.call_assignment import CallAssignment
+from app.models.call_override import CallOverride
 from app.models.half_day_assignment import HalfDayAssignment
 from app.models.person import Person
+from app.models.schedule_override import ScheduleOverride
 from app.schemas.cascade_override import CascadeOverrideRequest
 from app.schemas.emergency_deployment import (
     EmergencyDeploymentRequest,
@@ -288,15 +290,20 @@ class EmergencyDeploymentService:
                 slots_remaining = result["remaining"]
                 cascade_steps = result["steps"]
                 details.extend(result["details"])
+                overridden_ids = result.get("overridden_assignment_ids", set())
 
                 # If incremental failed, escalate to cascade
+                # Skip assignments that already have overrides to avoid 409 conflicts
                 if slots_remaining > 0:
                     details.append(
                         "Incremental repair incomplete, escalating to cascade"
                     )
                     strategy = EmergencyStrategy.CASCADE
                     result = await self._try_cascade_repair(
-                        request, created_by_id, max_depth=2
+                        request,
+                        created_by_id,
+                        max_depth=2,
+                        exclude_assignment_ids=overridden_ids,
                     )
                     slots_repaired += result["repaired"]
                     slots_remaining = result["remaining"]
@@ -354,8 +361,26 @@ class EmergencyDeploymentService:
         request: EmergencyDeploymentRequest,
         created_by_id: UUID | None,
         max_depth: int,
+        exclude_assignment_ids: set[UUID] | None = None,
     ) -> dict:
-        """Attempt cascade-based repair using CascadeOverrideService."""
+        """Attempt cascade-based repair using CascadeOverrideService.
+
+        Args:
+            request: The emergency deployment request
+            created_by_id: User ID for audit trail
+            max_depth: Maximum cascade depth (1=incremental, 2=full cascade)
+            exclude_assignment_ids: Assignment IDs to skip (already have overrides)
+
+        Returns:
+            Dict with repaired/remaining counts, steps, details, and overridden IDs
+        """
+        # Get assignments that already have active overrides
+        already_overridden = await self._get_already_overridden_assignment_ids(
+            request.person_id, request.start_date, request.end_date
+        )
+        if exclude_assignment_ids:
+            already_overridden = already_overridden.union(exclude_assignment_ids)
+
         cascade_request = CascadeOverrideRequest(
             person_id=request.person_id,
             start_date=request.start_date,
@@ -372,14 +397,37 @@ class EmergencyDeploymentService:
         if plan.warnings:
             details.extend([f"Warning: {w}" for w in plan.warnings])
         if plan.errors:
-            details.extend([f"Error: {e}" for e in plan.errors])
+            # Filter out errors for assignments we expected to skip
+            filtered_errors = [
+                e
+                for e in plan.errors
+                if not any(str(aid) in e for aid in already_overridden)
+            ]
+            details.extend([f"Error: {e}" for e in filtered_errors])
 
-        # Count successful coverage steps
-        coverage_steps = [s for s in plan.steps if s.override_type == "coverage"]
+        # Count successful coverage steps (excluding already-overridden)
+        coverage_steps = [
+            s
+            for s in plan.steps
+            if s.override_type == "coverage"
+            and s.assignment_id not in already_overridden
+        ]
         gap_steps = [s for s in plan.steps if s.override_type == "gap"]
 
         repaired = len(coverage_steps)
-        remaining = len(gap_steps) + len(plan.errors)
+        remaining = len(gap_steps) + len(
+            [
+                e
+                for e in plan.errors
+                if not any(str(aid) in e for aid in already_overridden)
+            ]
+        )
+
+        # Track which assignments got successfully overridden
+        overridden_assignment_ids: set[UUID] = set()
+        for step in plan.steps:
+            if step.created_override_id and step.override_type == "coverage":
+                overridden_assignment_ids.add(step.assignment_id)
 
         if plan.applied:
             details.append(f"Applied {len(plan.steps)} override steps")
@@ -389,6 +437,7 @@ class EmergencyDeploymentService:
             "remaining": remaining,
             "steps": len(plan.steps),
             "details": details,
+            "overridden_assignment_ids": overridden_assignment_ids,
         }
 
     async def _try_fallback_activation(self) -> str | None:
@@ -489,6 +538,51 @@ class EmergencyDeploymentService:
             )
         )
         return len(result.scalars().all())
+
+    async def _get_already_overridden_assignment_ids(
+        self, person_id: UUID, start_date: date, end_date: date
+    ) -> set[UUID]:
+        """Get IDs of assignments that already have active overrides.
+
+        This prevents cascade escalation from trying to re-override assignments
+        that were successfully overridden in a previous pass, which would cause
+        409 conflicts.
+        """
+        overridden_ids: set[UUID] = set()
+
+        # Get half-day assignments with active overrides
+        half_day_result = await self.session.execute(
+            select(HalfDayAssignment.id)
+            .join(
+                ScheduleOverride,
+                ScheduleOverride.half_day_assignment_id == HalfDayAssignment.id,
+            )
+            .where(
+                HalfDayAssignment.person_id == person_id,
+                HalfDayAssignment.date >= start_date,
+                HalfDayAssignment.date <= end_date,
+                ScheduleOverride.is_active == True,  # noqa: E712
+            )
+        )
+        overridden_ids.update(half_day_result.scalars().all())
+
+        # Get call assignments with active overrides
+        call_result = await self.session.execute(
+            select(CallAssignment.id)
+            .join(
+                CallOverride,
+                CallOverride.call_assignment_id == CallAssignment.id,
+            )
+            .where(
+                CallAssignment.person_id == person_id,
+                CallAssignment.date >= start_date,
+                CallAssignment.date <= end_date,
+                CallOverride.is_active == True,  # noqa: E712
+            )
+        )
+        overridden_ids.update(call_result.scalars().all())
+
+        return overridden_ids
 
     def _error_response(
         self,
