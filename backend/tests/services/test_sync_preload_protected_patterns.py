@@ -8,6 +8,7 @@ from app.models.institutional_event import InstitutionalEvent
 from app.models.inpatient_preload import InpatientPreload
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
+from app.models.weekly_pattern import WeeklyPattern
 from app.services.sync_preload_service import SyncPreloadService
 from app.utils.academic_blocks import get_block_dates
 
@@ -607,3 +608,74 @@ def test_preload_institutional_event_skips_inpatient(db):
     service._load_institutional_events(block_dates.start_date, block_dates.end_date)
 
     assert _get_assignment_code(db, resident.id, event_date, "AM") is None
+
+
+def test_preload_outpatient_time_off_patterns(db):
+    _create_activity(db, "C", "C", ActivityCategory.CLINICAL.value)
+    _create_activity(db, "LEC", "LEC", ActivityCategory.EDUCATIONAL.value)
+    _create_activity(db, "ADV", "ADV", ActivityCategory.EDUCATIONAL.value)
+    off_activity = _create_activity(db, "OFF", "OFF", ActivityCategory.TIME_OFF.value)
+
+    resident = Person(
+        id=uuid4(),
+        name="Resident Outpatient",
+        type="resident",
+        pgy_level=1,
+    )
+    template = RotationTemplate(
+        id=uuid4(),
+        name="Outpatient Template",
+        rotation_type="outpatient",
+        abbreviation="OPD",
+    )
+    db.add_all([resident, template])
+    db.commit()
+
+    # Sunday off (weekly_patterns uses Sunday=0)
+    db.add(
+        WeeklyPattern(
+            id=uuid4(),
+            rotation_template_id=template.id,
+            day_of_week=0,
+            time_of_day="AM",
+            week_number=None,
+            activity_type="off",
+            activity_id=off_activity.id,
+            is_protected=False,
+        )
+    )
+    db.add(
+        WeeklyPattern(
+            id=uuid4(),
+            rotation_template_id=template.id,
+            day_of_week=0,
+            time_of_day="PM",
+            week_number=None,
+            activity_type="off",
+            activity_id=off_activity.id,
+            is_protected=False,
+        )
+    )
+    db.commit()
+
+    block_number = 10
+    academic_year = 2025
+    assignment = BlockAssignment(
+        id=uuid4(),
+        block_number=block_number,
+        academic_year=academic_year,
+        resident_id=resident.id,
+        rotation_template_id=template.id,
+    )
+    db.add(assignment)
+    db.commit()
+
+    service = SyncPreloadService(db)
+    service._load_rotation_protected_preloads(block_number, academic_year)
+
+    block_dates = get_block_dates(block_number, academic_year)
+    sunday = _find_weekday(block_dates.start_date, block_dates.end_date, weekday=6)
+    assert sunday is not None
+
+    assert _get_assignment_code(db, resident.id, sunday, "AM") == "OFF"
+    assert _get_assignment_code(db, resident.id, sunday, "PM") == "OFF"

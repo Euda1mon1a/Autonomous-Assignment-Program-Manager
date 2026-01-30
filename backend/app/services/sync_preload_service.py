@@ -484,7 +484,7 @@ class SyncPreloadService:
                         active_template,
                         start_date,
                     )
-                if (is_inpatient or is_offsite) and active_template:
+                if active_template:
                     count += self._apply_inpatient_time_off_patterns(
                         assignment.resident_id,
                         current,
