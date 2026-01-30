@@ -77,6 +77,16 @@ Soft constraints (penalized, not enforced):
 - Post-call PCAT/DO is enforced via call assignments; call may proceed if the
   next-day slot is locked (yields PCAT/DO gaps in reports).
 
+## Block 10 Quality Summary (2026-01-30)
+- Block 10 (2026-03-12 → 2026-04-08): **PASS**
+- Total assignments: **1148** (residents **745**, faculty **403**)
+- ACGME compliance rate: **100%**
+- Double bookings: **0**
+- Call coverage: **28/28**
+- NF one-in-seven: **PASS (4/4)**
+- Post-call PCAT/DO: **PASS**
+- Call before leave: **PASS**
+
 ## Known Gaps After Latest Run
 - **CV ratio below 30%** in some weeks due to preloaded C slots; solver hits
   30% on solver slots but cannot move locked C without policy change.
