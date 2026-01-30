@@ -17,6 +17,8 @@ from sqlalchemy import select, func, text
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
+from app.analytics.metrics import calculate_acgme_compliance_rate
+from app.scheduling.validator import ACGMEValidator
 from app.utils.academic_blocks import get_block_dates as get_block_dates_util
 from app.schemas.block_quality_report import (
     BlockDates,
@@ -665,15 +667,20 @@ class BlockQualityReportService:
             else f"SOFT ({call_before_leave_gap_count})"
         )
 
+        # ACGME compliance (use validator as source of truth)
+        acgme_result = ACGMEValidator(self.db).validate_all(start_date, end_date)
+        acgme_metric = calculate_acgme_compliance_rate(
+            violations=acgme_result.total_violations,
+            total_checks=block_dates.days if block_dates.days else 1,
+        )
+
         executive = ExecutiveSummary(
             block_number=block_number,
             date_range=f"{start_date} to {end_date}",
             total_assignments=section_c.grand_total,
             resident_assignments=resident_total,
             faculty_assignments=faculty_total,
-            # Placeholder: ACGME compliance is not yet calculated in this report.
-            # Use ACGMEValidator/validate_schedule for authoritative compliance.
-            acgme_compliance_rate=100.0,
+            acgme_compliance_rate=acgme_metric["value"],
             double_bookings=0,
             call_coverage=f"{call_coverage.total_nights}/{block_dates.days}",
             nf_one_in_seven=f"PASS ({nf_pass}/{nf_total})" if nf_total else "N/A",

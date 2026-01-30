@@ -80,6 +80,26 @@ _INTERN_CONTINUITY_EXEMPT_ROTATIONS = {
 _OFFSITE_ROTATIONS = {"TDY", "HILO", "OKI"}
 _KAP_ROTATIONS = {"KAP"}
 _CLINIC_PATTERN_CODES = {"C", "C-I", "C-N", "FM_CLINIC"}
+# Temporary Saturday-off rules for external/inpatient rotations (P6-2).
+# Refine later with rotation-specific rules.
+_SATURDAY_OFF_ROTATIONS = {
+    "IM",
+    "IMW",
+    "PEDW",
+    "PEDNF",
+    "ICU",
+    "CCU",
+    "NICU",
+    "NIC",
+    "NBN",
+    "LAD",
+    "LD",
+    "L&D",
+    "KAP",
+    "HILO",
+    "OKI",
+    "TDY",
+}
 
 
 class PreloadService:
@@ -204,7 +224,9 @@ class PreloadService:
             while current <= end:
                 # Get AM/PM activity codes based on rotation type and day of week
                 am_code, pm_code = self._get_rotation_codes(
-                    preload.rotation_type, current.weekday()
+                    preload.rotation_type,
+                    current.weekday(),
+                    person=preload.person,
                 )
 
                 am_activity = await self._get_activity_id(am_code)
@@ -477,6 +499,9 @@ class PreloadService:
         if self._is_last_wednesday(current_date, block_end):
             return ("LEC", "ADV")
 
+        if current_date.weekday() == 5 and rotation_code in _SATURDAY_OFF_ROTATIONS:
+            return ("W", "W")
+
         if rotation_code in _OFFSITE_ROTATIONS:
             if rotation_code in {"HILO", "OKI"}:
                 return self._get_hilo_codes(current_date, block_start)
@@ -627,10 +652,13 @@ class PreloadService:
 
     def _get_nf_codes(self, rotation_code: str, current_date: date) -> tuple[str, str]:
         """Night Float pattern (NF/PedNF)."""
-        if current_date.weekday() >= 5:
-            return ("W", "W")
+        dow = current_date.weekday()
         if rotation_code == "PEDNF":
+            if dow == 5:  # Saturday off
+                return ("W", "W")
             return ("OFF", "PedNF")
+        if dow >= 5:
+            return ("W", "W")
         return ("OFF", "NF")
 
     def _get_hilo_codes(self, current_date: date, block_start: date) -> tuple[str, str]:
@@ -929,7 +957,11 @@ class PreloadService:
     }
 
     def _get_rotation_codes(
-        self, rotation_type: str, day_of_week: int
+        self,
+        rotation_type: str,
+        day_of_week: int,
+        *,
+        person: Person | None = None,
     ) -> tuple[str, str]:
         """
         Get AM/PM activity codes for rotation with day-specific patterns.
@@ -944,9 +976,25 @@ class PreloadService:
         Returns:
             Tuple of (AM_code, PM_code) - activity codes, not rotation types
         """
+        code_upper = (rotation_type or "").strip().upper()
+        person_type = getattr(person, "type", None)
+        pgy_level = (
+            getattr(person, "pgy_level", None) if person_type == "resident" else None
+        )
+
+        # Resident-only Saturday/Sunday off rules (temporary P6-2 defaults).
+        if person_type == "resident":
+            if code_upper == "FMIT":
+                if day_of_week == 5 and pgy_level in (1, 2):
+                    return ("W", "W")
+                if day_of_week == 6 and pgy_level == 3:
+                    return ("W", "W")
+            if day_of_week == 5 and code_upper in _SATURDAY_OFF_ROTATIONS:
+                return ("W", "W")
+
         # Day-specific patterns for KAP (Kapiolani L&D)
         # Mon PM=OFF (travel), Tue=OFF/OFF (recovery), Wed AM=C (continuity)
-        if rotation_type == "KAP":
+        if code_upper == "KAP":
             if day_of_week == 0:  # Monday
                 return ("KAP", "off")  # Travel back from Kapiolani
             elif day_of_week == 1:  # Tuesday
@@ -958,7 +1006,7 @@ class PreloadService:
 
         # Day-specific patterns for LDNF (L&D Night Float)
         # CRITICAL: Friday clinic, NOT Wednesday!
-        if rotation_type == "LDNF":
+        if code_upper == "LDNF":
             if day_of_week == 4:  # Friday
                 return ("fm_clinic", "off")  # Friday morning clinic!
             elif day_of_week in (5, 6):  # Weekend
@@ -968,15 +1016,15 @@ class PreloadService:
 
         # Day-specific patterns for NF (Night Float)
         # AM = off (sleeping), PM = NF (working nights)
-        if rotation_type == "NF":
+        if code_upper == "NF":
             if day_of_week in (5, 6):  # Weekend
                 return ("W", "W")
             else:
                 return ("off", "NF")
 
         # Day-specific patterns for PedNF (Peds Night Float)
-        if rotation_type == "PedNF":
-            if day_of_week in (5, 6):  # Weekend
+        if code_upper == "PEDNF":
+            if day_of_week == 5:  # Saturday off
                 return ("W", "W")
             else:
                 return ("off", "PedNF")
@@ -984,15 +1032,15 @@ class PreloadService:
         # Fixed patterns for other rotations (no day-specific rules)
         codes = {
             "FMIT": ("FMIT", "FMIT"),
-            "PedW": ("PedW", "PedW"),
+            "PEDW": ("PedW", "PedW"),
             "IM": ("IM", "IM"),
             "HILO": ("TDY", "TDY"),  # Hilo = TDY activity
             "FMC": ("fm_clinic", "fm_clinic"),  # FMC = fm_clinic activity
         }
 
         # Fall back to rotation type as activity code (works for most)
-        default = self.ROTATION_TO_ACTIVITY.get(rotation_type, rotation_type)
-        return codes.get(rotation_type, (default, default))
+        default = self.ROTATION_TO_ACTIVITY.get(code_upper, rotation_type)
+        return codes.get(code_upper, (default, default))
 
     async def _get_activity_id(
         self,
@@ -1082,19 +1130,13 @@ class PreloadService:
                 if existing.activity_id
                 else None
             )
-            new_is_time_off = (
-                new_activity
-                and (
-                    (new_activity.activity_category or "").lower() == "time_off"
-                    or new_activity.counts_toward_clinical_hours is False
-                )
+            new_is_time_off = new_activity and (
+                (new_activity.activity_category or "").lower() == "time_off"
+                or new_activity.counts_toward_clinical_hours is False
             )
-            existing_is_time_off = (
-                existing_activity
-                and (
-                    (existing_activity.activity_category or "").lower() == "time_off"
-                    or existing_activity.counts_toward_clinical_hours is False
-                )
+            existing_is_time_off = existing_activity and (
+                (existing_activity.activity_category or "").lower() == "time_off"
+                or existing_activity.counts_toward_clinical_hours is False
             )
             if (
                 existing.source == AssignmentSource.PRELOAD.value

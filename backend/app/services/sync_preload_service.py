@@ -70,6 +70,26 @@ _INTERN_CONTINUITY_EXEMPT_ROTATIONS = {
 _OFFSITE_ROTATIONS = {"TDY", "HILO", "OKI"}
 _KAP_ROTATIONS = {"KAP"}
 _CLINIC_PATTERN_CODES = {"C", "C-I", "C-N", "FM_CLINIC"}
+# Temporary Saturday-off rules for external/inpatient rotations (P6-2).
+# Refine later with rotation-specific rules.
+_SATURDAY_OFF_ROTATIONS = {
+    "IM",
+    "IMW",
+    "PEDW",
+    "PEDNF",
+    "ICU",
+    "CCU",
+    "NICU",
+    "NIC",
+    "NBN",
+    "LAD",
+    "LD",
+    "L&D",
+    "KAP",
+    "HILO",
+    "OKI",
+    "TDY",
+}
 
 # Rotation types that require translation to activity codes
 _ROTATION_TO_ACTIVITY = {
@@ -197,9 +217,13 @@ class SyncPreloadService:
         """Load inpatient rotation preloads (FMIT, NF, PedW, KAP, IM, LDNF)."""
         count = 0
 
-        stmt = select(InpatientPreload).where(
-            InpatientPreload.start_date <= end_date,
-            InpatientPreload.end_date >= start_date,
+        stmt = (
+            select(InpatientPreload)
+            .options(selectinload(InpatientPreload.person))
+            .where(
+                InpatientPreload.start_date <= end_date,
+                InpatientPreload.end_date >= start_date,
+            )
         )
         result = self.session.execute(stmt)
         preloads = result.scalars().all()
@@ -212,6 +236,7 @@ class SyncPreloadService:
 
         for preload in preloads:
             rotation_type = preload.rotation_type
+            person = preload.person
             # Handle both enum and string rotation types
             activity_code = (
                 rotation_type.value
@@ -230,7 +255,9 @@ class SyncPreloadService:
 
             while current <= end:
                 # Get day-specific codes for special rotations
-                am_code, pm_code = self._get_rotation_codes(rotation_type, current)
+                am_code, pm_code = self._get_rotation_codes(
+                    rotation_type, current, person=person
+                )
 
                 am_activity_id = self._get_activity_id(am_code)
                 pm_activity_id = self._get_activity_id(pm_code)
@@ -250,6 +277,7 @@ class SyncPreloadService:
                         InpatientRotationType.IM,
                         InpatientRotationType.PEDW,
                     )
+                    and not (am_code == "W" and pm_code == "W")
                 ):
                     current += timedelta(days=1)
                     continue
@@ -461,6 +489,9 @@ class SyncPreloadService:
         if self._is_last_wednesday(current_date, block_end):
             return ("LEC", "ADV")
 
+        if current_date.weekday() == 5 and rotation_code in _SATURDAY_OFF_ROTATIONS:
+            return ("W", "W")
+
         if rotation_code in _OFFSITE_ROTATIONS:
             if rotation_code in {"HILO", "OKI"}:
                 return self._get_hilo_codes(current_date, block_start)
@@ -610,10 +641,13 @@ class SyncPreloadService:
 
     def _get_nf_codes(self, rotation_code: str, current_date: date) -> tuple[str, str]:
         """Night Float pattern (NF/PedNF)."""
-        if current_date.weekday() >= 5:
-            return ("W", "W")
+        dow = current_date.weekday()
         if rotation_code == "PEDNF":
+            if dow == 5:  # Saturday off only
+                return ("W", "W")
             return ("OFF", "PedNF")
+        if dow >= 5:
+            return ("W", "W")
         return ("OFF", "NF")
 
     def _get_hilo_codes(self, current_date: date, block_start: date) -> tuple[str, str]:
@@ -626,7 +660,11 @@ class SyncPreloadService:
         return ("TDY", "TDY")
 
     def _get_rotation_codes(
-        self, rotation_type: InpatientRotationType | str | None, current_date: date
+        self,
+        rotation_type: InpatientRotationType | str | None,
+        current_date: date,
+        *,
+        person: Person | None = None,
     ) -> tuple[str, str]:
         """Get AM/PM activity codes for special rotations based on day of week."""
         if rotation_type is None:
@@ -635,10 +673,28 @@ class SyncPreloadService:
         dow = current_date.weekday()  # 0=Mon, 6=Sun
 
         # Get string code for comparison
-        code = rotation_type.value if hasattr(rotation_type, "value") else rotation_type
+        code_raw = (
+            rotation_type.value if hasattr(rotation_type, "value") else rotation_type
+        )
+        code_upper = (code_raw or "").strip().upper()
+
+        person_type = getattr(person, "type", None)
+        pgy_level = (
+            getattr(person, "pgy_level", None) if person_type == "resident" else None
+        )
+
+        # Resident-only Saturday/Sunday off rules (temporary P6-2 defaults).
+        if person_type == "resident":
+            if code_upper == "FMIT":
+                if dow == 5 and pgy_level in (1, 2):
+                    return ("W", "W")
+                if dow == 6 and pgy_level == 3:
+                    return ("W", "W")
+            if dow == 5 and code_upper in _SATURDAY_OFF_ROTATIONS:
+                return ("W", "W")
 
         # KAP (Kapiolani L&D - off-site)
-        if code == "KAP":
+        if code_upper == "KAP":
             if dow == 0:  # Monday
                 return ("KAP", "OFF")
             elif dow == 1:  # Tuesday
@@ -649,7 +705,7 @@ class SyncPreloadService:
                 return ("KAP", "KAP")
 
         # LDNF (L&D Night Float - Friday clinic!)
-        if code == "LDNF":
+        if code_upper == "LDNF":
             if dow == 4:  # Friday
                 return ("C", "OFF")
             elif dow >= 5:  # Weekend
@@ -658,23 +714,22 @@ class SyncPreloadService:
                 return ("OFF", "LDNF")
 
         # NF (Night Float) - off AM (sleeping), NF PM (working), weekends off
-        if code == "NF":
+        if code_upper == "NF":
             if dow >= 5:  # Weekend (Sat=5, Sun=6)
                 return ("W", "W")
             else:  # Mon-Fri
                 return ("OFF", "NF")
 
-        # PedNF (Peds Night Float) - same pattern as NF
-        if code == "PedNF":
-            if dow >= 5:  # Weekend
+        # PedNF (Peds Night Float) - Saturday off only
+        if code_upper == "PEDNF":
+            if dow == 5:  # Saturday
                 return ("W", "W")
-            else:  # Mon-Fri
-                return ("OFF", "PedNF")
+            return ("OFF", "PedNF")
 
         # Rotations that work all days including weekends:
         # FMIT, PedW, IM - just use rotation code for both slots
         # Default: use rotation type for both slots (after mapping to activity code)
-        mapped = _ROTATION_TO_ACTIVITY.get(code, code)
+        mapped = _ROTATION_TO_ACTIVITY.get(code_upper, code_raw)
         return (mapped, mapped)
 
     def _load_fmit_call(self, start_date: date, end_date: date) -> int:
@@ -1075,13 +1130,9 @@ class SyncPreloadService:
                     (activity.activity_category or "").lower() == "time_off"
                     or activity.counts_toward_clinical_hours is False
                 )
-                existing_is_time_off = (
-                    existing_activity
-                    and (
-                        (existing_activity.activity_category or "").lower()
-                        == "time_off"
-                        or existing_activity.counts_toward_clinical_hours is False
-                    )
+                existing_is_time_off = existing_activity and (
+                    (existing_activity.activity_category or "").lower() == "time_off"
+                    or existing_activity.counts_toward_clinical_hours is False
                 )
                 if new_is_time_off and not existing_is_time_off:
                     existing.activity_id = activity_id
