@@ -20,7 +20,7 @@ Order of Operations (per TAMC skill):
 from datetime import date, timedelta
 from uuid import UUID
 
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_, or_, case
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -835,6 +835,13 @@ class SyncPreloadService:
                     or_(
                         RotationTemplate.abbreviation.ilike(candidate),
                         RotationTemplate.display_abbreviation.ilike(candidate),
+                    )
+                )
+                .order_by(
+                    # Prefer exact abbreviation match over display_abbreviation
+                    case(
+                        (RotationTemplate.abbreviation.ilike(candidate), 0),
+                        else_=1,
                     )
                 )
                 .limit(1)

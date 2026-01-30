@@ -29,7 +29,7 @@ FMIT Residents: Petrie (R3), Cataquiz (R2)
 from datetime import date, timedelta
 from uuid import UUID
 
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_, or_, case
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -851,6 +851,13 @@ class PreloadService:
                     or_(
                         RotationTemplate.abbreviation.ilike(candidate),
                         RotationTemplate.display_abbreviation.ilike(candidate),
+                    )
+                )
+                .order_by(
+                    # Prefer exact abbreviation match over display_abbreviation
+                    case(
+                        (RotationTemplate.abbreviation.ilike(candidate), 0),
+                        else_=1,
                     )
                 )
                 .limit(1)
