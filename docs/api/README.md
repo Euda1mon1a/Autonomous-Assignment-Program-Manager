@@ -57,6 +57,13 @@ When the application is running, access the interactive API documentation:
 | POST | `/api/schedule/import/analyze` | Analyze Excel schedules | [SCHEDULE_API.md](SCHEDULE_API.md) |
 | POST | `/api/schedule/import/block` | Parse specific block | [SCHEDULE_API.md](SCHEDULE_API.md) |
 
+### Half-Day Import (Block Template2)
+| Method | Endpoint | Description | Guide |
+|--------|----------|-------------|-------|
+| POST | `/api/v1/import/half-day/stage` | Stage Block Template2 xlsx | [routes/half_day_imports.md](routes/half_day_imports.md) |
+| GET | `/api/v1/import/half-day/batches/{id}/preview` | Preview staged diffs | [routes/half_day_imports.md](routes/half_day_imports.md) |
+| POST | `/api/v1/import/half-day/batches/{id}/draft` | Create draft from staged diffs | [routes/half_day_imports.md](routes/half_day_imports.md) |
+
 ### Swaps & Coverage
 | Method | Endpoint | Description | Guide |
 |--------|----------|-------------|-------|
@@ -107,6 +114,7 @@ When the application is running, access the interactive API documentation:
 | [FMIT_HEALTH_API.md](FMIT_HEALTH_API.md) | FMIT-specific health endpoints |
 | [CALL_ASSIGNMENTS_API.md](CALL_ASSIGNMENTS_API.md) | Call scheduling API |
 | [EXOTIC_API.md](EXOTIC_API.md) | Experimental optimization endpoints |
+| [routes/half_day_imports.md](routes/half_day_imports.md) | Half-day import (Block Template2) |
 
 ### Supporting Documentation
 

@@ -37,6 +37,11 @@ Schedule generation and management endpoints.
 </div>
 
 <div class="feature-card" markdown>
+### :material-file-import: [Half-Day Import](routes/half_day_imports.md)
+Block Template2 staging, preview, and draft endpoints.
+</div>
+
+<div class="feature-card" markdown>
 ### :material-account-group: [People](people.md)
 User and personnel management.
 </div>
@@ -114,6 +119,7 @@ curl http://localhost:8000/api/v1/people \
 | <span class="endpoint-badge get">GET</span> | `/people` | List all people |
 | <span class="endpoint-badge get">GET</span> | `/schedule/{date}` | Get schedule for date |
 | <span class="endpoint-badge post">POST</span> | `/schedule/generate` | Generate new schedule |
+| <span class="endpoint-badge post">POST</span> | `/import/half-day/stage` | Stage Block Template2 import |
 | <span class="endpoint-badge get">GET</span> | `/absences` | List absences |
 | <span class="endpoint-badge post">POST</span> | `/swaps` | Create swap request |
 | <span class="endpoint-badge post">POST</span> | `/experiments` | Create A/B test experiment |

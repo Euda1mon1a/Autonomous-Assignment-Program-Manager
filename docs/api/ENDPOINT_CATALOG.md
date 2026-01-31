@@ -350,6 +350,22 @@ Endpoints for managing overnight and weekend faculty call assignments. Solver-ge
 | POST | `/schedule/swaps/find` | Bearer | - | Find swap candidates (Excel) |
 | POST | `/schedule/swaps/candidates` | Bearer | - | Find swap candidates (JSON) |
 
+---
+
+## Half-Day Import (Block Template2)
+
+**Prefix:** `/api/v1/import/half-day`
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/import/half-day/stage` | Admin | Stage Block Template2 xlsx and compute diffs |
+| GET | `/import/half-day/batches/{batch_id}/preview` | Admin | Preview staged diffs + metrics |
+| POST | `/import/half-day/batches/{batch_id}/draft` | Admin | Create schedule draft from selected diffs |
+
+**Notes:**
+- Draft creation is **atomic**: any failed row aborts and no draft is created.
+- Draft failures return `400` with `failed_ids` in the error detail.
+
 ### Schedule Generation Request
 
 ```json
