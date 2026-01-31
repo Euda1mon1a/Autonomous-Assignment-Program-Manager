@@ -7,7 +7,7 @@ import {
   useStageImport,
 } from "@/hooks/useImport";
 import { useToast } from "@/contexts/ToastContext";
-import { FileText, Upload } from "lucide-react";
+import { FileSpreadsheet, FileText, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 // import { ProtectedRoute } from '@/components/ProtectedRoute'; // Assumed to exist or will be added
 
@@ -66,6 +66,28 @@ export default function ImportPage() {
                 Uploading...
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 space-y-3">
+            <div className="flex items-center gap-3">
+              <FileSpreadsheet className="w-5 h-5 text-blue-400" />
+              <h3 className="text-lg font-semibold text-white">
+                Half-Day Block Template2
+              </h3>
+            </div>
+            <p className="text-sm text-slate-400">
+              Stage Block Template2 half-day Excel files, filter diffs, and
+              create a schedule draft with full rollback protection.
+            </p>
+            <button
+              onClick={() => router.push("/import/half-day")}
+              className="inline-flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium transition-colors"
+            >
+              Start half-day import
+            </button>
           </div>
         </div>
 

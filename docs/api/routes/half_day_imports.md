@@ -10,7 +10,7 @@ Reference for the `/api/v1/import/half-day` endpoints (Block Template2).
 
 ## Overview
 
-These endpoints stage Block Template2 half-day schedules, provide a diff preview, and create a schedule draft from selected diffs. Draft creation is **atomic**: if any selected row fails validation, the draft is not created.
+These endpoints stage Block Template2 half-day schedules, provide a diff preview, and create a schedule draft from selected diffs. Draft creation is **atomic**: if any selected row fails validation, the draft is not created. Preview entries include `staged_id`, plus `warnings` and `errors` arrays for validation feedback.
 
 ---
 
@@ -49,6 +49,10 @@ GET /api/v1/import/half-day/batches/{batch_id}/preview?page=1&page_size=50
 |-----------|------|----------|-------------|
 | `page` | int | No | Page number (default: 1) |
 | `page_size` | int | No | Page size (default: 50) |
+| `diff_type` | string | No | Filter by `added`, `removed`, `modified` |
+| `activity_code` | string | No | Filter by activity code (exact match) |
+| `has_errors` | bool | No | Filter rows with validation errors |
+| `person_id` | UUID | No | Filter by matched person ID |
 
 **Response:** `HalfDayImportPreviewResponse`
 

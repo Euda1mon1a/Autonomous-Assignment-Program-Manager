@@ -199,6 +199,16 @@ export {
 } from "./useAdminScheduling";
 
 // ============================================================================
+// Half-Day Import Hooks
+// ============================================================================
+export {
+  halfDayImportKeys,
+  useCreateHalfDayDraft,
+  useHalfDayImportPreview,
+  useStageHalfDayImport,
+} from "./useHalfDayImport";
+
+// ============================================================================
 // Admin User Management Hooks
 // ============================================================================
 export {

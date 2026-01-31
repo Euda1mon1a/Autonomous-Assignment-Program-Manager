@@ -32,6 +32,8 @@ For Block Template2 half-day schedules, the system stages diffs before drafting:
 Notes:
 - Draft creation is **atomic**: if any selected row fails validation, the draft is not created.
 - The draft response includes `failed_ids` (staged row IDs that failed). On failure, the `400` error detail includes the same list.
+- Preview supports filters (diff type, activity code, errors, person) to help narrow selection.
+- Preview rows include `staged_id`, which is used when selecting specific rows for draft creation.
 
 ### Supported File Formats
 

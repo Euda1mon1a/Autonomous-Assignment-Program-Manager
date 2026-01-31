@@ -384,22 +384,28 @@ Critical infrastructure gaps:
 
 ### 13. Frontend Integration Gaps (NEW - Session Phase 8 Assessment)
 **Added:** 2026-01-31
-**Source:** Stack readiness assessment (backend 90% ready, frontend 30%)
+**Updated:** 2026-01-31 (PR #791 + Codex frontend work)
+**Source:** Stack readiness assessment (backend 90% ready, frontend 30% → 80%)
 
-Backend is complete. Frontend needs these pieces before GUI works:
+Backend is complete. Frontend status:
 
 | Component | Status | File | Effort |
 |-----------|--------|------|--------|
 | Excel export auth | ❌ Broken | `frontend/src/lib/export.ts:122` | 1 hour |
-| Half-day import API | ❌ Missing | `frontend/src/api/half-day-import.ts` | 30 min |
-| Half-day import UI | ❌ Missing | `frontend/src/app/import/half-day/page.tsx` | 2-4 hours |
-| Type contracts | ✅ Ready | `frontend/src/types/api-generated.ts` | - |
-| Draft API client | ✅ Ready | `frontend/src/api/schedule-drafts.ts` | - |
+| Half-day import API | ✅ Done | `frontend/src/api/half-day-import.ts` | — |
+| Half-day import UI | ✅ Done | `frontend/src/app/import/half-day/page.tsx` | — |
+| Type contracts | ✅ Ready | `frontend/src/types/api-generated.ts` | — |
+| Draft API client | ✅ Ready | `frontend/src/api/schedule-drafts.ts` | — |
 
-**Fix Order:**
-1. Excel export auth (unblocks existing functionality)
-2. Half-day import API client (thin axios wrapper)
-3. Half-day import UI page (copy from call assignment import)
+**Remaining:**
+1. Excel export auth - `fetch()` → `api.get()` with `responseType: 'blob'`
+
+**Completed (PR #791 + Codex):**
+- Validation errors vs warnings distinction (errors block draft)
+- Preview filters: diff_type, activity_code, has_errors, person_id
+- `staged_id` on diff entries for row selection
+- Wizard UI at `/import/half-day` with Upload → Preview → Draft flow
+- TanStack Query hooks for stage/preview/draft mutations
 
 **Backend Readiness:**
 - ✅ All endpoints exist and work
