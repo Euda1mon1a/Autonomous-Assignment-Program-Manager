@@ -848,7 +848,7 @@ async def restore_from_backup(
 
             result = subprocess.run(
                 cmd,
-                shell=True,  # noqa: S602 - required for pipe
+                shell=True,  # noqa: S602 - required for pipe  # nosec B602
                 env={**subprocess.os.environ, **env},
                 capture_output=True,
                 text=True,
@@ -933,8 +933,8 @@ async def verify_backup(
                 error="Backup file not found",
             )
 
-        # Calculate MD5 checksum
-        hash_md5 = hashlib.md5()  # noqa: S324 - MD5 ok for checksum
+        # Calculate MD5 checksum (not for security, just integrity verification)
+        hash_md5 = hashlib.md5(usedforsecurity=False)  # noqa: S324
         with open(backup_file, "rb") as f:
             for chunk in iter(lambda: f.read(8192), b""):
                 hash_md5.update(chunk)
