@@ -1438,6 +1438,80 @@ class ScheduleDraftService:
                 error_code="CREATE_FAILED",
             )
 
+    def add_assignment_to_draft_sync(
+        self,
+        draft_id: UUID,
+        person_id: UUID,
+        assignment_date: date,
+        time_of_day: str | None,
+        activity_code: str | None = None,
+        rotation_id: UUID | None = None,
+        change_type: DraftAssignmentChangeType = DraftAssignmentChangeType.ADD,
+        existing_assignment_id: UUID | None = None,
+    ) -> UUID | None:
+        """
+        Sync version of add_assignment_to_draft for use from non-async contexts.
+
+        See add_assignment_to_draft() for full documentation.
+        """
+        try:
+            normalized_time = time_of_day or "ALL"
+
+            existing = (
+                self.db.query(ScheduleDraftAssignment)
+                .filter(
+                    ScheduleDraftAssignment.draft_id == draft_id,
+                    ScheduleDraftAssignment.person_id == person_id,
+                    ScheduleDraftAssignment.assignment_date == assignment_date,
+                    ScheduleDraftAssignment.time_of_day == normalized_time,
+                )
+                .first()
+            )
+
+            if existing:
+                existing.activity_code = activity_code
+                existing.rotation_id = rotation_id
+                existing.change_type = change_type
+                existing.existing_assignment_id = existing_assignment_id
+                self.db.commit()
+                return existing.id
+
+            draft_assignment = ScheduleDraftAssignment(
+                id=uuid4(),
+                draft_id=draft_id,
+                person_id=person_id,
+                assignment_date=assignment_date,
+                time_of_day=normalized_time,
+                activity_code=activity_code,
+                rotation_id=rotation_id,
+                change_type=change_type,
+                existing_assignment_id=existing_assignment_id,
+            )
+            self.db.add(draft_assignment)
+
+            draft = (
+                self.db.query(ScheduleDraft)
+                .filter(ScheduleDraft.id == draft_id)
+                .first()
+            )
+            if draft and draft.change_summary:
+                summary = draft.change_summary.copy()
+                if change_type == DraftAssignmentChangeType.ADD:
+                    summary["added"] = summary.get("added", 0) + 1
+                elif change_type == DraftAssignmentChangeType.MODIFY:
+                    summary["modified"] = summary.get("modified", 0) + 1
+                elif change_type == DraftAssignmentChangeType.DELETE:
+                    summary["deleted"] = summary.get("deleted", 0) + 1
+                draft.change_summary = summary
+
+            self.db.commit()
+            return draft_assignment.id
+
+        except Exception as e:
+            logger.exception(f"Failed to add assignment to draft {draft_id}: {e}")
+            self.db.rollback()
+            return None
+
     def add_solver_assignments_to_draft_sync(
         self,
         draft_id: UUID,

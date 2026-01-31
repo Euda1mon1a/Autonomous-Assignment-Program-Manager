@@ -13,6 +13,8 @@ from app.core.security import get_admin_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.half_day_import import (
+    HalfDayImportDraftRequest,
+    HalfDayImportDraftResponse,
     HalfDayImportPreviewResponse,
     HalfDayImportStageResponse,
 )
@@ -91,4 +93,39 @@ async def preview_half_day_import(
         total_diffs=total,
         page=page,
         page_size=page_size,
+    )
+
+
+@router.post(
+    "/batches/{batch_id}/draft",
+    response_model=HalfDayImportDraftResponse,
+    summary="Create a schedule draft from staged half-day diffs",
+)
+async def create_half_day_import_draft(
+    batch_id: UUID,
+    payload: HalfDayImportDraftRequest,
+    db=Depends(get_db),
+    current_user: User = Depends(get_admin_user),
+) -> HalfDayImportDraftResponse:
+    service = HalfDayImportService(db)
+    result = service.create_draft_from_batch(
+        batch_id=batch_id,
+        staged_ids=payload.staged_ids,
+        created_by_id=current_user.id,
+        notes=payload.notes,
+    )
+    if not result.success:
+        raise HTTPException(status_code=400, detail=result.message)
+
+    return HalfDayImportDraftResponse(
+        success=True,
+        batch_id=result.batch_id,
+        draft_id=result.draft_id,
+        message=result.message,
+        total_selected=result.total_selected,
+        added=result.added,
+        modified=result.modified,
+        removed=result.removed,
+        skipped=result.skipped,
+        failed=result.failed,
     )

@@ -21,15 +21,22 @@ from app.models.import_staging import (
     ImportBatch,
     ImportBatchStatus,
     ImportStagedAssignment,
+    StagedAssignmentStatus,
 )
 from app.models.person import Person
+from app.models.schedule_draft import (
+    DraftAssignmentChangeType,
+    DraftSourceType,
+    ScheduleDraft,
+)
 from app.models.schedule_override import ScheduleOverride
 from app.schemas.half_day_import import (
     HalfDayDiffEntry,
     HalfDayDiffMetrics,
     HalfDayDiffType,
 )
-from app.utils.academic_blocks import get_block_dates
+from app.services.schedule_draft_service import ScheduleDraftService
+from app.utils.academic_blocks import get_block_dates, get_block_number_for_date
 
 logger = get_logger(__name__)
 
@@ -60,6 +67,23 @@ class ParsedSlot:
     excel_code: str | None
     warnings: list[str]
     row_number: int | None = None
+
+
+@dataclass
+class DraftResult:
+    """Result of creating a schedule draft from staged diffs."""
+
+    success: bool
+    batch_id: UUID
+    draft_id: UUID | None = None
+    message: str = ""
+    error_code: str | None = None
+    total_selected: int = 0
+    added: int = 0
+    modified: int = 0
+    removed: int = 0
+    skipped: int = 0
+    failed: int = 0
 
 
 class HalfDayImportService:
@@ -313,6 +337,171 @@ class HalfDayImportService:
             )
 
         return metrics, diffs, total_diffs
+
+    def create_draft_from_batch(
+        self,
+        batch_id: UUID,
+        staged_ids: list[UUID] | None = None,
+        created_by_id: UUID | None = None,
+        notes: str | None = None,
+    ) -> DraftResult:
+        """Create a schedule draft from staged half-day diffs."""
+        batch = self.db.query(ImportBatch).filter(ImportBatch.id == batch_id).first()
+        if not batch:
+            return DraftResult(
+                success=False,
+                batch_id=batch_id,
+                message="Import batch not found",
+                error_code="BATCH_NOT_FOUND",
+            )
+        if batch.status not in (ImportBatchStatus.STAGED, ImportBatchStatus.APPROVED):
+            return DraftResult(
+                success=False,
+                batch_id=batch_id,
+                message="Import batch status must be staged or approved",
+                error_code="INVALID_BATCH_STATUS",
+            )
+
+        staged_query = self.db.query(ImportStagedAssignment).filter(
+            ImportStagedAssignment.batch_id == batch_id
+        )
+
+        staged_id_set = set(staged_ids or [])
+        if staged_ids:
+            selected_rows = staged_query.filter(
+                ImportStagedAssignment.id.in_(staged_id_set)
+            ).all()
+            skipped_rows = staged_query.filter(
+                ~ImportStagedAssignment.id.in_(staged_id_set)
+            ).all()
+        else:
+            selected_rows = staged_query.all()
+            skipped_rows = []
+
+        if not selected_rows:
+            return DraftResult(
+                success=False,
+                batch_id=batch_id,
+                message="No staged diffs selected",
+                error_code="NO_SELECTION",
+            )
+
+        eligible_rows = [row for row in selected_rows if row.matched_person_id]
+        if not eligible_rows:
+            return DraftResult(
+                success=False,
+                batch_id=batch_id,
+                message="Selected diffs have no matched people",
+                error_code="NO_MATCHED_PEOPLE",
+            )
+
+        # Determine draft scope from batch or selected rows
+        min_date = min(row.assignment_date for row in eligible_rows)
+        max_date = max(row.assignment_date for row in eligible_rows)
+        start_date = batch.target_start_date or min_date
+        end_date = batch.target_end_date or max_date
+        block_number = batch.target_block
+        if block_number is None:
+            block_number, _ = get_block_number_for_date(start_date)
+
+        draft_service = ScheduleDraftService(self.db)
+        draft_result = draft_service.create_draft_sync(
+            source_type=DraftSourceType.IMPORT,
+            start_date=start_date,
+            end_date=end_date,
+            block_number=block_number,
+            created_by_id=created_by_id,
+            notes=notes or f"Excel import batch {batch_id}",
+        )
+
+        if not draft_result.success or not draft_result.draft_id:
+            return DraftResult(
+                success=False,
+                batch_id=batch_id,
+                message=draft_result.message,
+                error_code=draft_result.error_code,
+            )
+
+        added = modified = removed = failed = 0
+        for row in eligible_rows:
+            diff_type = row.conflict_type or ""
+            if diff_type == HalfDayDiffType.ADDED.value:
+                change_type = DraftAssignmentChangeType.ADD
+                added += 1
+            elif diff_type == HalfDayDiffType.REMOVED.value:
+                change_type = DraftAssignmentChangeType.DELETE
+                removed += 1
+            elif diff_type == HalfDayDiffType.MODIFIED.value:
+                change_type = DraftAssignmentChangeType.MODIFY
+                modified += 1
+            else:
+                failed += 1
+                continue
+
+            activity_code = row.rotation_name if change_type != DraftAssignmentChangeType.DELETE else None
+            existing_id = (
+                row.existing_assignment_id
+                if change_type != DraftAssignmentChangeType.ADD
+                else None
+            )
+            if change_type != DraftAssignmentChangeType.ADD and not existing_id:
+                failed += 1
+                continue
+            draft_assignment_id = draft_service.add_assignment_to_draft_sync(
+                draft_id=draft_result.draft_id,
+                person_id=row.matched_person_id,
+                assignment_date=row.assignment_date,
+                time_of_day=row.slot,  # None→"ALL" handled by draft service
+                activity_code=activity_code,
+                rotation_id=row.matched_rotation_id,
+                change_type=change_type,
+                existing_assignment_id=existing_id,
+            )
+            if not draft_assignment_id:
+                failed += 1
+                continue
+            row.status = StagedAssignmentStatus.APPROVED
+
+        self.db.commit()
+
+        total_selected = len(eligible_rows)
+        skipped = len(skipped_rows)
+        successful = total_selected - failed
+
+        # Clean up orphan draft if all rows failed
+        if successful == 0 and draft_result.draft_id:
+            self.db.query(ScheduleDraft).filter(
+                ScheduleDraft.id == draft_result.draft_id
+            ).delete()
+            self.db.commit()
+            return DraftResult(
+                success=False,
+                batch_id=batch_id,
+                message="All rows failed validation - draft discarded",
+                error_code="ALL_ROWS_FAILED",
+                total_selected=total_selected,
+                failed=failed,
+                skipped=skipped,
+            )
+
+        message = (
+            f"Draft {draft_result.draft_id} created from {total_selected} staged diffs"
+        )
+        if failed:
+            message = f"{message} ({failed} failed)"
+
+        return DraftResult(
+            success=True,
+            batch_id=batch_id,
+            draft_id=draft_result.draft_id,
+            message=message,
+            total_selected=total_selected,
+            added=added,
+            modified=modified,
+            removed=removed,
+            skipped=skipped,
+            failed=failed,
+        )
 
     def _get_current_schedule(
         self,
