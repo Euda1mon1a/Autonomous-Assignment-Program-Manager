@@ -204,7 +204,7 @@ async def get_metrics_history(
             raise HTTPException(
                 status_code=400, detail="end_date must be on or after start_date"
             )
-        if end_date - start_date > MAX_ANALYTICS_RANGE:
+        if end_date.date() - start_date.date() > MAX_ANALYTICS_RANGE:
             raise HTTPException(
                 status_code=400,
                 detail="Date range too large (max 365 days)",
@@ -795,7 +795,7 @@ async def export_for_research(
             raise HTTPException(
                 status_code=400, detail="end_date must be on or after start_date"
             )
-        if end_date - start_date > MAX_ANALYTICS_RANGE:
+        if end_date.date() - start_date.date() > MAX_ANALYTICS_RANGE:
             raise HTTPException(
                 status_code=400,
                 detail="Date range too large (max 365 days)",
