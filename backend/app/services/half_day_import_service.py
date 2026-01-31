@@ -24,7 +24,11 @@ from app.models.import_staging import (
     StagedAssignmentStatus,
 )
 from app.models.person import Person
-from app.models.schedule_draft import DraftAssignmentChangeType, DraftSourceType
+from app.models.schedule_draft import (
+    DraftAssignmentChangeType,
+    DraftSourceType,
+    ScheduleDraft,
+)
 from app.models.schedule_override import ScheduleOverride
 from app.schemas.half_day_import import (
     HalfDayDiffEntry,
@@ -447,7 +451,7 @@ class HalfDayImportService:
                 draft_id=draft_result.draft_id,
                 person_id=row.matched_person_id,
                 assignment_date=row.assignment_date,
-                time_of_day=row.slot or "AM",
+                time_of_day=row.slot,  # None→"ALL" handled by draft service
                 activity_code=activity_code,
                 rotation_id=row.matched_rotation_id,
                 change_type=change_type,
@@ -462,6 +466,24 @@ class HalfDayImportService:
 
         total_selected = len(eligible_rows)
         skipped = len(skipped_rows)
+        successful = total_selected - failed
+
+        # Clean up orphan draft if all rows failed
+        if successful == 0 and draft_result.draft_id:
+            self.db.query(ScheduleDraft).filter(
+                ScheduleDraft.id == draft_result.draft_id
+            ).delete()
+            self.db.commit()
+            return DraftResult(
+                success=False,
+                batch_id=batch_id,
+                message="All rows failed validation - draft discarded",
+                error_code="ALL_ROWS_FAILED",
+                total_selected=total_selected,
+                failed=failed,
+                skipped=skipped,
+            )
+
         message = (
             f"Draft {draft_result.draft_id} created from {total_selected} staged diffs"
         )
@@ -469,7 +491,7 @@ class HalfDayImportService:
             message = f"{message} ({failed} failed)"
 
         return DraftResult(
-            success=(total_selected - failed) > 0,
+            success=True,
             batch_id=batch_id,
             draft_id=draft_result.draft_id,
             message=message,
