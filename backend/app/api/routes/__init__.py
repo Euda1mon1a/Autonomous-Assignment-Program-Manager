@@ -33,6 +33,7 @@ from app.api.routes import (
     daily_manifest,
     db_admin,
     docs,
+    enums,
     exotic_resilience,
     experiments,
     export,
@@ -97,6 +98,7 @@ api_router = APIRouter()
 # Core infrastructure routes
 api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(docs.router, prefix="/docs", tags=["documentation"])
+api_router.include_router(enums.router, tags=["enums"])
 api_router.include_router(features.router, prefix="/features", tags=["features"])
 api_router.include_router(
     experiments.router, prefix="/experiments", tags=["experiments"]
