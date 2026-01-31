@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-31 (Stack assessment: backend 90% ready, frontend needs 3 fixes)
+> **Last Updated:** 2026-01-31 (CRITICAL #1 + HIGH #13 resolved; completed items archived)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -100,50 +100,14 @@ We have three overlapping knowledge mechanisms (Skills, RAG, MCP Tools) with red
 
 ## CRITICAL (Fix Immediately)
 
-### 1. Excel Export Silent Failures (NEW - Session 136)
-**Added:** 2026-01-23
-**Source:** 10-agent parallel investigation
-
-Block 10 Excel export has multiple silent failure modes causing incomplete/incorrect output:
-
-| Issue | Severity | Location | Impact |
-|-------|----------|----------|--------|
-| **Row mapping silent skip** | CRITICAL | `xml_to_xlsx_converter.py:397` | Missing people in export - only warning log |
-| **Faculty filtered out** | HIGH | `half_day_xml_exporter.py:139` | Faculty never appear in export |
-| **Frontend auth bypass** | HIGH | `frontend/src/lib/export.ts:122` | Uses raw `fetch()`, JWT may not be sent |
-| **Missing structure XML fallback** | HIGH | `xml_to_xlsx_converter.py:121-123` | Silent wrong row numbering |
-| **Fragile name matching** | MEDIUM | `xml_to_xlsx_converter.py:382-394` | First-name matching causes false positives |
-
-**Why Plan B (Claude for macOS manual):** These silent failures produce incomplete Excel files without user feedback.
-
-**Status Update (2026-01-31):**
-- ✅ Canonical JSON export pipeline (`HalfDayJSONExporter` → `JSONToXlsxConverter`)
-- ✅ Merged-cell safe writing (headers + schedule cells)
-- ✅ Name mapping handles `Last, First` ↔ `First Last`
-- ✅ Faculty included in canonical export
-- ✅ Backend draft flow: Stage→Preview→Draft→Publish complete (PRs #785, #787, #788)
-- ✅ Atomic draft creation with `failed_ids` tracking
-- ✅ Bandit security config merged
-
-**Remaining Fixes (Frontend Only):**
-1. ~~Replace silent skip with exception~~ (backend done)
-2. **Fix frontend auth** - `export.ts:122` uses raw `fetch()` without auth header
-3. Add user feedback (toast) on export failures
-
-**Files:**
-- ~~`backend/app/services/xml_to_xlsx_converter.py`~~ ✅
-- ~~`backend/app/services/half_day_xml_exporter.py`~~ ✅
-- `frontend/src/lib/export.ts` ← **BLOCKING**
-- `frontend/src/components/dashboard/QuickActions.tsx`
-
-### 2. PII in Git History
+### 1. PII in Git History
 - Resident names in deleted files (BLOCK_10_SUMMARY.md, AIRTABLE_EXPORT_SUMMARY.md) still in history
 - Requires `git filter-repo` + force push to main
 - All collaborators must re-clone after
 
 **Ref:** `docs/archived/superseded/TODO_INVENTORY.md` line 6 (archived)
 
-### 3. MCP Production Security (PRODUCTION GATE)
+### 2. MCP Production Security (PRODUCTION GATE)
 **Status:** Dev bypass implemented - production MUST configure auth
 
 **Requirement:** Production deployments MUST set `MCP_API_KEY` environment variable.
@@ -165,7 +129,7 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 ## HIGH (Address Soon)
 
 ### 4. Block 10 Schedule Generation - PARTIAL (Activity Solver OK)
-**Status:** CP-SAT ✅ | Activity Solver ✅ | Backend Export ⚠️ (partial) | Frontend Export ⚠️ (see #1)
+**Status:** CP-SAT ✅ | Activity Solver ✅ | Backend Export ⚠️ (partial) | Frontend Export ✅
 
 **Latest Run (2026-01-27):**
 - CP-SAT solver generated **589** rotation assignments + **20** call nights
@@ -218,24 +182,6 @@ Remaining faculty-specific gaps:
 1. Decide canonical schedule table for faculty (prefer half_day_assignments)
 2. Wire faculty expansion into half-day pipeline before CP-SAT activity solver
 3. Enforce or normalize weekly clinic min/max limits and fix template coverage gaps
-
-### Phase 5 — Post-release Coverage Overrides ✅ COMMITTED (Session 150)
-**Status:** P5.0 + P5.1 committed (`5826b410`, `7cd4b045`)
-**Doc:** [`docs/planning/CP_SAT_PIPELINE_REFINEMENT_PHASE5.md`](planning/CP_SAT_PIPELINE_REFINEMENT_PHASE5.md)
-
-**Completed:**
-1. ✅ Schedule override model (coverage, cancellation, gap types)
-2. ✅ Admin-only routes (create, list, deactivate)
-3. ✅ Overlay integration (`include_overrides` param)
-4. ✅ Call override model + service
-5. ✅ Cascade planner with sacrifice hierarchy:
-   - GME/DFM → Solo clinic → Procedures → PROTECTED (FMIT/AT/PCAT/DO)
-6. ✅ GAP override type for visible unfilled slots
-7. ✅ Post-call PCAT/DO auto-GAP creation
-
-**Remaining (optional):**
-- [ ] Excel round-trip import creates overrides only (no hard deletes)
-- [ ] Resilience-driven cascade scoring (blast radius + contingency)
 
 ### Phase 6 — CP-SAT Hardening + Equity + Excel Staging (In Progress)
 **Status:** In progress (PR #784 merged; PR #785 merged — Excel staging + draft flow)
@@ -310,6 +256,7 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 ### 9. DoS Vulnerabilities - Unbounded Queries (NEW - Session 136)
 **Added:** 2026-01-23
 **Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
+**Status:** Fix implemented (pending merge)
 
 | Endpoint | File:Line | Issue |
 |----------|-----------|-------|
@@ -381,39 +328,6 @@ Critical infrastructure gaps:
 | `wellness.py` | 15 | P1 - Resident health |
 
 **Note:** Resilience endpoints also missing from OpenAPI spec (59 endpoints not generating frontend types).
-
-### 13. Frontend Integration Gaps (NEW - Session Phase 8 Assessment)
-**Added:** 2026-01-31
-**Updated:** 2026-01-31 (PR #791 + Codex frontend work)
-**Source:** Stack readiness assessment (backend 90% ready, frontend 30% → 80%)
-
-Backend is complete. Frontend status:
-
-| Component | Status | File | Effort |
-|-----------|--------|------|--------|
-| Excel export auth | ❌ Broken | `frontend/src/lib/export.ts:122` | 1 hour |
-| Half-day import API | ✅ Done | `frontend/src/api/half-day-import.ts` | — |
-| Half-day import UI | ✅ Done | `frontend/src/app/import/half-day/page.tsx` | — |
-| Type contracts | ✅ Ready | `frontend/src/types/api-generated.ts` | — |
-| Draft API client | ✅ Ready | `frontend/src/api/schedule-drafts.ts` | — |
-
-**Remaining:**
-1. Excel export auth - `fetch()` → `api.get()` with `responseType: 'blob'`
-
-**Completed (PR #791 + Codex):**
-- Validation errors vs warnings distinction (errors block draft)
-- Preview filters: diff_type, activity_code, has_errors, person_id
-- `staged_id` on diff entries for row selection
-- Wizard UI at `/import/half-day` with Upload → Preview → Draft flow
-- TanStack Query hooks for stage/preview/draft mutations
-
-**Backend Readiness:**
-- ✅ All endpoints exist and work
-- ✅ Atomic draft creation (PR #787)
-- ✅ Commit parameter fix (PR #788)
-- ✅ Error responses structured with `failed_ids`
-
----
 
 ### 14. K2.5 Swarm MCP Integration (NEW - Session Phase 8)
 **Added:** 2026-01-30
@@ -541,19 +455,6 @@ Pre-commit hooks fail due to missing dependencies:
 | Redundancies | 4 | `startupO-legacy`, `deep-research`+`devcom` |
 
 **Missing Skill:** `check-camelcase` referenced in CLAUDE.md but skill doesn't exist.
-
-### ~~22. Rename `activity_type` → `rotation_type`~~ ✅ RESOLVED (2026-01-25)
-**Resolved by:** Commit `7cd3f4eb` - 180 files changed, migration `20260126_rename_rotation_type`
-
-Complete rename across entire codebase including DB migration, models, schemas, API, frontend types, solver, and all documentation.
-
-### ~~23. CP-SAT Failure Logging Improvements~~ ✅ RESOLVED (2026-01-26)
-**Resolved by:** Commit `9a5c9b19`
-
-Added solver failure diagnostics in `SchedulingEngine`:
-- Logs enabled/disabled constraint lists
-- Logs context summary (residents, templates, blocks, locked slots)
-- Warns on missing key templates (PCAT/DO/SM/NF/PC)
 
 ### 24. Preload Service Code Duplication (NEW - Session 142)
 **Added:** 2026-01-25
@@ -854,7 +755,190 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 
 ---
 
-## ~~COMPLETED~~ (Archived)
+## SUMMARY
+
+| Priority | Open | Resolved |
+|----------|------|----------|
+| **CRITICAL** | 2 | 6 |
+| **HIGH** | 8 | 7 |
+| **MEDIUM** | 16 | 11 |
+| **LOW** | 13 | 3 |
+| **TOTAL** | **39** | **27** |
+
+### Top 5 Actions for Next Session
+
+1. **Purge PII from Git History** (CRITICAL #1) - `git filter-repo` + force push + re-clone
+2. **MCP Production Security Checklist** (CRITICAL #2) - set `MCP_API_KEY`, lock ports
+3. **Add Rate Limits** (HIGH #10) - DoS protection on expensive endpoints
+4. **Add DB-Schema Drift Tests** (HIGH #11) - Prevent 12+ more models drifting
+5. **Add Resilience Route Tests** (HIGH #12) - 59 untested safety-critical endpoints
+
+### Blind Spot Assessment Items (2026-01-27)
+
+| # | Item | Effort | Priority |
+|---|------|--------|----------|
+| 28 | Exception Handling Audit | 4-6h | MEDIUM |
+| 29 | Transaction Boundary Audit | 4-6h | MEDIUM |
+| 30 | Async/Sync Doc Fix | 30m | MEDIUM |
+| 31 | CP-SAT Integration Tests | 4-8h | MEDIUM |
+
+**Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+### Session 142 Updates (2026-01-26)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Resolved | MEDIUM #22 | `activity_type` → `rotation_type` rename done (commit 7cd3f4eb) |
+| ✅ Resolved | MEDIUM #23 | CP-SAT failure logging improvements |
+| ➕ Added | MEDIUM #24 | Preload service code duplication (~300 LOC + magic numbers) |
+| ➕ Added | MEDIUM #25 | Activity solver physical-capacity overflow (capacity skipped) |
+| ➕ Added | MEDIUM #26 | Supervision activity metadata validation |
+| 📝 Added | Review doc | `docs/reviews/CODEX_CPSAT_REVIEW_20260125.md` |
+| ✅ Fixed | Block 10 | CP-SAT + activity solver succeed after block-assignment filtering |
+| ⚠️ Found | Block 10 | Capacity constraints skipped for 35/40 slots (policy needed) |
+| 📝 Added | gitignore | `.claude/dontreadme/sessions/*.md` for session scratchpads |
+| 📝 Updated | ops scripts | `block_regen.py` + `block_export.py` now backfill env |
+
+### Session 150 Updates (2026-01-29)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Committed | Phase 5.0 | Schedule override layer (commit `5826b410`) |
+| ✅ Committed | Phase 5.1 | Cascade overrides + GAP + call coverage (commit `7cd4b045`) |
+| ➕ Added | MEDIUM #32 | Test infrastructure quirks (TestClient `/api` vs `/api/v1`) |
+| 📝 Updated | HIGH Phase 5 | Call + cascade + GAP override complete |
+
+### Session 141 Updates (2026-01-26)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Resolved | API/WS Convention Audit | PRs #758, #760, #765 - full enforcement |
+| ✅ N/A | PII in Burnout APIs | Files don't exist (planned, not implemented) |
+| 📝 Updated | Bandit hook | Branch ready, needs merge |
+| ✅ Verified | Hooks Consolidation | All 15 scripts aligned, D&D parallel |
+
+## COMPLETED / ARCHIVE
+
+### 1. Excel Export Silent Failures (CRITICAL #1) — RESOLVED (2026-01-31)
+**Added:** 2026-01-23  
+**Source:** 10-agent parallel investigation
+
+Block 10 Excel export had multiple silent failure modes causing incomplete/incorrect output:
+
+| Issue | Severity | Location | Impact |
+|-------|----------|----------|--------|
+| **Row mapping silent skip** | CRITICAL | `xml_to_xlsx_converter.py:397` | Missing people in export - only warning log |
+| **Faculty filtered out** | HIGH | `half_day_xml_exporter.py:139` | Faculty never appear in export |
+| **Frontend auth bypass** | HIGH | `frontend/src/lib/export.ts:122` | Uses raw `fetch()`, JWT may not be sent |
+| **Missing structure XML fallback** | HIGH | `xml_to_xlsx_converter.py:121-123` | Silent wrong row numbering |
+| **Fragile name matching** | MEDIUM | `xml_to_xlsx_converter.py:382-394` | First-name matching causes false positives |
+
+**Resolution (2026-01-31):**
+- ✅ Canonical JSON export pipeline (`HalfDayJSONExporter` → `JSONToXlsxConverter`)
+- ✅ Merged-cell safe writing (headers + schedule cells)
+- ✅ Name mapping handles `Last, First` ↔ `First Last`
+- ✅ Faculty included in canonical export
+- ✅ Backend draft flow: Stage→Preview→Draft→Publish complete (PRs #785, #787, #788)
+- ✅ Atomic draft creation with `failed_ids` tracking
+- ✅ Bandit security config merged
+- ✅ Frontend export auth uses authenticated API client (PR #792)
+
+**Remaining (optional):**
+- Add export failure toast in UI (`frontend/src/components/dashboard/QuickActions.tsx`)
+
+**Files:**
+- ~~`backend/app/services/xml_to_xlsx_converter.py`~~ ✅
+- ~~`backend/app/services/half_day_xml_exporter.py`~~ ✅
+- `frontend/src/lib/export.ts` ✅
+
+### 13. Frontend Integration Gaps (HIGH #13) — RESOLVED (2026-01-31)
+**Added:** 2026-01-31  
+**Source:** Stack readiness assessment (backend 90% ready, frontend 30% → 80%)
+
+| Component | Status | File | Effort |
+|-----------|--------|------|--------|
+| Excel export auth | ✅ Done | `frontend/src/lib/export.ts` | — |
+| Half-day import API | ✅ Done | `frontend/src/api/half-day-import.ts` | — |
+| Half-day import UI | ✅ Done | `frontend/src/app/import/half-day/page.tsx` | — |
+| Type contracts | ✅ Ready | `frontend/src/types/api-generated.ts` | — |
+| Draft API client | ✅ Ready | `frontend/src/api/schedule-drafts.ts` | — |
+
+**Completed (PR #791 + #792):**
+- Validation errors vs warnings distinction (errors block draft)
+- Preview filters: diff_type, activity_code, has_errors, person_id
+- `staged_id` on diff entries for row selection
+- Wizard UI at `/import/half-day` with Upload → Preview → Draft flow
+- TanStack Query hooks for stage/preview/draft mutations
+
+### Phase 5 — Post-release Coverage Overrides ✅ COMMITTED (Session 150)
+**Status:** P5.0 + P5.1 committed (`5826b410`, `7cd4b045`)  
+**Doc:** [`docs/planning/CP_SAT_PIPELINE_REFINEMENT_PHASE5.md`](planning/CP_SAT_PIPELINE_REFINEMENT_PHASE5.md)
+
+**Completed:**
+1. ✅ Schedule override model (coverage, cancellation, gap types)
+2. ✅ Admin-only routes (create, list, deactivate)
+3. ✅ Overlay integration (`include_overrides` param)
+4. ✅ Call override model + service
+5. ✅ Cascade planner with sacrifice hierarchy:
+   - GME/DFM → Solo clinic → Procedures → PROTECTED (FMIT/AT/PCAT/DO)
+6. ✅ GAP override type for visible unfilled slots
+7. ✅ Post-call PCAT/DO auto-GAP creation
+
+**Remaining (optional):**
+- [ ] Excel round-trip import creates overrides only (no hard deletes)
+- [ ] Resilience-driven cascade scoring (blast radius + contingency)
+
+### ~~22. Rename `activity_type` → `rotation_type`~~ ✅ RESOLVED (2026-01-25)
+**Resolved by:** Commit `7cd3f4eb` - 180 files changed, migration `20260126_rename_rotation_type`
+
+Complete rename across entire codebase including DB migration, models, schemas, API, frontend types, solver, and all documentation.
+
+### ~~23. CP-SAT Failure Logging Improvements~~ ✅ RESOLVED (2026-01-26)
+**Resolved by:** Commit `9a5c9b19`
+
+Added solver failure diagnostics in `SchedulingEngine`:
+- Logs enabled/disabled constraint lists
+- Logs context summary (residents, templates, blocks, locked slots)
+- Warns on missing key templates (PCAT/DO/SM/NF/PC)
+
+### Archived Resolutions (2026-01-18 → 2026-01-20)
+
+### ~~Block 10 GUI Navigation~~ ✅ RESOLVED (PR #758)
+~~Fixed: People API 500, cross-year block merging, Couatl Killer violations.~~
+
+### ~~Documentation Consolidation~~ ✅ RESOLVED (2026-01-18)
+~~Root-level docs reduced from 68 → 28 files.~~
+
+### ~~CLI and Security Cleanup~~ ✅ RESOLVED (2026-01-18)
+~~Startup log fixed, queue whitelist tightened.~~
+
+### ~~VaR Backend Endpoints~~ ✅ RESOLVED (2026-01-18)
+~~3 endpoints created: coverage-var, workload-var, conditional-var.~~
+
+### ~~Seed Script Credentials~~ ✅ RESOLVED (2026-01-18)
+~~Now uses `os.environ.get()` instead of hardcoded password.~~
+
+### ~~Docker Bind Mounts~~ ✅ RESOLVED (2026-01-18)
+~~Switched from named volumes to `./data/postgres/`, `./data/redis/` for visibility.~~
+
+### ~~Academic Year Fix~~ ✅ RESOLVED (2026-01-18)
+~~`block_quality_report_service.py` derives academic year from block start date.~~
+
+### ~~psutil Dependency~~ ✅ RESOLVED (2026-01-18)
+~~Added `psutil>=5.9.0` to requirements.txt.~~
+
+### ~~GUI + Wiring Review (PR #756)~~ ✅ RESOLVED (2026-01-20)
+~~Verified GUI fixes, identified and fixed remaining wiring gaps.~~
+
+### ~~API/WS Convention Audit~~ ✅ RESOLVED (2026-01-26)
+~~Full audit completed via PRs #758, #760, #765:~~
+- ~~WS messages: Auto snake↔camel conversion (PR #760)~~
+- ~~REST query params: 90+ violations fixed (PR #758)~~
+- ~~Frontend hooks: 17 hooks fixed~~
+- ~~Enforcement: Gorgon's Gaze, Couatl Killer, Modron March hooks~~
+
+### ~~PII in Burnout APIs~~ ✅ N/A (2026-01-26)
+~~Security report referenced `contagion_model.py`, `resilience_integration.py` with PII-exposing classes. Investigation found these files/classes don't exist - report was based on planned (not implemented) code.~~
 
 ### ~~Orphan Security Routes~~ ✅ RESOLVED (2026-01-18)
 ~~6 routes now wired to API (commit `b92a9e02`):~~
@@ -900,115 +984,6 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 
 ### ~~Invitation Emails~~ ✅ RESOLVED (2026-01-18)
 ~~Working via `render_email_template()` + `send_email.delay()`.~~
-
-### ~~Block 10 GUI Navigation~~ ✅ RESOLVED (PR #758)
-~~Fixed: People API 500, cross-year block merging, Couatl Killer violations.~~
-
-### ~~Documentation Consolidation~~ ✅ RESOLVED (2026-01-18)
-~~Root-level docs reduced from 68 → 28 files.~~
-
-### ~~CLI and Security Cleanup~~ ✅ RESOLVED (2026-01-18)
-~~Startup log fixed, queue whitelist tightened.~~
-
-### ~~VaR Backend Endpoints~~ ✅ RESOLVED (2026-01-18)
-~~3 endpoints created: coverage-var, workload-var, conditional-var.~~
-
-### ~~Seed Script Credentials~~ ✅ RESOLVED (2026-01-18)
-~~Now uses `os.environ.get()` instead of hardcoded password.~~
-
-### ~~Docker Bind Mounts~~ ✅ RESOLVED (2026-01-18)
-~~Switched from named volumes to `./data/postgres/`, `./data/redis/` for visibility.~~
-
-### ~~Academic Year Fix~~ ✅ RESOLVED (2026-01-18)
-~~`block_quality_report_service.py` derives academic year from block start date.~~
-
-### ~~psutil Dependency~~ ✅ RESOLVED (2026-01-18)
-~~Added `psutil>=5.9.0` to requirements.txt.~~
-
-### ~~GUI + Wiring Review (PR #756)~~ ✅ RESOLVED (2026-01-20)
-~~Verified GUI fixes, identified and fixed remaining wiring gaps.~~
-
-### ~~API/WS Convention Audit~~ ✅ RESOLVED (2026-01-26)
-~~Full audit completed via PRs #758, #760, #765:~~
-- ~~WS messages: Auto snake↔camel conversion (PR #760)~~
-- ~~REST query params: 90+ violations fixed (PR #758)~~
-- ~~Frontend hooks: 17 hooks fixed~~
-- ~~Enforcement: Gorgon's Gaze, Couatl Killer, Modron March hooks~~
-
-### ~~PII in Burnout APIs~~ ✅ N/A (2026-01-26)
-~~Security report referenced `contagion_model.py`, `resilience_integration.py` with PII-exposing classes. Investigation found these files/classes don't exist - report was based on planned (not implemented) code.~~
-
-### ~~Rename `activity_type` → `rotation_type`~~ ✅ RESOLVED (2026-01-25)
-~~Complete rename across 180 files (commit `7cd3f4eb`):~~
-- ~~Alembic migration: `20260126_rename_rotation_type`~~
-- ~~Models, schemas, API routes updated~~
-- ~~Frontend types regenerated~~
-- ~~Solver and constraints updated~~
-- ~~All docs standardized on `rotation_type` terminology~~
-
----
-
-## SUMMARY
-
-| Priority | Open | Resolved |
-|----------|------|----------|
-| **CRITICAL** | 3 | 5 |
-| **HIGH** | 9 | 6 |
-| **MEDIUM** | 16 | 11 |
-| **LOW** | 13 | 3 |
-| **TOTAL** | **41** | **25** |
-
-### Top 5 Actions for Next Session
-
-1. **Fix Excel Export Silent Failures** (CRITICAL #1) - Frontend auth bypass, need axios
-2. **Add Rate Limits** (HIGH #10) - DoS protection on expensive endpoints
-3. **Add DB-Schema Drift Tests** (HIGH #11) - Prevent 12+ more models drifting
-4. **Add Resilience Route Tests** (HIGH #12) - 59 untested safety-critical endpoints
-5. **Merge bandit-config branch** (HIGH #7) - Security scanner ready, needs PR
-
-### Blind Spot Assessment Items (2026-01-27)
-
-| # | Item | Effort | Priority |
-|---|------|--------|----------|
-| 28 | Exception Handling Audit | 4-6h | MEDIUM |
-| 29 | Transaction Boundary Audit | 4-6h | MEDIUM |
-| 30 | Async/Sync Doc Fix | 30m | MEDIUM |
-| 31 | CP-SAT Integration Tests | 4-8h | MEDIUM |
-
-**Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
-
-### Session 142 Updates (2026-01-26)
-
-| Change | Item | Reason |
-|--------|------|--------|
-| ✅ Resolved | MEDIUM #22 | `activity_type` → `rotation_type` rename done (commit 7cd3f4eb) |
-| ✅ Resolved | MEDIUM #23 | CP-SAT failure logging improvements |
-| ➕ Added | MEDIUM #24 | Preload service code duplication (~300 LOC + magic numbers) |
-| ➕ Added | MEDIUM #25 | Activity solver physical-capacity overflow (capacity skipped) |
-| ➕ Added | MEDIUM #26 | Supervision activity metadata validation |
-| 📝 Added | Review doc | `docs/reviews/CODEX_CPSAT_REVIEW_20260125.md` |
-| ✅ Fixed | Block 10 | CP-SAT + activity solver succeed after block-assignment filtering |
-| ⚠️ Found | Block 10 | Capacity constraints skipped for 35/40 slots (policy needed) |
-| 📝 Added | gitignore | `.claude/dontreadme/sessions/*.md` for session scratchpads |
-| 📝 Updated | ops scripts | `block_regen.py` + `block_export.py` now backfill env |
-
-### Session 150 Updates (2026-01-29)
-
-| Change | Item | Reason |
-|--------|------|--------|
-| ✅ Committed | Phase 5.0 | Schedule override layer (commit `5826b410`) |
-| ✅ Committed | Phase 5.1 | Cascade overrides + GAP + call coverage (commit `7cd4b045`) |
-| ➕ Added | MEDIUM #32 | Test infrastructure quirks (TestClient `/api` vs `/api/v1`) |
-| 📝 Updated | HIGH Phase 5 | Call + cascade + GAP override complete |
-
-### Session 141 Updates (2026-01-26)
-
-| Change | Item | Reason |
-|--------|------|--------|
-| ✅ Resolved | API/WS Convention Audit | PRs #758, #760, #765 - full enforcement |
-| ✅ N/A | PII in Burnout APIs | Files don't exist (planned, not implemented) |
-| 📝 Updated | Bandit hook | Branch ready, needs merge |
-| ✅ Verified | Hooks Consolidation | All 15 scripts aligned, D&D parallel |
 
 ---
 

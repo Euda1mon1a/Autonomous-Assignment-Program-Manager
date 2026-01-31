@@ -585,6 +585,46 @@ class TestMetricsHistoryEndpoint:
         assert len(data) == 1
         assert data[0]["trendDirection"] in ["improving", "declining", "stable"]
 
+    def test_get_metrics_history_rejects_large_range(
+        self, client: TestClient, auth_headers: dict
+    ):
+        """Reject overly large date ranges to prevent DoS."""
+        end_date = datetime.utcnow()
+        start_date = end_date - timedelta(days=366)
+
+        response = client.get(
+            "/api/analytics/metrics/history",
+            params={
+                "metric_name": "fairness",
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+            },
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 400
+        assert "date range too large" in response.json()["detail"].lower()
+
+    def test_get_metrics_history_rejects_reversed_range(
+        self, client: TestClient, auth_headers: dict
+    ):
+        """Reject ranges where end_date precedes start_date."""
+        start_date = datetime.utcnow()
+        end_date = start_date - timedelta(days=1)
+
+        response = client.get(
+            "/api/analytics/metrics/history",
+            params={
+                "metric_name": "fairness",
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+            },
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 400
+        assert "end_date" in response.json()["detail"].lower()
+
 
 # ============================================================================
 # Fairness Trend Endpoint Tests
@@ -1440,6 +1480,46 @@ class TestWhatIfAnalysisEndpoint:
 
 class TestResearchExportEndpoint:
     """Tests for GET /api/analytics/export/research endpoint."""
+
+    def test_research_export_rejects_large_range(
+        self, client: TestClient, auth_headers: dict
+    ):
+        """Reject overly large date ranges to prevent DoS."""
+        end_date = datetime.utcnow()
+        start_date = end_date - timedelta(days=366)
+
+        response = client.get(
+            "/api/analytics/export/research",
+            params={
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "anonymize": True,
+            },
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 400
+        assert "date range too large" in response.json()["detail"].lower()
+
+    def test_research_export_rejects_reversed_range(
+        self, client: TestClient, auth_headers: dict
+    ):
+        """Reject ranges where end_date precedes start_date."""
+        start_date = datetime.utcnow()
+        end_date = start_date - timedelta(days=1)
+
+        response = client.get(
+            "/api/analytics/export/research",
+            params={
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "anonymize": True,
+            },
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 400
+        assert "end_date" in response.json()["detail"].lower()
 
     def test_research_export_success(
         self, client: TestClient, auth_headers: dict, db: Session
