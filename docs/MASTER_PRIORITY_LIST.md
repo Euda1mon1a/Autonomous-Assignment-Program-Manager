@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-30 (PR #784 merged: GUI time-off patterns applied to inpatient preloads)
+> **Last Updated:** 2026-01-31 (Stack assessment: backend 90% ready, frontend needs 3 fixes)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -116,21 +116,24 @@ Block 10 Excel export has multiple silent failure modes causing incomplete/incor
 
 **Why Plan B (Claude for macOS manual):** These silent failures produce incomplete Excel files without user feedback.
 
-**Status Update (2026-01-25):**
+**Status Update (2026-01-31):**
 - ✅ Canonical JSON export pipeline (`HalfDayJSONExporter` → `JSONToXlsxConverter`)
 - ✅ Merged-cell safe writing (headers + schedule cells)
 - ✅ Name mapping handles `Last, First` ↔ `First Last`
 - ✅ Faculty included in canonical export
+- ✅ Backend draft flow: Stage→Preview→Draft→Publish complete (PRs #785, #787, #788)
+- ✅ Atomic draft creation with `failed_ids` tracking
+- ✅ Bandit security config merged
 
-**Remaining Fixes:**
-1. Replace silent skip with exception (fail fast on missing row mapping)
-2. Fix frontend auth - use axios instead of raw fetch in `export.ts`
+**Remaining Fixes (Frontend Only):**
+1. ~~Replace silent skip with exception~~ (backend done)
+2. **Fix frontend auth** - `export.ts:122` uses raw `fetch()` without auth header
 3. Add user feedback (toast) on export failures
 
 **Files:**
-- `backend/app/services/xml_to_xlsx_converter.py`
-- `backend/app/services/half_day_xml_exporter.py`
-- `frontend/src/lib/export.ts`
+- ~~`backend/app/services/xml_to_xlsx_converter.py`~~ ✅
+- ~~`backend/app/services/half_day_xml_exporter.py`~~ ✅
+- `frontend/src/lib/export.ts` ← **BLOCKING**
 - `frontend/src/components/dashboard/QuickActions.tsx`
 
 ### 2. PII in Git History
@@ -379,10 +382,37 @@ Critical infrastructure gaps:
 
 **Note:** Resilience endpoints also missing from OpenAPI spec (59 endpoints not generating frontend types).
 
-### 13. K2.5 Swarm MCP Integration (NEW - Session Phase 8)
+### 13. Frontend Integration Gaps (NEW - Session Phase 8 Assessment)
+**Added:** 2026-01-31
+**Source:** Stack readiness assessment (backend 90% ready, frontend 30%)
+
+Backend is complete. Frontend needs these pieces before GUI works:
+
+| Component | Status | File | Effort |
+|-----------|--------|------|--------|
+| Excel export auth | ❌ Broken | `frontend/src/lib/export.ts:122` | 1 hour |
+| Half-day import API | ❌ Missing | `frontend/src/api/half-day-import.ts` | 30 min |
+| Half-day import UI | ❌ Missing | `frontend/src/app/import/half-day/page.tsx` | 2-4 hours |
+| Type contracts | ✅ Ready | `frontend/src/types/api-generated.ts` | - |
+| Draft API client | ✅ Ready | `frontend/src/api/schedule-drafts.ts` | - |
+
+**Fix Order:**
+1. Excel export auth (unblocks existing functionality)
+2. Half-day import API client (thin axios wrapper)
+3. Half-day import UI page (copy from call assignment import)
+
+**Backend Readiness:**
+- ✅ All endpoints exist and work
+- ✅ Atomic draft creation (PR #787)
+- ✅ Commit parameter fix (PR #788)
+- ✅ Error responses structured with `failed_ids`
+
+---
+
+### 14. K2.5 Swarm MCP Integration (NEW - Session Phase 8)
 **Added:** 2026-01-30
 **Design:** [`docs/planning/K2_SWARM_MCP_INTEGRATION.md`](planning/K2_SWARM_MCP_INTEGRATION.md)
-**Analysis:** [`~/.gemini/antigravity/.../AGENT_ARCHITECTURE_COMPARISON.md`](research/AGENT_ARCHITECTURE_COMPARISON.md)
+**Analysis:** [`docs/research/AGENT_ARCHITECTURE_COMPARISON.md`](research/AGENT_ARCHITECTURE_COMPARISON.md)
 
 Integrate Kimi K2.5 Agent Swarm as a managed execution asset for parallel bulk work.
 
