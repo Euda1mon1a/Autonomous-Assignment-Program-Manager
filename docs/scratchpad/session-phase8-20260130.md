@@ -176,10 +176,46 @@ Stage → Preview → Draft → Publish
 
 ---
 
-## Commits on `excel-import-improvements`
+## Session End State
 
+**Date:** 2026-01-31
+**Branch:** `docs/stack-assessment` (PR #789 open)
+**Main at:** `86971b23`
+
+### PRs This Session
+| PR | Status | Description |
+|----|--------|-------------|
+| #787 | ✅ Merged | Atomic draft creation with failed_ids |
+| #788 | ✅ Merged | Draft commit param + Bandit config |
+| #789 | 🔄 Open | Stack assessment docs update |
+
+### Current Main Commits
 ```
-dca10d30 docs: add K2.5 swarm integration to priority list
+86971b23 fix: draft commit param + bandit security config (#788)
+248e7a69 fix(import): atomic draft creation with failed_ids tracking (#787)
+e7620746 feat(import): Excel staging → draft flow + time-off pattern extensions (#785)
+aaec3390 feat(preload): apply GUI time-off patterns to InpatientPreload (#784)
 ```
 
-(Other work was on `cpsat-phase8` which was merged)
+### Uncommitted Files (not in PR #789)
+- `docs/planning/CP_SAT_PIPELINE_REFINEMENT_PHASE6.md` - unrelated changes
+- `.claude/dontreadme/overnight/*` - mypy bulk fix artifacts
+- `.codex/*` - Codex config
+
+---
+
+## Compact Summary
+
+**What was accomplished:**
+1. Fixed atomic draft creation (PR #787) - transactional wrapper, failed_ids tracking
+2. Fixed commit parameter missing (PR #788) - Codex false positive, methods do support it
+3. Cherry-picked Bandit security config from `bandit-config` branch
+4. Performed stack readiness assessment: backend 90% ready, frontend needs 3 fixes
+5. Updated MASTER_PRIORITY_LIST.md with new HIGH #13 (Frontend Integration Gaps)
+
+**Key finding:** Backend is ready. Frontend blocks are:
+1. `export.ts` uses raw `fetch()` without auth
+2. No `api/half-day-import.ts` client
+3. No `app/import/half-day/page.tsx` UI page
+
+**Next priority:** Fix these 3 frontend gaps to enable GUI testing.
