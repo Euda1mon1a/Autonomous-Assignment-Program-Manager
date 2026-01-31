@@ -1,10 +1,15 @@
 """Tests for half-day import staging draft creation."""
+
 from datetime import date
 from uuid import uuid4
 
 from app.models.activity import Activity, ActivityCategory
 from app.models.half_day_assignment import HalfDayAssignment
-from app.models.import_staging import ImportBatch, ImportBatchStatus, ImportStagedAssignment
+from app.models.import_staging import (
+    ImportBatch,
+    ImportBatchStatus,
+    ImportStagedAssignment,
+)
 from app.models.person import Person
 from app.models.schedule_draft import DraftAssignmentChangeType, ScheduleDraftAssignment
 from app.schemas.half_day_import import HalfDayDiffType
@@ -108,6 +113,7 @@ def test_create_draft_from_batch_invalid_status(db):
 
     assert result.success is False
     assert result.error_code == "INVALID_BATCH_STATUS"
+    assert result.failed_ids == []
 
 
 def test_create_draft_from_batch_missing_existing_assignment(db):
@@ -153,3 +159,5 @@ def test_create_draft_from_batch_missing_existing_assignment(db):
 
     assert result.success is False
     assert result.failed == 1
+    assert result.draft_id is None
+    assert result.failed_ids == [staged.id]

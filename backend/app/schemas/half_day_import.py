@@ -86,3 +86,4 @@ class HalfDayImportDraftResponse(BaseModel):
     removed: int = 0
     skipped: int = 0
     failed: int = 0
+    failed_ids: list[UUID] = Field(default_factory=list)

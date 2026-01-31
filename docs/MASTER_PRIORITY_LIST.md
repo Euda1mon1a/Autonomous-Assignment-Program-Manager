@@ -235,7 +235,7 @@ Remaining faculty-specific gaps:
 - [ ] Resilience-driven cascade scoring (blast radius + contingency)
 
 ### Phase 6 — CP-SAT Hardening + Equity + Excel Staging (In Progress)
-**Status:** In progress (PR #784 merged; time-off patterns now applied to inpatient preloads)
+**Status:** In progress (PR #784 merged; PR #785 merged — Excel staging + draft flow)
 **Doc:** [`docs/planning/CP_SAT_PIPELINE_REFINEMENT_PHASE6.md`](planning/CP_SAT_PIPELINE_REFINEMENT_PHASE6.md)
 
 **Highlights:**
@@ -245,7 +245,8 @@ Remaining faculty-specific gaps:
    - Temporary default: Saturday off for external/inpatient rotations until refined
    - Remaining: confirm ICU/NICU/L&D authoritative day‑off rules
 3. Excel staging + diff metrics (measure manual vs automated changes)
-   - In progress: half-day Block Template2 staging + diff preview endpoints
+   - ✅ Block Template2 staging + diff preview + draft endpoints (PR #785)
+   - ✅ Draft creation is atomic; `failed_ids` surfaced on failure
 4. Institutional events table (USAFP/holidays/retreats)
 5. Equity + preferences:
    - Faculty equity by role (GME/DFM/AT/C)
@@ -377,6 +378,36 @@ Critical infrastructure gaps:
 | `wellness.py` | 15 | P1 - Resident health |
 
 **Note:** Resilience endpoints also missing from OpenAPI spec (59 endpoints not generating frontend types).
+
+### 13. K2.5 Swarm MCP Integration (NEW - Session Phase 8)
+**Added:** 2026-01-30
+**Design:** [`docs/planning/K2_SWARM_MCP_INTEGRATION.md`](planning/K2_SWARM_MCP_INTEGRATION.md)
+**Analysis:** [`~/.gemini/antigravity/.../AGENT_ARCHITECTURE_COMPARISON.md`](research/AGENT_ARCHITECTURE_COMPARISON.md)
+
+Integrate Kimi K2.5 Agent Swarm as a managed execution asset for parallel bulk work.
+
+| Tool | Purpose |
+|------|---------|
+| `k2_swarm_spawn_task` | Send task to 100-agent swarm |
+| `k2_swarm_get_result` | Poll completion, get patches/files/analysis |
+| `k2_swarm_apply_patches` | Selective apply with dry-run default |
+
+**Architecture:** AAPM orchestrates → K2.5 executes in parallel → Results returned as drafts for review → Claude/human approves before commit.
+
+**First Use Case:** Mypy bulk fix (4,250 errors across 742 files)
+- Highly parallelizable (each file independent)
+- Clear success metric (error count reduction)
+- Low-risk patches (type annotations)
+
+**Prerequisites:**
+- [ ] Moonshot API account with swarm access (`platform.moonshot.ai`)
+- [ ] `MOONSHOT_API_KEY` environment variable
+- [ ] MCP tool implementation
+
+**Files:**
+- `mcp-server/src/scheduler_mcp/k2_swarm/` (new module)
+
+**Effort:** 4-6 hours implementation + testing
 
 ---
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import io
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any
 from uuid import UUID, uuid4
@@ -15,6 +15,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
+from app.db.transaction import transactional
 from app.models.activity import Activity, ActivityCategory
 from app.models.half_day_assignment import HalfDayAssignment
 from app.models.import_staging import (
@@ -84,6 +85,7 @@ class DraftResult:
     removed: int = 0
     skipped: int = 0
     failed: int = 0
+    failed_ids: list[UUID] = field(default_factory=list)
 
 
 class HalfDayImportService:
@@ -405,103 +407,112 @@ class HalfDayImportService:
             block_number, _ = get_block_number_for_date(start_date)
 
         draft_service = ScheduleDraftService(self.db)
-        draft_result = draft_service.create_draft_sync(
-            source_type=DraftSourceType.IMPORT,
-            start_date=start_date,
-            end_date=end_date,
-            block_number=block_number,
-            created_by_id=created_by_id,
-            notes=notes or f"Excel import batch {batch_id}",
-        )
-
-        if not draft_result.success or not draft_result.draft_id:
-            return DraftResult(
-                success=False,
-                batch_id=batch_id,
-                message=draft_result.message,
-                error_code=draft_result.error_code,
-            )
-
+        draft_result = None
         added = modified = removed = failed = 0
-        for row in eligible_rows:
-            diff_type = row.conflict_type or ""
-            if diff_type == HalfDayDiffType.ADDED.value:
-                change_type = DraftAssignmentChangeType.ADD
-                added += 1
-            elif diff_type == HalfDayDiffType.REMOVED.value:
-                change_type = DraftAssignmentChangeType.DELETE
-                removed += 1
-            elif diff_type == HalfDayDiffType.MODIFIED.value:
-                change_type = DraftAssignmentChangeType.MODIFY
-                modified += 1
-            else:
-                failed += 1
-                continue
-
-            activity_code = row.rotation_name if change_type != DraftAssignmentChangeType.DELETE else None
-            existing_id = (
-                row.existing_assignment_id
-                if change_type != DraftAssignmentChangeType.ADD
-                else None
-            )
-            if change_type != DraftAssignmentChangeType.ADD and not existing_id:
-                failed += 1
-                continue
-            draft_assignment_id = draft_service.add_assignment_to_draft_sync(
-                draft_id=draft_result.draft_id,
-                person_id=row.matched_person_id,
-                assignment_date=row.assignment_date,
-                time_of_day=row.slot,  # None→"ALL" handled by draft service
-                activity_code=activity_code,
-                rotation_id=row.matched_rotation_id,
-                change_type=change_type,
-                existing_assignment_id=existing_id,
-            )
-            if not draft_assignment_id:
-                failed += 1
-                continue
-            row.status = StagedAssignmentStatus.APPROVED
-
-        self.db.commit()
-
+        failed_ids: list[UUID] = []
         total_selected = len(eligible_rows)
         skipped = len(skipped_rows)
-        successful = total_selected - failed
+        error_code = None
 
-        # Clean up orphan draft if all rows failed
-        if successful == 0 and draft_result.draft_id:
-            self.db.query(ScheduleDraft).filter(
-                ScheduleDraft.id == draft_result.draft_id
-            ).delete()
-            self.db.commit()
+        try:
+            with transactional(self.db):
+                draft_result = draft_service.create_draft_sync(
+                    source_type=DraftSourceType.IMPORT,
+                    start_date=start_date,
+                    end_date=end_date,
+                    block_number=block_number,
+                    created_by_id=created_by_id,
+                    notes=notes or f"Excel import batch {batch_id}",
+                    commit=False,
+                )
+
+                if not draft_result.success or not draft_result.draft_id:
+                    error_code = draft_result.error_code or "CREATE_FAILED"
+                    raise ValueError(draft_result.message or "Failed to create draft")
+
+                for row in eligible_rows:
+                    diff_type = row.conflict_type or ""
+                    if diff_type == HalfDayDiffType.ADDED.value:
+                        change_type = DraftAssignmentChangeType.ADD
+                        added += 1
+                    elif diff_type == HalfDayDiffType.REMOVED.value:
+                        change_type = DraftAssignmentChangeType.DELETE
+                        removed += 1
+                    elif diff_type == HalfDayDiffType.MODIFIED.value:
+                        change_type = DraftAssignmentChangeType.MODIFY
+                        modified += 1
+                    else:
+                        failed += 1
+                        failed_ids.append(row.id)
+                        continue
+
+                    activity_code = (
+                        row.rotation_name
+                        if change_type != DraftAssignmentChangeType.DELETE
+                        else None
+                    )
+                    existing_id = (
+                        row.existing_assignment_id
+                        if change_type != DraftAssignmentChangeType.ADD
+                        else None
+                    )
+                    if change_type != DraftAssignmentChangeType.ADD and not existing_id:
+                        failed += 1
+                        failed_ids.append(row.id)
+                        continue
+                    draft_assignment_id = draft_service.add_assignment_to_draft_sync(
+                        draft_id=draft_result.draft_id,
+                        person_id=row.matched_person_id,
+                        assignment_date=row.assignment_date,
+                        time_of_day=row.slot,  # None→"ALL" handled by draft service
+                        activity_code=activity_code,
+                        rotation_id=row.matched_rotation_id,
+                        change_type=change_type,
+                        existing_assignment_id=existing_id,
+                        commit=False,
+                    )
+                    if not draft_assignment_id:
+                        failed += 1
+                        failed_ids.append(row.id)
+                        continue
+                    row.status = StagedAssignmentStatus.APPROVED
+
+                if failed_ids:
+                    error_code = "ROW_FAILURE"
+                    raise ValueError(
+                        f"Draft creation failed for {len(failed_ids)} staged rows"
+                    )
+
+            message = f"Draft {draft_result.draft_id} created from {total_selected} staged diffs"
+            return DraftResult(
+                success=True,
+                batch_id=batch_id,
+                draft_id=draft_result.draft_id,
+                message=message,
+                total_selected=total_selected,
+                added=added,
+                modified=modified,
+                removed=removed,
+                skipped=skipped,
+                failed=failed,
+                failed_ids=failed_ids,
+            )
+        except Exception as exc:
+            error_message = str(exc) or "Draft creation failed"
             return DraftResult(
                 success=False,
                 batch_id=batch_id,
-                message="All rows failed validation - draft discarded",
-                error_code="ALL_ROWS_FAILED",
+                draft_id=None,
+                message=error_message,
+                error_code=error_code or "DRAFT_CREATE_FAILED",
                 total_selected=total_selected,
-                failed=failed,
+                added=added,
+                modified=modified,
+                removed=removed,
                 skipped=skipped,
+                failed=failed or len(failed_ids),
+                failed_ids=failed_ids,
             )
-
-        message = (
-            f"Draft {draft_result.draft_id} created from {total_selected} staged diffs"
-        )
-        if failed:
-            message = f"{message} ({failed} failed)"
-
-        return DraftResult(
-            success=True,
-            batch_id=batch_id,
-            draft_id=draft_result.draft_id,
-            message=message,
-            total_selected=total_selected,
-            added=added,
-            modified=modified,
-            removed=removed,
-            skipped=skipped,
-            failed=failed,
-        )
 
     def _get_current_schedule(
         self,

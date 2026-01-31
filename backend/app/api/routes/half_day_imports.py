@@ -115,7 +115,14 @@ async def create_half_day_import_draft(
         notes=payload.notes,
     )
     if not result.success:
-        raise HTTPException(status_code=400, detail=result.message)
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": result.message,
+                "error_code": result.error_code,
+                "failed_ids": [str(staged_id) for staged_id in result.failed_ids],
+            },
+        )
 
     return HalfDayImportDraftResponse(
         success=True,
@@ -128,4 +135,5 @@ async def create_half_day_import_draft(
         removed=result.removed,
         skipped=result.skipped,
         failed=result.failed,
+        failed_ids=result.failed_ids,
     )
