@@ -64,3 +64,25 @@ class HalfDayImportPreviewResponse(BaseModel):
     total_diffs: int = 0
     page: int = 1
     page_size: int = 50
+
+
+class HalfDayImportDraftRequest(BaseModel):
+    """Request to create a schedule draft from staged half-day diffs."""
+
+    staged_ids: list[UUID] | None = None
+    notes: str | None = Field(default=None, max_length=2000)
+
+
+class HalfDayImportDraftResponse(BaseModel):
+    """Response for creating a draft from staged half-day diffs."""
+
+    success: bool
+    batch_id: UUID
+    draft_id: UUID | None = None
+    message: str
+    total_selected: int = 0
+    added: int = 0
+    modified: int = 0
+    removed: int = 0
+    skipped: int = 0
+    failed: int = 0
