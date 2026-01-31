@@ -52,7 +52,6 @@ async def get_pgy_levels() -> list[dict[str, str]]:
         {"value": "1", "label": "PGY-1 (Intern)"},
         {"value": "2", "label": "PGY-2"},
         {"value": "3", "label": "PGY-3 (Chief)"},
-        {"value": "4", "label": "PGY-4 (Fellow)"},
     ]
 
 
@@ -68,7 +67,6 @@ async def get_person_types() -> list[dict[str, str]]:
     return [
         {"value": "resident", "label": "Resident"},
         {"value": "faculty", "label": "Faculty"},
-        {"value": "staff", "label": "Staff"},
     ]
 
 
