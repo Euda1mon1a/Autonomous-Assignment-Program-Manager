@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 
 from app.core.file_security import validate_excel_upload
 from app.core.logging import get_logger
@@ -17,6 +17,7 @@ from app.schemas.half_day_import import (
     HalfDayImportDraftResponse,
     HalfDayImportPreviewResponse,
     HalfDayImportStageResponse,
+    HalfDayDiffType,
 )
 from app.services.half_day_import_service import HalfDayImportService
 
@@ -80,11 +81,31 @@ async def preview_half_day_import(
     batch_id: UUID,
     page: int = 1,
     page_size: int = 50,
+    diff_type: HalfDayDiffType | None = Query(
+        default=None, description="Filter by diff type (added/removed/modified)"
+    ),
+    activity_code: str | None = Query(
+        default=None, description="Filter by activity code (exact match)"
+    ),
+    has_errors: bool | None = Query(
+        default=None, description="Filter rows with validation errors"
+    ),
+    person_id: UUID | None = Query(
+        default=None, description="Filter by matched person ID"
+    ),
     db=Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ) -> HalfDayImportPreviewResponse:
     service = HalfDayImportService(db)
-    metrics, diffs, total = service.preview_batch(batch_id, page, page_size)
+    metrics, diffs, total = service.preview_batch(
+        batch_id=batch_id,
+        page=page,
+        page_size=page_size,
+        diff_type=diff_type,
+        activity_code=activity_code,
+        has_errors=has_errors,
+        person_id=person_id,
+    )
 
     return HalfDayImportPreviewResponse(
         batch_id=batch_id,

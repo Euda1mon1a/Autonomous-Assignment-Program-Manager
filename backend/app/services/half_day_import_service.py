@@ -11,7 +11,7 @@ from uuid import UUID, uuid4
 
 from openpyxl import load_workbook
 from openpyxl.cell import MergedCell
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
@@ -67,6 +67,7 @@ class ParsedSlot:
     raw_value: str | None
     excel_code: str | None
     warnings: list[str]
+    errors: list[str]
     row_number: int | None = None
 
 
@@ -127,14 +128,18 @@ class HalfDayImportService:
         normalized_slots: list[ParsedSlot] = []
         for slot in parsed_slots:
             slot_warnings: list[str] = []
+            slot_errors: list[str] = []
             normalized_name = self._normalize_person_name(slot.person_name)
             person_id = self._person_map.get(normalized_name)
             if not person_id:
                 slot_warnings.append("Person not found in database")
 
             excel_code = self._normalize_excel_code(slot.raw_value, slot.time_of_day)
-            if excel_code and excel_code not in self._activity_map:
-                slot_warnings.append(f"Unknown activity code '{excel_code}'")
+            if (
+                excel_code
+                and self._normalize_token(excel_code) not in self._activity_map
+            ):
+                slot_errors.append(f"Unknown activity code '{excel_code}'")
             normalized_slots.append(
                 ParsedSlot(
                     person_name=slot.person_name,
@@ -144,6 +149,7 @@ class HalfDayImportService:
                     raw_value=slot.raw_value,
                     excel_code=excel_code,
                     warnings=slot_warnings,
+                    errors=slot_errors,
                     row_number=slot.row_number,
                 )
             )
@@ -250,10 +256,12 @@ class HalfDayImportService:
                 person_match_confidence=100,
                 conflict_type=diff_type.value,
                 existing_assignment_id=existing.id if existing else None,
+                validation_errors=slot.errors if slot.errors else None,
                 validation_warnings={
                     "existing_code": existing_code,
                     "excel_code": excel_code,
                     "diff_type": diff_type.value,
+                    "warnings": slot.warnings,
                 },
             )
             self.db.add(staged)
@@ -274,6 +282,10 @@ class HalfDayImportService:
         batch_id: UUID,
         page: int = 1,
         page_size: int = 50,
+        diff_type: HalfDayDiffType | None = None,
+        activity_code: str | None = None,
+        has_errors: bool | None = None,
+        person_id: UUID | None = None,
     ) -> tuple[HalfDayDiffMetrics, list[HalfDayDiffEntry], int]:
         """Preview a staged half-day batch."""
         batch = self.db.query(ImportBatch).filter(ImportBatch.id == batch_id).first()
@@ -288,6 +300,28 @@ class HalfDayImportService:
         total_query = self.db.query(ImportStagedAssignment).filter(
             ImportStagedAssignment.batch_id == batch_id
         )
+        if diff_type:
+            total_query = total_query.filter(
+                ImportStagedAssignment.conflict_type == diff_type.value
+            )
+        if activity_code:
+            normalized_code = self._normalize_token(activity_code)
+            total_query = total_query.filter(
+                func.upper(func.replace(ImportStagedAssignment.rotation_name, " ", ""))
+                == normalized_code
+            )
+        if has_errors is True:
+            total_query = total_query.filter(
+                ImportStagedAssignment.validation_errors.isnot(None)
+            )
+        elif has_errors is False:
+            total_query = total_query.filter(
+                ImportStagedAssignment.validation_errors.is_(None)
+            )
+        if person_id:
+            total_query = total_query.filter(
+                ImportStagedAssignment.matched_person_id == person_id
+            )
         total_diffs = total_query.count()
 
         staged_rows = (
@@ -322,9 +356,25 @@ class HalfDayImportService:
         diffs: list[HalfDayDiffEntry] = []
         for row in staged_rows:
             current_value = None
-            warnings = []
+            warnings: list[str] = []
+            errors: list[str] = []
             if row.validation_warnings:
                 current_value = row.validation_warnings.get("existing_code")
+                raw_warnings = row.validation_warnings.get("warnings")
+                if isinstance(raw_warnings, list):
+                    warnings = raw_warnings
+                elif raw_warnings:
+                    warnings = [str(raw_warnings)]
+            if row.validation_errors:
+                if isinstance(row.validation_errors, list):
+                    errors = row.validation_errors
+                elif isinstance(row.validation_errors, dict):
+                    errors = [
+                        f"{key}: {value}"
+                        for key, value in row.validation_errors.items()
+                    ]
+                else:
+                    errors = [str(row.validation_errors)]
             diffs.append(
                 HalfDayDiffEntry(
                     person_id=row.matched_person_id,
@@ -335,6 +385,7 @@ class HalfDayImportService:
                     excel_value=row.rotation_name,
                     current_value=current_value,
                     warnings=warnings,
+                    errors=errors,
                 )
             )
 
@@ -431,6 +482,10 @@ class HalfDayImportService:
                     raise ValueError(draft_result.message or "Failed to create draft")
 
                 for row in eligible_rows:
+                    if row.validation_errors:
+                        failed += 1
+                        failed_ids.append(row.id)
+                        continue
                     diff_type = row.conflict_type or ""
                     if diff_type == HalfDayDiffType.ADDED.value:
                         change_type = DraftAssignmentChangeType.ADD
@@ -702,6 +757,7 @@ class HalfDayImportService:
                         raw_value=am_raw,
                         excel_code=None,
                         warnings=[],
+                        errors=[],
                         row_number=row_idx,
                     )
                 )
@@ -714,6 +770,7 @@ class HalfDayImportService:
                         raw_value=pm_raw,
                         excel_code=None,
                         warnings=[],
+                        errors=[],
                         row_number=row_idx,
                     )
                 )

@@ -365,6 +365,7 @@ Endpoints for managing overnight and weekend faculty call assignments. Solver-ge
 **Notes:**
 - Draft creation is **atomic**: any failed row aborts and no draft is created.
 - Draft failures return `400` with `failed_ids` in the error detail.
+- Preview supports filters: `diff_type`, `activity_code`, `has_errors`, `person_id`.
 
 ### Schedule Generation Request
 

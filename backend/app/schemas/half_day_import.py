@@ -28,6 +28,7 @@ class HalfDayDiffEntry(BaseModel):
     excel_value: str | None = None
     current_value: str | None = None
     warnings: list[str] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
 
 
 class HalfDayDiffMetrics(BaseModel):
