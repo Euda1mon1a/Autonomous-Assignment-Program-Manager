@@ -76,6 +76,8 @@ Stage → Preview → Draft → Publish
 |----|-------|--------|
 | #784 | feat(preload): apply GUI time-off patterns to InpatientPreload | `aaec3390` |
 | #785 | feat(import): Excel staging → draft flow + time-off pattern extensions | `e7620746` |
+| #787 | fix(import): atomic draft creation with failed_ids tracking | `248e7a69` |
+| #788 | fix: draft commit param + bandit security config | `86971b23` |
 
 ## PRs Closed
 
@@ -83,6 +85,38 @@ Stage → Preview → Draft → Publish
 |----|--------|
 | #782 | Dependabot Next.js bump - deferred to maintenance window |
 | #783 | Superseded by #784 with complete implementation |
+
+---
+
+## Stack Readiness Assessment
+
+**Performed:** 2026-01-31
+
+### Backend Status: 90% Ready ✅
+
+| Layer | Status |
+|-------|--------|
+| Endpoints | ✅ All Stage→Preview→Draft→Publish exist |
+| Services | ✅ HalfDayImportService, ScheduleDraftService complete |
+| Database | ✅ Models, migrations applied |
+| Atomic Ops | ✅ Transactional with failed_ids tracking |
+| Error Responses | ✅ Structured `{message, error_code, failed_ids}` |
+
+### Frontend Status: 30% Ready ⚠️
+
+| Component | Status | Fix |
+|-----------|--------|-----|
+| Excel export auth | ❌ Broken | `export.ts` uses raw `fetch()` |
+| Half-day import API | ❌ Missing | Need `api/half-day-import.ts` |
+| Half-day import UI | ❌ Missing | Need `app/import/half-day/page.tsx` |
+| Type contracts | ✅ Ready | Generated correctly |
+| Draft API client | ✅ Ready | `api/schedule-drafts.ts` exists |
+
+### Codex Review Notes
+
+- **PR #787:** Codex flagged `commit=False` as unsupported - **FALSE POSITIVE** (methods do support it)
+- **PR #788:** No issues found
+- **Bandit config (733813da):** Reviewed and approved for cherry-pick
 
 ---
 
@@ -119,10 +153,17 @@ Stage → Preview → Draft → Publish
 
 ## Next Session
 
-1. **Get Moonshot API account** - Required for K2.5 swarm access
-2. **Implement K2.5 MCP tools** - `mcp-server/src/scheduler_mcp/k2_swarm/`
-3. **Test with mypy bulk fix** - First real use case
-4. **Or continue:** Excel export auth fix (CRITICAL #1), Rate limits (HIGH #10)
+**Priority: Frontend Integration (GUI enablement)**
+
+1. **Fix Excel export auth** - `frontend/src/lib/export.ts:122` (1 hour)
+   - Change `fetch()` to `api.get()` with `responseType: 'blob'`
+2. **Create half-day import API client** - `frontend/src/api/half-day-import.ts` (30 min)
+3. **Create half-day import UI page** - `frontend/src/app/import/half-day/page.tsx` (2-4 hours)
+4. **Test end-to-end flow in browser**
+
+**Deferred:**
+- K2.5 Swarm MCP Integration (blocked on Moonshot API account)
+- Rate limits on expensive endpoints (HIGH #10)
 
 ---
 
