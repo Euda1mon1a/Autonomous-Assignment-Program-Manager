@@ -420,7 +420,9 @@ class ServiceCache:
         key = ":".join(key_parts)
         if len(key) > 200:
             # Hash long keys to keep them manageable
-            hash_suffix = hashlib.md5(key.encode()).hexdigest()[:12]
+            hash_suffix = hashlib.md5(key.encode(), usedforsecurity=False).hexdigest()[
+                :12
+            ]
             key = f"{prefix}:{func.__name__}:{hash_suffix}"
 
         return key
@@ -452,7 +454,7 @@ class ServiceCache:
             return arg.value
         else:
             # For other types, use hash of string representation
-            return hashlib.md5(str(arg).encode()).hexdigest()[:8]
+            return hashlib.md5(str(arg).encode(), usedforsecurity=False).hexdigest()[:8]
 
             # Global cache instance
 

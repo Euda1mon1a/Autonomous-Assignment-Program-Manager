@@ -1369,6 +1369,7 @@ class ScheduleDraftService:
         created_by_id: UUID | None = None,
         schedule_run_id: UUID | None = None,
         notes: str | None = None,
+        commit: bool = True,
     ) -> CreateDraftResult:
         """
         Sync version of create_draft for use from non-async contexts.
@@ -1416,7 +1417,10 @@ class ScheduleDraftService:
             )
 
             self.db.add(draft)
-            self.db.commit()
+            if commit:
+                self.db.commit()
+            else:
+                self.db.flush()
 
             logger.info(
                 f"Created draft {draft.id} for {start_date} - {end_date} "
@@ -1448,6 +1452,7 @@ class ScheduleDraftService:
         rotation_id: UUID | None = None,
         change_type: DraftAssignmentChangeType = DraftAssignmentChangeType.ADD,
         existing_assignment_id: UUID | None = None,
+        commit: bool = True,
     ) -> UUID | None:
         """
         Sync version of add_assignment_to_draft for use from non-async contexts.
@@ -1473,7 +1478,10 @@ class ScheduleDraftService:
                 existing.rotation_id = rotation_id
                 existing.change_type = change_type
                 existing.existing_assignment_id = existing_assignment_id
-                self.db.commit()
+                if commit:
+                    self.db.commit()
+                else:
+                    self.db.flush()
                 return existing.id
 
             draft_assignment = ScheduleDraftAssignment(
@@ -1504,7 +1512,10 @@ class ScheduleDraftService:
                     summary["deleted"] = summary.get("deleted", 0) + 1
                 draft.change_summary = summary
 
-            self.db.commit()
+            if commit:
+                self.db.commit()
+            else:
+                self.db.flush()
             return draft_assignment.id
 
         except Exception as e:

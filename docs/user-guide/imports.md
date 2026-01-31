@@ -21,6 +21,18 @@ The web interface provides:
 - Progress tracking for large imports
 - Automatic duplicate detection
 
+### Half-Day Block Template2 (Draft Flow)
+
+For Block Template2 half-day schedules, the system stages diffs before drafting:
+
+1. Upload the workbook (Block Template2 sheet).
+2. Review the diff preview (slot-level changes).
+3. Create a schedule draft from selected rows.
+
+Notes:
+- Draft creation is **atomic**: if any selected row fails validation, the draft is not created.
+- The draft response includes `failed_ids` (staged row IDs that failed). On failure, the `400` error detail includes the same list.
+
 ### Supported File Formats
 
 | Format | Extension | Features |
