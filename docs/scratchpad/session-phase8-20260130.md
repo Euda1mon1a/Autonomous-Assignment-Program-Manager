@@ -219,3 +219,30 @@ aaec3390 feat(preload): apply GUI time-off patterns to InpatientPreload (#784)
 3. No `app/import/half-day/page.tsx` UI page
 
 **Next priority:** Fix these 3 frontend gaps to enable GUI testing.
+
+---
+
+## Continued: 2026-01-31 (Session 2)
+
+### PR #791 - Validation Errors + Preview Filters
+- Unknown activity codes → errors (block draft creation)
+- Preview surfaces both `warnings` and `errors` arrays
+- 4 new filters: `diff_type`, `activity_code`, `has_errors`, `person_id`
+- Test: `test_create_draft_from_batch_validation_errors`
+
+### Codex Frontend Work
+- `api/half-day-import.ts` - stage, preview, draft API client
+- `hooks/useHalfDayImport.ts` - TanStack Query mutations/queries
+- `types/half-day-import.ts` - mirrors backend schemas (camelCase)
+- `app/import/half-day/page.tsx` - 892-line wizard (Upload → Preview → Draft)
+- `app/import/page.tsx` - Quick-action card linking to wizard
+- `staged_id` added to backend schema for row selection
+
+### Stack Status Update
+| Component | Before | After |
+|-----------|--------|-------|
+| Half-day import API | ❌ Missing | ✅ Done |
+| Half-day import UI | ❌ Missing | ✅ Done |
+| Excel export auth | ❌ Broken | ❌ Still broken |
+
+**Remaining blocker:** Excel export auth (`export.ts` uses raw `fetch()` without Authorization header)

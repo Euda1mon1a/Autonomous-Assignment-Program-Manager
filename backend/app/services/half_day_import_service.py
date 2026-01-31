@@ -377,6 +377,7 @@ class HalfDayImportService:
                     errors = [str(row.validation_errors)]
             diffs.append(
                 HalfDayDiffEntry(
+                    staged_id=row.id,
                     person_id=row.matched_person_id,
                     person_name=row.person_name,
                     assignment_date=row.assignment_date,

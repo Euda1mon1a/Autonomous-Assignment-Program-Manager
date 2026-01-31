@@ -20,6 +20,7 @@ class HalfDayDiffType(str, Enum):
 class HalfDayDiffEntry(BaseModel):
     """Single diff entry between Excel and live schedule."""
 
+    staged_id: UUID | None = None
     person_id: UUID | None = None
     person_name: str
     assignment_date: date
