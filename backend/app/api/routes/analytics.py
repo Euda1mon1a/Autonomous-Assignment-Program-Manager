@@ -62,6 +62,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+MAX_ANALYTICS_RANGE = timedelta(days=365)
 
 # ============================================================================
 # Helper Functions
@@ -199,6 +200,16 @@ async def get_metrics_history(
     schedule runs or time periods.
     """
     try:
+        if end_date < start_date:
+            raise HTTPException(
+                status_code=400, detail="end_date must be on or after start_date"
+            )
+        if end_date.date() - start_date.date() > MAX_ANALYTICS_RANGE:
+            raise HTTPException(
+                status_code=400,
+                detail="Date range too large (max 365 days)",
+            )
+
         # Get all schedule runs in the date range
         runs = (
             db.query(ScheduleRun)
@@ -780,6 +791,16 @@ async def export_for_research(
     research, academic publication, or external analysis.
     """
     try:
+        if end_date < start_date:
+            raise HTTPException(
+                status_code=400, detail="end_date must be on or after start_date"
+            )
+        if end_date.date() - start_date.date() > MAX_ANALYTICS_RANGE:
+            raise HTTPException(
+                status_code=400,
+                detail="Date range too large (max 365 days)",
+            )
+
         # Get all data in date range
         blocks = (
             db.query(Block)

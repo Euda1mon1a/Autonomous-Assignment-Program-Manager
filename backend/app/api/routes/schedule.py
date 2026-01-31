@@ -13,7 +13,7 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import JSONResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
@@ -1305,8 +1305,10 @@ async def list_schedule_runs(
     query = query.order_by(ScheduleRun.created_at.desc())
 
     # Pagination
-    total_result = db.execute(select(ScheduleRun)).all()
-    total = len(total_result)
+    count_query = select(func.count(ScheduleRun.id))
+    if status:
+        count_query = count_query.where(ScheduleRun.status == status)
+    total = db.execute(count_query).scalar() or 0
 
     offset = (page - 1) * page_size
     query = query.offset(offset).limit(page_size)
