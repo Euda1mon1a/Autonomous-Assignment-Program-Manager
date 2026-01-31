@@ -11,7 +11,7 @@ from uuid import UUID, uuid4
 
 from openpyxl import load_workbook
 from openpyxl.cell import MergedCell
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
@@ -306,9 +306,24 @@ class HalfDayImportService:
             )
         if activity_code:
             normalized_code = self._normalize_token(activity_code)
+            # Match both Excel code (rotation_name) and existing code (for REMOVED diffs)
             total_query = total_query.filter(
-                func.upper(func.replace(ImportStagedAssignment.rotation_name, " ", ""))
-                == normalized_code
+                or_(
+                    func.upper(
+                        func.replace(ImportStagedAssignment.rotation_name, " ", "")
+                    )
+                    == normalized_code,
+                    func.upper(
+                        func.replace(
+                            ImportStagedAssignment.validation_warnings[
+                                "existing_code"
+                            ].astext,
+                            " ",
+                            "",
+                        )
+                    )
+                    == normalized_code,
+                )
             )
         if has_errors is True:
             total_query = total_query.filter(
