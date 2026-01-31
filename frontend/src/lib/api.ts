@@ -253,8 +253,13 @@ function createApiClient(): AxiosInstance {
   // Response interceptor - convert snake_case to camelCase, transform errors, handle token refresh
   client.interceptors.response.use(
     (response) => {
-      // Convert response data keys to camelCase
-      if (response.data && typeof response.data === 'object') {
+      // Convert response data keys to camelCase (skip binary data like Blob/ArrayBuffer)
+      if (
+        response.data &&
+        typeof response.data === 'object' &&
+        !(response.data instanceof Blob) &&
+        !(response.data instanceof ArrayBuffer)
+      ) {
         response.data = keysToCamelCase(response.data);
       }
       // Issue #5: Handle 207 Multi-Status as a successful response (partial success)

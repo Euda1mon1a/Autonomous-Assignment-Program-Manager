@@ -1,5 +1,7 @@
 // Export utility functions for CSV and JSON data export
 
+import { api } from '@/lib/api'
+
 export interface Column {
   key: string;
   header: string;
@@ -96,6 +98,7 @@ export function exportToJSON(data: unknown[], filename: string): void {
 /**
  * Export schedule to legacy Excel format via backend API
  */
+
 export async function exportToLegacyXlsx(
   startDate: string,
   endDate: string,
@@ -115,22 +118,17 @@ export async function exportToLegacyXlsx(
     params.append('federal_holidays', federalHolidays.join(','));
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  const url = `${apiUrl}/export/schedule/xlsx?${params.toString()}`;
-
   try {
-    const response = await fetch(url);
+    const response = await api.get(`/export/schedule/xlsx?${params.toString()}`, {
+      responseType: 'blob',
+    });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to export Excel file');
-    }
-
-    // Get the blob from response
-    const blob = await response.blob();
+    const blob = response.data;
 
     // Extract filename from Content-Disposition header or use default
-    const contentDisposition = response.headers.get('Content-Disposition');
+    const contentDisposition = response.headers?.['content-disposition'] as
+      | string
+      | undefined;
     let filename = `schedule_${startDate}_${endDate}.xlsx`;
     if (contentDisposition) {
       const match = contentDisposition.match(/filename=([^;]+)/);
