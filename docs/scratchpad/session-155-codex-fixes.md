@@ -86,7 +86,53 @@ Deleted `backend/tests/routes/test_call_assignments.py` (duplicate of PR #797's 
 
 ---
 
+## Kimi K2.5 Mypy Swarm Experiment
+
+### Setup
+- **API**: Moonshot AI `api.moonshot.ai` (OpenAI-compatible)
+- **Model**: `kimi-k2-turbo-preview`
+- **Script**: `scripts/kimi_mypy_swarm.py`
+
+### Research Findings
+| Source | Key Insight |
+|--------|-------------|
+| [Moonshot HuggingFace](https://huggingface.co/moonshotai/Kimi-K2.5) | Temperature=0.6, top_p=0.95 for turbo |
+| [arxiv paper](https://arxiv.org/html/2508.00422v1) | Generate-Check-Repair achieves 88% success |
+| [Moonshot Blog](https://aidatainsider.com/news/moonshot-ai-launches-kimi-k2-5-with-vision-based-coding-agent-swarms/) | K2.5 can coordinate 100 sub-agents |
+
+### Prompt Improvements Made
+1. ✅ Temperature 0.1 → 0.6
+2. ✅ Added top_p=0.95
+3. ✅ Added 3 few-shot examples
+4. ✅ Added SKIP mechanism for uncertain fixes
+5. ✅ Added --max-errors filter
+
+### Results
+| Files by Error Count | Success Rate |
+|---------------------|--------------|
+| 1 error | ~50% |
+| 2-3 errors | ~40% |
+| 5+ errors | <30% |
+| Complex files (50+ errors) | 0% |
+
+### Issues
+- Model struggles with indentation preservation
+- Some fixes create new errors
+- Net error reduction: ~5 per batch (not scaling well)
+
+### Conclusion
+LLM-based mypy fixing at scale needs:
+1. Repair loop (run mypy, retry on failure)
+2. Stricter validation before applying
+3. Focus on simple patterns (sed/awk may be more effective)
+
+### Files Modified (reverted)
+All 29 test changes reverted. Script improvements kept in `scripts/kimi_mypy_swarm.py`.
+
+---
+
 ## Next Session
 
 1. Consider tackling CRITICAL #1 (PII purge) or HIGH #5 (ACGME compliance gaps)
-2. Continue mypy bulk fixes (6,443 remaining)
+2. Try sed/awk for simple mypy patterns (implicit Optional)
+3. Add repair loop to swarm script if continuing LLM approach
