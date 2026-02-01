@@ -14,6 +14,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
@@ -542,20 +543,65 @@ def apply_line_fixes(content: str, fixes: dict[int, str]) -> str:
 
     result = "\n".join(lines)
 
-    # Add missing imports if needed
-    needs_any = "Any" in result and "from typing import" in result and "Any" not in result.split("from typing import")[1].split("\n")[0]
-    needs_optional = "Optional[" in result and "Optional" not in result.split("from typing import")[1].split("\n")[0] if "from typing import" in result else False
-    needs_callable = "Callable" in result and "from typing import" in result and "Callable" not in result.split("from typing import")[1].split("\n")[0]
-
-    # Simple import addition for common cases
+    # Add future annotations for Python 3.9 compatibility with | None syntax
     if "| None" in result and "from __future__ import annotations" not in result:
-        # Add future annotations for Python 3.9 compatibility
         if result.startswith('"""'):
             # Find end of docstring
             end = result.find('"""', 3) + 3
             result = result[:end] + "\nfrom __future__ import annotations" + result[end:]
         else:
             result = "from __future__ import annotations\n" + result
+
+    # Add missing typing imports if needed
+    imports_to_add = []
+    if "Any" in result:
+        if "from typing import" in result:
+            existing = result.split("from typing import")[1].split("\n")[0]
+            if "Any" not in existing:
+                imports_to_add.append("Any")
+        elif "from typing import" not in result:
+            imports_to_add.append("Any")
+
+    if "Optional[" in result:
+        if "from typing import" in result:
+            existing = result.split("from typing import")[1].split("\n")[0]
+            if "Optional" not in existing:
+                imports_to_add.append("Optional")
+        elif "from typing import" not in result:
+            imports_to_add.append("Optional")
+
+    if "Callable" in result:
+        if "from typing import" in result:
+            existing = result.split("from typing import")[1].split("\n")[0]
+            if "Callable" not in existing:
+                imports_to_add.append("Callable")
+        elif "from typing import" not in result:
+            imports_to_add.append("Callable")
+
+    # Insert missing imports
+    if imports_to_add:
+        if "from typing import" in result:
+            # Extend existing typing import
+            match = re.search(r"from typing import ([^\n]+)", result)
+            if match:
+                old_import = match.group(0)
+                existing_imports = match.group(1).strip()
+                new_imports = ", ".join(imports_to_add)
+                new_import = f"from typing import {existing_imports}, {new_imports}"
+                result = result.replace(old_import, new_import)
+        else:
+            # Add new typing import at top (after future imports if present)
+            import_line = f"from typing import {', '.join(imports_to_add)}\n"
+            if "from __future__" in result:
+                # Insert after future import
+                future_end = result.find("\n", result.find("from __future__")) + 1
+                result = result[:future_end] + import_line + result[future_end:]
+            elif result.startswith('"""'):
+                # Insert after docstring
+                end = result.find('"""', 3) + 3
+                result = result[:end] + "\n" + import_line + result[end:]
+            else:
+                result = import_line + result
 
     return result
 
@@ -699,18 +745,22 @@ async def fix_file_with_repair(
             print(f"    ⚠ Attempt {attempt + 1}: syntax error, reverting")
             continue
 
-        # Write temp file and check mypy
-        if not dry_run:
-            file_path.write_text(new_content)
+        # Write to temp file for mypy validation (works in both dry-run and apply modes)
+        with tempfile.NamedTemporaryFile(
+            mode='w', suffix='.py', dir=BACKEND_ROOT, delete=False
+        ) as tmp:
+            tmp.write(new_content)
+            temp_path = tmp.name
 
-        # Check if we reduced errors
-        new_errors = run_mypy_on_file(file_errors.file)
+        try:
+            # Check if we reduced errors using temp file
+            new_errors = run_mypy_on_file(temp_path)
+        finally:
+            os.unlink(temp_path)  # Clean up temp file
 
         if len(new_errors) >= len(current_errors):
             # Made it worse or same - revert
             print(f"    ⚠ Attempt {attempt + 1}: {len(new_errors)} errors (was {len(current_errors)}), reverting")
-            if not dry_run:
-                file_path.write_text(current_content)
             continue
 
         # Success! Keep the changes
