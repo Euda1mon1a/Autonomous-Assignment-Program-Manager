@@ -319,7 +319,7 @@ class ChartGenerator:
                 ]
             )
 
-            start_angle = end_angle
+            start_angle: float = end_angle
 
         svg_lines.append("</svg>")
         svg_content = "\n".join(svg_lines)

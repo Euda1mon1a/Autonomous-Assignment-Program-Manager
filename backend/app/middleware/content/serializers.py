@@ -11,6 +11,8 @@ Implements serializers for multiple formats:
 Each serializer handles conversion from Python objects to format-specific bytes.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from abc import ABC, abstractmethod
@@ -252,7 +254,7 @@ class YAMLSerializer(Serializer):
             self._available = True
             logger.debug("YAMLSerializer initialized")
         except ImportError:
-            self._yaml = None
+            self._yaml = None  # type: ignore
             self._available = False
             logger.warning(
                 "YAML serialization not available. Install with: pip install pyyaml"

@@ -4,6 +4,8 @@ Performance reporters for generating reports and visualizations.
 Provides tools for creating flame graphs, performance reports, and summaries.
 """
 
+from __future__ import annotations
+
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -166,7 +168,7 @@ class PerformanceReporter:
             # Requests summary
         if requests:
             request_durations = [r.duration_ms for r in requests if r.duration_ms]
-            failed = [r for r in requests if r.status_code and r.status_code >= 400]
+            failed = [r for r in requests if r.status_code and r.status_code >= 400]  # type: ignore
 
             summary["requests"] = {
                 "total_requests": len(requests),

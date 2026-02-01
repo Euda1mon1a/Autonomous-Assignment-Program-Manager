@@ -1,5 +1,7 @@
 """Template registry with versioning support."""
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -202,7 +204,7 @@ class TemplateRegistry:
         # Sort by version (newest first)
         def version_key(v: TemplateVersion) -> tuple[int, int, int]:
             parts = v.version.split(".")
-            return tuple(map(int, parts))
+            return tuple(map(int, parts))  # type: ignore
 
         return sorted(versions, key=version_key, reverse=True)
 

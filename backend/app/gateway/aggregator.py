@@ -4,6 +4,8 @@ Response aggregation for API gateway.
 Provides response aggregation from multiple services with different strategies.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 from dataclasses import dataclass
@@ -426,7 +428,7 @@ class ResponseAggregator:
                     if isinstance(result[key], dict) and isinstance(value, dict):
                         result[key] = self._deep_merge([result[key], value])
                     elif isinstance(result[key], list) and isinstance(value, list):
-                        result[key].extend(value)
+                        cast(list, result[key]).extend(value)
                     else:
                         # Overwrite with new value
                         result[key] = value

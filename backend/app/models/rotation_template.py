@@ -139,7 +139,7 @@ class RotationTemplate(Base):
     @property
     def has_capacity_limit(self) -> bool:
         """Check if this template has a capacity limit."""
-        return self.max_residents is not None and self.max_residents > 0
+        return bool(self.max_residents is not None and self.max_residents > 0)
 
     @property
     def requires_specialty_faculty(self) -> bool:

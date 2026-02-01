@@ -7,6 +7,8 @@ This module provides various sharding strategies:
 - Directory-based: Explicit mapping of keys to shards
 """
 
+from __future__ import annotations
+
 import hashlib
 from abc import ABC, abstractmethod
 from typing import Any
@@ -292,7 +294,7 @@ class RangeShardingStrategy(ShardingStrategy):
             True if ranges overlap
         """
         return not (
-            shard1.max_value < shard2.min_value or shard2.max_value < shard1.min_value
+            shard1.max_value < shard2.min_value or shard2.max_value < shard1.min_value  # type: ignore
         )
 
     def get_shard_id(self, key: Any) -> int:

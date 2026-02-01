@@ -8,6 +8,8 @@ Provides Redis-based caching for expensive operations:
 - Solver intermediate results
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import pickle
@@ -150,7 +152,7 @@ class ScheduleCache:
         }
 
         self._put(cache_key, result)
-        return result
+        return result  # type: ignore
 
     def invalidate(self, keys: list[str] | None = None) -> None:
         """

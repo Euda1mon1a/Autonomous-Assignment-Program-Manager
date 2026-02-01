@@ -1,5 +1,7 @@
 """Excel Exporter - Exports reports to Excel."""
 
+from __future__ import annotations
+
 from typing import Any, Dict, List
 import logging
 from io import BytesIO
@@ -11,7 +13,9 @@ logger = logging.getLogger(__name__)
 class ExcelExporter:
     """Exports reports to Excel format."""
 
-    def export_to_excel(self, report: dict[str, Any], file_path: str = None) -> bytes:
+    def export_to_excel(
+        self, report: dict[str, Any], file_path: str | None = None
+    ) -> bytes:
         """Export report to Excel."""
         # Create Excel file with pandas
         output = BytesIO()

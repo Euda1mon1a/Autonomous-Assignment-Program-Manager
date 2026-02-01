@@ -19,6 +19,8 @@ Precursor Signals Monitored:
 - Voluntary coverage declines (refusing extra shifts)
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -61,7 +63,7 @@ class SeismicAlert:
     predicted_magnitude: float  # 1-10 scale
     time_to_event: timedelta | None = None
     resident_id: UUID | None = None
-    context: dict = None
+    context: dict | None = None
 
     def __post_init__(self) -> None:
         """Initialize context if not provided."""

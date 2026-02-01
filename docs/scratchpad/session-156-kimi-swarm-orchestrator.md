@@ -92,6 +92,14 @@ FILE_PATH|LINE|FIXED_CODE
 - **P2-1:** Actually insert typing imports (Any, Optional, Callable)
 - **P2-2:** Fix dry-run repair loop to use temp file for validation
 
+### Mypy Fixes Applied
+| Commit | Change |
+|--------|--------|
+| `4b1bceda` | fix(types): apply Kimi swarm mypy fixes (22 errors reduced) |
+
+- 31 files fixed, 17 skipped, 2 syntax errors rejected
+- Error count: **4209 → 4187** (-22)
+
 ---
 
 ## Next Steps

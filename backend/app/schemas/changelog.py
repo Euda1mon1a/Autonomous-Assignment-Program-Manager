@@ -1,5 +1,7 @@
 """Pydantic schemas for changelog API."""
 
+from __future__ import annotations
+
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -42,7 +44,7 @@ class VersionSaveRequest(BaseModel):
         default=None,
         description="Version identifier (auto-detected from schema if not provided)",
     )
-    schema: dict[str, Any] = Field(..., description="OpenAPI schema to save")
+    schema: dict[str, Any] = Field(..., description="OpenAPI schema to save")  # type: ignore
     metadata: dict[str, Any] | None = Field(
         default=None,
         description="Additional metadata",

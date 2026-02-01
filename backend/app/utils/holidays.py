@@ -15,6 +15,8 @@ OPM Observed Date Rules:
 Reference: https://www.opm.gov/policy-data-oversight/pay-leave/federal-holidays/
 """
 
+from __future__ import annotations
+
 from datetime import date, timedelta
 from typing import NamedTuple
 

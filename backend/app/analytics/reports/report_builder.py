@@ -1,5 +1,7 @@
 """Report Builder - Constructs reports from data."""
 
+from __future__ import annotations
+
 from typing import Any, Dict, List
 from datetime import datetime
 import logging
@@ -14,7 +16,7 @@ class ReportBuilder:
         self,
         title: str,
         sections: list[dict[str, Any]],
-        metadata: dict[str, Any] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Build a structured report."""
         return {

@@ -44,6 +44,8 @@ Example:
     ...     print(f"WARNING: High recovery cost ({result.recovery_distance} edits)")
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
 from datetime import date
@@ -352,7 +354,7 @@ class RecoveryDistanceCalculator:
             )
             rd_p95 = sorted_distances[p95_index]
         else:
-            rd_p95 = 0.0
+            rd_p95: float = 0.0
 
             # Breakdown by event type
         by_event_type: dict[str, dict[str, float]] = {}

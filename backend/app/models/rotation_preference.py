@@ -123,7 +123,7 @@ class RotationPreference(Base):
             "high": 4.0,
             "required": 8.0,
         }
-        return multipliers.get(self.weight, 2.0)
+        return float(multipliers.get(self.weight, 2.0))
 
     def get_config_value(self, key: str, default: Any = None) -> Any:
         """Safely get a configuration value."""

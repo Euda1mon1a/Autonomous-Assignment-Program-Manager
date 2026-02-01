@@ -29,6 +29,8 @@ Multi-Objective Lens - Pareto Optimality:
     - The "knee" of the frontier often represents balanced solutions
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -198,7 +200,7 @@ class Solution:
             [self.normalized_objectives.get(name, 0.0) for name in objective_names]
         )
 
-    def copy(self) -> "Solution":
+    def copy(self) -> Solution:
         """Create a deep copy of this solution."""
         return Solution(
             id=uuid4(),
@@ -427,7 +429,7 @@ class ParetoFrontier:
             # Distance from centroid (approximation of knee)
             distance = np.linalg.norm(norm_vec - centroid)
             if distance > max_distance:
-                max_distance = distance
+                max_distance = float(distance)
                 knee_idx = i
 
         return self.solutions[knee_idx]
