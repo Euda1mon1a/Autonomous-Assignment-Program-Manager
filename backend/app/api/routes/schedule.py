@@ -10,6 +10,7 @@ from fastapi import (
     Header,
     HTTPException,
     Query,
+    Request,
     UploadFile,
 )
 from fastapi.responses import JSONResponse
@@ -87,7 +88,8 @@ logger = get_logger(__name__)
 @router.post("/generate", response_model=ScheduleResponse)
 @limiter.limit("2/minute")
 async def generate_schedule(
-    request: ScheduleRequest,
+    request: Request,
+    schedule_request: ScheduleRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     idempotency_key: str | None = Header(
@@ -127,16 +129,16 @@ async def generate_schedule(
 
     # Extract request parameters for hashing
     request_params = {
-        "start_date": request.start_date.isoformat(),
-        "end_date": request.end_date.isoformat(),
-        "algorithm": request.algorithm.value,
-        "pgy_levels": request.pgy_levels,
+        "start_date": schedule_request.start_date.isoformat(),
+        "end_date": schedule_request.end_date.isoformat(),
+        "algorithm": schedule_request.algorithm.value,
+        "pgy_levels": schedule_request.pgy_levels,
         "rotation_template_ids": (
-            [str(x) for x in request.rotation_template_ids]
-            if request.rotation_template_ids
+            [str(x) for x in schedule_request.rotation_template_ids]
+            if schedule_request.rotation_template_ids
             else None
         ),
-        "timeout_seconds": request.timeout_seconds,
+        "timeout_seconds": schedule_request.timeout_seconds,
     }
 
     # If idempotency key provided, check for existing request
@@ -216,8 +218,8 @@ async def generate_schedule(
             ScheduleRun.status == "in_progress",
             ScheduleRun.created_at >= recent_cutoff,
             # Check for overlapping date ranges
-            ScheduleRun.start_date <= request.end_date,
-            ScheduleRun.end_date >= request.start_date,
+            ScheduleRun.start_date <= schedule_request.end_date,
+            ScheduleRun.end_date >= schedule_request.start_date,
         )
         .first()
     )
@@ -237,33 +239,35 @@ async def generate_schedule(
             db.commit()
         raise HTTPException(status_code=409, detail=error_msg)
 
-    algorithm = request.algorithm.value
+    algorithm = schedule_request.algorithm.value
     try:
-        engine = SchedulingEngine(db, request.start_date, request.end_date)
+        engine = SchedulingEngine(
+            db, schedule_request.start_date, schedule_request.end_date
+        )
 
         # Generate schedule with selected algorithm (timed for metrics)
         if obs_metrics:
             with obs_metrics.time_schedule_generation(algorithm):
                 result = engine.generate(
-                    pgy_levels=request.pgy_levels,
-                    rotation_template_ids=request.rotation_template_ids,
+                    pgy_levels=schedule_request.pgy_levels,
+                    rotation_template_ids=schedule_request.rotation_template_ids,
                     algorithm=algorithm,
-                    timeout_seconds=request.timeout_seconds,
+                    timeout_seconds=schedule_request.timeout_seconds,
                     # Block assignment expansion (Session 095)
-                    expand_block_assignments=request.expand_block_assignments,
-                    block_number=request.block_number,
-                    academic_year=request.academic_year,
+                    expand_block_assignments=schedule_request.expand_block_assignments,
+                    block_number=schedule_request.block_number,
+                    academic_year=schedule_request.academic_year,
                 )
         else:
             result = engine.generate(
-                pgy_levels=request.pgy_levels,
-                rotation_template_ids=request.rotation_template_ids,
+                pgy_levels=schedule_request.pgy_levels,
+                rotation_template_ids=schedule_request.rotation_template_ids,
                 algorithm=algorithm,
-                timeout_seconds=request.timeout_seconds,
+                timeout_seconds=schedule_request.timeout_seconds,
                 # Block assignment expansion (Session 095)
-                expand_block_assignments=request.expand_block_assignments,
-                block_number=request.block_number,
-                academic_year=request.academic_year,
+                expand_block_assignments=schedule_request.expand_block_assignments,
+                block_number=schedule_request.block_number,
+                academic_year=schedule_request.academic_year,
             )
 
         # Build solver statistics if available
@@ -435,6 +439,7 @@ async def handle_emergency_coverage(
 @router.post("/import/analyze", response_model=ImportAnalysisResponse)
 @limiter.limit("2/minute")
 async def analyze_imported_schedules(
+    request: Request,
     fmit_file: UploadFile = File(..., description="FMIT rotation schedule Excel file"),
     clinic_file: UploadFile | None = File(
         None, description="Clinic schedule Excel file (optional)"
@@ -542,6 +547,7 @@ async def analyze_imported_schedules(
 @router.post("/import/analyze-file")
 @limiter.limit("2/minute")
 async def analyze_single_file(
+    request: Request,
     file: UploadFile = File(..., description="Schedule Excel file to analyze"),
     file_type: str = Form(
         "auto", description="File type: 'fmit', 'clinic', or 'auto' to detect"

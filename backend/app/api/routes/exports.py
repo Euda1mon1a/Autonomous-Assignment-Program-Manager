@@ -11,7 +11,7 @@ Provides endpoints for managing scheduled data exports including:
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -188,8 +188,9 @@ async def delete_export_job(
 @router.post("/{job_id}/run", response_model=ExportJobRunResponse)
 @limiter.limit("2/minute")
 async def run_export_job(
+    request: Request,
     job_id: str,
-    request: ExportJobRunRequest | None = None,
+    run_request: ExportJobRunRequest | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
