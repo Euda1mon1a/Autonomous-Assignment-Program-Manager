@@ -7,11 +7,21 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 from fastapi.responses import StreamingResponse
 
 from app.core.config import get_settings
 from app.core.security import get_current_active_user
+from app.core.slowapi_limiter import limiter
 from app.models.user import User
 from app.schemas.upload import (
     DeleteFileResponse,
@@ -66,7 +76,9 @@ def get_upload_service() -> UploadService:
 
 
 @router.post("", response_model=UploadResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("2/minute")
 async def upload_file(
+    request: Request,
     file: UploadFile = File(..., description="File to upload"),
     process_images: bool = Form(True, description="Process images (resize, optimize)"),
     generate_thumbnails: bool = Form(True, description="Generate thumbnails"),
