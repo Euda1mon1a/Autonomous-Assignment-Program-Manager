@@ -17,11 +17,13 @@ Example:
     updates = transformer.normalize_person_email(person)
 """
 
+from __future__ import annotations
+
 import logging
 import re
 from collections.abc import Callable
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Callable
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -46,7 +48,7 @@ class TransformationPipeline:
 
     def add_step(
         self, transform_func: Callable[[Any], dict[str, Any]]
-    ) -> "TransformationPipeline":
+    ) -> TransformationPipeline:
         """
         Add a transformation step to the pipeline.
 
@@ -355,7 +357,7 @@ class DataTransformer:
         updates = {"updated_at": datetime.utcnow()}
 
         if hasattr(record, "updated_by"):
-            updates["updated_by"] = user
+            updates["updated_by"] = str(user)
 
         return updates
 

@@ -15,6 +15,8 @@ This module enables the Residency Scheduler to integrate with service mesh
 platforms like Istio, Linkerd, Consul Connect, or AWS App Mesh.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 from dataclasses import dataclass, field
@@ -562,7 +564,7 @@ class SidecarConfig(BaseModel):
 
         # Add TLS configuration if enabled
         if self.mtls_config.is_enabled():
-            config["static_resources"]["clusters"][0]["transport_socket"] = (
+            config["static_resources"]["clusters"][0]["transport_socket"] = (  # type: ignore
                 self._get_tls_config()
             )
 
@@ -725,7 +727,7 @@ class ObservabilityHeaders:
     baggage: dict[str, str] = field(default_factory=dict)
 
     @classmethod
-    def from_headers(cls, headers: dict[str, str]) -> "ObservabilityHeaders":
+    def from_headers(cls, headers: dict[str, str]) -> ObservabilityHeaders:
         """
         Extract observability headers from request.
 
@@ -801,7 +803,7 @@ class ObservabilityHeaders:
 
         return headers
 
-    def create_child_span(self) -> "ObservabilityHeaders":
+    def create_child_span(self) -> ObservabilityHeaders:
         """
         Create child span for downstream calls.
 

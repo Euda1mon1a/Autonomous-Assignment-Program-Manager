@@ -15,6 +15,8 @@ Event Versioning:
 - Old versions remain supported for replay
 """
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 from enum import Enum
@@ -122,7 +124,7 @@ class BaseEvent(BaseModel):
         return self.model_dump(mode="json")
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "BaseEvent":
+    def from_dict(cls, data: dict[str, Any]) -> BaseEvent:
         """Reconstruct event from dictionary."""
         return cls(**data)
 
@@ -505,4 +507,4 @@ def get_event_class(event_type: str) -> type[BaseEvent]:
     if event_type not in event_map:
         raise ValueError(f"Unknown event type: {event_type}")
 
-    return event_map[event_type]
+    return event_map[event_type]  # type: ignore

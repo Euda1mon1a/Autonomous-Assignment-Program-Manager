@@ -4,6 +4,8 @@ Analyzes query patterns, table scans, and index usage to recommend
 optimal indexes for improving query performance.
 """
 
+from __future__ import annotations
+
 import logging
 import re
 from dataclasses import dataclass
@@ -454,7 +456,7 @@ class IndexAdvisor:
                 query, {"table_name": table_name, "pattern": column_pattern}
             ).scalar()
 
-            return result > 0
+            return bool(result and result > 0)
 
         except Exception as e:
             logger.error(f"Error checking index existence: {e}")

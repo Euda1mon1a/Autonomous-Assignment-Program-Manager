@@ -1,5 +1,7 @@
 """OpenTelemetry distributed tracing configuration."""
 
+from __future__ import annotations
+
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -404,7 +406,7 @@ class PerformanceTracer:
         }
 
         if error:
-            attributes["scheduler.error"] = error
+            attributes["scheduler.error"] = str(error)
 
         with self.tracer.start_as_current_span(
             "scheduler.execute", attributes=attributes

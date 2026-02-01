@@ -26,11 +26,13 @@ Example:
     ...     pass
 """
 
+from __future__ import annotations
+
 import logging
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Any
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +80,7 @@ class ConstraintConfig:
         """Check if constraint is active."""
         return self.enabled
 
-    def should_enable(self, context: dict[str, any]) -> bool:
+    def should_enable(self, context: dict[str, Any]) -> bool:
         """
         Check if constraint should be enabled based on context.
 

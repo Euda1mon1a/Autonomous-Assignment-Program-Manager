@@ -13,9 +13,11 @@ Visualization types:
 Uses NetworkX for graph layout and matplotlib/graphviz for rendering.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import date
-from typing import Optional
+from typing import Optional, Sized, cast
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -54,7 +56,7 @@ class KeystoneVisualizer:
 
     def visualize_dependency_graph(
         self,
-        graph: "nx.DiGraph",
+        graph: nx.DiGraph,
         keystones: list,
         output_path: str | None = None,
         highlight_entity: UUID | None = None,
@@ -212,7 +214,7 @@ class KeystoneVisualizer:
     def visualize_cascade(
         self,
         cascade_analysis,
-        graph: "nx.DiGraph",
+        graph: nx.DiGraph,
         output_path: str | None = None,
     ) -> str | None:
         """
@@ -272,7 +274,7 @@ class KeystoneVisualizer:
 
         for i, level_data in enumerate(levels):
             y_pos = 0.9 - (i * level_height)
-            num_entities = len(level_data["entities"])
+            num_entities = len(cast(Sized, level_data["entities"]))
 
             # Draw box for level
             rect = mpatches.Rectangle(
@@ -616,7 +618,7 @@ class KeystoneVisualizer:
 
     def export_to_graphviz(
         self,
-        graph: "nx.DiGraph",
+        graph: nx.DiGraph,
         keystones: list,
         output_path: str,
     ) -> str | None:

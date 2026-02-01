@@ -9,6 +9,8 @@ Provides comprehensive logging configuration with:
 - Integration with observability tools
 """
 
+from __future__ import annotations
+
 import logging
 import sys
 from dataclasses import dataclass, field
@@ -79,7 +81,7 @@ class LoggingConfig:
     async_logging: bool = field(default=False)
 
     @classmethod
-    def from_env(cls) -> "LoggingConfig":
+    def from_env(cls) -> LoggingConfig:
         """
         Create logging configuration from environment variables.
 
@@ -100,7 +102,9 @@ class LoggingConfig:
         """
         # Determine format based on environment
         default_format = (
-            LogFormat.JSON if settings.ENVIRONMENT == "production" else LogFormat.TEXT
+            LogFormat.JSON
+            if getattr(settings, "ENVIRONMENT", None) == "production"
+            else LogFormat.TEXT
         )
 
         return cls(

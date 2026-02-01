@@ -1,5 +1,7 @@
 """Timezone conversion utilities for UTC and local time handling."""
 
+from __future__ import annotations
+
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -289,7 +291,7 @@ class TimezoneConverter:
         else:
             dt = dt.astimezone(tz)
 
-        return dt.utcoffset()
+        return dt.utcoffset() or timedelta(0)
 
     @classmethod
     def is_dst(cls, dt: datetime, tz_name: str | None = None) -> bool:

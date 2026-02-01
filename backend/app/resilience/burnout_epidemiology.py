@@ -28,6 +28,8 @@ This module implements:
 6. Evidence-based intervention recommendations
 """
 
+from __future__ import annotations
+
 import logging
 import statistics
 from collections import defaultdict
@@ -215,7 +217,7 @@ class BurnoutEpidemiology:
         )
 
     def record_burnout_state(
-        self, resident_id: UUID, state: BurnoutState, timestamp: datetime = None
+        self, resident_id: UUID, state: BurnoutState, timestamp: datetime | None = None
     ) -> None:
         """
         Record a burnout state change for a resident.

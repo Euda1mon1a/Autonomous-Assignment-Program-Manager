@@ -11,6 +11,8 @@ BEFORE implementing these changes:
 4. Update API documentation
 """
 
+from __future__ import annotations
+
 from datetime import date
 from uuid import UUID
 
@@ -70,7 +72,7 @@ class BlockBase(BaseModel):
 
     @field_validator("date")
     @classmethod
-    def validate_date(cls, v: date) -> date:
+    def validate_date(cls, v: date) -> date:  # type: ignore
         """
         Validate date is within academic year bounds.
 

@@ -18,7 +18,7 @@ Example for Neurology Elective rotation:
 
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any
 
 from sqlalchemy import (
     Boolean,
@@ -215,7 +215,7 @@ class RotationActivityRequirement(Base):
     @property
     def is_hard_constraint(self) -> bool:
         """Check if min == max (exact requirement)."""
-        return self.min_halfdays == self.max_halfdays
+        return bool(self.min_halfdays == self.max_halfdays)
 
     @property
     def weeks_display(self) -> str:

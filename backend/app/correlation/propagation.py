@@ -9,10 +9,12 @@ Provides tools to propagate correlation context to:
 - Logging
 """
 
+from __future__ import annotations
+
 import functools
 import logging
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Callable
 
 from app.correlation.context import (
     CorrelationContext,
@@ -373,4 +375,4 @@ def create_child_context() -> CorrelationContext:
 try:
     import asyncio
 except ImportError:
-    asyncio = None
+    asyncio = None  # type: ignore

@@ -7,6 +7,8 @@ Key principle: Keep utilization below 80% to prevent queue explosion
 (from queuing theory - M/M/c queue becomes unstable near ρ=1).
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from typing import Optional
@@ -184,7 +186,9 @@ class UtilizationOptimizer:
         offpeak_opt = self.optimize_utilization(
             offpeak_rate, service_rate, current_servers
         )
-        avg_opt = self.optimize_utilization(avg_rate, service_rate, current_servers)
+        avg_opt = self.optimize_utilization(
+            float(avg_rate), service_rate, current_servers
+        )
 
         return {
             "peak_period": {
