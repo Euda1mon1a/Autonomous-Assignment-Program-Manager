@@ -108,17 +108,14 @@ We have three overlapping knowledge mechanisms (Skills, RAG, MCP Tools) with red
 **Ref:** `docs/archived/superseded/TODO_INVENTORY.md` line 6 (archived)
 
 ### 2. MCP Production Security (PRODUCTION GATE)
-**Status:** Dev bypass implemented - production MUST configure auth
+**Status:** Checklist documented (pending ops verification)
 
 **Requirement:** Production deployments MUST set `MCP_API_KEY` environment variable.
 
 **Context:** `MCP_ALLOW_LOCAL_DEV=true` in `docker-compose.dev.yml` bypasses all auth checks for dev convenience. This is intentional - Docker network detection is fragile and dev environments shouldn't require auth debugging.
 
 **Production Checklist:**
-- [ ] `MCP_API_KEY` set in production .env (32+ chars, use `python -c 'import secrets; print(secrets.token_urlsafe(32))'`)
-- [ ] `MCP_ALLOW_LOCAL_DEV` NOT set (or explicitly `false`)
-- [ ] Ports 8080/8081 not exposed to public internet
-- [ ] If using reverse proxy, ensure API key header forwarded
+- [ ] See `docs/security/MCP_PRODUCTION_SECURITY_CHECKLIST.md` for full verification steps
 
 **Without `MCP_API_KEY`:** Server fails closed for non-local requests (returns 500).
 
