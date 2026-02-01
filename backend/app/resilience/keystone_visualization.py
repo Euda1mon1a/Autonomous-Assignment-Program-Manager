@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 from datetime import date
-from typing import Optional
+from typing import Optional, Sized, cast
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
