@@ -80,11 +80,17 @@ FILE_PATH|LINE|FIXED_CODE
 
 ---
 
-## Commits
+## Commits (PR #800 - Merged)
 
 | Hash | Message |
 |------|---------|
 | `3d110390` | feat(swarm): add swarm mode with orchestrator-triggering prompts |
+| `0d4461a3` | docs: session 156 - kimi swarm orchestrator improvements |
+| `3031fcd1` | fix(swarm): address Codex P2 feedback |
+
+### Codex Fixes Applied
+- **P2-1:** Actually insert typing imports (Any, Optional, Callable)
+- **P2-2:** Fix dry-run repair loop to use temp file for validation
 
 ---
 
