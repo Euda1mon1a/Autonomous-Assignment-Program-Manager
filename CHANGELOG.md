@@ -40,6 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `GET /enums/pgy-levels`
   - `GET /enums/person-types`
 
+#### Session 156 - Kimi K2.5 Swarm Orchestrator (2026-02-01)
+
+**Swarm Mode for Mypy Fixes:**
+- Added `--swarm` flag to batch files and trigger Kimi's internal orchestrator
+- Added `--batch-size N` for controlling files per API call
+- Added `--repair` flag for Generate-Check-Repair loop
+- Key insight: Swarm orchestrator triggered by prompt structure, not API params
+- 100% success rate on simple error types (assignment, valid-type)
+- File: `scripts/kimi_mypy_swarm.py`
+
 #### ADK Integration Analysis (2026-01-19)
 
 **Comprehensive Analysis Document:**
