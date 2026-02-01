@@ -212,7 +212,7 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 | Hook | Issue | Scope | Progress |
 |------|-------|-------|----------|
 | **mypy** | 6,443 type errors | 742 files | 13.2% fixed (983 errors) |
-| **bandit** | Config + fixes ready | Branch `bandit-config` | ⏳ Needs merge to main |
+| **bandit** | 0 high severity, config in pyproject.toml | Merged (Sessions 154-155) | ✅ Complete |
 | **Modron March** | FairnessAuditResponse location | Type in wrong file | TODO |
 
 **mypy Progress (Sessions 137-139):**

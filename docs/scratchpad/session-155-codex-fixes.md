@@ -64,21 +64,29 @@ Deleted `backend/tests/routes/test_call_assignments.py` (duplicate of PR #797's 
 ## Environment Notes
 
 - **bcrypt**: Pinned to 3.2.2 (passlib's bcrypt backend breaks with 5.x)
-- **Pre-commit**: Skipping mypy/bandit due to pre-existing errors
+- **Pre-commit**: Skipping mypy only (bandit now clean - 0 high severity)
+
+---
+
+## Bandit Cleanup
+
+- Deleted stale `bandit-config` branch (local + remote)
+- All fixes already merged to main via Sessions 154-155
+- Bandit runs clean: **0 high**, 63 medium, 195 low
+- Config in `backend/pyproject.toml` with proper exclusions
 
 ---
 
 ## End State
 
-- **Branch:** `main` at `6a566197`
-- **Unpushed:** 1 commit (docs update)
+- **Branch:** `main`
 - **HIGH items resolved:** #9, #10, #11, #12
+- **Bandit:** ✅ Complete (was HIGH #7 sub-item)
 - **Remaining CRITICAL:** #1 (PII in git), #2 (MCP production security)
 
 ---
 
 ## Next Session
 
-1. Push pending docs commit
-2. Check Codex on any new PRs
-3. Consider tackling CRITICAL #1 (PII purge) or HIGH #5 (ACGME compliance gaps)
+1. Consider tackling CRITICAL #1 (PII purge) or HIGH #5 (ACGME compliance gaps)
+2. Continue mypy bulk fixes (6,443 remaining)
