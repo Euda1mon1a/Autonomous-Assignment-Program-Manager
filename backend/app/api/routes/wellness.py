@@ -842,6 +842,6 @@ async def get_wellness_analytics(
         average_streak=analytics["average_streak"],
         longest_streak=analytics["longest_streak"],
         total_points_earned_this_week=analytics["total_points_earned_this_week"],
-        hopfield_positions_this_week=analytics["hopfield_positions_this_week"],
+        hopfield_positions_this_week=analytics.get("hopfield_positions_this_week", 0),
         average_basin_depth=analytics.get("average_basin_depth"),
     )
