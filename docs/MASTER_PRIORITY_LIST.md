@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-31 (HIGH #10, #11, #12 resolved)
+> **Last Updated:** 2026-02-01 (Session 155 - HIGH #10, #11, #12 resolved, wellness routes fixed)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -699,8 +699,8 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 
 1. **Purge PII from Git History** (CRITICAL #1) - `git filter-repo` + force push + re-clone
 2. **MCP Production Security Checklist** (CRITICAL #2) - set `MCP_API_KEY`, lock ports
-3. **Add DB-Schema Drift Tests** (HIGH #11) - Prevent 12+ more models drifting
-4. **Add Resilience Route Tests** (HIGH #12) - 59 untested safety-critical endpoints
+3. ~~**Add DB-Schema Drift Tests** (HIGH #11)~~ ✅ Resolved (PR #796)
+4. ~~**Add Resilience Route Tests** (HIGH #12)~~ ✅ Resolved (PR #797)
 5. **Resolve ACGME Compliance Gaps** (HIGH #5) - merge call_assignments into rest checks
 
 ### Blind Spot Assessment Items (2026-01-27)
@@ -735,6 +735,16 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 |--------|------|--------|
 | ✅ Resolved | HIGH #9 | DoS guardrails merged (PR #793) |
 | ✅ Committed | Enums API | `/api/v1/enums/*` for frontend dropdowns (PR #794) |
+
+### Session 155 Updates (2026-02-01)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Merged | PR #798 | Wellness route ordering + analytics fields + docs |
+| ✅ Fixed | Wellness routes | `/surveys/history` route ordering, analytics KeyError guard |
+| ✅ Updated | CHANGELOG | Session 154 entries for PRs #794-797 |
+| ✅ Updated | RATE_LIMIT_AUDIT | Marked upload/schedule rate limits resolved |
+| ✅ Updated | ENDPOINT_CATALOG | Added enum endpoints section |
 
 ### Session 154 Updates (2026-01-31)
 
