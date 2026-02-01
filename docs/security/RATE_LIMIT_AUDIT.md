@@ -264,7 +264,7 @@ async def login(
 
 | Endpoint | Method | Rate Limit | Status | Risk Level |
 |----------|--------|-----------|--------|-----------|
-| `/api/upload` | POST | ❌ None | ⚠️ **GAP** | **HIGH** |
+| `/api/upload` | POST | ✅ 2/min | ✅ Protected | Low |
 | `/api/upload/progress/{upload_id}` | GET | ❌ None | ✅ OK | Low |
 | `/api/upload/{file_id}/url` | GET | ❌ None | ✅ OK | Low |
 | `/api/upload/{file_id}/download` | GET | ❌ None | ⚠️ Minor | Medium |
@@ -276,7 +276,7 @@ async def login(
 - ✅ Authentication required (`Depends(get_current_active_user)`)
 - ✅ File size validation (max 50MB by default)
 - ✅ File type whitelisting
-- ❌ **NO rate limiting** - can be abused for storage/bandwidth exhaustion
+- ✅ Rate limiting: 2/minute (PR #795)
 
 ---
 
@@ -683,24 +683,25 @@ Retry-After: <seconds>
 
 ### Critical Gaps
 
-1. ⚠️ **File upload not rate limited** - Storage/bandwidth exhaustion risk
+1. ~~⚠️ **File upload not rate limited**~~ ✅ Resolved (PR #795)
 2. ⚠️ **Token refresh not rate limited** - Token abuse risk
 
 ### Priority Action Items
 
-| Priority | Action | Estimated Effort | Impact |
-|----------|--------|-----------------|--------|
-| 🔴 **CRITICAL** | Add file upload rate limiting | 1-2 hours | High |
-| 🟠 **HIGH** | Add token refresh rate limiting | 30 minutes | High |
-| 🟡 **MEDIUM** | Add admin endpoint rate limiting | 1 hour | Medium |
-| 🟡 **MEDIUM** | Externalize lockout config | 30 minutes | Medium |
-| 🟢 **LOW** | Separate internal service key | 15 minutes | Low |
+| Priority | Action | Status |
+|----------|--------|--------|
+| ~~🔴 **CRITICAL**~~ | ~~Add file upload rate limiting~~ | ✅ Done (PR #795) |
+| ~~🟠 **HIGH**~~ | ~~Add schedule generate rate limiting~~ | ✅ Done (PR #795) |
+| 🟠 **HIGH** | Add token refresh rate limiting | 30 minutes |
+| 🟡 **MEDIUM** | Add admin endpoint rate limiting | 1 hour |
+| 🟡 **MEDIUM** | Externalize lockout config | 30 minutes |
+| 🟢 **LOW** | Separate internal service key | 15 minutes |
 
 ### Overall Assessment
 
-The Residency Scheduler has a **robust and well-designed rate limiting system** that protects against most common attack vectors. The use of multiple independent layers (SlowAPI, custom middleware, account lockout) provides defense-in-depth. The main gaps are in newer features (file uploads) and token management endpoints that were added after the initial rate limiting implementation.
+The Residency Scheduler has a **robust and well-designed rate limiting system** that protects against most common attack vectors. The use of multiple independent layers (SlowAPI, custom middleware, account lockout) provides defense-in-depth.
 
-**Recommended Action:** Implement the two critical gaps (file upload and token refresh rate limiting) before the next production deployment. The remaining gaps can be addressed in subsequent sprints as part of ongoing security hardening.
+**Update (2026-01-31):** PR #795 added rate limiting to expensive endpoints (schedule/generate, import/analyze, exports/run, uploads). The remaining gap is token refresh rate limiting.
 
 ---
 

@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-01 (HIGH #10 resolved; rate limits added)
+> **Last Updated:** 2026-01-31 (HIGH #10, #11, #12 resolved)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -253,46 +253,11 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 
 **Decision:** Keep all modules on roadmap. Integrate as features require.
 
-### 11. No DB-Schema Drift Detection (NEW - Session 136)
-**Added:** 2026-01-23
-**Source:** [DB-Schema Alignment Audit](reports/DB_SCHEMA_ALIGNMENT_AUDIT_2026-01-23.md)
+### ~~11. No DB-Schema Drift Detection~~ — RESOLVED
+See [COMPLETED section](#11-no-db-schema-drift-detection-high-11--resolved-2026-01-31)
 
-Critical infrastructure gaps:
-
-| Gap | Impact |
-|-----|--------|
-| No `naming_convention` on SQLAlchemy Base | Constraint names are gibberish (`fk_1a2b3c4d`) |
-| No model-database drift tests | 12 models exist without tables |
-| No schema-model alignment tests | ActivityResponse missing 2 fields |
-
-**Existing Drift:**
-- 12 models missing from database (webhooks, OAuth2, workflow engine)
-- 7 orphaned tables in database
-- ActivityResponse missing `provides_supervision`, `counts_toward_physical_capacity`
-
-**Fixes:**
-1. Add `MetaData(naming_convention=...)` to `backend/app/db/base.py`
-2. Create `test_model_database_sync.py`
-3. Create `test_schema_model_sync.py`
-
-**Effort:** 4 hours
-
-### 12. API Test Coverage Gap - 366 Untested Endpoints (NEW - Session 136)
-**Added:** 2026-01-23
-**Source:** [API Coverage Matrix](reports/API_COVERAGE_MATRIX_2026-01-23.md)
-
-53% test coverage (45/84 routes tested). Safety-critical gaps:
-
-| Route | Endpoints | Priority |
-|-------|-----------|----------|
-| `resilience.py` | 59 | **P0 - Crisis management** |
-| `fatigue_risk.py` | 16 | **P0 - Medical safety** |
-| `call_assignments.py` | 13 | P1 - PCAT equity |
-| `webhooks.py` | 13 | P1 - Event delivery |
-| `swap.py` | 5 | P1 - FMIT swaps |
-| `wellness.py` | 15 | P1 - Resident health |
-
-**Note:** Resilience endpoints also missing from OpenAPI spec (59 endpoints not generating frontend types).
+### ~~12. API Test Coverage Gap~~ — RESOLVED
+See [COMPLETED section](#12-api-test-coverage-gap-high-12--resolved-2026-01-31)
 
 ### 14. K2.5 Swarm MCP Integration (NEW - Session Phase 8)
 **Added:** 2026-01-30
@@ -771,6 +736,14 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 | ✅ Resolved | HIGH #9 | DoS guardrails merged (PR #793) |
 | ✅ Committed | Enums API | `/api/v1/enums/*` for frontend dropdowns (PR #794) |
 
+### Session 154 Updates (2026-01-31)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Resolved | HIGH #11 | Schema drift detection + naming convention added |
+| ✅ Resolved | HIGH #12 | API route test coverage (1,720 lines) |
+| ✅ Completed | Enum Endpoints | PR #794 - Frontend dropdown endpoints |
+
 ### Session 152 Updates (2026-02-01)
 
 | Change | Item | Reason |
@@ -824,6 +797,26 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 | `POST /uploads` | Storage exhaustion |
 
 **Fix:** Added `@limiter.limit("2/minute")` on all listed endpoints.
+
+### 11. No DB-Schema Drift Detection (HIGH #11) — RESOLVED (2026-01-31)
+**Added:** 2026-01-23
+**Resolved:** PR #796
+
+**Fixes Applied:**
+- Added `naming_convention` to `backend/app/db/base.py` (deterministic constraint names)
+- Fixed `provides_supervision` and `counts_toward_physical_capacity` persistence in ActivityService
+
+### 12. API Test Coverage Gap (HIGH #12) — RESOLVED (2026-01-31)
+**Added:** 2026-01-23
+**Resolved:** PR #797
+
+**Coverage Added (1,720 lines):**
+- `test_fatigue_risk_routes.py` - 16 endpoints tested
+- `test_resilience_routes_smoke.py` - Defense-level, circuit-breakers
+- `test_call_assignments_routes_api.py` - CRUD, coverage, bulk, PCAT
+- `test_webhooks_routes.py` - CRUD, deliveries, dead-letters
+- `test_wellness_routes.py` - Surveys, gamification, admin
+- `test_swap_routes_api.py` - Validate, execute, rollback
 
 ### Enum Dropdown Endpoints — COMPLETED (2026-01-31)
 **Resolved:** PR #794

@@ -137,6 +137,55 @@ async def list_available_surveys(
     ]
 
 
+@router.get("/surveys/history", response_model=SurveyHistoryResponse)
+async def get_survey_history(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+) -> SurveyHistoryResponse:
+    """
+    Get the current user's survey response history.
+
+    Returns paginated list of past survey responses with scores.
+
+    Args:
+        page: Page number (1-indexed)
+        page_size: Items per page (max 100)
+
+    Returns:
+        SurveyHistoryResponse: Paginated response history
+    """
+    person = await _get_person_for_user(db, current_user)
+    service = WellnessService(db)
+
+    responses, total = await service.get_survey_response_history(
+        person_id=person.id,
+        page=page,
+        page_size=page_size,
+    )
+
+    return SurveyHistoryResponse(
+        responses=[
+            SurveyResponseSummary(
+                id=r["id"],
+                survey_id=r["survey_id"],
+                survey_name=r["survey_name"],
+                survey_type=r["survey_type"],
+                score=r["score"],
+                score_interpretation=r["score_interpretation"],
+                submitted_at=r["submitted_at"],
+                block_number=r["block_number"],
+                academic_year=r["academic_year"],
+            )
+            for r in responses
+        ],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
+
+
 @router.get("/surveys/{survey_id}", response_model=SurveyResponse)
 async def get_survey(
     survey_id: UUID,
@@ -233,55 +282,6 @@ async def submit_survey_response(
         streak_updated=result.streak_result.streak_updated,
         current_streak=result.streak_result.current_streak,
         message=result.message,
-    )
-
-
-@router.get("/surveys/history", response_model=SurveyHistoryResponse)
-async def get_survey_history(
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
-    db: AsyncSession = Depends(get_async_db),
-    current_user: User = Depends(get_current_active_user),
-) -> SurveyHistoryResponse:
-    """
-    Get the current user's survey response history.
-
-    Returns paginated list of past survey responses with scores.
-
-    Args:
-        page: Page number (1-indexed)
-        page_size: Items per page (max 100)
-
-    Returns:
-        SurveyHistoryResponse: Paginated response history
-    """
-    person = await _get_person_for_user(db, current_user)
-    service = WellnessService(db)
-
-    responses, total = await service.get_survey_response_history(
-        person_id=person.id,
-        page=page,
-        page_size=page_size,
-    )
-
-    return SurveyHistoryResponse(
-        responses=[
-            SurveyResponseSummary(
-                id=r["id"],
-                survey_id=r["survey_id"],
-                survey_name=r["survey_name"],
-                survey_type=r["survey_type"],
-                score=r["score"],
-                score_interpretation=r["score_interpretation"],
-                submitted_at=r["submitted_at"],
-                block_number=r["block_number"],
-                academic_year=r["academic_year"],
-            )
-            for r in responses
-        ],
-        total=total,
-        page=page,
-        page_size=page_size,
     )
 
 
@@ -842,4 +842,6 @@ async def get_wellness_analytics(
         average_streak=analytics["average_streak"],
         longest_streak=analytics["longest_streak"],
         total_points_earned_this_week=analytics["total_points_earned_this_week"],
+        hopfield_positions_this_week=analytics.get("hopfield_positions_this_week", 0),
+        average_basin_depth=analytics.get("average_basin_depth"),
     )

@@ -199,7 +199,7 @@ class TestWellnessRoutes:
                     "icon": "star",
                     "earned": True,
                     "earned_at": datetime.utcnow(),
-                    "criteria": {},
+                    "criteria": "first_login",
                 }
             ]
 
@@ -273,7 +273,7 @@ class TestWellnessRoutes:
                     "icon": "star",
                     "earned": True,
                     "earned_at": recent,
-                    "criteria": {},
+                    "criteria": "first_login",
                 }
             ]
 
