@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-01-31 (CRITICAL #1 + HIGH #13 resolved; completed items archived)
+> **Last Updated:** 2026-02-01 (HIGH #10 resolved; rate limits added)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -252,41 +252,6 @@ Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
 | **gRPC** (`backend/app/grpc/`) | 1,775 | Full server, JWT auth | **EVALUATE** - MCP/external integrations |
 
 **Decision:** Keep all modules on roadmap. Integrate as features require.
-
-### 9. DoS Vulnerabilities - Unbounded Queries (NEW - Session 136)
-**Added:** 2026-01-23
-**Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
-**Status:** Fix implemented (pending merge)
-
-| Endpoint | File:Line | Issue |
-|----------|-----------|-------|
-| `GET /analytics/export/research` | `analytics.py:769` | No max date range, full table scan |
-| `GET /analytics/metrics/history` | `analytics.py:185` | No limit clause |
-| `GET /schedule/runs` | `schedule.py:1369` | `.all()` loads entire table for count |
-
-**Attacks:**
-- `?start_date=1900-01-01&end_date=2100-12-31` forces full table scan
-- Count query fetches all rows instead of using `func.count()`
-
-**Fixes:**
-1. Add `MAX_RANGE = timedelta(days=365)` validation
-2. Use `db.query(func.count(ScheduleRun.id)).scalar()`
-
-**Effort:** 2 hours
-
-### 10. Missing Rate Limits on Expensive Endpoints (NEW - Session 136)
-**Added:** 2026-01-23
-**Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
-
-| Endpoint | Impact |
-|----------|--------|
-| `POST /schedule/generate` | CPU exhaustion |
-| `POST /import/analyze` | File processing exhaustion |
-| `POST /exports/{job_id}/run` | Celery queue exhaustion |
-| `POST /upload` | Storage exhaustion |
-
-**Fix:** Add `@limiter.limit("2/minute")` decorator from `app.core.slowapi_limiter`.
-**Effort:** 1 hour
 
 ### 11. No DB-Schema Drift Detection (NEW - Session 136)
 **Added:** 2026-01-23
@@ -760,18 +725,18 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 | Priority | Open | Resolved |
 |----------|------|----------|
 | **CRITICAL** | 2 | 6 |
-| **HIGH** | 8 | 7 |
+| **HIGH** | 6 | 9 |
 | **MEDIUM** | 16 | 11 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **39** | **27** |
+| **TOTAL** | **37** | **29** |
 
 ### Top 5 Actions for Next Session
 
 1. **Purge PII from Git History** (CRITICAL #1) - `git filter-repo` + force push + re-clone
 2. **MCP Production Security Checklist** (CRITICAL #2) - set `MCP_API_KEY`, lock ports
-3. **Add Rate Limits** (HIGH #10) - DoS protection on expensive endpoints
-4. **Add DB-Schema Drift Tests** (HIGH #11) - Prevent 12+ more models drifting
-5. **Add Resilience Route Tests** (HIGH #12) - 59 untested safety-critical endpoints
+3. **Add DB-Schema Drift Tests** (HIGH #11) - Prevent 12+ more models drifting
+4. **Add Resilience Route Tests** (HIGH #12) - 59 untested safety-critical endpoints
+5. **Resolve ACGME Compliance Gaps** (HIGH #5) - merge call_assignments into rest checks
 
 ### Blind Spot Assessment Items (2026-01-27)
 
@@ -799,6 +764,19 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 | 📝 Added | gitignore | `.claude/dontreadme/sessions/*.md` for session scratchpads |
 | 📝 Updated | ops scripts | `block_regen.py` + `block_export.py` now backfill env |
 
+### Session 151 Updates (2026-01-31)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Resolved | HIGH #9 | DoS guardrails merged (PR #793) |
+| ✅ Committed | Enums API | `/api/v1/enums/*` for frontend dropdowns (PR #794) |
+
+### Session 152 Updates (2026-02-01)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Resolved | HIGH #10 | Rate limits added to expensive endpoints |
+
 ### Session 150 Updates (2026-01-29)
 
 | Change | Item | Reason |
@@ -818,6 +796,48 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 | ✅ Verified | Hooks Consolidation | All 15 scripts aligned, D&D parallel |
 
 ## COMPLETED / ARCHIVE
+
+### 9. DoS Vulnerabilities - Unbounded Queries (HIGH #9) — RESOLVED (2026-01-31)
+**Added:** 2026-01-23
+**Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
+**Resolved:** PR #793
+
+| Endpoint | File:Line | Issue |
+|----------|-----------|-------|
+| `GET /analytics/export/research` | `analytics.py:769` | No max date range, full table scan |
+| `GET /analytics/metrics/history` | `analytics.py:185` | No limit clause |
+| `GET /schedule/runs` | `schedule.py:1369` | `.all()` loads entire table for count |
+
+**Fixes:**
+1. Enforced `MAX_RANGE = timedelta(days=365)` validation
+2. Switched to `func.count()` for pagination totals
+
+### 10. Missing Rate Limits on Expensive Endpoints (HIGH #10) — RESOLVED (2026-02-01)
+**Added:** 2026-01-23
+**Source:** [Security Posture Report](reports/SECURITY_POSTURE_2026-01-23.md)
+
+| Endpoint | Impact |
+|----------|--------|
+| `POST /schedule/generate` | CPU exhaustion |
+| `POST /import/analyze` | File processing exhaustion |
+| `POST /exports/{job_id}/run` | Celery queue exhaustion |
+| `POST /uploads` | Storage exhaustion |
+
+**Fix:** Added `@limiter.limit("2/minute")` on all listed endpoints.
+
+### Enum Dropdown Endpoints — COMPLETED (2026-01-31)
+**Resolved:** PR #794
+
+**New endpoints:** `/api/v1/enums/*`
+- `scheduling-algorithms`
+- `activity-categories`
+- `rotation-types`
+- `pgy-levels`
+- `constraint-categories`
+- `person-types`
+- `freeze-scopes`
+
+**Notes:** Enum values aligned to schema validation (e.g., PGY 1–3 only, resident/faculty only).
 
 ### 1. Excel Export Silent Failures (CRITICAL #1) — RESOLVED (2026-01-31)
 **Added:** 2026-01-23  

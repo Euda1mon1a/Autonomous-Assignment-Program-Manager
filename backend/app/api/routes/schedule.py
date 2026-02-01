@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from app.core.file_security import FileValidationError, validate_excel_upload
 from app.core.logging import get_logger
 from app.core.security import get_current_active_user
+from app.core.slowapi_limiter import limiter
 from app.db.session import get_async_db, get_db
 from app.models.user import User
 from app.scheduling.engine import SchedulingEngine
@@ -84,6 +85,7 @@ logger = get_logger(__name__)
 
 
 @router.post("/generate", response_model=ScheduleResponse)
+@limiter.limit("2/minute")
 async def generate_schedule(
     request: ScheduleRequest,
     db: Session = Depends(get_db),
@@ -431,6 +433,7 @@ async def handle_emergency_coverage(
 
 
 @router.post("/import/analyze", response_model=ImportAnalysisResponse)
+@limiter.limit("2/minute")
 async def analyze_imported_schedules(
     fmit_file: UploadFile = File(..., description="FMIT rotation schedule Excel file"),
     clinic_file: UploadFile | None = File(
@@ -537,6 +540,7 @@ async def analyze_imported_schedules(
 
 
 @router.post("/import/analyze-file")
+@limiter.limit("2/minute")
 async def analyze_single_file(
     file: UploadFile = File(..., description="Schedule Excel file to analyze"),
     file_type: str = Form(
