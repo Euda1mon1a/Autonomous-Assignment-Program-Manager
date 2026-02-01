@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-01 (Session 155 - HIGH #10, #11, #12 resolved, wellness routes fixed)
+> **Last Updated:** 2026-02-01 (Session 156 - Admin GUI gaps assessed, HIGH #14 added)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -108,14 +108,13 @@ We have three overlapping knowledge mechanisms (Skills, RAG, MCP Tools) with red
 **Ref:** `docs/archived/superseded/TODO_INVENTORY.md` line 6 (archived)
 
 ### 2. MCP Production Security (PRODUCTION GATE)
-**Status:** Checklist documented (pending ops verification)
+**Status:** ✅ Checklist documented (PR #801) — run during deploy
 
 **Requirement:** Production deployments MUST set `MCP_API_KEY` environment variable.
 
 **Context:** `MCP_ALLOW_LOCAL_DEV=true` in `docker-compose.dev.yml` bypasses all auth checks for dev convenience. This is intentional - Docker network detection is fragile and dev environments shouldn't require auth debugging.
 
-**Production Checklist:**
-- [ ] See `docs/security/MCP_PRODUCTION_SECURITY_CHECKLIST.md` for full verification steps
+**Production Checklist:** See `docs/security/MCP_PRODUCTION_SECURITY_CHECKLIST.md`
 
 **Without `MCP_API_KEY`:** Server fails closed for non-local requests (returns 500).
 
@@ -256,7 +255,46 @@ See [COMPLETED section](#11-no-db-schema-drift-detection-high-11--resolved-2026-
 ### ~~12. API Test Coverage Gap~~ — RESOLVED
 See [COMPLETED section](#12-api-test-coverage-gap-high-12--resolved-2026-01-31)
 
-### 14. K2.5 Swarm MCP Integration (NEW - Session Phase 8)
+### 14. Admin GUI Backend Gaps (NEW - Session 156)
+**Added:** 2026-02-01
+**Source:** Backend/DB GUI readiness assessment
+
+Backend is **90% ready** (90 routes, 63 models, comprehensive CRUD). These gaps block full admin GUI:
+
+| Gap | Impact | Effort |
+|-----|--------|--------|
+| **Swap approval workflow** | Swaps execute immediately; no approve/deny stage | 4-6h |
+| **Leave approval workflow** | Leave created; no approval/denial flow | 4-6h |
+| **Dashboard aggregate endpoints** | No summary widgets (counts, trends) | 2-4h |
+| **Cascading delete warnings** | No endpoint warns about dependent records | 2-3h |
+| **Field-level change tracking** | Activity log tracks actions, not field diffs | 4-6h |
+
+**What's Ready:**
+- ✅ All CRUD operations (users, people, blocks, rotations, assignments, leave, swaps)
+- ✅ Bulk operations with dry-run and validation
+- ✅ Enumeration endpoints for dropdowns (PR #794)
+- ✅ Pagination and filtering on list endpoints
+- ✅ Audit trails and activity logging
+- ✅ Real-time WebSocket support
+- ✅ Rate limiting and DoS protection
+
+**Missing Enums (hardcode in frontend for now):**
+- User roles: `admin, coordinator, faculty, resident, clinical_staff, rn, lpn, msa`
+- User status: `active, inactive, locked, pending`
+- Absence reasons: free text (no enum)
+- Leave types: free text (no enum)
+
+**Action:**
+1. Implement swap approval workflow (new `swap_status` state machine)
+2. Implement leave approval workflow (new `leave_status` state machine)
+3. Add `/api/v1/dashboard/summary` aggregate endpoint
+
+**Files to create:**
+- `backend/app/api/routes/dashboard.py` (aggregate endpoint)
+- Modify `backend/app/services/swap_service.py` (approval workflow)
+- Modify `backend/app/services/leave_service.py` (approval workflow)
+
+### 15. K2.5 Swarm MCP Integration (NEW - Session Phase 8)
 **Added:** 2026-01-30
 **Design:** [`docs/planning/K2_SWARM_MCP_INTEGRATION.md`](planning/K2_SWARM_MCP_INTEGRATION.md)
 **Analysis:** [`docs/research/AGENT_ARCHITECTURE_COMPARISON.md`](research/AGENT_ARCHITECTURE_COMPARISON.md)
@@ -687,10 +725,10 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 | Priority | Open | Resolved |
 |----------|------|----------|
 | **CRITICAL** | 2 | 6 |
-| **HIGH** | 6 | 9 |
+| **HIGH** | 7 | 9 |
 | **MEDIUM** | 16 | 11 |
 | **LOW** | 13 | 3 |
-| **TOTAL** | **37** | **29** |
+| **TOTAL** | **38** | **29** |
 
 ### Top 5 Actions for Next Session
 
@@ -742,6 +780,15 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 | ✅ Updated | CHANGELOG | Session 154 entries for PRs #794-797 |
 | ✅ Updated | RATE_LIMIT_AUDIT | Marked upload/schedule rate limits resolved |
 | ✅ Updated | ENDPOINT_CATALOG | Added enum endpoints section |
+
+### Session 156 Updates (2026-02-01)
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Merged | PR #800 | Kimi K2.5 swarm orchestrator + Codex P2 fixes |
+| ✅ Merged | PR #801 | Kimi swarm mypy fixes (22 errors: 4209→4187) + Codex P1/P2 |
+| ➕ Added | HIGH #14 | Admin GUI backend gaps (swap/leave approval workflows) |
+| 📝 Assessed | Backend readiness | 90% ready for GUI (90 routes, 63 models) |
 
 ### Session 154 Updates (2026-01-31)
 
