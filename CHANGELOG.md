@@ -9,6 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Session 154 - Security & Testing Improvements (2026-01-31)
+
+**Rate Limiting (PR #795 - HIGH #10):**
+- Added `@limiter.limit("2/minute")` to expensive endpoints:
+  - `POST /schedule/generate` - CPU-intensive solver
+  - `POST /import/analyze` - File processing
+  - `POST /import/analyze-file` - Single file analysis
+  - `POST /exports/{job_id}/run` - Celery queue
+  - `POST /uploads` - Storage exhaustion prevention
+
+**Schema Drift Detection (PR #796 - HIGH #11):**
+- Added `naming_convention` to SQLAlchemy Base (deterministic constraint names)
+- Fixed ActivityService to persist `provides_supervision` and `counts_toward_physical_capacity`
+
+**API Test Coverage (PR #797 - HIGH #12):**
+- Added 1,720 lines of smoke tests across 6 route files:
+  - `test_fatigue_risk_routes.py` (311 lines)
+  - `test_resilience_routes_smoke.py` (276 lines)
+  - `test_swap_routes_api.py` (113 lines)
+  - `test_call_assignments_routes_api.py` (368 lines)
+  - `test_webhooks_routes.py` (273 lines)
+  - `test_wellness_routes.py` (373 lines)
+
+**Enum Endpoints (PR #794):**
+- Added `/api/v1/enums/*` endpoints for frontend dropdowns:
+  - `GET /enums/scheduling-algorithms`
+  - `GET /enums/activity-categories`
+  - `GET /enums/rotation-types`
+  - `GET /enums/pgy-levels`
+  - `GET /enums/person-types`
+
 #### ADK Integration Analysis (2026-01-19)
 
 **Comprehensive Analysis Document:**

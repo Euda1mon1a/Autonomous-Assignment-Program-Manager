@@ -2,7 +2,7 @@
 
 Comprehensive reference of all REST API endpoints in the Residency Scheduler.
 
-> **Last Updated:** 2026-01-04
+> **Last Updated:** 2026-01-31
 > **Total Endpoints:** 200+
 > **Base URL:** `/api/v1`
 > **OpenAPI Spec:** `http://localhost:8000/openapi.json`
@@ -35,8 +35,9 @@ Comprehensive reference of all REST API endpoints in the Residency Scheduler.
 23. [Conflict Resolution](#conflict-resolution)
 24. [Portal & Dashboard](#portal--dashboard)
 25. [Specialized Routes](#specialized-routes)
-26. [Response Codes](#response-codes)
-27. [Authentication Requirements](#authentication-requirements)
+26. [Enums](#enums)
+27. [Response Codes](#response-codes)
+28. [Authentication Requirements](#authentication-requirements)
 
 ---
 
@@ -817,6 +818,33 @@ See [Cross-Disciplinary Resilience](cross-disciplinary-resilience.md) for full d
 | `/api/v1/scheduling-catalyst` | Barrier analysis |
 | `/api/v1/quota` | Work hour quotas |
 | `/api/v1/rate-limit` | Rate limit status |
+
+---
+
+## Enums
+
+**Prefix:** `/api/v1/enums`
+
+Endpoints for fetching enumeration values used in frontend dropdowns.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/enums/scheduling-algorithms` | Yes | List available scheduling algorithms |
+| GET | `/enums/activity-categories` | Yes | List activity category options |
+| GET | `/enums/rotation-types` | Yes | List rotation type options |
+| GET | `/enums/pgy-levels` | Yes | List PGY level options (1-3) |
+| GET | `/enums/person-types` | Yes | List person type options (resident/faculty) |
+| GET | `/enums/constraint-categories` | Yes | List constraint category options |
+| GET | `/enums/freeze-scopes` | Yes | List freeze scope options |
+
+**Response Format:**
+```json
+[
+  {"value": "option_value", "label": "Display Label"}
+]
+```
+
+**Added:** PR #794 (2026-01-31)
 
 ---
 
