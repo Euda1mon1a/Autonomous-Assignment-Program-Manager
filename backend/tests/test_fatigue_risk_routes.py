@@ -292,6 +292,7 @@ class TestFatigueRiskRoutes:
         )
 
         payload = {
+            "resident_id": str(resident_id),
             "schedule_start": datetime.utcnow().date().isoformat(),
             "schedule_end": datetime.utcnow().date().isoformat(),
         }

@@ -360,6 +360,7 @@ class TestWellnessRoutes:
                 "average_streak": 1.5,
                 "longest_streak": 6,
                 "total_points_earned_this_week": 42,
+                "hopfield_positions_this_week": 15,
             }
 
         monkeypatch.setattr(
