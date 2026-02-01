@@ -163,8 +163,10 @@ class ActivityService:
             "font_color": data.font_color,
             "background_color": data.background_color,
             "requires_supervision": data.requires_supervision,
+            "provides_supervision": data.provides_supervision,
             "is_protected": data.is_protected,
             "counts_toward_clinical_hours": data.counts_toward_clinical_hours,
+            "counts_toward_physical_capacity": data.counts_toward_physical_capacity,
             "display_order": data.display_order,
         }
         if data.capacity_units is not None:
@@ -234,10 +236,16 @@ class ActivityService:
             activity.background_color = data.background_color
         if data.requires_supervision is not None:
             activity.requires_supervision = data.requires_supervision
+        if data.provides_supervision is not None:
+            activity.provides_supervision = data.provides_supervision
         if data.is_protected is not None:
             activity.is_protected = data.is_protected
         if data.counts_toward_clinical_hours is not None:
             activity.counts_toward_clinical_hours = data.counts_toward_clinical_hours
+        if data.counts_toward_physical_capacity is not None:
+            activity.counts_toward_physical_capacity = (
+                data.counts_toward_physical_capacity
+            )
         if data.display_order is not None:
             activity.display_order = data.display_order
         if data.capacity_units is not None:
