@@ -153,6 +153,21 @@ Applies neural network concepts (Hopfield networks, attractor dynamics) to sched
 
 Explores piezoelectric effects in bone tissue (Wolff's Law) as a metaphor for stress-sensing feedback systems. Includes review of Python libraries (FEniCS, SfePy). **Status:** Research complete, low priority for implementation.
 
+### Negative Viscosity & Active Matter (NEW)
+- [Negative Viscosity and Active Matter](./NEGATIVE_VISCOSITY_ACTIVE_MATTER.md) 🔬 **CUTTING EDGE**
+
+Explores the 2026 UW-Madison discovery that biological tissues can exhibit **negative viscosity**, where internal friction propels rather than resists movement. This represents a paradigm shift from passive flow to active propulsion in collective cell migration. Covers:
+- **Energy Injection Mechanism** - How cells bypass thermodynamics to create propulsion zones
+- **Active Matter Physics** - Mathematical framework for negative effective viscosity
+- **Comparison with Traditional Models** - Leader-follower vs. distributed vortex propulsion
+- **Computational Modeling** - ESPResSo, HoomD-blue, and custom NumPy implementations
+- **Scheduling Applications** - Constraint alignment as "negative viscosity" in optimization
+- **Medical Applications** - Active wound healing through metabolic priming
+
+**Key Insight:** Just as cells can coordinate to make viscosity propulsive rather than resistive, scheduling agents can coordinate so that constraints *facilitate* rather than *hinder* optimization.
+
+**Status:** Research complete, conceptual mapping to scheduling established, implementation planned.
+
 ### Quantum Physics
 - [Quantum Physics Scheduler Exploration](./quantum-physics-scheduler-exploration.md)
 
@@ -197,6 +212,7 @@ By looking to fields like **game theory, epidemiology, ecology, and physics**, w
 | **Signal Processing** | 🟢 **IMPLEMENTED** | `detect_schedule_changepoints_tool` | Medium-High |
 | **Complex Systems** | 🟢 **IMPLEMENTED** | `detect_critical_slowing_down_tool` | Medium |
 | **Game Theory** | 🟡 **PARTIAL** | `calculate_shapley_workload_tool` | Medium-High |
+| **Negative Viscosity** | ✅ Research Complete | - | High |
 | **Stigmergy** | ✅ Deployed | `analyze_stigmergy_tool` | - |
 | **Control Theory** | ✅ Research Complete | - | Medium |
 | **Epidemiology** | 🟡 **PARTIAL** | (burnout SIR model exists) | Medium |
@@ -325,6 +341,6 @@ Questions about other research areas:
 
 ---
 
-**Last Updated:** 2025-12-26
+**Last Updated:** 2026-02-02
 
 *Research is ongoing. Check back for updates as new concepts are explored and validated.*
