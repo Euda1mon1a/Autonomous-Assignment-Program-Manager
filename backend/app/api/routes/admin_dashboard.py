@@ -43,10 +43,7 @@ def get_admin_dashboard_summary(db: Session = Depends(get_db)) -> AdminDashboard
     # People
     people_total = db.query(func.count(Person.id)).scalar() or 0
     residents_total = (
-        db.query(func.count(Person.id))
-        .filter(Person.type == "resident")
-        .scalar()
-        or 0
+        db.query(func.count(Person.id)).filter(Person.type == "resident").scalar() or 0
     )
     faculty_total = (
         db.query(func.count(Person.id)).filter(Person.type == "faculty").scalar() or 0
@@ -90,9 +87,7 @@ def get_admin_dashboard_summary(db: Session = Depends(get_db)) -> AdminDashboard
         people=AdminPeopleCounts(
             total=people_total, residents=residents_total, faculty=faculty_total
         ),
-        absences=AdminAbsenceCounts(
-            active=absences_active, upcoming=absences_upcoming
-        ),
+        absences=AdminAbsenceCounts(active=absences_active, upcoming=absences_upcoming),
         swaps=AdminSwapCounts(
             pending=swap_counts[SwapStatus.PENDING.value],
             approved=swap_counts[SwapStatus.APPROVED.value],

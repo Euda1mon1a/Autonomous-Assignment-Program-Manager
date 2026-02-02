@@ -13,9 +13,7 @@ from app.models.rotation_template import RotationTemplate
 from app.utils.academic_blocks import get_block_number_for_date
 
 
-def test_delete_impact_person_dependencies(
-    client: TestClient, auth_headers: dict, db
-):
+def test_delete_impact_person_dependencies(client: TestClient, auth_headers: dict, db):
     today = date.today()
 
     person = Person(

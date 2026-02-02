@@ -7,7 +7,12 @@ from fastapi.testclient import TestClient
 
 from app.core.security import get_password_hash
 from app.models.absence import Absence
-from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus, ConflictSeverity, ConflictType
+from app.models.conflict_alert import (
+    ConflictAlert,
+    ConflictAlertStatus,
+    ConflictSeverity,
+    ConflictType,
+)
 from app.models.person import Person
 from app.models.swap import SwapRecord, SwapStatus, SwapType
 from app.models.user import User

@@ -54,7 +54,9 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", "transaction_id"),
     )
     op.create_index("idx_users_version_txn", "users_version", ["transaction_id"])
-    op.create_index("idx_users_version_end_txn", "users_version", ["end_transaction_id"])
+    op.create_index(
+        "idx_users_version_end_txn", "users_version", ["end_transaction_id"]
+    )
     op.create_index("idx_users_version_op", "users_version", ["operation_type"])
 
 

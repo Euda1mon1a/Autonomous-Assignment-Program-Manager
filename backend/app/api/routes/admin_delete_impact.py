@@ -63,8 +63,9 @@ def _count_dependents(
             continue
         condition = or_(*[column == resource_id for column in columns])
         count = (
-            db.execute(select(func.count()).select_from(table).where(condition))
-            .scalar()
+            db.execute(
+                select(func.count()).select_from(table).where(condition)
+            ).scalar()
             or 0
         )
         if count:
@@ -80,7 +81,9 @@ def _count_dependents(
     return results
 
 
-@router.get("", response_model=DeleteImpactResponse, dependencies=[Depends(require_admin())])
+@router.get(
+    "", response_model=DeleteImpactResponse, dependencies=[Depends(require_admin())]
+)
 def get_delete_impact(
     resource_type: DeleteImpactResource = Query(
         ..., description="Resource type to analyze"
