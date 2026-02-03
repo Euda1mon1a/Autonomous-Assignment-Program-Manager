@@ -1586,36 +1586,17 @@ def get_adjunct_faculty_gaps(
     current_user: User = Depends(get_current_active_user),
 ):
     """
-    Get adjunct faculty who need manual preload for a block.
+    DEPRECATED: Faculty expansion service archived.
 
-    Adjuncts are excluded from auto-expansion (by design) and must be
-    manually assigned by coordinators. This endpoint identifies which
-    adjuncts exist and how many assignments they currently have.
-
-    Use this to alert coordinators when adjunct coverage is incomplete.
+    Faculty assignments are now handled by the global CP-SAT solver.
+    Adjunct gaps should be managed via half_day_assignments queries.
     """
-    from app.services.faculty_assignment_expansion_service import (
-        FacultyAssignmentExpansionService,
-    )
-
-    service = FacultyAssignmentExpansionService(db)
-    gaps = service.get_adjunct_faculty_without_assignments(block_number, academic_year)
-
-    return AdjunctGapsResponse(
-        block_number=block_number,
-        academic_year=academic_year,
-        adjuncts_needing_manual=[
-            AdjunctFacultyGapResponse(
-                person_id=g.person_id,
-                display_name=g.display_name,
-                faculty_role=g.faculty_role,
-                min_clinic_halfdays=g.min_clinic_halfdays,
-                max_clinic_halfdays=g.max_clinic_halfdays,
-                existing_assignment_count=g.existing_assignment_count,
-            )
-            for g in gaps
-        ],
-        total_adjuncts=len(gaps),
+    raise HTTPException(
+        status_code=410,
+        detail=(
+            "Deprecated: faculty expansion service archived. "
+            "Global solver now handles faculty assignments."
+        ),
     )
 
 
@@ -1629,163 +1610,15 @@ def get_faculty_coverage_validation(
     current_user: User = Depends(get_current_active_user),
 ):
     """
-    Comprehensive faculty coverage validation for a block.
+    DEPRECATED: Faculty expansion service archived.
 
-    Returns:
-    - Total faculty count and coverage status
-    - Adjuncts needing manual preload
-    - Clinic limit violations (over max or under min)
-    - Overall coverage completeness indicator
-
-    Use this endpoint to verify faculty scheduling before publishing.
+    Faculty assignments are now handled by the global CP-SAT solver.
+    Coverage validation should query half_day_assignments directly.
     """
-    from collections import defaultdict
-    from datetime import timedelta
-    from sqlalchemy import func
-
-    from app.models.half_day_assignment import HalfDayAssignment
-    from app.models.person import Person
-    from app.models.activity import Activity
-    from app.services.faculty_assignment_expansion_service import (
-        FacultyAssignmentExpansionService,
-    )
-    from app.utils.academic_blocks import get_block_dates
-
-    # Get block date range
-    block_dates = get_block_dates(block_number, academic_year)
-    start_date, end_date = block_dates.start_date, block_dates.end_date
-
-    # Get all faculty
-    all_faculty = (
-        db.execute(select(Person).where(Person.type == "faculty")).scalars().all()
-    )
-    faculty_by_id = {f.id: f for f in all_faculty}
-
-    # Get faculty with assignments
-    faculty_with_assignments_stmt = (
-        select(HalfDayAssignment.person_id)
-        .where(
-            HalfDayAssignment.person_id.in_([f.id for f in all_faculty]),
-            HalfDayAssignment.date >= start_date,
-            HalfDayAssignment.date <= end_date,
-        )
-        .distinct()
-    )
-    faculty_with_assignments_ids = set(
-        db.execute(faculty_with_assignments_stmt).scalars().all()
-    )
-
-    # Get adjunct gaps
-    service = FacultyAssignmentExpansionService(db)
-    adjunct_gaps = service.get_adjunct_faculty_without_assignments(
-        block_number, academic_year
-    )
-
-    # Check clinic limit violations
-    # Get clinic activities
-    clinic_activities = (
-        db.execute(select(Activity).where(Activity.activity_type == "outpatient"))
-        .scalars()
-        .all()
-    )
-    clinic_activity_ids = {a.id for a in clinic_activities}
-
-    # Count clinic assignments per faculty per week
-    clinic_violations = []
-    if clinic_activity_ids:
-        # Get clinic assignments for faculty
-        clinic_assignments = (
-            db.execute(
-                select(HalfDayAssignment).where(
-                    HalfDayAssignment.person_id.in_([f.id for f in all_faculty]),
-                    HalfDayAssignment.date >= start_date,
-                    HalfDayAssignment.date <= end_date,
-                    HalfDayAssignment.activity_id.in_(clinic_activity_ids),
-                )
-            )
-            .scalars()
-            .all()
-        )
-
-        # Group by faculty and week
-        faculty_weekly_counts: dict[str, dict[str, int]] = defaultdict(
-            lambda: defaultdict(int)
-        )
-        for assignment in clinic_assignments:
-            week_start = assignment.date - timedelta(days=assignment.date.weekday())
-            faculty_weekly_counts[str(assignment.person_id)][str(week_start)] += 1
-
-        # Check against limits
-        for faculty in all_faculty:
-            if faculty.faculty_role == "adjunct":
-                continue  # Adjuncts handled separately
-
-            # Get effective limits
-            person_max = getattr(faculty, "max_clinic_halfdays_per_week", None)
-            if person_max is not None and person_max > 0:
-                max_limit = person_max
-                min_limit = getattr(faculty, "min_clinic_halfdays_per_week", 0) or 0
-                limit_source = "person"
-            else:
-                max_limit = faculty.weekly_clinic_limit
-                min_limit = 0
-                limit_source = "role"
-
-            faculty_weeks = faculty_weekly_counts.get(str(faculty.id), {})
-            for week_str, count in faculty_weeks.items():
-                if count > max_limit:
-                    clinic_violations.append(
-                        ClinicLimitViolationResponse(
-                            faculty_id=faculty.id,
-                            faculty_name=faculty.display_name or str(faculty.id),
-                            faculty_role=faculty.faculty_role,
-                            week_start=date.fromisoformat(week_str),
-                            clinic_count=count,
-                            min_limit=min_limit,
-                            max_limit=max_limit,
-                            violation_type="over_max",
-                            limit_source=limit_source,
-                        )
-                    )
-                elif min_limit > 0 and count < min_limit:
-                    clinic_violations.append(
-                        ClinicLimitViolationResponse(
-                            faculty_id=faculty.id,
-                            faculty_name=faculty.display_name or str(faculty.id),
-                            faculty_role=faculty.faculty_role,
-                            week_start=date.fromisoformat(week_str),
-                            clinic_count=count,
-                            min_limit=min_limit,
-                            max_limit=max_limit,
-                            violation_type="under_min",
-                            limit_source=limit_source,
-                        )
-                    )
-
-    # Determine coverage completeness
-    coverage_complete = (
-        len(faculty_with_assignments_ids) == len(all_faculty)
-        and len(clinic_violations) == 0
-    )
-
-    return FacultyCoverageResponse(
-        block_number=block_number,
-        academic_year=academic_year,
-        block_start_date=start_date,
-        block_end_date=end_date,
-        total_faculty=len(all_faculty),
-        faculty_with_assignments=len(faculty_with_assignments_ids),
-        adjuncts_needing_manual=[
-            AdjunctFacultyGapResponse(
-                person_id=g.person_id,
-                display_name=g.display_name,
-                faculty_role=g.faculty_role,
-                min_clinic_halfdays=g.min_clinic_halfdays,
-                max_clinic_halfdays=g.max_clinic_halfdays,
-                existing_assignment_count=g.existing_assignment_count,
-            )
-            for g in adjunct_gaps
-        ],
-        clinic_limit_violations=clinic_violations,
-        coverage_complete=coverage_complete,
+    raise HTTPException(
+        status_code=410,
+        detail=(
+            "Deprecated: faculty expansion service archived. "
+            "Global solver now handles faculty assignments."
+        ),
     )
