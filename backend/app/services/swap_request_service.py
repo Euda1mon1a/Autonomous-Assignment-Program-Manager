@@ -490,21 +490,10 @@ class SwapRequestService:
         swap.approved_at = datetime.utcnow()
         self.db.commit()
 
-        # Execute the swap
-        execution = self.executor.execute_swap(
-            source_faculty_id=swap.source_faculty_id,
-            source_week=swap.source_week,
-            target_faculty_id=swap.target_faculty_id,
-            target_week=swap.target_week,
-            swap_type=swap.swap_type.value,
-            reason=swap.reason,
-        )
+        # Execute the swap using the existing record
+        execution = self.executor.execute_existing_swap(swap.id)
 
         if execution.success:
-            swap.status = SwapStatus.EXECUTED
-            swap.executed_at = datetime.utcnow()
-            self.db.commit()
-
             # Notify both parties
             self.notifier.notify_swap_accepted(
                 recipient_faculty_id=swap.source_faculty_id,
@@ -687,21 +676,10 @@ class SwapRequestService:
                 ],
             )
 
-            # Execute the swap
-        execution = self.executor.execute_swap(
-            source_faculty_id=swap.source_faculty_id,
-            source_week=swap.source_week,
-            target_faculty_id=swap.target_faculty_id,
-            target_week=swap.target_week,
-            swap_type=swap.swap_type.value,
-            reason=swap.reason,
-        )
+            # Execute the swap using the existing record
+        execution = self.executor.execute_existing_swap(swap.id)
 
         if execution.success:
-            swap.status = SwapStatus.EXECUTED
-            swap.executed_at = datetime.utcnow()
-            self.db.commit()
-
             # Notify parties
             self.notifier.notify_swap_executed(
                 faculty_ids=[swap.source_faculty_id, swap.target_faculty_id],

@@ -289,6 +289,76 @@ class SwapExecutor:
                 error_code="EXECUTION_FAILED",
             )
 
+    def execute_existing_swap(
+        self,
+        swap_id: UUID,
+        executed_by_id: UUID | None = None,
+    ) -> ExecutionResult:
+        """
+        Execute a swap using an existing SwapRecord.
+
+        This preserves the original record (PENDING/APPROVED) and updates it
+        to EXECUTED after schedule changes are applied.
+        """
+        try:
+            with transactional_with_retry(self.db, max_retries=3, timeout_seconds=30.0):
+                swap_record = (
+                    self.db.query(SwapRecord)
+                    .filter(SwapRecord.id == swap_id)
+                    .with_for_update()
+                    .first()
+                )
+                if not swap_record:
+                    return ExecutionResult(
+                        success=False,
+                        message="Swap not found",
+                        error_code="SWAP_NOT_FOUND",
+                    )
+
+                if swap_record.status != SwapStatus.APPROVED:
+                    return ExecutionResult(
+                        success=False,
+                        message="Swap must be approved before execution",
+                        error_code="INVALID_STATUS",
+                    )
+
+                # Apply schedule updates
+                self._update_schedule_assignments(
+                    swap_record.source_faculty_id,
+                    swap_record.source_week,
+                    swap_record.target_faculty_id,
+                    swap_record.target_week,
+                )
+                self._update_call_cascade(
+                    swap_record.source_week, swap_record.target_faculty_id
+                )
+                if swap_record.target_week:
+                    self._update_call_cascade(
+                        swap_record.target_week, swap_record.source_faculty_id
+                    )
+
+                swap_record.status = SwapStatus.EXECUTED
+                swap_record.executed_at = datetime.utcnow()
+                swap_record.executed_by_id = executed_by_id
+
+                self.db.flush()
+
+            logger.info(f"Swap executed via existing record: {swap_id}")
+
+            return ExecutionResult(
+                success=True,
+                swap_id=swap_id,
+                message="Swap executed successfully",
+            )
+
+        except (SQLAlchemyError, ValueError, KeyError) as e:
+            logger.exception(f"Swap execution failed: {e}")
+            return ExecutionResult(
+                success=False,
+                message=f"Swap execution failed: {str(e)}",
+                error_code="EXECUTION_FAILED",
+            )
+
     def rollback_swap(
         self,
         swap_id: UUID,

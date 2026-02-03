@@ -44,7 +44,7 @@ See Also:
     - app.schemas.swap: Request/response schema definitions
 """
 
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -56,18 +56,176 @@ from app.db.session import get_db
 from app.models.swap import SwapRecord
 from app.models.user import User
 from app.schemas.swap import (
+    SwapApprovalRequest,
+    SwapApprovalResponse,
+    SwapExecuteByIdResponse,
     SwapExecuteRequest,
     SwapExecuteResponse,
     SwapHistoryResponse,
     SwapRecordResponse,
     SwapRollbackRequest,
+    SwapRequestCreateResponse,
     SwapValidationResult,
 )
 from app.services.swap_executor import SwapExecutor
 from app.services.swap_validation import SwapValidationService
 from app.websocket.manager import broadcast_schedule_updated, broadcast_swap_approved
+from app.models.swap import SwapStatus, SwapType
 
 router = APIRouter(prefix="/swaps", tags=["swaps"])
+
+
+@router.post("/request", response_model=SwapRequestCreateResponse)
+async def request_swap(
+    request: SwapExecuteRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> SwapRequestCreateResponse:
+    """
+    Create a swap request that requires approval before execution.
+    """
+    if not (current_user.can_manage_schedules or current_user.is_faculty):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to request swaps",
+        )
+
+    validator = SwapValidationService(db)
+    validation = validator.validate_swap(
+        source_faculty_id=request.source_faculty_id,
+        source_week=request.source_week,
+        target_faculty_id=request.target_faculty_id,
+        target_week=request.target_week,
+    )
+
+    if not validation.valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Swap validation failed",
+        )
+
+    existing = (
+        db.query(SwapRecord)
+        .filter(
+            SwapRecord.source_faculty_id == request.source_faculty_id,
+            SwapRecord.source_week == request.source_week,
+            SwapRecord.status.in_([SwapStatus.PENDING, SwapStatus.APPROVED]),
+        )
+        .first()
+    )
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Pending swap request already exists for this week",
+        )
+
+    swap_record = SwapRecord(
+        source_faculty_id=request.source_faculty_id,
+        source_week=request.source_week,
+        target_faculty_id=request.target_faculty_id,
+        target_week=request.target_week,
+        swap_type=SwapType(request.swap_type.value),
+        status=SwapStatus.PENDING,
+        reason=request.reason,
+        requested_by_id=current_user.id,
+    )
+    db.add(swap_record)
+    db.commit()
+    db.refresh(swap_record)
+
+    return SwapRequestCreateResponse(
+        success=True,
+        swap_id=swap_record.id,
+        status=swap_record.status,
+        message="Swap request created",
+    )
+
+
+@router.post("/{swap_id}/approval", response_model=SwapApprovalResponse)
+async def approve_swap(
+    swap_id: UUID,
+    request: SwapApprovalRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> SwapApprovalResponse:
+    """
+    Approve or reject a pending swap request.
+    """
+    if not current_user.can_manage_schedules:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to approve swaps",
+        )
+
+    swap = db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
+    if not swap:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Swap not found",
+        )
+
+    if swap.status != SwapStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Swap is already {swap.status.value}",
+        )
+
+    if request.approved:
+        swap.status = SwapStatus.APPROVED
+        swap.approved_at = datetime.utcnow()
+        swap.approved_by_id = current_user.id
+        swap.notes = request.notes
+        db.commit()
+
+        await broadcast_swap_approved(
+            swap_id=swap.id,
+            requester_id=swap.source_faculty_id,
+            target_person_id=swap.target_faculty_id,
+            approved_by=current_user.id,
+            affected_assignments=[],
+            message="Swap approved",
+        )
+    else:
+        swap.status = SwapStatus.REJECTED
+        swap.notes = request.notes
+        db.commit()
+
+    return SwapApprovalResponse(
+        success=True,
+        status=swap.status,
+        message=f"Swap {swap.status.value}",
+    )
+
+
+@router.post("/{swap_id}/execute", response_model=SwapExecuteByIdResponse)
+async def execute_swap_by_id(
+    swap_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> SwapExecuteByIdResponse:
+    """
+    Execute an approved swap request by ID.
+    """
+    if not current_user.can_manage_schedules:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to execute swaps",
+        )
+
+    executor = SwapExecutor(db)
+    result = executor.execute_existing_swap(swap_id, executed_by_id=current_user.id)
+
+    if not result.success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result.message,
+        )
+
+    return SwapExecuteByIdResponse(
+        success=True,
+        status=SwapStatus.EXECUTED,
+        message=result.message,
+    )
 
 
 @router.post("/execute", response_model=SwapExecuteResponse)
@@ -107,7 +265,7 @@ async def execute_swap(
     """
     # Validate the swap
     validator = SwapValidationService(db)
-    validation = await validator.validate_swap(
+    validation = validator.validate_swap(
         source_faculty_id=request.source_faculty_id,
         source_week=request.source_week,
         target_faculty_id=request.target_faculty_id,
@@ -181,7 +339,7 @@ async def validate_swap(
     Use this to check if a swap is possible before attempting execution.
     """
     validator = SwapValidationService(db)
-    validation = await validator.validate_swap(
+    validation = validator.validate_swap(
         source_faculty_id=request.source_faculty_id,
         source_week=request.source_week,
         target_faculty_id=request.target_faculty_id,
