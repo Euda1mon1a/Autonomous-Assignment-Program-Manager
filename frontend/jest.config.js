@@ -28,6 +28,7 @@ const config = {
   transformIgnorePatterns: [
     'node_modules/(?!(msw|@mswjs|until-async)/)',
   ],
+  modulePathIgnorePatterns: ['<rootDir>/.next/'],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
