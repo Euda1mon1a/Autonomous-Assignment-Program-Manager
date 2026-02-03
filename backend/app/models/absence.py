@@ -96,6 +96,12 @@ class Absence(Base):
         GUID(), ForeignKey("people.id", ondelete="SET NULL"), nullable=True
     )
 
+    # Approval workflow
+    status = Column(String(20), nullable=False, default="approved")
+    reviewed_at = Column(DateTime, nullable=True)
+    reviewed_by_id = Column(GUID(), ForeignKey("users.id"), nullable=True)
+    review_notes = Column(Text, nullable=True)
+
     # Military-specific
     deployment_orders = Column(Boolean, default=False)
     tdy_location = Column(String(255))
@@ -109,6 +115,7 @@ class Absence(Base):
     # Relationships
     person = relationship("Person", back_populates="absences", foreign_keys=[person_id])
     created_by = relationship("Person", foreign_keys=[created_by_id])
+    reviewed_by = relationship("User", foreign_keys=[reviewed_by_id])
 
     __table_args__ = (
         CheckConstraint("end_date >= start_date", name="check_absence_dates"),
@@ -117,6 +124,10 @@ class Absence(Base):
             "'conference', 'bereavement', 'emergency_leave', 'sick', 'convalescent', 'maternity_paternity', "
             "'training', 'military_duty')",
             name="check_absence_type",
+        ),
+        CheckConstraint(
+            "status IN ('pending', 'approved', 'rejected', 'cancelled')",
+            name="check_absence_status",
         ),
     )
 

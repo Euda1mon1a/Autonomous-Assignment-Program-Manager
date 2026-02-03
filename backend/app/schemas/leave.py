@@ -38,6 +38,13 @@ class LeaveType(str, Enum):
     MATERNITY_PATERNITY = "maternity_paternity"
 
 
+class LeaveStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
+
+
 class LeaveWebhookPayload(BaseModel):
     """Payload for leave webhook notifications."""
 
@@ -119,11 +126,33 @@ class LeaveResponse(BaseModel):
     leave_type: LeaveType
     is_blocking: bool
     description: str | None
+    status: LeaveStatus
+    reviewed_at: datetime | None = None
+    reviewed_by_id: UUID | None = None
+    review_notes: str | None = None
     created_at: datetime
     updated_at: datetime | None
 
     class Config:
         from_attributes = True
+
+
+class LeaveRequestResponse(BaseModel):
+    success: bool
+    leave_id: UUID | None = None
+    status: LeaveStatus
+    message: str
+
+
+class LeaveApprovalRequest(BaseModel):
+    approved: bool
+    notes: str | None = Field(None, max_length=500)
+
+
+class LeaveApprovalResponse(BaseModel):
+    success: bool
+    status: LeaveStatus
+    message: str
 
 
 class LeaveListResponse(BaseModel):
