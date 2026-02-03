@@ -167,6 +167,25 @@ class SwapExecuteResponse(BaseModel):
     validation: SwapValidationResult
 
 
+class SwapRequestCreateResponse(BaseModel):
+    success: bool
+    swap_id: UUID | None = None
+    status: SwapStatusSchema
+    message: str
+
+
+class SwapApprovalResponse(BaseModel):
+    success: bool
+    status: SwapStatusSchema
+    message: str
+
+
+class SwapExecuteByIdResponse(BaseModel):
+    success: bool
+    status: SwapStatusSchema
+    message: str
+
+
 class SwapHistoryResponse(BaseModel):
     items: list[SwapRecordResponse]
     total: int
