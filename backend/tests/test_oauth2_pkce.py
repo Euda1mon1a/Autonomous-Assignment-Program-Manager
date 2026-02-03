@@ -458,7 +458,5 @@ def valid_access_token(test_user):
         "username": test_user.username,
         "role": test_user.role,
     }
-    access_token, jti, expires_at = create_access_token(
-        token_data, return_details=True
-    )
+    access_token, jti, expires_at = create_access_token(token_data, return_details=True)
     return access_token

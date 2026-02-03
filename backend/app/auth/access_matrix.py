@@ -631,7 +631,7 @@ class AccessControlMatrix:
                 )
                 return False
 
-                # Check static permissions in matrix
+        # Check static permissions in matrix
         has_static_permission = self._check_static_permission(role, resource, action)
 
         # Check inherited permissions from role hierarchy
@@ -642,13 +642,30 @@ class AccessControlMatrix:
                     has_static_permission = True
                     break
 
-                    # Apply context-aware checks if context is provided
-        if context and has_static_permission:
-            has_permission = self._check_context_permission(
-                role, resource, action, context
-            )
+        if has_static_permission:
+            if context:
+                has_permission = self._check_context_permission(
+                    role, resource, action, context
+                )
+            else:
+                # Strict guard: self-service updates/deletes require context.
+                if role in {UserRole.RESIDENT, UserRole.FACULTY} and action in {
+                    PermissionAction.UPDATE,
+                    PermissionAction.DELETE,
+                }:
+                    if resource in {
+                        ResourceType.ABSENCE,
+                        ResourceType.LEAVE,
+                        ResourceType.SWAP_REQUEST,
+                        ResourceType.PERSON,
+                    }:
+                        has_permission = False
+                    else:
+                        has_permission = True
+                else:
+                    has_permission = True
         else:
-            has_permission = has_static_permission
+            has_permission = False
 
             # Audit the permission check
         self._audit_permission_check(
