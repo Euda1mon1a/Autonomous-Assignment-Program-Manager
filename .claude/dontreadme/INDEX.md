@@ -120,6 +120,24 @@ Multi-agent coordination and PAI (Programmatic Artificial Intelligence) specific
 
 ---
 
+## External Tools
+
+**Location:** `/tools/`
+
+Integration documentation for external AI tools and services.
+
+### Codex Integration (NEW - Feb 2026)
+- CODEX_INTEGRATION.md - LLM reference for Codex bot interaction
+  - Priority badge parsing (P1/P2/P3)
+  - GitHub API queries for comments/reviews
+  - Automation output interpretation
+  - Multi-agent coordination patterns
+
+**Human-facing docs:** `docs/tools/CODEX_APP.md`
+**Skill:** `/check-codex` - Fetch Codex feedback for current PR
+
+---
+
 ## How to Use This Index
 
 ### For New Sessions
