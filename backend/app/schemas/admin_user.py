@@ -11,6 +11,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator, ValidationInfo
 
+from app.schemas.audit import FieldChange
+
 
 class UserRole(str, Enum):
     """Available user roles."""
@@ -208,6 +210,7 @@ class ActivityLogEntry(BaseModel):
     target_user_id: UUID | None = Field(None, alias="targetUserId")
     target_user_email: str | None = Field(None, alias="targetUserEmail")
     details: dict | None = None
+    changes: list[FieldChange] | None = None
     ip_address: str | None = Field(None, alias="ipAddress")
     user_agent: str | None = Field(None, alias="userAgent")
 

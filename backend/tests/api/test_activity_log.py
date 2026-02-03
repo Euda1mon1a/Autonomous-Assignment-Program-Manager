@@ -279,6 +279,39 @@ class TestActivityLogQuery:
             for i in range(len(results) - 1):
                 assert results[i].created_at >= results[i + 1].created_at
 
+    def test_activity_log_changes_surface_in_response(
+        self, client: TestClient, db: Session, admin_user: User, auth_headers: dict
+    ):
+        """Test that field-level changes are surfaced in activity log response."""
+        if not auth_headers:
+            pytest.skip("Auth not available in test environment")
+
+        log_entry = ActivityLog.create_entry(
+            action_type=ActivityActionType.USER_UPDATED,
+            user_id=admin_user.id,
+            target_entity="User",
+            target_id=str(uuid.uuid4()),
+            details={"changes": {"role": {"old": "resident", "new": "faculty"}}},
+        )
+        db.add(log_entry)
+        db.commit()
+
+        response = client.get("/api/admin/users/activity-log", headers=auth_headers)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["items"]
+
+        changes = None
+        for item in data["items"]:
+            if item["id"] == str(log_entry.id):
+                changes = item.get("changes")
+                break
+
+        assert changes is not None
+        assert changes[0]["field"] == "role"
+        assert changes[0]["oldValue"] == "resident"
+        assert changes[0]["newValue"] == "faculty"
+
 
 class TestPHISafety:
     """Test that activity logs don't expose PHI improperly."""
