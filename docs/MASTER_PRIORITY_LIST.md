@@ -176,7 +176,7 @@ Remaining faculty-specific gaps:
 
 **Action:**
 1. Decide canonical schedule table for faculty (prefer half_day_assignments)
-2. Wire faculty expansion into half-day pipeline before CP-SAT activity solver
+2. Archive faculty expansion; faculty slots now created via outpatient writer + post-solver fill
 3. Enforce or normalize weekly clinic min/max limits and fix template coverage gaps
 
 ### Phase 6 — CP-SAT Hardening + Equity + Excel Staging (In Progress)

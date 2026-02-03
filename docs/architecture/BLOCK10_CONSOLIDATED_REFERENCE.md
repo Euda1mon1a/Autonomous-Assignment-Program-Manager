@@ -180,18 +180,14 @@ engine.py generate_schedule():
 │       ├─ Faculty Call → call/pcat/do
 │       └─ SM → sm_clinic
 │
-├─ Step 1.5h.5: Faculty Expansion ← NEW
-│   └─ FacultyAssignmentExpansionService.fill_faculty_assignments()
-│       ├─ Weekend → W
-│       ├─ Holiday → HOL
-│       ├─ Absence → LV-AM/LV-PM
-│       ├─ Deployed → DEP
-│       └─ Default → gme/dfm
-│
 ├─ Step 4: Activity Solver
 │   └─ CPSATActivitySolver.solve()
 │
-└─ Step 7: Faculty Supervision (skipped in half-day mode)
+├─ Step 6: Faculty Outpatient Writer
+│   └─ FacultyOutpatientAssignmentService (clinic + AT supervision)
+│
+└─ Step 7: Post-solver Faculty Slot Fill
+    └─ SchedulingEngine._ensure_faculty_half_day_slots()
 ```
 
 ---

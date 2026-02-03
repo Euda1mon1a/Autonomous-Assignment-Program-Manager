@@ -251,9 +251,13 @@ WHERE ca.date BETWEEN '2026-03-12' AND '2026-04-08';
 
 **Purpose:** Granular half-day slot assignments (AM/PM)
 
-**Status:** Empty for Block 10 (preload expansion not yet run)
+**Status:** Populated by preloads + solver/outpatient pipeline
 
-This table is populated by the preload expansion service after FMIT and other preloads are in place.
+Half-day assignments are now created directly by:
+- Preloads (FMIT/call/absences)
+- Faculty outpatient writer (clinic + AT)
+- Solver persistence (resident slots)
+- Post-solver fill for remaining faculty slots (OFF)
 
 ### Source Priority
 
