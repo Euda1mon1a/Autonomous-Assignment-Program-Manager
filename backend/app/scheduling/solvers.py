@@ -93,6 +93,8 @@ class SolverResult:
         random_seed: int | None = None,
         call_assignments: list[tuple[UUID, UUID, str]]
         | None = None,  # (person_id, block_id, call_type)
+        faculty_half_day_assignments: list[tuple[UUID, UUID, str]]
+        | None = None,  # (faculty_id, block_id, activity_type)
     ) -> None:
         self.success = success
         self.assignments = assignments
@@ -108,6 +110,9 @@ class SolverResult:
         self.call_assignments = (
             call_assignments or []
         )  # (person_id, block_id, call_type)
+        self.faculty_half_day_assignments = (
+            faculty_half_day_assignments or []
+        )  # (faculty_id, block_id, activity_type: C, AT, PCAT, DO, OFF)
 
     def __repr__(self) -> str:
         return f"SolverResult(success={self.success}, assignments={len(self.assignments)}, status={self.status})"
@@ -953,12 +958,58 @@ class CPSATSolver(BaseSolver):
                 f"eligible faculty across {len(call_dates_processed)} nights"
             )
 
+        # ==================================================
+        # FACULTY ACTIVITY DECISION VARIABLES (Half-Day Level)
+        # These determine what each faculty does in each half-day slot:
+        # - clinic: Faculty primary clinic session
+        # - supervise: Faculty supervising residents
+        # - pcat: Post-call attending (morning after overnight call)
+        # - do: Day off (afternoon after overnight call)
+        # If none selected, slot defaults to OFF
+        # ==================================================
+        fac_clinic = {}  # fac_clinic[f_i, b_i] = 1 if faculty f does clinic in block b
+        fac_supervise = {}  # fac_supervise[f_i, b_i] = 1 if faculty f supervises
+        fac_pcat = {}  # fac_pcat[f_i, b_i] = 1 if faculty f has PCAT
+        fac_do = {}  # fac_do[f_i, b_i] = 1 if faculty f has DO
+
+        # Track which blocks are AM vs PM for PCAT/DO assignment
+        am_blocks = {b.id: b for b in context.blocks if b.time_of_day == "AM"}
+        pm_blocks = {b.id: b for b in context.blocks if b.time_of_day == "PM"}
+
+        # Create variables for all faculty across all blocks (including weekends for PCAT/DO)
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            for block in context.blocks:  # All blocks, not just workdays
+                b_i = context.block_idx[block.id]
+
+                # Clinic only on workdays (not weekends/holidays)
+                if not block.is_weekend and not getattr(block, "is_holiday", False):
+                    fac_clinic[f_i, b_i] = model.NewBoolVar(f"fac_clinic_{f_i}_{b_i}")
+                    fac_supervise[f_i, b_i] = model.NewBoolVar(
+                        f"fac_supervise_{f_i}_{b_i}"
+                    )
+
+                # PCAT/DO can happen any day (after overnight call)
+                fac_pcat[f_i, b_i] = model.NewBoolVar(f"fac_pcat_{f_i}_{b_i}")
+                fac_do[f_i, b_i] = model.NewBoolVar(f"fac_do_{f_i}_{b_i}")
+
+        logger.info(
+            f"Created faculty activity variables: "
+            f"{len(fac_clinic)} clinic, {len(fac_supervise)} supervise, "
+            f"{len(fac_pcat)} pcat, {len(fac_do)} do"
+        )
+
         variables = {
             "assignments": x_2d,  # For legacy constraints (residents)
             "template_assignments": x,  # For rotation-specific constraints (residents)
             "faculty_assignments": f_2d,  # Faculty 2D view
             "faculty_template_assignments": f,  # Faculty 3D view
             "call_assignments": call,  # Overnight call assignments
+            # Faculty activity variables
+            "fac_clinic": fac_clinic,
+            "fac_supervise": fac_supervise,
+            "fac_pcat": fac_pcat,
+            "fac_do": fac_do,
         }
 
         # ==================================================
@@ -990,6 +1041,183 @@ class CPSATSolver(BaseSolver):
                 ]
                 if rotation_vars:
                     model.Add(sum(rotation_vars) <= 1)
+
+        # ==================================================
+        # FACULTY ACTIVITY CONSTRAINTS
+        # ==================================================
+
+        # Constraint: At most one activity per faculty per slot
+        # (clinic, supervise, pcat, do) are mutually exclusive
+        # If none selected, slot is implicitly OFF
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            for block in context.blocks:
+                b_i = context.block_idx[block.id]
+                activity_vars = []
+                if (f_i, b_i) in fac_clinic:
+                    activity_vars.append(fac_clinic[f_i, b_i])
+                if (f_i, b_i) in fac_supervise:
+                    activity_vars.append(fac_supervise[f_i, b_i])
+                if (f_i, b_i) in fac_pcat:
+                    activity_vars.append(fac_pcat[f_i, b_i])
+                if (f_i, b_i) in fac_do:
+                    activity_vars.append(fac_do[f_i, b_i])
+                if activity_vars:
+                    model.Add(sum(activity_vars) <= 1)
+
+        # Constraint: Faculty clinic limits by role
+        # PD=0, APD=2, OIC=2, DeptChief=1, Core=4 per week
+        # Group blocks by week (Monday-Sunday)
+        from collections import defaultdict
+        from datetime import timedelta
+
+        blocks_by_week: dict[tuple, list] = defaultdict(list)
+        for block in workday_blocks:
+            # Get Monday of the week
+            week_start = block.date - timedelta(days=block.date.weekday())
+            blocks_by_week[week_start].append(block)
+
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            # Get weekly clinic limit from faculty role
+            weekly_limit = getattr(faculty, "weekly_clinic_limit", 4)
+            if hasattr(faculty, "faculty_role"):
+                role = faculty.faculty_role
+                if role in ("PD", "program_director"):
+                    weekly_limit = 0
+                elif role in ("APD", "assistant_program_director", "OIC"):
+                    weekly_limit = 2
+                elif role in ("dept_chief", "department_chief"):
+                    weekly_limit = 1
+                elif role in ("sports_med",):
+                    weekly_limit = 0  # Sports Med has separate SM clinic
+                else:
+                    weekly_limit = 4  # Core faculty default
+
+            for week_start, week_blocks in blocks_by_week.items():
+                clinic_vars = [
+                    fac_clinic[f_i, context.block_idx[b.id]]
+                    for b in week_blocks
+                    if (f_i, context.block_idx[b.id]) in fac_clinic
+                ]
+                if clinic_vars:
+                    model.Add(sum(clinic_vars) <= weekly_limit)
+
+        # Constraint: PCAT/DO linked to overnight call
+        # If call[f, date] = 1, then pcat[f, date+1, AM] = 1 and do[f, date+1, PM] = 1
+        if call_eligible and call:
+            # Build date->block mapping
+            date_am_block = {}
+            date_pm_block = {}
+            for block in context.blocks:
+                if block.time_of_day == "AM":
+                    date_am_block[block.date] = block
+                else:
+                    date_pm_block[block.date] = block
+
+            for (f_i_call, b_i_call, call_type), call_var in call.items():
+                # Get the call date from the block
+                call_block = None
+                for block in context.blocks:
+                    if context.block_idx[block.id] == b_i_call:
+                        call_block = block
+                        break
+
+                if not call_block:
+                    continue
+
+                next_day = call_block.date + timedelta(days=1)
+
+                # Find matching faculty index in main faculty list
+                faculty_id = None
+                for fac in call_eligible:
+                    if call_idx.get(fac.id) == f_i_call:
+                        faculty_id = fac.id
+                        break
+
+                if not faculty_id or faculty_id not in context.faculty_idx:
+                    continue
+
+                f_i = context.faculty_idx[faculty_id]
+
+                # Link PCAT to next day AM (bidirectional)
+                if next_day in date_am_block:
+                    next_am = date_am_block[next_day]
+                    next_am_b_i = context.block_idx[next_am.id]
+                    if (f_i, next_am_b_i) in fac_pcat:
+                        # call <=> pcat (bidirectional: PCAT iff call)
+                        model.Add(fac_pcat[f_i, next_am_b_i] == call_var)
+
+                # Link DO to next day PM (bidirectional)
+                if next_day in date_pm_block:
+                    next_pm = date_pm_block[next_day]
+                    next_pm_b_i = context.block_idx[next_pm.id]
+                    if (f_i, next_pm_b_i) in fac_do:
+                        # call <=> do (bidirectional: DO iff call)
+                        model.Add(fac_do[f_i, next_pm_b_i] == call_var)
+
+        # Constraint: Supervision ratio (ACGME)
+        # For each slot with residents in clinic, need enough faculty supervisors
+        # PGY-1: 1 faculty per 2 residents (ratio 0.5)
+        # PGY-2/3: 1 faculty per 4 residents (ratio 0.25)
+        # Find clinic template(s)
+        clinic_template_ids = set()
+        for template in context.templates:
+            name_lower = template.name.lower()
+            if (
+                "clinic" in name_lower
+                or "fm" in name_lower
+                or "outpatient" in name_lower
+            ):
+                clinic_template_ids.add(template.id)
+
+        if clinic_template_ids:
+            clinic_template_indices = [
+                template_idx[tid] for tid in clinic_template_ids if tid in template_idx
+            ]
+
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+
+                # Count PGY-1 residents in clinic
+                pgy1_in_clinic = []
+                pgy23_in_clinic = []
+                for resident in context.residents:
+                    r_i = context.resident_idx[resident.id]
+                    pgy = getattr(resident, "pgy_level", 2)
+                    for t_i in clinic_template_indices:
+                        if (r_i, b_i, t_i) in x:
+                            if pgy == 1:
+                                pgy1_in_clinic.append(x[r_i, b_i, t_i])
+                            else:
+                                pgy23_in_clinic.append(x[r_i, b_i, t_i])
+
+                if not pgy1_in_clinic and not pgy23_in_clinic:
+                    continue
+
+                # Calculate supervision load (multiply by 4 to avoid fractions)
+                # PGY-1: 2 per faculty (load = 2), PGY-2/3: 4 per faculty (load = 1)
+                # supervision_load = pgy1 * 2 + pgy23 * 1
+                # supervision_needed * 4 >= supervision_load
+                pgy1_sum = sum(pgy1_in_clinic) if pgy1_in_clinic else 0
+                pgy23_sum = sum(pgy23_in_clinic) if pgy23_in_clinic else 0
+                supervision_load = pgy1_sum * 2 + pgy23_sum
+
+                # Faculty supervising in this block
+                faculty_supervising = [
+                    fac_supervise[context.faculty_idx[fac.id], b_i]
+                    for fac in context.faculty
+                    if (context.faculty_idx[fac.id], b_i) in fac_supervise
+                ]
+
+                if faculty_supervising:
+                    # supervision_needed >= ceil(supervision_load / 4)
+                    # Linearized: 4 * sum(supervisors) >= supervision_load
+                    model.Add(4 * sum(faculty_supervising) >= supervision_load)
+
+        logger.info(
+            "Added faculty activity constraints (clinic limits, PCAT/DO, supervision)"
+        )
 
         # ==================================================
         # APPLY CONSTRAINTS FROM MANAGER
@@ -1202,6 +1430,46 @@ class CPSATSolver(BaseSolver):
                 f"CP-SAT found {len(call_assignments_result)} overnight call assignments"
             )
 
+        # ==================================================
+        # EXTRACT SOLUTION - Faculty Half-Day Assignments
+        # For each faculty, for each block, determine activity:
+        # clinic, supervise, pcat, do, or off (default)
+        # ==================================================
+        faculty_half_day_result = []
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            for block in context.blocks:  # All blocks (56 per 4-week period)
+                b_i = context.block_idx[block.id]
+
+                # Determine activity for this slot
+                activity = "OFF"  # Default
+
+                if (f_i, b_i) in fac_clinic and solver.Value(fac_clinic[f_i, b_i]) == 1:
+                    activity = "C"  # Clinic
+                elif (f_i, b_i) in fac_supervise and solver.Value(
+                    fac_supervise[f_i, b_i]
+                ) == 1:
+                    activity = "AT"  # Attending/Supervision
+                elif (f_i, b_i) in fac_pcat and solver.Value(fac_pcat[f_i, b_i]) == 1:
+                    activity = "PCAT"  # Post-Call Attending Time
+                elif (f_i, b_i) in fac_do and solver.Value(fac_do[f_i, b_i]) == 1:
+                    activity = "DO"  # Day Off (post-call)
+
+                faculty_half_day_result.append((faculty.id, block.id, activity))
+
+        # Count by activity type for logging
+        activity_counts = {}
+        for _, _, act in faculty_half_day_result:
+            activity_counts[act] = activity_counts.get(act, 0) + 1
+
+        logger.info(
+            f"CP-SAT generated {len(faculty_half_day_result)} faculty half-day assignments "
+            f"({len(context.faculty)} faculty × {len(context.blocks)} blocks): "
+            f"C={activity_counts.get('C', 0)}, AT={activity_counts.get('AT', 0)}, "
+            f"PCAT={activity_counts.get('PCAT', 0)}, DO={activity_counts.get('DO', 0)}, "
+            f"OFF={activity_counts.get('OFF', 0)}"
+        )
+
         logger.info(
             f"CP-SAT found {len(assignments)} assignments "
             f"({len(assignments) - faculty_assignment_count} residents, "
@@ -1223,6 +1491,8 @@ class CPSATSolver(BaseSolver):
                 "resident_assignments": len(assignments) - faculty_assignment_count,
                 "faculty_assignments": faculty_assignment_count,
                 "call_assignments": len(call_assignments_result),
+                "faculty_half_day_assignments": len(faculty_half_day_result),
+                "faculty_activity_breakdown": activity_counts,
                 "coverage_rate": (
                     len(assignments) / len(workday_blocks) if workday_blocks else 0
                 ),
@@ -1230,6 +1500,7 @@ class CPSATSolver(BaseSolver):
                 "conflicts": solver.NumConflicts(),
             },
             call_assignments=call_assignments_result,
+            faculty_half_day_assignments=faculty_half_day_result,
         )
 
     @staticmethod

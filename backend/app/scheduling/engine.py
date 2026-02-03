@@ -506,7 +506,10 @@ class SchedulingEngine:
                     self.db.add(assignment)
                 self.db.flush()
                 self._persist_solver_assignments_to_half_day(self.assignments, blocks)
-                self._ensure_faculty_half_day_slots(faculty, blocks)
+                # Step 6.1: Persist faculty half-day assignments from global solver
+                # The unified CP-SAT solver now generates all 56 faculty slots with activities
+                # (C, AT, PCAT, DO, OFF). This replaces the legacy gap-filling approach.
+                self._persist_faculty_half_day_from_solver(solver_result, blocks)
 
             # Step 6.5: Create call assignments from solver results
             # Creates CallAssignment records for overnight call (Sun-Thurs)
@@ -2631,6 +2634,157 @@ class SchedulingEngine:
         self._off_activity_id = activity.id
         return self._off_activity_id
 
+    def _get_activity_id_by_code(self, code: str) -> UUID:
+        """
+        Resolve an activity ID by code, with caching.
+
+        Args:
+            code: Activity code (C, AT, PCAT, DO, OFF, etc.)
+
+        Returns:
+            Activity UUID
+
+        Raises:
+            ActivityNotFoundError: If activity code not found
+        """
+        # Initialize cache if needed
+        if not hasattr(self, "_activity_id_cache"):
+            self._activity_id_cache: dict[str, UUID] = {}
+
+        # Check cache
+        code_lower = code.lower()
+        if code_lower in self._activity_id_cache:
+            return self._activity_id_cache[code_lower]
+
+        # Query database - try exact match first, then display_abbreviation
+        result = self.db.execute(
+            select(Activity).where(
+                (func.lower(Activity.code) == code_lower)
+                | (func.lower(Activity.display_abbreviation) == code_lower)
+            )
+        )
+        activity = result.scalars().first()
+        if not activity:
+            raise ActivityNotFoundError(code, context="SchedulingEngine")
+
+        self._activity_id_cache[code_lower] = cast(UUID, activity.id)
+        return cast(UUID, activity.id)
+
+    def _persist_faculty_half_day_from_solver(
+        self,
+        solver_result: SolverResult,
+        blocks: list[Block],
+    ) -> int:
+        """
+        Persist faculty half-day assignments from unified CP-SAT solver output.
+
+        The global solver now generates all 56 half-day slots per faculty with
+        assigned activities (C, AT, PCAT, DO, OFF). This replaces the legacy
+        _ensure_faculty_half_day_slots() gap-filling approach.
+
+        Args:
+            solver_result: SolverResult containing faculty_half_day_assignments
+            blocks: List of blocks for date/time_of_day lookup
+
+        Returns:
+            Number of assignments created/updated
+        """
+        from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
+
+        if not solver_result.faculty_half_day_assignments:
+            logger.info("No faculty half-day assignments from solver")
+            return 0
+
+        # Build block lookup for date/time extraction
+        block_by_id = {cast(UUID, b.id): b for b in blocks}
+
+        # Track existing locked slots to avoid overwriting
+        existing_locked: set[tuple[UUID, date, str]] = set()
+        locked_query = (
+            self.db.query(
+                HalfDayAssignment.person_id,
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+            )
+            .filter(
+                HalfDayAssignment.date >= self.start_date,
+                HalfDayAssignment.date <= self.end_date,
+                HalfDayAssignment.source.in_(
+                    [AssignmentSource.PRELOAD.value, AssignmentSource.MANUAL.value]
+                ),
+            )
+            .all()
+        )
+        for person_id, slot_date, time_of_day in locked_query:
+            existing_locked.add((person_id, slot_date, time_of_day))
+
+        created = 0
+        updated = 0
+        skipped_locked = 0
+
+        for faculty_id, block_id, activity_type in solver_result.faculty_half_day_assignments:
+            block = block_by_id.get(block_id)
+            if not block:
+                logger.warning(f"Block {block_id} not found for faculty assignment")
+                continue
+
+            slot_key = (faculty_id, block.date, block.time_of_day)
+
+            # Skip locked slots
+            if slot_key in existing_locked:
+                skipped_locked += 1
+                continue
+
+            # Get activity ID for this activity type
+            try:
+                activity_id = self._get_activity_id_by_code(activity_type)
+            except ActivityNotFoundError:
+                logger.warning(
+                    f"Activity code '{activity_type}' not found, using OFF"
+                )
+                activity_id = self._get_off_activity_id()
+
+            # Check for existing row (solver/template source)
+            existing = (
+                self.db.query(HalfDayAssignment)
+                .filter(
+                    HalfDayAssignment.person_id == faculty_id,
+                    HalfDayAssignment.date == block.date,
+                    HalfDayAssignment.time_of_day == block.time_of_day,
+                )
+                .first()
+            )
+
+            if existing:
+                # Update existing row if it's not locked
+                if existing.is_locked:
+                    skipped_locked += 1
+                    continue
+                existing.activity_id = activity_id
+                existing.source = AssignmentSource.SOLVER.value
+                updated += 1
+            else:
+                # Create new row
+                self.db.add(
+                    HalfDayAssignment(
+                        person_id=faculty_id,
+                        date=block.date,
+                        time_of_day=block.time_of_day,
+                        activity_id=activity_id,
+                        source=AssignmentSource.SOLVER.value,
+                    )
+                )
+                created += 1
+
+        if created or updated:
+            self.db.flush()
+            logger.info(
+                f"Persisted faculty half-day assignments from solver: "
+                f"created={created}, updated={updated}, skipped_locked={skipped_locked}"
+            )
+
+        return created + updated
+
     def _get_blocking_half_day_slots(self) -> set[tuple[UUID, date, str]]:
         """
         Get blocking half-day slots (preload/manual) for the date range.
@@ -2813,11 +2967,27 @@ class SchedulingEngine:
         blocks: list[Block],
     ) -> int:
         """
-        Ensure faculty have half-day slots for the block date range.
+        DEPRECATED: Use _persist_faculty_half_day_from_solver() instead.
 
-        Creates source='solver' HalfDayAssignment rows for any missing
-        faculty slots on workdays, preserving any existing preload/manual rows.
+        The global CP-SAT solver now generates all 56 faculty half-day slots
+        with assigned activities (C, AT, PCAT, DO, OFF). This gap-filling
+        method is no longer needed.
+
+        Kept for backward compatibility and manual override scenarios only.
         """
+        import warnings
+
+        warnings.warn(
+            "_ensure_faculty_half_day_slots is deprecated. "
+            "Use _persist_faculty_half_day_from_solver() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        logger.warning(
+            "DEPRECATED: _ensure_faculty_half_day_slots called. "
+            "Global solver now handles faculty half-day assignments."
+        )
+
         from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
 
         if not faculty:
