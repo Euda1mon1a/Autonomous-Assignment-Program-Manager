@@ -244,3 +244,21 @@ docs/thinkos_cli_browser_pairing_plan.md
 
 # Pytest hypothesis cache
 .hypothesis/
+
+# ============================================================================
+# EXTERNAL AI TOOLS (user-specific config)
+# ============================================================================
+
+# Codex CLI config (user-specific MCP/perplexity setup)
+.codex/
+
+# Claude overnight artifacts (session work products)
+.claude/dontreadme/overnight/
+.claude/dontreadme/wip_migrations/
+
+# WIP frontend components (not ready for commit)
+frontend/src/app/admin/wellness/
+
+# WIP approval workflow tests (endpoints not implemented yet)
+backend/tests/routes/test_leave_approval_workflow.py
+backend/tests/routes/test_swap_approval_workflow.py

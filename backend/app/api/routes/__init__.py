@@ -6,6 +6,8 @@ from app.api.routes import (
     absences,
     academic_blocks,
     activities,
+    admin_delete_impact,
+    admin_dashboard,
     admin_block_assignments,
     # approval_chain,  # QUARANTINED: requires_coordinator_or_above not implemented
     faculty_activities,
@@ -157,6 +159,8 @@ api_router.include_router(oauth2.router, prefix="/oauth2", tags=["oauth2"])
 api_router.include_router(
     admin_users.router, prefix="/admin/users", tags=["admin-users"]
 )
+api_router.include_router(admin_dashboard.router, tags=["admin-dashboard"])
+api_router.include_router(admin_delete_impact.router, tags=["admin-delete-impact"])
 api_router.include_router(
     admin_block_assignments.router,
     prefix="/admin/block-assignments",
