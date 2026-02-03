@@ -83,12 +83,23 @@ async def request_swap(
 ) -> SwapRequestCreateResponse:
     """
     Create a swap request that requires approval before execution.
+
+    Faculty can only request swaps for their own assignments.
+    Coordinators/admins can request swaps on behalf of any faculty.
     """
     if not (current_user.can_manage_schedules or current_user.is_faculty):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to request swaps",
         )
+
+    # P1 fix: Faculty can only request swaps for their own weeks
+    if not current_user.can_manage_schedules:
+        if current_user.person_id != request.source_faculty_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Can only request swaps for your own assignments",
+            )
 
     validator = SwapValidationService(db)
     validation = validator.validate_swap(
@@ -219,6 +230,26 @@ async def execute_swap_by_id(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=result.message,
+        )
+
+    # P2 fix: Broadcast WebSocket events on successful execution
+    swap = db.query(SwapRecord).filter(SwapRecord.id == swap_id).first()
+    if swap:
+        await broadcast_swap_approved(
+            swap_id=swap_id,
+            requester_id=swap.source_faculty_id,
+            target_person_id=swap.target_faculty_id,
+            approved_by=current_user.id,
+            affected_assignments=[],
+            message=f"Swap executed: {swap.swap_type.value}",
+        )
+        await broadcast_schedule_updated(
+            schedule_id=None,
+            academic_year_id=None,
+            user_id=current_user.id,
+            update_type="modified",
+            affected_blocks_count=2,
+            message="Approved swap executed",
         )
 
     return SwapExecuteByIdResponse(
