@@ -183,6 +183,8 @@ test_write.xlsx
 .claude/plans/
 .claude/Missions/
 .claude/skills/*/
+!.claude/skills/codex-app-automation-triage/
+!.claude/skills/codex-app-automation-triage/SKILL.md
 .claude/settings.local.json
 .agent/
 local/
