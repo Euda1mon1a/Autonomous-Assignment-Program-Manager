@@ -265,8 +265,8 @@ Backend is **90% ready** (90 routes, 63 models, comprehensive CRUD). These gaps 
 |-----|--------|--------|--------|
 | **Swap approval workflow** | Swaps execute immediately; no approve/deny stage | 4-6h | ⏳ Pending |
 | **Leave approval workflow** | Leave created; no approval/denial flow | 4-6h | ⏳ Pending |
-| **Dashboard aggregate endpoints** | No summary widgets (counts, trends) | 2-4h | ✅ Done (PR #805) |
-| **Cascading delete warnings** | No endpoint warns about dependent records | 2-3h | ✅ Done (PR #805) |
+| **Dashboard aggregate endpoints** | No summary widgets (counts, trends) | 2-4h | ✅ Done (PR #804) |
+| **Cascading delete warnings** | No endpoint warns about dependent records | 2-3h | ✅ Done (PR #804) |
 | **Field-level change tracking** | Activity log tracks actions, not field diffs | 4-6h | ⏳ Pending |
 
 **What's Ready:**
