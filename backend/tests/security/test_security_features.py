@@ -134,7 +134,8 @@ class TestSQLInjectionPrevention:
         db.commit()
 
         token, _, _ = create_access_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
         headers = {"Authorization": f"Bearer {token}"}
 
@@ -187,7 +188,8 @@ class TestXSSPrevention:
         db.commit()
 
         token, _, _ = create_access_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
         headers = {"Authorization": f"Bearer {token}"}
 
@@ -327,7 +329,8 @@ class TestInputValidation:
         db.commit()
 
         token, _, _ = create_access_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
         headers = {"Authorization": f"Bearer {token}"}
 
@@ -440,7 +443,8 @@ class TestDataLeakagePrevention:
         db.commit()
 
         token, _, _ = create_access_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
         headers = {"Authorization": f"Bearer {token}"}
 
@@ -561,7 +565,9 @@ class TestSessionExpiration:
         data = {"sub": str(uuid4())}
 
         # Create token with 1 second expiration
-        token, _, _ = create_access_token(data, expires_delta=timedelta(seconds=1))
+        token, _, _ = create_access_token(
+            data, expires_delta=timedelta(seconds=1), return_details=True
+        )
 
         # Immediate decode should work
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])

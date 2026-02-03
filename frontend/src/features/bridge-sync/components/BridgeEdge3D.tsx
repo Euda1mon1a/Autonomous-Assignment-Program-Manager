@@ -59,7 +59,6 @@ export function BridgeEdge3D({ edge, nodes }: BridgeEdge3DProps) {
     // Animate dash offset for flow effect
     if (edge.active) {
       dashOffsetRef.current -= delta * 2;
-      // dashOffset exists on LineDashedMaterial at runtime
       const material = lineRef.current.material as THREE.LineDashedMaterial & { dashOffset: number };
       material.dashOffset = dashOffsetRef.current;
     }
@@ -67,19 +66,15 @@ export function BridgeEdge3D({ edge, nodes }: BridgeEdge3DProps) {
 
   if (!geometry || points.length < 2) return null;
 
-  // R3F uses lowercase JSX elements that map to Three.js classes
-  // TypeScript incorrectly infers these as SVG elements
+  // Note: Using primitive to avoid React Three Fiber SVG/Three type conflicts
   return (
-    // @ts-expect-error - R3F line element, not SVG
-    <line ref={lineRef} geometry={geometry}>
-      <lineDashedMaterial
-        color={edge.active ? '#06b6d4' : '#475569'}
-        dashSize={0.2}
-        gapSize={0.1}
-        opacity={edge.active ? 0.8 : 0.3}
-        transparent
-      />
-    </line>
+    <primitive object={new THREE.Line(geometry, new THREE.LineDashedMaterial({
+      color: edge.active ? '#06b6d4' : '#475569',
+      dashSize: 0.2,
+      gapSize: 0.1,
+      opacity: edge.active ? 0.8 : 0.3,
+      transparent: true,
+    }))} ref={lineRef} />
   );
 }
 

@@ -40,6 +40,9 @@ class AuthService:
         if not user:
             return {"user": None, "error": "Incorrect username or password"}
 
+        if not user.is_active:
+            return {"user": None, "error": "Account is inactive"}
+
         if not verify_password(password, user.hashed_password):
             return {"user": None, "error": "Incorrect username or password"}
 
@@ -52,6 +55,7 @@ class AuthService:
         access_token, jti, expires_at = create_access_token(
             data={"sub": str(user.id), "username": user.username},
             expires_delta=access_token_expires,
+            return_details=True,
         )
 
         return {

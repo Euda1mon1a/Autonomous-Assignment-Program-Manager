@@ -7,16 +7,18 @@ for testing the Residency Scheduler API.
 
 from collections.abc import AsyncGenerator, Generator
 from datetime import date, timedelta
+import os
 from typing import Any
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import Session, configure_mappers, sessionmaker
 from sqlalchemy.pool import StaticPool
+from pgvector.sqlalchemy import Vector
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy_continuum import versioning_manager
 
 from app.core.security import get_password_hash
 from app.db.base import Base
@@ -30,24 +32,66 @@ from app.models.rotation_template import RotationTemplate
 from app.models.user import User
 from app.utils.academic_blocks import get_block_number_for_date
 
-# Use in-memory SQLite for tests
-TEST_DATABASE_URL = "sqlite:///:memory:"
-
-
-@compiles(JSONB, "sqlite")
-def _compile_jsonb_sqlite(_type, _compiler, **_kw):
-    return "JSON"
-
-
-engine = create_engine(
-    TEST_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 # Configure mappers to ensure SQLAlchemy-Continuum creates version tables
 configure_mappers()
+
+# Use TEST_DATABASE_URL if provided, otherwise fall back to DATABASE_URL or SQLite.
+TEST_DATABASE_URL = (
+    os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL") or "sqlite:///:memory:"
+)
+USE_SQLITE = TEST_DATABASE_URL.startswith("sqlite")
+TEST_SCHEMA = None
+
+
+def _is_vector_column(column) -> bool:
+    return isinstance(column.type, Vector)
+
+
+def _is_sqlite_unsupported_column(column) -> bool:
+    return isinstance(column.type, (Vector, JSONB))
+
+
+if USE_SQLITE:
+    engine = create_engine(
+        TEST_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+else:
+    # Isolate tests in a dedicated schema to avoid touching existing data.
+    TEST_SCHEMA = f"test_schema_{uuid4().hex}"
+    engine = create_engine(
+        TEST_DATABASE_URL,
+        pool_pre_ping=True,
+        connect_args={"options": f"-c search_path={TEST_SCHEMA}"},
+    )
+
+    with engine.begin() as conn:
+        conn.exec_driver_sql(f'CREATE SCHEMA IF NOT EXISTS "{TEST_SCHEMA}"')
+
+if USE_SQLITE:
+    TEST_TABLES = [
+        table
+        for table in Base.metadata.sorted_tables
+        if not any(_is_sqlite_unsupported_column(column) for column in table.columns)
+    ]
+    VERSIONING_TABLES = [
+        table
+        for table in versioning_manager.metadata.sorted_tables
+        if not any(_is_sqlite_unsupported_column(column) for column in table.columns)
+    ]
+else:
+    TEST_TABLES = [
+        table
+        for table in Base.metadata.sorted_tables
+        if not any(_is_vector_column(column) for column in table.columns)
+    ]
+    VERSIONING_TABLES = [
+        table
+        for table in versioning_manager.metadata.sorted_tables
+        if not any(_is_vector_column(column) for column in table.columns)
+    ]
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 class AsyncSessionWrapper:
@@ -92,10 +136,6 @@ class AsyncSessionWrapper:
         """Close session."""
         self._session.close()
 
-    async def get(self, entity, ident, **kwargs):
-        """Get entity by primary key (makes sync get awaitable)."""
-        return self._session.get(entity, ident, **kwargs)
-
     def __getattr__(self, name):
         """Proxy attribute access to underlying session."""
         return getattr(self._session, name)
@@ -110,6 +150,12 @@ def override_get_db() -> Generator[Session, None, None]:
         db.close()
 
 
+@pytest.fixture
+async def async_db_session(db: Session) -> AsyncGenerator[AsyncSessionWrapper, None]:
+    """Provide async-compatible session wrapper for analytics tests."""
+    yield AsyncSessionWrapper(db)
+
+
 @pytest.fixture(scope="function")
 def db() -> Generator[Session, None, None]:
     """
@@ -117,13 +163,29 @@ def db() -> Generator[Session, None, None]:
 
     Creates all tables, yields a session, then drops all tables.
     """
-    Base.metadata.create_all(bind=engine)
+    if TEST_SCHEMA:
+        with engine.begin() as conn:
+            conn.exec_driver_sql(f'SET search_path TO "{TEST_SCHEMA}"')
+            Base.metadata.create_all(bind=conn, tables=TEST_TABLES)
+            versioning_manager.metadata.create_all(bind=conn, tables=VERSIONING_TABLES)
+    else:
+        Base.metadata.create_all(bind=engine, tables=TEST_TABLES)
+        versioning_manager.metadata.create_all(bind=engine, tables=VERSIONING_TABLES)
     db = TestingSessionLocal()
     try:
         yield db
     finally:
         db.close()
-        Base.metadata.drop_all(bind=engine)
+        if TEST_SCHEMA:
+            with engine.begin() as conn:
+                conn.exec_driver_sql(f'SET search_path TO "{TEST_SCHEMA}"')
+                versioning_manager.metadata.drop_all(
+                    bind=conn, tables=VERSIONING_TABLES
+                )
+                Base.metadata.drop_all(bind=conn, tables=TEST_TABLES)
+        else:
+            versioning_manager.metadata.drop_all(bind=engine, tables=VERSIONING_TABLES)
+            Base.metadata.drop_all(bind=engine, tables=TEST_TABLES)
 
 
 @pytest.fixture(scope="function")
@@ -265,14 +327,14 @@ def sample_faculty_members(db: Session) -> list[Person]:
 def sample_rotation_template(db: Session) -> RotationTemplate:
     """Create a sample rotation template.
 
-    Note: Uses rotation_type="outpatient" because the scheduling engine
+    Note: Uses activity_type="outpatient" because the scheduling engine
     defaults to filtering for outpatient templates. Using "clinic" would
     cause the template to be filtered out, resulting in no assignments.
     """
     template = RotationTemplate(
         id=uuid4(),
         name="Sports Medicine Clinic",
-        rotation_type="outpatient",  # Must match engine's default filter
+        activity_type="outpatient",  # Must match engine's default filter
         abbreviation="SM",
         clinic_location="Building A",
         max_residents=4,

@@ -37,23 +37,27 @@ logger = logging.getLogger(__name__)
 
 class FacultyRoleClinicConstraint(HardConstraint):
     """
-    Enforces role-based clinic half-day limits for faculty.
+    Enforces clinic half-day limits for faculty.
 
-    This constraint ensures faculty members do not exceed their role-specific
-    clinic limits, which vary based on administrative responsibilities.
+    This constraint ensures faculty members do not exceed their clinic limits.
+    Limits are determined by:
+    1. Person-specific `max_clinic_halfdays_per_week` if set and > 0
+    2. Role-based defaults from `weekly_clinic_limit` property
 
-    Role Limits:
+    Role Defaults (used when person-specific not set):
         - PD (Program Director): 0 clinic/week - Full admin
         - Dept Chief: 1 clinic/week
         - APD (Associate PD): 2 clinic/week (flexible within block)
         - OIC (Officer in Charge): 2 clinic/week (flexible within block)
         - Sports Medicine: 0 regular clinic (has SM clinic instead)
         - Core Faculty: max 4 clinic/week (16/block hard max)
+        - Adjunct: 0 (requires manual preload)
 
     Implementation Notes:
         - APD/OIC have block-level flexibility (0 one week, 4 another is OK)
         - Core faculty weekly limit is enforced strictly
         - Sports Medicine faculty should not be assigned to regular clinic
+        - Person-specific limits allow override of role defaults
     """
 
     def __init__(self) -> None:
@@ -63,6 +67,33 @@ class FacultyRoleClinicConstraint(HardConstraint):
             constraint_type=ConstraintType.CAPACITY,
             priority=ConstraintPriority.HIGH,
         )
+
+    def _get_effective_clinic_limits(self, faculty: Any) -> tuple[int, int]:
+        """
+        Get effective min/max clinic half-days per week for a faculty member.
+
+        Uses person-specific limits if set and > 0, otherwise falls back
+        to role-based defaults.
+
+        Args:
+            faculty: Person model instance
+
+        Returns:
+            Tuple of (min_limit, max_limit) clinic half-days per week
+        """
+        # Check for person-specific max (takes precedence if set and > 0)
+        person_max = getattr(faculty, "max_clinic_halfdays_per_week", None)
+        if person_max is not None and person_max > 0:
+            max_limit = person_max
+            # Also check person-specific min if max is person-specific
+            person_min = getattr(faculty, "min_clinic_halfdays_per_week", None)
+            min_limit = person_min if person_min is not None else 0
+        else:
+            # Fall back to role-based limit (which has no min enforcement)
+            max_limit = faculty.weekly_clinic_limit
+            min_limit = 0
+
+        return (min_limit, max_limit)
 
     def add_to_cpsat(
         self,
@@ -101,7 +132,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
                 # Faculty might be in a different index
                 continue
 
-            weekly_limit = faculty.weekly_clinic_limit
+            _min_limit, weekly_limit = self._get_effective_clinic_limits(faculty)
             block_limit = faculty.block_clinic_limit
 
             # Group blocks by week (Mon-Sun)
@@ -154,7 +185,7 @@ class FacultyRoleClinicConstraint(HardConstraint):
             if f_i is None:
                 continue
 
-            weekly_limit = faculty.weekly_clinic_limit
+            _min_limit, weekly_limit = self._get_effective_clinic_limits(faculty)
             weeks = self._group_blocks_by_week(context.blocks)
 
             for week_start, week_blocks in weeks.items():
@@ -221,22 +252,52 @@ class FacultyRoleClinicConstraint(HardConstraint):
             if not faculty or not hasattr(faculty, "faculty_role"):
                 continue
 
-            weekly_limit = faculty.weekly_clinic_limit
+            min_limit, max_limit = self._get_effective_clinic_limits(faculty)
+            is_person_specific = (
+                getattr(faculty, "max_clinic_halfdays_per_week", None) is not None
+                and faculty.max_clinic_halfdays_per_week > 0
+            )
 
             for week_start, count in weekly_counts.items():
-                if count > weekly_limit:
+                # Check max limit violation
+                if count > max_limit:
+                    limit_type = "person" if is_person_specific else "role"
                     violations.append(
                         ConstraintViolation(
                             constraint_name=self.name,
                             constraint_type=self.constraint_type,
                             severity="HIGH",
-                            message=f"{faculty.name} ({faculty.faculty_role}): {count} clinic half-days in week of {week_start} (limit: {weekly_limit})",
+                            message=f"{faculty.name} ({faculty.faculty_role}): {count} clinic half-days in week of {week_start} (max: {max_limit}, {limit_type} limit)",
                             person_id=faculty_id,
                             details={
                                 "week_start": str(week_start),
                                 "count": count,
-                                "limit": weekly_limit,
+                                "max_limit": max_limit,
+                                "min_limit": min_limit,
                                 "role": faculty.faculty_role,
+                                "limit_source": limit_type,
+                            },
+                        )
+                    )
+
+                # Check min limit violation (soft warning - not a hard constraint failure)
+                # Only for person-specific limits that have a min set
+                if is_person_specific and min_limit > 0 and count < min_limit:
+                    violations.append(
+                        ConstraintViolation(
+                            constraint_name=self.name,
+                            constraint_type=self.constraint_type,
+                            severity="MEDIUM",  # Lower severity for under-assignment
+                            message=f"{faculty.name} ({faculty.faculty_role}): {count} clinic half-days in week of {week_start} (min: {min_limit})",
+                            person_id=faculty_id,
+                            details={
+                                "week_start": str(week_start),
+                                "count": count,
+                                "min_limit": min_limit,
+                                "max_limit": max_limit,
+                                "role": faculty.faculty_role,
+                                "limit_source": "person",
+                                "violation_type": "under_minimum",
                             },
                         )
                     )

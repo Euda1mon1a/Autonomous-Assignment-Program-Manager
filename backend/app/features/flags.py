@@ -7,6 +7,7 @@ This service provides the main interface for:
 - Audit logging for compliance
 """
 
+import inspect
 import uuid
 from datetime import datetime
 from typing import Any
@@ -59,6 +60,12 @@ class FeatureFlagService:
         self.environment = environment or "production"
         self.evaluator = FeatureFlagEvaluator(environment=self.environment)
 
+    async def _maybe_await(self, result):
+        """Allow sync or async DB sessions by awaiting if needed."""
+        if inspect.isawaitable(result):
+            return await result
+        return result
+
     async def create_flag(
         self,
         key: str,
@@ -100,8 +107,8 @@ class FeatureFlagService:
             ValueError: If flag key already exists
         """
         # Check if flag already exists
-        existing = await self.db.execute(
-            select(FeatureFlag).where(FeatureFlag.key == key)
+        existing = await self._maybe_await(
+            self.db.execute(select(FeatureFlag).where(FeatureFlag.key == key))
         )
         if existing.scalar_one_or_none():
             raise ValueError(f"Feature flag with key '{key}' already exists")
@@ -125,8 +132,8 @@ class FeatureFlagService:
         )
 
         self.db.add(flag)
-        await self.db.commit()
-        await self.db.refresh(flag)
+        await self._maybe_await(self.db.commit())
+        await self._maybe_await(self.db.refresh(flag))
 
         # Log creation
         await self._log_audit(
@@ -161,8 +168,8 @@ class FeatureFlagService:
         Raises:
             ValueError: If flag not found
         """
-        result = await self.db.execute(
-            select(FeatureFlag).where(FeatureFlag.key == key)
+        result = await self._maybe_await(
+            self.db.execute(select(FeatureFlag).where(FeatureFlag.key == key))
         )
         flag = result.scalar_one_or_none()
 
@@ -179,8 +186,8 @@ class FeatureFlagService:
                     setattr(flag, field, new_value)
 
         if changes:
-            await self.db.commit()
-            await self.db.refresh(flag)
+            await self._maybe_await(self.db.commit())
+            await self._maybe_await(self.db.refresh(flag))
 
             # Log update
             await self._log_audit(
@@ -207,8 +214,8 @@ class FeatureFlagService:
         Returns:
             True if deleted, False if not found
         """
-        result = await self.db.execute(
-            select(FeatureFlag).where(FeatureFlag.key == key)
+        result = await self._maybe_await(
+            self.db.execute(select(FeatureFlag).where(FeatureFlag.key == key))
         )
         flag = result.scalar_one_or_none()
 
@@ -224,8 +231,8 @@ class FeatureFlagService:
             reason=reason,
         )
 
-        await self.db.delete(flag)
-        await self.db.commit()
+        await self._maybe_await(self.db.delete(flag))
+        await self._maybe_await(self.db.commit())
 
         return True
 
@@ -239,8 +246,8 @@ class FeatureFlagService:
         Returns:
             FeatureFlag instance or None if not found
         """
-        result = await self.db.execute(
-            select(FeatureFlag).where(FeatureFlag.key == key)
+        result = await self._maybe_await(
+            self.db.execute(select(FeatureFlag).where(FeatureFlag.key == key))
         )
         return result.scalar_one_or_none()
 
@@ -269,7 +276,7 @@ class FeatureFlagService:
                 | (FeatureFlag.environments.contains([environment]))
             )
 
-        result = await self.db.execute(query)
+        result = await self._maybe_await(self.db.execute(query))
         return list(result.scalars().all())
 
     async def evaluate_flag(
@@ -373,25 +380,35 @@ class FeatureFlagService:
             Dict with statistics about flags
         """
         # Count total flags
-        total_result = await self.db.execute(select(func.count(FeatureFlag.id)))
+        total_result = await self._maybe_await(
+            self.db.execute(select(func.count(FeatureFlag.id)))
+        )
         total_flags = total_result.scalar()
 
         # Count enabled flags
-        enabled_result = await self.db.execute(
-            select(func.count(FeatureFlag.id)).where(FeatureFlag.enabled == True)
+        enabled_result = await self._maybe_await(
+            self.db.execute(
+                select(func.count(FeatureFlag.id)).where(FeatureFlag.enabled == True)
+            )
         )
         enabled_flags = enabled_result.scalar()
 
         # Count by type
-        percentage_result = await self.db.execute(
-            select(func.count(FeatureFlag.id)).where(
-                FeatureFlag.flag_type == "percentage"
+        percentage_result = await self._maybe_await(
+            self.db.execute(
+                select(func.count(FeatureFlag.id)).where(
+                    FeatureFlag.flag_type == "percentage"
+                )
             )
         )
         percentage_flags = percentage_result.scalar()
 
-        variant_result = await self.db.execute(
-            select(func.count(FeatureFlag.id)).where(FeatureFlag.flag_type == "variant")
+        variant_result = await self._maybe_await(
+            self.db.execute(
+                select(func.count(FeatureFlag.id)).where(
+                    FeatureFlag.flag_type == "variant"
+                )
+            )
         )
         variant_flags = variant_result.scalar()
 
@@ -399,18 +416,22 @@ class FeatureFlagService:
         from datetime import timedelta
 
         yesterday = datetime.utcnow() - timedelta(days=1)
-        recent_eval_result = await self.db.execute(
-            select(func.count(FeatureFlagEvaluation.id)).where(
-                FeatureFlagEvaluation.evaluated_at >= yesterday
+        recent_eval_result = await self._maybe_await(
+            self.db.execute(
+                select(func.count(FeatureFlagEvaluation.id)).where(
+                    FeatureFlagEvaluation.evaluated_at >= yesterday
+                )
             )
         )
         recent_evaluations = recent_eval_result.scalar()
 
         # Count unique users in evaluations (last 24 hours)
-        unique_users_result = await self.db.execute(
-            select(func.count(func.distinct(FeatureFlagEvaluation.user_id))).where(
-                FeatureFlagEvaluation.evaluated_at >= yesterday,
-                FeatureFlagEvaluation.user_id.isnot(None),
+        unique_users_result = await self._maybe_await(
+            self.db.execute(
+                select(func.count(func.distinct(FeatureFlagEvaluation.user_id))).where(
+                    FeatureFlagEvaluation.evaluated_at >= yesterday,
+                    FeatureFlagEvaluation.user_id.isnot(None),
+                )
             )
         )
         unique_users = unique_users_result.scalar()
@@ -453,7 +474,7 @@ class FeatureFlagService:
         )
 
         self.db.add(audit)
-        await self.db.commit()
+        await self._maybe_await(self.db.commit())
 
     async def _track_evaluation(
         self,
@@ -487,4 +508,4 @@ class FeatureFlagService:
         )
 
         self.db.add(evaluation)
-        await self.db.commit()
+        await self._maybe_await(self.db.commit())

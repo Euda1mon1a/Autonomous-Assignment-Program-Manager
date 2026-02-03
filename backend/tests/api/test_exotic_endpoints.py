@@ -14,8 +14,29 @@ Test Coverage:
 - Integration with FastAPI
 """
 
+from uuid import uuid4
+
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from app.models.feature_flag import FeatureFlag
+
+
+@pytest.fixture
+def exotic_feature_flag(db: Session) -> FeatureFlag:
+    """Enable exotic resilience feature flag for endpoint tests."""
+    flag = FeatureFlag(
+        id=uuid4(),
+        key="exotic_resilience_enabled",
+        name="Exotic Resilience",
+        description="Enable exotic resilience endpoints for tests",
+        flag_type="boolean",
+        enabled=True,
+    )
+    db.add(flag)
+    db.commit()
+    return flag
 
 
 # ============================================================================
@@ -26,10 +47,13 @@ from fastapi.testclient import TestClient
 class TestMetastabilityEndpoint:
     """Tests for metastability detection endpoint."""
 
-    def test_metastability_detection_stable_state(self, client: TestClient):
+    def test_metastability_detection_stable_state(
+        self, client: TestClient, auth_headers: dict, exotic_feature_flag: FeatureFlag
+    ):
         """Test metastability detection for stable state (no metastability)."""
         response = client.post(
             "/api/v1/resilience/exotic/exotic/metastability",
+            headers=auth_headers,
             json={
                 "current_energy": 1.0,
                 "energy_landscape": [1.5, 2.0, 1.8],  # Current is global minimum
@@ -47,10 +71,13 @@ class TestMetastabilityEndpoint:
         assert data["source"] == "backend"
         assert "stable configuration" in data["recommendations"][0].lower()
 
-    def test_metastability_detection_metastable_state(self, client: TestClient):
+    def test_metastability_detection_metastable_state(
+        self, client: TestClient, auth_headers: dict, exotic_feature_flag: FeatureFlag
+    ):
         """Test metastability detection for trapped state."""
         response = client.post(
             "/api/v1/resilience/exotic/exotic/metastability",
+            headers=auth_headers,
             json={
                 "current_energy": 2.0,
                 "energy_landscape": [1.0, 2.0, 3.0],  # Lower energy state exists at 1.0
@@ -70,10 +97,13 @@ class TestMetastabilityEndpoint:
         assert data["escape_rate"] >= 0
         assert len(data["recommendations"]) > 0
 
-    def test_metastability_high_barrier_low_risk(self, client: TestClient):
+    def test_metastability_high_barrier_low_risk(
+        self, client: TestClient, auth_headers: dict, exotic_feature_flag: FeatureFlag
+    ):
         """Test that high barrier reduces risk level."""
         response = client.post(
             "/api/v1/resilience/exotic/exotic/metastability",
+            headers=auth_headers,
             json={
                 "current_energy": 2.0,
                 "energy_landscape": [1.0, 2.0, 3.0],
@@ -90,10 +120,13 @@ class TestMetastabilityEndpoint:
         assert data["risk_level"] == "low"
         assert data["lifetime"] > 10.0  # Long lifetime due to high barrier
 
-    def test_metastability_insufficient_data(self, client: TestClient):
+    def test_metastability_insufficient_data(
+        self, client: TestClient, auth_headers: dict, exotic_feature_flag: FeatureFlag
+    ):
         """Test metastability with insufficient data."""
         response = client.post(
             "/api/v1/resilience/exotic/exotic/metastability",
+            headers=auth_headers,
             json={
                 "current_energy": 1.0,
                 "energy_landscape": [],  # No landscape data
@@ -108,13 +141,16 @@ class TestMetastabilityEndpoint:
         # Should handle gracefully
         assert data["is_metastable"] is False
         assert data["barrier_height"] == 0.0
-        assert data["lifetime"] == float("inf")
+        assert data["lifetime"] is None
 
-    def test_metastability_temperature_effect(self, client: TestClient):
+    def test_metastability_temperature_effect(
+        self, client: TestClient, auth_headers: dict, exotic_feature_flag: FeatureFlag
+    ):
         """Test effect of temperature on escape rate."""
         # Low temperature
         response_low_temp = client.post(
             "/api/v1/resilience/exotic/exotic/metastability",
+            headers=auth_headers,
             json={
                 "current_energy": 2.0,
                 "energy_landscape": [1.0],
@@ -126,6 +162,7 @@ class TestMetastabilityEndpoint:
         # High temperature
         response_high_temp = client.post(
             "/api/v1/resilience/exotic/exotic/metastability",
+            headers=auth_headers,
             json={
                 "current_energy": 2.0,
                 "energy_landscape": [1.0],
@@ -144,10 +181,16 @@ class TestMetastabilityEndpoint:
         assert high_temp_data["escape_rate"] > low_temp_data["escape_rate"]
         assert low_temp_data["lifetime"] > high_temp_data["lifetime"]
 
-    def test_metastability_invalid_temperature(self, client: TestClient):
+    def test_metastability_invalid_temperature(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test that invalid temperature is rejected."""
         response = client.post(
             "/api/v1/resilience/exotic/exotic/metastability",
+            headers=auth_headers,
             json={
                 "current_energy": 1.0,
                 "energy_landscape": [1.5],
@@ -162,10 +205,16 @@ class TestMetastabilityEndpoint:
 class TestReorganizationRiskEndpoint:
     """Tests for reorganization risk prediction endpoint."""
 
-    def test_reorganization_low_risk(self, client: TestClient):
+    def test_reorganization_low_risk(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test low reorganization risk scenario."""
         response = client.post(
             "/api/v1/resilience/exotic/exotic/reorganization-risk",
+            headers=auth_headers,
             json={
                 "current_stability": 0.9,  # High stability
                 "external_perturbation": 0.1,  # Low perturbation
@@ -181,10 +230,16 @@ class TestReorganizationRiskEndpoint:
         assert data["effective_barrier"] > 0.5
         assert data["source"] == "backend"
 
-    def test_reorganization_high_risk(self, client: TestClient):
+    def test_reorganization_high_risk(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test high reorganization risk scenario."""
         response = client.post(
             "/api/v1/resilience/exotic/exotic/reorganization-risk",
+            headers=auth_headers,
             json={
                 "current_stability": 0.3,  # Low stability
                 "external_perturbation": 0.5,  # High perturbation
@@ -203,10 +258,16 @@ class TestReorganizationRiskEndpoint:
             or "High risk" in data["recommendations"][0]
         )
 
-    def test_reorganization_critical_immediate(self, client: TestClient):
+    def test_reorganization_critical_immediate(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test critical risk with barrier breached."""
         response = client.post(
             "/api/v1/resilience/exotic/exotic/reorganization-risk",
+            headers=auth_headers,
             json={
                 "current_stability": 0.2,
                 "external_perturbation": 0.5,  # Perturbation exceeds stability
@@ -231,10 +292,16 @@ class TestReorganizationRiskEndpoint:
 class TestSpinGlassEndpoint:
     """Tests for spin glass replica generation endpoint."""
 
-    def test_spin_glass_basic_generation(self, client: TestClient):
+    def test_spin_glass_basic_generation(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test basic spin glass replica generation."""
         response = client.post(
             "/api/v1/resilience/exotic/exotic/spin-glass",
+            headers=auth_headers,
             json={
                 "num_spins": 50,
                 "num_replicas": 3,
@@ -263,11 +330,17 @@ class TestSpinGlassEndpoint:
         assert 0.0 <= data["diversity_score"] <= 1.0
         assert data["difficulty"] in ["easy", "moderate", "hard", "very_hard"]
 
-    def test_spin_glass_diversity_increases_with_replicas(self, client: TestClient):
+    def test_spin_glass_diversity_increases_with_replicas(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test that more replicas increase diversity."""
         # Generate few replicas
         response_few = client.post(
             "/api/v1/resilience/exotic/exotic/spin-glass",
+            headers=auth_headers,
             json={
                 "num_spins": 30,
                 "num_replicas": 2,
@@ -280,6 +353,7 @@ class TestSpinGlassEndpoint:
         # Generate many replicas
         response_many = client.post(
             "/api/v1/resilience/exotic/exotic/spin-glass",
+            headers=auth_headers,
             json={
                 "num_spins": 30,
                 "num_replicas": 10,
@@ -299,11 +373,17 @@ class TestSpinGlassEndpoint:
         # (though this is stochastic, so we just check it's valid)
         assert 0.0 <= data_many["diversity_score"] <= 1.0
 
-    def test_spin_glass_frustration_effect(self, client: TestClient):
+    def test_spin_glass_frustration_effect(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test effect of frustration level on landscape ruggedness."""
         # Low frustration
         response_low = client.post(
             "/api/v1/resilience/exotic/exotic/spin-glass",
+            headers=auth_headers,
             json={
                 "num_spins": 40,
                 "num_replicas": 3,
@@ -316,6 +396,7 @@ class TestSpinGlassEndpoint:
         # High frustration
         response_high = client.post(
             "/api/v1/resilience/exotic/exotic/spin-glass",
+            headers=auth_headers,
             json={
                 "num_spins": 40,
                 "num_replicas": 3,
@@ -335,11 +416,17 @@ class TestSpinGlassEndpoint:
         assert 0.0 <= data_low["landscape_ruggedness"] <= 1.0
         assert 0.0 <= data_high["landscape_ruggedness"] <= 1.0
 
-    def test_spin_glass_invalid_parameters(self, client: TestClient):
+    def test_spin_glass_invalid_parameters(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test that invalid parameters are rejected."""
         # num_spins too small
         response = client.post(
             "/api/v1/resilience/exotic/exotic/spin-glass",
+            headers=auth_headers,
             json={
                 "num_spins": 5,  # Below minimum of 10
                 "num_replicas": 3,
@@ -353,6 +440,7 @@ class TestSpinGlassEndpoint:
         # num_replicas too high
         response = client.post(
             "/api/v1/resilience/exotic/exotic/spin-glass",
+            headers=auth_headers,
             json={
                 "num_spins": 50,
                 "num_replicas": 25,  # Above maximum of 20
@@ -366,6 +454,7 @@ class TestSpinGlassEndpoint:
         # frustration out of range
         response = client.post(
             "/api/v1/resilience/exotic/exotic/spin-glass",
+            headers=auth_headers,
             json={
                 "num_spins": 50,
                 "num_replicas": 3,
@@ -385,10 +474,16 @@ class TestSpinGlassEndpoint:
 class TestCatastropheEndpoint:
     """Tests for catastrophe prediction endpoint."""
 
-    def test_catastrophe_no_jump_detected(self, client: TestClient):
+    def test_catastrophe_no_jump_detected(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test case where no catastrophe is predicted."""
         response = client.post(
             "/api/v1/resilience/exotic/exotic/catastrophe",
+            headers=auth_headers,
             json={
                 "current_a": 1.0,
                 "current_b": 0.5,
@@ -408,10 +503,16 @@ class TestCatastropheEndpoint:
         assert data["status"] in ["robust", "stable", "vulnerable", "critical"]
         assert data["source"] == "backend"
 
-    def test_catastrophe_jump_detected(self, client: TestClient):
+    def test_catastrophe_jump_detected(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test case where catastrophe jump is detected."""
         response = client.post(
             "/api/v1/resilience/exotic/exotic/catastrophe",
+            headers=auth_headers,
             json={
                 "current_a": -1.0,  # Near bifurcation
                 "current_b": 0.1,
@@ -433,11 +534,17 @@ class TestCatastropheEndpoint:
             assert "jump_magnitude" in point
             assert point["jump_magnitude"] >= 0
 
-    def test_catastrophe_resilience_scoring(self, client: TestClient):
+    def test_catastrophe_resilience_scoring(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test resilience scoring for different parameter values."""
         # Far from bifurcation (robust)
         response_robust = client.post(
             "/api/v1/resilience/exotic/exotic/catastrophe",
+            headers=auth_headers,
             json={
                 "current_a": 5.0,  # Far from bifurcation set
                 "current_b": 0.0,
@@ -454,10 +561,16 @@ class TestCatastropheEndpoint:
         assert data_robust["is_safe"] or data_robust["status"] in ["robust", "stable"]
         assert len(data_robust["recommendations"]) > 0
 
-    def test_catastrophe_critical_warning(self, client: TestClient):
+    def test_catastrophe_critical_warning(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test that critical status generates urgent warnings."""
         response = client.post(
             "/api/v1/resilience/exotic/exotic/catastrophe",
+            headers=auth_headers,
             json={
                 "current_a": 0.0,  # On bifurcation boundary
                 "current_b": 0.0,
@@ -477,10 +590,16 @@ class TestCatastropheEndpoint:
         if data["status"] == "critical":
             assert any("URGENT" in rec for rec in data["recommendations"])
 
-    def test_catastrophe_invalid_num_steps(self, client: TestClient):
+    def test_catastrophe_invalid_num_steps(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test that invalid num_steps is rejected."""
         response = client.post(
             "/api/v1/resilience/exotic/exotic/catastrophe",
+            headers=auth_headers,
             json={
                 "current_a": 1.0,
                 "current_b": 0.5,
@@ -501,7 +620,12 @@ class TestCatastropheEndpoint:
 class TestExoticIntegration:
     """Integration tests for exotic endpoints."""
 
-    def test_all_endpoints_return_backend_source(self, client: TestClient):
+    def test_all_endpoints_return_backend_source(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test that all exotic endpoints mark source as 'backend'."""
         endpoints = [
             (
@@ -544,14 +668,19 @@ class TestExoticIntegration:
         ]
 
         for endpoint, payload in endpoints:
-            response = client.post(endpoint, json=payload)
+            response = client.post(endpoint, headers=auth_headers, json=payload)
             assert response.status_code == 200
             data = response.json()
             assert data["source"] == "backend", (
                 f"Endpoint {endpoint} returned wrong source"
             )
 
-    def test_exotic_endpoints_handle_concurrent_requests(self, client: TestClient):
+    def test_exotic_endpoints_handle_concurrent_requests(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        exotic_feature_flag: FeatureFlag,
+    ):
         """Test that exotic endpoints can handle concurrent requests."""
         # This is a simplified concurrency test
         # In production, use pytest-asyncio for true async testing
@@ -560,6 +689,7 @@ class TestExoticIntegration:
         for _ in range(3):
             response = client.post(
                 "/api/v1/resilience/exotic/exotic/metastability",
+                headers=auth_headers,
                 json={
                     "current_energy": 1.0,
                     "energy_landscape": [1.5],

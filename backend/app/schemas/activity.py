@@ -45,10 +45,6 @@ class ActivityBase(BaseModel):
         ...,
         description="Category: clinical, educational, administrative, time_off",
     )
-    procedure_id: UUID | None = Field(
-        None,
-        description="Optional procedure ID for credentialed activities (e.g., VAS, SM)",
-    )
     font_color: str | None = Field(None, description="Tailwind color class for text")
     background_color: str | None = Field(
         None, description="Tailwind color class for background"
@@ -56,23 +52,11 @@ class ActivityBase(BaseModel):
     requires_supervision: bool = Field(
         True, description="ACGME supervision requirement"
     )
-    provides_supervision: bool = Field(
-        False, description="Counts toward supervision ratios (AT/PCAT)"
-    )
     is_protected: bool = Field(False, description="True for locked slots (e.g., LEC)")
     counts_toward_clinical_hours: bool = Field(
         True, description="ACGME clinical hour limit"
     )
-    counts_toward_physical_capacity: bool = Field(
-        False,
-        description="Counts toward FMC physical capacity limits",
-    )
     display_order: int = Field(0, description="Sort order for UI")
-    capacity_units: int | None = Field(
-        None,
-        ge=0,
-        description="FMC physical capacity units consumed by this activity (0 for non-physical)",
-    )
 
     @field_validator("name")
     @classmethod
@@ -90,7 +74,6 @@ class ActivityBase(BaseModel):
             raise ValueError("code cannot be empty")
         v = v.strip().lower()
         # Code should be lowercase alphanumeric with underscores or hyphens
-        # Hyphens needed for codes like LV-PM, C-AM, W-AM, FMIT-R
         if not all(c.isalnum() or c in "_-" for c in v):
             raise ValueError(
                 "code must be lowercase alphanumeric with underscores or hyphens only"
@@ -124,13 +107,9 @@ class ActivityUpdate(BaseModel):
     font_color: str | None = None
     background_color: str | None = None
     requires_supervision: bool | None = None
-    provides_supervision: bool | None = None
     is_protected: bool | None = None
     counts_toward_clinical_hours: bool | None = None
-    counts_toward_physical_capacity: bool | None = None
     display_order: int | None = None
-    capacity_units: int | None = None
-    procedure_id: UUID | None = None
 
     @field_validator("code")
     @classmethod
@@ -139,7 +118,6 @@ class ActivityUpdate(BaseModel):
         if v is None:
             return v
         v = v.strip().lower()
-        # Hyphens needed for codes like LV-PM, C-AM, W-AM, FMIT-R
         if not all(c.isalnum() or c in "_-" for c in v):
             raise ValueError(
                 "code must be lowercase alphanumeric with underscores or hyphens only"

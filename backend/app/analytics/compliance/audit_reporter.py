@@ -47,10 +47,10 @@ class AuditReporter:
         if score["compliance_score"] < 85:
             recommendations.append("Improve overall compliance monitoring")
 
-        if violations["total_violations"] > 10:
+        if violations.get("total_violations", 0) > 10:
             recommendations.append("Review workload distribution")
 
-        if len(violations["work_hour_violations"]) > 0:
+        if len(violations.get("work_hour_violations", [])) > 0:
             recommendations.append("Implement stricter 80-hour rule enforcement")
 
         return recommendations

@@ -117,6 +117,7 @@ class Settings(BaseSettings):
 
     # Security
     SECRET_KEY: str = Field(default_factory=lambda: secrets.token_urlsafe(64))
+    ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = (
         15  # 15 minutes (security: reduced from 24 hours)
     )

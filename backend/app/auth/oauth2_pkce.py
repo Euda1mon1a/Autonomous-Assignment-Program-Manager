@@ -363,7 +363,7 @@ async def exchange_code_for_token(
         "client_id": request.client_id,
         "scope": auth_code.scope,
     }
-    access_token, jti, expires_at = create_access_token(token_data)
+    access_token, jti, expires_at = create_access_token(token_data, return_details=True)
 
     if obs_metrics:
         obs_metrics.record_oauth2_token_issued(request.client_id, "access_token")

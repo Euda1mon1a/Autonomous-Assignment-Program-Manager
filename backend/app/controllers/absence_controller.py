@@ -53,31 +53,14 @@ class AbsenceController:
         Returns:
             Dict with items, total count, page, and page_size
         """
-        # TODO: Update service layer to support pagination (page, page_size)
-        # For now, fetch all and apply pagination at controller level
-        result = self.service.list_absences(
+        return self.service.list_absences(
             start_date=start_date,
             end_date=end_date,
             person_id=person_id,
             absence_type=absence_type,
+            page=page,
+            page_size=page_size,
         )
-
-        # Handle both list and dict returns from service
-        if isinstance(result, dict):
-            items = result.get("items", result.get("absences", []))
-        else:
-            items = result if result else []
-
-        total = len(items)
-        offset = (page - 1) * page_size
-        paginated_items = items[offset : offset + page_size]
-
-        return {
-            "items": paginated_items,
-            "total": total,
-            "page": page,
-            "page_size": page_size,
-        }
 
     def get_absence(self, absence_id: UUID) -> AbsenceResponse:
         """Get a single absence by ID."""
@@ -91,6 +74,13 @@ class AbsenceController:
 
     def create_absence(self, absence_in: AbsenceCreate) -> AbsenceResponse:
         """Create a new absence."""
+        person = self.person_repo.get_by_id(absence_in.person_id)
+        if not person:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Person not found",
+            )
+
         result = self.service.create_absence(
             person_id=absence_in.person_id,
             start_date=absence_in.start_date,
@@ -125,7 +115,11 @@ class AbsenceController:
 
         if result["error"]:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=(
+                    status.HTTP_404_NOT_FOUND
+                    if result["error"] == "Absence not found"
+                    else status.HTTP_400_BAD_REQUEST
+                ),
                 detail=result["error"],
             )
 

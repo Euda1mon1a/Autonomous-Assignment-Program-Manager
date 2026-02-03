@@ -243,7 +243,9 @@ class SpinGlassModel:
                 replicas[i].overlap = overlap  # Store last computed overlap
 
         mean_overlap = float(np.mean(overlaps)) if overlaps else 0.0
-        diversity_score = 1.0 - mean_overlap
+        # Map overlap [-1, 1] -> diversity [0, 1] (higher = more diverse)
+        diversity_score = (1.0 - mean_overlap) / 2.0
+        diversity_score = float(np.clip(diversity_score, 0.0, 1.0))
 
         energies = [r.energy for r in replicas]
         mean_energy = float(np.mean(energies))

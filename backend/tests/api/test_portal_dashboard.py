@@ -9,7 +9,11 @@ from sqlalchemy.orm import Session
 
 from app.models.assignment import Assignment
 from app.models.block import Block
-from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus
+from app.models.conflict_alert import (
+    ConflictAlert,
+    ConflictAlertStatus,
+    ConflictType,
+)
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.swap import SwapRecord, SwapStatus, SwapType
@@ -353,6 +357,7 @@ class TestDashboardQueries:
             alert = ConflictAlert(
                 id=uuid4(),
                 faculty_id=sample_faculty.id,
+                conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
                 fmit_week=date.today() + timedelta(days=7 * i),
                 description=f"Test conflict {i}",
                 status=ConflictAlertStatus.NEW,
@@ -581,6 +586,7 @@ class TestDashboardIntegration:
         alert = ConflictAlert(
             id=uuid4(),
             faculty_id=faculty.id,
+            conflict_type=ConflictType.LEAVE_FMIT_OVERLAP,
             fmit_week=start_date,
             description="Test conflict",
             status=ConflictAlertStatus.NEW,

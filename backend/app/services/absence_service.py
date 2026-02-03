@@ -47,6 +47,8 @@ class AbsenceService:
         end_date: date | None = None,
         person_id: UUID | None = None,
         absence_type: str | None = None,
+        page: int = 1,
+        page_size: int = 100,
     ) -> dict:
         """List absences with optional filters.
 
@@ -55,17 +57,27 @@ class AbsenceService:
             end_date: Filter absences ending on or before this date.
             person_id: Filter absences for a specific person.
             absence_type: Filter by absence type (e.g., 'TDY', 'Leave', 'Deployment').
+            page: Page number (1-indexed).
+            page_size: Items per page.
 
         Returns:
-            Dictionary with 'items' (list of Absence objects) and 'total' (count).
+            Dictionary with 'items' (list of Absence objects), 'total', 'page', and 'page_size'.
         """
-        absences = self.absence_repo.list_with_filters(
+        offset = (page - 1) * page_size
+        absences, total = self.absence_repo.list_with_filters(
             start_date=start_date,
             end_date=end_date,
             person_id=person_id,
             absence_type=absence_type,
+            offset=offset,
+            limit=page_size,
         )
-        return {"items": absences, "total": len(absences)}
+        return {
+            "items": absences,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        }
 
     def create_absence(
         self,
@@ -128,6 +140,14 @@ class AbsenceService:
         absence = self.absence_repo.get_by_id(absence_id)
         if not absence:
             return {"absence": None, "error": "Absence not found"}
+
+        new_start = update_data.get("start_date", absence.start_date)
+        new_end = update_data.get("end_date", absence.end_date)
+        if new_start and new_end and new_start > new_end:
+            return {
+                "absence": None,
+                "error": "start_date must be on or before end_date",
+            }
 
         absence = self.absence_repo.update(absence, update_data)
         self.absence_repo.commit()
@@ -482,7 +502,7 @@ class AbsenceService:
         academic_year_end = date(academic_year_start.year + 1, 6, 30)
 
         # Get all absences for this person that overlap with the academic year
-        absences = self.absence_repo.list_with_filters(
+        absences, _ = self.absence_repo.list_with_filters(
             person_id=person_id,
             start_date=academic_year_start,
             end_date=academic_year_end,
@@ -583,7 +603,7 @@ class AbsenceService:
         )
 
         # Get absences that contribute to away-from-program
-        absences = self.absence_repo.list_with_filters(
+        absences, _ = self.absence_repo.list_with_filters(
             person_id=person_id,
             start_date=academic_year_start,
             end_date=academic_year_end,

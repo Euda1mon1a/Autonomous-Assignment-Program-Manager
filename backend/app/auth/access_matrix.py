@@ -177,7 +177,7 @@ class RoleHierarchy:
 
     Role Hierarchy (highest to lowest privilege):
     1. ADMIN (100) - Full system access
-    2. COORDINATOR (90) - Schedule management, inherits from ADMIN
+    2. COORDINATOR (90) - Schedule management, no inheritance
     3. FACULTY (80) - Limited management, INDEPENDENT (no inheritance)
     4. RESIDENT (70) - Basic view + self-management, INDEPENDENT
     5. CLINICAL_STAFF (60) - Clinical view access, INDEPENDENT
@@ -202,7 +202,7 @@ class RoleHierarchy:
     # SECURITY FIX: Faculty does NOT inherit from Coordinator
     HIERARCHY: dict[UserRole, set[UserRole]] = {
         UserRole.ADMIN: set(),  # Top level, no parents
-        UserRole.COORDINATOR: {UserRole.ADMIN},  # Inherits from admin only
+        UserRole.COORDINATOR: set(),  # No inheritance
         UserRole.FACULTY: set(),  # INDEPENDENT - no inheritance
         UserRole.CLINICAL_STAFF: set(),  # INDEPENDENT - no inheritance
         UserRole.RN: {UserRole.CLINICAL_STAFF},  # Inherits from clinical_staff
@@ -521,8 +521,16 @@ class AccessControlMatrix:
             ResourceType.BLOCK: {PermissionAction.READ, PermissionAction.LIST},
             ResourceType.ROTATION: {PermissionAction.READ, PermissionAction.LIST},
             ResourceType.PERSON: {PermissionAction.READ},  # Own profile
-            ResourceType.ABSENCE: {PermissionAction.CREATE, PermissionAction.READ},
-            ResourceType.LEAVE: {PermissionAction.CREATE, PermissionAction.READ},
+            ResourceType.ABSENCE: {
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+            },
+            ResourceType.LEAVE: {
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+            },
             ResourceType.SWAP: {
                 PermissionAction.CREATE,
                 PermissionAction.READ,

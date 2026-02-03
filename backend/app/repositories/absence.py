@@ -30,8 +30,14 @@ class AbsenceRepository(BaseRepository[Absence]):
         end_date: date | None = None,
         person_id: UUID | None = None,
         absence_type: str | None = None,
-    ) -> list[Absence]:
-        """List absences with optional filters and eager loading."""
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[list[Absence], int]:
+        """List absences with optional filters, eager loading, and pagination.
+
+        Returns:
+            Tuple of (absences list, total count)
+        """
         query = self.db.query(Absence).options(joinedload(Absence.person))
 
         if start_date:
@@ -43,7 +49,16 @@ class AbsenceRepository(BaseRepository[Absence]):
         if absence_type:
             query = query.filter(Absence.absence_type == absence_type)
 
-        return query.order_by(Absence.start_date).all()
+        total = query.count()
+
+        query = query.order_by(Absence.start_date, Absence.id)
+
+        if offset is not None:
+            query = query.offset(offset)
+        if limit is not None:
+            query = query.limit(limit)
+
+        return query.all(), total
 
     def get_person_ids_absent_on_date(self, on_date: date) -> list[UUID]:
         """Get all person IDs who have an absence on a specific date."""

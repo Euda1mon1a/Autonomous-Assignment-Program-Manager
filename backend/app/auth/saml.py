@@ -606,7 +606,9 @@ class SAMLAuthenticationService:
             "username": user.username,
             "saml_session_id": saml_session.session_id,
         }
-        access_token, jti, expires_at = create_access_token(token_data)
+        access_token, jti, expires_at = create_access_token(
+            token_data, return_details=True
+        )
 
         logger.info(
             f"SAML login successful for user {user.username} (ID: {user.id}) "

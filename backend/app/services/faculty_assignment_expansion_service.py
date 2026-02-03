@@ -22,11 +22,12 @@ Source priority (respected):
 PERSEC-compliant logging (no PII).
 """
 
+from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func, or_
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
@@ -35,6 +36,19 @@ from app.models.activity import Activity
 from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
 from app.models.person import Person
 from app.utils.academic_blocks import get_block_dates
+
+
+@dataclass
+class AdjunctFacultyGap:
+    """Adjunct faculty member needing manual assignment."""
+
+    person_id: UUID
+    display_name: str
+    faculty_role: str
+    min_clinic_halfdays: int | None
+    max_clinic_halfdays: int | None
+    existing_assignment_count: int
+
 
 logger = get_logger(__name__)
 
@@ -115,7 +129,88 @@ class FacultyAssignmentExpansionService:
             total_created += created
 
         logger.info(f"Created {total_created} new faculty half-day assignments")
+
+        # Log warning about skipped adjuncts
+        if exclude_adjuncts:
+            adjunct_gaps = self.get_adjunct_faculty_without_assignments(
+                block_number, academic_year
+            )
+            if adjunct_gaps:
+                logger.warning(
+                    f"Skipped {len(adjunct_gaps)} adjunct faculty - manual preload required"
+                )
+                for gap in adjunct_gaps:
+                    logger.warning(
+                        f"  Adjunct needs manual assignment: person_id={gap.person_id}, "
+                        f"min_clinics={gap.min_clinic_halfdays}, max_clinics={gap.max_clinic_halfdays}"
+                    )
+
         return total_created
+
+    def get_adjunct_faculty_without_assignments(
+        self,
+        block_number: int,
+        academic_year: int,
+    ) -> list[AdjunctFacultyGap]:
+        """
+        Get adjunct faculty who need manual preload for a block.
+
+        Adjuncts are excluded from auto-expansion and must be manually assigned.
+        This method identifies which adjuncts exist and how many assignments they have.
+
+        Args:
+            block_number: Academic block number (1-13)
+            academic_year: Academic year (e.g., 2025 for AY 2025-2026)
+
+        Returns:
+            List of AdjunctFacultyGap with adjunct info and assignment counts
+        """
+        # Get block date range
+        block_dates = get_block_dates(block_number, academic_year)
+        start_date, end_date = block_dates.start_date, block_dates.end_date
+
+        # Load all adjunct faculty
+        stmt = select(Person).where(
+            Person.type == "faculty",
+            Person.faculty_role == "adjunct",
+        )
+        adjuncts = list(self.db.execute(stmt).scalars().all())
+
+        if not adjuncts:
+            return []
+
+        # Count existing assignments per adjunct
+        adjunct_ids = [a.id for a in adjuncts]
+        count_stmt = (
+            select(
+                HalfDayAssignment.person_id,
+                func.count(HalfDayAssignment.id).label("assignment_count"),
+            )
+            .where(
+                HalfDayAssignment.person_id.in_(adjunct_ids),
+                HalfDayAssignment.date >= start_date,
+                HalfDayAssignment.date <= end_date,
+            )
+            .group_by(HalfDayAssignment.person_id)
+        )
+        counts = {row[0]: row[1] for row in self.db.execute(count_stmt)}
+
+        # Build gap list
+        gaps = []
+        for adjunct in adjuncts:
+            assignment_count = counts.get(adjunct.id, 0)
+            gaps.append(
+                AdjunctFacultyGap(
+                    person_id=adjunct.id,
+                    display_name=adjunct.display_name or f"Faculty {adjunct.id}",
+                    faculty_role=adjunct.faculty_role or "adjunct",
+                    min_clinic_halfdays=adjunct.min_clinic_halfdays_per_week,
+                    max_clinic_halfdays=adjunct.max_clinic_halfdays_per_week,
+                    existing_assignment_count=assignment_count,
+                )
+            )
+
+        return gaps
 
     def _load_faculty(self, exclude_adjuncts: bool) -> list[Person]:
         """Load all faculty members.
@@ -128,8 +223,6 @@ class FacultyAssignmentExpansionService:
         if exclude_adjuncts:
             # Adjuncts have faculty_role='adjunct'
             # Include NULL faculty_role (most faculty) - they are NOT adjuncts
-            from sqlalchemy import or_
-
             stmt = stmt.where(
                 or_(Person.faculty_role != "adjunct", Person.faculty_role.is_(None))
             )

@@ -398,6 +398,7 @@ class TestUserAdministrationE2E:
         expired_token, _, _ = create_access_token(
             data={"sub": user_id, "username": "token_test_user"},
             expires_delta=timedelta(seconds=-1),  # Already expired
+            return_details=True,
         )
         expired_headers = {"Authorization": f"Bearer {expired_token}"}
         expired_response = client.get("/api/auth/me", headers=expired_headers)

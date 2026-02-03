@@ -283,7 +283,7 @@ class BatchOperationResult(BaseModel):
     """Result for a single operation in a batch."""
 
     index: int = Field(..., description="Index of the operation in the batch")
-    template_id: UUID
+    template_id: UUID | None
     success: bool
     error: str | None = None
 

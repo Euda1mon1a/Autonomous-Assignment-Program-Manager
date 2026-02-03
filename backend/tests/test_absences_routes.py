@@ -15,6 +15,11 @@ from app.models.absence import Absence
 from app.models.person import Person
 
 
+@pytest.fixture(autouse=True)
+def _auth_client(client: TestClient, auth_headers: dict) -> None:
+    client.headers.update(auth_headers)
+
+
 class TestListAbsencesEndpoint:
     """Tests for GET /api/absences endpoint."""
 

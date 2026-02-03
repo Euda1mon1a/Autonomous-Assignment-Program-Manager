@@ -67,6 +67,31 @@ class TestAbsenceService:
 
         assert result["total"] == 3
         assert len(result["items"]) == 3
+        assert result["page"] == 1
+        assert result["page_size"] == 100
+
+    def test_list_absences_with_pagination(self, db, sample_resident):
+        """Test listing absences with pagination in the service layer."""
+        base_date = date.today()
+        for i in range(10):
+            absence = Absence(
+                id=uuid4(),
+                person_id=sample_resident.id,
+                start_date=base_date + timedelta(days=i),
+                end_date=base_date + timedelta(days=i + 1),
+                absence_type="vacation",
+            )
+            db.add(absence)
+        db.commit()
+
+        service = AbsenceService(db)
+        result = service.list_absences(page=2, page_size=3)
+
+        assert result["total"] == 10
+        assert len(result["items"]) == 3
+        assert result["page"] == 2
+        assert result["page_size"] == 3
+        assert result["items"][0].start_date == base_date + timedelta(days=3)
 
     def test_list_absences_filter_by_person_id(self, db, sample_residents):
         """Test filtering absences by person_id."""

@@ -1188,7 +1188,7 @@ class WorkloadSignalProcessor:
         ts: WorkloadTimeSeries,
         method: str = "wiener",
         noise_estimate: float | None = None,
-        window_size: int = 5,
+        window_size: int = 3,
     ) -> dict:
         """
         Apply adaptive filtering for noise reduction.

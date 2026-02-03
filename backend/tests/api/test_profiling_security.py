@@ -10,16 +10,7 @@ request patterns, and system internals. These endpoints MUST be admin-only.
 
 import pytest
 from fastapi import status
-from fastapi.testclient import TestClient
-
-from app.main import app
 from app.models.user import User
-
-
-@pytest.fixture
-def client():
-    """Create test client."""
-    return TestClient(app)
 
 
 @pytest.fixture
@@ -31,7 +22,7 @@ def regular_user_token(db):
         username="regular_user",
         email="regular@example.com",
         hashed_password=get_password_hash("testpass123"),
-        role="RESIDENT",  # Non-admin role
+        role="resident",  # Non-admin role
         is_active=True,
     )
     db.add(user)
@@ -39,7 +30,8 @@ def regular_user_token(db):
     db.refresh(user)
 
     token, _, _ = create_access_token(
-        data={"sub": str(user.id), "username": user.username}
+        data={"sub": str(user.id), "username": user.username},
+        return_details=True,
     )
     return token
 
@@ -53,7 +45,7 @@ def admin_user_token(db):
         username="admin_user",
         email="admin@example.com",
         hashed_password=get_password_hash("adminpass123"),
-        role="ADMIN",
+        role="admin",
         is_active=True,
     )
     db.add(user)
@@ -61,9 +53,13 @@ def admin_user_token(db):
     db.refresh(user)
 
     token, _, _ = create_access_token(
-        data={"sub": str(user.id), "username": user.username}
+        data={"sub": str(user.id), "username": user.username},
+        return_details=True,
     )
     return token
+
+
+API_PREFIX = "/api/v1"
 
 
 class TestProfilingEndpointSecurity:
@@ -71,17 +67,17 @@ class TestProfilingEndpointSecurity:
 
     # All profiling endpoints that must be admin-only
     PROFILING_ENDPOINTS = [
-        ("GET", "/profiling/status"),
-        ("POST", "/profiling/start"),
-        ("POST", "/profiling/stop"),
-        ("GET", "/profiling/report"),
-        ("GET", "/profiling/queries"),
-        ("GET", "/profiling/requests"),
-        ("GET", "/profiling/traces"),
-        ("GET", "/profiling/bottlenecks"),
-        ("GET", "/profiling/flamegraph"),
-        ("POST", "/profiling/analyze"),
-        ("DELETE", "/profiling/clear"),
+        ("GET", f"{API_PREFIX}/profiling/status"),
+        ("POST", f"{API_PREFIX}/profiling/start"),
+        ("POST", f"{API_PREFIX}/profiling/stop"),
+        ("GET", f"{API_PREFIX}/profiling/report"),
+        ("GET", f"{API_PREFIX}/profiling/queries"),
+        ("GET", f"{API_PREFIX}/profiling/requests"),
+        ("GET", f"{API_PREFIX}/profiling/traces"),
+        ("GET", f"{API_PREFIX}/profiling/bottlenecks"),
+        ("GET", f"{API_PREFIX}/profiling/flamegraph"),
+        ("POST", f"{API_PREFIX}/profiling/analyze"),
+        ("DELETE", f"{API_PREFIX}/profiling/clear"),
     ]
 
     @pytest.mark.parametrize("method,endpoint", PROFILING_ENDPOINTS)
@@ -176,7 +172,7 @@ class TestProfilingEndpointSecurity:
         Unauthenticated requests should receive generic error messages that
         don't reveal information about the profiling system.
         """
-        response = client.get("/profiling/status")
+        response = client.get(f"{API_PREFIX}/profiling/status")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 

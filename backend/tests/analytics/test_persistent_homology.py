@@ -22,6 +22,7 @@ from app.models.assignment import Assignment
 from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
+from app.utils.academic_blocks import get_block_number_for_date
 
 
 @pytest.fixture
@@ -49,7 +50,7 @@ def sample_assignments(db: Session):
             id=uuid.uuid4(),
             name=f"Resident {i}",
             email=f"resident{i}@example.com",
-            role="RESIDENT",
+            type="resident",
             pgy_level=i % 3 + 1,
         )
         db.add(person)
@@ -78,7 +79,8 @@ def sample_assignments(db: Session):
             block = Block(
                 id=uuid.uuid4(),
                 date=current_date,
-                session=session,
+                time_of_day=session,
+                block_number=get_block_number_for_date(current_date)[0],
             )
             db.add(block)
             blocks.append(block)

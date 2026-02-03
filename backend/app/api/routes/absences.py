@@ -151,7 +151,7 @@ async def delete_absence(
 ) -> None:
     """Delete an absence. Requires authentication."""
     controller = AbsenceController(db)
-    await controller.delete_absence(absence_id)
+    controller.delete_absence(absence_id)
 
     # Broadcast WebSocket event
     await broadcast_schedule_updated(

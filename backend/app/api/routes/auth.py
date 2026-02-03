@@ -91,7 +91,8 @@ async def login(
 
     # Generate refresh token with user data
     refresh_token, _, _ = create_refresh_token(
-        data={"sub": user_id, "username": username}
+        data={"sub": user_id, "username": username},
+        return_details=True,
     )
 
     return TokenWithRefresh(
@@ -140,7 +141,8 @@ async def login_json(
 
     # Generate refresh token with user data
     refresh_token, _, _ = create_refresh_token(
-        data={"sub": user_id, "username": username}
+        data={"sub": user_id, "username": username},
+        return_details=True,
     )
 
     return TokenWithRefresh(
@@ -243,6 +245,7 @@ async def refresh_token(
     new_access_token, _, _ = create_access_token(
         data={"sub": str(user.id), "username": user.username},
         expires_delta=access_token_expires,
+        return_details=True,
     )
 
     # Set new access token as httpOnly cookie
@@ -260,7 +263,8 @@ async def refresh_token(
     # The old token was already blacklisted in verify_refresh_token
     if settings.REFRESH_TOKEN_ROTATE:
         new_refresh_token, _, _ = create_refresh_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
     else:
         # Return the same refresh token if rotation is disabled
