@@ -985,7 +985,9 @@ class CPSATSolver(BaseSolver):
                 # Clinic only on workdays (not weekends/holidays)
                 if not block.is_weekend and not getattr(block, "is_holiday", False):
                     fac_clinic[f_i, b_i] = model.NewBoolVar(f"fac_clinic_{f_i}_{b_i}")
-                    fac_supervise[f_i, b_i] = model.NewBoolVar(f"fac_supervise_{f_i}_{b_i}")
+                    fac_supervise[f_i, b_i] = model.NewBoolVar(
+                        f"fac_supervise_{f_i}_{b_i}"
+                    )
 
                 # PCAT/DO can happen any day (after overnight call)
                 fac_pcat[f_i, b_i] = model.NewBoolVar(f"fac_pcat_{f_i}_{b_i}")
@@ -1138,21 +1140,21 @@ class CPSATSolver(BaseSolver):
 
                 f_i = context.faculty_idx[faculty_id]
 
-                # Link PCAT to next day AM
+                # Link PCAT to next day AM (bidirectional)
                 if next_day in date_am_block:
                     next_am = date_am_block[next_day]
                     next_am_b_i = context.block_idx[next_am.id]
                     if (f_i, next_am_b_i) in fac_pcat:
-                        # call = 1 => pcat = 1
-                        model.Add(fac_pcat[f_i, next_am_b_i] >= call_var)
+                        # call <=> pcat (bidirectional: PCAT iff call)
+                        model.Add(fac_pcat[f_i, next_am_b_i] == call_var)
 
-                # Link DO to next day PM
+                # Link DO to next day PM (bidirectional)
                 if next_day in date_pm_block:
                     next_pm = date_pm_block[next_day]
                     next_pm_b_i = context.block_idx[next_pm.id]
                     if (f_i, next_pm_b_i) in fac_do:
-                        # call = 1 => do = 1
-                        model.Add(fac_do[f_i, next_pm_b_i] >= call_var)
+                        # call <=> do (bidirectional: DO iff call)
+                        model.Add(fac_do[f_i, next_pm_b_i] == call_var)
 
         # Constraint: Supervision ratio (ACGME)
         # For each slot with residents in clinic, need enough faculty supervisors
@@ -1162,7 +1164,11 @@ class CPSATSolver(BaseSolver):
         clinic_template_ids = set()
         for template in context.templates:
             name_lower = template.name.lower()
-            if "clinic" in name_lower or "fm" in name_lower or "outpatient" in name_lower:
+            if (
+                "clinic" in name_lower
+                or "fm" in name_lower
+                or "outpatient" in name_lower
+            ):
                 clinic_template_ids.add(template.id)
 
         if clinic_template_ids:
@@ -1209,7 +1215,9 @@ class CPSATSolver(BaseSolver):
                     # Linearized: 4 * sum(supervisors) >= supervision_load
                     model.Add(4 * sum(faculty_supervising) >= supervision_load)
 
-        logger.info("Added faculty activity constraints (clinic limits, PCAT/DO, supervision)")
+        logger.info(
+            "Added faculty activity constraints (clinic limits, PCAT/DO, supervision)"
+        )
 
         # ==================================================
         # APPLY CONSTRAINTS FROM MANAGER
@@ -1438,10 +1446,9 @@ class CPSATSolver(BaseSolver):
 
                 if (f_i, b_i) in fac_clinic and solver.Value(fac_clinic[f_i, b_i]) == 1:
                     activity = "C"  # Clinic
-                elif (
-                    (f_i, b_i) in fac_supervise
-                    and solver.Value(fac_supervise[f_i, b_i]) == 1
-                ):
+                elif (f_i, b_i) in fac_supervise and solver.Value(
+                    fac_supervise[f_i, b_i]
+                ) == 1:
                     activity = "AT"  # Attending/Supervision
                 elif (f_i, b_i) in fac_pcat and solver.Value(fac_pcat[f_i, b_i]) == 1:
                     activity = "PCAT"  # Post-Call Attending Time
