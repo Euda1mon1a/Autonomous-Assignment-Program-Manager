@@ -127,13 +127,13 @@ The application defines an explicit role hierarchy with inheritance:
 
 ```
 ADMIN (highest privilege)
-  ├── COORDINATOR (schedule management)
-  │     ├── FACULTY (view + own data management)
-  │     ├── CLINICAL_STAFF (view only)
-  │     │     ├── RN (Registered Nurse)
-  │     │     ├── LPN (Licensed Practical Nurse)
-  │     │     └── MSA (Medical Support Assistant)
-  │     └── RESIDENT (view own + manage own swaps)
+  ├── COORDINATOR (schedule management; no admin inheritance)
+  ├── FACULTY (view + own data management)
+  ├── CLINICAL_STAFF (view only)
+  │     ├── RN (Registered Nurse)
+  │     ├── LPN (Licensed Practical Nurse)
+  │     └── MSA (Medical Support Assistant)
+  └── RESIDENT (view own + manage own swaps)
 ```
 
 ### User Model Properties
@@ -179,7 +179,7 @@ The `AccessControlMatrix` class defines comprehensive permissions:
 
 **Resident:**
 - Schedule/Assignment/Block/Rotation: READ, LIST
-- Own Absence/Leave: CREATE, READ
+- Own Absence/Leave: CREATE, READ, UPDATE
 - Swap: CREATE, READ, UPDATE, APPROVE, REJECT
 - Conflict/Notification: READ, LIST
 
@@ -192,6 +192,18 @@ The system supports dynamic permission checks based on resource ownership:
 if role == RESIDENT and action == UPDATE and resource == ABSENCE:
     return user_id == resource_owner_id
 ```
+
+### Policy Updates (2026-02-03 Addendum)
+
+These changes were implemented after the original audit date to tighten least-privilege
+and enable safe self-service edits:
+
+- **Coordinator no longer inherits admin privileges.** Coordinators retain schedule and
+  workflow permissions but do not gain full admin access by inheritance.
+- **Residents can update their own Absence/Leave requests.** This is only permitted when
+  context confirms ownership (resource owner id matches user id).
+- **Strict context requirement for self-service UPDATE/DELETE.** For resident/faculty
+  updates on Absence/Leave/Swap/Person, access is denied if no context is provided.
 
 ---
 

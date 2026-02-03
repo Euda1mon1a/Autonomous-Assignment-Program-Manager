@@ -213,6 +213,7 @@ def create_session(response: Response, user: User) -> dict:
     access_token, jti, expires_at = create_access_token(
         data={"sub": str(user.id), "username": user.username},
         expires_delta=access_token_expires,
+        return_details=True,
     )
 
     # Set httpOnly cookie for XSS protection

@@ -24,92 +24,68 @@ class TestRoleHierarchyBasics:
         assert inherited == {UserRole.ADMIN}
         assert len(inherited) == 1
 
-    def test_coordinator_inherits_from_admin(self):
-        """Coordinator inherits from admin."""
+    def test_coordinator_has_no_inheritance(self):
+        """Coordinator does not inherit admin permissions."""
         inherited = RoleHierarchy.get_inherited_roles(UserRole.COORDINATOR)
-        assert UserRole.COORDINATOR in inherited
-        assert UserRole.ADMIN in inherited
-        assert len(inherited) == 2
+        assert inherited == {UserRole.COORDINATOR}
 
-    def test_faculty_inherits_from_admin_and_coordinator(self):
-        """Faculty inherits from both admin and coordinator."""
+    def test_faculty_has_no_inheritance(self):
+        """Faculty does not inherit from coordinator or admin."""
         inherited = RoleHierarchy.get_inherited_roles(UserRole.FACULTY)
-        assert UserRole.FACULTY in inherited
-        assert UserRole.ADMIN in inherited
-        assert UserRole.COORDINATOR in inherited
-        assert len(inherited) == 3
+        assert inherited == {UserRole.FACULTY}
 
-    def test_clinical_staff_inherits_from_admin_and_coordinator(self):
-        """Clinical staff inherits from admin and coordinator."""
+    def test_clinical_staff_has_no_inheritance(self):
+        """Clinical staff does not inherit from coordinator or admin."""
         inherited = RoleHierarchy.get_inherited_roles(UserRole.CLINICAL_STAFF)
-        assert UserRole.CLINICAL_STAFF in inherited
-        assert UserRole.ADMIN in inherited
-        assert UserRole.COORDINATOR in inherited
-        assert len(inherited) == 3
+        assert inherited == {UserRole.CLINICAL_STAFF}
 
-    def test_rn_has_full_inheritance_chain(self):
-        """RN inherits from clinical_staff, coordinator, and admin."""
+    def test_rn_inherits_from_clinical_staff(self):
+        """RN inherits from clinical_staff only."""
         inherited = RoleHierarchy.get_inherited_roles(UserRole.RN)
-        assert UserRole.RN in inherited
-        assert UserRole.CLINICAL_STAFF in inherited
-        assert UserRole.COORDINATOR in inherited
-        assert UserRole.ADMIN in inherited
-        assert len(inherited) == 4
+        assert inherited == {UserRole.RN, UserRole.CLINICAL_STAFF}
 
-    def test_lpn_has_full_inheritance_chain(self):
-        """LPN inherits from clinical_staff, coordinator, and admin."""
+    def test_lpn_inherits_from_clinical_staff(self):
+        """LPN inherits from clinical_staff only."""
         inherited = RoleHierarchy.get_inherited_roles(UserRole.LPN)
-        assert UserRole.LPN in inherited
-        assert UserRole.CLINICAL_STAFF in inherited
-        assert UserRole.COORDINATOR in inherited
-        assert UserRole.ADMIN in inherited
+        assert inherited == {UserRole.LPN, UserRole.CLINICAL_STAFF}
 
-    def test_msa_has_full_inheritance_chain(self):
-        """MSA inherits from clinical_staff, coordinator, and admin."""
+    def test_msa_inherits_from_clinical_staff(self):
+        """MSA inherits from clinical_staff only."""
         inherited = RoleHierarchy.get_inherited_roles(UserRole.MSA)
-        assert UserRole.MSA in inherited
-        assert UserRole.CLINICAL_STAFF in inherited
-        assert UserRole.COORDINATOR in inherited
-        assert UserRole.ADMIN in inherited
+        assert inherited == {UserRole.MSA, UserRole.CLINICAL_STAFF}
 
-    def test_resident_inherits_from_admin_and_coordinator(self):
-        """Resident inherits from admin and coordinator."""
+    def test_resident_has_no_inheritance(self):
+        """Resident does not inherit from coordinator or admin."""
         inherited = RoleHierarchy.get_inherited_roles(UserRole.RESIDENT)
-        assert UserRole.RESIDENT in inherited
-        assert UserRole.ADMIN in inherited
-        assert UserRole.COORDINATOR in inherited
+        assert inherited == {UserRole.RESIDENT}
 
 
 class TestRoleComparison:
     """Test role hierarchy comparison."""
 
-    def test_coordinator_is_higher_than_admin(self):
-        """Coordinator is below admin in hierarchy (admin is parent)."""
-        assert RoleHierarchy.is_higher_role(UserRole.COORDINATOR, UserRole.ADMIN)
+    def test_admin_is_higher_than_coordinator(self):
+        """Admin is higher than coordinator."""
+        assert RoleHierarchy.is_higher_role(UserRole.ADMIN, UserRole.COORDINATOR)
 
-    def test_faculty_is_higher_than_admin(self):
-        """Faculty is below admin in hierarchy."""
-        assert RoleHierarchy.is_higher_role(UserRole.FACULTY, UserRole.ADMIN)
+    def test_admin_is_higher_than_faculty(self):
+        """Admin is higher than faculty."""
+        assert RoleHierarchy.is_higher_role(UserRole.ADMIN, UserRole.FACULTY)
 
-    def test_faculty_is_higher_than_coordinator(self):
-        """Faculty is below coordinator in hierarchy."""
-        assert RoleHierarchy.is_higher_role(UserRole.FACULTY, UserRole.COORDINATOR)
+    def test_admin_is_higher_than_resident(self):
+        """Admin is higher than resident."""
+        assert RoleHierarchy.is_higher_role(UserRole.ADMIN, UserRole.RESIDENT)
 
-    def test_resident_is_higher_than_admin(self):
-        """Resident is below admin in hierarchy."""
-        assert RoleHierarchy.is_higher_role(UserRole.RESIDENT, UserRole.ADMIN)
+    def test_coordinator_is_higher_than_faculty(self):
+        """Coordinator is higher than faculty."""
+        assert RoleHierarchy.is_higher_role(UserRole.COORDINATOR, UserRole.FACULTY)
 
-    def test_admin_not_higher_than_coordinator(self):
-        """Admin is not below coordinator (admin is parent)."""
-        assert not RoleHierarchy.is_higher_role(UserRole.ADMIN, UserRole.COORDINATOR)
+    def test_coordinator_is_higher_than_resident(self):
+        """Coordinator is higher than resident."""
+        assert RoleHierarchy.is_higher_role(UserRole.COORDINATOR, UserRole.RESIDENT)
 
-    def test_admin_not_higher_than_faculty(self):
-        """Admin is not below faculty."""
-        assert not RoleHierarchy.is_higher_role(UserRole.ADMIN, UserRole.FACULTY)
-
-    def test_coordinator_not_higher_than_faculty(self):
-        """Coordinator is not below faculty (coordinator is parent)."""
-        assert not RoleHierarchy.is_higher_role(UserRole.COORDINATOR, UserRole.FACULTY)
+    def test_faculty_not_higher_than_admin(self):
+        """Faculty is not higher than admin."""
+        assert not RoleHierarchy.is_higher_role(UserRole.FACULTY, UserRole.ADMIN)
 
     def test_role_not_higher_than_itself(self):
         """Role is not higher than itself."""
@@ -137,15 +113,15 @@ class TestClinicalStaffHierarchy:
 
     def test_rn_is_higher_than_clinical_staff(self):
         """RN is below clinical_staff in hierarchy."""
-        assert RoleHierarchy.is_higher_role(UserRole.RN, UserRole.CLINICAL_STAFF)
+        assert not RoleHierarchy.is_higher_role(UserRole.RN, UserRole.CLINICAL_STAFF)
 
     def test_lpn_is_higher_than_clinical_staff(self):
         """LPN is below clinical_staff in hierarchy."""
-        assert RoleHierarchy.is_higher_role(UserRole.LPN, UserRole.CLINICAL_STAFF)
+        assert not RoleHierarchy.is_higher_role(UserRole.LPN, UserRole.CLINICAL_STAFF)
 
     def test_msa_is_higher_than_clinical_staff(self):
         """MSA is below clinical_staff in hierarchy."""
-        assert RoleHierarchy.is_higher_role(UserRole.MSA, UserRole.CLINICAL_STAFF)
+        assert not RoleHierarchy.is_higher_role(UserRole.MSA, UserRole.CLINICAL_STAFF)
 
     def test_clinical_staff_roles_have_same_inheritance(self):
         """All clinical staff roles have same inheritance depth."""
@@ -282,8 +258,8 @@ class TestRoleLevels:
         specialized_roles = [UserRole.RN, UserRole.LPN, UserRole.MSA]
         for spec_role in specialized_roles:
             spec_depth = len(RoleHierarchy.get_inherited_roles(spec_role))
-            # Should have at least 4 levels (self + clinical_staff + coordinator + admin)
-            assert spec_depth >= 4
+            # Should include self + clinical_staff
+            assert spec_depth == 2
 
 
 class TestPermissionPropagation:

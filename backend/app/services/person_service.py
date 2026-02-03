@@ -2,6 +2,7 @@
 
 from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.person import Person
@@ -214,11 +215,17 @@ class PersonService:
         if performs_procedures:
             person_data["performs_procedures"] = performs_procedures
 
-        person = self.person_repo.create(person_data)
-        self.person_repo.commit()
-        self.person_repo.refresh(person)
-
-        return {"person": person, "error": None}
+        try:
+            person = self.person_repo.create(person_data)
+            self.person_repo.commit()
+            self.person_repo.refresh(person)
+            return {"person": person, "error": None}
+        except IntegrityError:
+            self.db.rollback()
+            return {
+                "person": None,
+                "error": "Person with this email already exists",
+            }
 
     def update_person(self, person_id: UUID, update_data: dict) -> dict:
         """

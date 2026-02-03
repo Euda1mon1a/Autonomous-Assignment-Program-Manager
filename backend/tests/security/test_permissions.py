@@ -227,8 +227,17 @@ class TestFacultyPermissions:
         assert acm.has_permission(
             UserRole.FACULTY, ResourceType.LEAVE, PermissionAction.CREATE
         )
+        user_id = uuid4()
+        context = PermissionContext(
+            user_id=user_id,
+            user_role=UserRole.FACULTY,
+            resource_owner_id=user_id,
+        )
         assert acm.has_permission(
-            UserRole.FACULTY, ResourceType.LEAVE, PermissionAction.UPDATE
+            UserRole.FACULTY,
+            ResourceType.LEAVE,
+            PermissionAction.UPDATE,
+            context=context,
         )
         # But cannot approve
         assert not acm.has_permission(
@@ -240,8 +249,17 @@ class TestFacultyPermissions:
         assert acm.has_permission(
             UserRole.FACULTY, ResourceType.ABSENCE, PermissionAction.CREATE
         )
+        user_id = uuid4()
+        context = PermissionContext(
+            user_id=user_id,
+            user_role=UserRole.FACULTY,
+            resource_owner_id=user_id,
+        )
         assert acm.has_permission(
-            UserRole.FACULTY, ResourceType.ABSENCE, PermissionAction.UPDATE
+            UserRole.FACULTY,
+            ResourceType.ABSENCE,
+            PermissionAction.UPDATE,
+            context=context,
         )
 
     def test_faculty_swap_permissions(self, acm):

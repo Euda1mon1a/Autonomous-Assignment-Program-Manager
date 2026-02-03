@@ -45,7 +45,7 @@ class RateLimiter:
                 )
                 # Test connection
                 self.redis.ping()
-            except (redis.ConnectionError, redis.TimeoutError) as e:
+            except (redis.ConnectionError, redis.TimeoutError, ValueError) as e:
                 logger.error(f"Failed to connect to Redis: {e}")
                 self.redis = None
         else:
@@ -381,7 +381,7 @@ class AccountLockout:
                     socket_timeout=5,
                 )
                 self.redis.ping()
-            except (redis.ConnectionError, redis.TimeoutError) as e:
+            except (redis.ConnectionError, redis.TimeoutError, ValueError) as e:
                 logger.error(f"Failed to connect to Redis for account lockout: {e}")
                 self.redis = None
         else:

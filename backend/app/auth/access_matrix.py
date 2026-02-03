@@ -33,10 +33,17 @@ from functools import wraps
 from typing import Any, cast
 from uuid import UUID, uuid4
 
-from fastapi import HTTPException, status
+import redis.asyncio as aioredis
+from fastapi import Depends, HTTPException, status
 from pydantic import BaseModel, Field
+from redis.exceptions import RedisError
+
+from app.core.config import get_settings
+from app.core.security import get_current_active_user
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 # ============================================================================
@@ -177,7 +184,7 @@ class RoleHierarchy:
 
     Role Hierarchy (highest to lowest privilege):
     1. ADMIN (100) - Full system access
-    2. COORDINATOR (90) - Schedule management, inherits from ADMIN
+    2. COORDINATOR (90) - Schedule management, no inheritance
     3. FACULTY (80) - Limited management, INDEPENDENT (no inheritance)
     4. RESIDENT (70) - Basic view + self-management, INDEPENDENT
     5. CLINICAL_STAFF (60) - Clinical view access, INDEPENDENT
@@ -202,7 +209,7 @@ class RoleHierarchy:
     # SECURITY FIX: Faculty does NOT inherit from Coordinator
     HIERARCHY: dict[UserRole, set[UserRole]] = {
         UserRole.ADMIN: set(),  # Top level, no parents
-        UserRole.COORDINATOR: {UserRole.ADMIN},  # Inherits from admin only
+        UserRole.COORDINATOR: set(),  # No inheritance
         UserRole.FACULTY: set(),  # INDEPENDENT - no inheritance
         UserRole.CLINICAL_STAFF: set(),  # INDEPENDENT - no inheritance
         UserRole.RN: {UserRole.CLINICAL_STAFF},  # Inherits from clinical_staff
@@ -521,8 +528,16 @@ class AccessControlMatrix:
             ResourceType.BLOCK: {PermissionAction.READ, PermissionAction.LIST},
             ResourceType.ROTATION: {PermissionAction.READ, PermissionAction.LIST},
             ResourceType.PERSON: {PermissionAction.READ},  # Own profile
-            ResourceType.ABSENCE: {PermissionAction.CREATE, PermissionAction.READ},
-            ResourceType.LEAVE: {PermissionAction.CREATE, PermissionAction.READ},
+            ResourceType.ABSENCE: {
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+            },
+            ResourceType.LEAVE: {
+                PermissionAction.CREATE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+            },
             ResourceType.SWAP: {
                 PermissionAction.CREATE,
                 PermissionAction.READ,
@@ -623,7 +638,7 @@ class AccessControlMatrix:
                 )
                 return False
 
-                # Check static permissions in matrix
+        # Check static permissions in matrix
         has_static_permission = self._check_static_permission(role, resource, action)
 
         # Check inherited permissions from role hierarchy
@@ -634,13 +649,30 @@ class AccessControlMatrix:
                     has_static_permission = True
                     break
 
-                    # Apply context-aware checks if context is provided
-        if context and has_static_permission:
-            has_permission = self._check_context_permission(
-                role, resource, action, context
-            )
+        if has_static_permission:
+            if context:
+                has_permission = self._check_context_permission(
+                    role, resource, action, context
+                )
+            else:
+                # Strict guard: self-service updates/deletes require context.
+                if role in {UserRole.RESIDENT, UserRole.FACULTY} and action in {
+                    PermissionAction.UPDATE,
+                    PermissionAction.DELETE,
+                }:
+                    if resource in {
+                        ResourceType.ABSENCE,
+                        ResourceType.LEAVE,
+                        ResourceType.SWAP_REQUEST,
+                        ResourceType.PERSON,
+                    }:
+                        has_permission = False
+                    else:
+                        has_permission = True
+                else:
+                    has_permission = True
         else:
-            has_permission = has_static_permission
+            has_permission = False
 
             # Audit the permission check
         self._audit_permission_check(
@@ -713,6 +745,149 @@ class AccessControlMatrix:
                     )
 
         return True  # No additional context restrictions
+
+    def _flatten_permissions(
+        self, permissions: dict[ResourceType, set[PermissionAction]]
+    ) -> set[str]:
+        """Convert permission map to a set of resource:action strings."""
+        flattened: set[str] = set()
+        for resource, actions in permissions.items():
+            for action in actions:
+                flattened.add(f"{resource.value}:{action.value}")
+        return flattened
+
+    def _check_permission_set(
+        self,
+        permissions: set[str],
+        resource: ResourceType,
+        action: PermissionAction,
+    ) -> bool:
+        """Check if permission set allows an action on a resource."""
+        key = f"{resource.value}:{action.value}"
+        if key in permissions:
+            return True
+        if action in {
+            PermissionAction.CREATE,
+            PermissionAction.READ,
+            PermissionAction.UPDATE,
+            PermissionAction.DELETE,
+        }:
+            manage_key = f"{resource.value}:{PermissionAction.MANAGE.value}"
+            return manage_key in permissions
+        return False
+
+    async def _get_role_permission_set(
+        self, role: UserRole, use_cache: bool = True
+    ) -> set[str]:
+        """Get flattened permissions for a role, optionally cached."""
+        if not use_cache:
+            return self._flatten_permissions(self.get_role_permissions(role))
+
+        try:
+            cache = await get_permission_cache()
+            cached = await cache.get_role_permissions(role)
+            if cached is not None:
+                return cached
+
+            permissions = self._flatten_permissions(self.get_role_permissions(role))
+            await cache.set_role_permissions(role, permissions)
+            return permissions
+        except Exception as exc:  # noqa: BLE001 - cache should never block auth
+            logger.warning(f"Permission cache unavailable, falling back: {exc}")
+            return self._flatten_permissions(self.get_role_permissions(role))
+
+    async def has_permission_async(
+        self,
+        role: UserRole | str,
+        resource: ResourceType | str,
+        action: PermissionAction | str,
+        context: PermissionContext | None = None,
+        use_cache: bool = True,
+    ) -> bool:
+        """
+        Async permission check with optional Redis caching.
+
+        Args:
+            role: User role
+            resource: Resource type
+            action: Permission action
+            context: Optional context for dynamic evaluation
+            use_cache: Whether to use Redis cache for role permissions
+
+        Returns:
+            True if permission is granted, False otherwise
+        """
+        # Convert strings to enums
+        if isinstance(role, str):
+            try:
+                role = UserRole(role)
+            except ValueError:
+                logger.warning(f"Invalid role: {role}")
+                self._audit_permission_check(
+                    role, resource, action, False, "Invalid role"
+                )
+                return False
+
+        if isinstance(resource, str):
+            try:
+                resource = ResourceType(resource)
+            except ValueError:
+                logger.warning(f"Invalid resource: {resource}")
+                self._audit_permission_check(
+                    role, resource, action, False, "Invalid resource"
+                )
+                return False
+
+        if isinstance(action, str):
+            try:
+                action = PermissionAction(action)
+            except ValueError:
+                logger.warning(f"Invalid action: {action}")
+                self._audit_permission_check(
+                    role, resource, action, False, "Invalid action"
+                )
+                return False
+
+        permissions = await self._get_role_permission_set(role, use_cache=use_cache)
+        has_static_permission = self._check_permission_set(
+            permissions, resource, action
+        )
+
+        if has_static_permission:
+            if context:
+                has_permission = self._check_context_permission(
+                    role, resource, action, context
+                )
+            else:
+                # Strict guard: self-service updates/deletes require context.
+                if role in {UserRole.RESIDENT, UserRole.FACULTY} and action in {
+                    PermissionAction.UPDATE,
+                    PermissionAction.DELETE,
+                }:
+                    if resource in {
+                        ResourceType.ABSENCE,
+                        ResourceType.LEAVE,
+                        ResourceType.SWAP_REQUEST,
+                        ResourceType.PERSON,
+                    }:
+                        has_permission = False
+                    else:
+                        has_permission = True
+                else:
+                    has_permission = True
+        else:
+            has_permission = False
+
+        # Audit the permission check
+        self._audit_permission_check(
+            role,
+            resource,
+            action,
+            has_permission,
+            context=context.model_dump() if context else None,
+        )
+
+        return has_permission
 
     def _validate_approval_context(
         self,
@@ -812,19 +987,27 @@ class AccessControlMatrix:
         if not self.enable_audit:
             return
 
-        entry = PermissionAuditEntry(
-            action="checked",
-            role=role if isinstance(role, UserRole) else UserRole(role),
-            resource=(
+        try:
+            role_value = role if isinstance(role, UserRole) else UserRole(role)
+            resource_value = (
                 resource
                 if isinstance(resource, ResourceType)
                 else ResourceType(resource)
-            ),
-            permission=(
+            )
+            action_value = (
                 action
                 if isinstance(action, PermissionAction)
                 else PermissionAction(action)
-            ),
+            )
+        except ValueError as exc:
+            logger.warning(f"Skipping audit for invalid permission check: {exc}")
+            return
+
+        entry = PermissionAuditEntry(
+            action="checked",
+            role=role_value,
+            resource=resource_value,
+            permission=action_value,
             result=result,
             reason=reason,
             context=context,
@@ -998,10 +1181,277 @@ class AccessControlMatrix:
         # Global Instance and Helpers
         # ============================================================================
 
-        # Global ACM instance
+# ============================================================================
+# Permission Cache (Redis-backed)
+# ============================================================================
+
+
+class PermissionCache:
+    """
+    Redis-based cache for role permissions.
+
+    Features:
+    - TTL-based invalidation
+    - Cache warming on startup
+    - Graceful degradation if Redis unavailable
+    """
+
+    ROLE_PERMISSIONS_PREFIX = "perm:role"
+    USER_PERMISSIONS_PREFIX = "perm:user"
+    RESOURCE_PERMISSIONS_PREFIX = "perm:resource"
+
+    DEFAULT_TTL = 3600  # 1 hour
+    ROLE_TTL = 86400  # 24 hours
+    USER_TTL = 3600  # 1 hour
+
+    def __init__(self, redis_client: aioredis.Redis | None = None):
+        self._redis = redis_client
+        self._fallback_mode = False
+
+    async def get_redis_client(self) -> aioredis.Redis | None:
+        if self._redis is not None:
+            return self._redis
+
+        try:
+            self._redis = aioredis.from_url(
+                settings.redis_url_with_password,
+                encoding="utf-8",
+                decode_responses=True,
+                socket_connect_timeout=5,
+                socket_timeout=5,
+            )
+            await self._redis.ping()
+            self._fallback_mode = False
+            logger.info("Permission cache connected to Redis")
+            return self._redis
+        except (RedisError, OSError) as e:
+            logger.warning(f"Failed to connect to Redis for permission cache: {e}")
+            self._fallback_mode = True
+            self._redis = None
+            return None
+
+    async def close(self) -> None:
+        if self._redis is not None:
+            await self._redis.close()
+            self._redis = None
+
+    def _make_role_key(self, role: UserRole | str) -> str:
+        role_str = role.value if isinstance(role, UserRole) else role
+        return f"{self.ROLE_PERMISSIONS_PREFIX}:{role_str}"
+
+    def _make_user_key(self, user_id: str) -> str:
+        return f"{self.USER_PERMISSIONS_PREFIX}:{user_id}"
+
+    def _make_resource_key(self, resource_type: str, resource_id: str) -> str:
+        return f"{self.RESOURCE_PERMISSIONS_PREFIX}:{resource_type}:{resource_id}"
+
+    async def get_role_permissions(self, role: UserRole | str) -> set[str] | None:
+        redis = await self.get_redis_client()
+        if redis is None:
+            return None
+
+        try:
+            key = self._make_role_key(role)
+            data = await redis.get(key)
+            if data is None:
+                return None
+            permissions = json.loads(data)
+            return set(permissions)
+        except (RedisError, json.JSONDecodeError) as e:
+            logger.warning(f"Failed to get role permissions from cache: {e}")
+            return None
+
+    async def set_role_permissions(
+        self, role: UserRole | str, permissions: set[str], ttl: int | None = None
+    ) -> bool:
+        redis = await self.get_redis_client()
+        if redis is None:
+            return False
+
+        try:
+            key = self._make_role_key(role)
+            data = json.dumps(list(permissions))
+            ttl = ttl or self.ROLE_TTL
+            await redis.setex(key, ttl, data)
+            logger.debug(f"Cached permissions for role {role} (TTL: {ttl}s)")
+            return True
+        except (RedisError, json.JSONEncodeError) as e:
+            logger.warning(f"Failed to cache role permissions: {e}")
+            return False
+
+    async def get_user_permissions(self, user_id: str) -> set[str] | None:
+        redis = await self.get_redis_client()
+        if redis is None:
+            return None
+
+        try:
+            key = self._make_user_key(user_id)
+            data = await redis.get(key)
+            if data is None:
+                return None
+            permissions = json.loads(data)
+            return set(permissions)
+        except (RedisError, json.JSONDecodeError) as e:
+            logger.warning(f"Failed to get user permissions from cache: {e}")
+            return None
+
+    async def set_user_permissions(
+        self, user_id: str, permissions: set[str], ttl: int | None = None
+    ) -> bool:
+        redis = await self.get_redis_client()
+        if redis is None:
+            return False
+
+        try:
+            key = self._make_user_key(user_id)
+            data = json.dumps(list(permissions))
+            ttl = ttl or self.USER_TTL
+            await redis.setex(key, ttl, data)
+            logger.debug(f"Cached permissions for user {user_id} (TTL: {ttl}s)")
+            return True
+        except (RedisError, json.JSONEncodeError) as e:
+            logger.warning(f"Failed to cache user permissions: {e}")
+            return False
+
+    async def invalidate_user_permissions(self, user_id: str) -> bool:
+        redis = await self.get_redis_client()
+        if redis is None:
+            return False
+
+        try:
+            key = self._make_user_key(user_id)
+            await redis.delete(key)
+            logger.debug(f"Invalidated permissions cache for user {user_id}")
+            return True
+        except RedisError as e:
+            logger.warning(f"Failed to invalidate user permissions: {e}")
+            return False
+
+    async def invalidate_role_permissions(self, role: UserRole | str) -> bool:
+        redis = await self.get_redis_client()
+        if redis is None:
+            return False
+
+        try:
+            key = self._make_role_key(role)
+            await redis.delete(key)
+            logger.debug(f"Invalidated permissions cache for role {role}")
+            return True
+        except RedisError as e:
+            logger.warning(f"Failed to invalidate role permissions: {e}")
+            return False
+
+    async def invalidate_all_permissions(self) -> bool:
+        redis = await self.get_redis_client()
+        if redis is None:
+            return False
+
+        try:
+            patterns = [
+                f"{self.ROLE_PERMISSIONS_PREFIX}:*",
+                f"{self.USER_PERMISSIONS_PREFIX}:*",
+                f"{self.RESOURCE_PERMISSIONS_PREFIX}:*",
+            ]
+
+            deleted_count = 0
+            for pattern in patterns:
+                cursor = 0
+                while True:
+                    cursor, keys = await redis.scan(cursor, match=pattern, count=100)
+                    if keys:
+                        deleted_count += await redis.delete(*keys)
+                    if cursor == 0:
+                        break
+
+            logger.info(f"Invalidated {deleted_count} permission cache entries")
+            return True
+        except RedisError as e:
+            logger.warning(f"Failed to invalidate all permissions: {e}")
+            return False
+
+    async def warm_cache(self, permissions_map: dict[UserRole, set[str]]) -> int:
+        if self._fallback_mode:
+            logger.info("Skipping cache warming in fallback mode")
+            return 0
+
+        cached_count = 0
+        for role, permissions in permissions_map.items():
+            if await self.set_role_permissions(role, permissions):
+                cached_count += 1
+
+        logger.info(
+            f"Cache warming completed: {cached_count}/{len(permissions_map)} roles cached"
+        )
+        return cached_count
+
+    async def get_cache_stats(self) -> dict[str, Any]:
+        redis = await self.get_redis_client()
+        if redis is None:
+            return {
+                "status": "unavailable",
+                "fallback_mode": True,
+            }
+
+        try:
+            info = await redis.info("stats")
+
+            role_count = 0
+            user_count = 0
+            resource_count = 0
+
+            for pattern, counter in [
+                (f"{self.ROLE_PERMISSIONS_PREFIX}:*", "role_count"),
+                (f"{self.USER_PERMISSIONS_PREFIX}:*", "user_count"),
+                (f"{self.RESOURCE_PERMISSIONS_PREFIX}:*", "resource_count"),
+            ]:
+                cursor = 0
+                count = 0
+                while True:
+                    cursor, keys = await redis.scan(cursor, match=pattern, count=100)
+                    count += len(keys)
+                    if cursor == 0:
+                        break
+
+                if counter == "role_count":
+                    role_count = count
+                elif counter == "user_count":
+                    user_count = count
+                elif counter == "resource_count":
+                    resource_count = count
+
+            return {
+                "status": "connected",
+                "fallback_mode": False,
+                "role_permissions_cached": role_count,
+                "user_permissions_cached": user_count,
+                "resource_permissions_cached": resource_count,
+                "total_commands": info.get("total_commands_processed", 0),
+                "keyspace_hits": info.get("keyspace_hits", 0),
+                "keyspace_misses": info.get("keyspace_misses", 0),
+                "hit_rate": self._calculate_hit_rate(info),
+            }
+        except RedisError as e:
+            logger.warning(f"Failed to get cache stats: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "fallback_mode": True,
+            }
+
+    def _calculate_hit_rate(self, info: dict) -> float:
+        hits = info.get("keyspace_hits", 0)
+        misses = info.get("keyspace_misses", 0)
+        total = hits + misses
+        return round(hits / total * 100, 2) if total > 0 else 0.0
+
+
+# ============================================================================
+# Global Instance and Helpers
+# ============================================================================
 
 
 _acm_instance: AccessControlMatrix | None = None
+_cache_instance: PermissionCache | None = None
 
 
 def get_acm() -> AccessControlMatrix:
@@ -1010,6 +1460,28 @@ def get_acm() -> AccessControlMatrix:
     if _acm_instance is None:
         _acm_instance = AccessControlMatrix()
     return _acm_instance
+
+
+async def get_permission_cache() -> PermissionCache:
+    """
+    Get global permission cache instance.
+
+    Returns:
+        PermissionCache instance
+    """
+    global _cache_instance
+    if _cache_instance is None:
+        _cache_instance = PermissionCache()
+        await _cache_instance.get_redis_client()
+    return _cache_instance
+
+
+async def close_permission_cache() -> None:
+    """Close global permission cache instance."""
+    global _cache_instance
+    if _cache_instance is not None:
+        await _cache_instance.close()
+        _cache_instance = None
 
 
 def has_permission(
@@ -1094,8 +1566,11 @@ def require_permission(
             if context_builder:
                 context = context_builder(*args, **kwargs)
 
-                # Check permission
-            if not has_permission(user.role, resource, action, context):
+            # Check permission (cached async path)
+            acm = get_acm()
+            if not await acm.has_permission_async(
+                user.role, resource, action, context=context
+            ):
                 raise PermissionDenied(resource, action)
 
             return await func(*args, **kwargs)
@@ -1103,3 +1578,117 @@ def require_permission(
         return wrapper
 
     return decorator
+
+
+def require_role(roles: list[str] | str, allow_admin: bool = True):
+    """
+    Create a FastAPI dependency that checks user roles.
+
+    Args:
+        roles: List of allowed role names (or single role string)
+        allow_admin: Whether to allow ADMIN role regardless (default: True)
+
+    Returns:
+        Dependency function that checks roles
+    """
+    if isinstance(roles, str):
+        role_set = {roles.upper()}
+    else:
+        role_set = {str(r).upper() for r in roles}
+
+    if allow_admin:
+        role_set.add("ADMIN")
+
+    async def role_checker(
+        current_user: User = Depends(get_current_active_user),
+    ) -> User:
+        user_role = current_user.role.upper() if current_user.role else ""
+
+        if user_role not in role_set:
+            logger.warning(
+                f"Role check failed for user {current_user.username} "
+                f"(role: {current_user.role}). Required: {role_set}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Requires role: {' or '.join(sorted(role_set))}",
+            )
+
+        return current_user
+
+    return role_checker
+
+
+async def warm_permission_cache() -> int:
+    """
+    Pre-populate permission cache on application startup.
+
+    Returns:
+        Number of roles successfully cached
+    """
+    cache = await get_permission_cache()
+    acm = get_acm()
+
+    permissions_map: dict[UserRole, set[str]] = {}
+    for role in UserRole:
+        permissions = acm._flatten_permissions(acm.get_role_permissions(role))
+        permissions_map[role] = permissions
+
+    cached_count = await cache.warm_cache(permissions_map)
+    return cached_count
+
+
+async def invalidate_permission_cache(
+    user_id: str | None = None,
+    role: UserRole | str | None = None,
+    invalidate_all: bool = False,
+) -> bool:
+    """
+    Invalidate permission cache.
+
+    Args:
+        user_id: Optional user ID to invalidate
+        role: Optional role to invalidate
+        invalidate_all: Whether to invalidate all cached permissions
+
+    Returns:
+        True if invalidation successful, False otherwise
+    """
+    cache = await get_permission_cache()
+
+    if invalidate_all:
+        return await cache.invalidate_all_permissions()
+    if user_id is not None:
+        return await cache.invalidate_user_permissions(user_id)
+    if role is not None:
+        return await cache.invalidate_role_permissions(role)
+    return False
+
+
+async def invalidate_user_role_cache(
+    user_id: str, old_role: str | None = None, new_role: str | None = None
+) -> bool:
+    """
+    Invalidate permission cache when a user's role changes.
+    """
+    cache = await get_permission_cache()
+    success = await cache.invalidate_user_permissions(user_id)
+
+    if success:
+        if old_role and new_role:
+            logger.info(
+                f"SECURITY: Invalidated permission cache for user {user_id} "
+                f"after role change: {old_role} -> {new_role}"
+            )
+        else:
+            logger.info(
+                f"SECURITY: Invalidated permission cache for user {user_id} "
+                f"after role change"
+            )
+    else:
+        logger.warning(
+            f"SECURITY WARNING: Failed to invalidate permission cache for user {user_id} "
+            f"after role change. Permissions may be stale!"
+        )
+
+    return success

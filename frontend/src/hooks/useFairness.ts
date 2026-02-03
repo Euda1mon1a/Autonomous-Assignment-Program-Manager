@@ -22,12 +22,24 @@ export interface CategoryStats {
 export interface FacultyWorkload {
   personId: string;
   personName: string;
+  /** Display name for UI */
+  name: string;
   callCount: number;
   fmitWeeks: number;
   clinicHalfdays: number;
   adminHalfdays: number;
   academicHalfdays: number;
   totalScore: number;
+  /** Total half-days worked */
+  totalHalfDays: number;
+  /** Call half-days */
+  callHalfDays: number;
+  /** FMIT half-days */
+  fmitHalfDays: number;
+  /** Clinic half-days */
+  clinicHalfDays: number;
+  /** Admin half-days */
+  adminHalfDays: number;
 }
 
 export interface FairnessAuditResponse {
@@ -45,11 +57,18 @@ export interface FairnessAuditResponse {
   };
   workloadStats: CategoryStats;
   fairnessIndex: number;
+  /** Jain's fairness index (0-1, higher is more fair) */
+  jainIndex: number;
+  /** Gini coefficient (0-1, lower is more equal) */
+  giniCoefficient: number;
   outliers: {
     high: string[];
     low: string[];
   };
+  /** @deprecated Use facultyWorkloads instead */
   workloads: FacultyWorkload[];
+  /** Faculty workload breakdown */
+  facultyWorkloads: FacultyWorkload[];
   weights: {
     call: number;
     fmit: number;

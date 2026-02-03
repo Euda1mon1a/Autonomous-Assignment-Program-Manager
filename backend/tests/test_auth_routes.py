@@ -364,7 +364,8 @@ class TestLogoutEndpoint:
         """Test logout with token from inactive user."""
         # Create token for inactive user
         token, jti, expires = create_access_token(
-            data={"sub": str(inactive_user.id), "username": inactive_user.username}
+            data={"sub": str(inactive_user.id), "username": inactive_user.username},
+            return_details=True,
         )
 
         response = client.post(
@@ -422,6 +423,7 @@ class TestGetCurrentUserEndpoint:
         expired_token, _, _ = create_access_token(
             data={"sub": str(admin_user.id), "username": admin_user.username},
             expires_delta=timedelta(seconds=-1),  # Already expired
+            return_details=True,
         )
 
         response = client.get(
@@ -913,7 +915,8 @@ class TestTokenSecurity:
         """
         # Create a refresh token
         refresh_token, _, _ = create_refresh_token(
-            data={"sub": str(admin_user.id), "username": admin_user.username}
+            data={"sub": str(admin_user.id), "username": admin_user.username},
+            return_details=True,
         )
 
         # Try to use refresh token via cookie
@@ -1134,6 +1137,7 @@ class TestRefreshTokenEndpoint:
         expired_token, _, _ = create_refresh_token(
             data={"sub": str(admin_user.id), "username": admin_user.username},
             expires_delta=timedelta(seconds=-1),  # Already expired
+            return_details=True,
         )
 
         response = client.post(
@@ -1149,7 +1153,8 @@ class TestRefreshTokenEndpoint:
         """Test that refresh fails when given an access token instead of refresh token."""
         # Create an access token (wrong type)
         access_token, _, _ = create_access_token(
-            data={"sub": str(admin_user.id), "username": admin_user.username}
+            data={"sub": str(admin_user.id), "username": admin_user.username},
+            return_details=True,
         )
 
         response = client.post(
@@ -1262,7 +1267,8 @@ class TestRefreshTokenEndpoint:
         """Test refresh fails if user became inactive."""
         # Create refresh token for inactive user
         refresh_token, _, _ = create_refresh_token(
-            data={"sub": str(inactive_user.id), "username": inactive_user.username}
+            data={"sub": str(inactive_user.id), "username": inactive_user.username},
+            return_details=True,
         )
 
         response = client.post(
@@ -1280,7 +1286,8 @@ class TestRefreshTokenEndpoint:
         """Test refresh fails if user was deleted after token was issued."""
         # Create refresh token
         refresh_token, _, _ = create_refresh_token(
-            data={"sub": str(regular_user.id), "username": regular_user.username}
+            data={"sub": str(regular_user.id), "username": regular_user.username},
+            return_details=True,
         )
 
         # Delete user

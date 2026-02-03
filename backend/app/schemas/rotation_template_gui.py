@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 # =============================================================================
@@ -466,6 +466,13 @@ class BatchPatternUpdateRequest(BaseModel):
     )
     dry_run: bool = Field(False, description="Preview changes without applying")
 
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_slots(cls, values: object) -> object:
+        if isinstance(values, dict) and "slots" not in values and "patterns" in values:
+            values = {**values, "slots": values["patterns"]}
+        return values
+
 
 class BatchPatternUpdateResult(BaseModel):
     """Result for a single template in batch update."""
@@ -480,6 +487,11 @@ class BatchPatternUpdateResult(BaseModel):
 class BatchPatternUpdateResponse(BaseModel):
     """Response for batch pattern update."""
 
+    operation_type: str = Field(
+        "batch_apply_patterns", description="Batch operation identifier"
+    )
+    total: int | None = Field(None, description="Total number of templates requested")
+    succeeded: int | None = Field(None, description="Number of successful updates")
     total_templates: int
     successful: int
     failed: int

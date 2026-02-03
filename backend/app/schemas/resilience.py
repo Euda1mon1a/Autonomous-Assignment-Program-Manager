@@ -1065,8 +1065,8 @@ class DecisionRequest(BaseModel):
 
     category: DecisionCategory
     complexity: DecisionComplexity
-    description: str = Field(min_length=5, max_length=500)
-    options: list[str] = Field(min_items=2)
+    description: str = Field(..., min_length=5, max_length=500)
+    options: list[str] = Field(..., min_items=2)
     recommended_option: str | None = None
     safe_default: str | None = None
     is_urgent: bool = False
@@ -1313,6 +1313,7 @@ class CriticalSlowingDownRequest(BaseModel):
     """Request to analyze critical slowing down signals."""
 
     utilization_history: list[float] = Field(
+        ...,
         description="Daily utilization values (0.0 to 1.0) for analysis",
         min_items=30,
     )
@@ -1755,23 +1756,17 @@ class HubStatusResponse(BaseModel):
 class DefenseLevelRequest(BaseModel):
     """Request for defense level calculation."""
 
-    coverage_rate: float = Field(
-        ..., ge=0.0, le=1.0, description="Current coverage rate (0.0 to 1.0)"
-    )
+    coverage_rate: float = Field(..., ge=0.0, le=1.0, description="Current coverage rate (0.0 to 1.0)")
 
 
 class DefenseLevelResponse(BaseModel):
     """Response from defense level calculation."""
 
     level: DefenseLevel
-    level_number: int = Field(
-        ..., ge=1, le=5, description="Numeric level (1=PREVENTION to 5=EMERGENCY)"
-    )
+    level_number: int = Field(..., ge=1, le=5, description="Numeric level (1=PREVENTION to 5=EMERGENCY)")
     description: str
     recommended_actions: list[str]
-    escalation_threshold: float = Field(
-        ..., description="Coverage rate that would trigger escalation"
-    )
+    escalation_threshold: float = Field(..., description="Coverage rate that would trigger escalation")
 
 
 class UtilizationThresholdRequest(BaseModel):
@@ -1809,9 +1804,7 @@ class BurnoutRtResponse(BaseModel):
     status: str = Field(..., description="declining, stable, growing, or crisis")
     secondary_cases: int
     time_window_days: int
-    confidence_interval: dict | None = Field(
-        default=None, description="Lower and upper bounds if available"
-    )
+    confidence_interval: dict | None = Field(default=None, description="Lower and upper bounds if available")
     interventions: list[str]
 
 

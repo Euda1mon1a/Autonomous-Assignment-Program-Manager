@@ -407,7 +407,8 @@ async def redirect_old_api(request: Request, call_next):
         if request.method == "OPTIONS":
             return await call_next(request)
         new_path = request.url.path.replace("/api/", "/api/v1/", 1)
-        return RedirectResponse(url=new_path, status_code=307)
+        new_url = request.url.replace(path=new_path)
+        return RedirectResponse(url=str(new_url), status_code=307)
     return await call_next(request)
 
 

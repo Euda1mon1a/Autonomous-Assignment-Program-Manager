@@ -13,6 +13,7 @@ Created: 2025-12-30 (Session 024 - Marathon Execution)
 """
 
 import logging
+import math
 from datetime import datetime
 from typing import Any
 from uuid import UUID, uuid4
@@ -97,6 +98,15 @@ from app.schemas.hopfield_schemas import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _finite_or_none(value: float | None) -> float | None:
+    if value is None:
+        return None
+    if not math.isfinite(value):
+        return None
+    return value
+
 
 router = APIRouter()
 
@@ -477,13 +487,15 @@ class MetastabilityResponse(BaseModel):
     """Metastability analysis results."""
 
     energy: float = Field(..., description="Current energy level")
-    barrier_height: float = Field(
-        ..., description="Energy barrier to nearest stable state"
+    barrier_height: float | None = Field(
+        None, description="Energy barrier to nearest stable state"
     )
     escape_rate: float = Field(
         ..., description="Probability of spontaneous escape per time unit"
     )
-    lifetime: float = Field(..., description="Expected lifetime in current state")
+    lifetime: float | None = Field(
+        None, description="Expected lifetime in current state"
+    )
     is_metastable: bool = Field(..., description="True if trapped in local minimum")
     stability_score: float = Field(
         ..., ge=0.0, le=1.0, description="Stability score (0-1)"
@@ -578,7 +590,7 @@ class SpinGlassResponse(BaseModel):
     energy_std: float = Field(..., description="Energy standard deviation")
     mean_overlap: float = Field(..., description="Average pairwise overlap")
     diversity_score: float = Field(
-        ..., ge=0.0, le=1.0, description="Diversity score (1 - mean_overlap)"
+        ..., ge=0.0, le=1.0, description="Diversity score (scaled from mean overlap)"
     )
     landscape_ruggedness: float = Field(
         ..., ge=0.0, le=1.0, description="Energy landscape ruggedness"
@@ -625,8 +637,8 @@ class CatastropheResponse(BaseModel):
     resilience_score: float = Field(..., ge=0.0, le=1.0, description="Resilience score")
     status: str = Field(..., description="Status: robust, stable, vulnerable, critical")
     is_safe: bool = Field(..., description="Whether system is safe from catastrophe")
-    distance_to_catastrophe: float = Field(
-        ..., description="Distance to catastrophe boundary"
+    distance_to_catastrophe: float | None = Field(
+        None, description="Distance to catastrophe boundary"
     )
     current_distance_to_bifurcation: float = Field(
         ..., description="Current distance to bifurcation set"
@@ -1592,9 +1604,9 @@ async def analyze_metastability(
 
     return MetastabilityResponse(
         energy=state.energy,
-        barrier_height=state.barrier_height,
+        barrier_height=_finite_or_none(state.barrier_height),
         escape_rate=state.escape_rate,
-        lifetime=state.lifetime,
+        lifetime=_finite_or_none(state.lifetime),
         is_metastable=state.is_metastable,
         stability_score=state.stability_score,
         nearest_stable_state=state.nearest_stable_state,
@@ -1784,7 +1796,7 @@ async def predict_catastrophe(
         resilience_score=resilience["resilience_score"],
         status=resilience["status"],
         is_safe=resilience["is_safe"],
-        distance_to_catastrophe=resilience["distance_to_catastrophe"],
+        distance_to_catastrophe=_finite_or_none(resilience["distance_to_catastrophe"]),
         current_distance_to_bifurcation=resilience["current_distance_to_bifurcation"],
         warning=resilience["warning"],
         recommendations=recommendations,

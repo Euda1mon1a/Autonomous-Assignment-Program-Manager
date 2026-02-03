@@ -55,14 +55,12 @@ class ProjectionState(Base):
 
     __tablename__ = "projection_state"
 
-    projection_name: Column = Column(String(100), primary_key=True)
-    last_event_sequence: Column = Column(Integer, nullable=False, default=0)
-    last_event_timestamp: Column = Column(DateTime)
-    last_updated: Column = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
-    status: Column = Column(String(50), default="active")  # active, rebuilding, paused
-    error_message: Column = Column(Text)
+    projection_name = Column(String(100), primary_key=True)
+    last_event_sequence = Column(Integer, nullable=False, default=0)
+    last_event_timestamp = Column(DateTime)
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    status = Column(String(50), default="active")  # active, rebuilding, paused
+    error_message = Column(Text)
 
 
 class ProjectionCheckpoint(Base):
@@ -75,15 +73,18 @@ class ProjectionCheckpoint(Base):
     __tablename__ = "projection_checkpoints"
     __table_args__ = {"extend_existing": True}
 
-    id: Column = Column(GUID(), primary_key=True)
-    projection_name: Column = Column(String(100), nullable=False, index=True)
-    checkpoint_sequence: Column = Column(Integer, nullable=False)
-    checkpoint_data: Column = Column(JSONType())
-    created_at: Column = Column(DateTime, default=datetime.utcnow)
+    id = Column(GUID(), primary_key=True)
+    # Index on projection_name is defined in cqrs.projection_builder to avoid
+    # duplicate index creation when both models are imported.
+    projection_name = Column(String(100), nullable=False)
+    checkpoint_sequence = Column(Integer, nullable=False)
+    checkpoint_data = Column(JSONType())
+    created_at = Column(DateTime, default=datetime.utcnow)
 
-    # =============================================================================
-    # Base Projection
-    # =============================================================================
+
+# =============================================================================
+# Base Projection
+# =============================================================================
 
 
 class EventProjection(ABC):
@@ -93,7 +94,7 @@ class EventProjection(ABC):
     Projections subscribe to events and build read models.
     """
 
-    def __init__(self, db: Session, projection_name: str) -> None:
+    def __init__(self, db: Session, projection_name: str):
         """
         Initialize projection.
 
@@ -105,7 +106,7 @@ class EventProjection(ABC):
         self.projection_name = projection_name
         self._load_state()
 
-    def _load_state(self) -> None:
+    def _load_state(self):
         """Load projection state from database."""
         state = (
             self.db.query(ProjectionState)
@@ -114,9 +115,9 @@ class EventProjection(ABC):
         )
 
         if state:
-            self.last_event_sequence: int = state.last_event_sequence
-            self.last_event_timestamp: datetime | None = state.last_event_timestamp
-            self.status: str = state.status
+            self.last_event_sequence = state.last_event_sequence
+            self.last_event_timestamp = state.last_event_timestamp
+            self.status = state.status
         else:
             # Initialize new projection
             self.last_event_sequence = 0
@@ -124,7 +125,7 @@ class EventProjection(ABC):
             self.status = "active"
             self._save_state()
 
-    def _save_state(self) -> None:
+    def _save_state(self):
         """Save projection state to database."""
         state = (
             self.db.query(ProjectionState)
@@ -149,7 +150,7 @@ class EventProjection(ABC):
         self.db.commit()
 
     @abstractmethod
-    async def handle_event(self, event: BaseEvent) -> None:
+    async def handle_event(self, event: BaseEvent):
         """
         Handle an event and update the projection.
 
@@ -158,7 +159,7 @@ class EventProjection(ABC):
         """
         pass
 
-    async def process_event(self, event: BaseEvent, event_sequence: int) -> None:
+    async def process_event(self, event: BaseEvent, event_sequence: int):
         """
         Process an event and update state.
 
@@ -182,7 +183,7 @@ class EventProjection(ABC):
             self._mark_error(str(e))
             raise
 
-    def _mark_error(self, error_message: str) -> None:
+    def _mark_error(self, error_message: str):
         """Mark projection as having an error."""
         state = (
             self.db.query(ProjectionState)
@@ -194,7 +195,7 @@ class EventProjection(ABC):
             state.error_message = error_message
             self.db.commit()
 
-    async def rebuild(self, event_store) -> None:
+    async def rebuild(self, event_store):
         """
         Rebuild projection from event store.
 
@@ -227,7 +228,7 @@ class EventProjection(ABC):
                         f"processed {i}/{len(events)} events"
                     )
 
-                    # Mark as active
+            # Mark as active
             self.status = "active"
             self.last_event_sequence = len(events)
             self._save_state()
@@ -243,13 +244,14 @@ class EventProjection(ABC):
             raise
 
     @abstractmethod
-    async def reset(self) -> None:
+    async def reset(self):
         """Reset projection data (called before rebuild)."""
         pass
 
-        # =============================================================================
-        # Schedule Projection
-        # =============================================================================
+
+# =============================================================================
+# Schedule Projection
+# =============================================================================
 
 
 class ScheduleProjection(EventProjection):
@@ -259,11 +261,11 @@ class ScheduleProjection(EventProjection):
     Maintains a denormalized view of schedules for fast queries.
     """
 
-    def __init__(self, db: Session) -> None:
+    def __init__(self, db: Session):
         super().__init__(db, "schedule_summary")
         self.schedules: dict[str, dict] = {}
 
-    async def handle_event(self, event: BaseEvent) -> None:
+    async def handle_event(self, event: BaseEvent):
         """Handle schedule-related events."""
         if isinstance(event, ScheduleCreatedEvent):
             self.schedules[event.schedule_id] = {
@@ -283,7 +285,7 @@ class ScheduleProjection(EventProjection):
                     event.metadata.timestamp
                 )
 
-    async def reset(self) -> None:
+    async def reset(self):
         """Reset schedule data."""
         self.schedules.clear()
 
@@ -295,9 +297,10 @@ class ScheduleProjection(EventProjection):
         """Get all schedule summaries."""
         return list(self.schedules.values())
 
-        # =============================================================================
-        # Assignment Projection
-        # =============================================================================
+
+# =============================================================================
+# Assignment Projection
+# =============================================================================
 
 
 class AssignmentProjection(EventProjection):
@@ -307,11 +310,11 @@ class AssignmentProjection(EventProjection):
     Maintains current state of all assignments.
     """
 
-    def __init__(self, db: Session) -> None:
+    def __init__(self, db: Session):
         super().__init__(db, "assignment_current_state")
         self.assignments: dict[str, dict] = {}
 
-    async def handle_event(self, event: BaseEvent) -> None:
+    async def handle_event(self, event: BaseEvent):
         """Handle assignment-related events."""
         if isinstance(event, AssignmentCreatedEvent):
             self.assignments[event.assignment_id] = {
@@ -342,7 +345,7 @@ class AssignmentProjection(EventProjection):
                 else:
                     del self.assignments[event.assignment_id]
 
-    async def reset(self) -> None:
+    async def reset(self):
         """Reset assignment data."""
         self.assignments.clear()
 
@@ -366,9 +369,10 @@ class AssignmentProjection(EventProjection):
             if a["block_id"] == block_id and a["status"] == "active"
         ]
 
-        # =============================================================================
-        # Audit Projection
-        # =============================================================================
+
+# =============================================================================
+# Audit Projection
+# =============================================================================
 
 
 class AuditProjection(EventProjection):
@@ -378,7 +382,7 @@ class AuditProjection(EventProjection):
     Maintains summary of all changes for compliance reporting.
     """
 
-    def __init__(self, db: Session) -> None:
+    def __init__(self, db: Session):
         super().__init__(db, "audit_summary")
         self.audit_entries: list[dict] = []
         self.statistics = {
@@ -388,7 +392,7 @@ class AuditProjection(EventProjection):
             "events_by_aggregate_type": defaultdict(int),
         }
 
-    async def handle_event(self, event: BaseEvent) -> None:
+    async def handle_event(self, event: BaseEvent):
         """Handle all events for audit trail."""
         # Add to audit entries
         entry = {
@@ -409,7 +413,7 @@ class AuditProjection(EventProjection):
             self.statistics["events_by_user"][event.metadata.user_id] += 1
         self.statistics["events_by_aggregate_type"][event.aggregate_type] += 1
 
-    async def reset(self) -> None:
+    async def reset(self):
         """Reset audit data."""
         self.audit_entries.clear()
         self.statistics = {
@@ -435,7 +439,7 @@ class AuditProjection(EventProjection):
         if event_type:
             entries = [e for e in entries if e["event_type"] == event_type]
 
-            # Sort by timestamp descending
+        # Sort by timestamp descending
         entries = sorted(entries, key=lambda x: x["timestamp"], reverse=True)
 
         # Apply pagination
@@ -452,9 +456,10 @@ class AuditProjection(EventProjection):
             ),
         }
 
-        # =============================================================================
-        # ACGME Compliance Projection
-        # =============================================================================
+
+# =============================================================================
+# ACGME Compliance Projection
+# =============================================================================
 
 
 class ACGMEComplianceProjection(EventProjection):
@@ -464,12 +469,12 @@ class ACGMEComplianceProjection(EventProjection):
     Tracks compliance history for reporting.
     """
 
-    def __init__(self, db: Session) -> None:
+    def __init__(self, db: Session):
         super().__init__(db, "acgme_compliance")
         self.violations: dict[str, dict] = {}
         self.overrides: dict[str, dict] = {}
 
-    async def handle_event(self, event: BaseEvent) -> None:
+    async def handle_event(self, event: BaseEvent):
         """Handle ACGME compliance events."""
         if isinstance(event, ACGMEViolationDetectedEvent):
             self.violations[event.violation_id] = {
@@ -493,7 +498,7 @@ class ACGMEComplianceProjection(EventProjection):
                 "applied_at": event.metadata.timestamp,
             }
 
-    async def reset(self) -> None:
+    async def reset(self):
         """Reset compliance data."""
         self.violations.clear()
         self.overrides.clear()
@@ -507,9 +512,10 @@ class ACGMEComplianceProjection(EventProjection):
         # This would need to join with assignments
         return list(self.overrides.values())
 
-        # =============================================================================
-        # Projection Manager
-        # =============================================================================
+
+# =============================================================================
+# Projection Manager
+# =============================================================================
 
 
 class ProjectionManager:
@@ -519,17 +525,17 @@ class ProjectionManager:
     Coordinates updates and rebuilds across all projections.
     """
 
-    def __init__(self, db: Session) -> None:
+    def __init__(self, db: Session):
         """Initialize projection manager."""
         self.db = db
         self.projections: dict[str, EventProjection] = {}
 
-    def register_projection(self, projection: EventProjection) -> None:
+    def register_projection(self, projection: EventProjection):
         """Register a projection."""
         self.projections[projection.projection_name] = projection
         logger.info(f"Registered projection: {projection.projection_name}")
 
-    async def process_event(self, event: BaseEvent, event_sequence: int) -> None:
+    async def process_event(self, event: BaseEvent, event_sequence: int):
         """Process event in all projections."""
         for projection in self.projections.values():
             try:
@@ -537,7 +543,7 @@ class ProjectionManager:
             except Exception as e:
                 logger.error(f"Error in projection {projection.projection_name}: {e}")
 
-    async def rebuild_all(self, event_store) -> None:
+    async def rebuild_all(self, event_store):
         """Rebuild all projections."""
         for projection in self.projections.values():
             await projection.rebuild(event_store)

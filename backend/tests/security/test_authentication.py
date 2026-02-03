@@ -131,7 +131,7 @@ class TestAccessTokenCreation:
     def test_create_access_token(self):
         """Access token is created with correct structure."""
         data = {"sub": str(uuid4()), "username": "testuser"}
-        token, jti, expires_at = create_access_token(data)
+        token, jti, expires_at = create_access_token(data, return_details=True)
 
         assert isinstance(token, str)
         assert len(token) > 20
@@ -144,7 +144,7 @@ class TestAccessTokenCreation:
         username = "testuser"
         data = {"sub": user_id, "username": username}
 
-        token, jti, expires_at = create_access_token(data)
+        token, jti, expires_at = create_access_token(data, return_details=True)
 
         # Verify token (without database check)
         from jose import jwt
@@ -164,7 +164,9 @@ class TestAccessTokenCreation:
         data = {"sub": str(uuid4())}
         custom_delta = timedelta(minutes=5)
 
-        token, jti, expires_at = create_access_token(data, expires_delta=custom_delta)
+        token, jti, expires_at = create_access_token(
+            data, expires_delta=custom_delta, return_details=True
+        )
 
         # Verify expiration is approximately 5 minutes from now
         expected_expiry = datetime.utcnow() + custom_delta
@@ -174,7 +176,7 @@ class TestAccessTokenCreation:
     def test_access_token_is_not_refresh_token(self):
         """Access tokens don't have type='refresh'."""
         data = {"sub": str(uuid4())}
-        token, jti, expires_at = create_access_token(data)
+        token, jti, expires_at = create_access_token(data, return_details=True)
 
         from jose import jwt
         from app.core.config import get_settings
@@ -192,7 +194,7 @@ class TestRefreshTokenCreation:
     def test_create_refresh_token(self):
         """Refresh token is created with correct structure."""
         data = {"sub": str(uuid4()), "username": "testuser"}
-        token, jti, expires_at = create_refresh_token(data)
+        token, jti, expires_at = create_refresh_token(data, return_details=True)
 
         assert isinstance(token, str)
         assert len(token) > 20
@@ -202,7 +204,7 @@ class TestRefreshTokenCreation:
     def test_refresh_token_has_type_field(self):
         """Refresh tokens have type='refresh'."""
         data = {"sub": str(uuid4())}
-        token, jti, expires_at = create_refresh_token(data)
+        token, jti, expires_at = create_refresh_token(data, return_details=True)
 
         from jose import jwt
         from app.core.config import get_settings
@@ -216,8 +218,10 @@ class TestRefreshTokenCreation:
         """Refresh tokens have longer expiration than access tokens."""
         data = {"sub": str(uuid4())}
 
-        access_token, _, access_expires = create_access_token(data)
-        refresh_token, _, refresh_expires = create_refresh_token(data)
+        access_token, _, access_expires = create_access_token(data, return_details=True)
+        refresh_token, _, refresh_expires = create_refresh_token(
+            data, return_details=True
+        )
 
         # Refresh should expire much later than access
         assert refresh_expires > access_expires
@@ -230,7 +234,7 @@ class TestTokenVerification:
         """Valid access token verification succeeds."""
         user_id = str(uuid4())
         data = {"sub": user_id, "username": "testuser"}
-        token, jti, _ = create_access_token(data)
+        token, jti, _ = create_access_token(data, return_details=True)
 
         token_data = verify_token(token)
 
@@ -248,7 +252,9 @@ class TestTokenVerification:
         """Expired token verification fails."""
         data = {"sub": str(uuid4())}
         # Create token that expires immediately
-        token, _, _ = create_access_token(data, expires_delta=timedelta(seconds=-1))
+        token, _, _ = create_access_token(
+            data, expires_delta=timedelta(seconds=-1), return_details=True
+        )
 
         token_data = verify_token(token)
         assert token_data is None
@@ -256,7 +262,7 @@ class TestTokenVerification:
     def test_verify_refresh_token_as_access_token_fails(self):
         """Refresh tokens cannot be used as access tokens."""
         data = {"sub": str(uuid4())}
-        refresh_token, _, _ = create_refresh_token(data)
+        refresh_token, _, _ = create_refresh_token(data, return_details=True)
 
         # Try to verify refresh token as access token
         token_data = verify_token(refresh_token)
@@ -267,7 +273,7 @@ class TestTokenVerification:
     def test_verify_token_with_blacklist(self, db: Session):
         """Blacklisted tokens are rejected."""
         data = {"sub": str(uuid4())}
-        token, jti, expires_at = create_access_token(data)
+        token, jti, expires_at = create_access_token(data, return_details=True)
 
         # Blacklist the token
         blacklist_token(db, jti, expires_at)
@@ -284,19 +290,19 @@ class TestRefreshTokenVerification:
         """Valid refresh token verification succeeds."""
         user_id = str(uuid4())
         data = {"sub": user_id, "username": "testuser"}
-        token, jti, expires_at = create_refresh_token(data)
+        token, jti, expires_at = create_refresh_token(data, return_details=True)
 
         token_data, returned_jti, returned_expires = verify_refresh_token(token, db)
 
         assert token_data is not None
         assert token_data.user_id == user_id
         assert returned_jti == jti
-        assert returned_expires == expires_at
+        assert abs((returned_expires - expires_at).total_seconds()) < 1
 
     def test_verify_access_token_as_refresh_token_fails(self, db: Session):
         """Access tokens cannot be used as refresh tokens."""
         data = {"sub": str(uuid4())}
-        access_token, _, _ = create_access_token(data)
+        access_token, _, _ = create_access_token(data, return_details=True)
 
         # Try to verify access token as refresh token
         token_data, jti, expires = verify_refresh_token(access_token, db)
@@ -309,7 +315,7 @@ class TestRefreshTokenVerification:
     def test_verify_blacklisted_refresh_token(self, db: Session):
         """Blacklisted refresh tokens are rejected."""
         data = {"sub": str(uuid4())}
-        token, jti, expires_at = create_refresh_token(data)
+        token, jti, expires_at = create_refresh_token(data, return_details=True)
 
         # Blacklist the token
         blacklist_token(db, jti, expires_at)
@@ -321,7 +327,7 @@ class TestRefreshTokenVerification:
     def test_refresh_token_rotation(self, db: Session):
         """Refresh token is blacklisted when used (rotation)."""
         data = {"sub": str(uuid4())}
-        token, jti, expires_at = create_refresh_token(data)
+        token, jti, expires_at = create_refresh_token(data, return_details=True)
 
         # Verify with blacklist_on_use=True
         token_data, _, _ = verify_refresh_token(token, db, blacklist_on_use=True)

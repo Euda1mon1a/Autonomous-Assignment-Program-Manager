@@ -45,8 +45,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(
-    data: dict, expires_delta: timedelta | None = None
-) -> tuple[str, str, datetime]:
+    data: dict,
+    expires_delta: timedelta | None = None,
+    return_details: bool = False,
+) -> str | tuple[str, str, datetime]:
     """
     Create a JWT access token with jti for blacklist support.
 
@@ -83,12 +85,16 @@ def create_access_token(
     if obs_metrics:
         obs_metrics.record_token_issued("access")
 
-    return encoded_jwt, jti, expire
+    if return_details:
+        return encoded_jwt, jti, expire
+    return encoded_jwt
 
 
 def create_refresh_token(
-    data: dict, expires_delta: timedelta | None = None
-) -> tuple[str, str, datetime]:
+    data: dict,
+    expires_delta: timedelta | None = None,
+    return_details: bool = False,
+) -> str | tuple[str, str, datetime]:
     """
     Create a JWT refresh token with jti for blacklist support.
 
@@ -127,7 +133,9 @@ def create_refresh_token(
     if obs_metrics:
         obs_metrics.record_token_issued("refresh")
 
-    return encoded_jwt, jti, expire
+    if return_details:
+        return encoded_jwt, jti, expire
+    return encoded_jwt
 
 
 def verify_refresh_token(
@@ -349,7 +357,11 @@ async def get_current_user(
         User object if authenticated, None otherwise
     """
     # Priority 0: Check for impersonation token (admin "View As" feature)
-    impersonation_token = _get_impersonation_token_from_request(request)
+    # Skip impersonation auth on the start-impersonation endpoint so nested
+    # impersonation attempts can return a proper 400 instead of 403.
+    impersonation_token = None
+    if not request.url.path.endswith("/auth/impersonate"):
+        impersonation_token = _get_impersonation_token_from_request(request)
     if impersonation_token:
         impersonation_result = _verify_impersonation_token(impersonation_token, db)
         if impersonation_result:

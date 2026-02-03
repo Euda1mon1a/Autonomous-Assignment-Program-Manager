@@ -7,6 +7,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.models.assignment import Assignment
+from app.models.block import Block
 from app.models.person import Person
 from app.models.swap import SwapRecord
 

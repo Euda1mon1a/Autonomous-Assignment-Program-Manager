@@ -5,7 +5,7 @@ These tests mock the service layer to test controllers in isolation,
 focusing on request/response handling and HTTP exception conversion.
 """
 
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -61,7 +61,16 @@ class TestPersonControllerListPeople:
         """Should return items from service."""
         mock_db = MagicMock()
         controller = PersonController(mock_db)
-        mock_items = [{"id": str(uuid4()), "name": "Dr. Test", "type": "resident"}]
+        now = datetime.utcnow()
+        mock_items = [
+            {
+                "id": str(uuid4()),
+                "name": "Dr. Test",
+                "type": "resident",
+                "created_at": now,
+                "updated_at": now,
+            }
+        ]
         controller.service.list_people = MagicMock(
             return_value={"items": mock_items, "total": 1}
         )
@@ -275,6 +284,9 @@ class TestAuthControllerLogin:
         """Should return Token on successful authentication."""
         mock_db = MagicMock()
         controller = AuthController(mock_db)
+        controller.lockout = MagicMock()
+        controller.lockout.check_lockout.return_value = (False, 0)
+        controller.lockout.clear_lockout.return_value = True
         controller.service.authenticate = MagicMock(
             return_value={
                 "access_token": "test_token",
@@ -295,6 +307,9 @@ class TestAuthControllerLogin:
         """Should raise HTTPException 401 on invalid credentials."""
         mock_db = MagicMock()
         controller = AuthController(mock_db)
+        controller.lockout = MagicMock()
+        controller.lockout.check_lockout.return_value = (False, 0)
+        controller.lockout.record_failed_attempt.return_value = (False, 1, 0)
         controller.service.authenticate = MagicMock(
             return_value={"error": "Invalid credentials"}
         )
@@ -326,7 +341,7 @@ class TestAuthControllerRegisterUser:
         user_in = UserCreate(
             username="newuser",
             email="new@test.com",
-            password="password123",
+            password="Str0ng!Passw0rd",
             role="viewer",
         )
         result = controller.register_user(user_in)
@@ -344,7 +359,7 @@ class TestAuthControllerRegisterUser:
         user_in = UserCreate(
             username="newuser",
             email="new@test.com",
-            password="password123",
+            password="Str0ng!Passw0rd",
             role="admin",
         )
 
@@ -364,7 +379,7 @@ class TestAuthControllerRegisterUser:
         user_in = UserCreate(
             username="existing",
             email="existing@test.com",
-            password="password123",
+            password="Str0ng!Passw0rd",
             role="viewer",
         )
 
@@ -405,7 +420,7 @@ class TestAbsenceControllerListAbsences:
         """Should call service with no filters."""
         mock_db = MagicMock()
         controller = AbsenceController(mock_db)
-        mock_result = {"items": [], "total": 0}
+        mock_result = {"items": [], "total": 0, "page": 1, "page_size": 100}
         controller.service.list_absences = MagicMock(return_value=mock_result)
 
         result = controller.list_absences()
@@ -416,6 +431,8 @@ class TestAbsenceControllerListAbsences:
             end_date=None,
             person_id=None,
             absence_type=None,
+            page=1,
+            page_size=100,
         )
 
     def test_list_absences_with_filters(self):
@@ -442,6 +459,8 @@ class TestAbsenceControllerListAbsences:
             end_date=end,
             person_id=person_id,
             absence_type="vacation",
+            page=1,
+            page_size=100,
         )
 
 
@@ -596,17 +615,32 @@ class TestAssignmentControllerListAssignments:
         """Should call service with no filters."""
         mock_db = MagicMock()
         controller = AssignmentController(mock_db)
-        mock_result = {"items": [], "total": 0}
+        now = datetime.utcnow()
+        mock_items = [
+            {
+                "id": str(uuid4()),
+                "block_id": str(uuid4()),
+                "person_id": str(uuid4()),
+                "role": "primary",
+                "created_at": now,
+                "updated_at": now,
+            }
+        ]
+        mock_result = {"items": mock_items, "total": 1}
         controller.service.list_assignments = MagicMock(return_value=mock_result)
 
         result = controller.list_assignments()
 
-        assert result == mock_result
+        assert result.total == 1
+        assert len(result.items) == 1
         controller.service.list_assignments.assert_called_once_with(
             start_date=None,
             end_date=None,
             person_id=None,
             role=None,
+            activity_type=None,
+            offset=0,
+            limit=100,
         )
 
     def test_list_assignments_with_filters(self):
@@ -633,6 +667,9 @@ class TestAssignmentControllerListAssignments:
             end_date=end,
             person_id=person_id,
             role="primary",
+            activity_type=None,
+            offset=0,
+            limit=100,
         )
 
 
@@ -672,6 +709,7 @@ class TestAssignmentControllerCreateAssignment:
         """Should return created assignment with ACGME warnings."""
         mock_db = MagicMock()
         controller = AssignmentController(mock_db)
+        now = datetime.utcnow()
 
         # Mock assignment object with __dict__
         mock_assignment = MagicMock()
@@ -680,6 +718,8 @@ class TestAssignmentControllerCreateAssignment:
             "block_id": uuid4(),
             "person_id": uuid4(),
             "role": "primary",
+            "created_at": now,
+            "updated_at": now,
         }
 
         controller.service.create_assignment = MagicMock(
@@ -736,10 +776,15 @@ class TestAssignmentControllerUpdateAssignment:
         controller = AssignmentController(mock_db)
         assignment_id = uuid4()
 
+        now = datetime.utcnow()
         mock_assignment = MagicMock()
         mock_assignment.__dict__ = {
             "id": assignment_id,
+            "block_id": uuid4(),
+            "person_id": uuid4(),
             "role": "backup",
+            "created_at": now,
+            "updated_at": now,
         }
 
         controller.service.update_assignment = MagicMock(
@@ -751,7 +796,7 @@ class TestAssignmentControllerUpdateAssignment:
             }
         )
 
-        assignment_in = AssignmentUpdate(role="backup")
+        assignment_in = AssignmentUpdate(role="backup", updated_at=now)
         result = controller.update_assignment(assignment_id, assignment_in)
 
         assert result.is_compliant is False
@@ -765,7 +810,7 @@ class TestAssignmentControllerUpdateAssignment:
             return_value={"assignment": None, "error": "Assignment not found"}
         )
 
-        assignment_in = AssignmentUpdate(role="backup")
+        assignment_in = AssignmentUpdate(role="backup", updated_at=datetime.utcnow())
 
         with pytest.raises(HTTPException) as exc_info:
             controller.update_assignment(uuid4(), assignment_in)
@@ -783,7 +828,7 @@ class TestAssignmentControllerUpdateAssignment:
             }
         )
 
-        assignment_in = AssignmentUpdate(role="backup")
+        assignment_in = AssignmentUpdate(role="backup", updated_at=datetime.utcnow())
 
         with pytest.raises(HTTPException) as exc_info:
             controller.update_assignment(uuid4(), assignment_in)
@@ -954,7 +999,7 @@ class TestProcedureControllerCreateProcedure:
         procedure_in = ProcedureCreate(
             name="New Procedure",
             description="Test procedure",
-            category="Minor",
+            category="surgical",
             specialty="General",
         )
         result = controller.create_procedure(procedure_in)
@@ -972,7 +1017,7 @@ class TestProcedureControllerCreateProcedure:
         procedure_in = ProcedureCreate(
             name="Duplicate",
             description="Test",
-            category="Minor",
+            category="surgical",
             specialty="General",
         )
 
@@ -1125,7 +1170,12 @@ class TestBlockControllerGetBlock:
         mock_db = MagicMock()
         controller = BlockController(mock_db)
         block_id = uuid4()
-        mock_block = {"id": str(block_id), "time_of_day": "AM"}
+        mock_block = {
+            "id": str(block_id),
+            "date": date.today(),
+            "time_of_day": "AM",
+            "block_number": 1,
+        }
         controller.service.get_block = MagicMock(return_value=mock_block)
 
         result = controller.get_block(block_id)
@@ -1153,8 +1203,9 @@ class TestBlockControllerCreateBlock:
         controller = BlockController(mock_db)
         mock_block = {
             "id": str(uuid4()),
-            "date": str(date.today()),
+            "date": date.today(),
             "time_of_day": "AM",
+            "block_number": 1,
         }
         controller.service.create_block = MagicMock(
             return_value={"block": mock_block, "error": None}
@@ -1163,6 +1214,7 @@ class TestBlockControllerCreateBlock:
         block_in = BlockCreate(
             date=date.today(),
             time_of_day="AM",
+            block_number=1,
         )
         result = controller.create_block(block_in)
 
@@ -1179,6 +1231,7 @@ class TestBlockControllerCreateBlock:
         block_in = BlockCreate(
             date=date.today(),
             time_of_day="AM",
+            block_number=1,
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -1194,7 +1247,14 @@ class TestBlockControllerGenerateBlocks:
         """Should return generated blocks."""
         mock_db = MagicMock()
         controller = BlockController(mock_db)
-        mock_blocks = [{"id": str(uuid4()), "time_of_day": "AM"}]
+        mock_blocks = [
+            {
+                "id": str(uuid4()),
+                "date": date.today(),
+                "time_of_day": "AM",
+                "block_number": 1,
+            }
+        ]
         controller.service.generate_blocks = MagicMock(
             return_value={"items": mock_blocks, "total": 1}
         )
@@ -1361,7 +1421,7 @@ class TestCredentialControllerCreateCredential:
             person_id=uuid4(),
             procedure_id=uuid4(),
             status="active",
-            competency_level="advanced",
+            competency_level="qualified",
         )
         result = controller.create_credential(credential_in)
 
@@ -1379,7 +1439,7 @@ class TestCredentialControllerCreateCredential:
             person_id=uuid4(),
             procedure_id=uuid4(),
             status="active",
-            competency_level="advanced",
+            competency_level="qualified",
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -1766,19 +1826,18 @@ class TestCertificationControllerCompliance:
         mock_db = MagicMock()
         controller = CertificationController(mock_db)
         mock_summary = {
-            "total_people": 50,
-            "fully_compliant": 45,
-            "non_compliant": 5,
-            "compliance_rate": 0.90,
+            "total": 50,
+            "current": 45,
             "expiring_soon": 10,
             "expired": 3,
+            "compliance_rate": 90.0,
         }
         controller.service.get_compliance_summary = MagicMock(return_value=mock_summary)
 
         result = controller.get_compliance_summary()
 
-        assert result.total_people == 50
-        assert result.compliance_rate == 0.90
+        assert result.total == 50
+        assert result.compliance_rate == 90.0
 
     def test_get_person_compliance_success(self):
         """Should return person compliance status."""

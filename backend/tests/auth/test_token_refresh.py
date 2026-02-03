@@ -360,6 +360,10 @@ class TestTokenReuseDetection:
             token2_string
         )
 
+        # Family should contain all generations prior to reuse detection
+        family_tokens = token_service.get_token_family(family_id)
+        assert len(family_tokens) >= 3
+
         # Try to reuse token1 (already used twice ago)
         (
             reuse_data,
@@ -370,9 +374,9 @@ class TestTokenReuseDetection:
         assert reuse_data is None
         assert "reuse detected" in reuse_status.lower()
 
-        # Verify entire family was revoked (3 tokens)
+        # Verify entire family was revoked and removed from in-memory storage
         family_tokens = token_service.get_token_family(family_id)
-        assert len(family_tokens) >= 3
+        assert len(family_tokens) == 0
 
 
 class TestTokenRevocation:
@@ -589,6 +593,7 @@ class TestTokenRotationStrategies:
 
         # Simulate time passing (>50% of lifetime)
         token_data.created_at = datetime.utcnow() - timedelta(hours=13)
+        token_data.expires_at = token_data.created_at + timedelta(days=1)
 
         # Should rotate
         result_data, result_string, status = await service.validate_and_rotate_token(

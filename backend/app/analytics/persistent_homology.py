@@ -29,7 +29,7 @@ References:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 
 import numpy as np
@@ -339,7 +339,10 @@ class PersistentScheduleAnalyzer:
                 block.date.toordinal(),  # Absolute day number
                 block.date.weekday(),  # Day of week (0-6)
                 block.date.isocalendar()[1],  # Week of year (1-53)
-                1 if block.session == "AM" else 0,  # Session (AM=1, PM=0)
+                1
+                if getattr(block, "time_of_day", getattr(block, "session", None))
+                == "AM"
+                else 0,  # Session (AM=1, PM=0)
                 # Workload proxy (could be computed from role)
                 1.0 if assignment.role == "primary" else 0.5,
             ]
@@ -548,8 +551,8 @@ class PersistentScheduleAnalyzer:
                 * date_range_days
                 / (np.max([f.death for f in significant_h2]) + 1e-8)
             )
-            void_start = start_date + np.timedelta64(offset_days, "D")
-            void_end = void_start + np.timedelta64(void_span_days, "D")
+            void_start = start_date + timedelta(days=offset_days)
+            void_end = void_start + timedelta(days=void_span_days)
 
             # Severity based on persistence and birth time
             severity = min(1.0, feature.persistence / (feature.birth + 0.1))
@@ -557,8 +560,8 @@ class PersistentScheduleAnalyzer:
             voids.append(
                 CoverageVoid(
                     void_id=f"void_{idx}",
-                    start_date=void_start.astype(date),
-                    end_date=void_end.astype(date),
+                    start_date=void_start,
+                    end_date=void_end,
                     affected_rotations=[],  # Would need clustering to determine
                     severity=severity,
                     persistence=feature.persistence,

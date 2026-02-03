@@ -7,7 +7,7 @@ from typing import Any
 import redis.asyncio as aioredis
 from redis.exceptions import RedisError
 
-from app.auth.permissions.models import UserRole
+from app.auth._archived_permissions.models import UserRole
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)

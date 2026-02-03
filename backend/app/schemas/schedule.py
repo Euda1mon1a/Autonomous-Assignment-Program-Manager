@@ -633,3 +633,74 @@ class QueueBatchRequest(BaseModel):
     """Request to queue multiple experiment configurations."""
 
     configurations: list[dict]
+
+
+# =============================================================================
+# Faculty Validation Schemas
+# =============================================================================
+
+
+class AdjunctFacultyGapResponse(BaseModel):
+    """Adjunct faculty member needing manual assignment."""
+
+    person_id: UUID = Field(alias="personId")
+    display_name: str = Field(alias="displayName")
+    faculty_role: str = Field(alias="facultyRole")
+    min_clinic_halfdays: int | None = Field(alias="minClinicHalfdays")
+    max_clinic_halfdays: int | None = Field(alias="maxClinicHalfdays")
+    existing_assignment_count: int = Field(alias="existingAssignmentCount")
+
+    class Config:
+        populate_by_name = True
+
+
+class AdjunctGapsResponse(BaseModel):
+    """Response for adjunct faculty gaps in a block."""
+
+    block_number: int = Field(alias="blockNumber")
+    academic_year: int = Field(alias="academicYear")
+    adjuncts_needing_manual: list[AdjunctFacultyGapResponse] = Field(
+        alias="adjunctsNeedingManual"
+    )
+    total_adjuncts: int = Field(alias="totalAdjuncts")
+
+    class Config:
+        populate_by_name = True
+
+
+class ClinicLimitViolationResponse(BaseModel):
+    """A clinic limit violation for a faculty member."""
+
+    faculty_id: UUID = Field(alias="facultyId")
+    faculty_name: str = Field(alias="facultyName")
+    faculty_role: str | None = Field(alias="facultyRole")
+    week_start: date = Field(alias="weekStart")
+    clinic_count: int = Field(alias="clinicCount")
+    min_limit: int = Field(alias="minLimit")
+    max_limit: int = Field(alias="maxLimit")
+    violation_type: str = Field(alias="violationType")  # "over_max" or "under_min"
+    limit_source: str = Field(alias="limitSource")  # "role" or "person"
+
+    class Config:
+        populate_by_name = True
+
+
+class FacultyCoverageResponse(BaseModel):
+    """Comprehensive faculty coverage validation for a block."""
+
+    block_number: int = Field(alias="blockNumber")
+    academic_year: int = Field(alias="academicYear")
+    block_start_date: date = Field(alias="blockStartDate")
+    block_end_date: date = Field(alias="blockEndDate")
+    total_faculty: int = Field(alias="totalFaculty")
+    faculty_with_assignments: int = Field(alias="facultyWithAssignments")
+    adjuncts_needing_manual: list[AdjunctFacultyGapResponse] = Field(
+        alias="adjunctsNeedingManual"
+    )
+    clinic_limit_violations: list[ClinicLimitViolationResponse] = Field(
+        alias="clinicLimitViolations"
+    )
+    coverage_complete: bool = Field(alias="coverageComplete")
+
+    class Config:
+        populate_by_name = True

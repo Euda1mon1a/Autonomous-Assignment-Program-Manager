@@ -2,7 +2,7 @@
 
 > **Purpose:** Unified reference for all cross-disciplinary scheduling science
 > **Status:** Canonical Source - Single URL for all exotic concepts
-> **Last Updated:** 2026-01-17
+> **Last Updated:** 2026-02-02
 
 ---
 
@@ -23,6 +23,7 @@
 | [Foam Topology](#foam-topology-scheduler) | Soft Matter Physics | 🔬 Experimental | Self-healing schedules |
 | [Hopfield Attractor](#hopfield-attractor-network) | Neural Networks | 🔬 Experimental | Schedule stability |
 | [Entropy Monitor](#schedule-entropy-monitor) | Thermodynamics | 🔬 Experimental | Disorder tracking |
+| [Negative Viscosity](#negative-viscosity-propulsion-zones) | Active Matter Physics | 🔬 Experimental | Optimizer efficiency |
 | [Quantum Annealing](#quantum-annealing) | Quantum Computing | 📚 Research | QUBO optimization |
 | [Game Theory](#game-theory) | Economics | 📚 Research | Nash equilibrium fairness |
 | [Ecological Dynamics](#ecological-dynamics) | Biology | 📚 Research | Lotka-Volterra competition |
@@ -298,6 +299,51 @@ Code exists but not production-hardened.
 
 ---
 
+### Negative Viscosity (Propulsion Zones)
+
+| Aspect | Detail |
+|--------|--------|
+| **Origin** | Active matter physics (UW-Madison PRX Life, Jan 2026) |
+| **Scheduling** | Identify where constraint cooperation accelerates optimization |
+| **Code** | `backend/app/resilience/propulsion_zones.py`, `entropy.py`, `constraint_validator.py` |
+| **Tests** | 25+ in `tests/resilience/test_negative_viscosity.py` |
+| **MCP Tool** | `analyze_schedule_viscosity_tool` |
+| **Status** | Core concepts implemented, flow-direction alignment pending |
+
+**Key Physics:** In active matter (living cells), particles with internal energy sources (ATP) can exhibit *negative viscosity*—stress aligned with flow direction creates propulsion rather than friction. The effective viscosity becomes: `ηₑff = η_passive - η_active`
+
+**Scheduling Parallel:**
+- **Constraints as "active agents"**: Each constraint has a "goal" (directionality)
+- **Propulsion zones**: Where constraints cooperate → optimization converges quickly
+- **Friction zones**: Where constraints compete → effort dissipated fighting conflicts
+
+**Metrics:**
+| Metric | Range | Interpretation |
+|--------|-------|----------------|
+| Constraint Alignment | -1.0 to +1.0 | -1=conflict, 0=orthogonal, +1=synergy |
+| Energy Flow Direction | negative to positive | negative=injection (order increasing) |
+| Intervention Potential | 0.0 to 1.0 | Combined opportunity score |
+
+**Bio-Inspired Integration:**
+- **PSO**: Improving particles get velocity boost (negative viscosity factor)
+- **ACO**: High-consensus pheromone trails get boosted instead of evaporated
+
+**Known Gaps (Future Work):**
+1. Flow-direction alignment: Currently measures constraint-to-constraint; research suggests constraint-to-optimizer-trajectory
+2. Computational investment: Research shows propulsion zones need MORE resources
+3. Interior vortices: Propulsion from middle (parallel solving connection)
+
+**Use Cases:**
+- Identify optimal intervention points in schedules
+- Focus solver effort on high-alignment regions
+- Detect constraint friction before it causes failures
+
+**References:**
+- Bonfanti et al. (2025). "Negative viscosity emerges from stress alignment in confluent tissues." *PRX Life*
+- Marchetti et al. (2013). "Hydrodynamics of soft active matter." *Rev. Mod. Phys.*
+
+---
+
 ## Tier 3: Research 📚
 
 Design documents and exploratory research. No production code.
@@ -344,6 +390,8 @@ Lotka-Volterra competition between rotation types. Predator-prey dynamics model 
 | Volatility → Circuit Breaker | Homeostasis jitter → pre-emptive open | Prevent cascades before failure |
 | Spin Glass → Hopfield | Replica diversity → attractor basins | Robust schedule ensembles |
 | Catastrophe → Defense Levels | Distance to cusp → safety level | Phase transition alerts |
+| Neg Viscosity → PSO/ACO | Propulsion zones → adaptive velocity/evaporation | Faster convergence in aligned regions |
+| Entropy → Neg Viscosity | Energy flow direction → propulsion detection | Thermodynamic grounding for zone ID |
 
 ### Architecture Diagram
 
@@ -361,7 +409,7 @@ Lotka-Volterra competition between rotation types. Predator-prey dynamics model 
 │ Circadian PRC │      │  Penrose      │      │  Homology     │
 │ Keystone      │      │  Anderson     │      │               │
 │ Catastrophe   │      │  Free Energy  │      │               │
-│               │      │  Zeno         │      │               │
+│ Neg Viscosity │      │  Zeno         │      │               │
 └───────┬───────┘      └───────┬───────┘      └───────┬───────┘
         │                       │                       │
         └───────────────────────┼───────────────────────┘
@@ -393,13 +441,15 @@ Lotka-Volterra competition between rotation types. Predator-prey dynamics model 
 | Keystone | 18 | 650 |
 | Zeno | 40+ | 705 |
 | Catastrophe | 35+ | 690 |
-| **Total** | **339+** | **6,601** |
+| Negative Viscosity | 25+ | ~400 |
+| **Total** | **364+** | **~7,001** |
 
 ```bash
 # Run all exotic tests
 cd backend
 pytest tests/resilience/test_metastability.py -v
 pytest tests/scheduling/test_spin_glass.py -v
+pytest tests/resilience/test_negative_viscosity.py -v
 # ... etc
 ```
 
@@ -423,6 +473,7 @@ pytest tests/scheduling/test_spin_glass.py -v
 
 ### Physics & Mathematics
 - Anderson, P.W. (1958). "Absence of Diffusion in Certain Random Lattices"
+- Bonfanti, A. et al. (2025). "Negative viscosity emerges from stress alignment in confluent tissues." *PRX Life*
 - Bovier, A. & den Hollander, F. (2015). *Metastability: A Potential-Theoretic Approach*
 - Mézard, M., Parisi, G., & Virasoro, M.A. (1987). *Spin Glass Theory and Beyond*
 - Misra, B. & Sudarshan, E.C.G. (1977). "The Zeno's paradox in quantum theory"

@@ -7,8 +7,8 @@ from typing import Any
 
 from fastapi import Depends, HTTPException, status
 
-from app.auth.permissions.models import PermissionAction, ResourceType
-from app.auth.permissions.resolver import get_permission_resolver
+from app.auth._archived_permissions.models import PermissionAction, ResourceType
+from app.auth._archived_permissions.resolver import get_permission_resolver
 from app.core.security import get_current_active_user
 from app.models.user import User
 

@@ -597,7 +597,14 @@ async def batch_update_patterns(
         if not request.dry_run:
             await service.commit()
 
-        return BatchPatternUpdateResponse(**result, dry_run=request.dry_run)
+        response_payload = {
+            **result,
+            "operation_type": "batch_apply_patterns",
+            "total": result.get("total_templates"),
+            "succeeded": result.get("successful"),
+            "dry_run": request.dry_run,
+        }
+        return BatchPatternUpdateResponse(**response_payload)
 
     except HTTPException:
         await service.rollback()

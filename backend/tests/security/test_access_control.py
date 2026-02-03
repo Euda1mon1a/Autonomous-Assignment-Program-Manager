@@ -52,7 +52,8 @@ class TestAdminAccess:
         db.commit()
 
         token, _, _ = create_access_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
         return token
 
@@ -92,7 +93,8 @@ class TestCoordinatorAccess:
         db.commit()
 
         token, _, _ = create_access_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
         return token
 
@@ -146,7 +148,8 @@ class TestFacultyAccess:
         db.commit()
 
         token, _, _ = create_access_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
         return token
 
@@ -206,7 +209,8 @@ class TestResidentAccess:
         db.commit()
 
         token, _, _ = create_access_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
         return token
 
@@ -270,7 +274,8 @@ class TestClinicalStaffAccess:
         db.commit()
 
         token, _, _ = create_access_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
         return token
 
@@ -317,7 +322,8 @@ class TestInactiveUserAccess:
         db.commit()
 
         token, _, _ = create_access_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
         return token
 
@@ -368,7 +374,8 @@ class TestResourceOwnershipChecks:
         db.commit()
 
         token, _, _ = create_access_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
         return user, token
 
@@ -428,6 +435,7 @@ class TestTokenValidation:
         token, _, _ = create_access_token(
             data={"sub": str(user.id), "username": user.username},
             expires_delta=timedelta(seconds=-1),  # Already expired
+            return_details=True,
         )
 
         headers = {"Authorization": f"Bearer {token}"}
@@ -459,7 +467,8 @@ class TestPermissionEscalation:
         db.commit()
 
         token, _, _ = create_access_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
         headers = {"Authorization": f"Bearer {token}"}
 
@@ -492,7 +501,8 @@ class TestPermissionEscalation:
         db.commit()
 
         token, _, _ = create_access_token(
-            data={"sub": str(user.id), "username": user.username}
+            data={"sub": str(user.id), "username": user.username},
+            return_details=True,
         )
         headers = {"Authorization": f"Bearer {token}"}
 

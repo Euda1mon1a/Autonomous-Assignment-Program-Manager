@@ -4,6 +4,8 @@ Tests for the LLM advisor interface with schema validation.
 
 from datetime import date, datetime
 
+import pytest
+
 from app.autonomous.advisor import (
     LLMAdvisor,
     MockLLMAdvisor,
@@ -133,9 +135,11 @@ class TestSuggestion:
 class TestLLMAdvisor:
     """Tests for LLMAdvisor without real LLM."""
 
-    def test_no_client_returns_none(self):
+    @pytest.mark.asyncio
+    async def test_no_client_returns_none(self):
         """Test that advisor returns None without LLM client."""
-        advisor = LLMAdvisor(llm_client=None)
+        advisor = LLMAdvisor()
+        advisor.llm_router = None
 
         state = RunState(
             run_id="test",
@@ -146,7 +150,7 @@ class TestLLMAdvisor:
             updated_at=datetime.now(),
         )
 
-        suggestion = advisor.suggest(state, None, [])
+        suggestion = await advisor.suggest(state, None, [])
 
         assert suggestion is None
 
@@ -203,9 +207,11 @@ class TestLLMAdvisor:
 
         assert advisor.validate_suggestion(suggestion) is True
 
-    def test_fallback_explanation(self):
+    @pytest.mark.asyncio
+    async def test_fallback_explanation(self):
         """Test fallback explanation without LLM."""
         advisor = LLMAdvisor()
+        advisor.llm_router = None
 
         result = EvaluationResult(
             valid=False,
@@ -224,7 +230,7 @@ class TestLLMAdvisor:
             ],
         )
 
-        explanation = advisor.explain(result)
+        explanation = await advisor.explain(result)
 
         assert "Score: 0.7" in explanation or "70.0%" in explanation
         assert "Invalid" in explanation or "Critical" in explanation
@@ -233,7 +239,8 @@ class TestLLMAdvisor:
 class TestMockLLMAdvisor:
     """Tests for MockLLMAdvisor."""
 
-    def test_suggest_on_critical_violations(self):
+    @pytest.mark.asyncio
+    async def test_suggest_on_critical_violations(self):
         """Test mock advisor suggests algorithm switch on critical violations."""
         advisor = MockLLMAdvisor()
 
@@ -263,12 +270,13 @@ class TestMockLLMAdvisor:
             ],
         )
 
-        suggestion = advisor.suggest(state, result, [])
+        suggestion = await advisor.suggest(state, result, [])
 
         assert suggestion is not None
         assert suggestion.type == SuggestionType.ALGORITHM_SWITCH
 
-    def test_suggest_on_stagnation(self):
+    @pytest.mark.asyncio
+    async def test_suggest_on_stagnation(self):
         """Test mock advisor suggests strategy change on stagnation."""
         advisor = MockLLMAdvisor()
 
@@ -292,12 +300,13 @@ class TestMockLLMAdvisor:
             critical_violations=0,
         )
 
-        suggestion = advisor.suggest(state, result, [])
+        suggestion = await advisor.suggest(state, result, [])
 
         assert suggestion is not None
         assert suggestion.type == SuggestionType.STRATEGY_CHANGE
 
-    def test_suggest_none_on_good_result(self):
+    @pytest.mark.asyncio
+    async def test_suggest_none_on_good_result(self):
         """Test mock advisor returns None on good non-stagnating result."""
         advisor = MockLLMAdvisor()
 
@@ -321,7 +330,7 @@ class TestMockLLMAdvisor:
             critical_violations=0,
         )
 
-        suggestion = advisor.suggest(state, result, [])
+        suggestion = await advisor.suggest(state, result, [])
 
         # No suggestion needed for good result
         assert suggestion is None

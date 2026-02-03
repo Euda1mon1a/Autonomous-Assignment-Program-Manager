@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 
 @router.get("", response_model=HalfDayAssignmentListResponse)
 async def list_half_day_assignments(
-    block_number: int | None = Query(None, ge=0, le=13, description="Block number"),
+    block_number: int | None = Query(None, ge=1, le=13, description="Block number"),
     academic_year: int | None = Query(None, description="Academic year (e.g., 2025)"),
     start_date: date | None = Query(None, description="Start date"),
     end_date: date | None = Query(None, description="End date"),
@@ -34,7 +34,7 @@ async def list_half_day_assignments(
         True, description="Apply active schedule overrides"
     ),
     db: AsyncSession = Depends(get_async_db),
-) -> HalfDayAssignmentListResponse:
+):
     """
     List half-day assignments for a block or date range.
 
@@ -48,7 +48,7 @@ async def list_half_day_assignments(
     - Mid-block transitions
 
     Args:
-        block_number: Block number (0-13)
+        block_number: Block number (1-13)
         academic_year: Academic year (e.g., 2025 for AY 2025-2026)
         start_date: Start date for date range query
         end_date: End date for date range query
@@ -87,7 +87,6 @@ async def list_half_day_assignments(
     # Convert to response schema
     assignment_reads = []
     for a in assignments:
-        is_gap = bool(getattr(a, "is_gap", False))
         assignment_reads.append(
             HalfDayAssignmentRead(
                 id=a.id,
@@ -105,7 +104,7 @@ async def list_half_day_assignments(
                 else None,
                 source=a.source,
                 is_locked=a.is_locked,
-                is_gap=is_gap,
+                is_gap=a.is_gap,
                 created_at=a.created_at,
                 updated_at=a.updated_at,
             )

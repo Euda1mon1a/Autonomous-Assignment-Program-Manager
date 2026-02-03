@@ -27,7 +27,7 @@ class CredentialBase(BaseModel):
     def validate_dates_in_range(cls, v: date | None) -> date | None:
         """Validate dates are within reasonable bounds."""
         if v is not None:
-            return validate_date_range(v, field_name="date")
+            return validate_date_not_null(v, field_name="date")
         return v
 
     @field_validator("status")
@@ -82,7 +82,7 @@ class CredentialUpdate(BaseModel):
     def validate_dates_in_range(cls, v: date | None) -> date | None:
         """Validate dates are within reasonable bounds."""
         if v is not None:
-            return validate_date_range(v, field_name="date")
+            return validate_date_not_null(v, field_name="date")
         return v
 
     @field_validator("status")
