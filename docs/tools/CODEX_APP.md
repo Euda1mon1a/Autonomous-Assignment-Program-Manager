@@ -1,6 +1,6 @@
 # OpenAI Codex App Guide (macOS)
 
-> **Last Updated:** 2026-02-03
+> **Last Updated:** 2026-02-02
 > **Purpose:** Practical guide to the Codex macOS app, plus fast vs slow automation paths
 
 ---
@@ -107,6 +107,8 @@ Codex app automations are **best for deeper, longer runs**:
 - Automations use your default sandbox settings; you can tighten or allowlist commands using rules.
 
 This is the right place for nightly scans, test-gap detection, broader refactors, or documentation sweeps.
+
+> **Tip:** Use the **Test** button to run any automation manually. The scheduled time is preserved - testing doesn't reset or skip the next scheduled run.
 
 ### Recommended Schedule (0100 Local)
 
@@ -297,6 +299,341 @@ Collect and prioritize TODOs:
 - For trivial ones (<5 lines to fix), just fix them
 
 Output a summary of remaining TODOs sorted by priority. Create commits for trivial fixes.
+```
+</details>
+
+### Repo-Specific Automations (High Yield)
+
+These automations target issues specific to this medical residency scheduling codebase. They catch bugs documented in CLAUDE.md and discovered in CCW sessions.
+
+**Top 3 (Highest ROI):**
+1. Missing Await Detector - catches 2-5 bugs/month
+2. N-1 Faculty Vulnerability Scanner - prevents operational crises
+3. Enum Value Sync Validator - catches frontend/backend drift
+
+<details>
+<summary><b>1. Missing Await Detector</b> ⭐ TOP 3</summary>
+
+```
+Scan backend/app/ for async functions with missing await on database operations.
+
+For each file in api/routes/, services/, controllers/:
+1. Find async def functions
+2. Look for calls to AsyncSession methods: execute, commit, refresh, flush, delete, merge
+3. Check if preceded by 'await' on same line or previous line
+4. Flag violations with file:line and suggested fix
+
+Pattern to detect:
+  result = db.execute(select(Model))  # WRONG - missing await
+  result = await db.execute(select(Model))  # CORRECT
+
+Skip: tests/, conftest.py, sync background tasks (Celery)
+
+For each violation found:
+- Report file path and line number
+- Show the offending line
+- Suggest the fix (add 'await')
+- Create a commit if fix is unambiguous
+```
+</details>
+
+<details>
+<summary><b>2. N-1 Faculty Vulnerability Scanner</b> ⭐ TOP 3</summary>
+
+```
+Analyze faculty coverage for single points of failure using MCP resilience tools.
+
+Steps:
+1. Run contingency analysis on current schedule
+2. For each faculty member, calculate:
+   - Coverage gaps if they're absent (uncovered blocks)
+   - ACGME violations on replacement residents
+   - Cascade failures (secondary overloads > 2)
+3. Compute vulnerability score (0.0 - 1.0)
+4. Check cross-training status for high-vulnerability faculty
+
+Alert thresholds:
+- vulnerability_score > 0.8: CRITICAL - no backup available
+- vulnerability_score > 0.6: WARNING - partial coverage only
+- cascade_failures > 2: ESCALATE - systemic risk
+
+Report format:
+| Faculty | Vuln Score | Gaps | Cascades | Cross-Trained Backup |
+|---------|------------|------|----------|---------------------|
+
+Suggest remediation:
+- Cross-training recommendations
+- Staffing level adjustments
+- Temporary coverage for planned absences
+```
+</details>
+
+<details>
+<summary><b>3. Enum Value Sync Validator</b> ⭐ TOP 3</summary>
+
+```
+Detect frontend/backend enum drift that causes silent API failures.
+
+Extract enums from:
+- Backend: backend/app/models/*.py (SQLAlchemy enums)
+- Backend: backend/app/schemas/*.py (Pydantic enums)
+- Frontend: frontend/src/types/api.ts and api-generated.ts
+
+For each enum type:
+1. Compare value strings exactly (must be snake_case)
+2. Flag any frontend enum with camelCase values (Gorgon's Gaze violation)
+3. Detect new backend values not present in frontend
+4. Report missing enum exports in frontend barrel files
+
+Critical enums to check:
+- PersonType, RotationType, SwapType, AbsenceType, ConflictType
+- SwapStatus, LeaveStatus, ConflictStatus
+- UserRole, FacultyRole
+
+Test round-trip:
+- Send enum value from frontend
+- Verify backend validation accepts it
+- Verify response contains same value
+
+Report format:
+| Enum | Backend Values | Frontend Values | Status |
+|------|----------------|-----------------|--------|
+```
+</details>
+
+<details>
+<summary><b>4. ACGME Rolling Window Edge Case Tester</b></summary>
+
+```
+Generate and run edge case tests for ACGME 80-hour rolling window validator.
+
+Test scenarios:
+1. Exactly 80 hours in 28-day window (boundary)
+2. 80.5 hours - should trigger violation
+3. Feb 28/29 boundary in leap year
+4. Dec 31 → Jan 1 year boundary
+5. Block boundary (4-week block ends, new starts)
+6. Resident with vacation mid-window (hours reset?)
+7. Back-to-back 24-hour calls spanning window edge
+
+For each scenario:
+1. Create test schedule data
+2. Run against backend/app/validators/acgme_validators.py
+3. Verify expected pass/fail result
+4. Report any edge cases that pass when they should fail
+
+Target files:
+- backend/app/validators/acgme_validators.py
+- backend/app/scheduling/acgme_compliance_engine.py
+- backend/tests/validators/test_acgme_edge_cases.py (create if missing)
+
+If edge case bug found, create minimal fix with test.
+```
+</details>
+
+<details>
+<summary><b>5. Constraint Registration Drift Detector</b></summary>
+
+```
+Verify all scheduling constraints are properly registered with the solver.
+
+Scan backend/app/scheduling/constraints/:
+1. Find all classes inheriting from BaseConstraint or SchedulingConstraint
+2. Check registration in constraint_registry.py (or equivalent)
+3. For each constraint, verify:
+   - Has Priority enum (CRITICAL, HIGH, MEDIUM, LOW)
+   - Has weight value defined
+   - Has test file in tests/scheduling/constraints/
+   - Is documented in constraint docs
+
+Report format:
+| Constraint Class | Registered | Priority | Weight | Has Tests |
+|------------------|------------|----------|--------|-----------|
+
+Flag:
+- Unregistered constraints (implemented but not used)
+- Missing test coverage
+- Constraints without priority (default behavior unclear)
+- Duplicate registrations
+
+If unregistered constraint found, add registration entry.
+```
+</details>
+
+<details>
+<summary><b>6. Migration Chain Integrity Checker</b></summary>
+
+```
+Verify Alembic migration chain integrity and naming conventions.
+
+Scan backend/alembic/versions/:
+1. Build dependency graph: down_revision → revision
+2. Detect orphaned migrations (no parent, not initial)
+3. Detect merge conflicts (multiple heads)
+4. Verify naming convention: YYYYMMDD_description
+5. Check revision ID length ≤ 64 characters
+6. Verify each migration has both upgrade() and downgrade()
+
+Run validation:
+- alembic history --verbose
+- alembic check (if available)
+
+Report format:
+| Migration | Revision | Down Revision | Length | Has Downgrade |
+|-----------|----------|---------------|--------|---------------|
+
+Flag:
+- Broken chain links
+- UUID-format revisions (old auto-generated, should convert)
+- Names approaching 64-char limit (warn at 55+)
+- Missing downgrade() function
+
+If chain break found, identify the gap and suggest fix.
+```
+</details>
+
+<details>
+<summary><b>7. Async/Sync Type Mismatch Hunter</b></summary>
+
+```
+Find sync database operations in async routes causing event loop blocking.
+
+Scan backend/app/api/routes/:
+For each async def function:
+1. Check parameter type hints for 'Session' (should be AsyncSession)
+2. Find db.query() calls (sync ORM, should use select())
+3. Find sync commits: db.commit() without await
+4. Flag imports: 'from sqlalchemy.orm import Session' in async modules
+
+Patterns to flag:
+- async def endpoint(db: Session)  # Should be AsyncSession
+- db.query(Model).filter(...)  # Should be await db.execute(select(...))
+- db.add(item); db.commit()  # Should be await db.commit()
+
+Exclude:
+- Background task handlers (Celery uses sync by design)
+- Files in backend/app/tasks/ (async optional)
+- Test files using sync fixtures
+
+Report format:
+| File | Line | Pattern | Suggested Fix |
+|------|------|---------|---------------|
+
+Create fixes for clear violations.
+```
+</details>
+
+<details>
+<summary><b>8. Pre-Solver Infeasibility Detector</b></summary>
+
+```
+Detect constraint combinations that make schedules unsolvable BEFORE solver runs.
+
+For upcoming block configuration, validate:
+1. Total required coverage hours ≤ available resident hours
+   - Sum all rotation coverage requirements
+   - Sum all resident available hours (minus absences, leave)
+   - Flag if deficit > 5%
+
+2. Supervision ratios achievable with faculty count
+   - PGY-1: 1:2 faculty ratio
+   - PGY-2/3: 1:4 faculty ratio
+   - Check each rotation's faculty availability
+
+3. No resident has conflicting hard constraints
+   - Vacation overlapping required rotation
+   - Call assignment during blocking absence
+   - Two rotations assigned same block
+
+4. Call frequency requirements satisfiable
+   - Every-3rd-night rule with resident pool size
+   - Weekend call distribution feasibility
+
+Report format:
+| Constraint Conflict | Severity | Affected Residents | Resolution |
+|--------------------|----------|-------------------|------------|
+
+If infeasibility detected, suggest:
+- Which constraint to relax
+- Additional resources needed
+- Alternative scheduling approach
+```
+</details>
+
+<details>
+<summary><b>9. Circuit Breaker Health Monitor</b></summary>
+
+```
+Monitor service health via circuit breaker status using MCP tools.
+
+Steps:
+1. Check all circuit breakers for current state
+2. For breakers in HALF_OPEN or OPEN:
+   - Record time since last state change
+   - Attempt test probe if safe
+   - Flag if stuck (> 1 hour in HALF_OPEN)
+
+3. Check aggregate health metrics:
+   - Failure rate per service
+   - Request latency trends
+   - Error rate spikes
+
+Alert thresholds:
+- OPEN breaker: CRITICAL - service unavailable
+- HALF_OPEN > 1 hour: WARNING - recovery stalled
+- failure_rate > 50%: WARNING - service degraded
+- failure_rate > 80%: CRITICAL - service failing
+
+Critical services (escalate immediately):
+- Database connection
+- Redis cache
+- MCP server
+- Auth service
+
+Report format:
+| Service | State | Duration | Failure Rate | Action |
+|---------|-------|----------|--------------|--------|
+
+If degraded, suggest:
+- Service restart command
+- Fallback activation
+- Manual override steps
+```
+</details>
+
+<details>
+<summary><b>10. Burnout Precursor Scanner</b></summary>
+
+```
+Identify residents approaching burnout threshold using MCP wellness tools.
+
+Steps:
+1. Scan all residents for burnout precursors
+2. Check team fatigue levels
+3. For each resident with precursor_score > 0.7:
+   - Current week's total hours
+   - Consecutive days worked
+   - Night shifts in last 14 days
+   - Weekend calls in last month
+
+4. Simulate burnout spread to identify super-spreaders
+   - Network analysis of coverage dependencies
+   - Contagion risk assessment
+
+Alert thresholds:
+- precursor_score > 0.9: CRITICAL - immediate intervention
+- precursor_score > 0.7: WARNING - schedule adjustment needed
+- team_fatigue > 0.6: WARNING - systemic issue
+
+Report format:
+| Resident | Score | Hours/Week | Consec Days | Night Shifts | Risk |
+|----------|-------|------------|-------------|--------------|------|
+
+Suggest schedule adjustments:
+- Swap candidates (who can absorb load safely)
+- Coverage redistribution options
+- Mandatory rest recommendations
+- Flag for program director review
 ```
 </details>
 
