@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-01 (Session 156 - Admin GUI gaps assessed, HIGH #14 added)
+> **Last Updated:** 2026-02-03 (Admin GUI gaps partially closed; Codex App automation triage skill documented)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -261,13 +261,13 @@ See [COMPLETED section](#12-api-test-coverage-gap-high-12--resolved-2026-01-31)
 
 Backend is **90% ready** (90 routes, 63 models, comprehensive CRUD). These gaps block full admin GUI:
 
-| Gap | Impact | Effort |
-|-----|--------|--------|
-| **Swap approval workflow** | Swaps execute immediately; no approve/deny stage | 4-6h |
-| **Leave approval workflow** | Leave created; no approval/denial flow | 4-6h |
-| **Dashboard aggregate endpoints** | No summary widgets (counts, trends) | 2-4h |
-| **Cascading delete warnings** | No endpoint warns about dependent records | 2-3h |
-| **Field-level change tracking** | Activity log tracks actions, not field diffs | 4-6h |
+| Gap | Impact | Effort | Status |
+|-----|--------|--------|--------|
+| **Swap approval workflow** | Swaps execute immediately; no approve/deny stage | 4-6h | ⏳ Pending |
+| **Leave approval workflow** | Leave created; no approval/denial flow | 4-6h | ⏳ Pending |
+| **Dashboard aggregate endpoints** | No summary widgets (counts, trends) | 2-4h | ✅ Done (PR #805) |
+| **Cascading delete warnings** | No endpoint warns about dependent records | 2-3h | ✅ Done (PR #805) |
+| **Field-level change tracking** | Activity log tracks actions, not field diffs | 4-6h | ⏳ Pending |
 
 **What's Ready:**
 - ✅ All CRUD operations (users, people, blocks, rotations, assignments, leave, swaps)
@@ -277,6 +277,8 @@ Backend is **90% ready** (90 routes, 63 models, comprehensive CRUD). These gaps 
 - ✅ Audit trails and activity logging
 - ✅ Real-time WebSocket support
 - ✅ Rate limiting and DoS protection
+- ✅ Dashboard aggregates (`/api/v1/admin/dashboard/summary`)
+- ✅ Delete-impact warnings (`/api/v1/admin/delete-impact`)
 
 **Missing Enums (hardcode in frontend for now):**
 - User roles: `admin, coordinator, faculty, resident, clinical_staff, rn, lpn, msa`
@@ -287,12 +289,12 @@ Backend is **90% ready** (90 routes, 63 models, comprehensive CRUD). These gaps 
 **Action:**
 1. Implement swap approval workflow (new `swap_status` state machine)
 2. Implement leave approval workflow (new `leave_status` state machine)
-3. Add `/api/v1/dashboard/summary` aggregate endpoint
+3. Add field-level change tracking (audit diffs per update)
 
-**Files to create:**
-- `backend/app/api/routes/dashboard.py` (aggregate endpoint)
-- Modify `backend/app/services/swap_service.py` (approval workflow)
-- Modify `backend/app/services/leave_service.py` (approval workflow)
+**Files to modify:**
+- `backend/app/services/swap_service.py` (approval workflow)
+- `backend/app/services/absence_service.py` (leave approval workflow)
+- `backend/app/services/activity_log_service.py` (field-level diff capture)
 
 ### 15. K2.5 Swarm MCP Integration (NEW - Session Phase 8)
 **Added:** 2026-01-30
