@@ -1434,8 +1434,8 @@ For issues or questions:
 
 ---
 
-[1.0.0]: https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager/releases/tag/v1.0.0
-[Unreleased]: https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager/releases
+[Unreleased]: https://github.com/Euda1mon1a/Autonomous-Assignment-Program-Manager/compare/main...HEAD
 
 ## [Unreleased] - 2025-12-31
 
