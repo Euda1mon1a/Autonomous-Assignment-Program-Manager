@@ -128,6 +128,10 @@ class AsyncSessionWrapper:
         """Delete object."""
         self._session.delete(obj)
 
+    async def get(self, entity, ident, *args, **kwargs):
+        """Get entity by primary key (async-compatible wrapper)."""
+        return self._session.get(entity, ident, *args, **kwargs)
+
     def add(self, obj):
         """Add object to session."""
         self._session.add(obj)
