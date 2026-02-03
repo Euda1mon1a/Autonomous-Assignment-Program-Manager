@@ -12,7 +12,7 @@ import logging
 import math
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import desc, func, or_, select
@@ -42,10 +42,41 @@ from app.schemas.admin_user import (
     UserRole,
     UserStatus,
 )
+from app.schemas.audit import FieldChange
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def _format_field_name(field_name: str) -> str:
+    """Format a field name for display."""
+    return " ".join(word.capitalize() for word in field_name.split("_"))
+
+
+def _extract_field_changes(details: dict | None) -> list[FieldChange] | None:
+    """Extract field changes from details payload."""
+    if not details or not isinstance(details, dict):
+        return None
+
+    raw_changes = details.get("changes")
+    if not isinstance(raw_changes, dict):
+        return None
+
+    changes: list[FieldChange] = []
+    for field, change in raw_changes.items():
+        if not isinstance(change, dict):
+            continue
+        changes.append(
+            FieldChange(
+                field=field,
+                old_value=change.get("old"),
+                new_value=change.get("new"),
+                display_name=_format_field_name(field),
+            )
+        )
+
+    return changes or None
 
 
 def _user_to_admin_response(user: User) -> AdminUserResponse:
@@ -744,6 +775,7 @@ async def get_activity_log(
                 targetUserId=uuid.UUID(log.target_id) if log.target_id else None,
                 targetUserEmail=target_email,
                 details=log.details,
+                changes=_extract_field_changes(cast(dict | None, log.details)),
                 ipAddress=log.ip_address,
                 userAgent=log.user_agent,
             )
