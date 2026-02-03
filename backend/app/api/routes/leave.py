@@ -36,11 +36,15 @@ from app.models.user import User
 from app.schemas.leave import (
     BulkLeaveImportRequest,
     BulkLeaveImportResponse,
+    LeaveApprovalRequest,
+    LeaveApprovalResponse,
     LeaveCalendarEntry,
     LeaveCalendarResponse,
     LeaveCreateRequest,
     LeaveListResponse,
+    LeaveRequestResponse,
     LeaveResponse,
+    LeaveStatus,
     LeaveUpdateRequest,
     LeaveWebhookPayload,
 )
@@ -154,6 +158,10 @@ async def list_leave(
                 leave_type=absence.absence_type,
                 is_blocking=absence.should_block_assignment,
                 description=absence.notes,
+                status=LeaveStatus(absence.status),
+                reviewed_at=absence.reviewed_at,
+                reviewed_by_id=absence.reviewed_by_id,
+                review_notes=absence.review_notes,
                 created_at=(
                     absence.created_at if hasattr(absence, "created_at") else None
                 ),
@@ -259,6 +267,7 @@ async def create_leave(
         absence_type=request.leave_type.value,
         is_blocking=request.is_blocking,
         notes=request.description,
+        status=LeaveStatus.APPROVED.value,
     )
     db.add(absence)
     db.commit()
@@ -278,8 +287,123 @@ async def create_leave(
         leave_type=absence.absence_type,
         is_blocking=absence.is_blocking or absence.absence_type == "deployment",
         description=absence.notes,
+        status=LeaveStatus(absence.status),
+        reviewed_at=absence.reviewed_at,
+        reviewed_by_id=absence.reviewed_by_id,
+        review_notes=absence.review_notes,
         created_at=absence.created_at if hasattr(absence, "created_at") else None,
         updated_at=None,
+    )
+
+
+@router.post("/request", response_model=LeaveRequestResponse)
+async def request_leave(
+    request: LeaveCreateRequest,
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> LeaveRequestResponse:
+    """
+    Create a leave request that requires approval.
+    """
+    # Verify faculty exists
+    person = (
+        db.execute(select(Person).where(Person.id == request.faculty_id))
+    ).scalar_one_or_none()
+    if not person:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Faculty not found",
+        )
+
+    existing = (
+        db.query(Absence)
+        .filter(
+            Absence.person_id == request.faculty_id,
+            Absence.start_date == request.start_date,
+            Absence.end_date == request.end_date,
+            Absence.status.in_([LeaveStatus.PENDING.value, LeaveStatus.APPROVED.value]),
+        )
+        .first()
+    )
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Leave request already exists for this date range",
+        )
+
+    absence = Absence(
+        person_id=request.faculty_id,
+        start_date=request.start_date,
+        end_date=request.end_date,
+        absence_type=request.leave_type.value,
+        is_blocking=request.is_blocking,
+        notes=request.description,
+        status=LeaveStatus.PENDING.value,
+    )
+    db.add(absence)
+    db.commit()
+    db.refresh(absence)
+
+    return LeaveRequestResponse(
+        success=True,
+        leave_id=absence.id,
+        status=LeaveStatus(absence.status),
+        message="Leave request submitted",
+    )
+
+
+@router.post("/{leave_id}/approval", response_model=LeaveApprovalResponse)
+async def approve_leave(
+    leave_id: UUID,
+    request: LeaveApprovalRequest,
+    background_tasks: BackgroundTasks,
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> LeaveApprovalResponse:
+    """
+    Approve or reject a pending leave request.
+    """
+    if not current_user.can_manage_schedules:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to approve leave",
+        )
+
+    absence = (
+        db.execute(select(Absence).where(Absence.id == leave_id))
+    ).scalar_one_or_none()
+    if not absence:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Leave record not found",
+        )
+
+    if absence.status != LeaveStatus.PENDING.value:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Leave is already {absence.status}",
+        )
+
+    absence.review_notes = request.notes
+    absence.reviewed_at = datetime.utcnow()
+    absence.reviewed_by_id = current_user.id
+
+    if request.approved:
+        absence.status = LeaveStatus.APPROVED.value
+        db.commit()
+
+        # Trigger conflict detection in background using Celery
+        from app.notifications.tasks import detect_leave_conflicts
+
+        background_tasks.add_task(detect_leave_conflicts.delay, str(absence.id))
+    else:
+        absence.status = LeaveStatus.REJECTED.value
+        db.commit()
+
+    return LeaveApprovalResponse(
+        success=True,
+        status=LeaveStatus(absence.status),
+        message=f"Leave {absence.status}",
     )
 
 
@@ -323,6 +447,10 @@ async def update_leave(
         leave_type=absence.absence_type,
         is_blocking=absence.is_blocking or absence.absence_type == "deployment",
         description=absence.notes,
+        status=LeaveStatus(absence.status),
+        reviewed_at=absence.reviewed_at,
+        reviewed_by_id=absence.reviewed_by_id,
+        review_notes=absence.review_notes,
         created_at=absence.created_at if hasattr(absence, "created_at") else None,
         updated_at=absence.updated_at if hasattr(absence, "updated_at") else None,
     )
