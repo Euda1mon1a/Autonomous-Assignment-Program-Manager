@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app.auth.permissions.decorators import require_role
+from app.auth import require_role
 from app.core.security import get_current_active_user
 from app.db.optimization import IndexAdvisor
 from app.db.session import get_db

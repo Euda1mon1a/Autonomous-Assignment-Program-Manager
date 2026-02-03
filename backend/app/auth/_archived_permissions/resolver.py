@@ -3,8 +3,8 @@
 import logging
 from typing import Any
 
-from app.auth.permissions.cache import PermissionCache, get_permission_cache
-from app.auth.permissions.models import (
+from app.auth._archived_permissions.cache import PermissionCache, get_permission_cache
+from app.auth._archived_permissions.models import (
     DEFAULT_ROLE_PERMISSIONS,
     ROLE_HIERARCHY,
     PermissionAction,

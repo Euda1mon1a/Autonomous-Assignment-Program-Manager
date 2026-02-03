@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.auth.permissions.decorators import require_role
+from app.auth import require_role
 from app.core.config import settings
 from app.core.security import get_current_active_user
 from app.db.session import get_db

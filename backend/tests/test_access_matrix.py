@@ -18,6 +18,7 @@ import pytest
 from app.auth.access_matrix import (
     AccessControlMatrix,
     PermissionAction,
+    PermissionAuditEntry,
     PermissionContext,
     PermissionDenied,
     ResourceType,
@@ -38,10 +39,11 @@ class TestRoleHierarchy:
         assert inherited == {UserRole.ADMIN}
 
     def test_get_inherited_roles_coordinator(self):
-        """Coordinator inherits from admin."""
+        """Coordinator is independent (no admin inheritance)."""
         inherited = RoleHierarchy.get_inherited_roles(UserRole.COORDINATOR)
         assert UserRole.COORDINATOR in inherited
-        assert UserRole.ADMIN in inherited
+        assert UserRole.ADMIN not in inherited
+        assert len(inherited) == 1
 
     def test_get_inherited_roles_faculty(self):
         """Faculty is INDEPENDENT - no inheritance (SECURITY FIX)."""
@@ -238,8 +240,17 @@ class TestAccessControlMatrix:
         assert acm.has_permission(
             UserRole.FACULTY, ResourceType.LEAVE, PermissionAction.CREATE
         )
+        context = PermissionContext(
+            user_id=uuid4(),
+            user_role=UserRole.FACULTY,
+            resource_owner_id=None,
+        )
+        context.resource_owner_id = context.user_id
         assert acm.has_permission(
-            UserRole.FACULTY, ResourceType.LEAVE, PermissionAction.UPDATE
+            UserRole.FACULTY,
+            ResourceType.LEAVE,
+            PermissionAction.UPDATE,
+            context=context,
         )
 
     def test_faculty_can_manage_swaps(self, acm):

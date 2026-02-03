@@ -9,30 +9,40 @@ This package provides authentication mechanisms including:
 - Role-based permission caching with Redis
 """
 
-from app.auth.permissions import (
+from app.auth.access_matrix import (
+    AccessControlMatrix,
     PermissionAction,
     PermissionCache,
     PermissionDenied,
-    PermissionResolver,
+    PermissionContext,
     ResourceType,
     UserRole,
+    get_acm,
     get_permission_cache,
-    get_permission_resolver,
+    has_permission,
+    invalidate_permission_cache,
+    invalidate_user_role_cache,
     require_permission,
+    require_role,
     warm_permission_cache,
 )
 
 __all__ = [
     "sso",
     # Permissions
+    "AccessControlMatrix",
     "PermissionAction",
     "PermissionCache",
     "PermissionDenied",
-    "PermissionResolver",
+    "PermissionContext",
     "ResourceType",
     "UserRole",
+    "get_acm",
     "get_permission_cache",
-    "get_permission_resolver",
+    "has_permission",
+    "invalidate_permission_cache",
+    "invalidate_user_role_cache",
     "require_permission",
+    "require_role",
     "warm_permission_cache",
 ]
