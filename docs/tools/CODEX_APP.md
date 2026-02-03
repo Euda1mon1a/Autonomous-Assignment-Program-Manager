@@ -1,6 +1,6 @@
 # OpenAI Codex App Guide (macOS)
 
-> **Last Updated:** 2026-02-02
+> **Last Updated:** 2026-02-03
 > **Purpose:** Practical guide to the Codex macOS app, plus fast vs slow automation paths
 
 ---
