@@ -488,17 +488,13 @@ class FacultyOutpatientAssignmentService:
         # Sort blocks by date/time
         workday_blocks.sort(key=lambda b: (b.date, 0 if b.time_of_day == "AM" else 1))
 
-        # Preload existing slots to avoid duplicate half-day assignments
-        existing_keys: set[tuple[UUID, date, str]] = set()
+        # Preload existing slots for replace/skip decisions
+        existing_by_slot: dict[tuple[UUID, date, str], HalfDayAssignment] = {}
         if faculty and workday_blocks:
             start_date = min(b.date for b in workday_blocks)
             end_date = max(b.date for b in workday_blocks)
             rows = (
-                self.db.query(
-                    HalfDayAssignment.person_id,
-                    HalfDayAssignment.date,
-                    HalfDayAssignment.time_of_day,
-                )
+                self.db.query(HalfDayAssignment)
                 .filter(
                     HalfDayAssignment.person_id.in_([f.id for f in faculty]),
                     HalfDayAssignment.date >= start_date,
@@ -506,7 +502,9 @@ class FacultyOutpatientAssignmentService:
                 )
                 .all()
             )
-            existing_keys = {(p, d, t) for p, d, t in rows}
+            existing_by_slot = {
+                (row.person_id, row.date, row.time_of_day): row for row in rows
+            }
 
         for block in workday_blocks:
             week_start = self._get_week_start(block.date)
@@ -545,19 +543,29 @@ class FacultyOutpatientAssignmentService:
                 clinic_activity, fm_clinic_template
             )
             key = (selected_faculty.id, block.date, block.time_of_day)
-            if key in existing_keys:
-                continue
-
-            assignment = HalfDayAssignment(
-                person_id=selected_faculty.id,
-                date=block.date,
-                time_of_day=block.time_of_day,
-                activity_id=clinic_activity.id,
-                counts_toward_fmc_capacity=counts_toward,
-                source=AssignmentSource.MANUAL.value,
-                is_override=False,
-            )
-            assignments.append(assignment)
+            existing = existing_by_slot.get(key)
+            if existing:
+                if existing.source in (
+                    AssignmentSource.PRELOAD.value,
+                    AssignmentSource.MANUAL.value,
+                ) or existing.is_override:
+                    continue
+                existing.activity_id = clinic_activity.id
+                existing.counts_toward_fmc_capacity = counts_toward
+                existing.source = AssignmentSource.MANUAL.value
+                existing.is_override = False
+                assignments.append(existing)
+            else:
+                assignment = HalfDayAssignment(
+                    person_id=selected_faculty.id,
+                    date=block.date,
+                    time_of_day=block.time_of_day,
+                    activity_id=clinic_activity.id,
+                    counts_toward_fmc_capacity=counts_toward,
+                    source=AssignmentSource.MANUAL.value,
+                    is_override=False,
+                )
+                assignments.append(assignment)
             faculty_weekly_counts[selected_faculty.id][week_start] += 1
 
         return assignments
@@ -630,16 +638,13 @@ class FacultyOutpatientAssignmentService:
 
         # Preload existing faculty assignments for this date range
         block_by_id = {b.id: b for b in blocks}
-        existing_faculty_by_slot: dict[tuple[date, str], set[UUID]] = defaultdict(set)
+        existing_by_slot: dict[tuple[UUID, date, str], HalfDayAssignment] = {}
+        blocked_by_slot: dict[tuple[date, str], set[UUID]] = defaultdict(set)
         if blocks:
             start_date = min(b.date for b in blocks)
             end_date = max(b.date for b in blocks)
             rows = (
-                self.db.query(
-                    HalfDayAssignment.person_id,
-                    HalfDayAssignment.date,
-                    HalfDayAssignment.time_of_day,
-                )
+                self.db.query(HalfDayAssignment)
                 .join(Person, HalfDayAssignment.person_id == Person.id)
                 .filter(
                     Person.type == "faculty",
@@ -648,8 +653,17 @@ class FacultyOutpatientAssignmentService:
                 )
                 .all()
             )
-            for person_id, slot_date, time_of_day in rows:
-                existing_faculty_by_slot[(slot_date, time_of_day)].add(person_id)
+            for row in rows:
+                existing_by_slot[(row.person_id, row.date, row.time_of_day)] = row
+                if (
+                    row.source
+                    in (
+                        AssignmentSource.PRELOAD.value,
+                        AssignmentSource.MANUAL.value,
+                    )
+                    or row.is_override
+                ):
+                    blocked_by_slot[(row.date, row.time_of_day)].add(row.person_id)
 
         supervision_activity = self._get_supervision_activity()
         if not supervision_activity:
@@ -682,7 +696,7 @@ class FacultyOutpatientAssignmentService:
 
             # Find available faculty (not already assigned to this slot)
             existing_faculty_in_block = set(
-                existing_faculty_by_slot.get((block.date, block.time_of_day), set())
+                blocked_by_slot.get((block.date, block.time_of_day), set())
             )
 
             # Also exclude faculty assigned via new clinic assignments (not yet committed)
@@ -701,16 +715,35 @@ class FacultyOutpatientAssignmentService:
             # Assign required number of faculty
             for i in range(min(required, len(available))):
                 selected = available[i]
-                assignment = HalfDayAssignment(
-                    person_id=selected.id,
-                    date=block.date,
-                    time_of_day=block.time_of_day,
-                    activity_id=supervision_activity.id,
-                    counts_toward_fmc_capacity=False,
-                    source=AssignmentSource.MANUAL.value,
-                    is_override=False,
+                existing = existing_by_slot.get(
+                    (selected.id, block.date, block.time_of_day)
                 )
-                assignments.append(assignment)
+                if existing:
+                    if (
+                        existing.source
+                        in (
+                            AssignmentSource.PRELOAD.value,
+                            AssignmentSource.MANUAL.value,
+                        )
+                        or existing.is_override
+                    ):
+                        continue
+                    existing.activity_id = supervision_activity.id
+                    existing.counts_toward_fmc_capacity = False
+                    existing.source = AssignmentSource.MANUAL.value
+                    existing.is_override = False
+                    assignments.append(existing)
+                else:
+                    assignment = HalfDayAssignment(
+                        person_id=selected.id,
+                        date=block.date,
+                        time_of_day=block.time_of_day,
+                        activity_id=supervision_activity.id,
+                        counts_toward_fmc_capacity=False,
+                        source=AssignmentSource.MANUAL.value,
+                        is_override=False,
+                    )
+                    assignments.append(assignment)
                 faculty_load[selected.id] = faculty_load.get(selected.id, 0) + 1
 
         return assignments
