@@ -133,6 +133,9 @@ Results land in **Triage inbox** by ~0200-0300, ready for morning review.
 
 ### Automation Prompts (Copy-Paste Ready)
 
+> **Tip:** This repo includes a Codex App skill for morning triage:  
+> `/.codex/skills/codex-app-automation-triage` (runs the consolidation script and links prompts).
+
 <details>
 <summary><b>Daily Bug Scan</b></summary>
 
