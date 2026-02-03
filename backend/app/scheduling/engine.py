@@ -313,6 +313,20 @@ class SchedulingEngine:
                     block_number, academic_year, skip_faculty_call=True
                 )
                 logger.info(f"Loaded {preload_count} non-call preload assignments")
+
+                # Step 3.6: Ensure faculty half-day slots exist before solver
+                # Fill missing faculty slots with source='template' so activity solver can assign
+                from app.services.faculty_assignment_expansion_service import (
+                    FacultyAssignmentExpansionService,
+                )
+
+                faculty_expander = FacultyAssignmentExpansionService(self.db)
+                created_slots = faculty_expander.fill_faculty_assignments(
+                    block_number, academic_year
+                )
+                if created_slots:
+                    self.db.flush()
+                logger.info(f"Filled {created_slots} faculty half-day template slots")
             elif create_draft:
                 logger.info(
                     "Skipping preload sync in draft mode (would modify live data)"
