@@ -1,0 +1,68 @@
+# Codex CI Auto-Fix Workflow
+# Automatically diagnoses and fixes CI failures using Codex
+# Triggers when CI - Tests or Quality Gates workflows fail
+
+name: Codex CI Auto-Fix
+
+on:
+  workflow_run:
+    workflows: ["CI - Tests", "Quality Gates"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-fix:
+    name: Diagnose and Fix CI Failure
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout failing branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
+
+      - name: Get failure context
+        id: context
+        run: |
+          echo "branch=${{ github.event.workflow_run.head_branch }}" >> $GITHUB_OUTPUT
+          echo "workflow=${{ github.event.workflow_run.name }}" >> $GITHUB_OUTPUT
+          echo "run_id=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
+          echo "sha=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+
+      - name: Run Codex Auto-Fix
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt: |
+            The CI workflow "${{ steps.context.outputs.workflow }}" failed on branch "${{ steps.context.outputs.branch }}".
+
+            1. Fetch the workflow logs from run ID ${{ steps.context.outputs.run_id }}
+            2. Identify the root cause of the failure
+            3. Propose a minimal fix
+            4. Create a commit with the fix
+
+            Focus on:
+            - Test failures (check assertion messages)
+            - Lint errors (ruff, eslint)
+            - Type errors (mypy, tsc)
+            - Import errors
+
+            Do NOT fix unrelated issues. Keep changes minimal and focused.
+          sandbox: workspace-write
+          safety-strategy: drop-sudo
+
+      - name: Push fix if created
+        if: success()
+        run: |
+          if git diff --quiet HEAD; then
+            echo "No changes made by Codex"
+          else
+            echo "Codex made changes, pushing..."
+            git push origin ${{ steps.context.outputs.branch }}
+          fi
