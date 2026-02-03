@@ -25,7 +25,7 @@ from math import ceil
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import func, or_
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from app.models.absence import Absence
@@ -287,8 +287,41 @@ class FacultyOutpatientAssignmentService:
         if supervision_activity:
             activity_ids.add(supervision_activity.id)
 
-        if not activity_ids:
+        # Get OFF activity for solver placeholder cleanup
+        off_activity = (
+            self.db.query(Activity)
+            .filter(func.lower(Activity.code) == "off")
+            .first()
+        )
+        off_activity_id = off_activity.id if off_activity else None
+
+        if not activity_ids and not off_activity_id:
             return 0
+
+        # Build delete conditions:
+        # 1. Outpatient activities: delete MANUAL/SOLVER/TEMPLATE rows
+        # 2. OFF activity: delete only SOLVER rows (placeholders from engine)
+        delete_conditions = []
+        if activity_ids:
+            delete_conditions.append(
+                and_(
+                    HalfDayAssignment.activity_id.in_(activity_ids),
+                    HalfDayAssignment.source.in_(
+                        [
+                            AssignmentSource.MANUAL.value,
+                            AssignmentSource.SOLVER.value,
+                            AssignmentSource.TEMPLATE.value,
+                        ]
+                    ),
+                )
+            )
+        if off_activity_id:
+            delete_conditions.append(
+                and_(
+                    HalfDayAssignment.activity_id == off_activity_id,
+                    HalfDayAssignment.source == AssignmentSource.SOLVER.value,
+                )
+            )
 
         # Delete matching half-day assignments
         deleted = (
@@ -297,9 +330,8 @@ class FacultyOutpatientAssignmentService:
                 HalfDayAssignment.person_id.in_(faculty_ids),
                 HalfDayAssignment.date >= block_start,
                 HalfDayAssignment.date <= block_end,
-                HalfDayAssignment.activity_id.in_(activity_ids),
-                HalfDayAssignment.source == AssignmentSource.MANUAL.value,
                 HalfDayAssignment.is_override == False,  # noqa: E712
+                or_(*delete_conditions),
             )
             .delete(synchronize_session="fetch")
         )
