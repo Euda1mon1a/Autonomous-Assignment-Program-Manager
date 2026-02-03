@@ -246,10 +246,20 @@ async def create_leave(
     current_user: User = Depends(get_current_active_user),
 ):
     """
-    Create a new leave record.
+    Create a new leave record (manager-only).
+
+    Creates leave with APPROVED status. Regular users should use
+    POST /leave/request for the approval workflow.
 
     Automatically triggers conflict detection in the background.
     """
+    # Only managers can create pre-approved leave
+    if not current_user.can_manage_schedules:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Use /leave/request for approval workflow",
+        )
+
     # Verify faculty exists
     person = (
         db.execute(select(Person).where(Person.id == request.faculty_id))
