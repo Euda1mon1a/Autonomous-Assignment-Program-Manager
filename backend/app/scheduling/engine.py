@@ -586,7 +586,8 @@ class SchedulingEngine:
             # Residents can be scheduled knowing which slots have supervision.
 
             # Step 6.7: Run activity solver to assign activities to half-day slots
-            # This assigns activities to resident + faculty slots that aren't locked by preload.
+            # By default this assigns activities to resident slots only.
+            # Faculty activities are treated as authoritative CP-SAT output unless explicitly overridden.
             # NOW runs AFTER PCAT is created, so AT coverage is known.
             # SKIP in draft mode - activity solver writes to live half_day_assignments
             if (
@@ -598,7 +599,11 @@ class SchedulingEngine:
                     self.db,
                     timeout_seconds=min(timeout_seconds, 30.0),  # Cap at 30s
                 )
-                activity_result = activity_solver.solve(block_number, academic_year)
+                activity_result = activity_solver.solve(
+                    block_number,
+                    academic_year,
+                    include_faculty_slots=False,
+                )
                 if activity_result.get("success"):
                     logger.info(
                         f"Activity solver assigned {activity_result.get('assignments_updated', 0)} "
@@ -2722,7 +2727,11 @@ class SchedulingEngine:
         updated = 0
         skipped_locked = 0
 
-        for faculty_id, block_id, activity_type in solver_result.faculty_half_day_assignments:
+        for (
+            faculty_id,
+            block_id,
+            activity_type,
+        ) in solver_result.faculty_half_day_assignments:
             block = block_by_id.get(block_id)
             if not block:
                 logger.warning(f"Block {block_id} not found for faculty assignment")
@@ -2739,9 +2748,7 @@ class SchedulingEngine:
             try:
                 activity_id = self._get_activity_id_by_code(activity_type)
             except ActivityNotFoundError:
-                logger.warning(
-                    f"Activity code '{activity_type}' not found, using OFF"
-                )
+                logger.warning(f"Activity code '{activity_type}' not found, using OFF")
                 activity_id = self._get_off_activity_id()
 
             # Check for existing row (solver/template source)
