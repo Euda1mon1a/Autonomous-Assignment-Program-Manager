@@ -550,11 +550,16 @@ class TestCredentialAPI:
     """Tests for credential API endpoints."""
 
     def test_get_credentials_for_person(
-        self, client, db: Session, faculty_with_credentials: Person
+        self,
+        client,
+        db: Session,
+        auth_headers: dict,
+        faculty_with_credentials: Person,
     ):
         """Test getting credentials for a person."""
         response = client.get(
-            f"/api/credentials/by-person/{faculty_with_credentials.id}"
+            f"/api/credentials/by-person/{faculty_with_credentials.id}",
+            headers=auth_headers,
         )
         assert response.status_code == 200
         data = response.json()
@@ -564,12 +569,14 @@ class TestCredentialAPI:
         self,
         client,
         db: Session,
+        auth_headers: dict,
         faculty_with_credentials: Person,
         sample_procedures: list[Procedure],
     ):
         """Test getting qualified faculty for a procedure."""
         response = client.get(
-            f"/api/credentials/qualified-faculty/{sample_procedures[0].id}"
+            f"/api/credentials/qualified-faculty/{sample_procedures[0].id}",
+            headers=auth_headers,
         )
         assert response.status_code == 200
         data = response.json()
@@ -580,20 +587,23 @@ class TestCredentialAPI:
         self,
         client,
         db: Session,
+        auth_headers: dict,
         faculty_with_credentials: Person,
         sample_procedures: list[Procedure],
     ):
         """Test checking qualification via API."""
         # Has credential
         response = client.get(
-            f"/api/credentials/check/{faculty_with_credentials.id}/{sample_procedures[0].id}"
+            f"/api/credentials/check/{faculty_with_credentials.id}/{sample_procedures[0].id}",
+            headers=auth_headers,
         )
         assert response.status_code == 200
         assert response.json()["is_qualified"] is True
 
         # No credential
         response = client.get(
-            f"/api/credentials/check/{faculty_with_credentials.id}/{sample_procedures[2].id}"
+            f"/api/credentials/check/{faculty_with_credentials.id}/{sample_procedures[2].id}",
+            headers=auth_headers,
         )
         assert response.status_code == 200
         assert response.json()["is_qualified"] is False
@@ -628,20 +638,32 @@ class TestPeopleCredentialAPI:
     """Tests for credential endpoints on people routes."""
 
     def test_get_person_credentials(
-        self, client, db: Session, faculty_with_credentials: Person
+        self,
+        client,
+        db: Session,
+        auth_headers: dict,
+        faculty_with_credentials: Person,
     ):
         """Test getting credentials via people endpoint."""
-        response = client.get(f"/api/people/{faculty_with_credentials.id}/credentials")
+        response = client.get(
+            f"/api/people/{faculty_with_credentials.id}/credentials",
+            headers=auth_headers,
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 2
 
     def test_get_person_credential_summary(
-        self, client, db: Session, faculty_with_credentials: Person
+        self,
+        client,
+        db: Session,
+        auth_headers: dict,
+        faculty_with_credentials: Person,
     ):
         """Test getting credential summary via people endpoint."""
         response = client.get(
-            f"/api/people/{faculty_with_credentials.id}/credentials/summary"
+            f"/api/people/{faculty_with_credentials.id}/credentials/summary",
+            headers=auth_headers,
         )
         assert response.status_code == 200
         data = response.json()
@@ -649,10 +671,17 @@ class TestPeopleCredentialAPI:
         assert data["active_credentials"] == 2
 
     def test_get_person_procedures(
-        self, client, db: Session, faculty_with_credentials: Person
+        self,
+        client,
+        db: Session,
+        auth_headers: dict,
+        faculty_with_credentials: Person,
     ):
         """Test getting qualified procedures via people endpoint."""
-        response = client.get(f"/api/people/{faculty_with_credentials.id}/procedures")
+        response = client.get(
+            f"/api/people/{faculty_with_credentials.id}/procedures",
+            headers=auth_headers,
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["total"] == 2
