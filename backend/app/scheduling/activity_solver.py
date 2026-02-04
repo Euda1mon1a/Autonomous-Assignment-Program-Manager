@@ -290,6 +290,7 @@ class CPSATActivitySolver:
         self,
         block_number: int,
         academic_year: int,
+        include_faculty_slots: bool = False,
     ) -> dict[str, Any]:
         """
         Assign activities to half-day slots for a block.
@@ -327,6 +328,11 @@ class CPSATActivitySolver:
             f"Activity solver starting for Block {block_number}: "
             f"{start_date} to {end_date}"
         )
+        if include_faculty_slots:
+            logger.warning(
+                "Activity solver running with include_faculty_slots=True; "
+                "this may overwrite CP-SAT faculty activities."
+            )
 
         # Load candidate slots WITHOUT template filtering first
         # (template filtering requires _assignment_rotation_map which we build next)
@@ -349,6 +355,12 @@ class CPSATActivitySolver:
 
         # NOW filter for outpatient rotations (map is populated)
         slots = self._filter_outpatient_slots(candidate_slots, start_date)
+        if not include_faculty_slots:
+            slots = [
+                slot
+                for slot in slots
+                if not (slot.person and slot.person.type == "faculty")
+            ]
         if not slots:
             logger.info("No outpatient slots to assign after filtering")
             return {
@@ -994,6 +1006,20 @@ class CPSATActivitySolver:
         baseline_vas_resident_presence: dict[tuple[date, str], int] = defaultdict(int)
         baseline_vas_faculty_coverage: dict[tuple[date, str], int] = defaultdict(int)
         locked_slots = self._load_locked_slots(start_date, end_date, None)
+        if not include_faculty_slots:
+            solver_faculty_slots = self._load_slots(
+                start_date,
+                end_date,
+                [AssignmentSource.SOLVER.value],
+            )
+            solver_faculty_slots = [
+                slot
+                for slot in solver_faculty_slots
+                if slot.person
+                and slot.person.type == "faculty"
+                and getattr(slot.person, "faculty_role", None) != "adjunct"
+            ]
+            locked_slots.extend(solver_faculty_slots)
         sm_clinic_activity = self._get_activity_by_code(
             "sm_clinic"
         ) or self._get_activity_by_code("SM")
@@ -3103,6 +3129,7 @@ def solve_activities(
     block_number: int,
     academic_year: int,
     timeout_seconds: float = 60.0,
+    include_faculty_slots: bool = False,
 ) -> dict[str, Any]:
     """
     Convenience function to run activity solver.
@@ -3117,4 +3144,8 @@ def solve_activities(
         Solver result dictionary
     """
     solver = CPSATActivitySolver(session, timeout_seconds=timeout_seconds)
-    return solver.solve(block_number, academic_year)
+    return solver.solve(
+        block_number,
+        academic_year,
+        include_faculty_slots=include_faculty_slots,
+    )

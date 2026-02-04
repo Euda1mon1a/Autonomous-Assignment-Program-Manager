@@ -162,9 +162,8 @@ class BaseSolver(ABC):
         """
         Select appropriate rotation template for a resident.
 
-        Filters templates to find those suitable for the resident based on
-        credential requirements. Currently checks for procedure credentials
-        but could be extended to consider PGY level, specialty, etc.
+        Filters templates to find those suitable for the resident.
+        Could be extended to consider PGY level, specialty, etc.
 
         Args:
             resident: Person object for the resident being assigned
@@ -174,18 +173,8 @@ class BaseSolver(ABC):
             RotationTemplate if a suitable template is found, None otherwise.
             Returns the first suitable template in the list.
 
-        Note:
-            Templates requiring procedure credentials are excluded unless the
-            resident has the necessary qualifications.
         """
-        suitable = []
-        for template in templates:
-            # Skip templates requiring procedure credentials
-            if template.requires_procedure_credential:
-                continue
-            suitable.append(template)
-
-        return suitable[0] if suitable else None
+        return templates[0] if templates else None
 
 
 class PuLPSolver(BaseSolver):
@@ -259,10 +248,6 @@ class PuLPSolver(BaseSolver):
                     continue
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
-                    # Skip templates requiring procedure credentials if resident doesn't have them
-                    if template.requires_procedure_credential:
-                        continue
-
                     t_i = template_idx[template.id]
                     x[r_i, b_i, t_i] = pulp.LpVariable(
                         f"x_{r_i}_{b_i}_{t_i}",
@@ -858,10 +843,6 @@ class CPSATSolver(BaseSolver):
                     continue
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
-                    # Skip templates requiring procedure credentials if resident doesn't have them
-                    if template.requires_procedure_credential:
-                        continue
-
                     t_i = template_idx[template.id]
                     x[r_i, b_i, t_i] = model.NewBoolVar(f"x_{r_i}_{b_i}_{t_i}")
 
@@ -1837,10 +1818,6 @@ class GreedySolver(BaseSolver):
             template = None
             valid_templates = []
             for t in context.templates:
-                # Skip if requires procedure credential
-                if t.requires_procedure_credential:
-                    continue
-
                 # Check capacity constraint
                 if (
                     t.max_residents
