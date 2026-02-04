@@ -31,6 +31,7 @@ class DraftSourceType(str, Enum):
     MANUAL = "manual"
     SWAP = "swap"
     IMPORT = "import"
+    RESILIENCE = "resilience"
 
 
 class DraftAssignmentChangeType(str, Enum):
@@ -48,6 +49,7 @@ class DraftFlagType(str, Enum):
     ACGME_VIOLATION = "acgme_violation"
     COVERAGE_GAP = "coverage_gap"
     MANUAL_REVIEW = "manual_review"
+    LOCK_WINDOW_VIOLATION = "lock_window_violation"
 
 
 class DraftFlagSeverity(str, Enum):
@@ -122,6 +124,12 @@ class ScheduleDraftResponse(BaseModel):
     # Publish tracking
     published_at: datetime | None = None
     published_by_id: UUID | None = None
+
+    # Break-glass approval (lock window)
+    approved_at: datetime | None = None
+    approved_by_id: UUID | None = None
+    approval_reason: str | None = None
+    lock_date_at_approval: date | None = None
 
     # Rollback info
     rollback_available: bool = True
@@ -326,6 +334,11 @@ class PublishRequest(BaseModel):
         None,
         max_length=500,
         description="Required for Tier 1 if unacknowledged flags exist",
+    )
+    break_glass_reason: str | None = Field(
+        None,
+        max_length=500,
+        description="Required when publishing drafts that touch the lock window",
     )
     validate_acgme: bool = Field(
         True, description="If True, validate ACGME compliance after publish"

@@ -250,6 +250,10 @@ async def get_draft(
         source_schedule_run_id=draft.source_schedule_run_id,
         published_at=draft.published_at,
         published_by_id=draft.published_by_id,
+        approved_at=draft.approved_at,
+        approved_by_id=draft.approved_by_id,
+        approval_reason=draft.approval_reason,
+        lock_date_at_approval=draft.lock_date_at_approval,
         rollback_available=draft.rollback_available,
         rollback_expires_at=draft.rollback_expires_at,
         rolled_back_at=draft.rolled_back_at,
@@ -485,6 +489,7 @@ async def publish_draft(
         draft_id=draft_id,
         published_by_id=current_user.id,
         override_comment=request.override_comment,
+        break_glass_reason=request.break_glass_reason,
         validate_acgme=request.validate_acgme,
     )
 

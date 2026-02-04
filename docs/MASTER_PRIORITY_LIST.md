@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-03 (Admin GUI gaps partially closed; Codex App automation triage skill documented)
+> **Last Updated:** 2026-02-04 (Lock window + break-glass spec/roadmap added)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -180,6 +180,27 @@ Remaining faculty-specific gaps:
 
 **Action:**
 1. Enforce or normalize weekly clinic min/max limits and fix template coverage gaps
+
+### 9. Lock Window + Break-Glass Publish Gate (NEW - Feb 2026)
+**Status:** Spec + roadmap complete; implementation pending
+
+**Why:** Protect near-term schedules from solver/import/resilience churn while still allowing urgent changes with explicit approval.
+
+**Policy Summary:**
+- Lock date stored in DB (GUI editable); dates on or before lock date are locked.
+- System-initiated changes can be staged but **cannot be published** without break-glass approval.
+- Manual edits allowed for Coordinator/Admin with audit (current decision).
+- Swaps inside lock window require break-glass even if user-initiated.
+- Break-glass requires reason + Coordinator/Admin approval + full re-validation.
+
+**Docs:**
+- `docs/specs/LOCK_WINDOW_BREAK_GLASS_SPEC.md`
+- `docs/roadmaps/LOCK_WINDOW_BREAK_GLASS_ROADMAP.md`
+- `docs/resilience/LOCK_WINDOW_BREAK_GLASS_POLICY.md`
+
+**Immediate Action:**
+1. Phase 1: Add lock_date setting + draft flags + publish gate
+2. Phase 2: Settings UI + break-glass dialog + dashboard indicator
 
 ### Phase 6 — CP-SAT Hardening + Equity + Excel Staging (In Progress)
 **Status:** In progress (PR #784 merged; PR #785 merged — Excel staging + draft flow)

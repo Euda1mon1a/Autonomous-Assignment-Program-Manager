@@ -28,6 +28,7 @@ DEFAULT_SETTINGS = {
     "enable_weekend_scheduling": True,
     "enable_holiday_scheduling": False,
     "default_block_duration_hours": 4,
+    "schedule_lock_date": None,
 }
 
 
@@ -62,6 +63,7 @@ async def update_settings(
 ) -> SettingsResponse:
     """Update application settings (full replacement)."""
     settings = await get_or_create_settings(db)
+    previous_lock_date = settings.schedule_lock_date
 
     # Update all fields
     for field, value in settings_in.model_dump().items():
@@ -70,6 +72,11 @@ async def update_settings(
     settings.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(settings)
+
+    if previous_lock_date != settings.schedule_lock_date:
+        from app.services.schedule_draft_service import ScheduleDraftService
+
+        ScheduleDraftService(db).reflag_lock_window_for_all_drafts()
 
     logger.info(
         "Settings updated: algorithm=%s, work_hours=%d",
@@ -87,6 +94,7 @@ async def patch_settings(
 ) -> SettingsResponse:
     """Partially update application settings."""
     settings = await get_or_create_settings(db)
+    previous_lock_date = settings.schedule_lock_date
 
     # Only update provided fields
     update_data = settings_in.model_dump(exclude_unset=True)
@@ -100,6 +108,11 @@ async def patch_settings(
     db.commit()
     db.refresh(settings)
 
+    if previous_lock_date != settings.schedule_lock_date:
+        from app.services.schedule_draft_service import ScheduleDraftService
+
+        ScheduleDraftService(db).reflag_lock_window_for_all_drafts()
+
     logger.info("Settings patched: %s", list(update_data.keys()))
     return SettingsResponse(**settings.to_dict())
 
@@ -111,6 +124,7 @@ async def reset_settings(
 ) -> None:
     """Reset settings to defaults."""
     settings = await get_or_create_settings(db)
+    previous_lock_date = settings.schedule_lock_date
 
     # Reset all fields to defaults
     for field, value in DEFAULT_SETTINGS.items():
@@ -118,5 +132,10 @@ async def reset_settings(
 
     settings.updated_at = datetime.utcnow()
     db.commit()
+
+    if previous_lock_date != settings.schedule_lock_date:
+        from app.services.schedule_draft_service import ScheduleDraftService
+
+        ScheduleDraftService(db).reflag_lock_window_for_all_drafts()
 
     logger.info("Settings reset to defaults")

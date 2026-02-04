@@ -55,6 +55,7 @@ from app.models.schedule_draft import (
 from app.models.person import Person
 from app.models.schedule_run import ScheduleRun
 from app.scheduling.validator import ACGMEValidator
+from app.services.lock_window_service import LockWindowService
 from app.utils.academic_blocks import get_block_half, get_block_number_for_date
 from app.utils.fmc_capacity import activity_counts_toward_fmc_capacity_for_template
 
@@ -62,6 +63,8 @@ logger = logging.getLogger(__name__)
 
 # Rollback window in hours
 ROLLBACK_WINDOW_HOURS = 24
+# Draft staleness threshold (require re-validation before publish)
+STALE_DRAFT_HOURS = 24
 
 
 @dataclass
@@ -145,6 +148,132 @@ class ScheduleDraftService:
             db: SQLAlchemy Session for database operations.
         """
         self.db = db
+
+    def _get_lock_window_service(self) -> LockWindowService:
+        return LockWindowService(self.db)
+
+    def _refresh_lock_window_flag(self, draft_id: UUID, commit: bool = True) -> bool:
+        """Ensure lock-window flag reflects current draft assignments.
+
+        Returns True if the draft has assignments inside the lock window.
+        """
+        lock_service = self._get_lock_window_service()
+        lock_date = lock_service.get_lock_date()
+
+        # Clear lock flag if no lock date is configured
+        if lock_date is None:
+            self._remove_lock_window_flag(draft_id, commit=commit)
+            return False
+
+        has_locked_assignments = (
+            self.db.query(ScheduleDraftAssignment)
+            .filter(
+                ScheduleDraftAssignment.draft_id == draft_id,
+                ScheduleDraftAssignment.assignment_date <= lock_date,
+            )
+            .first()
+            is not None
+        )
+
+        if has_locked_assignments:
+            self._upsert_lock_window_flag(
+                draft_id=draft_id, lock_date=lock_date, commit=commit
+            )
+        else:
+            self._remove_lock_window_flag(draft_id, commit=commit)
+
+        return has_locked_assignments
+
+    def _upsert_lock_window_flag(
+        self, draft_id: UUID, lock_date: date, commit: bool = True
+    ) -> None:
+        existing_flag = (
+            self.db.query(ScheduleDraftFlag)
+            .filter(
+                ScheduleDraftFlag.draft_id == draft_id,
+                ScheduleDraftFlag.flag_type == DraftFlagType.LOCK_WINDOW_VIOLATION,
+            )
+            .first()
+        )
+
+        if existing_flag:
+            draft = (
+                self.db.query(ScheduleDraft)
+                .filter(ScheduleDraft.id == draft_id)
+                .first()
+            )
+            if (
+                draft
+                and draft.lock_date_at_approval
+                and draft.lock_date_at_approval != lock_date
+            ):
+                draft.approved_at = None
+                draft.approved_by_id = None
+                draft.approval_reason = None
+                draft.lock_date_at_approval = None
+                if commit:
+                    self.db.commit()
+                else:
+                    self.db.flush()
+            return
+
+        flag = ScheduleDraftFlag(
+            id=uuid4(),
+            draft_id=draft_id,
+            flag_type=DraftFlagType.LOCK_WINDOW_VIOLATION,
+            severity=DraftFlagSeverity.ERROR,
+            message=(
+                "Draft includes assignments inside the lock window "
+                f"(through {lock_date.isoformat()}). Break-glass approval required."
+            ),
+            created_at=datetime.utcnow(),
+        )
+        self.db.add(flag)
+
+        draft = (
+            self.db.query(ScheduleDraft).filter(ScheduleDraft.id == draft_id).first()
+        )
+        if draft:
+            draft.flags_total = (draft.flags_total or 0) + 1
+            # Reset approval if lock date changed
+            if draft.lock_date_at_approval and draft.lock_date_at_approval != lock_date:
+                draft.approved_at = None
+                draft.approved_by_id = None
+                draft.approval_reason = None
+                draft.lock_date_at_approval = None
+
+        if commit:
+            self.db.commit()
+        else:
+            self.db.flush()
+
+    def _remove_lock_window_flag(self, draft_id: UUID, commit: bool = True) -> bool:
+        existing_flag = (
+            self.db.query(ScheduleDraftFlag)
+            .filter(
+                ScheduleDraftFlag.draft_id == draft_id,
+                ScheduleDraftFlag.flag_type == DraftFlagType.LOCK_WINDOW_VIOLATION,
+            )
+            .first()
+        )
+        if not existing_flag:
+            return False
+
+        draft = (
+            self.db.query(ScheduleDraft).filter(ScheduleDraft.id == draft_id).first()
+        )
+        self.db.delete(existing_flag)
+
+        if draft:
+            draft.flags_total = max((draft.flags_total or 0) - 1, 0)
+            if existing_flag.acknowledged_at is not None:
+                draft.flags_acknowledged = max((draft.flags_acknowledged or 0) - 1, 0)
+
+        if commit:
+            self.db.commit()
+        else:
+            self.db.flush()
+        return True
 
     async def create_draft(
         self,
@@ -287,6 +416,7 @@ class ScheduleDraftService:
                 existing.change_type = change_type
                 existing.existing_assignment_id = existing_assignment_id
                 self.db.commit()
+                self._refresh_lock_window_flag(draft_id, commit=True)
                 return existing.id
 
                 # Create new draft assignment
@@ -321,6 +451,7 @@ class ScheduleDraftService:
                 draft.change_summary = summary
 
             self.db.commit()
+            self._refresh_lock_window_flag(draft_id, commit=True)
             return draft_assignment.id
 
         except Exception as e:
@@ -526,6 +657,7 @@ class ScheduleDraftService:
         draft_id: UUID,
         published_by_id: UUID,
         override_comment: str | None = None,
+        break_glass_reason: str | None = None,
         validate_acgme: bool = True,
     ) -> PublishResult:
         """
@@ -568,7 +700,41 @@ class ScheduleDraftService:
                         error_code="INVALID_STATUS",
                     )
 
-                    # Check flags (Tier 1 must acknowledge or provide override comment)
+                now = datetime.utcnow()
+                # Enforce staleness re-validation (must validate if draft is old)
+                if (
+                    draft.created_at
+                    and now - draft.created_at > timedelta(hours=STALE_DRAFT_HOURS)
+                    and not validate_acgme
+                ):
+                    return PublishResult(
+                        success=False,
+                        draft_id=draft_id,
+                        status=draft.status,
+                        message="Draft is stale; re-validation required before publish.",
+                        error_code="DRAFT_STALE_REVALIDATE",
+                    )
+
+                # Refresh lock-window flag and enforce break-glass if needed
+                has_locked = self._refresh_lock_window_flag(draft_id, commit=False)
+                if has_locked and not draft.approved_at:
+                    if not break_glass_reason:
+                        return PublishResult(
+                            success=False,
+                            draft_id=draft_id,
+                            status=draft.status,
+                            message="Draft touches lock window. Break-glass approval required.",
+                            error_code="LOCK_WINDOW_BLOCKED",
+                        )
+                    lock_date = self._get_lock_window_service().get_lock_date()
+                    draft.approved_at = now
+                    draft.approved_by_id = published_by_id
+                    draft.approval_reason = break_glass_reason
+                    draft.lock_date_at_approval = lock_date
+                    if not override_comment:
+                        override_comment = break_glass_reason
+
+                # Check flags (Tier 1 must acknowledge or provide override comment)
                 if draft.has_unacknowledged_flags and not override_comment:
                     return PublishResult(
                         success=False,
@@ -612,8 +778,6 @@ class ScheduleDraftService:
                         )
 
                         # Update draft status based on success
-                now = datetime.utcnow()
-
                 if error_count > 0 and published_count == 0:
                     # Complete failure - stay in DRAFT
                     draft.notes = f"Publish failed: {error_count} errors"
@@ -1284,6 +1448,7 @@ class ScheduleDraftService:
             }
 
         self.db.commit()
+        self._refresh_lock_window_flag(draft_id, commit=True)
         logger.info(f"Added {added_count} solver assignments to draft {draft_id}")
         return added_count
 
@@ -1442,6 +1607,24 @@ class ScheduleDraftService:
                 error_code="CREATE_FAILED",
             )
 
+    def refresh_lock_window_flag_sync(
+        self, draft_id: UUID, commit: bool = True
+    ) -> bool:
+        """Sync helper to refresh lock-window flags for a draft."""
+        return self._refresh_lock_window_flag(draft_id, commit=commit)
+
+    def reflag_lock_window_for_all_drafts(self) -> int:
+        """Re-evaluate lock-window flags for all active drafts."""
+        drafts = (
+            self.db.query(ScheduleDraft)
+            .filter(ScheduleDraft.status == ScheduleDraftStatus.DRAFT)
+            .all()
+        )
+        for draft in drafts:
+            self._refresh_lock_window_flag(draft.id, commit=False)
+        self.db.commit()
+        return len(drafts)
+
     def add_assignment_to_draft_sync(
         self,
         draft_id: UUID,
@@ -1453,6 +1636,7 @@ class ScheduleDraftService:
         change_type: DraftAssignmentChangeType = DraftAssignmentChangeType.ADD,
         existing_assignment_id: UUID | None = None,
         commit: bool = True,
+        update_lock_flags: bool = True,
     ) -> UUID | None:
         """
         Sync version of add_assignment_to_draft for use from non-async contexts.
@@ -1482,6 +1666,8 @@ class ScheduleDraftService:
                     self.db.commit()
                 else:
                     self.db.flush()
+                if update_lock_flags:
+                    self._refresh_lock_window_flag(draft_id, commit=commit)
                 return existing.id
 
             draft_assignment = ScheduleDraftAssignment(
@@ -1516,6 +1702,8 @@ class ScheduleDraftService:
                 self.db.commit()
             else:
                 self.db.flush()
+            if update_lock_flags:
+                self._refresh_lock_window_flag(draft_id, commit=commit)
             return draft_assignment.id
 
         except Exception as e:
@@ -1614,6 +1802,7 @@ class ScheduleDraftService:
             }
 
         self.db.commit()
+        self._refresh_lock_window_flag(draft_id, commit=True)
         logger.info(f"Added {added_count} solver assignments to draft {draft_id}")
         return added_count
 
