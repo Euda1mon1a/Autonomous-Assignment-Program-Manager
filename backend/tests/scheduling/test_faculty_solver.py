@@ -67,10 +67,12 @@ class MockTemplate:
         template_id=None,
         name="Test Template",
         max_residents=None,
+        requires_procedure_credential=False,
     ):
         self.id = template_id or uuid4()
         self.name = name
         self.max_residents = max_residents
+        self.requires_procedure_credential = requires_procedure_credential
 
 
 # =============================================================================
@@ -132,9 +134,17 @@ def create_resident(name="Dr. Resident", pgy_level=1):
 
 
 def create_context_with_availability(residents, faculty, blocks, templates=None):
-    """Create a SchedulingContext with full availability."""
+    """Create a SchedulingContext with full availability.
+
+    Note: Solver requires at least one resident and template to not early-return.
+    This helper adds a dummy resident if none provided.
+    """
     if templates is None:
         templates = [MockTemplate(name="Clinic")]
+
+    # Solver requires at least one resident to not early-return
+    if not residents:
+        residents = [create_resident("Dummy Resident", pgy_level=2)]
 
     start_date = min(b.date for b in blocks)
     end_date = max(b.date for b in blocks)

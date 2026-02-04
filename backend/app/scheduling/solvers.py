@@ -1046,6 +1046,28 @@ class CPSATSolver(BaseSolver):
         # FACULTY ACTIVITY CONSTRAINTS
         # ==================================================
 
+        # Hard-block faculty activity on locked/unavailable slots
+        availability = getattr(context, "availability", {}) or {}
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            for block in context.blocks:
+                b_i = context.block_idx[block.id]
+                is_locked = (faculty.id, block.id) in locked_blocks
+                block_avail = availability.get(faculty.id, {}).get(block.id)
+                is_unavailable = bool(block_avail) and not block_avail.get(
+                    "available", True
+                )
+                if not (is_locked or is_unavailable):
+                    continue
+                if (f_i, b_i) in fac_clinic:
+                    model.Add(fac_clinic[f_i, b_i] == 0)
+                if (f_i, b_i) in fac_supervise:
+                    model.Add(fac_supervise[f_i, b_i] == 0)
+                if (f_i, b_i) in fac_pcat:
+                    model.Add(fac_pcat[f_i, b_i] == 0)
+                if (f_i, b_i) in fac_do:
+                    model.Add(fac_do[f_i, b_i] == 0)
+
         # Constraint: At most one activity per faculty per slot
         # (clinic, supervise, pcat, do) are mutually exclusive
         # If none selected, slot is implicitly OFF
@@ -1105,6 +1127,8 @@ class CPSATSolver(BaseSolver):
 
         # Constraint: PCAT/DO linked to overnight call
         # If call[f, date] = 1, then pcat[f, date+1, AM] = 1 and do[f, date+1, PM] = 1
+        allowed_pcat: set[tuple[int, int]] = set()
+        allowed_do: set[tuple[int, int]] = set()
         if call_eligible and call:
             # Build date->block mapping
             date_am_block = {}
@@ -1145,6 +1169,7 @@ class CPSATSolver(BaseSolver):
                     next_am = date_am_block[next_day]
                     next_am_b_i = context.block_idx[next_am.id]
                     if (f_i, next_am_b_i) in fac_pcat:
+                        allowed_pcat.add((f_i, next_am_b_i))
                         # call <=> pcat (bidirectional: PCAT iff call)
                         model.Add(fac_pcat[f_i, next_am_b_i] == call_var)
 
@@ -1153,8 +1178,17 @@ class CPSATSolver(BaseSolver):
                     next_pm = date_pm_block[next_day]
                     next_pm_b_i = context.block_idx[next_pm.id]
                     if (f_i, next_pm_b_i) in fac_do:
+                        allowed_do.add((f_i, next_pm_b_i))
                         # call <=> do (bidirectional: DO iff call)
                         model.Add(fac_do[f_i, next_pm_b_i] == call_var)
+
+        # If no call mapping exists for a slot, PCAT/DO must be 0
+        for (f_i, b_i), var in fac_pcat.items():
+            if (f_i, b_i) not in allowed_pcat:
+                model.Add(var == 0)
+        for (f_i, b_i), var in fac_do.items():
+            if (f_i, b_i) not in allowed_do:
+                model.Add(var == 0)
 
         # Constraint: Supervision ratio (ACGME)
         # For each slot with residents in clinic, need enough faculty supervisors
