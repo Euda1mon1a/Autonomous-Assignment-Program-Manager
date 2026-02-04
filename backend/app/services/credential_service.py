@@ -1,10 +1,12 @@
 """Credential service for business logic."""
 
-from datetime import date
+from datetime import date, timedelta
 from uuid import UUID
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.models.person import Person
 from app.models.procedure_credential import ProcedureCredential
 from app.repositories.person import PersonRepository
 from app.repositories.procedure import ProcedureRepository
@@ -228,6 +230,80 @@ class CredentialService:
         credentials = self.credential_repo.list_expiring_soon(days=days)
         return {"items": credentials, "total": len(credentials)}
 
+    def list_faculty_credential_summaries(
+        self,
+        include_adjuncts: bool = False,
+        include_empty: bool = False,
+    ) -> list[dict]:
+        """List credential summaries for all faculty members."""
+        credentials = self.credential_repo.list_credentials_for_faculty(
+            include_adjuncts=include_adjuncts,
+            include_expired=True,
+        )
+
+        summaries: dict[UUID, dict] = {}
+        today = date.today()
+        expiring_cutoff = today + timedelta(days=30)
+
+        for credential in credentials:
+            if not credential.person:
+                continue
+            entry = summaries.setdefault(
+                credential.person_id,
+                {
+                    "person_id": credential.person_id,
+                    "person_name": credential.person.name,
+                    "total_credentials": 0,
+                    "active_credentials": 0,
+                    "expiring_soon": 0,
+                    "procedures": {},
+                },
+            )
+            entry["total_credentials"] += 1
+
+            if credential.is_valid:
+                entry["active_credentials"] += 1
+
+            if (
+                credential.is_valid
+                and credential.expiration_date
+                and credential.expiration_date <= expiring_cutoff
+            ):
+                entry["expiring_soon"] += 1
+
+            if credential.procedure:
+                entry["procedures"][credential.procedure.id] = credential.procedure
+
+        if include_empty:
+            faculty_query = self.db.query(Person).filter(Person.type == "faculty")
+            if not include_adjuncts:
+                faculty_query = faculty_query.filter(
+                    or_(
+                        Person.faculty_role.is_(None),
+                        Person.faculty_role != "adjunct",
+                    )
+                )
+            for faculty in faculty_query.order_by(Person.name).all():
+                summaries.setdefault(
+                    faculty.id,
+                    {
+                        "person_id": faculty.id,
+                        "person_name": faculty.name,
+                        "total_credentials": 0,
+                        "active_credentials": 0,
+                        "expiring_soon": 0,
+                        "procedures": {},
+                    },
+                )
+
+        summary_list = []
+        for entry in summaries.values():
+            entry["procedures"] = list(entry["procedures"].values())
+            summary_list.append(entry)
+
+        summary_list.sort(key=lambda item: item["person_name"].lower())
+        return summary_list
+
     def get_faculty_credential_summary(self, person_id: UUID) -> dict:
         """Get a summary of a faculty member's credentials."""
         person = self.person_repo.get_by_id(person_id)
@@ -247,8 +323,6 @@ class CredentialService:
         active_count = sum(1 for c in all_credentials if c.is_valid)
 
         # Count expiring soon (within 30 days)
-        from datetime import timedelta
-
         today = date.today()
         expiring_soon = sum(
             1

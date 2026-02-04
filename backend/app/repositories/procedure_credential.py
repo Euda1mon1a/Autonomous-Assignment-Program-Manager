@@ -3,6 +3,7 @@
 from datetime import date
 from uuid import UUID
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.person import Person
@@ -112,6 +113,35 @@ class ProcedureCredentialRepository(BaseRepository[ProcedureCredential]):
             )
             .all()
         )
+
+    def list_credentials_for_faculty(
+        self,
+        include_adjuncts: bool = False,
+        include_expired: bool = True,
+    ) -> list[ProcedureCredential]:
+        """List credentials for all faculty members."""
+        query = (
+            self.db.query(ProcedureCredential)
+            .join(Person)
+            .options(
+                joinedload(ProcedureCredential.person),
+                joinedload(ProcedureCredential.procedure),
+            )
+            .filter(Person.type == "faculty")
+        )
+
+        if not include_adjuncts:
+            query = query.filter(
+                or_(Person.faculty_role.is_(None), Person.faculty_role != "adjunct")
+            )
+
+        if not include_expired:
+            query = query.filter(
+                (ProcedureCredential.expiration_date.is_(None))
+                | (ProcedureCredential.expiration_date >= date.today())
+            )
+
+        return query.order_by(Person.name).all()
 
     def list_qualified_faculty_for_procedure(
         self,

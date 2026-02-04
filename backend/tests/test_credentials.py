@@ -458,6 +458,48 @@ class TestCredentialService:
         assert result["total_credentials"] == 2
         assert result["active_credentials"] == 2
 
+    def test_list_faculty_credential_summaries(
+        self,
+        db: Session,
+        faculty_with_credentials: Person,
+        sample_faculty: Person,
+        sample_procedures: list[Procedure],
+    ):
+        """Test listing summaries for faculty with credentials only."""
+        expired_credential = ProcedureCredential(
+            id=uuid4(),
+            person_id=faculty_with_credentials.id,
+            procedure_id=sample_procedures[2].id,
+            status="expired",
+            expiration_date=date.today() - timedelta(days=1),
+        )
+        db.add(expired_credential)
+        db.commit()
+
+        service = CredentialService(db)
+        summaries = service.list_faculty_credential_summaries()
+
+        assert len(summaries) == 1
+        summary = summaries[0]
+        assert summary["person_id"] == faculty_with_credentials.id
+        assert summary["total_credentials"] == 3
+        assert summary["active_credentials"] == 2
+        assert len(summary["procedures"]) == 3
+
+    def test_list_faculty_credential_summaries_include_empty(
+        self,
+        db: Session,
+        faculty_with_credentials: Person,
+        sample_faculty: Person,
+    ):
+        """Test including faculty with no credentials."""
+        service = CredentialService(db)
+        summaries = service.list_faculty_credential_summaries(include_empty=True)
+        ids = {summary["person_id"] for summary in summaries}
+
+        assert faculty_with_credentials.id in ids
+        assert sample_faculty.id in ids
+
 
 # ============================================================================
 # API Endpoint Tests
@@ -555,6 +597,31 @@ class TestCredentialAPI:
         )
         assert response.status_code == 200
         assert response.json()["is_qualified"] is False
+
+    def test_get_faculty_credential_summaries(
+        self,
+        client,
+        db: Session,
+        auth_headers: dict,
+        faculty_with_credentials: Person,
+        sample_faculty: Person,
+    ):
+        """Test listing faculty credential summaries."""
+        response = client.get("/api/credentials/faculty-summary", headers=auth_headers)
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["person_id"] == str(faculty_with_credentials.id)
+
+        response = client.get(
+            "/api/credentials/faculty-summary?include_empty=true",
+            headers=auth_headers,
+        )
+        assert response.status_code == 200
+        data = response.json()
+        ids = {item["person_id"] for item in data}
+        assert str(faculty_with_credentials.id) in ids
+        assert str(sample_faculty.id) in ids
 
 
 class TestPeopleCredentialAPI:

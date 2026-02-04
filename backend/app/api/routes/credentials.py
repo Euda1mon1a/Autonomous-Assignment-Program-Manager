@@ -98,6 +98,23 @@ async def get_faculty_credential_summary(
     return controller.get_faculty_summary(person_id)
 
 
+@router.get("/faculty-summary", response_model=list[FacultyCredentialSummary])
+async def list_faculty_credential_summaries(
+    include_adjuncts: bool = Query(False, description="Include adjunct faculty"),
+    include_empty: bool = Query(
+        False, description="Include faculty without credentials"
+    ),
+    db=Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """List credential summaries for faculty. Requires authentication."""
+    controller = CredentialController(db)
+    return controller.list_faculty_summaries(
+        include_adjuncts=include_adjuncts,
+        include_empty=include_empty,
+    )
+
+
 @router.get("/{credential_id}", response_model=CredentialResponse)
 async def get_credential(
     credential_id: UUID,
