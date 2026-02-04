@@ -583,6 +583,9 @@ except Exception as e:
 
 The MCP validation `await` bug wasn't caught by unit tests - found by operational testing.
 
+**Status (2026-02-04):** Added minimal CP-SAT pipeline integration test at
+`backend/tests/scheduling/test_cpsat_pipeline.py` (tiny dataset, call + PCAT/DO assertions).
+
 ### 32. Test Infrastructure Quirks Audit (NEW - Session 150)
 **Added:** 2026-01-29
 **Source:** P5.1 schedule override test failures
