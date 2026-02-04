@@ -21,7 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
-from app.core.security import get_current_active_user
+from app.core.security import get_current_active_user, get_scheduler_user
 from app.db.session import get_db
 from app.models.schedule_draft import (
     DraftAssignmentChangeType,
@@ -65,7 +65,7 @@ logger = get_logger(__name__)
 async def create_draft(
     request: ScheduleDraftCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Create a new schedule draft.
@@ -350,7 +350,7 @@ async def add_assignment(
     draft_id: UUID,
     request: DraftAssignmentCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Add an assignment to a draft.
@@ -394,7 +394,7 @@ async def acknowledge_flag(
     flag_id: UUID,
     request: DraftFlagAcknowledge | None = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Acknowledge a flag on a draft.
@@ -432,7 +432,7 @@ async def bulk_acknowledge_flags(
     draft_id: UUID,
     request: DraftFlagBulkAcknowledge,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Acknowledge multiple flags on a draft.
@@ -472,7 +472,7 @@ async def publish_draft(
     draft_id: UUID,
     request: PublishRequest | None = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Publish a draft to the live assignments table.
@@ -542,7 +542,7 @@ async def rollback_draft(
     draft_id: UUID,
     request: RollbackRequest | None = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Rollback a published draft.
@@ -588,7 +588,7 @@ async def rollback_draft(
 async def discard_draft(
     draft_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Discard a draft without publishing.
