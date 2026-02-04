@@ -14,6 +14,7 @@ from app.schemas.procedure_credential import (
     FacultyCredentialSummary,
     QualifiedFacultyResponse,
 )
+from app.schemas.procedure import ProcedureSummary
 from app.services.credential_service import CredentialService
 
 
@@ -195,6 +196,30 @@ class CredentialController:
             items=[CredentialResponse.model_validate(item) for item in result["items"]],
             total=result["total"],
         )
+
+    def list_faculty_summaries(
+        self,
+        include_adjuncts: bool = False,
+        include_empty: bool = False,
+    ) -> list[FacultyCredentialSummary]:
+        """List credential summaries for faculty."""
+        result = self.service.list_faculty_credential_summaries(
+            include_adjuncts=include_adjuncts,
+            include_empty=include_empty,
+        )
+        return [
+            FacultyCredentialSummary(
+                person_id=item["person_id"],
+                person_name=item["person_name"],
+                total_credentials=item["total_credentials"],
+                active_credentials=item["active_credentials"],
+                expiring_soon=item["expiring_soon"],
+                procedures=[
+                    ProcedureSummary.model_validate(proc) for proc in item["procedures"]
+                ],
+            )
+            for item in result
+        ]
 
     def get_faculty_summary(self, person_id: UUID) -> FacultyCredentialSummary:
         """Get a summary of a faculty member's credentials."""
