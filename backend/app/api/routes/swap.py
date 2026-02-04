@@ -69,6 +69,7 @@ from app.schemas.swap import (
 )
 from app.services.swap_executor import SwapExecutor
 from app.services.swap_validation import SwapValidationService
+from app.services.swap.lock_window import check_swap_lock_window
 from app.websocket.manager import broadcast_schedule_updated, broadcast_swap_approved
 from app.models.swap import SwapStatus, SwapType
 
@@ -179,6 +180,19 @@ async def approve_swap(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Swap is already {swap.status.value}",
+        )
+
+    lock_check = check_swap_lock_window(
+        db, source_week=swap.source_week, target_week=swap.target_week
+    )
+    if request.approved and lock_check.within_lock_window and not request.notes:
+        lock_date = lock_check.lock_date.isoformat() if lock_check.lock_date else "N/A"
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Approval requires a reason for swaps touching the lock window "
+                f"(lock_date={lock_date})"
+            ),
         )
 
     if request.approved:
@@ -316,6 +330,22 @@ async def execute_swap(
             success=False,
             swap_id=None,
             message="Swap validation failed",
+            validation=validation_result,
+        )
+
+    lock_check = check_swap_lock_window(
+        db, source_week=request.source_week, target_week=request.target_week
+    )
+    if lock_check.within_lock_window and not (
+        request.reason and request.reason.strip()
+    ):
+        validation_result.valid = False
+        validation_result.errors.append("LOCK_WINDOW_APPROVAL_REQUIRED")
+        return SwapExecuteResponse(
+            success=False,
+            swap_id=None,
+            message=lock_check.message
+            or "Swap touches lock window. Approval reason required.",
             validation=validation_result,
         )
 

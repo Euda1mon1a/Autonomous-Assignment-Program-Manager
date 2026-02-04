@@ -211,11 +211,6 @@ backend/scripts/*.json
 backend/tests/services/test_block_schedule_export_service.py
 backend/tests/services/test_xml_vs_rosetta.py
 
-# Frontend local files (WIP UI components)
-frontend/src/api/schedule-drafts.ts
-frontend/src/app/admin/schedule-drafts/
-frontend/src/hooks/useScheduleDrafts.ts
-
 # Auto-generated type check files (temp validation)
 frontend/src/types/api-generated-check.ts
 

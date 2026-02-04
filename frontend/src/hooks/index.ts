@@ -199,6 +199,30 @@ export {
 } from "./useAdminScheduling";
 
 // ============================================================================
+// Schedule Draft Hooks
+// ============================================================================
+export {
+  scheduleDraftKeys,
+  useScheduleDrafts,
+  useScheduleDraft,
+  useScheduleDraftPreview,
+  usePublishDraft,
+  useRollbackDraft,
+  useDiscardDraft,
+  useAcknowledgeFlag,
+  useBulkAcknowledgeFlags,
+} from "./useScheduleDrafts";
+
+// ============================================================================
+// Admin Dashboard Hooks
+// ============================================================================
+export {
+  adminDashboardQueryKeys,
+  useBreakGlassUsage,
+  type BreakGlassUsageResponse,
+} from "./useAdminDashboard";
+
+// ============================================================================
 // Half-Day Import Hooks
 // ============================================================================
 export {

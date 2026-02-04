@@ -19,6 +19,7 @@ interface Settings {
   enableWeekendScheduling: boolean
   enableHolidayScheduling: boolean
   defaultBlockDurationHours: number
+  scheduleLockDate: string | null
 }
 
 const defaultSettings: Settings = {
@@ -32,6 +33,7 @@ const defaultSettings: Settings = {
   enableWeekendScheduling: true,
   enableHolidayScheduling: false,
   defaultBlockDurationHours: 4,
+  scheduleLockDate: null,
 }
 
 // API hooks for settings
@@ -65,9 +67,20 @@ export default function SettingsPage() {
   // Load settings from API when fetched
   useEffect(() => {
     if (fetchedSettings) {
-      setSettings(fetchedSettings)
+      setSettings({
+        ...defaultSettings,
+        ...fetchedSettings,
+      })
     }
   }, [fetchedSettings])
+
+  const formattedLockDate = settings.scheduleLockDate
+    ? new Date(`${settings.scheduleLockDate}T12:00:00`).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
+    : null
 
   const updateSetting = <K extends keyof Settings>(
     field: K,
@@ -342,6 +355,45 @@ export default function SettingsPage() {
                     Enable Holiday Scheduling
                   </span>
                 </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Schedule Lock Settings */}
+          <div className="card">
+            <h2 className="font-semibold text-lg mb-4">Schedule Lock</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Lock Date
+                </label>
+                <input
+                  type="date"
+                  className="input-field w-full"
+                  value={settings.scheduleLockDate ?? ''}
+                  onChange={(e) =>
+                    updateSetting('scheduleLockDate', e.target.value ? e.target.value : null)
+                  }
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Dates on or before the lock date are locked from edits. Clear the date for no lock.
+                </p>
+              </div>
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>
+                  {formattedLockDate
+                    ? `Currently locked through ${formattedLockDate}`
+                    : 'No lock date set'}
+                </span>
+                {settings.scheduleLockDate && (
+                  <button
+                    type="button"
+                    onClick={() => updateSetting('scheduleLockDate', null)}
+                    className="text-xs text-blue-600 hover:text-blue-700"
+                  >
+                    Clear lock
+                  </button>
+                )}
               </div>
             </div>
           </div>

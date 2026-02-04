@@ -66,6 +66,7 @@ from app.models.schedule_draft import (
     ScheduleDraftStatus,
 )
 from app.models.swap import SwapRecord, SwapStatus, SwapType
+from app.services.swap.lock_window import check_swap_lock_window
 
 logger = logging.getLogger(__name__)
 
@@ -240,7 +241,18 @@ class SwapExecutor:
             else:
                 swap_type_enum = swap_type
 
-                # Execute in transactional context with retry on deadlock
+            lock_check = check_swap_lock_window(
+                self.db, source_week=source_week, target_week=target_week
+            )
+            if lock_check.within_lock_window and not (reason and reason.strip()):
+                message = lock_check.message or "Swap touches lock window"
+                return ExecutionResult(
+                    success=False,
+                    message=f"{message}. Approval reason required.",
+                    error_code="LOCK_WINDOW_APPROVAL_REQUIRED",
+                )
+
+            # Execute in transactional context with retry on deadlock
             with transactional_with_retry(self.db, max_retries=3, timeout_seconds=30.0):
                 # Persist SwapRecord to database
                 swap_record = SwapRecord(
@@ -255,6 +267,10 @@ class SwapExecutor:
                     executed_at=datetime.utcnow(),
                     executed_by_id=executed_by_id,
                 )
+                if lock_check.within_lock_window:
+                    swap_record.approved_at = datetime.utcnow()
+                    swap_record.approved_by_id = executed_by_id
+                    swap_record.notes = reason.strip() if reason else None
                 self.db.add(swap_record)
                 self.db.flush()
 
@@ -320,6 +336,19 @@ class SwapExecutor:
                         success=False,
                         message="Swap must be approved before execution",
                         error_code="INVALID_STATUS",
+                    )
+
+                lock_check = check_swap_lock_window(
+                    self.db,
+                    source_week=swap_record.source_week,
+                    target_week=swap_record.target_week,
+                )
+                if lock_check.within_lock_window and not swap_record.approved_at:
+                    return ExecutionResult(
+                        success=False,
+                        message=lock_check.message
+                        or "Swap touches lock window and requires approval.",
+                        error_code="LOCK_WINDOW_APPROVAL_REQUIRED",
                     )
 
                 # Apply schedule updates

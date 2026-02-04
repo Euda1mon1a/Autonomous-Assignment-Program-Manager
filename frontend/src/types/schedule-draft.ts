@@ -17,6 +17,7 @@ export enum DraftSourceType {
   MANUAL = "manual",
   SWAP = "swap",
   IMPORT = "import",
+  RESILIENCE = "resilience",
 }
 
 export enum DraftAssignmentChangeType {
@@ -30,6 +31,7 @@ export enum DraftFlagType {
   ACGME_VIOLATION = "acgme_violation",
   COVERAGE_GAP = "coverage_gap",
   MANUAL_REVIEW = "manual_review",
+  LOCK_WINDOW_VIOLATION = "lock_window_violation",
 }
 
 export enum DraftFlagSeverity {
@@ -72,6 +74,12 @@ export interface ScheduleDraftResponse {
   // Publish tracking
   publishedAt?: string;
   publishedById?: string;
+
+  // Break-glass approval (lock window)
+  approvedAt?: string;
+  approvedById?: string;
+  approvalReason?: string;
+  lockDateAtApproval?: string;
 
   // Rollback info
   rollbackAvailable: boolean;
@@ -219,6 +227,7 @@ export interface ScheduleDraftCreate {
 export interface PublishRequest {
   overrideComment?: string;
   validateAcgme?: boolean;
+  breakGlassReason?: string;
 }
 
 export interface PublishError {

@@ -541,12 +541,18 @@ class HalfDayImportService:
                         change_type=change_type,
                         existing_assignment_id=existing_id,
                         commit=False,
+                        update_lock_flags=False,
                     )
                     if not draft_assignment_id:
                         failed += 1
                         failed_ids.append(row.id)
                         continue
                     row.status = StagedAssignmentStatus.APPROVED
+
+                if not failed_ids:
+                    draft_service.refresh_lock_window_flag_sync(
+                        draft_result.draft_id, commit=False
+                    )
 
                 if failed_ids:
                     error_code = "ROW_FAILURE"

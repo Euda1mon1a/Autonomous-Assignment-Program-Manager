@@ -1,3 +1,5 @@
+from datetime import date
+
 from pydantic import BaseModel, Field
 
 
@@ -14,6 +16,10 @@ class SettingsBase(BaseModel):
     enable_weekend_scheduling: bool = True
     enable_holiday_scheduling: bool = False
     default_block_duration_hours: int = Field(default=4, ge=1, le=12)
+    schedule_lock_date: date | None = Field(
+        default=None,
+        description="Lock date for system-initiated changes (null = no lock)",
+    )
 
 
 class SettingsCreate(SettingsBase):
@@ -31,6 +37,7 @@ class SettingsUpdate(BaseModel):
     enable_weekend_scheduling: bool | None = None
     enable_holiday_scheduling: bool | None = None
     default_block_duration_hours: int | None = None
+    schedule_lock_date: date | None = None
 
 
 class SettingsResponse(SettingsBase):

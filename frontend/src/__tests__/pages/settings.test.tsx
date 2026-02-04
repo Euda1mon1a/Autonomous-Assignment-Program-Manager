@@ -36,6 +36,7 @@ const mockSettings = {
   enableWeekendScheduling: true,
   enableHolidayScheduling: false,
   defaultBlockDurationHours: 4,
+  scheduleLockDate: null,
 }
 
 // Create a fresh QueryClient for each test
@@ -134,6 +135,7 @@ describe('SettingsPage', () => {
       })
       expect(screen.getByText('Supervision Ratios')).toBeInTheDocument()
       expect(screen.getByText('Scheduling')).toBeInTheDocument()
+      expect(screen.getByText('Schedule Lock')).toBeInTheDocument()
     })
 
     it('should render work hours fields', async () => {
@@ -169,6 +171,17 @@ describe('SettingsPage', () => {
       expect(screen.getByText(/default block duration/i)).toBeInTheDocument()
       expect(screen.getByText(/enable weekend scheduling/i)).toBeInTheDocument()
       expect(screen.getByText(/enable holiday scheduling/i)).toBeInTheDocument()
+      expect(screen.getByText(/lock date/i)).toBeInTheDocument()
+    })
+
+    it('should render schedule lock helper text', async () => {
+      renderWithProviders(<SettingsPage />)
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/dates on or before the lock date are locked/i)
+        ).toBeInTheDocument()
+      })
     })
 
     it('should render save button', async () => {
@@ -257,6 +270,20 @@ describe('SettingsPage', () => {
 
       expect(weekendCheckbox.checked).toBe(true)
       expect(holidayCheckbox.checked).toBe(false)
+    })
+
+    it('should display current lock date when provided', async () => {
+      mockedApi.get.mockResolvedValue({
+        ...mockSettings,
+        scheduleLockDate: '2025-01-15',
+      })
+
+      renderWithProviders(<SettingsPage />)
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('2025-01-15')).toBeInTheDocument()
+      })
+      expect(screen.getByText(/currently locked through/i)).toBeInTheDocument()
     })
   })
 
@@ -436,6 +463,19 @@ describe('SettingsPage', () => {
       expect(algorithmSelect.value).toBe('cp_sat')
     })
 
+    it('should update lock date when changed', async () => {
+      const { container } = renderWithProviders(<SettingsPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText(/lock date/i)).toBeInTheDocument()
+      })
+
+      const lockDateInput = findInputByLabelText(container, /lock date/i)!
+      fireEvent.change(lockDateInput, { target: { value: '2025-02-01' } })
+
+      expect(lockDateInput.value).toBe('2025-02-01')
+    })
+
     it('should toggle weekend scheduling checkbox', async () => {
       const user = userEvent.setup({ delay: null })
 
@@ -524,6 +564,30 @@ describe('SettingsPage', () => {
           '/settings',
           expect.objectContaining({
             workHoursPerWeek: 75,
+          })
+        )
+      })
+    })
+
+    it('should send schedule lock date when updated', async () => {
+      const user = userEvent.setup({ delay: null })
+
+      const { container } = renderWithProviders(<SettingsPage />)
+
+      await waitFor(() => {
+        expect(screen.getByText(/lock date/i)).toBeInTheDocument()
+      })
+
+      const lockDateInput = findInputByLabelText(container, /lock date/i)!
+      fireEvent.change(lockDateInput, { target: { value: '2025-02-01' } })
+
+      await user.click(screen.getByRole('button', { name: /save settings/i }))
+
+      await waitFor(() => {
+        expect(mockedApi.post).toHaveBeenCalledWith(
+          '/settings',
+          expect.objectContaining({
+            scheduleLockDate: '2025-02-01',
           })
         )
       })

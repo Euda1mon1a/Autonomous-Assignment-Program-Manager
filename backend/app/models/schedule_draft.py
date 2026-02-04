@@ -60,6 +60,7 @@ class DraftSourceType(str, enum.Enum):
     MANUAL = "manual"  # Manual edit via UI
     SWAP = "swap"  # Approved swap request
     IMPORT = "import"  # Excel import
+    RESILIENCE = "resilience"  # Resilience-driven change set
 
 
 class DraftAssignmentChangeType(str, enum.Enum):
@@ -77,6 +78,7 @@ class DraftFlagType(str, enum.Enum):
     ACGME_VIOLATION = "acgme_violation"  # ACGME compliance issue
     COVERAGE_GAP = "coverage_gap"  # Missing required coverage
     MANUAL_REVIEW = "manual_review"  # Flagged for manual review
+    LOCK_WINDOW_VIOLATION = "lock_window_violation"  # Locked window change
 
 
 class DraftFlagSeverity(str, enum.Enum):
@@ -134,6 +136,12 @@ class ScheduleDraft(Base):
     published_at = Column(DateTime, nullable=True)
     published_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
+    # Break-glass approval (lock window)
+    approved_at = Column(DateTime, nullable=True)
+    approved_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    approval_reason = Column(Text, nullable=True)
+    lock_date_at_approval = Column(Date, nullable=True)
+
     # Archive/rollback
     archived_version_id = Column(UUID(as_uuid=True), nullable=True)
     rollback_available = Column(Boolean, default=True)
@@ -160,6 +168,7 @@ class ScheduleDraft(Base):
     # Relationships
     created_by = relationship("User", foreign_keys=[created_by_id])
     published_by = relationship("User", foreign_keys=[published_by_id])
+    approved_by = relationship("User", foreign_keys=[approved_by_id])
     rolled_back_by = relationship("User", foreign_keys=[rolled_back_by_id])
     override_by = relationship("User", foreign_keys=[override_by_id])
     source_schedule_run = relationship(

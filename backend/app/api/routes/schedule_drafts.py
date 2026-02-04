@@ -21,7 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
-from app.core.security import get_current_active_user
+from app.core.security import get_current_active_user, get_scheduler_user
 from app.db.session import get_db
 from app.models.schedule_draft import (
     DraftAssignmentChangeType,
@@ -65,7 +65,7 @@ logger = get_logger(__name__)
 async def create_draft(
     request: ScheduleDraftCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Create a new schedule draft.
@@ -250,6 +250,10 @@ async def get_draft(
         source_schedule_run_id=draft.source_schedule_run_id,
         published_at=draft.published_at,
         published_by_id=draft.published_by_id,
+        approved_at=draft.approved_at,
+        approved_by_id=draft.approved_by_id,
+        approval_reason=draft.approval_reason,
+        lock_date_at_approval=draft.lock_date_at_approval,
         rollback_available=draft.rollback_available,
         rollback_expires_at=draft.rollback_expires_at,
         rolled_back_at=draft.rolled_back_at,
@@ -346,7 +350,7 @@ async def add_assignment(
     draft_id: UUID,
     request: DraftAssignmentCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Add an assignment to a draft.
@@ -390,7 +394,7 @@ async def acknowledge_flag(
     flag_id: UUID,
     request: DraftFlagAcknowledge | None = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Acknowledge a flag on a draft.
@@ -428,7 +432,7 @@ async def bulk_acknowledge_flags(
     draft_id: UUID,
     request: DraftFlagBulkAcknowledge,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Acknowledge multiple flags on a draft.
@@ -468,7 +472,7 @@ async def publish_draft(
     draft_id: UUID,
     request: PublishRequest | None = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Publish a draft to the live assignments table.
@@ -485,6 +489,7 @@ async def publish_draft(
         draft_id=draft_id,
         published_by_id=current_user.id,
         override_comment=request.override_comment,
+        break_glass_reason=request.break_glass_reason,
         validate_acgme=request.validate_acgme,
     )
 
@@ -537,7 +542,7 @@ async def rollback_draft(
     draft_id: UUID,
     request: RollbackRequest | None = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Rollback a published draft.
@@ -583,7 +588,7 @@ async def rollback_draft(
 async def discard_draft(
     draft_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_scheduler_user),
 ):
     """
     Discard a draft without publishing.

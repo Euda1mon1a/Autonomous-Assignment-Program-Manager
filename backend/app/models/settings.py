@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Integer, String
+from sqlalchemy import Boolean, CheckConstraint, Column, Date, DateTime, Integer, String
 
 from app.db.base import Base
 from app.db.types import GUID
@@ -68,6 +68,9 @@ class ApplicationSettings(Base):
     enable_weekend_scheduling = Column(Boolean, nullable=False, default=True)
     enable_holiday_scheduling = Column(Boolean, nullable=False, default=False)
     default_block_duration_hours = Column(Integer, nullable=False, default=4)
+
+    # Lock window settings (NULL = no lock window enforced)
+    schedule_lock_date = Column(Date, nullable=True)
 
     # Freeze horizon settings
     # Number of days before an assignment where changes are restricted
@@ -134,6 +137,9 @@ class ApplicationSettings(Base):
             "enable_weekend_scheduling": self.enable_weekend_scheduling,
             "enable_holiday_scheduling": self.enable_holiday_scheduling,
             "default_block_duration_hours": self.default_block_duration_hours,
+            "schedule_lock_date": self.schedule_lock_date.isoformat()
+            if self.schedule_lock_date
+            else None,
             "freeze_horizon_days": self.freeze_horizon_days,
             "freeze_scope": self.freeze_scope,
             "alembic_version": self.alembic_version,
