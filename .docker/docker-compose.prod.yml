@@ -18,7 +18,7 @@ services:
   # PostgreSQL Database
   # ===========================================================================
   db:
-    image: postgres:15-alpine
+    image: postgres:15-alpine  # PostgreSQL 15.15 (CVE-2025-12817/12818 patched)
     container_name: rs-db-prod
     restart: always
 
@@ -76,7 +76,7 @@ services:
   # Redis Cache (for Celery and caching)
   # ===========================================================================
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.2-alpine  # CVE-2025-49844 defense (7.4.2+)
     container_name: rs-redis-prod
     restart: always
 

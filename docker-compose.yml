@@ -4,7 +4,7 @@
 services:
   # PostgreSQL Database with pgvector for AI/ML vector similarity search
   db:
-    image: pgvector/pgvector:0.8.1-pg15  # Includes pgvector extension for embeddings
+    image: pgvector/pgvector:pg15  # PostgreSQL 15.15 + pgvector (CVE-2025-12817/12818 patched)
     container_name: residency-scheduler-db
     restart: unless-stopped
     environment:
@@ -27,7 +27,7 @@ services:
 
   # Redis - Message Broker for Celery
   redis:
-    image: redis:7.4.2-alpine  # CVE-2025-49844 (CVSS 9.9 RCE) patched
+    image: redis:7.4.2-alpine  # CVE-2025-49844 defense (7.4.2+); full patch requires 8.2.2+
     container_name: residency-scheduler-redis
     restart: unless-stopped
     # Port removed for production security - Redis only accessible within Docker network

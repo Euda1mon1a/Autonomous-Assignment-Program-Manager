@@ -32,7 +32,7 @@ services:
   # PostgreSQL Database
   # ===========================================================================
   db:
-    image: pgvector/pgvector:0.8.1-pg15
+    image: pgvector/pgvector:pg15  # PostgreSQL 15.15 + pgvector (CVE-2025-12817/12818 patched)
     container_name: scheduler-local-db
     restart: unless-stopped
     environment:
@@ -56,7 +56,7 @@ services:
   # Redis - Message Broker & Cache
   # ===========================================================================
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.2-alpine  # CVE-2025-49844 defense (7.4.2+)
     container_name: scheduler-local-redis
     restart: unless-stopped
     ports:
