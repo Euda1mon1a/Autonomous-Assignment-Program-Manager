@@ -19,6 +19,7 @@ import {
   FileCheck,
   RefreshCw,
   AlertTriangle,
+  AlertOctagon,
   CheckCircle2,
   XCircle,
   Zap,
@@ -36,6 +37,7 @@ import {
   useBreakerHealth,
   useMTFCompliance,
   useUnifiedCriticalIndex,
+  useBreakGlassUsage,
 } from '@/hooks';
 import { useFairnessAudit } from '@/hooks/useFairness';
 
@@ -182,6 +184,13 @@ function ErrorMessage({ message }: { message: string }) {
   );
 }
 
+function formatShortDate(value?: string | null): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 // ============================================================================
 // Tab Content: Overview
 // ============================================================================
@@ -189,6 +198,21 @@ function ErrorMessage({ message }: { message: string }) {
 function OverviewTab() {
   const { data: health, isLoading: healthLoading, error: healthError } = useSystemHealth();
   const { data: vulnerability } = useVulnerabilityReport({ include_n2: true });
+  const {
+    data: breakGlass,
+    isLoading: breakGlassLoading,
+    error: breakGlassError,
+  } = useBreakGlassUsage();
+
+  const breakGlassCount = breakGlass?.count ?? 0;
+  const breakGlassLastUsed = formatShortDate(breakGlass?.lastUsedAt);
+  const breakGlassSubValue = breakGlassLoading
+    ? 'Loading...'
+    : breakGlassError
+      ? 'Unavailable'
+      : breakGlassLastUsed
+        ? `Last used ${breakGlassLastUsed}`
+        : 'No overrides';
 
   if (healthLoading) return <LoadingSpinner />;
   if (healthError) return <ErrorMessage message="Failed to load system health" />;
@@ -196,7 +220,7 @@ function OverviewTab() {
   return (
     <div className="space-y-6">
       {/* Quick Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
         <MetricCard
           label="Overall Status"
           value={health?.overallStatus ? health.overallStatus.charAt(0).toUpperCase() + health.overallStatus.slice(1) : 'Unknown'}
@@ -220,6 +244,13 @@ function OverviewTab() {
           value={health?.n2Pass ? 'PASS' : 'FAIL'}
           icon={Users}
           status={health?.n2Pass ? 'healthy' : 'warning'}
+        />
+        <MetricCard
+          label="Break-Glass (7d)"
+          value={breakGlassLoading ? '--' : breakGlassCount}
+          subValue={breakGlassSubValue}
+          icon={AlertOctagon}
+          status={breakGlassCount > 0 ? 'warning' : 'healthy'}
         />
       </div>
 

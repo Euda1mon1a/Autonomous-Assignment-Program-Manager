@@ -37,6 +37,13 @@ class AdminConflictCounts(BaseModel):
     ignored: int
 
 
+class AdminBreakGlassUsage(BaseModel):
+    window_start: datetime
+    window_end: datetime
+    count: int
+    last_used_at: datetime | None = None
+
+
 class AdminDashboardSummary(BaseModel):
     timestamp: datetime
     users: AdminUserCounts

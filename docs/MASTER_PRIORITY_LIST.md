@@ -182,7 +182,7 @@ Remaining faculty-specific gaps:
 1. Enforce or normalize weekly clinic min/max limits and fix template coverage gaps
 
 ### 9. Lock Window + Break-Glass Publish Gate (NEW - Feb 2026)
-**Status:** Spec + roadmap complete; implementation pending
+**Status:** Phase 1 complete; Phase 2 UI complete; Phase 3 in progress
 
 **Why:** Protect near-term schedules from solver/import/resilience churn while still allowing urgent changes with explicit approval.
 
@@ -199,8 +199,9 @@ Remaining faculty-specific gaps:
 - `docs/resilience/LOCK_WINDOW_BREAK_GLASS_POLICY.md`
 
 **Immediate Action:**
-1. Phase 1: Add lock_date setting + draft flags + publish gate
-2. Phase 2: Settings UI + break-glass dialog + dashboard indicator
+1. Phase 3: Resilience workflows (stage + gated publish)
+2. Phase 3: Imports (lock-window flag injection)
+3. Optional: Break-glass notifications (Slack/email)
 
 ### Phase 6 — CP-SAT Hardening + Equity + Excel Staging (In Progress)
 **Status:** In progress (PR #784 merged; PR #785 merged — Excel staging + draft flow)

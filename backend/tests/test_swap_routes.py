@@ -5,6 +5,8 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
+from app.models.settings import ApplicationSettings
+
 
 class TestSwapExecuteEndpoint:
     """Tests for POST /api/swaps/execute endpoint."""
@@ -93,6 +95,34 @@ class TestSwapExecuteEndpoint:
         data = response.json()
         assert data["success"] is False
         assert "PAST_DATE" in str(data["validation"]["errors"])
+
+    def test_execute_swap_requires_reason_within_lock_window(
+        self, client: TestClient, auth_headers: dict, sample_faculty_members, db
+    ):
+        """Test lock-window swaps require an approval reason."""
+        lock_date = date.today() + timedelta(days=7)
+        db.add(ApplicationSettings(schedule_lock_date=lock_date))
+        db.commit()
+
+        source = sample_faculty_members[0]
+        target = sample_faculty_members[1]
+
+        response = client.post(
+            "/api/swaps/execute",
+            json={
+                "source_faculty_id": str(source.id),
+                "source_week": (date.today() + timedelta(days=1)).isoformat(),
+                "target_faculty_id": str(target.id),
+                "target_week": (date.today() + timedelta(days=8)).isoformat(),
+                "swap_type": "one_to_one",
+            },
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is False
+        assert "LOCK_WINDOW_APPROVAL_REQUIRED" in str(data["validation"]["errors"])
 
 
 class TestSwapValidateEndpoint:

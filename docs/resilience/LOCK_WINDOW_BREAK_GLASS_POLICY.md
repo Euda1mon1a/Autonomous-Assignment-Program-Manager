@@ -10,7 +10,7 @@
 - Locked window: `date <= schedule_lock_date`.
 - System-initiated changes can be staged but **cannot be published** without break-glass.
 - Manual changes are allowed for Coordinator/Admin with audit.
- - If `schedule_lock_date` is NULL, no lock window is applied.
+- If `schedule_lock_date` is NULL, no lock window is applied.
 
 ---
 

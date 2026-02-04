@@ -226,6 +226,7 @@ class ScheduleDraftService:
                 "Draft includes assignments inside the lock window "
                 f"(through {lock_date.isoformat()}). Break-glass approval required."
             ),
+            affected_date=lock_date,
             created_at=datetime.utcnow(),
         )
         self.db.add(flag)

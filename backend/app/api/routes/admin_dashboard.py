@@ -1,6 +1,6 @@
 """Admin dashboard aggregate endpoints."""
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
@@ -11,10 +11,12 @@ from app.db.session import get_db
 from app.models.absence import Absence
 from app.models.conflict_alert import ConflictAlert, ConflictAlertStatus
 from app.models.person import Person
+from app.models.schedule_draft import ScheduleDraft, ScheduleDraftStatus
 from app.models.swap import SwapRecord, SwapStatus
 from app.models.user import User
 from app.schemas.admin_dashboard import (
     AdminAbsenceCounts,
+    AdminBreakGlassUsage,
     AdminConflictCounts,
     AdminDashboardSummary,
     AdminPeopleCounts,
@@ -102,4 +104,40 @@ def get_admin_dashboard_summary(db: Session = Depends(get_db)) -> AdminDashboard
             resolved=conflict_counts[ConflictAlertStatus.RESOLVED.value],
             ignored=conflict_counts[ConflictAlertStatus.IGNORED.value],
         ),
+    )
+
+
+@router.get(
+    "/break-glass",
+    response_model=AdminBreakGlassUsage,
+    dependencies=[Depends(require_role(["ADMIN", "COORDINATOR"]))],
+)
+def get_break_glass_usage(db: Session = Depends(get_db)) -> AdminBreakGlassUsage:
+    """Return break-glass usage for the last 7 days."""
+    window_end = datetime.utcnow()
+    window_start = window_end - timedelta(days=7)
+
+    filters = [
+        ScheduleDraft.status == ScheduleDraftStatus.PUBLISHED,
+        ScheduleDraft.approved_at.isnot(None),
+        ScheduleDraft.approved_at >= window_start,
+        ScheduleDraft.approved_at <= window_end,
+        ScheduleDraft.approval_reason.isnot(None),
+        ScheduleDraft.approval_reason != "",
+    ]
+
+    count, last_used_at = (
+        db.query(
+            func.count(ScheduleDraft.id),
+            func.max(ScheduleDraft.approved_at),
+        )
+        .filter(*filters)
+        .one()
+    )
+
+    return AdminBreakGlassUsage(
+        window_start=window_start,
+        window_end=window_end,
+        count=int(count or 0),
+        last_used_at=last_used_at,
     )
