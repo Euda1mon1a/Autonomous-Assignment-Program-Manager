@@ -382,7 +382,10 @@ class WorkHourValidator:
             current_start_dt = self._parse_time_to_datetime(current_date, current_start)
             if (
                 current_start_dt is not None
-                and current_shift.get("source") == "call"
+                and (
+                    current_shift.get("is_call")
+                    or current_shift.get("source") in {"call", "call_assignment"}
+                )
                 and current_shift.get("duration_hours")
             ):
                 current_end_dt = current_start_dt + timedelta(
