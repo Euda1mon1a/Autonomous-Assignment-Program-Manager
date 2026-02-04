@@ -179,6 +179,7 @@ test_write.xlsx
 
 # AI session artifacts
 .claude/Scratchpad/session-*
+.claude/Scratchpad/SESSION_*.md
 .claude/dontreadme/sessions/*.md
 .claude/plans/
 .claude/Missions/

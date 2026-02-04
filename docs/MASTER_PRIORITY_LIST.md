@@ -187,10 +187,10 @@ Remaining faculty-specific gaps:
 
 **Highlights:**
 1. ACGME compliance truth alignment (remove stub, validator‑driven)
-2. External rotation time‑off intake (FMIT/IMW/Peds patterns) — **In progress** (PR #784)
+2. External rotation time‑off intake (FMIT/IMW/Peds patterns) — **Complete** (PR #784 + ICU/NICU/L&D backfill)
    - GUI time‑off patterns now applied to inpatient preloads (#784)
+   - Saturday-off weekly patterns backfilled for ICU/NICU/L&D (`backend/scripts/backfill_weekly_patterns_saturday_off.py`)
    - Temporary default: Saturday off for external/inpatient rotations until refined
-   - Remaining: confirm ICU/NICU/L&D authoritative day‑off rules
 3. Excel staging + diff metrics (measure manual vs automated changes)
    - ✅ Block Template2 staging + diff preview + draft endpoints (PR #785)
    - ✅ Draft creation is atomic; `failed_ids` surfaced on failure
