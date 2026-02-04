@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import func, select, or_
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
@@ -45,11 +45,8 @@ class FacultyWeeklyTemplateCoverageService:
             .subquery()
         )
 
-        faculty_filter = (Person.type == "faculty") & or_(
-            Person.faculty_role.is_(None), Person.faculty_role != "adjunct"
-        )
         total_faculty_stmt = (
-            select(func.count()).select_from(Person).where(faculty_filter)
+            select(func.count()).select_from(Person).where(Person.type == "faculty")
         )
         total_faculty_result = await self._execute(total_faculty_stmt)
         total_faculty = int(total_faculty_result.scalar_one())
@@ -66,7 +63,7 @@ class FacultyWeeklyTemplateCoverageService:
                     "override_count"
                 ),
             )
-            .where(faculty_filter)
+            .where(Person.type == "faculty")
             .outerjoin(template_counts, template_counts.c.person_id == Person.id)
             .outerjoin(override_counts, override_counts.c.person_id == Person.id)
             .where(
