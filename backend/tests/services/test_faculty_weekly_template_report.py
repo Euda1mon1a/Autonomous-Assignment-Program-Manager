@@ -36,6 +36,13 @@ async def test_missing_weekly_templates_report(async_db):
         email="missing@hospital.org",
         faculty_role="apd",
     )
+    adjunct = Person(
+        id=uuid4(),
+        name="Dr. Adjunct",
+        type="faculty",
+        email="adjunct@hospital.org",
+        faculty_role="adjunct",
+    )
     resident = Person(
         id=uuid4(),
         name="Dr. Resident",
@@ -45,7 +52,13 @@ async def test_missing_weekly_templates_report(async_db):
     )
 
     async_db.add_all(
-        [faculty_with_template, faculty_with_override, faculty_missing, resident]
+        [
+            faculty_with_template,
+            faculty_with_override,
+            faculty_missing,
+            adjunct,
+            resident,
+        ]
     )
     await async_db.commit()
 
