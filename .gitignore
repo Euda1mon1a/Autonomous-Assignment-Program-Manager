@@ -186,6 +186,8 @@ test_write.xlsx
 .claude/skills/*/
 !.claude/skills/codex-app-automation-triage/
 !.claude/skills/codex-app-automation-triage/SKILL.md
+!.claude/skills/codex-local-triage/
+!.claude/skills/codex-local-triage/SKILL.md
 .claude/settings.local.json
 .agent/
 local/
