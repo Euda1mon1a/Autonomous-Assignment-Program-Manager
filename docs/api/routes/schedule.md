@@ -327,40 +327,18 @@ Find swap candidates using JSON input (no file upload).
 
 ---
 
-## Faculty Outpatient Endpoints
+## Faculty Outpatient Endpoints (Deprecated)
 
-### Generate Faculty Outpatient Assignments
+### Generate Faculty Outpatient Assignments (Deprecated)
 
 ```http
 POST /api/v1/schedule/faculty-outpatient/generate
 ```
 
-Generate faculty PRIMARY clinic and SUPERVISION assignments for a block.
+**Status:** Deprecated (returns `410 Gone`).
 
-**Authorization:** Required (authenticated user)
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `block_number` | int | Yes | - | Block number (1-13) |
-| `regenerate` | bool | No | true | Clear existing faculty outpatient assignments first |
-| `include_clinic` | bool | No | true | Generate faculty primary clinic assignments |
-| `include_supervision` | bool | No | true | Generate faculty supervision assignments |
-
-**Response:** Generation result with assignment counts and faculty summaries
-
-**Status Codes:**
-- `200 OK`: Generation successful
-- `400 Bad Request`: Generation failed
-- `401 Unauthorized`: Missing or invalid authentication
-- `500 Internal Server Error`: Server error
-
-**Generates:**
-1. Faculty clinic sessions - Based on role limits (PD=0, APD=2, Core=4/week)
-2. Faculty supervision - ACGME-compliant supervision of resident assignments
-
-**Warning:** This endpoint modifies the database. Ensure backup before use.
+Faculty clinic + supervision are now produced by the **global CP‑SAT solver**
+via `POST /api/v1/schedule/generate`. This legacy endpoint is retired.
 
 ---
 

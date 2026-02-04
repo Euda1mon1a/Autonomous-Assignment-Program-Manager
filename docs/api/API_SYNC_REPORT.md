@@ -555,7 +555,7 @@ FastAPI automatically generates OpenAPI spec at:
 - `POST /schedule/import/block` - Parse block
 - `POST /schedule/swaps/find` - Find swap candidates
 - `POST /schedule/swaps/candidates` - Find candidates (JSON)
-- `POST /schedule/faculty-outpatient/generate` - Generate faculty outpatient
+- `POST /schedule/faculty-outpatient/generate` - **Deprecated** (410 Gone). Use `/schedule/generate`.
 
 #### settings.py (4 endpoints)
 - `GET /settings` - Get settings

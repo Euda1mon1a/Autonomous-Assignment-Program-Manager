@@ -92,9 +92,11 @@ AcademicYear
 
 ### Solver behavior (important)
 
-- The CP-SAT half-day solver only assigns **outpatient rotations**
-  (`rotation_type = outpatient`, `template_category = rotation`).
-- **Inpatient rotations** and **non-rotation templates** (off/absence/recovery/
+- The **global CP‑SAT solver** assigns:
+  - **Resident outpatient rotations** (`rotation_type = outpatient`, `template_category = rotation`)
+  - **Faculty half‑day activities** (C, AT, PCAT, DO, OFF)
+  - **Overnight call**
+- **Inpatient rotations** and **non‑rotation templates** (off/absence/recovery/
   education) are preloaded/locked before the solver runs.
 
 ### FMC physical capacity (activity-level)
