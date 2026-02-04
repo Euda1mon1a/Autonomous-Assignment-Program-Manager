@@ -256,6 +256,9 @@ docs/thinkos_cli_browser_pairing_plan.md
 
 # Codex CLI config (user-specific MCP/perplexity setup)
 .codex/
+!.codex/skills/
+!.codex/skills/codex-app-automation-triage/
+!.codex/skills/codex-app-automation-triage/SKILL.md
 
 # Claude overnight artifacts (session work products)
 .claude/dontreadme/overnight/
@@ -267,3 +270,6 @@ frontend/src/app/admin/wellness/
 # WIP approval workflow tests (endpoints not implemented yet)
 backend/tests/routes/test_leave_approval_workflow.py
 backend/tests/routes/test_swap_approval_workflow.py
+
+# Codex automation reports (generated)
+docs/reports/automation/
