@@ -10,8 +10,10 @@ Set up your development environment.
 - Node.js 18+
 - Docker & Docker Compose
 - Git
-- PostgreSQL 15 (for local dev)
-- Redis 7 (for local dev)
+- PostgreSQL 15.15+ (CVE-2025-12817/12818 patched)
+- Redis 7.4.2+ (CVE-2025-49844 defense)
+
+> **Security Note:** Container images in `docker-compose.local.yml` are pinned to security-patched versions. If running locally without Docker, ensure your PostgreSQL and Redis versions include these patches.
 
 ---
 

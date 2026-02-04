@@ -48,7 +48,7 @@ RUN apt-get update && apt-get install -y postgresql-15-pgvector
 
 ```yaml
 db:
-  image: pgvector/pgvector:0.8.1-pg15
+  image: pgvector/pgvector:pg15  # PostgreSQL 15.15 (CVE-2025-12817/12818 patched)
 ```
 
 **Pros:**
@@ -56,10 +56,11 @@ db:
 - Drop-in replacement for postgres
 - Optimized compilation flags
 - No build step required
-- Version pinned for reproducibility
+- Rolling tag (`pg15`) auto-updates to latest PostgreSQL 15.x patch
 
 **Cons:**
 - Third-party image dependency (mitigated: widely used, open source)
+- Rolling tag requires periodic verification (mitigated: quarterly checks)
 
 ---
 
@@ -70,7 +71,7 @@ db:
 ```yaml
 services:
   db:
-    image: pgvector/pgvector:0.8.1-pg15  # Includes pgvector extension for embeddings
+    image: pgvector/pgvector:pg15  # PostgreSQL 15.15 + pgvector (CVE-2025-12817/12818 patched)
     container_name: residency-scheduler-db
     # ... rest of config unchanged
 ```
@@ -87,9 +88,15 @@ This is handled by the Alembic migration: `20251229_add_rag_documents_table.py`
 
 ### Version Strategy
 
-- Pin to specific version (e.g., `0.8.1-pg15`) for reproducibility
-- Update quarterly or when security patches released
+- Use rolling PostgreSQL tag (`pg15`) for automatic security patches
+- Verify PostgreSQL version quarterly: `docker run --rm pgvector/pgvector:pg15 psql --version`
 - Test in dev before production upgrade
+- Document CVE patches in docker-compose comments
+
+**Security patches applied (2026-02-03):**
+- CVE-2025-12817: PostgreSQL privilege checking vulnerability
+- CVE-2025-12818: PostgreSQL memory allocation issue
+- Both patched in PostgreSQL 15.15+
 
 ---
 
@@ -134,6 +141,7 @@ docker compose exec db psql -U scheduler -c "SELECT '[1,2,3]'::vector <-> '[4,5,
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | 2025-12-29 | Initial decision documentation |
+| 1.1.0 | 2026-02-03 | Updated to pg15 rolling tag for CVE-2025-12817/12818 patches |
 
 ---
 
