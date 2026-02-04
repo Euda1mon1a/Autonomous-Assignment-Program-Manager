@@ -19,6 +19,17 @@ The local development setup (`docker-compose.local.yml`) is optimized for:
 - 8GB RAM minimum (for all services)
 - Ports available: 3000, 5432, 5679, 6379, 8000
 
+## Security-Pinned Container Images
+
+The local development environment uses security-pinned container images:
+
+| Service | Image | Version | Security Notes |
+|---------|-------|---------|----------------|
+| PostgreSQL | `pgvector/pgvector:pg15` | 15.15 | CVE-2025-12817/12818 patched |
+| Redis | `redis:7.4.2-alpine` | 7.4.2 | CVE-2025-49844 defense |
+
+These versions are pinned to ensure consistent, secure development environments.
+
 ## Quick Start
 
 ### 1. First-Time Setup

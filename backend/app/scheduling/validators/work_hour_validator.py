@@ -255,6 +255,7 @@ class WorkHourValidator:
                 - start_time: time string "HH:MM" or time object
                 - end_time: time string "HH:MM" or time object
                 - duration_hours: float
+                - is_call: optional flag for overnight call duty
 
         Returns:
             (violations, warnings) tuples
@@ -290,8 +291,9 @@ class WorkHourValidator:
             next_shift = sorted_shifts[i + 1]
 
             current_duration = current_shift.get("duration_hours", 0)
-            if current_duration < MAX_CONSECUTIVE_HOURS:
-                continue  # No rest requirement after short shifts
+            is_call = current_shift.get("is_call", False)
+            if current_duration < MAX_CONSECUTIVE_HOURS and not is_call:
+                continue  # No rest requirement after short, non-call shifts
 
                 # Calculate actual rest period between shifts
             rest_hours = self._calculate_rest_hours(current_shift, next_shift)
@@ -378,7 +380,18 @@ class WorkHourValidator:
         current_start = current_shift.get("start_time")
         if current_end_dt is not None and current_start:
             current_start_dt = self._parse_time_to_datetime(current_date, current_start)
-            if current_start_dt is not None and current_end_dt < current_start_dt:
+            if (
+                current_start_dt is not None
+                and (
+                    current_shift.get("is_call")
+                    or current_shift.get("source") in {"call", "call_assignment"}
+                )
+                and current_shift.get("duration_hours")
+            ):
+                current_end_dt = current_start_dt + timedelta(
+                    hours=float(current_shift["duration_hours"])
+                )
+            elif current_start_dt is not None and current_end_dt < current_start_dt:
                 # Overnight shift - end time is on the next day
                 current_end_dt = current_end_dt + timedelta(days=1)
 

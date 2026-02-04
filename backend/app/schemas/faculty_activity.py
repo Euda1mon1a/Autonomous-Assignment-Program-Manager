@@ -186,3 +186,24 @@ class FacultyMatrixResponse(BaseModel):
     end_date: date
     faculty: list[FacultyMatrixRow]
     total_faculty: int
+
+
+# =============================================================================
+# Coverage Report Schemas
+# =============================================================================
+
+
+class FacultyMissingWeeklyTemplateItem(BaseModel):
+    """Schema for a faculty member missing weekly templates and overrides."""
+
+    person_id: UUID
+    name: str
+    faculty_role: str | None
+
+
+class FacultyWeeklyTemplateCoverageResponse(BaseModel):
+    """Schema for coverage report response."""
+
+    total_faculty: int
+    total_missing: int
+    missing: list[FacultyMissingWeeklyTemplateItem]

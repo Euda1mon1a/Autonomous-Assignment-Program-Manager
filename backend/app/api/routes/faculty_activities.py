@@ -33,8 +33,12 @@ from app.schemas.faculty_activity import (
     FacultyTemplateUpdateRequest,
     FacultyWeekSlots,
     PermittedActivitiesResponse,
+    FacultyWeeklyTemplateCoverageResponse,
 )
 from app.services.faculty_activity_service import FacultyActivityService
+from app.services.faculty_weekly_template_report import (
+    FacultyWeeklyTemplateCoverageService,
+)
 
 router = APIRouter()
 
@@ -111,6 +115,20 @@ async def get_faculty_template(
         ],
         total_slots=len(templates),
     )
+
+
+@router.get(
+    "/faculty/weekly-template-coverage",
+    response_model=FacultyWeeklyTemplateCoverageResponse,
+)
+async def get_weekly_template_coverage(
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get faculty missing weekly templates and overrides."""
+    service = FacultyWeeklyTemplateCoverageService(db)
+    report = await service.get_missing_faculty_weekly_templates()
+    return FacultyWeeklyTemplateCoverageResponse(**report)
 
 
 @router.put(

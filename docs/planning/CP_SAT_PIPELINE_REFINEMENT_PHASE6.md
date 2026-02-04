@@ -47,7 +47,7 @@ making equity/preferences **data‑driven and measurable**.
 ### P6-2 — External Rotation Time‑Off Intake
 **Goal:** Encode external day‑off patterns as explicit data.
 
-**Status:** In progress (PR #784 merged — GUI time‑off patterns now applied to inpatient preloads)
+**Status:** Complete (PR #784 merged; Saturday-off backfill added for ICU/NICU/L&D)
 
 **Examples**
 - FMIT: PGY‑1/2 Saturdays off; PGY‑3 Sundays off
@@ -57,9 +57,10 @@ making equity/preferences **data‑driven and measurable**.
 
 **Completed**
 - Apply GUI time‑off patterns to inpatient preloads (PR #784)
-
-**Remaining**
-- Confirm ICU/NICU/L&D authoritative day‑off rules and encode in DB patterns
+- Backfill ICU/NICU/L&D Saturday‑off weekly patterns (AM+PM)
+  - Script: `backend/scripts/backfill_weekly_patterns_saturday_off.py`
+  - Dry run: `python backend/scripts/backfill_weekly_patterns_saturday_off.py --dry-run`
+  - Apply: `python backend/scripts/backfill_weekly_patterns_saturday_off.py`
 
 **Acceptance Criteria**
 - External rotation time‑off is represented in DB.

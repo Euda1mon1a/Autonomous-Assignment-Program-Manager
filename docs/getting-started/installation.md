@@ -6,6 +6,10 @@ This guide covers detailed installation instructions for Residency Scheduler.
 
 ## Docker Installation (Recommended)
 
+> **Security Note:** Docker images are pinned to security-patched versions:
+> - PostgreSQL: 15.15+ (CVE-2025-12817/12818 patched)
+> - Redis: 7.4.2+ (CVE-2025-49844 defense)
+
 ### Step 1: Clone Repository
 
 ```bash

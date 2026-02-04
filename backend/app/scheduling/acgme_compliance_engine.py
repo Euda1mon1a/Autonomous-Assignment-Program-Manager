@@ -14,7 +14,7 @@ rotation validators into a unified compliance system.
 
 import logging
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Optional
 from uuid import UUID
 
@@ -229,7 +229,11 @@ class ACGMEComplianceEngine:
         )
 
         # 1b. Build shift data for 24+4 and rest period validation
-        shift_data = self._build_shift_data(assignments, blocks)
+        shift_data = self._build_shift_data(
+            assignments=assignments,
+            blocks=blocks,
+            call_assignments=call_assignments,
+        )
 
         # 1c. Validate 24+4 rule (max continuous duty)
         rule_24_violations, rule_24_warnings = (
@@ -476,6 +480,7 @@ class ACGMEComplianceEngine:
         self,
         assignments: list[dict],
         blocks: list[dict],
+        call_assignments: list[dict] | None = None,
     ) -> list[dict]:
         """
         Build shift data for 24+4 and rest period validation.
@@ -483,6 +488,7 @@ class ACGMEComplianceEngine:
         Args:
             assignments: Resident's assignments with block_id
             blocks: All blocks with id, date, time_of_day, start_time, end_time
+            call_assignments: Optional call assignments with date/timing data
 
         Returns:
             List of shift dicts with date, start_time, end_time, duration_hours
@@ -490,7 +496,7 @@ class ACGMEComplianceEngine:
         # Build block lookup
         blocks_by_id = {b.get("id"): b for b in blocks}
 
-        shift_data = []
+        shift_data: list[dict] = []
         for assignment in assignments:
             block_id = assignment.get("block_id")
             block = blocks_by_id.get(block_id)
@@ -527,12 +533,110 @@ class ACGMEComplianceEngine:
                 }
             )
 
+        for call in call_assignments or []:
+            call_date = self._normalize_date(
+                self._get_call_value(call, "date")
+                or self._get_call_value(call, "call_date")
+            )
+            if not call_date:
+                continue
+
+            call_type = self._get_call_value(call, "call_type")
+            call_type_value = str(call_type).lower() if call_type is not None else None
+            if call_type_value == "backup":
+                continue
+
+            start_time = (
+                self._get_call_value(call, "start_time")
+                or self._get_call_value(call, "start")
+                or "19:00"
+            )
+            end_time = (
+                self._get_call_value(call, "end_time")
+                or self._get_call_value(call, "end")
+                or "07:00"
+            )
+            duration_hours = self._get_call_value(call, "duration_hours")
+            if duration_hours is None:
+                duration_hours = self._calculate_duration_hours(
+                    call_date, start_time, end_time, default_hours=12.0
+                )
+
+            shift_data.append(
+                {
+                    "date": call_date,
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "duration_hours": duration_hours,
+                    "call_type": call_type_value or call_type or "overnight",
+                    "time_of_day": "CALL",
+                    "is_call": True,
+                    "source": "call_assignment",
+                }
+            )
+
         # Sort by date and start_time
         shift_data.sort(
             key=lambda x: (x.get("date", date.min), str(x.get("start_time", "")))
         )
 
         return shift_data
+
+    def _get_call_value(self, call, key: str):
+        """Fetch a value from a call assignment dict or object."""
+        if isinstance(call, dict):
+            return call.get(key)
+        return getattr(call, key, None)
+
+    def _normalize_date(self, value) -> date | None:
+        """Normalize a date value from date or ISO string."""
+        if value is None:
+            return None
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            try:
+                return date.fromisoformat(value)
+            except ValueError:
+                return None
+        return None
+
+    def _calculate_duration_hours(
+        self,
+        shift_date: date,
+        start_time,
+        end_time,
+        default_hours: float,
+    ) -> float:
+        """Calculate duration hours between start and end times."""
+        start_dt = self._parse_time_to_datetime(shift_date, start_time)
+        end_dt = self._parse_time_to_datetime(shift_date, end_time)
+        if start_dt is None or end_dt is None:
+            return default_hours
+        if end_dt < start_dt:
+            end_dt = end_dt + timedelta(days=1)
+        return (end_dt - start_dt).total_seconds() / 3600
+
+    def _parse_time_to_datetime(self, shift_date: date, time_value) -> datetime | None:
+        """Parse a time string or time object into a datetime."""
+        try:
+            if hasattr(time_value, "hour"):
+                return datetime.combine(shift_date, time_value)
+            time_str = str(time_value)
+            parts = time_str.split(":")
+            hour = int(parts[0])
+            minute = int(parts[1]) if len(parts) > 1 else 0
+            second = int(parts[2]) if len(parts) > 2 else 0
+            return datetime(
+                shift_date.year,
+                shift_date.month,
+                shift_date.day,
+                hour,
+                minute,
+                second,
+            )
+        except (ValueError, IndexError, TypeError):
+            return None
 
     def _generate_executive_summary(
         self,

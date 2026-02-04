@@ -6,9 +6,10 @@
 
 **Phase A — Generation (CP-SAT)**
 1. **Preload** locked assignments (e.g., absences, protected activities, lecture/advising, manual entries).
-2. **CP-SAT block/call generation** produces core assignments and call records.
-3. **Sync PCAT/DO from call** into half-day assignments.
-4. **CP-SAT activity solver** fills **only unlocked** half-day slots.
+2. **Global CP-SAT solve** produces resident rotations, **faculty half‑day activities**
+   (C, AT, PCAT, DO, OFF), and overnight call records.
+3. **Sync PCAT/DO from call** into half-day assignments (resident post‑call + any gaps).
+4. **CP-SAT activity solver** fills **only unlocked** half‑day slots (primarily resident).
 
 **Phase B — Export (JSON → XLSX)**
 5. **HalfDayJSONExporter** reads `half_day_assignments` (descriptive truth).
@@ -72,7 +73,7 @@ The activity solver **only fills unlocked slots**. It never overwrites preloads 
 
 - **Canonical JSON pipeline**: `half_day_assignments → JSON → XLSX`.
 - **Merged-cell safe writing** in the XLSX converter (headers + schedule cells).
-- **Faculty activities in CP-SAT activity solver** (AT coverage + admin activities).
+- **Faculty activities in global CP‑SAT solver** (C/AT/PCAT/DO/OFF).
 - **Row mapping improvements**: supports `Last, First` and `First Last` mapping.
 - **Export template binding**: Block Template2 template and structure XML are required for canonical export.
 

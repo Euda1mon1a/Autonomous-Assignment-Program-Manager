@@ -62,6 +62,21 @@ docker-compose -f .docker/docker-compose.prod.yml logs -f
 
 ## Security Features
 
+### Container Image Pinning
+
+Infrastructure images are pinned to security-patched versions:
+
+| Service | Image | Security Patches |
+|---------|-------|------------------|
+| PostgreSQL | `postgres:15-alpine` | CVE-2025-12817/12818 (PostgreSQL 15.15) |
+| Redis | `redis:7.4.2-alpine` | CVE-2025-49844 (CVSS 9.9 RCE defense) |
+
+**Update procedure:**
+1. Check for new CVEs: Monitor Redis/PostgreSQL security advisories
+2. Test in local: Update `docker-compose.local.yml`, verify functionality
+3. Update production: Apply to `docker-compose.prod.yml` after testing
+4. Document: Add CVE comments to docker-compose files
+
 ### Container Hardening
 - Non-root users in all containers
 - Read-only root filesystems
