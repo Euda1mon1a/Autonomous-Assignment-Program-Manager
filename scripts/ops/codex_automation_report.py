@@ -86,6 +86,7 @@ def is_noise_path(path: str) -> bool:
         r"^dist/",
         r"^build/",
         r"^coverage/",
+        r"^docs/reports/automation/",
         r"^frontend/src/types/api-generated",
         r"^frontend/src/types/api-generated-check",
         r"^package-lock\.json$",

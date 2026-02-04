@@ -19,6 +19,14 @@ python3 scripts/ops/codex_automation_report.py
 
 This writes a Markdown report to `docs/reports/automation/` and prints the path.
 
+To generate a triage plan (JSON) and optionally apply it:
+
+```bash
+python3 scripts/ops/codex_automation_triage.py --plan
+# Edit the plan JSON to set actions (cherry-pick/archive)
+python3 scripts/ops/codex_automation_triage.py --apply-plan docs/reports/automation/<plan>.json
+```
+
 ## What to do with the report
 
 For each worktree with **signal**:
