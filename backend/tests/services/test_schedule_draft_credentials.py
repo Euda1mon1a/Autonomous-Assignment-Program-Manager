@@ -27,7 +27,7 @@ async def test_missing_credential_flag_blocks_publish(db, sample_faculty: Person
         hashed_password="hashed",
         role="admin",
     )
-    procedure = Procedure(name="Vasectomy", specialty="Urology")
+    procedure = Procedure(id=uuid4(), name="Vasectomy", specialty="Urology")
     activity = Activity(
         name="Vasectomy Clinic",
         code="vas",
@@ -91,7 +91,7 @@ async def test_valid_credential_no_flag(db, sample_faculty: Person):
         hashed_password="hashed",
         role="admin",
     )
-    procedure = Procedure(name="Sports Med", specialty="Sports")
+    procedure = Procedure(id=uuid4(), name="Sports Med", specialty="Sports")
     activity = Activity(
         name="Sports Med Clinic",
         code="smc",
