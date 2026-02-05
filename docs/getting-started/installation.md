@@ -28,7 +28,7 @@ Edit `.env` with your settings:
 ```env
 # Database (required)
 DB_PASSWORD=your_secure_password_here
-DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@localhost:5432/residency_scheduler
+DATABASE_URL=postgresql://scheduler:your_secure_password_here@localhost:5432/residency_scheduler
 
 # Security (generate with: openssl rand -hex 32)
 SECRET_KEY=your_64_character_random_secret_key_here
@@ -36,6 +36,8 @@ SECRET_KEY=your_64_character_random_secret_key_here
 # Frontend API URL
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
+
+`DATABASE_URL` does not auto-expand `DB_PASSWORD`; ensure the URL includes the actual password.
 
 ### Step 3: Start Services
 
@@ -118,6 +120,7 @@ celery -A app.core.celery_app beat --loglevel=info
 
 | Variable | Description | Example |
 |----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection URL (must include password) | `postgresql://scheduler:secure_password@localhost:5432/residency_scheduler` |
 | `DB_PASSWORD` | Database password | `secure_password` |
 | `SECRET_KEY` | JWT signing key (64 chars) | `openssl rand -hex 32` |
 | `NEXT_PUBLIC_API_URL` | API endpoint for frontend | `http://localhost:8000` |

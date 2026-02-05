@@ -264,6 +264,11 @@ See [MCP Admin Guide](docs/admin-manual/mcp-admin-guide.md) for complete documen
 | Playwright | End-to-end testing |
 | MSW | API mocking |
 
+**Optional dependency warnings:** Some tests emit warnings if optional packages are missing
+(`prometheus_client`, `strawberry`, `ripser`, `persim`, `pyyaml`, `msgpack`). These power
+metrics export, GraphQL, and advanced analytics. Install them if you need those features
+locally; otherwise warnings are expected.
+
 ---
 
 ## Quick Start
@@ -282,6 +287,9 @@ cd residency-scheduler
 
 # Copy environment file
 cp .env.example .env
+
+# Ensure DATABASE_URL is set (required for local pytest/config validation)
+# Example: postgresql://scheduler:<DB_PASSWORD>@localhost:5432/residency_scheduler
 
 # Start all services
 docker-compose up -d

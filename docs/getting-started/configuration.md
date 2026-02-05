@@ -23,6 +23,11 @@ Complete reference for all configuration options.
 | `DB_POOL_SIZE` | Connection pool size | `10` |
 | `DB_MAX_OVERFLOW` | Max overflow connections | `20` |
 
+!!! note "DATABASE_URL and DB_PASSWORD"
+    `DATABASE_URL` does **not** auto-expand `DB_PASSWORD`. Ensure the URL includes the
+    actual password value (e.g., `postgresql://scheduler:<DB_PASSWORD>@localhost:5432/residency_scheduler`)
+    or tests/config validation will fail.
+
 !!! warning "Production Security"
     Always use strong, unique passwords in production. Generate with:
     ```bash
@@ -170,3 +175,20 @@ curl http://localhost:8000/health
 ```
 
 See [Troubleshooting](../troubleshooting.md) if health checks fail.
+
+---
+
+## Optional Dependencies (Warnings)
+
+Some features load optional packages at runtime. If they are missing, you may see warnings
+during tests or startup, but core scheduling still runs.
+
+| Package | Used For |
+|---------|----------|
+| `prometheus_client` | Metrics export endpoints |
+| `strawberry` | GraphQL support |
+| `ripser`, `persim` | Persistent homology analytics |
+| `pyyaml` | YAML-based configuration helpers |
+| `msgpack` | Fast serialization in data pipelines |
+
+Install them only if you need those features locally.
