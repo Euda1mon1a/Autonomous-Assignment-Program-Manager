@@ -271,7 +271,8 @@ class CredentialService:
             ):
                 entry["expiring_soon"] += 1
 
-            if credential.procedure:
+            # Only include procedures from valid (active, non-expired) credentials
+            if credential.procedure and credential.is_valid:
                 entry["procedures"][credential.procedure.id] = credential.procedure
 
         if include_empty:
