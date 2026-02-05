@@ -2,18 +2,10 @@
 
 from types import SimpleNamespace
 
-import pytest
-
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models.settings import ApplicationSettings
-
-@pytest.fixture
-def authed_client(client: TestClient, auth_headers: dict) -> TestClient:
-    """Return a client with admin auth headers attached."""
-    client.headers.update(auth_headers)
-    return client
 
 
 class TestGetSettingsEndpoint:
