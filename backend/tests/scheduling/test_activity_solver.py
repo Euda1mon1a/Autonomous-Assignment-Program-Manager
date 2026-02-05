@@ -179,7 +179,7 @@ class TestHelperMethods:
         assert activity_id in result
 
     def test_get_faculty_clinic_caps_with_values(self):
-        """_get_faculty_clinic_caps returns min/max from faculty."""
+        """_get_faculty_clinic_caps ignores min and returns max."""
         mock_session = MagicMock()
         solver = CPSATActivitySolver(mock_session)
 
@@ -188,7 +188,7 @@ class TestHelperMethods:
         mock_faculty.max_clinic_halfdays_per_week = 6
 
         min_c, max_c = solver._get_faculty_clinic_caps(mock_faculty)
-        assert min_c == 2
+        assert min_c == 0
         assert max_c == 6
 
     def test_get_faculty_clinic_caps_with_none(self):
@@ -205,7 +205,7 @@ class TestHelperMethods:
         assert max_c == 0
 
     def test_get_faculty_clinic_caps_max_less_than_min(self):
-        """_get_faculty_clinic_caps adjusts max if less than min."""
+        """_get_faculty_clinic_caps ignores min when max is set."""
         mock_session = MagicMock()
         solver = CPSATActivitySolver(mock_session)
 
@@ -214,8 +214,8 @@ class TestHelperMethods:
         mock_faculty.max_clinic_halfdays_per_week = 2  # Less than min
 
         min_c, max_c = solver._get_faculty_clinic_caps(mock_faculty)
-        assert min_c == 5
-        assert max_c == 5  # Adjusted to equal min
+        assert min_c == 0
+        assert max_c == 2
 
     def test_get_admin_activity_for_faculty_gme(self):
         """_get_admin_activity_for_faculty returns GME activity."""
