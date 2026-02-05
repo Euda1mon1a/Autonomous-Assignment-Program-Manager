@@ -1010,10 +1010,11 @@ class CPSATSolver(BaseSolver):
                             else sum(clinic_vars)
                         )
 
-        # Re-key faculty supervision vars from (int, int) to (UUID, date, slot)
-        # so FacultySupervisionConstraint can look them up by faculty ID + date + AM/PM
+        # Re-key faculty activity vars from (int, int) to (UUID, date, slot)
+        # so constraints can look them up by faculty ID + date + AM/PM
         faculty_at_by_slot: dict[tuple, Any] = {}
         faculty_pcat_by_slot: dict[tuple, Any] = {}
+        faculty_clinic_by_slot: dict[tuple, Any] = {}
         for faculty in context.faculty:
             f_i = context.faculty_idx[faculty.id]
             for block in workday_blocks:
@@ -1023,6 +1024,8 @@ class CPSATSolver(BaseSolver):
                     faculty_at_by_slot[slot_key] = fac_supervise[f_i, b_i]
                 if (f_i, b_i) in fac_pcat:
                     faculty_pcat_by_slot[slot_key] = fac_pcat[f_i, b_i]
+                if (f_i, b_i) in fac_clinic:
+                    faculty_clinic_by_slot[slot_key] = fac_clinic[f_i, b_i]
 
         variables = {
             "assignments": x_2d,  # For legacy constraints (residents)
@@ -1035,9 +1038,10 @@ class CPSATSolver(BaseSolver):
             "fac_supervise": fac_supervise,
             "fac_pcat": fac_pcat,
             "fac_do": fac_do,
-            # Supervision constraint wiring (UUID-date-slot keyed)
+            # Constraint wiring (UUID-date-slot keyed)
             "faculty_at": faculty_at_by_slot,
             "faculty_pcat": faculty_pcat_by_slot,
+            "faculty_clinic": faculty_clinic_by_slot,
             "resident_clinic": resident_clinic,
         }
 
@@ -1116,34 +1120,22 @@ class CPSATSolver(BaseSolver):
                 if activity_vars:
                     model.Add(sum(activity_vars) <= 1)
 
-        # Constraint: Faculty clinic limits by role
-        # PD=0, APD=2, OIC=2, DeptChief=1, Core=4 per week
-        # Group blocks by week (Monday-Sunday)
+        # Constraint: Faculty clinic limits from DB (clinic_min/clinic_max per week)
         from collections import defaultdict
         from datetime import timedelta
 
         blocks_by_week: dict[tuple, list] = defaultdict(list)
         for block in workday_blocks:
-            # Get Monday of the week
             week_start = block.date - timedelta(days=block.date.weekday())
             blocks_by_week[week_start].append(block)
 
+        # Soft penalty weight for clinic minimum shortfall
+        CLINIC_MIN_PENALTY = 200  # Strong incentive to meet minimum clinic
+
         for faculty in context.faculty:
             f_i = context.faculty_idx[faculty.id]
-            # Get weekly clinic limit from faculty role
-            weekly_limit = getattr(faculty, "weekly_clinic_limit", 4)
-            if hasattr(faculty, "faculty_role"):
-                role = faculty.faculty_role
-                if role in ("PD", "program_director"):
-                    weekly_limit = 0
-                elif role in ("APD", "assistant_program_director", "OIC"):
-                    weekly_limit = 2
-                elif role in ("dept_chief", "department_chief"):
-                    weekly_limit = 1
-                elif role in ("sports_med",):
-                    weekly_limit = 0  # Sports Med has separate SM clinic
-                else:
-                    weekly_limit = 4  # Core faculty default
+            weekly_min = getattr(faculty, "min_clinic_halfdays_per_week", 0) or 0
+            weekly_max = getattr(faculty, "max_clinic_halfdays_per_week", 4) or 4
 
             for week_start, week_blocks in blocks_by_week.items():
                 clinic_vars = [
@@ -1152,7 +1144,17 @@ class CPSATSolver(BaseSolver):
                     if (f_i, context.block_idx[b.id]) in fac_clinic
                 ]
                 if clinic_vars:
-                    model.Add(sum(clinic_vars) <= weekly_limit)
+                    model.Add(sum(clinic_vars) <= weekly_max)
+                    # MIN is soft to avoid infeasibility with supervision demand
+                    if weekly_min > 0:
+                        shortfall = model.NewIntVar(
+                            0,
+                            weekly_min,
+                            f"clinic_shortfall_{f_i}_{week_start}",
+                        )
+                        model.Add(shortfall >= weekly_min - sum(clinic_vars))
+                        objective_terms = variables.setdefault("objective_terms", [])
+                        objective_terms.append((shortfall, CLINIC_MIN_PENALTY))
 
         # Constraint: PCAT/DO linked to overnight call
         # If call[f, date] = 1, then pcat[f, date+1, AM] = 1 and do[f, date+1, PM] = 1
