@@ -20,6 +20,33 @@
 
 ---
 
+## How This Differs from Manual Scheduling (Resident‑First → Faculty Backfill)
+
+**Manual approach (typical human workflow):**
+1. Place residents into rotations.
+2. Backfill faculty supervision and clinic coverage to meet demand.
+3. Iterate when coverage or capacity breaks.
+
+**Canonical CP‑SAT approach (system workflow):**
+1. **Solve residents and faculty together** in a single CP‑SAT optimization.
+   - Faculty availability, supervision ratios, and physical capacity are **hard constraints**.
+   - Resident placement is **jointly optimized** with faculty coverage, not staged.
+2. **Persist faculty half‑day assignments first** (they are already final outputs).
+3. Use the activity solver **only for resident outpatient activities** (resident expansion).
+
+**Why faculty isn’t “filled later” like residents:**
+- CP‑SAT already outputs **faculty half‑day activities** directly (final‑form).
+- Resident output is **block/rotation‑level** and requires a second step to map to
+  outpatient half‑days (clinic/admin/AT), so only residents need the activity solver.
+
+**Net effect:**
+- The solver avoids the common human failure mode of “resident‑first placement that
+  later can’t be staffed.”
+- Faculty schedules are **authoritative** from CP‑SAT and are not overwritten unless
+  explicitly overridden.
+
+---
+
 ## Sources of Truth
 
 - **Descriptive Truth:** `half_day_assignments`
@@ -27,6 +54,9 @@
 - **Solver slots:** `source = solver`
 
 The activity solver **only fills unlocked slots**. It never overwrites preloads or manual edits.
+
+**Production rule:** Only CP‑SAT is selectable in production API paths. Other solvers remain
+available for development and research but are not exposed in prod dropdowns.
 
 ---
 

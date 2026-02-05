@@ -422,6 +422,13 @@ class TestHelperMethods:
 class TestSolveReturnFormat:
     """Tests for solve() return value structure."""
 
+    def test_solve_requires_explicit_faculty_override(self):
+        """solve() rejects faculty overrides without explicit flag."""
+        solver = CPSATActivitySolver(MagicMock())
+
+        with pytest.raises(ValueError):
+            solver.solve(10, 2025, include_faculty_slots=True)
+
     @patch("app.scheduling.activity_solver.get_block_dates")
     @patch.object(CPSATActivitySolver, "_load_candidate_slots")
     def test_solve_no_slots_returns_no_work(self, mock_candidates, mock_dates):
@@ -438,6 +445,78 @@ class TestSolveReturnFormat:
         assert result["assignments_updated"] == 0
         assert result["status"] == "no_work"
         assert "message" in result
+
+    @patch("app.scheduling.activity_solver.get_block_dates")
+    @patch.object(CPSATActivitySolver, "_load_candidate_slots")
+    @patch.object(CPSATActivitySolver, "_load_assignment_rotation_map")
+    @patch.object(CPSATActivitySolver, "_filter_outpatient_slots")
+    def test_solve_filters_faculty_slots_by_default(
+        self,
+        mock_filter,
+        mock_rotation_map,
+        mock_candidates,
+        mock_dates,
+    ):
+        """solve() filters faculty slots unless explicitly overridden."""
+        mock_dates.return_value = MagicMock(
+            start_date=date(2026, 3, 12), end_date=date(2026, 4, 8)
+        )
+
+        faculty_slot = MagicMock()
+        faculty_slot.person_id = uuid4()
+        faculty_slot.person = MagicMock()
+        faculty_slot.person.type = "faculty"
+        faculty_slot.date = date(2026, 3, 12)
+        faculty_slot.time_of_day = "AM"
+        mock_candidates.return_value = [faculty_slot]
+        mock_rotation_map.return_value = {}
+        mock_filter.return_value = [faculty_slot]
+
+        solver = CPSATActivitySolver(MagicMock())
+        result = solver.solve(10, 2025)
+
+        assert result["status"] == "no_work"
+        assert "No outpatient rotation slots found" in result.get("message", "")
+
+    @patch("app.scheduling.activity_solver.get_block_dates")
+    @patch.object(CPSATActivitySolver, "_load_candidate_slots")
+    @patch.object(CPSATActivitySolver, "_load_assignment_rotation_map")
+    @patch.object(CPSATActivitySolver, "_filter_outpatient_slots")
+    @patch.object(CPSATActivitySolver, "_load_activities")
+    def test_solve_allows_faculty_slots_with_override(
+        self,
+        mock_activities,
+        mock_filter,
+        mock_rotation_map,
+        mock_candidates,
+        mock_dates,
+    ):
+        """solve() proceeds when faculty override flag is explicitly set."""
+        mock_dates.return_value = MagicMock(
+            start_date=date(2026, 3, 12), end_date=date(2026, 4, 8)
+        )
+
+        faculty_slot = MagicMock()
+        faculty_slot.person_id = uuid4()
+        faculty_slot.person = MagicMock()
+        faculty_slot.person.type = "faculty"
+        faculty_slot.date = date(2026, 3, 12)
+        faculty_slot.time_of_day = "AM"
+        mock_candidates.return_value = [faculty_slot]
+        mock_rotation_map.return_value = {}
+        mock_filter.return_value = [faculty_slot]
+        mock_activities.return_value = []
+
+        solver = CPSATActivitySolver(MagicMock())
+        result = solver.solve(
+            10,
+            2025,
+            include_faculty_slots=True,
+            force_faculty_override=True,
+        )
+
+        assert result["status"] == "error"
+        assert "No activities found" in result.get("message", "")
 
     @patch("app.scheduling.activity_solver.get_block_dates")
     @patch.object(CPSATActivitySolver, "_load_candidate_slots")
@@ -534,7 +613,12 @@ class TestSolveActivitiesConvenience:
             mock_solver_class.assert_called_once_with(
                 mock_session, timeout_seconds=60.0
             )
-            mock_solver.solve.assert_called_once_with(10, 2025)
+            mock_solver.solve.assert_called_once_with(
+                10,
+                2025,
+                include_faculty_slots=False,
+                force_faculty_override=False,
+            )
             assert result == {"success": True}
 
     def test_solve_activities_passes_timeout(self):
@@ -554,4 +638,10 @@ class TestSolveActivitiesConvenience:
 
             mock_solver_class.assert_called_once_with(
                 mock_session, timeout_seconds=120.0
+            )
+            mock_solver.solve.assert_called_once_with(
+                10,
+                2025,
+                include_faculty_slots=False,
+                force_faculty_override=False,
             )

@@ -291,6 +291,7 @@ class CPSATActivitySolver:
         block_number: int,
         academic_year: int,
         include_faculty_slots: bool = False,
+        force_faculty_override: bool = False,
     ) -> dict[str, Any]:
         """
         Assign activities to half-day slots for a block.
@@ -328,6 +329,12 @@ class CPSATActivitySolver:
             f"Activity solver starting for Block {block_number}: "
             f"{start_date} to {end_date}"
         )
+        if include_faculty_slots and not force_faculty_override:
+            raise ValueError(
+                "include_faculty_slots requires explicit override "
+                "(force_faculty_override=True)."
+            )
+
         if include_faculty_slots:
             logger.warning(
                 "Activity solver running with include_faculty_slots=True; "
@@ -3130,6 +3137,7 @@ def solve_activities(
     academic_year: int,
     timeout_seconds: float = 60.0,
     include_faculty_slots: bool = False,
+    force_faculty_override: bool = False,
 ) -> dict[str, Any]:
     """
     Convenience function to run activity solver.
@@ -3139,6 +3147,8 @@ def solve_activities(
         block_number: Block number (1-13)
         academic_year: Academic year
         timeout_seconds: Solver timeout
+        include_faculty_slots: Include faculty slots in activity solver (override only)
+        force_faculty_override: Explicit override flag required when including faculty
 
     Returns:
         Solver result dictionary
@@ -3148,4 +3158,5 @@ def solve_activities(
         block_number,
         academic_year,
         include_faculty_slots=include_faculty_slots,
+        force_faculty_override=force_faculty_override,
     )

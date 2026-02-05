@@ -26,7 +26,7 @@ class ScheduleRequest(BaseModel):
     end_date: date
     pgy_levels: list[int] | None = None  # Filter residents by PGY level
     rotation_template_ids: list[UUID] | None = None  # Specific templates to use
-    algorithm: SchedulingAlgorithm = SchedulingAlgorithm.GREEDY
+    algorithm: SchedulingAlgorithm = SchedulingAlgorithm.CP_SAT
     timeout_seconds: float = Field(
         default=60.0,
         ge=5.0,

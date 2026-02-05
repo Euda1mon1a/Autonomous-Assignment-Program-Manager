@@ -14,6 +14,8 @@ All tests use fixtures from conftest.py for auth, test data, and database setup.
 
 import pytest
 from datetime import date, datetime, timedelta
+from types import SimpleNamespace
+from unittest.mock import patch
 from uuid import uuid4
 
 # The TestClient is available in conftest.py
@@ -84,6 +86,31 @@ class TestScheduleGenerationRoutes:
             },
         )
         assert response.status_code == 401
+
+    def test_post_schedule_generate_rejects_non_cpsat_in_production(
+        self, client, auth_headers, monkeypatch
+    ):
+        """Production config rejects non-CP-SAT algorithms."""
+        import app.api.routes.schedule as schedule_routes
+
+        monkeypatch.setattr(
+            schedule_routes, "get_settings", lambda: SimpleNamespace(DEBUG=False)
+        )
+
+        with patch.object(schedule_routes.SchedulingEngine, "generate") as mock_generate:
+            response = client.post(
+                "/api/schedule/generate",
+                headers=auth_headers,
+                json={
+                    "start_date": "2025-01-01",
+                    "end_date": "2025-01-31",
+                    "algorithm": "greedy",
+                },
+            )
+
+        assert response.status_code == 400
+        assert "cp-sat" in response.json()["detail"].lower()
+        mock_generate.assert_not_called()
 
     # =========================================================================
     # Schedule Validation Tests

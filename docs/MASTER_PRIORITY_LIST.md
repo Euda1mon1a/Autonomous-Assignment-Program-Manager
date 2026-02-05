@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-04 (Lock window + break-glass spec/roadmap added)
+> **Last Updated:** 2026-02-05 (solver lockdown docs + CP-SAT authority hardening)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -223,6 +223,20 @@ Remaining faculty-specific gaps:
    - Holiday equity for FMIT + call
    - Resident equity across all assignments (block/week/assignment)
    - 2 soft preferences per faculty (clinic + call)
+
+**Solver Lockdown (GUI Readiness) — Priority Subset**
+1. **CP-SAT only in production paths** (API + enums)
+   - Reject non‑cp_sat in prod config
+   - Hide non‑cp_sat options from `/enums/scheduling-algorithms`
+2. **Faculty immutability guard**
+   - Activity solver must require explicit override to touch faculty slots
+   - Add test: faculty assignments unchanged after activity solver
+3. **Resident eligibility regression**
+   - Test that `requires_procedure_credential` does *not* block residents
+
+**Secondary Hardening**
+4. Locked slots are forced to zero (add regression test)
+5. Call assignment integrity across all blocks (weekends included)
 
 ### 7. Pre-commit Hook Failures (Session 128) - MYPY PROGRESS
 **Updated:** 2026-01-24 (Session 139)
@@ -730,6 +744,32 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 **Document:** [`docs/ORCHESTRATOR_SPEC_HANDOFF.md`](ORCHESTRATOR_SPEC_HANDOFF.md)
 - Seamless subagent launch via prepared AgentSpec
 
+### 29. Codex Worktree Cleanup (NEW - 2026-02-04)
+**Location:** `~/.codex/worktrees/*/Autonomous-Assignment-Program-Manager`
+**Status:** Safe to clean after Codex CLI finishes current work
+
+10 worktrees examined. All uncommitted changes are **already merged** via PRs #816/#817:
+
+| Worktree | Base | Changes | Status |
+|----------|------|---------|--------|
+| 155f | #814 | 6 | Merged in #817 (schedule drafts frontend) |
+| 8667 | #817 | 0 | Clean |
+| a692 | #817 | 0 | Clean |
+| aa99 | #817 | 0 | Clean |
+| b0e4 | #814 | 6 | Merged in #817 (resilience draft flags) |
+| b55a | #817 | 0 | Clean |
+| bad1 | old | 2 | Noise (stack health JSON, npm cache) |
+| cb5a | #814 | 2 | Merged in #817 (settings tests) |
+| dca9 | #814 | 5 | Merged in #817 (admin dashboard) |
+| ddb5 | #814 | 5 | Merged in #817 (swap lock-window) |
+
+**Action when ready:**
+```bash
+for dir in ~/.codex/worktrees/*/Autonomous-Assignment-Program-Manager; do
+  cd "$dir" && git fetch origin main && git reset --hard origin/main && git clean -fd
+done
+```
+
 ---
 
 ## ALREADY WORKING (No Action Required)
@@ -777,6 +817,22 @@ Set up Jupyter notebook integration via Claude Code IDE tools for empirical data
 | 31 | CP-SAT Integration Tests | 4-8h | MEDIUM |
 
 **Reference:** [SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md](development/SOFTWARE_CONCEPTS_MEDICAL_ANALOGIES.md)
+
+### Session 2026-02-05 Updates
+
+| Change | Item | Reason |
+|--------|------|--------|
+| ✅ Merged | PR #813 | `/codex-local-triage` skill |
+| ✅ Merged | PR #814 | Security patches + compliance updates |
+| ✅ Merged | PR #815 | Exotic visualization revival (6 viz features) |
+| ✅ Merged | PR #816 | Faculty credential summaries + RBAC |
+| ✅ Merged | PR #817 | Lock-window + break-glass publish gate (Phase 1) |
+| ✅ Merged | PR #818 | CP-SAT authority for faculty activities |
+| 🗑️ Deleted | 42 branches | Stale local + remote branches (search-party verified) |
+| ➕ Added | HIGH #9 | Lock-window + break-glass spec/roadmap/policy |
+| ➕ Added | LOW #29 | Codex worktree cleanup (safe to clean) |
+| 🔧 In Progress | Codex P1 | #817: Manual drafts bypass break-glass (branch: feat/lock-window-ui) |
+| 🔧 In Progress | Codex P2 | #816: Filter expired credentials in summaries (branch: feat/faculty-credential-summary) |
 
 ### Session 142 Updates (2026-01-26)
 
