@@ -10,11 +10,9 @@ Faculty admin time fills AFTER knowing resident clinic demand.
 
 CORRECT Order (Session 125):
 1. Load NON-CALL preloads (skip_faculty_call=True)
-2. Expand resident block assignments
-3. Call solver → NEW CallAssignment
-4. Create PCAT/DO immediately (LOCKED as preload)
-5. Activity solver (NOW knows PCAT for AT coverage)
-6. Fill faculty half-days (NOW knows resident demand)
+2. Call solver → NEW CallAssignment
+3. Create PCAT/DO immediately (LOCKED as preload)
+4. Activity solver (NOW knows PCAT for AT coverage)
 
 These tests verify the order is maintained and detect regressions.
 
@@ -130,11 +128,9 @@ class TestPipelineOrderEnforcement:
 
         Expected order:
         1. preload (with skip_faculty_call=True)
-        2. expansion
-        3. call_solver (greedy for call generation)
-        4. pcat_do_sync (after call_create)
-        5. activity_solver
-        6. faculty_expansion
+        2. call_solver (greedy for call generation)
+        3. pcat_do_sync (after call_create)
+        4. activity_solver
 
         HARD-FAIL: Test fails if ANY required step is missing (no exception swallowing).
         """
@@ -144,11 +140,9 @@ class TestPipelineOrderEnforcement:
         # Required steps that MUST be called (in order)
         REQUIRED_STEPS = [
             "preload_skip_faculty",
-            "expansion",
             "call_solver",
             "pcat_do_sync",
             "activity_solver",
-            "faculty_expansion",
         ]
 
         def track_preload_call(*args: Any, **kwargs: Any) -> int:
@@ -157,10 +151,6 @@ class TestPipelineOrderEnforcement:
             else:
                 call_order.append("preload_all")
             return 0
-
-        def track_expansion_call(*args: Any, **kwargs: Any) -> list:
-            call_order.append("expansion")
-            return []
 
         def track_call_solver(*args: Any, **kwargs: Any) -> MagicMock:
             """Track _run_solver for call generation."""
@@ -177,10 +167,6 @@ class TestPipelineOrderEnforcement:
             call_order.append("activity_solver")
             return {"success": True, "assignments_updated": 0, "status": "OPTIMAL"}
 
-        def track_faculty_call(*args: Any, **kwargs: Any) -> int:
-            call_order.append("faculty_expansion")
-            return 0
-
         def track_pcat_sync(*args: Any, **kwargs: Any) -> int:
             call_order.append("pcat_do_sync")
             return 0
@@ -192,119 +178,116 @@ class TestPipelineOrderEnforcement:
             mock_preload_cls.return_value = mock_preload_instance
 
             with patch(
-                "app.scheduling.engine.BlockAssignmentExpansionService"
-            ) as mock_expansion_cls:
-                mock_expansion_instance = MagicMock()
-                mock_expansion_instance.expand_block_assignments.side_effect = (
-                    track_expansion_call
-                )
-                mock_expansion_cls.return_value = mock_expansion_instance
+                "app.scheduling.engine.CPSATActivitySolver"
+            ) as mock_activity_cls:
+                mock_activity_instance = MagicMock()
+                mock_activity_instance.solve.side_effect = track_activity_call
+                mock_activity_cls.return_value = mock_activity_instance
+
+                # Import after patching
+                from app.scheduling.engine import SchedulingEngine
+
+                # Create mock DB
+                mock_db = MagicMock()
+                mock_db.execute.return_value.scalars.return_value.all.return_value = []  # noqa: E501
+                mock_db.execute.return_value.scalars.return_value.first.return_value = None  # noqa: E501
+                mock_db.execute.return_value.scalar.return_value = 0
+                mock_db.query.return_value.filter.return_value.all.return_value = []  # noqa: E501
+
+                start_date = date(2026, 3, 12)
+                end_date = date(2026, 4, 8)
+
+                # Patch engine methods
+                with patch.object(SchedulingEngine, "_ensure_blocks_exist"):
+                    with patch.object(
+                        SchedulingEngine, "_check_pre_generation_resilience"
+                    ):
+                        with patch.object(
+                            SchedulingEngine,
+                            "_check_post_generation_resilience",
+                        ):
+                            engine = SchedulingEngine(
+                                mock_db, start_date, end_date
+                            )
+
+                # Patch instance methods - track _run_solver for call generation
+                engine._run_solver = track_call_solver
+                engine._sync_call_pcat_do_to_half_day = track_pcat_sync
+
+                # Mock PreSolverValidator to pass validation
+                mock_validation_result = MagicMock()
+                mock_validation_result.feasible = True
+                mock_validation_result.issues = []
+                mock_validation_result.warnings = []
+                mock_validation_result.recommendations = []
+                mock_validation_result.statistics = {
+                    "complexity_level": "LOW",
+                    "num_variables": 100,
+                    "estimated_runtime": "1s",
+                }
 
                 with patch(
-                    "app.scheduling.engine.CPSATActivitySolver"
-                ) as mock_activity_cls:
-                    mock_activity_instance = MagicMock()
-                    mock_activity_instance.solve.side_effect = track_activity_call
-                    mock_activity_cls.return_value = mock_activity_instance
+                    "app.scheduling.engine.PreSolverValidator"
+                ) as mock_validator_cls:
+                    mock_validator = MagicMock()
+                    mock_validator.validate_saturation.return_value = (
+                        mock_validation_result
+                    )
+                    mock_validator_cls.return_value = mock_validator
 
-                    with patch(
-                        "app.scheduling.engine.FacultyAssignmentExpansionService"
-                    ) as mock_faculty_cls:
-                        mock_faculty_instance = MagicMock()
-                        mock_faculty_instance.fill_faculty_assignments.side_effect = (
-                            track_faculty_call
-                        )
-                        mock_faculty_cls.return_value = mock_faculty_instance
-
-                        # Import after patching
-                        from app.scheduling.engine import SchedulingEngine
-
-                        # Create mock DB
-                        mock_db = MagicMock()
-                        mock_db.execute.return_value.scalars.return_value.all.return_value = []  # noqa: E501
-                        mock_db.execute.return_value.scalars.return_value.first.return_value = None  # noqa: E501
-                        mock_db.execute.return_value.scalar.return_value = 0
-                        mock_db.query.return_value.filter.return_value.all.return_value = []  # noqa: E501
-
-                        start_date = date(2026, 3, 12)
-                        end_date = date(2026, 4, 8)
-
-                        # Patch engine methods
-                        with patch.object(SchedulingEngine, "_ensure_blocks_exist"):
-                            with patch.object(
-                                SchedulingEngine, "_check_pre_generation_resilience"
-                            ):
-                                with patch.object(
-                                    SchedulingEngine,
-                                    "_check_post_generation_resilience",
-                                ):
-                                    engine = SchedulingEngine(
-                                        mock_db, start_date, end_date
-                                    )
-
-                        # Patch instance methods - track _run_solver for call generation
-                        engine._run_solver = track_call_solver
-                        engine._sync_call_pcat_do_to_half_day = track_pcat_sync
-
-                        # Mock PreSolverValidator to pass validation
-                        mock_validation_result = MagicMock()
-                        mock_validation_result.feasible = True
-                        mock_validation_result.issues = []
-                        mock_validation_result.warnings = []
-                        mock_validation_result.recommendations = []
-                        mock_validation_result.statistics = {
-                            "complexity_level": "LOW",
-                            "num_variables": 100,
-                            "estimated_runtime": "1s",
-                        }
-
-                        with patch(
-                            "app.scheduling.engine.PreSolverValidator"
-                        ) as mock_validator_cls:
-                            mock_validator = MagicMock()
-                            mock_validator.validate_saturation.return_value = (
-                                mock_validation_result
-                            )
-                            mock_validator_cls.return_value = mock_validator
-
+                    with patch.object(
+                        engine,
+                        "_create_call_assignments_from_result",
+                        return_value=[MagicMock()],
+                    ):
+                        with patch.object(engine, "_build_availability_matrix"):
                             with patch.object(
                                 engine,
-                                "_create_call_assignments_from_result",
+                                "_get_residents",
                                 return_value=[MagicMock()],
                             ):
-                                with patch.object(engine, "_build_availability_matrix"):
+                                with patch.object(
+                                    engine,
+                                    "_get_rotation_templates",
+                                    return_value=[MagicMock()],
+                                ):
                                     with patch.object(
-                                        engine,
-                                        "_get_residents",
-                                        return_value=[MagicMock()],
+                                        engine, "_get_faculty", return_value=[]
                                     ):
+                                        # Mock post-generation validator
+                                        mock_post_validation = MagicMock()
+                                        mock_post_validation.valid = True
+                                        mock_post_validation.violations = []
+                                        mock_post_validation.warnings = []
+                                        mock_post_validation.coverage_rate = 1.0
+                                        engine.validator = MagicMock()
+                                        engine.validator.validate_all.return_value = mock_post_validation
+
+                                        # Avoid activity lookups in mocked DB
                                         with patch.object(
                                             engine,
-                                            "_get_rotation_templates",
-                                            return_value=[MagicMock()],
+                                            "_persist_solver_assignments_to_half_day",
                                         ):
-                                            with patch.object(
-                                                engine, "_get_faculty", return_value=[]
-                                            ):
-                                                # Mock post-generation validator
-                                                mock_post_validation = MagicMock()
-                                                mock_post_validation.valid = True
-                                                mock_post_validation.violations = []
-                                                mock_post_validation.warnings = []
-                                                mock_post_validation.coverage_rate = 1.0
-                                                engine.validator = MagicMock()
-                                                engine.validator.validate_all.return_value = mock_post_validation
-
-                                                # Run generate - NO exception swallowing
-                                                # validate_pcat_do=False because mock DB
-                                                # doesn't have Activity records
-                                                engine.generate(
-                                                    block_number=10,
-                                                    academic_year=2025,
-                                                    expand_block_assignments=True,
-                                                    algorithm="greedy",
-                                                    validate_pcat_do=False,
-                                                )
+                                            # Run generate - NO exception swallowing
+                                            # validate_pcat_do=False because mock DB
+                                            # doesn't have Activity records
+                                            engine.generate(
+                                                block_number=10,
+                                                academic_year=2025,
+                                                expand_block_assignments=True,
+                                                algorithm="greedy",
+                                                validate_pcat_do=False,
+                                            )
+                                        mock_activity_instance.solve.assert_called()
+                                        _, activity_kwargs = (
+                                            mock_activity_instance.solve.call_args
+                                        )
+                                        assert (
+                                            activity_kwargs.get(
+                                                "include_faculty_slots"
+                                            )
+                                            is False
+                                        )
 
         # HARD-FAIL ASSERTIONS: All required steps MUST be present
         missing_steps = [step for step in REQUIRED_STEPS if step not in call_order]

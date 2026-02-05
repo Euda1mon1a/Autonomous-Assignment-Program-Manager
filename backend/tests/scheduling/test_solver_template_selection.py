@@ -1,8 +1,12 @@
 """Tests for solver template selection behavior."""
 
 from types import SimpleNamespace
+from datetime import date
+from uuid import uuid4
 
 from app.scheduling.solvers import BaseSolver
+from app.scheduling.constraints import ConstraintManager, SchedulingContext
+from app.scheduling.solvers import CPSATSolver
 
 
 class _DummySolver(BaseSolver):
@@ -32,3 +36,33 @@ def test_select_template_returns_none_for_empty_list():
     resident = SimpleNamespace()
 
     assert solver._select_template(resident, []) is None
+
+
+def test_cpsat_allows_templates_requiring_procedure_credential():
+    """CP-SAT should consider templates even when they require credentials."""
+    resident = SimpleNamespace(id=uuid4())
+    block = SimpleNamespace(
+        id=uuid4(),
+        date=date(2026, 1, 6),
+        is_weekend=False,
+        time_of_day="AM",
+    )
+    template = SimpleNamespace(
+        id=uuid4(),
+        name="Procedure Clinic",
+        abbreviation="PROC",
+        requires_procedure_credential=True,
+    )
+
+    context = SchedulingContext(
+        residents=[resident],
+        faculty=[],
+        blocks=[block],
+        templates=[template],
+    )
+
+    solver = CPSATSolver(constraint_manager=ConstraintManager.create_minimal())
+    result = solver.solve(context)
+
+    assert result.success is True
+    assert any(t_id == template.id for _, _, t_id in result.assignments)
