@@ -6,6 +6,7 @@ can populate dropdowns without hardcoding values.
 
 from fastapi import APIRouter
 
+from app.core.config import get_settings
 from app.models.activity import ActivityCategory
 from app.models.inpatient_preload import InpatientRotationType
 from app.schemas.schedule import SchedulingAlgorithm
@@ -25,6 +26,9 @@ def _enum_to_options(enum_class: type) -> list[dict[str, str]]:
 @router.get("/scheduling-algorithms")
 async def get_scheduling_algorithms() -> list[dict[str, str]]:
     """Get available scheduling algorithms for dropdown."""
+    settings = get_settings()
+    if not settings.DEBUG:
+        return [{"value": "cp_sat", "label": "CP-SAT (Canonical)"}]
     return [
         {"value": "greedy", "label": "Greedy (Fast heuristic)"},
         {"value": "cp_sat", "label": "CP-SAT (Optimal, slower)"},

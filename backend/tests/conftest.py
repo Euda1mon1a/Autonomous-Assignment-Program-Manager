@@ -248,6 +248,13 @@ def auth_headers(client: TestClient, admin_user: User) -> dict:
     return {}
 
 
+@pytest.fixture
+def authed_client(client: TestClient, auth_headers: dict) -> TestClient:
+    """Return a client with admin auth headers attached."""
+    client.headers.update(auth_headers)
+    return client
+
+
 # ============================================================================
 # Sample Data Fixtures
 # ============================================================================

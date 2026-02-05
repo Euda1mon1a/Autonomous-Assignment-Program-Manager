@@ -2,7 +2,7 @@
  * Tests for useWebSocket hooks
  * Tests WebSocket connection lifecycle, message handling, reconnection, and subscriptions
  */
-import { renderHook, waitFor, act } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@/__tests__/utils/test-utils'
 import {
   useWebSocket,
   useScheduleWebSocket,
@@ -157,10 +157,10 @@ const mockScheduleUpdatedEvent: ScheduleUpdatedEvent = {
   eventType: 'schedule_updated',
   timestamp: '2024-01-01T12:00:00Z',
   scheduleId: 'schedule-123',
-  academicYear_id: 'ay-2024',
+  academicYearId: 'ay-2024',
   userId: 'user-123',
-  update_type: 'modified',
-  affected_blocks_count: 5,
+  updateType: 'modified',
+  affectedBlocksCount: 5,
   message: 'Schedule updated successfully',
 }
 
@@ -171,8 +171,8 @@ const mockAssignmentChangedEvent: AssignmentChangedEvent = {
   personId: 'person-123',
   blockId: 'block-123',
   rotationTemplateId: 'rotation-123',
-  change_type: 'created',
-  changed_by: 'user-123',
+  changeType: 'created',
+  changedBy: 'user-123',
   message: 'Assignment created',
 }
 

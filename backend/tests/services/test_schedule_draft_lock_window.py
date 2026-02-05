@@ -79,3 +79,74 @@ async def test_publish_blocked_by_lock_window(db):
 
     assert result.success is False
     assert result.error_code == "LOCK_WINDOW_BLOCKED"
+
+
+@pytest.mark.asyncio
+async def test_manual_draft_bypasses_lock_window_breakglass(db):
+    """Manual drafts should bypass break-glass gate per policy.
+
+    Coordinators are trusted for manual edits - the break-glass gate
+    is intended for automated systems (SOLVER, IMPORT), not human judgment.
+    """
+    lock_date = date.today() + timedelta(days=7)
+    settings = ApplicationSettings(schedule_lock_date=lock_date)
+    db.add(settings)
+
+    user = User(
+        id=uuid4(),
+        username="coordinator",
+        email="coord@example.com",
+        hashed_password="hashed",
+        role="coordinator",
+    )
+    person = Person(
+        id=uuid4(),
+        name="Test Resident",
+        type="resident",
+        email="resident@example.com",
+        pgy_level=1,
+    )
+    db.add_all([user, person])
+    db.commit()
+
+    # Key difference: source_type=DraftSourceType.MANUAL
+    draft = ScheduleDraft(
+        id=uuid4(),
+        created_at=datetime.utcnow(),
+        created_by_id=user.id,
+        target_start_date=date.today(),
+        target_end_date=date.today(),
+        status=ScheduleDraftStatus.DRAFT,
+        source_type=DraftSourceType.MANUAL,
+        change_summary={"added": 0, "modified": 0, "deleted": 0},
+        flags_total=0,
+        flags_acknowledged=0,
+    )
+    db.add(draft)
+    db.commit()
+
+    draft_assignment = ScheduleDraftAssignment(
+        id=uuid4(),
+        draft_id=draft.id,
+        person_id=person.id,
+        assignment_date=date.today(),
+        time_of_day="AM",
+        activity_code=None,
+        rotation_id=None,
+        change_type=DraftAssignmentChangeType.ADD,
+        existing_assignment_id=None,
+    )
+    db.add(draft_assignment)
+    db.commit()
+
+    service = ScheduleDraftService(db)
+    result = await service.publish_draft(
+        draft_id=draft.id,
+        published_by_id=user.id,
+        override_comment=None,
+        break_glass_reason=None,  # No break-glass provided
+        validate_acgme=True,
+    )
+
+    # MANUAL drafts should NOT return LOCK_WINDOW_BLOCKED
+    assert result.error_code != "LOCK_WINDOW_BLOCKED"

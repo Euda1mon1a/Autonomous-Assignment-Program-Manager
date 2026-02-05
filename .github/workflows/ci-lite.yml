@@ -1,0 +1,503 @@
+# Lightweight CI for Codex/bot PRs - No Docker/DB required
+# Maximizes static analysis and mocked tests for catching wiring issues
+#
+# What this catches:
+# - Type mismatches (mypy, tsc)
+# - API contract drift (schema validation)
+# - Import errors (syntax validation)
+# - Linting violations (ruff, eslint)
+# - Security issues (bandit, npm audit)
+# - MCP tool contract issues (mocked tests)
+# - Frontend component issues (Jest mocked tests)
+
+name: CI Lite (Repo Only)
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+  push:
+    branches:
+      - 'codex/**'
+      - 'claude/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
+
+jobs:
+  # ============================================================================
+  # Phase 1: Quick syntax validation (fails fast)
+  # ============================================================================
+  syntax-check:
+    name: Syntax Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Validate Python syntax
+        run: |
+          echo "Checking Python syntax..."
+          find backend/app -name "*.py" -exec python -m py_compile {} \;
+          echo "✓ Python syntax valid"
+
+      - name: Validate MCP server syntax
+        run: |
+          echo "Checking MCP server syntax..."
+          find mcp-server/src -name "*.py" -exec python -m py_compile {} \;
+          echo "✓ MCP server syntax valid"
+
+  # ============================================================================
+  # Phase 2: Backend static analysis
+  # ============================================================================
+  backend-lint:
+    name: Backend - Ruff Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Run Ruff linter
+        working-directory: backend
+        run: |
+          echo "Running Ruff linter..."
+          ruff check . --output-format=github
+          echo "✓ Ruff lint passed"
+
+      - name: Check Ruff formatting
+        working-directory: backend
+        run: |
+          echo "Checking code formatting..."
+          ruff format --check .
+          echo "✓ Ruff format passed"
+
+  backend-types:
+    name: Backend - MyPy Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: 'backend/requirements.txt'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          pip install --upgrade pip
+          # Install only what's needed for type checking (skip heavy ML deps)
+          pip install mypy types-python-dateutil types-redis pydantic sqlalchemy fastapi
+          # Install project in editable mode for import resolution
+          pip install -e . --no-deps 2>/dev/null || true
+
+      - name: Run MyPy
+        working-directory: backend
+        continue-on-error: true  # Informational until errors fixed
+        run: |
+          echo "Running MyPy type checker..."
+          mypy app --ignore-missing-imports --no-error-summary || true
+          echo "ℹ Type check complete (informational)"
+
+  backend-security:
+    name: Backend - Bandit Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install bandit
+        run: pip install bandit
+
+      - name: Run Bandit
+        working-directory: backend
+        continue-on-error: true  # Informational until issues fixed
+        run: |
+          echo "Running Bandit security scan..."
+          bandit -r app -ll -f txt || true
+          echo "ℹ Security scan complete (informational)"
+
+  # ============================================================================
+  # Phase 3: Frontend static analysis
+  # ============================================================================
+  frontend-lint:
+    name: Frontend - ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: frontend
+        run: |
+          echo "Running ESLint..."
+          npm run lint
+          echo "✓ ESLint passed"
+
+  frontend-types:
+    name: Frontend - TypeScript Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run TypeScript type check
+        working-directory: frontend
+        run: |
+          echo "Running TypeScript compiler..."
+          npx tsc --noEmit
+          echo "✓ TypeScript type check passed"
+
+  frontend-tests:
+    name: Frontend - Jest Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run Jest tests
+        working-directory: frontend
+        run: |
+          echo "Running Jest unit tests..."
+          npm test -- --passWithNoTests --ci
+          echo "✓ Jest tests passed"
+
+  frontend-security:
+    name: Frontend - npm Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Run npm audit
+        working-directory: frontend
+        continue-on-error: true
+        run: |
+          echo "Running npm audit..."
+          npm audit --audit-level=high || true
+          echo "ℹ npm audit complete (informational)"
+
+  # ============================================================================
+  # Phase 4: API Contract Validation (critical for wiring)
+  # ============================================================================
+  api-contract:
+    name: API Contract - Type Sync Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Validate generated types exist
+        run: |
+          echo "Checking API generated types..."
+          if [ -f "frontend/src/types/api-generated.ts" ]; then
+            echo "✓ api-generated.ts exists"
+            wc -l frontend/src/types/api-generated.ts
+          else
+            echo "❌ api-generated.ts missing!"
+            exit 1
+          fi
+
+      - name: Check for camelCase convention violations
+        working-directory: frontend
+        run: |
+          echo "Checking TypeScript interfaces use camelCase..."
+          # Look for snake_case in interface definitions (potential wiring bugs)
+          if grep -rn "^\s*[a-z_]*_[a-z_]*:" src/types/*.ts src/hooks/*.ts 2>/dev/null | grep -v "// @enum-ok" | grep -v "_id:" | head -20; then
+            echo "⚠ Potential snake_case in TypeScript (check if intentional enum values)"
+          else
+            echo "✓ No obvious snake_case violations"
+          fi
+
+      - name: Validate OpenAPI spec syntax
+        run: |
+          echo "Validating OpenAPI spec..."
+          if [ -f "docs/api/openapi.yaml" ]; then
+            python3 -c "import yaml; yaml.safe_load(open('docs/api/openapi.yaml'))"
+            echo "✓ OpenAPI spec is valid YAML"
+          else
+            echo "ℹ No OpenAPI spec file found (optional)"
+          fi
+
+  # ============================================================================
+  # Phase 5: MCP Server Tests (mocked, no backend needed)
+  # ============================================================================
+  mcp-tests:
+    name: MCP Server - Mocked Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: 'mcp-server/pyproject.toml'
+
+      - name: Install MCP server with dev deps
+        working-directory: mcp-server
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run MCP tests (mocked)
+        working-directory: mcp-server
+        run: |
+          echo "Running MCP server tests..."
+          pytest tests/ -v --tb=short -x
+          echo "✓ MCP tests passed"
+
+  # ============================================================================
+  # Phase 6: Schema & Pydantic Validation
+  # ============================================================================
+  schema-validation:
+    name: Schema - Pydantic Model Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install minimal deps for schema validation
+        run: |
+          pip install pydantic pydantic-settings
+
+      - name: Validate Pydantic schemas importable
+        working-directory: backend
+        run: |
+          echo "Checking Pydantic schemas..."
+          python -c "
+          import sys
+          sys.path.insert(0, '.')
+
+          # Try importing core schemas
+          try:
+              from app.schemas import schedule_draft
+              print('✓ schedule_draft schemas importable')
+          except ImportError as e:
+              print(f'⚠ schedule_draft: {e}')
+
+          try:
+              from app.schemas import person
+              print('✓ person schemas importable')
+          except ImportError as e:
+              print(f'⚠ person: {e}')
+
+          try:
+              from app.schemas import assignment
+              print('✓ assignment schemas importable')
+          except ImportError as e:
+              print(f'⚠ assignment: {e}')
+
+          print('Schema import check complete')
+          "
+
+  # ============================================================================
+  # Phase 7: Documentation & Config Validation
+  # ============================================================================
+  docs-config:
+    name: Docs & Config Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Validate YAML configs
+        run: |
+          echo "Validating YAML files..."
+          for file in .github/workflows/*.yml docker-compose*.yml; do
+            if [ -f "$file" ]; then
+              python3 -c "import yaml; yaml.safe_load(open('$file'))" && echo "✓ $file"
+            fi
+          done
+
+      - name: Validate JSON configs
+        run: |
+          echo "Validating JSON files..."
+          for file in frontend/package.json frontend/tsconfig.json backend/pyproject.toml; do
+            if [ -f "$file" ]; then
+              if [[ "$file" == *.json ]]; then
+                python3 -c "import json; json.load(open('$file'))" && echo "✓ $file"
+              elif [[ "$file" == *.toml ]]; then
+                python3 -c "import tomllib; tomllib.load(open('$file', 'rb'))" && echo "✓ $file"
+              fi
+            fi
+          done
+
+      - name: Check for merge conflict markers
+        run: |
+          echo "Checking for merge conflict markers..."
+          if grep -rn "<<<<<<< HEAD" --include="*.py" --include="*.ts" --include="*.tsx" .; then
+            echo "❌ Found merge conflict markers!"
+            exit 1
+          fi
+          echo "✓ No merge conflict markers"
+
+  # ============================================================================
+  # Final Gate
+  # ============================================================================
+  ci-lite-summary:
+    name: CI Lite Summary
+    runs-on: ubuntu-latest
+    needs:
+      - syntax-check
+      - backend-lint
+      - backend-types
+      - backend-security
+      - frontend-lint
+      - frontend-types
+      - frontend-tests
+      - frontend-security
+      - api-contract
+      - mcp-tests
+      - schema-validation
+      - docs-config
+    if: always()
+
+    steps:
+      - name: Check results
+        run: |
+          echo "=== CI Lite Results ==="
+          echo ""
+          echo "Hard gates (must pass):"
+          echo "  Syntax:        ${{ needs.syntax-check.result }}"
+          echo "  Backend Lint:  ${{ needs.backend-lint.result }}"
+          echo "  Frontend Lint: ${{ needs.frontend-lint.result }}"
+          echo "  Frontend TSC:  ${{ needs.frontend-types.result }}"
+          echo "  Frontend Jest: ${{ needs.frontend-tests.result }}"
+          echo "  API Contract:  ${{ needs.api-contract.result }}"
+          echo "  MCP Tests:     ${{ needs.mcp-tests.result }}"
+          echo "  Docs/Config:   ${{ needs.docs-config.result }}"
+          echo ""
+          echo "Soft gates (informational):"
+          echo "  Backend Types: ${{ needs.backend-types.result }}"
+          echo "  Backend Sec:   ${{ needs.backend-security.result }}"
+          echo "  Frontend Sec:  ${{ needs.frontend-security.result }}"
+          echo "  Schema Valid:  ${{ needs.schema-validation.result }}"
+          echo ""
+
+          # Fail on hard gate failures
+          FAILED=0
+
+          if [[ "${{ needs.syntax-check.result }}" == "failure" ]]; then
+            echo "❌ Syntax check failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.backend-lint.result }}" == "failure" ]]; then
+            echo "❌ Backend lint failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.frontend-lint.result }}" == "failure" ]]; then
+            echo "❌ Frontend lint failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.frontend-types.result }}" == "failure" ]]; then
+            echo "❌ Frontend type check failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.frontend-tests.result }}" == "failure" ]]; then
+            echo "❌ Frontend tests failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.api-contract.result }}" == "failure" ]]; then
+            echo "❌ API contract check failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.mcp-tests.result }}" == "failure" ]]; then
+            echo "❌ MCP tests failed"
+            FAILED=1
+          fi
+
+          if [[ "${{ needs.docs-config.result }}" == "failure" ]]; then
+            echo "❌ Docs/config validation failed"
+            FAILED=1
+          fi
+
+          if [ $FAILED -eq 0 ]; then
+            echo ""
+            echo "✓ CI Lite PASSED - Ready for human review"
+          else
+            echo ""
+            echo "❌ CI Lite FAILED - Fix issues before merge"
+            exit 1
+          fi

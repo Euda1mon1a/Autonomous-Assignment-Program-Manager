@@ -233,6 +233,8 @@ export const credentialKeys = {
     [...credentialKeys.all, 'by-procedure', procedureId, filters] as const,
   qualified: (procedureId: string) => [...credentialKeys.all, 'qualified', procedureId] as const,
   summary: (personId: string) => [...credentialKeys.all, 'summary', personId] as const,
+  facultySummaries: (options?: { includeAdjuncts?: boolean; includeEmpty?: boolean }) =>
+    [...credentialKeys.all, 'faculty-summaries', options] as const,
   expiring: (days: number) => [...credentialKeys.all, 'expiring', days] as const,
 };
 
@@ -578,6 +580,65 @@ export function useFacultyCredentialSummary(
     gcTime: 15 * 60 * 1000, // 15 minutes
     enabled: !!personId,
     ...options,
+  });
+}
+
+/**
+ * Fetch credential summaries for all faculty members.
+ *
+ * Returns aggregated counts (total, active, expiring) and procedure lists
+ * for each faculty member. Use for dashboard views and reporting.
+ *
+ * @param options - Query options including filters
+ * @param options.includeAdjuncts - Include adjunct faculty (default: false)
+ * @param options.includeEmpty - Include faculty with no credentials (default: false)
+ *
+ * @example
+ * ```tsx
+ * function FacultyCredentialDashboard() {
+ *   const { data, isLoading } = useFacultyCredentialSummaries({
+ *     includeAdjuncts: false,
+ *     includeEmpty: true,
+ *   });
+ *
+ *   if (isLoading) return <Skeleton />;
+ *
+ *   return (
+ *     <DataTable
+ *       data={data}
+ *       columns={[
+ *         { header: 'Faculty', accessor: 'personName' },
+ *         { header: 'Active', accessor: 'activeCredentials' },
+ *         { header: 'Expiring Soon', accessor: 'expiringSoon' },
+ *       ]}
+ *     />
+ *   );
+ * }
+ * ```
+ */
+export function useFacultyCredentialSummaries(
+  options?: {
+    includeAdjuncts?: boolean;
+    includeEmpty?: boolean;
+  } & Omit<UseQueryOptions<FacultyCredentialSummary[], ApiError>, 'queryKey' | 'queryFn'>
+): UseQueryResult<FacultyCredentialSummary[], ApiError> {
+  const { includeAdjuncts, includeEmpty, ...queryOptions } = options ?? {};
+
+  // Build query params (snake_case for URL)
+  const params = new URLSearchParams();
+  if (includeAdjuncts) params.set('include_adjuncts', 'true');
+  if (includeEmpty) params.set('include_empty', 'true');
+  const queryString = params.toString();
+
+  return useQuery<FacultyCredentialSummary[], ApiError>({
+    queryKey: credentialKeys.facultySummaries({ includeAdjuncts, includeEmpty }),
+    queryFn: () =>
+      get<FacultyCredentialSummary[]>(
+        `/credentials/faculty-summary${queryString ? `?${queryString}` : ''}`
+      ),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    ...queryOptions,
   });
 }
 

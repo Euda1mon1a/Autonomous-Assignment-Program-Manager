@@ -4,7 +4,7 @@
  * Tests data fetching, mutations, and cache management
  */
 
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@/__tests__/utils/test-utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as api from '@/lib/api';
 import {

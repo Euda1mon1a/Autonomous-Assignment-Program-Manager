@@ -41,6 +41,9 @@ The `.env.local` file is already created with development-friendly values:
 cat .env.local
 ```
 
+If you run backend tests **outside** Docker, ensure `.env` includes a valid
+`DATABASE_URL` (the backend validates this on startup).
+
 ### 2. Start All Services
 
 ```bash

@@ -522,6 +522,25 @@ Ensure `tsconfig.json` includes test files:
    rm -rf test_env
    ```
 
+### Optional Dependency Warnings (Not Failures)
+
+**Symptom:**
+```
+WARNING: Optional dependency not available: prometheus_client
+WARNING: Optional dependency not available: ripser/persim
+```
+
+**What it means:** These packages power optional features (metrics export, GraphQL,
+advanced analytics). Missing them is **not** a CI failure unless a test explicitly
+requires those features.
+
+**Action:**
+- Ignore for standard scheduling tests.
+- Install only if you need those features locally:
+  ```bash
+  pip install prometheus_client strawberry-graphql ripser persim pyyaml msgpack
+  ```
+
 ### OpenTelemetry Specific Issues
 
 The `opentelemetry-instrumentation-*` packages have complex interdependencies.

@@ -91,6 +91,7 @@ FACULTY_ADMIN_EQUITY_PENALTY = 12
 FACULTY_AT_EQUITY_PENALTY = 12
 FACULTY_ACADEMIC_EQUITY_PENALTY = 8
 RESIDENT_CLINIC_EQUITY_PENALTY = 8
+FACULTY_CREDENTIAL_MISMATCH_PENALTY = 0
 FACULTY_ADMIN_BONUS = 1
 PHYSICAL_CAPACITY_SOFT_PENALTY = 10
 ACTIVITY_MIN_SHORTFALL_PENALTY = 10
@@ -225,26 +226,41 @@ class CPSATActivitySolver:
             return True
         return self._get_procedure_credential(faculty, procedure_id) is not None
 
-    def _filter_allowed_by_credentials(
+    def _uncredentialed_activity_ids(
         self,
         faculty: Person | None,
         allowed: list[UUID],
         activity_by_id: dict[UUID, Activity],
-    ) -> list[UUID]:
+    ) -> set[UUID]:
+        """Return activity IDs that require credentials the faculty lacks."""
         if not faculty or not allowed:
-            return allowed
-        filtered: list[UUID] = []
+            return set()
+        uncredentialed: set[UUID] = set()
         for act_id in allowed:
             activity = activity_by_id.get(act_id)
             if not activity or not activity.procedure_id:
-                filtered.append(act_id)
                 continue
             if not self._procedure_requires_credential(activity.procedure_id):
-                filtered.append(act_id)
                 continue
-            if self._faculty_has_procedure_credential(faculty, activity.procedure_id):
-                filtered.append(act_id)
-        return filtered
+            if not self._faculty_has_procedure_credential(
+                faculty, activity.procedure_id
+            ):
+                uncredentialed.add(act_id)
+        return uncredentialed
+
+    def _get_credential_mismatch_penalty(self) -> int:
+        raw = os.environ.get("FACULTY_CREDENTIAL_MISMATCH_PENALTY")
+        if raw is None:
+            return FACULTY_CREDENTIAL_MISMATCH_PENALTY
+        try:
+            return max(0, int(raw))
+        except (TypeError, ValueError):
+            logger.warning(
+                "Invalid FACULTY_CREDENTIAL_MISMATCH_PENALTY=%s; using default %s",
+                raw,
+                FACULTY_CREDENTIAL_MISMATCH_PENALTY,
+            )
+            return FACULTY_CREDENTIAL_MISMATCH_PENALTY
 
     def _vas_faculty_penalty(self, faculty: Person | None) -> int:
         if not self._vas_procedure_id:
@@ -291,6 +307,7 @@ class CPSATActivitySolver:
         block_number: int,
         academic_year: int,
         include_faculty_slots: bool = False,
+        force_faculty_override: bool = False,
     ) -> dict[str, Any]:
         """
         Assign activities to half-day slots for a block.
@@ -328,6 +345,12 @@ class CPSATActivitySolver:
             f"Activity solver starting for Block {block_number}: "
             f"{start_date} to {end_date}"
         )
+        if include_faculty_slots and not force_faculty_override:
+            raise ValueError(
+                "include_faculty_slots requires explicit override "
+                "(force_faculty_override=True)."
+            )
+
         if include_faculty_slots:
             logger.warning(
                 "Activity solver running with include_faculty_slots=True; "
@@ -747,8 +770,10 @@ class CPSATActivitySolver:
         faculty_admin_activity_by_slot: dict[int, UUID] = {}
         cv_penalty_terms: list[tuple[Any, int]] = []
         vas_penalty_terms: list[tuple[Any, int]] = []
+        credential_penalty_terms: list[tuple[Any, int]] = []
         oic_clinical_avoid_terms: list[tuple[Any, int]] = []
         clinic_preference_terms: list[tuple[Any, int]] = []
+        credential_penalty_weight = self._get_credential_mismatch_penalty()
 
         for s_i, slot in enumerate(slots):
             person_type = slot_meta[s_i].get("person_type")
@@ -756,6 +781,7 @@ class CPSATActivitySolver:
             if person_type == "faculty":
                 allowed: list[UUID] = []
                 faculty = slot.person
+                uncredentialed_ids: set[UUID] = set()
                 if faculty:
                     if at_activity and at_activity.id in assignable_ids:
                         allowed.append(at_activity.id)
@@ -800,7 +826,7 @@ class CPSATActivitySolver:
                 if not allowed:
                     allowed = list(faculty_allowed_ids)
                 if faculty:
-                    allowed = self._filter_allowed_by_credentials(
+                    uncredentialed_ids = self._uncredentialed_activity_ids(
                         faculty, allowed, activity_by_id
                     )
             else:
@@ -893,6 +919,15 @@ class CPSATActivitySolver:
                 )
                 safe_code = act_code.replace("-", "_")
                 a[s_i, act_id] = model.NewBoolVar(f"a_{s_i}_{safe_code}")
+                if (
+                    person_type == "faculty"
+                    and credential_penalty_weight > 0
+                    and act_id in uncredentialed_ids
+                    and (s_i, act_id) in a
+                ):
+                    credential_penalty_terms.append(
+                        (a[s_i, act_id], credential_penalty_weight)
+                    )
 
             if vas_penalty_weight and vas_penalty_weight > 0:
                 for act_id in allowed:
@@ -2178,6 +2213,14 @@ class CPSATActivitySolver:
                     objective_expr - penalty if objective_expr is not None else -penalty
                 )
 
+        if credential_penalty_terms:
+            penalties = [var * weight for var, weight in credential_penalty_terms]
+            if penalties:
+                penalty = sum(penalties)
+                objective_expr = (
+                    objective_expr - penalty if objective_expr is not None else -penalty
+                )
+
         if oic_clinical_avoid_terms:
             penalties = [var * weight for var, weight in oic_clinical_avoid_terms]
             if penalties:
@@ -3130,6 +3173,7 @@ def solve_activities(
     academic_year: int,
     timeout_seconds: float = 60.0,
     include_faculty_slots: bool = False,
+    force_faculty_override: bool = False,
 ) -> dict[str, Any]:
     """
     Convenience function to run activity solver.
@@ -3139,6 +3183,8 @@ def solve_activities(
         block_number: Block number (1-13)
         academic_year: Academic year
         timeout_seconds: Solver timeout
+        include_faculty_slots: Include faculty slots in activity solver (override only)
+        force_faculty_override: Explicit override flag required when including faculty
 
     Returns:
         Solver result dictionary
@@ -3148,4 +3194,5 @@ def solve_activities(
         block_number,
         academic_year,
         include_faculty_slots=include_faculty_slots,
+        force_faculty_override=force_faculty_override,
     )

@@ -54,16 +54,9 @@ repos:
 
   # Type checking - non-blocking until tech debt cleared (~4250 errors)
   # Config in backend/pyproject.toml catches real bugs, not annotation noise
-  - repo: local
-    hooks:
-      - id: mypy
-        name: mypy (type check)
-        entry: bash -c "cd backend && mypy app/ --config-file pyproject.toml --no-error-summary || true"
-        language: system
-        pass_filenames: false
-        files: ^backend/app/
-        stages: [pre-commit]
-        verbose: true
+  # mypy removed from pre-commit (ran full scan but never blocked)
+  # For type checking, run: ./scripts/mypy-check.sh
+  # CI runs mypy on PRs
 
   # ============================================================================
   # PHASE 4: General File Quality
@@ -121,12 +114,13 @@ repos:
   # PHASE 5: Python Security (Bandit)
   # ============================================================================
 
-  # Bandit - Python security linter (uses pyproject.toml config automatically)
+  # Bandit - Python security linter (staged files only)
+  # For full backend scan, run: ./scripts/bandit-full.sh
   - repo: local
     hooks:
       - id: bandit
-        name: bandit (Python security)
-        entry: bash -c "cd backend && bandit -r app -ll"
+        name: bandit (Python security - staged files)
+        entry: bandit -ll
         language: system
         types: [python]
         files: ^backend/app/

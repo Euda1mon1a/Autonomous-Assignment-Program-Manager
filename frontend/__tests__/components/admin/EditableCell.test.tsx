@@ -4,7 +4,7 @@
  * Tests click-to-edit functionality, keyboard navigation, and save/cancel behavior.
  */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/__tests__/utils/test-utils';
 import userEvent from '@testing-library/user-event';
 import { EditableCell } from '@/components/admin/EditableCell';
 

@@ -5,7 +5,7 @@
  * for on-call assignment data and contact information.
  */
 
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@/__tests__/utils/test-utils';
 import { QueryClient } from '@tanstack/react-query';
 import * as api from '@/lib/api';
 import {

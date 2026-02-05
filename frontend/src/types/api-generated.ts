@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-02-02T06:47:27Z
+ * Generated at: 2026-02-05T04:52:28Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -3358,6 +3358,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/faculty/weekly-template-coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Weekly Template Coverage
+         * @description Get faculty missing weekly templates and overrides.
+         */
+        get: operations["get_weekly_template_coverage_api_v1_faculty_weekly_template_coverage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/faculty/{person_id}/weekly-template/slots": {
         parameters: {
             query?: never;
@@ -4761,24 +4781,14 @@ export interface paths {
         put?: never;
         /**
          * Generate Faculty Outpatient
-         * @description Generate faculty PRIMARY clinic and SUPERVISION assignments for a block.
+         * @description DEPRECATED: Use /generate endpoint instead.
          *
-         *     This generates:
-         *     1. Faculty clinic sessions - Based on role limits (PD=0, APD=2, Core=4/week)
-         *     2. Faculty supervision - ACGME-compliant supervision of resident assignments
-         *
-         *     Args:
-         *         block_number: Block number (1-13 for academic year)
-         *         regenerate: If True, clear existing faculty outpatient assignments first
-         *         include_clinic: Generate faculty primary clinic assignments
-         *         include_supervision: Generate faculty supervision assignments
+         *     Faculty clinic and supervision assignments are now handled by the global
+         *     CP-SAT solver. Use POST /schedule/generate which produces resident AND
+         *     faculty assignments in a single optimized solve.
          *
          *     Returns:
-         *         Generation result with assignment counts and faculty summaries
-         *
-         *     Note:
-         *         This endpoint modifies the database. Ensure backup before use.
-         *         Use the safe-schedule-generation skill pre-flight checklist.
+         *         410 Gone - This endpoint has been removed.
          */
         post: operations["generate_faculty_outpatient_api_v1_schedule_faculty_outpatient_generate_post"];
         delete?: never;
@@ -5058,6 +5068,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/schedule/faculty/adjunct-gaps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Adjunct Faculty Gaps
+         * @description DEPRECATED: Faculty expansion service archived.
+         *
+         *     Faculty assignments are now handled by the global CP-SAT solver.
+         *     Adjunct gaps should be managed via half_day_assignments queries.
+         */
+        get: operations["get_adjunct_faculty_gaps_api_v1_schedule_faculty_adjunct_gaps_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schedule/validation/faculty-coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Faculty Coverage Validation
+         * @description DEPRECATED: Faculty expansion service archived.
+         *
+         *     Faculty assignments are now handled by the global CP-SAT solver.
+         *     Coverage validation should query half_day_assignments directly.
+         */
+        get: operations["get_faculty_coverage_validation_api_v1_schedule_validation_faculty_coverage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/half-day-assignments": {
         parameters: {
             query?: never;
@@ -5079,7 +5135,7 @@ export interface paths {
          *     - Mid-block transitions
          *
          *     Args:
-         *         block_number: Block number (0-13)
+         *         block_number: Block number (1-13)
          *         academic_year: Academic year (e.g., 2025 for AY 2025-2026)
          *         start_date: Start date for date range query
          *         end_date: End date for date range query
@@ -6177,6 +6233,26 @@ export interface paths {
          * @description Return aggregate counts for admin dashboard widgets.
          */
         get: operations["get_admin_dashboard_summary_api_v1_admin_dashboard_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/dashboard/break-glass": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Break Glass Usage
+         * @description Return break-glass usage for the last 7 days.
+         */
+        get: operations["get_break_glass_usage_api_v1_admin_dashboard_break_glass_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -10455,6 +10531,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/credentials/faculty-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Faculty Credential Summaries
+         * @description List credential summaries for faculty. Requires authentication.
+         */
+        get: operations["list_faculty_credential_summaries_api_v1_credentials_faculty_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/credentials/{credential_id}": {
         parameters: {
             query?: never;
@@ -13946,6 +14042,69 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/swaps/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request Swap
+         * @description Create a swap request that requires approval before execution.
+         *
+         *     Faculty can only request swaps for their own assignments.
+         *     Coordinators/admins can request swaps on behalf of any faculty.
+         */
+        post: operations["request_swap_api_v1_swaps_request_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/swaps/{swap_id}/approval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve Swap
+         * @description Approve or reject a pending swap request.
+         */
+        post: operations["approve_swap_api_v1_swaps__swap_id__approval_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/swaps/{swap_id}/execute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Execute Swap By Id
+         * @description Execute an approved swap request by ID.
+         */
+        post: operations["execute_swap_by_id_api_v1_swaps__swap_id__execute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/swaps/execute": {
         parameters: {
             query?: never;
@@ -14103,7 +14262,10 @@ export interface paths {
         put?: never;
         /**
          * Create Leave
-         * @description Create a new leave record.
+         * @description Create a new leave record (manager-only).
+         *
+         *     Creates leave with APPROVED status. Regular users should use
+         *     POST /leave/request for the approval workflow.
          *
          *     Automatically triggers conflict detection in the background.
          */
@@ -14130,6 +14292,46 @@ export interface paths {
         get: operations["get_leave_calendar_api_v1_leave_calendar_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leave/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request Leave
+         * @description Create a leave request that requires approval.
+         */
+        post: operations["request_leave_api_v1_leave_request_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leave/{leave_id}/approval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve Leave
+         * @description Approve or reject a pending leave request.
+         */
+        post: operations["approve_leave_api_v1_leave__leave_id__approval_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -20384,11 +20586,6 @@ export interface components {
              */
             activityCategory: string;
             /**
-             * Procedure Id
-             * @description Optional procedure ID for credentialed activities (e.g., VAS, SM)
-             */
-            procedureId?: string | null;
-            /**
              * Font Color
              * @description Tailwind color class for text
              */
@@ -20405,12 +20602,6 @@ export interface components {
              */
             requiresSupervision: boolean;
             /**
-             * Provides Supervision
-             * @description Counts toward supervision ratios (AT/PCAT)
-             * @default false
-             */
-            providesSupervision: boolean;
-            /**
              * Is Protected
              * @description True for locked slots (e.g., LEC)
              * @default false
@@ -20423,22 +20614,11 @@ export interface components {
              */
             countsTowardClinicalHours: boolean;
             /**
-             * Counts Toward Physical Capacity
-             * @description Counts toward FMC physical capacity limits
-             * @default false
-             */
-            countsTowardPhysicalCapacity: boolean;
-            /**
              * Display Order
              * @description Sort order for UI
              * @default 0
              */
             displayOrder: number;
-            /**
-             * Capacity Units
-             * @description FMC physical capacity units consumed by this activity (0 for non-physical)
-             */
-            capacityUnits?: number | null;
         };
         /**
          * ActivityListResponse
@@ -20479,6 +20659,8 @@ export interface components {
             details?: {
                 [key: string]: unknown;
             } | null;
+            /** Changes */
+            changes?: components["schemas"]["FieldChange"][] | null;
             /** Ipaddress */
             ipAddress?: string | null;
             /** Useragent */
@@ -20659,11 +20841,6 @@ export interface components {
              */
             activityCategory: string;
             /**
-             * Procedure Id
-             * @description Optional procedure ID for credentialed activities (e.g., VAS, SM)
-             */
-            procedureId?: string | null;
-            /**
              * Font Color
              * @description Tailwind color class for text
              */
@@ -20680,12 +20857,6 @@ export interface components {
              */
             requiresSupervision: boolean;
             /**
-             * Provides Supervision
-             * @description Counts toward supervision ratios (AT/PCAT)
-             * @default false
-             */
-            providesSupervision: boolean;
-            /**
              * Is Protected
              * @description True for locked slots (e.g., LEC)
              * @default false
@@ -20698,22 +20869,11 @@ export interface components {
              */
             countsTowardClinicalHours: boolean;
             /**
-             * Counts Toward Physical Capacity
-             * @description Counts toward FMC physical capacity limits
-             * @default false
-             */
-            countsTowardPhysicalCapacity: boolean;
-            /**
              * Display Order
              * @description Sort order for UI
              * @default 0
              */
             displayOrder: number;
-            /**
-             * Capacity Units
-             * @description FMC physical capacity units consumed by this activity (0 for non-physical)
-             */
-            capacityUnits?: number | null;
             /**
              * Id
              * Format: uuid
@@ -20756,20 +20916,47 @@ export interface components {
             backgroundColor?: string | null;
             /** Requires Supervision */
             requiresSupervision?: boolean | null;
-            /** Provides Supervision */
-            providesSupervision?: boolean | null;
             /** Is Protected */
             isProtected?: boolean | null;
             /** Counts Toward Clinical Hours */
             countsTowardClinicalHours?: boolean | null;
-            /** Counts Toward Physical Capacity */
-            countsTowardPhysicalCapacity?: boolean | null;
             /** Display Order */
             displayOrder?: number | null;
-            /** Capacity Units */
-            capacityUnits?: number | null;
-            /** Procedure Id */
-            procedureId?: string | null;
+        };
+        /**
+         * AdjunctFacultyGapResponse
+         * @description Adjunct faculty member needing manual assignment.
+         */
+        AdjunctFacultyGapResponse: {
+            /**
+             * Personid
+             * Format: uuid
+             */
+            personId: string;
+            /** Displayname */
+            displayName: string;
+            /** Facultyrole */
+            facultyRole: string;
+            /** Minclinichalfdays */
+            minClinicHalfdays: number | null;
+            /** Maxclinichalfdays */
+            maxClinicHalfdays: number | null;
+            /** Existingassignmentcount */
+            existingAssignmentCount: number;
+        };
+        /**
+         * AdjunctGapsResponse
+         * @description Response for adjunct faculty gaps in a block.
+         */
+        AdjunctGapsResponse: {
+            /** Blocknumber */
+            blockNumber: number;
+            /** Academicyear */
+            academicYear: number;
+            /** Adjunctsneedingmanual */
+            adjunctsNeedingManual: components["schemas"]["AdjunctFacultyGapResponse"][];
+            /** Totaladjuncts */
+            totalAdjuncts: number;
         };
         /** AdminAbsenceCounts */
         AdminAbsenceCounts: {
@@ -20777,6 +20964,23 @@ export interface components {
             active: number;
             /** Upcoming */
             upcoming: number;
+        };
+        /** AdminBreakGlassUsage */
+        AdminBreakGlassUsage: {
+            /**
+             * Window Start
+             * Format: date-time
+             */
+            windowStart: string;
+            /**
+             * Window End
+             * Format: date-time
+             */
+            windowEnd: string;
+            /** Count */
+            count: number;
+            /** Last Used At */
+            lastUsedAt?: string | null;
         };
         /** AdminConflictCounts */
         AdminConflictCounts: {
@@ -22735,14 +22939,12 @@ export interface components {
              * @description Index of the operation in the batch
              */
             index: number;
+            /** Template Id */
+            templateId: string | null;
             /** Success */
             success: boolean;
-            /** Assignment Id */
-            assignmentId?: string | null;
             /** Error */
             error?: string | null;
-            /** Warnings */
-            warnings?: string[];
         };
         /**
          * BatchOperationStatus
@@ -22878,6 +23080,22 @@ export interface components {
          * @description Response for batch pattern update.
          */
         BatchPatternUpdateResponse: {
+            /**
+             * Operation Type
+             * @description Batch operation identifier
+             * @default batch_apply_patterns
+             */
+            operationType: string;
+            /**
+             * Total
+             * @description Total number of templates requested
+             */
+            total?: number | null;
+            /**
+             * Succeeded
+             * @description Number of successful updates
+             */
+            succeeded?: number | null;
             /** Total Templates */
             totalTemplates: number;
             /** Successful */
@@ -23140,7 +23358,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["BatchOperationResult"][];
+            results?: components["schemas"]["app__schemas__batch__BatchOperationResult"][];
             /**
              * Errors
              * @description Global errors
@@ -23287,7 +23505,7 @@ export interface components {
              * Results
              * @description Detailed results for each operation
              */
-            results?: components["schemas"]["app__schemas__rotation_template__BatchOperationResult"][];
+            results?: components["schemas"]["BatchOperationResult"][];
             /**
              * Dry Run
              * @description Whether this was a dry run
@@ -24441,9 +24659,9 @@ export interface components {
         /** Body_record_zone_incident_api_v1_resilience_tier2_zones_incident_post */
         Body_record_zone_incident_api_v1_resilience_tier2_zones_incident_post: {
             /** Faculty Affected */
-            facultyAffected?: string[] | null;
+            facultyAffected?: string[];
             /** Services Affected */
-            servicesAffected?: string[] | null;
+            servicesAffected?: string[];
         };
         /** Body_stage_half_day_import_api_v1_import_half_day_stage_post */
         Body_stage_half_day_import_api_v1_import_half_day_stage_post: {
@@ -25493,7 +25711,7 @@ export interface components {
              * Distance To Catastrophe
              * @description Distance to catastrophe boundary
              */
-            distanceToCatastrophe: number;
+            distanceToCatastrophe?: number | null;
             /**
              * Current Distance To Bifurcation
              * @description Current distance to bifurcation set
@@ -25944,6 +26162,36 @@ export interface components {
          * @enum {string}
          */
         CircuitBreakerState: "closed" | "open" | "half_open";
+        /**
+         * ClinicLimitViolationResponse
+         * @description A clinic limit violation for a faculty member.
+         */
+        ClinicLimitViolationResponse: {
+            /**
+             * Facultyid
+             * Format: uuid
+             */
+            facultyId: string;
+            /** Facultyname */
+            facultyName: string;
+            /** Facultyrole */
+            facultyRole: string | null;
+            /**
+             * Weekstart
+             * Format: date
+             */
+            weekStart: string;
+            /** Cliniccount */
+            clinicCount: number;
+            /** Minlimit */
+            minLimit: number;
+            /** Maxlimit */
+            maxLimit: number;
+            /** Violationtype */
+            violationType: string;
+            /** Limitsource */
+            limitSource: string;
+        };
         /**
          * CognitiveLoadAnalysis
          * @description Analysis of cognitive load for a schedule.
@@ -26443,15 +26691,29 @@ export interface components {
         };
         /**
          * ConflictCheckResponse
-         * @description Response for conflict check.
+         * @description Response for conflict checking before assignment.
          */
         ConflictCheckResponse: {
-            /** Has Conflicts */
-            hasConflicts: boolean;
-            /** Conflicts */
-            conflicts: components["schemas"]["TemplateConflict"][];
-            /** Can Proceed */
-            canProceed: boolean;
+            /**
+             * Can Assign
+             * @description Whether assignment can proceed
+             */
+            canAssign: boolean;
+            /**
+             * Conflicts
+             * @description Detected conflicts
+             */
+            conflicts?: components["schemas"]["ConflictDetail"][];
+            /**
+             * Warnings
+             * @description Warnings
+             */
+            warnings?: string[];
+            /**
+             * Suggestions
+             * @description Alternative suggestions
+             */
+            suggestions?: string[];
         };
         /**
          * ConflictDetail
@@ -26598,15 +26860,93 @@ export interface components {
         };
         /**
          * ConflictSummary
-         * @description Summary of conflicts found.
+         * @description Summary statistics for a set of conflicts.
+         *
+         *     Used for dashboard displays and reporting.
+         * @example {
+         *       "affectedPeopleCount": 8,
+         *       "autoResolvableCount": 6,
+         *       "averageImpactScore": 0.65,
+         *       "criticalCount": 3,
+         *       "highCount": 5,
+         *       "lowCount": 3,
+         *       "mediumCount": 4,
+         *       "totalConflicts": 15
+         *     }
          */
         ConflictSummary: {
-            /** Total Conflicts */
+            /**
+             * Total Conflicts
+             * @default 0
+             */
             totalConflicts: number;
-            /** Errors */
-            errors: number;
-            /** Warnings */
-            warnings: number;
+            /**
+             * Critical Count
+             * @default 0
+             */
+            criticalCount: number;
+            /**
+             * High Count
+             * @default 0
+             */
+            highCount: number;
+            /**
+             * Medium Count
+             * @default 0
+             */
+            mediumCount: number;
+            /**
+             * Low Count
+             * @default 0
+             */
+            lowCount: number;
+            /** By Category */
+            byCategory?: {
+                [key: string]: number | undefined;
+            };
+            /** By Type */
+            byType?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Affected People Count
+             * @default 0
+             */
+            affectedPeopleCount: number;
+            /**
+             * Affected Blocks Count
+             * @default 0
+             */
+            affectedBlocksCount: number;
+            /**
+             * Auto Resolvable Count
+             * @default 0
+             */
+            autoResolvableCount: number;
+            /**
+             * Requires Manual Count
+             * @default 0
+             */
+            requiresManualCount: number;
+            /**
+             * Average Impact Score
+             * @default 0
+             */
+            averageImpactScore: number;
+            /**
+             * Average Urgency Score
+             * @default 0
+             */
+            averageUrgencyScore: number;
+            /**
+             * Average Complexity Score
+             * @default 0
+             */
+            averageComplexityScore: number;
+            /** Earliest Date */
+            earliestDate?: string | null;
+            /** Latest Date */
+            latestDate?: string | null;
         };
         /**
          * ConflictType
@@ -26830,36 +27170,34 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap in the schedule.
-         * @example {
-         *       "date": "2024-01-15",
-         *       "rotation": "FMIT Inpatient",
-         *       "severity": "high",
-         *       "timeOfDay": "PM"
-         *     }
+         * @description Represents a coverage gap with details.
          */
         CoverageGap: {
+            /** Gap Id */
+            gapId: string;
             /**
              * Date
              * Format: date
-             * @description Date of the gap
              */
             date: string;
-            /**
-             * Time Of Day
-             * @description AM or PM
-             */
+            /** Time Of Day */
             timeOfDay: string;
-            /**
-             * Rotation
-             * @description Rotation with gap
-             */
-            rotation?: string | null;
-            /**
-             * Severity
-             * @description low, medium, high
-             */
+            /** Block Id */
+            blockId: string;
+            /** Severity */
             severity: string;
+            /** Days Until */
+            daysUntil: number;
+            /** Affected Area */
+            affectedArea: string;
+            /** Department */
+            department: string | null;
+            /** Current Assignments */
+            currentAssignments: number;
+            /** Required Assignments */
+            requiredAssignments: number;
+            /** Gap Size */
+            gapSize: number;
         };
         /**
          * CoverageGapsResponse
@@ -26886,7 +27224,7 @@ export interface components {
                 [key: string]: number | undefined;
             };
             /** Gaps */
-            gaps: components["schemas"]["app__api__routes__fmit_health__CoverageGap"][];
+            gaps: components["schemas"]["CoverageGap"][];
         };
         /**
          * CoverageHeatmapResponse
@@ -26938,7 +27276,7 @@ export interface components {
              * Gaps
              * @description List of coverage gaps
              */
-            gaps?: components["schemas"]["CoverageGap"][];
+            gaps?: components["schemas"]["app__schemas__visualization__CoverageGap"][];
             /**
              * Title
              * @description Title for the heatmap
@@ -28209,7 +28547,7 @@ export interface components {
          * @description Types of flags that require review.
          * @enum {string}
          */
-        DraftFlagType: "conflict" | "acgme_violation" | "coverage_gap" | "manual_review";
+        DraftFlagType: "conflict" | "acgme_violation" | "coverage_gap" | "manual_review" | "lock_window_violation" | "credential_missing";
         /**
          * DraftPreviewResponse
          * @description Schema for draft preview - comparison of draft vs live.
@@ -28271,7 +28609,7 @@ export interface components {
          * @description Source of draft changes.
          * @enum {string}
          */
-        DraftSourceType: "solver" | "manual" | "swap" | "import";
+        DraftSourceType: "solver" | "manual" | "swap" | "import" | "resilience";
         /**
          * DuplicateAction
          * @description Action to take for duplicate assignments.
@@ -30555,6 +30893,36 @@ export interface components {
             pendingSwapRequest: boolean;
         };
         /**
+         * FacultyCoverageResponse
+         * @description Comprehensive faculty coverage validation for a block.
+         */
+        FacultyCoverageResponse: {
+            /** Blocknumber */
+            blockNumber: number;
+            /** Academicyear */
+            academicYear: number;
+            /**
+             * Blockstartdate
+             * Format: date
+             */
+            blockStartDate: string;
+            /**
+             * Blockenddate
+             * Format: date
+             */
+            blockEndDate: string;
+            /** Totalfaculty */
+            totalFaculty: number;
+            /** Facultywithassignments */
+            facultyWithAssignments: number;
+            /** Adjunctsneedingmanual */
+            adjunctsNeedingManual: components["schemas"]["AdjunctFacultyGapResponse"][];
+            /** Cliniclimitviolations */
+            clinicLimitViolations: components["schemas"]["ClinicLimitViolationResponse"][];
+            /** Coveragecomplete */
+            coverageComplete: boolean;
+        };
+        /**
          * FacultyCredentialSummary
          * @description Summary of a faculty member's credentials.
          */
@@ -30663,6 +31031,21 @@ export interface components {
             facultyRole: string | null;
             /** Weeks */
             weeks: components["schemas"]["FacultyWeekSlots"][];
+        };
+        /**
+         * FacultyMissingWeeklyTemplateItem
+         * @description Schema for a faculty member missing weekly templates and overrides.
+         */
+        FacultyMissingWeeklyTemplateItem: {
+            /**
+             * Person Id
+             * Format: uuid
+             */
+            personId: string;
+            /** Name */
+            name: string;
+            /** Faculty Role */
+            facultyRole: string | null;
         };
         /**
          * FacultyOverrideCreate
@@ -31156,6 +31539,18 @@ export interface components {
             weekStart: string;
             /** Slots */
             slots: components["schemas"]["EffectiveSlot"][];
+        };
+        /**
+         * FacultyWeeklyTemplateCoverageResponse
+         * @description Schema for coverage report response.
+         */
+        FacultyWeeklyTemplateCoverageResponse: {
+            /** Total Faculty */
+            totalFaculty: number;
+            /** Total Missing */
+            totalMissing: number;
+            /** Missing */
+            missing: components["schemas"]["FacultyMissingWeeklyTemplateItem"][];
         };
         /**
          * FacultyYearSummary
@@ -33642,7 +34037,7 @@ export interface components {
              * @default []
              */
             recommendations: components["schemas"]["Recommendation"][];
-            summary?: components["schemas"]["ConflictSummary"] | null;
+            summary?: components["schemas"]["app__schemas__schedule__ConflictSummary"] | null;
         };
         /**
          * ImportApplyError
@@ -34637,6 +35032,21 @@ export interface components {
             /** Snapshot Date */
             snapshotDate?: string | null;
         };
+        /** LeaveApprovalRequest */
+        LeaveApprovalRequest: {
+            /** Approved */
+            approved: boolean;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** LeaveApprovalResponse */
+        LeaveApprovalResponse: {
+            /** Success */
+            success: boolean;
+            status: components["schemas"]["LeaveStatus"];
+            /** Message */
+            message: string;
+        };
         /**
          * LeaveCalendarEntry
          * @description Single entry in leave calendar.
@@ -34753,6 +35163,16 @@ export interface components {
             /** Page Size */
             pageSize: number;
         };
+        /** LeaveRequestResponse */
+        LeaveRequestResponse: {
+            /** Success */
+            success: boolean;
+            /** Leave Id */
+            leaveId?: string | null;
+            status: components["schemas"]["LeaveStatus"];
+            /** Message */
+            message: string;
+        };
         /**
          * LeaveResponse
          * @description Response for a leave record.
@@ -34785,6 +35205,13 @@ export interface components {
             isBlocking: boolean;
             /** Description */
             description: string | null;
+            status: components["schemas"]["LeaveStatus"];
+            /** Reviewed At */
+            reviewedAt?: string | null;
+            /** Reviewed By Id */
+            reviewedById?: string | null;
+            /** Review Notes */
+            reviewNotes?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -34793,6 +35220,11 @@ export interface components {
             /** Updated At */
             updatedAt: string | null;
         };
+        /**
+         * LeaveStatus
+         * @enum {string}
+         */
+        LeaveStatus: "pending" | "approved" | "rejected" | "cancelled";
         /**
          * LeaveType
          * @description Leave/absence types with Hawaii-appropriate defaults.
@@ -35255,7 +35687,7 @@ export interface components {
              * Barrier Height
              * @description Energy barrier to nearest stable state
              */
-            barrierHeight: number;
+            barrierHeight?: number | null;
             /**
              * Escape Rate
              * @description Probability of spontaneous escape per time unit
@@ -35265,7 +35697,7 @@ export interface components {
              * Lifetime
              * @description Expected lifetime in current state
              */
-            lifetime: number;
+            lifetime?: number | null;
             /**
              * Is Metastable
              * @description True if trapped in local minimum
@@ -37378,6 +37810,11 @@ export interface components {
              */
             overrideComment?: string | null;
             /**
+             * Break Glass Reason
+             * @description Required when publishing drafts that touch the lock window
+             */
+            breakGlassReason?: string | null;
+            /**
              * Validate Acgme
              * @description If True, validate ACGME compliance after publish
              * @default true
@@ -37863,14 +38300,13 @@ export interface components {
             queueName: string;
             /**
              * Confirm
-             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
         };
         /**
          * QueuePurgeResponse
-         * @description Response after purging a queue.
+         * @description Response to queue purge request.
          */
         QueuePurgeResponse: {
             /** Queuename */
@@ -40592,6 +41028,14 @@ export interface components {
             publishedAt?: string | null;
             /** Published By Id */
             publishedById?: string | null;
+            /** Approved At */
+            approvedAt?: string | null;
+            /** Approved By Id */
+            approvedById?: string | null;
+            /** Approval Reason */
+            approvalReason?: string | null;
+            /** Lock Date At Approval */
+            lockDateAtApproval?: string | null;
             /**
              * Rollback Available
              * @default true
@@ -40917,7 +41361,7 @@ export interface components {
             pgyLevels?: number[] | null;
             /** Rotation Template Ids */
             rotationTemplateIds?: string[] | null;
-            /** @default greedy */
+            /** @default cp_sat */
             algorithm: components["schemas"]["SchedulingAlgorithm"];
             /**
              * Timeout Seconds
@@ -41554,8 +41998,8 @@ export interface components {
         SettingsBase: {
             /**
              * Scheduling Algorithm
-             * @description Algorithm: greedy, min_conflicts, cp_sat
-             * @default greedy
+             * @description Algorithm (cp_sat is canonical; other values allowed only in DEBUG)
+             * @default cp_sat
              */
             schedulingAlgorithm: string;
             /**
@@ -41603,13 +42047,18 @@ export interface components {
              * @default 4
              */
             defaultBlockDurationHours: number;
+            /**
+             * Schedule Lock Date
+             * @description Lock date for system-initiated changes (null = no lock)
+             */
+            scheduleLockDate?: string | null;
         };
         /** SettingsResponse */
         SettingsResponse: {
             /**
              * Scheduling Algorithm
-             * @description Algorithm: greedy, min_conflicts, cp_sat
-             * @default greedy
+             * @description Algorithm (cp_sat is canonical; other values allowed only in DEBUG)
+             * @default cp_sat
              */
             schedulingAlgorithm: string;
             /**
@@ -41657,6 +42106,11 @@ export interface components {
              * @default 4
              */
             defaultBlockDurationHours: number;
+            /**
+             * Schedule Lock Date
+             * @description Lock date for system-initiated changes (null = no lock)
+             */
+            scheduleLockDate?: string | null;
         };
         /** SettingsUpdate */
         SettingsUpdate: {
@@ -41680,6 +42134,8 @@ export interface components {
             enableHolidayScheduling?: boolean | null;
             /** Default Block Duration Hours */
             defaultBlockDurationHours?: number | null;
+            /** Schedule Lock Date */
+            scheduleLockDate?: string | null;
         };
         /**
          * ShapleyFacultyResult
@@ -42235,7 +42691,7 @@ export interface components {
             meanOverlap: number;
             /**
              * Diversity Score
-             * @description Diversity score (1 - mean_overlap)
+             * @description Diversity score (scaled from mean overlap)
              */
             diversityScore: number;
             /**
@@ -43123,6 +43579,21 @@ export interface components {
          * @enum {string}
          */
         SurveyTypeEnum: "burnout" | "stress" | "sleep" | "efficacy" | "pulse" | "hopfield" | "custom";
+        /** SwapApprovalRequest */
+        SwapApprovalRequest: {
+            /** Approved */
+            approved: boolean;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** SwapApprovalResponse */
+        SwapApprovalResponse: {
+            /** Success */
+            success: boolean;
+            status: components["schemas"]["SwapStatusSchema"];
+            /** Message */
+            message: string;
+        };
         /**
          * SwapBarrierAnalysisRequest
          * @description Request to analyze barriers for a swap operation.
@@ -43282,6 +43753,14 @@ export interface components {
              */
             rank: number;
         };
+        /** SwapExecuteByIdResponse */
+        SwapExecuteByIdResponse: {
+            /** Success */
+            success: boolean;
+            status: components["schemas"]["SwapStatusSchema"];
+            /** Message */
+            message: string;
+        };
         /** SwapExecuteRequest */
         SwapExecuteRequest: {
             /**
@@ -43437,6 +43916,16 @@ export interface components {
              * @default true
              */
             autoFindCandidates: boolean;
+        };
+        /** SwapRequestCreateResponse */
+        SwapRequestCreateResponse: {
+            /** Success */
+            success: boolean;
+            /** Swap Id */
+            swapId?: string | null;
+            status: components["schemas"]["SwapStatusSchema"];
+            /** Message */
+            message: string;
         };
         /**
          * SwapRequestResponse
@@ -47333,127 +47822,6 @@ export interface components {
          */
         ZoneType: "inpatient" | "outpatient" | "education" | "research" | "admin" | "on_call";
         /**
-         * CoverageGap
-         * @description Represents a coverage gap with details.
-         */
-        app__api__routes__fmit_health__CoverageGap: {
-            /** Gap Id */
-            gapId: string;
-            /**
-             * Date
-             * Format: date
-             */
-            date: string;
-            /** Time Of Day */
-            timeOfDay: string;
-            /** Block Id */
-            blockId: string;
-            /** Severity */
-            severity: string;
-            /** Days Until */
-            daysUntil: number;
-            /** Affected Area */
-            affectedArea: string;
-            /** Department */
-            department: string | null;
-            /** Current Assignments */
-            currentAssignments: number;
-            /** Required Assignments */
-            requiredAssignments: number;
-            /** Gap Size */
-            gapSize: number;
-        };
-        /**
-         * ConflictSummary
-         * @description Summary statistics for a set of conflicts.
-         *
-         *     Used for dashboard displays and reporting.
-         * @example {
-         *       "affectedPeopleCount": 8,
-         *       "autoResolvableCount": 6,
-         *       "averageImpactScore": 0.65,
-         *       "criticalCount": 3,
-         *       "highCount": 5,
-         *       "lowCount": 3,
-         *       "mediumCount": 4,
-         *       "totalConflicts": 15
-         *     }
-         */
-        app__scheduling__conflicts__types__ConflictSummary: {
-            /**
-             * Total Conflicts
-             * @default 0
-             */
-            totalConflicts: number;
-            /**
-             * Critical Count
-             * @default 0
-             */
-            criticalCount: number;
-            /**
-             * High Count
-             * @default 0
-             */
-            highCount: number;
-            /**
-             * Medium Count
-             * @default 0
-             */
-            mediumCount: number;
-            /**
-             * Low Count
-             * @default 0
-             */
-            lowCount: number;
-            /** By Category */
-            byCategory?: {
-                [key: string]: number | undefined;
-            };
-            /** By Type */
-            byType?: {
-                [key: string]: number | undefined;
-            };
-            /**
-             * Affected People Count
-             * @default 0
-             */
-            affectedPeopleCount: number;
-            /**
-             * Affected Blocks Count
-             * @default 0
-             */
-            affectedBlocksCount: number;
-            /**
-             * Auto Resolvable Count
-             * @default 0
-             */
-            autoResolvableCount: number;
-            /**
-             * Requires Manual Count
-             * @default 0
-             */
-            requiresManualCount: number;
-            /**
-             * Average Impact Score
-             * @default 0
-             */
-            averageImpactScore: number;
-            /**
-             * Average Urgency Score
-             * @default 0
-             */
-            averageUrgencyScore: number;
-            /**
-             * Average Complexity Score
-             * @default 0
-             */
-            averageComplexityScore: number;
-            /** Earliest Date */
-            earliestDate?: string | null;
-            /** Latest Date */
-            latestDate?: string | null;
-        };
-        /**
          * BlockListResponse
          * @description Response for listing academic blocks.
          */
@@ -47473,6 +47841,25 @@ export interface components {
              * @description Total number of blocks
              */
             totalBlocks: number;
+        };
+        /**
+         * BatchOperationResult
+         * @description Result for a single operation in a batch.
+         */
+        app__schemas__batch__BatchOperationResult: {
+            /**
+             * Index
+             * @description Index of the operation in the batch
+             */
+            index: number;
+            /** Success */
+            success: boolean;
+            /** Assignment Id */
+            assignmentId?: string | null;
+            /** Error */
+            error?: string | null;
+            /** Warnings */
+            warnings?: string[];
         };
         /**
          * CoverageGap
@@ -47537,57 +47924,6 @@ export interface components {
             pgyLevel?: number | null;
         };
         /**
-         * ConflictCheckResponse
-         * @description Response for conflict checking before assignment.
-         */
-        app__schemas__fmit_assignments__ConflictCheckResponse: {
-            /**
-             * Can Assign
-             * @description Whether assignment can proceed
-             */
-            canAssign: boolean;
-            /**
-             * Conflicts
-             * @description Detected conflicts
-             */
-            conflicts?: components["schemas"]["ConflictDetail"][];
-            /**
-             * Warnings
-             * @description Warnings
-             */
-            warnings?: string[];
-            /**
-             * Suggestions
-             * @description Alternative suggestions
-             */
-            suggestions?: string[];
-        };
-        /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
-         */
-        app__schemas__jobs__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
-            /**
-             * Confirm
-             * @default false
-             */
-            confirm: boolean;
-        };
-        /**
-         * QueuePurgeResponse
-         * @description Response to queue purge request.
-         */
-        app__schemas__jobs__QueuePurgeResponse: {
-            /** Queuename */
-            queueName: string;
-            /** Taskspurged */
-            tasksPurged: number;
-            /** Timestamp */
-            timestamp: string;
-        };
-        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
@@ -47605,24 +47941,54 @@ export interface components {
             error?: string | null;
         };
         /**
-         * BatchOperationResult
-         * @description Result for a single operation in a batch.
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
          */
-        app__schemas__rotation_template__BatchOperationResult: {
+        app__schemas__queue__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
             /**
-             * Index
-             * @description Index of the operation in the batch
+             * Confirm
+             * @description Must be true to confirm purge
+             * @default false
              */
-            index: number;
-            /**
-             * Template Id
-             * Format: uuid
-             */
-            templateId: string;
-            /** Success */
-            success: boolean;
-            /** Error */
-            error?: string | null;
+            confirm: boolean;
+        };
+        /**
+         * QueuePurgeResponse
+         * @description Response after purging a queue.
+         */
+        app__schemas__queue__QueuePurgeResponse: {
+            /** Queuename */
+            queueName: string;
+            /** Taskspurged */
+            tasksPurged: number;
+            /** Timestamp */
+            timestamp: string;
+        };
+        /**
+         * ConflictCheckResponse
+         * @description Response for conflict check.
+         */
+        app__schemas__rotation_template__ConflictCheckResponse: {
+            /** Has Conflicts */
+            hasConflicts: boolean;
+            /** Conflicts */
+            conflicts: components["schemas"]["TemplateConflict"][];
+            /** Can Proceed */
+            canProceed: boolean;
+        };
+        /**
+         * ConflictSummary
+         * @description Summary of conflicts found.
+         */
+        app__schemas__schedule__ConflictSummary: {
+            /** Total Conflicts */
+            totalConflicts: number;
+            /** Errors */
+            errors: number;
+            /** Warnings */
+            warnings: number;
         };
         /**
          * SuggestionResponse
@@ -47644,6 +48010,39 @@ export interface components {
              * @description Entity type
              */
             entityType: string;
+        };
+        /**
+         * CoverageGap
+         * @description Represents a coverage gap in the schedule.
+         * @example {
+         *       "date": "2024-01-15",
+         *       "rotation": "FMIT Inpatient",
+         *       "severity": "high",
+         *       "timeOfDay": "PM"
+         *     }
+         */
+        app__schemas__visualization__CoverageGap: {
+            /**
+             * Date
+             * Format: date
+             * @description Date of the gap
+             */
+            date: string;
+            /**
+             * Time Of Day
+             * @description AM or PM
+             */
+            timeOfDay: string;
+            /**
+             * Rotation
+             * @description Rotation with gap
+             */
+            rotation?: string | null;
+            /**
+             * Severity
+             * @description low, medium, high
+             */
+            severity: string;
         };
     };
     responses: never;
@@ -50465,7 +50864,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictCheckResponse"];
+                    "application/json": components["schemas"]["app__schemas__rotation_template__ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -51421,6 +51820,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_weekly_template_coverage_api_v1_faculty_weekly_template_coverage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacultyWeeklyTemplateCoverageResponse"];
                 };
             };
         };
@@ -53827,6 +54246,74 @@ export interface operations {
             };
         };
     };
+    get_adjunct_faculty_gaps_api_v1_schedule_faculty_adjunct_gaps_get: {
+        parameters: {
+            query: {
+                /** @description Block number (1-13) */
+                block_number: number;
+                /** @description Academic year (e.g., 2025) */
+                academic_year: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjunctGapsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_faculty_coverage_validation_api_v1_schedule_validation_faculty_coverage_get: {
+        parameters: {
+            query: {
+                /** @description Block number (1-13) */
+                block_number: number;
+                /** @description Academic year (e.g., 2025) */
+                academic_year: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacultyCoverageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_half_day_assignments_api_v1_half_day_assignments_get: {
         parameters: {
             query?: {
@@ -55077,6 +55564,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminDashboardSummary"];
+                };
+            };
+        };
+    };
+    get_break_glass_usage_api_v1_admin_dashboard_break_glass_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBreakGlassUsage"];
                 };
             };
         };
@@ -57241,7 +57748,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": string[] | null;
+                "application/json": string[];
             };
         };
         responses: {
@@ -61087,6 +61594,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FacultyCredentialSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_faculty_credential_summaries_api_v1_credentials_faculty_summary_get: {
+        parameters: {
+            query?: {
+                /** @description Include adjunct faculty */
+                include_adjuncts?: boolean;
+                /** @description Include faculty without credentials */
+                include_empty?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacultyCredentialSummary"][];
                 };
             };
             /** @description Validation Error */
@@ -65274,6 +65815,105 @@ export interface operations {
             };
         };
     };
+    request_swap_api_v1_swaps_request_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SwapExecuteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwapRequestCreateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_swap_api_v1_swaps__swap_id__approval_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                swap_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SwapApprovalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwapApprovalResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    execute_swap_by_id_api_v1_swaps__swap_id__execute_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                swap_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwapExecuteByIdResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     execute_swap_api_v1_swaps_execute_post: {
         parameters: {
             query?: never;
@@ -65529,6 +66169,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeaveCalendarResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_leave_api_v1_leave_request_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeaveCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaveRequestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_leave_api_v1_leave__leave_id__approval_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leave_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeaveApprovalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaveApprovalResponse"];
                 };
             };
             /** @description Validation Error */
@@ -66285,7 +66993,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__fmit_assignments__ConflictCheckResponse"];
+                    "application/json": components["schemas"]["ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -66480,7 +67188,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__scheduling__conflicts__types__ConflictSummary"];
+                    "application/json": components["schemas"]["ConflictSummary"];
                 };
             };
             /** @description Validation Error */
@@ -67757,7 +68465,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -67767,7 +68475,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeResponse"];
+                    "application/json": components["schemas"]["QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -68124,7 +68832,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -68134,7 +68842,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["QueuePurgeResponse"];
+                    "application/json": components["schemas"]["app__schemas__queue__QueuePurgeResponse"];
                 };
             };
             /** @description Validation Error */

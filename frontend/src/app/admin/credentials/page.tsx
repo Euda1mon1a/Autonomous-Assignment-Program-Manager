@@ -14,6 +14,8 @@ import {
   RefreshCw,
   Filter,
   AlertTriangle,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { CredentialMatrix } from '@/components/admin/CredentialMatrix';
@@ -24,6 +26,8 @@ import {
   useCredentials,
   useProcedureSpecialties,
   useExpiringCredentials,
+  useFacultyCredentialSummaries,
+  type FacultyCredentialSummary,
 } from '@/hooks/useProcedures';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -31,9 +35,125 @@ import { useToast } from '@/contexts/ToastContext';
 // Types
 // ============================================================================
 
+type ViewMode = 'matrix' | 'summary';
+
 interface CredentialFilters {
   specialty: string;
   category: string;
+}
+
+// ============================================================================
+// Faculty Summary Table Component
+// ============================================================================
+
+function FacultySummaryTable({
+  summaries,
+  isLoading,
+}: {
+  summaries: FacultyCredentialSummary[];
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!summaries.length) {
+    return (
+      <div className="text-center py-12 text-slate-400">
+        No faculty credential data available.
+      </div>
+    );
+  }
+
+  // Sort by expiring soon (urgent first), then by name
+  const sortedSummaries = [...summaries].sort((a, b) => {
+    if (b.expiringSoon !== a.expiringSoon) {
+      return b.expiringSoon - a.expiringSoon;
+    }
+    return a.personName.localeCompare(b.personName);
+  });
+
+  return (
+    <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
+      <table className="w-full">
+        <thead className="bg-slate-900/50">
+          <tr>
+            <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+              Faculty
+            </th>
+            <th className="px-4 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
+              Total
+            </th>
+            <th className="px-4 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
+              Active
+            </th>
+            <th className="px-4 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">
+              Expiring Soon
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+              Procedures
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-700/50">
+          {sortedSummaries.map((summary) => (
+            <tr
+              key={summary.personId}
+              className="hover:bg-slate-700/30 transition-colors"
+            >
+              <td className="px-4 py-3">
+                <span className="text-white font-medium">
+                  {summary.personName}
+                </span>
+              </td>
+              <td className="px-4 py-3 text-center">
+                <span className="text-slate-300">{summary.totalCredentials}</span>
+              </td>
+              <td className="px-4 py-3 text-center">
+                <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900/50 text-green-300">
+                  {summary.activeCredentials}
+                </span>
+              </td>
+              <td className="px-4 py-3 text-center">
+                {summary.expiringSoon > 0 ? (
+                  <span className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-900/50 text-amber-300">
+                    <AlertTriangle className="w-3 h-3" />
+                    {summary.expiringSoon}
+                  </span>
+                ) : (
+                  <span className="text-slate-500">0</span>
+                )}
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap gap-1">
+                  {summary.procedures.slice(0, 3).map((proc) => (
+                    <span
+                      key={proc.id}
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-slate-700/50 text-slate-300"
+                      title={proc.name}
+                    >
+                      {proc.name.length > 20
+                        ? `${proc.name.slice(0, 20)}...`
+                        : proc.name}
+                    </span>
+                  ))}
+                  {summary.procedures.length > 3 && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-slate-600/50 text-slate-400">
+                      +{summary.procedures.length - 3} more
+                    </span>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 // ============================================================================
@@ -44,6 +164,7 @@ export default function AdminCredentialsPage() {
   const { toast } = useToast();
 
   // State
+  const [viewMode, setViewMode] = useState<ViewMode>('matrix');
   const [filters, setFilters] = useState<CredentialFilters>({
     specialty: '',
     category: '',
@@ -78,13 +199,27 @@ export default function AdminCredentialsPage() {
     isLoading: expiringLoading,
   } = useExpiringCredentials(30);
 
+  // Faculty summaries for summary view
+  const {
+    data: facultySummaries,
+    isLoading: summariesLoading,
+    refetch: refetchSummaries,
+  } = useFacultyCredentialSummaries({
+    includeEmpty: true,
+    enabled: viewMode === 'summary',
+  });
+
   // Handlers
   const handleRefresh = useCallback(() => {
-    refetchFaculty();
-    refetchProcedures();
-    refetchCredentials();
+    if (viewMode === 'matrix') {
+      refetchFaculty();
+      refetchProcedures();
+      refetchCredentials();
+    } else {
+      refetchSummaries();
+    }
     toast.info('Refreshing credentials...');
-  }, [refetchFaculty, refetchProcedures, refetchCredentials, toast]);
+  }, [viewMode, refetchFaculty, refetchProcedures, refetchCredentials, refetchSummaries, toast]);
 
   const isLoading = facultyLoading || proceduresLoading || credentialsLoading;
 
@@ -115,13 +250,41 @@ export default function AdminCredentialsPage() {
 
             {/* Actions */}
             <div className="flex items-center gap-3">
+              {/* View Toggle */}
+              <div className="flex items-center bg-slate-800/50 rounded-lg p-1 border border-slate-700">
+                <button
+                  onClick={() => setViewMode('matrix')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors ${
+                    viewMode === 'matrix'
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Matrix View"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                  Matrix
+                </button>
+                <button
+                  onClick={() => setViewMode('summary')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors ${
+                    viewMode === 'summary'
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Summary View"
+                >
+                  <List className="w-4 h-4" />
+                  Summary
+                </button>
+              </div>
+
               <button
                 onClick={handleRefresh}
-                disabled={isLoading}
+                disabled={isLoading || summariesLoading}
                 className="p-2 text-slate-300 hover:text-white transition-colors disabled:opacity-50"
                 title="Refresh"
               >
-                <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-5 h-5 ${isLoading || summariesLoading ? 'animate-spin' : ''}`} />
               </button>
             </div>
           </div>
@@ -178,17 +341,24 @@ export default function AdminCredentialsPage() {
           </div>
         </div>
 
-        {/* Credential Matrix */}
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <LoadingSpinner />
-          </div>
+        {/* Credential View (Matrix or Summary) */}
+        {viewMode === 'matrix' ? (
+          isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <CredentialMatrix
+              faculty={faculty}
+              procedures={procedures}
+              credentials={credentials}
+              showExpiringOnly={showExpiringOnly}
+            />
+          )
         ) : (
-          <CredentialMatrix
-            faculty={faculty}
-            procedures={procedures}
-            credentials={credentials}
-            showExpiringOnly={showExpiringOnly}
+          <FacultySummaryTable
+            summaries={facultySummaries ?? []}
+            isLoading={summariesLoading}
           />
         )}
       </main>

@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react'
+import { render as rtlRender, type RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { PersonType, AbsenceType, AssignmentRole } from '@/types/api'
 
@@ -21,6 +22,24 @@ export function createTestQueryClient() {
     },
   })
 }
+
+const AllProviders = ({ children }: { children: React.ReactNode }) => {
+  const [queryClient] = React.useState(() => createTestQueryClient())
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  )
+}
+
+export const customRender = (
+  ui: React.ReactElement,
+  options?: Omit<RenderOptions, 'wrapper'>
+) => rtlRender(ui, { wrapper: AllProviders, ...options })
+
+export * from '@testing-library/react'
+export { customRender as render }
 
 /**
  * Wrapper component for testing hooks with React Query

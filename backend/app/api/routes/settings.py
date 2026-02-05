@@ -3,10 +3,11 @@
 import logging
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.security import get_admin_user, get_current_active_user
 from app.db.session import get_db
 from app.models.settings import ApplicationSettings
@@ -18,7 +19,7 @@ router = APIRouter()
 
 # Default settings for initialization
 DEFAULT_SETTINGS = {
-    "scheduling_algorithm": "greedy",
+    "scheduling_algorithm": "cp_sat",
     "work_hours_per_week": 80,
     "max_consecutive_days": 6,
     "min_days_off_per_week": 1,
@@ -62,6 +63,11 @@ async def update_settings(
     current_user: User = Depends(get_admin_user),
 ) -> SettingsResponse:
     """Update application settings (full replacement)."""
+    if not get_settings().DEBUG and settings_in.scheduling_algorithm != "cp_sat":
+        raise HTTPException(
+            status_code=400,
+            detail="Only CP-SAT is allowed in production settings.",
+        )
     settings = await get_or_create_settings(db)
     previous_lock_date = settings.schedule_lock_date
 
@@ -100,6 +106,16 @@ async def patch_settings(
     update_data = settings_in.model_dump(exclude_unset=True)
     if not update_data:
         return SettingsResponse(**settings.to_dict())
+
+    if (
+        not get_settings().DEBUG
+        and update_data.get("scheduling_algorithm")
+        and update_data["scheduling_algorithm"] != "cp_sat"
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Only CP-SAT is allowed in production settings.",
+        )
 
     for field, value in update_data.items():
         setattr(settings, field, value)

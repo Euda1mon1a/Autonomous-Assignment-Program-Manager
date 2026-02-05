@@ -79,6 +79,7 @@ class DraftFlagType(str, enum.Enum):
     COVERAGE_GAP = "coverage_gap"  # Missing required coverage
     MANUAL_REVIEW = "manual_review"  # Flagged for manual review
     LOCK_WINDOW_VIOLATION = "lock_window_violation"  # Locked window change
+    CREDENTIAL_MISSING = "credential_missing"  # Missing required credential
 
 
 class DraftFlagSeverity(str, enum.Enum):

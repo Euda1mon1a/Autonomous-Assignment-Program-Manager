@@ -2,7 +2,7 @@
  * Tests for useAbsences hook
  * Tests absence management, leave calendar, military leave, and approvals
  */
-import { renderHook, waitFor, act } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@/__tests__/utils/test-utils'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   useAbsence,

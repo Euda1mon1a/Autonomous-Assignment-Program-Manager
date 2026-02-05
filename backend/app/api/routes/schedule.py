@@ -19,6 +19,7 @@ from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.file_security import FileValidationError, validate_excel_upload
 from app.core.logging import get_logger
 from app.core.security import get_current_active_user
@@ -51,6 +52,7 @@ from app.schemas.schedule import (
     RunQueueResponse,
     ScheduleRequest,
     ScheduleResponse,
+    SchedulingAlgorithm,
     ScheduleRunRead,
     ScheduleRunsResponse,
     ScheduleSummary,
@@ -126,6 +128,17 @@ async def generate_schedule(
     from datetime import datetime, timedelta
 
     from app.models.schedule_run import ScheduleRun
+
+    settings = get_settings()
+
+    if (
+        not settings.DEBUG
+        and schedule_request.algorithm != SchedulingAlgorithm.CP_SAT
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Only CP-SAT is allowed in production. Use algorithm=cp_sat.",
+        )
 
     # Initialize idempotency service
     idempotency_service = IdempotencyService(db)
