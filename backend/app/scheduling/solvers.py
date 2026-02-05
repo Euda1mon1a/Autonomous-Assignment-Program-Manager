@@ -304,7 +304,7 @@ class PuLPSolver(BaseSolver):
         # ==================================================
         # OVERNIGHT CALL DECISION VARIABLES
         # call[f_i, b_i, "overnight"] = 1 if faculty f on call for block b's date
-        # Only Sun-Thurs nights (weekday 0,1,2,3,6)
+        # Sun-Thurs nights + Fri/Sat when FMIT attending is mandatory
         # ==================================================
         call = {}
         call_eligible = getattr(context, "call_eligible_faculty", [])
@@ -919,10 +919,9 @@ class CPSATSolver(BaseSolver):
             call_blocks = [
                 block
                 for block in context.blocks
-                if block.date.weekday() in (0, 1, 2, 3, 6)
+                if block.date.weekday() in (0, 1, 2, 3, 6)  # Mon-Thu, Sun
             ]
             for block in call_blocks:
-                # Only Sun-Thurs nights (Mon=0, Tue=1, Wed=2, Thu=3, Sun=6)
                 if block.date in call_dates_processed:
                     continue
                 call_dates_processed.add(block.date)
@@ -980,6 +979,42 @@ class CPSATSolver(BaseSolver):
             f"{len(fac_pcat)} pcat, {len(fac_do)} do"
         )
 
+        # ==================================================
+        # RESIDENT CLINIC INDICATORS (for supervision constraints)
+        # ==================================================
+        resident_clinic = {}
+        clinic_template_ids = set()
+        for template in context.templates:
+            name_lower = template.name.lower()
+            if (
+                "clinic" in name_lower
+                or "fm" in name_lower
+                or "outpatient" in name_lower
+            ):
+                clinic_template_ids.add(template.id)
+
+        if clinic_template_ids:
+            clinic_template_indices = [
+                template_idx[tid] for tid in clinic_template_ids if tid in template_idx
+            ]
+            for resident in context.residents:
+                r_i = context.resident_idx[resident.id]
+                for block in workday_blocks:
+                    b_i = context.block_idx[block.id]
+                    clinic_vars = [
+                        x[r_i, b_i, t_i]
+                        for t_i in clinic_template_indices
+                        if (r_i, b_i, t_i) in x
+                    ]
+                    if clinic_vars:
+                        resident_clinic[
+                            (resident.id, block.date, block.time_of_day)
+                        ] = (
+                            clinic_vars[0]
+                            if len(clinic_vars) == 1
+                            else sum(clinic_vars)
+                        )
+
         variables = {
             "assignments": x_2d,  # For legacy constraints (residents)
             "template_assignments": x,  # For rotation-specific constraints (residents)
@@ -991,6 +1026,10 @@ class CPSATSolver(BaseSolver):
             "fac_supervise": fac_supervise,
             "fac_pcat": fac_pcat,
             "fac_do": fac_do,
+            # Supervision constraint wiring
+            "faculty_at": fac_supervise,
+            "faculty_pcat": fac_pcat,
+            "resident_clinic": resident_clinic,
         }
 
         # ==================================================
@@ -1304,6 +1343,76 @@ class CPSATSolver(BaseSolver):
         model.Maximize(objective_expr)
 
         # ==================================================
+        # PRE-SOLVE DEBUGGING
+        # ==================================================
+        proto = model.Proto()
+        logger.info("=" * 60)
+        logger.info("PRE-SOLVE STATE")
+        logger.info("=" * 60)
+        logger.info(
+            f"Model: {len(proto.variables)} vars, {len(proto.constraints)} constraints"
+        )
+        logger.info(
+            f"Residents: {len(context.residents)}, Faculty: {len(context.faculty)}"
+        )
+        logger.info(
+            f"Templates: {len(context.templates)}, Workday blocks: {len(workday_blocks)}"
+        )
+        logger.info(f"Resident decision vars (x): {len(x)}")
+        logger.info(f"Faculty decision vars (f): {len(f)}")
+        logger.info(f"Existing assignments to preserve: {len(existing_assignments)}")
+
+        # Count locked assignments by person
+        locked_by_person = {}
+        for a in existing_assignments:
+            name = "unknown"
+            if a.person_id in context.resident_idx:
+                name = f"R:{context.residents[context.resident_idx[a.person_id]].name}"
+            elif a.person_id in context.faculty_idx:
+                name = f"F:{context.faculty[context.faculty_idx[a.person_id]].name}"
+            locked_by_person[name] = locked_by_person.get(name, 0) + 1
+        for name, count in sorted(locked_by_person.items(), key=lambda x: -x[1])[:10]:
+            logger.info(f"  Locked: {name} = {count}")
+
+        # Log hard constraints from constraint manager
+        hard_constraints = []
+        soft_constraints = []
+        for c in self.constraint_manager.constraints:
+            is_hard = (
+                hasattr(c, "is_hard")
+                and c.is_hard
+                or c.__class__.__name__.endswith("HardConstraint")
+            )
+            from app.scheduling.constraints.base import HardConstraint
+
+            if isinstance(c, HardConstraint):
+                hard_constraints.append(c.name)
+            else:
+                soft_constraints.append(c.name)
+        logger.info(f"Hard constraints from manager: {hard_constraints}")
+        logger.info(f"Soft constraints from manager: {soft_constraints}")
+
+        # Log built-in hard constraints in this solver
+        logger.info("Built-in hard constraints in solver:")
+        logger.info(
+            "  - OneAssignmentPerBlock: each (resident, block) has exactly 1 template"
+        )
+        logger.info(
+            "  - FacultyAtMostOnePerBlock: each (faculty, block) has at most 1 template"
+        )
+        logger.info("  - FacultySupervision: 4*supervisors >= supervision_load")
+        logger.info("  - OneCallPerNight: exactly 1 faculty per night")
+        logger.info("  - FacultyClinicCap: faculty clinic <= weekly max")
+        logger.info(
+            "  - PCAT/DO linkage: call[f,n]=1 => pcat[f,n+1,AM]=1, do[f,n+1,PM]=1"
+        )
+        logger.info(
+            "  - ExistingAssignmentPreservation: locked assignments forced to 1"
+        )
+        logger.info(f"  - Locked existing assignments: {len(existing_assignments)}")
+        logger.info("=" * 60)
+
+        # ==================================================
         # SOLVE
         # ==================================================
         solver = cp_model.CpSolver()
@@ -1374,6 +1483,70 @@ class CPSATSolver(BaseSolver):
         status_name = solver.StatusName(status)
         if status not in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
             logger.warning(f"CP-SAT solver status: {status_name}")
+
+            # Enhanced debugging for INFEASIBLE
+            logger.error("=" * 60)
+            logger.error("INFEASIBLE SOLVER DEBUGGING")
+            logger.error("=" * 60)
+
+            # Log model statistics
+            proto = model.Proto()
+            logger.error(
+                f"Model stats: {len(proto.variables)} vars, {len(proto.constraints)} constraints"
+            )
+
+            # Log resident/faculty counts
+            logger.error(f"Residents: {len(context.residents)}")
+            logger.error(f"Faculty: {len(context.faculty)}")
+            logger.error(f"Templates: {len(context.templates)}")
+            logger.error(f"Workday blocks: {len(workday_blocks)}")
+
+            # Log locked assignment counts
+            locked_resident_count = sum(
+                1 for a in existing_assignments if a.person_id in context.resident_idx
+            )
+            locked_faculty_count = sum(
+                1 for a in existing_assignments if a.person_id in context.faculty_idx
+            )
+            logger.error(f"Locked resident assignments: {locked_resident_count}")
+            logger.error(f"Locked faculty assignments: {locked_faculty_count}")
+
+            # Log template usage
+            template_usage = {}
+            for a in existing_assignments:
+                if a.rotation_template_id:
+                    template_usage[a.rotation_template_id] = (
+                        template_usage.get(a.rotation_template_id, 0) + 1
+                    )
+            logger.error(
+                f"Template usage in locked assignments: {len(template_usage)} unique templates"
+            )
+            for tid, count in sorted(template_usage.items(), key=lambda x: -x[1])[:10]:
+                tname = next(
+                    (t.name for t in context.templates if t.id == tid), str(tid)
+                )
+                logger.error(f"  {tname}: {count}")
+
+            # Log x variable counts by type
+            resident_vars = sum(1 for k in x if k[0] < len(context.residents))
+            logger.error(f"Resident decision vars (x): {resident_vars}")
+            logger.error(f"Faculty decision vars (f): {len(f)}")
+
+            # Check for over-constrained blocks
+            block_constraint_counts = {}
+            for r_i, b_i, t_i in x:
+                block_constraint_counts[b_i] = block_constraint_counts.get(b_i, 0) + 1
+            if block_constraint_counts:
+                max_block = max(block_constraint_counts.values())
+                min_block = min(block_constraint_counts.values())
+                logger.error(f"Vars per block: min={min_block}, max={max_block}")
+
+            # Log supervision constraint info
+            logger.error(f"Clinic template IDs found: {len(clinic_template_ids)}")
+            logger.error(f"Faculty supervise vars: {len(fac_supervise)}")
+
+            logger.error("=" * 60)
+
             return SolverResult(
                 success=False,
                 assignments=[],
