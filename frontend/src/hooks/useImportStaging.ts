@@ -141,7 +141,8 @@ export function useStageImport() {
         throw new Error(error.detail?.error || 'Failed to stage import');
       }
 
-      return response.json();
+      const data = await response.json();
+      return { batchId: data.batch_id };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: importStagingKeys.batches() });
