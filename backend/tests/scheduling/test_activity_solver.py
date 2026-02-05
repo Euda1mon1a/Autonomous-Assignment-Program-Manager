@@ -23,6 +23,64 @@ from app.scheduling.activity_solver import (
 )
 
 
+def _make_activity(
+    code: str,
+    *,
+    display: str | None = None,
+    category: str = "clinical",
+    is_supervision: bool = False,
+):
+    return SimpleNamespace(
+        id=uuid4(),
+        code=code,
+        display_abbreviation=display or code,
+        activity_category=category,
+        is_archived=False,
+        is_protected=False,
+        is_supervision=is_supervision,
+        provides_supervision=is_supervision,
+        capacity_units=1,
+        procedure_id=None,
+    )
+
+
+def _make_requirement(template, activity):
+    return SimpleNamespace(
+        rotation_template_id=template.id,
+        activity_id=activity.id,
+        activity=activity,
+        min_halfdays=1,
+        max_halfdays=1,
+        target_halfdays=1,
+        applicable_weeks=None,
+        prefer_full_days=False,
+        preferred_days=None,
+        avoid_days=None,
+        priority=100,
+    )
+
+
+def _make_slot(*, person_type: str, slot_date: date, activity_id=None):
+    person_id = uuid4()
+    person = SimpleNamespace(type=person_type, id=person_id)
+    if person_type != "faculty":
+        person.pgy_level = 2
+    else:
+        person.faculty_role = "core"
+        person.pgy_level = None
+    return SimpleNamespace(
+        id=uuid4(),
+        person=person,
+        person_id=person_id,
+        date=slot_date,
+        time_of_day="AM",
+        block_assignment=None,
+        activity_id=activity_id,
+        counts_toward_fmc_capacity=None,
+        source=None,
+    )
+
+
 class TestModuleConstants:
     """Tests verifying module constants are defined correctly."""
 
@@ -645,3 +703,185 @@ class TestSolveActivitiesConvenience:
                 include_faculty_slots=False,
                 force_faculty_override=False,
             )
+
+
+class TestFacultyImmutability:
+    """Tests ensuring faculty assignments remain unchanged without override."""
+
+    def test_solve_does_not_modify_faculty_slots_without_override(self):
+        """Faculty slots should remain untouched when not explicitly included."""
+        start_date = date(2026, 1, 6)
+        end_date = date(2026, 2, 2)
+
+        template = SimpleNamespace(
+            id=uuid4(),
+            name="FMC Clinic",
+            abbreviation="FMC",
+            display_abbreviation="FMC",
+            rotation_type="outpatient",
+            requires_specialty=None,
+        )
+        clinic_activity = _make_activity("C", display="C")
+        at_activity = _make_activity("AT", display="AT", is_supervision=True)
+        requirement = _make_requirement(template, clinic_activity)
+
+        resident_slot = _make_slot(person_type="resident", slot_date=start_date)
+        existing_faculty_activity_id = uuid4()
+        faculty_slot = _make_slot(
+            person_type="faculty",
+            slot_date=start_date,
+            activity_id=existing_faculty_activity_id,
+        )
+        candidates = [resident_slot, faculty_slot]
+
+        solver = CPSATActivitySolver(MagicMock())
+        solver._activity_cache = {
+            clinic_activity.code: clinic_activity,
+            clinic_activity.display_abbreviation: clinic_activity,
+            at_activity.code: at_activity,
+            at_activity.display_abbreviation: at_activity,
+        }
+
+        with (
+            patch("app.scheduling.activity_solver.get_block_dates") as mock_dates,
+            patch.object(
+                CPSATActivitySolver,
+                "_load_candidate_slots",
+                return_value=candidates,
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_load_assignment_rotation_map",
+                return_value={},
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_filter_outpatient_slots",
+                return_value=candidates,
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_get_active_rotation_template",
+                side_effect=lambda slot, _start: template
+                if slot.person.type != "faculty"
+                else None,
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_load_activity_requirements",
+                return_value={template.id: [requirement]},
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_missing_outpatient_requirements",
+                return_value=[],
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_load_activities",
+                return_value=[clinic_activity, at_activity],
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_load_locked_slots",
+                return_value=[],
+            ),
+            patch.object(CPSATActivitySolver, "_load_slots", return_value=[]),
+        ):
+            mock_dates.return_value = SimpleNamespace(
+                start_date=start_date, end_date=end_date
+            )
+            result = solver.solve(1, 2026)
+
+        assert result["success"] is True
+        assert resident_slot.activity_id == clinic_activity.id
+        assert faculty_slot.activity_id == existing_faculty_activity_id
+
+    def test_solve_keeps_baseline_faculty_slots_unchanged(self):
+        """Baseline faculty slots (solver source) should remain unchanged."""
+        start_date = date(2026, 1, 6)
+        end_date = date(2026, 2, 2)
+
+        template = SimpleNamespace(
+            id=uuid4(),
+            name="FMC Clinic",
+            abbreviation="FMC",
+            display_abbreviation="FMC",
+            rotation_type="outpatient",
+            requires_specialty=None,
+        )
+        clinic_activity = _make_activity("C", display="C")
+        at_activity = _make_activity("AT", display="AT", is_supervision=True)
+        requirement = _make_requirement(template, clinic_activity)
+
+        resident_slot = _make_slot(person_type="resident", slot_date=start_date)
+        faculty_slot = _make_slot(
+            person_type="faculty",
+            slot_date=start_date,
+            activity_id=at_activity.id,
+        )
+
+        solver = CPSATActivitySolver(MagicMock())
+        solver._activity_cache = {
+            clinic_activity.code: clinic_activity,
+            clinic_activity.display_abbreviation: clinic_activity,
+            at_activity.code: at_activity,
+            at_activity.display_abbreviation: at_activity,
+        }
+
+        with (
+            patch("app.scheduling.activity_solver.get_block_dates") as mock_dates,
+            patch.object(
+                CPSATActivitySolver,
+                "_load_candidate_slots",
+                return_value=[resident_slot],
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_load_assignment_rotation_map",
+                return_value={},
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_filter_outpatient_slots",
+                return_value=[resident_slot],
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_get_active_rotation_template",
+                side_effect=lambda slot, _start: template,
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_load_activity_requirements",
+                return_value={template.id: [requirement]},
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_missing_outpatient_requirements",
+                return_value=[],
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_load_activities",
+                return_value=[clinic_activity, at_activity],
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_load_locked_slots",
+                return_value=[],
+            ),
+            patch.object(
+                CPSATActivitySolver,
+                "_load_slots",
+                return_value=[faculty_slot],
+            ),
+        ):
+            mock_dates.return_value = SimpleNamespace(
+                start_date=start_date, end_date=end_date
+            )
+            result = solver.solve(1, 2026)
+
+        assert result["success"] is True
+        assert resident_slot.activity_id == clinic_activity.id
+        assert faculty_slot.activity_id == at_activity.id
