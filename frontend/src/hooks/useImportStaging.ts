@@ -28,7 +28,8 @@ export const importStagingKeys = {
   batchList: (params?: { page?: number; pageSize?: number; status?: string }) =>
     [...importStagingKeys.batches(), params] as const,
   batch: (batchId: string) => [...importStagingKeys.batches(), batchId] as const,
-  preview: (batchId: string) => [...importStagingKeys.all, 'preview', batchId] as const,
+  preview: (batchId: string, page?: number, pageSize?: number) =>
+    [...importStagingKeys.all, 'preview', batchId, page, pageSize] as const,
 };
 
 // ============================================================================
@@ -71,7 +72,7 @@ export function useImportBatch(batchId: string | null) {
  */
 export function useImportPreview(batchId: string | null, page = 1, pageSize = 50) {
   return useQuery<ImportPreviewResponse, ApiError>({
-    queryKey: batchId ? importStagingKeys.preview(batchId) : importStagingKeys.all,
+    queryKey: batchId ? importStagingKeys.preview(batchId, page, pageSize) : importStagingKeys.all,
     queryFn: () => {
       const params = new URLSearchParams();
       params.set('page', String(page));

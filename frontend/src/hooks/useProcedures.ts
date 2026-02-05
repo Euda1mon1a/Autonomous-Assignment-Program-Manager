@@ -233,7 +233,8 @@ export const credentialKeys = {
     [...credentialKeys.all, 'by-procedure', procedureId, filters] as const,
   qualified: (procedureId: string) => [...credentialKeys.all, 'qualified', procedureId] as const,
   summary: (personId: string) => [...credentialKeys.all, 'summary', personId] as const,
-  facultySummaries: () => [...credentialKeys.all, 'faculty-summaries'] as const,
+  facultySummaries: (options?: { includeAdjuncts?: boolean; includeEmpty?: boolean }) =>
+    [...credentialKeys.all, 'faculty-summaries', options] as const,
   expiring: (days: number) => [...credentialKeys.all, 'expiring', days] as const,
 };
 
@@ -630,7 +631,7 @@ export function useFacultyCredentialSummaries(
   const queryString = params.toString();
 
   return useQuery<FacultyCredentialSummary[], ApiError>({
-    queryKey: credentialKeys.facultySummaries(),
+    queryKey: credentialKeys.facultySummaries({ includeAdjuncts, includeEmpty }),
     queryFn: () =>
       get<FacultyCredentialSummary[]>(
         `/credentials/faculty-summary${queryString ? `?${queryString}` : ''}`

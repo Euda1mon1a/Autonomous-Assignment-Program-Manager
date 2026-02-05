@@ -24,6 +24,7 @@ import {
   AlertTriangle,
   AlertOctagon,
   ArrowLeft,
+  BadgeX,
   Check,
   CheckCircle,
   Clock,
@@ -65,6 +66,11 @@ const flagTypeConfig: Record<
     label: "Lock Window",
     color: "text-red-400 bg-red-900/20 border-red-900/50",
     icon: AlertOctagon,
+  },
+  [DraftFlagType.CREDENTIAL_MISSING]: {
+    label: "Missing Credential",
+    color: "text-purple-400 bg-purple-900/20 border-purple-900/50",
+    icon: BadgeX,
   },
 };
 
