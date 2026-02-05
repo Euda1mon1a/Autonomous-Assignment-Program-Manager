@@ -12,6 +12,9 @@
 
 name: CI Lite (Repo Only)
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches: [main, master, develop]
