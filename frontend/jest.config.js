@@ -4,6 +4,7 @@ const config = {
   testTimeout: 15000, // Increase from 5s to 15s for async component tests
   setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
   moduleNameMapper: {
+    '^@/__tests__/(.*)$': '<rootDir>/__tests__/$1',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@/types/(.*)$': '<rootDir>/types/$1',
     // Mock CSS imports

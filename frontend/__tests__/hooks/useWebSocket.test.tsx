@@ -2,7 +2,7 @@
  * Tests for useWebSocket hooks
  * Tests WebSocket connection lifecycle, message handling, reconnection, and subscriptions
  */
-import { renderHook, waitFor, act } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@/__tests__/utils/test-utils'
 import {
   useWebSocket,
   useScheduleWebSocket,

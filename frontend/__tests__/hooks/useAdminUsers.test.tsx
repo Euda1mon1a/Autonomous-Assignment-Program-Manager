@@ -4,7 +4,7 @@
  * Tests CRUD operations for user management including
  * filtering, pagination, bulk actions, and account locking.
  */
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@/__tests__/utils/test-utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import {

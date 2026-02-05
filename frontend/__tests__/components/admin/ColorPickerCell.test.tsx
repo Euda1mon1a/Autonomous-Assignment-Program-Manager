@@ -4,7 +4,7 @@
  * Tests color picker functionality, preset selection, custom color input, and accessibility.
  */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/__tests__/utils/test-utils';
 import userEvent from '@testing-library/user-event';
 import { ColorPickerCell } from '@/components/admin/ColorPickerCell';
 

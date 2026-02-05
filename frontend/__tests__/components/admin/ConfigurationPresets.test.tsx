@@ -4,7 +4,7 @@
  * Tests preset management, save/load functionality, and import/export
  */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/__tests__/utils/test-utils';
 import userEvent from '@testing-library/user-event';
 import { ConfigurationPresets, SchedulingPreset } from '@/components/admin/ConfigurationPresets';
 

@@ -4,7 +4,7 @@
  * Tests rendering, mode selection, pattern configuration, and submission.
  */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/__tests__/utils/test-utils';
 import userEvent from '@testing-library/user-event';
 import { BulkPatternModal, SchedulePattern } from '@/components/admin/BulkPatternModal';
 import type { RotationTemplate } from '@/types/admin-templates';

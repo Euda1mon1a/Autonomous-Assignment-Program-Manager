@@ -4,7 +4,7 @@
  * Tests chat interface, message display, streaming, artifacts, and interactions
  */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@/__tests__/utils/test-utils';
 import userEvent from '@testing-library/user-event';
 import ClaudeCodeChat from '@/components/admin/ClaudeCodeChat';
 import { ClaudeChatProvider } from '@/contexts/ClaudeChatContext';

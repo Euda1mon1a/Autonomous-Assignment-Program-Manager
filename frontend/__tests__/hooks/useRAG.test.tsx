@@ -1,5 +1,5 @@
 // @ts-nocheck - Tests written for custom interface but hook returns UseMutationResult
-import { renderHook, waitFor, act } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@/__tests__/utils/test-utils'
 import { useRAGSearch as useRAG } from '@/hooks/useRAG'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'
