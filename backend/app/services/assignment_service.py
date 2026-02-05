@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.cache import invalidate_schedule_cache
 from app.models.assignment import Assignment
+from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
 from app.models.settings import OverrideReasonCode
 from app.repositories.assignment import AssignmentRepository
 from app.repositories.block import BlockRepository
@@ -496,8 +497,33 @@ class AssignmentService:
         deleted_count = self.assignment_repo.delete_by_block_ids(block_ids)
         self.assignment_repo.commit()
 
+        # Clear solver/template half-day assignments for the same range.
+        # Preload/manual are preserved.
+        half_day_deleted = (
+            self.db.query(HalfDayAssignment)
+            .filter(
+                HalfDayAssignment.date >= start_date,
+                HalfDayAssignment.date <= end_date,
+                HalfDayAssignment.source.in_(
+                    [
+                        AssignmentSource.SOLVER.value,
+                        AssignmentSource.TEMPLATE.value,
+                    ]
+                ),
+            )
+            .delete(synchronize_session=False)
+        )
+        if half_day_deleted:
+            logger.info(
+                "Deleted %s solver/template half-day assignments for %s to %s",
+                half_day_deleted,
+                start_date,
+                end_date,
+            )
+            self.db.commit()
+
         # Invalidate schedule cache after bulk deletion
-        if deleted_count > 0:
+        if deleted_count > 0 or half_day_deleted > 0:
             try:
                 invalidate_schedule_cache()
                 logger.debug(

@@ -948,8 +948,7 @@ class PreloadService:
         result = await self.session.execute(stmt)
         fmit_preloads = result.scalars().all()
 
-        # Get CALL activity ID
-        call_activity_id = await self._get_activity_id("CALL")
+        from app.models.call_assignment import CallAssignment
 
         count = 0
         for preload in fmit_preloads:
@@ -963,18 +962,34 @@ class PreloadService:
 
             while current <= fmit_end:
                 if current.weekday() in (4, 5):  # Friday=4, Saturday=5
-                    # Create call assignment in PM slot (overnight starts PM)
-                    created = await self._create_preload(
-                        person_id=preload.person_id,
-                        date_val=current,
-                        time_of_day="PM",
-                        activity_id=call_activity_id,
+                    existing_call = (
+                        (
+                            await self.session.execute(
+                                select(CallAssignment).where(
+                                    CallAssignment.person_id == preload.person_id,
+                                    CallAssignment.date == current,
+                                    CallAssignment.call_type == "overnight",
+                                )
+                            )
+                        )
+                        .scalars()
+                        .first()
                     )
-                    if created:
+                    if not existing_call:
+                        self.session.add(
+                            CallAssignment(
+                                person_id=preload.person_id,
+                                date=current,
+                                call_type="overnight",
+                                is_weekend=current.weekday() >= 5,
+                            )
+                        )
                         count += 1
                 current += timedelta(days=1)
 
-        logger.info(f"Loaded {count} FMIT call preloads")
+        if count:
+            await self.session.flush()
+        logger.info(f"Created {count} FMIT call assignments")
         return count
 
     async def _load_inpatient_clinic(
