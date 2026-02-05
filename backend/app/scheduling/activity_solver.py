@@ -91,6 +91,7 @@ FACULTY_ADMIN_EQUITY_PENALTY = 12
 FACULTY_AT_EQUITY_PENALTY = 12
 FACULTY_ACADEMIC_EQUITY_PENALTY = 8
 RESIDENT_CLINIC_EQUITY_PENALTY = 8
+FACULTY_CREDENTIAL_MISMATCH_PENALTY = 200
 FACULTY_ADMIN_BONUS = 1
 PHYSICAL_CAPACITY_SOFT_PENALTY = 10
 ACTIVITY_MIN_SHORTFALL_PENALTY = 10
@@ -225,26 +226,27 @@ class CPSATActivitySolver:
             return True
         return self._get_procedure_credential(faculty, procedure_id) is not None
 
-    def _filter_allowed_by_credentials(
+    def _uncredentialed_activity_ids(
         self,
         faculty: Person | None,
         allowed: list[UUID],
         activity_by_id: dict[UUID, Activity],
-    ) -> list[UUID]:
+    ) -> set[UUID]:
+        """Return activity IDs that require credentials the faculty lacks."""
         if not faculty or not allowed:
-            return allowed
-        filtered: list[UUID] = []
+            return set()
+        uncredentialed: set[UUID] = set()
         for act_id in allowed:
             activity = activity_by_id.get(act_id)
             if not activity or not activity.procedure_id:
-                filtered.append(act_id)
                 continue
             if not self._procedure_requires_credential(activity.procedure_id):
-                filtered.append(act_id)
                 continue
-            if self._faculty_has_procedure_credential(faculty, activity.procedure_id):
-                filtered.append(act_id)
-        return filtered
+            if not self._faculty_has_procedure_credential(
+                faculty, activity.procedure_id
+            ):
+                uncredentialed.add(act_id)
+        return uncredentialed
 
     def _vas_faculty_penalty(self, faculty: Person | None) -> int:
         if not self._vas_procedure_id:
@@ -754,6 +756,7 @@ class CPSATActivitySolver:
         faculty_admin_activity_by_slot: dict[int, UUID] = {}
         cv_penalty_terms: list[tuple[Any, int]] = []
         vas_penalty_terms: list[tuple[Any, int]] = []
+        credential_penalty_terms: list[tuple[Any, int]] = []
         oic_clinical_avoid_terms: list[tuple[Any, int]] = []
         clinic_preference_terms: list[tuple[Any, int]] = []
 
@@ -763,6 +766,7 @@ class CPSATActivitySolver:
             if person_type == "faculty":
                 allowed: list[UUID] = []
                 faculty = slot.person
+                uncredentialed_ids: set[UUID] = set()
                 if faculty:
                     if at_activity and at_activity.id in assignable_ids:
                         allowed.append(at_activity.id)
@@ -807,7 +811,7 @@ class CPSATActivitySolver:
                 if not allowed:
                     allowed = list(faculty_allowed_ids)
                 if faculty:
-                    allowed = self._filter_allowed_by_credentials(
+                    uncredentialed_ids = self._uncredentialed_activity_ids(
                         faculty, allowed, activity_by_id
                     )
             else:
@@ -900,6 +904,14 @@ class CPSATActivitySolver:
                 )
                 safe_code = act_code.replace("-", "_")
                 a[s_i, act_id] = model.NewBoolVar(f"a_{s_i}_{safe_code}")
+                if (
+                    person_type == "faculty"
+                    and act_id in uncredentialed_ids
+                    and (s_i, act_id) in a
+                ):
+                    credential_penalty_terms.append(
+                        (a[s_i, act_id], FACULTY_CREDENTIAL_MISMATCH_PENALTY)
+                    )
 
             if vas_penalty_weight and vas_penalty_weight > 0:
                 for act_id in allowed:
@@ -2179,6 +2191,14 @@ class CPSATActivitySolver:
 
         if vas_penalty_terms:
             penalties = [var * weight for var, weight in vas_penalty_terms]
+            if penalties:
+                penalty = sum(penalties)
+                objective_expr = (
+                    objective_expr - penalty if objective_expr is not None else -penalty
+                )
+
+        if credential_penalty_terms:
+            penalties = [var * weight for var, weight in credential_penalty_terms]
             if penalties:
                 penalty = sum(penalties)
                 objective_expr = (

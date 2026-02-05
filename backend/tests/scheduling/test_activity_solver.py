@@ -476,6 +476,47 @@ class TestHelperMethods:
         result = solver._get_week_number(slot_date, block_start)
         assert result == 4
 
+    def test_uncredentialed_activity_ids_empty_without_procedure(self):
+        """_uncredentialed_activity_ids ignores non-procedure activities."""
+        solver = CPSATActivitySolver(MagicMock())
+        faculty = SimpleNamespace(id=uuid4())
+        activity = SimpleNamespace(id=uuid4(), procedure_id=None)
+
+        result = solver._uncredentialed_activity_ids(
+            faculty, [activity.id], {activity.id: activity}
+        )
+        assert result == set()
+
+    def test_uncredentialed_activity_ids_flags_missing_credential(self):
+        """_uncredentialed_activity_ids returns activities lacking credentials."""
+        solver = CPSATActivitySolver(MagicMock())
+        faculty = SimpleNamespace(id=uuid4())
+        procedure_id = uuid4()
+        activity = SimpleNamespace(id=uuid4(), procedure_id=procedure_id)
+        solver._procedure_requires_cert = {procedure_id: True}
+        solver._procedure_credentials_by_person = {}
+
+        result = solver._uncredentialed_activity_ids(
+            faculty, [activity.id], {activity.id: activity}
+        )
+        assert result == {activity.id}
+
+    def test_uncredentialed_activity_ids_allows_active_credential(self):
+        """_uncredentialed_activity_ids excludes activities with valid credentials."""
+        solver = CPSATActivitySolver(MagicMock())
+        faculty = SimpleNamespace(id=uuid4())
+        procedure_id = uuid4()
+        activity = SimpleNamespace(id=uuid4(), procedure_id=procedure_id)
+        solver._procedure_requires_cert = {procedure_id: True}
+        solver._procedure_credentials_by_person = {
+            faculty.id: {procedure_id: SimpleNamespace()}
+        }
+
+        result = solver._uncredentialed_activity_ids(
+            faculty, [activity.id], {activity.id: activity}
+        )
+        assert result == set()
+
 
 class TestSolveReturnFormat:
     """Tests for solve() return value structure."""
