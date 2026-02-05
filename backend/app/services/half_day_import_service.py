@@ -553,6 +553,9 @@ class HalfDayImportService:
                     draft_service.refresh_lock_window_flag_sync(
                         draft_result.draft_id, commit=False
                     )
+                    draft_service.refresh_credential_flags_sync(
+                        draft_result.draft_id, commit=False
+                    )
 
                 if failed_ids:
                     error_code = "ROW_FAILURE"

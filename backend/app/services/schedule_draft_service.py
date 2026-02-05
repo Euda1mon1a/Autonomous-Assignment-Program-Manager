@@ -53,6 +53,7 @@ from app.models.schedule_draft import (
     ScheduleDraftStatus,
 )
 from app.models.person import Person
+from app.models.procedure_credential import ProcedureCredential
 from app.models.schedule_run import ScheduleRun
 from app.scheduling.validator import ACGMEValidator
 from app.services.lock_window_service import LockWindowService
@@ -276,6 +277,135 @@ class ScheduleDraftService:
             self.db.flush()
         return True
 
+    def _remove_credential_flags(self, draft_id: UUID, commit: bool = True) -> int:
+        """Remove all credential-missing flags for a draft."""
+        flags = (
+            self.db.query(ScheduleDraftFlag)
+            .filter(
+                ScheduleDraftFlag.draft_id == draft_id,
+                ScheduleDraftFlag.flag_type == DraftFlagType.CREDENTIAL_MISSING,
+            )
+            .all()
+        )
+        if not flags:
+            return 0
+
+        acknowledged = sum(1 for flag in flags if flag.acknowledged_at is not None)
+        for flag in flags:
+            self.db.delete(flag)
+
+        draft = (
+            self.db.query(ScheduleDraft).filter(ScheduleDraft.id == draft_id).first()
+        )
+        if draft:
+            draft.flags_total = max((draft.flags_total or 0) - len(flags), 0)
+            if acknowledged:
+                draft.flags_acknowledged = max(
+                    (draft.flags_acknowledged or 0) - acknowledged, 0
+                )
+
+        if commit:
+            self.db.commit()
+        else:
+            self.db.flush()
+        return len(flags)
+
+    def _refresh_credential_flags(self, draft_id: UUID, commit: bool = True) -> int:
+        """Add flags for faculty assignments missing required procedure credentials."""
+        self._remove_credential_flags(draft_id, commit=False)
+
+        assignments = (
+            self.db.query(ScheduleDraftAssignment)
+            .options(selectinload(ScheduleDraftAssignment.person))
+            .join(Person, ScheduleDraftAssignment.person_id == Person.id)
+            .filter(
+                ScheduleDraftAssignment.draft_id == draft_id,
+                ScheduleDraftAssignment.change_type != DraftAssignmentChangeType.DELETE,
+                Person.type == "faculty",
+            )
+            .all()
+        )
+
+        if not assignments:
+            if commit:
+                self.db.commit()
+            else:
+                self.db.flush()
+            return 0
+
+        person_ids = {assignment.person_id for assignment in assignments}
+        credentials = (
+            self.db.query(ProcedureCredential)
+            .filter(ProcedureCredential.person_id.in_(person_ids))
+            .all()
+        )
+        valid_pairs = {
+            (credential.person_id, credential.procedure_id)
+            for credential in credentials
+            if credential.is_valid
+        }
+
+        activity_cache: dict[str, Activity | None] = {}
+        flags_added = 0
+
+        for assignment in assignments:
+            if not assignment.activity_code:
+                continue
+            normalized = assignment.activity_code.strip()
+            if not normalized:
+                continue
+            key = normalized.lower()
+            if key in activity_cache:
+                activity = activity_cache[key]
+            else:
+                activity = self._resolve_activity_by_code(normalized)
+                activity_cache[key] = activity
+
+            if not activity or not activity.procedure_id:
+                continue
+
+            if (assignment.person_id, activity.procedure_id) in valid_pairs:
+                continue
+
+            procedure_label = (
+                activity.procedure.name if activity.procedure else "required procedure"
+            )
+            faculty_name = (
+                assignment.person.name if assignment.person else "Faculty member"
+            )
+            message = (
+                f"{faculty_name} lacks active credential for procedure "
+                f"{procedure_label} (activity {normalized})."
+            )
+            flag = ScheduleDraftFlag(
+                id=uuid4(),
+                draft_id=draft_id,
+                flag_type=DraftFlagType.CREDENTIAL_MISSING,
+                severity=DraftFlagSeverity.ERROR,
+                message=message,
+                assignment_id=assignment.id,
+                person_id=assignment.person_id,
+                affected_date=assignment.assignment_date,
+                created_at=datetime.utcnow(),
+            )
+            self.db.add(flag)
+            flags_added += 1
+
+        if flags_added:
+            draft = (
+                self.db.query(ScheduleDraft)
+                .filter(ScheduleDraft.id == draft_id)
+                .first()
+            )
+            if draft:
+                draft.flags_total = (draft.flags_total or 0) + flags_added
+
+        if commit:
+            self.db.commit()
+        else:
+            self.db.flush()
+        return flags_added
+
     async def create_draft(
         self,
         source_type: DraftSourceType,
@@ -418,6 +548,7 @@ class ScheduleDraftService:
                 existing.existing_assignment_id = existing_assignment_id
                 self.db.commit()
                 self._refresh_lock_window_flag(draft_id, commit=True)
+                self._refresh_credential_flags(draft_id, commit=True)
                 return existing.id
 
                 # Create new draft assignment
@@ -453,6 +584,7 @@ class ScheduleDraftService:
 
             self.db.commit()
             self._refresh_lock_window_flag(draft_id, commit=True)
+            self._refresh_credential_flags(draft_id, commit=True)
             return draft_assignment.id
 
         except Exception as e:
@@ -719,7 +851,15 @@ class ScheduleDraftService:
                 # Refresh lock-window flag and enforce break-glass if needed
                 has_locked = self._refresh_lock_window_flag(draft_id, commit=False)
                 if has_locked and not draft.approved_at:
-                    if not break_glass_reason:
+                    # Manual edits bypass break-glass per policy - coordinators are trusted
+                    if draft.source_type == DraftSourceType.MANUAL:
+                        logger.info(
+                            "Manual draft %s bypassing break-glass gate "
+                            "(source_type=MANUAL, user=%s)",
+                            draft_id,
+                            published_by_id,
+                        )
+                    elif not break_glass_reason:
                         return PublishResult(
                             success=False,
                             draft_id=draft_id,
@@ -734,6 +874,9 @@ class ScheduleDraftService:
                     draft.lock_date_at_approval = lock_date
                     if not override_comment:
                         override_comment = break_glass_reason
+
+                # Refresh credential flags before publish gate
+                self._refresh_credential_flags(draft_id, commit=False)
 
                 # Check flags (Tier 1 must acknowledge or provide override comment)
                 if draft.has_unacknowledged_flags and not override_comment:
@@ -857,6 +1000,34 @@ class ScheduleDraftService:
                 error_code="PUBLISH_FAILED",
             )
 
+    def _resolve_activity_by_code(self, activity_code: str) -> Activity | None:
+        """Resolve an activity by code, abbreviation, or name."""
+        normalized = activity_code.strip()
+        if not normalized:
+            return None
+
+        activity = (
+            self.db.query(Activity)
+            .filter(func.lower(Activity.code) == normalized.lower())
+            .first()
+        )
+        if activity:
+            return activity
+
+        activity = (
+            self.db.query(Activity)
+            .filter(func.lower(Activity.display_abbreviation) == normalized.lower())
+            .first()
+        )
+        if activity:
+            return activity
+
+        return (
+            self.db.query(Activity)
+            .filter(func.lower(Activity.name) == normalized.lower())
+            .first()
+        )
+
     async def _apply_draft_assignment(self, da: ScheduleDraftAssignment) -> list[UUID]:
         """
         Apply a single draft assignment to half_day_assignments table.
@@ -877,30 +1048,10 @@ class ScheduleDraftService:
         activity_id = None
         if da.change_type != DraftAssignmentChangeType.DELETE:
             if da.activity_code:
-                normalized = da.activity_code.strip()
-                activity = (
-                    self.db.query(Activity)
-                    .filter(func.lower(Activity.code) == normalized.lower())
-                    .first()
-                )
-                if not activity:
-                    activity = (
-                        self.db.query(Activity)
-                        .filter(
-                            func.lower(Activity.display_abbreviation)
-                            == normalized.lower()
-                        )
-                        .first()
-                    )
-                if not activity:
-                    activity = (
-                        self.db.query(Activity)
-                        .filter(func.lower(Activity.name) == normalized.lower())
-                        .first()
-                    )
+                activity = self._resolve_activity_by_code(da.activity_code)
                 if not activity:
                     raise ActivityNotFoundError(
-                        normalized, context="schedule_draft_service"
+                        da.activity_code.strip(), context="schedule_draft_service"
                     )
                 activity_id = activity.id
             else:
@@ -1450,6 +1601,7 @@ class ScheduleDraftService:
 
         self.db.commit()
         self._refresh_lock_window_flag(draft_id, commit=True)
+        self._refresh_credential_flags(draft_id, commit=True)
         logger.info(f"Added {added_count} solver assignments to draft {draft_id}")
         return added_count
 
@@ -1614,6 +1766,10 @@ class ScheduleDraftService:
         """Sync helper to refresh lock-window flags for a draft."""
         return self._refresh_lock_window_flag(draft_id, commit=commit)
 
+    def refresh_credential_flags_sync(self, draft_id: UUID, commit: bool = True) -> int:
+        """Sync helper to refresh credential flags for a draft."""
+        return self._refresh_credential_flags(draft_id, commit=commit)
+
     def reflag_lock_window_for_all_drafts(self) -> int:
         """Re-evaluate lock-window flags for all active drafts."""
         drafts = (
@@ -1669,6 +1825,7 @@ class ScheduleDraftService:
                     self.db.flush()
                 if update_lock_flags:
                     self._refresh_lock_window_flag(draft_id, commit=commit)
+                    self._refresh_credential_flags(draft_id, commit=commit)
                 return existing.id
 
             draft_assignment = ScheduleDraftAssignment(
@@ -1705,6 +1862,7 @@ class ScheduleDraftService:
                 self.db.flush()
             if update_lock_flags:
                 self._refresh_lock_window_flag(draft_id, commit=commit)
+                self._refresh_credential_flags(draft_id, commit=commit)
             return draft_assignment.id
 
         except Exception as e:
@@ -1804,6 +1962,7 @@ class ScheduleDraftService:
 
         self.db.commit()
         self._refresh_lock_window_flag(draft_id, commit=True)
+        self._refresh_credential_flags(draft_id, commit=True)
         logger.info(f"Added {added_count} solver assignments to draft {draft_id}")
         return added_count
 
