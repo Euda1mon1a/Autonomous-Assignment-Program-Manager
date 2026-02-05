@@ -199,16 +199,31 @@ ORCHESTRATOR (opus) ─── Supreme Commander
     PAO (HISTORIAN) ─── Historical Record (sonnet)
 ```
 
-## Model Tier Assignments
+## Model Tier Assignments (Claude 4.5/4.6 — February 2026)
 
-| Tier | Role | Agents |
-|------|------|--------|
-| **Opus** | Strategic decision-makers | ORCHESTRATOR, ARCHITECT, SYNTHESIZER |
-| **Opus** | High-stakes Special Staff | DEVCOM_RESEARCH, MEDCOM, INCIDENT_COMMANDER *(Reserves - production activation)* |
-| **Sonnet** | Tactical coordinators + advisors | All COORDs, G-Staff, IG, PAO, FORCE_MANAGER |
-| **Haiku** | Execution specialists | All specialists under coordinators, CRASH_RECOVERY_SPECIALIST *(Reserves - production activation)* |
+| Tier | Model ID | Role | Agents |
+|------|----------|------|--------|
+| **Opus 4.6** | `claude-opus-4-6` | Strategic decision-makers | ORCHESTRATOR, ARCHITECT, SYNTHESIZER |
+| **Opus 4.6** | `claude-opus-4-6` | High-stakes Special Staff | DEVCOM_RESEARCH, MEDCOM, INCIDENT_COMMANDER *(Reserves)* |
+| **Sonnet 4.5** | `claude-sonnet-4-5-20250929` | Tactical coordinators + advisors | All COORDs, G-Staff, IG, PAO, FORCE_MANAGER |
+| **Haiku 4.5** | `claude-haiku-4-5-20251001` | Execution specialists | All specialists under coordinators, CRASH_RECOVERY *(Reserves)* |
 
-> **Reserves Note:** Agents marked *(Reserves - production activation)* are production-ready reserves in `.claude/Reserves/`. They activate based on system maturity triggers, not development phase.
+> **Reserves Note:** Agents marked *(Reserves)* are production-ready reserves in `.claude/Reserves/`. They activate based on system maturity triggers, not development phase.
+
+### Agent Teams (Experimental — Opus 4.6)
+
+Native Claude Code agent teams are available as a coordination mechanism alongside PAI hierarchy:
+
+| PAI Mechanism | Agent Teams |
+|---------------|-------------|
+| Governed by identity cards + spawn chains | Governed by team lead + shared task list |
+| Audit trail via MCP `spawn_agent_tool` | Audit trail via `~/.claude/teams/` |
+| Chain-of-command messaging | Peer-to-peer messaging |
+| Best for: ACGME-critical schedule ops | Best for: research, review, debugging |
+
+**Configuration:** `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in `~/.claude/settings.json` env block.
+
+**Standing Order:** Agent Teams do NOT replace PAI governance for schedule operations. Use PAI for anything touching ACGME compliance, schedule generation, or swap execution.
 
 ## L3 Minimal Context Standing Order (2026-01-10)
 

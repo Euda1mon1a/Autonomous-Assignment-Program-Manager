@@ -64,7 +64,7 @@ const LAB_CATEGORIES: LabCategory[] = [
     iconColor: 'text-cyan-500',
     targetTier: 'Tier 1-2',
     readiness: 'medium',
-    features: ['CP-SAT Simulator', 'Brane Topology', 'Foam Topology'],
+    features: ['CP-SAT Simulator', 'Hopfield Energy', 'Free Energy', 'Energy Landscape', '+5 more'],
   },
   {
     id: 'fairness',

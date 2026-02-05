@@ -33,32 +33,29 @@ Residency Scheduler is a production-ready, full-stack application designed to au
 
 ---
 
-## What's New (December 2025)
+## What's New (February 2026)
 
-### Major Additions
+### Claude Opus 4.6 Upgrade
 
-**Personal AI Infrastructure (PAI)** - Complete AI agent framework with 34 skills, 27 slash commands, 4 operational modes, and multi-agent orchestration. Based on Kai Patterns for consistent, safe AI-assisted development.
+**Model Upgrade** - All PAI agents now run on the Claude 4.5/4.6 model family. ORCHESTRATOR and Deputies use `claude-opus-4-6`, Coordinators use `claude-sonnet-4-5-20250929`, Specialists use `claude-haiku-4-5-20251001`.
 
-**Solver Operational Controls** - Redis-backed kill-switch for aborting runaway solvers, real-time progress monitoring, partial result capture, and Prometheus metrics integration.
+**Agent Teams (Experimental)** - Native Claude Code multi-agent coordination. Multiple Claude instances work as a team with shared task lists, peer-to-peer messaging, and centralized management. Enabled via `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in settings. Complements existing PAI hierarchy with native orchestration primitives.
 
-**Block Schedule Import/Export** - CLI-based Excel parsing with fuzzy matching, markdown export for human-readable summaries, and PII sanitization for military medical data.
+**Adaptive Thinking** - Opus 4.6 intelligently determines when extended reasoning is needed. Four effort levels (low/medium/high/max) reduce latency and cost for simpler tasks while preserving deep reasoning for complex ones.
 
-**MCP Server Integration** - 34 Model Context Protocol tools enabling AI assistants to validate schedules, detect conflicts, analyze swaps, and manage background tasks.
+**1M Token Context Window (API Beta)** - 5x expansion from 200K tokens. Requires API usage Tier 4+ and `anthropic-beta: context-1m-2025-08-07` header. Not available on consumer claude.ai plans.
 
-**Docker Security Hardening** - Non-root user execution, multi-stage builds, read-only filesystems, Docker secrets, and production security controls.
+**128K Output Tokens** - Doubled from 64K, enabling longer code generation and analysis responses.
 
-**Cross-Disciplinary Research** - 10+ bridge specifications connecting resilience concepts from forestry, telecommunications, epidemiology, game theory, and materials science.
+### Previous Highlights (December 2025)
 
-**Exotic Frontier Concepts** - 10 cutting-edge physics/biology/math scheduling modules including metastability detection (statistical mechanics), spin glass constraint models (condensed matter), circadian phase response (chronobiology), Penrose process efficiency (astrophysics), Anderson localization (quantum physics), persistent homology (topology), free energy scheduling (neuroscience), keystone species analysis (ecology), quantum Zeno governor, and catastrophe theory detection.
+**Personal AI Infrastructure (PAI)** - Complete AI agent framework with 58 agents, 80+ skills, multi-agent orchestration, and Auftragstaktik delegation doctrine.
 
-### Recent Changes (427 commits since Dec 18)
+**MCP Server Integration** - 34+ Model Context Protocol tools for AI-assisted scheduling operations.
 
-- **Exotic Frontier Implementation** - 10 new modules (~21,000 lines) from statistical mechanics, quantum physics, topology, neuroscience, ecology, and catastrophe theory
-- Added FMIT recovery constraints and activity type categorization
-- Implemented schedule verification scripts with 12 automated checks
-- Created 10 service specifications for advanced features (signal processing, game theory, control theory)
-- Expanded documentation with research directory and architecture bridges
-- Added session documentation for handoff continuity
+**CP-SAT Solver** - Constraint Programming solver with credential penalty ramp, faculty activity preservation, and ACGME compliance.
+
+**Exotic Frontier Concepts** - 10 cutting-edge physics/biology/math scheduling modules from statistical mechanics, quantum physics, topology, neuroscience, ecology, and catastrophe theory.
 
 ---
 
@@ -403,7 +400,7 @@ residency-scheduler/
 │   └── schedules/               # Sanitized test data
 ├── scripts/                     # CLI tools & utilities
 ├── docker-compose.yml           # Production configuration
-├── docker-compose.dev.yml       # Development configuration
+├── docker-compose.local.yml       # Development configuration
 ├── docker-compose.prod.yml      # Security-hardened production
 └── README.md
 ```

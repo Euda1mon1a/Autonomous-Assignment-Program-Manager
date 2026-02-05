@@ -364,7 +364,7 @@ Following Docker's MCP Toolkit security patterns:
 - INFO log level
 - No volume mounts
 
-**Development (docker-compose.dev.yml):**
+**Development (docker-compose.local.yml):**
 - Port 8080 exposed (HTTP transport)
 - 2 CPU, 4GB RAM limits
 - DEBUG log level

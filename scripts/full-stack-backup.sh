@@ -264,7 +264,7 @@ backup_configs() {
 
     # Docker compose files
     cp docker-compose.yml "${BACKUP_DIR}/config/" 2>/dev/null && log_ok "docker-compose.yml"
-    cp docker-compose.dev.yml "${BACKUP_DIR}/config/" 2>/dev/null || true
+    cp docker-compose.local.yml "${BACKUP_DIR}/config/" 2>/dev/null || true
     cp docker-compose.prod.yml "${BACKUP_DIR}/config/" 2>/dev/null || true
     cp docker-compose.override.yml "${BACKUP_DIR}/config/" 2>/dev/null || true
 

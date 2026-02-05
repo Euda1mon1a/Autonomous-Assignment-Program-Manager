@@ -244,6 +244,39 @@ The session expired or was cleared. Simply type a new message to start a fresh s
 - Verify data exists for the period
 - Try a broader search first
 
+### Schedule Generation Fails After Multiple Runs
+
+If schedule generation returns **INFEASIBLE** or **partial** immediately after using "clear existing":
+- The MCP client currently clears `assignments` but does **not** clear `half_day_assignments` for `solver`/`template` sources.
+- Stale half-day rows from prior runs can conflict with the next solve.
+- Stale **faculty PCAT/DO preloads** can lock next‑day slots and make call coverage infeasible.
+
+**Interim Fix (Docker/SQL):** clear `half_day_assignments` for the date range, then re-run the solver.
+
+```sql
+DELETE FROM half_day_assignments
+WHERE source IN ('solver', 'template')
+  AND date BETWEEN 'YYYY-MM-DD' AND 'YYYY-MM-DD';
+```
+
+If call coverage is infeasible due to locked next‑day slots, clear stale PCAT/DO preloads:
+
+```sql
+DELETE FROM half_day_assignments
+WHERE source = 'preload'
+  AND date BETWEEN 'YYYY-MM-DD' AND 'YYYY-MM-DD'
+  AND activity_id IN (
+    SELECT id FROM activities WHERE code IN ('pcat', 'do')
+  );
+```
+
+### MCP vs Docker Mismatch
+
+If MCP results differ from direct Docker runs:
+- **Use Docker as the source of truth** for critical CP‑SAT regeneration runs.
+- Update MCP/API tooling **after** Docker behavior is confirmed stable.
+- Log the discrepancy and link to the relevant report (e.g., `docs/reports/cpsat-call-preload-and-schema-drift-20260205.md`).
+
 ### Long-Running Operations
 
 Some operations take time (schedule generation, contingency analysis):

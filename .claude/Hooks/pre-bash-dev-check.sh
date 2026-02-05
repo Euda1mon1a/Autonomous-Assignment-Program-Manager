@@ -31,7 +31,7 @@ if echo "$COMMAND" | grep -qE 'docker-compose\s+up|docker\s+compose\s+up'; then
         echo "" >&2
         echo "⚠️  DEV CHECK: docker-compose up without dev config detected" >&2
         echo "   For hot reload, use:" >&2
-        echo "   docker-compose -f docker-compose.dev.yml up" >&2
+        echo "   docker-compose -f docker-compose.local.yml up" >&2
         echo "   Or for full local stack:" >&2
         echo "   docker-compose -f docker-compose.local.yml up" >&2
         echo "" >&2
@@ -48,7 +48,7 @@ if echo "$COMMAND" | grep -qE 'docker-compose.*build|docker\s+build'; then
         echo "⚠️  DEV CHECK: Docker build detected" >&2
         echo "   Volume mounts in dev mode avoid rebuilds." >&2
         echo "   If you need to rebuild, consider:" >&2
-        echo "   - docker-compose -f docker-compose.dev.yml up --build" >&2
+        echo "   - docker-compose -f docker-compose.local.yml up --build" >&2
         echo "   - Or ./scripts/rebuild-containers.sh for fresh rebuild" >&2
         echo "" >&2
     fi

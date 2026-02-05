@@ -120,7 +120,7 @@ ORCHESTRATOR ──┬── Coordinator (via Task, no Task())
 
 ## Docker Fix Applied
 
-Added `.claude` mount to MCP container in `docker-compose.dev.yml`:
+Added `.claude` mount to MCP container in `docker-compose.local.yml`:
 
 ```yaml
 mcp-server:

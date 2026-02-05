@@ -112,7 +112,7 @@ We have three overlapping knowledge mechanisms (Skills, RAG, MCP Tools) with red
 
 **Requirement:** Production deployments MUST set `MCP_API_KEY` environment variable.
 
-**Context:** `MCP_ALLOW_LOCAL_DEV=true` in `docker-compose.dev.yml` bypasses all auth checks for dev convenience. This is intentional - Docker network detection is fragile and dev environments shouldn't require auth debugging.
+**Context:** `MCP_ALLOW_LOCAL_DEV=true` in `docker-compose.local.yml` bypasses all auth checks for dev convenience. This is intentional - Docker network detection is fragile and dev environments shouldn't require auth debugging.
 
 **Production Checklist:** See `docs/security/MCP_PRODUCTION_SECURITY_CHECKLIST.md`
 
@@ -123,6 +123,66 @@ We have three overlapping knowledge mechanisms (Skills, RAG, MCP Tools) with red
 ---
 
 ## HIGH (Address Soon)
+
+### 3. CP-SAT FMIT Fri/Sat Call Missing (NEW - Feb 2026)
+**Status:** ✅ Fixed locally; pending verification in main + MCP parity
+
+**Symptom (prior):** No Friday/Saturday call entries in `call_assignments`, so FMIT faculty call was not represented as call. PCAT/DO only existed for Sun–Thu calls.
+
+**Root Cause (confirmed):**
+- Solver call variables are **only created for Sun–Thu**.
+- Preload sync **creates FMIT Fri/Sat `call_assignments`**, but the engine cleared
+  the entire `call_assignments` range after the solver, **wiping FMIT Fri/Sat**.
+
+**Local Fix Applied (2026-02-05):**
+1. Preserve FMIT Fri/Sat `call_assignments` when clearing the call table
+   (derive dates from `inpatient_preloads`).
+2. Ensure FMIT call preload creation is **faculty-only** (parity with async preload service).
+
+**Verification Required:**
+1. Regenerate call assignments; confirm Fri/Sat call appears in `call_assignments`.
+2. Confirm PCAT/DO remains correct (skip if still on FMIT).
+3. Update MCP/API tooling to mirror direct Docker behavior.
+
+### 3.1. CP-SAT Infeasible With 98% Preassigned (NEW - Feb 2026)
+**Status:** Active - blocks regeneration
+**Report:** [`docs/reports/cpsat-call-preload-and-schema-drift-20260205.md`](reports/cpsat-call-preload-and-schema-drift-20260205.md)
+
+**Symptom:** CP-SAT returns **INFEASIBLE** for 2026-03-12 → 2026-04-08.
+
+**Evidence (Docker logs):**
+- 98% of slots pre-assigned; multiple residents at **40/40 workday blocks**.
+- `ExistingAssignmentPreservation` hard-locks **664** assignments.
+- Missing templates: **DO, NF, PC, PCAT, SM** (constraints disabled).
+- NF headcount uses template name match; existing assignments show **4 NF‑named templates per block**, violating `NF_CONCURRENT_MAX = 1`.
+- Diagnostic run with `ResidentInpatientHeadcount` disabled still **INFEASIBLE** → broader constraint conflict remains.
+
+**Updated root cause (2026‑02‑05):**
+- Minimal infeasible hard set (ddmin) = `OvernightCallCoverage` + `CallAvailability`.
+- Stale **PCAT/DO preloads** lock next‑day slots (e.g., 2026‑03‑13), leaving **zero** eligible faculty for 2026‑03‑12 call.
+- Fix implemented locally: clear stale faculty PCAT/DO preloads when `skip_faculty_call=True`
+  (`SyncPreloadService._clear_faculty_call_preloads`).
+- **Post‑fix status:** Full Docker regen (clear → preload → CP‑SAT → activity solver) returns **partial** (not infeasible), with **3 supervision ratio** violations remaining.  
+   Run ID: `b0d947e2-9b78-4c55-9754-a6e7188362f8` (2026‑02‑05 20:02).  
+   Call assignments: **28** (20 weekday + 8 weekend).
+ - **Solver log note:** `No faculty_at or faculty_pcat variables, supervision constraint not applied` (likely reason for supervision gaps).
+
+**Action (Documented):**
+1. Validate that locked assignments don’t violate hard constraints (1-in-7, 80-hr, supervision).
+2. Confirm preassignments are not stale solver output.
+3. If needed, introduce **soft** preservation with high penalty or clear stale solver output before solve.
+
+### 3.5. DB Schema Drift (NEW - Feb 2026)
+**Status:** Alembic reports head, but live DB is missing model tables
+
+**Symptoms:**
+- Missing tables in DB (models exist): `calendar_subscriptions`, `export_jobs`, `export_job_executions`, `oauth2_authorization_codes`, `pkce_clients`, `schema_change_events`, `schema_versions`, `state_machine_instances`, `state_machine_transitions`, `webhooks`, `webhook_deliveries`, `webhook_dead_letters`.
+- Extra tables in DB: Continuum version tables (`*_version`, `transaction`) and legacy tables (`schedule_versions`, `schedule_diffs`, `metric_snapshots`, `chaos_experiments`, `faculty_activity_permissions`).
+
+**Action:**
+1. Confirm which missing tables are **intentional/optional** vs required.
+2. Add migrations for required tables.
+3. **Do not prune** tables unless they cause active issues.
 
 ### 4. Block 10 Schedule Generation - PARTIAL (Activity Solver OK)
 **Status:** CP-SAT ✅ | Activity Solver ✅ | Backend Export ⚠️ (partial) | Frontend Export ✅
@@ -363,6 +423,18 @@ Integrate Kimi K2.5 Agent Swarm as a managed execution asset for parallel bulk w
 - `mcp-server/src/scheduler_mcp/k2_swarm/` (new module)
 
 **Effort:** 4-6 hours implementation + testing
+
+### 16. MCP Clear-Existing Does Not Clear Half-Day Assignments (NEW - Feb 2026)
+**Status:** Gap in MCP cleanup after successful local runs
+
+**Symptom:** Schedule generation becomes **INFEASIBLE/partial** after repeated runs because stale `half_day_assignments` (sources `solver`/`template`) persist even when MCP `clear_existing` is used.
+
+**Cause:** MCP client deletes `assignments` only; `half_day_assignments` cleanup runs only after a successful solve, so failed/partial runs leave stale solver/template rows.
+
+**Action:**
+1. Update MCP client to clear `half_day_assignments` (sources `solver`/`template`) for the target date range.
+2. Document interim Docker/SQL cleanup procedure for admins.
+3. Add integration test to ensure MCP `clear_existing` clears both tables.
 
 ---
 

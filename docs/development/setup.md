@@ -61,7 +61,7 @@ For full-stack development with Docker:
 
 ```bash
 # Start all services with hot reload
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+docker-compose -f docker-compose.yml -f docker-compose.local.yml up
 
 # View logs
 docker-compose logs -f backend

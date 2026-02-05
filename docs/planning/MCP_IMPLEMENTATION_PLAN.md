@@ -499,7 +499,7 @@ mcp-server:
 docker-compose up -d
 
 # Development mode with hot reload
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker-compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
 # View MCP server logs
 docker-compose logs -f mcp-server

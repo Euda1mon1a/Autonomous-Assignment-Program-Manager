@@ -1,5 +1,5 @@
 # Production Docker Compose Configuration
-# For development, use: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# For development, use: docker-compose -f docker-compose.yml -f docker-compose.local.yml up
 
 services:
   # PostgreSQL Database with pgvector for AI/ML vector similarity search
@@ -31,7 +31,7 @@ services:
     container_name: residency-scheduler-redis
     restart: unless-stopped
     # Port removed for production security - Redis only accessible within Docker network
-    # For local development, use docker-compose.dev.yml to expose port
+    # For local development, use docker-compose.local.yml to expose port
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD:-dev_only_password}
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-dev_only_password}
@@ -71,6 +71,8 @@ services:
       DEBUG: "false"
       CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000"]}
       RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-false}
+      # Credential penalty for solver tuning (0 = disabled, higher = stronger preference for credentialed faculty)
+      FACULTY_CREDENTIAL_MISMATCH_PENALTY: ${FACULTY_CREDENTIAL_MISMATCH_PENALTY:-0}
       # OpenTelemetry Distributed Tracing Configuration
       # For production deployments, enable TELEMETRY_ENABLED and configure OTEL backend
       # Supported backends: Jaeger, Zipkin, DataDog, New Relic, or any OTLP-compatible collector

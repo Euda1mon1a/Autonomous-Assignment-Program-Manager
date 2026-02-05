@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Guidelines for Autonomous Claude Work
 
-> **Last Updated:** 2026-01-03 | **Purpose:** Guidelines for AI-assisted development on the Residency Scheduler
+> **Last Updated:** 2026-02-05 | **Purpose:** Guidelines for AI-assisted development on the Residency Scheduler
 
 ---
 
@@ -41,7 +41,17 @@
 
 ### Infrastructure
 
-Docker + Docker Compose, MCP Server (29+ AI tools), Prometheus, Grafana
+Docker + Docker Compose, MCP Server (97+ AI tools), Prometheus, Grafana
+
+### AI Models (Claude 4.5/4.6 — February 2026)
+
+| Model | ID | Role |
+|-------|----|------|
+| Opus 4.6 | `claude-opus-4-6` | ORCHESTRATOR, Deputies, complex reasoning |
+| Sonnet 4.5 | `claude-sonnet-4-5-20250929` | Coordinators, G-Staff, tactical work |
+| Haiku 4.5 | `claude-haiku-4-5-20251001` | Specialists, simple execution |
+
+**Agent Teams (Experimental):** Enabled via `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in `~/.claude/settings.json`. Provides native multi-agent coordination with shared task lists and peer-to-peer messaging. Use for research and review; PAI hierarchy remains authoritative for schedule operations.
 
 ---
 

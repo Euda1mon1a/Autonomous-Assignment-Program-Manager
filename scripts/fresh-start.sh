@@ -67,7 +67,7 @@ echo ""
 
 # Step 2: Start Docker services (with dev compose for port exposure)
 echo "2. Starting Docker services (dev mode - ports exposed)..."
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db redis backend frontend mcp-server celery-worker celery-beat
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d db redis backend frontend mcp-server celery-worker celery-beat
 echo ""
 
 # Step 3: Wait for DB healthy
