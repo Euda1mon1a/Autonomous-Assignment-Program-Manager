@@ -32,6 +32,7 @@ export enum DraftFlagType {
   COVERAGE_GAP = "coverage_gap",
   MANUAL_REVIEW = "manual_review",
   LOCK_WINDOW_VIOLATION = "lock_window_violation",
+  CREDENTIAL_MISSING = "credential_missing",
 }
 
 export enum DraftFlagSeverity {
