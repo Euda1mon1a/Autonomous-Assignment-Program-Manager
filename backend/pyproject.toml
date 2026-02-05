@@ -78,6 +78,7 @@ ignore = [
     "SIM117", # multiple with statements - sometimes clearer separated
     "B905",   # zip strict - Python <3.10 compatibility
     "UP035",  # deprecated imports - will fix gradually
+    "UP042",  # str + Enum pattern - intentional for JSON serialization
     "UP028",  # yield in for loop - sometimes needed for clarity
     "C414",   # unnecessary list call - sometimes needed for clarity
     "C416",   # unnecessary comprehension - sometimes clearer

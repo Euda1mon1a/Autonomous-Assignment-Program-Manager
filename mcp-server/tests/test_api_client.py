@@ -124,7 +124,7 @@ class TestSchedulerAPIClient:
             assert len(result["conflicts"]) == 1
             mock_httpx_client.request.assert_awaited_once_with(
                 "GET",
-                f"{client.config.api_prefix}/conflicts/analyze",
+                f"{client.config.api_prefix}/conflicts/analysis/analyze",
                 headers={"Authorization": "Bearer test-token"},
                 params={"start_date": "2024-01-01", "end_date": "2024-01-31"},
             )
