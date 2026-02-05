@@ -5,7 +5,8 @@ from pydantic import BaseModel, Field
 
 class SettingsBase(BaseModel):
     scheduling_algorithm: str = Field(
-        default="greedy", description="Algorithm: greedy, min_conflicts, cp_sat"
+        default="cp_sat",
+        description="Algorithm (cp_sat is canonical; other values allowed only in DEBUG)",
     )
     work_hours_per_week: int = Field(default=80, ge=40, le=100)
     max_consecutive_days: int = Field(default=6, ge=1, le=7)

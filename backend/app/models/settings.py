@@ -52,7 +52,7 @@ class ApplicationSettings(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
 
     # Scheduling algorithm configuration
-    scheduling_algorithm = Column(String(50), nullable=False, default="greedy")
+    scheduling_algorithm = Column(String(50), nullable=False, default="cp_sat")
 
     # Work hour limits (ACGME compliance)
     work_hours_per_week = Column(Integer, nullable=False, default=80)
