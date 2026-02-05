@@ -91,7 +91,7 @@ FACULTY_ADMIN_EQUITY_PENALTY = 12
 FACULTY_AT_EQUITY_PENALTY = 12
 FACULTY_ACADEMIC_EQUITY_PENALTY = 8
 RESIDENT_CLINIC_EQUITY_PENALTY = 8
-FACULTY_CREDENTIAL_MISMATCH_PENALTY = 200
+FACULTY_CREDENTIAL_MISMATCH_PENALTY = 0
 FACULTY_ADMIN_BONUS = 1
 PHYSICAL_CAPACITY_SOFT_PENALTY = 10
 ACTIVITY_MIN_SHORTFALL_PENALTY = 10
@@ -247,6 +247,20 @@ class CPSATActivitySolver:
             ):
                 uncredentialed.add(act_id)
         return uncredentialed
+
+    def _get_credential_mismatch_penalty(self) -> int:
+        raw = os.environ.get("FACULTY_CREDENTIAL_MISMATCH_PENALTY")
+        if raw is None:
+            return FACULTY_CREDENTIAL_MISMATCH_PENALTY
+        try:
+            return max(0, int(raw))
+        except (TypeError, ValueError):
+            logger.warning(
+                "Invalid FACULTY_CREDENTIAL_MISMATCH_PENALTY=%s; using default %s",
+                raw,
+                FACULTY_CREDENTIAL_MISMATCH_PENALTY,
+            )
+            return FACULTY_CREDENTIAL_MISMATCH_PENALTY
 
     def _vas_faculty_penalty(self, faculty: Person | None) -> int:
         if not self._vas_procedure_id:
@@ -759,6 +773,7 @@ class CPSATActivitySolver:
         credential_penalty_terms: list[tuple[Any, int]] = []
         oic_clinical_avoid_terms: list[tuple[Any, int]] = []
         clinic_preference_terms: list[tuple[Any, int]] = []
+        credential_penalty_weight = self._get_credential_mismatch_penalty()
 
         for s_i, slot in enumerate(slots):
             person_type = slot_meta[s_i].get("person_type")
@@ -906,11 +921,12 @@ class CPSATActivitySolver:
                 a[s_i, act_id] = model.NewBoolVar(f"a_{s_i}_{safe_code}")
                 if (
                     person_type == "faculty"
+                    and credential_penalty_weight > 0
                     and act_id in uncredentialed_ids
                     and (s_i, act_id) in a
                 ):
                     credential_penalty_terms.append(
-                        (a[s_i, act_id], FACULTY_CREDENTIAL_MISMATCH_PENALTY)
+                        (a[s_i, act_id], credential_penalty_weight)
                     )
 
             if vas_penalty_weight and vas_penalty_weight > 0:
