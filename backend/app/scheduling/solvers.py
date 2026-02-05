@@ -985,12 +985,7 @@ class CPSATSolver(BaseSolver):
         resident_clinic = {}
         clinic_template_ids = set()
         for template in context.templates:
-            name_lower = template.name.lower()
-            if (
-                "clinic" in name_lower
-                or "fm" in name_lower
-                or "outpatient" in name_lower
-            ):
+            if getattr(template, "rotation_type", "") == "outpatient":
                 clinic_template_ids.add(template.id)
 
         if clinic_template_ids:
@@ -1015,20 +1010,34 @@ class CPSATSolver(BaseSolver):
                             else sum(clinic_vars)
                         )
 
+        # Re-key faculty supervision vars from (int, int) to (UUID, date, slot)
+        # so FacultySupervisionConstraint can look them up by faculty ID + date + AM/PM
+        faculty_at_by_slot: dict[tuple, Any] = {}
+        faculty_pcat_by_slot: dict[tuple, Any] = {}
+        for faculty in context.faculty:
+            f_i = context.faculty_idx[faculty.id]
+            for block in workday_blocks:
+                b_i = context.block_idx[block.id]
+                slot_key = (faculty.id, block.date, block.time_of_day)
+                if (f_i, b_i) in fac_supervise:
+                    faculty_at_by_slot[slot_key] = fac_supervise[f_i, b_i]
+                if (f_i, b_i) in fac_pcat:
+                    faculty_pcat_by_slot[slot_key] = fac_pcat[f_i, b_i]
+
         variables = {
             "assignments": x_2d,  # For legacy constraints (residents)
             "template_assignments": x,  # For rotation-specific constraints (residents)
             "faculty_assignments": f_2d,  # Faculty 2D view
             "faculty_template_assignments": f,  # Faculty 3D view
             "call_assignments": call,  # Overnight call assignments
-            # Faculty activity variables
+            # Faculty activity variables (index-keyed, for objective function)
             "fac_clinic": fac_clinic,
             "fac_supervise": fac_supervise,
             "fac_pcat": fac_pcat,
             "fac_do": fac_do,
-            # Supervision constraint wiring
-            "faculty_at": fac_supervise,
-            "faculty_pcat": fac_pcat,
+            # Supervision constraint wiring (UUID-date-slot keyed)
+            "faculty_at": faculty_at_by_slot,
+            "faculty_pcat": faculty_pcat_by_slot,
             "resident_clinic": resident_clinic,
         }
 

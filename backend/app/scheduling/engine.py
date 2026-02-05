@@ -623,6 +623,10 @@ class SchedulingEngine:
             # Step 7: Assign faculty supervision (legacy mode only)
             logger.info("Skipping legacy faculty supervision (CP-SAT output only)")
 
+            # Step 7.5: Backfill empty weekend slots with W (Weekend) activity
+            if not create_draft:
+                self._backfill_weekend_slots(residents, blocks)
+
             # Step 8: Handle draft vs live assignment persistence
             draft_id = None
             if create_draft:
@@ -1302,21 +1306,55 @@ class SchedulingEngine:
         if not result.call_assignments:
             return call_assignments
 
-        # Clear existing call assignments for this date range to avoid conflicts
-        # This allows regeneration without unique constraint violations
-        deleted_count = (
+        # Preserve FMIT Fri/Sat call preloads (created before solver run)
+        # These are authoritative and should not be wiped by regeneration.
+        from app.models.inpatient_preload import InpatientPreload, InpatientRotationType
+
+        fmit_call_pairs: set[tuple[UUID, date]] = set()
+        fmit_stmt = select(InpatientPreload).where(
+            InpatientPreload.rotation_type == InpatientRotationType.FMIT,
+            InpatientPreload.start_date <= self.end_date,
+            InpatientPreload.end_date >= self.start_date,
+        )
+        fmit_preloads = self.db.execute(fmit_stmt).scalars().all()
+        for preload in fmit_preloads:
+            current = max(preload.start_date, self.start_date)
+            end = min(preload.end_date, self.end_date)
+            while current <= end:
+                # Fri=4, Sat=5
+                if current.weekday() in (4, 5):
+                    fmit_call_pairs.add((cast(UUID, preload.person_id), current))
+                current += timedelta(days=1)
+
+        # Clear existing call assignments for this date range to avoid conflicts,
+        # but preserve FMIT Fri/Sat call preloads.
+        existing_calls = (
             self.db.query(CallAssignment)
             .filter(
                 CallAssignment.date >= self.start_date,
                 CallAssignment.date <= self.end_date,
             )
-            .delete(synchronize_session=False)
+            .all()
         )
-        if deleted_count:
+        deleted_count = 0
+        preserved_count = 0
+        for existing in existing_calls:
+            if (existing.person_id, existing.date) in fmit_call_pairs:
+                preserved_count += 1
+                continue
+            self.db.delete(existing)
+            deleted_count += 1
+
+        if deleted_count or preserved_count:
             logger.info(
-                f"Cleared {deleted_count} existing call assignments for "
-                f"{self.start_date} to {self.end_date}"
+                "Cleared %s existing call assignments for %s to %s "
+                "(preserved %s FMIT Fri/Sat calls)",
+                deleted_count,
+                self.start_date,
+                self.end_date,
+                preserved_count,
             )
+            self.db.flush()
 
         # Build block lookup for date extraction
         block_by_id = {b.id: b for b in context.blocks}
@@ -1336,6 +1374,10 @@ class SchedulingEngine:
                 mapped_call_type = "weekend" if is_sunday else "overnight"
             else:
                 mapped_call_type = call_type
+
+            # Avoid duplicate insert if an FMIT preload already owns this date/person
+            if (person_id, block.date) in fmit_call_pairs:
+                continue
 
             call_assignment = CallAssignment(
                 date=block.date,
@@ -1819,6 +1861,7 @@ class SchedulingEngine:
         """
         return (
             self.db.query(Assignment)
+            .options(selectinload(Assignment.rotation_template))
             .join(Block, Assignment.block_id == Block.id)
             .join(Person, Assignment.person_id == Person.id)
             .join(
@@ -1857,6 +1900,7 @@ class SchedulingEngine:
         """
         return (
             self.db.query(Assignment)
+            .options(selectinload(Assignment.rotation_template))
             .join(Block, Assignment.block_id == Block.id)
             .join(Person, Assignment.person_id == Person.id)
             .join(
@@ -1892,6 +1936,7 @@ class SchedulingEngine:
         """
         return (
             self.db.query(Assignment)
+            .options(selectinload(Assignment.rotation_template))
             .join(Block, Assignment.block_id == Block.id)
             .join(
                 RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
@@ -1925,6 +1970,7 @@ class SchedulingEngine:
         """
         return (
             self.db.query(Assignment)
+            .options(selectinload(Assignment.rotation_template))
             .join(Block, Assignment.block_id == Block.id)
             .join(
                 RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
@@ -1958,6 +2004,7 @@ class SchedulingEngine:
         """
         return (
             self.db.query(Assignment)
+            .options(selectinload(Assignment.rotation_template))
             .join(Block, Assignment.block_id == Block.id)
             .join(
                 RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
@@ -1991,6 +2038,7 @@ class SchedulingEngine:
         """
         return (
             self.db.query(Assignment)
+            .options(selectinload(Assignment.rotation_template))
             .join(Block, Assignment.block_id == Block.id)
             .join(
                 RotationTemplate, Assignment.rotation_template_id == RotationTemplate.id
@@ -2674,6 +2722,63 @@ class SchedulingEngine:
 
         self._activity_id_cache[code_lower] = cast(UUID, activity.id)
         return cast(UUID, activity.id)
+
+    def _backfill_weekend_slots(
+        self,
+        residents: list[Person],
+        blocks: list[Block],
+    ) -> None:
+        """Fill empty weekend slots with Weekend (W) activity.
+
+        Outpatient residents whose rotation has includes_weekend_work=False
+        don't get weekend preloads. This backfill ensures every person has
+        an assignment for every half-day block in the date range.
+        """
+        from app.models.half_day_assignment import AssignmentSource, HalfDayAssignment
+
+        w_activity_id = self._get_activity_id_by_code("W")
+        weekend_blocks = [b for b in blocks if b.is_weekend]
+        if not weekend_blocks:
+            return
+
+        # Find all existing weekend assignments
+        existing = set(
+            self.db.query(
+                HalfDayAssignment.person_id,
+                HalfDayAssignment.date,
+                HalfDayAssignment.time_of_day,
+            )
+            .filter(
+                HalfDayAssignment.date >= self.start_date,
+                HalfDayAssignment.date <= self.end_date,
+                HalfDayAssignment.date.in_([b.date for b in weekend_blocks]),
+            )
+            .all()
+        )
+        existing_keys = {(p, d, t) for p, d, t in existing}
+
+        created = 0
+        for resident in residents:
+            for block in weekend_blocks:
+                key = (resident.id, block.date, block.time_of_day)
+                if key not in existing_keys:
+                    self.db.add(
+                        HalfDayAssignment(
+                            person_id=resident.id,
+                            date=block.date,
+                            time_of_day=block.time_of_day,
+                            activity_id=w_activity_id,
+                            source=AssignmentSource.SOLVER.value,
+                        )
+                    )
+                    created += 1
+
+        if created:
+            self.db.flush()
+            logger.info(
+                f"Backfilled {created} weekend slots with W activity "
+                f"for {len(residents)} residents"
+            )
 
     def _persist_faculty_half_day_from_solver(
         self,
