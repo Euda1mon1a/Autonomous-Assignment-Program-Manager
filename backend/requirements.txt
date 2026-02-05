@@ -87,6 +87,7 @@ pymoo>=0.6.0
 # Monitoring & Observability
 sentry-sdk[fastapi]==2.48.0
 prometheus-fastapi-instrumentator==7.1.0
+prometheus-client>=0.20.0
 
 # OpenTelemetry - Distributed Tracing
 opentelemetry-api>=1.20.0
@@ -142,6 +143,8 @@ python-dotenv==1.2.1
 python-decouple==3.8
 watchdog==6.0.0  # File system monitoring for config hot reload
 psutil>=5.9.0  # System and process utilities (CPU, memory, profiling)
+PyYAML>=6.0,<7.0  # YAML parsing/serialization helpers
+msgpack>=1.0,<2.0  # MessagePack serialization support
 
 # Visualization
 plotly>=5.18.0
