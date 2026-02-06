@@ -13,6 +13,10 @@ SAVE=false
 
 for arg in "$@"; do
   case "$arg" in
+    -h|--help)
+      echo "Usage: $0 [--todo-only] [--hooks-only] [--with-scans] [--save]"
+      exit 0
+      ;;
     --with-scans)
       WITH_SCANS=true
       ;;
@@ -64,7 +68,7 @@ run_todo_section() {
     return
   fi
 
-  open_count="$(rg -n "^- \\[ \\]" HUMAN_TODO.md | wc -l | tr -d ' ')"
+  open_count="$( (rg -n "^- \\[ \\]" HUMAN_TODO.md || true) | wc -l | tr -d ' ')"
   high_open_count="$(
     awk '
       /^## / {
@@ -106,13 +110,20 @@ run_hooks_section() {
     return 1
   fi
 
-  hooks_path="$(git config --get core.hooksPath || echo '.git/hooks')"
-  append "- git hooks path: \`$hooks_path\`"
+  hooks_path="$(git config --get core.hooksPath 2>/dev/null || true)"
+  if [[ -z "${hooks_path}" ]]; then
+    common_git_dir="$(git rev-parse --git-common-dir 2>/dev/null || echo '.git')"
+    hooks_path="${common_git_dir}/hooks"
+  fi
+  if [[ "${hooks_path}" != /* ]]; then
+    hooks_path="${REPO_ROOT}/${hooks_path}"
+  fi
+  append "- git hooks path: \`${hooks_path}\`"
 
-  if [[ -f ".git/hooks/pre-commit" ]]; then
-    append "- .git/hooks/pre-commit: \`present\`"
+  if [[ -f "${hooks_path}/pre-commit" ]]; then
+    append "- pre-commit hook: \`present\`"
   else
-    append "- .git/hooks/pre-commit: \`missing\`"
+    append "- pre-commit hook: \`missing\`"
   fi
 
   append ""

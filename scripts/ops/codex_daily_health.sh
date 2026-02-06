@@ -91,7 +91,8 @@ mcp_list_output="$(CODEX_HOME=.codex codex mcp list 2>&1)"
 mcp_list_rc=$?
 set -e
 if [[ ${mcp_list_rc} -eq 0 ]]; then
-  enabled_count="$(printf '%s\n' "${mcp_list_output}" | rg -n "enabled" | wc -l | tr -d ' ')"
+  enabled_count="$(printf '%s\n' "${mcp_list_output}" | rg -n "enabled" | wc -l | tr -d ' ' || true)"
+  enabled_count="${enabled_count:-0}"
   append "- codex mcp list: \`ok\`"
   append "- enabled rows detected: \`${enabled_count}\`"
 else
@@ -111,8 +112,8 @@ mcp_health_json="$(curl -sSf http://127.0.0.1:8081/health 2>/dev/null)"
 mcp_health_rc=$?
 set -e
 if [[ ${mcp_health_rc} -eq 0 ]]; then
-  service_status="$(printf '%s\n' "${mcp_health_json}" | rg -o '"status":"[^"]+"' | head -n1 | cut -d':' -f2 | tr -d '"')"
-  api_creds="$(printf '%s\n' "${mcp_health_json}" | rg -o '"api_credentials_configured":[^,}]+' | cut -d':' -f2)"
+  service_status="$(printf '%s\n' "${mcp_health_json}" | rg -o '"status":"[^"]+"' | head -n1 | cut -d':' -f2 | tr -d '"' || true)"
+  api_creds="$(printf '%s\n' "${mcp_health_json}" | rg -o '"api_credentials_configured":[^,}]+' | cut -d':' -f2 || true)"
   append "- health endpoint: \`ok\`"
   append "- status: \`${service_status:-unknown}\`"
   append "- api_credentials_configured: \`${api_creds:-unknown}\`"
