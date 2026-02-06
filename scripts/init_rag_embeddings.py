@@ -65,6 +65,8 @@ DOC_TYPE_MAP = {
     "api-patterns.md": "technical_doc",
     "RAG_CONTENT_LIFECYCLE.md": "ai_patterns",
     "kimi-k2-5.md": "ai_patterns",
+    "architecture-overview.md": "technical_doc",
+    "troubleshooting-guide.md": "technical_doc",
 }
 
 # Base path for knowledge documents
