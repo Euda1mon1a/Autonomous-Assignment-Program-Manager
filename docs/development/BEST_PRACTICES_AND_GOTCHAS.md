@@ -17,7 +17,8 @@
 8. [Frontend-Backend Integration](#8-frontend-backend-integration)
 9. [Common CLI Tool Locations](#9-common-cli-tool-locations)
 10. [Debugging Flowcharts](#10-debugging-flowcharts)
-11. [Antipatterns - Things NOT to Do](#11-antipatterns---things-not-to-do)
+11. [CP-SAT Activity Solver Architecture (Two Grids)](#11-cp-sat-activity-solver-architecture-two-grids)
+12. [Antipatterns - Things NOT to Do](#12-antipatterns---things-not-to-do)
 
 ---
 
@@ -803,7 +804,71 @@ cd frontend && npm test
 
 ---
 
-## 11. Antipatterns - Things NOT to Do
+## 11. CP-SAT Activity Solver Architecture (Two Grids)
+
+> **Why this matters:** The scheduling system uses two separate CP-SAT solvers, and understanding which "grid" a person is on determines what you can and can't do.
+
+### The Two Grids
+
+The system has two solvers that run in sequence:
+
+1. **Main CP-SAT solver** (`solvers.py`) — assigns people to rotations and faculty to activities. Faculty decisions here are **authoritative**.
+2. **Activity solver** (`activity_solver.py`) — assigns specific activities (C, AT, VAS, etc.) to half-day slots. By default, only residents are on this grid.
+
+Think of it like two whiteboards:
+- **Whiteboard 1 (main solver):** Both faculty and residents. Someone fills this in first.
+- **Whiteboard 2 (activity solver):** Only residents. Faculty entries from Whiteboard 1 are photocopied onto Whiteboard 2 as read-only reference (baselines).
+
+The flag `include_faculty_slots=False` (the default) is what keeps faculty off Whiteboard 2. This is intentional — if both solvers could move faculty around, they'd fight each other.
+
+### SM vs VAS: Same Concept, Different Plumbing
+
+**Sports Medicine (SM) alignment** works because SM faculty ARE on the activity solver's grid (when `include_faculty_slots=True`). The solver has a checkbox for "faculty does SM clinic" that it can freely toggle. So the rule "if SM resident is here, SM faculty must be here too" is straightforward — both checkboxes are on the same grid.
+
+**Vasectomy (VAS) alignment** can't work that way because faculty are on the frozen grid. The solver can see that a faculty member exists on Thursday AM, but can't change what they're doing. So instead of giving the solver full control, we poke specific holes:
+
+For each VAS-credentialed faculty on a VAS-eligible slot (Thu AM/PM, Fri AM only), we add a single override checkbox: "steal this faculty from whatever they're doing and reassign them to VAS." The solver can check that box if it needs to, but it can only touch those specific slots — nothing else about the faculty's schedule.
+
+**This works elegantly because VAS is narrow.** Only 3 half-day slots per week are VAS-eligible, and only 2 faculty are VAS-credentialed. That's ~24 override checkboxes per block — tiny. If VAS could happen any day (like SM), you'd need dozens of overrides and it would get messy. The narrowness makes the "poke specific holes" approach cleaner than giving the solver full faculty control.
+
+**Net effect is identical to SM:** resident gets VAS → solver ensures a credentialed faculty is there too. The plumbing is different, the outcome is the same.
+
+### When Faculty Override Is Needed vs Post-Solve
+
+| Approach | When to Use | Example |
+|----------|-------------|---------|
+| **In-solver override** | Activity competes for shared resources (AT coverage, physical capacity, other faculty) | VAS, PROC — pulling a faculty to VAS means one less AT preceptor |
+| **Post-solve conversion** | Activity is a 1:1 relabel that doesn't affect anything else | C → CV — same room, same supervision, just a different activity code |
+
+**Rule of thumb:** If reassigning a faculty changes what other people can do (fewer preceptors, less room capacity), it MUST be in the solver. If it's just relabeling with no side effects, post-solve is fine.
+
+### Don't Touch These Without Understanding the Above
+
+- `include_faculty_slots` flag — controls whether faculty are on the activity solver grid. Default `False` is correct. Setting to `True` requires `force_faculty_override=True` safety guard.
+- `vas_override_candidates` / `vas_override_vars` — the "holes poked in the frozen grid" for VAS.
+- `baseline_faculty_coverage` — how the activity solver accounts for faculty it can't move. VAS overrides subtract from this when activated.
+
+### Penalty Hierarchy
+
+The solver minimizes total penalty. Lower weight = "I'll accept this if needed." Higher weight = "Avoid at all costs."
+
+| Penalty | Weight | What It Means |
+|---------|--------|---------------|
+| AT_COVERAGE_SHORTFALL | 50 | Not enough faculty supervising residents |
+| CLINIC_OVERAGE | 40 | Faculty exceeding their clinic cap |
+| VAS/SM_ALIGNMENT_SHORTFALL | 30 | Resident doing VAS/SM without matching faculty |
+| CLINIC_MIN_SHORTFALL | 25 | Faculty not meeting minimum clinic requirement |
+| OIC_CLINICAL_AVOID | 18 | OIC scheduled on dispreferred day |
+| CREDENTIAL_MISMATCH | 15 | Faculty doing procedure they're not credentialed for |
+| PHYSICAL_CAPACITY_SOFT | 10 | More than 6 clinical workers in one half-day |
+| VAS_OVERRIDE | 8 | Cost of pulling faculty from AT/clinic to VAS |
+| ADMIN/AT_EQUITY | 12 | Uneven distribution of admin or supervision time |
+
+The solver will pull a faculty member to VAS supervision (cost 8) rather than leave a VAS shortfall (cost 30). But it won't pull faculty unnecessarily because there's still a cost.
+
+---
+
+## 12. Antipatterns - Things NOT to Do
 
 > **These patterns have caused real bugs or wasted time. Learn from our pain.**
 
