@@ -22,6 +22,18 @@
 
 **Revisit when:** Adding collaborators with write access, or finalizing hosting decision.
 
+## Codex Self-Improvement Ops (2026-02-06)
+
+**Priority:** High
+**Status:** Active
+
+Codex-side safety and triage scaffolding is in place. These are the remaining human decisions.
+
+- [ ] Optional: review `docs/reports/automation/codex_bad1_final_salvage_20260205-2247.md` and cherry-pick from `codex/salvage/bad1-final-20260205-2247` if you want to keep any residual ideas.
+- [ ] Keep nightly Codex hook scan automation enabled (`hook-pii-health-check` at `01:00`) unless replaced with an equivalent gate.
+- [ ] Confirm canonical keychain service names for local API keys (`OPENAI_API_KEY`, `PERPLEXITY_API_KEY`, optional `MCP_API_KEY`) for long-term setup stability.
+- [ ] Decide whether to keep duplicated skills in both `.codex/skills` and `.claude/skills` or consolidate to one canonical root.
+
 ---
 
 ## LaTeX/MFR Generation Research (2026-01-28)

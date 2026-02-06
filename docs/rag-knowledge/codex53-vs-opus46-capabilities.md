@@ -1,80 +1,66 @@
-# Codex 5.3 vs Claude Opus 4.6 Capability Delta
+# Codex vs Opus Capability Delta (Verified 2026-02-06)
 
-> Last updated: 2026-02-06
+> Last verified: 2026-02-06
 > Suggested doc_type: `ai_patterns`
-> Audience: orchestrators, agent authors, and documentation maintainers
+> Audience: human operators, orchestrators, and agent maintainers
 
-## Purpose
+## Why this doc exists
 
-Provide a stable capability comparison for routing work between Codex and Claude in this repository, with a special focus on RAG document authoring and ingestion.
+This is a stable routing reference for deciding when to use Codex 5.3 workflows vs Claude Opus 4.6 workflows in this repository.
 
-## Release Snapshot
+## Verified snapshot (as of 2026-02-06)
 
-- `GPT-5.3-Codex` announced by OpenAI on `2026-02-05`.
-- `Claude Opus 4.6` announced by Anthropic on `2026-02-05`.
-- Both are positioned for longer-running, tool-using, agentic workflows.
+### Codex / GPT-5.3-Codex (OpenAI)
 
-## Capability Matrix
+- OpenAI announced `GPT-5.3-Codex` on **February 5, 2026**.
+- OpenAI describes it as stronger than GPT-5.2-Codex on coding plus stronger reasoning/professional knowledge, and **25% faster** for Codex users.
+- OpenAI states interactive steering while the agent is running is a core behavior.
+- Availability is stated for paid ChatGPT users in Codex app, CLI, IDE extension, and Codex web; OpenAI also states API access for `gpt-5.3-codex` is coming soon, and API-key workflows should continue using `gpt-5.2-codex` until rollout completes.
+- Codex app `v260205` changelog also lists support for GPT-5.3-Codex, mid-turn steering, and file attachment/drop improvements.
 
-| Capability Area | Codex 5.3 | Claude Opus 4.6 | Repo Impact |
+### Claude Opus 4.6 (Anthropic)
+
+- Anthropic announced Claude Opus 4.6 on **February 5, 2026**.
+- Anthropic describes Opus 4.6 as improved for long agentic coding tasks, larger codebases, code review/debugging, and broader knowledge work.
+- Anthropic states Opus 4.6 includes a **1M token context window in beta** (first for Opus class).
+- Anthropic also announces related controls/features: Claude Code agent teams, API compaction, adaptive thinking, and effort controls.
+- Anthropic states Opus 4.6 is available on claude.ai, API, and major cloud platforms.
+
+## Practical differences for this repo
+
+| Area | Codex (GPT-5.3-Codex) | Opus 4.6 | Repo impact |
 |---|---|---|---|
-| Long-running agentic coding | OpenAI positions Codex 5.3 for long-running tasks with research, tools, and complex execution | Anthropic positions Opus 4.6 for sustained agentic tasks in large codebases | Either model can own multi-step backend/frontend tasks if guardrails are explicit |
-| Interactive steering during execution | Codex emphasizes in-task steering and frequent progress updates while the task runs | Anthropic emphasizes adaptive reasoning and effort controls for balancing depth/latency | For high-risk changes, keep human steering checkpoints every major phase |
-| Benchmark framing in vendor materials | OpenAI highlights SWE-Bench Pro, Terminal-Bench 2.0, OSWorld, GDPval | Anthropic highlights Terminal-Bench 2.0, Humanity's Last Exam, GDPval-AA, long-context retrieval | Do not route solely on benchmark names; route on concrete repo workflow fit |
-| Long-context behavior | Codex post emphasizes stronger end-to-end computer work and interactive supervision | Opus 4.6 introduces a 1M-token context window in beta and improved long-context retrieval claims | Large documentation and architecture synthesis can be routed to Opus-first |
-| Model controls | Codex workflow is centered on task execution + steering in Codex surfaces | Opus 4.6 adds adaptive thinking and explicit effort controls | Opus is useful when you need predictable depth tuning for doc-heavy reasoning |
-| Availability surfaces | OpenAI states Codex 5.3 availability in app/CLI/IDE/web for paid ChatGPT plans | Anthropic states Opus 4.6 availability on claude.ai, API, and major cloud platforms | Mixed-model operating model is viable for this monorepo |
+| Repo-grounded execution | Strong fit for direct file edits + command execution in local worktrees | Strong reasoning, but this repo’s Codex automation/scripts are already tuned for Codex execution | Use Codex for integration changes, script wiring, and branch-safe cleanup workflows |
+| Mid-task steering | Explicitly highlighted in Codex app/changelog | Available conceptually via effort/extended modes; different control surface | Use Codex when you want frequent in-flight course corrections during long edits |
+| Long-context synthesis | Strong, but OpenAI messaging emphasizes computer work + execution loop | Anthropic explicitly emphasizes long-context retrieval, 1M beta, and deep research workflows | Use Opus-first for long synthesis drafts; then Codex for implementation and validation |
+| API model availability | `gpt-5.3-codex` rollout to API stated as pending | `claude-opus-4-6` already exposed in Anthropic API | For API-key automations today, keep Codex API lane on `gpt-5.2-codex` where needed |
+| Skills + workspace model | OpenAI docs/changelog support per-user (`~/.codex/skills`) and per-repo (`.codex/skills`) skills | N/A (Anthropic has separate ecosystem) | Supports shared skill patterns between human + repo-local automation, useful for dual-agent collaboration |
 
-## Recommended Split for This Repo
+## Recommended routing in this repository
 
-- `Claude Opus 4.6` primary lane:
-  - Drafting and structuring new RAG documents.
-  - Long-context synthesis across existing docs and policies.
-  - High-depth reasoning passes before ingestion.
-- `Codex 5.3` primary lane:
-  - Repo-grounded implementation and verification of doc wiring changes.
-  - Tooling updates (`DOC_TYPE_MAP`, ingestion scripts, index docs).
-  - Fast follow-up edits across multiple files with execution feedback.
+- Use **Opus 4.6 first** for:
+  - large cross-document synthesis,
+  - policy interpretation writeups,
+  - high-context first-pass RAG drafting.
+- Use **Codex 5.3 lane** for:
+  - converting drafts into repository artifacts,
+  - script/config wiring (`scripts/ops/*`, `.codex/*`, docs indexes),
+  - verification commands and safety gates.
+- Use **both in parallel** when outcome quality depends on both deep synthesis and low-friction repo execution.
 
-## Current Mode: RAG Docs Sans Codex
+## Minimal ingestion metadata
 
-Use this when Claude is creating RAG docs before Codex is in the loop.
-
-1. Write the document in `docs/rag-knowledge/` with stable, reusable content.
-2. Assign an approved `doc_type` (typically `ai_patterns` or `agent_spec` for model workflow docs).
-3. Ingest with `rag_ingest` and include source/date metadata.
-4. Verify retrieval with `rag_search` using a unique phrase.
-5. Add file-to-doc_type mapping in ingestion automation if this file should be included in bulk refresh.
-
-## Future Mode: Incorporate Codex After Authoring
-
-1. Claude generates initial draft and rationale.
-2. Codex performs repo fit pass:
-   - checks taxonomy consistency,
-   - updates ingestion maps,
-   - updates index/readme references,
-   - validates no broken internal links.
-3. Human approves publication and ingestion.
-
-## Canonical Ingestion Snippet
-
-```python
-content = open("docs/rag-knowledge/codex53-vs-opus46-capabilities.md").read()
-
-result = mcp__residency-scheduler__rag_ingest(
-    content=content,
-    doc_type="ai_patterns",
-    metadata={
-        "source": "codex53-vs-opus46-capabilities.md",
-        "updated": "2026-02-06",
-        "scope": "model-routing"
-    }
-)
+```yaml
+doc_type: ai_patterns
+source: codex53-vs-opus46-capabilities.md
+scope: model-routing
+verified_on: 2026-02-06
 ```
 
 ## Sources
 
-- OpenAI: https://openai.com/index/introducing-gpt-5-3-codex/
-- OpenAI Codex changelog: https://developers.openai.com/codex/changelog/
-- Anthropic announcement: https://www.anthropic.com/news/claude-opus-4-6
-- Anthropic model page: https://www.anthropic.com/claude/opus
+- OpenAI Codex changelog: https://developers.openai.com/codex/changelog
+- OpenAI GPT-5.3-Codex announcement: https://openai.com/index/introducing-gpt-5-3-codex/
+- OpenAI developer changelog (skills/per-user/per-repo references): https://developers.openai.com/changelog
+- Anthropic Opus announcement: https://www.anthropic.com/news/claude-opus-4-6
+- Anthropic Opus model page: https://www.anthropic.com/claude/opus
