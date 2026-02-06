@@ -16,6 +16,7 @@ Business Rules:
 
 import logging
 from collections import defaultdict
+from datetime import date
 from typing import Any
 
 from .base import (
@@ -51,6 +52,12 @@ class ResidentInpatientHeadcountConstraint(HardConstraint):
             priority=ConstraintPriority.CRITICAL,
         )
 
+    def _get_week_number(self, block_date: date, start_date: date | None) -> int:
+        """Compute 1-based week number within the block (1-4)."""
+        if not start_date:
+            return 1
+        return ((block_date - start_date).days // 7) + 1
+
     def _get_fmit_template_ids(self, context: SchedulingContext) -> set[Any]:
         """Get template IDs for FMIT rotations."""
         fmit_ids = set()
@@ -61,15 +68,45 @@ class ResidentInpatientHeadcountConstraint(HardConstraint):
                     fmit_ids.add(template.id)
         return fmit_ids
 
-    def _get_nf_template_ids(self, context: SchedulingContext) -> set[Any]:
-        """Get template IDs for Night Float rotations."""
-        nf_ids = set()
+    def _is_combo_template(self, template: Any) -> bool:
+        """Identify split-block templates with component rotations."""
+        return bool(
+            getattr(template, "first_half_component_id", None)
+            or getattr(template, "second_half_component_id", None)
+        )
+
+    def _is_nf_base_template(self, template: Any) -> bool:
+        """Identify standalone Night Float templates (not split-block combos)."""
+        if self._is_combo_template(template):
+            return False
+        name_lower = (getattr(template, "name", "") or "").lower()
+        abbr = (getattr(template, "abbreviation", "") or "").upper()
+        return "night float" in name_lower or abbr.startswith("NF")
+
+    def _get_nf_template_sets(
+        self, context: SchedulingContext
+    ) -> tuple[set[Any], dict[Any, set[int]]]:
+        """Return full NF template IDs and combo templates with NF-active weeks."""
+        full_nf_ids: set[Any] = set()
         for template in context.templates:
-            if hasattr(template, "name") and template.name:
-                name_lower = template.name.lower()
-                if "night" in name_lower or "nf" in name_lower:
-                    nf_ids.add(template.id)
-        return nf_ids
+            if self._is_nf_base_template(template):
+                full_nf_ids.add(template.id)
+
+        combo_week_map: dict[Any, set[int]] = {}
+        for template in context.templates:
+            if not self._is_combo_template(template):
+                continue
+
+            weeks: set[int] = set()
+            if getattr(template, "first_half_component_id", None) in full_nf_ids:
+                weeks.update({1, 2})
+            if getattr(template, "second_half_component_id", None) in full_nf_ids:
+                weeks.update({3, 4})
+
+            if weeks:
+                combo_week_map[template.id] = weeks
+
+        return full_nf_ids, combo_week_map
 
     def add_to_cpsat(
         self,
@@ -89,7 +126,7 @@ class ResidentInpatientHeadcountConstraint(HardConstraint):
             return
 
         fmit_template_ids = self._get_fmit_template_ids(context)
-        nf_template_ids = self._get_nf_template_ids(context)
+        nf_template_ids, nf_combo_week_map = self._get_nf_template_sets(context)
 
         if not fmit_template_ids and not nf_template_ids:
             logger.debug("No FMIT or NF templates found")
@@ -126,11 +163,24 @@ class ResidentInpatientHeadcountConstraint(HardConstraint):
                 if fmit_vars:
                     model.Add(sum(fmit_vars) <= self.FMIT_PER_PGY_PER_BLOCK)
 
-        # NF headcount per half-day (across all residents)
+        # NF headcount per half-day (across all residents), week-aware for split blocks
+        nf_ids_by_week: dict[int, set[Any]] = {
+            1: set(nf_template_ids),
+            2: set(nf_template_ids),
+            3: set(nf_template_ids),
+            4: set(nf_template_ids),
+        }
+        for template_id, weeks in nf_combo_week_map.items():
+            for week in weeks:
+                nf_ids_by_week.setdefault(week, set()).add(template_id)
+
         for block in context.blocks:
             b_i = context.block_idx.get(block.id)
             if b_i is None:
                 continue
+
+            week_number = self._get_week_number(block.date, context.start_date)
+            active_nf_ids = nf_ids_by_week.get(week_number, nf_template_ids)
 
             nf_vars = []
             for resident in context.residents:
@@ -138,7 +188,7 @@ class ResidentInpatientHeadcountConstraint(HardConstraint):
                 if r_i is None:
                     continue
 
-                for t_id in nf_template_ids:
+                for t_id in active_nf_ids:
                     t_i = context.template_idx.get(t_id)
                     if t_i is not None and (r_i, b_i, t_i) in template_vars:
                         nf_vars.append(template_vars[r_i, b_i, t_i])
@@ -160,7 +210,7 @@ class ResidentInpatientHeadcountConstraint(HardConstraint):
             return
 
         fmit_template_ids = self._get_fmit_template_ids(context)
-        nf_template_ids = self._get_nf_template_ids(context)
+        nf_template_ids, nf_combo_week_map = self._get_nf_template_sets(context)
 
         if not fmit_template_ids and not nf_template_ids:
             return
@@ -201,11 +251,24 @@ class ResidentInpatientHeadcountConstraint(HardConstraint):
                     )
                     constraint_count += 1
 
-        # NF headcount per half-day
+        # NF headcount per half-day (week-aware for split blocks)
+        nf_ids_by_week: dict[int, set[Any]] = {
+            1: set(nf_template_ids),
+            2: set(nf_template_ids),
+            3: set(nf_template_ids),
+            4: set(nf_template_ids),
+        }
+        for template_id, weeks in nf_combo_week_map.items():
+            for week in weeks:
+                nf_ids_by_week.setdefault(week, set()).add(template_id)
+
         for block in context.blocks:
             b_i = context.block_idx.get(block.id)
             if b_i is None:
                 continue
+
+            week_number = self._get_week_number(block.date, context.start_date)
+            active_nf_ids = nf_ids_by_week.get(week_number, nf_template_ids)
 
             nf_vars = []
             for resident in context.residents:
@@ -213,7 +276,7 @@ class ResidentInpatientHeadcountConstraint(HardConstraint):
                 if r_i is None:
                     continue
 
-                for t_id in nf_template_ids:
+                for t_id in active_nf_ids:
                     t_i = context.template_idx.get(t_id)
                     if t_i is not None and (r_i, b_i, t_i) in template_vars:
                         nf_vars.append(template_vars[(r_i, b_i, t_i)])
@@ -234,7 +297,7 @@ class ResidentInpatientHeadcountConstraint(HardConstraint):
         violations: list[ConstraintViolation] = []
 
         fmit_template_ids = self._get_fmit_template_ids(context)
-        nf_template_ids = self._get_nf_template_ids(context)
+        nf_template_ids, nf_combo_week_map = self._get_nf_template_sets(context)
 
         # Build person lookup
         person_by_id = {p.id: p for p in context.residents}
@@ -242,6 +305,16 @@ class ResidentInpatientHeadcountConstraint(HardConstraint):
         # Count FMIT per block per PGY level
         fmit_by_block_pgy: dict[tuple[Any, int], int] = defaultdict(int)
         nf_by_block: dict[Any, int] = defaultdict(int)
+        blocks_by_id = {b.id: b for b in context.blocks}
+        nf_ids_by_week: dict[int, set[Any]] = {
+            1: set(nf_template_ids),
+            2: set(nf_template_ids),
+            3: set(nf_template_ids),
+            4: set(nf_template_ids),
+        }
+        for template_id, weeks in nf_combo_week_map.items():
+            for week in weeks:
+                nf_ids_by_week.setdefault(week, set()).add(template_id)
 
         for assignment in assignments:
             if assignment.rotation_template_id in fmit_template_ids:
@@ -250,8 +323,12 @@ class ResidentInpatientHeadcountConstraint(HardConstraint):
                     key = (assignment.block_id, person.pgy_level)
                     fmit_by_block_pgy[key] += 1
 
-            if assignment.rotation_template_id in nf_template_ids:
-                nf_by_block[assignment.block_id] += 1
+            block = blocks_by_id.get(assignment.block_id)
+            if block:
+                week_number = self._get_week_number(block.date, context.start_date)
+                active_nf_ids = nf_ids_by_week.get(week_number, nf_template_ids)
+                if assignment.rotation_template_id in active_nf_ids:
+                    nf_by_block[assignment.block_id] += 1
 
         # Check FMIT violations
         for (block_id, pgy_level), count in fmit_by_block_pgy.items():

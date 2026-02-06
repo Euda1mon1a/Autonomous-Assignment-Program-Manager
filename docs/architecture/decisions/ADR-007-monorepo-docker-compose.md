@@ -216,7 +216,7 @@ mcp-server ──→  backend
 ## References
 
 - `docker-compose.yml` - Service orchestration configuration
-- `docker-compose.dev.yml` - Development overrides
+- `docker-compose.local.yml` - Development overrides
 - `docker-compose.prod.yml` - Production configuration
 - `.env.example` - Environment variable template
 - `backend/Dockerfile` - Backend container definition

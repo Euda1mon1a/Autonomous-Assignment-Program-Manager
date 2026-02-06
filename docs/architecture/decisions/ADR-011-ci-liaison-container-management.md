@@ -118,7 +118,7 @@ docker-compose exec db pg_isready    # Database accepting connections
 
 **Implementation Files:**
 - `docker-compose.yml` - Main orchestration configuration
-- `docker-compose.dev.yml` - Development overrides
+- `docker-compose.local.yml` - Development overrides
 - `backend/Dockerfile` - Backend container
 - `mcp-server/Dockerfile` - MCP server container
 - `frontend/Dockerfile` - Frontend container

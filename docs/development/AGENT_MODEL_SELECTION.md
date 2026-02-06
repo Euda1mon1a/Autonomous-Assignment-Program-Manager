@@ -1,22 +1,41 @@
 # Agent Model Selection
 
 > **Status:** Active
-> **Version:** 1.0.0
-> **Last Updated:** 2025-12-29
+> **Version:** 2.0.0
+> **Last Updated:** 2026-02-05
 
 This document describes the vector-based agent model selection system that enables ORCHESTRATOR to choose optimal Claude model tiers (haiku/sonnet/opus) when spawning subagents.
 
 ---
 
-## Overview
+## Model Family: Claude 4.5/4.6 (February 2026)
 
-When ORCHESTRATOR spawns agents, it should select the most cost-effective model that can handle the task:
+| Model | Model ID | Cost (per M tokens) | Latency | Use Case |
+|-------|----------|---------------------|---------|----------|
+| **Haiku 4.5** | `claude-haiku-4-5-20251001` | $0.25 / $1.25 in/out | Fast | Simple tasks, metadata updates, delegation auditing |
+| **Sonnet 4.5** | `claude-sonnet-4-5-20250929` | $3 / $15 in/out | Medium | Code generation, testing, analysis |
+| **Opus 4.6** | `claude-opus-4-6` | $5 / $25 in/out | Slower | Architecture, coordination, multi-agent synthesis |
 
-| Model | Cost | Latency | Use Case |
-|-------|------|---------|----------|
-| **Haiku** | 1x | Fast | Simple tasks, metadata updates, delegation auditing |
-| **Sonnet** | 10x | Medium | Code generation, testing, analysis |
-| **Opus** | 100x | Slow | Architecture, coordination, multi-agent synthesis |
+### New Opus 4.6 Capabilities
+
+| Capability | Detail |
+|------------|--------|
+| **Agent Teams** | Native multi-agent coordination (experimental). Enable: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` |
+| **Adaptive Thinking** | Auto-selects reasoning effort (low/medium/high/max) per prompt |
+| **1M Token Context** | Beta, API Tier 4+ only. Header: `anthropic-beta: context-1m-2025-08-07` |
+| **128K Output Tokens** | Doubled from 64K — longer code generation and analysis |
+
+### Agent Teams vs PAI Hierarchy
+
+Agent Teams are a **complement** to PAI hierarchy, not a replacement:
+
+| Mechanism | Best For | Communication | Token Cost |
+|-----------|----------|---------------|------------|
+| **Task() subagents** | Focused tasks, results-only | Report back to caller | Lower |
+| **Agent Teams** | Complex parallel work needing discussion | Peer-to-peer messaging | Higher |
+| **PAI MCP spawn** | Governed agents with identity + audit trail | Chain of command | Medium |
+
+**Guidance:** Use Agent Teams for research, parallel review, and competing-hypotheses debugging. Use PAI hierarchy for governed schedule operations where audit trails and ACGME compliance matter.
 
 Without explicit model selection, all agents inherit the parent model (typically Opus), wasting resources on simple tasks.
 
@@ -300,5 +319,5 @@ assert results[0].similarity > 0.99
 
 ---
 
-*Last Updated: 2025-12-29*
+*Last Updated: 2026-02-05*
 *Maintained By: ORCHESTRATOR*

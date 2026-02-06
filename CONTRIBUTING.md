@@ -68,7 +68,7 @@ Before contributing, ensure you have:
 cp .env.example .env
 
 # Start all services
-docker-compose -f docker-compose.dev.yml up -d
+docker-compose -f docker-compose.local.yml up -d
 
 # View logs
 docker-compose logs -f

@@ -30,7 +30,7 @@ fi
 if ! nc -z localhost 5432 2>/dev/null; then
     echo "Error: Port 5432 not exposed to host"
     echo "NocoDB requires dev compose for port exposure. Run:"
-    echo "  docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db"
+    echo "  docker compose -f docker-compose.yml -f docker-compose.local.yml up -d db"
     exit 1
 fi
 

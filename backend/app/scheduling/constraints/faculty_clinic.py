@@ -77,9 +77,16 @@ class FacultyClinicCapConstraint(SoftConstraint):
             priority=ConstraintPriority.HIGH,
         )
 
-    def _get_caps(self, faculty_name: str) -> tuple[int, int]:
-        """Get (MIN, MAX) clinic caps for faculty by last name."""
-        # Extract last name from "First Last" or "Last, First" format
+    def _get_caps(self, faculty) -> tuple[int, int]:
+        """Get (MIN, MAX) clinic caps from faculty DB fields or fallback to hardcoded dict."""
+        # Prefer model-mapped columns from Person ORM
+        db_min = getattr(faculty, "min_clinic_halfdays_per_week", None)
+        db_max = getattr(faculty, "max_clinic_halfdays_per_week", None)
+        if db_min is not None and db_max is not None:
+            return (db_min, db_max)
+
+        # Fallback: hardcoded dict by last name
+        faculty_name = getattr(faculty, "name", "")
         if "," in faculty_name:
             last_name = faculty_name.split(",")[0].strip()
         else:
@@ -125,8 +132,7 @@ class FacultyClinicCapConstraint(SoftConstraint):
         weeks = self._get_week_dates(context.start_date, context.end_date)
 
         for faculty in context.faculty:
-            faculty_name = getattr(faculty, "name", "")
-            min_c, max_c = self._get_caps(faculty_name)
+            min_c, max_c = self._get_caps(faculty)
 
             for week_start, week_end in weeks:
                 # Collect clinic variables for this faculty in this week
@@ -149,6 +155,9 @@ class FacultyClinicCapConstraint(SoftConstraint):
                 # MAX constraint (hard in solver)
                 if max_c > 0:
                     model.Add(clinic_sum <= max_c)
+
+                # MIN is handled as soft penalty in solver inline code
+                # to avoid infeasibility with supervision demand
 
                 # MIN constraint (soft - penalize in objective)
                 # We don't add as hard constraint to avoid infeasibility
@@ -212,7 +221,7 @@ class FacultyClinicCapConstraint(SoftConstraint):
                 continue
 
             faculty_name = getattr(faculty, "name", "Unknown")
-            min_c, max_c = self._get_caps(faculty_name)
+            min_c, max_c = self._get_caps(faculty)
 
             for week_idx, count in week_counts.items():
                 week_start, _ = weeks[week_idx]

@@ -145,6 +145,13 @@ class SyncPreloadService:
 
         total = 0
 
+        # If the engine will generate NEW call assignments + PCAT/DO,
+        # clear any stale faculty PCAT/DO preloads from old call schedules.
+        if skip_faculty_call:
+            cleared = self._clear_faculty_call_preloads(start_date, end_date)
+            if cleared:
+                logger.info(f"Cleared {cleared} stale faculty call PCAT/DO preloads")
+
         # Order of operations (per TAMC skill)
         total += self._load_absences(start_date, end_date)
         total += self._load_institutional_events(start_date, end_date)
@@ -176,6 +183,27 @@ class SyncPreloadService:
         self.session.flush()
         logger.info(f"Loaded {total} preload assignments")
         return total
+
+    def _clear_faculty_call_preloads(self, start_date: date, end_date: date) -> int:
+        """Delete stale faculty PCAT/DO preloads in the date range."""
+        pcat_id = self._get_activity_id("PCAT")
+        do_id = self._get_activity_id("DO")
+        if not pcat_id or not do_id:
+            return 0
+
+        deleted = (
+            self.session.query(HalfDayAssignment)
+            .filter(
+                HalfDayAssignment.date >= start_date,
+                HalfDayAssignment.date <= end_date,
+                HalfDayAssignment.source == AssignmentSource.PRELOAD.value,
+                HalfDayAssignment.activity_id.in_([pcat_id, do_id]),
+            )
+            .delete(synchronize_session=False)
+        )
+        if deleted:
+            self.session.flush()
+        return deleted
 
     def _load_absences(self, start_date: date, end_date: date) -> int:
         """Load absence assignments (LV-AM, LV-PM)."""
@@ -991,32 +1019,61 @@ class SyncPreloadService:
         return (mapped, mapped)
 
     def _load_fmit_call(self, start_date: date, end_date: date) -> int:
-        """Load FMIT call (Fri/Sat PM during FMIT weeks)."""
-        count = 0
-        call_id = self._get_activity_id("CALL")
+        """Load FMIT call (Fri/Sat overnight during FMIT weeks)."""
+        created_calls = 0
+        from app.models.call_assignment import CallAssignment
 
         # Get FMIT preloads
-        stmt = select(InpatientPreload).where(
-            InpatientPreload.rotation_type == InpatientRotationType.FMIT,
-            InpatientPreload.start_date <= end_date,
-            InpatientPreload.end_date >= start_date,
+        stmt = (
+            select(InpatientPreload)
+            .where(
+                InpatientPreload.rotation_type == InpatientRotationType.FMIT,
+                InpatientPreload.start_date <= end_date,
+                InpatientPreload.end_date >= start_date,
+            )
+            .options(selectinload(InpatientPreload.person))
         )
         result = self.session.execute(stmt)
         preloads = result.scalars().all()
 
         for preload in preloads:
+            # Only for faculty (not residents)
+            if not preload.person or preload.person.type != "faculty":
+                continue
             current = max(preload.start_date, start_date)
             end = min(preload.end_date, end_date)
 
             while current <= end:
                 # Fri=4, Sat=5
                 if current.weekday() in (4, 5):
-                    if self._create_preload(preload.person_id, current, "PM", call_id):
-                        count += 1
+                    # Create CALL assignment in call_assignments (authoritative call table)
+                    existing_call = (
+                        self.session.execute(
+                            select(CallAssignment).where(
+                                CallAssignment.person_id == preload.person_id,
+                                CallAssignment.date == current,
+                                CallAssignment.call_type == "overnight",
+                            )
+                        )
+                        .scalars()
+                        .first()
+                    )
+                    if not existing_call:
+                        self.session.add(
+                            CallAssignment(
+                                person_id=preload.person_id,
+                                date=current,
+                                call_type="overnight",
+                                is_weekend=current.weekday() >= 5,
+                            )
+                        )
+                        created_calls += 1
                 current += timedelta(days=1)
 
-        logger.info(f"Loaded {count} FMIT call preloads")
-        return count
+        if created_calls:
+            self.session.flush()
+        logger.info(f"Created {created_calls} FMIT call assignments")
+        return created_calls
 
     def _load_inpatient_clinic(self, block_number: int, academic_year: int) -> int:
         """Load inpatient clinic (C-I) based on PGY level.

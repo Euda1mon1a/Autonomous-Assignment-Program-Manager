@@ -72,6 +72,61 @@ def is_sun_thurs(any_date: date) -> bool:
     return any_date.weekday() in (6, 0, 1, 2, 3)  # Sun=6, Mon-Thu=0-3
 
 
+def _is_fmit_template(template: Any) -> bool:
+    """Return True if a template represents FMIT (inpatient) rotations."""
+    if not template:
+        return False
+
+    rotation_type = getattr(template, "rotation_type", None)
+    if rotation_type != "inpatient":
+        return False
+
+    name = (getattr(template, "name", "") or "").upper()
+    abbreviation = (getattr(template, "abbreviation", "") or "").upper()
+    display_abbreviation = (getattr(template, "display_abbreviation", "") or "").upper()
+
+    return "FMIT" in name or "FMIT" in abbreviation or "FMIT" in display_abbreviation
+
+
+def _get_assignment_template(assignment: Any, context: SchedulingContext) -> Any | None:
+    """Get the rotation template for an assignment without DB queries."""
+    template = getattr(assignment, "rotation_template", None)
+    if template is not None:
+        return template
+
+    for t in context.templates:
+        if t.id == assignment.rotation_template_id:
+            return t
+
+    return None
+
+
+def _identify_fmit_weeks_from_context(
+    context: SchedulingContext,
+) -> dict[Any, list[tuple[date, date]]]:
+    """Identify FMIT weeks from existing assignments in the context."""
+    fmit_weeks: dict[Any, set[tuple[date, date]]] = defaultdict(set)
+
+    if not context.existing_assignments:
+        return {}
+
+    blocks_by_id = {b.id: b for b in context.blocks}
+
+    for assignment in context.existing_assignments:
+        template = _get_assignment_template(assignment, context)
+        if not _is_fmit_template(template):
+            continue
+
+        block = blocks_by_id.get(assignment.block_id)
+        if not block:
+            continue
+
+        friday_start, thursday_end = get_fmit_week_dates(block.date)
+        fmit_weeks[assignment.person_id].add((friday_start, thursday_end))
+
+    return {k: list(v) for k, v in fmit_weeks.items()}
+
+
 class FMITWeekBlockingConstraint(HardConstraint):
     """
     Blocks clinic and Sun-Thurs call during FMIT week.
@@ -83,7 +138,8 @@ class FMITWeekBlockingConstraint(HardConstraint):
     - Faculty MUST take Friday and Saturday night call (mandatory)
 
     This constraint requires FMIT assignments to be pre-identified in the context.
-    FMIT assignments should have rotation_type='inpatient' and name containing 'FMIT'.
+    FMIT assignments should have rotation_type='inpatient' and template identifiers
+    (name/abbreviation/display_abbreviation) containing 'FMIT'.
     """
 
     def __init__(self) -> None:
@@ -107,7 +163,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
         - Block clinic templates for all days in FMIT week
         - Block call assignments for Sun-Thurs of FMIT week
         """
-        template_vars = variables.get("template_assignments", {})
+        faculty_template_vars = variables.get("faculty_template_assignments", {})
         call_vars = variables.get("call_assignments", {})
 
         # Find FMIT assignments in existing assignments
@@ -124,8 +180,9 @@ class FMITWeekBlockingConstraint(HardConstraint):
         }
 
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
-            f_i = context.resident_idx.get(faculty_id)
-            if f_i is None:
+            faculty_i = context.faculty_idx.get(faculty_id)
+            call_i = context.call_eligible_faculty_idx.get(faculty_id)
+            if faculty_i is None:
                 continue
 
             for friday_start, thursday_end in fmit_weeks:
@@ -136,17 +193,22 @@ class FMITWeekBlockingConstraint(HardConstraint):
 
                     b_i = context.block_idx[block.id]
 
-                    # Block clinic templates
-                    if template_vars:
+                    # Block clinic templates (use faculty-scoped vars)
+                    if faculty_template_vars:
                         for template_id in clinic_template_ids:
                             t_i = context.template_idx.get(template_id)
-                            if t_i is not None and (f_i, b_i, t_i) in template_vars:
-                                model.Add(template_vars[f_i, b_i, t_i] == 0)
+                            if (
+                                t_i is not None
+                                and (faculty_i, b_i, t_i) in faculty_template_vars
+                            ):
+                                model.Add(
+                                    faculty_template_vars[faculty_i, b_i, t_i] == 0
+                                )
 
                     # Block Sun-Thurs call
-                    if call_vars and is_sun_thurs(block.date):
-                        if (f_i, b_i, "overnight") in call_vars:
-                            model.Add(call_vars[f_i, b_i, "overnight"] == 0)
+                    if call_vars and is_sun_thurs(block.date) and call_i is not None:
+                        if (call_i, b_i, "overnight") in call_vars:
+                            model.Add(call_vars[call_i, b_i, "overnight"] == 0)
 
     def add_to_pulp(
         self,
@@ -155,7 +217,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
         context: SchedulingContext,
     ) -> None:
         """Add FMIT blocking constraints to PuLP model."""
-        template_vars = variables.get("template_assignments", {})
+        faculty_template_vars = variables.get("faculty_template_assignments", {})
         call_vars = variables.get("call_assignments", {})
 
         fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
@@ -170,8 +232,9 @@ class FMITWeekBlockingConstraint(HardConstraint):
 
         constraint_count = 0
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
-            f_i = context.resident_idx.get(faculty_id)
-            if f_i is None:
+            faculty_i = context.faculty_idx.get(faculty_id)
+            call_i = context.call_eligible_faculty_idx.get(faculty_id)
+            if faculty_i is None:
                 continue
 
             for friday_start, thursday_end in fmit_weeks:
@@ -181,21 +244,24 @@ class FMITWeekBlockingConstraint(HardConstraint):
 
                     b_i = context.block_idx[block.id]
 
-                    if template_vars:
+                    if faculty_template_vars:
                         for template_id in clinic_template_ids:
                             t_i = context.template_idx.get(template_id)
-                            if t_i is not None and (f_i, b_i, t_i) in template_vars:
+                            if (
+                                t_i is not None
+                                and (faculty_i, b_i, t_i) in faculty_template_vars
+                            ):
                                 model += (
-                                    template_vars[f_i, b_i, t_i] == 0,
-                                    f"fmit_no_clinic_{f_i}_{b_i}_{constraint_count}",
+                                    faculty_template_vars[faculty_i, b_i, t_i] == 0,
+                                    f"fmit_no_clinic_{faculty_i}_{b_i}_{constraint_count}",
                                 )
                                 constraint_count += 1
 
-                    if call_vars and is_sun_thurs(block.date):
-                        if (f_i, b_i, "overnight") in call_vars:
+                    if call_vars and is_sun_thurs(block.date) and call_i is not None:
+                        if (call_i, b_i, "overnight") in call_vars:
                             model += (
-                                call_vars[f_i, b_i, "overnight"] == 0,
-                                f"fmit_no_call_{f_i}_{b_i}_{constraint_count}",
+                                call_vars[call_i, b_i, "overnight"] == 0,
+                                f"fmit_no_call_{call_i}_{b_i}_{constraint_count}",
                             )
                             constraint_count += 1
 
@@ -261,52 +327,8 @@ class FMITWeekBlockingConstraint(HardConstraint):
     def _identify_fmit_weeks(
         self, context: SchedulingContext
     ) -> dict[Any, list[tuple[date, date]]]:
-        """
-        Identify FMIT weeks from existing assignments.
-
-        Returns:
-            dict: {faculty_id: [(friday_start, thursday_end), ...]}
-        """
-        fmit_weeks: dict[Any, set[tuple[date, date]]] = defaultdict(set)
-
-        # Look for FMIT assignments in existing assignments
-        for a in context.existing_assignments:
-            # Check if this is an FMIT assignment
-            # FMIT templates have rotation_type='inpatient' and name contains 'FMIT'
-            template = None
-            for t in context.templates:
-                if t.id == a.rotation_template_id:
-                    template = t
-                    break
-
-            if not template:
-                continue
-
-            is_fmit = (
-                hasattr(template, "rotation_type")
-                and template.rotation_type == "inpatient"
-                and hasattr(template, "name")
-                and "FMIT" in template.name.upper()
-            )
-
-            if not is_fmit:
-                continue
-
-            # Get the block date
-            block = None
-            for b in context.blocks:
-                if b.id == a.block_id:
-                    block = b
-                    break
-
-            if not block:
-                continue
-
-            # Calculate FMIT week for this date
-            friday_start, thursday_end = get_fmit_week_dates(block.date)
-            fmit_weeks[a.person_id].add((friday_start, thursday_end))
-
-        return {k: list(v) for k, v in fmit_weeks.items()}
+        """Identify FMIT weeks from existing assignments."""
+        return _identify_fmit_weeks_from_context(context)
 
 
 class FMITMandatoryCallConstraint(HardConstraint):
@@ -345,8 +367,8 @@ class FMITMandatoryCallConstraint(HardConstraint):
             return
 
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
-            f_i = context.resident_idx.get(faculty_id)
-            if f_i is None:
+            call_i = context.call_eligible_faculty_idx.get(faculty_id)
+            if call_i is None:
                 continue
 
             for friday_start, thursday_end in fmit_weeks:
@@ -354,14 +376,14 @@ class FMITMandatoryCallConstraint(HardConstraint):
                 for block in context.blocks:
                     if block.date == friday_start:  # Friday
                         b_i = context.block_idx[block.id]
-                        if (f_i, b_i, "overnight") in call_vars:
-                            model.Add(call_vars[f_i, b_i, "overnight"] == 1)
+                        if (call_i, b_i, "overnight") in call_vars:
+                            model.Add(call_vars[call_i, b_i, "overnight"] == 1)
 
                     saturday = friday_start + timedelta(days=1)
                     if block.date == saturday:
                         b_i = context.block_idx[block.id]
-                        if (f_i, b_i, "overnight") in call_vars:
-                            model.Add(call_vars[f_i, b_i, "overnight"] == 1)
+                        if (call_i, b_i, "overnight") in call_vars:
+                            model.Add(call_vars[call_i, b_i, "overnight"] == 1)
 
     def add_to_pulp(
         self,
@@ -380,28 +402,28 @@ class FMITMandatoryCallConstraint(HardConstraint):
 
         constraint_count = 0
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
-            f_i = context.resident_idx.get(faculty_id)
-            if f_i is None:
+            call_i = context.call_eligible_faculty_idx.get(faculty_id)
+            if call_i is None:
                 continue
 
             for friday_start, thursday_end in fmit_weeks:
                 for block in context.blocks:
                     if block.date == friday_start:
                         b_i = context.block_idx[block.id]
-                        if (f_i, b_i, "overnight") in call_vars:
+                        if (call_i, b_i, "overnight") in call_vars:
                             model += (
-                                call_vars[f_i, b_i, "overnight"] == 1,
-                                f"fmit_fri_call_{f_i}_{constraint_count}",
+                                call_vars[call_i, b_i, "overnight"] == 1,
+                                f"fmit_fri_call_{call_i}_{constraint_count}",
                             )
                             constraint_count += 1
 
                     saturday = friday_start + timedelta(days=1)
                     if block.date == saturday:
                         b_i = context.block_idx[block.id]
-                        if (f_i, b_i, "overnight") in call_vars:
+                        if (call_i, b_i, "overnight") in call_vars:
                             model += (
-                                call_vars[f_i, b_i, "overnight"] == 1,
-                                f"fmit_sat_call_{f_i}_{constraint_count}",
+                                call_vars[call_i, b_i, "overnight"] == 1,
+                                f"fmit_sat_call_{call_i}_{constraint_count}",
                             )
                             constraint_count += 1
 
@@ -428,41 +450,7 @@ class FMITMandatoryCallConstraint(HardConstraint):
         self, context: SchedulingContext
     ) -> dict[Any, list[tuple[date, date]]]:
         """Identify FMIT weeks (same as FMITWeekBlockingConstraint)."""
-        fmit_weeks: dict[Any, set[tuple[date, date]]] = defaultdict(set)
-
-        for a in context.existing_assignments:
-            template = None
-            for t in context.templates:
-                if t.id == a.rotation_template_id:
-                    template = t
-                    break
-
-            if not template:
-                continue
-
-            is_fmit = (
-                hasattr(template, "rotation_type")
-                and template.rotation_type == "inpatient"
-                and hasattr(template, "name")
-                and "FMIT" in template.name.upper()
-            )
-
-            if not is_fmit:
-                continue
-
-            block = None
-            for b in context.blocks:
-                if b.id == a.block_id:
-                    block = b
-                    break
-
-            if not block:
-                continue
-
-            friday_start, thursday_end = get_fmit_week_dates(block.date)
-            fmit_weeks[a.person_id].add((friday_start, thursday_end))
-
-        return {k: list(v) for k, v in fmit_weeks.items()}
+        return _identify_fmit_weeks_from_context(context)
 
 
 class PostFMITRecoveryConstraint(HardConstraint):
@@ -499,8 +487,9 @@ class PostFMITRecoveryConstraint(HardConstraint):
             return
 
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
-            f_i = context.resident_idx.get(faculty_id)
-            if f_i is None:
+            faculty_i = context.faculty_idx.get(faculty_id)
+            call_i = context.call_eligible_faculty_idx.get(faculty_id)
+            if faculty_i is None:
                 continue
 
             for friday_start, thursday_end in fmit_weeks:
@@ -518,14 +507,17 @@ class PostFMITRecoveryConstraint(HardConstraint):
                     if template_vars:
                         for template in context.templates:
                             t_i = context.template_idx.get(template.id)
-                            if t_i is not None and (f_i, b_i, t_i) in template_vars:
-                                model.Add(template_vars[f_i, b_i, t_i] == 0)
+                            if (
+                                t_i is not None
+                                and (faculty_i, b_i, t_i) in template_vars
+                            ):
+                                model.Add(template_vars[faculty_i, b_i, t_i] == 0)
 
                     # Block call assignments
-                    if call_vars:
+                    if call_vars and call_i is not None:
                         for call_type in ["overnight", "weekend", "backup"]:
-                            if (f_i, b_i, call_type) in call_vars:
-                                model.Add(call_vars[f_i, b_i, call_type] == 0)
+                            if (call_i, b_i, call_type) in call_vars:
+                                model.Add(call_vars[call_i, b_i, call_type] == 0)
 
     def add_to_pulp(
         self,
@@ -543,8 +535,9 @@ class PostFMITRecoveryConstraint(HardConstraint):
 
         constraint_count = 0
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
-            f_i = context.resident_idx.get(faculty_id)
-            if f_i is None:
+            faculty_i = context.faculty_idx.get(faculty_id)
+            call_i = context.call_eligible_faculty_idx.get(faculty_id)
+            if faculty_i is None:
                 continue
 
             for friday_start, thursday_end in fmit_weeks:
@@ -559,19 +552,22 @@ class PostFMITRecoveryConstraint(HardConstraint):
                     if template_vars:
                         for template in context.templates:
                             t_i = context.template_idx.get(template.id)
-                            if t_i is not None and (f_i, b_i, t_i) in template_vars:
+                            if (
+                                t_i is not None
+                                and (faculty_i, b_i, t_i) in template_vars
+                            ):
                                 model += (
-                                    template_vars[f_i, b_i, t_i] == 0,
-                                    f"post_fmit_blocked_{f_i}_{b_i}_{constraint_count}",
+                                    template_vars[faculty_i, b_i, t_i] == 0,
+                                    f"post_fmit_blocked_{faculty_i}_{b_i}_{constraint_count}",
                                 )
                                 constraint_count += 1
 
-                    if call_vars:
+                    if call_vars and call_i is not None:
                         for call_type in ["overnight", "weekend", "backup"]:
-                            if (f_i, b_i, call_type) in call_vars:
+                            if (call_i, b_i, call_type) in call_vars:
                                 model += (
-                                    call_vars[f_i, b_i, call_type] == 0,
-                                    f"post_fmit_no_call_{f_i}_{b_i}_{constraint_count}",
+                                    call_vars[call_i, b_i, call_type] == 0,
+                                    f"post_fmit_no_call_{call_i}_{b_i}_{constraint_count}",
                                 )
                                 constraint_count += 1
 
@@ -631,41 +627,7 @@ class PostFMITRecoveryConstraint(HardConstraint):
         self, context: SchedulingContext
     ) -> dict[Any, list[tuple[date, date]]]:
         """Identify FMIT weeks (same as FMITWeekBlockingConstraint)."""
-        fmit_weeks: dict[Any, set[tuple[date, date]]] = defaultdict(set)
-
-        for a in context.existing_assignments:
-            template = None
-            for t in context.templates:
-                if t.id == a.rotation_template_id:
-                    template = t
-                    break
-
-            if not template:
-                continue
-
-            is_fmit = (
-                hasattr(template, "rotation_type")
-                and template.rotation_type == "inpatient"
-                and hasattr(template, "name")
-                and "FMIT" in template.name.upper()
-            )
-
-            if not is_fmit:
-                continue
-
-            block = None
-            for b in context.blocks:
-                if b.id == a.block_id:
-                    block = b
-                    break
-
-            if not block:
-                continue
-
-            friday_start, thursday_end = get_fmit_week_dates(block.date)
-            fmit_weeks[a.person_id].add((friday_start, thursday_end))
-
-        return {k: list(v) for k, v in fmit_weeks.items()}
+        return _identify_fmit_weeks_from_context(context)
 
 
 class PostFMITSundayBlockingConstraint(HardConstraint):
@@ -707,8 +669,8 @@ class PostFMITSundayBlockingConstraint(HardConstraint):
             return
 
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
-            f_i = context.resident_idx.get(faculty_id)
-            if f_i is None:
+            call_i = context.call_eligible_faculty_idx.get(faculty_id)
+            if call_i is None:
                 continue
 
             for friday_start, thursday_end in fmit_weeks:
@@ -718,8 +680,8 @@ class PostFMITSundayBlockingConstraint(HardConstraint):
                 for block in context.blocks:
                     if block.date == blocked_sunday:
                         b_i = context.block_idx.get(block.id)
-                        if b_i is not None and (f_i, b_i, "overnight") in call_vars:
-                            model.Add(call_vars[f_i, b_i, "overnight"] == 0)
+                        if b_i is not None and (call_i, b_i, "overnight") in call_vars:
+                            model.Add(call_vars[call_i, b_i, "overnight"] == 0)
 
     def add_to_pulp(
         self,
@@ -738,8 +700,8 @@ class PostFMITSundayBlockingConstraint(HardConstraint):
 
         constraint_count = 0
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
-            f_i = context.resident_idx.get(faculty_id)
-            if f_i is None:
+            call_i = context.call_eligible_faculty_idx.get(faculty_id)
+            if call_i is None:
                 continue
 
             for friday_start, thursday_end in fmit_weeks:
@@ -748,10 +710,10 @@ class PostFMITSundayBlockingConstraint(HardConstraint):
                 for block in context.blocks:
                     if block.date == blocked_sunday:
                         b_i = context.block_idx.get(block.id)
-                        if b_i is not None and (f_i, b_i, "overnight") in call_vars:
+                        if b_i is not None and (call_i, b_i, "overnight") in call_vars:
                             model += (
-                                call_vars[f_i, b_i, "overnight"] == 0,
-                                f"post_fmit_no_sunday_{f_i}_{constraint_count}",
+                                call_vars[call_i, b_i, "overnight"] == 0,
+                                f"post_fmit_no_sunday_{call_i}_{constraint_count}",
                             )
                             constraint_count += 1
 
@@ -814,41 +776,7 @@ class PostFMITSundayBlockingConstraint(HardConstraint):
         self, context: SchedulingContext
     ) -> dict[Any, list[tuple[date, date]]]:
         """Identify FMIT weeks from existing assignments."""
-        fmit_weeks: dict[Any, set[tuple[date, date]]] = defaultdict(set)
-
-        for a in context.existing_assignments:
-            template = None
-            for t in context.templates:
-                if t.id == a.rotation_template_id:
-                    template = t
-                    break
-
-            if not template:
-                continue
-
-            is_fmit = (
-                hasattr(template, "rotation_type")
-                and template.rotation_type == "inpatient"
-                and hasattr(template, "name")
-                and "FMIT" in template.name.upper()
-            )
-
-            if not is_fmit:
-                continue
-
-            block = None
-            for b in context.blocks:
-                if b.id == a.block_id:
-                    block = b
-                    break
-
-            if not block:
-                continue
-
-            friday_start, thursday_end = get_fmit_week_dates(block.date)
-            fmit_weeks[a.person_id].add((friday_start, thursday_end))
-
-        return {k: list(v) for k, v in fmit_weeks.items()}
+        return _identify_fmit_weeks_from_context(context)
 
 
 class FMITContinuityTurfConstraint(HardConstraint):
@@ -1142,12 +1070,7 @@ class FMITStaffingFloorConstraint(HardConstraint):
 
     def _is_fmit_template(self, template: Any) -> bool:
         """Check if template is an FMIT rotation."""
-        return (
-            hasattr(template, "rotation_type")
-            and template.rotation_type == "inpatient"
-            and hasattr(template, "name")
-            and "FMIT" in template.name.upper()
-        )
+        return _is_fmit_template(template)
 
     def _block_all_fmit_assignments(
         self,

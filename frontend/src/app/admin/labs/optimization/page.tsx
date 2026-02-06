@@ -20,7 +20,7 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowLeft, Cpu, Layers, Circle, Box, Waves, Zap, GitBranch, Network } from 'lucide-react';
+import { ArrowLeft, Cpu, Layers, Circle, Box, Waves, Zap, GitBranch, Network, Activity, TrendingUp } from 'lucide-react';
 import type {
   SimulationConfig,
   GeminiAnalysisResult,
@@ -28,6 +28,10 @@ import type {
 import { transformPatternsToNodes } from '@/app/admin/visualizations/stigmergy-flow/constants';
 import { useStigmergyPatterns } from '@/hooks/useResilience';
 import { useHopfieldEnergy } from '@/hooks/useHopfield';
+import { useEnergyLandscape } from '@/hooks/useEnergyLandscape';
+import { useFreeEnergy } from '@/hooks/useFreeEnergy';
+import type { EnergyLandscapeResponse } from '@/api/exotic-resilience';
+import type { FreeEnergyOptimizationResponse } from '@/api/exotic-resilience';
 
 // Dynamic imports for 3D visualizations - only load when tab is active
 const CpsatSimulator = dynamic(
@@ -103,7 +107,27 @@ const BottleneckFlowVisualizer = dynamic(
   }
 );
 
-type TabId = 'cpsat' | 'brane' | 'foam' | 'stigmergy' | 'hopfield' | 'bridge' | 'bottleneck';
+const FreeEnergyVisualizer = dynamic(
+  () =>
+    import('@/features/free-energy').then((mod) => mod.FreeEnergyVisualizer),
+  {
+    ssr: false,
+    loading: () => <LoadingScreen label="Computing Free Energy Surface..." />,
+  }
+);
+
+const EnergyLandscapeVisualizer = dynamic(
+  () =>
+    import('@/features/energy-landscape/EnergyLandscapeVisualizer').then(
+      (mod) => mod.EnergyLandscapeVisualizer
+    ),
+  {
+    ssr: false,
+    loading: () => <LoadingScreen label="Mapping Energy Landscape..." />,
+  }
+);
+
+type TabId = 'cpsat' | 'brane' | 'foam' | 'stigmergy' | 'hopfield' | 'bridge' | 'bottleneck' | 'freeEnergy' | 'energy';
 
 interface Tab {
   id: TabId;
@@ -154,6 +178,18 @@ const TABS: Tab[] = [
     label: 'Bottleneck Flow',
     icon: Network,
     description: 'Supervision cascade visualization',
+  },
+  {
+    id: 'freeEnergy',
+    label: 'Free Energy',
+    icon: Activity,
+    description: 'Helmholtz free energy stability analysis',
+  },
+  {
+    id: 'energy',
+    label: 'Energy Landscape',
+    icon: TrendingUp,
+    description: 'Schedule optimization landscape analysis',
   },
 ];
 
@@ -289,6 +325,150 @@ function HopfieldVisualizerWrapper() {
   );
 }
 
+/**
+ * Mock data fallback for Energy Landscape when API is unavailable.
+ */
+const MOCK_ENERGY_LANDSCAPE: EnergyLandscapeResponse = {
+  currentEnergy: -1.47,
+  isLocalMinimum: true,
+  estimatedBasinSize: 342,
+  meanBarrierHeight: 0.83,
+  meanGradient: 0.12,
+  landscapeRuggedness: 0.45,
+  numLocalMinima: 3,
+  interpretation: 'Schedule is in a stable local minimum with moderate landscape complexity. Three distinct scheduling strategies exist in the solution space.',
+  recommendations: [
+    'Current position is stable — no immediate optimization needed',
+    'Consider exploring alternative minima for potential 8% improvement',
+    'Monitor barrier heights during schedule perturbations (swaps, absences)',
+  ],
+  computedAt: new Date().toISOString(),
+  source: 'mock_fallback',
+};
+
+/**
+ * Wrapper component for Energy Landscape Visualizer with API integration.
+ * Calls the energy landscape analysis endpoint and falls back to mock data on error.
+ */
+function EnergyLandscapeWrapper() {
+  const mutation = useEnergyLandscape();
+
+  const handleAnalyze = useCallback(() => {
+    mutation.mutate({});
+  }, [mutation]);
+
+  // Use API data if available, fall back to mock on error
+  const displayData = mutation.data ?? (mutation.error ? MOCK_ENERGY_LANDSCAPE : null);
+
+  return (
+    <div className="flex-1 flex flex-col bg-black">
+      {/* Control bar */}
+      <div className="p-4 bg-slate-900/60 border-b border-slate-700/50">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleAnalyze}
+            disabled={mutation.isPending}
+            className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            {mutation.isPending ? 'Analyzing...' : 'Analyze Schedule'}
+          </button>
+          {mutation.error && (
+            <span className="text-xs text-yellow-400">
+              API unavailable — showing mock data
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Visualization area */}
+      <div className="flex-1 overflow-auto p-6">
+        {displayData ? (
+          <EnergyLandscapeVisualizer data={displayData} />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <TrendingUp className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+              <p className="text-slate-400 text-sm mb-2">Energy Landscape Analysis</p>
+              <p className="text-slate-600 text-xs">
+                Click &quot;Analyze Schedule&quot; to map the optimization landscape
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const MOCK_FREE_ENERGY: FreeEnergyOptimizationResponse = {
+  freeEnergy: -0.847,
+  internalEnergy: 0.523,
+  entropyTerm: 1.370,
+  temperature: 1.0,
+  constraintViolations: 2,
+  configurationEntropy: 1.370,
+  interpretation: 'Schedule is thermodynamically stable (F < 0). Entropy contribution outweighs internal energy costs. Two minor constraint violations are within acceptable tolerance.',
+  recommendations: [
+    'Maintain current temperature — schedule diversity is healthy',
+    'Address 2 soft constraint violations for marginal improvement',
+    'Consider cooling (lower T) to lock in current stable configuration before block transition',
+  ],
+  computedAt: new Date().toISOString(),
+  source: 'mock_fallback', // @enum-ok
+};
+
+/**
+ * Wrapper component for FreeEnergyVisualizer with API integration.
+ * Calls the free energy optimization endpoint and falls back to mock
+ * data on error so the visualization always renders.
+ */
+function FreeEnergyWrapper() {
+  const mutation = useFreeEnergy();
+
+  const handleOptimize = useCallback(() => {
+    mutation.mutate({});
+  }, [mutation]);
+
+  // Use real data when available, fall back to mock on error
+  const data = mutation.data ?? (mutation.error ? MOCK_FREE_ENERGY : null);
+
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center bg-black p-8 overflow-auto">
+      <div className="w-full max-w-2xl space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-white">
+            Helmholtz Free Energy Analysis
+          </h2>
+          <button
+            onClick={handleOptimize}
+            disabled={mutation.isPending}
+            className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            {mutation.isPending ? 'Optimizing...' : 'Optimize Schedule'}
+          </button>
+        </div>
+
+        {mutation.error && !mutation.data && (
+          <p className="text-xs text-amber-400">
+            API unavailable — showing mock data
+          </p>
+        )}
+
+        {data ? (
+          <FreeEnergyVisualizer data={data} />
+        ) : (
+          <div className="text-center py-16">
+            <Activity className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-400 text-sm">
+              Click &quot;Optimize Schedule&quot; to analyze thermodynamic stability
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function OptimizationLabsPage() {
   const [activeTab, setActiveTab] = useState<TabId>('cpsat');
 
@@ -356,6 +536,8 @@ export default function OptimizationLabsPage() {
         {activeTab === 'hopfield' && <HopfieldVisualizerWrapper />}
         {activeTab === 'bridge' && <BridgeSyncVisualizer />}
         {activeTab === 'bottleneck' && <BottleneckFlowVisualizer />}
+        {activeTab === 'freeEnergy' && <FreeEnergyWrapper />}
+        {activeTab === 'energy' && <EnergyLandscapeWrapper />}
       </div>
     </div>
   );

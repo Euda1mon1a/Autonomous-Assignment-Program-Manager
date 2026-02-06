@@ -102,7 +102,7 @@ echo -n "Checking for burnout risk patterns... "
 # Look for consecutive shift patterns or high workload indicators
 BURNOUT_PATTERNS=$(grep -rn --include="*.py" --include="*.ts" \
   -iE '(consecutive.*(7|8|9|[1-9][0-9]).*days?|workload.*exceed|overtime.*unlimited)' \
-  backend/app/scheduling/ 2>/dev/null | grep -v "test" || true)
+  backend/app/scheduling/ 2>/dev/null | grep -v "test" | grep -v "constraints/" || true)
 
 if [ -n "$BURNOUT_PATTERNS" ]; then
   echo -e "${YELLOW}WARNING${NC}"

@@ -112,6 +112,10 @@ docs/data/*_pii_mapping*.json
 docs/reports/BLOCK_*_QUALITY_REPORT_*.md
 docs/reports/BLOCKS_*_SUMMARY_*.md
 
+# Session postmortems and schema drift reports (contain PII)
+docs/reports/block10-postmortem-*.md
+docs/reports/cpsat-call-preload-and-schema-drift-*.md
+
 # Local config files (contain real names/mappings)
 config/*.local.json
 *.local.md

@@ -20,6 +20,9 @@ Role: Parallel Agent Coordination & Delegation | Philosophy: "Delegate, don't ex
 
 > **Litmus Test:** Recipe = micromanaging. Mission orders = delegating.
 
+**Model Family:** Claude 4.5/4.6 (Feb 2026) | Opus=`claude-opus-4-6`, Sonnet=`claude-sonnet-4-5-20250929`, Haiku=`claude-haiku-4-5-20251001`
+**Agent Teams:** Experimental — `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in settings. Use for research/review; PAI hierarchy for schedule ops.
+
 ---
 
 ## Startup Actions
@@ -74,7 +77,8 @@ If ANY tool inside a container reports "file not found" but the file exists on h
 ## ORCHESTRATOR Lite Active
 
 **Branch:** `[branch]` | **Status:** [Clean/Dirty] | **Behind:** [N] | **Codex:** [N/No PR]
-**MCP:** [healthy/⚠️ unavailable] | **RAG:** [X docs / ⚠️ offline]
+**Model:** Opus 4.6 | **Agent Teams:** [enabled/disabled]
+**MCP:** [healthy/unavailable] | **RAG:** [X docs / offline]
 
 ### Agents
 | Agent | Domain | Agent | Domain |

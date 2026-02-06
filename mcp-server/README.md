@@ -157,7 +157,7 @@ The MCP server runs as a Docker container following Docker MCP Toolkit patterns:
 docker-compose up -d
 
 # Development mode (hot reload, HTTP transport on port 8080)
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker-compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
 # View MCP server logs
 docker-compose logs -f mcp-server

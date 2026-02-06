@@ -58,7 +58,7 @@ Production-grade Docker patterns for multi-stage builds, orchestration, developm
 | File | Purpose | Command |
 |------|---------|---------|
 | `docker-compose.yml` | Base configuration | `docker compose up` |
-| `docker-compose.dev.yml` | Development overrides | `docker compose -f docker-compose.yml -f docker-compose.dev.yml up` |
+| `docker-compose.local.yml` | Development overrides | `docker compose -f docker-compose.yml -f docker-compose.local.yml up` |
 | `docker-compose.prod.yml` | Production overrides | `docker compose -f docker-compose.yml -f docker-compose.prod.yml up` |
 | `.docker/docker-compose.prod.yml` | Hardened production | Uses Docker secrets |
 | `monitoring/docker-compose.monitoring.yml` | Prometheus/Grafana | Observability stack |
@@ -252,7 +252,7 @@ networks:
 ### Development Overrides
 
 ```yaml
-# docker-compose.dev.yml
+# docker-compose.local.yml
 services:
   db:
     ports:
@@ -529,7 +529,7 @@ COPY . .
   "name": "Residency Scheduler Dev",
   "dockerComposeFile": [
     "../docker-compose.yml",
-    "../docker-compose.dev.yml",
+    "../docker-compose.local.yml",
     "docker-compose.devcontainer.yml"
   ],
   "service": "backend",
@@ -634,10 +634,10 @@ jobs:
 ```bash
 # === Development ===
 # Start all services
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
 # Start with rebuild
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 
 # View logs (follow)
 docker compose logs -f backend
@@ -721,7 +721,7 @@ docker run --rm -i hadolint/hadolint < Dockerfile
 **Can handle autonomously:**
 
 1. Development Dockerfile creation
-2. docker-compose.dev.yml modifications
+2. docker-compose.local.yml modifications
 3. Health check implementation
 4. .dockerignore updates
 5. Image size optimization

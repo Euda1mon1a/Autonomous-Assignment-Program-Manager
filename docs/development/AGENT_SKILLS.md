@@ -278,7 +278,7 @@ cd backend && python ../scripts/verify_constraints.py
 - `/backend/Dockerfile` - Production backend (multi-stage)
 - `/frontend/Dockerfile` - Production frontend (multi-stage)
 - `docker-compose.yml` - Base configuration
-- `docker-compose.dev.yml` - Development overrides
+- `docker-compose.local.yml` - Development overrides
 - `.docker/docker-compose.prod.yml` - Hardened production
 
 **Supporting Files**:
@@ -288,7 +288,7 @@ cd backend && python ../scripts/verify_constraints.py
 **Quick Commands**:
 ```bash
 # Development
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
 # View logs
 docker compose logs -f backend

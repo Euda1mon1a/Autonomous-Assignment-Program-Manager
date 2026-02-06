@@ -60,7 +60,7 @@ Notes:
 
 ```
 cp .env.example .env
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 ```
 
 Notes:
@@ -161,7 +161,7 @@ Manual:
 
 4) MCP server ports:
    - `docker-compose.yml`: 8080
-   - `docker-compose.dev.yml` or `docker-compose.local.yml`: 8081
+   - `docker-compose.local.yml` or `docker-compose.local.yml`: 8081
    - `.mcp.json` currently points to 8081 (`http://127.0.0.1:8081/mcp`)
 
 ---
@@ -188,7 +188,7 @@ These are the current mismatches that prevent end-to-end function:
 4) MCP port mismatch depending on compose file.
    - `.mcp.json` uses 8081
    - `docker-compose.yml` exposes 8080
-   - Fix: use `docker-compose.dev.yml` or update `.mcp.json` when using base compose.
+   - Fix: use `docker-compose.local.yml` or update `.mcp.json` when using base compose.
 
 ---
 
@@ -198,7 +198,7 @@ These are the current mismatches that prevent end-to-end function:
 2) Ensure `.env` (or `.env.local`) matches the API base and MCP port.
 3) Start services:
    - `docker compose up -d`
-   - or `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d`
+   - or `docker compose -f docker-compose.yml -f docker-compose.local.yml up -d`
 4) Verify health:
    - `./scripts/health-check.sh --docker`
 5) Validate MCP:

@@ -362,6 +362,32 @@ Design [SCHEMA/API CHANGE].
 
 ---
 
+## Coordination Mechanisms (February 2026)
+
+With Opus 4.6, three coordination mechanisms are available:
+
+| Mechanism | Context Model | Communication | Best For |
+|-----------|---------------|---------------|----------|
+| **Task() subagents** | Isolated (prompt only) | Results return to caller | Focused tasks, results-only |
+| **Agent Teams** (experimental) | Independent (loads CLAUDE.md) | Peer-to-peer + shared task list | Research, review, competing hypotheses |
+| **PAI MCP spawn** | Identity card + RAG injection | Chain of command | Governed schedule operations |
+
+### When to Use Agent Teams vs Subagents
+
+| Scenario | Use Agent Teams | Use Task() Subagents |
+|----------|----------------|---------------------|
+| Parallel code review (security + perf + tests) | Yes — teammates share findings | No |
+| Quick file search / exploration | No | Yes (`subagent_type="Explore"`) |
+| Debugging with competing theories | Yes — adversarial debate | No |
+| Schedule generation (ACGME-critical) | No — use PAI hierarchy | No — use PAI hierarchy |
+| Frontend + backend + tests in parallel | Yes — need coordination | Maybe — if truly independent |
+
+**Standing Order:** Agent Teams do NOT replace PAI governance for ACGME-critical schedule operations.
+
+**Enable:** `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in `~/.claude/settings.json`
+
+---
+
 ## Context for Built-in Agent Types
 
 Some Task tool `subagent_type` options have special context behavior:
@@ -613,7 +639,7 @@ Current identity cards in the system:
 - **Created:** 2025-12-29
 - **Author:** Claude Code Session
 - **Applies to:** Claude Code CLI, Claude Agent SDK
-- **Last Updated:** 2026-01-06 (Added identity card integration)
+- **Last Updated:** 2026-02-05 (Added Agent Teams coordination, Opus 4.6 model references)
 
 ---
 

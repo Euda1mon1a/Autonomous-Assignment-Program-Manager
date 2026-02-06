@@ -343,6 +343,96 @@ export async function detectMetastability(
 }
 
 // =============================================================================
+// Energy Landscape Types
+// =============================================================================
+
+export interface EnergyLandscapeRequest {
+  scheduleId?: string;
+}
+
+export interface EnergyLandscapeResponse {
+  currentEnergy: number;
+  isLocalMinimum: boolean;
+  estimatedBasinSize: number;
+  meanBarrierHeight: number;
+  meanGradient: number;
+  landscapeRuggedness: number;
+  numLocalMinima: number;
+  interpretation: string;
+  recommendations: string[];
+  computedAt: string;
+  source: string;
+}
+
+// =============================================================================
+// Energy Landscape API Function
+// =============================================================================
+
+/**
+ * Analyze the energy landscape around the current schedule.
+ *
+ * Maps the optimization landscape topology including local minima,
+ * barrier heights, and gradient characteristics.
+ *
+ * @param request - Optional schedule ID
+ * @returns Energy landscape analysis with topology metrics
+ */
+export async function analyzeEnergyLandscape(
+  request: EnergyLandscapeRequest = {}
+): Promise<EnergyLandscapeResponse> {
+  return post<EnergyLandscapeResponse>(
+    `${BASE_URL}/energy-landscape/analyze`,
+    request
+  );
+}
+
+// =============================================================================
+// Free Energy Types
+// =============================================================================
+
+export interface FreeEnergyRequest {
+  scheduleId?: string;
+  targetTemperature?: number;
+  maxIterations?: number;
+}
+
+export interface FreeEnergyOptimizationResponse {
+  freeEnergy: number;
+  internalEnergy: number;
+  entropyTerm: number;
+  temperature: number;
+  constraintViolations: number;
+  configurationEntropy: number;
+  interpretation: string;
+  recommendations: string[];
+  computedAt: string;
+  source: string;
+}
+
+// =============================================================================
+// Free Energy API Function
+// =============================================================================
+
+/**
+ * Optimize schedule using Helmholtz free energy minimization.
+ *
+ * Analyzes schedule stability through thermodynamic principles,
+ * balancing internal energy (constraint satisfaction) against
+ * entropy (schedule flexibility).
+ *
+ * @param request - Optional schedule ID, temperature, and iteration params
+ * @returns Free energy optimization results with interpretation
+ */
+export async function optimizeFreeEnergy(
+  request: FreeEnergyRequest = {}
+): Promise<FreeEnergyOptimizationResponse> {
+  return post<FreeEnergyOptimizationResponse>(
+    `${BASE_URL}/free-energy/optimize`,
+    request
+  );
+}
+
+// =============================================================================
 // Aggregated Holographic Data Types
 // =============================================================================
 
