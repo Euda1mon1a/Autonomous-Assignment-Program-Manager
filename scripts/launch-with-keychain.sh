@@ -102,7 +102,7 @@ fi
 
 export DEBUG="${DEBUG:-false}"
 export CORS_ORIGINS="${CORS_ORIGINS:-[\"http://localhost:3000\"]}"
-export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
+export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}"
 export MCP_LOG_LEVEL="${MCP_LOG_LEVEL:-INFO}"
 export TELEMETRY_ENABLED="${TELEMETRY_ENABLED:-false}"
 
