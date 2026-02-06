@@ -4,6 +4,26 @@
 
 ---
 
+## Consider GitHub Pro ($4/mo) (2026-02-06)
+
+**Priority:** Low
+**Status:** Deferred until closer to production
+
+**Context:** Repo is now private. Branch protection and rulesets require GitHub Pro on private repos. Currently relying on discipline + pre-commit hooks (33 hooks across 25 phases) since you're the sole write-access user.
+
+**Pro gets you:**
+- Branch protection / rulesets on private repos
+- Required reviewers, CODEOWNERS enforcement
+- 3,000 Actions minutes (vs 2,000 free)
+- Full repository traffic insights
+- Email support from GitHub
+
+**Note:** If self-hosting (GitLab, Gitea, etc.), this becomes moot — those platforms include branch protection at all tiers.
+
+**Revisit when:** Adding collaborators with write access, or finalizing hosting decision.
+
+---
+
 ## LaTeX/MFR Generation Research (2026-01-28)
 
 **Priority:** Low (deferred)
