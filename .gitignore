@@ -191,6 +191,9 @@ test_write.xlsx
 .claude/plans/
 .claude/Missions/
 .claude/skills/*/
+!.claude/skills/check-camelcase/
+!.claude/skills/check-camelcase/SKILL.md
+
 !.claude/skills/codex-app-automation-triage/
 !.claude/skills/codex-app-automation-triage/SKILL.md
 !.claude/skills/codex-local-triage/
