@@ -247,7 +247,7 @@ export const mockData = {
     requester_blockId: 'block-1',
     target_blockId: 'block-2',
     status: 'pending',
-    swapType: 'oneToOne',
+    swapType: 'one_to_one', // @gorgon-ok
     reason: 'Test swap request',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',

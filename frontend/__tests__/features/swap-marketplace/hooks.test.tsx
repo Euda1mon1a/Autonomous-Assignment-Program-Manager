@@ -144,7 +144,7 @@ describe('Swap Marketplace Hooks', () => {
             targetFacultyId: 'user-1',
             targetFaculty: { name: 'Dr. Doe' },
             targetWeek: '2025-01-22',
-            swapType: 'oneToOne',
+            swapType: 'one_to_one', // @gorgon-ok
             status: 'pending',
             requestedAt: '2025-01-10T10:00:00Z',
             reason: 'Conference',

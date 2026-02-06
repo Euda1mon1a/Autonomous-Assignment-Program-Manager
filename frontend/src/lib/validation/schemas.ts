@@ -107,7 +107,7 @@ export const blockResponseSchema = blockBaseSchema.extend({
 
 // ==================== Swap Schemas ====================
 
-export const swapTypeSchema = z.enum(["oneToOne", "absorb", "multi_way"]);
+export const swapTypeSchema = z.enum(["one_to_one", "absorb", "multi_way"]); // @gorgon-ok values must match backend snake_case
 
 export const swapStatusSchema = z.enum([
   "pending",
