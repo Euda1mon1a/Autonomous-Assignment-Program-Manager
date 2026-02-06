@@ -42,7 +42,7 @@ import {
 import { useFairnessAudit } from '@/hooks/useFairness';
 
 // Existing resilience components
-import { DefenseLevel } from '@/components/resilience/DefenseLevel';
+import { DefenseLevel, mapBackendDefenseLevel } from '@/components/resilience/DefenseLevel';
 import { UtilizationGauge } from '@/components/resilience/UtilizationGauge';
 import { BurnoutRtDisplay } from '@/components/resilience/BurnoutRtDisplay';
 import { N1ContingencyMap } from '@/components/resilience/N1ContingencyMap';
@@ -260,7 +260,7 @@ function OverviewTab() {
           <>
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
               <h3 className="text-lg font-medium text-white mb-4">Defense Level</h3>
-              <DefenseLevel level={(health.defenseLevel as string)?.toUpperCase() as 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED' | 'BLACK' || 'GREEN'} />
+              <DefenseLevel level={mapBackendDefenseLevel(health.defenseLevel)} />
             </div>
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
               <h3 className="text-lg font-medium text-white mb-4">Utilization</h3>
@@ -272,7 +272,7 @@ function OverviewTab() {
         )}
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
           <h3 className="text-lg font-medium text-white mb-4">Burnout Risk</h3>
-          <BurnoutRtDisplay value={(health as { burnoutRt?: number })?.burnoutRt || 0.5} />
+          <BurnoutRtDisplay value={0.5} />
         </div>
       </div>
 
@@ -281,9 +281,9 @@ function OverviewTab() {
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
           <h3 className="text-lg font-medium text-white mb-4">N-1 Vulnerability Map</h3>
           <N1ContingencyMap
-            criticalResources={vulnerability.n1Vulnerabilities?.map((v: { facultyId: string }) => v.facultyId) || []}
-            vulnerableRotations={vulnerability.n1Vulnerabilities?.flatMap((v: { affectedBlocks: number[] }) => v.affectedBlocks.map(b => `Block ${b}`)) || []}
-            recoveryDistance={(vulnerability as { recoveryDistance?: number }).recoveryDistance || 0}
+            criticalResources={vulnerability.n1Vulnerabilities?.map((v) => v.facultyId) || []}
+            vulnerableRotations={vulnerability.n1Vulnerabilities?.flatMap((v) => v.affectedBlocks.map(b => `Block ${b}`)) || []}
+            recoveryDistance={0}
           />
         </div>
       )}
