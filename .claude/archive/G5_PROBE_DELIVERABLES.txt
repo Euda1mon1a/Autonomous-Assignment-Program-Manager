@@ -267,7 +267,7 @@ SUPPORT RESOURCES
 
 Where to find these documents:
   Location: /Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/
-  
+
   Files:
   - G5_PROBE_INDEX.md (START HERE)
   - AGENT_MCP_MATRIX.md (Quick reference)

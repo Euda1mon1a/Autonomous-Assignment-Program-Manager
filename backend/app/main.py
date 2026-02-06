@@ -18,10 +18,14 @@ from app.api.routes import api_router
 from app.core.config import get_settings
 from app.core.exceptions import AppException
 from app.core.logging import get_logger, setup_logging
+from app.core.secrets_loader import initialize_secrets_from_keychain
 from app.core.slowapi_limiter import limiter, rate_limit_exceeded_handler
 from app.middleware.audit import AuditContextMiddleware
 from app.middleware.phi_middleware import PHIMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
+
+# Populate os.environ from macOS Keychain before Pydantic reads settings
+initialize_secrets_from_keychain()
 
 settings = get_settings()
 

@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Guidelines for Autonomous Claude Work
 
-> **Last Updated:** 2026-02-05 | **Purpose:** Guidelines for AI-assisted development on the Residency Scheduler
+> **Last Updated:** 2026-02-05 (PAI v2 modernization) | **Purpose:** Guidelines for AI-assisted development on the Residency Scheduler
 
 ---
 
@@ -45,13 +45,13 @@ Docker + Docker Compose, MCP Server (97+ AI tools), Prometheus, Grafana
 
 ### AI Models (Claude 4.5/4.6 — February 2026)
 
-| Model | ID | Role |
-|-------|----|------|
-| Opus 4.6 | `claude-opus-4-6` | ORCHESTRATOR, Deputies, complex reasoning |
-| Sonnet 4.5 | `claude-sonnet-4-5-20250929` | Coordinators, G-Staff, tactical work |
-| Haiku 4.5 | `claude-haiku-4-5-20251001` | Specialists, simple execution |
+| Model | ID | Best For |
+|-------|----|----------|
+| Opus 4.6 | `claude-opus-4-6` | Complex reasoning, architecture, orchestration |
+| Sonnet 4.5 | `claude-sonnet-4-5-20250929` | Tactical work, code generation, reviews |
+| Haiku 4.5 | `claude-haiku-4-5-20251001` | Simple execution, quick lookups |
 
-**Agent Teams (Experimental):** Enabled via `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in `~/.claude/settings.json`. Provides native multi-agent coordination with shared task lists and peer-to-peer messaging. Use for research and review; PAI hierarchy remains authoritative for schedule operations.
+**Agent Teams:** Enabled via `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in `~/.claude/settings.json`. Provides native multi-agent coordination with shared task lists and peer-to-peer messaging.
 
 ---
 
@@ -364,7 +364,6 @@ This project operates on **mission-type orders** (Auftragstaktik), not detailed 
 - **Escalate When Blocked**: Only strategic pivots surface up
 
 > RAG: `rag_search('Auftragstaktik doctrine')` for full delegation patterns
-> See: `.claude/Governance/HIERARCHY.md` for command philosophy
 
 ### Commander's Intent
 
@@ -386,12 +385,11 @@ This project operates on **mission-type orders** (Auftragstaktik), not detailed 
 
 ### Decision Rights
 
-| Tier | Act Autonomously | Escalate Up |
-|------|------------------|-------------|
-| **Specialist** | Implementation details, test fixes, bug patches | Architecture changes, new dependencies, scope creep |
-| **Coordinator** | Task decomposition, agent selection, retry logic | Blocked >2 attempts, cross-domain impact, unclear requirements |
-| **Deputy** | Strategic pivots within domain, resource allocation | User-facing changes, cross-deputy coordination, policy changes |
-| **ORCHESTRATOR** | 99% delegation, workflow orchestration | Container ops (1%), user preference unclear, boundary violations |
+| Action | Do It | Ask First |
+|--------|-------|-----------|
+| Implementation details, test fixes, bug patches | Yes | Architecture changes, new dependencies, scope creep |
+| Task decomposition, agent selection, retry logic | Yes | Blocked >2 attempts, cross-domain impact, unclear requirements |
+| Local file edits, running tests/linters | Yes | User-facing changes, policy changes, boundary violations |
 
 **When in doubt:** Act within boundaries. Escalate if approaching a boundary.
 
@@ -408,10 +406,9 @@ Examples of things to report:
 
 ### Resources Available
 
-**Tools:** 34+ MCP tools via `mcp__*` prefix. Key domains: scheduling, validation, resilience, RAG search.
+**Tools:** 97+ MCP tools via `mcp__*` prefix. Key domains: scheduling, validation, resilience, RAG search.
 **Hazards:** Run `rag_search('common pitfalls')` before novel approaches. Known issues: CCW token bugs, import removal, docker volume masking.
-**Agents:** See `.claude/Agents/` for full roster. Spawn based on domain expertise, not availability.
-**Codebase:** `backend/app/` (FastAPI), `frontend/src/` (Next.js), `.claude/` (PAI governance).
+**Codebase:** `backend/app/` (FastAPI), `frontend/src/` (Next.js), `mcp-server/` (MCP tools).
 
 ### MCP Tool Requirements (MUST USE)
 
@@ -501,25 +498,11 @@ Before changes, AI MUST:
 - Frontend: `npm run lint:fix`
 - Pre-commit hooks must pass (CI/CD disabled pre-production, see Section 13 of Best Practices)
 
-### Agent Spawning (MANDATORY)
+### Agent Spawning
 
-When spawning ANY PAI agent via Task(), you MUST:
-1. Read `.claude/Identities/[AGENT_NAME].identity.md`
-2. Include it as `## BOOT CONTEXT` at the start of the prompt
+Use the Task tool with clear, specific prompts. Include relevant context directly — no external identity cards needed. Opus 4.6 and Agent Teams handle coordination natively.
 
-```
-Task(
-  prompt="""
-  ## BOOT CONTEXT
-  [contents of identity card]
-
-  ## MISSION
-  [task description]
-  """
-)
-```
-
-**No exceptions.** Identity cards contain chain of command, spawn authority, and standing orders.
+> **Note:** PAI v1 framework (identity cards, spawn chains, G-Staff) archived in `.claude/archive/`. Principles retained in this file; scaffolding removed.
 
 ---
 
@@ -604,9 +587,7 @@ YYYYMMDD_short_description
 | Application logs | `logs/app.log` | Backend application events |
 | Offline events | `logs/offline_events.log` | System outages and recovery |
 | Schedule audit | Database `activity_log` table | Schedule modification history |
-| Agent governance | Session transcripts | PAI agent actions and decisions |
-
-**Governance Review:** DELEGATION_AUDITOR reviews offline logs weekly. See `.claude/SOPs/OFFLINE_SOP.md` for offline procedures.
+| Agent governance | Session transcripts | Agent actions and decisions |
 
 ### RAG Queries
 
