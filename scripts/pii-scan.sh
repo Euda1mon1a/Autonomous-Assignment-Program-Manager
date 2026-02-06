@@ -207,7 +207,7 @@ fi
 if [ -n "$STAGED_FILES" ]; then
   NAME_MATCHES=""
   for file in $STAGED_FILES; do
-    if [[ "$file" =~ \.(md|txt|json|xml|csv)$ ]] && [ -f "$file" ]; then
+    if [[ "$file" =~ \.(md|txt|json|xml|csv)$ ]] && [ -f "$file" ] && [[ ! "$file" =~ \.claude/archive/ ]]; then
       MATCHES=$(grep -nE "\b($KNOWN_NAMES)\b" "$file" 2>/dev/null || true)
       if [ -n "$MATCHES" ]; then
         NAME_MATCHES="${NAME_MATCHES}${file}:

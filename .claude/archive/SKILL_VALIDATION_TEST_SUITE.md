@@ -736,4 +736,3 @@ When skills are modified:
 - PROMPT_LIBRARY.md
 - CONTEXT_PATTERNS.md
 - Individual skill SKILL.md files
-
