@@ -1,7 +1,10 @@
 """Service for managing faculty FMIT scheduling preferences."""
 
+from __future__ import annotations
+
 import logging
 from datetime import date, datetime, timedelta
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import and_, or_
@@ -12,6 +15,9 @@ from app.models.block import Block
 from app.models.faculty_preference import FacultyPreference
 from app.models.person import Person
 from app.models.swap import SwapApproval, SwapRecord, SwapStatus
+
+if TYPE_CHECKING:
+    from app.services.constraints.faculty import FacultyPreferenceCache
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +38,7 @@ class FacultyPreferenceService:
         self.db = db
         self._cache = None
 
-    def _get_cache(self) -> "FacultyPreferenceCache | None":
+    def _get_cache(self) -> FacultyPreferenceCache | None:
         """Lazy-load cache to avoid circular imports."""
         if self._cache is None:
             try:

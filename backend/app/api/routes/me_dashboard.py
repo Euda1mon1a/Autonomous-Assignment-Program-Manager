@@ -6,8 +6,8 @@ This endpoint provides a unified view of a user's schedule, swaps, and absences.
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import joinedload
+from sqlalchemy import select
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.security import get_current_active_user
 from app.db.session import get_db

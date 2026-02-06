@@ -17,20 +17,23 @@ Tier 2 (Strategic) endpoints:
 - Stress and compensation tracking
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from datetime import date, datetime, timedelta
-from typing import Any
-
-logger = logging.getLogger(__name__)
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-logger = logging.getLogger(__name__)
-
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, desc
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import joinedload, Session
+from sqlalchemy import desc, select
+from sqlalchemy.orm import Session, joinedload
+
+if TYPE_CHECKING:
+    from app.resilience.service import ResilienceService
+    from app.services.resilience.contingency import ContingencyService
+
+logger = logging.getLogger(__name__)
 
 from app.api.dependencies.role_filter import require_admin
 from app.core.security import get_current_active_user
@@ -135,7 +138,7 @@ from app.services.resilience.homeostasis import (
 router = APIRouter()
 
 
-def get_resilience_service(db: Session) -> "ResilienceService":
+def get_resilience_service(db: Session) -> ResilienceService:
     """Get or create ResilienceService instance."""
     from app.core.config import get_resilience_config
     from app.resilience.service import ResilienceService
@@ -702,7 +705,7 @@ async def set_load_shedding_level(
     )
 
 
-def get_contingency_service(db: Session) -> "ContingencyService":
+def get_contingency_service(db: Session) -> ContingencyService:
     """Get or create ContingencyService instance with dependency injection."""
     from app.services.resilience.contingency import ContingencyService
 

@@ -375,7 +375,7 @@ def stats() -> None:
         from app.models.assignment import Assignment
         from app.models.block import Block
         from app.models.person import Person
-        from sqlalchemy import func
+        from sqlalchemy import func, select
 
         person_count = db.execute(select(func.count(Person.id))).scalar()
         block_count = db.execute(select(func.count(Block.id))).scalar()
