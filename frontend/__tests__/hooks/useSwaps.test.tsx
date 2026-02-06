@@ -290,7 +290,7 @@ describe('useSwapList', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('swapType=oneToOne')
+        expect.stringContaining('swap_type=one_to_one')
       )
     })
 

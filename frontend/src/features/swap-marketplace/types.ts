@@ -24,7 +24,7 @@ export enum SwapStatus {
  * Type of swap being requested
  */
 export enum SwapType {
-  ONE_TO_ONE = 'oneToOne',
+  ONE_TO_ONE = 'one_to_one', // @gorgon-ok values must match backend snake_case
   ABSORB = 'absorb',
 }
 

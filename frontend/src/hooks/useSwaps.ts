@@ -36,7 +36,7 @@ export enum SwapStatus {
  * Type of swap being requested
  */
 export enum SwapType {
-  ONE_TO_ONE = "oneToOne",
+  ONE_TO_ONE = "one_to_one",
   ABSORB = "absorb",
 }
 

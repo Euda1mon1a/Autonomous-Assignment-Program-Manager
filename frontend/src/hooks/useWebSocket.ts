@@ -87,7 +87,7 @@ export interface SwapRequestedEvent extends WebSocketEvent {
   swapId: string
   requesterId: string
   targetPersonId: string | null
-  swapType: 'oneToOne' | 'absorb'
+  swapType: 'one_to_one' | 'absorb' // @gorgon-ok values must match backend snake_case
   affectedAssignments: string[]
   message: string
 }
