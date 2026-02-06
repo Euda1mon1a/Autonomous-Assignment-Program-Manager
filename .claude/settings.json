@@ -101,7 +101,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/hooks/pre-task-context.sh"
+            "command": ".claude/hooks/pre-task-context.sh"
           }
         ]
       }
