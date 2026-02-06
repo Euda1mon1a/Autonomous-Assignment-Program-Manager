@@ -246,6 +246,9 @@ workspace/
 # Schedule exports with PII (real names)
 docs/priorities/*
 
+# Filled-in schedule alignment questionnaire answers (OPSEC/PERSEC)
+docs/guides/SCHEDULE_ALIGNMENT_ANSWERS*.md
+
 # Local ThinkOS pairing docs (user-specific)
 docs/thinkos_cli_browser_pairing_plan.md
 

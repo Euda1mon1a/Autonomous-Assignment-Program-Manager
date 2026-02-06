@@ -206,9 +206,14 @@ We have three overlapping knowledge mechanisms (Skills, RAG, MCP Tools) with red
 - Credentialed procedures now linked via `activities.procedure_id` (VAS/VASC/SM).
 - VAS/VASC allocator + activity solver use `procedure_credentials` with competency-based priority.
 
+**New (2026-02-06):**
+- Human-facing schedule verification: [`docs/guides/SCHEDULE_ALIGNMENT_QUESTIONNAIRE.md`](guides/SCHEDULE_ALIGNMENT_QUESTIONNAIRE.md)
+- 15-min coordinator checklist for expected vs actual alignment
+
 **References:**
 - `docs/reports/block10-cpsat-run-20260127.md`
 - `docs/scheduling/CP_SAT_CANONICAL_PIPELINE.md`
+- `docs/guides/SCHEDULE_ALIGNMENT_QUESTIONNAIRE.md` (NEW - verification checklist)
 
 **Immediate Action:**
 1. Review **activity min shortfall** (1 total) and decide if acceptable.
