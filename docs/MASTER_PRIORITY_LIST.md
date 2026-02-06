@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-05 (solver lockdown docs + CP-SAT authority hardening)
+> **Last Updated:** 2026-02-06 (pre-push hook + faculty clinic constraints + Gorgon's Gaze fix)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -312,7 +312,7 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 |------|-------|-------|----------|
 | **mypy** | 6,443 type errors | 742 files | 13.2% fixed (983 errors) |
 | **bandit** | 0 high severity, config in pyproject.toml | Merged (Sessions 154-155) | ✅ Complete |
-| **Modron March** | FairnessAuditResponse location | Type in wrong file | TODO |
+| **Modron March** | FairnessAuditResponse location | Type in wrong file | ⏳ See parallel sprint session |
 
 **mypy Progress (Sessions 137-139):**
 | Session | Start | End | Fixed | % |
@@ -461,7 +461,7 @@ Integrate Kimi K2.5 Agent Swarm as a managed execution asset for parallel bulk w
 
 | Gap | Current State | Impact |
 |-----|---------------|--------|
-| No pre-push hook | Missing | Dangerous ops reach remote |
+| ~~No pre-push hook~~ | ✅ Githyanki Gatekeeper merged (PR #837) | Blocks force-push to main, requires clean tests |
 | ~~24 sequential phases~~ | D&D hooks parallel, others sequential | ~~15-30s~~ Improved |
 | MyPy/Bandit advisory | `|| true` patterns | Bugs/security issues slip through |
 
@@ -566,6 +566,11 @@ if day_index == 19:       # Return Tuesday
 3. Both services import shared logic
 
 **Effort:** 2-3 hours
+
+**UPDATE (2026-02-06):** Codex implemented faculty clinic floor constraints in activity solver (commit `000fa24d`, branch `codex/excel-export-functional-20260206`):
+- Faculty clinic min/max caps now enforced with **hard floor (>=1)** + **soft penalty** for min shortfall
+- Legacy fallback added: reads `clinic_min`/`clinic_max` from DB if weekly template missing
+- **P1 Follow-up:** Raw SQL in `_get_legacy_clinic_caps_for_person` should be migrated to ORM for maintainability
 
 ### 25. Activity Solver Physical Capacity Overflow (NEW - Session 142)
 **Added:** 2026-01-26
