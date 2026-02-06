@@ -202,7 +202,7 @@ frontend/src/types/api.ts (barrel export + utilities)
 | Layer | Hook | When |
 |-------|------|------|
 | Pre-commit | `modron-march.sh` | Every commit |
-| CI | `npm run generate:types:check` | Every PR |
+| ~~CI~~ | ~~`npm run generate:types:check`~~ | ~~Disabled pre-production~~ |
 | Startup | Type staleness check | Every session |
 | This doc | Standing order | Every AI task |
 
@@ -499,7 +499,7 @@ Before changes, AI MUST:
 
 - Backend: `ruff check . --fix && ruff format .`
 - Frontend: `npm run lint:fix`
-- CI must pass before merge
+- Pre-commit hooks must pass (CI/CD disabled pre-production, see Section 13 of Best Practices)
 
 ### Agent Spawning (MANDATORY)
 
