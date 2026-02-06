@@ -1,6 +1,6 @@
-# Codex App Server Integration Guide
+# Codex App Server Integration Research
 
-> **Last Updated:** 2026-02-05 | **Status:** Planning | **Author:** AAPM Architecture Team
+> **Last Updated:** 2026-02-05 | **Status:** Research | **Origin:** Claude Code web session (idea capture)
 
 ---
 
