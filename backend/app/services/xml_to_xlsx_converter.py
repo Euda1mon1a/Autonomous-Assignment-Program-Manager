@@ -18,6 +18,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any
 from defusedxml import ElementTree
+from xml.etree.ElementTree import Element
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.cell.cell import MergedCell
@@ -242,12 +243,12 @@ class XMLToXlsxConverter:
 
         return xlsx_bytes
 
-    def _parse_xml_to_data(self, root: ElementTree.Element) -> dict[str, Any]:
+    def _parse_xml_to_data(self, root: Element) -> dict[str, Any]:
         """Parse XML schedule into a JSON-like dict."""
         block_start = root.get("block_start", "")
         block_end = root.get("block_end", "")
 
-        def _parse_people(elements: list[ElementTree.Element]) -> list[dict[str, Any]]:
+        def _parse_people(elements: list[Element]) -> list[dict[str, Any]]:
             people: list[dict[str, Any]] = []
             for elem in elements:
                 person = {
