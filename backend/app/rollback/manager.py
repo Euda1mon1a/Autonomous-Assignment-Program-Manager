@@ -39,6 +39,7 @@ Usage:
 import gzip
 import json
 import logging
+import tempfile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
@@ -1131,7 +1132,7 @@ class RollbackManager:
 
         # Default storage directory for rollback points
 
-    ROLLBACK_STORAGE_DIR = Path("/tmp/rollback_points")
+    ROLLBACK_STORAGE_DIR = Path(tempfile.gettempdir()) / "rollback_points"
 
     def _ensure_storage_dir(self) -> Path:
         """

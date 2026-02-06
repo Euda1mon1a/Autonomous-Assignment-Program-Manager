@@ -14,7 +14,8 @@ Catches errors at the XML stage, before xlsx conversion.
 from __future__ import annotations
 
 from pathlib import Path
-import xml.etree.ElementTree as ET
+
+from defusedxml import ElementTree as ET
 
 
 def compare_xml(

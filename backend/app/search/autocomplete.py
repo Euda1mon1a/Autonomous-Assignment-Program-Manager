@@ -23,6 +23,7 @@ Example:
     )
 """
 
+import ast
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -967,7 +968,9 @@ class AutocompleteService:
                 for entry in entries:
                     try:
                         # Parse stored dict string back to dict
-                        all_analytics.append(eval(entry))
+                        if isinstance(entry, (bytes, bytearray)):
+                            entry = entry.decode("utf-8")
+                        all_analytics.append(ast.literal_eval(entry))
                     except Exception:
                         pass
 

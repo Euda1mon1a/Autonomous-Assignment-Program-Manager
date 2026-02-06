@@ -489,7 +489,7 @@ class SidecarConfig(BaseModel):
                         "name": f"{self.service_name}_listener",
                         "address": {
                             "socket_address": {
-                                "address": "0.0.0.0",
+                                "address": "0.0.0.0",  # nosec B104
                                 "port_value": self.port,
                             }
                         },

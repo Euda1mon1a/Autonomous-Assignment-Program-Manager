@@ -12,6 +12,7 @@ Provides automated compliance report generation and distribution:
 import json
 import logging
 import os
+import tempfile
 from datetime import date, datetime, timedelta
 from typing import Any
 
@@ -43,7 +44,8 @@ def save_report_to_file(report_bytes: bytes, filename: str, report_type: str) ->
     """
     try:
         # Get reports directory from environment or use default
-        reports_dir = os.getenv("REPORTS_DIR", "/tmp/reports")
+        default_reports_dir = os.path.join(tempfile.gettempdir(), "reports")
+        reports_dir = os.getenv("REPORTS_DIR", default_reports_dir)
 
         # Create subdirectory for report type
         type_dir = os.path.join(reports_dir, report_type)
@@ -77,7 +79,8 @@ def save_report_data_to_json(report_data: dict, report_type: str) -> str:
         IOError: If file cannot be written
     """
     try:
-        reports_dir = os.getenv("REPORTS_DIR", "/tmp/reports")
+        default_reports_dir = os.path.join(tempfile.gettempdir(), "reports")
+        reports_dir = os.getenv("REPORTS_DIR", default_reports_dir)
         os.makedirs(reports_dir, exist_ok=True)
 
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")

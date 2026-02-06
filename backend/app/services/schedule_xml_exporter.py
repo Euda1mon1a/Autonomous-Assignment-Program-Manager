@@ -13,7 +13,7 @@ The XML format matches ROSETTA ground truth for validation.
 
 from datetime import date, timedelta
 from typing import Any
-from xml.dom import minidom
+from defusedxml import minidom
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 from app.core.logging import get_logger

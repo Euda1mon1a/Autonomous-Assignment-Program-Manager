@@ -8,6 +8,7 @@ Provides abstraction layer for file storage with support for:
 
 import logging
 import shutil
+import tempfile
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -112,14 +113,15 @@ class LocalStorageBackend(StorageBackend):
     Stores files in a local directory with organized folder structure.
     """
 
-    def __init__(self, base_path: str | Path = "/tmp/uploads") -> None:
+    def __init__(self, base_path: str | Path | None = None) -> None:
         """
         Initialize local storage backend.
 
         Args:
             base_path: Base directory for file storage
         """
-        self.base_path = Path(base_path)
+        storage_root = base_path or Path(tempfile.gettempdir()) / "uploads"
+        self.base_path = Path(storage_root)
         self.base_path.mkdir(parents=True, exist_ok=True)
         logger.info(f"Local storage initialized at {self.base_path}")
 

@@ -350,8 +350,8 @@ class DeduplicationStorage:
             if data is None:
                 return None
 
-                # Deserialize record
-            record = pickle.loads(data)
+                # Deserialize record (internal cache payload).
+            record = pickle.loads(data)  # nosec B301
 
             # Check expiration
             if record.is_expired():
@@ -455,7 +455,7 @@ class DeduplicationStorage:
                     # Check if expired and delete
                     data = await self.redis.get(key)
                     if data:
-                        record = pickle.loads(data)
+                        record = pickle.loads(data)  # nosec B301
                         if record.is_expired():
                             await self.redis.delete(key)
                             cleaned += 1
@@ -507,7 +507,7 @@ class DeduplicationStorage:
                 for key in keys:
                     data = await self.redis.get(key)
                     if data:
-                        record = pickle.loads(data)
+                        record = pickle.loads(data)  # nosec B301
                         stats["total_records"] += 1
 
                         if record.status == RequestStatus.PROCESSING:

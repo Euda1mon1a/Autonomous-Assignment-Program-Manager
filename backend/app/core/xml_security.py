@@ -12,7 +12,8 @@ secure ElementTree configuration.
 
 import logging
 from typing import Any, cast
-from xml.etree import ElementTree as ET
+
+from defusedxml import ElementTree as ET
 
 logger = logging.getLogger(__name__)
 
@@ -96,11 +97,9 @@ def parse_xml_defused(xml_string: str) -> ET.Element:
     """
     try:
         # Try to use defusedxml (preferred)
-        from defusedxml.ElementTree import fromstring
-
         logger.debug("Using defusedxml for secure XML parsing")
         try:
-            return cast(ET.Element[str], fromstring(xml_string))
+            return cast(ET.Element[str], ET.fromstring(xml_string))
         except Exception as e:
             logger.error(f"XML parsing error (defusedxml): {e}")
             raise ValueError(f"Invalid XML: {e}") from e

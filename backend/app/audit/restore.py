@@ -52,6 +52,13 @@ from app.audit.storage import ArchiveStorageBackend, get_storage_backend
 
 logger = logging.getLogger(__name__)
 
+ALLOWED_ENTITY_TYPES = {
+    "assignment",
+    "absence",
+    "schedule_run",
+    "swap_record",
+}
+
 
 class RestoreResult(BaseModel):
     """Result of an archive restoration operation."""
@@ -511,6 +518,10 @@ class AuditRestorer:
             records_by_type: dict[str, list[dict[str, Any]]] = {}
             for record in records:
                 entity_type = record["entity_type"]
+                if entity_type not in ALLOWED_ENTITY_TYPES:
+                    raise ValueError(
+                        f"Unsupported entity type in archive: {entity_type}"
+                    )
                 if entity_type not in records_by_type:
                     records_by_type[entity_type] = []
                 records_by_type[entity_type].append(record)
@@ -523,13 +534,12 @@ class AuditRestorer:
 
                 for record in entity_records:
                     # Build insert query
+                    # Table name from fixed allowlist.
                     insert_query = text(
-                        f"""
-                        INSERT INTO {table_name}
-                        (id, transaction_id, operation_type)
-                        VALUES (:entity_id, :transaction_id, :operation_type)
-                        ON CONFLICT (id, transaction_id) DO NOTHING
-                    """
+                        f"INSERT INTO {table_name} "  # nosec B608
+                        "(id, transaction_id, operation_type)\n"
+                        "VALUES (:entity_id, :transaction_id, :operation_type)\n"
+                        "ON CONFLICT (id, transaction_id) DO NOTHING\n"
                     )
 
                     self.db.execute(

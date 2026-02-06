@@ -41,7 +41,7 @@ router = APIRouter()
 
 # Initialize changelog generator
 # In production, configure storage path via environment variable
-changelog_generator = ChangelogGenerator(storage_path="/tmp/api_versions")
+changelog_generator = ChangelogGenerator()
 
 
 @router.get("/versions", response_model=VersionListResponse)

@@ -17,7 +17,7 @@ This XML exporter is kept for validation and legacy ROSETTA compatibility.
 from datetime import date
 from typing import Any
 from uuid import UUID
-from xml.dom import minidom
+from defusedxml import minidom
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 from sqlalchemy import select, or_

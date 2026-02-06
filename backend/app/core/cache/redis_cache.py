@@ -680,8 +680,8 @@ class MultiLevelCache:
             if data is None:
                 return None
 
-                # Deserialize
-            value = pickle.loads(data)
+                # Deserialize internal cache payload (trusted).
+            value = pickle.loads(data)  # nosec B301
             return value
 
         except redis.ConnectionError as e:

@@ -4,7 +4,9 @@ Provides endpoints for file uploads with validation, processing, and storage.
 """
 
 import logging
+import tempfile
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 from fastapi import (
@@ -60,7 +62,8 @@ def get_upload_service() -> UploadService:
         )
     else:
         # Local storage (default)
-        upload_dir = getattr(settings, "UPLOAD_LOCAL_DIR", "/tmp/uploads")
+        default_upload_dir = Path(tempfile.gettempdir()) / "uploads"
+        upload_dir = Path(getattr(settings, "UPLOAD_LOCAL_DIR", default_upload_dir))
         storage = LocalStorageBackend(base_path=upload_dir)
 
     # Configure validator

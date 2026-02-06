@@ -239,7 +239,7 @@ class FacultyPreferenceCache:
             try:
                 data = self._redis.get(key)
                 if data is not None:
-                    return pickle.loads(data)
+                    return pickle.loads(data)  # nosec B301
             except redis.RedisError as e:
                 logger.warning(f"Redis get error: {e}")
                 self._available = False

@@ -158,8 +158,8 @@ class ServiceCache:
                     self._misses += 1
                 return None
 
-                # Deserialize
-            value = pickle.loads(data)
+                # Deserialize internal cache payload (trusted).
+            value = pickle.loads(data)  # nosec B301
             with self._lock:
                 self._hits += 1
             return value

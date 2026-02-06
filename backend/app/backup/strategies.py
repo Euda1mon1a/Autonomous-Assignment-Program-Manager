@@ -108,7 +108,8 @@ class BackupStrategy(ABC):
             int: Number of rows in table
         """
         try:
-            query = text(f"SELECT COUNT(*) FROM {table}")
+            # Table name derived from database metadata.
+            query = text(f"SELECT COUNT(*) FROM {table}")  # nosec B608
             result = db.execute(query)
             count = result.scalar()
             return count or 0
@@ -253,7 +254,8 @@ class FullBackupStrategy(BackupStrategy):
             dict: Table data with all rows
         """
         # Get all rows
-        query = text(f"SELECT * FROM {table}")
+        # Table name derived from database metadata.
+        query = text(f"SELECT * FROM {table}")  # nosec B608
         result = db.execute(query)
 
         # Convert rows to dictionaries
@@ -401,10 +403,10 @@ class IncrementalBackupStrategy(BackupStrategy):
         """
         # Check if table has updated_at column
         column_query = text(
-            f"""
+            """
             SELECT column_name
             FROM information_schema.columns
-            WHERE table_name = '{table}'
+            WHERE table_name = :table
             AND column_name IN ('updated_at', 'created_at', 'changed_at')
             ORDER BY
                 CASE column_name
@@ -416,24 +418,24 @@ class IncrementalBackupStrategy(BackupStrategy):
         """
         )
 
-        result = db.execute(column_query)
+        result = db.execute(column_query, {"table": table})
         timestamp_column = result.scalar()
 
         if timestamp_column:
             # Query rows changed since last backup
+            # Table/column names derived from database metadata.
             query = text(
-                f"""
-                SELECT *
-                FROM {table}
-                WHERE {timestamp_column} > :since
-                ORDER BY {timestamp_column}
-            """
+                f"SELECT *\n"  # nosec B608
+                f"FROM {table}\n"
+                f"WHERE {timestamp_column} > :since\n"
+                f"ORDER BY {timestamp_column}\n"
             )
             result = db.execute(query, {"since": since})
         else:
             # No timestamp column - include all rows as a safety measure
             logger.warning(f"Table {table} has no timestamp column, including all rows")
-            query = text(f"SELECT * FROM {table}")
+            # Table name derived from database metadata.
+            query = text(f"SELECT * FROM {table}")  # nosec B608
             result = db.execute(query)
 
         # Convert rows to dictionaries

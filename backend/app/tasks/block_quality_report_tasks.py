@@ -9,6 +9,7 @@ Provides automated and on-demand block quality report generation:
 
 import logging
 import os
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -23,7 +24,8 @@ logger = logging.getLogger(__name__)
 
 def get_reports_directory() -> Path:
     """Get the reports output directory."""
-    reports_dir = os.getenv("REPORTS_DIR", "/tmp/reports/block_quality")
+    default_reports_dir = Path(tempfile.gettempdir()) / "reports" / "block_quality"
+    reports_dir = os.getenv("REPORTS_DIR", str(default_reports_dir))
     path = Path(reports_dir)
     path.mkdir(parents=True, exist_ok=True)
     return path

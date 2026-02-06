@@ -4,6 +4,7 @@ Request/response transformation for API gateway.
 Provides transformation pipelines for modifying requests and responses.
 """
 
+import ast
 import logging
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -288,10 +289,142 @@ class BodyTransformer(Transformer):
             list: Filtered list
         """
         try:
-            return [item for item in items if eval(condition, {"item": item})]
+            return [
+                item for item in items if self._safe_eval_condition(condition, item)
+            ]
         except Exception as e:
             logger.error(f"Error filtering list: {e}", exc_info=True)
             return items
+
+    def _safe_eval_condition(self, condition: str, item: Any) -> bool:
+        """Safely evaluate a condition against a single item."""
+        try:
+            parsed = ast.parse(condition, mode="eval")
+        except SyntaxError as exc:
+            raise ValueError(f"Invalid filter condition: {exc}") from exc
+
+        context = {"item": item}
+        return bool(self._eval_ast_node(parsed.body, context))
+
+    def _eval_ast_node(self, node: ast.AST, context: dict[str, Any]) -> Any:
+        if isinstance(node, ast.Constant):
+            return node.value
+
+        if isinstance(node, ast.Name):
+            if node.id in context:
+                return context[node.id]
+            raise ValueError(f"Unknown name in filter condition: {node.id}")
+
+        if isinstance(node, ast.Attribute):
+            value = self._eval_ast_node(node.value, context)
+            if node.attr.startswith("_"):
+                raise ValueError("Private attribute access is not allowed")
+            if isinstance(value, dict) and node.attr in value:
+                return value[node.attr]
+            return getattr(value, node.attr)
+
+        if isinstance(node, ast.Subscript):
+            value = self._eval_ast_node(node.value, context)
+            key = self._eval_ast_slice(node.slice, context)
+            return value[key]
+
+        if isinstance(node, ast.List):
+            return [self._eval_ast_node(elt, context) for elt in node.elts]
+
+        if isinstance(node, ast.Tuple):
+            return tuple(self._eval_ast_node(elt, context) for elt in node.elts)
+
+        if isinstance(node, ast.Dict):
+            return {
+                self._eval_ast_node(k, context): self._eval_ast_node(v, context)
+                for k, v in zip(node.keys, node.values)
+            }
+
+        if isinstance(node, ast.UnaryOp):
+            operand = self._eval_ast_node(node.operand, context)
+            if isinstance(node.op, ast.Not):
+                return not operand
+            if isinstance(node.op, ast.USub):
+                return -operand
+            if isinstance(node.op, ast.UAdd):
+                return +operand
+            raise ValueError("Unsupported unary operation in filter condition")
+
+        if isinstance(node, ast.BinOp):
+            left = self._eval_ast_node(node.left, context)
+            right = self._eval_ast_node(node.right, context)
+            if isinstance(node.op, ast.Add):
+                return left + right
+            if isinstance(node.op, ast.Sub):
+                return left - right
+            if isinstance(node.op, ast.Mult):
+                return left * right
+            if isinstance(node.op, ast.Div):
+                return left / right
+            if isinstance(node.op, ast.Mod):
+                return left % right
+            raise ValueError("Unsupported binary operation in filter condition")
+
+        if isinstance(node, ast.BoolOp):
+            values = [self._eval_ast_node(v, context) for v in node.values]
+            if isinstance(node.op, ast.And):
+                return all(values)
+            if isinstance(node.op, ast.Or):
+                return any(values)
+            raise ValueError("Unsupported boolean operator in filter condition")
+
+        if isinstance(node, ast.Compare):
+            left = self._eval_ast_node(node.left, context)
+            for op, comparator in zip(node.ops, node.comparators):
+                right = self._eval_ast_node(comparator, context)
+                if isinstance(op, ast.Eq) and left != right:
+                    return False
+                if isinstance(op, ast.NotEq) and left == right:
+                    return False
+                if isinstance(op, ast.Lt) and not (left < right):
+                    return False
+                if isinstance(op, ast.LtE) and not (left <= right):
+                    return False
+                if isinstance(op, ast.Gt) and not (left > right):
+                    return False
+                if isinstance(op, ast.GtE) and not (left >= right):
+                    return False
+                if isinstance(op, ast.In) and left not in right:
+                    return False
+                if isinstance(op, ast.NotIn) and not (left not in right):
+                    return False
+                if isinstance(op, ast.Is) and left is not right:
+                    return False
+                if isinstance(op, ast.IsNot) and not (left is not right):
+                    return False
+                left = right
+            return True
+
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Attribute) and node.func.attr == "get":
+                target = self._eval_ast_node(node.func.value, context)
+                if not isinstance(target, dict):
+                    raise ValueError("Only dict.get() is allowed")
+                args = [self._eval_ast_node(arg, context) for arg in node.args]
+                kwargs = {
+                    kw.arg: self._eval_ast_node(kw.value, context)
+                    for kw in node.keywords
+                    if kw.arg
+                }
+                return target.get(*args, **kwargs)
+            raise ValueError("Unsupported function call in filter condition")
+
+        raise ValueError("Unsupported expression in filter condition")
+
+    def _eval_ast_slice(self, node: ast.AST, context: dict[str, Any]) -> Any:
+        if isinstance(node, ast.Slice):
+            lower = self._eval_ast_node(node.lower, context) if node.lower else None
+            upper = self._eval_ast_node(node.upper, context) if node.upper else None
+            step = self._eval_ast_node(node.step, context) if node.step else None
+            return slice(lower, upper, step)
+        if isinstance(node, ast.Index):  # pragma: no cover - py<3.9 compatibility
+            return self._eval_ast_node(node.value, context)
+        return self._eval_ast_node(node, context)
 
 
 class CustomTransformer(Transformer):

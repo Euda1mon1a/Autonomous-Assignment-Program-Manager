@@ -10,7 +10,7 @@ Central Dogma Pipeline Integration:
 """
 
 from pathlib import Path
-from xml.etree import ElementTree
+from defusedxml import ElementTree
 
 from app.core.logging import get_logger
 

@@ -24,6 +24,7 @@ Usage:
 import gzip
 import hashlib
 import json
+import tempfile
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -204,14 +205,15 @@ class LocalStorage(BackupStorage):
                 backup_<id>.meta.json
     """
 
-    def __init__(self, backup_dir: str = "/tmp/backups") -> None:
+    def __init__(self, backup_dir: str | Path | None = None) -> None:
         """
         Initialize local storage.
 
         Args:
             backup_dir: Directory to store backups
         """
-        self.backup_dir = Path(backup_dir)
+        storage_root = backup_dir or Path(tempfile.gettempdir()) / "backups"
+        self.backup_dir = Path(storage_root)
         self._ensure_directories()
 
         logger.info(f"Initialized LocalStorage at {self.backup_dir}")
@@ -899,7 +901,8 @@ def get_storage_backend() -> BackupStorage:
     storage_backend = getattr(settings, "BACKUP_STORAGE_BACKEND", "local")
 
     if storage_backend == "local":
-        backup_dir = getattr(settings, "BACKUP_LOCAL_DIR", "/tmp/backups")
+        default_backup_dir = Path(tempfile.gettempdir()) / "backups"
+        backup_dir = getattr(settings, "BACKUP_LOCAL_DIR", default_backup_dir)
         return LocalStorage(backup_dir=backup_dir)
 
     elif storage_backend == "s3":
