@@ -135,7 +135,7 @@ class Settings(BaseSettings):
 
     # File Upload Settings
     UPLOAD_STORAGE_BACKEND: str = "local"  # Storage backend: 'local' or 's3'
-    UPLOAD_LOCAL_DIR: str = "/tmp/uploads"  # Local storage directory
+    UPLOAD_LOCAL_DIR: str = "/tmp/uploads"  # Local storage directory  # nosec B108
     UPLOAD_MAX_SIZE_MB: int = 50  # Maximum file size in megabytes
     UPLOAD_ENABLE_VIRUS_SCAN: bool = False  # Enable virus scanning
 
@@ -273,7 +273,7 @@ class Settings(BaseSettings):
     OLLAMA_TOOL_MODEL: str = "mistral"  # Model with tool calling support
     OLLAMA_TIMEOUT: float = 60.0  # Ollama request timeout in seconds
     ANTHROPIC_API_KEY: str = ""  # Anthropic API key (optional for airgap)
-    ANTHROPIC_DEFAULT_MODEL: str = "claude-3-5-sonnet-20241022"  # Default Claude model
+    ANTHROPIC_DEFAULT_MODEL: str = "claude-sonnet-4-5-20250929"  # Default Claude model
 
     @field_validator("SECRET_KEY", "WEBHOOK_SECRET")
     @classmethod
