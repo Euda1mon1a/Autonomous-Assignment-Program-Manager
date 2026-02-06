@@ -34,7 +34,16 @@ DOC_TYPE_MAP = {
     "delegation-patterns.md": "delegation_patterns",
     "L3-minimal-context-pattern.md": "delegation_patterns",
     "exotic-concepts.md": "exotic_concepts",
+    "strict-button-pattern.md": "technical_doc",
+    "agent-capabilities.md": "ai_patterns",
+    "test-coverage-guide.md": "ai_patterns",
+    "performance-testing-guide.md": "ai_patterns",
+    "rag-ingestion-patterns.md": "ai_patterns",
     "codex53-vs-opus46-capabilities.md": "ai_patterns",
+    "browser-automation-capabilities.md": "technical_doc",
+    "api-patterns.md": "technical_doc",
+    "RAG_CONTENT_LIFECYCLE.md": "ai_patterns",
+    "kimi-k2-5.md": "ai_patterns",
 }
 
 
