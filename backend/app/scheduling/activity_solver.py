@@ -123,6 +123,7 @@ VAS_RESIDENT_PENALTY_FMC = 5
 VAS_RESIDENT_PENALTY_POCUS = 10
 VAS_RESIDENT_PENALTY_OTHER = 20
 VAS_ALLOWED_WEEKDAY_TIMES = {(3, "AM"), (3, "PM"), (4, "AM")}
+VAS_OVERRIDE_PENALTY = 8  # Cost of pulling faculty from AT/C to VAS supervision
 
 
 class CPSATActivitySolver:
@@ -1058,6 +1059,10 @@ class CPSATActivitySolver:
         baseline_sm_faculty_coverage: dict[tuple[date, str], int] = defaultdict(int)
         baseline_vas_resident_presence: dict[tuple[date, str], int] = defaultdict(int)
         baseline_vas_faculty_coverage: dict[tuple[date, str], int] = defaultdict(int)
+        # VAS override candidates: locked faculty that could switch to VAS
+        vas_override_candidates: list[tuple[int, Any]] = []
+        vas_override_slot_keys: dict[int, tuple[date, str]] = {}
+        vas_override_was_at: dict[int, bool] = {}
         locked_slots = self._load_locked_slots(start_date, end_date, None)
         if not include_faculty_slots:
             solver_faculty_slots = self._load_slots(
@@ -1144,6 +1149,20 @@ class CPSATActivitySolver:
                     and self._is_sports_medicine_faculty(locked.person)
                 ):
                     baseline_sm_faculty_coverage[slot_key] += 1
+                # Identify VAS override candidates: VAS-credentialed faculty
+                # on VAS-eligible slots that the solver can reassign to VAS.
+                if (
+                    vas_activity_ids
+                    and locked.person
+                    and self._is_vas_faculty(locked.person)
+                    and self._is_vas_allowed_slot(locked.date, locked.time_of_day)
+                ):
+                    override_idx = len(vas_override_candidates)
+                    vas_override_candidates.append((override_idx, locked))
+                    vas_override_slot_keys[override_idx] = slot_key
+                    vas_override_was_at[override_idx] = (
+                        locked.activity_id in supervision_provider_ids
+                    )
             else:
                 if locked.activity_id in supervision_required_ids:
                     demand_units = 2 if pgy_level == 1 else 1
@@ -1716,8 +1735,18 @@ class CPSATActivitySolver:
                 # ==================================================
                 # ACGME AT COVERAGE (faculty supervision)
                 # ==================================================
+        # Initialize VAS override variables early — populated in VAS section below,
+        # but referenced here for AT coverage adjustment.
+        vas_override_vars: dict[int, Any] = {}
+        vas_override_by_slot: dict[tuple[date, str], list[Any]] = defaultdict(list)
+        vas_override_penalty_terms: list[tuple[Any, int]] = []
+
         at_shortfalls: list[Any] = []
-        if resident_slots and faculty_slots and at_activity:
+        if (
+            resident_slots
+            and (faculty_slots or vas_override_candidates)
+            and at_activity
+        ):
             resident_slots_by_key: dict[tuple[date, str], list[int]] = defaultdict(list)
             faculty_slots_by_key: dict[tuple[date, str], list[int]] = defaultdict(list)
             for s_i, meta in slot_meta.items():
@@ -1758,8 +1787,22 @@ class CPSATActivitySolver:
                             coverage_terms.append(a[s_i, act_id])
 
                 baseline_coverage = baseline_faculty_coverage.get(slot_key, 0)
+
+                # Subtract VAS overrides that pull faculty away from AT
+                at_loss_terms: list[Any] = []
+                for idx, var in vas_override_vars.items():
+                    if (
+                        vas_override_slot_keys[idx] == slot_key
+                        and vas_override_was_at[idx]
+                    ):
+                        at_loss_terms.append(var)
+
                 total_demand = sum(demand_terms) + baseline_demand
-                total_coverage = sum(coverage_terms) + baseline_coverage
+                total_coverage = (
+                    sum(coverage_terms) + baseline_coverage - sum(at_loss_terms)
+                    if at_loss_terms
+                    else sum(coverage_terms) + baseline_coverage
+                )
 
                 # Scale by 4 to avoid fractional demand (PGY1=2, PGY2/3=1)
                 # Soft constraint: allow shortfall with penalty
@@ -1864,6 +1907,26 @@ class CPSATActivitySolver:
             logger.warning("Skipping SM alignment constraints (DISABLE_SM_ALIGNMENT)")
 
             # ==================================================
+            # VAS OVERRIDE VARIABLES
+            # Let the solver reassign VAS-credentialed faculty to VAS supervision.
+            # Each override variable = "switch this faculty from current activity to VAS"
+            # ==================================================
+        if vas_override_candidates:
+            logger.info(
+                f"VAS override candidates: {len(vas_override_candidates)} "
+                f"faculty slots eligible for VAS reassignment"
+            )
+            for idx, (_, locked) in enumerate(vas_override_candidates):
+                var = model.NewBoolVar(
+                    f"vas_override_{locked.date.strftime('%Y%m%d')}"
+                    f"_{locked.time_of_day}_{idx}"
+                )
+                vas_override_vars[idx] = var
+                slot_key = vas_override_slot_keys[idx]
+                vas_override_by_slot[slot_key].append(var)
+                vas_override_penalty_terms.append((var, VAS_OVERRIDE_PENALTY))
+
+            # ==================================================
             # VASECTOMY ALIGNMENT
             # VAS residents must align with VAS faculty, and faculty VAS requires resident
             # ==================================================
@@ -1892,17 +1955,20 @@ class CPSATActivitySolver:
             )
             all_vas_keys |= set(baseline_vas_resident_presence.keys())
             all_vas_keys |= set(baseline_vas_faculty_coverage.keys())
+            all_vas_keys |= set(vas_override_by_slot.keys())
 
             for slot_key in all_vas_keys:
                 slot_date, time_of_day = slot_key
                 resident_vars = vas_resident_vars_by_slot.get(slot_key, [])
                 faculty_vars = vas_faculty_vars_by_slot.get(slot_key, [])
+                override_vars = vas_override_by_slot.get(slot_key, [])
                 baseline_resident = baseline_vas_resident_presence.get(slot_key, 0)
                 baseline_faculty = baseline_vas_faculty_coverage.get(slot_key, 0)
 
                 if (
                     not resident_vars
                     and not faculty_vars
+                    and not override_vars
                     and not baseline_resident
                     and not baseline_faculty
                 ):
@@ -1914,26 +1980,30 @@ class CPSATActivitySolver:
                     f"vas_shortfall_{slot_date.strftime('%Y%m%d')}_{time_of_day}",
                 )
 
+                # Faculty VAS supply = solver vars + overrides + baseline
+                faculty_supply = (
+                    sum(faculty_vars) + sum(override_vars) + baseline_faculty
+                )
+
                 # Resident VAS requires faculty VAS coverage.
                 if baseline_resident > 0:
-                    model.Add(sum(faculty_vars) + baseline_faculty + shortfall >= 1)
+                    model.Add(faculty_supply + shortfall >= 1)
                 elif resident_vars:
                     any_resident = model.NewBoolVar(
                         f"any_vas_res_{slot_date.strftime('%Y%m%d')}_{time_of_day}"
                     )
                     model.AddMaxEquality(any_resident, resident_vars)
-                    model.Add(
-                        sum(faculty_vars) + baseline_faculty + shortfall >= any_resident
-                    )
+                    model.Add(faculty_supply + shortfall >= any_resident)
 
                     # Faculty VAS requires resident presence.
+                all_faculty_vas = list(faculty_vars) + list(override_vars)
                 if baseline_faculty > 0:
                     model.Add(sum(resident_vars) + baseline_resident + shortfall >= 1)
-                elif faculty_vars:
+                elif all_faculty_vas:
                     any_faculty = model.NewBoolVar(
                         f"any_vas_fac_{slot_date.strftime('%Y%m%d')}_{time_of_day}"
                     )
-                    model.AddMaxEquality(any_faculty, faculty_vars)
+                    model.AddMaxEquality(any_faculty, all_faculty_vas)
                     model.Add(
                         sum(resident_vars) + baseline_resident + shortfall
                         >= any_faculty
@@ -2239,6 +2309,14 @@ class CPSATActivitySolver:
                     objective_expr - penalty if objective_expr is not None else -penalty
                 )
 
+        if vas_override_penalty_terms:
+            penalties = [var * weight for var, weight in vas_override_penalty_terms]
+            if penalties:
+                penalty = sum(penalties)
+                objective_expr = (
+                    objective_expr - penalty if objective_expr is not None else -penalty
+                )
+
         if oic_clinical_avoid_terms:
             penalties = [var * weight for var, weight in oic_clinical_avoid_terms]
             if penalties:
@@ -2483,51 +2561,23 @@ class CPSATActivitySolver:
         self.session.flush()
         logger.info(f"Activity solver updated {updated} slots")
 
-        # Post-solve: reassign VAS-credentialed faculty from clinic → VAS
-        # on slots where residents were assigned VAS.  VAS is 1:1 dedicated
-        # faculty supervision (minor surgery), not a pop-in from clinic.
-        if vas_activity_ids:
-            vas_resident_slot_keys: set[tuple[date, str]] = set()
-            for s_i, slot in enumerate(slots):
-                if slot.activity_id in vas_activity_ids:
-                    vas_resident_slot_keys.add((slot.date, slot.time_of_day))
-            if vas_resident_slot_keys:
-                vas_reassigned = 0
-                # Pick any VAS activity ID for faculty assignment
-                vas_faculty_activity_id = next(iter(vas_activity_ids))
-                vas_faculty_activity = activity_by_id.get(vas_faculty_activity_id)
-                for locked in locked_slots:
-                    if not locked.person or locked.person.type != "faculty":
-                        continue
-                    slot_key = (locked.date, locked.time_of_day)
-                    if slot_key not in vas_resident_slot_keys:
-                        continue
-                    if not self._is_vas_faculty(locked.person):
-                        continue
-                    # Reassign this faculty from their current activity to VAS
-                    locked.activity_id = vas_faculty_activity_id
-                    locked.counts_toward_fmc_capacity = (
-                        activity_counts_toward_fmc_capacity_for_template(
-                            vas_faculty_activity, None
-                        )
-                    )
-                    vas_reassigned += 1
-                    # One credentialed faculty per slot is sufficient
-                    vas_resident_slot_keys.discard(slot_key)
-                    if not vas_resident_slot_keys:
-                        break
-                if vas_reassigned:
-                    self.session.flush()
-                    logger.info(
-                        f"VAS faculty reassignment: {vas_reassigned} faculty "
-                        f"moved to VAS supervision"
-                    )
-                unfilled = len(vas_resident_slot_keys)
-                if unfilled:
-                    logger.warning(
-                        f"VAS faculty gap: {unfilled} slot(s) have VAS residents "
-                        f"but no credentialed faculty available to reassign"
-                    )
+        # Apply VAS faculty overrides decided by the solver.
+        # VAS is 1:1 dedicated faculty supervision (minor surgery) —
+        # the solver jointly optimizes VAS assignment with AT coverage
+        # and physical capacity via vas_override decision variables.
+        vas_overrides_applied = 0
+        for idx, (_, locked) in enumerate(vas_override_candidates):
+            if idx in vas_override_vars and solver.Value(vas_override_vars[idx]):
+                vas_override_activity_id = next(iter(vas_activity_ids))
+                locked.activity_id = vas_override_activity_id
+                locked.counts_toward_fmc_capacity = True
+                vas_overrides_applied += 1
+        if vas_overrides_applied:
+            self.session.flush()
+            logger.info(
+                f"VAS faculty overrides: {vas_overrides_applied} faculty "
+                f"assigned to VAS supervision"
+            )
 
         if activity_min_shortfalls:
             min_total = sum(
