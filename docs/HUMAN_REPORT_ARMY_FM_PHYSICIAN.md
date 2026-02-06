@@ -68,11 +68,11 @@ This report explains how the system’s delegation model works, what the two key
   - `CLAUDE.md`
   - `docs/development/AI_RULES_OF_ENGAGEMENT.md`
   - `HUMAN_TODO.md`
-  - `.claude/Agents/ORCHESTRATOR.md`
+  - `.claude/archive/agents/ORCHESTRATOR.md` *(Archived in PAI v1)*
   - `.claude/Scratchpad/ORCHESTRATOR_ADVISOR_NOTES.md`
   - `.claude/skills/context-aware-delegation/SKILL.md`
-  - `.claude/Governance/HIERARCHY.md`
-  - `.claude/Governance/SPAWN_CHAINS.md`
+  - `.claude/archive/governance/HIERARCHY.md` *(Archived in PAI v1)*
+  - `.claude/archive/governance/SPAWN_CHAINS.md` *(Archived in PAI v1)*
 - Avoid tasks that require MCP tools or RAG context; stick to read-only reviews or clearly scoped edits with local guidance.
 - Attempt recovery first: `./scripts/start-local.sh` (restores MCP and RAG).
 
@@ -90,8 +90,8 @@ This report explains how the system’s delegation model works, what the two key
 - Standing orders
 
 **Fallback if RAG is incomplete:**
-- `.claude/Governance/HIERARCHY.md`
-- `.claude/Governance/SPAWN_CHAINS.md`
+- `.claude/archive/governance/HIERARCHY.md` *(Archived in PAI v1)*
+- `.claude/archive/governance/SPAWN_CHAINS.md` *(Archived in PAI v1)*
 - `.claude/Governance/CAPABILITIES.md`
 - `.claude/dontreadme/synthesis/PATTERNS.md`
 
@@ -147,7 +147,7 @@ This report explains how the system’s delegation model works, what the two key
 ---
 
 ## 6) Exceptions & Overrides (USASOC, User, Subagent Types)
-**Where it is documented today:** `.claude/Governance/SPAWN_CHAINS.md` (not prominently in ORCHESTRATOR spec).\n+
+**Where it is documented today:** `.claude/archive/governance/SPAWN_CHAINS.md` *(Archived in PAI v1)* (not prominently in ORCHESTRATOR spec).\n+
 **Explicit exceptions that exist:**
 - **USASOC exception:** USASOC has wide lateral authority to task any Coordinator or Specialist. 18A can task any agent when USASOC is active.
 - **User override:** The user can invoke any agent directly (explicit exception to spawn chain enforcement).
@@ -182,7 +182,7 @@ Registry location: `.claude/agents.yaml` (54 total)
 ---
 
 ## 8) Standing Orders (What they are)
-**Where they live:** Individual identity cards in `.claude/Identities/*.identity.md` and the hierarchy doc.
+**Where they live:** Individual identity cards in `.claude/archive/identities/*.identity.md` *(Archived in PAI v1)* and the hierarchy doc.
 
 **Known standing orders (global):**
 - L3 Minimal Context Standing Order: When mission is clear and tools are available, use minimal context to delegate.
@@ -280,9 +280,9 @@ ORCHESTRATOR has full oversight of RAG + docs (RAG preferred; open files only wh
 - `.claude/skills/startupO/SKILL.md`
 - `.claude/skills/startupO-lite/SKILL.md`
 - `.claude/skills/force-multiplier/SKILL.md`
-- `.claude/Governance/HIERARCHY.md`
-- `.claude/Governance/SPAWN_CHAINS.md`
-- `.claude/Identities/README.md`
+- `.claude/archive/governance/HIERARCHY.md` *(Archived in PAI v1)*
+- `.claude/archive/governance/SPAWN_CHAINS.md` *(Archived in PAI v1)*
+- `.claude/archive/identities/README.md` *(Archived in PAI v1)*
 - `.claude/agents.yaml`
 - `mcp-server/docs/deployment-tools.md`
 - `mcp-server/docs/AGENT_SERVER.md`

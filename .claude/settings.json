@@ -104,24 +104,6 @@
             "command": "/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/hooks/pre-task-context.sh"
           }
         ]
-      },
-      {
-        "matcher": "Task",
-        "hooks": [
-          {
-            "type": "command",
-            "command": ".claude/hooks/pre-task-context.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Task",
-        "hooks": [
-          {
-            "type": "command",
-            "command": ".claude/hooks/pre-task-context.sh"
-          }
-        ]
       }
     ],
     "Stop": [

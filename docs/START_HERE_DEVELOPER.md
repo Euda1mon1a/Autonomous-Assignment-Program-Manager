@@ -42,7 +42,10 @@ rag_search('MCP configuration type http')
 ```
 
 ### Agent Identity Cards
-Located in `.claude/Identities/`. When spawning agents via `Task()`, include the identity card content.
+
+> **Note:** PAI v1 agent specs and identity cards were archived in Feb 2026. See `.claude/archive/` for historical reference.
+
+Located in `.claude/archive/identities/`. When spawning agents via `Task()`, include the identity card content.
 
 ### MCP Tools Available
 34+ tools via `mcp__residency-scheduler__*`. Key categories:

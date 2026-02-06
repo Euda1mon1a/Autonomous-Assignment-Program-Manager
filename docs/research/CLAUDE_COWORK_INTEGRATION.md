@@ -136,7 +136,7 @@ Cowork Folder              Chrome Extension           External System
 User Prompt: "Create an onboarding guide for new developers from the .claude/ folder"
 
 Cowork Actions:
-1. Reads CLAUDE.md, CONSTITUTION.md, HIERARCHY.md
+1. Reads CLAUDE.md, CONSTITUTION.md, HIERARCHY.md *(governance files archived -- see `.claude/archive/governance/`)*
 2. Identifies key concepts (Auftragstaktik, PAI², MCP tools)
 3. Generates structured onboarding document
 4. Creates quick-reference cards for common workflows

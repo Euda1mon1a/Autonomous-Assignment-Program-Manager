@@ -283,7 +283,7 @@ Session 020 achieved 85% (not 100%) because:
 **<90% = Review needed:** Possible hierarchy bypass pattern
 
 **How to Achieve 100%:**
-1. Read the agent specification (`.claude/Agents/[AGENT_NAME].md`)
+1. Read the agent specification (`.claude/Agents/[AGENT_NAME].md`) *(Archived -- see `.claude/archive/agents/`)*
 2. Match task type to agent specialization
 3. If uncertain, ask ORCHESTRATOR
 4. Never skip the hierarchy to save time

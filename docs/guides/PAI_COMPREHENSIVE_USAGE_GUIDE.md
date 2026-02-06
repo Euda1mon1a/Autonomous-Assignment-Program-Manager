@@ -108,7 +108,7 @@ When you solve a problem:
 ├── SKILL_INDEX.md            # Complete skill registry
 ├── INFRASTRUCTURE_OVERVIEW.md # Architecture documentation
 │
-├── Agents/                   # Specialized AI personas
+├── archive/agents/           # Specialized AI personas (Archived in PAI v1)
 │   ├── SCHEDULER.md          # Schedule generation
 │   ├── ARCHITECT.md          # System design
 │   ├── RESILIENCE_ENGINEER.md # Health monitoring
@@ -1037,7 +1037,7 @@ Swap Request Workflow:
 |------|---------|
 | `.claude/CONSTITUTION.md` | Foundational rules |
 | `.claude/SKILL_INDEX.md` | Complete skill registry |
-| `.claude/Agents/SCHEDULER.md` | Schedule agent spec |
+| `.claude/archive/agents/SCHEDULER.md` | Schedule agent spec *(Archived in PAI v1)* |
 | `.claude/History/README.md` | History system docs |
 | `.claude/Scratchpad/README.md` | Scratchpad docs |
 | `docs/PERSONAL_INFRASTRUCTURE.md` | PAI overview |

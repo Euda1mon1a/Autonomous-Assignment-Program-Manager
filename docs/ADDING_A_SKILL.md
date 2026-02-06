@@ -2023,7 +2023,7 @@ schedule-optimization depends on acgme-compliance (not vacation-management)
 ---
 
 **Questions? Issues?**
-- Consult `.claude/Agents/META_UPDATER.md` for skill enhancement proposals
+- Consult `.claude/archive/agents/META_UPDATER.md` for skill enhancement proposals *(Archived in PAI v1)*
 - Escalate to ARCHITECT for architectural questions
 - Review existing skills for patterns and best practices
 

@@ -21,7 +21,7 @@ Add content to RAG when it is:
 
 - ACGME compliance rules (regulatory, rarely changes)
 - Scheduling constraint documentation (domain knowledge)
-- PAI agent identity cards (agent_spec)
+- PAI agent identity cards *(Archived -- see `.claude/archive/identities/`)* (agent_spec)
 - Validated resilience patterns (cross-disciplinary)
 - Architectural decision records (stable decisions)
 - Delegation patterns / Auftragstaktik doctrine

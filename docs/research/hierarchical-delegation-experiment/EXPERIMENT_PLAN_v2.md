@@ -1,5 +1,7 @@
 # Plan: Hierarchical Delegation Experiment v2.0 - Total Redesign
 
+> **Note:** This experiment used the pre-archive PAI v1 structure. Agent specs, identity cards, and governance files were archived in Feb 2026. See `.claude/archive/` for historical reference.
+
 **Date:** 2026-01-10
 **Status:** Planning
 **Type:** Comprehensive Hierarchy + Doctrine + Parallelization Test
@@ -179,7 +181,7 @@ This tests the 50×1 > 5×10 principle.
 ### Phase 1: Preparation
 1. Count actual test files: `find frontend -name "*.test.tsx" -o -name "*.test.ts" | wc -l`
 2. Prepare file lists for each pool (equal distribution)
-3. Load identity cards for all agents in each pathway
+3. Load identity cards for all agents in each pathway *(identity cards archived -- see `.claude/archive/identities/`)*
 
 ### Phase 2: Parallel Launch (4 Pools)
 Launch all 4 pools simultaneously in background:
@@ -204,8 +206,8 @@ Launch all 4 pools simultaneously in background:
 
 - Plan: `/Users/aaronmontgomery/.claude/plans/idempotent-crunching-lecun.md`
 - Scratchpad: `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/scratchpad/`
-- Identities: `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Identities/`
-- Governance: `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Governance/`
+- Identities: `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Identities/` *(Archived -- see `.claude/archive/identities/`)*
+- Governance: `/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/Governance/` *(Archived -- see `.claude/archive/governance/`)*
 
 ---
 
@@ -226,7 +228,7 @@ To replicate this experiment in another codebase:
 
 1. **Identify 100+ independent files** for audit/remediation
 2. **Define clear success criteria** (e.g., 0 TypeScript errors)
-3. **Create agent identity cards** in `.claude/Identities/`
+3. **Create agent identity cards** in `.claude/Identities/` *(Archived -- see `.claude/archive/identities/`)*
 4. **Include doctrinal mandates** in mission prompts
 5. **Launch pools in parallel** via Task() with `run_in_background=true`
 6. **Grade with neutral panel** (G6_SIGNAL, CODE_REVIEWER, DELEGATION_AUDITOR)

@@ -184,7 +184,7 @@ Complex reasoning, architecture, and coordination.
 - `backend/alembic/versions/20251227_add_pgvector_agent_memory.py`
 
 ### Agent Specs
-All agent specifications in `.claude/Agents/*.md` include:
+All agent specifications in `.claude/archive/agents/*.md` *(Archived in PAI v1)* include:
 ```markdown
 > **Model Tier:** haiku | sonnet | opus
 ```
@@ -313,7 +313,7 @@ assert results[0].similarity > 0.99
 ## Related Documentation
 
 - [Agent Skills Reference](AGENT_SKILLS.md)
-- [ORCHESTRATOR Agent Spec](../../.claude/Agents/ORCHESTRATOR.md)
+- [ORCHESTRATOR Agent Spec](../../.claude/archive/agents/ORCHESTRATOR.md) *(Archived in PAI v1)*
 - [Parallel Claude Best Practices](PARALLEL_CLAUDE_BEST_PRACTICES.md)
 - [Cross-Disciplinary Resilience](../architecture/cross-disciplinary-resilience.md)
 

@@ -1,5 +1,7 @@
 # Hierarchical Delegation Experiment
 
+> **Note:** This experiment used the pre-archive PAI v1 structure. Agent specs, identity cards, and governance files were archived in Feb 2026. See `.claude/archive/` for historical reference.
+
 Research into multi-agent hierarchical delegation patterns, comparing SOF (Special Operations Forces) vs Conventional force structures for software engineering tasks.
 
 ## Overview
@@ -36,16 +38,16 @@ v2.0 addresses v1.0 failures with:
 To replicate this experiment:
 
 1. **Identify 100+ independent files** for audit/remediation
-2. **Create agent identity cards** per `.claude/Identities/*.identity.md`
+2. **Create agent identity cards** per `.claude/Identities/*.identity.md` *(Archived -- see `.claude/archive/identities/`)*
 3. **Include doctrinal mandates** in mission prompts
 4. **Launch pools in parallel** via Task() with `run_in_background=true`
 5. **Grade with neutral panel** (G6_SIGNAL, CODE_REVIEWER, DELEGATION_AUDITOR)
 
 ## Related Documentation
 
-- `.claude/Governance/HIERARCHY.md` - PAI hierarchy structure
-- `.claude/Governance/CONSTITUTION.md` - Auftragstaktik doctrine
-- `.claude/Identities/` - Agent identity cards
+- `.claude/Governance/HIERARCHY.md` *(Archived -- see `.claude/archive/governance/`)* - PAI hierarchy structure
+- `.claude/Governance/CONSTITUTION.md` *(Archived -- see `.claude/archive/governance/`)* - Auftragstaktik doctrine
+- `.claude/Identities/` *(Archived -- see `.claude/archive/identities/`)* - Agent identity cards
 - `CLAUDE.md` - Project guidelines including delegation philosophy
 
 ## Session History

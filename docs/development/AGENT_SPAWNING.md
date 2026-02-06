@@ -121,7 +121,7 @@ Task(
 │           ▼                                                      │
 │  3. MCP Tool loads identity card                                 │
 │     ┌──────────────────────────────────┐                        │
-│     │  .claude/Identities/AGENT.md     │                        │
+│     │  .claude/archive/identities/      │                        │
 │     │  - Standing orders               │                        │
 │     │  - Escalation triggers           │                        │
 │     │  - Key constraints               │                        │
@@ -269,7 +269,7 @@ agents:
 
 ### Adding New Agents
 
-1. Create identity card: `.claude/Identities/NEW_AGENT.identity.md`
+1. Create identity card: `.claude/archive/identities/NEW_AGENT.identity.md` *(Archived in PAI v1)*
 2. Add entry to `.claude/agents.yaml`
 3. Update parent's `can_spawn` list
 4. Test spawn chain with `/spawn-agent NEW_AGENT test mission`
@@ -280,7 +280,9 @@ agents:
 
 ### Location
 
-`.claude/Identities/`
+> **Note:** PAI v1 identity cards were archived in Feb 2026. See `.claude/archive/identities/` for historical reference.
+
+`.claude/archive/identities/`
 
 ### Format
 
@@ -562,8 +564,8 @@ Error: Identity card not found for agent: NEW_AGENT
 
 **Resolution:**
 1. Check if agent exists in `.claude/agents.yaml`
-2. Create identity card at `.claude/Identities/NEW_AGENT.identity.md`
-3. Follow template structure from `.claude/Identities/TEMPLATE.identity.md`
+2. Create identity card at `.claude/archive/identities/NEW_AGENT.identity.md` *(Archived in PAI v1)*
+3. Follow template structure from `.claude/archive/identities/TEMPLATE.identity.md` *(Archived in PAI v1)*
 
 ### RAG Injection Failure
 
@@ -634,10 +636,10 @@ Error: Cannot parse checkpoint state from [path]
 |----------|---------|
 | `.claude/Governance/PAI_SQUARED.md` | **PAI² framework philosophy and principles** |
 | `.claude/agents.yaml` | Agent registry (tiers, models, spawn chains) |
-| `.claude/Identities/` | Identity cards with standing orders |
-| `.claude/Governance/SPAWN_CHAINS.md` | Spawn authority matrix |
-| `.claude/Governance/CHECKPOINT_PROTOCOL.md` | Full checkpoint specification |
-| `.claude/Governance/HIERARCHY.md` | Command structure philosophy |
+| `.claude/archive/identities/` | Identity cards with standing orders *(Archived in PAI v1)* |
+| `.claude/archive/governance/SPAWN_CHAINS.md` | Spawn authority matrix *(Archived in PAI v1)* |
+| `.claude/archive/governance/CHECKPOINT_PROTOCOL.md` | Full checkpoint specification *(Archived in PAI v1)* |
+| `.claude/archive/governance/HIERARCHY.md` | Command structure philosophy *(Archived in PAI v1)* |
 | `.claude/skills/spawn-agent/SKILL.md` | `/spawn-agent` skill documentation |
 | `docs/development/AGENT_SKILLS.md` | All agent skills reference |
 

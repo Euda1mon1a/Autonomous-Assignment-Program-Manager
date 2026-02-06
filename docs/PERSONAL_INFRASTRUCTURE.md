@@ -188,7 +188,9 @@ Update CONSTITUTION/Skills
 
 ---
 
-### 2. Agents (.claude/Agents/)
+### 2. Agents (.claude/archive/agents/)
+
+> **Note:** PAI v1 agent specs and identity cards were archived in Feb 2026. See `.claude/archive/agents/` for historical reference.
 
 **What:** Specialized AI personas with defined roles, authorities, and personalities
 
@@ -199,18 +201,18 @@ Update CONSTITUTION/Skills
 
 **Key Agents:**
 
-#### SCHEDULER (.claude/Agents/SCHEDULER.md)
+#### SCHEDULER (.claude/archive/agents/SCHEDULER.md)
 - **Role:** Schedule generation, swap execution, ACGME validation
 - **Authority:** Can execute schedules if safety checks pass
 - **Personality:** Methodical, safety-conscious, communicative
 - **Workflows:** Generate schedule, process swap, optimize schedule, handle violations
 
-#### ARCHITECT (.claude/Agents/ARCHITECT.md)
+#### ARCHITECT (.claude/archive/agents/ARCHITECT.md)
 - **Role:** System design, database schema, infrastructure decisions
 - **Authority:** Approve major architectural changes
 - **Personality:** Strategic, conservative, documentation-focused
 
-#### RESILIENCE_ENGINEER (.claude/Agents/RESILIENCE_ENGINEER.md)
+#### RESILIENCE_ENGINEER (.claude/archive/agents/RESILIENCE_ENGINEER.md)
 - **Role:** N-1/N-2 contingency, health scoring, workload analysis
 - **Authority:** Escalate when resilience thresholds breached
 - **Personality:** Analytical, proactive, data-driven
@@ -228,7 +230,7 @@ Update CONSTITUTION/Skills
 3. Compliance Exceptions (never granted)
 ```
 
-**Location:** `.claude/Agents/*.md`
+**Location:** `.claude/archive/agents/*.md` *(Archived in PAI v1)*
 
 ---
 
@@ -889,8 +891,8 @@ cat .claude/History/scheduling/2025-07-15_block10_gen001.md
 
 **Task 2: Review an Agent**
 ```bash
-# Read SCHEDULER agent definition
-cat .claude/Agents/SCHEDULER.md
+# Read SCHEDULER agent definition (archived in PAI v1)
+cat .claude/archive/agents/SCHEDULER.md
 
 # Note:
 # - What can SCHEDULER do autonomously?
@@ -1017,7 +1019,7 @@ cat .claude/skills/schedule-optimization/SKILL.md
 3. **Define Personality:** How should it communicate and behave?
 4. **List Skills:** Which skills does this agent use?
 5. **Escalation Rules:** When/how does it escalate to humans or other agents?
-6. **Create Charter:** Document in `.claude/Agents/[AGENT_NAME].md`
+6. **Create Charter:** Document in `.claude/archive/agents/[AGENT_NAME].md` *(Archived in PAI v1 -- see `.claude/archive/agents/`)*
 
 **Example:**
 ```markdown
@@ -1133,10 +1135,10 @@ PAI solves these problems by treating AI infrastructure as **first-class archite
 - `.claude/History/README.md` - Audit trail system
 - `.claude/Scratchpad/README.md` - Temporary workspace
 
-**Agents:**
-- `.claude/Agents/SCHEDULER.md` - Schedule generation agent
-- `.claude/Agents/ARCHITECT.md` - System design agent
-- `.claude/Agents/RESILIENCE_ENGINEER.md` - Resilience monitoring agent
+**Agents** *(Archived in PAI v1 -- see `.claude/archive/agents/`)*:
+- `.claude/archive/agents/SCHEDULER.md` - Schedule generation agent
+- `.claude/archive/agents/ARCHITECT.md` - System design agent
+- `.claude/archive/agents/RESILIENCE_ENGINEER.md` - Resilience monitoring agent
 
 **Skills:**
 - `.claude/skills/schedule-optimization/SKILL.md`

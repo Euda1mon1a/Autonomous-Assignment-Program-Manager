@@ -5,6 +5,8 @@ author: "Claude Opus 4.5"
 status: "reference"
 ---
 
+> **Note:** This research document references the pre-archive PAI v1 structure. Agent specs, identity cards, and governance files (HIERARCHY.md, SPAWN_CHAINS.md) were archived in Feb 2026. See `.claude/archive/` for historical reference.
+
 # Comparative Analysis: AAPM/Claude Code vs Moltbot vs Kimi K2.5
 
 ## Executive Summary
@@ -206,4 +208,4 @@ Future: K2.5 Orchestrator (native, no explicit DAG)
 - [SiliconANGLE: K2.5 with 1T parameters](https://siliconangle.com/2026/01/27/moonshot-ai-releases-open-source-kimi-k2-5-model-1t-parameters/)
 - moltbot/AGENTS.md
 - ~/.claude/plugins/feature-dev/
-- AAPM HIERARCHY.md
+- AAPM HIERARCHY.md *(Archived -- see `.claude/archive/governance/`)*

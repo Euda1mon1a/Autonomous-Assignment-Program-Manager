@@ -1192,7 +1192,7 @@ explanation = matcher.explain_match("Generate a compliant resident schedule")
 ```
 
 **How It Works:**
-1. Loads agent specifications from `.claude/Agents/*.md`
+1. Loads agent specifications from `.claude/archive/agents/*.md` *(Archived in PAI v1)*
 2. Extracts capabilities from Charter and Primary Responsibilities sections
 3. Pre-computes 384-dim embeddings for each agent using sentence-transformers
 4. Matches incoming task descriptions via cosine similarity
