@@ -163,7 +163,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
         - Block clinic templates for all days in FMIT week
         - Block call assignments for Sun-Thurs of FMIT week
         """
-        template_vars = variables.get("template_assignments", {})
+        faculty_template_vars = variables.get("faculty_template_assignments", {})
         call_vars = variables.get("call_assignments", {})
 
         # Find FMIT assignments in existing assignments
@@ -193,15 +193,17 @@ class FMITWeekBlockingConstraint(HardConstraint):
 
                     b_i = context.block_idx[block.id]
 
-                    # Block clinic templates
-                    if template_vars:
+                    # Block clinic templates (use faculty-scoped vars)
+                    if faculty_template_vars:
                         for template_id in clinic_template_ids:
                             t_i = context.template_idx.get(template_id)
                             if (
                                 t_i is not None
-                                and (faculty_i, b_i, t_i) in template_vars
+                                and (faculty_i, b_i, t_i) in faculty_template_vars
                             ):
-                                model.Add(template_vars[faculty_i, b_i, t_i] == 0)
+                                model.Add(
+                                    faculty_template_vars[faculty_i, b_i, t_i] == 0
+                                )
 
                     # Block Sun-Thurs call
                     if call_vars and is_sun_thurs(block.date) and call_i is not None:
@@ -215,7 +217,7 @@ class FMITWeekBlockingConstraint(HardConstraint):
         context: SchedulingContext,
     ) -> None:
         """Add FMIT blocking constraints to PuLP model."""
-        template_vars = variables.get("template_assignments", {})
+        faculty_template_vars = variables.get("faculty_template_assignments", {})
         call_vars = variables.get("call_assignments", {})
 
         fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
@@ -242,15 +244,15 @@ class FMITWeekBlockingConstraint(HardConstraint):
 
                     b_i = context.block_idx[block.id]
 
-                    if template_vars:
+                    if faculty_template_vars:
                         for template_id in clinic_template_ids:
                             t_i = context.template_idx.get(template_id)
                             if (
                                 t_i is not None
-                                and (faculty_i, b_i, t_i) in template_vars
+                                and (faculty_i, b_i, t_i) in faculty_template_vars
                             ):
                                 model += (
-                                    template_vars[faculty_i, b_i, t_i] == 0,
+                                    faculty_template_vars[faculty_i, b_i, t_i] == 0,
                                     f"fmit_no_clinic_{faculty_i}_{b_i}_{constraint_count}",
                                 )
                                 constraint_count += 1
