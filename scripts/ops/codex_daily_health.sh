@@ -87,16 +87,25 @@ fi
 append "## MCP Visibility"
 append ""
 set +e
-mcp_list_output="$(CODEX_HOME=.codex codex mcp list 2>&1)"
-mcp_list_rc=$?
+if [[ -f ".codex/config.toml" ]]; then
+  mcp_config_source=".codex/config.toml"
+  mcp_list_output="$(CODEX_HOME=.codex codex mcp list 2>&1)"
+  mcp_list_rc=$?
+else
+  mcp_config_source="default (~/.codex/config.toml)"
+  mcp_list_output="$(codex mcp list 2>&1)"
+  mcp_list_rc=$?
+fi
 set -e
 if [[ ${mcp_list_rc} -eq 0 ]]; then
   enabled_count="$(printf '%s\n' "${mcp_list_output}" | rg -n "enabled" | wc -l | tr -d ' ' || true)"
   enabled_count="${enabled_count:-0}"
   append "- codex mcp list: \`ok\`"
+  append "- codex mcp config source: \`${mcp_config_source}\`"
   append "- enabled rows detected: \`${enabled_count}\`"
 else
   append "- codex mcp list: \`fail\` (exit ${mcp_list_rc})"
+  append "- codex mcp config source: \`${mcp_config_source}\`"
   overall_rc=1
 fi
 append ""
