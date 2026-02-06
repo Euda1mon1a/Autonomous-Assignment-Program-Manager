@@ -2,7 +2,10 @@
 
 > **Complete reference for AI Agent Skills in the Residency Scheduler**
 >
-> Last Updated: 2025-12-26
+> Last Updated: 2026-02-06
+>
+> Note: Skills inventory updated to match `.claude/skills/` directory (44 skills as of 2026-02-06).
+> Notable additions: check-camelcase, check-codex, codex-*-triage, resilience-*, force-multiplier, context-aware-delegation.
 
 ---
 
@@ -932,6 +935,48 @@ Route (thin) → Controller → Service → Repository → Model
 7. Offer rollback if results are bad
 
 **Critical Rule**: NEVER execute schedule-modifying MCP tools without backup verification.
+
+---
+
+### check-camelcase
+
+**Purpose**: Scan TypeScript files for naming convention violations that cause runtime failures.
+
+**Activates When**:
+- Pre-commit checks
+- TypeScript compilation errors
+- Undefined property access at runtime
+- User explicitly requests `/check-camelcase`
+- Before merging frontend PRs
+
+**Three Critical Checks**:
+
+| Violation | Tool | Impact |
+|-----------|------|--------|
+| Interface property names | ESLint @typescript-eslint/naming-convention | Axios converts API responses to camelCase; snake_case properties access `undefined` |
+| URL query parameters | Couatl Killer (`scripts/couatl-killer.sh`) | Query params bypass axios interceptor; backend expects snake_case |
+| Enum values | Gorgon's Gaze (`scripts/gorgons-gaze.sh`) | Axios converts keys not values; camelCase enums never match backend snake_case |
+
+**Quick Commands**:
+```bash
+# ESLint check
+cd frontend && npm run lint
+
+# Couatl Killer (query params)
+./scripts/couatl-killer.sh
+
+# Gorgon's Gaze (enum values)
+./scripts/gorgons-gaze.sh
+```
+
+**Suppression Comments**:
+- ESLint: `// eslint-disable-line @typescript-eslint/naming-convention`
+- Couatl Killer: `// @query-param-ok`
+- Gorgon's Gaze: `// @enum-ok` or `// @gorgon-ok`
+
+**Why These Rules Exist**: The axios interceptor in `frontend/src/lib/api.ts` converts object keys (snake_case → camelCase) but not values or URL parameters. This creates three failure modes that these checks prevent.
+
+**Related**: See CLAUDE.md sections "API Type Naming Convention", "URL Query Parameters (Couatl Killer)", "Enum Values Stay snake_case (Gorgon's Gaze)".
 
 ---
 
