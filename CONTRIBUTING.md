@@ -325,7 +325,7 @@ Describe the tests you ran
 ### Review Process
 
 1. Submit your PR against the `main` branch
-2. Automated checks will run (tests, linting)
+2. Ensure all pre-commit hooks pass locally (CI/CD is disabled pre-production)
 3. A maintainer will review your PR
 4. Address any requested changes
 5. Once approved, a maintainer will merge your PR

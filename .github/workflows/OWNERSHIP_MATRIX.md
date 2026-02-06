@@ -1,5 +1,10 @@
 # GitHub Workflows File Ownership Matrix
 
+> **STATUS: ALL GITHUB ACTIONS DISABLED (2026-02-05)**
+> CI/CD pipelines disabled pre-production. All checks enforced via 30+ pre-commit hooks locally.
+> See `docs/development/BEST_PRACTICES_AND_GOTCHAS.md` Section 13 for rationale.
+> Re-enable: `gh api repos/OWNER/REPO/actions/permissions -X PUT -F enabled=true -f allowed_actions=all`
+
 This document defines the ownership and responsibility matrix for all CI/CD workflow files in the `.github/workflows/` directory.
 
 ## Ownership Matrix
