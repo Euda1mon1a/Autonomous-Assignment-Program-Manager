@@ -61,6 +61,16 @@ class TestCanonicalScheduleExportService:
         assert (
             mock_converter_class.call_args.kwargs.get("include_qa_sheet", True) is True
         )
+        assert (
+            mock_converter_class.call_args.kwargs.get(
+                "preserve_template_identity_fields", True
+            )
+            is True
+        )
+        assert (
+            mock_converter_class.call_args.kwargs.get("presentation_profile")
+            == "tamc_handjam_v2"
+        )
 
     @patch("app.services.canonical_schedule_export_service.get_block_dates")
     def test_export_uses_block_dates(self, mock_get_block_dates):
@@ -131,6 +141,49 @@ class TestCanonicalScheduleExportService:
             )
 
         assert mock_converter_class.call_args.kwargs["include_qa_sheet"] is False
+
+    @patch("app.services.canonical_schedule_export_service.get_block_dates")
+    @patch("app.services.canonical_schedule_export_service.HalfDayJSONExporter")
+    @patch("app.services.canonical_schedule_export_service.JSONToXlsxConverter")
+    def test_export_can_override_identity_and_profile(
+        self, mock_converter_class, mock_exporter_class, mock_get_block_dates
+    ):
+        """export_block_xlsx() should pass identity/profile options through."""
+        mock_db = MagicMock()
+
+        mock_block_dates = MagicMock()
+        mock_block_dates.start_date = date(2026, 3, 12)
+        mock_block_dates.end_date = date(2026, 4, 8)
+        mock_get_block_dates.return_value = mock_block_dates
+
+        mock_exporter = MagicMock()
+        mock_exporter.export.return_value = {"residents": [], "faculty": []}
+        mock_exporter_class.return_value = mock_exporter
+
+        mock_converter = MagicMock()
+        mock_converter.convert_from_json.return_value = b"xlsx_content"
+        mock_converter_class.return_value = mock_converter
+
+        service = CanonicalScheduleExportService(mock_db)
+        with (
+            patch.object(
+                service, "_template_path", return_value=Path("/fake/template.xlsx")
+            ),
+            patch.object(
+                service, "_structure_path", return_value=Path("/fake/structure.xml")
+            ),
+            patch("pathlib.Path.exists", return_value=True),
+        ):
+            service.export_block_xlsx(
+                block_number=10,
+                academic_year=2025,
+                preserve_template_identity_fields=False,
+                presentation_profile="none",
+            )
+
+        kwargs = mock_converter_class.call_args.kwargs
+        assert kwargs["preserve_template_identity_fields"] is False
+        assert kwargs["presentation_profile"] == "none"
 
 
 class TestTemplatePaths:

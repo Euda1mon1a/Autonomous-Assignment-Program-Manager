@@ -75,6 +75,17 @@ def main() -> int:
         action="store_true",
         help="Do not add Export_QA worksheet with explicit code totals",
     )
+    parser.add_argument(
+        "--write-identity-fields",
+        action="store_true",
+        help="Write columns A-E (rotation/template/role/name) from DB instead of preserving template values",
+    )
+    parser.add_argument(
+        "--presentation-profile",
+        type=str,
+        default="tamc_handjam_v2",
+        help="Presentation profile overlay (default: tamc_handjam_v2)",
+    )
 
     args = parser.parse_args()
     _load_env()
@@ -95,6 +106,8 @@ def main() -> int:
             academic_year=academic_year,
             include_faculty=not args.no_faculty,
             include_qa_sheet=not args.no_qa,
+            preserve_template_identity_fields=not args.write_identity_fields,
+            presentation_profile=args.presentation_profile,
             output_path=output_path,
         )
         print(f"Exported block {block_number} AY{academic_year} to {output_path}")

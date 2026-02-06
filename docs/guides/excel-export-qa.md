@@ -22,6 +22,16 @@ Optional:
 python scripts/ops/block_export.py --block 10 --academic-year 2025 --output /tmp/block10.xlsx --no-qa
 ```
 
+Optional identity/presentation controls:
+
+```bash
+# Write columns A-E from DB values instead of keeping template labels/names.
+python scripts/ops/block_export.py --block 10 --academic-year 2025 --output /tmp/block10.xlsx --write-identity-fields
+
+# Use a different presentation profile (default is tamc_handjam_v2).
+python scripts/ops/block_export.py --block 10 --academic-year 2025 --output /tmp/block10.xlsx --presentation-profile tamc_handjam_v2
+```
+
 ## Parity audit (DB vs XLSX)
 
 Run against live DB and generate an audited workbook:
@@ -43,3 +53,10 @@ Some built-in summary columns on `Block Template2` are composite:
 - Faculty `BJ` combines `C`, `SM`.
 
 Use `Export_QA` for explicit code totals when you need pure `C` counts.
+
+## Known limitation: activity granularity
+
+The exporter reflects codes present in `half_day_assignments` (descriptive truth).
+If a legacy handjam sheet contains codes that are not in DB for the block
+(for example `Ophtho`, `URO`, `EPIC`, `C30`), export cannot recreate those
+without regenerating assignments upstream.

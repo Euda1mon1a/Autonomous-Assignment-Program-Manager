@@ -100,6 +100,8 @@ class XMLToXlsxConverter:
         use_block_template2: bool = True,
         strict_row_mapping: bool = False,
         include_qa_sheet: bool = True,
+        preserve_template_identity_fields: bool = True,
+        presentation_profile: str = "tamc_handjam_v2",
     ) -> None:
         """
         Initialize converter with optional template.
@@ -115,6 +117,11 @@ class XMLToXlsxConverter:
             strict_row_mapping: If True, fail export when a person name has no row mapping.
             include_qa_sheet: If True, add an Export_QA worksheet with explicit
                 code totals and per-faculty clinic counts.
+            preserve_template_identity_fields: If True, keeps template values in
+                columns A-E (rotations/template/role/name) and only writes schedule
+                cells. This preserves full handjam labels/names.
+            presentation_profile: Post-processing profile for summary formulas and
+                freeze panes. "tamc_handjam_v2" aligns output with manual Block 10.
         """
         self.template_path = Path(template_path) if template_path else None
         self.apply_colors = apply_colors
@@ -122,6 +129,8 @@ class XMLToXlsxConverter:
         self.use_block_template2 = use_block_template2
         self.strict_row_mapping = strict_row_mapping
         self.include_qa_sheet = include_qa_sheet
+        self.preserve_template_identity_fields = preserve_template_identity_fields
+        self.presentation_profile = presentation_profile
 
         # Load row mappings from structure XML if provided
         self.row_mappings: dict[str, int] = {}
@@ -269,6 +278,7 @@ class XMLToXlsxConverter:
         if call_rows:
             self._fill_call_row(sheet, call_rows, block_start, block_end)
         stats["call_nights_input"] = len(call_rows)
+        self._apply_presentation_profile(sheet, block_start, block_end)
         self.last_conversion_stats = stats
         if self.include_qa_sheet and self.use_block_template2:
             self._write_export_qa_sheet(wb, data, stats)
@@ -365,6 +375,121 @@ class XMLToXlsxConverter:
             rows.append((name, counter))
         return rows
 
+    def _apply_presentation_profile(
+        self, sheet, block_start: date, block_end: date
+    ) -> None:
+        """Apply output formatting profile overlays for Block Template2."""
+        if not self.use_block_template2:
+            return
+        if self.presentation_profile != "tamc_handjam_v2":
+            return
+        self._apply_tamc_handjam_summary_layout(sheet, block_start, block_end)
+
+    def _apply_tamc_handjam_summary_layout(
+        self, sheet, block_start: date, block_end: date
+    ) -> None:
+        """Align summary headers/formulas/freeze panes with handjam Block 10."""
+        # Keep navigation locked to schedule start while exposing summary rows.
+        sheet.freeze_panes = "F50"
+
+        summary_headers = [
+            "C",
+            "CC",
+            "CV",
+            "(C+CC+CV)",
+            "NF",
+            "CC",
+            "PC/OFF",
+            "LV",
+            "FMIT",
+        ]
+        for idx, header in enumerate(summary_headers):
+            sheet.cell(row=8, column=62 + idx).value = header
+
+        for row in range(9, 29):
+            c_terms = '{"C","C-I","SM"}' if row == 9 else '{"C","CV","C-I","SM"}'
+            sheet.cell(
+                row=row, column=62
+            ).value = f"=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {c_terms}))"
+            sheet.cell(row=row, column=63).value = f'=COUNTIF(F{row}:BI{row}, "CC")'
+            sheet.cell(row=row, column=64).value = f'=COUNTIF(F{row}:BI{row}, "CV")'
+            sheet.cell(row=row, column=65).value = f"=BJ{row}+BK{row}+BL{row}"
+            sheet.cell(row=row, column=66).value = f'=COUNTIF(F{row}:BI{row}, "NF")'
+            sheet.cell(row=row, column=67).value = f'=COUNTIF(F{row}:BI{row}, "CC")'
+            sheet.cell(
+                row=row, column=68
+            ).value = f'=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {{"PC","OFF","W"}}))'
+            sheet.cell(row=row, column=69).value = f'=COUNTIF(F{row}:BI{row}, "LV")'
+            sheet.cell(row=row, column=70).value = f'=COUNTIF(F{row}:BI{row}, "FMIT")'
+
+        sheet.cell(row=29, column=62).value = "=SUM(BJ9:BJ26)"
+        sheet.cell(row=29, column=63).value = "=SUM(BK9:BK26)"
+        sheet.cell(row=29, column=64).value = "=SUM(BL9:BL26)"
+        sheet.cell(row=29, column=65).value = "=SUM(BM9:BM26)"
+        sheet.cell(row=29, column=66).value = "=SUM(BN9:BN28)"
+        sheet.cell(row=29, column=67).value = "=SUM(BP9:BP28)"
+        sheet.cell(row=29, column=68).value = "=SUM(BQ9:BQ28)"
+        sheet.cell(row=29, column=69).value = "=SUM(BR9:BR28)"
+        sheet.cell(row=29, column=70).value = None
+
+        row30_headers = [
+            "C",
+            "CC",
+            "CV",
+            "(C+CC+CV)",
+            "AT",
+            "ADM",
+            "LV",
+            "FMIT",
+            "CALL",
+        ]
+        for idx, header in enumerate(row30_headers):
+            sheet.cell(row=30, column=62 + idx).value = header
+
+        for row in range(31, 43):
+            sheet.cell(
+                row=row, column=62
+            ).value = f'=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {{"C","SM"}}))'
+            sheet.cell(row=row, column=63).value = f'=COUNTIF(F{row}:BI{row}, "CC")'
+            sheet.cell(row=row, column=64).value = f'=COUNTIF(F{row}:BI{row}, "CV")'
+            sheet.cell(row=row, column=65).value = f"=BJ{row}+BK{row}+BL{row}"
+            sheet.cell(
+                row=row, column=66
+            ).value = f'=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {{"AT","PCAT","DO"}}))'
+            sheet.cell(
+                row=row, column=67
+            ).value = f'=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {{"GME","DFM","DOFM"}}))'
+            sheet.cell(row=row, column=68).value = f'=COUNTIF(F{row}:BI{row}, "LV")'
+            sheet.cell(row=row, column=69).value = f'=COUNTIF(F{row}:BI{row}, "FMIT")'
+            call_name = self._call_last_name_token(sheet.cell(row=row, column=5).value)
+            sheet.cell(row=row, column=70).value = (
+                f'=COUNTIF(F4:BI4, "{call_name}")' if call_name else None
+            )
+
+        sheet.cell(row=43, column=62).value = "=SUM(BJ31:BJ42)"
+        sheet.cell(row=43, column=63).value = "=SUM(BK31:BK42)"
+        sheet.cell(row=43, column=64).value = "=SUM(BL31:BL42)"
+        sheet.cell(row=43, column=65).value = "=SUM(BM31:BM42)"
+        sheet.cell(row=43, column=66).value = "=SUM(BN31:BN42)"
+        sheet.cell(row=43, column=67).value = "=SUM(BO31:BO42)"
+        sheet.cell(row=43, column=68).value = "=SUM(BP31:BP42)"
+        sheet.cell(row=43, column=69).value = "=SUM(BQ31:BQ42)"
+        sheet.cell(row=43, column=70).value = "=SUM(BR31:BR42)"
+        sheet.cell(row=44, column=62).value = "%CVf"
+        sheet.cell(row=44, column=64).value = "=BL43/(BJ43+BK43+BL43)*100"
+
+    def _call_last_name_token(self, raw_name: Any) -> str:
+        if not raw_name:
+            return ""
+        text = str(raw_name).replace("*", "").strip()
+        if not text:
+            return ""
+        if "," in text:
+            last = text.split(",", 1)[0]
+        else:
+            last = text.split()[-1]
+        return " ".join(last.split()).upper()
+
     def _write_export_qa_sheet(
         self, wb: Workbook, data: dict[str, Any], stats: dict[str, Any]
     ) -> None:
@@ -386,16 +511,24 @@ class XMLToXlsxConverter:
         qa["B5"] = str(data.get("source", "unknown"))
         qa["A6"] = "Unmerged Schedule Ranges"
         qa["B6"] = int(stats.get("schedule_cells_unmerged", 0))
+        qa["A7"] = "Presentation Profile"
+        qa["B7"] = self.presentation_profile
+        qa["C7"] = "Identity Fields"
+        qa["D7"] = (
+            "template-preserved"
+            if self.preserve_template_identity_fields
+            else "db-written"
+        )
 
-        qa["A8"] = "Section"
-        qa["B8"] = "People Input"
-        qa["C8"] = "People Written"
-        qa["D8"] = "Unmapped Names"
-        qa["E8"] = "Non-empty Cells"
-        for cell in ("A8", "B8", "C8", "D8", "E8"):
+        qa["A9"] = "Section"
+        qa["B9"] = "People Input"
+        qa["C9"] = "People Written"
+        qa["D9"] = "Unmapped Names"
+        qa["E9"] = "Non-empty Cells"
+        for cell in ("A9", "B9", "C9", "D9", "E9"):
             qa[cell].font = bold
 
-        for idx, section in enumerate(("residents", "faculty"), start=9):
+        for idx, section in enumerate(("residents", "faculty"), start=10):
             section_stats = stats.get(section, {})
             qa.cell(row=idx, column=1, value=section.title())
             qa.cell(row=idx, column=2, value=int(section_stats.get("people_input", 0)))
@@ -427,14 +560,14 @@ class XMLToXlsxConverter:
         )
         combined_codes = resident_codes + faculty_codes
 
-        qa["A13"] = "Code"
-        qa["B13"] = "Residents"
-        qa["C13"] = "Faculty"
-        qa["D13"] = "Combined"
-        for cell in ("A13", "B13", "C13", "D13"):
+        qa["A14"] = "Code"
+        qa["B14"] = "Residents"
+        qa["C14"] = "Faculty"
+        qa["D14"] = "Combined"
+        for cell in ("A14", "B14", "C14", "D14"):
             qa[cell].font = bold
 
-        code_row = 14
+        code_row = 15
         for code in sorted(combined_codes):
             qa.cell(row=code_row, column=1, value=code)
             qa.cell(row=code_row, column=2, value=int(resident_codes.get(code, 0)))
@@ -442,24 +575,24 @@ class XMLToXlsxConverter:
             qa.cell(row=code_row, column=4, value=int(combined_codes.get(code, 0)))
             code_row += 1
 
-        qa["F8"] = "Note"
-        qa["F8"].font = bold
-        qa["F9"] = (
+        qa["F9"] = "Note"
+        qa["F9"].font = bold
+        qa["F10"] = (
             "Template summary columns on Block Template2 are composite in places "
             "(e.g. BJ may include C with SM/C-I). Use this sheet for explicit counts."
         )
 
-        qa["F13"] = "Faculty Clinic Detail"
-        qa["F13"].font = bold
-        qa["F14"] = "Name"
-        qa["G14"] = "C"
-        qa["H14"] = "SM"
-        qa["I14"] = "C+SM"
-        for cell in ("F14", "G14", "H14", "I14"):
+        qa["F14"] = "Faculty Clinic Detail"
+        qa["F14"].font = bold
+        qa["F15"] = "Name"
+        qa["G15"] = "C"
+        qa["H15"] = "SM"
+        qa["I15"] = "C+SM"
+        for cell in ("F15", "G15", "H15", "I15"):
             qa[cell].font = bold
 
         faculty_people = self._collect_people_code_counts(data.get("faculty", []) or [])
-        faculty_row = 15
+        faculty_row = 16
         for name, counter in faculty_people:
             c_count = int(counter.get("C", 0))
             sm_count = int(counter.get("SM", 0))
@@ -823,28 +956,29 @@ class XMLToXlsxConverter:
                 role = self._get_role(pgy, is_faculty)
                 display_name = self._to_last_first(name)
 
-                rot1_cell = self._get_writable_cell(
-                    sheet, row=row, column=BT2_COL_ROTATION1
-                )
-                rot1_cell.value = rotation1
-                self._apply_rotation_color(rot1_cell, rotation1)
+                if not self.preserve_template_identity_fields:
+                    rot1_cell = self._get_writable_cell(
+                        sheet, row=row, column=BT2_COL_ROTATION1
+                    )
+                    rot1_cell.value = rotation1
+                    self._apply_rotation_color(rot1_cell, rotation1)
 
-                rot2_cell = self._get_writable_cell(
-                    sheet, row=row, column=BT2_COL_ROTATION2
-                )
-                rot2_cell.value = rotation2 or ""
-                if rotation2:
-                    self._apply_rotation_color(rot2_cell, rotation2)
+                    rot2_cell = self._get_writable_cell(
+                        sheet, row=row, column=BT2_COL_ROTATION2
+                    )
+                    rot2_cell.value = rotation2 or ""
+                    if rotation2:
+                        self._apply_rotation_color(rot2_cell, rotation2)
 
-                self._get_writable_cell(
-                    sheet, row=row, column=BT2_COL_TEMPLATE
-                ).value = template_code
-                self._get_writable_cell(
-                    sheet, row=row, column=BT2_COL_ROLE
-                ).value = role
-                self._get_writable_cell(
-                    sheet, row=row, column=BT2_COL_NAME
-                ).value = display_name
+                    self._get_writable_cell(
+                        sheet, row=row, column=BT2_COL_TEMPLATE
+                    ).value = template_code
+                    self._get_writable_cell(
+                        sheet, row=row, column=BT2_COL_ROLE
+                    ).value = role
+                    self._get_writable_cell(
+                        sheet, row=row, column=BT2_COL_NAME
+                    ).value = display_name
             else:
                 # ROSETTA format: Name, PGY, Rotation1, Rotation2, Notes
                 self._get_writable_cell(

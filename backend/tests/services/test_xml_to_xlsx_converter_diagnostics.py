@@ -221,3 +221,107 @@ def test_prunes_empty_placeholder_sheets(tmp_path):
     assert "Block Template2" in out_wb.sheetnames
     assert "Export_QA" in out_wb.sheetnames
     assert "Sheet1" not in out_wb.sheetnames
+
+
+def test_preserves_template_identity_fields_by_default(tmp_path):
+    template_path = tmp_path / "template.xlsx"
+    structure_path = tmp_path / "structure.xml"
+    output_path = tmp_path / "out.xlsx"
+    _write_template(template_path)
+    _write_structure_xml(structure_path)
+
+    wb = load_workbook(template_path)
+    ws = wb["Block Template2"]
+    ws.cell(row=9, column=1).value = "Template Rot A"
+    ws.cell(row=9, column=2).value = "Template Rot B"
+    ws.cell(row=9, column=5).value = "Resident, Template"
+    ws.cell(row=31, column=5).value = "Bevis, Zach"
+    wb.save(template_path)
+
+    converter = XMLToXlsxConverter(
+        template_path=template_path,
+        structure_xml_path=structure_path,
+        use_block_template2=True,
+        apply_colors=False,
+        strict_row_mapping=True,
+    )
+    converter.convert_from_data(_one_day_payload_only_mapped(), output_path=output_path)
+
+    out_wb = load_workbook(output_path, data_only=False)
+    out_ws = out_wb["Block Template2"]
+    assert out_ws.cell(row=9, column=1).value == "Template Rot A"
+    assert out_ws.cell(row=9, column=2).value == "Template Rot B"
+    assert out_ws.cell(row=9, column=5).value == "Resident, Template"
+
+
+def test_can_overwrite_identity_fields_when_enabled(tmp_path):
+    template_path = tmp_path / "template.xlsx"
+    structure_path = tmp_path / "structure.xml"
+    output_path = tmp_path / "out.xlsx"
+    _write_template(template_path)
+    _write_structure_xml(structure_path)
+
+    wb = load_workbook(template_path)
+    ws = wb["Block Template2"]
+    ws.cell(row=9, column=1).value = "Template Rot A"
+    ws.cell(row=9, column=5).value = "Resident, Template"
+    ws.cell(row=31, column=5).value = "Bevis, Zach"
+    wb.save(template_path)
+
+    converter = XMLToXlsxConverter(
+        template_path=template_path,
+        structure_xml_path=structure_path,
+        use_block_template2=True,
+        apply_colors=False,
+        strict_row_mapping=True,
+        preserve_template_identity_fields=False,
+    )
+    converter.convert_from_data(_one_day_payload_only_mapped(), output_path=output_path)
+
+    out_wb = load_workbook(output_path, data_only=False)
+    out_ws = out_wb["Block Template2"]
+    assert out_ws.cell(row=9, column=1).value == "FMC"
+    assert out_ws.cell(row=9, column=5).value == "Resident, Mapped"
+
+
+def test_presentation_profile_updates_summary_headers_and_formulas(tmp_path):
+    template_path = tmp_path / "template.xlsx"
+    structure_path = tmp_path / "structure.xml"
+    output_path = tmp_path / "out.xlsx"
+    _write_template(template_path)
+    _write_structure_xml(structure_path)
+
+    wb = load_workbook(template_path)
+    ws = wb["Block Template2"]
+    ws.cell(row=31, column=5).value = "Bevis, Zach"
+    wb.save(template_path)
+
+    converter = XMLToXlsxConverter(
+        template_path=template_path,
+        structure_xml_path=structure_path,
+        use_block_template2=True,
+        apply_colors=False,
+        strict_row_mapping=True,
+        include_qa_sheet=False,
+        presentation_profile="tamc_handjam_v2",
+    )
+    converter.convert_from_data(_one_day_payload_only_mapped(), output_path=output_path)
+
+    out_wb = load_workbook(output_path, data_only=False)
+    out_ws = out_wb["Block Template2"]
+    assert out_ws.freeze_panes == "F50"
+    expected_headers = [
+        "C",
+        "CC",
+        "CV",
+        "(C+CC+CV)",
+        "NF",
+        "CC",
+        "PC/OFF",
+        "LV",
+        "FMIT",
+    ]
+    actual_headers = [out_ws.cell(row=8, column=62 + idx).value for idx in range(9)]
+    assert actual_headers == expected_headers
+    assert out_ws.cell(row=31, column=63).value == '=COUNTIF(F31:BI31, "CC")'
+    assert out_ws.cell(row=31, column=70).value == '=COUNTIF(F4:BI4, "BEVIS")'
