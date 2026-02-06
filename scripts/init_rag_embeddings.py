@@ -61,6 +61,10 @@ DOC_TYPE_MAP = {
     "performance-testing-guide.md": "ai_patterns",
     "rag-ingestion-patterns.md": "ai_patterns",
     "codex53-vs-opus46-capabilities.md": "ai_patterns",
+    "browser-automation-capabilities.md": "technical_doc",
+    "api-patterns.md": "technical_doc",
+    "RAG_CONTENT_LIFECYCLE.md": "ai_patterns",
+    "kimi-k2-5.md": "ai_patterns",
 }
 
 # Base path for knowledge documents
