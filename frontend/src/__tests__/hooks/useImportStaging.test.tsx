@@ -45,7 +45,8 @@ describe('useStageImport', () => {
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ batchId: 'batch-1' }),
+      // Backend stage endpoint returns snake_case; hook maps to batchId.
+      json: async () => ({ batch_id: 'batch-1' }),
     });
 
     const { result } = renderHook(() => useStageImport(), {
