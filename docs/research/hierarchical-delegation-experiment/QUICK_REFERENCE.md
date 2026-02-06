@@ -1,5 +1,7 @@
 # Session 086 v2.0 - Hierarchical Delegation Experiment Redesign
 
+> **Note:** This experiment used the pre-archive PAI v1 structure. Agent specs, identity cards, and governance files were archived in Feb 2026. See `.claude/archive/` for historical reference.
+
 **Status:** Plan approved, ready for execution
 **Context:** v1.0 failed because no delegation occurred
 
@@ -43,8 +45,8 @@
 ## Key Files
 - Full plan: `EXPERIMENT_PLAN_v2.md` (this directory)
 - v1.0 report: `SESSION_086_V1_REPORT.md` (this directory)
-- Governance: `.claude/Governance/HIERARCHY.md`
-- Identities: `.claude/Identities/`
+- Governance: `.claude/Governance/HIERARCHY.md` *(Archived -- see `.claude/archive/governance/`)*
+- Identities: `.claude/Identities/` *(Archived -- see `.claude/archive/identities/`)*
 
 ## Next Steps for Replication
 1. Count test files in target codebase

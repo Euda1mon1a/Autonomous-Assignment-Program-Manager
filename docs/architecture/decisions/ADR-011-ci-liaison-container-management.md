@@ -104,7 +104,7 @@ docker-compose exec db pg_isready    # Database accepting connections
 
 ## References
 
-- `.claude/Agents/CI_LIAISON.md` - Agent specification
+- `.claude/Agents/CI_LIAISON.md` *(Archived -- see `.claude/archive/agents/`)* - Agent specification
 - `.claude/skills/docker-containerization/SKILL.md` - Docker skill
 - `docker-compose.yml` - Container orchestration config
 - Session 41 handoff documentation
@@ -127,8 +127,8 @@ docker-compose exec db pg_isready    # Database accepting connections
 - [Docker Security Best Practices](../DOCKER_SECURITY_BEST_PRACTICES.md) - Security guidelines
 
 **Agent Specifications:**
-- `.claude/Agents/CI_LIAISON.md` - CI_LIAISON responsibilities including container management
-- `.claude/Agents/COORD_PLATFORM.md` - COORD_PLATFORM (escalation target for docker-compose.yml changes)
+- `.claude/Agents/CI_LIAISON.md` *(Archived -- see `.claude/archive/agents/`)* - CI_LIAISON responsibilities including container management
+- `.claude/Agents/COORD_PLATFORM.md` *(Archived -- see `.claude/archive/agents/`)* - COORD_PLATFORM (escalation target for docker-compose.yml changes)
 
 **Skills:**
 - `.claude/skills/docker-containerization/` - Docker operations skill

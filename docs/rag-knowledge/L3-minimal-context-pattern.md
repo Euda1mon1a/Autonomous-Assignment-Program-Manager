@@ -209,7 +209,7 @@ The L3 pattern works because of the **4-layer MCP enforcement mechanism** (commi
 ```
 
 ### Related Documentation
-- **`.claude/Governance/HIERARCHY.md`** - L3 Standing Order (lines 135-146)
+- **`.claude/Governance/HIERARCHY.md`** *(Archived -- see `.claude/archive/governance/`)* - L3 Standing Order (lines 135-146)
 - **`.claude/skills/CORE/delegation-patterns.md`** - L3 section (lines 21-58)
 - **`.claude/skills/context-aware-delegation/SKILL.md`** - Context levels table (lines 57-99)
 - **`docs/rag-knowledge/delegation-patterns.md`** - RAG-indexed L3 summary

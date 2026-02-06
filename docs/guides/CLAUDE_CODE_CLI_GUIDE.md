@@ -730,11 +730,11 @@ Extended thinking levels (increasing compute):
 │   │   ├── acgme-compliance/
 │   │   ├── schedule-optimization/
 │   │   └── ...
-│   ├── Agents/                  # PAI agent specifications
+│   ├── Agents/                  # PAI agent specifications (Archived -- see .claude/archive/agents/)
 │   │   ├── ORCHESTRATOR.md
 │   │   ├── SCHEDULER.md
 │   │   └── ...
-│   └── Identities/              # Agent identity cards
+│   └── Identities/              # Agent identity cards (Archived -- see .claude/archive/identities/)
 │       └── *.identity.md
 └── mcp-server/                  # MCP server implementation
     └── scheduler_mcp/

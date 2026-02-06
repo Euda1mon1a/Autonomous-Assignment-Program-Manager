@@ -207,4 +207,4 @@ workspace/research/
 
 - `workspace/README.md` - Guidelines in the workspace folder
 - `/cowork-handoff` skill - Automates task handoff
-- `.claude/Governance/HIERARCHY.md` - Agent hierarchy
+- `.claude/archive/governance/HIERARCHY.md` - Agent hierarchy *(Archived in PAI v1)*

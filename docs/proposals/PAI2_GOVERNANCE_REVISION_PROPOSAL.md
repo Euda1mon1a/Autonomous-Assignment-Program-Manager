@@ -1,5 +1,7 @@
 # PAI² Governance Revision Proposal
 
+> **Note:** PAI v1 agent specs, identity cards, and governance files referenced below were archived in Feb 2026. See `.claude/archive/` for historical reference.
+
 **Source:** PLAN_PARTY analysis (10 probes) on `docs/HUMAN_REPORT_ARMY_FM_PHYSICIAN.md`
 **Date:** 2026-01-18
 **Author:** ORCHESTRATOR + G5_PLANNING
@@ -74,8 +76,8 @@ The HUMAN_REPORT identified 7 gaps in PAI² (Parallel Agent Infrastructure) gove
 
 | Stream | Gap | Owner         | File                                          | Notes                    |
 | ------ | --- | ------------- | --------------------------------------------- | ------------------------ |
-| A      | 3   | COORD_TOOLING | `.claude/Identities/ORCHESTRATOR.identity.md` | Plus HIERARCHY.md update |
-| B      | 4   | G2_RECON      | `.claude/Governance/STANDING_ORDERS_INDEX.md` | Generated via script     |
+| A      | 3   | COORD_TOOLING | `.claude/Identities/ORCHESTRATOR.identity.md` *(Archived -- see `.claude/archive/identities/`)* | Plus HIERARCHY.md update |
+| B      | 4   | G2_RECON      | `.claude/Governance/STANDING_ORDERS_INDEX.md` *(Archived -- see `.claude/archive/governance/`)* | Generated via script     |
 | C      | 1   | ARCHITECT     | `.claude/templates/HANDOFF_KIT_v1.md`         | Context kit template     |
 
 **Script:** `scripts/generate-standing-orders-index.sh` (prevents drift)
@@ -87,7 +89,7 @@ The HUMAN_REPORT identified 7 gaps in PAI² (Parallel Agent Infrastructure) gove
 
 | Gap | Owner              | File                                       | Dependency  |
 | --- | ------------------ | ------------------------------------------ | ----------- |
-| 2   | USASOC + COORD_OPS | `.claude/Governance/EXCEPTIONS.md`         | After Gap 4 |
+| 2   | USASOC + COORD_OPS | `.claude/Governance/EXCEPTIONS.md` *(Archived -- see `.claude/archive/governance/`)*         | After Gap 4 |
 | 6   | G6_SIGNAL          | `.claude/skills/force-multiplier/SKILL.md` | None        |
 
 ### Phase 3: Resilience
@@ -108,9 +110,9 @@ The HUMAN_REPORT identified 7 gaps in PAI² (Parallel Agent Infrastructure) gove
 
 | File                                          | Purpose                                |
 | --------------------------------------------- | -------------------------------------- |
-| `.claude/Identities/ORCHESTRATOR.identity.md` | Commander identity card                |
-| `.claude/Governance/EXCEPTIONS.md`            | Consolidated override catalog          |
-| `.claude/Governance/STANDING_ORDERS_INDEX.md` | Generated index of all standing orders |
+| `.claude/Identities/ORCHESTRATOR.identity.md` *(Archived -- see `.claude/archive/identities/`)* | Commander identity card                |
+| `.claude/Governance/EXCEPTIONS.md` *(Archived -- see `.claude/archive/governance/`)* | Consolidated override catalog          |
+| `.claude/Governance/STANDING_ORDERS_INDEX.md` *(Archived -- see `.claude/archive/governance/`)* | Generated index of all standing orders |
 | `.claude/templates/HANDOFF_KIT_v1.md`         | Standard Deputy context kit            |
 | `.claude/SOPs/OFFLINE_SOP.md`                 | Degraded operations playbook           |
 | `scripts/generate-standing-orders-index.sh`   | Automation to prevent index drift      |
@@ -119,7 +121,7 @@ The HUMAN_REPORT identified 7 gaps in PAI² (Parallel Agent Infrastructure) gove
 
 | File                                       | Change                                 |
 | ------------------------------------------ | -------------------------------------- |
-| `.claude/Governance/HIERARCHY.md`          | Add ORCHESTRATOR unique status section |
+| `.claude/Governance/HIERARCHY.md` *(Archived -- see `.claude/archive/governance/`)* | Add ORCHESTRATOR unique status section |
 | `.claude/skills/force-multiplier/SKILL.md` | Add `rag_health` check before queries  |
 | `CLAUDE.md`                                | Add MCP audit log location reference   |
 
@@ -149,13 +151,13 @@ The HUMAN_REPORT identified 7 gaps in PAI² (Parallel Agent Infrastructure) gove
 ### Phase 1
 ```bash
 # Files exist
-ls -la .claude/Identities/ORCHESTRATOR.identity.md
-ls -la .claude/Governance/STANDING_ORDERS_INDEX.md
+ls -la .claude/archive/identities/ORCHESTRATOR.identity.md  # Archived
+ls -la .claude/archive/governance/STANDING_ORDERS_INDEX.md  # Archived
 ls -la .claude/templates/HANDOFF_KIT_v1.md
 
 # Script works and output matches
 ./scripts/generate-standing-orders-index.sh > /tmp/generated.md
-diff .claude/Governance/STANDING_ORDERS_INDEX.md /tmp/generated.md
+diff .claude/archive/governance/STANDING_ORDERS_INDEX.md /tmp/generated.md  # Archived
 ```
 
 ### Phase 2
@@ -164,7 +166,7 @@ diff .claude/Governance/STANDING_ORDERS_INDEX.md /tmp/generated.md
 grep "rag_health" .claude/skills/force-multiplier/SKILL.md
 
 # Exceptions references standing orders
-grep "STANDING_ORDERS" .claude/Governance/EXCEPTIONS.md
+grep "STANDING_ORDERS" .claude/archive/governance/EXCEPTIONS.md  # Archived
 ```
 
 ### Phase 3

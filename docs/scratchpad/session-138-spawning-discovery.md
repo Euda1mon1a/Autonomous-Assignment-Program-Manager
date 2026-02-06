@@ -144,8 +144,8 @@ Also updated `mcp-server/src/scheduler_mcp/server.py` to use `PROJECT_ROOT` env 
 | `.claude/skills/search-party/SKILL.md` | Add Task() limitation warning |
 | `.claude/skills/qa-party/SKILL.md` | Add Task() limitation warning |
 | `.claude/skills/plan-party/SKILL.md` | Add Task() limitation warning |
-| `.claude/Governance/HIERARCHY.md` | Add spawning constraints table |
-| `.claude/Governance/SPAWNING_CONSTRAINTS.md` | New file with full docs |
+| `.claude/Governance/HIERARCHY.md` *(Archived -- see `.claude/archive/governance/`)* | Add spawning constraints table |
+| `.claude/Governance/SPAWNING_CONSTRAINTS.md` *(Archived -- see `.claude/archive/governance/`)* | New file with full docs |
 
 ---
 

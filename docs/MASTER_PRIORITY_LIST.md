@@ -30,7 +30,7 @@ Addresses 7 gaps in PAI² governance framework:
 | 1 | HIGH | No standardized handoff kit ORCH→Deputies |
 | 2 | MEDIUM | Exceptions (USASOC/user/subagent) not surfaced |
 | 3 | LOW | ORCHESTRATOR not in agents.yaml |
-| 4 | MEDIUM | Standing orders dispersed across identity cards |
+| 4 | MEDIUM | Standing orders dispersed across identity cards *(identity cards archived -- see `.claude/archive/identities/`)* |
 | 5 | LOW | MCP audit logs not visible in-repo |
 | 6 | MEDIUM | /force-multiplier lacks RAG health check |
 | 7 | HIGH | No formal offline SOP |

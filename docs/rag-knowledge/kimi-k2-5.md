@@ -40,7 +40,7 @@ The headline feature. For complex tasks, K2.5 self-directs an agent swarm:
 - **80% reduction in end-to-end runtime** on complex tasks
 - Trained via **PARL** (Parallel-Agent Reinforcement Learning)
 
-This is distinct from our PAI hierarchy — K2.5's swarm is model-native parallelism, while PAI uses explicit agent spawning with identity cards and chain-of-command.
+This is distinct from our PAI hierarchy — K2.5's swarm is model-native parallelism, while PAI used explicit agent spawning with identity cards and chain-of-command. *(PAI v1 identity cards archived in Feb 2026 -- see `.claude/archive/identities/`)*
 
 ## Benchmark Performance
 

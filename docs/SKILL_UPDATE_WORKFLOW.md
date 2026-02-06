@@ -1439,7 +1439,7 @@ Action: No changes needed, document success in quarterly retrospective
 ---
 
 **Questions? Issues?**
-- See `.claude/Agents/META_UPDATER.md` for META_UPDATER responsibilities
+- See `.claude/archive/agents/META_UPDATER.md` for META_UPDATER responsibilities *(Archived in PAI v1)*
 - See `docs/ADDING_A_SKILL.md` for skill creation guidance
 - See `docs/RETIRING_SKILLS.md` for deprecation procedures
 
