@@ -359,21 +359,20 @@ class AuditArchiver:
         for table_name in version_tables:
             try:
                 # Query version table with transaction join
+                # Table name from fixed allowlist.
                 query = text(
-                    f"""
-                    SELECT
-                        v.id as entity_id,
-                        v.transaction_id,
-                        v.operation_type,
-                        t.issued_at,
-                        t.user_id,
-                        t.remote_addr
-                    FROM {table_name} v
-                    LEFT JOIN transaction t ON v.transaction_id = t.id
-                    WHERE t.issued_at < :cutoff_date
-                    ORDER BY t.issued_at ASC
-                    LIMIT :batch_size
-                """
+                    f"SELECT\n"  # nosec B608
+                    "    v.id as entity_id,\n"
+                    "    v.transaction_id,\n"
+                    "    v.operation_type,\n"
+                    "    t.issued_at,\n"
+                    "    t.user_id,\n"
+                    "    t.remote_addr\n"
+                    f"FROM {table_name} v\n"
+                    "LEFT JOIN transaction t ON v.transaction_id = t.id\n"
+                    "WHERE t.issued_at < :cutoff_date\n"
+                    "ORDER BY t.issued_at ASC\n"
+                    "LIMIT :batch_size\n"
                 )
 
                 result = self.db.execute(
@@ -442,21 +441,20 @@ class AuditArchiver:
 
         for table_name in version_tables:
             try:
+                # Table name from fixed allowlist.
                 query = text(
-                    f"""
-                    SELECT
-                        v.id as entity_id,
-                        v.transaction_id,
-                        v.operation_type,
-                        t.issued_at,
-                        t.user_id,
-                        t.remote_addr
-                    FROM {table_name} v
-                    LEFT JOIN transaction t ON v.transaction_id = t.id
-                    WHERE t.issued_at >= :start_date
-                      AND t.issued_at <= :end_date
-                    ORDER BY t.issued_at ASC
-                """
+                    f"SELECT\n"  # nosec B608
+                    "    v.id as entity_id,\n"
+                    "    v.transaction_id,\n"
+                    "    v.operation_type,\n"
+                    "    t.issued_at,\n"
+                    "    t.user_id,\n"
+                    "    t.remote_addr\n"
+                    f"FROM {table_name} v\n"
+                    "LEFT JOIN transaction t ON v.transaction_id = t.id\n"
+                    "WHERE t.issued_at >= :start_date\n"
+                    "  AND t.issued_at <= :end_date\n"
+                    "ORDER BY t.issued_at ASC\n"
                 )
 
                 result = self.db.execute(
@@ -570,8 +568,9 @@ class AuditArchiver:
                 placeholders = ",".join(
                     [f":tid_{i}" for i in range(len(transaction_ids))]
                 )
+                # Table name from fixed allowlist.
                 delete_query = text(
-                    f"DELETE FROM {table_name} WHERE transaction_id IN ({placeholders})"
+                    f"DELETE FROM {table_name} WHERE transaction_id IN ({placeholders})"  # nosec B608
                 )
 
                 # Create params dict

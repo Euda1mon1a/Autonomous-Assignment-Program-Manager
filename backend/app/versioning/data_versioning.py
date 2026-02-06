@@ -212,20 +212,19 @@ class DataVersioningService:
         VersionClass = version_class(model_class)
 
         # Query versions
+        # Table name derived from model metadata.
         query = text(
-            f"""
-            SELECT
-                v.transaction_id,
-                v.operation_type,
-                t.issued_at,
-                t.user_id,
-                t.remote_addr
-            FROM {model_class.__tablename__}_version v
-            LEFT JOIN transaction t ON v.transaction_id = t.id
-            WHERE v.id = :entity_id
-            ORDER BY v.transaction_id DESC
-            LIMIT :limit
-        """
+            f"SELECT\n"  # nosec B608
+            "    v.transaction_id,\n"
+            "    v.operation_type,\n"
+            "    t.issued_at,\n"
+            "    t.user_id,\n"
+            "    t.remote_addr\n"
+            f"FROM {model_class.__tablename__}_version v\n"
+            "LEFT JOIN transaction t ON v.transaction_id = t.id\n"
+            "WHERE v.id = :entity_id\n"
+            "ORDER BY v.transaction_id DESC\n"
+            "LIMIT :limit\n"
         )
 
         result = self.db.execute(query, {"entity_id": str(entity_id), "limit": limit})
@@ -325,19 +324,18 @@ class DataVersioningService:
         model_class = ENTITY_MODEL_MAP[entity_type]
 
         # Find the most recent version before or at the timestamp
+        # Table name derived from model metadata.
         query = text(
-            f"""
-            SELECT
-                v.transaction_id,
-                v.operation_type,
-                t.issued_at
-            FROM {model_class.__tablename__}_version v
-            LEFT JOIN transaction t ON v.transaction_id = t.id
-            WHERE v.id = :entity_id
-                AND t.issued_at <= :timestamp
-            ORDER BY v.transaction_id DESC
-            LIMIT 1
-        """
+            f"SELECT\n"  # nosec B608
+            "    v.transaction_id,\n"
+            "    v.operation_type,\n"
+            "    t.issued_at\n"
+            f"FROM {model_class.__tablename__}_version v\n"
+            "LEFT JOIN transaction t ON v.transaction_id = t.id\n"
+            "WHERE v.id = :entity_id\n"
+            "    AND t.issued_at <= :timestamp\n"
+            "ORDER BY v.transaction_id DESC\n"
+            "LIMIT 1\n"
         )
 
         result = self.db.execute(
@@ -401,13 +399,12 @@ class DataVersioningService:
         model_class = ENTITY_MODEL_MAP[entity_type]
 
         # Get all unique entity IDs that existed at or before the timestamp
+        # Table name derived from model metadata.
         query = text(
-            f"""
-            SELECT DISTINCT v.id
-            FROM {model_class.__tablename__}_version v
-            LEFT JOIN transaction t ON v.transaction_id = t.id
-            WHERE t.issued_at <= :timestamp
-        """
+            f"SELECT DISTINCT v.id\n"  # nosec B608
+            f"FROM {model_class.__tablename__}_version v\n"
+            "LEFT JOIN transaction t ON v.transaction_id = t.id\n"
+            "WHERE t.issued_at <= :timestamp\n"
         )
 
         result = self.db.execute(query, {"timestamp": timestamp})

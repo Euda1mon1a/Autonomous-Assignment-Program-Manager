@@ -15,7 +15,7 @@ import zlib
 from datetime import datetime
 from typing import Any
 from urllib.parse import urlencode
-from xml.etree import ElementTree as ET
+from defusedxml import ElementTree as ET
 
 from app.auth.sso.config import SAMLConfig
 

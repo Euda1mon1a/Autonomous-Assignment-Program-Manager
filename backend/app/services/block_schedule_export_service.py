@@ -228,8 +228,8 @@ class BlockScheduleExportService:
         call_assignments: list[dict[str, Any]],
     ) -> str:
         """Generate XML with residents, faculty (from DB), and call."""
+        from defusedxml import minidom
         from xml.etree.ElementTree import Element, SubElement, tostring
-        from xml.dom import minidom
 
         root = Element("schedule")
         root.set("block_start", start_date.isoformat())

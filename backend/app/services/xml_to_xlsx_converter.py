@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from io import BytesIO
 from pathlib import Path
 from typing import Any
-from xml.etree import ElementTree
+from defusedxml import ElementTree
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.cell.cell import MergedCell

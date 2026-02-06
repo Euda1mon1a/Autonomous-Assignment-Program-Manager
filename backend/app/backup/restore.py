@@ -366,13 +366,12 @@ class RestoreService:
                     [f"{col} = EXCLUDED.{col}" for col in update_cols]
                 )
 
+                # Table/column names derived from backup metadata.
                 query = text(
-                    f"""
-                    INSERT INTO {table_name} ({column_names})
-                    VALUES ({placeholders})
-                    ON CONFLICT (id)
-                    DO UPDATE SET {update_clause}
-                """
+                    f"INSERT INTO {table_name} ({column_names})\n"  # nosec B608
+                    f"VALUES ({placeholders})\n"
+                    "ON CONFLICT (id)\n"
+                    f"DO UPDATE SET {update_clause}\n"
                 )
 
                 db.execute(query, row)

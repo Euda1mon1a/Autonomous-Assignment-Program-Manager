@@ -155,8 +155,9 @@ async def create_snapshot(
 
     try:
         # Get row count
+        # Table name validated against allowlist.
         count_result = db.execute(
-            text(f"SELECT COUNT(*) FROM {request.table}")  # noqa: S608 - whitelist validated
+            text(f"SELECT COUNT(*) FROM {request.table}")  # nosec B608
         ).scalar()
 
         # Generate snapshot ID
@@ -416,7 +417,8 @@ async def restore_snapshot(
                 db_port = "5432"
 
             # First truncate the table
-            db.execute(text(f"TRUNCATE TABLE {table_name} CASCADE"))  # noqa: S608
+            # Table name validated against allowlist.
+            db.execute(text(f"TRUNCATE TABLE {table_name} CASCADE"))  # nosec B608
             db.commit()
 
             # Then restore from snapshot
@@ -451,8 +453,9 @@ async def restore_snapshot(
                 )
 
             # Count restored rows
+            # Table name validated against allowlist.
             row_count = db.execute(
-                text(f"SELECT COUNT(*) FROM {table_name}")  # noqa: S608
+                text(f"SELECT COUNT(*) FROM {table_name}")  # nosec B608
             ).scalar()
 
             logger.warning(

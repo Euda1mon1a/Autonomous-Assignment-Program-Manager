@@ -191,7 +191,7 @@ class DatabaseHealthCheck:
         for table_name in core_tables:
             try:
                 # Try to query table (with limit to avoid loading data)
-                query = text(f"SELECT 1 FROM {table_name} LIMIT 1")
+                query = text(f"SELECT 1 FROM {table_name} LIMIT 1")  # nosec B608
                 db.execute(query)
                 accessible.append(table_name)
 

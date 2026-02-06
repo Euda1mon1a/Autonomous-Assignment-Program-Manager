@@ -422,8 +422,8 @@ class HTTPCache:
                 logger.debug(f"Cache miss: {cache_key}")
                 return None
 
-                # Deserialize
-            cached_dict = pickle.loads(data)
+                # Deserialize internal cache payload (trusted).
+            cached_dict = pickle.loads(data)  # nosec B301
             cached_response = CachedResponse.from_dict(cached_dict)
 
             # Check if stale

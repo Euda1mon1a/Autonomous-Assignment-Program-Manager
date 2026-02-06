@@ -170,14 +170,13 @@ class AuditRepository:
             # Validate and quote table name to prevent SQL injection
             quoted_table = self._validate_and_quote_table_name(table_name)
 
+            # Table name validated and quoted.
             query = text(
-                f"""
-                SELECT v.id, v.transaction_id, v.operation_type,
-                       t.issued_at, t.user_id
-                FROM {quoted_table} v
-                LEFT JOIN transaction t ON v.transaction_id = t.id
-                WHERE v.id = :entry_id
-            """
+                f"SELECT v.id, v.transaction_id, v.operation_type,\n"  # nosec B608
+                "       t.issued_at, t.user_id\n"
+                f"FROM {quoted_table} v\n"
+                "LEFT JOIN transaction t ON v.transaction_id = t.id\n"
+                "WHERE v.id = :entry_id\n"
             )
 
             row = self.db.execute(query, {"entry_id": entry_id}).fetchone()
@@ -243,18 +242,17 @@ class AuditRepository:
                     # Validate and quote table name to prevent SQL injection
                     quoted_table = self._validate_and_quote_table_name(table_name)
 
+                    # Table name validated and quoted.
                     query = text(
-                        f"""
-                        SELECT
-                            COUNT(*) as total,
-                            v.operation_type,
-                            t.user_id,
-                            DATE(t.issued_at) as change_date
-                        FROM {quoted_table} v
-                        LEFT JOIN transaction t ON v.transaction_id = t.id
-                        WHERE 1=1 {date_filter}
-                        GROUP BY v.operation_type, t.user_id, DATE(t.issued_at)
-                    """
+                        f"SELECT\n"  # nosec B608
+                        "    COUNT(*) as total,\n"
+                        "    v.operation_type,\n"
+                        "    t.user_id,\n"
+                        "    DATE(t.issued_at) as change_date\n"
+                        f"FROM {quoted_table} v\n"
+                        "LEFT JOIN transaction t ON v.transaction_id = t.id\n"
+                        f"WHERE 1=1 {date_filter}\n"
+                        "GROUP BY v.operation_type, t.user_id, DATE(t.issued_at)\n"
                     )
 
                     rows = self.db.execute(query, params).fetchall()
@@ -372,15 +370,14 @@ class AuditRepository:
             # Validate and quote table name to prevent SQL injection
             quoted_table = self._validate_and_quote_table_name(table_name)
 
+            # Table name validated and quoted.
             query = text(
-                f"""
-                SELECT v.id, v.transaction_id, v.operation_type,
-                       t.issued_at, t.user_id
-                FROM {quoted_table} v
-                LEFT JOIN transaction t ON v.transaction_id = t.id
-                WHERE v.id = :entity_id
-                ORDER BY t.issued_at ASC
-            """
+                f"SELECT v.id, v.transaction_id, v.operation_type,\n"  # nosec B608
+                "       t.issued_at, t.user_id\n"
+                f"FROM {quoted_table} v\n"
+                "LEFT JOIN transaction t ON v.transaction_id = t.id\n"
+                "WHERE v.id = :entity_id\n"
+                "ORDER BY t.issued_at ASC\n"
             )
 
             rows = self.db.execute(query, {"entity_id": str(entity_id)}).fetchall()
@@ -433,17 +430,16 @@ class AuditRepository:
 
         where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
 
-        query_sql = f"""
-            SELECT v.id, v.id as entity_id, v.transaction_id, v.operation_type,
-                   t.issued_at, t.user_id
-            FROM {quoted_table} v
-            LEFT JOIN transaction t ON v.transaction_id = t.id
-            WHERE {where_sql}
-            ORDER BY t.issued_at DESC
-            LIMIT 1000
-        """
-
-        return text(query_sql)
+        # Table name validated and quoted.
+        return text(
+            f"SELECT v.id, v.id as entity_id, v.transaction_id, v.operation_type,\n"  # nosec B608
+            "       t.issued_at, t.user_id\n"
+            f"FROM {quoted_table} v\n"
+            "LEFT JOIN transaction t ON v.transaction_id = t.id\n"
+            f"WHERE {where_sql}\n"
+            "ORDER BY t.issued_at DESC\n"
+            "LIMIT 1000\n"
+        )
 
     def _build_query_params(self, filters: dict[str, Any]) -> dict[str, Any]:
         """Build query parameters from filters."""

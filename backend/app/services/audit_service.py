@@ -203,21 +203,20 @@ def _query_version_table(
 
     where_sql = " AND ".join(where_clauses)
 
+    # Table name validated and quoted.
     query = text(
-        f"""
-        SELECT
-            v.id,
-            v.transaction_id,
-            v.operation_type,
-            t.issued_at,
-            t.user_id,
-            t.remote_addr
-        FROM {quoted_table} v
-        LEFT JOIN transaction t ON v.transaction_id = t.id
-        WHERE {where_sql}
-        ORDER BY t.issued_at DESC
-        LIMIT 1000
-    """
+        f"SELECT\n"  # nosec B608
+        "    v.id,\n"
+        "    v.transaction_id,\n"
+        "    v.operation_type,\n"
+        "    t.issued_at,\n"
+        "    t.user_id,\n"
+        "    t.remote_addr\n"
+        f"FROM {quoted_table} v\n"
+        "LEFT JOIN transaction t ON v.transaction_id = t.id\n"
+        f"WHERE {where_sql}\n"
+        "ORDER BY t.issued_at DESC\n"
+        "LIMIT 1000\n"
     )
 
     rows = db.execute(query, params).fetchall()

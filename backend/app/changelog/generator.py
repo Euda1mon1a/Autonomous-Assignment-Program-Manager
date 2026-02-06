@@ -10,8 +10,10 @@ Orchestrates the changelog generation process:
 
 import json
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
+from tempfile import gettempdir
 from typing import Any
 
 from app.changelog.differ import APIDiff, APIDiffer
@@ -20,17 +22,25 @@ from app.changelog.formatter import ChangelogFormatter, OutputFormat
 logger = logging.getLogger(__name__)
 
 
+def _default_storage_path() -> Path:
+    env_path = os.getenv("API_VERSION_STORAGE_DIR")
+    if env_path:
+        return Path(env_path)
+    return Path(gettempdir()) / "api_versions"
+
+
 class VersionHistory:
     """Manages version history storage and retrieval."""
 
-    def __init__(self, storage_path: str = "/tmp/api_versions") -> None:
+    def __init__(self, storage_path: str | Path | None = None) -> None:
         """
         Initialize version history manager.
 
         Args:
             storage_path: Directory to store version snapshots
         """
-        self.storage_path = Path(storage_path)
+        storage_root = storage_path or _default_storage_path()
+        self.storage_path = Path(storage_root)
         self.storage_path.mkdir(parents=True, exist_ok=True)
 
     def save_version(
@@ -142,7 +152,7 @@ class ChangelogGenerator:
     - Version history tracking
     """
 
-    def __init__(self, storage_path: str = "/tmp/api_versions") -> None:
+    def __init__(self, storage_path: str | Path | None = None) -> None:
         """
         Initialize changelog generator.
 

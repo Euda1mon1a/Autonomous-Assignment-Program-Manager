@@ -12,6 +12,7 @@ Manages task queues with advanced features:
 import json
 import logging
 import os
+import tempfile
 from datetime import datetime
 from typing import Any
 
@@ -415,7 +416,8 @@ class QueueManager:
                 logger.warning(f"Redis DLQ failed, using file fallback: {redis_error}")
 
                 # Fallback to file storage
-            dlq_dir = os.getenv("DLQ_DIR", "/tmp/dlq")
+            default_dlq_dir = os.path.join(tempfile.gettempdir(), "dlq")
+            dlq_dir = os.getenv("DLQ_DIR", default_dlq_dir)
             os.makedirs(dlq_dir, exist_ok=True)
 
             filepath = os.path.join(dlq_dir, f"{job_id}.json")
