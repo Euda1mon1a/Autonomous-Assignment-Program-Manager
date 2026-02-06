@@ -1,7 +1,7 @@
 # Best Practices & Gotchas
 
 > **Purpose:** Prevent common bugs and headaches. Read this before starting work.
-> **Last Updated:** 2026-01-23
+> **Last Updated:** 2026-02-05
 
 ---
 
@@ -19,6 +19,7 @@
 10. [Debugging Flowcharts](#10-debugging-flowcharts)
 11. [CP-SAT Activity Solver Architecture (Two Grids)](#11-cp-sat-activity-solver-architecture-two-grids)
 12. [Antipatterns - Things NOT to Do](#12-antipatterns---things-not-to-do)
+13. [CI/CD in the Vibecoding Age](#13-cicd-in-the-vibecoding-age)
 
 ---
 
@@ -917,6 +918,73 @@ The solver will pull a faculty member to VAS supervision (cost 8) rather than le
 |----------------|--------------|-------------------|
 | Multiple TODO/priority files | Contradictions, unclear source of truth | Single MASTER_PRIORITY_LIST.md |
 | Session scratchpads referencing other scratchpads | Broken links when files move/delete | Reference committed docs or inline the info |
+
+---
+
+## 13. CI/CD in the Vibecoding Age
+
+### The Shift
+
+Traditional CI pipelines were designed for a world where:
+- Code was written by humans who make typos, forget imports, and skip tests
+- PRs were reviewed by humans who miss things under time pressure
+- Linting and testing happened "somewhere else" because local tooling was inconsistent
+
+That world is changing. With LLM-assisted development, the quality gate has moved **left** — way left.
+
+### Why CI Is Disabled (For Now)
+
+This project runs **30+ pre-commit hooks** locally on every commit:
+
+| Category | Hooks | What They Catch |
+|----------|-------|-----------------|
+| Security | PII scanner, Gitleaks, Bandit | Real names, secrets, vulnerabilities |
+| Code quality | Ruff lint, Ruff format, ESLint, TSC | Style, bugs, type errors |
+| Data integrity | ACGME compliance, schedule safety, swap validation | Domain rule violations |
+| Contract enforcement | Modron March, D&D hooks, Gorgon's Gaze | Type drift, enum mismatches |
+| Convention | Conventional commits, migration name length | Commit hygiene |
+
+This is more thorough than most CI pipelines. CI was adding ~3 min of latency per push to re-run checks that already passed locally.
+
+Additionally:
+- **GitHub Codex** reviews PRs with full codebase context
+- **Claude Code** catches bugs in real-time during development (F821, missing imports, type errors)
+- **Pre-commit hooks are deterministic** — same environment as development, no "works on my machine" gap
+
+### When to Turn CI Back On
+
+CI becomes valuable again when any of these are true:
+
+| Trigger | Why |
+|---------|-----|
+| **Multiple developers** | Can't enforce everyone's local hooks are configured identically |
+| **Production deployment** | Need a clean-room build verification before release |
+| **External contributors** | PRs from forks won't have your pre-commit hooks |
+| **Compliance audit** | Auditors want CI logs as evidence, not "trust me, I ran hooks" |
+| **CD pipeline** | Automated deployment needs a CI gate |
+
+### Re-enabling
+
+```bash
+# GitHub Actions
+gh api repos/OWNER/REPO/actions/permissions -X PUT -F enabled=true -f allowed_actions=all
+
+# Dependabot (CVE alerts)
+gh api repos/OWNER/REPO/vulnerability-alerts -X PUT
+```
+
+### The Broader Industry Trend
+
+GitHub is exploring making PRs optional. Vercel ships from `main`. The ceremony around code review and CI was built for human-speed, human-accuracy development. When your development loop is:
+
+1. LLM writes code with type awareness
+2. 30+ hooks validate on commit
+3. AI reviews the PR
+4. Single developer with full context
+
+...CI is checking homework that was already graded three times.
+
+This is not an argument against CI in general. It's an argument that **the right quality gate depends on your team size, deployment target, and tooling maturity.** For a single-developer pre-production project with aggressive local gating, CI is overhead. For a 50-person team shipping to production, it's essential.
 
 ---
 
