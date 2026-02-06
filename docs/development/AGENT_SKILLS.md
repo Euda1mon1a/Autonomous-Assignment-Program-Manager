@@ -2,7 +2,9 @@
 
 > **Complete reference for AI Agent Skills in the Residency Scheduler**
 >
-> Last Updated: 2025-12-26
+> Last Updated: 2026-02-06
+>
+> Note: Skills inventory updated (44 skills). Notable additions: check-camelcase, check-codex, codex-*-triage, resilience-*, force-multiplier.
 
 ---
 
