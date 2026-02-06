@@ -31,7 +31,8 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.logging import get_logger
@@ -159,6 +160,9 @@ class CPSATActivitySolver:
         self._procedure_requires_cert: dict[UUID, bool] = {}
         self._vas_procedure_id: UUID | None = None
         self._sm_procedure_id: UUID | None = None
+        self._legacy_clinic_caps: dict[UUID, tuple[int | None, int | None]] | None = (
+            None
+        )
 
     def _is_fmc_clinic_activity(self, activity: Activity | None) -> bool:
         if not activity:
@@ -1362,6 +1366,7 @@ class CPSATActivitySolver:
             # ==================================================
         faculty_clinic_shortfalls: list[Any] = []
         faculty_clinic_overages: list[Any] = []
+        faculty_clinic_floor_constraints = 0
         if faculty_slots and clinic_activity:
             faculty_by_id: dict[UUID, Person] = {}
             for s_i in faculty_slots:
@@ -1391,6 +1396,26 @@ class CPSATActivitySolver:
                 if not clinic_vars:
                     continue
 
+                hard_min = 0
+                # Keep at least one clinic session per week for faculty with clinic
+                # requirements, unless clinic floors are explicitly disabled.
+                if not disable_clinic_floor and min_needed > 0:
+                    hard_min = min(1, min_needed, len(clinic_vars))
+                    if hard_min > 0:
+                        model.Add(sum(clinic_vars) >= hard_min)
+                        faculty_clinic_floor_constraints += 1
+
+                # Soft remainder: allow controlled shortfall above the hard floor
+                # to avoid hard infeasibility in tight supervision weeks.
+                if min_needed > hard_min:
+                    shortfall = model.NewIntVar(
+                        0,
+                        min_needed - hard_min,
+                        f"fac_clinic_short_{str(faculty_id)[:8]}_{week}",
+                    )
+                    model.Add(sum(clinic_vars) + shortfall >= min_needed)
+                    faculty_clinic_shortfalls.append(shortfall)
+
                 over_max = model.NewIntVar(
                     0,
                     len(clinic_vars),
@@ -1399,12 +1424,17 @@ class CPSATActivitySolver:
                 model.Add(sum(clinic_vars) <= max_allowed + over_max)
                 faculty_clinic_overages.append(over_max)
 
-                # ==================================================
-                # FACULTY EQUITY (admin/academic/supervision)
-                # - Admin (GME/DFM) by role
-                # - Supervision (AT/PCAT) by role
-                # - Academic (LEC/ADV) across all faculty
-                # ==================================================
+        if faculty_clinic_floor_constraints:
+            logger.info(
+                f"Added faculty clinic floor constraints: {faculty_clinic_floor_constraints}"
+            )
+
+            # ==================================================
+            # FACULTY EQUITY (admin/academic/supervision)
+            # - Admin (GME/DFM) by role
+            # - Supervision (AT/PCAT) by role
+            # - Academic (LEC/ADV) across all faculty
+            # ==================================================
         faculty_admin_equity_ranges: list[Any] = []
         faculty_academic_equity_ranges: list[Any] = []
         faculty_supervision_equity_ranges: list[Any] = []
@@ -2543,6 +2573,7 @@ class CPSATActivitySolver:
             # EXTRACT SOLUTION & UPDATE DATABASE
             # ==================================================
         updated = 0
+        faculty_clinic_assigned = 0
         for s_i, slot in enumerate(slots):
             for act_id in slot_allowed[s_i]:
                 if solver.Value(a[s_i, act_id]) == 1:
@@ -2556,10 +2587,20 @@ class CPSATActivitySolver:
                     )
                     slot.source = AssignmentSource.SOLVER.value
                     updated += 1
+                    if (
+                        clinic_activity
+                        and slot.person
+                        and slot.person.type == "faculty"
+                        and act_id == clinic_activity.id
+                    ):
+                        faculty_clinic_assigned += 1
                     break
 
         self.session.flush()
         logger.info(f"Activity solver updated {updated} slots")
+        logger.info(
+            f"Faculty clinic assignments in solution: {faculty_clinic_assigned}"
+        )
 
         # Apply VAS faculty overrides decided by the solver.
         # VAS is 1:1 dedicated faculty supervision (minor surgery) —
@@ -3015,11 +3056,79 @@ class CPSATActivitySolver:
 
     def _get_faculty_clinic_caps(self, faculty: Person) -> tuple[int, int]:
         """Return (min, max) weekly clinic half-days for a faculty member."""
-        max_c = getattr(faculty, "max_clinic_halfdays_per_week", 4) or 0
-        if max_c < 0:
-            max_c = 0
-            # Policy: no minimum clinic requirement to preserve AT capacity.
-        return 0, max_c
+
+        def _coerce_non_negative_int(value: Any) -> int | None:
+            if value is None:
+                return None
+            try:
+                parsed = int(value)
+            except (TypeError, ValueError):
+                return None
+            return max(parsed, 0)
+
+        min_new = _coerce_non_negative_int(
+            getattr(faculty, "min_clinic_halfdays_per_week", None)
+        )
+        max_new = _coerce_non_negative_int(
+            getattr(faculty, "max_clinic_halfdays_per_week", None)
+        )
+        legacy_min = _coerce_non_negative_int(getattr(faculty, "clinic_min", None))
+        legacy_max = _coerce_non_negative_int(getattr(faculty, "clinic_max", None))
+
+        # Some deployments still have legacy clinic_min/clinic_max persisted
+        # in DB but not mapped on the Person model. Load those values lazily.
+        if legacy_min is None and legacy_max is None:
+            legacy_min_db, legacy_max_db = self._get_legacy_clinic_caps_for_person(
+                getattr(faculty, "id", None)
+            )
+            legacy_min = _coerce_non_negative_int(legacy_min_db)
+            legacy_max = _coerce_non_negative_int(legacy_max_db)
+
+        # Backward compatibility: some datasets still carry limits in legacy fields.
+        use_legacy = (min_new in (None, 0) and max_new in (None, 0)) and (
+            (legacy_min or 0) > 0 or (legacy_max or 0) > 0
+        )
+
+        if use_legacy:
+            min_c = legacy_min or 0
+            max_c = legacy_max if legacy_max is not None else min_c
+        else:
+            min_c = min_new or 0
+            max_c = max_new if max_new is not None else 0
+
+        # Normalize contradictory inputs instead of silently dropping the minimum.
+        if max_c < min_c:
+            max_c = min_c
+
+        return min_c, max_c
+
+    def _get_legacy_clinic_caps_for_person(
+        self, person_id: UUID | None
+    ) -> tuple[int | None, int | None]:
+        """Read legacy clinic_min/clinic_max from DB when model fields are unavailable."""
+        if not person_id:
+            return None, None
+
+        if self._legacy_clinic_caps is None:
+            self._legacy_clinic_caps = {}
+            try:
+                rows = self.session.execute(
+                    text("SELECT id, clinic_min, clinic_max FROM people")
+                ).all()
+            except SQLAlchemyError:
+                # Legacy columns may not exist in newer schemas.
+                return None, None
+
+            for raw_id, raw_min, raw_max in rows:
+                try:
+                    normalized_id = (
+                        raw_id if isinstance(raw_id, UUID) else UUID(str(raw_id))
+                    )
+                except (TypeError, ValueError):
+                    continue
+                self._legacy_clinic_caps[normalized_id] = (raw_min, raw_max)
+
+        return self._legacy_clinic_caps.get(person_id, (None, None))
 
     def _get_admin_activity_for_faculty(
         self, faculty: Person, activities: dict[str, Activity]
