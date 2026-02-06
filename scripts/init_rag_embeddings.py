@@ -50,7 +50,6 @@ DOC_TYPE_MAP = {
     "military-specific.md": "military_specific",
     "resilience-concepts.md": "resilience_concepts",
     "user-guide-faq.md": "user_guide_faq",
-    "session-learnings.md": "session_learnings",
     "session-protocols.md": "session_protocols",
     "delegation-patterns.md": "delegation_patterns",
     "L3-minimal-context-pattern.md": "delegation_patterns",
@@ -61,6 +60,7 @@ DOC_TYPE_MAP = {
     "test-coverage-guide.md": "ai_patterns",
     "performance-testing-guide.md": "ai_patterns",
     "rag-ingestion-patterns.md": "ai_patterns",
+    "codex53-vs-opus46-capabilities.md": "ai_patterns",
 }
 
 # Base path for knowledge documents

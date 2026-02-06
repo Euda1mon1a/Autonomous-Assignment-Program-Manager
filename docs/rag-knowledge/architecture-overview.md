@@ -178,7 +178,7 @@ class PersonCreate(BaseModel):
 | Backend | 8000 | FastAPI |
 | Database | 5432 | PostgreSQL |
 | Redis | 6379 | Cache/Celery broker |
-| MCP | 8081 | AI tools server |
+| MCP | 8080 | AI tools server |
 
 ## Security Architecture
 
@@ -201,15 +201,34 @@ Redis serves as:
 - Cache layer
 - Rate limit storage
 
+## Scheduling Engine
+
+The scheduling engine uses a two-solver pipeline:
+
+### Pipeline
+
+1. **Preload phase** — Lock FMIT, leave, conferences, holidays
+2. **Main CP-SAT solver** (`solvers.py`) — Faculty activities authoritative
+3. **Activity solver** (`activity_solver.py`) — Resident half-day activities
+4. **Validation** — ACGME compliance check
+
+### Two-Grid Architecture
+
+- **Main solver** assigns faculty (C, AT, SM, ADM) — these are authoritative
+- **Activity solver** assigns residents — faculty appear as frozen baselines
+- Flag `include_faculty_slots=False` (default) keeps faculty off the activity solver grid
+- VAS uses targeted override variables to "poke holes" in the frozen faculty grid
+- Credential penalty system (`FACULTY_CREDENTIAL_MISMATCH_PENALTY`) enforces faculty-procedure matching
+
 ## MCP Integration
 
-The MCP (Model Context Protocol) server provides 34+ AI tools:
-- Schedule validation
+The MCP (Model Context Protocol) server provides 50+ AI tools:
+- Schedule validation and generation
 - ACGME compliance checking
-- Resilience analysis
+- Resilience analysis (defense levels, burnout detection)
 - RAG knowledge search
-- Conflict detection
-- Swap analysis
+- Conflict detection and swap analysis
+- Credential and credential penalty tools
 
 ## Monitoring
 

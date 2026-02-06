@@ -552,6 +552,20 @@ The system sends notifications via:
 - Educational requirements must be met
 - Some flexibility, but not unlimited
 
+## Procedure and Credential Questions
+
+### What happens if my supervising faculty isn't credentialed for my procedure?
+
+The scheduling system uses a credential penalty to prefer credentialed faculty. If a credentialed faculty member is available, they will be assigned. If not, any available faculty will be assigned — the system prioritizes having supervision over having no one. Talk to the program coordinator if you consistently see uncredentialed faculty assigned to your procedures.
+
+### Why was a different faculty member assigned to my VAS slot?
+
+VAS (vasectomy) requires dedicated 1:1 faculty supervision for the entire half-day. The scheduler may reassign a faculty member from their regular activity (clinic, admin) to VAS supervision if a VAS-credentialed faculty is needed. This is an optimization — the system balances VAS coverage against overall clinic supervision needs.
+
+### Can I swap a procedure slot if my swap partner isn't credentialed?
+
+Swaps involving procedure slots (VAS, PROC) are validated for credential compatibility. If neither your swap partner nor the available faculty are credentialed for the procedure, the system will flag this during validation. The swap may still be approved if coverage can be maintained.
+
 ## Additional Resources
 
 ### Educational materials

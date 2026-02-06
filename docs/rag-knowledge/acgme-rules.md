@@ -216,6 +216,17 @@ Automated scheduling systems must:
 - Cannot schedule: Monday call, Tuesday call, Wednesday call (violates every-3rd-night rule)
 - Acceptable: Monday call, Thursday call, Sunday call (minimum 2 nights between)
 
+## Procedure Credentialing
+
+Certain procedures require faculty with specific credentials:
+
+- **VAS (Vasectomy):** Requires dedicated 1:1 faculty supervision by a VAS-credentialed physician. This is a minor surgery, not a "pop-in" supervision — the faculty member must be exclusively assigned to VAS alongside the resident for the entire half-day.
+- **PROC (Procedures):** Requires a credentialed faculty member present for supervision.
+
+The scheduling system enforces credential matching through a soft penalty (`FACULTY_CREDENTIAL_MISMATCH_PENALTY`). The solver prefers credentialed faculty but won't make the schedule infeasible if none are available.
+
+**Key distinction:** VAS/PROC each require +1.0 AT (dedicated faculty), unlike regular clinic which needs only 0.25-0.5 AT per resident.
+
 ## Summary of Key Numbers
 
 - **80 hours/week** maximum (4-week average)
