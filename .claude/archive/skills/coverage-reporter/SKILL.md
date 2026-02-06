@@ -185,4 +185,3 @@ When coverage gaps identified:
 - Coverage requirements in CLAUDE.md
 - See test-writer skill for test generation
 - Testing patterns in python-testing-patterns skill
-
