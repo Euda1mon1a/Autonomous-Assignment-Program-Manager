@@ -453,6 +453,22 @@ repos:
         stages: [pre-commit]
 
   # ============================================================================
+  # PHASE 26: Pre-Push Safety (Githyanki Gatekeeper)
+  # ============================================================================
+
+  # Guards main/master from force pushes and direct pushes
+  # Named after D&D's Githyanki who guard their Astral fortresses with legendary vigilance
+  - repo: local
+    hooks:
+      - id: githyanki-gatekeeper
+        name: Githyanki Gatekeeper (pre-push safety)
+        entry: scripts/githyanki-gatekeeper.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [push]
+
+  # ============================================================================
   # Configuration
   # ============================================================================
 

@@ -231,14 +231,14 @@
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-| ID | Task | Effort | Files | Verification |
-|----|------|--------|-------|--------------|
-| P2.1 | Add pre-push hook for remote-aware validation | 1h | `.pre-commit-config.yaml` | Push blocked on failures |
-| P2.2 | Fix existing MyPy violations | 2h | `backend/app/**/*.py` | Zero errors |
-| P2.3 | Graduate MyPy to blocking (remove `|| true`) | 30m | `.pre-commit-config.yaml` | Commits blocked on type errors |
-| P2.4 | Fix existing Bandit violations | 1h | `backend/app/**/*.py` | Zero high/medium issues |
-| P2.5 | Graduate Bandit to blocking (remove `|| true`) | 30m | `.pre-commit-config.yaml` | Commits blocked on security issues |
-| P2.6 | Audit and fix `|| true` patterns in validate-*.sh | 1h | `scripts/validate-*.sh` | No silent failures |
+| ID | Task | Effort | Files | Verification | Status |
+|----|------|--------|-------|--------------|--------|
+| P2.1 | Add pre-push hook for remote-aware validation | 1h | `.pre-commit-config.yaml`, `scripts/githyanki-gatekeeper.sh` | Push blocked on failures | ✅ COMPLETE (2026-02-06) |
+| P2.2 | Fix existing MyPy violations | 2h | `backend/app/**/*.py` | Zero errors | PENDING |
+| P2.3 | Graduate MyPy to blocking (remove `|| true`) | 30m | `.pre-commit-config.yaml` | Commits blocked on type errors | PENDING |
+| P2.4 | Fix existing Bandit violations | 1h | `backend/app/**/*.py` | Zero high/medium issues | PENDING |
+| P2.5 | Graduate Bandit to blocking (remove `|| true`) | 30m | `.pre-commit-config.yaml` | Commits blocked on security issues | PENDING |
+| P2.6 | Audit and fix `|| true` patterns in validate-*.sh | 1h | `scripts/validate-*.sh` | No silent failures | PENDING |
 
 **Verification Checklist:**
 - [ ] `git push` blocked when pre-push hooks fail
