@@ -107,6 +107,22 @@ def test_conversion_stats_tracks_mapped_and_unmapped_people(tmp_path):
     assert ws.cell(row=31, column=6).value == "GME"
     assert ws.cell(row=31, column=7).value == "C"
 
+    assert "Export_QA" in wb.sheetnames
+    qa = wb["Export_QA"]
+    assert qa["A1"].value == "Export QA Summary"
+    assert qa["B3"].value == "2026-03-12"
+    assert qa["B4"].value == "2026-03-12"
+    # Code totals from payload: residents C=1, faculty C=1 => combined C=2.
+    c_row = None
+    for row in range(14, 40):
+        if qa.cell(row=row, column=1).value == "C":
+            c_row = row
+            break
+    assert c_row is not None
+    assert qa.cell(row=c_row, column=2).value == 1
+    assert qa.cell(row=c_row, column=3).value == 1
+    assert qa.cell(row=c_row, column=4).value == 2
+
 
 def test_strict_row_mapping_raises_for_unmapped_people(tmp_path):
     template_path = tmp_path / "template.xlsx"
@@ -157,3 +173,51 @@ def test_converter_unmerges_schedule_cells_before_writing(tmp_path):
     out_ws = out_wb["Block Template2"]
     assert out_ws.cell(row=9, column=6).value == "C"
     assert out_ws.cell(row=9, column=7).value == "AT"
+
+
+def test_can_disable_export_qa_sheet(tmp_path):
+    template_path = tmp_path / "template.xlsx"
+    structure_path = tmp_path / "structure.xml"
+    output_path = tmp_path / "out.xlsx"
+    _write_template(template_path)
+    _write_structure_xml(structure_path)
+
+    converter = XMLToXlsxConverter(
+        template_path=template_path,
+        structure_xml_path=structure_path,
+        use_block_template2=True,
+        apply_colors=False,
+        strict_row_mapping=True,
+        include_qa_sheet=False,
+    )
+    converter.convert_from_data(_one_day_payload_only_mapped(), output_path=output_path)
+
+    wb = load_workbook(output_path, data_only=False)
+    assert "Export_QA" not in wb.sheetnames
+
+
+def test_prunes_empty_placeholder_sheets(tmp_path):
+    template_path = tmp_path / "template.xlsx"
+    structure_path = tmp_path / "structure.xml"
+    output_path = tmp_path / "out.xlsx"
+    _write_template(template_path)
+    _write_structure_xml(structure_path)
+
+    # Add an empty placeholder sheet similar to template artifacts.
+    wb = load_workbook(template_path)
+    wb.create_sheet("Sheet1")
+    wb.save(template_path)
+
+    converter = XMLToXlsxConverter(
+        template_path=template_path,
+        structure_xml_path=structure_path,
+        use_block_template2=True,
+        apply_colors=False,
+        strict_row_mapping=True,
+    )
+    converter.convert_from_data(_one_day_payload_only_mapped(), output_path=output_path)
+
+    out_wb = load_workbook(output_path, data_only=False)
+    assert "Block Template2" in out_wb.sheetnames
+    assert "Export_QA" in out_wb.sheetnames
+    assert "Sheet1" not in out_wb.sheetnames

@@ -34,6 +34,7 @@ class CanonicalScheduleExportService:
         academic_year: int,
         include_faculty: bool = True,
         include_overrides: bool = True,
+        include_qa_sheet: bool = True,
         output_path: Path | str | None = None,
     ) -> bytes:
         """Export a block schedule to XLSX using the canonical template."""
@@ -52,6 +53,7 @@ class CanonicalScheduleExportService:
             use_block_template2=True,
             apply_colors=True,
             strict_row_mapping=True,
+            include_qa_sheet=include_qa_sheet,
         )
         return converter.convert_from_json(data, output_path)
 

@@ -70,6 +70,11 @@ def main() -> int:
         action="store_true",
         help="Exclude faculty rows from export",
     )
+    parser.add_argument(
+        "--no-qa",
+        action="store_true",
+        help="Do not add Export_QA worksheet with explicit code totals",
+    )
 
     args = parser.parse_args()
     _load_env()
@@ -89,9 +94,12 @@ def main() -> int:
             block_number=block_number,
             academic_year=academic_year,
             include_faculty=not args.no_faculty,
+            include_qa_sheet=not args.no_qa,
             output_path=output_path,
         )
         print(f"Exported block {block_number} AY{academic_year} to {output_path}")
+        if not args.no_qa:
+            print("Included worksheet: Export_QA")
     finally:
         session.close()
 

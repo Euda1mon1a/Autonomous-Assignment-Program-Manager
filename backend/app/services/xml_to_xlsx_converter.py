@@ -15,6 +15,7 @@ Legacy pipeline:
 
 from __future__ import annotations
 
+from collections import Counter
 from copy import copy
 from datetime import date, datetime, timedelta
 from io import BytesIO
@@ -98,6 +99,7 @@ class XMLToXlsxConverter:
         structure_xml_path: Path | str | None = None,
         use_block_template2: bool = True,
         strict_row_mapping: bool = False,
+        include_qa_sheet: bool = True,
     ) -> None:
         """
         Initialize converter with optional template.
@@ -111,12 +113,15 @@ class XMLToXlsxConverter:
             use_block_template2: If True, use Block Template2 column layout (production).
                                 If False, use ROSETTA layout (validation).
             strict_row_mapping: If True, fail export when a person name has no row mapping.
+            include_qa_sheet: If True, add an Export_QA worksheet with explicit
+                code totals and per-faculty clinic counts.
         """
         self.template_path = Path(template_path) if template_path else None
         self.apply_colors = apply_colors
         self.color_scheme = get_color_scheme() if apply_colors else None
         self.use_block_template2 = use_block_template2
         self.strict_row_mapping = strict_row_mapping
+        self.include_qa_sheet = include_qa_sheet
 
         # Load row mappings from structure XML if provided
         self.row_mappings: dict[str, int] = {}
@@ -265,6 +270,10 @@ class XMLToXlsxConverter:
             self._fill_call_row(sheet, call_rows, block_start, block_end)
         stats["call_nights_input"] = len(call_rows)
         self.last_conversion_stats = stats
+        if self.include_qa_sheet and self.use_block_template2:
+            self._write_export_qa_sheet(wb, data, stats)
+        if self.use_block_template2:
+            self._prune_empty_sheets(wb, keep={"Block Template2", "Export_QA"})
 
         # Save to bytes
         buffer = BytesIO()
@@ -330,6 +339,157 @@ class XMLToXlsxConverter:
         if unmerged:
             logger.info(f"Unmerged {unmerged} schedule cell ranges for AM/PM fidelity")
         return unmerged
+
+    def _normalize_code(self, value: Any) -> str:
+        if value is None:
+            return ""
+        code = str(value).strip().upper()
+        return code
+
+    def _collect_people_code_counts(
+        self, people: list[dict[str, Any]]
+    ) -> list[tuple[str, Counter[str]]]:
+        rows: list[tuple[str, Counter[str]]] = []
+        for person in sorted(people, key=lambda p: str(p.get("name", ""))):
+            name = str(person.get("name", "") or "").strip()
+            if not name:
+                continue
+            counter: Counter[str] = Counter()
+            for day in person.get("days", []) or []:
+                am = self._normalize_code(day.get("am", ""))
+                pm = self._normalize_code(day.get("pm", ""))
+                if am:
+                    counter[am] += 1
+                if pm:
+                    counter[pm] += 1
+            rows.append((name, counter))
+        return rows
+
+    def _write_export_qa_sheet(
+        self, wb: Workbook, data: dict[str, Any], stats: dict[str, Any]
+    ) -> None:
+        """Write a human-readable QA sheet with explicit code breakdowns."""
+        if "Export_QA" in wb.sheetnames:
+            del wb["Export_QA"]
+        qa = wb.create_sheet("Export_QA")
+
+        bold = Font(bold=True)
+        qa["A1"] = "Export QA Summary"
+        qa["A1"].font = bold
+        qa["A2"] = "Generated UTC"
+        qa["B2"] = f"{datetime.utcnow().isoformat(timespec='seconds')}Z"
+        qa["A3"] = "Block Start"
+        qa["B3"] = str(stats.get("block_start", ""))
+        qa["A4"] = "Block End"
+        qa["B4"] = str(stats.get("block_end", ""))
+        qa["A5"] = "Source"
+        qa["B5"] = str(data.get("source", "unknown"))
+        qa["A6"] = "Unmerged Schedule Ranges"
+        qa["B6"] = int(stats.get("schedule_cells_unmerged", 0))
+
+        qa["A8"] = "Section"
+        qa["B8"] = "People Input"
+        qa["C8"] = "People Written"
+        qa["D8"] = "Unmapped Names"
+        qa["E8"] = "Non-empty Cells"
+        for cell in ("A8", "B8", "C8", "D8", "E8"):
+            qa[cell].font = bold
+
+        for idx, section in enumerate(("residents", "faculty"), start=9):
+            section_stats = stats.get(section, {})
+            qa.cell(row=idx, column=1, value=section.title())
+            qa.cell(row=idx, column=2, value=int(section_stats.get("people_input", 0)))
+            qa.cell(
+                row=idx, column=3, value=int(section_stats.get("people_written", 0))
+            )
+            unmapped = section_stats.get("unmapped_names", []) or []
+            qa.cell(row=idx, column=4, value=", ".join(str(n) for n in unmapped))
+            codes_written = section_stats.get("codes_written", {}) or {}
+            qa.cell(
+                row=idx, column=5, value=sum(int(v) for v in codes_written.values())
+            )
+
+        resident_codes = Counter(
+            {
+                k: int(v)
+                for k, v in (
+                    stats.get("residents", {}).get("codes_written", {}) or {}
+                ).items()
+            }
+        )
+        faculty_codes = Counter(
+            {
+                k: int(v)
+                for k, v in (
+                    stats.get("faculty", {}).get("codes_written", {}) or {}
+                ).items()
+            }
+        )
+        combined_codes = resident_codes + faculty_codes
+
+        qa["A13"] = "Code"
+        qa["B13"] = "Residents"
+        qa["C13"] = "Faculty"
+        qa["D13"] = "Combined"
+        for cell in ("A13", "B13", "C13", "D13"):
+            qa[cell].font = bold
+
+        code_row = 14
+        for code in sorted(combined_codes):
+            qa.cell(row=code_row, column=1, value=code)
+            qa.cell(row=code_row, column=2, value=int(resident_codes.get(code, 0)))
+            qa.cell(row=code_row, column=3, value=int(faculty_codes.get(code, 0)))
+            qa.cell(row=code_row, column=4, value=int(combined_codes.get(code, 0)))
+            code_row += 1
+
+        qa["F8"] = "Note"
+        qa["F8"].font = bold
+        qa["F9"] = (
+            "Template summary columns on Block Template2 are composite in places "
+            "(e.g. BJ may include C with SM/C-I). Use this sheet for explicit counts."
+        )
+
+        qa["F13"] = "Faculty Clinic Detail"
+        qa["F13"].font = bold
+        qa["F14"] = "Name"
+        qa["G14"] = "C"
+        qa["H14"] = "SM"
+        qa["I14"] = "C+SM"
+        for cell in ("F14", "G14", "H14", "I14"):
+            qa[cell].font = bold
+
+        faculty_people = self._collect_people_code_counts(data.get("faculty", []) or [])
+        faculty_row = 15
+        for name, counter in faculty_people:
+            c_count = int(counter.get("C", 0))
+            sm_count = int(counter.get("SM", 0))
+            qa.cell(row=faculty_row, column=6, value=name)
+            qa.cell(row=faculty_row, column=7, value=c_count)
+            qa.cell(row=faculty_row, column=8, value=sm_count)
+            qa.cell(row=faculty_row, column=9, value=c_count + sm_count)
+            faculty_row += 1
+
+        for col, width in (
+            ("A", 28),
+            ("B", 16),
+            ("C", 16),
+            ("D", 40),
+            ("E", 16),
+            ("F", 42),
+            ("G", 10),
+            ("H", 10),
+            ("I", 10),
+        ):
+            qa.column_dimensions[col].width = width
+
+    def _prune_empty_sheets(self, wb: Workbook, keep: set[str]) -> None:
+        """Remove placeholder sheets that contain no data."""
+        for name in list(wb.sheetnames):
+            if name in keep:
+                continue
+            ws = wb[name]
+            if ws.max_row == 1 and ws.max_column == 1 and ws["A1"].value in (None, ""):
+                del wb[name]
 
     def _parse_xml_to_data(self, root: ElementTree.Element) -> dict[str, Any]:
         """Parse XML schedule into a JSON-like dict."""
