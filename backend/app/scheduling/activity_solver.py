@@ -1127,11 +1127,6 @@ class CPSATActivitySolver:
                     ] += 1
                 if locked.activity_id in vas_activity_ids:
                     baseline_vas_faculty_coverage[slot_key] += 1
-                elif (
-                    is_clinic and locked.person and self._is_vas_faculty(locked.person)
-                ):
-                    # VAS-credentialed faculty in clinic can supervise VAS
-                    baseline_vas_faculty_coverage[slot_key] += 1
                 if is_cv:
                     locked_cv_target_counts[week_number]["cv"] += 1
                     locked_cv_target_counts_by_day[(week_number, day_of_week)][
@@ -1181,24 +1176,6 @@ class CPSATActivitySolver:
             locked_counts[
                 (locked.person_id, template.id, week_number, locked.activity_id)
             ] += 1
-
-        # Faculty slots from CP-SAT may lack activity_id (the locked loop
-        # skips them).  A VAS-credentialed faculty present in ANY slot on a
-        # (date, time_of_day) can supervise VAS, so count them here.
-        for locked in locked_slots:
-            if locked.activity_id:
-                continue  # already counted in the locked loop above
-            if not locked.person or locked.person.type != "faculty":
-                continue
-            slot_key = (locked.date, locked.time_of_day)
-            if self._is_vas_faculty(locked.person):
-                baseline_vas_faculty_coverage[slot_key] += 1
-            if (
-                sm_clinic_activity
-                and locked.person
-                and self._is_sports_medicine_faculty(locked.person)
-            ):
-                baseline_sm_faculty_coverage[slot_key] += 1
 
         constraint_count = 0
         activity_min_shortfalls: list[tuple[Any, UUID]] = []
@@ -2505,6 +2482,52 @@ class CPSATActivitySolver:
 
         self.session.flush()
         logger.info(f"Activity solver updated {updated} slots")
+
+        # Post-solve: reassign VAS-credentialed faculty from clinic → VAS
+        # on slots where residents were assigned VAS.  VAS is 1:1 dedicated
+        # faculty supervision (minor surgery), not a pop-in from clinic.
+        if vas_activity_ids:
+            vas_resident_slot_keys: set[tuple[date, str]] = set()
+            for s_i, slot in enumerate(slots):
+                if slot.activity_id in vas_activity_ids:
+                    vas_resident_slot_keys.add((slot.date, slot.time_of_day))
+            if vas_resident_slot_keys:
+                vas_reassigned = 0
+                # Pick any VAS activity ID for faculty assignment
+                vas_faculty_activity_id = next(iter(vas_activity_ids))
+                vas_faculty_activity = activity_by_id.get(vas_faculty_activity_id)
+                for locked in locked_slots:
+                    if not locked.person or locked.person.type != "faculty":
+                        continue
+                    slot_key = (locked.date, locked.time_of_day)
+                    if slot_key not in vas_resident_slot_keys:
+                        continue
+                    if not self._is_vas_faculty(locked.person):
+                        continue
+                    # Reassign this faculty from their current activity to VAS
+                    locked.activity_id = vas_faculty_activity_id
+                    locked.counts_toward_fmc_capacity = (
+                        activity_counts_toward_fmc_capacity_for_template(
+                            vas_faculty_activity, None
+                        )
+                    )
+                    vas_reassigned += 1
+                    # One credentialed faculty per slot is sufficient
+                    vas_resident_slot_keys.discard(slot_key)
+                    if not vas_resident_slot_keys:
+                        break
+                if vas_reassigned:
+                    self.session.flush()
+                    logger.info(
+                        f"VAS faculty reassignment: {vas_reassigned} faculty "
+                        f"moved to VAS supervision"
+                    )
+                unfilled = len(vas_resident_slot_keys)
+                if unfilled:
+                    logger.warning(
+                        f"VAS faculty gap: {unfilled} slot(s) have VAS residents "
+                        f"but no credentialed faculty available to reassign"
+                    )
 
         if activity_min_shortfalls:
             min_total = sum(
