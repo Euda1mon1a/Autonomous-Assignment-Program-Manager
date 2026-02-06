@@ -13,6 +13,8 @@ Legacy pipeline:
     DB → HalfDayXMLExporter → XML → XMLToXlsxConverter → xlsx
 """
 
+from __future__ import annotations
+
 from datetime import date, datetime, timedelta
 from io import BytesIO
 from pathlib import Path

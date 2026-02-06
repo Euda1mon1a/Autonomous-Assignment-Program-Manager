@@ -669,7 +669,7 @@ describe('ExportModal', () => {
       { wrapper: createWrapper() }
     );
 
-    const closeButton = screen.getByLabelText('Close');
+    const closeButton = screen.getByLabelText('Close export modal');
     await user.click(closeButton);
 
     expect(mockOnClose).toHaveBeenCalled();
