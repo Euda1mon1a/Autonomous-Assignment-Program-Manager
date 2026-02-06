@@ -321,6 +321,8 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
             from datetime import date as date_type
             from datetime import timedelta
 
+            from sqlalchemy import select
+
             from app.models.assignment import Assignment
             from app.models.block import Block
             from app.models.person import Person

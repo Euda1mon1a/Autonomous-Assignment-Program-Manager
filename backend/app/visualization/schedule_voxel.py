@@ -20,11 +20,16 @@ This enables spatial reasoning about scheduling:
 - Volume distribution = workload balance
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 import math
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 class RotationLayer(Enum):
@@ -40,7 +45,7 @@ class RotationLayer(Enum):
     SUPERVISION = 7  # Special layer for faculty oversight
 
     @classmethod
-    def from_rotation_type(cls, rotation_type: str) -> "RotationLayer":
+    def from_rotation_type(cls, rotation_type: str) -> RotationLayer:
         """Convert rotation type string to layer enum."""
         mapping = {
             "clinic": cls.CLINIC,
@@ -74,7 +79,7 @@ class VoxelColor:
         return (self.r, self.g, self.b, self.a)
 
     @classmethod
-    def from_hex(cls, hex_color: str) -> "VoxelColor":
+    def from_hex(cls, hex_color: str) -> VoxelColor:
         """Create from hex string like '#ff0000'."""
         hex_color = hex_color.lstrip("#")
         r = int(hex_color[0:2], 16) / 255
@@ -326,7 +331,7 @@ class ScheduleVoxelGrid:
             },
         }
 
-    def to_numpy_grid(self) -> "np.ndarray":
+    def to_numpy_grid(self) -> np.ndarray:
         """
         Convert to 3D numpy array for analysis.
 
