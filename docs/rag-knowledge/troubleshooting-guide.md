@@ -11,13 +11,13 @@ This guide covers common issues and solutions for the Residency Scheduler. Use t
 docker ps --format "table {{.Names}}\t{{.Status}}"
 
 # View logs
-docker logs scheduler-local-backend --tail 50
+docker logs residency-scheduler-backend --tail 50
 
 # Check database connectivity
 curl http://localhost:8000/api/v1/health/ready
 
 # Check if file exists in container
-docker exec scheduler-local-backend ls -la /app/path/to/file
+docker exec residency-scheduler-backend ls -la /app/path/to/file
 ```
 
 ## Installation Issues
@@ -172,14 +172,14 @@ Container fails to start with migration error.
 **Debugging:**
 ```bash
 # Check migration applied
-docker exec scheduler-local-backend alembic current
+docker exec residency-scheduler-backend alembic current
 
 # Check migration files exist
 ls backend/alembic/versions/
 
 # Force re-apply
-docker exec scheduler-local-backend alembic stamp head
-docker exec scheduler-local-backend alembic upgrade head
+docker exec residency-scheduler-backend alembic stamp head
+docker exec residency-scheduler-backend alembic upgrade head
 ```
 
 ## Docker Issues
@@ -253,30 +253,82 @@ docker compose build --no-cache
 docker compose up -d
 ```
 
-## Schedule Generation Issues
+## Schedule Generation / CP-SAT Issues
 
-### "No Valid Schedule Found"
+### "No Valid Schedule Found" (INFEASIBLE)
 
 **Causes:**
-1. Insufficient staff - not enough people to cover requirements
-2. Constraint conflicts - impossible requirements
-3. Algorithm timeout - complex schedule needs more time
+1. Insufficient staff — not enough people to cover requirements
+2. Constraint conflicts — impossible requirements (e.g., two hard constraints contradict)
+3. Algorithm timeout — complex schedule needs more time
 
 **Solutions:**
 - Review absence calendar for coverage gaps
-- Relax constraint priorities
-- Try different algorithm (Greedy vs CP-SAT)
-- Increase generation timeout
+- Check preloaded slots aren't blocking too many faculty
+- Increase solver timeout: `solver.parameters.max_time_in_seconds`
+- Check for VAS/PROC credential conflicts — if no credentialed faculty exists for a VAS slot, the solver may become infeasible
+
+### VAS Shortfalls After Solve
+
+**Symptoms:** VAS alignment shortfall count > 0 in solver logs
+
+**Causes:**
+- No VAS-credentialed faculty available on VAS-eligible slots (Thu AM/PM, Fri AM)
+- VAS override penalty too high — solver avoids pulling faculty
+- Faculty locked in FMIT/leave on all VAS-eligible slots
+
+**Debug:**
+- Check VAS-credentialed faculty: `_is_vas_faculty()` in activity_solver.py
+- Check `vas_override_candidates` count in solver logs
+- Lower `VAS_OVERRIDE_PENALTY` if solver is too conservative
+
+### Credential Penalty Misconfiguration
+
+**Symptoms:** Faculty assigned to procedures they're not credentialed for (or overly strict matching)
+
+**Debug:**
+```bash
+# Check current penalty value
+echo $FACULTY_CREDENTIAL_MISMATCH_PENALTY
+
+# Default is 15. Tune:
+# 0 = disabled (no credential preference)
+# 15 = moderate (default)
+# 25-40 = strict (strong preference for credentialed faculty)
+```
 
 ### Schedule Generation Slow
 
 **Debug:**
 ```bash
 # Check database connections
-docker-compose exec db psql -U postgres -c "SELECT count(*) FROM pg_stat_activity;"
+docker-compose exec db psql -U scheduler -c "SELECT count(*) FROM pg_stat_activity;"
 
 # Clear Redis cache
-docker-compose exec redis redis-cli FLUSHALL
+docker-compose exec redis redis-cli -a "${REDIS_PASSWORD}" FLUSHALL
+```
+
+## Docker Volume Masking
+
+### Code Changes Not Reflected in Container
+
+**Symptoms:** File exists on host but container has old version, or code changes aren't picked up.
+
+**Cause:** Running production compose (`docker-compose.yml` only) without dev volume mounts.
+
+**Fix:**
+```bash
+# Development mode (hot reload with volume mounts)
+COMPOSE_FILE=docker-compose.yml:docker-compose.local.yml docker compose up -d
+
+# Verify volume mounts
+docker inspect residency-scheduler-backend | grep -A5 Mounts
+# Should show host paths mounted, NOT empty []
+```
+
+**Prevention:** Set in `.env`:
+```
+COMPOSE_FILE=docker-compose.yml:docker-compose.local.yml
 ```
 
 ## Frontend Issues

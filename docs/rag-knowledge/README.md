@@ -66,10 +66,10 @@ ai_decisions       - If session-specific, doesn't belong
 | `military-specific.md` | `military_specific` | Military medical residency specifics | Embedded |
 | `resilience-concepts.md` | `resilience_concepts` | Tier 1-3 resilience framework concepts | Embedded |
 | `user-guide-faq.md` | `user_guide_faq` | User guide and FAQ | Embedded |
-| `session-learnings.md` | `session_learnings` | Session learnings and patterns | Embedded |
 | `session-protocols.md` | `session_protocols` | Session protocols and workflows | Embedded |
 | `delegation-patterns.md` | `delegation_patterns` | Multi-agent delegation patterns | Embedded |
-| `exotic-concepts.md` | `exotic_concepts` | Tier 5 exotic frontier concepts (NEW) | **Needs Embedding** |
+| `exotic-concepts.md` | `exotic_concepts` | Tier 5 exotic frontier concepts | Embedded |
+| `codex53-vs-opus46-capabilities.md` | `ai_patterns` | Model capability routing and integration guidance | New |
 
 ## Embedding Documents
 
@@ -117,20 +117,20 @@ curl -X POST http://localhost:8000/api/v1/rag/ingest \
 
 ## Recent Changes
 
+**2026-02-05:**
+- **Full RAG sweep:** Updated stale docs, removed duplicates, added credential/CP-SAT coverage
+- Rewrote `scheduling-policies.md` with TAMC-specific content (activity codes, two-grid CP-SAT, VAS override, credential penalty, penalty hierarchy)
+- Updated `troubleshooting-guide.md` with CP-SAT debugging, Docker volume masking, credential troubleshooting
+- Updated `architecture-overview.md` with scheduling engine section and two-grid architecture
+- Updated `acgme-rules.md` with procedure credentialing section
+- Updated `user-guide-faq.md` with credential/VAS FAQ entries
+- Deleted `session-learnings.md` (content already in `delegation-patterns.md`, per README content policy)
+- Deleted `COMBINED_RAG_BUNDLE.md` (stale duplicate, not in DOC_TYPE_MAP)
+- Removed `session_learnings` from DOC_TYPE_MAP
+- **ACTION REQUIRED:** Run `python scripts/init_rag_embeddings.py --clear-all` to re-ingest all documents
+
 **2025-12-30:**
-- Added `exotic-concepts.md` documenting 10 Tier 5 exotic frontier concepts:
-  - Metastability Detection (statistical mechanics)
-  - Spin Glass Model (condensed matter physics)
-  - Circadian PRC (chronobiology)
-  - Penrose Process (astrophysics)
-  - Anderson Localization (quantum physics)
-  - Persistent Homology (topology)
-  - Free Energy Principle (neuroscience)
-  - Keystone Species Analysis (ecology)
-  - Quantum Zeno Effect (quantum mechanics)
-  - Catastrophe Theory (mathematics)
-- Updated `DOC_TYPE_MAP` in `scripts/init_rag_embeddings.py` and `backend/app/tasks/rag_tasks.py`
-- **ACTION REQUIRED:** Run `python scripts/init_rag_embeddings.py --doc exotic-concepts.md` to embed the new document
+- Added `exotic-concepts.md` documenting 10 Tier 5 exotic frontier concepts
 
 ## Verification
 

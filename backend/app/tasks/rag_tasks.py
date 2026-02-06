@@ -30,11 +30,11 @@ DOC_TYPE_MAP = {
     "military-specific.md": "military_specific",
     "resilience-concepts.md": "resilience_concepts",
     "user-guide-faq.md": "user_guide_faq",
-    "session-learnings.md": "session_learnings",
     "session-protocols.md": "session_protocols",
     "delegation-patterns.md": "delegation_patterns",
     "L3-minimal-context-pattern.md": "delegation_patterns",
     "exotic-concepts.md": "exotic_concepts",
+    "codex53-vs-opus46-capabilities.md": "ai_patterns",
 }
 
 
