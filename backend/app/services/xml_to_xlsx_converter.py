@@ -15,6 +15,7 @@ Legacy pipeline:
 
 from __future__ import annotations
 
+from copy import copy
 from datetime import date, datetime, timedelta
 from io import BytesIO
 from pathlib import Path
@@ -122,6 +123,7 @@ class XMLToXlsxConverter:
         self.pgy_mappings: dict[str, int] = {}  # name → pgy level
         self.template_mappings: dict[str, str] = {}  # name → template code
         self.call_row: int = BT2_ROW_STAFF_CALL
+        self.last_conversion_stats: dict[str, Any] = {}
         if structure_xml_path:
             self._load_structure_xml(Path(structure_xml_path))
 
@@ -213,14 +215,44 @@ class XMLToXlsxConverter:
             wb = self._create_new_workbook(block_start, block_end)
             sheet = wb.active
 
-            # Fill header row (always - helps with readability)
+        # Fill header row (always - helps with readability)
         self._fill_header_row(sheet, block_start, block_end)
+        unmerged_cells = self._prepare_schedule_grid(sheet, block_start, block_end)
 
         # Fill residents and faculty
         residents = data.get("residents", [])
         faculty = data.get("faculty", [])
-        self._fill_residents(sheet, residents, block_start, is_faculty=False)
-        self._fill_residents(sheet, faculty, block_start, is_faculty=True)
+        stats: dict[str, Any] = {
+            "block_start": block_start.isoformat(),
+            "block_end": block_end.isoformat(),
+            "residents": {
+                "people_input": len(residents),
+                "people_written": 0,
+                "unmapped_names": [],
+                "codes_written": {},
+            },
+            "faculty": {
+                "people_input": len(faculty),
+                "people_written": 0,
+                "unmapped_names": [],
+                "codes_written": {},
+            },
+        }
+        stats["schedule_cells_unmerged"] = unmerged_cells
+        self._fill_residents(
+            sheet,
+            residents,
+            block_start,
+            is_faculty=False,
+            stats=stats["residents"],
+        )
+        self._fill_residents(
+            sheet,
+            faculty,
+            block_start,
+            is_faculty=True,
+            stats=stats["faculty"],
+        )
 
         # Fill call row (Row 4) - single cells for user to merge
         call_section = data.get("call", {})
@@ -231,8 +263,10 @@ class XMLToXlsxConverter:
             call_rows = call_section
         if call_rows:
             self._fill_call_row(sheet, call_rows, block_start, block_end)
+        stats["call_nights_input"] = len(call_rows)
+        self.last_conversion_stats = stats
 
-            # Save to bytes
+        # Save to bytes
         buffer = BytesIO()
         wb.save(buffer)
         xlsx_bytes = buffer.getvalue()
@@ -243,6 +277,59 @@ class XMLToXlsxConverter:
             logger.info(f"Saved xlsx to {output_path}")
 
         return xlsx_bytes
+
+    def _prepare_schedule_grid(self, sheet, block_start: date, block_end: date) -> int:
+        """Unmerge schedule-grid cells in mapped rows so AM/PM can be written independently."""
+        if not self.use_block_template2 or not self.row_mappings:
+            return 0
+
+        schedule_start_col = COL_SCHEDULE_START
+        total_days = (block_end - block_start).days + 1
+        schedule_end_col = schedule_start_col + (total_days * COLS_PER_DAY) - 1
+
+        target_rows = set(self.row_mappings.values())
+        if not target_rows:
+            return 0
+
+        merged_ranges = list(sheet.merged_cells.ranges)
+        unmerged = 0
+
+        for merged_range in merged_ranges:
+            if merged_range.max_col < schedule_start_col:
+                continue
+            if merged_range.min_col > schedule_end_col:
+                continue
+            if merged_range.max_row < min(target_rows):
+                continue
+            if merged_range.min_row > max(target_rows):
+                continue
+
+            overlaps_target_row = any(
+                merged_range.min_row <= row <= merged_range.max_row
+                for row in target_rows
+            )
+            if not overlaps_target_row:
+                continue
+
+            top_left = sheet.cell(row=merged_range.min_row, column=merged_range.min_col)
+
+            # Preserve style/format from top-left before unmerge.
+            for row in range(merged_range.min_row, merged_range.max_row + 1):
+                for col in range(merged_range.min_col, merged_range.max_col + 1):
+                    if row == merged_range.min_row and col == merged_range.min_col:
+                        continue
+                    cell = sheet.cell(row=row, column=col)
+                    cell._style = copy(top_left._style)
+                    cell.number_format = top_left.number_format
+                    cell.protection = copy(top_left.protection)
+                    cell.alignment = copy(top_left.alignment)
+
+            sheet.unmerge_cells(str(merged_range))
+            unmerged += 1
+
+        if unmerged:
+            logger.info(f"Unmerged {unmerged} schedule cell ranges for AM/PM fidelity")
+        return unmerged
 
     def _parse_xml_to_data(self, root: ElementTree.Element) -> dict[str, Any]:
         """Parse XML schedule into a JSON-like dict."""
@@ -496,6 +583,7 @@ class XMLToXlsxConverter:
         residents: list[dict[str, Any]],
         block_start: date,
         is_faculty: bool,
+        stats: dict[str, Any] | None = None,
     ) -> None:
         """Fill resident/faculty rows from schedule dicts.
 
@@ -537,6 +625,8 @@ class XMLToXlsxConverter:
                             break
 
                 if not row:
+                    if stats is not None:
+                        stats["unmapped_names"].append(name)
                     if self.strict_row_mapping:
                         raise ValueError(
                             f"No row mapping for: {name}. "
@@ -546,6 +636,9 @@ class XMLToXlsxConverter:
                     continue
             else:
                 row = i + 2  # Start at row 2 (row 1 is headers)
+
+            if stats is not None:
+                stats["people_written"] += 1
 
             pgy = resident.get("pgy", "")
             rotation1 = resident.get("rotation1", "") or ""
@@ -634,6 +727,13 @@ class XMLToXlsxConverter:
 
                 am_cell.value = am_code
                 pm_cell.value = pm_code
+
+                if stats is not None and am_code:
+                    codes_written = stats["codes_written"]
+                    codes_written[am_code] = codes_written.get(am_code, 0) + 1
+                if stats is not None and pm_code:
+                    codes_written = stats["codes_written"]
+                    codes_written[pm_code] = codes_written.get(pm_code, 0) + 1
 
                 # Apply colors based on schedule code
                 if am_code:
