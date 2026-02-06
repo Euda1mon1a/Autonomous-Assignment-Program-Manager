@@ -990,11 +990,20 @@ class WorkflowEngine:
             raise ConditionEvaluationError("Unsupported binary operation in condition")
 
         if isinstance(node, ast.BoolOp):
-            values = [self._eval_ast_node(v, context) for v in node.values]
             if isinstance(node.op, ast.And):
-                return all(values)
+                result = True
+                for v in node.values:
+                    result = self._eval_ast_node(v, context)
+                    if not result:
+                        return result
+                return result
             if isinstance(node.op, ast.Or):
-                return any(values)
+                result = False
+                for v in node.values:
+                    result = self._eval_ast_node(v, context)
+                    if result:
+                        return result
+                return result
             raise ConditionEvaluationError("Unsupported boolean operator in condition")
 
         if isinstance(node, ast.Compare):
