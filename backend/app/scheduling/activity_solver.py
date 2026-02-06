@@ -91,7 +91,7 @@ FACULTY_ADMIN_EQUITY_PENALTY = 12
 FACULTY_AT_EQUITY_PENALTY = 12
 FACULTY_ACADEMIC_EQUITY_PENALTY = 8
 RESIDENT_CLINIC_EQUITY_PENALTY = 8
-FACULTY_CREDENTIAL_MISMATCH_PENALTY = 0
+FACULTY_CREDENTIAL_MISMATCH_PENALTY = 15
 FACULTY_ADMIN_BONUS = 1
 PHYSICAL_CAPACITY_SOFT_PENALTY = 10
 ACTIVITY_MIN_SHORTFALL_PENALTY = 10
@@ -557,8 +557,26 @@ class CPSATActivitySolver:
             self._procedure_requires_cert = {
                 proc.id: bool(proc.requires_certification) for proc in procedures
             }
+            # Load credentials for ALL faculty in the database, not just those
+            # in the solver's slot list.  When include_faculty_slots=False the
+            # slot-derived faculty_person_ids is empty, but we still need
+            # credential data to evaluate VAS/SM coverage from locked faculty.
+            all_faculty_ids = set(
+                self.session.execute(select(Person.id).where(Person.type == "faculty"))
+                .scalars()
+                .all()
+            )
+            credential_person_ids = all_faculty_ids | faculty_person_ids
             self._procedure_credentials_by_person = self._load_procedure_credentials(
-                faculty_person_ids, procedure_ids
+                credential_person_ids, procedure_ids
+            )
+            n_creds = sum(
+                len(v) for v in self._procedure_credentials_by_person.values()
+            )
+            logger.info(
+                f"Credential loading: {len(credential_person_ids)} person_ids "
+                f"({len(all_faculty_ids)} from DB, {len(faculty_person_ids)} from slots), "
+                f"{len(procedure_ids)} procedure_ids -> {n_creds} credentials loaded"
             )
         else:
             self._procedure_requires_cert = {}
@@ -1109,6 +1127,11 @@ class CPSATActivitySolver:
                     ] += 1
                 if locked.activity_id in vas_activity_ids:
                     baseline_vas_faculty_coverage[slot_key] += 1
+                elif (
+                    is_clinic and locked.person and self._is_vas_faculty(locked.person)
+                ):
+                    # VAS-credentialed faculty in clinic can supervise VAS
+                    baseline_vas_faculty_coverage[slot_key] += 1
                 if is_cv:
                     locked_cv_target_counts[week_number]["cv"] += 1
                     locked_cv_target_counts_by_day[(week_number, day_of_week)][
@@ -1158,6 +1181,24 @@ class CPSATActivitySolver:
             locked_counts[
                 (locked.person_id, template.id, week_number, locked.activity_id)
             ] += 1
+
+        # Faculty slots from CP-SAT may lack activity_id (the locked loop
+        # skips them).  A VAS-credentialed faculty present in ANY slot on a
+        # (date, time_of_day) can supervise VAS, so count them here.
+        for locked in locked_slots:
+            if locked.activity_id:
+                continue  # already counted in the locked loop above
+            if not locked.person or locked.person.type != "faculty":
+                continue
+            slot_key = (locked.date, locked.time_of_day)
+            if self._is_vas_faculty(locked.person):
+                baseline_vas_faculty_coverage[slot_key] += 1
+            if (
+                sm_clinic_activity
+                and locked.person
+                and self._is_sports_medicine_faculty(locked.person)
+            ):
+                baseline_sm_faculty_coverage[slot_key] += 1
 
         constraint_count = 0
         activity_min_shortfalls: list[tuple[Any, UUID]] = []
@@ -2573,7 +2614,7 @@ class CPSATActivitySolver:
     def _write_failure_snapshot(self, snapshot: dict[str, Any]) -> None:
         """Write a PII-free failure snapshot to disk for debugging."""
         output_dir = Path(
-            os.environ.get("SCHEDULE_FAILURE_SNAPSHOT_DIR", "/tmp")
+            os.environ.get("SCHEDULE_FAILURE_SNAPSHOT_DIR", "/tmp")  # nosec B108
         ).expanduser()
         try:
             output_dir.mkdir(parents=True, exist_ok=True)

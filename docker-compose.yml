@@ -72,7 +72,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000"]}
       RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-false}
       # Credential penalty for solver tuning (0 = disabled, higher = stronger preference for credentialed faculty)
-      FACULTY_CREDENTIAL_MISMATCH_PENALTY: ${FACULTY_CREDENTIAL_MISMATCH_PENALTY:-0}
+      FACULTY_CREDENTIAL_MISMATCH_PENALTY: ${FACULTY_CREDENTIAL_MISMATCH_PENALTY:-15}
       # OpenTelemetry Distributed Tracing Configuration
       # For production deployments, enable TELEMETRY_ENABLED and configure OTEL backend
       # Supported backends: Jaeger, Zipkin, DataDog, New Relic, or any OTLP-compatible collector
