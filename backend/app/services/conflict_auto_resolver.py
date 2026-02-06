@@ -13,6 +13,7 @@ from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.core.logging import get_logger
 from app.db.transaction import transactional, transactional_with_retry
 from app.models.assignment import Assignment
 from app.models.block import Block
@@ -36,6 +37,8 @@ from app.schemas.conflict_resolution import (
     SafetyCheckResult,
     SafetyCheckType,
 )
+
+logger = get_logger(__name__)
 
 
 class ConflictAutoResolver:

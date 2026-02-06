@@ -16,7 +16,7 @@ from sqlalchemy import and_, func
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 if TYPE_CHECKING:
-    pass
+    from app.models.person import Person
 
 
 @dataclass
