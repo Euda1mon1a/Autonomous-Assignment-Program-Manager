@@ -1,7 +1,7 @@
 # MASTER PRIORITY LIST - Codebase Audit
 
 > **Generated:** 2026-01-18
-> **Last Updated:** 2026-02-06 (pre-push hook + faculty clinic constraints + Gorgon's Gaze fix)
+> **Last Updated:** 2026-02-06 (quick wins batch: deps, skill, mock labels, type fixes, tests)
 > **Authority:** This is the single source of truth for codebase priorities.
 > **Supersedes:** TODO_INVENTORY.md, PRIORITY_LIST.md, TECHNICAL_DEBT.md, ARCHITECTURAL_DISCONNECTS.md
 > **Methodology:** Full codebase exploration via Claude Code agents (10 parallel agents, Session 136)
@@ -312,7 +312,7 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 |------|-------|-------|----------|
 | **mypy** | 6,443 type errors | 742 files | 13.2% fixed (983 errors) |
 | **bandit** | 0 high severity, config in pyproject.toml | Merged (Sessions 154-155) | ✅ Complete |
-| **Modron March** | FairnessAuditResponse location | Type in wrong file | ⏳ See parallel sprint session |
+| **Modron March** | FairnessAuditResponse location | Type in wrong file | ✅ Fixed (PR #838) |
 
 **mypy Progress (Sessions 137-139):**
 | Session | Start | End | Fixed | % |
@@ -336,8 +336,8 @@ Pre-commit hooks blocking commits due to pre-existing issues:
 **Action:**
 1. Bulk fix `-> None` patterns with sed
 2. Bulk fix SQLAlchemy Column casts
-3. Install bandit: `pip install bandit`
-4. Update Modron March to check correct type locations
+3. ~~Install bandit: `pip install bandit`~~ ✅ Added to requirements.txt (PR #839)
+4. ~~Update Modron March to check correct type locations~~ ✅ Fixed (PR #838)
 
 ### 8. Orphan Framework Code (12K+ LOC) - ANALYSIS COMPLETE
 Production-quality infrastructure built for future scaling. Analyzed 2026-01-18:
@@ -510,16 +510,17 @@ Database Inspector now supports multiple data types but Activities view has upst
 
 **Next:** Run schedule generation (preload + solver)
 
-### 15. Missing Dependencies in requirements.txt
+### ~~15. Missing Dependencies in requirements.txt~~ — RESOLVED (PR #839)
 **Priority:** LOW (Quick Fix)
 **Added:** 2026-01-23 (Session 136)
+**Resolved:** PR #839 — Added `bandit>=1.7.0` and `types-PyYAML>=6.0.0`
 
-Pre-commit hooks fail due to missing dependencies:
+~~Pre-commit hooks fail due to missing dependencies:~~
 
 | Package | Issue | Fix |
 |---------|-------|-----|
-| `bandit` | Pre-commit `command not found` | Add `bandit>=1.7.0` |
-| `types-PyYAML` | mypy missing stubs error | Add `types-PyYAML>=6.0.0` |
+| ~~`bandit`~~ | ~~Pre-commit `command not found`~~ | ✅ Added |
+| ~~`types-PyYAML`~~ | ~~mypy missing stubs error~~ | ✅ Added |
 
 **Also consider:**
 - Split into `requirements.txt` (core) + `requirements-dev.txt` (testing/linting)
@@ -536,7 +537,7 @@ Pre-commit hooks fail due to missing dependencies:
 | Skills → RAG | 5 | `hierarchy`, `parties`, `python-testing-patterns` |
 | Redundancies | 4 | `startupO-legacy`, `deep-research`+`devcom` |
 
-**Missing Skill:** `check-camelcase` referenced in CLAUDE.md but skill doesn't exist.
+~~**Missing Skill:** `check-camelcase` referenced in CLAUDE.md but skill doesn't exist.~~ ✅ Created (PR #839)
 
 ### 24. Preload Service Code Duplication (NEW - Session 142)
 **Added:** 2026-01-25
@@ -619,7 +620,7 @@ coverage constraints will under/over-count demand.
 | `calculate_blast_radius_tool` | `BlastRadiusService.calculate()` |
 | (6 more) | See PLACEHOLDER_IMPLEMENTATIONS.md |
 
-**Action:** Add `[MOCK]` prefix to tool descriptions until backend services exist.
+~~**Action:** Add `[MOCK]` prefix to tool descriptions until backend services exist.~~ ✅ Done (PR #839) — 10 tools labeled `[MOCK]`
 
 ### 28. Exception Handling Audit (NEW - Blind Spot Assessment)
 **Added:** 2026-01-27
