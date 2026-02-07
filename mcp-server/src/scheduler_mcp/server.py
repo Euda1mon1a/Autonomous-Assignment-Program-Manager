@@ -1121,7 +1121,7 @@ async def run_contingency_analysis_resilience_tool(
 @mcp.tool()
 async def get_static_fallbacks_tool() -> StaticFallbacksResponse:
     """
-    Get pre-computed fallback schedules (AWS static stability).
+    [MOCK] Get pre-computed fallback schedules (AWS static stability).
 
     Retrieves fallback schedules pre-computed for various crisis scenarios.
     Like AWS availability zones, these provide immediate failover capability.
@@ -1137,7 +1137,7 @@ async def execute_sacrifice_hierarchy_tool(
     target_level: str, simulate_only: bool = True
 ) -> SacrificeHierarchyResponse:
     """
-    Execute sacrifice hierarchy (triage-based load shedding).
+    [MOCK] Execute sacrifice hierarchy (triage-based load shedding).
 
     Implements triage-based load shedding, suspending non-essential activities
     in priority order to maintain critical patient safety functions.
@@ -1165,7 +1165,7 @@ async def analyze_homeostasis_tool(
     current_values: dict[str, float],
 ) -> HomeostasisStatusResponse:
     """
-    Analyze homeostasis feedback loops and allostatic load.
+    [MOCK] Analyze homeostasis feedback loops and allostatic load.
 
     Monitors feedback loops that maintain system stability and calculates
     allostatic load (cumulative stress) on faculty and the system.
@@ -1184,7 +1184,7 @@ async def calculate_blast_radius_tool(
     zone_id: str | None = None, check_all_zones: bool = True
 ) -> BlastRadiusAnalysisResponse:
     """
-    Calculate blast radius and zone isolation status.
+    [MOCK] Calculate blast radius and zone isolation status.
 
     Analyzes how failures are contained within scheduling zones, preventing
     cascades from spreading across the entire system.
@@ -3439,7 +3439,7 @@ async def calculate_schedule_entropy_tool(
     include_mutual_information: bool = True,
 ) -> ScheduleEntropyResponse:
     """
-    Calculate comprehensive entropy metrics for the schedule.
+    [MOCK] Calculate comprehensive entropy metrics for the schedule.
 
     Entropy measures the disorder/randomness in schedule assignment distribution.
     This tool applies Shannon entropy analysis across multiple dimensions.
@@ -3591,7 +3591,7 @@ async def optimize_free_energy_tool(
     max_iterations: int = 100,
 ) -> FreeEnergyOptimizationResponse:
     """
-    Optimize schedule using free energy minimization.
+    [MOCK] Optimize schedule using free energy minimization.
 
     **NOTE: This module is planned but not yet implemented.**
 
@@ -3734,7 +3734,7 @@ async def calculate_hopfield_energy_tool(
     schedule_id: str | None = None,
 ) -> HopfieldEnergyResponse:
     """
-    Calculate Hopfield energy of the current schedule state.
+    [MOCK] Calculate Hopfield energy of the current schedule state.
 
     **Hopfield Energy Function:**
     E = -0.5 * sum_ij(w_ij * s_i * s_j)
@@ -3793,7 +3793,7 @@ async def find_nearby_attractors_tool(
     end_date: str | None = None,
 ) -> NearbyAttractorsResponse:
     """
-    Identify stable attractors near the current schedule state.
+    [MOCK] Identify stable attractors near the current schedule state.
 
     **Attractor Concept:**
     In Hopfield networks, attractors are stable states (energy minima) that
@@ -3848,7 +3848,7 @@ async def measure_basin_depth_tool(
     num_perturbations: int = 100,
 ) -> BasinDepthResponse:
     """
-    Measure the depth of the basin of attraction for current or specified attractor.
+    [MOCK] Measure the depth of the basin of attraction for current or specified attractor.
 
     **Basin Depth Concept:**
     Basin depth is the energy barrier that must be overcome to escape the basin.
@@ -3906,7 +3906,7 @@ async def detect_spurious_attractors_tool(
     min_basin_size: int = 10,
 ) -> SpuriousAttractorsResponse:
     """
-    Detect spurious attractors (unintended stable patterns / scheduling anti-patterns).
+    [MOCK] Detect spurious attractors (unintended stable patterns / scheduling anti-patterns).
 
     **Spurious Attractor Problem:**
     Hopfield networks can form "spurious attractors" - stable states that were
