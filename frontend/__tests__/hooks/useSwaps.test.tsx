@@ -313,7 +313,7 @@ describe('useSwapList', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('startDate=2024-01-01')
+        expect.stringContaining('start_date=2024-01-01')
       )
     })
 
@@ -335,7 +335,7 @@ describe('useSwapList', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('sourceFacultyId=faculty-1')
+        expect.stringContaining('source_faculty_id=faculty-1')
       )
     })
   })
@@ -410,7 +410,7 @@ describe('useSwapCandidates', () => {
 
       expect(result.current.data).toEqual(mockCandidates)
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('sourceFacultyId=faculty-1')
+        expect.stringContaining('source_faculty_id=faculty-1')
       )
     })
 

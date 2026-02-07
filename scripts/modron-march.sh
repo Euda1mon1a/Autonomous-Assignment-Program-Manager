@@ -132,9 +132,9 @@ validate_critical_types() {
 
     local errors=0
 
-    # Check FairnessAuditResponse (lives in useFairness.ts with related types)
-    if ! validate_type_exists "FairnessAuditResponse" "frontend/src/hooks/useFairness.ts"; then
-        log_error "FairnessAuditResponse not found in useFairness.ts"
+    # Check FairnessAuditResponse (domain type in resilience.ts, re-exported by useFairness.ts)
+    if ! validate_type_exists "FairnessAuditResponse" "frontend/src/types/resilience.ts"; then
+        log_error "FairnessAuditResponse not found in resilience.ts"
         ((errors++))
     fi
 
