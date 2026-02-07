@@ -122,6 +122,10 @@ black==25.12.0
 ruff==0.14.10
 mypy==1.19.1
 isort==6.0.1
+bandit>=1.7.0  # Security linter for finding common security issues
+
+# Type Stubs
+types-PyYAML>=6.0.0  # Type hints for PyYAML (enables mypy type checking)
 
 # Testing
 pytest==9.0.2
