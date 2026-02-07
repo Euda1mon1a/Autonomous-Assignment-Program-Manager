@@ -247,11 +247,12 @@ def build_lookup_tables(
     """Build hierarchical lookup tables from training data.
 
     Returns a list of tables from most specific to broadest:
-      0: (rotation, db_code, weekday/weekend, person_type, half)
-      1: (rotation, db_code, weekday/weekend, person_type)
-      2: (rotation, db_code, weekday/weekend)
-      3: (rotation, db_code)
-      4: (db_code,)
+      0: (person_last, db_code, weekday/weekend, half)  — per-person patterns
+      1: (rotation, db_code, weekday/weekend, person_type, half)
+      2: (rotation, db_code, weekday/weekend, person_type)
+      3: (rotation, db_code, weekday/weekend)
+      4: (rotation, db_code)
+      5: (db_code,)
 
     Each table maps key → (most_common_truth_code, count).
     """
@@ -260,7 +261,12 @@ def build_lookup_tables(
     def _wd(f):
         return "wkend" if f.get("is_weekend") else "wkday"
 
+    def _person_last(f):
+        name = f.get("person", "")
+        return _last_name(name) if name else "?"
+
     key_fns = [
+        lambda f: (_person_last(f), f.get("db_code"), _wd(f), f.get("half")),
         lambda f: (f.get("rotation1") or "?", f.get("db_code"), _wd(f),
                    f.get("person_type", "resident"), f.get("half")),
         lambda f: (f.get("rotation1") or "?", f.get("db_code"), _wd(f),
@@ -292,12 +298,26 @@ def lookup_display(
     tables: list[dict[tuple, tuple[str, int]]],
     rot: str, db_code: str, is_weekend: bool, person_type: str,
     half: str = "am",
+    person_last: str = "?",
     min_count: int = 1,
 ) -> str | None:
-    """Hierarchical lookup: try most specific key first, broaden on miss."""
+    """Hierarchical lookup: try most specific key first, broaden on miss.
+
+    Per-person lookup (level 0) only used for faculty since residents
+    change rotations each block, making per-person patterns unreliable.
+    """
     wd = "wkend" if is_weekend else "wkday"
     rot_val = rot or "?"
 
+    # Level 0: per-person (faculty only — residents change rotations)
+    if person_type == "faculty":
+        key = (person_last, db_code, wd, half)
+        if key in tables[0]:
+            code, count = tables[0][key]
+            if count >= min_count:
+                return code
+
+    # Levels 1-5: rotation-based hierarchy
     keys = [
         (rot_val, db_code, wd, person_type, half),
         (rot_val, db_code, wd, person_type),
@@ -306,7 +326,7 @@ def lookup_display(
         (db_code,),
     ]
 
-    for table, key in zip(tables, keys):
+    for table, key in zip(tables[1:], keys):
         if key in table:
             code, count = table[key]
             if count >= min_count:
@@ -445,6 +465,7 @@ def fill_template(
                         rf, encoders, label_enc, cat_fields,
                         person_type, pgy, block_number, i, day_date,
                         half, other_code, stats, lookup=lookup,
+                        person_last=person_last,
                     )
 
                 col = COL_SCHEDULE_START + i * COLS_PER_DAY
@@ -524,7 +545,7 @@ def _resolve_display(
     raw_code, rot1, rot2, is_weekend, is_faculty,
     rf, encoders, label_enc, cat_fields,
     person_type, pgy, block_number, day_index, day_date,
-    half, other_code, stats, lookup=None,
+    half, other_code, stats, lookup=None, person_last="?",
 ) -> str:
     """Resolve the display code using the selected strategy."""
 
@@ -545,7 +566,8 @@ def _resolve_display(
     if mode == "lookup-only":
         if lookup:
             code = lookup_display(
-                lookup, rot1, raw_code, is_weekend, person_type, half=half,
+                lookup, rot1, raw_code, is_weekend, person_type,
+                half=half, person_last=person_last,
             )
             if code:
                 stats["lookup_hit"] += 1
@@ -568,7 +590,7 @@ def _resolve_display(
         if lookup:
             lookup_code = lookup_display(
                 lookup, rot1, raw_code, is_weekend, person_type,
-                half=half, min_count=2,
+                half=half, person_last=person_last, min_count=2,
             )
             if lookup_code and lookup_code != raw_code:
                 stats["lookup_supplement"] += 1
