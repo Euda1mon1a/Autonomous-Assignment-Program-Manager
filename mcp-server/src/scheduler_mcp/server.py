@@ -4865,11 +4865,11 @@ async def generate_block_quality_report_tool(
             "message": (
                 "Block quality report API endpoint not available. "
                 "Use the CLI script instead: "
-                f"docker exec scheduler-local-backend python /app/scripts/generate_block_quality_report.py --block {block_number}"
+                f"cd backend && python ../scripts/generate_block_quality_report.py --block {block_number}"
             ),
             "fallback_command": (
-                f"docker exec scheduler-local-backend python "
-                f"/app/scripts/generate_block_quality_report.py --block {block_number}"
+                f"cd backend && python "
+                f"../scripts/generate_block_quality_report.py --block {block_number}"
             ),
         }
 
@@ -4955,8 +4955,8 @@ async def generate_multi_block_quality_report_tool(
                 "Multi-block report API endpoint not available. Use the CLI script instead."
             ),
             "fallback_command": (
-                f"docker exec scheduler-local-backend python "
-                f"/app/scripts/generate_block_quality_report.py "
+                f"cd backend && python "
+                f"../scripts/generate_block_quality_report.py "
                 f"--blocks {block_numbers} {'--summary' if include_summary else ''}"
             ),
         }
