@@ -441,6 +441,23 @@ Integrate Kimi K2.5 Agent Swarm as a managed execution asset for parallel bulk w
 2. Document interim Docker/SQL cleanup procedure for admins.
 3. Add integration test to ensure MCP `clear_existing` clears both tables.
 
+### 17. Local-First Runtime Refactor (Mac mini) (NEW - Feb 2026)
+**Status:** Proposed
+**Roadmap:** [`docs/roadmaps/LOCAL_FIRST_REFACTOR_ROADMAP.md`](roadmaps/LOCAL_FIRST_REFACTOR_ROADMAP.md)
+
+Mac mini is now the primary execution environment. Runtime defaults should be
+local-first, with Docker/Render paths treated as optional compatibility only.
+
+**Target Outcomes:**
+1. One-command local stack boot is authoritative.
+2. Scripts/tests/hooks stop assuming container-first runtime.
+3. README/setup/ops docs prioritize local runbook first.
+
+**Immediate Action:**
+1. Execute Phases 0-2 from the roadmap (bootstrap, runtime defaults, script consolidation).
+2. Run local smoke verification (auth, schedule validation, resilience, MCP).
+3. Complete docs handoff and keep Docker as fallback only.
+
 ---
 
 ## MEDIUM (Plan for Sprint)
