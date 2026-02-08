@@ -6,9 +6,10 @@ This module provides the execution layer for MCP tools.
 
 import logging
 import time
+from inspect import isawaitable
 from typing import Any
 
-from .base import BaseTool, ToolError
+from .base import ToolError
 from .registry import get_registry
 
 logger = logging.getLogger(__name__)
@@ -130,7 +131,8 @@ class ToolExecutor:
                 },
             )
 
-            result = await tool(**kwargs)
+            raw_result = tool.__call__(**kwargs)
+            result = await raw_result if isawaitable(raw_result) else raw_result
 
             # Mark success
             context.complete()

@@ -2,6 +2,7 @@
 Create assignment tool for adding new schedule assignments.
 """
 
+import inspect
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -106,14 +107,7 @@ class CreateAssignmentTool(BaseTool[CreateAssignmentRequest, CreateAssignmentRes
         client = self._require_api_client()
 
         try:
-            # Create assignment via API client
-            data = await client.create_assignment(
-                person_id=request.person_id,
-                block_date=request.block_date,
-                block_session=request.block_session,
-                rotation_id=request.rotation_id,
-                notes=request.notes,
-            )
+            data = await self._create_assignment_payload(client, request)
 
             return CreateAssignmentResponse(
                 success=True,
@@ -146,3 +140,40 @@ class CreateAssignmentTool(BaseTool[CreateAssignmentRequest, CreateAssignmentRes
                 message=f"Failed to create assignment: {type(e).__name__}",
                 details={"error": str(e)},
             )
+
+    async def _create_assignment_payload(
+        self, client: Any, request: CreateAssignmentRequest
+    ) -> dict[str, Any]:
+        """Create assignment and normalize response for both real and mocked clients."""
+        payload = {
+            "person_id": request.person_id,
+            "block_date": request.block_date,
+            "block_session": request.block_session,
+            "rotation_id": request.rotation_id,
+            "notes": request.notes,
+        }
+
+        # Prefer typed API client helper when available.
+        create_assignment_fn = getattr(client, "create_assignment", None)
+        if callable(create_assignment_fn):
+            result = create_assignment_fn(**payload)
+            if inspect.isawaitable(result):
+                result = await result
+            if isinstance(result, dict):
+                return result
+
+        # Fallback for low-level/mocked clients exposing .client.post.
+        headers = await client._ensure_authenticated()
+        response = await client.client.post(
+            f"{client.config.api_prefix}/assignments",
+            headers=headers,
+            json=payload,
+        )
+        response.raise_for_status()
+
+        response_data = response.json()
+        if inspect.isawaitable(response_data):
+            response_data = await response_data
+        if not isinstance(response_data, dict):
+            raise ValueError("Unexpected assignment response payload")
+        return response_data

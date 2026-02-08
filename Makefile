@@ -1,7 +1,7 @@
 # Makefile for Residency Scheduler
 # Unified command interface for development tasks
 
-.PHONY: help dev-start dev-stop test lint build clean install health db-migrate db-reset
+.PHONY: help dev-start dev-stop local-start local-start-build local-stop local-status local-logs test lint build clean install health db-migrate db-reset
 
 # Default target
 help:
@@ -14,6 +14,11 @@ help:
 	@echo "  dev-stop        Stop all Docker services"
 	@echo "  dev-rebuild     Rebuild and start Docker services"
 	@echo "  dev-logs        View Docker logs (follow mode)"
+	@echo "  local-start     One-command full local stack boot (recommended)"
+	@echo "  local-start-build  Rebuild + start local stack"
+	@echo "  local-stop      Stop local development stack"
+	@echo "  local-status    Show local development stack status"
+	@echo "  local-logs      Follow local development stack logs"
 	@echo ""
 	@echo "Testing:"
 	@echo "  test            Run all tests (backend + frontend)"
@@ -57,6 +62,21 @@ dev-rebuild:
 
 dev-logs:
 	docker-compose logs -f
+
+local-start:
+	./scripts/start-local.sh
+
+local-start-build:
+	./scripts/start-local.sh --build
+
+local-stop:
+	docker compose -f docker-compose.local.yml down
+
+local-status:
+	docker compose -f docker-compose.local.yml ps
+
+local-logs:
+	docker compose -f docker-compose.local.yml logs -f
 
 # =============================================================================
 # Testing

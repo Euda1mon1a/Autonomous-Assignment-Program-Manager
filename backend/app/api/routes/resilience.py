@@ -2837,8 +2837,6 @@ async def calculate_defense_level(
     - Level 4: CONTAINMENT - Crisis containment (coverage 65-75%)
     - Level 5: EMERGENCY - Full emergency response (coverage < 65%)
     """
-    from app.resilience.defense_in_depth import get_defense_level_from_coverage
-
     coverage_rate = request.coverage_rate
 
     # Map coverage rate to defense level

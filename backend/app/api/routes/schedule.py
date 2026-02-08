@@ -1,5 +1,6 @@
 """Schedule generation and validation API routes."""
 
+from inspect import isawaitable
 from uuid import UUID
 
 from fastapi import (
@@ -65,6 +66,7 @@ from app.schemas.schedule import (
     SwapFinderResponse,
     SyncMetadata,
     ValidationResult,
+    Violation,
 )
 from app.services.emergency_coverage import EmergencyCoverageService
 from app.services.idempotency_service import (
@@ -89,6 +91,85 @@ except ImportError:
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+def _normalize_validation_result(raw_result: object) -> ValidationResult:
+    """
+    Normalize legacy/custom validator payloads to ValidationResult.
+
+    Accepts:
+    - ValidationResult objects (returned as-is)
+    - Dict payloads using either canonical keys (`valid`, `total_violations`)
+      or legacy keys (`is_valid`, `metrics`).
+    """
+    if isinstance(raw_result, ValidationResult):
+        return raw_result
+
+    if not isinstance(raw_result, dict):
+        raise TypeError(
+            f"Expected ValidationResult or dict, got {type(raw_result).__name__}"
+        )
+
+    raw_violations = raw_result.get("violations", [])
+    normalized_violations: list[Violation] = []
+    for item in raw_violations if isinstance(raw_violations, list) else []:
+        if isinstance(item, Violation):
+            normalized_violations.append(item)
+            continue
+        if not isinstance(item, dict):
+            normalized_violations.append(
+                Violation(
+                    type="unknown",
+                    severity="MEDIUM",
+                    message=str(item),
+                    details=None,
+                )
+            )
+            continue
+
+        details = {
+            k: v
+            for k, v in item.items()
+            if k
+            not in {
+                "type",
+                "severity",
+                "message",
+                "person_id",
+                "resident_id",
+                "person_name",
+                "resident_name",
+                "block_id",
+            }
+        }
+        normalized_violations.append(
+            Violation(
+                type=str(item.get("type", "unknown")),
+                severity=str(item.get("severity", "MEDIUM")),
+                person_id=item.get("person_id") or item.get("resident_id"),
+                person_name=item.get("person_name") or item.get("resident_name"),
+                block_id=item.get("block_id"),
+                message=str(item.get("message") or item.get("type") or "Violation"),
+                details=details or None,
+            )
+        )
+
+    metrics = raw_result.get("metrics")
+    coverage_rate = raw_result.get("coverage_rate")
+    if coverage_rate is None and isinstance(metrics, dict):
+        coverage_rate = metrics.get("coverage_rate", 0.0)
+
+    return ValidationResult(
+        valid=bool(raw_result.get("valid", raw_result.get("is_valid", True))),
+        total_violations=int(
+            raw_result.get("total_violations", len(normalized_violations))
+        ),
+        violations=normalized_violations,
+        coverage_rate=float(coverage_rate or 0.0),
+        statistics=raw_result.get("statistics")
+        if isinstance(raw_result.get("statistics"), dict)
+        else (metrics if isinstance(metrics, dict) else None),
+    )
 
 
 @router.post("/generate", response_model=ScheduleResponse)
@@ -131,10 +212,7 @@ async def generate_schedule(
 
     settings = get_settings()
 
-    if (
-        not settings.DEBUG
-        and schedule_request.algorithm != SchedulingAlgorithm.CP_SAT
-    ):
+    if not settings.DEBUG and schedule_request.algorithm != SchedulingAlgorithm.CP_SAT:
         raise HTTPException(
             status_code=400,
             detail="Only CP-SAT is allowed in production. Use algorithm=cp_sat.",
@@ -411,9 +489,8 @@ async def validate_schedule(
         )
 
     validator = ACGMEValidator(db)
-    result = validator.validate_all(start, end)
-
-    return result
+    raw_result = validator.validate_all(start, end)
+    return _normalize_validation_result(raw_result)
 
 
 @router.post("/emergency-coverage", response_model=EmergencyResponse)
@@ -436,12 +513,17 @@ async def handle_emergency_coverage(
     """
     service = EmergencyCoverageService(db)
 
-    result = await service.handle_emergency_absence(
+    result_or_awaitable = service.handle_emergency_absence(
         person_id=request.person_id,
         start_date=request.start_date,
         end_date=request.end_date,
         reason=request.reason,
         is_deployment=request.is_deployment,
+    )
+    result = (
+        await result_or_awaitable
+        if isawaitable(result_or_awaitable)
+        else result_or_awaitable
     )
 
     return EmergencyResponse(

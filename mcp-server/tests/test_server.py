@@ -7,6 +7,8 @@ and resources registered, and is properly configured.
 
 import pytest
 
+pytest.importorskip("fastmcp")
+
 
 class TestServerImports:
     """Test that server module imports correctly."""

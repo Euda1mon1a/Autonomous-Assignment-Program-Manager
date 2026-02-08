@@ -285,17 +285,29 @@ cd residency-scheduler
 # Copy environment file
 cp .env.example .env
 
-# Ensure DATABASE_URL is set (required for local pytest/config validation)
-# Example: postgresql://scheduler:<DB_PASSWORD>@localhost:5432/residency_scheduler
-
-# Start all services
-docker-compose up -d
+# One-command full local stack boot (backend + frontend + postgres + redis + celery + MCP)
+./scripts/start-local.sh
+# or: make local-start
 
 # Access the application
 # Frontend:  http://localhost:3000
 # API:       http://localhost:8000
 # API Docs:  http://localhost:8000/docs (Swagger UI)
 # ReDoc:     http://localhost:8000/redoc
+# MCP:       http://localhost:8081
+```
+
+To rebuild images during startup:
+
+```bash
+./scripts/start-local.sh --build
+# or: make local-start-build
+```
+
+To stop the local stack:
+
+```bash
+make local-stop
 ```
 
 ### Local Development
