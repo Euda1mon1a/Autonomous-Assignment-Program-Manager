@@ -433,6 +433,26 @@ async def test_create_person(db: AsyncSession):
 - Each test gets a fresh transaction that's rolled back
 - Don't rely on data from previous tests
 
+### FastAPI TestClient: Query Params Stripped on Non-Versioned Routes
+
+**Symptom:** Tests hitting `/api/admin/schedule-overrides?start_date=...` return 400 (missing required params), but identical tests hitting `/api/v1/admin/schedule-overrides?start_date=...` work fine.
+
+**Root Cause:** FastAPI TestClient has undocumented behavior where query parameters are silently stripped when hitting unversioned `/api/*` routes. This appears to be related to how TestClient handles routing fallbacks.
+
+**The Fix:** Always use versioned routes (`/api/v1/*`) in tests.
+
+```python
+# ❌ WRONG - query params silently dropped
+response = client.get("/api/admin/schedule-overrides?start_date=2025-01-01")
+# Status 400: required query param 'start_date' not provided
+
+# ✅ CORRECT - versioned route preserves query params
+response = client.get("/api/v1/admin/schedule-overrides?start_date=2025-01-01")
+# Status 200: works as expected
+```
+
+**Action Item:** Audit all existing tests for this pattern and convert any non-versioned routes to `/api/v1/*`.
+
 ### Integration vs Unit Tests
 
 | Test Type | Uses Real DB | Uses Real API | Speed |
