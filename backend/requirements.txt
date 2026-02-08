@@ -28,6 +28,7 @@ passlib[bcrypt]==1.7.4
 bcrypt>=4.0.1,<5.0.0  # Pin bcrypt version for passlib 1.7.4 compatibility (prevents "password cannot be longer than 72 bytes" errors)
 keyring>=24.3.0  # macOS Keychain / OS credential store for local secret management
 python-magic>=0.4.27  # File type detection for upload validation
+defusedxml>=0.7.1  # Harden XML parsing against XXE and entity expansion attacks
 
 # API Enhancements
 fastapi-pagination==0.15.4

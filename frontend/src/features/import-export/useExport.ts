@@ -3,6 +3,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import * as XLSX from 'xlsx';
 import type {
   ExportColumn,
   ExportOptions,
@@ -188,20 +189,32 @@ export function useExport(hookOptions: UseExportOptions = {}) {
     });
 
     try {
-      // For Excel export, we'll generate a CSV that Excel can open
-      // In a production app, you'd use a library like xlsx or exceljs
-      const content = generateCSV(data, options.columns, options.includeHeaders);
+      const rows = data.map((row) =>
+        options.columns.map((column) => {
+          const value = getNestedValue(row, column.key);
+          return formatExportValue(value, column.format);
+        })
+      );
 
-      // Use tab-separated values for better Excel compatibility
-      const tsvContent = content.replace(/,/g, '\t');
-      const filename = `${options.filename}.xls`;
+      const headerRow = options.columns.map((column) => column.header);
+      const aoa = options.includeHeaders ? [headerRow, ...rows] : rows;
+      const worksheet = XLSX.utils.aoa_to_sheet(aoa);
+      worksheet['!cols'] = options.columns.map((column) => ({
+        wch: Math.max(column.header.length, column.width ?? 12),
+      }));
 
-      // Create a Blob with Excel MIME type
-      const blob = new Blob(['\ufeff' + tsvContent], {
-        type: 'application/vnd.ms-excel;charset=utf-8;',
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Export');
+
+      const xlsxBuffer = XLSX.write(workbook, {
+        bookType: 'xlsx',
+        type: 'array',
+        compression: true,
       });
 
-      downloadFile(blob, filename, 'application/vnd.ms-excel');
+      const filename = `${options.filename}${getFileExtension('xlsx')}`;
+      const blob = new Blob([xlsxBuffer], { type: getMimeType('xlsx') });
+      downloadFile(blob, filename, getMimeType('xlsx'));
 
       updateProgress({
         status: 'complete',

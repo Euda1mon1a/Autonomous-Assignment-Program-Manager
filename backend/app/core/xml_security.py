@@ -10,8 +10,10 @@ This module provides secure alternatives using defusedxml or
 secure ElementTree configuration.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, cast
+from typing import Any
 
 from defusedxml import ElementTree as ET
 
@@ -99,7 +101,7 @@ def parse_xml_defused(xml_string: str) -> ET.Element:
         # Try to use defusedxml (preferred)
         logger.debug("Using defusedxml for secure XML parsing")
         try:
-            return cast(ET.Element[str], ET.fromstring(xml_string))
+            return ET.fromstring(xml_string)
         except Exception as e:
             logger.error(f"XML parsing error (defusedxml): {e}")
             raise ValueError(f"Invalid XML: {e}") from e

@@ -190,7 +190,9 @@ class TestPipelineOrderEnforcement:
                 # Create mock DB
                 mock_db = MagicMock()
                 mock_db.execute.return_value.scalars.return_value.all.return_value = []  # noqa: E501
-                mock_db.execute.return_value.scalars.return_value.first.return_value = None  # noqa: E501
+                mock_db.execute.return_value.scalars.return_value.first.return_value = (
+                    None  # noqa: E501
+                )
                 mock_db.execute.return_value.scalar.return_value = 0
                 mock_db.query.return_value.filter.return_value.all.return_value = []  # noqa: E501
 
@@ -206,9 +208,7 @@ class TestPipelineOrderEnforcement:
                             SchedulingEngine,
                             "_check_post_generation_resilience",
                         ):
-                            engine = SchedulingEngine(
-                                mock_db, start_date, end_date
-                            )
+                            engine = SchedulingEngine(mock_db, start_date, end_date)
 
                 # Patch instance methods - track _run_solver for call generation
                 engine._run_solver = track_call_solver
@@ -261,32 +261,44 @@ class TestPipelineOrderEnforcement:
                                         mock_post_validation.warnings = []
                                         mock_post_validation.coverage_rate = 1.0
                                         engine.validator = MagicMock()
-                                        engine.validator.validate_all.return_value = mock_post_validation
+                                        engine.validator.validate_all.return_value = (
+                                            mock_post_validation
+                                        )
 
                                         # Avoid activity lookups in mocked DB
                                         with patch.object(
                                             engine,
                                             "_persist_solver_assignments_to_half_day",
                                         ):
-                                            # Run generate - NO exception swallowing
-                                            # validate_pcat_do=False because mock DB
-                                            # doesn't have Activity records
-                                            engine.generate(
-                                                block_number=10,
-                                                academic_year=2025,
-                                                expand_block_assignments=True,
-                                                algorithm="greedy",
-                                                validate_pcat_do=False,
-                                            )
+                                            with patch.object(
+                                                engine, "_backfill_weekend_slots"
+                                            ):
+                                                with patch.object(
+                                                    engine, "_backfill_virtual_clinic"
+                                                ):
+                                                    # Run generate - NO exception swallowing
+                                                    # validate_pcat_do=False because mock DB
+                                                    # doesn't have Activity records
+                                                    engine.generate(
+                                                        block_number=10,
+                                                        academic_year=2025,
+                                                        expand_block_assignments=True,
+                                                        algorithm="greedy",
+                                                        validate_pcat_do=False,
+                                                    )
                                         mock_activity_instance.solve.assert_called()
                                         _, activity_kwargs = (
                                             mock_activity_instance.solve.call_args
                                         )
                                         assert (
+                                            activity_kwargs.get("include_faculty_slots")
+                                            is True
+                                        )
+                                        assert (
                                             activity_kwargs.get(
-                                                "include_faculty_slots"
+                                                "force_faculty_override"
                                             )
-                                            is False
+                                            is True
                                         )
 
         # HARD-FAIL ASSERTIONS: All required steps MUST be present

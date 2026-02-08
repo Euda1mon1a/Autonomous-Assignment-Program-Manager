@@ -237,16 +237,18 @@ class TestHelperMethods:
         assert activity_id in result
 
     def test_get_faculty_clinic_caps_with_values(self):
-        """_get_faculty_clinic_caps ignores min and returns max."""
+        """_get_faculty_clinic_caps returns configured min and max."""
         mock_session = MagicMock()
         solver = CPSATActivitySolver(mock_session)
 
         mock_faculty = MagicMock()
         mock_faculty.min_clinic_halfdays_per_week = 2
         mock_faculty.max_clinic_halfdays_per_week = 6
+        mock_faculty.clinic_min = None
+        mock_faculty.clinic_max = None
 
         min_c, max_c = solver._get_faculty_clinic_caps(mock_faculty)
-        assert min_c == 0
+        assert min_c == 2
         assert max_c == 6
 
     def test_get_faculty_clinic_caps_with_none(self):
@@ -257,23 +259,60 @@ class TestHelperMethods:
         mock_faculty = MagicMock()
         mock_faculty.min_clinic_halfdays_per_week = None
         mock_faculty.max_clinic_halfdays_per_week = None
+        mock_faculty.clinic_min = None
+        mock_faculty.clinic_max = None
 
         min_c, max_c = solver._get_faculty_clinic_caps(mock_faculty)
         assert min_c == 0
         assert max_c == 0
 
     def test_get_faculty_clinic_caps_max_less_than_min(self):
-        """_get_faculty_clinic_caps ignores min when max is set."""
+        """_get_faculty_clinic_caps normalizes max so max >= min."""
         mock_session = MagicMock()
         solver = CPSATActivitySolver(mock_session)
 
         mock_faculty = MagicMock()
         mock_faculty.min_clinic_halfdays_per_week = 5
         mock_faculty.max_clinic_halfdays_per_week = 2  # Less than min
+        mock_faculty.clinic_min = None
+        mock_faculty.clinic_max = None
 
         min_c, max_c = solver._get_faculty_clinic_caps(mock_faculty)
-        assert min_c == 0
-        assert max_c == 2
+        assert min_c == 5
+        assert max_c == 5
+
+    def test_get_faculty_clinic_caps_uses_legacy_when_new_fields_zero(self):
+        """Legacy clinic_min/clinic_max should be used for stale rows."""
+        mock_session = MagicMock()
+        solver = CPSATActivitySolver(mock_session)
+
+        mock_faculty = MagicMock()
+        mock_faculty.min_clinic_halfdays_per_week = 0
+        mock_faculty.max_clinic_halfdays_per_week = 0
+        mock_faculty.clinic_min = 2
+        mock_faculty.clinic_max = 4
+
+        min_c, max_c = solver._get_faculty_clinic_caps(mock_faculty)
+        assert min_c == 2
+        assert max_c == 4
+
+    def test_get_faculty_clinic_caps_uses_legacy_db_when_attrs_unmapped(self):
+        """Fallback should load legacy caps from DB when Person attrs are unmapped."""
+        mock_session = MagicMock()
+        solver = CPSATActivitySolver(mock_session)
+
+        faculty_id = uuid4()
+        mock_session.execute.return_value.all.return_value = [(faculty_id, 2, 4)]
+
+        mock_faculty = SimpleNamespace(
+            id=faculty_id,
+            min_clinic_halfdays_per_week=0,
+            max_clinic_halfdays_per_week=0,
+        )
+
+        min_c, max_c = solver._get_faculty_clinic_caps(mock_faculty)
+        assert min_c == 2
+        assert max_c == 4
 
     def test_get_admin_activity_for_faculty_gme(self):
         """_get_admin_activity_for_faculty returns GME activity."""

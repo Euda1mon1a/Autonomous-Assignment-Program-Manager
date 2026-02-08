@@ -595,6 +595,9 @@ class SchedulingEngine:
                 and academic_year is not None
                 and not create_draft
             ):
+                include_faculty_activity_solver = os.getenv(
+                    "ACTIVITY_SOLVER_INCLUDE_FACULTY", "true"
+                ).strip().lower() in {"1", "true", "yes", "on"}
                 activity_solver = CPSATActivitySolver(
                     self.db,
                     timeout_seconds=min(timeout_seconds, 30.0),  # Cap at 30s
@@ -602,12 +605,14 @@ class SchedulingEngine:
                 activity_result = activity_solver.solve(
                     block_number,
                     academic_year,
-                    include_faculty_slots=False,
+                    include_faculty_slots=include_faculty_activity_solver,
+                    force_faculty_override=include_faculty_activity_solver,
                 )
                 if activity_result.get("success"):
                     logger.info(
                         f"Activity solver assigned {activity_result.get('assignments_updated', 0)} "
-                        f"activities ({activity_result.get('status', 'unknown')})"
+                        f"activities ({activity_result.get('status', 'unknown')}); "
+                        f"faculty_slots={'on' if include_faculty_activity_solver else 'off'}"
                     )
                 else:
                     logger.warning(

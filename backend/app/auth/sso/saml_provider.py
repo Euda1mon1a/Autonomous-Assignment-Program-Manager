@@ -9,6 +9,8 @@ Provides SAML 2.0 authentication flow including:
 - Attribute extraction and mapping
 """
 
+from __future__ import annotations
+
 import base64
 import uuid
 import zlib

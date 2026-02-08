@@ -13,6 +13,10 @@ Legacy pipeline:
     DB → HalfDayXMLExporter → XML → XMLToXlsxConverter → xlsx
 """
 
+from __future__ import annotations
+
+from collections import Counter
+from copy import copy
 from datetime import date, datetime, timedelta
 from io import BytesIO
 from pathlib import Path
@@ -95,6 +99,9 @@ class XMLToXlsxConverter:
         structure_xml_path: Path | str | None = None,
         use_block_template2: bool = True,
         strict_row_mapping: bool = False,
+        include_qa_sheet: bool = True,
+        preserve_template_identity_fields: bool = True,
+        presentation_profile: str = "tamc_handjam_v2",
     ) -> None:
         """
         Initialize converter with optional template.
@@ -108,18 +115,29 @@ class XMLToXlsxConverter:
             use_block_template2: If True, use Block Template2 column layout (production).
                                 If False, use ROSETTA layout (validation).
             strict_row_mapping: If True, fail export when a person name has no row mapping.
+            include_qa_sheet: If True, add an Export_QA worksheet with explicit
+                code totals and per-faculty clinic counts.
+            preserve_template_identity_fields: If True, keeps template values in
+                columns A-E (rotations/template/role/name) and only writes schedule
+                cells. This preserves full handjam labels/names.
+            presentation_profile: Post-processing profile for summary formulas and
+                freeze panes. "tamc_handjam_v2" aligns output with manual Block 10.
         """
         self.template_path = Path(template_path) if template_path else None
         self.apply_colors = apply_colors
         self.color_scheme = get_color_scheme() if apply_colors else None
         self.use_block_template2 = use_block_template2
         self.strict_row_mapping = strict_row_mapping
+        self.include_qa_sheet = include_qa_sheet
+        self.preserve_template_identity_fields = preserve_template_identity_fields
+        self.presentation_profile = presentation_profile
 
         # Load row mappings from structure XML if provided
         self.row_mappings: dict[str, int] = {}
         self.pgy_mappings: dict[str, int] = {}  # name → pgy level
         self.template_mappings: dict[str, str] = {}  # name → template code
         self.call_row: int = BT2_ROW_STAFF_CALL
+        self.last_conversion_stats: dict[str, Any] = {}
         if structure_xml_path:
             self._load_structure_xml(Path(structure_xml_path))
 
@@ -211,14 +229,44 @@ class XMLToXlsxConverter:
             wb = self._create_new_workbook(block_start, block_end)
             sheet = wb.active
 
-            # Fill header row (always - helps with readability)
+        # Fill header row (always - helps with readability)
         self._fill_header_row(sheet, block_start, block_end)
+        unmerged_cells = self._prepare_schedule_grid(sheet, block_start, block_end)
 
         # Fill residents and faculty
         residents = data.get("residents", [])
         faculty = data.get("faculty", [])
-        self._fill_residents(sheet, residents, block_start, is_faculty=False)
-        self._fill_residents(sheet, faculty, block_start, is_faculty=True)
+        stats: dict[str, Any] = {
+            "block_start": block_start.isoformat(),
+            "block_end": block_end.isoformat(),
+            "residents": {
+                "people_input": len(residents),
+                "people_written": 0,
+                "unmapped_names": [],
+                "codes_written": {},
+            },
+            "faculty": {
+                "people_input": len(faculty),
+                "people_written": 0,
+                "unmapped_names": [],
+                "codes_written": {},
+            },
+        }
+        stats["schedule_cells_unmerged"] = unmerged_cells
+        self._fill_residents(
+            sheet,
+            residents,
+            block_start,
+            is_faculty=False,
+            stats=stats["residents"],
+        )
+        self._fill_residents(
+            sheet,
+            faculty,
+            block_start,
+            is_faculty=True,
+            stats=stats["faculty"],
+        )
 
         # Fill call row (Row 4) - single cells for user to merge
         call_section = data.get("call", {})
@@ -229,8 +277,15 @@ class XMLToXlsxConverter:
             call_rows = call_section
         if call_rows:
             self._fill_call_row(sheet, call_rows, block_start, block_end)
+        stats["call_nights_input"] = len(call_rows)
+        self._apply_presentation_profile(sheet, block_start, block_end)
+        self.last_conversion_stats = stats
+        if self.include_qa_sheet and self.use_block_template2:
+            self._write_export_qa_sheet(wb, data, stats)
+        if self.use_block_template2:
+            self._prune_empty_sheets(wb, keep={"Block Template2", "Export_QA"})
 
-            # Save to bytes
+        # Save to bytes
         buffer = BytesIO()
         wb.save(buffer)
         xlsx_bytes = buffer.getvalue()
@@ -241,6 +296,333 @@ class XMLToXlsxConverter:
             logger.info(f"Saved xlsx to {output_path}")
 
         return xlsx_bytes
+
+    def _prepare_schedule_grid(self, sheet, block_start: date, block_end: date) -> int:
+        """Unmerge schedule-grid cells in mapped rows so AM/PM can be written independently."""
+        if not self.use_block_template2 or not self.row_mappings:
+            return 0
+
+        schedule_start_col = COL_SCHEDULE_START
+        total_days = (block_end - block_start).days + 1
+        schedule_end_col = schedule_start_col + (total_days * COLS_PER_DAY) - 1
+
+        target_rows = set(self.row_mappings.values())
+        if not target_rows:
+            return 0
+
+        merged_ranges = list(sheet.merged_cells.ranges)
+        unmerged = 0
+
+        for merged_range in merged_ranges:
+            if merged_range.max_col < schedule_start_col:
+                continue
+            if merged_range.min_col > schedule_end_col:
+                continue
+            if merged_range.max_row < min(target_rows):
+                continue
+            if merged_range.min_row > max(target_rows):
+                continue
+
+            overlaps_target_row = any(
+                merged_range.min_row <= row <= merged_range.max_row
+                for row in target_rows
+            )
+            if not overlaps_target_row:
+                continue
+
+            top_left = sheet.cell(row=merged_range.min_row, column=merged_range.min_col)
+
+            # Preserve style/format from top-left before unmerge.
+            for row in range(merged_range.min_row, merged_range.max_row + 1):
+                for col in range(merged_range.min_col, merged_range.max_col + 1):
+                    if row == merged_range.min_row and col == merged_range.min_col:
+                        continue
+                    cell = sheet.cell(row=row, column=col)
+                    cell._style = copy(top_left._style)
+                    cell.number_format = top_left.number_format
+                    cell.protection = copy(top_left.protection)
+                    cell.alignment = copy(top_left.alignment)
+
+            sheet.unmerge_cells(str(merged_range))
+            unmerged += 1
+
+        if unmerged:
+            logger.info(f"Unmerged {unmerged} schedule cell ranges for AM/PM fidelity")
+        return unmerged
+
+    def _normalize_code(self, value: Any) -> str:
+        if value is None:
+            return ""
+        code = str(value).strip().upper()
+        return code
+
+    def _collect_people_code_counts(
+        self, people: list[dict[str, Any]]
+    ) -> list[tuple[str, Counter[str]]]:
+        rows: list[tuple[str, Counter[str]]] = []
+        for person in sorted(people, key=lambda p: str(p.get("name", ""))):
+            name = str(person.get("name", "") or "").strip()
+            if not name:
+                continue
+            counter: Counter[str] = Counter()
+            for day in person.get("days", []) or []:
+                am = self._normalize_code(day.get("am", ""))
+                pm = self._normalize_code(day.get("pm", ""))
+                if am:
+                    counter[am] += 1
+                if pm:
+                    counter[pm] += 1
+            rows.append((name, counter))
+        return rows
+
+    def _apply_presentation_profile(
+        self, sheet, block_start: date, block_end: date
+    ) -> None:
+        """Apply output formatting profile overlays for Block Template2."""
+        if not self.use_block_template2:
+            return
+        if self.presentation_profile != "tamc_handjam_v2":
+            return
+        self._apply_tamc_handjam_summary_layout(sheet, block_start, block_end)
+
+    def _apply_tamc_handjam_summary_layout(
+        self, sheet, block_start: date, block_end: date
+    ) -> None:
+        """Align summary headers/formulas/freeze panes with handjam Block 10."""
+        # Keep navigation locked to schedule start while exposing summary rows.
+        sheet.freeze_panes = "F50"
+
+        summary_headers = [
+            "C",
+            "CC",
+            "CV",
+            "(C+CC+CV)",
+            "NF",
+            "CC",
+            "PC/OFF",
+            "LV",
+            "FMIT",
+        ]
+        for idx, header in enumerate(summary_headers):
+            sheet.cell(row=8, column=62 + idx).value = header
+
+        for row in range(9, 29):
+            c_terms = '{"C","C-I","SM"}' if row == 9 else '{"C","CV","C-I","SM"}'
+            sheet.cell(
+                row=row, column=62
+            ).value = f"=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {c_terms}))"
+            sheet.cell(row=row, column=63).value = f'=COUNTIF(F{row}:BI{row}, "CC")'
+            sheet.cell(row=row, column=64).value = f'=COUNTIF(F{row}:BI{row}, "CV")'
+            sheet.cell(row=row, column=65).value = f"=BJ{row}+BK{row}+BL{row}"
+            sheet.cell(row=row, column=66).value = f'=COUNTIF(F{row}:BI{row}, "NF")'
+            sheet.cell(row=row, column=67).value = f'=COUNTIF(F{row}:BI{row}, "CC")'
+            sheet.cell(
+                row=row, column=68
+            ).value = f'=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {{"PC","OFF","W"}}))'
+            sheet.cell(row=row, column=69).value = f'=COUNTIF(F{row}:BI{row}, "LV")'
+            sheet.cell(row=row, column=70).value = f'=COUNTIF(F{row}:BI{row}, "FMIT")'
+
+        sheet.cell(row=29, column=62).value = "=SUM(BJ9:BJ26)"
+        sheet.cell(row=29, column=63).value = "=SUM(BK9:BK26)"
+        sheet.cell(row=29, column=64).value = "=SUM(BL9:BL26)"
+        sheet.cell(row=29, column=65).value = "=SUM(BM9:BM26)"
+        sheet.cell(row=29, column=66).value = "=SUM(BN9:BN28)"
+        sheet.cell(row=29, column=67).value = "=SUM(BP9:BP28)"
+        sheet.cell(row=29, column=68).value = "=SUM(BQ9:BQ28)"
+        sheet.cell(row=29, column=69).value = "=SUM(BR9:BR28)"
+        sheet.cell(row=29, column=70).value = None
+
+        row30_headers = [
+            "C",
+            "CC",
+            "CV",
+            "(C+CC+CV)",
+            "AT",
+            "ADM",
+            "LV",
+            "FMIT",
+            "CALL",
+        ]
+        for idx, header in enumerate(row30_headers):
+            sheet.cell(row=30, column=62 + idx).value = header
+
+        for row in range(31, 43):
+            sheet.cell(
+                row=row, column=62
+            ).value = f'=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {{"C","SM"}}))'
+            sheet.cell(row=row, column=63).value = f'=COUNTIF(F{row}:BI{row}, "CC")'
+            sheet.cell(row=row, column=64).value = f'=COUNTIF(F{row}:BI{row}, "CV")'
+            sheet.cell(row=row, column=65).value = f"=BJ{row}+BK{row}+BL{row}"
+            sheet.cell(
+                row=row, column=66
+            ).value = f'=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {{"AT","PCAT","DO"}}))'
+            sheet.cell(
+                row=row, column=67
+            ).value = f'=SUMPRODUCT(COUNTIF(F{row}:BI{row}, {{"GME","DFM","DOFM"}}))'
+            sheet.cell(row=row, column=68).value = f'=COUNTIF(F{row}:BI{row}, "LV")'
+            sheet.cell(row=row, column=69).value = f'=COUNTIF(F{row}:BI{row}, "FMIT")'
+            call_name = self._call_last_name_token(sheet.cell(row=row, column=5).value)
+            sheet.cell(row=row, column=70).value = (
+                f'=COUNTIF(F4:BI4, "{call_name}")' if call_name else None
+            )
+
+        sheet.cell(row=43, column=62).value = "=SUM(BJ31:BJ42)"
+        sheet.cell(row=43, column=63).value = "=SUM(BK31:BK42)"
+        sheet.cell(row=43, column=64).value = "=SUM(BL31:BL42)"
+        sheet.cell(row=43, column=65).value = "=SUM(BM31:BM42)"
+        sheet.cell(row=43, column=66).value = "=SUM(BN31:BN42)"
+        sheet.cell(row=43, column=67).value = "=SUM(BO31:BO42)"
+        sheet.cell(row=43, column=68).value = "=SUM(BP31:BP42)"
+        sheet.cell(row=43, column=69).value = "=SUM(BQ31:BQ42)"
+        sheet.cell(row=43, column=70).value = "=SUM(BR31:BR42)"
+        sheet.cell(row=44, column=62).value = "%CVf"
+        sheet.cell(row=44, column=64).value = "=BL43/(BJ43+BK43+BL43)*100"
+
+    def _call_last_name_token(self, raw_name: Any) -> str:
+        if not raw_name:
+            return ""
+        text = str(raw_name).replace("*", "").strip()
+        if not text:
+            return ""
+        if "," in text:
+            last = text.split(",", 1)[0]
+        else:
+            last = text.split()[-1]
+        return " ".join(last.split()).upper()
+
+    def _write_export_qa_sheet(
+        self, wb: Workbook, data: dict[str, Any], stats: dict[str, Any]
+    ) -> None:
+        """Write a human-readable QA sheet with explicit code breakdowns."""
+        if "Export_QA" in wb.sheetnames:
+            del wb["Export_QA"]
+        qa = wb.create_sheet("Export_QA")
+
+        bold = Font(bold=True)
+        qa["A1"] = "Export QA Summary"
+        qa["A1"].font = bold
+        qa["A2"] = "Generated UTC"
+        qa["B2"] = f"{datetime.utcnow().isoformat(timespec='seconds')}Z"
+        qa["A3"] = "Block Start"
+        qa["B3"] = str(stats.get("block_start", ""))
+        qa["A4"] = "Block End"
+        qa["B4"] = str(stats.get("block_end", ""))
+        qa["A5"] = "Source"
+        qa["B5"] = str(data.get("source", "unknown"))
+        qa["A6"] = "Unmerged Schedule Ranges"
+        qa["B6"] = int(stats.get("schedule_cells_unmerged", 0))
+        qa["A7"] = "Presentation Profile"
+        qa["B7"] = self.presentation_profile
+        qa["C7"] = "Identity Fields"
+        qa["D7"] = (
+            "template-preserved"
+            if self.preserve_template_identity_fields
+            else "db-written"
+        )
+
+        qa["A9"] = "Section"
+        qa["B9"] = "People Input"
+        qa["C9"] = "People Written"
+        qa["D9"] = "Unmapped Names"
+        qa["E9"] = "Non-empty Cells"
+        for cell in ("A9", "B9", "C9", "D9", "E9"):
+            qa[cell].font = bold
+
+        for idx, section in enumerate(("residents", "faculty"), start=10):
+            section_stats = stats.get(section, {})
+            qa.cell(row=idx, column=1, value=section.title())
+            qa.cell(row=idx, column=2, value=int(section_stats.get("people_input", 0)))
+            qa.cell(
+                row=idx, column=3, value=int(section_stats.get("people_written", 0))
+            )
+            unmapped = section_stats.get("unmapped_names", []) or []
+            qa.cell(row=idx, column=4, value=", ".join(str(n) for n in unmapped))
+            codes_written = section_stats.get("codes_written", {}) or {}
+            qa.cell(
+                row=idx, column=5, value=sum(int(v) for v in codes_written.values())
+            )
+
+        resident_codes = Counter(
+            {
+                k: int(v)
+                for k, v in (
+                    stats.get("residents", {}).get("codes_written", {}) or {}
+                ).items()
+            }
+        )
+        faculty_codes = Counter(
+            {
+                k: int(v)
+                for k, v in (
+                    stats.get("faculty", {}).get("codes_written", {}) or {}
+                ).items()
+            }
+        )
+        combined_codes = resident_codes + faculty_codes
+
+        qa["A14"] = "Code"
+        qa["B14"] = "Residents"
+        qa["C14"] = "Faculty"
+        qa["D14"] = "Combined"
+        for cell in ("A14", "B14", "C14", "D14"):
+            qa[cell].font = bold
+
+        code_row = 15
+        for code in sorted(combined_codes):
+            qa.cell(row=code_row, column=1, value=code)
+            qa.cell(row=code_row, column=2, value=int(resident_codes.get(code, 0)))
+            qa.cell(row=code_row, column=3, value=int(faculty_codes.get(code, 0)))
+            qa.cell(row=code_row, column=4, value=int(combined_codes.get(code, 0)))
+            code_row += 1
+
+        qa["F9"] = "Note"
+        qa["F9"].font = bold
+        qa["F10"] = (
+            "Template summary columns on Block Template2 are composite in places "
+            "(e.g. BJ may include C with SM/C-I). Use this sheet for explicit counts."
+        )
+
+        qa["F14"] = "Faculty Clinic Detail"
+        qa["F14"].font = bold
+        qa["F15"] = "Name"
+        qa["G15"] = "C"
+        qa["H15"] = "SM"
+        qa["I15"] = "C+SM"
+        for cell in ("F15", "G15", "H15", "I15"):
+            qa[cell].font = bold
+
+        faculty_people = self._collect_people_code_counts(data.get("faculty", []) or [])
+        faculty_row = 16
+        for name, counter in faculty_people:
+            c_count = int(counter.get("C", 0))
+            sm_count = int(counter.get("SM", 0))
+            qa.cell(row=faculty_row, column=6, value=name)
+            qa.cell(row=faculty_row, column=7, value=c_count)
+            qa.cell(row=faculty_row, column=8, value=sm_count)
+            qa.cell(row=faculty_row, column=9, value=c_count + sm_count)
+            faculty_row += 1
+
+        for col, width in (
+            ("A", 28),
+            ("B", 16),
+            ("C", 16),
+            ("D", 40),
+            ("E", 16),
+            ("F", 42),
+            ("G", 10),
+            ("H", 10),
+            ("I", 10),
+        ):
+            qa.column_dimensions[col].width = width
+
+    def _prune_empty_sheets(self, wb: Workbook, keep: set[str]) -> None:
+        """Remove placeholder sheets that contain no data."""
+        for name in list(wb.sheetnames):
+            if name in keep:
+                continue
+            ws = wb[name]
+            if ws.max_row == 1 and ws.max_column == 1 and ws["A1"].value in (None, ""):
+                del wb[name]
 
     def _parse_xml_to_data(self, root: ElementTree.Element) -> dict[str, Any]:
         """Parse XML schedule into a JSON-like dict."""
@@ -494,6 +876,7 @@ class XMLToXlsxConverter:
         residents: list[dict[str, Any]],
         block_start: date,
         is_faculty: bool,
+        stats: dict[str, Any] | None = None,
     ) -> None:
         """Fill resident/faculty rows from schedule dicts.
 
@@ -535,6 +918,8 @@ class XMLToXlsxConverter:
                             break
 
                 if not row:
+                    if stats is not None:
+                        stats["unmapped_names"].append(name)
                     if self.strict_row_mapping:
                         raise ValueError(
                             f"No row mapping for: {name}. "
@@ -544,6 +929,9 @@ class XMLToXlsxConverter:
                     continue
             else:
                 row = i + 2  # Start at row 2 (row 1 is headers)
+
+            if stats is not None:
+                stats["people_written"] += 1
 
             pgy = resident.get("pgy", "")
             rotation1 = resident.get("rotation1", "") or ""
@@ -568,28 +956,29 @@ class XMLToXlsxConverter:
                 role = self._get_role(pgy, is_faculty)
                 display_name = self._to_last_first(name)
 
-                rot1_cell = self._get_writable_cell(
-                    sheet, row=row, column=BT2_COL_ROTATION1
-                )
-                rot1_cell.value = rotation1
-                self._apply_rotation_color(rot1_cell, rotation1)
+                if not self.preserve_template_identity_fields:
+                    rot1_cell = self._get_writable_cell(
+                        sheet, row=row, column=BT2_COL_ROTATION1
+                    )
+                    rot1_cell.value = rotation1
+                    self._apply_rotation_color(rot1_cell, rotation1)
 
-                rot2_cell = self._get_writable_cell(
-                    sheet, row=row, column=BT2_COL_ROTATION2
-                )
-                rot2_cell.value = rotation2 or ""
-                if rotation2:
-                    self._apply_rotation_color(rot2_cell, rotation2)
+                    rot2_cell = self._get_writable_cell(
+                        sheet, row=row, column=BT2_COL_ROTATION2
+                    )
+                    rot2_cell.value = rotation2 or ""
+                    if rotation2:
+                        self._apply_rotation_color(rot2_cell, rotation2)
 
-                self._get_writable_cell(
-                    sheet, row=row, column=BT2_COL_TEMPLATE
-                ).value = template_code
-                self._get_writable_cell(
-                    sheet, row=row, column=BT2_COL_ROLE
-                ).value = role
-                self._get_writable_cell(
-                    sheet, row=row, column=BT2_COL_NAME
-                ).value = display_name
+                    self._get_writable_cell(
+                        sheet, row=row, column=BT2_COL_TEMPLATE
+                    ).value = template_code
+                    self._get_writable_cell(
+                        sheet, row=row, column=BT2_COL_ROLE
+                    ).value = role
+                    self._get_writable_cell(
+                        sheet, row=row, column=BT2_COL_NAME
+                    ).value = display_name
             else:
                 # ROSETTA format: Name, PGY, Rotation1, Rotation2, Notes
                 self._get_writable_cell(
@@ -632,6 +1021,13 @@ class XMLToXlsxConverter:
 
                 am_cell.value = am_code
                 pm_cell.value = pm_code
+
+                if stats is not None and am_code:
+                    codes_written = stats["codes_written"]
+                    codes_written[am_code] = codes_written.get(am_code, 0) + 1
+                if stats is not None and pm_code:
+                    codes_written = stats["codes_written"]
+                    codes_written[pm_code] = codes_written.get(pm_code, 0) + 1
 
                 # Apply colors based on schedule code
                 if am_code:
