@@ -15,13 +15,19 @@ Fixture Strategy:
 """
 
 import asyncio
-import os
-from datetime import date, datetime, timedelta
+import sys
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
+
+MCP_SERVER_ROOT = Path(__file__).resolve().parents[1]
+MCP_SERVER_SRC = MCP_SERVER_ROOT / "src"
+if str(MCP_SERVER_SRC) not in sys.path:
+    sys.path.insert(0, str(MCP_SERVER_SRC))
 
 # ============================================================================
 # Environment Setup for Tests

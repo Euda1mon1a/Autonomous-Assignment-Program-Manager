@@ -12,7 +12,7 @@
 #   - Celery worker & beat
 #   - Next.js frontend
 #   - MCP server (CRITICAL for AI assistant RAG/tools)
-#   - n8n workflow automation
+#   - Optional n8n workflow automation (disabled in local compose)
 #
 # IMPORTANT: Always use this script to ensure MCP is running.
 #   Without MCP, Claude Code loses access to:
@@ -133,8 +133,8 @@ echo -e "${GREEN}Access Points:${NC}"
 echo "  Frontend:  http://localhost:3000"
 echo "  Backend:   http://localhost:8000"
 echo "  API Docs:  http://localhost:8000/docs"
-echo "  MCP:       http://localhost:8080"
-echo "  n8n:       http://localhost:5679"
+echo "  MCP:       http://localhost:8081"
+echo "  n8n:       disabled in docker-compose.local.yml"
 
 if [ -n "$LOGS" ]; then
     echo ""

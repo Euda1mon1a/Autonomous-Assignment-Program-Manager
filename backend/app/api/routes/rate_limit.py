@@ -18,7 +18,7 @@ from app.core.config import get_settings
 from app.core.rate_limit_tiers import (
     ENDPOINT_LIMITS,
     TIER_CONFIGS,
-    RateLimitConfig,
+    RateLimitConfig as CoreRateLimitConfig,
     RateLimitTier,
     TokenBucket,
     get_custom_limit,
@@ -35,6 +35,7 @@ from app.schemas.rate_limit import (
     CustomLimitResponse,
     EndpointLimitInfo,
     EndpointLimitsResponse,
+    RateLimitConfig as SchemaRateLimitConfig,
     RateLimitLimits,
     RateLimitRemaining,
     RateLimitReset,
@@ -262,7 +263,7 @@ async def get_all_tiers(
         tiers.append(
             TierInfo(
                 tier=tier.value,
-                config=RateLimitConfig(
+                config=SchemaRateLimitConfig(
                     requests_per_minute=config.requests_per_minute,
                     requests_per_hour=config.requests_per_hour,
                     burst_size=config.burst_size,
@@ -319,7 +320,7 @@ async def get_endpoint_limits(
             refill_rate = (
                 limit.requests_per_minute / 60.0 if limit.requests_per_minute else 0.0
             )
-            config = RateLimitConfig(
+            config = SchemaRateLimitConfig(
                 requests_per_minute=limit.requests_per_minute or 0,
                 requests_per_hour=limit.requests_per_hour or 0,
                 burst_size=limit.burst_size or 0,
@@ -340,7 +341,6 @@ async def get_endpoint_limits(
 async def set_custom_user_limit(
     request: CustomLimitRequest,
     current_user: User = Depends(get_admin_user),
-    redis_client: redis.Redis = Depends(get_redis_client),
 ) -> CustomLimitResponse:
     """
     Set custom rate limit for a specific user (admin only).
@@ -375,7 +375,9 @@ async def set_custom_user_limit(
     }
     ```
     """
-    config = RateLimitConfig(
+    redis_client = get_redis_client()
+
+    config = CoreRateLimitConfig(
         requests_per_minute=request.config.requests_per_minute,
         requests_per_hour=request.config.requests_per_hour,
         burst_size=request.config.burst_size,
@@ -405,7 +407,12 @@ async def set_custom_user_limit(
         success=True,
         message="Custom rate limit set successfully",
         user_id=request.user_id,
-        config=config,
+        config=SchemaRateLimitConfig(
+            requests_per_minute=config.requests_per_minute,
+            requests_per_hour=config.requests_per_hour,
+            burst_size=config.burst_size,
+            burst_refill_rate=config.burst_refill_rate,
+        ),
         expires_at=expires_at,
     )
 
@@ -414,7 +421,6 @@ async def set_custom_user_limit(
 async def remove_custom_user_limit(
     user_id: str,
     current_user: User = Depends(get_admin_user),
-    redis_client: redis.Redis = Depends(get_redis_client),
 ):
     """
     Remove custom rate limit for a user (admin only).
@@ -433,6 +439,7 @@ async def remove_custom_user_limit(
     ```
     """
     try:
+        redis_client = get_redis_client()
         key = f"custom_limit:{user_id}"
         redis_client.delete(key)
 
@@ -445,6 +452,8 @@ async def remove_custom_user_limit(
             "message": "Custom rate limit removed",
             "user_id": user_id,
         }
+    except HTTPException:
+        raise
 
     except Exception as e:
         logger.error(f"Error removing custom limit for user {user_id}: {e}")

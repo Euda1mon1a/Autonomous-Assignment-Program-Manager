@@ -3299,31 +3299,21 @@ class SchedulingEngine:
             len(v) for v in getattr(context, "preassigned_off_days", {}).values()
         )
 
-        preassigned_work_blocks = sum(
-            len(v) for v in getattr(context, "preassigned_work_blocks", {}).values()
-        )
-        preassigned_work_days = sum(
-            len(v) for v in getattr(context, "preassigned_work_days", {}).values()
-        )
-        preassigned_off_days = sum(
-            len(v) for v in getattr(context, "preassigned_off_days", {}).values()
-        )
-
         logger.error(
-            "Context summary: residents=%s, faculty=%s, templates=%s, blocks=%s (workday=%s), locked=%s, call_eligible=%s, existing_assignments=%s, preassigned_work_blocks=%s, preassigned_work_days=%s, preassigned_off_days=%s"
-            % (
-                len(context.residents),
-                len(context.faculty),
-                len(context.templates),
-                len(context.blocks),
-                len(workday_blocks),
-                locked_count,
-                call_eligible,
-                len(getattr(context, "existing_assignments", [])),
-                preassigned_work_blocks,
-                preassigned_work_days,
-                preassigned_off_days,
-            )
+            "Context summary: residents={}, faculty={}, templates={}, blocks={} "
+            "(workday={}), locked={}, call_eligible={}, existing_assignments={}, "
+            "preassigned_work_blocks={}, preassigned_work_days={}, preassigned_off_days={}",
+            len(context.residents),
+            len(context.faculty),
+            len(context.templates),
+            len(context.blocks),
+            len(workday_blocks),
+            locked_count,
+            call_eligible,
+            len(getattr(context, "existing_assignments", [])),
+            preassigned_work_blocks,
+            preassigned_work_days,
+            preassigned_off_days,
         )
 
         template_codes = sorted(

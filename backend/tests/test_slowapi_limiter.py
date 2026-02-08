@@ -8,7 +8,7 @@ global rate limits on all API endpoints.
 from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.testclient import TestClient
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
@@ -67,7 +67,7 @@ def rate_limited_app():
 
     @app.get("/test")
     @test_limiter.limit("3/minute")
-    async def test_endpoint(request: Request):
+    async def test_endpoint(request: Request, response: Response):
         return {"message": "success"}
 
     @app.get("/unlimited")
@@ -141,9 +141,22 @@ class TestLimiterInstance:
 class TestRateLimitExceededHandler:
     """Test the custom rate limit exceeded handler."""
 
+    @staticmethod
+    def _make_exc(
+        detail: str = "5 per minute",
+        retry_after: int = 60,
+        limit: str = "5 per minute",
+    ) -> RateLimitExceeded:
+        """Create a RateLimitExceeded instance without depending on internals."""
+        exc = RateLimitExceeded.__new__(RateLimitExceeded)
+        exc.detail = detail
+        exc.retry_after = retry_after
+        exc.limit = limit
+        return exc
+
     def test_returns_429_status(self, mock_request):
         """Test that handler returns 429 status code."""
-        exc = RateLimitExceeded("5 per minute")
+        exc = self._make_exc()
 
         response = rate_limit_exceeded_handler(mock_request, exc)
 
@@ -151,8 +164,7 @@ class TestRateLimitExceededHandler:
 
     def test_response_includes_retry_after_header(self, mock_request):
         """Test that response includes Retry-After header."""
-        exc = RateLimitExceeded("5 per minute")
-        exc.retry_after = 60
+        exc = self._make_exc(retry_after=60)
 
         response = rate_limit_exceeded_handler(mock_request, exc)
 
@@ -160,8 +172,7 @@ class TestRateLimitExceededHandler:
 
     def test_response_includes_rate_limit_headers(self, mock_request):
         """Test that response includes X-RateLimit headers."""
-        exc = RateLimitExceeded("5 per minute")
-        exc.limit = "5 per minute"
+        exc = self._make_exc(limit="5 per minute")
 
         response = rate_limit_exceeded_handler(mock_request, exc)
 

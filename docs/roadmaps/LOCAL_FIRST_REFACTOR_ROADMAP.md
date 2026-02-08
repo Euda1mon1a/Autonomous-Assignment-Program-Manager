@@ -1,9 +1,16 @@
 # Local-First Runtime Refactor Roadmap (Mac mini)
 
-> **Created:** 2026-02-08  
-> **Status:** Proposed  
-> **Owner:** Platform / Backend  
+> **Created:** 2026-02-08
+> **Status:** Complete (superseded by existing implementation)
+> **Closed:** 2026-02-08
+> **Owner:** Platform / Backend
 > **Goal:** Make macOS local runtime the default operational path and keep Docker/Render as optional fallback only.
+>
+> **Closure Note:** The codebase already implements local-first runtime as the default path.
+> `config.py` defaults to localhost for all services (Postgres, Redis, Celery), Docker overrides
+> via env vars (12-factor). Makefile labels Docker as "Docker Compatibility (optional)".
+> README quickstart says "Running Locally (Recommended)". Remaining Docker references in
+> MCP fallback commands and `.env.example` OLLAMA_URL fixed in `chore/local-first-cleanup`.
 
 ---
 

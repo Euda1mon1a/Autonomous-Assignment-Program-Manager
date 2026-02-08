@@ -4,18 +4,19 @@ Integration tests for MCP tools.
 Tests tool registration, execution, and middleware integration.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from scheduler_mcp.tools.base import BaseTool
-from scheduler_mcp.tools.executor import ToolExecutor
-from scheduler_mcp.tools.registry import ToolRegistry
+import pytest
+
 from scheduler_mcp.middleware import (
     AuthMiddleware,
     ErrorHandlerMiddleware,
     LoggingMiddleware,
     RateLimitMiddleware,
 )
+from scheduler_mcp.tools.base import AuthenticationError, BaseTool, ToolError
+from scheduler_mcp.tools.executor import ToolExecutor
+from scheduler_mcp.tools.registry import ToolRegistry
 
 
 class TestToolRegistry:
@@ -104,7 +105,7 @@ class TestToolExecutor:
         """Test executing non-existent tool raises error."""
         executor = ToolExecutor()
 
-        with pytest.raises(Exception):
+        with pytest.raises(ToolError):
             await executor.execute("nonexistent_tool")
 
     def test_get_stats(self):
@@ -125,14 +126,15 @@ class TestMiddleware:
     @pytest.mark.asyncio
     async def test_auth_middleware_enabled(self):
         """Test auth middleware when enabled."""
-        middleware = AuthMiddleware(enabled=True)
+        with patch.dict("os.environ", {"API_USERNAME": "", "API_PASSWORD": ""}):
+            middleware = AuthMiddleware(enabled=True)
 
-        # Mock next handler
-        next_handler = AsyncMock(return_value="result")
+            # Mock next handler
+            next_handler = AsyncMock(return_value="result")
 
-        # Execute (should fail without credentials)
-        with pytest.raises(Exception):
-            await middleware("test_tool", next_handler, param="value")
+            # Execute (should fail without credentials)
+            with pytest.raises(AuthenticationError):
+                await middleware("test_tool", next_handler, param="value")
 
     @pytest.mark.asyncio
     async def test_auth_middleware_disabled(self):
