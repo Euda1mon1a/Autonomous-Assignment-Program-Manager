@@ -176,8 +176,11 @@ def predict_schedule(
                         total_changed += 1
 
     print(f"\n  Predicted {total_predicted} cells")
-    print(f"  Changed {total_changed} codes ({100*total_changed/total_predicted:.1f}%)")
-    print(f"  Kept {total_predicted - total_changed} codes unchanged")
+    if total_predicted > 0:
+        print(f"  Changed {total_changed} codes ({100*total_changed/total_predicted:.1f}%)")
+        print(f"  Kept {total_predicted - total_changed} codes unchanged")
+    else:
+        print("  No cells to predict (empty input)")
 
     if output_path:
         out = Path(output_path)
