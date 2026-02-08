@@ -43,7 +43,9 @@ def get_client_identifier(request: Request) -> str:
     forwarded_for = request.headers.get("X-Forwarded-For")
     if forwarded_for is not None:
         # Get the first IP in the chain (original client)
-        return forwarded_for.split(",")[0].strip()
+        client_ip = forwarded_for.split(",")[0].strip()
+        if client_ip:
+            return client_ip
 
     # Fall back to direct client IP
     return get_remote_address(request)

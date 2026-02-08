@@ -93,6 +93,15 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+def _parse_bool(value: object) -> bool:
+    """Parse a validity flag that may be a bool, string, or int."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() not in ("false", "0", "no", "")
+    return bool(value)
+
+
 def _normalize_validation_result(raw_result: object) -> ValidationResult:
     """
     Normalize legacy/custom validator payloads to ValidationResult.
@@ -160,7 +169,7 @@ def _normalize_validation_result(raw_result: object) -> ValidationResult:
         coverage_rate = metrics.get("coverage_rate", 0.0)
 
     return ValidationResult(
-        valid=bool(raw_result.get("valid", raw_result.get("is_valid", True))),
+        valid=_parse_bool(raw_result.get("valid", raw_result.get("is_valid", True))),
         total_violations=int(
             raw_result.get("total_violations", len(normalized_violations))
         ),
