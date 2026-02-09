@@ -16,6 +16,7 @@ import {
   isRateLimitError,
 } from './error-types'
 import { getErrorMessage } from './error-messages'
+import { createErrorReporter, ErrorReporter } from '../reporting/error-reporter'
 
 /**
  * Error handling configuration
@@ -34,6 +35,8 @@ class GlobalErrorHandler {
     enableLogging: true,
     enableReporting: false,
   }
+
+  private reporter: ErrorReporter = createErrorReporter()
 
   /**
    * Configure the error handler
@@ -138,14 +141,8 @@ class GlobalErrorHandler {
       return
     }
 
-    // TODO: Integrate with error reporting service (e.g., Sentry)
-    // For now, just log that we would report
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('[ERROR REPORTING]', 'Would report error to external service', {
-        error,
-        context,
-      })
-    }
+    // Report via configured reporter
+    this.reporter.report(error, context)
   }
 
   /**
