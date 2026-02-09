@@ -314,7 +314,7 @@ export function useSolutionTransitions(
 
         setTransitions((prev) => {
           const updated = new Map(prev);
-          let allComplete = true;
+          let _allComplete = true;
           const nowCompleted: string[] = [];
 
           let index = 0;
@@ -324,7 +324,7 @@ export function useSolutionTransitions(
 
             if (localElapsed < 0) {
               // Not started yet
-              allComplete = false;
+              _allComplete = false;
             } else {
               const rawProgress = Math.min(localElapsed / animationDuration, 1);
               const easedProgress = easingFn(rawProgress);
@@ -332,7 +332,7 @@ export function useSolutionTransitions(
               updated.set(id, { ...transition, progress: easedProgress });
 
               if (rawProgress < 1) {
-                allComplete = false;
+                _allComplete = false;
               } else {
                 // This transition is complete
                 nowCompleted.push(id);
