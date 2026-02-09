@@ -10,7 +10,7 @@
  * Mobile-friendly design with responsive layouts and touch-friendly controls.
  */
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Calendar,
   Briefcase,
@@ -64,11 +64,28 @@ export function MyLifeDashboard({ className = '' }: MyLifeDashboardProps) {
   };
 
   const handleSwapAction = (_swapId: string) => {
-    // Navigate to swap marketplace or show swap details
-    // console.log('Handle swap action for:', _swapId);
-    // For now, just refresh
     refetch();
   };
+
+  // Close days selector on Escape or outside click
+  const daysSelectorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showDaysSelector) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setShowDaysSelector(false);
+    }
+    function handleClickOutside(e: MouseEvent) {
+      if (daysSelectorRef.current && !daysSelectorRef.current.contains(e.target as Node)) {
+        setShowDaysSelector(false);
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDaysSelector]);
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -143,22 +160,26 @@ export function MyLifeDashboard({ className = '' }: MyLifeDashboardProps) {
       </div>
 
       {/* Days Ahead Selector */}
-      <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
+      <div ref={daysSelectorRef} className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
         <div className="text-sm text-gray-700">
           <span className="font-medium">Viewing schedule for next</span>{' '}
           <button
             onClick={() => setShowDaysSelector(!showDaysSelector)}
+            aria-expanded={showDaysSelector}
+            aria-haspopup="listbox"
             className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 rounded font-semibold text-blue-600 hover:bg-gray-50 transition-colors"
           >
             {daysAhead} days
-            <ChevronDown className={`w-4 h-4 transition-transform ${showDaysSelector ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-4 h-4 transition-transform ${showDaysSelector ? 'rotate-180' : ''}`} aria-hidden="true" />
           </button>
         </div>
         {showDaysSelector && (
-          <div className="absolute mt-24 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10">
+          <div role="listbox" aria-label="Select days ahead" className="absolute mt-24 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10">
             {dayOptions.map((days) => (
               <button
                 key={days}
+                role="option"
+                aria-selected={days === daysAhead}
                 onClick={() => {
                   setDaysAhead(days);
                   setShowDaysSelector(false);
