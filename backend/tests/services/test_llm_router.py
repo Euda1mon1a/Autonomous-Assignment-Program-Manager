@@ -74,7 +74,11 @@ class TestMLXProvider:
 
     @pytest.mark.asyncio
     async def test_generate_with_tools(self):
-        """Test tool calling via OpenAI-compatible API."""
+        """Test tool calling via OpenAI-compatible API.
+
+        OpenAI-compatible servers return arguments as a JSON string,
+        not a dict. The provider must parse them before constructing ToolCall.
+        """
         provider = MLXProvider(base_url="http://test:8082")
 
         mock_response = Mock()
@@ -88,7 +92,7 @@ class TestMLXProvider:
                                 "id": "call_1",
                                 "function": {
                                     "name": "get_schedule",
-                                    "arguments": {"block": 10},
+                                    "arguments": '{"block": 10}',
                                 },
                             }
                         ],
@@ -109,6 +113,7 @@ class TestMLXProvider:
         assert response.tool_calls is not None
         assert len(response.tool_calls) == 1
         assert response.tool_calls[0].name == "get_schedule"
+        assert response.tool_calls[0].arguments == {"block": 10}
 
     @pytest.mark.asyncio
     async def test_is_available_after_failures(self):

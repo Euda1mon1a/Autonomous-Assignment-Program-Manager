@@ -4,6 +4,7 @@ Provides unified interface for local (Ollama) and cloud (Anthropic) LLM provider
 with intelligent routing, fallback chains, and circuit breaker patterns.
 """
 
+import json
 import logging
 import os
 import time
@@ -350,14 +351,19 @@ class MLXProvider(LLMProvider):
 
             tool_calls = None
             if "tool_calls" in message and message["tool_calls"]:
-                tool_calls = [
-                    ToolCall(
-                        id=tc.get("id", f"call_{i}"),
-                        name=tc.get("function", {}).get("name", ""),
-                        arguments=tc.get("function", {}).get("arguments", {}),
+                tool_calls = []
+                for i, tc in enumerate(message["tool_calls"]):
+                    raw_args = tc.get("function", {}).get("arguments", {})
+                    args = (
+                        json.loads(raw_args) if isinstance(raw_args, str) else raw_args
                     )
-                    for i, tc in enumerate(message["tool_calls"])
-                ]
+                    tool_calls.append(
+                        ToolCall(
+                            id=tc.get("id", f"call_{i}"),
+                            name=tc.get("function", {}).get("name", ""),
+                            arguments=args,
+                        )
+                    )
 
             return LLMResponse(
                 content=content,
@@ -597,14 +603,19 @@ class OllamaProvider(LLMProvider):
             # Extract tool calls if present
             tool_calls = None
             if "tool_calls" in message:
-                tool_calls = [
-                    ToolCall(
-                        id=tc.get("id", f"call_{i}"),
-                        name=tc.get("function", {}).get("name", ""),
-                        arguments=tc.get("function", {}).get("arguments", {}),
+                tool_calls = []
+                for i, tc in enumerate(message["tool_calls"]):
+                    raw_args = tc.get("function", {}).get("arguments", {})
+                    args = (
+                        json.loads(raw_args) if isinstance(raw_args, str) else raw_args
                     )
-                    for i, tc in enumerate(message["tool_calls"])
-                ]
+                    tool_calls.append(
+                        ToolCall(
+                            id=tc.get("id", f"call_{i}"),
+                            name=tc.get("function", {}).get("name", ""),
+                            arguments=args,
+                        )
+                    )
 
             return LLMResponse(
                 content=content,
