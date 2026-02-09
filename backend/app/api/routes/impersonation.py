@@ -12,7 +12,11 @@ Security:
 All impersonation events are logged to the audit trail.
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 
 from app.core.security import get_admin_user
@@ -128,11 +132,13 @@ async def start_impersonation(
         return result
 
     except ImpersonationForbiddenError as e:
+        logger.warning("Impersonation forbidden: %s", e)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e),
         )
     except ValueError as e:
+        logger.warning("Impersonation target not found: %s", e)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
@@ -186,6 +192,7 @@ async def end_impersonation(
         )
 
     except ImpersonationTokenError as e:
+        logger.warning("Impersonation token error: %s", e)
         # Clear cookie even if token was invalid
         response.delete_cookie(key="impersonation_token", path="/")
         raise HTTPException(

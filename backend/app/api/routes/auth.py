@@ -4,9 +4,12 @@ Thin routing layer that connects URL paths to controllers.
 All business logic is in the service layer.
 """
 
+import logging
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+
+logger = logging.getLogger(__name__)
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 
@@ -427,6 +430,7 @@ async def initialize_admin(
         }
 
     except Exception as e:
+        logger.exception("Failed to initialize admin user")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

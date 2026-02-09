@@ -9,9 +9,12 @@ Activities are distinct from Rotations:
 - Activity = Slot-level event (e.g., "FM Clinic AM", "LEC Wednesday PM")
 """
 
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_active_user
@@ -93,6 +96,7 @@ async def create_activity(
         await db.commit()
         return ActivityResponse.model_validate(activity)
     except ValueError as e:
+        logger.debug("Activity creation failed: %s", e)
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -157,6 +161,7 @@ async def update_activity(
         await db.commit()
         return ActivityResponse.model_validate(activity)
     except ValueError as e:
+        logger.debug("Activity update failed: %s", e)
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -188,6 +193,7 @@ async def delete_activity(
             raise HTTPException(status_code=404, detail="Activity not found")
         await db.commit()
     except ValueError as e:
+        logger.debug("Activity deletion failed: %s", e)
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 

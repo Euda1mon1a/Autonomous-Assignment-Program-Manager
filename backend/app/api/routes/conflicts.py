@@ -136,6 +136,7 @@ async def get_conflict_summary(
         return summary
 
     except Exception as e:
+        logger.exception("Error generating conflict summary")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating summary: {str(e)}",
@@ -191,6 +192,7 @@ async def get_conflict_timeline(
         return timeline.model_dump()
 
     except Exception as e:
+        logger.exception("Error generating conflict timeline")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating timeline: {str(e)}",
@@ -235,6 +237,7 @@ async def get_conflict_heatmap(
         return heatmap_data
 
     except Exception as e:
+        logger.exception("Error generating conflict heatmap")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating heatmap: {str(e)}",
@@ -278,6 +281,7 @@ async def get_conflict_gantt(
         return {"gantt_entries": gantt_data}
 
     except Exception as e:
+        logger.exception("Error generating conflict Gantt chart")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating Gantt chart: {str(e)}",
@@ -322,6 +326,7 @@ async def get_conflict_distribution(
         return distribution
 
     except Exception as e:
+        logger.exception("Error generating conflict distribution")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating distribution: {str(e)}",
@@ -361,6 +366,7 @@ async def get_person_impact(
         return {"person_impacts": impact_data}
 
     except Exception as e:
+        logger.exception("Error generating person impact analysis")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error generating person impact: {str(e)}",
@@ -455,6 +461,7 @@ async def batch_analyze_conflicts(
         }
 
     except Exception as e:
+        logger.exception("Error in batch conflict analysis")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error in batch analysis: {str(e)}",
