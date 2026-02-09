@@ -94,7 +94,8 @@ start_service() {
         return 0
     fi
 
-    local port="${SERVICE_PORTS[$name]:-}"
+    local port
+    port=$(get_service_port "$name")
     if [ -n "$port" ] && check_port "$port"; then
         echo -e "  ${RED}[!!]${NC} $name: port $port already in use"
         return 1
@@ -109,7 +110,10 @@ start_service() {
     STARTED_SERVICES+=("$name")
 
     if [ -n "$port" ]; then
-        if wait_for_port "$port" 30; then
+        # Backend loads ML models at startup — needs longer timeout
+        local timeout=30
+        [ "$name" = "backend" ] && timeout=90
+        if wait_for_port "$port" "$timeout"; then
             echo -e "  ${GREEN}[OK]${NC} $name on :${port} (PID $pid)"
         else
             echo -e "  ${RED}[!!]${NC} $name failed to start (check ${LOG_DIR}/${name}.log)"
@@ -196,6 +200,16 @@ fi
 # ===========================================================
 echo ""
 echo -e "${BLUE}=== Phase 2: Environment ===${NC}"
+
+# Activate Python virtual environment if present
+VENV_DIR="${PROJECT_ROOT}/backend/.venv"
+if [ -f "${VENV_DIR}/bin/activate" ]; then
+    # shellcheck disable=SC1091
+    source "${VENV_DIR}/bin/activate"
+    echo -e "  ${GREEN}[OK]${NC} Python venv activated ($(python3 --version))"
+else
+    echo -e "  ${YELLOW}[--]${NC} No venv at ${VENV_DIR} — using system Python"
+fi
 
 export DATABASE_URL="postgresql://scheduler:scheduler@localhost:5432/residency_scheduler"
 export REDIS_URL="redis://localhost:6379/0"
