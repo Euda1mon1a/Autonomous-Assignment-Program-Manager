@@ -106,12 +106,7 @@ def backfill(dry_run: bool = False) -> int:
 
                 if existing:
                     print(
-                        "Skip: existing Saturday %s pattern for %s (%s)"
-                        % (
-                            time_of_day,
-                            template.name,
-                            template.abbreviation or template.display_abbreviation,
-                        )
+                        f"Skip: existing Saturday {time_of_day} pattern for {template.name} ({template.abbreviation or template.display_abbreviation})"
                     )
                     continue
 
