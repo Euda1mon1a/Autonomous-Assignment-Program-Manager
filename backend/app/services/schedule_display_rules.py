@@ -24,7 +24,6 @@ Rules are organized by category:
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
 
 
 # ── Rule 1: Night float OFF -> rotation-specific display code ─────────
@@ -235,7 +234,7 @@ def estimate_impact(mismatches: list[dict]) -> dict[str, int]:
 
         if db_code in CODE_NORMALIZATION and CODE_NORMALIZATION[db_code] == truth_code:
             fixes["code_normalization"] += 1
-        elif db_code == "OFF" and truth_code in NIGHT_FLOAT_ROTATIONS.values():
+        elif db_code == "OFF" and truth_code in {v for _, v in _NF_ROTATION_MAP}:
             fixes["night_float_off"] += 1
         elif db_code == "W" and truth_code in (
             "FMIT",
