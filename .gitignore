@@ -150,8 +150,7 @@ celerybeat-schedule
 backend/celerybeat-schedule
 celerybeat.pid
 
-# Package lock files (regenerated on install)
-**/package-lock.json
+# Note: package-lock.json is committed for deterministic builds
 
 # Local seed scripts that may reference real data paths
 scripts/seed_people_local.py
