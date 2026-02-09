@@ -17,6 +17,21 @@ DB_USER="scheduler"
 DB_NAME="residency_scheduler"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.local.yml}"
 
+# Database connection defaults for native mode
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-5432}"
+
+# Auto-detect: use Docker if db container is running, otherwise direct pg tools
+if docker compose -f "$COMPOSE_FILE" ps db --status running 2>/dev/null | grep -q running; then
+    USE_DOCKER=true
+else
+    USE_DOCKER=false
+    if ! command -v pg_dump &>/dev/null; then
+        echo -e "${RED:-}ERROR: pg_dump not found. Install PostgreSQL client tools.${NC:-}"
+        exit 1
+    fi
+fi
+
 # Create backup directory
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 SUFFIX="${1:-}"
@@ -31,22 +46,40 @@ echo "Creating backup in $BACKUP_DIR..."
 
 # Custom format dump (for selective restore)
 # GOTCHA: Use -T flag for non-interactive
-docker compose -f "$COMPOSE_FILE" exec -T db \
-  pg_dump -U "$DB_USER" -Fc "$DB_NAME" > "$BACKUP_DIR/db.dump"
+if [ "$USE_DOCKER" = true ]; then
+    docker compose -f "$COMPOSE_FILE" exec -T db \
+      pg_dump -U "$DB_USER" -Fc "$DB_NAME" > "$BACKUP_DIR/db.dump"
+else
+    pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -Fc "$DB_NAME" > "$BACKUP_DIR/db.dump"
+fi
 
 # Plain SQL (human readable, grep-able)
-docker compose -f "$COMPOSE_FILE" exec -T db \
-  pg_dump -U "$DB_USER" "$DB_NAME" > "$BACKUP_DIR/db.sql"
+if [ "$USE_DOCKER" = true ]; then
+    docker compose -f "$COMPOSE_FILE" exec -T db \
+      pg_dump -U "$DB_USER" "$DB_NAME" > "$BACKUP_DIR/db.sql"
+else
+    pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME" > "$BACKUP_DIR/db.sql"
+fi
 
 # Row counts for verification
-docker compose -f "$COMPOSE_FILE" exec -T db \
-  psql -U "$DB_USER" "$DB_NAME" -c "
-    SELECT 'half_day_assignments' as tbl, COUNT(*) FROM half_day_assignments
-    UNION ALL SELECT 'inpatient_preloads', COUNT(*) FROM inpatient_preloads
-    UNION ALL SELECT 'absences', COUNT(*) FROM absences
-    UNION ALL SELECT 'people', COUNT(*) FROM people
-    UNION ALL SELECT 'activities', COUNT(*) FROM activities;
-  " > "$BACKUP_DIR/row_counts.txt"
+if [ "$USE_DOCKER" = true ]; then
+    docker compose -f "$COMPOSE_FILE" exec -T db \
+      psql -U "$DB_USER" "$DB_NAME" -c "
+        SELECT 'half_day_assignments' as tbl, COUNT(*) FROM half_day_assignments
+        UNION ALL SELECT 'inpatient_preloads', COUNT(*) FROM inpatient_preloads
+        UNION ALL SELECT 'absences', COUNT(*) FROM absences
+        UNION ALL SELECT 'people', COUNT(*) FROM people
+        UNION ALL SELECT 'activities', COUNT(*) FROM activities;
+      " > "$BACKUP_DIR/row_counts.txt"
+else
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME" -c "
+        SELECT 'half_day_assignments' as tbl, COUNT(*) FROM half_day_assignments
+        UNION ALL SELECT 'inpatient_preloads', COUNT(*) FROM inpatient_preloads
+        UNION ALL SELECT 'absences', COUNT(*) FROM absences
+        UNION ALL SELECT 'people', COUNT(*) FROM people
+        UNION ALL SELECT 'activities', COUNT(*) FROM activities;
+      " > "$BACKUP_DIR/row_counts.txt"
+fi
 
 # Git info for context
 {
