@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import ConfigDict, BaseModel, EmailStr, field_validator
 
 # ============================================================================
 # EmailLog Schemas

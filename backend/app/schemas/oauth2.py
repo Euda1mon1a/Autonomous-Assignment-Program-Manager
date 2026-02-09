@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import ConfigDict, BaseModel, Field, HttpUrl, field_validator
 
 
 class OAuth2ClientCreate(BaseModel):

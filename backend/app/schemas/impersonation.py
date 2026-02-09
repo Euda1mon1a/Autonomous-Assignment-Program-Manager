@@ -15,7 +15,7 @@ Security Considerations:
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import ConfigDict, BaseModel, Field
 
 from app.schemas.auth import UserResponse
 

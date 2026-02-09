@@ -6,7 +6,7 @@ filters, statistics, and export configurations.
 
 from typing import Any
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import ConfigDict, BaseModel, EmailStr, Field
 
 # ============================================================================
 # Core Audit Schemas
