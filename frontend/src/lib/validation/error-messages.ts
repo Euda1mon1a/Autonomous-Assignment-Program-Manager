@@ -108,31 +108,34 @@ interface ZodErrorIssue {
 
 interface ZodErrorLike {
   errors?: ZodErrorIssue[];
+  issues?: ZodErrorIssue[];
 }
 
 /**
  * Type guard for Zod error structure.
+ * Supports both .errors (legacy/plain objects) and .issues (real ZodError).
  */
 function isZodErrorLike(error: unknown): error is ZodErrorLike {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'errors' in error &&
-    Array.isArray((error as ZodErrorLike).errors)
-  );
+  if (typeof error !== 'object' || error === null) return false;
+  const obj = error as ZodErrorLike;
+  return Array.isArray(obj.errors) || Array.isArray(obj.issues);
 }
 
 /**
  * Format Zod error messages for display.
+ * Extracts field-level errors from ZodError (.issues) or plain objects (.errors).
  */
 export function formatZodError(error: unknown): Record<string, string> {
   const fieldErrors: Record<string, string> = {};
 
-  if (isZodErrorLike(error) && error.errors) {
-    error.errors.forEach((err: ZodErrorIssue): void => {
-      const path: string = err.path.join(".");
-      fieldErrors[path] = err.message;
-    });
+  if (isZodErrorLike(error)) {
+    const items = error.issues || error.errors;
+    if (items) {
+      items.forEach((err: ZodErrorIssue): void => {
+        const path: string = err.path.join(".");
+        fieldErrors[path] = err.message;
+      });
+    }
   }
 
   return fieldErrors;
