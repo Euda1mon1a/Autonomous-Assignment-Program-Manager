@@ -171,8 +171,9 @@ export function CallRoster() {
           onClick={goToPreviousMonth}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           title="Previous month"
+          aria-label="Previous month"
         >
-          <ChevronLeft className="h-5 w-5 text-gray-600" />
+          <ChevronLeft className="h-5 w-5 text-gray-600" aria-hidden="true" />
         </button>
 
         <div className="flex items-center gap-4">
@@ -191,8 +192,9 @@ export function CallRoster() {
           onClick={goToNextMonth}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           title="Next month"
+          aria-label="Next month"
         >
-          <ChevronRight className="h-5 w-5 text-gray-600" />
+          <ChevronRight className="h-5 w-5 text-gray-600" aria-hidden="true" />
         </button>
       </div>
 
