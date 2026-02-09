@@ -493,6 +493,7 @@ async def validate_schedule(
         start = datetime.strptime(start_date, "%Y-%m-%d").date()
         end = datetime.strptime(end_date, "%Y-%m-%d").date()
     except ValueError:
+        logger.debug("Invalid date format. Use YYYY-MM-DD")
         raise HTTPException(
             status_code=400, detail="Invalid date format. Use YYYY-MM-DD"
         )
@@ -853,6 +854,7 @@ async def parse_block_schedule_endpoint(
             known_people=people_list,
         )
     except ValueError as e:
+        logger.debug("Validation error: %s", e)
         raise HTTPException(status_code=422, detail=str(e))
     finally:
         os.unlink(tmp_path)
@@ -1112,6 +1114,7 @@ async def find_swap_candidates_json(
     try:
         person_uuid = UUID(request.person_id)
     except ValueError:
+        logger.debug("Invalid person_id format")
         raise HTTPException(status_code=400, detail="Invalid person_id format")
 
     requester = (
@@ -1130,6 +1133,7 @@ async def find_swap_candidates_json(
         try:
             assignment_uuid = UUID(request.assignment_id)
         except ValueError:
+            logger.debug("Invalid assignment_id format")
             raise HTTPException(status_code=400, detail="Invalid assignment_id format")
 
         target_assignment = (
@@ -1149,6 +1153,7 @@ async def find_swap_candidates_json(
         try:
             block_uuid = UUID(request.block_id)
         except ValueError:
+            logger.debug("Invalid block_id format")
             raise HTTPException(status_code=400, detail="Invalid block_id format")
 
         target_block = (
@@ -1408,6 +1413,7 @@ async def get_schedule(start_date: str, end_date: str, db: Session = Depends(get
         start = datetime.strptime(start_date, "%Y-%m-%d").date()
         end = datetime.strptime(end_date, "%Y-%m-%d").date()
     except ValueError:
+        logger.debug("Invalid date format. Use YYYY-MM-DD")
         raise HTTPException(
             status_code=400, detail="Invalid date format. Use YYYY-MM-DD"
         )
