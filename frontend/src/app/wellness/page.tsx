@@ -506,7 +506,7 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
     >
       <div className="flex items-center gap-4">
         <span className="w-8 text-center font-mono text-gray-400">
-          {medal ? <span dangerouslySetInnerHTML={{ __html: medal }} /> : entry.rank}
+          {medal ? <span>{medal}</span> : entry.rank}
         </span>
         <span className={entry.isYou ? 'text-cyan-400 font-medium' : ''}>
           {entry.displayName}
