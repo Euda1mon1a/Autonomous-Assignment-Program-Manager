@@ -817,7 +817,6 @@ async def get_wellness_analytics(
     Returns:
         WellnessAnalyticsSummary: Aggregate analytics
     """
-    # TODO: Add admin role check
     if current_user.role not in ["admin", "coordinator"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

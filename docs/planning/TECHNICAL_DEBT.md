@@ -62,19 +62,7 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 **Location:** Database schema / Alembic migrations
 **Category:** Performance
 **Found:** 2025-12-30
-
-**Missing indexes:**
-```sql
-CREATE INDEX idx_block_date ON blocks(date);
-CREATE INDEX idx_assignment_person_id ON assignments(person_id);
-CREATE INDEX idx_assignment_block_id ON assignments(block_id);
-CREATE INDEX idx_swap_source_faculty ON swap_records(source_faculty_id);
-CREATE INDEX idx_swap_target_faculty ON swap_records(target_faculty_id);
-```
-
-**Impact:** Slow queries on schedule views, assignment lookups, and swap operations.
-
-**Fix:** Create Alembic migration to add indexes.
+**Status:** ✅ RESOLVED (migration `20251230_add_critical_indexes.py`)
 
 ---
 
@@ -82,14 +70,7 @@ CREATE INDEX idx_swap_target_faculty ON swap_records(target_faculty_id);
 **Location:** `/frontend/src/app/admin/users/page.tsx`
 **Category:** Feature Incomplete
 **Found:** 2025-12-30
-
-**TODOs:**
-- Line 662: `handleCreateUser` - API call not implemented
-- Line 672: `handleDeleteUser` - API call not implemented
-- Line 677: `handleToggleLock` - API call not implemented
-- Line 682: `handleResendInvite` - API call not implemented
-
-**Impact:** User management is non-functional (mock data only).
+**Status:** ✅ RESOLVED (backend CRUD in `admin_users.py`, frontend hooks wired)
 
 ---
 
@@ -97,12 +78,7 @@ CREATE INDEX idx_swap_target_faculty ON swap_records(target_faculty_id);
 **Location:** `/backend/app/api/routes/resilience.py`
 **Category:** API Quality
 **Found:** 2025-12-30
-
-**Issue:** Only 12/54 endpoints (22%) have `response_model` defined.
-
-**Impact:** Poor OpenAPI documentation, inconsistent response formats.
-
-**Fix:** Add Pydantic response models to all 54 endpoints.
+**Status:** ✅ RESOLVED (59/59 endpoints now have `response_model`)
 
 ---
 
@@ -110,12 +86,7 @@ CREATE INDEX idx_swap_target_faculty ON swap_records(target_faculty_id);
 **Location:** `/frontend/src/hooks/useAuth.ts`, `/frontend/src/lib/auth.ts`
 **Category:** Authentication
 **Found:** 2025-12-30
-
-**Description:** Access tokens expire in 15 minutes. Backend supports refresh tokens, but frontend doesn't use them.
-
-**Impact:** Users silently logged out after 15 minutes of inactivity.
-
-**Fix:** Implement token refresh before expiry or on 401 response.
+**Status:** ✅ RESOLVED (`performRefresh()` in auth.ts, 401 interceptor in api.ts)
 
 ---
 
@@ -157,12 +128,7 @@ CREATE INDEX idx_swap_target_faculty ON swap_records(target_faculty_id);
 **Location:** Frontend
 **Category:** Real-time Features
 **Found:** 2025-12-30
-
-**Description:** Backend WebSocket fully implemented with 8 event types. Frontend only has SSE implementation (EventSource).
-
-**Impact:** Real-time updates not leveraged on frontend.
-
-**Fix:** Implement WebSocket client with reconnection logic.
+**Status:** ✅ RESOLVED (`useWebSocket.ts` with reconnection, JWT auth, typed events)
 
 ---
 
@@ -170,14 +136,7 @@ CREATE INDEX idx_swap_target_faculty ON swap_records(target_faculty_id);
 **Location:** `/backend/app/scheduling/engine.py`
 **Category:** Performance
 **Found:** 2025-12-30
-
-**Issues:**
-```python
-people = self.db.query(Person).all()  # No eager loading
-# Later accesses: person.assignments -> N+1 per person
-```
-
-**Fix:** Use `selectinload()` or prefetch utilities from `/backend/app/db/optimization/`.
+**Status:** ✅ RESOLVED (engine uses `selectinload()` extensively, pre-fetch confirmed)
 
 ---
 
@@ -199,12 +158,7 @@ people = self.db.query(Person).all()  # No eager loading
 **Location:** `/backend/app/core/config.py`
 **Category:** Code Quality
 **Found:** 2025-12-30
-
-**Duplicates:**
-- `CACHE_HEATMAP_TTL` defined at lines 82 and 122
-- `CACHE_CALENDAR_TTL` defined at lines 83 and 123
-
-**Fix:** Remove duplicate definitions.
+**Status:** ✅ RESOLVED (duplicates removed, single definition remains)
 
 ---
 
@@ -212,18 +166,7 @@ people = self.db.query(Person).all()  # No eager loading
 **Location:** `/frontend/src/features/swap-marketplace/hooks.ts`
 **Category:** Architecture
 **Found:** 2025-12-30
-
-**Issue:** Reads user ID from `localStorage` instead of `AuthContext`.
-
-```typescript
-// Current (anti-pattern):
-const userStr = localStorage.getItem('user');
-
-// Should be:
-const { user } = useAuth();
-```
-
-**Fix:** Use AuthContext for user data.
+**Status:** ✅ RESOLVED (uses AuthContext, no localStorage for user data)
 
 ---
 
@@ -314,10 +257,7 @@ export async function logout(): Promise<void> {
 **Location:** Frontend
 **Category:** Error Handling
 **Found:** 2025-12-30
-
-**Issue:** No `window.onunhandledrejection` handler to catch async errors outside React Query.
-
-**Fix:** Add global handler in app layout.
+**Status:** ✅ RESOLVED (`providers.tsx` has `handleUnhandledRejection` with window listener)
 
 ---
 
@@ -357,8 +297,7 @@ export async function logout(): Promise<void> {
 **Location:** `backend/app/scheduling/engine.py`
 **Category:** Performance
 **Found:** 2025-12-30 (DEBT-011), re-confirmed 2026-02-08
-
-**Note:** Schedule draft service (`schedule_draft_service.py`) is clean (uses `selectinload`), but the core scheduling engine still lazy-loads `person.assignments`. This is the original DEBT-011 — not yet resolved.
+**Status:** ✅ RESOLVED (engine confirmed using `selectinload()` throughout; DEBT-011 closed)
 
 ---
 
@@ -375,24 +314,27 @@ export async function logout(): Promise<void> {
 
 ## Summary by Category
 
-| Category | P0 | P1 | P2 | P3 | Total |
-|----------|----|----|----|----|-------|
-| Security | 1 | 0 | 0 | 0 | 1 |
-| Infrastructure | 1 | 0 | 0 | 0 | 1 |
-| Configuration | 0 | 1 | 2 | 0 | 3 |
-| Performance | 0 | 1 | 1 | 0 | 2 |
-| Feature Incomplete | 0 | 2 | 2 | 1 | 5 |
-| API Quality | 0 | 1 | 0 | 0 | 1 |
-| Authentication | 0 | 1 | 0 | 0 | 1 |
-| Accessibility | 0 | 0 | 1 | 0 | 1 |
-| Architecture | 0 | 0 | 1 | 0 | 1 |
-| Code Quality | 0 | 0 | 1 | 0 | 1 |
-| Data / OPSEC | 0 | 0 | 1 | 0 | 1 |
-| Frontend Quality | 0 | 0 | 0 | 1 | 1 |
-| Testing | 0 | 0 | 0 | 2 | 2 |
-| Error Handling | 0 | 0 | 0 | 2 | 2 |
-| Observability | 0 | 0 | 0 | 1 | 1 |
-| **Total** | **2** | **6** | **9** | **7** | **24** |
+| Category | Open | Resolved | Total |
+|----------|------|----------|-------|
+| Security | 0 | 1 | 1 |
+| Infrastructure | 0 | 1 | 1 |
+| Configuration | 1 | 1 | 2 |
+| Performance | 0 | 2 | 2 |
+| Feature Incomplete | 1 | 3 | 4 |
+| API Quality | 0 | 1 | 1 |
+| Authentication | 0 | 1 | 1 |
+| Accessibility | 1 | 0 | 1 |
+| Architecture | 0 | 1 | 1 |
+| Code Quality | 0 | 1 | 1 |
+| Data / OPSEC | 1 | 0 | 1 |
+| Frontend Quality | 1 | 0 | 1 |
+| Testing | 2 | 0 | 2 |
+| Error Handling | 1 | 1 | 2 |
+| Observability | 1 | 0 | 1 |
+| Real-time Features | 0 | 1 | 1 |
+| **Total** | **9** | **14** | **24** |
+
+> 14 of 24 items resolved (58%). Remaining 9 open items are medium-to-large effort.
 
 ---
 
@@ -403,26 +345,26 @@ export async function logout(): Promise<void> {
 | DEBT-001 | ✅ Resolved | 2025-12-30 | PR #546 |
 | DEBT-002 | ✅ Resolved | 2025-12-30 | PR #546 |
 | DEBT-003 | ✅ Resolved | 2025-12-30 | PR #546 |
-| DEBT-004 | Open | - | - |
-| DEBT-005 | Open | - | - |
-| DEBT-006 | Open | - | - |
-| DEBT-007 | Open | - | - |
+| DEBT-004 | ✅ Resolved | pre-2026 | Migration `20251230_add_critical_indexes` |
+| DEBT-005 | ✅ Resolved | pre-2026 | `admin_users.py` + frontend hooks |
+| DEBT-006 | ✅ Resolved | pre-2026 | 59/59 response_model coverage |
+| DEBT-007 | ✅ Resolved | pre-2026 | `performRefresh()` + 401 interceptor |
 | DEBT-008 | Open | - | - |
 | DEBT-009 | Open | - | - |
-| DEBT-010 | Open | - | - |
-| DEBT-011 | Open | - | - |
+| DEBT-010 | ✅ Resolved | pre-2026 | `useWebSocket.ts` |
+| DEBT-011 | ✅ Resolved | pre-2026 | selectinload in engine |
 | DEBT-012 | Open | - | - |
-| DEBT-013 | Open | - | - |
-| DEBT-014 | Open | - | - |
+| DEBT-013 | ✅ Resolved | pre-2026 | Duplicates removed |
+| DEBT-014 | ✅ Resolved | pre-2026 | AuthContext, no localStorage |
 | DEBT-015 | Open | - | - |
 | DEBT-016 | Open | - | - |
 | DEBT-017 | ✅ Closed | 2025-12-30 | Local changes |
 | DEBT-018 | Open | - | - |
 | DEBT-019 | Open | - | - |
-| DEBT-020 | Open | - | - |
+| DEBT-020 | ✅ Resolved | pre-2026 | `providers.tsx` unhandled rejection |
 | DEBT-021 | Open | - | - |
 | DEBT-022 | Partial | 2026-02-08 | PR #847 (error-toast only) |
-| DEBT-023 | Open | - | - |
+| DEBT-023 | ✅ Resolved | 2026-02-08 | Confirmed DEBT-011 resolved |
 | DEBT-024 | Open | - | - |
 
 ---
