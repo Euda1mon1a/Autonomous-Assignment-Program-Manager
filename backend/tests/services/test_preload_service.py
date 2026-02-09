@@ -10,6 +10,7 @@ from datetime import date
 import pytest
 
 from app.services.preload_service import (
+    _CLINIC_PATTERN_CODES,
     _INTERN_CONTINUITY_EXEMPT_ROTATIONS,
     _KAP_ROTATIONS,
     _LEC_EXEMPT_ROTATIONS,
@@ -329,3 +330,160 @@ class TestConstants:
                 f"Canonical code {canonical} should be uppercase"
             )
             assert len(canonical) <= 10, f"Canonical code {canonical} too long"
+
+    def test_clinic_pattern_codes(self):
+        for code in ("C", "C-I", "C-N"):
+            assert code in _CLINIC_PATTERN_CODES
+
+
+# ============================================================================
+# _get_rotation_preload_codes (complex branching logic)
+# ============================================================================
+
+
+class TestGetRotationPreloadCodes:
+    """Tests for the central preload code determination method.
+
+    This method determines AM/PM activity codes for each slot based on
+    rotation type, date, PGY level, and block boundaries.
+    """
+
+    def test_empty_rotation_returns_none(self, service):
+        assert service._get_rotation_preload_codes(
+            "", date(2025, 3, 17), date(2025, 3, 13), date(2025, 4, 8), 1, False
+        ) == (None, None)
+
+    def test_last_wednesday_returns_lec_adv(self, service):
+        # Block ends Apr 8 (Tue). Last Wednesday = Apr 2.
+        assert service._get_rotation_preload_codes(
+            "IM", date(2025, 4, 2), date(2025, 3, 13), date(2025, 4, 8), 1, True
+        ) == ("LEC", "ADV")
+
+    def test_last_wednesday_overrides_everything(self, service):
+        # Even night float gets LEC/ADV on last Wednesday
+        assert service._get_rotation_preload_codes(
+            "NF", date(2025, 4, 2), date(2025, 3, 13), date(2025, 4, 8), 1, False
+        ) == ("LEC", "ADV")
+
+    def test_saturday_off_for_im(self, service):
+        # Saturday (Mar 22), IM is in _SATURDAY_OFF_ROTATIONS
+        assert service._get_rotation_preload_codes(
+            "IM", date(2025, 3, 22), date(2025, 3, 13), date(2025, 4, 8), 1, False
+        ) == ("W", "W")
+
+    def test_saturday_off_skipped_with_time_off_patterns(self, service):
+        # Saturday but has_time_off_patterns=True skips the W/W default
+        result = service._get_rotation_preload_codes(
+            "IM",
+            date(2025, 3, 22),
+            date(2025, 3, 13),
+            date(2025, 4, 8),
+            1,
+            False,
+            has_time_off_patterns=True,
+        )
+        assert result == (None, None)
+
+    def test_offsite_tdy(self, service):
+        # TDY rotation on a regular weekday
+        assert service._get_rotation_preload_codes(
+            "TDY", date(2025, 3, 17), date(2025, 3, 13), date(2025, 4, 8), 1, False
+        ) == ("TDY", "TDY")
+
+    def test_offsite_hilo_delegates(self, service):
+        # HILO day 0 -> clinic
+        assert service._get_rotation_preload_codes(
+            "HILO", date(2025, 3, 13), date(2025, 3, 13), date(2025, 4, 8), 1, False
+        ) == ("C", "C")
+
+    def test_offsite_oki_delegates(self, service):
+        # OKI mid-block -> TDY
+        assert service._get_rotation_preload_codes(
+            "OKI", date(2025, 3, 25), date(2025, 3, 13), date(2025, 4, 8), 1, False
+        ) == ("TDY", "TDY")
+
+    def test_kap_delegates(self, service):
+        # KAP on Monday -> KAP/OFF
+        assert service._get_rotation_preload_codes(
+            "KAP", date(2025, 3, 17), date(2025, 3, 13), date(2025, 4, 8), 1, False
+        ) == ("KAP", "OFF")
+
+    def test_ldnf_delegates(self, service):
+        # LDNF on Friday -> C/OFF
+        assert service._get_rotation_preload_codes(
+            "LDNF", date(2025, 3, 21), date(2025, 3, 13), date(2025, 4, 8), 1, False
+        ) == ("C", "OFF")
+
+    def test_nf_delegates(self, service):
+        # NF on Monday -> OFF/NF
+        assert service._get_rotation_preload_codes(
+            "NF", date(2025, 3, 17), date(2025, 3, 13), date(2025, 4, 8), 1, False
+        ) == ("OFF", "NF")
+
+    def test_pednf_delegates(self, service):
+        # PEDNF on Monday -> OFF/PedNF
+        assert service._get_rotation_preload_codes(
+            "PEDNF", date(2025, 3, 17), date(2025, 3, 13), date(2025, 4, 8), 1, False
+        ) == ("OFF", "PedNF")
+
+    def test_wednesday_outpatient_pgy1_gets_continuity_and_lec(self, service):
+        # Wed, outpatient, PGY1, non-exempt rotation
+        assert service._get_rotation_preload_codes(
+            "CARDIO",
+            date(2025, 3, 19),
+            date(2025, 3, 13),
+            date(2025, 4, 8),
+            pgy_level=1,
+            is_outpatient=True,
+        ) == ("C", "LEC")
+
+    def test_wednesday_outpatient_pgy2_no_continuity(self, service):
+        # Wed, outpatient, PGY2 -> no continuity clinic, just LEC
+        assert service._get_rotation_preload_codes(
+            "CARDIO",
+            date(2025, 3, 19),
+            date(2025, 3, 13),
+            date(2025, 4, 8),
+            pgy_level=2,
+            is_outpatient=True,
+        ) == (None, "LEC")
+
+    def test_wednesday_inpatient_pgy1_no_continuity(self, service):
+        # Wed, NOT outpatient, PGY1 -> no continuity, just LEC
+        assert service._get_rotation_preload_codes(
+            "CARDIO",
+            date(2025, 3, 19),
+            date(2025, 3, 13),
+            date(2025, 4, 8),
+            pgy_level=1,
+            is_outpatient=False,
+        ) == (None, "LEC")
+
+    def test_wednesday_lec_exempt_rotation(self, service):
+        # Wed, NF rotation -> exempt from LEC
+        assert service._get_rotation_preload_codes(
+            "NF", date(2025, 3, 19), date(2025, 3, 13), date(2025, 4, 8), 1, False
+        ) == ("OFF", "NF")  # NF branch takes priority over Wednesday branch
+
+    def test_regular_weekday_returns_none(self, service):
+        # Thursday, regular rotation -> nothing to preload
+        assert service._get_rotation_preload_codes(
+            "CARDIO", date(2025, 3, 20), date(2025, 3, 13), date(2025, 4, 8), 1, True
+        ) == (None, None)
+
+    def test_regular_friday_returns_none(self, service):
+        assert service._get_rotation_preload_codes(
+            "CARDIO", date(2025, 3, 21), date(2025, 3, 13), date(2025, 4, 8), 1, True
+        ) == (None, None)
+
+    def test_wednesday_intern_continuity_exempt_rotation(self, service):
+        # Wed, outpatient, PGY1, KAP (exempt from intern continuity)
+        # KAP hits the KAP branch first, so it returns KAP Wednesday codes
+        assert service._get_rotation_preload_codes(
+            "KAP",
+            date(2025, 3, 19),
+            date(2025, 3, 13),
+            date(2025, 4, 8),
+            pgy_level=1,
+            is_outpatient=True,
+        ) == ("C", "LEC")  # KAP Wednesday pattern
