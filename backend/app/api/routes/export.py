@@ -248,6 +248,7 @@ async def export_schedule_xlsx(
             include_faculty=True,
         )
     except Exception:
+        logger.exception("Excel export failed")
         raise HTTPException(
             status_code=500, detail="An error occurred generating the Excel file"
         )

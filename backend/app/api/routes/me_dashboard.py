@@ -3,6 +3,7 @@
 This endpoint provides a unified view of a user's schedule, swaps, and absences.
 """
 
+import logging
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -26,6 +27,8 @@ from app.schemas.me_dashboard import (
     MeDashboardResponse,
 )
 from app.services.calendar_service import CalendarService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -239,7 +242,7 @@ async def get_my_dashboard(
             subscription.token, base_url
         )
     except Exception:
-        # If calendar sync fails, continue without it
+        logger.debug("Calendar sync URL generation failed, continuing without it")
         calendar_sync_url = None
 
     # --- Calculate summary statistics ---

@@ -8,6 +8,8 @@ Admin endpoints for managing experiments:
 - View results and lifecycle events
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -37,6 +39,8 @@ from app.schemas.experiments import (
     VariantMetricsResponse,
     VariantResponse,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -185,7 +189,7 @@ async def get_experiment_stats(
                         for metric_stats in vm.metrics.values():
                             total_metrics += int(metric_stats.get("count", 0))
                 except Exception:
-                    pass  # Skip experiments with missing data
+                    logger.debug("Skipping experiment %s with missing data", exp.key)
 
         return ExperimentStatsResponse(
             total_experiments=len(experiments),
