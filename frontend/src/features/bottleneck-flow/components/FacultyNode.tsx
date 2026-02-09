@@ -17,7 +17,6 @@ export function FacultyNode({
   faculty,
   position,
   isDisabled,
-  laneColor,
 }: FacultyNodeProps) {
   const meshRef = useRef<THREE.Mesh>(null);
 

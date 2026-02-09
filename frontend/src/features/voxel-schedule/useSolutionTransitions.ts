@@ -314,6 +314,7 @@ export function useSolutionTransitions(
 
         setTransitions((prev) => {
           const updated = new Map(prev);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           let allComplete = true;
           const nowCompleted: string[] = [];
 

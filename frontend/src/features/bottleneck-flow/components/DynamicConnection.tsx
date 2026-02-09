@@ -11,7 +11,6 @@
 import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
-import * as THREE from 'three';
 import { THREE_COLORS } from '../constants';
 import type { DynamicConnectionProps } from '../types';
 

@@ -106,8 +106,8 @@ export interface StagedAssignmentResponse {
 
   status: StagedAssignmentStatus;
 
-  validationErrors?: any[]; // Simplified for now
-  validationWarnings?: any[]; // Simplified for now
+  validationErrors?: unknown[]; // Simplified for now
+  validationWarnings?: unknown[]; // Simplified for now
 
   createdAssignmentId?: string;
 }
@@ -145,7 +145,7 @@ export interface ImportApplyResponse {
   errorCount: number;
   startedAt: string;
   completedAt?: string;
-  errors: any[];
+  errors: unknown[];
   acgmeWarnings: string[];
   rollbackAvailable: boolean;
   rollbackExpiresAt?: string;
