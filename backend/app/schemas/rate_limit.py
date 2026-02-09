@@ -4,7 +4,7 @@ Rate limit response schemas.
 Pydantic schemas for rate limit status and configuration endpoints.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import ConfigDict, BaseModel, Field
 
 
 class RateLimitStatus(BaseModel):

@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 
 
 class DashboardUserInfo(BaseModel):

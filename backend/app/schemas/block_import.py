@@ -1,6 +1,6 @@
 """Pydantic schemas for block schedule import API responses."""
 
-from pydantic import BaseModel, Field
+from pydantic import ConfigDict, BaseModel, Field
 
 
 class ResidentRosterItem(BaseModel):

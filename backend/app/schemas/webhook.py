@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import ConfigDict, BaseModel, Field, HttpUrl, field_validator
 
 # ============================================================================
 # Webhook Schemas

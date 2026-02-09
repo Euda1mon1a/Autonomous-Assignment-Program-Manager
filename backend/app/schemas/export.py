@@ -11,7 +11,7 @@ Pydantic models for scheduled data export jobs including:
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import ConfigDict, BaseModel, Field, field_validator
 
 from app.models.export_job import (
     ExportDeliveryMethod,
