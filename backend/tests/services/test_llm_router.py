@@ -9,6 +9,7 @@ from app.services.llm_router import (
     LLMProvider,
     LLMProviderError,
     LLMRouter,
+    MLXProvider,
     OllamaProvider,
     ProviderUnavailableError,
 )
@@ -18,6 +19,114 @@ from app.schemas.llm import (
     LLMUsage,
     TaskClassification,
 )
+
+
+class TestMLXProvider:
+    """Test suite for MLX (Apple Silicon) provider."""
+
+    @pytest.mark.asyncio
+    async def test_generate_success(self):
+        """Test successful generation from MLX server."""
+        provider = MLXProvider(base_url="http://test:8082")
+
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "choices": [
+                {
+                    "message": {"content": "MLX response"},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": 20,
+                "total_tokens": 30,
+            },
+        }
+        mock_response.raise_for_status = Mock()
+
+        with patch.object(provider._client, "post", return_value=mock_response):
+            response = await provider.generate(
+                prompt="Test prompt", system="Test system"
+            )
+
+        assert isinstance(response, LLMResponse)
+        assert response.content == "MLX response"
+        assert response.provider == "mlx"
+        assert response.usage is not None
+        assert response.usage.input_tokens == 10
+        assert response.usage.output_tokens == 20
+
+    @pytest.mark.asyncio
+    async def test_generate_failure_records_error(self):
+        """Test that failures are recorded."""
+        provider = MLXProvider(base_url="http://test:8082")
+
+        with patch.object(
+            provider._client,
+            "post",
+            side_effect=Exception("Connection failed"),
+        ):
+            with pytest.raises(LLMProviderError):
+                await provider.generate(prompt="Test")
+
+        assert provider._failure_count > 0
+
+    @pytest.mark.asyncio
+    async def test_generate_with_tools(self):
+        """Test tool calling via OpenAI-compatible API.
+
+        OpenAI-compatible servers return arguments as a JSON string,
+        not a dict. The provider must parse them before constructing ToolCall.
+        """
+        provider = MLXProvider(base_url="http://test:8082")
+
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "content": "",
+                        "tool_calls": [
+                            {
+                                "id": "call_1",
+                                "function": {
+                                    "name": "get_schedule",
+                                    "arguments": '{"block": 10}',
+                                },
+                            }
+                        ],
+                    },
+                    "finish_reason": "tool_calls",
+                }
+            ],
+        }
+        mock_response.raise_for_status = Mock()
+
+        with patch.object(provider._client, "post", return_value=mock_response):
+            response = await provider.generate_with_tools(
+                prompt="Get block 10 schedule",
+                tools=[{"name": "get_schedule"}],
+            )
+
+        assert response.provider == "mlx"
+        assert response.tool_calls is not None
+        assert len(response.tool_calls) == 1
+        assert response.tool_calls[0].name == "get_schedule"
+        assert response.tool_calls[0].arguments == {"block": 10}
+
+    @pytest.mark.asyncio
+    async def test_is_available_after_failures(self):
+        """Test provider becomes unavailable after multiple failures."""
+        provider = MLXProvider()
+
+        assert provider.is_available() is True
+
+        provider._record_failure()
+        provider._record_failure()
+        provider._record_failure()
+
+        assert provider.is_available() is False
 
 
 class TestOllamaProvider:
@@ -179,20 +288,22 @@ class TestLLMRouter:
     @pytest.mark.asyncio
     async def test_router_initialization(self):
         """Test router initializes with providers."""
-        router = LLMRouter(default_provider="ollama")
+        router = LLMRouter(default_provider="mlx")
 
+        assert "mlx" in router.providers
         assert "ollama" in router.providers
         assert "anthropic" in router.providers
-        assert router.default_provider == "ollama"
+        assert router.default_provider == "mlx"
 
     @pytest.mark.asyncio
     async def test_router_airgap_mode(self):
         """Test router in airgap mode only has local providers."""
         router = LLMRouter(airgap_mode=True)
 
+        assert "mlx" in router.providers
         assert "ollama" in router.providers
         assert "anthropic" not in router.providers
-        assert router.fallback_chain == ["ollama"]
+        assert router.fallback_chain == ["mlx", "ollama"]
 
     @pytest.mark.asyncio
     async def test_classify_simple_task(self):
@@ -203,7 +314,7 @@ class TestLLMRouter:
 
         assert isinstance(classification, TaskClassification)
         assert classification.task_type == "simple_query"
-        assert classification.recommended_provider == "ollama"
+        assert classification.recommended_provider == "mlx"
 
     @pytest.mark.asyncio
     async def test_classify_privacy_sensitive(self):
@@ -215,7 +326,7 @@ class TestLLMRouter:
         )
 
         assert classification.task_type == "privacy_sensitive"
-        assert classification.recommended_provider == "ollama"
+        assert classification.recommended_provider == "mlx"
         assert classification.is_privacy_sensitive is True
 
     @pytest.mark.asyncio
@@ -251,7 +362,10 @@ class TestLLMRouter:
         )
 
         assert classification.task_type == "code_generation"
-        assert classification.recommended_model == "qwen2.5"
+        assert (
+            classification.recommended_model
+            == "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
+        )
 
     @pytest.mark.asyncio
     async def test_generate_with_explicit_provider(self):
@@ -283,37 +397,48 @@ class TestLLMRouter:
 
     @pytest.mark.asyncio
     async def test_fallback_on_provider_failure(self):
-        """Test fallback to secondary provider on failure."""
+        """Test fallback through chain: mlx -> ollama -> anthropic."""
         router = LLMRouter(enable_fallback=True)
 
-        # Mock ollama to fail
+        # Mock mlx to fail
         with patch.object(
-            router.providers["ollama"],
+            router.providers["mlx"],
             "generate",
-            side_effect=LLMProviderError("Ollama failed"),
+            side_effect=LLMProviderError("MLX failed"),
         ):
-            # Mock anthropic to be available and succeed
-            mock_response = LLMResponse(
-                content="Fallback response",
-                provider="anthropic",
-                model="claude-3-5-sonnet-20241022",
-            )
-
+            # Mock ollama to also fail
             with patch.object(
-                router.providers["anthropic"],
-                "is_available",
-                return_value=True,
+                router.providers["ollama"],
+                "generate",
+                side_effect=LLMProviderError("Ollama failed"),
             ):
                 with patch.object(
-                    router.providers["anthropic"],
-                    "generate",
-                    return_value=mock_response,
+                    router.providers["ollama"],
+                    "is_available",
+                    return_value=True,
                 ):
-                    request = LLMRequest(
-                        prompt="Test prompt",
-                        provider="ollama",
+                    # Mock anthropic to succeed
+                    mock_response = LLMResponse(
+                        content="Fallback response",
+                        provider="anthropic",
+                        model="claude-3-5-sonnet-20241022",
                     )
-                    response = await router.generate(request)
+
+                    with patch.object(
+                        router.providers["anthropic"],
+                        "is_available",
+                        return_value=True,
+                    ):
+                        with patch.object(
+                            router.providers["anthropic"],
+                            "generate",
+                            return_value=mock_response,
+                        ):
+                            request = LLMRequest(
+                                prompt="Test prompt",
+                                provider="mlx",
+                            )
+                            response = await router.generate(request)
 
         assert response.content == "Fallback response"
         assert response.provider == "anthropic"
@@ -326,9 +451,10 @@ class TestLLMRouter:
 
         health_status = await router.health_check_all()
 
+        assert "mlx" in health_status
         assert "ollama" in health_status
         assert "anthropic" in health_status
-        assert health_status["ollama"].provider == "ollama"
+        assert health_status["mlx"].provider == "mlx"
 
     @pytest.mark.asyncio
     async def test_get_stats(self):
@@ -348,7 +474,8 @@ class TestLLMRouter:
 
         states = router.get_circuit_breaker_states()
 
+        assert "mlx" in states
         assert "ollama" in states
         assert "anthropic" in states
-        assert states["ollama"].provider == "ollama"
-        assert states["ollama"].state == "closed"
+        assert states["mlx"].provider == "mlx"
+        assert states["mlx"].state == "closed"

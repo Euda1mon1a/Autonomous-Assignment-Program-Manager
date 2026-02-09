@@ -4,6 +4,7 @@ Provides unified interface for local (Ollama) and cloud (Anthropic) LLM provider
 with intelligent routing, fallback chains, and circuit breaker patterns.
 """
 
+import json
 import logging
 import os
 import time
@@ -217,6 +218,243 @@ class LLMProvider(ABC):
             )
 
 
+class MLXProvider(LLMProvider):
+    """Apple Silicon native LLM provider via mlx-lm server (OpenAI-compatible API)."""
+
+    def __init__(
+        self,
+        base_url: str | None = None,
+        default_model: str = "mlx-community/Llama-3.2-3B-Instruct-4bit",
+        tool_model: str = "mlx-community/Mistral-7B-Instruct-v0.3-4bit",
+        timeout: float = 120.0,
+    ) -> None:
+        super().__init__(name="mlx")
+        self.base_url = base_url or os.getenv("MLX_URL", "http://localhost:8082")
+        self.default_model = default_model
+        self.tool_model = tool_model
+        self.timeout = timeout
+        self._client = httpx.AsyncClient(timeout=timeout)
+
+    async def generate(
+        self,
+        prompt: str,
+        system: str | None = None,
+        model: str | None = None,
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+        **kwargs: Any,
+    ) -> LLMResponse:
+        """Generate text using mlx-lm OpenAI-compatible API."""
+        start_time = time.time()
+        model = model or self.default_model
+
+        try:
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+
+            payload = {
+                "model": model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "stream": False,
+            }
+
+            response = await self._client.post(
+                f"{self.base_url}/v1/chat/completions",
+                json=payload,
+            )
+            response.raise_for_status()
+
+            data = response.json()
+            latency_ms = (time.time() - start_time) * 1000
+            self._record_success(latency_ms)
+
+            choice = data.get("choices", [{}])[0]
+            content = choice.get("message", {}).get("content", "")
+
+            usage = None
+            if "usage" in data:
+                u = data["usage"]
+                usage = LLMUsage(
+                    input_tokens=u.get("prompt_tokens", 0),
+                    output_tokens=u.get("completion_tokens", 0),
+                    total_tokens=u.get("total_tokens", 0),
+                )
+
+            return LLMResponse(
+                content=content,
+                provider=self.name,
+                model=model,
+                usage=usage,
+                finish_reason=choice.get("finish_reason", "stop"),
+                metadata={"latency_ms": latency_ms},
+            )
+
+        except httpx.HTTPStatusError as e:
+            self._record_failure()
+            logger.error(
+                f"MLX HTTP error: {e.response.status_code} - {e.response.text}"
+            )
+            raise LLMProviderError(
+                f"MLX generation failed: {e.response.status_code}"
+            ) from e
+        except httpx.RequestError as e:
+            self._record_failure()
+            logger.error(f"MLX request error: {str(e)}")
+            raise LLMProviderError(f"MLX connection failed: {str(e)}") from e
+        except Exception as e:
+            self._record_failure()
+            logger.error(f"MLX unexpected error: {str(e)}")
+            raise LLMProviderError(f"MLX error: {str(e)}") from e
+
+    async def generate_with_tools(
+        self,
+        prompt: str,
+        tools: list[dict[str, Any]],
+        system: str | None = None,
+        model: str | None = None,
+        **kwargs: Any,
+    ) -> LLMResponse:
+        """Generate with tool calling using OpenAI-compatible tools API."""
+        start_time = time.time()
+        model = model or self.tool_model
+
+        try:
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+
+            payload = {
+                "model": model,
+                "messages": messages,
+                "tools": tools,
+                "stream": False,
+            }
+
+            response = await self._client.post(
+                f"{self.base_url}/v1/chat/completions",
+                json=payload,
+            )
+            response.raise_for_status()
+
+            data = response.json()
+            latency_ms = (time.time() - start_time) * 1000
+            self._record_success(latency_ms)
+
+            choice = data.get("choices", [{}])[0]
+            message = choice.get("message", {})
+            content = message.get("content", "") or ""
+
+            tool_calls = None
+            if "tool_calls" in message and message["tool_calls"]:
+                tool_calls = []
+                for i, tc in enumerate(message["tool_calls"]):
+                    raw_args = tc.get("function", {}).get("arguments", {})
+                    args = (
+                        json.loads(raw_args) if isinstance(raw_args, str) else raw_args
+                    )
+                    tool_calls.append(
+                        ToolCall(
+                            id=tc.get("id", f"call_{i}"),
+                            name=tc.get("function", {}).get("name", ""),
+                            arguments=args,
+                        )
+                    )
+
+            return LLMResponse(
+                content=content,
+                provider=self.name,
+                model=model,
+                tool_calls=tool_calls,
+                finish_reason=choice.get("finish_reason", "stop"),
+                metadata={"latency_ms": latency_ms},
+            )
+
+        except Exception as e:
+            self._record_failure()
+            logger.error(f"MLX tool calling error: {str(e)}")
+            raise LLMProviderError(f"MLX tool calling failed: {str(e)}") from e
+
+    async def stream_generate(  # type: ignore[override]
+        self,
+        prompt: str,
+        system: str | None = None,
+        model: str | None = None,
+        **kwargs: Any,
+    ) -> AsyncGenerator[StreamChunk, None]:
+        """Stream generation from mlx-lm server."""
+        model = model or self.default_model
+
+        try:
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+
+            payload = {
+                "model": model,
+                "messages": messages,
+                "stream": True,
+            }
+
+            async with self._client.stream(
+                "POST",
+                f"{self.base_url}/v1/chat/completions",
+                json=payload,
+            ) as response:
+                response.raise_for_status()
+
+                async for line in response.aiter_lines():
+                    if not line or not line.startswith("data: "):
+                        continue
+                    line = line[6:]  # strip "data: " prefix
+                    if line.strip() == "[DONE]":
+                        break
+
+                    try:
+                        import json
+
+                        data = json.loads(line)
+                        choice = data.get("choices", [{}])[0]
+                        delta = choice.get("delta", {}).get("content", "")
+                        finish = choice.get("finish_reason")
+
+                        yield StreamChunk(
+                            delta=delta or "",
+                            provider=self.name,
+                            model=model,
+                            finish_reason=finish,
+                        )
+
+                        if finish:
+                            break
+                    except json.JSONDecodeError:
+                        logger.warning(f"Failed to parse MLX streaming line: {line}")
+                        continue
+
+            self._record_success(0)
+
+        except Exception as e:
+            self._record_failure()
+            logger.error(f"MLX streaming error: {str(e)}")
+            raise LLMProviderError(f"MLX streaming failed: {str(e)}") from e
+
+    def is_available(self) -> bool:
+        if not self._is_available:
+            if (datetime.utcnow() - self._last_check).seconds > 60:
+                self._is_available = True
+                self._failure_count = 0
+                logger.info(f"Resetting {self.name} availability after cooldown")
+        return self._is_available
+
+    async def close(self) -> None:
+        await self._client.aclose()
+
+
 class OllamaProvider(LLMProvider):
     """Ollama local LLM provider."""
 
@@ -238,7 +476,7 @@ class OllamaProvider(LLMProvider):
             timeout: Request timeout in seconds (default: 60.0)
         """
         super().__init__(name="ollama")
-        self.base_url = base_url or os.getenv("OLLAMA_URL", "http://ollama:11434")
+        self.base_url = base_url or os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.default_model = default_model
         self.timeout = timeout
         self._client = httpx.AsyncClient(timeout=timeout)
@@ -365,14 +603,19 @@ class OllamaProvider(LLMProvider):
             # Extract tool calls if present
             tool_calls = None
             if "tool_calls" in message:
-                tool_calls = [
-                    ToolCall(
-                        id=tc.get("id", f"call_{i}"),
-                        name=tc.get("function", {}).get("name", ""),
-                        arguments=tc.get("function", {}).get("arguments", {}),
+                tool_calls = []
+                for i, tc in enumerate(message["tool_calls"]):
+                    raw_args = tc.get("function", {}).get("arguments", {})
+                    args = (
+                        json.loads(raw_args) if isinstance(raw_args, str) else raw_args
                     )
-                    for i, tc in enumerate(message["tool_calls"])
-                ]
+                    tool_calls.append(
+                        ToolCall(
+                            id=tc.get("id", f"call_{i}"),
+                            name=tc.get("function", {}).get("name", ""),
+                            arguments=args,
+                        )
+                    )
 
             return LLMResponse(
                 content=content,
@@ -830,8 +1073,9 @@ class LLMRouter:
         self.enable_fallback = enable_fallback
         self.airgap_mode = airgap_mode
 
-        # Initialize providers
+        # Initialize providers (local-first: MLX → Ollama → Anthropic)
         self.providers: dict[str, LLMProvider] = {
+            "mlx": MLXProvider(),
             "ollama": OllamaProvider(),
         }
 
@@ -839,10 +1083,10 @@ class LLMRouter:
         if not airgap_mode:
             self.providers["anthropic"] = AnthropicProvider()
 
-        # Fallback chain (local first, then cloud)
-        self.fallback_chain = ["ollama", "anthropic"]
+        # Fallback chain (native silicon first, then Ollama, then cloud)
+        self.fallback_chain = ["mlx", "ollama", "anthropic"]
         if airgap_mode:
-            self.fallback_chain = ["ollama"]
+            self.fallback_chain = ["mlx", "ollama"]
 
         # Circuit breaker
         self.circuit_breaker = CircuitBreaker()
@@ -1061,8 +1305,8 @@ class LLMRouter:
             return TaskClassification(
                 task_type="privacy_sensitive",
                 complexity_score=0.3,
-                recommended_provider="ollama",
-                recommended_model="llama3.2",
+                recommended_provider="mlx",
+                recommended_model="mlx-community/Llama-3.2-3B-Instruct-4bit",
                 reasoning="Contains privacy-sensitive information, routing to local model",
                 requires_tools=False,
                 is_privacy_sensitive=True,
@@ -1073,10 +1317,10 @@ class LLMRouter:
             return TaskClassification(
                 task_type="tool_calling",
                 complexity_score=0.7,
-                recommended_provider="anthropic" if not self.airgap_mode else "ollama",
+                recommended_provider="anthropic" if not self.airgap_mode else "mlx",
                 recommended_model="claude-3-5-sonnet-20241022"
                 if not self.airgap_mode
-                else "mistral",
+                else "mlx-community/Mistral-7B-Instruct-v0.3-4bit",
                 reasoning="Tool calling requested, using provider with best tool support",
                 requires_tools=True,
                 is_privacy_sensitive=False,
@@ -1099,10 +1343,10 @@ class LLMRouter:
             return TaskClassification(
                 task_type="multi_step",
                 complexity_score=0.9,
-                recommended_provider="anthropic" if not self.airgap_mode else "ollama",
+                recommended_provider="anthropic" if not self.airgap_mode else "mlx",
                 recommended_model="claude-3-5-sonnet-20241022"
                 if not self.airgap_mode
-                else "llama3.2:8b",
+                else "mlx-community/Llama-3.2-3B-Instruct-4bit",
                 reasoning="Multi-step reasoning detected, using advanced model",
                 requires_tools=False,
                 is_privacy_sensitive=False,
@@ -1116,8 +1360,8 @@ class LLMRouter:
             return TaskClassification(
                 task_type="code_generation",
                 complexity_score=0.6,
-                recommended_provider="ollama",
-                recommended_model="qwen2.5",
+                recommended_provider="mlx",
+                recommended_model="mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
                 reasoning="Code generation task, using code-specialized model",
                 requires_tools=False,
                 is_privacy_sensitive=False,
@@ -1128,8 +1372,8 @@ class LLMRouter:
             return TaskClassification(
                 task_type="simple_query",
                 complexity_score=0.2,
-                recommended_provider="ollama",
-                recommended_model="llama3.2",
+                recommended_provider="mlx",
+                recommended_model="mlx-community/Llama-3.2-3B-Instruct-4bit",
                 reasoning="Short prompt, using fast local model",
                 requires_tools=False,
                 is_privacy_sensitive=False,
@@ -1139,8 +1383,8 @@ class LLMRouter:
         return TaskClassification(
             task_type="explanation",
             complexity_score=0.5,
-            recommended_provider="ollama",
-            recommended_model="llama3.2",
+            recommended_provider="mlx",
+            recommended_model="mlx-community/Llama-3.2-3B-Instruct-4bit",
             reasoning="General explanation task, using local model",
             requires_tools=False,
             is_privacy_sensitive=False,

@@ -264,14 +264,23 @@ class Settings(BaseSettings):
     SHADOW_METRICS_RETENTION_HOURS: int = 24  # Metrics retention period
 
     # LLM Router Configuration
-    LLM_DEFAULT_PROVIDER: str = "ollama"  # Default provider: ollama, anthropic
+    LLM_DEFAULT_PROVIDER: str = "mlx"  # Default provider: mlx, ollama, anthropic
     LLM_ENABLE_FALLBACK: bool = True  # Enable fallback to other providers
     LLM_AIRGAP_MODE: bool = False  # Disable cloud providers (local only)
-    OLLAMA_URL: str = "http://ollama:11434"  # Ollama API base URL
+
+    # MLX (Apple Silicon native inference via mlx-lm)
+    MLX_URL: str = "http://localhost:8082"  # mlx_lm.server OpenAI-compatible endpoint
+    MLX_DEFAULT_MODEL: str = "mlx-community/Llama-3.2-3B-Instruct-4bit"
+    MLX_TOOL_MODEL: str = "mlx-community/Mistral-7B-Instruct-v0.3-4bit"
+    MLX_TIMEOUT: float = 120.0  # MLX request timeout in seconds
+
+    # Ollama (fallback local inference)
+    OLLAMA_URL: str = "http://localhost:11434"  # Ollama API base URL
     OLLAMA_DEFAULT_MODEL: str = "llama3.2"  # Default Ollama model
     OLLAMA_FAST_MODEL: str = "llama3.2"  # Fast model for simple tasks
     OLLAMA_TOOL_MODEL: str = "mistral"  # Model with tool calling support
     OLLAMA_TIMEOUT: float = 60.0  # Ollama request timeout in seconds
+
     ANTHROPIC_API_KEY: str = ""  # Anthropic API key (optional for airgap)
     ANTHROPIC_DEFAULT_MODEL: str = "claude-sonnet-4-5-20250929"  # Default Claude model
 

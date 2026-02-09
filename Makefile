@@ -1,7 +1,7 @@
 # Makefile for Residency Scheduler
 # Unified command interface for development tasks
 
-.PHONY: help dev-start dev-stop local-start local-start-build local-stop local-status local-logs test lint build clean install health db-migrate db-reset
+.PHONY: help dev-start dev-stop local-start local-start-build local-stop local-status local-logs local-mlx test lint build clean install health db-migrate db-reset
 
 # Default target
 help:
@@ -77,6 +77,10 @@ local-status:
 
 local-logs:
 	docker compose -f docker-compose.local.yml logs -f
+
+local-mlx:
+	@echo "Starting MLX inference server on :8082 (Apple Silicon native)..."
+	python -m mlx_lm.server --port 8082
 
 # =============================================================================
 # Testing
