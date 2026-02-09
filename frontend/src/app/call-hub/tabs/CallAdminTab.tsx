@@ -418,9 +418,8 @@ export function CallAdminTab({ userTier }: CallAdminTabProps) {
     setPendingAction(null);
   }, [toast]);
 
-  const handleRowClick = useCallback((assignment: CallAssignment) => {
-    // Could open detail/edit modal in the future
-    console.log('Row clicked:', assignment);
+  const handleRowClick = useCallback((_assignment: CallAssignment) => {
+    // TODO: Open detail/edit modal
   }, []);
 
   // Keyboard shortcuts
