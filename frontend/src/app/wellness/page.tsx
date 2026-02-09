@@ -84,7 +84,7 @@ export default function WellnessPage() {
               </div>
               {(account?.currentStreakWeeks ?? 0) > 0 && (
                 <div className="text-sm text-orange-400 flex items-center justify-end gap-1">
-                  <span>&#x1F525;</span>
+                  <span>🔥</span>
                   {account?.currentStreakWeeks}-week streak
                 </div>
               )}
@@ -516,7 +516,7 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
       <div className="flex items-center gap-4 text-sm">
         {entry.streak > 0 && (
           <span className="text-orange-400">
-            &#x1F525; {entry.streak}
+            🔥 {entry.streak}
           </span>
         )}
         <span className="text-amber-400 font-semibold">
@@ -547,7 +547,7 @@ function HistoryTab({
   if (!history?.responses?.length) {
     return (
       <div className="text-center py-12 text-gray-400">
-        <p className="text-4xl mb-4">&#x1F4CA;</p>
+        <p className="text-4xl mb-4">📊</p>
         <p>No survey history yet. Complete a survey to get started!</p>
       </div>
     );
@@ -556,7 +556,7 @@ function HistoryTab({
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">
-        <span className="mr-2">&#x1F4CA;</span>
+        <span className="mr-2">📊</span>
         Recent Responses
       </h2>
 
