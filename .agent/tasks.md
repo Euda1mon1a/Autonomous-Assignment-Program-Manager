@@ -5,13 +5,13 @@ Work on the first unchecked task (`- [ ]`). After completing it, change it to `-
 ## Phase 1: Fix & Clean
 - [x] Fix import error in tests/services/test_faculty_pipeline.py — the module `app.services.faculty_assignment_expansion_service` does not exist. Either create a stub or fix the import to point to the correct module. Run tests after.
 - [x] Run `ruff check backend/ --fix` to auto-fix safe lint issues. Then manually fix any remaining errors. Commit fixes.
-- [ ] Run `cd frontend && npx tsc --noEmit` and fix any TypeScript type errors found. Commit fixes.
-- [ ] Run `cd frontend && npm run lint` and fix any ESLint errors found. Commit fixes.
-- [ ] Search for `# TODO` and `# FIXME` comments in backend/app/ — pick the easiest one and implement it. Commit.
-- [ ] Search for `// TODO` and `// FIXME` comments in frontend/src/ — pick the easiest one and implement it. Commit.
+- [x] Run `cd frontend && npx tsc --noEmit` and fix any TypeScript type errors found. Commit fixes.
+- [x] Run `cd frontend && npm run lint` and fix any ESLint errors found. Commit fixes.
+- [x] Search for `# TODO` and `# FIXME` comments in backend/app/ — pick the easiest one and implement it. Commit.
+- [x] Search for `// TODO` and `// FIXME` comments in frontend/src/ — pick the easiest one and implement it. Commit.
 
 ## Phase 2: Test Coverage
-- [ ] List files in backend/app/services/ that have NO corresponding test file in tests/services/. Pick the first one and write basic tests (happy path + error case). Commit.
+- [x] List files in backend/app/services/ that have NO corresponding test file in tests/services/. Pick the first one and write basic tests (happy path + error case). Commit.
 - [ ] Continue writing tests for the next untested service file. Commit.
 - [ ] Continue writing tests for the next untested service file. Commit.
 - [ ] List files in backend/app/api/routes/ that have NO corresponding test file in tests/api/. Pick the first one and write basic route tests. Commit.
