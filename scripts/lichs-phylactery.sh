@@ -29,16 +29,29 @@ fi
 
 echo "💀 DB structure changes detected, preserving soul in phylactery..."
 
-# Check if docker is running
-if ! docker compose -f "$COMPOSE_FILE" ps db --status running 2>/dev/null | grep -q "running"; then
-    echo "⚠️  Database container not running, skipping schema snapshot"
-    echo "   Run: docker compose -f $COMPOSE_FILE up -d db"
+# Check if database is available (Docker or native)
+DOCKER_DB_RUNNING=false
+if docker compose -f "$COMPOSE_FILE" ps db --status running 2>/dev/null | grep -q "running"; then
+    DOCKER_DB_RUNNING=true
+fi
+
+NATIVE_DB_RUNNING=false
+if pg_isready -q -h localhost -p 5432 2>/dev/null; then
+    NATIVE_DB_RUNNING=true
+fi
+
+if [ "$DOCKER_DB_RUNNING" = false ] && [ "$NATIVE_DB_RUNNING" = false ]; then
+    echo "Warning: No database available, skipping schema snapshot"
     exit 0
 fi
 
 # Dump schema (no data)
-docker compose -f "$COMPOSE_FILE" exec -T db \
-  pg_dump -U scheduler --schema-only residency_scheduler > "$SCHEMA_FILE.tmp" 2>/dev/null
+if [ "$DOCKER_DB_RUNNING" = true ]; then
+    docker compose -f "$COMPOSE_FILE" exec -T db \
+      pg_dump -U scheduler --schema-only residency_scheduler > "$SCHEMA_FILE.tmp" 2>/dev/null
+else
+    pg_dump -h localhost -p 5432 -U scheduler --schema-only residency_scheduler > "$SCHEMA_FILE.tmp" 2>/dev/null
+fi
 
 if [[ ! -s "$SCHEMA_FILE.tmp" ]]; then
     echo "⚠️  Schema dump empty, skipping (migrations may not be applied yet)"

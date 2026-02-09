@@ -1,7 +1,7 @@
 # Makefile for Residency Scheduler
 # Unified command interface for development tasks
 
-.PHONY: help dev-start dev-stop local-start local-start-build local-stop local-status local-logs local-mlx test lint build clean install health db-migrate db-reset
+.PHONY: help dev-start dev-stop local-start local-start-build local-stop local-status local-logs local-mlx test lint build clean install health db-migrate db-reset native-start native-start-mlx native-stop native-stop-all native-status native-logs native-restart native-bootstrap
 
 # Default target
 help:
@@ -19,6 +19,16 @@ help:
 	@echo "  local-stop      Stop local development stack"
 	@echo "  local-status    Show local development stack status"
 	@echo "  local-logs      Follow local development stack logs"
+	@echo ""
+	@echo "Native Development (non-Docker):"
+	@echo "  native-start      Start all services natively (no Docker)"
+	@echo "  native-start-mlx  Start all services + MLX inference"
+	@echo "  native-stop       Stop application processes"
+	@echo "  native-stop-all   Stop everything (incl. Postgres/Redis)"
+	@echo "  native-status     Show status of all services"
+	@echo "  native-logs       Follow native service logs"
+	@echo "  native-restart    Stop and restart all services"
+	@echo "  native-bootstrap  First-time setup (install + start Postgres/Redis)"
 	@echo ""
 	@echo "Testing:"
 	@echo "  test            Run all tests (backend + frontend)"
@@ -81,6 +91,34 @@ local-logs:
 local-mlx:
 	@echo "Starting MLX inference server on :8082 (Apple Silicon native)..."
 	python -m mlx_lm.server --port 8082
+
+# =============================================================================
+# Native Development (non-Docker)
+# =============================================================================
+
+native-start:
+	./scripts/start-native.sh
+
+native-start-mlx:
+	./scripts/start-native.sh --mlx
+
+native-stop:
+	./scripts/stop-native.sh
+
+native-stop-all:
+	./scripts/stop-native.sh --all
+
+native-status:
+	./scripts/status-native.sh
+
+native-logs:
+	./scripts/status-native.sh --logs
+
+native-restart:
+	./scripts/stop-native.sh && sleep 2 && ./scripts/start-native.sh
+
+native-bootstrap:
+	./scripts/start-native.sh --bootstrap
 
 # =============================================================================
 # Testing
@@ -154,14 +192,22 @@ build-frontend:
 # =============================================================================
 
 health:
-	@echo "=== Docker Services ==="
-	@docker-compose ps
+	@echo "=== Service Health ==="
 	@echo ""
-	@echo "=== Backend Health ==="
-	@curl -s http://localhost:8000/health 2>/dev/null | jq . || echo "Backend not running"
+	@echo "Backend:"
+	@curl -s http://localhost:8000/health 2>/dev/null | python3 -m json.tool 2>/dev/null || echo "  Not running"
 	@echo ""
-	@echo "=== Frontend ==="
-	@curl -s -o /dev/null -w "Status: %{http_code}\n" http://localhost:3000 2>/dev/null || echo "Frontend not running"
+	@echo "Frontend:"
+	@curl -s -o /dev/null -w "  Status: %{http_code}\n" http://localhost:3000 2>/dev/null || echo "  Not running"
+	@echo ""
+	@echo "MCP Server:"
+	@curl -s http://localhost:8081/health 2>/dev/null | python3 -m json.tool 2>/dev/null || echo "  Not running"
+	@echo ""
+	@echo "PostgreSQL:"
+	@pg_isready -h localhost -p 5432 2>/dev/null && echo "  Accepting connections" || echo "  Not running"
+	@echo ""
+	@echo "Redis:"
+	@redis-cli ping 2>/dev/null && echo "  Connected" || echo "  Not running"
 
 clean:
 	@echo "Cleaning build artifacts..."
