@@ -114,6 +114,7 @@ async def preview_block_assignment_import(
 @router.post(
     "/import",
     response_model=BlockAssignmentImportResult,
+    status_code=201,
     summary="Execute block assignment import",
     description="""
     Execute import based on a previous preview.
@@ -147,6 +148,7 @@ async def execute_block_assignment_import(
 @router.post(
     "/templates/quick-create",
     response_model=QuickTemplateCreateResponse,
+    status_code=201,
     summary="Quick-create rotation template",
     description="""
     Create a new rotation template during import.
@@ -336,6 +338,7 @@ async def parse_block_sheet(
 
 @router.post(
     "/import-block-sheet",
+    status_code=201,
     summary="Import parsed block schedule data",
     description="""
     Import block assignments from parsed block schedule data.
