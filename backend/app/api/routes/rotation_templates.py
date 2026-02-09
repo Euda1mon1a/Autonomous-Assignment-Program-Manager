@@ -57,6 +57,8 @@ from app.schemas.activity import (
 from app.services.rotation_template_service import RotationTemplateService
 from app.services.activity_service import ActivityService
 
+logger = get_logger(__name__)
+
 router = APIRouter()
 
 
@@ -182,6 +184,7 @@ async def batch_delete_rotation_templates(
         await service.rollback()
         raise
     except Exception as e:
+        logger.exception("Batch delete rotation templates failed")
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -260,6 +263,7 @@ async def batch_update_rotation_templates(
         await service.rollback()
         raise
     except Exception as e:
+        logger.exception("Batch update rotation templates failed")
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -327,6 +331,7 @@ async def batch_create_rotation_templates(
         await service.rollback()
         raise
     except Exception as e:
+        logger.exception("Batch create rotation templates failed")
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -465,6 +470,7 @@ async def batch_archive_rotation_templates(
         await service.rollback()
         raise
     except Exception as e:
+        logger.exception("Batch archive rotation templates failed")
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -517,6 +523,7 @@ async def batch_restore_rotation_templates(
         await service.rollback()
         raise
     except Exception as e:
+        logger.exception("Batch restore rotation templates failed")
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -610,6 +617,7 @@ async def batch_update_patterns(
         await service.rollback()
         raise
     except Exception as e:
+        logger.exception("Batch update patterns failed")
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -680,6 +688,7 @@ async def batch_apply_preferences(
         await service.rollback()
         raise
     except Exception as e:
+        logger.exception("Batch apply preferences failed")
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -734,6 +743,7 @@ async def archive_rotation_template(
         await service.commit()
         return template
     except ValueError as e:
+        logger.debug("Validation error: %s", e)
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -768,6 +778,7 @@ async def restore_rotation_template(
         await service.commit()
         return template
     except ValueError as e:
+        logger.debug("Validation error: %s", e)
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -953,6 +964,7 @@ async def replace_weekly_patterns(
         await service.commit()
         return patterns
     except ValueError as e:
+        logger.debug("Validation error: %s", e)
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -1041,6 +1053,7 @@ async def upsert_halfday_requirements(
         await service.commit()
         return result
     except ValueError as e:
+        logger.debug("Validation error: %s", e)
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -1125,6 +1138,7 @@ async def replace_rotation_preferences(
         await service.commit()
         return new_preferences
     except ValueError as e:
+        logger.debug("Validation error: %s", e)
         await service.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -1215,6 +1229,7 @@ async def replace_activity_requirements(
         db.commit()
         return [ActivityRequirementResponse.model_validate(r) for r in new_requirements]
     except ValueError as e:
+        logger.debug("Validation error: %s", e)
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -1254,6 +1269,7 @@ async def add_activity_requirement(
         db.commit()
         return ActivityRequirementResponse.model_validate(new_requirement)
     except ValueError as e:
+        logger.debug("Validation error: %s", e)
         db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
