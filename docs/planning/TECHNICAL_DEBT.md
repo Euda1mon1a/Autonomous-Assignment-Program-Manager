@@ -1,7 +1,7 @@
 # Technical Debt Tracker
 
-> **Last Updated:** 2025-12-30
-> **Source:** Full-Stack MVP Review (16-layer inspection)
+> **Last Updated:** 2026-02-08
+> **Source:** Full-Stack MVP Review (16-layer inspection) + 2026-02-08 Repo-Wide Scan
 
 This document tracks identified technical debt, prioritized by severity and impact.
 
@@ -321,13 +321,65 @@ export async function logout(): Promise<void> {
 
 ---
 
+### DEBT-021: Hardcoded Faculty Clinic Caps
+**Location:** `backend/app/scheduling/constraints/faculty_clinic.py` (lines 34-54)
+**Category:** Data / OPSEC
+**Found:** 2026-02-08
+
+**Issue:** `FACULTY_CLINIC_CAPS` dict hardcodes min/max clinic half-days for 13 faculty members by last name. A `_get_caps()` fallback reads DB columns (`min_clinic_halfdays_per_week`, `max_clinic_halfdays_per_week`) first, but the hardcoded dict remains as a backstop.
+
+**Risks:**
+- Faculty names in source code (OPSEC concern)
+- Values drift from DB if DB is populated but dict is stale
+
+**Fix:** Verify all faculty have DB-stored values, then remove the hardcoded dict. Requires: DB audit + constraint test validation.
+
+---
+
+### DEBT-022: Index-Based React Keys (30+ instances)
+**Location:** Multiple frontend components
+**Category:** Frontend Quality
+**Found:** 2026-02-08
+
+**Issue:** 30+ instances of `key={index}` across the frontend. Index-based keys cause incorrect DOM reuse when list items reorder, insert, or delete.
+
+**Partial fix in PR #847:** Fixed `error-toast.tsx` (most user-visible). Remaining instances need per-component audit to determine stable key sources.
+
+**Files with known instances:**
+- Various page components, hooks, and utility components
+- Full grep: `grep -rn 'key={index}' frontend/src/`
+
+**Fix:** Audit each instance; replace with content hash, ID, or unique field. Static lists with no reorder can keep index keys (suppress with comment).
+
+---
+
+### DEBT-023: N+1 Queries in Scheduling Engine
+**Location:** `backend/app/scheduling/engine.py`
+**Category:** Performance
+**Found:** 2025-12-30 (DEBT-011), re-confirmed 2026-02-08
+
+**Note:** Schedule draft service (`schedule_draft_service.py`) is clean (uses `selectinload`), but the core scheduling engine still lazy-loads `person.assignments`. This is the original DEBT-011 — not yet resolved.
+
+---
+
+### DEBT-024: MAX_FACULTY_IN_CLINIC Hardcoded
+**Location:** `backend/app/scheduling/engine.py` (line ~2431)
+**Category:** Configuration
+**Found:** 2026-02-08
+
+**Issue:** `MAX_FACULTY_IN_CLINIC = 6` is hardcoded as a physical facility limit. Should be configurable per clinic/site for multi-site deployments.
+
+**Fix:** Move to config or per-clinic DB field.
+
+---
+
 ## Summary by Category
 
 | Category | P0 | P1 | P2 | P3 | Total |
 |----------|----|----|----|----|-------|
 | Security | 1 | 0 | 0 | 0 | 1 |
 | Infrastructure | 1 | 0 | 0 | 0 | 1 |
-| Configuration | 0 | 1 | 1 | 0 | 2 |
+| Configuration | 0 | 1 | 2 | 0 | 3 |
 | Performance | 0 | 1 | 1 | 0 | 2 |
 | Feature Incomplete | 0 | 2 | 2 | 1 | 5 |
 | API Quality | 0 | 1 | 0 | 0 | 1 |
@@ -335,10 +387,12 @@ export async function logout(): Promise<void> {
 | Accessibility | 0 | 0 | 1 | 0 | 1 |
 | Architecture | 0 | 0 | 1 | 0 | 1 |
 | Code Quality | 0 | 0 | 1 | 0 | 1 |
+| Data / OPSEC | 0 | 0 | 1 | 0 | 1 |
+| Frontend Quality | 0 | 0 | 0 | 1 | 1 |
 | Testing | 0 | 0 | 0 | 2 | 2 |
 | Error Handling | 0 | 0 | 0 | 2 | 2 |
 | Observability | 0 | 0 | 0 | 1 | 1 |
-| **Total** | **2** | **6** | **7** | **6** | **21** |
+| **Total** | **2** | **6** | **9** | **7** | **24** |
 
 ---
 
@@ -366,6 +420,10 @@ export async function logout(): Promise<void> {
 | DEBT-018 | Open | - | - |
 | DEBT-019 | Open | - | - |
 | DEBT-020 | Open | - | - |
+| DEBT-021 | Open | - | - |
+| DEBT-022 | Partial | 2026-02-08 | PR #847 (error-toast only) |
+| DEBT-023 | Open | - | - |
+| DEBT-024 | Open | - | - |
 
 ---
 
