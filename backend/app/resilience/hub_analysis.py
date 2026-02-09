@@ -117,6 +117,7 @@ class FacultyCentrality:
             + self.pagerank * weights.get("pagerank", 0.15)
             + self.replacement_difficulty * weights.get("replacement", 0.15)
         )
+        return self.composite_score
 
     @property
     def risk_level(self) -> HubRiskLevel:
