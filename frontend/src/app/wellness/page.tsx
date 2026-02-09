@@ -489,9 +489,9 @@ function LeaderboardTab({
 
 function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
   const getMedalEmoji = (rank: number) => {
-    if (rank === 1) return '&#x1F947;';
-    if (rank === 2) return '&#x1F948;';
-    if (rank === 3) return '&#x1F949;';
+    if (rank === 1) return '\u{1F947}';
+    if (rank === 2) return '\u{1F948}';
+    if (rank === 3) return '\u{1F949}';
     return null;
   };
 
