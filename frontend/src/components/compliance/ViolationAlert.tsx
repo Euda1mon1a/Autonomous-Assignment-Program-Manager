@@ -166,8 +166,8 @@ export const ViolationAlert: React.FC<ViolationAlertProps> = ({
             <span aria-hidden="true">💡</span> Suggested Actions:
           </h5>
           <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
-            {violation.suggestions.map((suggestion, idx) => (
-              <li key={idx}>{suggestion}</li>
+            {violation.suggestions.map((suggestion) => (
+              <li key={suggestion}>{suggestion}</li>
             ))}
           </ul>
         </div>

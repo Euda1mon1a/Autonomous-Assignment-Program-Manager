@@ -198,8 +198,8 @@ export function ComplianceSummary({
       </div>
 
       <div className="space-y-2">
-        {items.map((item, index) => (
-          <ComplianceCard key={index} {...item} />
+        {items.map((item) => (
+          <ComplianceCard key={`${item.rule}-${item.status}`} {...item} />
         ))}
       </div>
     </div>

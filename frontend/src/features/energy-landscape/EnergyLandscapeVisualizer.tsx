@@ -352,7 +352,7 @@ export const EnergyLandscapeVisualizer: React.FC<EnergyLandscapeVisualizerProps>
           <h3 className="text-lg font-semibold text-green-900 mb-4">Recommendations</h3>
           <ul className="space-y-3">
             {data.recommendations.map((recommendation, index) => (
-              <li key={index} className="flex gap-3">
+              <li key={recommendation} className="flex gap-3">
                 <div className="flex-shrink-0 mt-1">
                   <div className="flex items-center justify-center h-5 w-5 rounded-full bg-green-600">
                     <span className="text-white text-xs font-bold">{index + 1}</span>

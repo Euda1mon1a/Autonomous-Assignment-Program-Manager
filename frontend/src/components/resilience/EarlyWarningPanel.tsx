@@ -218,7 +218,7 @@ export const EarlyWarningPanel: React.FC<EarlyWarningPanelProps> = ({
                           const height = (point.value / maxValue) * 100;
 
                           return (
-                            <div key={idx} className="flex-1 flex flex-col items-center">
+                            <div key={point.date} className="flex-1 flex flex-col items-center">
                               <div
                                 className={`w-full rounded-t transition-all ${
                                   idx === warning.trend!.length - 1

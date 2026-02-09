@@ -130,7 +130,7 @@ export function Pagination({
           </button>
 
           {pageNumbers.map((page, index) => (
-            <React.Fragment key={index}>
+            <React.Fragment key={`page-${page}-${index}`}>
               {page === '...' ? (
                 <span className="px-3 py-2 text-gray-500" aria-hidden="true">...</span>
               ) : (

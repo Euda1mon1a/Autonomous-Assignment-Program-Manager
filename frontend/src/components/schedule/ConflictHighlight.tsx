@@ -153,8 +153,8 @@ export const ConflictHighlight: React.FC<ConflictHighlightProps> = ({
                 <div>
                   <span className="font-medium">Affected Persons:</span>
                   <div className="mt-1">
-                    {conflict.affectedPersons.map((person, idx) => (
-                      <span key={idx} className="inline-block bg-white px-2 py-0.5 rounded mr-1 mb-1 text-xs">
+                    {conflict.affectedPersons.map((person) => (
+                      <span key={person} className="inline-block bg-white px-2 py-0.5 rounded mr-1 mb-1 text-xs">
                         {person}
                       </span>
                     ))}
@@ -163,8 +163,8 @@ export const ConflictHighlight: React.FC<ConflictHighlightProps> = ({
                 <div>
                   <span className="font-medium">Affected Dates:</span>
                   <div className="mt-1">
-                    {conflict.affectedDates.map((date, idx) => (
-                      <span key={idx} className="inline-block bg-white px-2 py-0.5 rounded mr-1 mb-1 text-xs">
+                    {conflict.affectedDates.map((date) => (
+                      <span key={date} className="inline-block bg-white px-2 py-0.5 rounded mr-1 mb-1 text-xs">
                         {new Date(date).toLocaleDateString()}
                       </span>
                     ))}
@@ -177,8 +177,8 @@ export const ConflictHighlight: React.FC<ConflictHighlightProps> = ({
                 <div className="bg-white bg-opacity-50 rounded p-2">
                   <span className="font-medium text-sm">Suggestions:</span>
                   <ul className="list-disc list-inside text-sm mt-1 space-y-1">
-                    {conflict.suggestions.map((suggestion, idx) => (
-                      <li key={idx}>{suggestion}</li>
+                    {conflict.suggestions.map((suggestion) => (
+                      <li key={suggestion}>{suggestion}</li>
                     ))}
                   </ul>
                 </div>

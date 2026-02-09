@@ -307,7 +307,7 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
                 </thead>
                 <tbody className="divide-y divide-slate-700">
                   {parseResult.assignments.map((a, idx) => (
-                    <tr key={idx} className="hover:bg-slate-700/50">
+                    <tr key={`${a.name}-${a.rotation}-${idx}`} className="hover:bg-slate-700/50">
                       <td className="px-3 py-2 text-white font-medium">{a.rotation}</td>
                       <td className="px-3 py-2 text-slate-300">{a.role}</td>
                       <td className="px-3 py-2 text-slate-300">{a.pgyLevel}</td>
@@ -340,8 +340,8 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
                 Rotations ({parseResult.assignments.length})
               </h4>
               <div className="space-y-1 max-h-32 overflow-y-auto">
-                {parseResult.assignments.slice(0, 10).map((a, idx) => (
-                  <div key={idx} className="flex items-center text-sm">
+                {parseResult.assignments.slice(0, 10).map((a) => (
+                  <div key={`${a.name}-${a.rotation}`} className="flex items-center text-sm">
                     <CheckCircle2 className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
                     <span className="text-slate-300">{a.name}</span>
                     <ArrowRight className="w-3 h-3 mx-2 text-slate-500" />
@@ -363,8 +363,8 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
               </h4>
               {parseResult.absences.length > 0 ? (
                 <div className="space-y-1 max-h-24 overflow-y-auto">
-                  {parseResult.absences.slice(0, 5).map((abs, idx) => (
-                    <div key={idx} className="flex items-center text-sm">
+                  {parseResult.absences.slice(0, 5).map((abs) => (
+                    <div key={`${abs.name}-${abs.dates[0]}`} className="flex items-center text-sm">
                       <AlertTriangle className="w-4 h-4 text-amber-500 mr-2 flex-shrink-0" />
                       <span className="text-slate-300">{abs.name}:</span>
                       <span className="text-white ml-2">{abs.dates.join(', ')}</span>
@@ -380,8 +380,8 @@ function BlockImportTab({ userTier }: BlockImportTabProps) {
             {parseResult.warnings.length > 0 && (
               <Alert variant="warning" className="mb-4">
                 <ul className="list-disc list-inside text-sm">
-                  {parseResult.warnings.map((w, idx) => (
-                    <li key={idx}>{w}</li>
+                  {parseResult.warnings.map((w) => (
+                    <li key={w}>{w}</li>
                   ))}
                 </ul>
               </Alert>
@@ -789,8 +789,8 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
                     Errors ({data.errors.length})
                   </h4>
                   <ul className="space-y-1 text-sm text-red-300">
-                    {data.errors.map((err, idx) => (
-                      <li key={idx}>{err}</li>
+                    {data.errors.map((err) => (
+                      <li key={err}>{err}</li>
                     ))}
                   </ul>
                 </div>
@@ -802,8 +802,8 @@ function FmitImportTab({ userTier }: FmitImportTabProps) {
                     Warnings ({data.warnings.length})
                   </h4>
                   <ul className="space-y-1 text-sm text-amber-300">
-                    {data.warnings.map((warning, idx) => (
-                      <li key={idx}>{warning}</li>
+                    {data.warnings.map((warning) => (
+                      <li key={warning}>{warning}</li>
                     ))}
                   </ul>
                 </div>

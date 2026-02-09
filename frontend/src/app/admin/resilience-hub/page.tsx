@@ -293,8 +293,8 @@ function OverviewTab() {
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
           <h3 className="text-lg font-medium text-white mb-4">Immediate Actions</h3>
           <ul className="space-y-2">
-            {health.immediateActions.map((action, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-slate-300">
+            {health.immediateActions.map((action) => (
+              <li key={action} className="flex items-start gap-2 text-slate-300">
                 <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                 <span>{action}</span>
               </li>
@@ -412,8 +412,8 @@ function CircuitBreakersTab() {
         <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
           <h3 className="text-lg font-medium text-white mb-4">Recommendations</h3>
           <ul className="space-y-2">
-            {breakers.recommendations.map((rec, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-slate-300">
+            {breakers.recommendations.map((rec) => (
+              <li key={rec} className="flex items-start gap-2 text-slate-300">
                 <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                 <span>{rec}</span>
               </li>
@@ -638,8 +638,8 @@ function ComplianceTab() {
         <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6">
           <h3 className="text-lg font-medium text-red-400 mb-4">Deficiencies</h3>
           <ul className="space-y-2">
-            {mtf.deficiencies.map((def, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-red-300">
+            {mtf.deficiencies.map((def) => (
+              <li key={def} className="flex items-start gap-2 text-red-300">
                 <XCircle className="w-5 h-5 shrink-0 mt-0.5" />
                 <span>{def}</span>
               </li>
@@ -712,8 +712,8 @@ function ComplianceTab() {
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-6">
               <h3 className="text-lg font-medium text-white mb-4">Recommendations</h3>
               <ul className="space-y-2">
-                {criticalIndex.recommendations.map((rec, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-slate-300">
+                {criticalIndex.recommendations.map((rec) => (
+                  <li key={rec} className="flex items-start gap-2 text-slate-300">
                     <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                     <span>{rec}</span>
                   </li>

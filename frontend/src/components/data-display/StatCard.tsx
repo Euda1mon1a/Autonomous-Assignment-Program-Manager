@@ -141,8 +141,8 @@ export function StatGrid({
 
   return (
     <div className={`grid gap-6 ${gridCols[columns]} ${className}`}>
-      {stats.map((stat, index) => (
-        <StatCard key={index} {...stat} />
+      {stats.map((stat) => (
+        <StatCard key={stat.label} {...stat} />
       ))}
     </div>
   );
