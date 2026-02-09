@@ -162,7 +162,7 @@ export function useImport(hookOptions: UseImportOptions = {}) {
 
       // Use fetch directly for FormData upload
       const apiBase =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+        process.env.NEXT_PUBLIC_API_URL || "/api/v1";
       const response = await fetch(`${apiBase}/imports/parse-xlsx`, {
         method: "POST",
         body: formData,
