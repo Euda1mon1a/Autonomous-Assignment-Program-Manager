@@ -140,6 +140,24 @@ class TestFacultyCentrality:
         # = 0.1 + 0.18 + 0.08 + 0.045 + 0.105 = 0.51
         assert abs(centrality.composite_score - expected) < 0.001
 
+    def test_calculate_composite_returns_float(self):
+        """Regression: calculate_composite() must return the computed value."""
+        centrality = FacultyCentrality(
+            faculty_id=uuid4(),
+            faculty_name="Test Faculty",
+            calculated_at=datetime.now(),
+            degree_centrality=0.45,
+            betweenness_centrality=0.4,
+            eigenvector_centrality=0.35,
+            pagerank=0.25,
+            replacement_difficulty=0.5,
+        )
+
+        result = centrality.calculate_composite()
+
+        assert isinstance(result, float)
+        assert result == pytest.approx(centrality.composite_score)
+
     def test_composite_score_custom_weights(self):
         """Test composite score calculation with custom weights."""
         centrality = FacultyCentrality(
