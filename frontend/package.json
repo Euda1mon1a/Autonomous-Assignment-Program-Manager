@@ -44,7 +44,6 @@
     "postprocessing": "^6.38.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-is": "^19.2.3",
     "react-plotly.js": "^2.6.0",
     "recharts": "^3.6.0",
     "three": "^0.164.1",

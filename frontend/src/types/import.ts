@@ -106,8 +106,8 @@ export interface StagedAssignmentResponse {
 
   status: StagedAssignmentStatus;
 
-  validationErrors?: any[]; // Simplified for now
-  validationWarnings?: any[]; // Simplified for now
+  validationErrors?: Record<string, unknown>[];
+  validationWarnings?: Record<string, unknown>[];
 
   createdAssignmentId?: string;
 }
@@ -137,6 +137,15 @@ export interface ImportPreviewResponse {
   pageSize: number;
 }
 
+export interface ImportApplyErrorDetail {
+  stagedAssignmentId: string;
+  rowNumber?: number;
+  personName: string;
+  assignmentDate: string;
+  errorMessage: string;
+  errorCode?: string;
+}
+
 export interface ImportApplyResponse {
   batchId: string;
   status: ImportBatchStatus;
@@ -145,7 +154,7 @@ export interface ImportApplyResponse {
   errorCount: number;
   startedAt: string;
   completedAt?: string;
-  errors: any[];
+  errors: ImportApplyErrorDetail[];
   acgmeWarnings: string[];
   rollbackAvailable: boolean;
   rollbackExpiresAt?: string;
