@@ -548,7 +548,7 @@ export function WhatIfAnalysis({ baseVersionId, className = '' }: WhatIfAnalysis
           <div className="space-y-4" role="list" aria-label="List of proposed changes">
             {changes.map((change, index) => (
               <ChangeEditor
-                key={index}
+                key={`${change.type}-${index}`}
                 change={change}
                 onUpdate={(c) => handleUpdateChange(index, c)}
                 onRemove={() => handleRemoveChange(index)}

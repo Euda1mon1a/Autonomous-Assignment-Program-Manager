@@ -329,8 +329,8 @@ export function ConflictResolutionSuggestions({
                         Proposed Changes ({suggestion.changes.length})
                       </h5>
                       <div className="space-y-2">
-                        {suggestion.changes.map((change, index) => (
-                          <ChangeItem key={index} change={change} />
+                        {suggestion.changes.map((change) => (
+                          <ChangeItem key={change.description} change={change} />
                         ))}
                       </div>
                     </div>
@@ -345,8 +345,8 @@ export function ConflictResolutionSuggestions({
                               Potential Side Effects
                             </h5>
                             <ul className="text-sm text-amber-700 space-y-1">
-                              {suggestion.sideEffects.map((effect, index) => (
-                                <li key={index}>&bull; {effect}</li>
+                              {suggestion.sideEffects.map((effect) => (
+                                <li key={effect}>&bull; {effect}</li>
                               ))}
                             </ul>
                           </div>

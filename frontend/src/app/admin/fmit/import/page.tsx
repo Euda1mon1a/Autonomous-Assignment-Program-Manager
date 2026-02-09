@@ -292,8 +292,8 @@ function ParseResults({ data, onReset }: ParseResultsProps) {
                   Errors ({data.errors.length})
                 </h4>
                 <ul className="space-y-1 text-sm text-red-300">
-                  {data.errors.map((error, idx) => (
-                    <li key={idx}>{error}</li>
+                  {data.errors.map((error) => (
+                    <li key={error}>{error}</li>
                   ))}
                 </ul>
               </div>
@@ -305,8 +305,8 @@ function ParseResults({ data, onReset }: ParseResultsProps) {
                   Warnings ({data.warnings.length})
                 </h4>
                 <ul className="space-y-1 text-sm text-amber-300">
-                  {data.warnings.map((warning, idx) => (
-                    <li key={idx}>{warning}</li>
+                  {data.warnings.map((warning) => (
+                    <li key={warning}>{warning}</li>
                   ))}
                 </ul>
               </div>

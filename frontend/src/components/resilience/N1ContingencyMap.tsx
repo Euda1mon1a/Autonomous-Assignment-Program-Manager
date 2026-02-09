@@ -99,9 +99,9 @@ export const N1ContingencyMap: React.FC<N1ContingencyMapProps> = ({
             <span>Critical Resources (Single Points of Failure)</span>
           </h4>
           <div className="space-y-2">
-            {criticalResources.map((resource, idx) => (
+            {criticalResources.map((resource) => (
               <button
-                key={idx}
+                key={resource}
                 onClick={() => setSelectedResource(selectedResource === resource ? null : resource)}
                 className="w-full text-left p-3 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
                 aria-label={`${resource} - Single point of failure. Click to ${selectedResource === resource ? 'hide' : 'view'} impact details`}
@@ -134,9 +134,9 @@ export const N1ContingencyMap: React.FC<N1ContingencyMapProps> = ({
             <span>Vulnerable Rotations</span>
           </h4>
           <div className="grid grid-cols-2 gap-2">
-            {vulnerableRotations.map((rotation, idx) => (
+            {vulnerableRotations.map((rotation) => (
               <div
-                key={idx}
+                key={rotation}
                 className="p-2 bg-orange-50 border border-orange-200 rounded text-sm"
               >
                 <div className="flex items-center gap-2">

@@ -300,8 +300,8 @@ function DiagnosisHelper({ expanded, onToggle }: { expanded: boolean; onToggle: 
               </tr>
             </thead>
             <tbody>
-              {DIAGNOSIS_MATRIX.map((row, idx) => (
-                <tr key={idx} className="border-t border-slate-700/30">
+              {DIAGNOSIS_MATRIX.map((row) => (
+                <tr key={row.symptom} className="border-t border-slate-700/30">
                   <td className="py-2 px-2 text-slate-300">{row.symptom}</td>
                   <td className="py-2 px-2 text-slate-300 font-mono text-xs">{row.guiShows}</td>
                   <td className="py-2 px-2 text-slate-300 font-mono text-xs">{row.dbShows}</td>

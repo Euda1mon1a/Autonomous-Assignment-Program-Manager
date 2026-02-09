@@ -264,9 +264,9 @@ export function FMITTimeline({
 
             {/* Time periods header */}
             <div className="flex-1 flex">
-              {timePeriods.map((period, index) => (
+              {timePeriods.map((period) => (
                 <div
-                  key={index}
+                  key={period.startDate}
                   className={`flex-1 p-3 border-r border-gray-200 text-center ${
                     period.isCurrent ? 'bg-blue-100' : 'bg-gray-50'
                   }`}

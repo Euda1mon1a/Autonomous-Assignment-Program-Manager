@@ -218,7 +218,7 @@ function ACGMEComplianceTab() {
         ) : (
           <div className="divide-y" role="list" aria-label="Compliance violations">
             {validation?.violations?.map((violation: Violation, idx: number) => (
-              <ACGMEViolationRow key={idx} violation={violation} />
+              <ACGMEViolationRow key={`${violation.type}-${violation.personId ?? 'global'}-${idx}`} violation={violation} />
             ))}
           </div>
         )}

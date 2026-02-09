@@ -141,8 +141,8 @@ export function ImportProgressIndicator({
             Errors encountered:
           </p>
           <ul className="text-sm text-red-700 list-disc list-inside max-h-32 overflow-y-auto">
-            {progress.errors.slice(0, 10).map((error, index) => (
-              <li key={index}>
+            {progress.errors.slice(0, 10).map((error) => (
+              <li key={`${error.row}-${error.message}`}>
                 Row {error.row}: {error.message}
               </li>
             ))}

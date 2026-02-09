@@ -136,9 +136,9 @@ export function TimelineRow({
       <div className="flex-1 relative min-h-[120px] bg-white">
         {/* Background grid lines */}
         <div className="absolute inset-0 flex">
-          {periods.map((period, index) => (
+          {periods.map((period) => (
             <div
-              key={index}
+              key={period.startDate}
               className={`flex-1 border-r border-gray-100 ${
                 period.isCurrent ? 'bg-blue-50/30' : ''
               }`}

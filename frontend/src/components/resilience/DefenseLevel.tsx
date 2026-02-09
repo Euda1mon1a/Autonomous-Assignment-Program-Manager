@@ -192,8 +192,8 @@ export const DefenseLevel: React.FC<DefenseLevelProps> = ({
             <div className="bg-white rounded-lg p-4 shadow-sm">
               <h4 className="font-semibold text-sm mb-2">Recommended Actions:</h4>
               <ul className="space-y-2">
-                {config.actions.map((action, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm">
+                {config.actions.map((action) => (
+                  <li key={action} className="flex items-start gap-2 text-sm">
                     <span className="text-blue-600 font-bold" aria-hidden="true">→</span>
                     <span>{action}</span>
                   </li>

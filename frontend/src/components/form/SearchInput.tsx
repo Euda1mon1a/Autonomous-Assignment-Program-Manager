@@ -183,7 +183,7 @@ export function SearchWithSuggestions({
         <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
           {filteredSuggestions.map((suggestion, index) => (
             <button
-              key={index}
+              key={suggestion}
               onClick={() => {
                 onSuggestionSelect(suggestion);
                 setShowSuggestions(false);

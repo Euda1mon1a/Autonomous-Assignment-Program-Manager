@@ -345,8 +345,8 @@ export function BulkImportModal({
                   <div>
                     <p className="font-medium">Parsing Notes</p>
                     <ul className="text-sm list-disc list-inside">
-                      {xlsxWarnings.map((warning, index) => (
-                        <li key={index}>{warning}</li>
+                      {xlsxWarnings.map((warning) => (
+                        <li key={warning}>{warning}</li>
                       ))}
                     </ul>
                   </div>
@@ -427,8 +427,8 @@ export function BulkImportModal({
                 <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-left max-h-40 overflow-y-auto">
                   <p className="text-sm font-medium text-red-800 mb-2">Errors:</p>
                   <ul className="text-sm text-red-700 list-disc list-inside">
-                    {progress.errors.slice(0, 10).map((error, index) => (
-                      <li key={index}>Row {error.row}: {error.message}</li>
+                    {progress.errors.slice(0, 10).map((error) => (
+                      <li key={`${error.row}-${error.message}`}>Row {error.row}: {error.message}</li>
                     ))}
                     {progress.errors.length > 10 && (
                       <li>...and {progress.errors.length - 10} more</li>

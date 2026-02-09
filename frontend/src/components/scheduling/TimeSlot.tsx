@@ -106,8 +106,8 @@ export function TimeSlotGrid({
 }) {
   return (
     <div className={`grid grid-cols-7 gap-1 ${className}`}>
-      {slots.map((slot, index) => (
-        <TimeSlot key={index} {...slot} />
+      {slots.map((slot) => (
+        <TimeSlot key={`${slot.date.toISOString()}-${slot.period}`} {...slot} />
       ))}
     </div>
   );

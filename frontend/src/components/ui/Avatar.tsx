@@ -124,9 +124,9 @@ export function AvatarGroup({
 
   return (
     <div className={`flex items-center -space-x-2 ${className}`}>
-      {displayAvatars.map((avatar, index) => (
+      {displayAvatars.map((avatar) => (
         <Avatar
-          key={index}
+          key={avatar.name ?? avatar.alt ?? avatar.src}
           {...avatar}
           size={size}
           className="ring-2 ring-white"

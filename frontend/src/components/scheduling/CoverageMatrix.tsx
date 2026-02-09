@@ -92,12 +92,12 @@ export function CoverageMatrix({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {dates.map((date, index) => {
+          {dates.map((date) => {
             const amSlot = getSlot(date, 'AM');
             const pmSlot = getSlot(date, 'PM');
 
             return (
-              <tr key={index} className="hover:bg-gray-50">
+              <tr key={date.toISOString()} className="hover:bg-gray-50">
                 <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
                   {date.toLocaleDateString('en-US', {
                     month: 'short',

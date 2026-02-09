@@ -53,8 +53,8 @@ export function HeatmapLegend({
             <span>{scale.min}</span>
             {scale.labels && scale.labels.length > 0 && (
               <div className="flex-1 flex justify-around">
-                {scale.labels.map((label, index) => (
-                  <span key={index}>{label}</span>
+                {scale.labels.map((label) => (
+                  <span key={label}>{label}</span>
                 ))}
               </div>
             )}

@@ -262,8 +262,8 @@ export function FreeEnergyVisualizer({
             Recommendations
           </h4>
           <ul className="space-y-2">
-            {data.recommendations.map((recommendation, index) => (
-              <li key={index} className="flex gap-3 text-sm">
+            {data.recommendations.map((recommendation) => (
+              <li key={recommendation} className="flex gap-3 text-sm">
                 <span className="text-cyan-400 font-bold flex-shrink-0">
                   •
                 </span>
