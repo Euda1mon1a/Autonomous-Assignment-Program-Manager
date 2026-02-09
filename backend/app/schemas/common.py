@@ -72,8 +72,7 @@ class ListResponse(BaseModel, Generic[T]):
     page_size: int | None = Field(None, description="Items per page")
     total_pages: int | None = Field(None, description="Total number of pages")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IdResponse(BaseModel):
@@ -140,8 +139,7 @@ class BaseSchema(TimestampMixin):
 
     id: UUID = Field(..., description="Resource ID")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BaseAuditedSchema(AuditMixin):
@@ -149,8 +147,7 @@ class BaseAuditedSchema(AuditMixin):
 
     id: UUID = Field(..., description="Resource ID")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class HealthCheckResponse(BaseModel):

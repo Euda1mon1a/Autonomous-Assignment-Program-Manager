@@ -73,8 +73,8 @@ class BlockParseResponse(BaseModel):
     total_residents: int = Field(0, description="Total resident count")
     total_assignments: int = Field(0, description="Total assignment count")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "success": True,
                 "block_number": 10,
@@ -119,3 +119,4 @@ class BlockParseResponse(BaseModel):
                 "errors": [],
             }
         }
+    )

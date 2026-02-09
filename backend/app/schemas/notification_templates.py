@@ -168,10 +168,7 @@ class TemplateVersionSchema(BaseModel):
     tags: list[str]
     metadata: dict[str, Any]
 
-    class Config:
-        """Pydantic config."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TemplateListItemSchema(BaseModel):

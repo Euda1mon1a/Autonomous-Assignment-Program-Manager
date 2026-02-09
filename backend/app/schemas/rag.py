@@ -145,10 +145,7 @@ class DocumentChunk(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
 
-    class Config:
-        """Pydantic config."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RetrievedDocument(BaseModel):
@@ -165,10 +162,7 @@ class RetrievedDocument(BaseModel):
     )
     created_at: datetime
 
-    class Config:
-        """Pydantic config."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IngestResponse(BaseModel):

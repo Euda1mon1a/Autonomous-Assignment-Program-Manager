@@ -82,8 +82,7 @@ class WebhookResponse(BaseModel):
     updated_at: datetime
     last_triggered_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WebhookListResponse(BaseModel):
@@ -121,8 +120,7 @@ class WebhookDeliveryResponse(BaseModel):
     last_attempted_at: datetime | None
     completed_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WebhookDeliveryListResponse(BaseModel):
@@ -184,8 +182,7 @@ class WebhookDeadLetterResponse(BaseModel):
     resolution_notes: str | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WebhookDeadLetterListResponse(BaseModel):

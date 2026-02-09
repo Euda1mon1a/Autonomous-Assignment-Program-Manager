@@ -118,8 +118,7 @@ class DecisionExplanation(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     random_seed: int | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AssignmentWithExplanation(BaseModel):
@@ -140,8 +139,7 @@ class AssignmentWithExplanation(BaseModel):
     confidence: ConfidenceLevel | None = None
     confidence_score: float | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ExplainabilityReport(BaseModel):

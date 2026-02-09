@@ -47,8 +47,7 @@ class ImpersonateResponse(BaseModel):
         ..., description="When the impersonation session expires"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ImpersonationStatus(BaseModel):
@@ -74,8 +73,7 @@ class ImpersonationStatus(BaseModel):
         default=None, description="When the impersonation session expires"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EndImpersonationResponse(BaseModel):

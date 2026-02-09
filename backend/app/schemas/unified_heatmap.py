@@ -17,8 +17,8 @@ class UnifiedCoverageRequest(BaseModel):
         True, description="Include residency assignments in heatmap"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "start_date": "2024-01-01",
                 "end_date": "2024-03-31",
@@ -26,6 +26,7 @@ class UnifiedCoverageRequest(BaseModel):
                 "include_residency": True,
             }
         }
+    )
 
 
 class UnifiedCoverageResponse(BaseModel):
@@ -40,8 +41,8 @@ class UnifiedCoverageResponse(BaseModel):
         default_factory=datetime.utcnow, description="Timestamp of generation"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "x_labels": ["2024-01-01", "2024-01-02", "2024-01-03"],
                 "y_labels": ["FMIT", "Clinic", "Procedures"],
@@ -56,6 +57,7 @@ class UnifiedCoverageResponse(BaseModel):
                 "generated_at": "2024-01-15T10:00:00",
             }
         }
+    )
 
 
 class PersonCoverageRequest(BaseModel):
@@ -70,8 +72,8 @@ class PersonCoverageRequest(BaseModel):
         False, description="Include call assignments in coverage"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "start_date": "2024-01-01",
                 "end_date": "2024-01-31",
@@ -79,6 +81,7 @@ class PersonCoverageRequest(BaseModel):
                 "include_call": False,
             }
         }
+    )
 
 
 class PersonCoverageResponse(BaseModel):
@@ -95,8 +98,8 @@ class PersonCoverageResponse(BaseModel):
         default_factory=datetime.utcnow, description="Timestamp of generation"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "x_labels": ["2024-01-01", "2024-01-02"],
                 "y_labels": ["Dr. Smith", "Dr. Johnson"],
@@ -111,6 +114,7 @@ class PersonCoverageResponse(BaseModel):
                 "generated_at": "2024-01-15T10:00:00",
             }
         }
+    )
 
 
 class WeeklyFMITRequest(BaseModel):
@@ -119,13 +123,14 @@ class WeeklyFMITRequest(BaseModel):
     start_date: date = Field(..., description="Start date for heatmap")
     end_date: date = Field(..., description="End date for heatmap")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "start_date": "2024-01-01",
                 "end_date": "2024-12-31",
             }
         }
+    )
 
 
 class WeeklyFMITResponse(BaseModel):
@@ -142,8 +147,8 @@ class WeeklyFMITResponse(BaseModel):
         default_factory=datetime.utcnow, description="Timestamp of generation"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "x_labels": ["2024-01-01", "2024-01-08", "2024-01-15"],
                 "y_labels": ["Dr. Adams", "Dr. Brown", "Dr. Chen"],
@@ -157,6 +162,7 @@ class WeeklyFMITResponse(BaseModel):
                 "generated_at": "2024-01-15T10:00:00",
             }
         }
+    )
 
 
 class HeatmapExportRequest(BaseModel):
@@ -170,8 +176,8 @@ class HeatmapExportRequest(BaseModel):
     width: int = Field(1200, description="Image width in pixels", gt=0, le=4000)
     height: int = Field(800, description="Image height in pixels", gt=0, le=4000)
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "start_date": "2024-01-01",
                 "end_date": "2024-03-31",
@@ -182,6 +188,7 @@ class HeatmapExportRequest(BaseModel):
                 "height": 800,
             }
         }
+    )
 
 
 class HeatmapRenderRequest(BaseModel):
@@ -192,8 +199,8 @@ class HeatmapRenderRequest(BaseModel):
     include_fmit: bool = Field(True, description="Include FMIT assignments")
     include_residency: bool = Field(True, description="Include residency assignments")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "start_date": "2024-01-01",
                 "end_date": "2024-03-31",
@@ -201,3 +208,4 @@ class HeatmapRenderRequest(BaseModel):
                 "include_residency": True,
             }
         }
+    )

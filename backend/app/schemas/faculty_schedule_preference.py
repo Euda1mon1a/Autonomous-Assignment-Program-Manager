@@ -61,8 +61,7 @@ class FacultySchedulePreferenceUpdate(BaseModel):
 class FacultySchedulePreferenceResponse(FacultySchedulePreferenceBase):
     id: UUID
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FacultySchedulePreferenceListResponse(BaseModel):

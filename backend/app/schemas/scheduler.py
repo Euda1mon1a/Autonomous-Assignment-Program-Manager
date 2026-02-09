@@ -212,10 +212,7 @@ class JobResponseSchema(BaseModel):
     updated_at: datetime
     created_by: str | None
 
-    class Config:
-        """Pydantic config."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class JobExecutionSchema(BaseModel):
@@ -246,10 +243,7 @@ class JobExecutionSchema(BaseModel):
     runtime_seconds: int | None
     scheduled_run_time: datetime
 
-    class Config:
-        """Pydantic config."""
-
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class JobStatisticsSchema(BaseModel):

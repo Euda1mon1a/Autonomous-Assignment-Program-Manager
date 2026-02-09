@@ -106,8 +106,7 @@ class StateMachineInstanceResponse(BaseModel):
     updated_at: datetime
     completed_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StateMachineTransitionResponse(BaseModel):
@@ -129,8 +128,7 @@ class StateMachineTransitionResponse(BaseModel):
     error_message: str | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StateMachineHistoryResponse(BaseModel):

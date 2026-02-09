@@ -86,8 +86,7 @@ class ConflictResponse(BaseModel):
     # Additional context
     details: dict = Field(default_factory=dict)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ConflictListResponse(BaseModel):

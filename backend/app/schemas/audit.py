@@ -35,8 +35,7 @@ class FieldChange(BaseModel):
         description="Human-readable field name",
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class AuditLogEntry(BaseModel):
@@ -78,8 +77,7 @@ class AuditLogEntry(BaseModel):
         description="Justification for ACGME override",
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class AuditLogResponse(BaseModel):
@@ -91,8 +89,7 @@ class AuditLogResponse(BaseModel):
     page_size: int = Field(alias="pageSize")
     total_pages: int = Field(alias="totalPages")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -138,8 +135,7 @@ class AuditLogFilters(BaseModel):
         None, alias="acgmeOverridesOnly", description="Show only ACGME overrides"
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -158,8 +154,7 @@ class AuditStatistics(BaseModel):
     unique_users: int = Field(alias="uniqueUsers")
     date_range: DateRange = Field(alias="dateRange")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -176,8 +171,7 @@ class AuditExportConfig(BaseModel):
     include_changes: bool | None = Field(None, alias="includeChanges")
     date_format: str | None = Field(None, alias="dateFormat")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -199,5 +193,4 @@ class MarkReviewedRequest(BaseModel):
     )
     notes: str | None = Field(None, max_length=1000, description="Review notes")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
