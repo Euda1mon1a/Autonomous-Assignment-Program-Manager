@@ -1,9 +1,20 @@
 """Tests for PersonService."""
 
+import os
 from uuid import uuid4
+
+import pytest
 
 from app.models.person import Person
 from app.services.person_service import PersonService
+
+_TEST_DB_URL = (
+    os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL") or "sqlite:///:memory:"
+)
+_USING_SQLITE = _TEST_DB_URL.startswith("sqlite")
+needs_postgres = pytest.mark.skipif(
+    _USING_SQLITE, reason="JSONB operations not supported on SQLite"
+)
 
 
 class TestPersonService:
@@ -160,6 +171,7 @@ class TestPersonService:
         assert result["total"] == 3
         assert all(person.type == "faculty" for person in result["items"])
 
+    @needs_postgres
     def test_list_faculty_filter_by_specialty(self, db):
         """Test listing faculty filtered by specialty."""
         # Create faculty with specific specialties
@@ -468,6 +480,7 @@ class TestPersonService:
     # Edge Cases and Business Logic Tests
     # ========================================================================
 
+    @needs_postgres
     def test_create_person_with_empty_specialties_list(self, db):
         """Test creating faculty with empty specialties list."""
         service = PersonService(db)
