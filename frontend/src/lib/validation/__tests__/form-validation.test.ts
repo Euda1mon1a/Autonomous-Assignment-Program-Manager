@@ -275,11 +275,10 @@ describe('validateField (Zod integration)', () => {
     expect(result.error).toBeUndefined();
   });
 
-  it('returns isValid false for failing value', () => {
+  it('returns error message for failing value', () => {
     const result = validateField('A', nameSchema);
     expect(result.isValid).toBe(false);
-    // Note: error message extraction depends on Zod version's error shape
-    // (Zod uses .issues not .errors, so formatZodError returns empty)
+    expect(result.error).toBe('Too short');
   });
 });
 
@@ -295,9 +294,11 @@ describe('validateForm (Zod integration)', () => {
     expect(result.errors).toEqual({});
   });
 
-  it('returns isValid false for failing form', () => {
+  it('returns field errors for failing form', () => {
     const result = validateForm({ name: '', age: -1 }, formSchema);
     expect(result.isValid).toBe(false);
+    expect(result.errors.name).toBeDefined();
+    expect(result.errors.age).toBeDefined();
   });
 });
 
@@ -307,9 +308,8 @@ describe('createFieldValidator (Zod integration)', () => {
     expect(validateName('Alice')).toBeUndefined();
   });
 
-  it('returns undefined for invalid input (formatZodError limitation)', () => {
-    // formatZodError checks .errors but Zod provides .issues
+  it('returns error message for invalid input', () => {
     const validateName = createFieldValidator(z.string().min(2, 'Too short'));
-    expect(validateName('A')).toBeUndefined();
+    expect(validateName('A')).toBe('Too short');
   });
 });
