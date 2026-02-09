@@ -253,7 +253,7 @@ async def create_template_slot(
 async def delete_template_slot(
     person_id: UUID,
     day_of_week: int = Query(..., ge=0, le=6),
-    time_of_day: str = Query(..., regex="^(AM|PM)$"),
+    time_of_day: str = Query(..., pattern="^(AM|PM)$"),
     week_number: int | None = Query(None, ge=1, le=4),
     db: AsyncSession = Depends(get_async_db),
     current_user: User = Depends(get_current_active_user),

@@ -11,7 +11,6 @@ Provides write endpoints for FMIT scheduling:
 All endpoints require authentication and use async SQLAlchemy patterns.
 """
 
-import statistics
 from datetime import date, datetime, timedelta
 from uuid import UUID
 

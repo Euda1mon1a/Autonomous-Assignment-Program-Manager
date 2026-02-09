@@ -248,7 +248,7 @@ async def post_render_heatmap(
 async def export_heatmap(
     start_date: date = Query(..., description="Start date for heatmap"),
     end_date: date = Query(..., description="End date for heatmap"),
-    format: str = Query("png", regex="^(png|svg|pdf)$", description="Export format"),
+    format: str = Query("png", pattern="^(png|svg|pdf)$", description="Export format"),
     include_fmit: bool = Query(True, description="Include FMIT assignments"),
     include_residency: bool = Query(True, description="Include residency assignments"),
     width: int = Query(1200, description="Image width in pixels", gt=0, le=4000),

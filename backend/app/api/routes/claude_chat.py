@@ -50,7 +50,6 @@ from pydantic import BaseModel
 
 from app.api.deps import get_current_active_user
 from app.core.config import settings
-from app.db.session import get_db
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
