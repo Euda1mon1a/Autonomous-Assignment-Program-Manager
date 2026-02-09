@@ -15,7 +15,7 @@ import {
   useBulkUpdateWeeklyPatterns,
   weeklyPatternQueryKeys,
 } from '@/hooks/useWeeklyPattern'
-import type { WeeklyPatternGrid, WeeklyPatternResponse } from '@/types/weekly-pattern'
+import type { WeeklyPatternGrid, WeeklyPatternResponse, DayOfWeek } from '@/types/weekly-pattern'
 
 // Mock the api module
 jest.mock('@/lib/api')
@@ -244,8 +244,8 @@ describe('useUpdateWeeklyPattern', () => {
   it('should update weekly pattern successfully', async () => {
     const mockPattern: WeeklyPatternGrid = {
       slots: Array(14).fill(null).map((_, i) => ({
-        dayOfWeek: Math.floor(i / 2),
-        timeOfDay: (i % 2 === 0 ? 'AM' : 'PM') as 'AM' | 'PM',
+        dayOfWeek: Math.floor(i / 2) as DayOfWeek,
+        timeOfDay: (i % 2 === 0 ? 'AM' : 'PM'),
         rotationTemplateId: i === 0 ? 'rotation-a' : null,
         activityType: i === 0 ? 'scheduled' : undefined,
         isProtected: false,
@@ -303,8 +303,8 @@ describe('useUpdateWeeklyPattern', () => {
 
     const mockPattern: WeeklyPatternGrid = {
       slots: Array(14).fill(null).map((_, i) => ({
-        dayOfWeek: Math.floor(i / 2),
-        timeOfDay: (i % 2 === 0 ? 'AM' : 'PM') as 'AM' | 'PM',
+        dayOfWeek: Math.floor(i / 2) as DayOfWeek,
+        timeOfDay: (i % 2 === 0 ? 'AM' : 'PM'),
         rotationTemplateId: null,
         activityType: undefined,
         isProtected: false,
@@ -343,8 +343,8 @@ describe('useUpdateWeeklyPattern', () => {
 
     const mockPattern: WeeklyPatternGrid = {
       slots: Array(14).fill(null).map((_, i) => ({
-        dayOfWeek: Math.floor(i / 2),
-        timeOfDay: (i % 2 === 0 ? 'AM' : 'PM') as 'AM' | 'PM',
+        dayOfWeek: Math.floor(i / 2) as DayOfWeek,
+        timeOfDay: (i % 2 === 0 ? 'AM' : 'PM'),
         rotationTemplateId: null,
         activityType: undefined,
         isProtected: false,
@@ -477,7 +477,7 @@ describe('useBulkUpdateWeeklyPatterns', () => {
         {
           dayOfWeek: 0,
           timeOfDay: 'AM',
-          rotationTemplateId: 'rotation-a',
+          linkedTemplateId: 'rotation-a',
         },
       ],
     })
@@ -587,7 +587,7 @@ describe('useBulkUpdateWeeklyPatterns', () => {
       templateIds: ['template-1'],
       mode: 'overlay',
       slots: [
-        { dayOfWeek: 0, timeOfDay: 'AM', rotationTemplateId: 'rotation-a' },
+        { dayOfWeek: 0, timeOfDay: 'AM', linkedTemplateId: 'rotation-a' },
       ],
     })
 
