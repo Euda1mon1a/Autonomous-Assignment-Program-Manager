@@ -9,7 +9,14 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, field_validator, ValidationInfo
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    ValidationInfo,
+    field_validator,
+)
 
 from app.schemas.audit import FieldChange
 
@@ -96,8 +103,7 @@ class AdminUserUpdate(BaseModel):
     role: UserRole | None = None
     is_active: bool | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AdminUserResponse(BaseModel):
@@ -118,8 +124,7 @@ class AdminUserResponse(BaseModel):
     invite_sent_at: datetime | None = None
     invite_accepted_at: datetime | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AdminUserListResponse(BaseModel):
@@ -131,8 +136,7 @@ class AdminUserListResponse(BaseModel):
     page_size: int = Field(alias="pageSize")
     total_pages: int = Field(alias="totalPages")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -159,8 +163,7 @@ class AccountLockResponse(BaseModel):
     locked_by: str | None = Field(None, alias="lockedBy")
     message: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -178,8 +181,7 @@ class ResendInviteRequest(BaseModel):
         description="Optional custom message to include in invite",
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ResendInviteResponse(BaseModel):
@@ -190,8 +192,7 @@ class ResendInviteResponse(BaseModel):
     sent_at: datetime = Field(alias="sentAt")
     message: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -214,8 +215,7 @@ class ActivityLogEntry(BaseModel):
     ip_address: str | None = Field(None, alias="ipAddress")
     user_agent: str | None = Field(None, alias="userAgent")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ActivityLogResponse(BaseModel):
@@ -227,8 +227,7 @@ class ActivityLogResponse(BaseModel):
     page_size: int = Field(alias="pageSize")
     total_pages: int = Field(alias="totalPages")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ActivityLogFilters(BaseModel):
@@ -239,8 +238,7 @@ class ActivityLogFilters(BaseModel):
     date_from: datetime | None = Field(None, alias="dateFrom")
     date_to: datetime | None = Field(None, alias="dateTo")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -254,8 +252,7 @@ class BulkUserActionRequest(BaseModel):
     user_ids: list[UUID] = Field(..., alias="userIds", min_length=1, max_length=100)
     action: BulkAction
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class BulkUserActionResponse(BaseModel):
@@ -268,8 +265,7 @@ class BulkUserActionResponse(BaseModel):
     errors: list[str] = Field(default_factory=list)
     message: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -286,5 +282,4 @@ class UserListQueryParams(BaseModel):
     status: UserStatus | None = None
     search: str | None = Field(None, max_length=100)
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

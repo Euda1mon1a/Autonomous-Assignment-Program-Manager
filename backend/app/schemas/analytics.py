@@ -7,7 +7,7 @@ comparisons, trend analysis, and research data exports.
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================================================
 # Core Metric Schemas
@@ -58,8 +58,7 @@ class ScheduleVersionMetrics(BaseModel):
     # Workload distribution
     workload_distribution: dict[str, Any] = Field(alias="workloadDistribution")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -87,8 +86,7 @@ class MetricTimeSeries(BaseModel):
         alias="trendDirection"
     )  # "improving", "declining", "stable"
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -104,8 +102,7 @@ class FairnessTrendDataPoint(BaseModel):
     gini_coefficient: float = Field(alias="giniCoefficient")
     residents_count: int = Field(alias="residentsCount")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class FairnessTrendReport(BaseModel):
@@ -125,8 +122,7 @@ class FairnessTrendReport(BaseModel):
     # Recommendations
     recommendations: list[str]
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -144,8 +140,7 @@ class VersionMetricComparison(BaseModel):
     percent_change: float = Field(alias="percentChange")
     improvement: bool  # True if version B is better
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class VersionComparison(BaseModel):
@@ -172,8 +167,7 @@ class VersionComparison(BaseModel):
         ..., max_length=20, description="List of recommendations (max 20)"
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -190,8 +184,7 @@ class AssignmentChange(BaseModel):
     rotation_template_id: UUID | None = Field(None, alias="rotationTemplateId")
     change_type: str = Field(alias="changeType")  # "add", "remove", "modify"
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class WhatIfMetricImpact(BaseModel):
@@ -206,8 +199,7 @@ class WhatIfMetricImpact(BaseModel):
     )  # "positive", "negative", "neutral"
     confidence: float  # 0-1
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class WhatIfViolation(BaseModel):
@@ -219,8 +211,7 @@ class WhatIfViolation(BaseModel):
     person_name: str | None = Field(None, alias="personName")
     message: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class WhatIfResult(BaseModel):
@@ -247,8 +238,7 @@ class WhatIfResult(BaseModel):
     affected_residents: list[str] = Field(alias="affectedResidents")
     workload_changes: dict[str, dict[str, float]] = Field(alias="workloadChanges")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -269,8 +259,7 @@ class ResidentWorkloadData(BaseModel):
     max_consecutive_days: int = Field(alias="maxConsecutiveDays")
     average_rest_days: float = Field(alias="averageRestDays")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class RotationCoverageData(BaseModel):
@@ -282,8 +271,7 @@ class RotationCoverageData(BaseModel):
     unique_residents: int = Field(alias="uniqueResidents")
     average_duration: float = Field(alias="averageDuration")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ComplianceData(BaseModel):
@@ -296,8 +284,7 @@ class ComplianceData(BaseModel):
     violations_by_severity: dict[str, int] = Field(alias="violationsBySeverity")
     override_count: int = Field(alias="overrideCount")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ResearchDataExport(BaseModel):
@@ -340,5 +327,4 @@ class ResearchDataExport(BaseModel):
     # Export notes
     notes: str | None = Field(None, max_length=2000, description="Export notes")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
