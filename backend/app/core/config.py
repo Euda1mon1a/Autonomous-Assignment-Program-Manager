@@ -131,6 +131,8 @@ class Settings(BaseSettings):
     RATE_LIMIT_LOGIN_WINDOW: int = 60  # Time window in seconds (1 minute)
     RATE_LIMIT_REGISTER_ATTEMPTS: int = 3  # Maximum registration attempts per minute
     RATE_LIMIT_REGISTER_WINDOW: int = 60  # Time window in seconds (1 minute)
+    RATE_LIMIT_REFRESH_ATTEMPTS: int = 10  # Maximum token refresh attempts per minute
+    RATE_LIMIT_REFRESH_WINDOW: int = 60  # Time window in seconds (1 minute)
     RATE_LIMIT_ENABLED: bool = True  # Enable/disable rate limiting globally
 
     # File Upload Settings

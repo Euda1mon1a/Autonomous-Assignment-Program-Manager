@@ -489,9 +489,9 @@ function LeaderboardTab({
 
 function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
   const getMedalEmoji = (rank: number) => {
-    if (rank === 1) return '&#x1F947;';
-    if (rank === 2) return '&#x1F948;';
-    if (rank === 3) return '&#x1F949;';
+    if (rank === 1) return '\u{1F947}';
+    if (rank === 2) return '\u{1F948}';
+    if (rank === 3) return '\u{1F949}';
     return null;
   };
 
@@ -506,7 +506,7 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
     >
       <div className="flex items-center gap-4">
         <span className="w-8 text-center font-mono text-gray-400">
-          {medal ? <span dangerouslySetInnerHTML={{ __html: medal }} /> : entry.rank}
+          {medal ? <span>{medal}</span> : entry.rank}
         </span>
         <span className={entry.isYou ? 'text-cyan-400 font-medium' : ''}>
           {entry.displayName}

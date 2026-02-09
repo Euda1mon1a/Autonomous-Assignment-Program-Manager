@@ -51,6 +51,12 @@ rate_limit_register = create_rate_limit_dependency(
     key_prefix="register",
 )
 
+rate_limit_refresh = create_rate_limit_dependency(
+    max_requests=settings.RATE_LIMIT_REFRESH_ATTEMPTS,
+    window_seconds=settings.RATE_LIMIT_REFRESH_WINDOW,
+    key_prefix="refresh",
+)
+
 
 @router.post("/login", response_model=TokenWithRefresh)
 async def login(
@@ -199,6 +205,7 @@ async def refresh_token(
     response: Response,
     request: RefreshTokenRequest,
     db=Depends(get_db),
+    _rate_limit: None = Depends(rate_limit_refresh),
 ) -> TokenWithRefresh:
     """
     Exchange a refresh token for a new access token.

@@ -130,8 +130,8 @@ export function ErrorToast({
             {/* Show detailed errors if available */}
             {details && details.length > 0 && (
               <ul className="mt-2 list-disc list-inside space-y-1">
-                {details.map((detail, index) => (
-                  <li key={index} className="text-xs">
+                {details.map((detail) => (
+                  <li key={detail} className="text-xs">
                     {detail}
                   </li>
                 ))}
@@ -143,8 +143,8 @@ export function ErrorToast({
               <div className="mt-2">
                 <p className="font-medium text-xs">Suggestions:</p>
                 <ul className="mt-1 list-disc list-inside space-y-1">
-                  {suggestions.map((suggestion, index) => (
-                    <li key={index} className="text-xs">
+                  {suggestions.map((suggestion) => (
+                    <li key={suggestion} className="text-xs">
                       {suggestion}
                     </li>
                   ))}

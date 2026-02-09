@@ -101,16 +101,16 @@ class GlobalErrorHandler {
 
     switch (severity) {
       case ErrorSeverity.CRITICAL:
-        // console.error('[CRITICAL]', logData, error)
+        console.error('[CRITICAL]', logData, error)
         break
       case ErrorSeverity.ERROR:
-        // console.error('[ERROR]', logData, error)
+        console.error('[ERROR]', logData, error)
         break
       case ErrorSeverity.WARNING:
-        // console.warn('[WARNING]', logData, error)
+        console.warn('[WARNING]', logData, error)
         break
       case ErrorSeverity.INFO:
-        console.info('[INFO]', logData, error)
+        // console.info('[INFO]', logData, error)
         break
     }
   }
