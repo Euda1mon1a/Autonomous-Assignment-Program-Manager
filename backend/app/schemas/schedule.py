@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.validators.date_validators import validate_academic_year_date
 
@@ -141,8 +141,7 @@ class ScheduleResponse(BaseModel):
     nf_pc_audit: NFPCAudit | None = None
     acgme_override_count: int = 0  # Number of acknowledged ACGME overrides
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class EmergencyRequest(BaseModel):
@@ -395,9 +394,7 @@ class ScheduleMetrics(BaseModel):
     total_blocks: int = Field(default=0, alias="totalBlocks")
     timestamp: datetime
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class ScheduleRunRead(BaseModel):
@@ -444,9 +441,7 @@ class ScheduleRunRead(BaseModel):
             tags=getattr(obj, "tags", []),
         )
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class ScheduleRunsResponse(BaseModel):
@@ -457,9 +452,7 @@ class ScheduleRunsResponse(BaseModel):
     page: int
     page_size: int = Field(alias="pageSize")
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class RollbackPoint(BaseModel):
@@ -513,8 +506,7 @@ class ExperimentRunResult(BaseModel):
     total_blocks: int = Field(alias="totalBlocks")
     timestamp: datetime
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ExperimentRunConfiguration(BaseModel):
@@ -529,8 +521,7 @@ class ExperimentRunConfiguration(BaseModel):
     timeout_seconds: int = Field(alias="timeoutSeconds")
     dry_run: bool = Field(default=False, alias="dryRun")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ExperimentRunResponse(BaseModel):
@@ -546,8 +537,7 @@ class ExperimentRunResponse(BaseModel):
     progress: float | None = None  # 0.0 to 1.0
     result: ExperimentRunResult | None = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
     @classmethod
     def from_schedule_run(cls, obj: Any) -> "ExperimentRunResponse":
@@ -625,8 +615,7 @@ class RunQueueResponse(BaseModel):
     max_concurrent: int = Field(default=2, alias="maxConcurrent")
     currently_running: int = Field(default=0, alias="currentlyRunning")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class QueueBatchRequest(BaseModel):
@@ -650,8 +639,7 @@ class AdjunctFacultyGapResponse(BaseModel):
     max_clinic_halfdays: int | None = Field(alias="maxClinicHalfdays")
     existing_assignment_count: int = Field(alias="existingAssignmentCount")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class AdjunctGapsResponse(BaseModel):
@@ -664,8 +652,7 @@ class AdjunctGapsResponse(BaseModel):
     )
     total_adjuncts: int = Field(alias="totalAdjuncts")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ClinicLimitViolationResponse(BaseModel):
@@ -681,8 +668,7 @@ class ClinicLimitViolationResponse(BaseModel):
     violation_type: str = Field(alias="violationType")  # "over_max" or "under_min"
     limit_source: str = Field(alias="limitSource")  # "role" or "person"
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class FacultyCoverageResponse(BaseModel):
@@ -702,5 +688,4 @@ class FacultyCoverageResponse(BaseModel):
     )
     coverage_complete: bool = Field(alias="coverageComplete")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

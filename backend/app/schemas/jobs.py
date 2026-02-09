@@ -11,7 +11,7 @@ Pydantic models for background job monitoring, including:
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================================================
 # Core Job Schemas
@@ -37,8 +37,7 @@ class TaskInfo(BaseModel):
     error: str | None = None
     traceback: str | None = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ScheduledTaskInfo(BaseModel):
@@ -52,8 +51,7 @@ class ScheduledTaskInfo(BaseModel):
     args: list[Any] | None = None
     kwargs: dict[str, Any] | None = None  # type: ignore[no-redef]
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ReservedTaskInfo(BaseModel):
@@ -67,8 +65,7 @@ class ReservedTaskInfo(BaseModel):
     args: list[Any] | None = None
     kwargs: dict[str, Any] | None = None  # type: ignore[no-redef]
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -85,8 +82,7 @@ class WorkerInfo(BaseModel):
     max_concurrency: int | None = Field(None, alias="maxConcurrency")
     processes: list[Any] | None = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class WorkerStats(BaseModel):
@@ -96,8 +92,7 @@ class WorkerStats(BaseModel):
     online_workers: int = Field(alias="onlineWorkers")
     workers: list[WorkerInfo]
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class WorkerHealth(BaseModel):
@@ -110,8 +105,7 @@ class WorkerHealth(BaseModel):
     workers: list[str]
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -127,8 +121,7 @@ class QueueStatus(BaseModel):
     reserved_tasks: int = Field(alias="reservedTasks")
     total_pending: int = Field(alias="totalPending")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class QueueLengths(BaseModel):
@@ -137,8 +130,7 @@ class QueueLengths(BaseModel):
     queues: dict[str, int]
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -163,8 +155,7 @@ class TaskStatistics(BaseModel):
     max_runtime_seconds: float = Field(alias="maxRuntimeSeconds")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class RetryStatistics(BaseModel):
@@ -179,8 +170,7 @@ class RetryStatistics(BaseModel):
     common_retry_reasons: list[str] = Field(alias="commonRetryReasons")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class PerformanceMetrics(BaseModel):
@@ -201,8 +191,7 @@ class PerformanceMetrics(BaseModel):
     std_dev_runtime_seconds: float = Field(alias="stdDevRuntimeSeconds")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ThroughputMetrics(BaseModel):
@@ -218,8 +207,7 @@ class ThroughputMetrics(BaseModel):
     average_processing_time_seconds: float = Field(alias="averageProcessingTimeSeconds")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class WorkerUtilization(BaseModel):
@@ -232,8 +220,7 @@ class WorkerUtilization(BaseModel):
     tasks_per_worker: float = Field(alias="tasksPerWorker")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -258,8 +245,7 @@ class TaskHistoryRecord(BaseModel):
     result: Any | None = None
     error: str | None = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class TaskHistoryResponse(BaseModel):
@@ -273,8 +259,7 @@ class TaskHistoryResponse(BaseModel):
     filters: dict[str, Any] | None = None
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class TimelineBucket(BaseModel):
@@ -286,8 +271,7 @@ class TimelineBucket(BaseModel):
     failed_tasks: int = Field(alias="failedTasks")
     average_runtime_seconds: float = Field(alias="averageRuntimeSeconds")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class TaskTimeline(BaseModel):
@@ -299,8 +283,7 @@ class TaskTimeline(BaseModel):
     buckets: list[TimelineBucket]
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class FailureRecord(BaseModel):
@@ -318,8 +301,7 @@ class FailureRecord(BaseModel):
     args: list[Any] | None = None
     kwargs: dict[str, Any] | None = None  # type: ignore[no-redef]
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class SlowTaskRecord(BaseModel):
@@ -334,8 +316,7 @@ class SlowTaskRecord(BaseModel):
     queue: str | None = None
     status: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -351,8 +332,7 @@ class ScheduledTaskConfig(BaseModel):
     schedule: str
     options: dict[str, Any] | None = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ScheduledTasksSummary(BaseModel):
@@ -362,8 +342,7 @@ class ScheduledTasksSummary(BaseModel):
     scheduled_tasks: list[ScheduledTaskConfig] = Field(alias="scheduledTasks")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -377,8 +356,7 @@ class TaskRevocationRequest(BaseModel):
     task_id: str = Field(alias="taskId")
     terminate: bool = False
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class TaskRevocationResponse(BaseModel):
@@ -388,8 +366,7 @@ class TaskRevocationResponse(BaseModel):
     success: bool
     message: str | None = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class QueuePurgeRequest(BaseModel):
@@ -398,8 +375,7 @@ class QueuePurgeRequest(BaseModel):
     queue_name: str = Field(alias="queueName")
     confirm: bool = False
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class QueuePurgeResponse(BaseModel):
@@ -409,8 +385,7 @@ class QueuePurgeResponse(BaseModel):
     tasks_purged: int = Field(alias="tasksPurged")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -430,5 +405,4 @@ class JobsDashboardOverview(BaseModel):
     worker_utilization_percentage: float = Field(alias="workerUtilizationPercentage")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

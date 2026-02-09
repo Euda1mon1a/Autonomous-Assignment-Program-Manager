@@ -1121,7 +1121,7 @@ async def get_mtf_compliance(
         tier2_status = resilience_service.get_tier2_status()
         equilibrium_state = tier2_status.get("equilibrium", {}).get("state", "STABLE")
     except Exception:
-        pass
+        logger.debug("Failed to fetch tier2 status for equilibrium state")
 
     # Calculate required faculty (based on blocks)
     required_faculty = max(len(blocks) // 2, len(faculty))
@@ -1168,7 +1168,7 @@ async def get_mtf_compliance(
                 "compensation_debt", 0.0
             )
         except Exception:
-            pass
+            logger.debug("Failed to fetch tier2 status for circuit breaker metrics")
 
         cb_check = iron_dome.check_circuit_breaker(
             n1_pass=health.n1_pass,

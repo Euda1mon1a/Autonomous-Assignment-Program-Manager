@@ -30,6 +30,7 @@ async def get_role_permissions(
         permissions = RoleViewService.get_permissions(role)
         return permissions
     except Exception:
+        logger.exception("Failed to retrieve permissions for role %s", role)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred retrieving permissions",
@@ -53,6 +54,7 @@ async def get_role_config(
         config = RoleViewService.get_role_config(role)
         return config
     except Exception:
+        logger.exception("Failed to retrieve role config for %s", role)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred retrieving role configuration",
@@ -73,6 +75,7 @@ async def get_current_user_view_config(
         config = RoleViewService.get_role_config(current_user.role)
         return config
     except Exception:
+        logger.exception("Failed to retrieve role config for current user")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred retrieving role configuration",
@@ -104,6 +107,7 @@ async def check_endpoint_access(
             "permissions": RoleViewService.get_permissions(role),
         }
     except Exception:
+        logger.exception("Failed to check endpoint access for role %s", role)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred checking access",

@@ -6,7 +6,7 @@ Pydantic models for queue management API requests and responses.
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================================================
 # Task Submission Schemas
@@ -34,8 +34,7 @@ class TaskSubmitRequest(BaseModel):  # type: ignore[no-redef]
         None, description="Queue name (overrides priority-based routing)"
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class TaskSubmitResponse(BaseModel):
@@ -47,8 +46,7 @@ class TaskSubmitResponse(BaseModel):
     message: str | None = None
     estimated_execution: str | None = Field(None, alias="estimatedExecution")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -62,8 +60,7 @@ class TaskChainRequest(BaseModel):
     tasks: list[dict[str, Any]] = Field(..., description="List of tasks to chain")
     priority: int = Field(default=5, ge=0, le=9)
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class TaskGroupRequest(BaseModel):
@@ -72,8 +69,7 @@ class TaskGroupRequest(BaseModel):
     tasks: list[dict[str, Any]] = Field(..., description="List of tasks to group")
     priority: int = Field(default=5, ge=0, le=9)
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class TaskDependencyRequest(BaseModel):
@@ -87,8 +83,7 @@ class TaskDependencyRequest(BaseModel):
     )
     priority: int = Field(default=5, ge=0, le=9)
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -109,8 +104,7 @@ class TaskStatusResponse(BaseModel):
     error: str | None = None
     traceback: str | None = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class TaskProgressResponse(BaseModel):
@@ -122,8 +116,7 @@ class TaskProgressResponse(BaseModel):
     percentage: int
     message: str | None = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -137,8 +130,7 @@ class TaskCancelRequest(BaseModel):
     task_id: str = Field(..., alias="taskId")
     terminate: bool = Field(default=False, description="Terminate if running")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class TaskCancelResponse(BaseModel):
@@ -148,8 +140,7 @@ class TaskCancelResponse(BaseModel):
     success: bool
     message: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class TaskRetryRequest(BaseModel):
@@ -159,8 +150,7 @@ class TaskRetryRequest(BaseModel):
     countdown: int | None = Field(None, ge=0)
     eta: str | None = None
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class TaskRetryResponse(BaseModel):
@@ -170,8 +160,7 @@ class TaskRetryResponse(BaseModel):
     new_task_id: str = Field(..., alias="newTaskId")
     message: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -185,8 +174,7 @@ class QueueStatsResponse(BaseModel):
     queues: dict[str, dict[str, int]]
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class QueuePurgeRequest(BaseModel):
@@ -195,8 +183,7 @@ class QueuePurgeRequest(BaseModel):
     queue_name: str = Field(..., alias="queueName")
     confirm: bool = Field(default=False, description="Must be true to confirm purge")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class QueuePurgeResponse(BaseModel):
@@ -206,8 +193,7 @@ class QueuePurgeResponse(BaseModel):
     tasks_purged: int = Field(..., alias="tasksPurged")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -224,8 +210,7 @@ class WorkerHealthResponse(BaseModel):
     online_workers: int = Field(..., alias="onlineWorkers")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class WorkerStatsResponse(BaseModel):
@@ -235,8 +220,7 @@ class WorkerStatsResponse(BaseModel):
     total_workers: int = Field(..., alias="totalWorkers")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class WorkerUtilizationResponse(BaseModel):
@@ -248,8 +232,7 @@ class WorkerUtilizationResponse(BaseModel):
     utilization_percentage: float = Field(..., alias="utilizationPercentage")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class WorkerTasksResponse(BaseModel):
@@ -258,8 +241,7 @@ class WorkerTasksResponse(BaseModel):
     workers: dict[str, Any]
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class WorkerControlRequest(BaseModel):
@@ -269,8 +251,7 @@ class WorkerControlRequest(BaseModel):
     action: str = Field(..., description="Action: shutdown, autoscale, grow, shrink")
     parameters: dict[str, Any] = Field(default_factory=dict)
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class WorkerControlResponse(BaseModel):
@@ -281,8 +262,7 @@ class WorkerControlResponse(BaseModel):
     success: bool
     message: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -300,8 +280,7 @@ class ScheduleTaskRequest(BaseModel):
     countdown: int | None = Field(None, ge=0, description="Delay in seconds")
     priority: int = Field(default=5, ge=0, le=9)
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ScheduleTaskResponse(BaseModel):
@@ -312,8 +291,7 @@ class ScheduleTaskResponse(BaseModel):
     scheduled_for: str = Field(..., alias="scheduledFor")
     message: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class PeriodicTaskRequest(BaseModel):
@@ -326,8 +304,7 @@ class PeriodicTaskRequest(BaseModel):
     kwargs: dict[str, Any] = Field(default_factory=dict)  # type: ignore[no-redef]
     options: dict[str, Any] = Field(default_factory=dict)
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class PeriodicTaskResponse(BaseModel):
@@ -338,8 +315,7 @@ class PeriodicTaskResponse(BaseModel):
     schedule: str
     message: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class PeriodicTasksListResponse(BaseModel):
@@ -349,8 +325,7 @@ class PeriodicTasksListResponse(BaseModel):
     total_tasks: int = Field(..., alias="totalTasks")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ScheduledTasksListResponse(BaseModel):
@@ -360,8 +335,7 @@ class ScheduledTasksListResponse(BaseModel):
     total_tasks: int = Field(..., alias="totalTasks")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class PeriodicTaskControlRequest(BaseModel):
@@ -370,8 +344,7 @@ class PeriodicTaskControlRequest(BaseModel):
     name: str
     action: str = Field(..., description="Action: enable, disable, remove")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class PeriodicTaskControlResponse(BaseModel):
@@ -382,8 +355,7 @@ class PeriodicTaskControlResponse(BaseModel):
     success: bool
     message: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -403,8 +375,7 @@ class DeadLetterTask(BaseModel):
     traceback: str
     failed_at: str = Field(..., alias="failedAt")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class DeadLetterQueueResponse(BaseModel):
@@ -414,5 +385,4 @@ class DeadLetterQueueResponse(BaseModel):
     total_tasks: int = Field(..., alias="totalTasks")
     timestamp: str
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
