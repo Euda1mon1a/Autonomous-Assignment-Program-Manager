@@ -11,7 +11,10 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
 
 export const metadata: Metadata = {
-  title: 'Residency Scheduler',
+  title: {
+    default: 'Residency Scheduler',
+    template: '%s | Residency Scheduler',
+  },
   description: 'Medical residency scheduling with ACGME compliance',
   robots: 'noindex, nofollow', // Private app
 }
