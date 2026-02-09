@@ -74,7 +74,8 @@ check_service() {
         SVC_DETAIL="PID $SVC_PID"
 
         # Health check for services with HTTP endpoints
-        local health_url="${SERVICE_HEALTH_URLS[$name]:-}"
+        local health_url
+        health_url=$(get_service_health_url "$name")
         if [ -n "$health_url" ]; then
             if check_http "$health_url"; then
                 SVC_DETAIL="PID $SVC_PID, healthy"
@@ -110,7 +111,9 @@ print_json() {
     for svc in "${all_services[@]}"; do
         i=$((i + 1))
         check_service "$svc"
-        local port="${SERVICE_PORTS[$svc]:-null}"
+        local port
+        port=$(get_service_port "$svc")
+        port="${port:-null}"
         local pid_val="${SVC_PID:-null}"
         local comma=","
         [ $i -eq $count ] && comma=""
@@ -176,7 +179,8 @@ print_terminal() {
 
     for svc in "${all_services[@]}"; do
         check_service "$svc"
-        local port="${SERVICE_PORTS[$svc]:-}"
+        local port
+        port=$(get_service_port "$svc")
         local port_str=""
         [ -n "$port" ] && port_str=":${port}  "
 

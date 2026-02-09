@@ -11,6 +11,16 @@
 # Resolve project root (parent of scripts/)
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# Add keg-only Homebrew PostgreSQL to PATH if not already available
+if ! command -v pg_isready &>/dev/null; then
+    for pg_dir in /opt/homebrew/opt/postgresql@15/bin /usr/local/opt/postgresql@15/bin; do
+        if [ -d "$pg_dir" ]; then
+            export PATH="${pg_dir}:${PATH}"
+            break
+        fi
+    done
+fi
+
 # Directories
 PID_DIR="/tmp/residency-scheduler"
 LOG_DIR="${PROJECT_ROOT}/logs/native"
@@ -25,20 +35,26 @@ NC='\033[0m'
 # Service list (ordered)
 SERVICES=(backend frontend celery-worker celery-beat mcp)
 
-# Port assignments
-declare -A SERVICE_PORTS=(
-  [backend]=8000
-  [frontend]=3000
-  [mcp]=8081
-  [mlx]=8082
-)
+# Port assignments (Bash 3 compatible — no associative arrays on macOS)
+get_service_port() {
+  case "$1" in
+    backend)  echo 8000 ;;
+    frontend) echo 3000 ;;
+    mcp)      echo 8081 ;;
+    mlx)      echo 8082 ;;
+    *)        echo "" ;;
+  esac
+}
 
 # Health check URLs
-declare -A SERVICE_HEALTH_URLS=(
-  [backend]="http://localhost:8000/health"
-  [mcp]="http://localhost:8081/health"
-  [frontend]="http://localhost:3000"
-)
+get_service_health_url() {
+  case "$1" in
+    backend)  echo "http://localhost:8000/health" ;;
+    mcp)      echo "http://localhost:8081/health" ;;
+    frontend) echo "http://localhost:3000" ;;
+    *)        echo "" ;;
+  esac
+}
 
 # -----------------------------------------------------------
 # Directory helpers
