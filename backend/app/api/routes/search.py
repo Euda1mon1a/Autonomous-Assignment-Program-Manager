@@ -7,6 +7,8 @@ Provides endpoints for:
 - Quick search
 """
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -25,6 +27,8 @@ from app.schemas.search import (
     SuggestionResponse,
 )
 from app.services.search.indexer import SearchService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -71,6 +75,7 @@ async def search(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
+        logger.exception("Search failed")
         raise HTTPException(status_code=500, detail="Search failed")
 
 
@@ -105,6 +110,7 @@ async def quick_search(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
+        logger.exception("Quick search failed")
         raise HTTPException(status_code=500, detail="Quick search failed")
 
 
@@ -146,6 +152,7 @@ async def search_people(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
+        logger.exception("People search failed")
         raise HTTPException(status_code=500, detail="People search failed")
 
 
@@ -183,6 +190,7 @@ async def search_rotations(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
+        logger.exception("Rotation search failed")
         raise HTTPException(status_code=500, detail="Rotation search failed")
 
 
@@ -219,6 +227,7 @@ async def search_procedures(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
+        logger.exception("Procedure search failed")
         raise HTTPException(status_code=500, detail="Procedure search failed")
 
 
@@ -257,6 +266,7 @@ async def global_search(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
+        logger.exception("Global search failed")
         raise HTTPException(status_code=500, detail="Global search failed")
 
 
@@ -288,6 +298,7 @@ async def get_suggestions(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
+        logger.exception("Suggestion request failed (POST)")
         raise HTTPException(status_code=500, detail="Suggestion request failed")
 
 
@@ -325,4 +336,5 @@ async def get_suggestions_get(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
+        logger.exception("Suggestion request failed (GET)")
         raise HTTPException(status_code=500, detail="Suggestion request failed")

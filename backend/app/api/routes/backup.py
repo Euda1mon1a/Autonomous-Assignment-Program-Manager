@@ -587,7 +587,7 @@ def parse_backup_metadata(backup_file: Path) -> dict:
 
                 return json.load(f)
         except Exception:
-            pass
+            logger.debug("Failed to parse backup metadata for %s", backup_file)
     return {}
 
 

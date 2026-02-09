@@ -452,6 +452,7 @@ async def execute_tool(tool_name: str, tool_input: dict, db) -> dict[str, Any]:
                 db.execute("SELECT 1")
                 db_status = "connected"
             except Exception:
+                logger.debug("Database health check failed")
                 db_status = "disconnected"
 
             return {
@@ -807,7 +808,7 @@ async def claude_chat_websocket(
         try:
             await websocket.send_json({"type": "error", "message": str(e)})
         except Exception:
-            pass  # Connection may be closed
+            logger.debug("Failed to send error to WebSocket client (connection closed)")
     finally:
         # Cleanup interrupt flag
         if session.session_id in _interrupt_flags:
