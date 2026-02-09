@@ -16,8 +16,11 @@ from app.models.conflict_alert import (
     ConflictSeverity,
     ConflictType,
 )
+from app.core.logging import get_logger
 from app.models.person import Person
 from app.models.swap import SwapRecord, SwapStatus, SwapType
+
+logger = get_logger(__name__)
 
 
 class ResolutionStrategy(str, Enum):
@@ -521,6 +524,7 @@ class ConflictAlertService:
 
         except Exception as e:
             self.db.rollback()
+            logger.error("Failed to apply conflict resolution: %s", e, exc_info=True)
             return False, f"Error applying resolution: {str(e)}"
 
     def validate_resolution(

@@ -21,8 +21,11 @@ from app.schemas.swap_matching import (
     ScoringBreakdown,
     SwapMatch,
 )
+from app.core.logging import get_logger
 from app.services.faculty_preference_service import FacultyPreferenceService
 from app.services.swap_validation import SwapValidationService
+
+logger = get_logger(__name__)
 
 
 class SwapAutoMatcher:
@@ -304,8 +307,13 @@ class SwapAutoMatcher:
                 else:
                     no_matches.append(request.id)
 
-            except Exception:
-                # Log error but continue processing
+            except Exception as e:
+                logger.error(
+                    "Error processing swap request %s: %s",
+                    request.id,
+                    e,
+                    exc_info=True,
+                )
                 no_matches.append(request.id)
                 continue
 
