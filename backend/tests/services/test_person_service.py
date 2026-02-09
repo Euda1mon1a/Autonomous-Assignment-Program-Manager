@@ -532,3 +532,260 @@ class TestPersonService:
         result = fresh_service.get_person(sample_resident.id)
 
         assert result.name == "Dr. Persistent Update"
+
+    # ========================================================================
+    # Batch Create Tests
+    # ========================================================================
+
+    def test_batch_create_success(self, db):
+        """Test batch creating multiple people successfully."""
+        service = PersonService(db)
+        people_data = [
+            {
+                "name": "Dr. Batch Resident 1",
+                "type": "resident",
+                "pgy_level": 1,
+                "email": "batch.r1@hospital.org",
+            },
+            {
+                "name": "Dr. Batch Faculty 1",
+                "type": "faculty",
+                "email": "batch.f1@hospital.org",
+            },
+        ]
+        result = service.batch_create(people_data)
+
+        assert result["operation_type"] == "create"
+        assert result["total"] == 2
+        assert result["succeeded"] == 2
+        assert result["failed"] == 0
+        assert result["dry_run"] is False
+        assert len(result["created_ids"]) == 2
+
+        # Verify people exist in DB
+        for pid in result["created_ids"]:
+            person = db.query(Person).filter(Person.id == pid).first()
+            assert person is not None
+
+    def test_batch_create_dry_run(self, db):
+        """Test batch create with dry_run=True validates but doesn't persist."""
+        service = PersonService(db)
+        people_data = [
+            {
+                "name": "Dr. DryRun 1",
+                "type": "faculty",
+                "email": "dryrun1@hospital.org",
+            },
+        ]
+        result = service.batch_create(people_data, dry_run=True)
+
+        assert result["succeeded"] == 1
+        assert result["failed"] == 0
+        assert result["dry_run"] is True
+        assert result["created_ids"] == []
+
+        # Verify nothing was persisted
+        count = db.query(Person).count()
+        assert count == 0
+
+    def test_batch_create_resident_missing_pgy_level(self, db):
+        """Test batch create fails atomically when a resident lacks PGY level."""
+        service = PersonService(db)
+        people_data = [
+            {
+                "name": "Dr. Good Resident",
+                "type": "resident",
+                "pgy_level": 2,
+                "email": "good@hospital.org",
+            },
+            {
+                "name": "Dr. Bad Resident",
+                "type": "resident",
+                "email": "bad@hospital.org",
+            },
+        ]
+        result = service.batch_create(people_data)
+
+        # Atomic: one failure means entire batch fails
+        assert result["failed"] > 0
+        assert result["succeeded"] == 0
+        assert result["created_ids"] == []
+
+        # Nothing should be persisted
+        count = db.query(Person).count()
+        assert count == 0
+
+    def test_batch_create_duplicate_email_in_batch(self, db):
+        """Test batch create rejects duplicate emails within the same batch."""
+        service = PersonService(db)
+        people_data = [
+            {"name": "Dr. First", "type": "faculty", "email": "dupe@hospital.org"},
+            {"name": "Dr. Second", "type": "faculty", "email": "dupe@hospital.org"},
+        ]
+        result = service.batch_create(people_data)
+
+        assert result["failed"] > 0
+        assert result["succeeded"] == 0
+        assert result["created_ids"] == []
+
+    def test_batch_create_duplicate_email_in_db(self, db, sample_resident):
+        """Test batch create rejects emails that already exist in the database."""
+        service = PersonService(db)
+        people_data = [
+            {
+                "name": "Dr. Duplicate",
+                "type": "faculty",
+                "email": sample_resident.email,
+            },
+        ]
+        result = service.batch_create(people_data)
+
+        assert result["failed"] > 0
+        assert result["succeeded"] == 0
+        assert result["created_ids"] == []
+
+    def test_batch_create_empty_batch(self, db):
+        """Test batch create with empty list returns zero counts."""
+        service = PersonService(db)
+        result = service.batch_create([])
+
+        assert result["total"] == 0
+        assert result["succeeded"] == 0
+        assert result["failed"] == 0
+        assert result["created_ids"] == []
+
+    # ========================================================================
+    # Batch Update Tests
+    # ========================================================================
+
+    def test_batch_update_success(self, db, sample_residents):
+        """Test batch updating multiple people successfully."""
+        service = PersonService(db)
+        updates = [
+            {
+                "person_id": sample_residents[0].id,
+                "updates": {"name": "Dr. Updated R1"},
+            },
+            {"person_id": sample_residents[1].id, "updates": {"pgy_level": 3}},
+        ]
+        result = service.batch_update(updates)
+
+        assert result["operation_type"] == "update"
+        assert result["total"] == 2
+        assert result["succeeded"] == 2
+        assert result["failed"] == 0
+        assert result["dry_run"] is False
+
+        # Verify updates persisted
+        db.refresh(sample_residents[0])
+        db.refresh(sample_residents[1])
+        assert sample_residents[0].name == "Dr. Updated R1"
+        assert sample_residents[1].pgy_level == 3
+
+    def test_batch_update_dry_run(self, db, sample_resident):
+        """Test batch update with dry_run=True validates but doesn't apply."""
+        original_name = sample_resident.name
+        service = PersonService(db)
+        updates = [
+            {
+                "person_id": sample_resident.id,
+                "updates": {"name": "Dr. Should Not Change"},
+            },
+        ]
+        result = service.batch_update(updates, dry_run=True)
+
+        assert result["succeeded"] == 1
+        assert result["dry_run"] is True
+
+        # Name should be unchanged
+        db.refresh(sample_resident)
+        assert sample_resident.name == original_name
+
+    def test_batch_update_person_not_found(self, db, sample_resident):
+        """Test batch update fails atomically when any person doesn't exist."""
+        service = PersonService(db)
+        original_name = sample_resident.name
+        updates = [
+            {"person_id": sample_resident.id, "updates": {"name": "Dr. Valid Update"}},
+            {"person_id": uuid4(), "updates": {"name": "Dr. Ghost"}},
+        ]
+        result = service.batch_update(updates)
+
+        # Atomic: one failure means none are applied
+        assert result["failed"] > 0
+        assert result["succeeded"] == 0
+
+        # Original person should be unchanged
+        db.refresh(sample_resident)
+        assert sample_resident.name == original_name
+
+    def test_batch_update_empty_batch(self, db):
+        """Test batch update with empty list returns zero counts."""
+        service = PersonService(db)
+        result = service.batch_update([])
+
+        assert result["total"] == 0
+        assert result["succeeded"] == 0
+        assert result["failed"] == 0
+
+    # ========================================================================
+    # Batch Delete Tests
+    # ========================================================================
+
+    def test_batch_delete_success(self, db, sample_residents):
+        """Test batch deleting multiple people successfully."""
+        service = PersonService(db)
+        ids_to_delete = [sample_residents[0].id, sample_residents[1].id]
+        result = service.batch_delete(ids_to_delete)
+
+        assert result["operation_type"] == "delete"
+        assert result["total"] == 2
+        assert result["succeeded"] == 2
+        assert result["failed"] == 0
+        assert result["dry_run"] is False
+
+        # Verify deleted
+        for pid in ids_to_delete:
+            assert db.query(Person).filter(Person.id == pid).first() is None
+
+        # Third resident should still exist
+        assert (
+            db.query(Person).filter(Person.id == sample_residents[2].id).first()
+            is not None
+        )
+
+    def test_batch_delete_dry_run(self, db, sample_resident):
+        """Test batch delete with dry_run=True validates but doesn't delete."""
+        service = PersonService(db)
+        result = service.batch_delete([sample_resident.id], dry_run=True)
+
+        assert result["succeeded"] == 1
+        assert result["dry_run"] is True
+
+        # Person should still exist
+        assert (
+            db.query(Person).filter(Person.id == sample_resident.id).first() is not None
+        )
+
+    def test_batch_delete_person_not_found(self, db, sample_resident):
+        """Test batch delete fails atomically when any person doesn't exist."""
+        service = PersonService(db)
+        result = service.batch_delete([sample_resident.id, uuid4()])
+
+        # Atomic: one failure means none are deleted
+        assert result["failed"] > 0
+        assert result["succeeded"] == 0
+
+        # Existing person should still be there
+        assert (
+            db.query(Person).filter(Person.id == sample_resident.id).first() is not None
+        )
+
+    def test_batch_delete_empty_batch(self, db):
+        """Test batch delete with empty list returns zero counts."""
+        service = PersonService(db)
+        result = service.batch_delete([])
+
+        assert result["total"] == 0
+        assert result["succeeded"] == 0
+        assert result["failed"] == 0
