@@ -863,6 +863,7 @@ class SchedulingEngine:
                 self._update_run_status(run, "failed", 0, 0, time.time() - start_time)
                 self.db.commit()
             except Exception:
+                logger.error("Failed to update run status after generation failure")
                 self.db.rollback()
 
             raise
