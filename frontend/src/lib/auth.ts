@@ -397,11 +397,9 @@ export async function validateToken(): Promise<User | null> {
  * @param access - The access token to store (optional, for WebSocket auth)
  */
 function storeTokens(refresh: string, access?: string): void {
-  console.log('[Auth] storeTokens called:', { hasRefresh: !!refresh, hasAccess: !!access })
   refreshToken = refresh
   if (access) {
     accessToken = access
-    console.log('[Auth] Access token stored:', access.substring(0, 20) + '...')
   }
   tokenExpiresAt = Date.now() + ACCESS_TOKEN_EXPIRE_MINUTES * 60 * 1000
   scheduleProactiveRefresh()
@@ -464,27 +462,22 @@ export async function restoreSession(): Promise<boolean> {
   try {
     const storedRefreshToken = sessionStorage.getItem('__rt')
     if (!storedRefreshToken) {
-      console.log('[Auth] No stored refresh token found')
       return false
     }
 
-    console.log('[Auth] Found stored refresh token, attempting refresh...')
     // Temporarily set the refresh token so performRefresh can use it
     refreshToken = storedRefreshToken
 
     const result = await performRefresh()
     if (result) {
-      console.log('[Auth] Session restored successfully')
       return true
     } else {
-      console.log('[Auth] Session restore failed - refresh token invalid')
       // Clear invalid token from storage
       sessionStorage.removeItem('__rt')
       refreshToken = null
       return false
     }
   } catch {
-    console.log('[Auth] Session restore error')
     return false
   }
 }
@@ -499,7 +492,6 @@ export async function restoreSession(): Promise<boolean> {
  * @returns The current access token, or null if not authenticated
  */
 export function getAccessToken(): string | null {
-  console.log('[Auth] getAccessToken called, token:', accessToken ? 'exists' : 'null')
   return accessToken
 }
 

@@ -226,17 +226,11 @@ function createApiClient(): AxiosInstance {
       try {
         const auth = await getAuthModule()
         const token = auth.getAccessToken()
-        console.log('[API] Request interceptor:', {
-          url: config.url,
-          hasToken: !!token,
-          tokenPreview: token ? token.substring(0, 20) + '...' : 'none'
-        })
         if (token && !config.headers.Authorization) {
           config.headers.Authorization = `Bearer ${token}`
-          console.log('[API] Added Authorization header')
         }
-      } catch (e) {
-        console.log('[API] Auth module error:', e)
+      } catch {
+        // Auth module not available — request proceeds without token
       }
 
       // Convert request body keys to snake_case

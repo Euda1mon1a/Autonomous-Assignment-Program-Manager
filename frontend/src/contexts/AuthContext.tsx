@@ -62,7 +62,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Try to restore session from sessionStorage first
         // This handles page refresh where in-memory tokens are lost
         const restored = await restoreSession()
-        console.log('[AuthContext] restoreSession result:', restored)
 
         // Now validate the token to get user data
         // If session was restored, we have a fresh access token
@@ -71,7 +70,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(validatedUser)
       } catch {
         // Token validation failed, user remains null (needs to log in)
-        console.log('[AuthContext] Session validation failed, user needs to log in')
+        // Token validation failed — user remains null (needs to log in)
       }
       setIsLoading(false)
     }
@@ -80,7 +79,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // If auth takes longer than timeout, assume not authenticated
     const timeoutPromise = new Promise<void>((resolve) => {
       setTimeout(() => {
-        console.log('[AuthContext] Auth check timed out, proceeding as unauthenticated')
+        // Auth check timed out — proceeding as unauthenticated
         resolve()
       }, AUTH_TIMEOUT_MS)
     })
