@@ -9,7 +9,6 @@ Defines request/response schemas for:
 """
 
 from datetime import datetime, date
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field

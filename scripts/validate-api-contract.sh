@@ -126,7 +126,7 @@ if [ -n "$BACKEND_STAGED" ]; then
                 done
             fi
         fi
-    done | head -15
+    done 2>/dev/null | head -15 || true
 fi
 
 # ============================================================
