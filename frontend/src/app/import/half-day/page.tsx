@@ -557,8 +557,8 @@ export default function HalfDayImportPage() {
                         Stage warnings
                       </div>
                       <ul className="mt-2 space-y-1">
-                        {stageWarnings.map((warning, index) => (
-                          <li key={index}>• {warning}</li>
+                        {stageWarnings.map((warning) => (
+                          <li key={warning}>• {warning}</li>
                         ))}
                       </ul>
                     </div>
