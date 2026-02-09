@@ -54,14 +54,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // First tries to restore from sessionStorage (for page refresh),
   // then validates the token to get user data.
   useEffect(() => {
-    // Timeout for auth check to prevent infinite loading on network issues
     const AUTH_TIMEOUT_MS = 5000
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
 
     async function initAuth() {
       try {
         // Try to restore session from sessionStorage first
         // This handles page refresh where in-memory tokens are lost
-        const restored = await restoreSession()
+        await restoreSession()
 
         // Now validate the token to get user data
         // If session was restored, we have a fresh access token
@@ -69,25 +69,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const validatedUser = await validateToken()
         setUser(validatedUser)
       } catch {
-        // Token validation failed, user remains null (needs to log in)
         // Token validation failed — user remains null (needs to log in)
       }
       setIsLoading(false)
     }
 
     // Race auth init against timeout to prevent infinite loading
-    // If auth takes longer than timeout, assume not authenticated
     const timeoutPromise = new Promise<void>((resolve) => {
-      setTimeout(() => {
-        // Auth check timed out — proceeding as unauthenticated
+      timeoutId = setTimeout(() => {
         resolve()
       }, AUTH_TIMEOUT_MS)
     })
 
     Promise.race([initAuth(), timeoutPromise]).then(() => {
-      // Ensure loading is set to false regardless of which promise resolved
       setIsLoading(false)
     })
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId)
+    }
   }, [])
 
   // Login function
