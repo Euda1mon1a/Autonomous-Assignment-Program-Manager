@@ -314,8 +314,8 @@ function ResultsPanel({
           <div className="mt-4 pt-4 border-t border-gray-300" role="region" aria-label="Alternative approaches">
             <h4 className="text-sm font-semibold text-gray-900 mb-2">Alternative Approaches</h4>
             <ul className="space-y-1">
-              {recommendation.alternatives.map((alt, index) => (
-                <li key={index} className="text-sm text-gray-700 flex gap-2">
+              {recommendation.alternatives.map((alt) => (
+                <li key={alt} className="text-sm text-gray-700 flex gap-2">
                   <span className="text-blue-600" aria-hidden="true">•</span>
                   <span>{alt}</span>
                 </li>
@@ -350,8 +350,8 @@ function ResultsPanel({
         <div role="region" aria-label="Analysis warnings">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Warnings</h3>
           <div className="space-y-3">
-            {predictedImpact.warnings.map((warning, index) => (
-              <WarningItem key={index} warning={warning} />
+            {predictedImpact.warnings.map((warning) => (
+              <WarningItem key={`${warning.severity}-${warning.affectedEntity}`} warning={warning} />
             ))}
           </div>
         </div>
@@ -362,8 +362,8 @@ function ResultsPanel({
         <div role="region" aria-label="Constraint impacts">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Constraint Impacts</h3>
           <div className="space-y-3">
-            {predictedImpact.constraints.map((constraint, index) => (
-              <ConstraintImpactItem key={index} constraint={constraint} />
+            {predictedImpact.constraints.map((constraint) => (
+              <ConstraintImpactItem key={constraint.constraintName} constraint={constraint} />
             ))}
           </div>
         </div>
@@ -374,9 +374,9 @@ function ResultsPanel({
         <div role="region" aria-label="Predicted metric changes">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Predicted Metric Changes</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {predictedImpact.comparisonToBaseline.map((delta, index) => (
+            {predictedImpact.comparisonToBaseline.map((delta) => (
               <div
-                key={index}
+                key={delta.metricName}
                 className="p-4 border border-gray-200 rounded-lg bg-white"
                 role="article"
                 aria-label={`${delta.metricName}: ${delta.improved ? 'improved' : 'declined'} by ${delta.delta.toFixed(2)}`}

@@ -153,9 +153,9 @@ function MeetingRow({ meeting }: { meeting: PecMeeting }) {
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-wrap gap-1">
-          {meeting.focusAreas.slice(0, 2).map((area, i) => (
+          {meeting.focusAreas.slice(0, 2).map((area) => (
             <span
-              key={i}
+              key={area}
               className="px-2 py-0.5 text-xs bg-slate-700/50 text-slate-300 rounded"
             >
               {area}
@@ -336,9 +336,9 @@ function OverviewTab({
               <div>
                 <p className="text-sm text-slate-400 mb-2">Focus Areas:</p>
                 <div className="flex flex-wrap gap-2">
-                  {upcomingMeeting.focusAreas.map((area, i) => (
+                  {upcomingMeeting.focusAreas.map((area) => (
                     <span
-                      key={i}
+                      key={area}
                       className="px-2 py-1 text-sm bg-indigo-500/10 text-indigo-300 rounded"
                     >
                       {area}

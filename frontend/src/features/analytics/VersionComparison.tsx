@@ -253,8 +253,8 @@ function ImpactAssessmentCard({
             <div className="pt-4 border-t border-gray-300" role="region" aria-label="Recommendations">
               <h4 className="text-sm font-semibold text-gray-900 mb-2">Recommendations</h4>
               <ul className="space-y-2">
-                {impactAssessment.recommendations.map((rec, index) => (
-                  <li key={index} className="flex gap-2 text-sm text-gray-700">
+                {impactAssessment.recommendations.map((rec) => (
+                  <li key={rec} className="flex gap-2 text-sm text-gray-700">
                     <span className="text-blue-600" aria-hidden="true">•</span>
                     <span>{rec}</span>
                   </li>
@@ -404,7 +404,7 @@ export function VersionComparison({
 
             <div className="grid gap-4" role="list" aria-label="List of metric comparisons">
               {filteredDeltas.length > 0 ? (
-                filteredDeltas.map((delta, index) => <MetricDeltaRow key={index} delta={delta} />)
+                filteredDeltas.map((delta) => <MetricDeltaRow key={delta.metricName} delta={delta} />)
               ) : (
                 <p className="text-center text-gray-500 py-8">No metrics to display</p>
               )}

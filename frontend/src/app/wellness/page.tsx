@@ -469,8 +469,8 @@ function LeaderboardTab({
       </div>
 
       <div className="bg-gray-800 rounded-lg overflow-hidden">
-        {leaderboard?.entries.map((entry: LeaderboardEntry, index: number) => (
-          <LeaderboardRow key={index} entry={entry} />
+        {leaderboard?.entries.map((entry: LeaderboardEntry) => (
+          <LeaderboardRow key={entry.rank} entry={entry} />
         ))}
       </div>
 
