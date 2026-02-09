@@ -7,9 +7,12 @@ Endpoints for analyzing schedule change barriers and finding catalysts:
 - Analyze swap feasibility
 """
 
+import logging
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, status
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
@@ -169,6 +172,7 @@ async def detect_barriers(
             summary=summary,
         )
     except Exception as e:
+        logger.exception("Barrier detection failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Barrier detection failed: {str(e)}",
@@ -203,6 +207,7 @@ async def optimize_pathway(
 
         return _pathway_result_to_response(result)
     except Exception as e:
+        logger.exception("Pathway optimization failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Pathway optimization failed: {str(e)}",
@@ -272,6 +277,7 @@ async def analyze_swap_barriers(
             recommendations=recommendations,
         )
     except Exception as e:
+        logger.exception("Swap barrier analysis failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Swap barrier analysis failed: {str(e)}",
@@ -329,6 +335,7 @@ async def get_catalyst_capacity(
             recommendations=recommendations,
         )
     except Exception as e:
+        logger.exception("Catalyst capacity check failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Capacity check failed: {str(e)}",
@@ -375,6 +382,7 @@ async def optimize_batch(
                 if result.pathway and hasattr(result.pathway, "catalyzed_energy"):
                     aggregate_energy += result.pathway.catalyzed_energy
         except Exception as e:
+            logger.exception("Batch optimization failed for change")
             results.append(
                 PathwayResultResponse(
                     success=False,

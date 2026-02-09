@@ -1,6 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-
   "permissions": {
     "allow": [
       "Skill",
@@ -16,7 +15,6 @@
       "Bash",
       "mcp__*"
     ],
-
     "deny": [
       "Read(.env)",
       "Read(.env.local)",
@@ -28,7 +26,6 @@
       "Read(**/*.dump)",
       "Read(**/*.sql)",
       "Read(**/*.pem)",
-
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
       "Bash(git push origin main:*)",
@@ -48,7 +45,6 @@
       "Bash(dd if=:*)"
     ]
   },
-
   "hooks": {
     "PreToolUse": [
       {
@@ -65,7 +61,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/pre-schedule-warning.sh"
+            "command": "/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/hooks/pre-schedule-warning.sh"
           }
         ]
       },
@@ -74,7 +70,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .claude/hooks/security-guidance.py"
+            "command": "python3 /Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/hooks/security-guidance.py"
           }
         ]
       },
@@ -101,7 +97,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/pre-task-context.sh"
+            "command": "/Users/aaronmontgomery/Autonomous-Assignment-Program-Manager/.claude/hooks/pre-task-context.sh"
           }
         ]
       }
@@ -118,11 +114,9 @@
       }
     ]
   },
-
   "env": {
     "CLAUDE_PROJECT": "residency-scheduler",
     "CLAUDE_GUARDRAILS": "strict"
   },
-
   "enableAllProjectMcpServers": true
 }
