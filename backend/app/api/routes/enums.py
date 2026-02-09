@@ -9,7 +9,6 @@ from fastapi import APIRouter
 from app.core.config import get_settings
 from app.models.activity import ActivityCategory
 from app.models.inpatient_preload import InpatientRotationType
-from app.schemas.schedule import SchedulingAlgorithm
 from app.scheduling.constraints.config import ConstraintCategory
 
 router = APIRouter(prefix="/enums", tags=["enums"])
