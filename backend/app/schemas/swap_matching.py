@@ -41,8 +41,7 @@ class SwapMatch(BaseModel):
     is_mutual: bool = Field(description="Whether both parties want each other's weeks")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ScoringBreakdown(BaseModel):
@@ -70,8 +69,7 @@ class ScoringBreakdown(BaseModel):
         ge=0.0, le=1.0, description="Overall compatibility score"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RankedMatch(BaseModel):
@@ -96,8 +94,7 @@ class RankedMatch(BaseModel):
         default_factory=list, description="Any warnings or concerns"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AutoMatchResult(BaseModel):
@@ -120,8 +117,7 @@ class AutoMatchResult(BaseModel):
     success: bool = Field(description="Whether matching was successful")
     message: str = Field(description="Status message")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BatchAutoMatchResult(BaseModel):
@@ -145,8 +141,7 @@ class BatchAutoMatchResult(BaseModel):
     )
     processed_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MatchingCriteria(BaseModel):
@@ -246,8 +241,7 @@ class MatchingCriteria(BaseModel):
             + self.availability_weight
         )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MatchingSuggestion(BaseModel):
@@ -265,8 +259,7 @@ class MatchingSuggestion(BaseModel):
     reason: str = Field(description="Why this swap is suggested")
     action_text: str = Field(description="Suggested action text for UI")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MatchingAnalytics(BaseModel):
@@ -292,5 +285,4 @@ class MatchingAnalytics(BaseModel):
     )
     generated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -40,8 +40,8 @@ class AudienceTokenResponse(BaseModel):
     expires_at: datetime = Field(..., description="Token expiration timestamp (UTC)")
     ttl_seconds: int = Field(..., description="Time-to-live in seconds")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                 "audience": "jobs.abort",
@@ -49,6 +49,7 @@ class AudienceTokenResponse(BaseModel):
                 "ttl_seconds": 120,
             }
         }
+    )
 
 
 class AudienceListResponse(BaseModel):
@@ -59,8 +60,8 @@ class AudienceListResponse(BaseModel):
         description="Map of audience keys to descriptions",
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "audiences": {
                     "jobs.abort": "Abort running background jobs",
@@ -69,6 +70,7 @@ class AudienceListResponse(BaseModel):
                 }
             }
         }
+    )
 
 
 class RevokeTokenRequest(BaseModel):
@@ -98,11 +100,12 @@ class RevokeTokenResponse(BaseModel):
     jti: str = Field(..., description="JWT ID that was revoked")
     message: str = Field(..., description="Human-readable message")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "success": True,
                 "jti": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                 "message": "Token successfully revoked",
             }
         }
+    )

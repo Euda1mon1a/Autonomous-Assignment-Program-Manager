@@ -22,8 +22,8 @@ class HeatmapRequest(BaseModel):
         description="Group heatmap by 'person', 'rotation', 'daily', or 'weekly'",
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "start_date": "2024-01-01",
                 "end_date": "2024-03-31",
@@ -33,6 +33,7 @@ class HeatmapRequest(BaseModel):
                 "group_by": "person",
             }
         }
+    )
 
 
 class HeatmapData(BaseModel):
@@ -46,8 +47,8 @@ class HeatmapData(BaseModel):
         None, description="Annotations for heatmap cells"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "x_labels": ["2024-01-01", "2024-01-02", "2024-01-03"],
                 "y_labels": ["Dr. Smith", "Dr. Johnson", "Dr. Williams"],
@@ -56,6 +57,7 @@ class HeatmapData(BaseModel):
                 "annotations": None,
             }
         }
+    )
 
 
 class HeatmapResponse(BaseModel):
@@ -69,8 +71,8 @@ class HeatmapResponse(BaseModel):
     )
     metadata: dict[str, Any] | None = Field(None, description="Additional metadata")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "data": {
                     "x_labels": ["2024-01-01", "2024-01-02"],
@@ -84,6 +86,7 @@ class HeatmapResponse(BaseModel):
                 "metadata": {"total_assignments": 4},
             }
         }
+    )
 
 
 class CoverageGap(BaseModel):
@@ -94,8 +97,8 @@ class CoverageGap(BaseModel):
     rotation: str | None = Field(None, description="Rotation with gap")
     severity: str = Field(..., description="low, medium, high")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "date": "2024-01-15",
                 "time_of_day": "PM",
@@ -103,6 +106,7 @@ class CoverageGap(BaseModel):
                 "severity": "high",
             }
         }
+    )
 
 
 class CoverageHeatmapResponse(BaseModel):
@@ -118,8 +122,8 @@ class CoverageHeatmapResponse(BaseModel):
     title: str = Field(..., description="Title for the heatmap")
     generated_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "data": {
                     "x_labels": ["2024-01-01", "2024-01-02"],
@@ -141,6 +145,7 @@ class CoverageHeatmapResponse(BaseModel):
                 "generated_at": "2024-01-15T10:00:00",
             }
         }
+    )
 
 
 class WorkloadRequest(BaseModel):
@@ -153,8 +158,8 @@ class WorkloadRequest(BaseModel):
     end_date: datetime.date = Field(..., description="End date")
     include_weekends: bool = Field(False, description="Include weekends in analysis")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "person_ids": ["550e8400-e29b-41d4-a716-446655440000"],
                 "start_date": "2024-01-01",
@@ -162,6 +167,7 @@ class WorkloadRequest(BaseModel):
                 "include_weekends": False,
             }
         }
+    )
 
 
 class ExportRequest(BaseModel):
@@ -177,8 +183,8 @@ class ExportRequest(BaseModel):
         ..., description="Parameters for heatmap generation"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "heatmap_type": "unified",
                 "format": "png",
@@ -192,6 +198,7 @@ class ExportRequest(BaseModel):
                 },
             }
         }
+    )
 
 
 class TimeRangeType(BaseModel):
@@ -211,8 +218,8 @@ class TimeRangeType(BaseModel):
         None, description="Custom end date (required for 'custom' range)"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "range_type": "month",
                 "reference_date": "2024-01-15",
@@ -220,6 +227,7 @@ class TimeRangeType(BaseModel):
                 "end_date": None,
             }
         }
+    )
 
 
 class UnifiedHeatmapRequest(BaseModel):
@@ -236,8 +244,8 @@ class UnifiedHeatmapRequest(BaseModel):
         description="Group heatmap by 'person', 'rotation', 'daily', or 'weekly'",
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "time_range": {"range_type": "month", "reference_date": "2024-01-15"},
                 "person_ids": None,
@@ -246,3 +254,4 @@ class UnifiedHeatmapRequest(BaseModel):
                 "group_by": "person",
             }
         }
+    )

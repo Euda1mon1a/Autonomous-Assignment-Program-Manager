@@ -42,8 +42,7 @@ class OAuth2ClientResponse(BaseModel):
     is_public: bool
     is_active: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PKCECodeChallenge(BaseModel):

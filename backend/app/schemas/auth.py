@@ -137,8 +137,7 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool = True
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserInDB(UserResponse):

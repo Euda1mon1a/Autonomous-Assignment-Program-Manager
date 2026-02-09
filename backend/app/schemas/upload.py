@@ -79,8 +79,8 @@ class UploadResponse(BaseModel):
         default_factory=dict, description="Upload metadata"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "upload_id": "550e8400-e29b-41d4-a716-446655440000",
                 "file_id": "660e8400-e29b-41d4-a716-446655440001",
@@ -111,6 +111,7 @@ class UploadResponse(BaseModel):
                 "metadata": {},
             }
         }
+    )
 
 
 class UploadProgressResponse(BaseModel):
@@ -126,8 +127,8 @@ class UploadProgressResponse(BaseModel):
     started_at: str = Field(..., description="Upload start timestamp")
     completed_at: str | None = Field(None, description="Upload completion timestamp")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "upload_id": "550e8400-e29b-41d4-a716-446655440000",
                 "total_size": 1024000,
@@ -138,6 +139,7 @@ class UploadProgressResponse(BaseModel):
                 "completed_at": None,
             }
         }
+    )
 
 
 class FileUrlResponse(BaseModel):
@@ -149,14 +151,15 @@ class FileUrlResponse(BaseModel):
         None, description="URL expiration timestamp (for pre-signed URLs)"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "file_id": "660e8400-e29b-41d4-a716-446655440001",
                 "url": "https://s3.amazonaws.com/bucket/file?signature=...",
                 "expires_at": "2025-12-20T11:30:00Z",
             }
         }
+    )
 
 
 class DeleteFileResponse(BaseModel):
@@ -166,14 +169,15 @@ class DeleteFileResponse(BaseModel):
     file_id: str = Field(..., description="File identifier")
     message: str = Field(..., description="Status message")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "success": True,
                 "file_id": "660e8400-e29b-41d4-a716-446655440001",
                 "message": "File deleted successfully",
             }
         }
+    )
 
 
 class UploadErrorResponse(BaseModel):
@@ -183,11 +187,12 @@ class UploadErrorResponse(BaseModel):
     message: str = Field(..., description="Error message")
     details: dict[str, Any] | None = Field(None, description="Additional error details")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "error": "ValidationError",
                 "message": "File too large: 60.00MB (max: 50MB)",
                 "details": {"max_size_mb": 50, "actual_size_mb": 60.0},
             }
         }
+    )

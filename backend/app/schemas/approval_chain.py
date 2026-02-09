@@ -36,8 +36,7 @@ class ApprovalRecordBase(BaseModel):
         description="ID of affected entity",
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ApprovalRecordCreate(ApprovalRecordBase):
@@ -55,8 +54,7 @@ class ApprovalRecordCreate(ApprovalRecordBase):
         description="Type of actor performing action",
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ApprovalRecordResponse(ApprovalRecordBase):
@@ -80,9 +78,7 @@ class ApprovalRecordResponse(ApprovalRecordBase):
     created_at: datetime = Field(..., alias="createdAt", description="Record timestamp")
     ip_address: str | None = Field(None, alias="ipAddress", description="Client IP")
 
-    class Config:
-        populate_by_name = True
-        from_attributes = True
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
 
 
 # ============================================================================
@@ -105,8 +101,7 @@ class ChainVerificationRequest(BaseModel):
         description="Stop verification at first invalid record",
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ChainVerificationResponse(BaseModel):
@@ -153,8 +148,7 @@ class ChainVerificationResponse(BaseModel):
         description="Timestamp of verification",
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -194,8 +188,7 @@ class ChainStatsResponse(BaseModel):
         description="Record counts by action type",
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -218,8 +211,7 @@ class DailySealRequest(BaseModel):
         description="Date to seal (defaults to today)",
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class DailySealResponse(BaseModel):
@@ -245,8 +237,7 @@ class DailySealResponse(BaseModel):
         description="Hash of seal record",
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 # ============================================================================
@@ -279,8 +270,7 @@ class ApprovalRecordQuery(BaseModel):
     limit: int = Field(100, ge=1, le=1000, description="Maximum records to return")
     offset: int = Field(0, ge=0, description="Records to skip")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ApprovalRecordListResponse(BaseModel):
@@ -292,5 +282,4 @@ class ApprovalRecordListResponse(BaseModel):
     offset: int = Field(..., description="Records skipped")
     chain_id: str = Field(..., alias="chainId", description="Chain queried")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

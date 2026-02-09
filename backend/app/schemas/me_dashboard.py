@@ -15,8 +15,7 @@ class DashboardUserInfo(BaseModel):
     email: str | None = None
     pgy_level: int | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DashboardScheduleItem(BaseModel):
@@ -30,8 +29,7 @@ class DashboardScheduleItem(BaseModel):
     role: str | None = None  # 'primary', 'supervising', 'backup'
     assignment_id: UUID | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DashboardSwapItem(BaseModel):
@@ -45,8 +43,7 @@ class DashboardSwapItem(BaseModel):
     other_party_name: str
     requested_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DashboardAbsenceItem(BaseModel):
@@ -58,8 +55,7 @@ class DashboardAbsenceItem(BaseModel):
     absence_type: str
     notes: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DashboardSummary(BaseModel):
@@ -81,5 +77,4 @@ class MeDashboardResponse(BaseModel):
     calendar_sync_url: str | None = None
     summary: DashboardSummary
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

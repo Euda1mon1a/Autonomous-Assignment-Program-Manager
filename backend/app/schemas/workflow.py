@@ -159,8 +159,7 @@ class WorkflowTemplateResponse(BaseModel):
     updated_at: datetime
     tags: list[str] | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -224,8 +223,7 @@ class WorkflowInstanceResponse(BaseModel):
     priority: int
     parent_instance_id: UUID | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WorkflowInstanceDetailResponse(WorkflowInstanceResponse):
@@ -260,8 +258,7 @@ class WorkflowStepExecutionResponse(BaseModel):
     execution_order: int | None
     condition_result: bool | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================

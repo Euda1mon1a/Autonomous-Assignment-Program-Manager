@@ -138,7 +138,7 @@ echo -n "Checking generated API types... "
 
 if [ -f "$GENERATED_TYPES" ]; then
     # Check if backend is running for live comparison
-    if curl -s http://localhost:8000/health >/dev/null 2>&1; then
+    if curl -s --connect-timeout 3 --max-time 5 http://localhost:8000/health >/dev/null 2>&1; then
         # Run the drift check
         if cd frontend && ./scripts/generate-api-types.sh --check >/dev/null 2>&1; then
             cd ..
@@ -171,7 +171,7 @@ if [ "${API_CONTRACT_FULL:-0}" = "1" ]; then
     echo -e "${CYAN}Running full contract validation (API_CONTRACT_FULL=1)...${NC}"
 
     # Check if backend is running
-    if curl -s http://localhost:8000/health >/dev/null 2>&1; then
+    if curl -s --connect-timeout 3 --max-time 5 http://localhost:8000/health >/dev/null 2>&1; then
         echo -n "Fetching live OpenAPI spec... "
         LIVE_SPEC=$(curl -s http://localhost:8000/openapi.json 2>/dev/null || true)
 

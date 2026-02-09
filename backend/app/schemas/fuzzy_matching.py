@@ -71,8 +71,7 @@ class FuzzyMatchResult(BaseModel):
     )
     rank: int = Field(..., ge=1, description="Rank in result set (1-based)")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FuzzyMatchResponse(BaseModel):
@@ -141,8 +140,7 @@ class NameMatchResult(BaseModel):
         description="Additional entity metadata (email, role, etc.)",
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NameMatchResponse(BaseModel):

@@ -599,10 +599,8 @@ class HomeostasisReport(BaseModel):
         description="List of recommended actions based on current state",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "timestamp": "2024-01-15T10:30:00",
                 "overall_state": "homeostasis",
@@ -614,6 +612,7 @@ class HomeostasisReport(BaseModel):
                 "recommendations": ["Monitor coverage rate - approaching threshold"],
             }
         }
+    )
 
 
 class AllostasisCalculateRequest(BaseModel):
@@ -1424,10 +1423,8 @@ class CriticalSlowingDownResponse(BaseModel):
         description="Items to monitor closely",
     )
 
-    class Config:
-        """Pydantic model configuration."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "123e4567-e89b-12d3-a456-426614174000",
                 "calculated_at": "2024-01-15T10:30:00",
@@ -1457,6 +1454,7 @@ class CriticalSlowingDownResponse(BaseModel):
                 "watch_items": ["Monitor swap resolution times"],
             }
         }
+    )
 
 
 class SOCMetricsHistoryResponse(BaseModel):
@@ -1756,17 +1754,23 @@ class HubStatusResponse(BaseModel):
 class DefenseLevelRequest(BaseModel):
     """Request for defense level calculation."""
 
-    coverage_rate: float = Field(..., ge=0.0, le=1.0, description="Current coverage rate (0.0 to 1.0)")
+    coverage_rate: float = Field(
+        ..., ge=0.0, le=1.0, description="Current coverage rate (0.0 to 1.0)"
+    )
 
 
 class DefenseLevelResponse(BaseModel):
     """Response from defense level calculation."""
 
     level: DefenseLevel
-    level_number: int = Field(..., ge=1, le=5, description="Numeric level (1=PREVENTION to 5=EMERGENCY)")
+    level_number: int = Field(
+        ..., ge=1, le=5, description="Numeric level (1=PREVENTION to 5=EMERGENCY)"
+    )
     description: str
     recommended_actions: list[str]
-    escalation_threshold: float = Field(..., description="Coverage rate that would trigger escalation")
+    escalation_threshold: float = Field(
+        ..., description="Coverage rate that would trigger escalation"
+    )
 
 
 class UtilizationThresholdRequest(BaseModel):
@@ -1804,7 +1808,9 @@ class BurnoutRtResponse(BaseModel):
     status: str = Field(..., description="declining, stable, growing, or crisis")
     secondary_cases: int
     time_window_days: int
-    confidence_interval: dict | None = Field(default=None, description="Lower and upper bounds if available")
+    confidence_interval: dict | None = Field(
+        default=None, description="Lower and upper bounds if available"
+    )
     interventions: list[str]
 
 

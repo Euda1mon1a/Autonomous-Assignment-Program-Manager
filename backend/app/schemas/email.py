@@ -73,8 +73,7 @@ class EmailLogRead(EmailLogBase):
     retry_count: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EmailLogListResponse(BaseModel):
@@ -185,8 +184,7 @@ class EmailTemplateRead(EmailTemplateBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EmailTemplateListResponse(BaseModel):
@@ -204,8 +202,7 @@ class EmailTemplateSummary(BaseModel):
     template_type: str
     is_active: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================

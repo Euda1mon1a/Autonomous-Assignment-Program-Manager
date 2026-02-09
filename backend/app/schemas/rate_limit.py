@@ -186,8 +186,7 @@ class RateLimitHeaders(BaseModel):
         description="Remaining burst tokens",
     )
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class RateLimitErrorDetail(BaseModel):

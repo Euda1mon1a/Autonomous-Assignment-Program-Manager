@@ -123,8 +123,7 @@ class StrategyResponse(BaseModel):
     cooperation_rate: float | None
     is_active: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StrategyListResponse(BaseModel):
@@ -183,8 +182,7 @@ class TournamentResponse(BaseModel):
     winner_strategy_id: UUID | None
     winner_strategy_name: str | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TournamentListResponse(BaseModel):
@@ -246,8 +244,7 @@ class MatchResponse(BaseModel):
 
     winner: str | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =============================================================================
@@ -295,8 +292,7 @@ class EvolutionResponse(BaseModel):
     winner_strategy_name: str | None
     is_evolutionarily_stable: bool | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EvolutionListResponse(BaseModel):
@@ -365,8 +361,7 @@ class ValidationResponse(BaseModel):
     assessment: str
     recommendation: str | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =============================================================================
@@ -459,8 +454,7 @@ class ShapleyValueResult(BaseModel):
         ..., description="Hours above (+) or below (-) fair target"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FacultyShapleyMetrics(BaseModel):

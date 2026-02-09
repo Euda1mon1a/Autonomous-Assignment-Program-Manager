@@ -34,10 +34,8 @@ class ReportRequest(BaseModel):
     include_toc: bool = Field(default=True, description="Include table of contents")
     include_page_numbers: bool = Field(default=True, description="Include page numbers")
 
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "report_type": "schedule",
                 "start_date": "2025-01-01",
@@ -48,6 +46,7 @@ class ReportRequest(BaseModel):
                 "include_page_numbers": True,
             }
         }
+    )
 
 
 class ScheduleReportRequest(ReportRequest):
@@ -130,10 +129,8 @@ class ReportResponse(BaseModel):
     download_url: str | None = None
     filename: str | None = None
 
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "success": True,
                 "message": "Report generated successfully",
@@ -151,6 +148,7 @@ class ReportResponse(BaseModel):
                 "filename": "schedule_report_2025-01-01_to_2025-01-31.pdf",
             }
         }
+    )
 
 
 class DetailedComplianceReportRequest(BaseModel):
@@ -176,10 +174,8 @@ class DetailedComplianceReportRequest(BaseModel):
     )
     format: str = Field(default="pdf", description="Export format: 'pdf' or 'excel'")
 
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "start_date": "2025-01-01",
                 "end_date": "2025-03-31",
@@ -190,6 +186,7 @@ class DetailedComplianceReportRequest(BaseModel):
                 "format": "pdf",
             }
         }
+    )
 
 
 class ComplianceSummary(BaseModel):
@@ -204,10 +201,8 @@ class ComplianceSummary(BaseModel):
     supervision_compliance_rate: float
     coverage_rate: float
 
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "total_residents": 12,
                 "residents_with_violations": 2,
@@ -219,6 +214,7 @@ class ComplianceSummary(BaseModel):
                 "coverage_rate": 98.5,
             }
         }
+    )
 
 
 class ViolationDetail(BaseModel):
@@ -234,10 +230,8 @@ class ViolationDetail(BaseModel):
         default_factory=dict, description="Additional violation details"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "type": "80_HOUR_VIOLATION",
                 "severity": "CRITICAL",
@@ -252,6 +246,7 @@ class ViolationDetail(BaseModel):
                 },
             }
         }
+    )
 
 
 class ResidentComplianceSummary(BaseModel):
@@ -269,10 +264,8 @@ class ResidentComplianceSummary(BaseModel):
     has_violations: bool
     violations: list[ViolationDetail] = Field(default_factory=list)
 
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "resident_id": "123e4567-e89b-12d3-a456-426614174000",
                 "resident_name": "Dr. Jane Smith",
@@ -287,6 +280,7 @@ class ResidentComplianceSummary(BaseModel):
                 "violations": [],
             }
         }
+    )
 
 
 class ScheduledReportConfig(BaseModel):
@@ -314,10 +308,8 @@ class ScheduledReportConfig(BaseModel):
     )
     enabled: bool = Field(default=True, description="Whether schedule is active")
 
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "report_name": "Weekly PGY-1 Compliance Report",
                 "schedule_cron": "0 8 * * 1",
@@ -330,3 +322,4 @@ class ScheduledReportConfig(BaseModel):
                 "enabled": True,
             }
         }
+    )

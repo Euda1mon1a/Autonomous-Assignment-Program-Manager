@@ -143,8 +143,7 @@ class ConflictAlertResponse(BaseModel):
     resolved_by_id: UUID | None = Field(None, description="ID of resolver")
     resolution_notes: str | None = Field(None, description="Resolution notes")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ConflictGroup(BaseModel):

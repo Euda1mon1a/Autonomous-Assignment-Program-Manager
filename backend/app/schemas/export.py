@@ -159,8 +159,7 @@ class ExportJobResponse(ExportJobBase):
     updated_at: datetime
     created_by: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ExportJobListResponse(BaseModel):
@@ -207,8 +206,7 @@ class ExportJobExecutionResponse(BaseModel):
     triggered_by: str | None = None
     execution_metadata: dict[str, Any] | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ExportJobExecutionListResponse(BaseModel):
@@ -283,5 +281,4 @@ class ExportJobStatsResponse(BaseModel):
     total_rows_exported: int | None = Field(None, alias="totalRowsExported")
     total_bytes_exported: int | None = Field(None, alias="totalBytesExported")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)

@@ -65,8 +65,7 @@ class APIKeyResponse(BaseModel):
         None, description="Full API key (only shown once on creation)"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class APIKeyUpdate(BaseModel):
@@ -135,8 +134,7 @@ class OAuth2ClientResponse(BaseModel):
         None, description="Client secret (only shown once on creation)"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OAuth2ClientUpdate(BaseModel):
@@ -199,8 +197,7 @@ class IPWhitelistResponse(BaseModel):
     expires_at: datetime | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IPBlacklistCreate(BaseModel):
@@ -249,8 +246,7 @@ class IPBlacklistResponse(BaseModel):
     last_hit_at: datetime | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RequestSignatureVerifyRequest(BaseModel):
