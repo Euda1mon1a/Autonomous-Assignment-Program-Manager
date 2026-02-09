@@ -49,7 +49,7 @@ echo "Running PII/OPSEC/PERSEC scan..."
 echo -n "Checking for SSN patterns... "
 SSNS=$(grep -rn --include="*.py" --include="*.ts" --include="*.tsx" --include="*.json" \
   -E '\b\d{3}-\d{2}-\d{4}\b' \
-  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
+  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv --exclude-dir=.venv \
   --exclude-dir=__pycache__ --exclude-dir=htmlcov \
   --exclude-dir=tests --exclude-dir=__tests__ \
   . 2>/dev/null || true)
@@ -67,7 +67,7 @@ fi
 echo -n "Checking for .mil email addresses... "
 MIL=$(grep -rn --include="*.py" --include="*.ts" --include="*.json" \
   -E '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.mil\b' \
-  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
+  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv --exclude-dir=.venv \
   --exclude-dir=__pycache__ \
   . 2>/dev/null | \
   grep -viE '(example|test|fake|dummy|sample|hospital\.mil|@test\.mil|noreply)' || true)
@@ -116,7 +116,7 @@ fi
 echo -n "Checking for hardcoded API keys... "
 API_KEYS=$(grep -rn --include="*.py" --include="*.ts" --include="*.tsx" \
   -E '(api_key|apikey|API_KEY)\s*=\s*["\x27][a-zA-Z0-9_-]{20,}["\x27]' \
-  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
+  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv --exclude-dir=.venv \
   --exclude-dir=__pycache__ --exclude-dir=tests --exclude-dir=__tests__ \
   --exclude-dir=docs \
   backend/ frontend/src/ 2>/dev/null || true)
@@ -134,7 +134,7 @@ fi
 echo -n "Checking for raw SQL queries... "
 RAW_SQL=$(grep -rn --include="*.py" \
   -E '(execute\(|text\(|raw_connection|\.raw\().*SELECT|INSERT|UPDATE|DELETE' \
-  --exclude-dir=venv --exclude-dir=__pycache__ \
+  --exclude-dir=venv --exclude-dir=.venv --exclude-dir=__pycache__ \
   --exclude-dir=tests --exclude-dir=alembic \
   backend/app/ 2>/dev/null || true)
 
@@ -151,7 +151,7 @@ fi
 echo -n "Checking for sensitive data in logs... "
 LOG_SENSITIVE=$(grep -rn --include="*.py" \
   -iE 'log(ger)?\.(info|debug|warning|error).*\b(password|ssn|token|secret|credential|api_key)\b' \
-  --exclude-dir=venv --exclude-dir=__pycache__ \
+  --exclude-dir=venv --exclude-dir=.venv --exclude-dir=__pycache__ \
   --exclude-dir=tests \
   backend/app/ 2>/dev/null || true)
 
@@ -168,7 +168,7 @@ fi
 echo -n "Checking for hardcoded secrets... "
 SECRETS=$(grep -rn --include="*.py" --include="*.ts" \
   -E '(password|secret|token)\s*=\s*["\x27][^"\x27]{8,}["\x27]' \
-  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv \
+  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=venv --exclude-dir=.venv \
   --exclude-dir=__pycache__ --exclude-dir=tests --exclude-dir=__tests__ \
   --exclude-dir=docs --exclude-dir=.claude \
   backend/app/ frontend/src/ 2>/dev/null | \
