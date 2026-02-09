@@ -210,8 +210,8 @@ export function GenerateScheduleDialog({
                     {result.validation.totalViolations} violation(s) found
                   </p>
                   <div className="max-h-32 overflow-y-auto space-y-1">
-                    {result.validation.violations?.slice(0, 5).map((v, i) => (
-                      <p key={i} className="text-xs text-gray-600">
+                    {result.validation.violations?.slice(0, 5).map((v) => (
+                      <p key={v.message} className="text-xs text-gray-600">
                         • {v.message}
                       </p>
                     ))}

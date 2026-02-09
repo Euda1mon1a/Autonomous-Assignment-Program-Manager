@@ -507,8 +507,8 @@ export default function ScheduleDraftReviewPage() {
           {preview?.acgmeViolations && preview.acgmeViolations.length > 0 && (
             <Alert variant="warning" title="ACGME Compliance Warnings">
               <ul className="list-disc list-inside text-sm space-y-1 mt-2">
-                {preview.acgmeViolations.map((violation, i) => (
-                  <li key={i}>{violation}</li>
+                {preview.acgmeViolations.map((violation) => (
+                  <li key={violation}>{violation}</li>
                 ))}
               </ul>
             </Alert>
