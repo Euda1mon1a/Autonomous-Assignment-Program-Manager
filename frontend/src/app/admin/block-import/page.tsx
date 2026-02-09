@@ -373,8 +373,8 @@ export default function BlockImportPage() {
                 <AlertOctagon className="w-5 h-5 inline mr-2" />
                 <span className="font-medium">ACGME Violations Detected:</span>
                 <ul className="list-disc list-inside mt-2 text-sm">
-                  {preview.acgmeViolations.map((v, i) => (
-                    <li key={i}>{v}</li>
+                  {preview.acgmeViolations.map((v) => (
+                    <li key={v}>{v}</li>
                   ))}
                 </ul>
               </Alert>

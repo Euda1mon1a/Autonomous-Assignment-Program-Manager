@@ -197,8 +197,8 @@ export default function BatchReviewPage() {
                 ACGME Compliance Warnings
               </h3>
               <ul className="mt-2 space-y-1">
-                {preview.acgmeViolations.map((v, i) => (
-                  <li key={i} className="text-red-300 text-sm">
+                {preview.acgmeViolations.map((v) => (
+                  <li key={v} className="text-red-300 text-sm">
                     • {v}
                   </li>
                 ))}

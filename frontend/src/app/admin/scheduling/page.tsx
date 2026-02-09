@@ -677,8 +677,8 @@ function ConfigurationPanel({
               </div>
               {(validationResult.violations?.length ?? 0) > 0 && (
                 <ul className="text-sm text-slate-300 space-y-1">
-                  {validationResult.violations?.slice(0, 3).map((v, i) => (
-                    <li key={i} className="flex items-start gap-2">
+                  {validationResult.violations?.slice(0, 3).map((v) => (
+                    <li key={v.message} className="flex items-start gap-2">
                       <span className="text-amber-400">•</span>
                       {v.message}
                     </li>
@@ -1756,8 +1756,8 @@ function ConfirmationModal({
 
         {warnings.length > 0 && (
           <div className="bg-slate-900/50 rounded-lg p-3 mb-4 space-y-2">
-            {warnings.map((warning, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm">
+            {warnings.map((warning) => (
+              <div key={warning.message} className="flex items-start gap-2 text-sm">
                 <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                 <span className="text-slate-300">{warning.message}</span>
               </div>

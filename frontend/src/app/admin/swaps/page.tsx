@@ -102,14 +102,14 @@ function ValidationWarnings({
           {result.valid ? 'Validation Passed' : 'Validation Issues'}
         </span>
       </div>
-      {result.errors?.map((error, i) => (
-        <div key={i} className="flex items-start gap-2 text-sm text-red-400 mt-1">
+      {result.errors?.map((error) => (
+        <div key={error} className="flex items-start gap-2 text-sm text-red-400 mt-1">
           <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           {error}
         </div>
       ))}
-      {result.warnings?.map((warning, i) => (
-        <div key={i} className="flex items-start gap-2 text-sm text-amber-400 mt-1">
+      {result.warnings?.map((warning) => (
+        <div key={warning} className="flex items-start gap-2 text-sm text-amber-400 mt-1">
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           {warning}
         </div>
