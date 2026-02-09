@@ -12,8 +12,8 @@ Work on the first unchecked task (`- [ ]`). After completing it, change it to `-
 
 ## Phase 2: Test Coverage
 - [x] List files in backend/app/services/ that have NO corresponding test file in tests/services/. Pick the first one and write basic tests (happy path + error case). Commit.
-- [ ] Continue writing tests for the next untested service file. Commit.
-- [ ] Continue writing tests for the next untested service file. Commit.
+- [x] Continue writing tests for the next untested service file. Commit.
+- [!] Continue writing tests for the next untested service file. Commit. (BLOCKED: absence_overlap_service requires async refactoring - tests partially written but failing due to sync/async fixture mismatch)
 - [ ] List files in backend/app/api/routes/ that have NO corresponding test file in tests/api/. Pick the first one and write basic route tests. Commit.
 - [ ] Continue writing tests for the next untested route file. Commit.
 - [ ] Continue writing tests for the next untested route file. Commit.
