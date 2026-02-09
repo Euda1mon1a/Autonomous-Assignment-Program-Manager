@@ -106,14 +106,27 @@ export function Dropdown({
   return (
     <div ref={dropdownRef} className={`relative inline-block ${className}`}>
       {/* Trigger */}
-      <div
+      <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+          }
+          if (e.key === 'ArrowDown' && !isOpen) {
+            e.preventDefault();
+            setIsOpen(true);
+            setFocusedIndex(0);
+          }
+        }}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-controls={isOpen ? menuId : undefined}
+        className="appearance-none bg-transparent border-0 p-0 m-0 cursor-pointer"
       >
         {trigger}
-      </div>
+      </button>
 
       {/* Menu */}
       {isOpen && (
