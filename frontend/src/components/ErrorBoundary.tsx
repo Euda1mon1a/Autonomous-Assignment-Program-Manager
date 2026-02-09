@@ -294,7 +294,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     // Exponential backoff: 1s, 2s, 4s, 8s...
     const delay = Math.min(1000 * Math.pow(2, retryCount), 8000);
 
-    console.log(`Auto-retry in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
 
     this.retryTimeoutId = setTimeout(() => {
       this.handleReset();

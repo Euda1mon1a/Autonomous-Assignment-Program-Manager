@@ -308,19 +308,16 @@ export const useClaudeChat = () => {
       wsUrl.searchParams.set('session_id', sessionId);
     }
 
-    console.log('[useClaudeChat] Connecting to WebSocket:', wsUrl.toString().replace(token, '***'));
 
     const ws = new WebSocket(wsUrl.toString());
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('[useClaudeChat] WebSocket connected');
       setConnectionState('connected');
       setError(null);
     };
 
     ws.onclose = (event) => {
-      console.log('[useClaudeChat] WebSocket closed:', event.code, event.reason);
       setConnectionState('disconnected');
       wsRef.current = null;
 
@@ -357,7 +354,6 @@ export const useClaudeChat = () => {
   const handleWsMessage = useCallback((data: WsMessage) => {
     switch (data.type) {
       case 'connected':
-        console.log('[useClaudeChat] Session connected:', data.session_id);
         // Update session ID if we got a new one from server
         setSession(prev => prev ? { ...prev, id: data.session_id } : prev);
         break;
@@ -380,13 +376,11 @@ export const useClaudeChat = () => {
       case 'tool_call_start':
       case 'tool_call': {
         // Tool being executed - could add to UI
-        console.log('[useClaudeChat] Tool call:', data.name, data.input);
         break;
       }
 
       case 'tool_result': {
         // Tool result - surface to UI as artifact and notify callback
-        console.log('[useClaudeChat] Tool result:', data.id, data.result);
 
         // Extract tool name from result if available, otherwise use generic title
         const resultData = data.result || {};
@@ -443,7 +437,6 @@ export const useClaudeChat = () => {
         }
         currentAssistantMessageIdRef.current = null;
         setIsLoading(false);
-        console.log('[useClaudeChat] Complete:', data.usage);
         break;
       }
 
@@ -461,7 +454,6 @@ export const useClaudeChat = () => {
         }
         currentAssistantMessageIdRef.current = null;
         setIsLoading(false);
-        console.log('[useClaudeChat] Interrupted:', data.message);
         break;
       }
 
@@ -486,7 +478,6 @@ export const useClaudeChat = () => {
 
       case 'history': {
         // Session history received
-        console.log('[useClaudeChat] History received:', data.messages.length, 'messages');
         break;
       }
     }
@@ -563,7 +554,6 @@ export const useClaudeChat = () => {
 
       // Ensure WebSocket is connected
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        console.log('[useClaudeChat] Connecting before send...');
         connect(session.id);
         // Wait a bit for connection
         await new Promise(resolve => setTimeout(resolve, 1000));

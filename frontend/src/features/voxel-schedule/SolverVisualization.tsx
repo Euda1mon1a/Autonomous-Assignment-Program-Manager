@@ -322,8 +322,8 @@ export const SolverVisualization: React.FC<SolverVisualizationProps> = ({
       // Trigger animation when delta arrives
       applyDelta(delta, personIndex, blockIndex, templateToLayer);
     },
-    onComplete: (event) => {
-      console.log('Solver complete:', event.status);
+    onComplete: (_event) => {
+      // Solver finished — voxels reflect final state
     },
   });
 
