@@ -9,10 +9,13 @@ Endpoints for ML model management and predictions:
 - Analyze workload
 """
 
+import logging
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, status
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
@@ -214,6 +217,7 @@ async def train_models(
                         )
 
             except Exception as e:
+                logger.exception("ML training failed for model %s", model_type)
                 results[model_type] = TrainingResultResponse(
                     model_name=model_type,
                     status="failed",
@@ -230,6 +234,7 @@ async def train_models(
         )
 
     except Exception as e:
+        logger.exception("Training failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Training failed: {str(e)}",
@@ -265,6 +270,7 @@ async def train_models_async(
         }
 
     except Exception as e:
+        logger.exception("Failed to start async training task")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to start training task: {str(e)}",
@@ -385,6 +391,7 @@ async def score_schedule(
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception("Schedule scoring failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Scoring failed: {str(e)}",
@@ -462,6 +469,7 @@ async def predict_conflict(
         )
 
     except Exception as e:
+        logger.exception("Conflict prediction failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Prediction failed: {str(e)}",
@@ -525,6 +533,7 @@ async def predict_preference(
         )
 
     except Exception as e:
+        logger.exception("Preference prediction failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Prediction failed: {str(e)}",
@@ -605,6 +614,7 @@ async def analyze_workload(
         )
 
     except Exception as e:
+        logger.exception("Workload analysis failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Analysis failed: {str(e)}",

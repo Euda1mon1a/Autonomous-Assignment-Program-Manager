@@ -6,8 +6,8 @@
  */
 import { http, HttpResponse } from 'msw'
 
-// Base URL for API requests
-const API_BASE_URL = 'http://localhost:8000/api'
+// Base URL for API requests - use env var for consistency with production config
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000') + '/api'
 
 // ============================================================================
 // Mock Data

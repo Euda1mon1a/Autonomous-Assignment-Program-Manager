@@ -367,7 +367,8 @@ function getWebSocketUrl(apiUrl?: string): string {
 
   // Handle relative URLs (e.g., "/api/v1") - these need absolute backend URL
   if (baseUrl.startsWith('/')) {
-    baseUrl = `http://localhost:8000${baseUrl}`
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    baseUrl = `${backendUrl.replace(/\/$/, '')}${baseUrl}`
   }
 
   // Ensure /api/v1 is in the path (backend mounts WS at /api/v1/ws)
