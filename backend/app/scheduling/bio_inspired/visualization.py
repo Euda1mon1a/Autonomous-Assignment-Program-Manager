@@ -402,6 +402,7 @@ class EvolutionTracker:
             self._pca_basis = Vt[:2].T  # Shape: (n_features, 2)
             self._pca_mean = mean
         except Exception:
+            logger.debug("PCA initialization failed, using fallback projection")
             self._pca_basis = None
 
     def _project_to_2d(self, chromosome: Chromosome) -> tuple[float, float]:
@@ -571,7 +572,7 @@ class FitnessLandscapeVisualizer:
             x_2d = X_centered @ Vt[0]
             y_2d = X_centered @ Vt[1]
         except Exception:
-            # Fallback
+            logger.debug("SVD projection failed, using summary-stat fallback")
             x_2d = np.mean(X, axis=1)
             y_2d = np.std(X, axis=1)
 
