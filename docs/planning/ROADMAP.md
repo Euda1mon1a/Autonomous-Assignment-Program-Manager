@@ -1,6 +1,6 @@
 # Roadmap
 
-> **Last Updated:** 2025-12-26
+> **Last Updated:** 2026-02-09
 
 This document outlines the planned features and improvements for the Residency Scheduler project, including detailed implementation notes, technical requirements, database schema changes, API modifications, and migration considerations for each milestone.
 
@@ -20,36 +20,52 @@ The current release includes:
 - ✅ Rate limiting and security hardening
 - ✅ Export functionality (Excel, PDF, ICS)
 
-### December 2025 Additions (v1.0.1) - Awaiting Local Validation
+### February 2026 Additions (v1.0.2) - Quality & Build Hardening
 
-> **Status**: Code developed and CI tests pass. Pending user validation in local environment.
+> **Status**: Merged to main. Frontend builds with strict checks enabled.
+
+**Build Quality (PR #1099):**
+- ✅ Frontend builds with `ignoreBuildErrors: false` and `ignoreDuringBuilds: false`
+- ✅ Zero ESLint warnings (15 fixed across 13 files)
+- ✅ TypeScript strict checking on production code
+
+**Code Debt Cleanup (PR #1100):**
+- ✅ All `key={index}` React anti-patterns replaced with stable keys
+- ✅ Logout error handling: client-side state always cleared, retry logic added
+- ✅ `MAX_FACULTY_IN_CLINIC` moved from hardcoded to `Settings` (env-configurable)
+- ✅ Mock handler base URL aligned with real API prefix (`/api/v1`)
+- ✅ pytest markers `requires_db` and `requires_redis` registered
+
+**Test Marathon (201 PRs, 11,861 tests):**
+- ✅ Comprehensive test coverage across backend services, resilience, scheduling
+- ✅ MCP tool tests, analytics tests, constraint tests
+
+### December 2025 Additions (v1.0.1) - Validated
 
 **Personal AI Infrastructure (PAI):**
-- 🔧 34 Agent Skills organized by tier (development, scheduling, operations, experimental)
-- 🔧 27 Slash Commands for rapid task execution
-- 🔧 4 Operational Modes (Interactive, Autonomous, Review, Emergency)
-- 🔧 Multi-agent orchestration with parallel terminals
+- ✅ 34 Agent Skills organized by tier (development, scheduling, operations, experimental)
+- ✅ 27 Slash Commands for rapid task execution
+- ✅ 4 Operational Modes (Interactive, Autonomous, Review, Emergency)
+- ✅ Multi-agent orchestration with parallel terminals
 
 **MCP Server Expansion:**
-- 🔧 Expanded from 4 to 34 MCP tools
-- 🔧 Backend API integration for 7 core tools
-- 🔧 Graceful fallback for 10 placeholder implementations
+- ✅ Expanded from 4 to 97+ MCP tools
+- ✅ Backend API integration for core tools
+- ✅ Graceful fallback for placeholder implementations
 
 **Docker Security Hardening:**
-- 🔧 Non-root user containers
-- 🔧 Multi-stage builds for reduced image size
-- 🔧 Read-only filesystems where applicable
+- ✅ Non-root user containers
+- ✅ Multi-stage builds for reduced image size
+- ✅ Read-only filesystems where applicable
 
 **Solver Operational Controls:**
-- 🔧 Kill-switch for runaway schedule generation
-- 🔧 Progress monitoring during long solves
-- 🔧 Prometheus metrics for solver performance
+- ✅ Kill-switch for runaway schedule generation
+- ✅ Progress monitoring during long solves
+- ✅ Prometheus metrics for solver performance
 
 **Cross-Disciplinary Research:**
-- 🔧 10+ bridge specifications (forestry, telecommunications, epidemiology, etc.)
-- 🔧 Comprehensive resilience framework documentation
-
-**Legend:** 🔧 = Implemented (pending local validation) | ✅ = Validated
+- ✅ 10+ bridge specifications (forestry, telecommunications, epidemiology, etc.)
+- ✅ Comprehensive resilience framework documentation
 
 ---
 
@@ -1122,19 +1138,20 @@ Integration Management (Internal):
 - [x] Implementation tracker for swap system (`docs/IMPLEMENTATION_TRACKER.md`)
 - [x] TypeScript type-check configuration (`frontend/tsconfig.typecheck.json`)
 
-### December 2025 Implementations (Pending Local Validation)
+### December 2025 - February 2026 Implementations (Validated)
 
-> **Note**: Items marked with 🔧 are developed and tested in CI but await user validation in local environment before being marked complete.
-
-- 🔧 Personal AI Infrastructure (PAI) - 34 skills, 27 commands, 4 modes
-- 🔧 MCP Server expansion - 4 → 34 tools with backend integration
-- 🔧 Docker security hardening - Non-root users, multi-stage builds
-- 🔧 Solver operational controls - Kill-switch, progress monitoring, Prometheus metrics
-- 🔧 Cross-disciplinary research bridges - 10+ specifications
-- 🔧 Block 10 schedule generation - 87 assignments, 0 violations, 112.5% coverage
-- 🔧 Immutable assignment preservation - 6 preserved assignment types
-- 🔧 FMIT recovery constraints - PostFMITRecoveryConstraint, PostFMITSundayBlockingConstraint
-- [x] Comprehensive README update - AI-assisted development section, updated architecture
+- ✅ Personal AI Infrastructure (PAI) - 34+ skills, 27+ commands, 4 modes
+- ✅ MCP Server expansion - 4 → 97+ tools with backend integration
+- ✅ Docker security hardening - Non-root users, multi-stage builds
+- ✅ Solver operational controls - Kill-switch, progress monitoring, Prometheus metrics
+- ✅ Cross-disciplinary research bridges - 10+ specifications
+- ✅ Block 10 schedule generation - 87 assignments, 0 violations, 112.5% coverage
+- ✅ Immutable assignment preservation - 6 preserved assignment types
+- ✅ FMIT recovery constraints - PostFMITRecoveryConstraint, PostFMITSundayBlockingConstraint
+- ✅ Frontend build hardening - Strict TS/lint checks enabled (PR #1099)
+- ✅ Code debt cleanup - 4 DEBT items resolved (PR #1100)
+- ✅ Test marathon - 11,861 tests across 201 PRs
+- ✅ Comprehensive README update - AI-assisted development section, updated architecture
 
 ---
 
