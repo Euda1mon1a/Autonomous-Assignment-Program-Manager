@@ -497,15 +497,16 @@ class TestLogoutEndpoint:
 class TestRefreshEndpoint:
     """Test token refresh endpoint."""
 
-    def test_refresh_token_endpoint(self):
+    @pytest.mark.requires_db
+    def test_refresh_token_endpoint(self, client: TestClient):
         """Token refresh endpoint exists and works."""
-        # This would test the /api/auth/refresh endpoint
-        pytest.skip("Refresh endpoint tests require full integration")
+        pytest.skip("Refresh endpoint tests require full integration setup")
 
 
 class TestRateLimiting:
     """Test rate limiting on auth endpoints."""
 
+    @pytest.mark.requires_db
     def test_login_rate_limit(self, client: TestClient):
         """Login endpoint has rate limiting."""
         # Make many failed login attempts
@@ -537,10 +538,34 @@ class TestPasswordSecurity:
         assert len(hashed) > 20
 
     def test_password_complexity_requirements(self):
-        """Password must meet complexity requirements."""
-        # This would test:
-        # - Minimum length (12 characters)
-        # - Uppercase + lowercase
-        # - Numbers
-        # - Special characters
-        pytest.skip("Password complexity rules tested at endpoint level")
+        """Password must meet complexity requirements via Pydantic schema."""
+        from pydantic import ValidationError
+
+        from app.schemas.auth import UserCreate
+
+        # Too short
+        with pytest.raises(ValidationError, match="12 characters"):
+            UserCreate(
+                username="testuser",
+                email="test@test.org",
+                password="Short1!",
+                role="resident",
+            )
+
+        # Insufficient complexity (only lowercase letters)
+        with pytest.raises(ValidationError, match="3 of"):
+            UserCreate(
+                username="testuser",
+                email="test@test.org",
+                password="onlylowercaseletters",
+                role="resident",
+            )
+
+        # Strong password passes
+        user = UserCreate(
+            username="testuser",
+            email="test@test.org",
+            password="Str0ngP@ssw0rd!",
+            role="resident",
+        )
+        assert user.password == "Str0ngP@ssw0rd!"

@@ -119,8 +119,6 @@ class TestAdminUserActivityLogging:
     ):
         """Test that creating a user logs the activity."""
         # Skip if no auth headers (auth may not be set up in test)
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         response = client.post(
             "/api/admin/users",
@@ -283,8 +281,6 @@ class TestActivityLogQuery:
         self, client: TestClient, db: Session, admin_user: User, auth_headers: dict
     ):
         """Test that field-level changes are surfaced in activity log response."""
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         log_entry = ActivityLog.create_entry(
             action_type=ActivityActionType.USER_UPDATED,

@@ -11,8 +11,13 @@ from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 
-# BlockMarkdownService class not implemented - module has functions instead
-pytest.skip("BlockMarkdownService class not implemented", allow_module_level=True)
+# BlockMarkdownService class does not exist. The block_markdown module provides
+# standalone functions (generate_block_markdown) rather than a service class.
+# These tests target a hypothetical BlockMarkdownService and cannot run.
+pytest.skip(
+    "BlockMarkdownService class not implemented (module uses standalone functions)",
+    allow_module_level=True,
+)
 
 
 class TestBlockMarkdownService:

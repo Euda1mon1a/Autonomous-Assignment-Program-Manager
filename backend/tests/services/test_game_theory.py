@@ -12,7 +12,12 @@ from sqlalchemy.orm import Session
 from app.models.person import Person
 from app.services.game_theory import GameTheoryService, AXELROD_AVAILABLE
 
+requires_axelrod = pytest.mark.skipif(
+    not AXELROD_AVAILABLE, reason="Axelrod library not installed"
+)
 
+
+@pytest.mark.requires_db
 class TestGameTheoryService:
     """Test suite for game theory service."""
 
@@ -173,7 +178,7 @@ class TestGameTheoryService:
         assert isinstance(tournaments, list)
         assert len(tournaments) >= 2
 
-    @pytest.mark.skipif(not AXELROD_AVAILABLE, reason="Axelrod library not installed")
+    @requires_axelrod
     def test_run_tournament(self, gt_service: GameTheoryService):
         """Test running a tournament (requires axelrod)."""
         strategy1 = gt_service.create_strategy(
@@ -248,7 +253,7 @@ class TestGameTheoryService:
     # Validation Tests
     # =========================================================================
 
-    @pytest.mark.skipif(not AXELROD_AVAILABLE, reason="Axelrod library not installed")
+    @requires_axelrod
     def test_validate_strategy(self, gt_service: GameTheoryService):
         """Test validating a strategy against TFT (requires axelrod)."""
         strategy = gt_service.create_strategy(
@@ -267,7 +272,7 @@ class TestGameTheoryService:
     # Analysis Tests
     # =========================================================================
 
-    @pytest.mark.skipif(not AXELROD_AVAILABLE, reason="Axelrod library not installed")
+    @requires_axelrod
     def test_analyze_current_config(self, gt_service: GameTheoryService):
         """Test analyzing current resilience configuration (requires axelrod)."""
         result = gt_service.analyze_current_config(
@@ -284,7 +289,7 @@ class TestGameTheoryService:
         assert "recommendation" in result
         assert "strategy_classification" in result
 
-    @pytest.mark.skipif(not AXELROD_AVAILABLE, reason="Axelrod library not installed")
+    @requires_axelrod
     def test_analyze_config_aggressive(self, gt_service: GameTheoryService):
         """Test analyzing an aggressive configuration (requires axelrod)."""
         result = gt_service.analyze_current_config(
@@ -295,7 +300,7 @@ class TestGameTheoryService:
         assert result is not None
         assert result["strategy_classification"] == "aggressive"
 
-    @pytest.mark.skipif(not AXELROD_AVAILABLE, reason="Axelrod library not installed")
+    @requires_axelrod
     def test_analyze_config_cooperative(self, gt_service: GameTheoryService):
         """Test analyzing a cooperative configuration (requires axelrod)."""
         result = gt_service.analyze_current_config(
@@ -307,6 +312,7 @@ class TestGameTheoryService:
         assert result["strategy_classification"] == "cooperative"
 
 
+@pytest.mark.requires_db
 class TestGameTheoryServiceEdgeCases:
     """Edge case tests for GameTheoryService."""
 
@@ -330,13 +336,13 @@ class TestGameTheoryServiceEdgeCases:
         result = gt_service.get_evolution(uuid4())
         assert result is None
 
-    @pytest.mark.skipif(not AXELROD_AVAILABLE, reason="Axelrod library not installed")
+    @requires_axelrod
     def test_run_tournament_not_found(self, gt_service: GameTheoryService):
         """Test running a tournament that doesn't exist (requires axelrod)."""
         with pytest.raises(ValueError, match="not found"):
             gt_service.run_tournament(uuid4())
 
-    @pytest.mark.skipif(not AXELROD_AVAILABLE, reason="Axelrod library not installed")
+    @requires_axelrod
     def test_validate_strategy_not_found(self, gt_service: GameTheoryService):
         """Test validating a strategy that doesn't exist (requires axelrod)."""
         with pytest.raises(ValueError, match="not found"):
@@ -412,6 +418,7 @@ class TestGameTheoryServiceEdgeCases:
         assert strategy.id not in inactive_ids or not active_strategies
 
 
+@pytest.mark.requires_db
 class TestGameTheoryWithoutAxelrod:
     """Tests that work even without axelrod library."""
 
