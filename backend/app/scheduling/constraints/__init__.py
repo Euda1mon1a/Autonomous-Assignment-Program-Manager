@@ -89,7 +89,6 @@ from .faculty import PreferenceConstraint
 from .faculty_clinic import (
     FacultyClinicCapConstraint,
     FacultySupervisionConstraint,
-    FACULTY_CLINIC_CAPS,
 )
 
 # Faculty role-based constraints
@@ -215,7 +214,6 @@ __all__ = [
     # Faculty clinic and AT constraints (Session 136)
     "FacultyClinicCapConstraint",
     "FacultySupervisionConstraint",
-    "FACULTY_CLINIC_CAPS",
     # Faculty role constraints
     "FacultyRoleClinicConstraint",
     "SMFacultyClinicConstraint",

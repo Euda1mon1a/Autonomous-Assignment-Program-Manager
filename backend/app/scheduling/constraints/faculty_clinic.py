@@ -31,29 +31,7 @@ from .base import (
 logger = logging.getLogger(__name__)
 
 
-# Faculty clinic caps (MIN, MAX per week)
-# From TAMC scheduling requirements (skill doc: tamc-cpsat-constraints)
-# C = Faculty seeing OWN patients (has caps)
-# AT = Faculty supervising residents (no cap - unlimited)
-FACULTY_CLINIC_CAPS: dict[str, tuple[int, int]] = {
-    # Core faculty with clinic responsibilities
-    "Kinkennon": (0, 4),  # MIN 0, MAX 4 per week (min set to 0 to preserve AT)
-    "LaBounty": (0, 4),
-    "McRae": (0, 4),
-    "Montgomery": (0, 2),  # Fixed max 2 per week
-    "McGuire": (0, 1),  # DFM focus, minimal clinic
-    # Sports Med and specialty faculty (no FM clinic)
-    "Tagawa": (0, 0),  # SM only
-    # FMIT-focused faculty (no outpatient clinic)
-    "Bevis": (0, 0),
-    "Dahl": (0, 2),
-    "Chu": (0, 4),
-    "Napierala": (0, 0),
-    "Van Brunt": (0, 0),
-    "Colgan": (0, 0),  # Deployed
-}
-
-# Default caps for faculty not in the list
+# Default clinic caps when DB values are not set
 DEFAULT_CLINIC_CAPS = (0, 4)  # MIN 0, MAX 4
 
 
@@ -78,22 +56,18 @@ class FacultyClinicCapConstraint(SoftConstraint):
         )
 
     def _get_caps(self, faculty) -> tuple[int, int]:
-        """Get (MIN, MAX) clinic caps from faculty DB fields or fallback to hardcoded dict."""
-        # Prefer model-mapped columns from Person ORM
+        """Get (MIN, MAX) clinic caps from faculty DB fields, falling back to defaults."""
         db_min = getattr(faculty, "min_clinic_halfdays_per_week", None)
         db_max = getattr(faculty, "max_clinic_halfdays_per_week", None)
         if db_min is not None and db_max is not None:
             return (db_min, db_max)
-
-        # Fallback: hardcoded dict by last name
-        faculty_name = getattr(faculty, "name", "")
-        if "," in faculty_name:
-            last_name = faculty_name.split(",")[0].strip()
-        else:
-            parts = faculty_name.split()
-            last_name = parts[-1] if parts else faculty_name
-
-        return FACULTY_CLINIC_CAPS.get(last_name, DEFAULT_CLINIC_CAPS)
+        faculty_name = getattr(faculty, "name", "Unknown")
+        logger.warning(
+            "Faculty %s missing clinic cap DB values, using defaults %s",
+            faculty_name,
+            DEFAULT_CLINIC_CAPS,
+        )
+        return DEFAULT_CLINIC_CAPS
 
     def _get_week_dates(
         self, start_date: date, end_date: date

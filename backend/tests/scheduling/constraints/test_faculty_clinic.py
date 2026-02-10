@@ -10,7 +10,7 @@ from uuid import uuid4
 import pytest
 
 from app.scheduling.constraints.faculty_clinic import (
-    FACULTY_CLINIC_CAPS,
+    DEFAULT_CLINIC_CAPS,
     FacultyClinicCapConstraint,
     FacultySupervisionConstraint,
 )
@@ -23,11 +23,15 @@ from app.scheduling.constraints.base import (
 class MockPerson:
     """Mock Person object for testing."""
 
-    def __init__(self, name: str, person_type: str = "faculty", pgy_level: int = 2):
+    def __init__(
+        self, name: str, person_type: str = "faculty", pgy_level: int = 2, **kwargs
+    ):
         self.id = uuid4()
         self.name = name
         self.type = person_type
         self.pgy_level = pgy_level
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
 
 class MockAssignment:
@@ -50,34 +54,6 @@ class MockAssignment:
         self.pgy_level = pgy_level
 
 
-class TestFacultyClinicCaps:
-    """Tests for FACULTY_CLINIC_CAPS configuration."""
-
-    def test_clinic_caps_defined(self):
-        """Verify clinic caps are defined for core faculty."""
-        assert "Montgomery" in FACULTY_CLINIC_CAPS
-        assert "Kinkennon" in FACULTY_CLINIC_CAPS
-        assert "Tagawa" in FACULTY_CLINIC_CAPS
-
-    def test_montgomery_caps(self):
-        """Montgomery should have fixed 2 clinic per week."""
-        min_c, max_c = FACULTY_CLINIC_CAPS["Montgomery"]
-        assert min_c == 2
-        assert max_c == 2
-
-    def test_tagawa_no_clinic(self):
-        """Tagawa (SM) should have no FM clinic."""
-        min_c, max_c = FACULTY_CLINIC_CAPS["Tagawa"]
-        assert min_c == 0
-        assert max_c == 0
-
-    def test_kinkennon_flexible_caps(self):
-        """Kinkennon should have 2-4 clinic per week."""
-        min_c, max_c = FACULTY_CLINIC_CAPS["Kinkennon"]
-        assert min_c == 2
-        assert max_c == 4
-
-
 class TestFacultyClinicCapConstraint:
     """Tests for FacultyClinicCapConstraint."""
 
@@ -91,7 +67,13 @@ class TestFacultyClinicCapConstraint:
         """Create minimal scheduling context."""
         return SchedulingContext(
             residents=[],
-            faculty=[MockPerson("Aaron Montgomery")],
+            faculty=[
+                MockPerson(
+                    "Dr. Test",
+                    min_clinic_halfdays_per_week=0,
+                    max_clinic_halfdays_per_week=2,
+                )
+            ],
             blocks=[],
             templates=[],
             start_date=date(2026, 3, 12),
@@ -106,21 +88,19 @@ class TestFacultyClinicCapConstraint:
         """Constraint should have correct name."""
         assert constraint.name == "FacultyClinicCap"
 
-    def test_get_caps_last_name_extraction(self, constraint):
-        """Should extract last name and get caps."""
-        min_c, max_c = constraint._get_caps("Aaron Montgomery")
+    def test_get_caps_from_db_columns(self, constraint):
+        """Should read caps from DB columns."""
+        person = MockPerson(
+            "Dr. Test", min_clinic_halfdays_per_week=2, max_clinic_halfdays_per_week=2
+        )
+        min_c, max_c = constraint._get_caps(person)
         assert min_c == 2
         assert max_c == 2
 
-    def test_get_caps_comma_format(self, constraint):
-        """Should handle 'Last, First' format."""
-        min_c, max_c = constraint._get_caps("Montgomery, Aaron")
-        assert min_c == 2
-        assert max_c == 2
-
-    def test_get_caps_unknown_faculty(self, constraint):
-        """Unknown faculty should get default caps."""
-        min_c, max_c = constraint._get_caps("Unknown Faculty")
+    def test_get_caps_no_db_values(self, constraint):
+        """Faculty without DB values should get default caps."""
+        person = MockPerson("Dr. Unknown")
+        min_c, max_c = constraint._get_caps(person)
         assert min_c == 0
         assert max_c == 4
 
@@ -137,7 +117,7 @@ class TestFacultyClinicCapConstraint:
             MockAssignment(faculty.id, date(2026, 3, 12), "PM", "fm_clinic"),
         ]
         result = constraint.validate(assignments, context)
-        # Montgomery has max 2, this is exactly 2
+        # Faculty has max 2, this is exactly 2
         assert result.satisfied
 
     def test_validate_exceeds_max(self, constraint, context):
@@ -149,7 +129,7 @@ class TestFacultyClinicCapConstraint:
             MockAssignment(faculty.id, date(2026, 3, 13), "AM", "fm_clinic"),
         ]
         result = constraint.validate(assignments, context)
-        # Montgomery has max 2, this is 3 = violation
+        # Faculty has max 2, this is 3 = violation
         assert not result.satisfied
         assert len(result.violations) > 0
         assert result.violations[0].severity == "HIGH"
@@ -281,9 +261,7 @@ class TestIntegration:
         from app.scheduling.constraints import (
             FacultyClinicCapConstraint,
             FacultySupervisionConstraint,
-            FACULTY_CLINIC_CAPS,
         )
 
         assert FacultyClinicCapConstraint is not None
         assert FacultySupervisionConstraint is not None
-        assert isinstance(FACULTY_CLINIC_CAPS, dict)
