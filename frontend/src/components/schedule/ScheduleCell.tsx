@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useId, useMemo } from 'react'
 
 /**
  * Color coding for rotation types
@@ -91,6 +91,8 @@ export function ScheduleCell({
   isToday,
   timeOfDay,
 }: ScheduleCellProps) {
+  const tooltipId = useId()
+
   // Memoize the color class and style calculation
   const { colorClass, customStyle } = useMemo(() => {
     if (!assignment) return { colorClass: '', customStyle: undefined }
@@ -138,7 +140,7 @@ export function ScheduleCell({
   // Empty cell
   if (!assignment) {
     return (
-      <td className={baseStyles}>
+      <td className={baseStyles} role="gridcell" aria-label={`${timeOfDay}: No assignment`}>
         <div className="text-gray-300 text-xs">-</div>
       </td>
     )
@@ -157,8 +159,10 @@ export function ScheduleCell({
   // Prefer displayAbbreviation (short codes like C, FMIT) over abbreviation (may include time suffix like C-AM)
   const displayCode = assignment.displayAbbreviation || assignment.abbreviation
 
+  const cellLabel = `${timeOfDay}: ${assignment.templateName || assignment.abbreviation}, ${assignment.activityType}`
+
   return (
-    <td className={baseStyles}>
+    <td className={baseStyles} role="gridcell" aria-label={cellLabel}>
       <div
         className={`
           inline-block px-1.5 py-0.5 rounded text-xs font-medium border
@@ -167,9 +171,11 @@ export function ScheduleCell({
         `}
         style={customStyle}
         title={tooltipContent}
+        aria-describedby={tooltipId}
       >
         {displayCode}
       </div>
+      <span id={tooltipId} className="sr-only">{tooltipContent}</span>
     </td>
   )
 }

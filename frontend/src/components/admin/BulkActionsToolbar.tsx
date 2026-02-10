@@ -195,7 +195,7 @@ export function BulkActionsToolbar({
     <>
       {/* Floating toolbar */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-        <div className="flex items-center gap-3 px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl">
+        <div className="flex items-center gap-3 px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl" role="toolbar" aria-label="Bulk actions">
           {/* Selection count */}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-500/20 text-violet-300 rounded-lg text-sm font-medium">
             <span>{selectedCount}</span>
@@ -299,6 +299,7 @@ export function BulkActionsToolbar({
             onClick={onClearSelection}
             className="p-2 text-slate-400 hover:text-white transition-colors"
             title="Clear selection"
+            aria-label="Clear selection"
           >
             <X className="w-4 h-4" />
           </button>

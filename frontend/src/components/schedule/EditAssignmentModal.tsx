@@ -376,7 +376,7 @@ export function EditAssignmentModal({
 
         {/* Error display */}
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-md" role="alert">
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}

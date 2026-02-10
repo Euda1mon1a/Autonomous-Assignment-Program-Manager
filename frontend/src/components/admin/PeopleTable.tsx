@@ -186,10 +186,10 @@ export function PeopleTable({
                   checked={isAllSelected}
                   indeterminate={isSomeSelected}
                   onChange={handleSelectAll}
-                  ariaLabel={isAllSelected ? 'Deselect all' : 'Select all'}
+                  ariaLabel={isAllSelected ? 'Deselect all people' : 'Select all people'}
                 />
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">
+              <th className="px-4 py-3 text-left text-sm font-medium text-slate-400" aria-sort={sort.field === 'name' ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <SortHeader
                   label="Name"
                   field="name"
@@ -197,7 +197,7 @@ export function PeopleTable({
                   onSort={onSortChange}
                 />
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">
+              <th className="px-4 py-3 text-left text-sm font-medium text-slate-400" aria-sort={sort.field === 'type' ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <SortHeader
                   label="Type"
                   field="type"
@@ -205,7 +205,7 @@ export function PeopleTable({
                   onSort={onSortChange}
                 />
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">
+              <th className="px-4 py-3 text-left text-sm font-medium text-slate-400" aria-sort={sort.field === 'pgyLevel' ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <SortHeader
                   label="PGY Level"
                   field="pgyLevel"
@@ -213,7 +213,7 @@ export function PeopleTable({
                   onSort={onSortChange}
                 />
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">
+              <th className="px-4 py-3 text-left text-sm font-medium text-slate-400" aria-sort={sort.field === 'email' ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
                 <SortHeader
                   label="Email"
                   field="email"

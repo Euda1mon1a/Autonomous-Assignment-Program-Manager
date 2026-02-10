@@ -4,7 +4,7 @@
  * Custom select dropdown with search support
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId } from 'react';
 
 export interface SelectOption {
   value: string;
@@ -22,6 +22,7 @@ export interface SelectProps {
   error?: string;
   label?: string;
   required?: boolean;
+  id?: string;
   className?: string;
 }
 
@@ -35,8 +36,11 @@ export const Select: React.FC<SelectProps> = ({
   error,
   label,
   required = false,
+  id,
   className = '',
 }) => {
+  const autoId = useId();
+  const selectId = id || autoId;
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -149,7 +153,7 @@ export const Select: React.FC<SelectProps> = ({
     <div className={`select-component ${className}`} ref={containerRef}>
       {/* Label */}
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor={selectId} className="block text-sm font-medium text-gray-700 mb-2">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -158,6 +162,7 @@ export const Select: React.FC<SelectProps> = ({
       {/* Select Button */}
       <button
         type="button"
+        id={selectId}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         onKeyDown={handleKeyDown}

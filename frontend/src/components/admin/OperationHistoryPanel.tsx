@@ -163,6 +163,7 @@ function OperationItem({
 
   return (
     <div
+      aria-label={`${label} ${operation.templateIds.length} template${operation.templateIds.length !== 1 ? 's' : ''} - ${formatRelativeTime(operation.timestamp)}`}
       className={`
         border rounded-lg transition-colors
         ${operation.status === 'undone' ? 'border-slate-700/50 opacity-60' : 'border-slate-700'}
@@ -337,7 +338,7 @@ export function OperationHistoryPanel({
             <p className="text-sm text-slate-400">No recent operations</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div role="log" aria-label="Operation history" className="space-y-2">
             {displayOperations.map((operation) => (
               <OperationItem
                 key={operation.id}

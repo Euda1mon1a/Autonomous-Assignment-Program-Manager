@@ -38,7 +38,7 @@ function StatusBadge({ status, isExpiring }: { status: CredentialStatus; isExpir
   if (isExpiring) {
     return (
       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-400">
-        <AlertTriangle className="w-3 h-3" />
+        <AlertTriangle className="w-3 h-3" aria-label="Expiring soon" />
       </span>
     );
   }
@@ -47,25 +47,25 @@ function StatusBadge({ status, isExpiring }: { status: CredentialStatus; isExpir
     case 'active':
       return (
         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400">
-          <CheckCircle className="w-3 h-3" />
+          <CheckCircle className="w-3 h-3" aria-label="Credentialed" />
         </span>
       );
     case 'expired':
       return (
         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400">
-          <XCircle className="w-3 h-3" />
+          <XCircle className="w-3 h-3" aria-label="Not credentialed" />
         </span>
       );
     case 'suspended':
       return (
         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-slate-500/20 text-slate-400">
-          <XCircle className="w-3 h-3" />
+          <XCircle className="w-3 h-3" aria-label="Not credentialed" />
         </span>
       );
     case 'pending':
       return (
         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
-          <Clock className="w-3 h-3" />
+          <Clock className="w-3 h-3" aria-label="Pending" />
         </span>
       );
     default:
@@ -142,7 +142,7 @@ export function CredentialMatrix({
     <>
       <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full" role="grid" aria-label="Credential matrix">
             <thead>
               <tr className="border-b border-slate-700">
                 <th className="px-4 py-3 text-left text-sm font-medium text-slate-400 sticky left-0 bg-slate-800/50 z-10 min-w-[200px]">

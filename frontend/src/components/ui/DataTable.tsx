@@ -24,6 +24,7 @@ export interface DataTableProps<T> {
   pageSize?: number;
   searchable?: boolean;
   className?: string;
+  ariaLabel?: string;
 }
 
 export function DataTable<T>({
@@ -34,6 +35,7 @@ export function DataTable<T>({
   pageSize = 10,
   searchable = true,
   className = '',
+  ariaLabel = 'Data table',
 }: DataTableProps<T>) {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -108,6 +110,7 @@ export function DataTable<T>({
               setCurrentPage(1); // Reset to first page on search
             }}
             placeholder="Search..."
+            aria-label="Search table"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -115,7 +118,7 @@ export function DataTable<T>({
 
       {/* Table */}
       <div className="overflow-x-auto bg-white rounded-lg shadow">
-        <table className="w-full">
+        <table className="w-full" aria-label={ariaLabel}>
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               {columns.map((column) => {
@@ -136,6 +139,7 @@ export function DataTable<T>({
                     {column.sortable ? (
                       <button
                         onClick={() => handleSort(column.key)}
+                        aria-label={`Sort by ${column.header}${sortColumn === column.key ? ', currently sorted ' + sortDirection : ''}`}
                         className="flex items-center gap-2 hover:text-gray-900 focus:outline-none focus:underline group"
                       >
                         <span>{column.header}</span>
@@ -177,6 +181,16 @@ export function DataTable<T>({
                       : ''
                   }`}
                   onClick={() => onRowClick?.(row)}
+                  {...(onRowClick ? {
+                    tabIndex: 0,
+                    role: 'button' as const,
+                    onKeyDown: (e: React.KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onRowClick(row);
+                      }
+                    },
+                  } : {})}
                 >
                   {columns.map((column) => {
                     const value = column.accessor(row);

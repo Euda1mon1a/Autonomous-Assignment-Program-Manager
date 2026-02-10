@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useId } from 'react';
 import { AlertCircle, CheckCircle, Info, XCircle, X } from 'lucide-react';
 
 export type AlertVariant = 'info' | 'success' | 'warning' | 'error';
@@ -61,18 +61,20 @@ export function Alert({
 }: AlertProps) {
   const config = variantConfig[variant];
   const Icon = config.icon;
+  const titleId = useId();
 
   return (
     <div
       className={`rounded-lg border p-4 ${config.container} ${className}`}
       role={variant === 'error' || variant === 'warning' ? 'alert' : 'status'}
+      aria-labelledby={title ? titleId : undefined}
     >
       <div className="flex gap-3">
         <Icon className={`w-5 h-5 flex-shrink-0 ${config.iconColor}`} aria-hidden="true" />
 
         <div className="flex-1 min-w-0">
           {title && (
-            <h3 className="text-sm font-semibold mb-1">{title}</h3>
+            <h3 id={titleId} className="text-sm font-semibold mb-1">{title}</h3>
           )}
           <div className="text-sm">{children}</div>
         </div>

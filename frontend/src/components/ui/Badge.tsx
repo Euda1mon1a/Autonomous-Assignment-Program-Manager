@@ -5,7 +5,7 @@ import React from 'react';
 export type BadgeVariant = 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'destructive' | 'info';
 export type BadgeSize = 'sm' | 'md' | 'lg';
 
-export interface BadgeProps {
+export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
   size?: BadgeSize;
   rounded?: boolean;
@@ -47,12 +47,13 @@ export function Badge({
   dot = false,
   children,
   className = '',
+  ...rest
 }: BadgeProps) {
   const baseStyles = 'inline-flex items-center gap-1.5 font-medium';
   const roundedStyles = rounded ? 'rounded-full' : 'rounded';
 
   return (
-    <span className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${roundedStyles} ${className}`}>
+    <span className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${roundedStyles} ${className}`} {...rest}>
       {dot && (
         <span className={`w-1.5 h-1.5 rounded-full ${variant === 'default' ? 'bg-gray-600' :
           variant === 'primary' ? 'bg-blue-600' :

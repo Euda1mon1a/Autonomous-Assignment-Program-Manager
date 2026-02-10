@@ -68,6 +68,8 @@ export function PhaseTransitionBanner({
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       className={`border-l-4 ${bgClass} ${
         data.overallSeverity === 'normal'
           ? 'border-green-500'
@@ -82,7 +84,7 @@ export function PhaseTransitionBanner({
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-lg ${bgClass}`}>
-            <AlertTriangle className={`w-5 h-5 ${severityClass}`} />
+            <AlertTriangle className={`w-5 h-5 ${severityClass}`} aria-hidden="true" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -101,7 +103,7 @@ export function PhaseTransitionBanner({
               {data.signals.length} early warning signal{data.signals.length !== 1 ? 's' : ''} detected
               {data.time_to_transition && (
                 <span className="ml-2 flex items-center gap-1 inline-flex">
-                  <Clock className="w-3 h-3" />
+                  <Clock className="w-3 h-3" aria-hidden="true" />
                   ~{Math.round(data.time_to_transition)}h until transition
                 </span>
               )}

@@ -87,7 +87,7 @@ export const ScheduleFilters: React.FC<ScheduleFiltersProps> = ({
   const activeCount = getActiveFilterCount();
 
   return (
-    <div className={`schedule-filters bg-white rounded-lg shadow-sm border border-gray-200 ${className}`} role="region" aria-label="Schedule filters">
+    <div className={`schedule-filters bg-white rounded-lg shadow-sm border border-gray-200 ${className}`} role="search" aria-label="Schedule filters">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center gap-2">
