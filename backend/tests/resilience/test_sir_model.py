@@ -16,8 +16,9 @@ class TestSIRModel:
         """Test R0 calculation."""
         model = SIRModel(transmission_rate=0.3, recovery_rate=0.1)
 
-        assert model.basic_reproduction_number == 3.0  # β/γ = 0.3/0.1
-        assert model.r0 == 3.0
+        # Use approx for floating-point division (0.3/0.1 may not be exactly 3.0)
+        assert model.basic_reproduction_number == pytest.approx(3.0)
+        assert model.r0 == pytest.approx(3.0)
 
     def test_r0_interpretation(self):
         """Test R0 > 1 means epidemic."""

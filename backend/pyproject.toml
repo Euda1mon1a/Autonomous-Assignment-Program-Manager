@@ -176,6 +176,8 @@ markers = [
     "integration: marks tests as integration tests",
     "requires_db: marks tests that need a database connection",
     "requires_redis: marks tests that need Redis",
+    "resilience: marks tests for resilience framework",
+    "performance: marks tests for performance benchmarking",
 ]
 
 [tool.coverage.run]
