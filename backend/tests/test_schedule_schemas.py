@@ -41,13 +41,15 @@ class TestScheduleResponse:
         # Verify internal field name
         assert response.total_assignments == 42
 
-        # Verify JSON serialization uses correct field name
+        # Verify JSON serialization uses alias (DB column name) when by_alias=True
         json_data = response.model_dump(by_alias=True)
-        assert "total_assignments" in json_data
-        assert json_data["total_assignments"] == 42
+        assert "total_blocks_assigned" in json_data
+        assert json_data["total_blocks_assigned"] == 42
 
-        # Verify old name is NOT in serialized output
-        assert "total_blocks_assigned" not in json_data
+        # Verify field name used when by_alias=False
+        json_data_no_alias = response.model_dump(by_alias=False)
+        assert "total_assignments" in json_data_no_alias
+        assert json_data_no_alias["total_assignments"] == 42
 
     def test_schedule_response_serialization(self):
         """Test full ScheduleResponse serialization."""
@@ -71,7 +73,7 @@ class TestScheduleResponse:
         json_data = response.model_dump(by_alias=True)
 
         assert json_data["status"] == "partial"
-        assert json_data["total_assignments"] == 87
+        assert json_data["total_blocks_assigned"] == 87
         assert json_data["total_blocks"] == 100
         assert json_data["acgme_override_count"] == 2
         assert json_data["validation"]["coverage_rate"] == 95.5

@@ -32,6 +32,8 @@ from typing import Any
 
 from loguru import logger
 
+from app.core.phi_filter import PHIFilter, phi_patcher
+
 # Context variable for request correlation ID (integrates with observability.py)
 _request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
 
@@ -217,8 +219,14 @@ def setup_logging(
             serialize=format_type == "json",
         )
 
+    # Apply PHI sanitization patcher so all loguru messages are scrubbed
+    logger.configure(patcher=phi_patcher)
+
     # Intercept standard library logging
     logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+
+    # Attach PHI filter to the root stdlib logger as a safety net
+    logging.getLogger().addFilter(PHIFilter())
 
     # Set log levels for noisy third-party libraries
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)

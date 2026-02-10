@@ -1,22 +1,22 @@
 #!/bin/bash
 # =============================================================================
-# DEPRECATED - Use stack-backup.sh instead
+# DEPRECATED - Use scripts/backup.sh instead
 # =============================================================================
-# This script has been superseded by the unified stack-backup.sh
+# This script has been superseded by the unified backup.sh
 #
 # New usage:
-#   ./scripts/stack-backup.sh backup [--name NAME] [--include-redis]
-#   ./scripts/stack-backup.sh restore [BACKUP_NAME]
-#   ./scripts/stack-backup.sh emergency --confirm
+#   ./scripts/backup.sh backup [--name NAME] [--include-redis]
+#   ./scripts/backup.sh restore [BACKUP_NAME]
+#   ./scripts/backup.sh emergency --confirm
 #
 # This script will be removed in a future version.
 # =============================================================================
 
 echo ""
-echo "⚠️  DEPRECATED: This script has been replaced by stack-backup.sh"
+echo "DEPRECATED: This script has been replaced by scripts/backup.sh"
 echo ""
 echo "Use instead:"
-echo "  ./scripts/stack-backup.sh backup --include-redis"
+echo "  ./scripts/backup.sh backup --include-redis"
 echo ""
 echo "Continuing with legacy script in 5 seconds... (Ctrl+C to cancel)"
 sleep 5
