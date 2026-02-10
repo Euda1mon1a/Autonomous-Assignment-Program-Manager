@@ -18,7 +18,6 @@ import {
   CalendarDays,
   CalendarOff,
   CheckCircle,
-  Circle,
   ClipboardList,
   Database,
   Eye,
@@ -31,7 +30,6 @@ import {
   Settings,
   Shield,
   Users,
-  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

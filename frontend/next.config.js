@@ -23,14 +23,10 @@ const nextConfig = {
     unoptimized: true, // No external images
   },
   eslint: {
-    // CCW burns created many lint warnings in test files - bypass for builds
-    // TODO: Fix lint issues properly and re-enable
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
-    // CCW burns created type mismatches - bypass for builds during surgical reset
-    // TODO: Fix TypeScript errors and re-enable
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 }
 
