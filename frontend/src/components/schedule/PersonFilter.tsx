@@ -26,14 +26,14 @@ export function PersonFilter({ selectedPersonId, onSelect }: PersonFilterProps) 
   const { user } = useAuth()
   const { data: peopleData, isLoading } = usePeople()
 
-  const people = peopleData?.items ?? []
+  const stablePeople = useMemo(() => peopleData?.items ?? [], [peopleData?.items])
 
   // Group people by type and PGY level
   const groupedPeople = useMemo<GroupedPeople>(() => {
     const residents = new Map<number, Person[]>()
     const faculty: Person[] = []
 
-    people.forEach((person) => {
+    stablePeople.forEach((person) => {
       if (person.type === 'resident' && person.pgyLevel !== null) {
         const existing = residents.get(person.pgyLevel) ?? []
         residents.set(person.pgyLevel, [...existing, person])
@@ -49,24 +49,24 @@ export function PersonFilter({ selectedPersonId, onSelect }: PersonFilterProps) 
     faculty.sort((a, b) => a.name.localeCompare(b.name))
 
     return { residents, faculty }
-  }, [people])
+  }, [stablePeople])
 
   // Filter people based on search query
   const filteredPeople = useMemo(() => {
     if (!searchQuery.trim()) return null
 
     const query = searchQuery.toLowerCase()
-    return people.filter((person) =>
+    return stablePeople.filter((person) =>
       person.name.toLowerCase().includes(query) ||
       person.email?.toLowerCase().includes(query)
     )
-  }, [people, searchQuery])
+  }, [stablePeople, searchQuery])
 
   // Get selected person details
   const selectedPerson = useMemo(() => {
     if (!selectedPersonId) return null
-    return people.find((p) => p.id === selectedPersonId) ?? null
-  }, [people, selectedPersonId])
+    return stablePeople.find((p) => p.id === selectedPersonId) ?? null
+  }, [stablePeople, selectedPersonId])
 
   // Get display text for button
   const displayText = useMemo(() => {
@@ -154,7 +154,7 @@ export function PersonFilter({ selectedPersonId, onSelect }: PersonFilterProps) 
           className="absolute z-50 mt-1 w-72 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
         >
           {/* Search Input */}
-          {people.length > 10 && (
+          {stablePeople.length > 10 && (
             <div className="p-2 border-b border-gray-100">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden="true" />

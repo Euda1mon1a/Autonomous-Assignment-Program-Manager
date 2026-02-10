@@ -420,7 +420,7 @@ export function FacultyWeeklyEditor({
     }
   }, [mode, templateData, effectiveData]);
 
-  const activities = permissionsData?.activities ?? [];
+  const activities = useMemo(() => permissionsData?.activities ?? [], [permissionsData?.activities]);
 
   // Get merged slot (local changes + remote data)
   const getMergedSlot = useCallback(

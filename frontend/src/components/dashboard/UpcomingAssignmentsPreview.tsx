@@ -64,8 +64,8 @@ export function UpcomingAssignmentsPreview({
 }: UpcomingAssignmentsPreviewProps) {
   const { user } = useAuth()
 
-  const today = new Date()
-  const endDate = addDays(today, daysAhead)
+  const today = useMemo(() => new Date(), [])
+  const endDate = useMemo(() => addDays(today, daysAhead), [today, daysAhead])
   const startDateStr = format(today, 'yyyy-MM-dd')
   const endDateStr = format(endDate, 'yyyy-MM-dd')
 

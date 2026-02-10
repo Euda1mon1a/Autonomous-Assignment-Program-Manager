@@ -61,6 +61,26 @@ interface ScheduleCellProps {
   timeOfDay: 'AM' | 'PM'
 }
 
+const tailwindToHex: Record<string, string> = {
+  'black': '#000000',
+  'white': '#ffffff',
+  'gray-100': '#f3f4f6',
+  'gray-200': '#e5e7eb',
+  'gray-400': '#9ca3af',
+  'gray-800': '#1f2937',
+  'red-500': '#ef4444',
+  'green-100': '#dcfce7',
+  'green-500': '#22c55e',
+  'green-800': '#166534',
+  'blue-300': '#93c5fd',
+  'sky-500': '#0ea5e9',
+  'purple-700': '#7c3aed',
+  'amber-100': '#fef3c7',
+  'amber-800': '#92400e',
+  'yellow-300': '#fde047',
+  'emerald-200': '#a7f3d0',
+}
+
 /**
  * Individual cell in the schedule grid
  * Shows the rotation abbreviation with color coding
@@ -71,27 +91,6 @@ export function ScheduleCell({
   isToday,
   timeOfDay,
 }: ScheduleCellProps) {
-  // Map Tailwind color names to hex values
-  const tailwindToHex: Record<string, string> = {
-    'black': '#000000',
-    'white': '#ffffff',
-    'gray-100': '#f3f4f6',
-    'gray-200': '#e5e7eb',
-    'gray-400': '#9ca3af',
-    'gray-800': '#1f2937',
-    'red-500': '#ef4444',
-    'green-100': '#dcfce7',
-    'green-500': '#22c55e',
-    'green-800': '#166534',
-    'blue-300': '#93c5fd',
-    'sky-500': '#0ea5e9',
-    'purple-700': '#7c3aed',
-    'amber-100': '#fef3c7',
-    'amber-800': '#92400e',
-    'yellow-300': '#fde047',
-    'emerald-200': '#a7f3d0',
-  }
-
   // Memoize the color class and style calculation
   const { colorClass, customStyle } = useMemo(() => {
     if (!assignment) return { colorClass: '', customStyle: undefined }

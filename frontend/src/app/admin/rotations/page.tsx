@@ -293,7 +293,7 @@ export default function AdminTemplatesPage() {
     });
 
     return filtered;
-  }, [templatesData?.items, debouncedSearch, filters, sort]);
+  }, [templatesData?.items, debouncedSearch, filters, sort, showAllCategories]);
 
   // Archived templates - filter from the includeArchived query
   const archivedTemplates = useMemo(() => {

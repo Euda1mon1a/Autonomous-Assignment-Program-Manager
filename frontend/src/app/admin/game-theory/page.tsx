@@ -29,8 +29,8 @@ import type { ConfigStrategy, TournamentCreate, EvolutionCreate, GameTheorySumma
 export default function GameTheoryPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'strategies' | 'tournaments' | 'evolution' | 'analysis'>('overview');
   const [selectedStrategies, setSelectedStrategies] = useState<string[]>([]);
-  const [showTournamentModal, setShowTournamentModal] = useState(false);
-  const [showEvolutionModal, setShowEvolutionModal] = useState(false);
+  const [_showTournamentModal, setShowTournamentModal] = useState(false);
+  const [_showEvolutionModal, setShowEvolutionModal] = useState(false);
   const { toast } = useToast();
 
   const { data: summary, isLoading: summaryLoading } = useGameTheorySummary();

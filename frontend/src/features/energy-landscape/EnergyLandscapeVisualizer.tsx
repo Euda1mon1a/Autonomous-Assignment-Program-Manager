@@ -10,7 +10,7 @@
  * - Interpretations and recommendations
  */
 
-import { CheckCircle, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import { CheckCircle, AlertTriangle, TrendingDown } from 'lucide-react';
 
 // ============================================================================
 // Types

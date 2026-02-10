@@ -471,7 +471,7 @@ export function InlineLoader({
 // Exports
 // ============================================================================
 
-export default {
+const LoadingStates = {
   // Spinners
   Spinner,
   ButtonSpinner,
@@ -493,3 +493,5 @@ export default {
   TableLoader,
   InlineLoader,
 };
+
+export default LoadingStates;

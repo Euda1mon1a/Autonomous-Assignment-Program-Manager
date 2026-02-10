@@ -73,8 +73,8 @@ export function UpcomingAbsences() {
 
   const isLoading = absencesLoading || peopleLoading
 
-  const today = new Date()
-  const nextWeek = addDays(today, 7)
+  const today = useMemo(() => new Date(), [])
+  const nextWeek = useMemo(() => addDays(today, 7), [today])
 
   // Calculate absences with coverage impact
   const absencesWithImpact = useMemo<AbsenceWithImpact[]>(() => {
