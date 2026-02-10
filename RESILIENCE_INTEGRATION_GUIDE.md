@@ -1,3 +1,5 @@
+> **Note:** The primary resilience documentation is at [docs/guides/resilience-framework.md](docs/guides/resilience-framework.md). This integration guide provides supplementary implementation details.
+
 # Resilience Concept Integration Guide
 
 ## Mission Summary

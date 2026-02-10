@@ -1,3 +1,5 @@
+> **Note:** The canonical Getting Started guide is at [docs/getting-started/installation.md](getting-started/installation.md). This file is kept for backward compatibility.
+
 # Getting Started with Residency Scheduler
 
 Quick start guide for new users and developers.

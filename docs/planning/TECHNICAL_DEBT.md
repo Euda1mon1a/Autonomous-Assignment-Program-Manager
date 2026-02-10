@@ -292,9 +292,9 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 |----------|------|----------|-------|
 | Security | 0 | 1 | 1 |
 | Infrastructure | 0 | 1 | 1 |
-| Configuration | 0 | 2 | 2 |
-| Performance | 0 | 2 | 2 |
-| Feature Incomplete | 1 | 3 | 4 |
+| Configuration | 0 | 3 | 3 |
+| Performance | 0 | 3 | 3 |
+| Feature Incomplete | 1 | 2 | 3 |
 | API Quality | 0 | 1 | 1 |
 | Authentication | 0 | 1 | 1 |
 | Accessibility | 1 | 0 | 1 |
@@ -302,13 +302,13 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 | Code Quality | 0 | 1 | 1 |
 | Data / OPSEC | 1 | 0 | 1 |
 | Frontend Quality | 0 | 1 | 1 |
-| Testing | 2 | 0 | 2 |
+| Testing | 0 | 2 | 2 |
 | Error Handling | 0 | 2 | 2 |
 | Observability | 1 | 0 | 1 |
 | Real-time Features | 0 | 1 | 1 |
-| **Total** | **6** | **18** | **24** |
+| **Total** | **4** | **20** | **24** |
 
-> 18 of 24 items resolved (75%). Remaining 6 open items require DB access, infrastructure config, or domain expertise.
+> 20 of 24 items resolved (83%). Remaining 4 open items require DB access, infrastructure config, or domain expertise.
 
 ---
 
