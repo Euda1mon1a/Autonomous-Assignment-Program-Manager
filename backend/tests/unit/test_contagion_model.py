@@ -26,11 +26,14 @@ from app.resilience.contagion_model import (
 
 # Check if ndlib is available
 try:
-    import ndlib
+    import ndlib  # noqa: F401
 
     HAS_NDLIB = True
 except ImportError:
     HAS_NDLIB = False
+
+requires_ndlib = pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+skip_when_ndlib = pytest.mark.skipif(HAS_NDLIB, reason="Test for missing ndlib")
 
 
 # =============================================================================
@@ -125,7 +128,7 @@ def initial_burnout_high():
 # =============================================================================
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_model_initialization(simple_network):
     """Test model initializes with a social network."""
     model = BurnoutContagionModel(simple_network)
@@ -138,7 +141,7 @@ def test_model_initialization(simple_network):
     assert model.recovery_rate == 0.01  # Default
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_model_initialization_empty_network():
     """Test model with empty network."""
     G = nx.Graph()
@@ -147,7 +150,7 @@ def test_model_initialization_empty_network():
     assert model.social_graph.number_of_nodes() == 0
 
 
-@pytest.mark.skipif(HAS_NDLIB, reason="Test for missing ndlib")
+@skip_when_ndlib
 def test_model_requires_ndlib():
     """Test that model raises error when ndlib not installed."""
     G = nx.Graph()
@@ -162,7 +165,7 @@ def test_model_requires_ndlib():
 # =============================================================================
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_configure_model(simple_network):
     """Test model configuration with custom parameters."""
     model = BurnoutContagionModel(simple_network)
@@ -175,7 +178,7 @@ def test_configure_model(simple_network):
     assert model.config is not None
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_configure_default_parameters(simple_network):
     """Test configuration with default parameters."""
     model = BurnoutContagionModel(simple_network)
@@ -186,7 +189,7 @@ def test_configure_default_parameters(simple_network):
     assert model.recovery_rate == 0.01
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_configure_invalid_infection_rate(simple_network):
     """Test configuration rejects invalid infection rate."""
     model = BurnoutContagionModel(simple_network)
@@ -198,7 +201,7 @@ def test_configure_invalid_infection_rate(simple_network):
         model.configure(infection_rate=-0.1)
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_configure_invalid_recovery_rate(simple_network):
     """Test configuration rejects invalid recovery rate."""
     model = BurnoutContagionModel(simple_network)
@@ -212,7 +215,7 @@ def test_configure_invalid_recovery_rate(simple_network):
 # =============================================================================
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_set_initial_burnout(simple_network, initial_burnout_mixed):
     """Test setting initial burnout states."""
     model = BurnoutContagionModel(simple_network)
@@ -229,7 +232,7 @@ def test_set_initial_burnout(simple_network, initial_burnout_mixed):
     assert len(infected) > 0
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_set_initial_burnout_before_configure(simple_network, initial_burnout_low):
     """Test that setting burnout before configure raises error."""
     model = BurnoutContagionModel(simple_network)
@@ -245,7 +248,7 @@ def test_set_initial_burnout_before_configure(simple_network, initial_burnout_lo
 # =============================================================================
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_simulate_basic(simple_network, initial_burnout_mixed):
     """Test basic simulation runs without error."""
     model = BurnoutContagionModel(simple_network)
@@ -266,7 +269,7 @@ def test_simulate_basic(simple_network, initial_burnout_mixed):
         assert "node_count" in result
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_simulate_infection_spread(simple_network, initial_burnout_mixed):
     """Test that infection can spread in the network."""
     model = BurnoutContagionModel(simple_network)
@@ -286,7 +289,7 @@ def test_simulate_infection_spread(simple_network, initial_burnout_mixed):
     assert len(model.snapshots) == 50
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_simulate_without_configuration(simple_network):
     """Test that simulate raises error if not configured."""
     model = BurnoutContagionModel(simple_network)
@@ -295,7 +298,7 @@ def test_simulate_without_configuration(simple_network):
         model.simulate(iterations=10)
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_simulate_snapshots(simple_network, initial_burnout_mixed):
     """Test that snapshots are created correctly."""
     model = BurnoutContagionModel(simple_network)
@@ -322,7 +325,7 @@ def test_simulate_snapshots(simple_network, initial_burnout_mixed):
 # =============================================================================
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_identify_superspreaders(hub_network):
     """Test superspreader identification in hub network."""
     model = BurnoutContagionModel(hub_network)
@@ -353,7 +356,7 @@ def test_identify_superspreaders(hub_network):
     assert len(superspreaders) >= 1
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_identify_superspreaders_profiles(hub_network):
     """Test getting detailed superspreader profiles."""
     model = BurnoutContagionModel(hub_network)
@@ -396,7 +399,7 @@ def test_identify_superspreaders_profiles(hub_network):
     assert profile.direct_contacts >= 0
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_identify_superspreaders_no_burnout(simple_network):
     """Test superspreader identification with no burnout scores."""
     model = BurnoutContagionModel(simple_network)
@@ -413,7 +416,7 @@ def test_identify_superspreaders_no_burnout(simple_network):
 # =============================================================================
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_recommend_interventions(simple_network, initial_burnout_high):
     """Test intervention recommendations for high burnout network."""
     model = BurnoutContagionModel(simple_network)
@@ -437,7 +440,7 @@ def test_recommend_interventions(simple_network, initial_burnout_high):
     assert intervention.estimated_infection_reduction >= 0.0
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_recommend_interventions_types(hub_network):
     """Test different types of interventions are recommended."""
     model = BurnoutContagionModel(hub_network)
@@ -471,7 +474,7 @@ def test_recommend_interventions_types(hub_network):
     assert InterventionType.QUARANTINE in intervention_types
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_recommend_interventions_no_superspreaders(simple_network, initial_burnout_low):
     """Test no interventions when no superspreaders."""
     model = BurnoutContagionModel(simple_network)
@@ -486,7 +489,7 @@ def test_recommend_interventions_no_superspreaders(simple_network, initial_burno
     assert len(interventions) == 0
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_recommend_interventions_max_limit(simple_network, initial_burnout_high):
     """Test that max_interventions limit is respected."""
     model = BurnoutContagionModel(simple_network)
@@ -505,7 +508,7 @@ def test_recommend_interventions_max_limit(simple_network, initial_burnout_high)
 # =============================================================================
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_generate_report(simple_network, initial_burnout_mixed):
     """Test comprehensive report generation."""
     model = BurnoutContagionModel(simple_network)
@@ -530,7 +533,7 @@ def test_generate_report(simple_network, initial_burnout_mixed):
     assert len(report.snapshots) == 30
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_generate_report_without_simulation(simple_network, initial_burnout_mixed):
     """Test that report generation requires simulation."""
     model = BurnoutContagionModel(simple_network)
@@ -544,7 +547,7 @@ def test_generate_report_without_simulation(simple_network, initial_burnout_mixe
         model.generate_report()
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_report_risk_levels(simple_network):
     """Test that different burnout levels result in different risk levels."""
     # Low burnout scenario
@@ -563,7 +566,7 @@ def test_report_risk_levels(simple_network):
     assert report_low.contagion_risk in (ContagionRisk.LOW, ContagionRisk.MODERATE)
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_report_warnings(simple_network, initial_burnout_high):
     """Test that report generates warnings for high-risk scenarios."""
     model = BurnoutContagionModel(simple_network)
@@ -584,7 +587,7 @@ def test_report_warnings(simple_network, initial_burnout_high):
 # =============================================================================
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_get_infection_trajectory(simple_network, initial_burnout_mixed):
     """Test getting infection trajectory over time."""
     model = BurnoutContagionModel(simple_network)
@@ -605,7 +608,7 @@ def test_get_infection_trajectory(simple_network, initial_burnout_mixed):
         assert 0.0 <= rate <= 1.0
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_get_current_state(simple_network, initial_burnout_mixed):
     """Test getting current simulation state."""
     model = BurnoutContagionModel(simple_network)
@@ -625,7 +628,7 @@ def test_get_current_state(simple_network, initial_burnout_mixed):
     assert 0.0 <= state["infection_rate"] <= 1.0
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_get_current_state_no_simulation(simple_network):
     """Test getting state before simulation."""
     model = BurnoutContagionModel(simple_network)
@@ -640,7 +643,7 @@ def test_get_current_state_no_simulation(simple_network):
 # =============================================================================
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 @pytest.mark.skip(reason="ndlib has known issues with single-node networks")
 def test_single_node_network():
     """Test model with single-node network."""
@@ -660,7 +663,7 @@ def test_single_node_network():
     assert len(results) == 10
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_disconnected_network():
     """Test model with disconnected components."""
     G = nx.Graph()
@@ -694,7 +697,7 @@ def test_disconnected_network():
     # (though this is probabilistic, so we just verify it runs)
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_all_infected_initial_state(simple_network):
     """Test with all providers initially infected."""
     model = BurnoutContagionModel(simple_network)
@@ -721,7 +724,7 @@ def test_all_infected_initial_state(simple_network):
     assert final_infection_count >= 1
 
 
-@pytest.mark.skipif(not HAS_NDLIB, reason="ndlib not installed")
+@requires_ndlib
 def test_all_susceptible_initial_state(simple_network):
     """Test with all providers initially susceptible."""
     model = BurnoutContagionModel(simple_network)

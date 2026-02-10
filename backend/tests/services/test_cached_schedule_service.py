@@ -11,8 +11,13 @@ from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 
-# CachedScheduleService not implemented - use CachedCalendarService or CachedHeatmapService
-pytest.skip("CachedScheduleService class not implemented", allow_module_level=True)
+# CachedScheduleService class does not exist. The module provides
+# CachedCalendarService and CachedHeatmapService instead.
+# These tests target a hypothetical CachedScheduleService and cannot run.
+pytest.skip(
+    "CachedScheduleService class not implemented (module has CachedCalendarService/CachedHeatmapService)",
+    allow_module_level=True,
+)
 
 
 class TestCachedScheduleService:

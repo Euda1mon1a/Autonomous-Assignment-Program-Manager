@@ -2,6 +2,7 @@
 Integration tests for access control enforcement.
 
 Tests actual HTTP access control, authentication requirements, and authorization.
+All tests in this file require a running database and FastAPI app (TestClient).
 """
 
 import pytest
@@ -12,6 +13,12 @@ from uuid import uuid4
 
 from app.core.security import create_access_token, get_password_hash
 from app.models.user import User
+
+
+# All tests in this file need the DB/client fixtures from conftest.py.
+# When run with --noconftest they will ERROR (expected).
+# Mark the entire module as requires_db so CI can deselect if needed.
+pytestmark = pytest.mark.requires_db
 
 
 class TestAuthenticationRequired:
@@ -351,8 +358,6 @@ class TestCrossTenantAccess:
 
     def test_users_cannot_access_other_department_resources(self):
         """Users are isolated to their own department resources."""
-        # This would test department-scoped permissions
-        # Skipping for now as department isolation may not be implemented yet
         pytest.skip("Department isolation not yet implemented")
 
 
@@ -383,23 +388,12 @@ class TestResourceOwnershipChecks:
         self, client: TestClient, resident_user_and_token, db: Session
     ):
         """Resident can update their own absence request."""
-        user, token = resident_user_and_token
-        headers = {"Authorization": f"Bearer {token}"}
-
-        # Create an absence for this user
-        # Then try to update it - should succeed
-        # This is an integration test that would require the full absence flow
         pytest.skip("Absence ownership checks require full integration test setup")
 
     def test_resident_cannot_update_others_absence(
         self, client: TestClient, resident_user_and_token, db: Session
     ):
         """Resident cannot update another resident's absence."""
-        user, token = resident_user_and_token
-        headers = {"Authorization": f"Bearer {token}"}
-
-        # Try to update an absence belonging to another user
-        # Should return 403 Forbidden
         pytest.skip("Absence ownership checks require full integration test setup")
 
 
@@ -408,8 +402,6 @@ class TestRateLimitBypass:
 
     def test_rate_limit_applies_to_all_roles(self):
         """Rate limiting applies even to admin users."""
-        # This would test that rate limiting is enforced
-        # regardless of user role (no bypass)
         pytest.skip("Rate limiting bypass tests require rate limit configuration")
 
 

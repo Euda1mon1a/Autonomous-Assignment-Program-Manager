@@ -44,10 +44,14 @@ from app.core.config import get_settings
 
 settings = get_settings()
 from app.db.session import async_session
-import pytest
 
-# AuditLog model not yet implemented - skip entire module
-pytest.skip("AuditLog model not yet implemented", allow_module_level=True)
+# AuditLog ORM model and Role enum not yet implemented - skip entire module.
+# Tests depend on: AuditLog, AuditAction, Role, Person.first_name/last_name,
+# Assignment.rotation_id, Assignment.session — none of which exist in the schema.
+pytest.skip(
+    "AuditLog ORM model not yet implemented (requires schema additions)",
+    allow_module_level=True,
+)
 from app.schemas.assignment import AssignmentCreate
 
 

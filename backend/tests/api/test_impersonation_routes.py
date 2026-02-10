@@ -116,8 +116,6 @@ class TestImpersonationRoutes:
         target_user_for_routes: User,
     ):
         """Test that non-admin users cannot access impersonate endpoint."""
-        if not regular_user_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         response = client.post(
             "/api/auth/impersonate",
@@ -134,8 +132,6 @@ class TestImpersonationRoutes:
         target_user_for_routes: User,
     ):
         """Test successful impersonation returns token for admin."""
-        if not admin_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         response = client.post(
             "/api/auth/impersonate",
@@ -163,8 +159,6 @@ class TestImpersonationRoutes:
         db: Session,
     ):
         """Test that nested impersonation returns 400."""
-        if not admin_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         # Start first impersonation
         first_response = client.post(
@@ -209,8 +203,6 @@ class TestImpersonationRoutes:
         admin_auth_headers: dict,
     ):
         """Test that impersonating nonexistent user returns 404."""
-        if not admin_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         nonexistent_id = uuid4()
         response = client.post(
@@ -229,8 +221,6 @@ class TestImpersonationRoutes:
         admin_user_for_routes: User,
     ):
         """Test that admin cannot impersonate themselves."""
-        if not admin_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         response = client.post(
             "/api/auth/impersonate",
@@ -252,8 +242,6 @@ class TestImpersonationRoutes:
         target_user_for_routes: User,
     ):
         """Test successful ending of impersonation session."""
-        if not admin_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         # Start impersonation
         start_response = client.post(
@@ -311,8 +299,6 @@ class TestImpersonationRoutes:
         target_user_for_routes: User,
     ):
         """Test that status endpoint returns correct state when impersonating."""
-        if not admin_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         # Start impersonation
         start_response = client.post(
@@ -361,8 +347,6 @@ class TestImpersonationRoutes:
         target_user_for_routes: User,
     ):
         """Test status after impersonation session has ended."""
-        if not admin_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         # Start impersonation
         start_response = client.post(
@@ -404,8 +388,6 @@ class TestImpersonationRoutes:
         target_user_for_routes: User,
     ):
         """Test that starting impersonation sets a cookie."""
-        if not admin_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         response = client.post(
             "/api/auth/impersonate",
@@ -430,8 +412,6 @@ class TestImpersonationRoutes:
         target_user_for_routes: User,
     ):
         """Test that ending impersonation clears the cookie."""
-        if not admin_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         # Start impersonation
         start_response = client.post(
@@ -473,8 +453,6 @@ class TestImpersonationRoutes:
         is difficult to test with TestClient due to httpx/Starlette limitations.
         Real cookie behavior should be verified via browser/integration testing.
         """
-        if not admin_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         # Start impersonation
         start_response = client.post(
@@ -505,8 +483,6 @@ class TestImpersonationRoutes:
         db: Session,
     ):
         """Test that X-Impersonation-Token header takes precedence over cookie."""
-        if not admin_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         # Start impersonation (sets cookie)
         start_response = client.post(
@@ -540,8 +516,6 @@ class TestImpersonationRoutes:
         db: Session,
     ):
         """Test that impersonating inactive user returns 403."""
-        if not admin_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         # Create inactive user
         inactive_user = User(
@@ -588,8 +562,6 @@ class TestImpersonationRoutes:
         admin_auth_headers: dict,
     ):
         """Test that invalid UUID format returns 422."""
-        if not admin_auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         response = client.post(
             "/api/auth/impersonate",

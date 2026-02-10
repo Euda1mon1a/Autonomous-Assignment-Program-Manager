@@ -188,6 +188,7 @@ class TestProfilingEndpointSecurity:
 class TestProfilingRateLimiting:
     """Test rate limiting on profiling endpoints (if implemented)."""
 
+    @pytest.mark.requires_db
     @pytest.mark.skip(
         reason="Rate limiting for profiling endpoints not yet implemented"
     )
@@ -213,6 +214,7 @@ class TestProfilingRateLimiting:
 class TestProfilingAuditLogging:
     """Test that profiling access is logged for audit trails."""
 
+    @pytest.mark.requires_db
     @pytest.mark.skip(reason="Audit logging for profiling not yet implemented")
     def test_profiling_access_is_logged(self, client, admin_user_token, db):
         """

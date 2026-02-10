@@ -45,10 +45,13 @@ except ImportError:
             raise NotImplementedError("WorkloadKalmanFilter not yet implemented")
 
 
-@pytest.mark.integration
-@pytest.mark.skipif(
+requires_kalman = pytest.mark.skipif(
     not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
 )
+
+
+@pytest.mark.integration
+@requires_kalman
 class TestKalmanConsistentMeasurements:
     """Test Kalman filter with consistent, low-noise measurements."""
 
@@ -135,9 +138,7 @@ class TestKalmanConsistentMeasurements:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(
-    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
-)
+@requires_kalman
 class TestKalmanNoisyMeasurements:
     """Test Kalman filter's ability to smooth noisy measurements."""
 
@@ -223,9 +224,7 @@ class TestKalmanNoisyMeasurements:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(
-    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
-)
+@requires_kalman
 class TestKalmanAdaptation:
     """Test Kalman filter's ability to adapt to sudden changes."""
 
@@ -305,9 +304,7 @@ class TestKalmanAdaptation:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(
-    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
-)
+@requires_kalman
 class TestKalmanMissingData:
     """Test Kalman filter's predict-only mode when measurements are missing."""
 
@@ -417,9 +414,7 @@ class TestKalmanMissingData:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(
-    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
-)
+@requires_kalman
 class TestKalmanConfidenceIntervals:
     """Test Kalman filter confidence interval calibration."""
 
@@ -508,9 +503,7 @@ class TestKalmanConfidenceIntervals:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(
-    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
-)
+@requires_kalman
 class TestKalmanGainCalculation:
     """Test Kalman gain calculation and mathematical correctness."""
 
@@ -667,9 +660,7 @@ class TestKalmanGainCalculation:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(
-    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
-)
+@requires_kalman
 class TestKalmanIntegration:
     """Integration tests for complete workflows."""
 
@@ -809,9 +800,7 @@ class TestKalmanIntegration:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(
-    not IMPLEMENTATION_EXISTS, reason="WorkloadKalmanFilter not yet implemented"
-)
+@requires_kalman
 class TestKalmanEdgeCases:
     """Test edge cases and error handling."""
 

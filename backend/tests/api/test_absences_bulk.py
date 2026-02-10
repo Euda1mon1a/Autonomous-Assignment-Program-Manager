@@ -28,8 +28,6 @@ class TestBulkAbsencePreview:
         sample_residents: list[Person],
     ):
         """Test preview with valid absences returns success."""
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         # Create valid absence data
         start_date = date.today() + timedelta(days=30)
@@ -77,8 +75,6 @@ class TestBulkAbsencePreview:
         sample_residents: list[Person],
     ):
         """Test preview detects validation errors."""
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         start_date = date.today() + timedelta(days=30)
         end_date = start_date + timedelta(days=7)
@@ -124,8 +120,6 @@ class TestBulkAbsencePreview:
         sample_residents: list[Person],
     ):
         """Test preview detects invalid absence types."""
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         start_date = date.today() + timedelta(days=30)
         end_date = start_date + timedelta(days=7)
@@ -158,8 +152,6 @@ class TestBulkAbsencePreview:
         sample_residents: list[Person],
     ):
         """Test preview detects duplicate absences within the same batch."""
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         start_date = date.today() + timedelta(days=30)
         end_date = start_date + timedelta(days=7)
@@ -207,8 +199,6 @@ class TestBulkAbsencePreview:
         sample_absence: Absence,
     ):
         """Test preview detects conflicts with existing absences in DB."""
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         # Use dates that overlap with sample_absence
         bulk_data = {
@@ -246,8 +236,6 @@ class TestBulkAbsencePreview:
         auth_headers: dict,
     ):
         """Test that empty absence list is rejected."""
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         bulk_data = {"absences": []}
 
@@ -268,8 +256,6 @@ class TestBulkAbsencePreview:
         sample_residents: list[Person],
     ):
         """Test that preview endpoint sets X-Contains-PHI header."""
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         start_date = date.today() + timedelta(days=30)
         end_date = start_date + timedelta(days=7)
@@ -306,8 +292,6 @@ class TestBulkAbsenceApply:
         sample_residents: list[Person],
     ):
         """Test applying valid absences creates records."""
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         start_date = date.today() + timedelta(days=60)
         end_date = start_date + timedelta(days=7)
@@ -357,8 +341,6 @@ class TestBulkAbsenceApply:
         sample_residents: list[Person],
     ):
         """Test applying absences with conflicts skips conflicting entries."""
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         # Find a resident without the sample_absence
         resident_without_absence = next(
@@ -409,8 +391,6 @@ class TestBulkAbsenceApply:
         sample_residents: list[Person],
     ):
         """Test applying absences with duplicates in batch handles correctly."""
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         start_date = date.today() + timedelta(days=120)
         end_date = start_date + timedelta(days=7)
@@ -454,8 +434,6 @@ class TestBulkAbsenceApply:
         sample_residents: list[Person],
     ):
         """Test applying military-specific absence types (deployment, tdy)."""
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         start_date = date.today() + timedelta(days=150)
         end_date = start_date + timedelta(days=30)
@@ -570,8 +548,6 @@ class TestBulkAbsenceSummary:
         sample_residents: list[Person],
     ):
         """Test that summary contains expected fields."""
-        if not auth_headers:
-            pytest.skip("Auth not available in test environment")
 
         start_date = date.today() + timedelta(days=30)
         end_date = start_date + timedelta(days=7)

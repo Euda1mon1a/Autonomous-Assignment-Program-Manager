@@ -26,7 +26,10 @@ from app.security.rate_limit_bypass import (
 
 @pytest.fixture
 def redis_client():
-    """Create a Redis client for testing."""
+    """Create a Redis client for testing.
+
+    Skips tests when Redis is not available (requires_redis marker).
+    """
     try:
         client = redis.Redis(
             host="localhost",

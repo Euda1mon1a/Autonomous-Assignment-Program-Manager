@@ -174,10 +174,13 @@ markers = [
     "acgme: marks tests for ACGME compliance validation",
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
-    "requires_db: marks tests that need a database connection",
-    "requires_redis: marks tests that need Redis",
+    "unit: marks tests as unit tests",
     "resilience: marks tests for resilience framework",
     "performance: marks tests for performance benchmarking",
+    "e2e: marks tests as end-to-end tests requiring full stack",
+    "requires_db: marks tests that need a database connection",
+    "requires_redis: marks tests that need Redis",
+    "requires_celery: marks tests requiring Celery worker",
 ]
 
 [tool.coverage.run]
