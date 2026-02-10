@@ -18,7 +18,7 @@
 # Requires:
 #   - Python 3.11+ with backend virtualenv activated
 #   - Node.js 18+ with frontend deps installed
-#   - Postgres 15 and Redis (native or via brew)
+#   - PostgreSQL and Redis (native or via brew)
 # ============================================================
 
 set -euo pipefail
@@ -46,7 +46,7 @@ for arg in "$@"; do
             echo "Usage: $0 [--bootstrap] [--mlx] [--skip-infra] [--follow]"
             echo ""
             echo "Options:"
-            echo "  --bootstrap   Install/start Postgres+Redis via brew services"
+            echo "  --bootstrap   Install/start PostgreSQL+Redis via brew services"
             echo "  --mlx         Also start MLX inference server on :8082"
             echo "  --skip-infra  Skip Postgres/Redis checks"
             echo "  --follow      Tail combined logs after startup"
@@ -141,25 +141,36 @@ echo -e "${BLUE}=== Phase 1: Infrastructure ===${NC}"
 if [ "$SKIP_INFRA" = true ]; then
     echo -e "  ${YELLOW}[--]${NC} Skipping infrastructure checks (--skip-infra)"
 else
-    # --- Postgres ---
+    # --- PostgreSQL ---
     PG_OK=false
     if pg_isready -q -h localhost -p 5432 2>/dev/null; then
         echo -e "  ${GREEN}[OK]${NC} PostgreSQL is running"
         PG_OK=true
     else
         if [ "$BOOTSTRAP" = true ]; then
-            echo -e "  ${YELLOW}[..]${NC} Starting PostgreSQL via brew..."
-            brew services start postgresql@15
-            sleep 3
-            if pg_isready -q -h localhost -p 5432 2>/dev/null; then
-                echo -e "  ${GREEN}[OK]${NC} PostgreSQL started"
-                PG_OK=true
+            PG_FORMULA="$(detect_brew_postgres_service || true)"
+            if [ -n "$PG_FORMULA" ]; then
+                echo -e "  ${YELLOW}[..]${NC} Starting PostgreSQL via brew (${PG_FORMULA})..."
+                brew services start "${PG_FORMULA}"
+                sleep 3
+                if pg_isready -q -h localhost -p 5432 2>/dev/null; then
+                    echo -e "  ${GREEN}[OK]${NC} PostgreSQL started (${PG_FORMULA})"
+                    PG_OK=true
+                else
+                    echo -e "  ${RED}[!!]${NC} PostgreSQL failed to start (${PG_FORMULA})"
+                fi
             else
-                echo -e "  ${RED}[!!]${NC} PostgreSQL failed to start"
+                echo -e "  ${RED}[!!]${NC} No Homebrew PostgreSQL formula detected"
+                echo "         Install one of: postgresql@17 or postgresql@18"
             fi
         else
             echo -e "  ${RED}[!!]${NC} PostgreSQL not running on localhost:5432"
-            echo "         Run: brew services start postgresql@15"
+            PG_FORMULA="$(detect_brew_postgres_service || true)"
+            if [ -n "$PG_FORMULA" ]; then
+                echo "         Run: brew services start ${PG_FORMULA}"
+            else
+                echo "         Run: brew install postgresql@17 && brew services start postgresql@17"
+            fi
             echo "         Or use: $0 --bootstrap"
         fi
     fi
@@ -211,15 +222,44 @@ else
     echo -e "  ${YELLOW}[--]${NC} No venv at ${VENV_DIR} — using system Python"
 fi
 
-export DATABASE_URL="postgresql://scheduler:scheduler@localhost:5432/residency_scheduler"
-export REDIS_URL="redis://localhost:6379/0"
-export CELERY_BROKER_URL="redis://localhost:6379/0"
-export CELERY_RESULT_BACKEND="redis://localhost:6379/0"
-export DEBUG="true"
-export CORS_ORIGINS='["http://localhost:3000"]'
+DB_USER="${DB_USER:-scheduler}"
+DB_PASSWORD="${DB_PASSWORD:-scheduler}"
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-5432}"
+DB_NAME="${DB_NAME:-residency_scheduler}"
+
+DEFAULT_DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+export DATABASE_URL="${DATABASE_URL:-$DEFAULT_DATABASE_URL}"
+export REDIS_URL="${REDIS_URL:-redis://localhost:6379/0}"
+export CELERY_BROKER_URL="${CELERY_BROKER_URL:-$REDIS_URL}"
+export CELERY_RESULT_BACKEND="${CELERY_RESULT_BACKEND:-$REDIS_URL}"
+export DEBUG="${DEBUG:-true}"
+export CORS_ORIGINS="${CORS_ORIGINS:-[\"http://localhost:3000\"]}"
+
+# Avoid Redis double-password injection:
+# if password is embedded in REDIS_URL, REDIS_PASSWORD must be blank.
+if [[ "$REDIS_URL" =~ ^redis://:[^@]+@ ]]; then
+    export REDIS_PASSWORD=""
+fi
 export SECRET_KEY="${SECRET_KEY:-local_dev_secret_key_not_for_production_use_only_12345678901234567890}"
 
 echo -e "  ${GREEN}[OK]${NC} Environment variables set"
+
+# pgvector is required for RAG and vector-backed tables.
+if command -v psql >/dev/null 2>&1; then
+    if PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -tAc \
+        "SELECT extname FROM pg_extension WHERE extname='vector';" 2>/dev/null | grep -q vector
+    then
+        echo -e "  ${GREEN}[OK]${NC} pgvector extension detected in residency_scheduler"
+    else
+        echo -e "  ${YELLOW}[--]${NC} pgvector extension not detected in residency_scheduler"
+        echo "         RAG/vector features may fail on this host."
+        echo "         Native recommendation: use PostgreSQL 17+ with Homebrew pgvector."
+        echo "         Fallback: run Docker db image (pgvector/pgvector:pg15) for local RAG."
+    fi
+else
+    echo -e "  ${YELLOW}[--]${NC} psql not found; skipping pgvector extension check"
+fi
 
 # ===========================================================
 # Phase 3: Migrations
@@ -288,7 +328,7 @@ export PYTHONPATH="${PROJECT_ROOT}/mcp-server/src"
 export API_BASE_URL="http://localhost:8000"
 
 start_service "mcp" "$PROJECT_ROOT/mcp-server/src" \
-    python -m scheduler_mcp.server
+    python -m scheduler_mcp.server --host 127.0.0.1 --port 8081
 
 # 6. Optional MLX server
 if [ "$MLX" = true ]; then

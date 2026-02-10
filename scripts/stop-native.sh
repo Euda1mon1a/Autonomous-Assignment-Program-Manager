@@ -128,10 +128,23 @@ if [ "$STOP_ALL" = true ]; then
     fi
 
     echo -n "  PostgreSQL: "
-    if brew services stop postgresql@15 >/dev/null 2>&1; then
-        echo -e "${GREEN}stopped${NC}"
+    if command -v brew >/dev/null 2>&1; then
+        PG_STOPPED=false
+        for version in 18 17 16 15; do
+            formula="postgresql@${version}"
+            if brew list --versions "${formula}" >/dev/null 2>&1; then
+                if brew services stop "${formula}" >/dev/null 2>&1; then
+                    echo -e "${GREEN}stopped (${formula})${NC}"
+                    PG_STOPPED=true
+                    break
+                fi
+            fi
+        done
+        if [ "$PG_STOPPED" = false ]; then
+            echo -e "${YELLOW}already stopped or not managed by brew${NC}"
+        fi
     else
-        echo -e "${YELLOW}already stopped or not managed by brew${NC}"
+        echo -e "${YELLOW}brew not available${NC}"
     fi
 fi
 

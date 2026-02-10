@@ -11,14 +11,47 @@
 # Resolve project root (parent of scripts/)
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# Add keg-only Homebrew PostgreSQL to PATH if not already available
-if ! command -v pg_isready &>/dev/null; then
-    for pg_dir in /opt/homebrew/opt/postgresql@15/bin /usr/local/opt/postgresql@15/bin; do
-        if [ -d "$pg_dir" ]; then
-            export PATH="${pg_dir}:${PATH}"
-            break
+# Supported Homebrew PostgreSQL versions (newest first)
+POSTGRES_VERSIONS=(18 17 16 15)
+
+find_brew_postgres_bin_dir() {
+    local version
+    local pg_dir
+    for version in "${POSTGRES_VERSIONS[@]}"; do
+        for pg_dir in \
+            "/opt/homebrew/opt/postgresql@${version}/bin" \
+            "/usr/local/opt/postgresql@${version}/bin"
+        do
+            if [ -d "$pg_dir" ]; then
+                echo "$pg_dir"
+                return 0
+            fi
+        done
+    done
+    return 1
+}
+
+detect_brew_postgres_service() {
+    if ! command -v brew >/dev/null 2>&1; then
+        return 1
+    fi
+
+    local version
+    for version in "${POSTGRES_VERSIONS[@]}"; do
+        if brew list --versions "postgresql@${version}" >/dev/null 2>&1; then
+            echo "postgresql@${version}"
+            return 0
         fi
     done
+    return 1
+}
+
+# Add keg-only Homebrew PostgreSQL to PATH if not already available.
+if ! command -v pg_isready &>/dev/null; then
+    PG_BREW_BIN_DIR="$(find_brew_postgres_bin_dir || true)"
+    if [ -n "${PG_BREW_BIN_DIR}" ]; then
+        export PATH="${PG_BREW_BIN_DIR}:${PATH}"
+    fi
 fi
 
 # Directories

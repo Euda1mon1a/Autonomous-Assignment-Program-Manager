@@ -16,10 +16,18 @@ import sqlalchemy as sa
 revision = "20260115_fix_capacity_null"
 down_revision = "20260115_schedule_drafts"
 branch_labels = None
-depends_on = None
+depends_on = ("20260114_half_day_tables",)
 
 
 def upgrade() -> None:
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    activities_cols = {c["name"] for c in inspector.get_columns("activities")}
+
+    # Guard against out-of-order branch application.
+    if "counts_toward_physical_capacity" not in activities_cols:
+        return
+
     # Backfill any NULLs to FALSE (safe default)
     op.execute("""
         UPDATE activities
