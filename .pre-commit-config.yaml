@@ -1,3 +1,19 @@
+# Parallelization Analysis (2026-02-10):
+# - pre-commit runs hooks within the same repo entry in parallel by default
+#   (unless require_serial: true), but runs repo entries sequentially.
+# - All hooks already have explicit stages: [pre-commit].
+# - No hooks set require_serial: true, so intra-repo parallelism is enabled.
+# - Most repo: local entries contain a single hook, so there is nothing to
+#   parallelize within them. The pre-commit-hooks repo (Phase 4) has 8 hooks
+#   that already run in parallel.
+# - The D&D hooks (Phase 24) already consolidate 3 checks into one parallel
+#   script via dnd-hooks-parallel.sh.
+# - Further speedup would require a custom runner that launches multiple
+#   repo: local scripts concurrently, or consolidating validation scripts
+#   (Phases 12-23) into a single parallel dispatcher. This is not worth the
+#   complexity since most hooks only trigger on specific file patterns and
+#   skip quickly when unmatched.
+
 repos:
   # ============================================================================
   # PHASE 1: Security Scanning (First Line of Defense)

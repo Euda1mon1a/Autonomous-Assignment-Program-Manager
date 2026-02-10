@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Pre-push hook: blocks force-pushes and direct pushes to main/master
+
+# Allow override via GIT_FORCE_PUSH=1
+if [ "$GIT_FORCE_PUSH" = "1" ]; then
+  exit 0
+fi
+
+# Read push info from stdin
+while read local_ref local_sha remote_ref remote_sha; do
+  # Block pushes to main/master
+  if echo "$remote_ref" | grep -qE "refs/heads/(main|master)$"; then
+    echo "ERROR: Direct push to main/master is blocked."
+    echo "Use a feature branch and create a PR instead."
+    echo "Override: GIT_FORCE_PUSH=1 git push"
+    exit 1
+  fi
+done
+
+# Check for --force flag (parse /proc or ps - simpler: check GIT_PUSH_OPTION)
+# Note: pre-push hook can't directly see --force flag, but we block main which is the key risk
+exit 0

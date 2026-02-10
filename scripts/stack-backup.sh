@@ -2,6 +2,7 @@
 # =============================================================================
 # Unified Stack Backup & Restore Script
 # =============================================================================
+# NOTE: The canonical entry point is now scripts/backup.sh (which delegates here).
 # Consolidates backup_full_stack.sh, full-stack-backup.sh, restore_full_stack.sh
 #
 # MODES:

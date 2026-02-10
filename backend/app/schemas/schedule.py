@@ -133,7 +133,7 @@ class ScheduleResponse(BaseModel):
     # Note: Field stores assignment count, not block count. Exposed as total_assignments
     # in API responses for clarity. DB column remains total_blocks_assigned for backwards
     # compatibility. After axios camelCase conversion, frontend receives totalAssignments.
-    total_assignments: int = Field(serialization_alias="total_assignments")
+    total_assignments: int = Field(alias="total_blocks_assigned")
     total_blocks: int
     validation: ValidationResult
     run_id: UUID | None = None
