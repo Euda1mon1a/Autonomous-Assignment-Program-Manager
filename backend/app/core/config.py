@@ -160,6 +160,11 @@ class Settings(BaseSettings):
     # Only trust X-Forwarded-For from these IPs; empty list uses direct client IP
     TRUSTED_PROXIES: list[str] = []  # e.g., ["10.0.0.1", "10.0.0.2", "172.16.0.0/12"]
 
+    # Scheduling Engine
+    MAX_FACULTY_IN_CLINIC: int = (
+        6  # Physical limit of faculty in clinic at any one time
+    )
+
     # Resilience Configuration (Tier 1)
     # Utilization thresholds based on queuing theory (M/M/c queue model)
     # Wait time formula: W ~ rho / (1 - rho), where rho = utilization

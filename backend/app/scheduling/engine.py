@@ -29,6 +29,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.config import get_settings
 from app.core.exceptions import ActivityNotFoundError
 from app.core.logging import get_logger
 from app.schemas.schedule import (
@@ -2428,10 +2429,10 @@ class SchedulingEngine:
                 floor = 0
 
             # Final required = max(floor, ACGME calc) + procedure bonus
-            # Cap at 6 (physical limit of faculty in clinic at any time)
-            MAX_FACULTY_IN_CLINIC = 6
+            # Cap at configurable limit (physical limit of faculty in clinic)
             required = min(
-                MAX_FACULTY_IN_CLINIC, max(floor, acgme_required) + procedure_bonus
+                get_settings().MAX_FACULTY_IN_CLINIC,
+                max(floor, acgme_required) + procedure_bonus,
             )
 
             # Find available faculty (not on leave AND not already assigned to this block)

@@ -75,7 +75,7 @@ const ClaudeCodeChat: React.FC<ClaudeCodeChatProps> = ({
 
   const formatContent = (content: string) => {
     return content.split('\n').map((line, i) => (
-      <React.Fragment key={i}>
+      <React.Fragment key={`${i}-${line}`}>
         {line}
         <br />
       </React.Fragment>
@@ -83,7 +83,7 @@ const ClaudeCodeChat: React.FC<ClaudeCodeChatProps> = ({
   };
 
   const renderCodeBlock = (code: { language: string; code: string; filename?: string }, index: number): React.ReactElement => (
-    <div key={index} className="code-block">
+    <div key={`${code.language}-${code.filename ?? index}`} className="code-block">
       <div className="code-header">
         <span className="language">{code.language}</span>
         {code.filename && <span className="filename">{code.filename}</span>}
@@ -120,9 +120,9 @@ const ClaudeCodeChat: React.FC<ClaudeCodeChatProps> = ({
         {msg.artifacts && msg.artifacts.length > 0 && (
           <div className="artifacts-container">
             <div className="artifacts-header">Generated Artifacts:</div>
-            {msg.artifacts.map((artifact, i) => (
+            {msg.artifacts.map((artifact) => (
               <button
-                key={i}
+                key={artifact.id}
                 className="artifact-button"
                 onClick={() => setSelectedArtifact(artifact)}
               >

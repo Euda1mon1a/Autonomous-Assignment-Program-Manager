@@ -259,8 +259,8 @@ export function TemplateEditor({
                   onChange={(e) => setStartDayOfWeek(parseInt(e.target.value))}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  {DAY_OF_WEEK_LABELS.map((day, index) => (
-                    <option key={index} value={index}>
+                  {DAY_OF_WEEK_LABELS.map((day, dayIdx) => (
+                    <option key={day} value={dayIdx}>
                       {day}
                     </option>
                   ))}

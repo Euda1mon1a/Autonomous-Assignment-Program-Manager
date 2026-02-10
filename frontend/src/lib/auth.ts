@@ -235,15 +235,29 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
  * @see login - For logging in
  */
 export async function logout(): Promise<boolean> {
-  // Clear token state before making the request (security: always clear local state)
+  // Always clear client-side session state regardless of server response
   clearTokenState()
 
   try {
     await post('/auth/logout', {})
     return true
-  } catch (_error) {
-    // Even if the request fails, the user is logged out client-side
-    return false
+  } catch (_firstError) {
+    // Retry once on failure
+    try {
+      await post('/auth/logout', {})
+      return true
+    } catch (retryError) {
+      // Only re-throw if both attempts fail AND it's not a network error
+      // (user might already be offline, so failing to reach server is expected)
+      const isNetworkError =
+        retryError instanceof TypeError ||
+        (retryError instanceof Error && retryError.message === 'Network Error')
+      if (!isNetworkError) {
+        throw retryError
+      }
+      // Network error: client state already cleared, treat as success
+      return false
+    }
   }
 }
 
