@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Project Realization Sprint (PRs #1099-#1108, Feb 9-10, 2026)
+
+**Build & Quality (#1099)**
+- Re-enabled `ignoreBuildErrors: false` and `ignoreDuringBuilds: false` in Next.js config
+- Fixed all ESLint warnings across 13 frontend files
+
+**Code Debt Cleanup (#1100)**
+- DEBT-012: Fixed mock handler base URL drift
+- DEBT-019: Logout error propagation with retry + unconditional client-side cleanup
+- DEBT-022: Replaced index-based React keys with stable keys in 4 files
+- DEBT-024: Made `MAX_FACULTY_IN_CLINIC` configurable via Settings
+
+**Test Calibration (#1102)** — Fixed 67 resilience test failures, 3505 passing
+
+**Skipped Tests Audit (#1103)** — Reduced skip markers from ~180 to 92 (49% reduction)
+
+**Frontend Component Tests (#1104)** — 403 new tests (compliance, admin, hooks)
+
+**Test Coverage Imports (#1105)** — Work hour validator boundaries, FMIT conflicts, faculty activity, half-day XML export
+
+**Native Runtime Hardening (#1106)** — Multi-version PG detection, pgvector checks, env var defaults
+
+### Fixed
+- Async DB session in resident weekly requirements route (#1107)
+- RAG ingest idempotency — per-file clearing instead of per-doc_type bucket overwrite (#1108)
+- Migration dependency chain for `20260115_fix_capacity_null` (#1106)
+
 #### Autonomous Test Marathon (PRs #896-#1096, Feb 9-10, 2026)
 
 **201 PRs merged in ~18.5 hours** of autonomous Claude Code operation, adding 11,861 test functions across 283 new test files (112,298 lines of test code). Backend test total: 25,136 functions across 910 files.

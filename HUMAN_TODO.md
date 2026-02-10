@@ -1,6 +1,7 @@
 # Human TODO
 
 > Tasks that require human action (external accounts, manual configuration, etc.)
+> **Open items: ~25 | Archived: 31** (cleaned 2026-02-10)
 
 ---
 
@@ -70,118 +71,9 @@ Codex-side safety and triage scaffolding is in place. These are the remaining hu
 
 ---
 
-## CP-SAT Phase 2: COMPLETE (2026-01-28)
-
-**Priority:** N/A - COMPLETE
-**Status:** ✅ All P0-P4 items resolved, validator fixed, MCP validation clean
-
-### Phase 2 Summary
-
-| Item | Status | Description |
-|------|--------|-------------|
-| **P0: 80-hour** | ✅ | Time-off patterns loaded into weekly_patterns |
-| **P1: 1-in-7** | ✅ | Saturday OFF for FMIT/IMW/PEDSW/PNF |
-| **P2: Supervision** | ✅ | AT/PCAT ratios via half_day_assignments |
-| **P3: Templates** | ✅ | 37 templates have activity requirements |
-| **P4: Faculty Equity** | ✅ | Admin/AT equity via penalty weights |
-| **Validator Fix** | ✅ | Time-off excluded from duty hours |
-
-### Validator Bug Fixed (2026-01-28)
-
-**Root cause:** Validator counted W/OFF as duty hours, causing false 80-hour and consecutive-day violations.
-
-**Fix applied:**
-- `backend/app/scheduling/validator.py` - Exclude time-off from duty hours
-- `backend/app/scheduling/conflicts/analyzer.py` - Same exclusion for detect_conflicts
-- `backend/app/services/block_quality_report_service.py` - Note ACGME is placeholder
-
-### Block 10 Validation (Post-Fix)
-
-| Tool | Result |
-|------|--------|
-| `validate_schedule_tool` | ✅ is_valid=true, 0 issues |
-| `detect_conflicts_tool` | ✅ 0 conflicts |
-| `block_quality_report_tool` | ✅ PASS (ACGME placeholder, PCAT/DO gap expected) |
-
-### Time-Off Rules Applied (Authoritative)
-
-| Rotation | Day Off |
-|----------|---------|
-| FMIT PGY-1/PGY-2 | Saturday |
-| FMIT PGY-3 | Sunday |
-| IMW | Saturday |
-| PEDSW | Saturday |
-| PNF | Saturday |
-
-### Files Changed
-- `backend/app/scheduling/validator.py`
-- `backend/app/scheduling/conflicts/analyzer.py`
-- `backend/app/services/block_quality_report_service.py`
-- `scripts/ops/apply_inpatient_time_off_overrides.py`
-- `data/inpatient_time_off_overrides_manual.json`
-
-**Ready for:** Phase 2 PR and merge
-
----
-
-## Priority: Import/Export Staging DB (2026-01-01)
-
-**Status:** ✅ COMPLETE (verified 2026-01-04)
-**Context:** Full round-trip import workflow implemented and deployed.
-
-### Implementation Summary
-
-All 6 required components are FULLY IMPLEMENTED:
-
-| Component | Location | Status |
-|-----------|----------|--------|
-| **Model** | `backend/app/models/import_staging.py` | ✅ Complete |
-| **Schema** | `backend/app/schemas/import_staging.py` | ✅ Complete |
-| **Service** | `backend/app/services/import_staging_service.py` | ✅ Complete |
-| **Routes** | `backend/app/api/routes/import_staging.py` | ✅ Complete (6 endpoints) |
-| **Migration** | `backend/alembic/versions/20260101_import_staging_tables.py` | ✅ Complete |
-| **Frontend** | Wired to routes | ✅ Complete |
-
-### Endpoints Implemented
-- [x] POST `/import/stage` - Parse Excel and stage (no commit)
-- [x] GET `/import/batches` - List staged batches
-- [x] GET `/import/batches/{id}/preview` - Show staged vs existing
-- [x] POST `/import/batches/{id}/apply` - Commit staged to live
-- [x] POST `/import/batches/{id}/rollback` - Undo applied batch
-- [x] DELETE `/import/batches/{id}` - Remove batch
-
-### Conflict Resolution Modes
-| Mode | Behavior | Status |
-|------|----------|--------|
-| Replace | Delete block assignments, insert staged | ✅ Implemented |
-| Merge | Keep existing, add new, skip conflicts | ✅ Implemented |
-| Upsert | Update if person+date+slot exists, else insert | ✅ Implemented |
-
-**Verification:** Database migration runs on startup, all 6 endpoints tested and functional, round-trip workflow: Export → Edit → Re-import now fully operational.
-
----
-
 ## Post-Rebuild Fixes (2026-01-02)
 
-**Context:** After Session 052 infrastructure rebuild, several items need attention.
-
-### 1. Re-enable Alembic Migrations in docker-entrypoint.sh
-**Priority:** High
-**Status:** DONE (verified 2026-01-03)
-
-~~Migrations were commented out during rebuild to prevent issues.~~
-
-**Verified:** `alembic upgrade head` is ACTIVE at line 22 of `backend/docker-entrypoint.sh`.
-The migration runs on every container startup as intended.
-
-```bash
-# From backend/docker-entrypoint.sh:22
-alembic upgrade head
-```
-
-**No action required** - this was a phantom task.
-
-### 2. Fix Misleading "/mcp not authenticated" Display
+### Fix Misleading "/mcp not authenticated" Display
 **Priority:** Low
 **Status:** TODO
 
@@ -201,14 +93,6 @@ The `/mcp` command shows "not authenticated" even when tools work fine. This is 
 
 ## Cleanup / Developer Experience (2026-01-09)
 
-### Seaborn Warning in Backend Logs - ✅ COMPLETE
-**Priority:** Low
-**Status:** DONE (2026-01-11, commit `9200055e`)
-
-Removed unused seaborn import from `spin_glass_visualizer.py`. Warning no longer appears.
-
----
-
 ### Heatmap Feature - Needs Schedule Data
 **Priority:** Medium (post-first-deployment)
 **Status:** Working but empty
@@ -224,45 +108,9 @@ Removed unused seaborn import from `spin_glass_visualizer.py`. Warning no longer
 
 ---
 
-## Completed (2025-12-25)
+## Completed (2025-12-25) - Remaining Open Items
 
-### 1. Block 10 Schedule Generation - COMPLETE ✅
-**Priority:** High
-**Context:** Block 10 fully working as of 2025-12-25
-
-- [x] Run schedule generation with Docker backend (87 assignments, 112.5% coverage)
-- [x] Verify assignments distributed across clinic templates
-- [x] All 25 constraints active and working
-- [x] 0 violations
-
-**Verified:** See `docs/development/SESSION_HANDOFF_20251225.md` for details
-
-### 2. Complete MCP Wiring - DONE
-**Priority:** Medium
-**Context:** PR #402 wired 3/5 tools, 2 remaining - **FIXED 2025-12-24**
-
-| Tool | Issue | Fix Applied |
-|------|-------|-------------|
-| `analyze_swap_candidates` | Backend required file upload | Created `/schedule/swaps/candidates` JSON endpoint |
-| `run_contingency_analysis` | Different response structure | Added response mapping in `resilience_integration.py` |
-
-**Files Changed:**
-- `backend/app/api/routes/schedule.py` - Added JSON-based swap candidates endpoint
-- `backend/app/schemas/schedule.py` - Added new request/response schemas
-- `mcp-server/src/scheduler_mcp/tools.py` - Wired to backend, kept mock as fallback
-- `mcp-server/src/scheduler_mcp/api_client.py` - Updated to call new endpoint
-- `mcp-server/src/scheduler_mcp/resilience_integration.py` - Added backend response mapping
-
-### 3. PuLP Solver Template Balance - DONE
-**Priority:** Low
-**Context:** Only fixed greedy + CP-SAT, PuLP may have same issue - **FIXED 2025-12-24**
-
-- [x] Check if PuLP solver has template concentration bug ✅
-- [x] Apply same fix pattern if needed (select template with fewest assignments) ✅
-
-**Fix Applied:** Added template balance penalty to PuLP solver objective function, matching CP-SAT pattern
-
-### 4. Optional: Add `solver_managed` Flag
+### Optional: Add `solver_managed` Flag
 **Priority:** Low (nice-to-have)
 **Context:** Cleaner than filtering by `activity_type`
 
@@ -273,48 +121,6 @@ Removed unused seaborn import from `spin_glass_visualizer.py`. Warning no longer
 ---
 
 ## Feature Requests - Pending Investigation
-
-### Admin GUI: Bulk Rotation Template Editing
-**Priority:** Medium
-**Added:** 2026-01-04
-**Status:** ✅ COMPLETE (PR #633, #638, #642 merged)
-
-**Implementation:**
-- [x] View all rotation templates at `/admin/templates`
-- [x] Bulk enable/disable templates
-- [x] Bulk edit capacity, supervision requirements
-- [x] Bulk assign activity_type
-- [x] Filter/sort templates by type, status, capacity
-- [x] Pattern editor modal (weekly schedule grid)
-- [x] Preference editor modal
-
-**Files Created:**
-- `frontend/src/app/admin/templates/page.tsx`
-- `frontend/src/components/admin/TemplateTable.tsx`
-- `frontend/src/components/admin/BulkActionsToolbar.tsx`
-- `frontend/src/components/admin/PreferenceEditor.tsx`
-- `frontend/src/hooks/useAdminTemplates.ts`
-
----
-
-### Admin GUI: Absence Loader (CRITICAL)
-**Priority:** HIGH
-**Added:** 2026-01-05
-**Status:** ✅ COMPLETE (PR #649 merged)
-
-**Implementation:**
-- [x] Upload CSV/Excel with absence records
-- [x] Preview staged absences before committing (staging pattern)
-- [x] Handle both resident and faculty absences
-- [x] Support all absence types (Annual, Sick, TDY, Deployment, etc.)
-- [x] Conflict detection during preview
-- [x] Apply/rollback workflow
-
-**Files Created:**
-- Backend bulk absence endpoints
-- Frontend absence loader UI with preview/apply pattern
-
----
 
 ### Intern Scheduler Generator for Anticipated Leave
 **Priority:** Medium
@@ -335,7 +141,7 @@ Removed unused seaborn import from `spin_glass_visualizer.py`. Warning no longer
 **Implementation Considerations:**
 - Add `leave_status: anticipated | confirmed | denied` to Absence model
 - Generate schedule with anticipated absences distributed evenly
-- Provide UI to convert anticipated → confirmed when requests arrive
+- Provide UI to convert anticipated -> confirmed when requests arrive
 - Alerting for interns who haven't submitted requests by deadline
 
 ---
@@ -350,7 +156,7 @@ Removed unused seaborn import from `spin_glass_visualizer.py`. Warning no longer
 | PGY Level | ACGME Requirement | Current Code |
 |-----------|------------------|--------------|
 | PGY-1 | 10 hours ("should have" - recommended) | 8 hours |
-| PGY-2+ | 8 hours ("must have" - required) | 8 hours ✓ |
+| PGY-2+ | 8 hours ("must have" - required) | 8 hours |
 
 **Current implementation:** Single constant `ACGME_MIN_REST_BETWEEN_SHIFTS = 8.0` in `backend/app/resilience/frms/frms_service.py:181`
 
@@ -369,239 +175,6 @@ ACGME_MIN_REST_PGY2_PLUS = 8.0  # ACGME "must have"
 - `backend/app/resilience/frms/frms_service.py` (constraint definition)
 - `docs/rag-knowledge/acgme-rules.md` (documentation)
 - `backend/app/prompts/scheduling_assistant.py` (AI guidance)
-
----
-
-### Faculty FMIT and Call Equity - ✅ ADDRESSED
-**Priority:** Medium
-**Added:** 2026-01-11
-**Status:** DONE (2026-01-11, commit `1bac63ca`)
-
-**Implementation:** `IntegratedWorkloadConstraint` tracks 5 workload categories with weighted scoring:
-- Call (overnight) - weight 1.0
-- FMIT weeks - weight 3.0
-- Clinic half-days - weight 0.5
-- Admin half-days (GME, DFM) - weight 0.25
-- Academic half-days (LEC, ADV) - weight 0.25
-
-**Features:**
-- Min-max fairness optimization (minimize maximum workload)
-- Per-category statistics (min/max/mean/spread)
-- Excludes titled faculty (PD, APD, OIC, Dept Chief) by default
-- Jain's fairness index calculation
-- CP-SAT and PuLP solver support
-
-**Files Created:**
-- `backend/app/scheduling/constraints/integrated_workload.py`
-- `backend/app/services/fairness_audit_service.py`
-
-**Remaining:** ✅ COMPLETE - API endpoints (PR #692) and frontend dashboard (PR #693) merged
-
----
-
-## Admin GUI Wiring (2026-02-04) - ✅ COMPLETE
-
-**Priority:** High
-**Status:** DONE (2026-02-04)
-
-All admin dashboard and scheduling interface pages are fully wired to backend APIs.
-
-| Page | Status | Notes |
-|------|--------|-------|
-| `/admin/dashboard` | ✅ Complete | Metric cards (users, absences, swaps, conflicts) |
-| `/admin/credentials` | ✅ Complete | Matrix + summary views, expiring alerts |
-| `/admin/block-import` | ✅ Complete | Full staging workflow (upload → preview → apply/rollback) |
-| `/admin/schedule-drafts` | ✅ Complete | Review UI with CREDENTIAL_MISSING flag support |
-
-**New hooks created:**
-- `useAdminDashboard.ts` - Dashboard summary metrics
-- `useImportStaging.ts` - Import batch lifecycle (stage, preview, apply, rollback, delete)
-- `useFacultyCredentialSummaries` in `useProcedures.ts` - Faculty summary view
-
-**Type sync:** `DraftFlagType.CREDENTIAL_MISSING` added to frontend enum to match backend.
-
----
-
-## Frontend Hub Consolidation (2026-01-12) - ✅ PHASE 1 COMPLETE
-
-**Priority:** High
-**Added:** 2026-01-11
-**Status:** Phase 1 Complete (PRs #694-700 merged)
-
-**Vision:** Transform scattered frontend pages into unified hub-based navigation with tier-based permissions.
-
-### Completed PRs
-
-| PR | Feature | Status |
-|----|---------|--------|
-| #694 | Frontend Consolidation Map (analysis) | ✅ Merged |
-| #695 | RiskBar design system component | ✅ Merged |
-| #696 | Swap Hub (`/swaps`) - Gold Standard | ✅ Merged |
-| #697 | PersonSelector + tier utilities | ✅ Merged |
-| #698 | Couatl Killer + Hub Roadmap | ✅ Merged |
-| #699 | Proxy Coverage Dashboard | ✅ Merged |
-| #700 | 3D Command Center + WebXR Roadmap | ✅ Merged |
-
-### Key Deliverables
-
-- **RiskBar Component:** Tier 0/1/2 permission indicator (green/amber/red)
-- **Swap Hub:** Reference implementation for hub pattern
-- **Couatl Killer:** Pre-commit hook catching snake_case query param bugs
-- **Proxy Coverage:** Dashboard showing coverage relationships
-- **Command Center:** 3D voxel schedule visualization (Three.js)
-- **Hub Roadmap:** `docs/planning/FRONTEND_HUB_CONSOLIDATION_ROADMAP.md`
-
-### Remaining Hubs (Roadmapped)
-
-| Priority | Hub | Status |
-|----------|-----|--------|
-| 1 | Activity Hub | Pending |
-| 2 | Absences Hub | Pending |
-| 3 | People Hub Enhancement | Pending |
-| 4 | Procedures Hub | Pending |
-| 5 | Ops Hub (consolidate manifest/heatmap/conflicts/coverage) | Planned |
-| 6 | Compliance Hub | Pending |
-| 7 | Analytics Hub | Pending |
-
-**Roadmap Location:** `docs/planning/FRONTEND_HUB_CONSOLIDATION_ROADMAP.md`
-
----
-
-## Process Improvements (2026-01-01)
-
-### CCW Burn Quality Protocol - ✅ COMPLETE
-**Priority:** High → IMPLEMENTED
-**Added:** 2026-01-01 (Session 047)
-**Implemented:** 2026-01-04 (Session TOOLSMITH enhancement)
-**Status:** Protocol fully documented and operational
-
-**Protocol Location:** `.claude/protocols/CCW_BURN_PROTOCOL.md` (217 lines)
-
-**Completed Action Items:**
-- [x] Created formal CCW_BURN_PROTOCOL.md with pre-merge gates
-- [x] Analyzed common error patterns from past burns
-- [x] Added automated detection for known CCW error signatures
-- [x] Established "quarantine" branch naming convention (`ccw/burn-*`)
-- [x] Required stack audit GREEN before merging CCW burns
-- [x] Added rollback procedures (3 options: revert, reset, cherry-pick)
-
-**Protocol Sections:**
-1. Executive Summary - CCW validation gap context
-2. The Core Problem - Feedback loop visualization
-3. Burn Execution Protocol - Phase 1 & 2 with gates
-4. Common CCW Failure Patterns - Error catalog with detection
-5. CCW Task Constraints - Constraints to include in prompts
-6. Pre-Merge Quality Gates - Decontamination checklist
-7. Rollback Procedure - 3 recovery strategies
-8. Quick Reference - All stages summarized
-
-**See Also:**
-- `.claude/Scratchpad/CCW_BURN_POSTMORTEM.md` - Historical postmortem
-- `.claude/scripts/ccw-validation-gate.sh` - Validation script
-- `/stack-audit` skill - Required pre-merge check
-
----
-
-## UI/UX Improvements (2025-12-26)
-
-> Findings from Comet Assistant GUI exploration session
-
-### 1. Schedule Grid - Frozen Headers/Columns
-**Priority:** High
-**Page:** `/schedule` (Block View)
-**Status:** ✅ COMPLETE (Session 012, 2025-12-28)
-
-**Issues:**
-- [x] Top header row (dates) disappears when scrolling vertically through residents
-- [x] First column (resident name/PGY) disappears when scrolling horizontally
-
-**Implementation:**
-```css
-/* Sticky header row */
-th { position: sticky; top: 0; background-color: ...; z-index: 1; }
-
-/* Sticky first column */
-td:first-child, th:first-child { position: sticky; left: 0; z-index: 2; }
-```
-
-**Files Modified:**
-- `frontend/src/components/schedule/ScheduleHeader.tsx` - Added sticky positioning
-- `frontend/src/components/schedule/ScheduleGrid.tsx` - Applied z-index hierarchy
-- `frontend/src/app/globals.css` - Enhanced scroll container styling
-
-**Additional UX suggestions:**
-- Add subtle row/column hover highlight for scanning dense schedules
-- Ensure scroll container is on grid (not whole page)
-
----
-
-### 2. Heatmap Page - Add Block Navigation
-**Priority:** High
-**Page:** `/heatmap`
-**Status:** ✅ COMPLETE (Session 012, 2025-12-28)
-
-**Current state:** Only manual date pickers (From/To)
-
-**Requested:** Match Schedule page block navigation pattern:
-```
-[◀ Previous Block] [Next Block ▶] [Today] [This Block] Block: [Mar 12 - Apr 8, 2026]
-```
-
-**Implemented layout:**
-```
-[◀ Prev] [Next ▶] [Today] [This Block] Block: [Date Range]
-From: [date] To: [date] Group by: [dropdown] ☑ Include FMIT [Filters]
-```
-
-**Benefits:**
-- Consistency with Schedule page UX
-- One-click block selection vs manual date entry
-- Quick navigation through 730 blocks
-
-**File Modified:**
-- `frontend/src/components/heatmap/HeatmapControls.tsx` - Added Previous/Next/Today/This Block buttons
-
----
-
-### 3. Heatmap Backend Bug - group_by Validation - FIXED
-**Priority:** Medium
-**Page:** `/heatmap`
-**Status:** FIXED (PR #512)
-
-**Issue:** Backend rejects "Daily" and "Weekly" `group_by` values, only accepts "person" or "rotation"
-
-**Resolution (PR #512):**
-- Added `_generate_daily_heatmap()` and `_generate_weekly_heatmap()` helper methods
-- Extended group_by validation to accept 'daily' and 'weekly' values (case-insensitive)
-- Updated GET /heatmap, POST /heatmap/unified, GET /heatmap/image endpoints
-- Added 28 new tests (22 route-level, 6 service-level)
-
----
-
-### 4. Daily Manifest - Empty State UX
-**Priority:** Medium
-**Page:** `/daily-manifest`
-**Status:** COMPLETE (Session 012, 2025-12-28)
-
-**Issues fixed:**
-- [x] Improved error messaging with context-aware messages (network error vs service unavailable)
-- [x] Empty state now shows date-specific message with helpful guidance
-- [x] Added info box with actionable suggestions ("What you can do" list)
-- [x] Quick action buttons: "Go to Today" and "View All Day"
-- [x] Search empty state: Shows search term and "Clear Search" button
-- [ ] Date picker data availability indicator (deferred - requires backend endpoint)
-
-**Files Modified:**
-- `frontend/src/features/daily-manifest/DailyManifest.tsx`
-
-**Changes:**
-1. Error state now distinguishes between 404, network errors, and other errors with appropriate messaging
-2. Empty state (no locations) shows:
-   - CalendarX icon with date-specific heading
-   - Context-aware message (morning/afternoon/all day)
-   - Blue info box with helpful suggestions
-   - Quick action buttons to navigate to today or view all day
-3. Search empty state shows the search query and provides a "Clear Search" button
 
 ---
 
@@ -630,341 +203,15 @@ From: [date] To: [date] Group by: [dropdown] ☑ Include FMIT [Filters]
 
 ---
 
-## Documentation Cleanup
-
-- [x] **Move CELERY_PRODUCTION_CHECKLIST.md out of archived** ✅ Completed 2025-12-21
-  - Moved to: `docs/deployment/CELERY_PRODUCTION_CHECKLIST.md`
-  - Reason: Contains pending production tasks (email implementation, SMTP config, monitoring)
-  - Per archived/README.md, active checklists should not be archived
-
----
-
 ## Other Pending Tasks
 
-### Backend Fix: Faculty Assignments Missing rotation_template_id - FIXED
-
-**Priority:** Medium
-**Found:** Session 14 (2025-12-22)
-**Fixed:** Session 14 (2025-12-23) - Commit e88a63b
-**Status:** RESOLVED
-
-**Original Issue:** Faculty-Inpatient Year View showed all zeros because faculty assignments were created without `rotation_template_id`.
-
-**Fix Applied:**
-- Added `_get_primary_template_for_block()` method to determine rotation template from resident assignments
-- Faculty supervisors now receive the same `rotation_template_id` as the residents they supervise
-- Tests added: `test_faculty_receives_rotation_template_id()` and `test_faculty_template_matches_resident_template()`
-
-**Current Database State (verified 2025-12-28):**
-```
-   type   | total_assignments | with_template | without_template
-----------+-------------------+---------------+------------------
- faculty  |               430 |           430 |                0
- resident |              3592 |          3592 |                0
-```
-
-**Files Modified:**
-- `backend/app/scheduling/engine.py` - Added `_get_primary_template_for_block()` and updated `_assign_faculty()`
-- `backend/tests/test_scheduling_engine.py` - Added faculty template tests
-
----
-
-### Solver Template Distribution Bugs - FIXED & VERIFIED
-
-**Priority:** High
-**Found:** Session review (2025-12-24)
-**Fixed:** 2025-12-24
-**Verified:** Session 015 (2025-12-29) - All 4 solvers operational
-**Location:** `backend/app/scheduling/solvers.py`, `backend/app/scheduling/engine.py`
-
-**Issue:** Both greedy and CP-SAT solvers were assigning all residents to the same rotation.
-
-**Three bugs fixed:**
-
-1. [x] **Greedy Solver:** Now selects template with fewest total assignments for even distribution
-2. [x] **CP-SAT Solver:** Added `template_balance_penalty` to objective function
-3. [x] **Template Filtering:** `_get_rotation_templates()` now defaults to `activity_type="outpatient"`
-   - **NOTE (2025-12-26):** Previous fix incorrectly used `"clinic"` instead of `"outpatient"`.
-     PR #442 was not merged due to this issue being caught during evaluation.
-     The solver is for outpatient half-day optimization, so the filter must match `"outpatient"`
-     activity_type (electives/selectives), not `"clinic"` (FM Clinic only).
-
-**Architecture Note:**
-- Block-assigned rotations (FMIT, NF, inpatient) are pre-assigned and shouldn't go to solver
-- Solvers are for outpatient half-day optimization only
-- Templates now filtered to `activity_type == "outpatient"` by default
-- `"clinic"` is a separate activity_type for FM Clinic with its own capacity/supervision constraints
-
-**Session 015 Verification Results (2025-12-29):**
-
-| Solver | Tests | Status | Balance Verified |
-|--------|-------|--------|------------------|
-| **Greedy** | 7/7 pass | Operational | 7,7,6 distribution |
-| **CP-SAT** | 4/4 pass | Operational | 9,9 distribution |
-| **PuLP** | 5/5 pass | Operational | 9,9 distribution |
-| **Hybrid** | 5/5 pass | Operational | Fallback chain working |
-
-**Test Coverage Gap - FIXED (2026-01-04):**
-- ~~No explicit balance behavior tests exist~~ RESOLVED
-- ~~Balance is verified implicitly through assignment distribution~~ RESOLVED
-- ~~Recommendation: Add dedicated `test_template_balance_*` tests~~ RESOLVED
-
-**Implementation:** Added `TestTemplateBalance` class with 5 dedicated tests:
-- `test_template_balance_greedy` - Verifies GreedySolver distributes across templates
-- `test_template_balance_cpsat` - Verifies CPSATSolver distributes across templates
-- `test_template_balance_pulp` - Verifies PuLPSolver distributes across templates
-- `test_template_balance_hybrid` - Verifies HybridSolver distributes across templates
-- `test_template_balance_no_concentration` - Ensures no template exceeds 60% of assignments
-
-**Location:** `backend/tests/test_solvers.py` (lines 517-733)
-
----
-
-### NF Half-Block Documentation Consistency - VERIFIED
-
-**Priority:** Medium
-**Found:** Session review (2025-12-24)
-**Verified:** 2025-12-24
-
-**Issue:** Night Float (NF) half-block mirrored pairing pattern is documented in multiple places.
-
-**Audit completed - Documentation is CONSISTENT across all locations:**
-
-| Location | Status | Notes |
-|----------|--------|-------|
-| `docs/development/CODEX_SYSTEM_OVERVIEW.md` | Consistent | Most comprehensive, has PC rules |
-| `backend/app/scheduling/constraints/night_float_post_call.py` | Consistent | Implementation matches docs |
-| `.claude/skills/schedule-optimization/SKILL.md` | Consistent | Cross-references other files |
-
-**Verified consistent terminology:**
-- [x] "block-half" used everywhere (not "half-block")
-- [x] Day 15 as transition point between half 1 and half 2
-- [x] PC = full day (AM + PM blocked)
-- [x] NF in half 1 → Day 15 = PC; NF in half 2 → Day 1 next block = PC
-- [x] Mirrored pairing pattern documented identically
-
----
-
-## Cleanup Session Report (2025-12-21 Overnight)
-
-### Completed Autonomously
-
-- [x] Moved `CELERY_PRODUCTION_CHECKLIST.md` from archived to `docs/deployment/`
-- [x] Renamed session 11 docs to avoid confusion:
-  - `SESSION_011_PARALLEL_HIGH_YIELD_TODOS.md` → `SESSION_11A_MCP_AND_OPTIMIZATION.md`
-  - `SESSION_11_PARALLEL_HIGH_YIELD_TODOS.md` → `SESSION_11B_TEST_COVERAGE.md`
-- [x] Updated all cross-references in docs/sessions/README.md, docs/README.md, CHANGELOG.md
-- [x] Verified .gitignore is properly configured (no committed secrets/artifacts)
-
-### Broken Documentation Links - FIXED
-**Status:** RESOLVED (verified 2026-01-04)
-
-~~The following links in `README.md` point to non-existent files:~~
-
-| Original Broken Link | Fixed To | Status |
-|---------------------|----------|--------|
-| ~~`docs/api/endpoints/credentials.md`~~ | `docs/api/authentication.md` (line 113) | FIXED |
-| ~~`docs/SETUP.md`~~ | `docs/getting-started/installation.md` (line 298) | FIXED |
-| ~~`docs/API_REFERENCE.md`~~ | `docs/api/index.md` (line 426, 530) | FIXED |
-
-**Verification:** All README.md links now point to existing documentation files. The fixes were applied in a previous session but this TODO was not updated.
-
-### Big Ideas (Deferred for Morning Review)
-
-1. **Linting Enforcement**: Ruff is configured in `pyproject.toml` but not run in CI. Consider adding `ruff check --fix` to pre-commit or CI.
-
-2. **Session Naming Convention**: Sessions 7-9 are in `docs/archived/sessions/` while 10+ are in `docs/sessions/`. Consider consolidating.
-
-3. **Remaining Backend TODOs (from TODO_TRACKER.md)**:
-   - Portal Dashboard Data (`portal.py:863`) - Faculty dashboard returns stub data
-   - MCP Sampling Call (`agent_server.py:263`) - Placeholder LLM response
-   - Server Cleanup Logic (`server.py:1121`) - DB connection cleanup on shutdown
-
-### Skipped (Too Invasive for Rest Mode)
-
-- Automated unused import cleanup (would require code changes)
-- Large refactoring or architectural changes
-
----
-
----
-
-## Full-Stack MVP Review Findings (2025-12-30)
-
-> Comprehensive 16-layer inspection conducted. See `docs/planning/MVP_STATUS_REPORT.md` for full details.
-
-### 🔴 CRITICAL - Fix Before Launch
-
-#### 1. Celery Worker Missing Queues - ✅ RESOLVED
-**Priority:** CRITICAL → RESOLVED
-**Location:** `docker-compose.yml` (celery-worker service)
-**Verified:** 2025-12-30 (Session 023)
-
-The celery worker command already includes all 6 queues:
-```yaml
-command: celery -A app.core.celery_app worker --loglevel=info -Q default,resilience,notifications,metrics,exports,security
-```
-
-#### 2. Security TODOs in audience_tokens.py - ✅ RESOLVED
-**Priority:** CRITICAL → RESOLVED
-**Location:** `/backend/app/api/routes/audience_tokens.py`
-**Verified:** 2025-12-30 (Session 023)
-
-Both security controls are fully implemented:
-- **Role-based restrictions:** `ROLE_LEVELS` (L59-68), `AUDIENCE_REQUIREMENTS` (L72-86), `check_audience_permission()` (L102-139)
-- **Token ownership:** Multi-method verification (decode L349-384, blacklist L386-388), admin bypass (L391-424)
-
-### 🟡 HIGH PRIORITY - Fix This Week
-
-#### 3. Frontend Environment Variable Mismatch - ✅ RESOLVED
-**Priority:** HIGH → RESOLVED
-**Location:** `/frontend/src/hooks/useClaudeChat.ts`
-**Verified:** 2025-12-30 (G2_RECON audit)
-
-- ✅ Now uses `NEXT_PUBLIC_API_URL` correctly (Next.js style)
-- ✅ All frontend hooks standardized to Next.js environment variable convention
-
-#### 4. Missing Database Indexes - ✅ RESOLVED
-**Priority:** HIGH → RESOLVED
-**Location:** Database migrations
-**Verified:** 2025-12-30 (G2_RECON audit)
-
-- ✅ Added in migration `12b3fa4f11ec` (2025-12-21): `idx_block_date`, `idx_assignment_person_id`, `idx_assignment_block_id`
-- ✅ Additional indexes added in migration `20251230_add_critical_indexes`: composite indexes for performance optimization
-
-#### 5. Admin Users Page API - ✅ RESOLVED
-**Priority:** HIGH → RESOLVED
-**Location:** `/frontend/src/app/admin/users/page.tsx`, `/frontend/src/hooks/useAdminUsers.ts`
-**Verified:** 2026-01-04 (Session G2_RECON verification)
-
-**Status: FULLY WIRED AND OPERATIONAL**
-
-All 8 API hooks fully wired to 8 backend endpoints:
-- ✅ `useUsers()` - GET /admin/users with filters/pagination
-- ✅ `useUser()` - GET /admin/users/{id} single user
-- ✅ `useCreateUser()` - POST /admin/users
-- ✅ `useUpdateUser()` - PATCH /admin/users/{id}
-- ✅ `useDeleteUser()` - DELETE /admin/users/{id}
-- ✅ `useToggleUserLock()` - POST /admin/users/{id}/lock
-- ✅ `useResendInvite()` - POST /admin/users/{id}/resend-invite
-- ✅ `useBulkUserAction()` - POST /admin/users/bulk
-
-**Features Operational:** User CRUD, account locking, invitation management, bulk operations, activity audit log
-**Previous concern:** Task was added when hooks were stubs; implementation completed but TODO not removed
-
-#### 6. Resilience API Response Models - 85% COMPLETE
+### Resilience API Response Models - 85% COMPLETE
 **Location:** `/backend/app/api/routes/resilience.py`
 - 46/54 endpoints now have `response_model` defined (85% coverage, up from 22%)
 - Remaining 8 endpoints return complex nested structures pending schema refactoring
 - **Impact:** Significantly improved OpenAPI documentation, response consistency
 
-#### 7. CD Pipeline - Deployment Logic Placeholder-Only
-**Priority:** HIGH → RESOLVED
-**Location:** `.github/workflows/cd.yml`
-**Found:** G2_RECON audit (2025-12-30)
-**Status:** ✅ FIXED (Session 025, 2025-12-30)
-
-- ~~`deploy` job exists but contains only placeholder comments~~
-- ~~No actual deployment logic (no kubectl, no helm, no container registry push)~~
-- ~~CI passes but no automated deployment to staging/production~~
-- ~~**Impact:** Manual deployment required, no CD automation~~
-
-**Resolution (Session 025):**
-- Implemented full deployment pipeline with container registry push
-- Added staging and production deployment stages
-- Integrated with existing CI workflow
-
-#### 8. MCP Server Production Config - ✅ FIXED
-**Priority:** HIGH → RESOLVED
-**Location:** `docker-compose.prod.yml`
-**Found:** G2_RECON audit (2025-12-30)
-**Fixed:** 2026-01-04 (Session ARCHITECT verification)
-
-**Status: FULLY CONFIGURED AND VALIDATED**
-
-MCP server was present in prod config but had critical errors preventing functionality:
-
-**Issues Fixed:**
-- ✅ Transport mode: `streamable-http` → `http` (invalid transport corrected)
-- ✅ Port binding: Added `127.0.0.1:8080:8080` (was missing, tools inaccessible)
-- ✅ Security config: Removed duplicate `security_opt` (caused validation error)
-- ✅ Celery worker: Fixed `container_name` + `replicas` conflict
-
-**Configuration Verified:**
-```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
-# Returns: SUCCESS (no errors)
-```
-
-**29+ MCP tools now available in production** with proper security (localhost-only binding, no-new-privileges)
-
-#### 9. Frontend Procedure Hooks - All Stubs
-**Priority:** HIGH → RESOLVED
-**Location:** `/frontend/src/hooks/useProcedures.ts`
-**Found:** G2_RECON audit (2025-12-30)
-**Status:** ✅ FIXED (Session 025, 2025-12-30)
-
-~~All 12 hooks return mock/stub implementations:~~
-- ~~`useProcedures()` - Returns empty array~~
-- ~~`useProcedure()` - Returns null~~
-- ~~`useCreateProcedure()` - Logs to console only~~
-- ~~`useUpdateProcedure()` - Logs to console only~~
-- ~~`useDeleteProcedure()` - Logs to console only~~
-- ~~Plus 7 more stubs~~
-
-**Resolution (Session 025):**
-- All 12 hooks wired to backend `/api/credentials/*` endpoints
-- Uses TanStack Query patterns consistent with other hooks
-- Includes error handling and loading states
-
-#### 10. Frontend Resilience Components - ✅ RESOLVED
-**Priority:** HIGH → RESOLVED
-**Location:** `/frontend/src/features/resilience/components/`
-**Found:** G2_RECON audit (2025-12-30)
-**Verified:** 2026-01-04 (Session META_UPDATER verification)
-
-**Status: FULLY WIRED AND TESTED**
-
-All 4 components are fully functional and wired to backend:
-- ✅ `BurnoutDashboard.tsx` - Connected to `/api/resilience/burnout` endpoints
-- ✅ `ResilienceMetrics.tsx` - Connected to `/api/resilience/metrics` endpoints
-- ✅ `N1Analysis.tsx` - Connected to `/api/resilience/contingency` endpoints
-- ✅ `UtilizationChart.tsx` - Connected to `/api/resilience/utilization` endpoints
-
-**Test Coverage:** 43 comprehensive tests verify all functionality
-- BurnoutDashboard: 12 tests (render, API calls, error handling, state management)
-- ResilienceMetrics: 11 tests (data loading, rendering, edge cases)
-- N1Analysis: 10 tests (contingency logic, visualization)
-- UtilizationChart: 10 tests (chart rendering, threshold indicators)
-
-**Impact:** Resilience monitoring dashboard fully operational
-**Previous concern:** G2_RECON found skeleton-only claim in MVP report; verification shows complete implementation was already in place
-
-#### 11. Frontend TypeScript Errors - Pre-existing Build Issues
-**Priority:** HIGH → RESOLVED
-**Location:** Various frontend components
-**Found:** Session 025 reconnaissance (2025-12-30)
-**Status:** ✅ FIXED (Session 025, 2025-12-30; build hardened PR #1099, 2026-02-09)
-
-Pre-existing TypeScript errors discovered during Session 025 audit:
-
-| File | Error | Resolution |
-|------|-------|------------|
-| Various hooks | `zod` module not found | ✅ Added `zod` to dependencies |
-| `EmptyState` component | Missing export | ✅ Added named export |
-| `SearchInput` component | Props type mismatch | ✅ Fixed prop interface |
-
-**Resolution (Session 025 + PR #1099):**
-- All TypeScript errors resolved
-- `npm run type-check` now passes cleanly
-- Build succeeds without type errors
-- **PR #1099 (2026-02-09):** Re-enabled `ignoreBuildErrors: false` and `ignoreDuringBuilds: false` in `next.config.js`, fixed 15 ESLint warnings, all strict checks now enforced
-
----
-
-### 🟢 MEDIUM PRIORITY - Post-Launch Sprint
-
-#### 13. Frontend Accessibility Gaps - AUDIT UPDATE (2026-01-04)
+### Frontend Accessibility Gaps - AUDIT UPDATE (2026-01-04)
 **Status:** Partially addressed, some items were phantom tasks
 
 | Issue | Status | Notes |
@@ -983,72 +230,11 @@ Pre-existing TypeScript errors discovered during Session 025 audit:
 
 **Remaining work:** Audit remaining 70+ components for ARIA compliance (medium priority)
 
-#### 14. Token Refresh Not Implemented - ✅ RESOLVED
-**Priority:** MEDIUM → RESOLVED
-**Location:** `/frontend/src/lib/auth.ts`
-**Verified:** 2025-12-30 (G2_RECON audit)
-
-- ✅ Full implementation in `frontend/src/lib/auth.ts`
-- ✅ Proactive refresh: Background job checks token expiry every 5 minutes
-- ✅ Reactive refresh: Intercepts 401 responses and refreshes before retrying
-- ✅ Users no longer silently logged out
-
-#### 15. MCP Placeholder Tools (11 tools)
+### MCP Placeholder Tools (11 tools)
 - Hopfield networks, immune system, game theory return synthetic data
 - Shapley value returns uniform distribution
 
-#### 16. Frontend WebSocket Client - ✅ RESOLVED
-- ✅ `useWebSocket.ts` implemented with reconnection, JWT auth, typed events (DEBT-010)
-
-#### 17. Admin Email Invitations - IMPLEMENTED
-**Priority:** MEDIUM
-**Status:** DONE (verified 2026-01-03) - was a phantom task
-
-~~User creation endpoint contains TODO: "Send invitation email"~~
-
-**Actually Implemented:**
-- `admin_users.py:239-265`: Sends email via `send_email.delay()` Celery task when `send_invite=True`
-- `admin_users.py:588-610`: Resend invite also uses `send_email.delay()`
-- Celery task: `backend/app/notifications/tasks.py:119-192` - fully implemented with retry logic
-- Email template: `backend/app/notifications/channels/email/email_templates.py` - `admin_welcome` template exists
-- EmailService: `backend/app/services/email_service.py` - full SMTP implementation
-
-**Email Infrastructure Status:**
-| Component | Status | Location |
-|-----------|--------|----------|
-| Celery task | Implemented | `notifications/tasks.py:send_email` |
-| Email template | Implemented | `email_templates.py:admin_welcome` |
-| SMTP service | Implemented | `email_service.py:EmailService` |
-| Route wiring | Implemented | `admin_users.py:260,605` |
-
-**Note:** Actual email delivery depends on SMTP configuration (`SMTP_HOST`, `SMTP_USER`, etc.).
-Infrastructure is wired; SMTP credentials are environment-specific.
-
-#### 18. Activity Logging - ✅ COMPLETE
-**Priority:** MEDIUM
-**Status:** DONE (verified 2026-01-04) - infrastructure exists and deployed
-
-**Fully Implemented:**
-- ✅ Model: `backend/app/models/activity_log.py` - Full ActivityLog model with 26 action types
-- ✅ Migration: `backend/alembic/versions/20260103_add_activity_log_table.py` - Creates table with indexes
-- ✅ Enum: `ActivityActionType` covers user, auth, schedule, swap, and settings actions
-- ✅ Table deployed: Database migration runs on startup, table exists in production
-
-**Wiring Status:** FULLY WIRED (verified 2026-01-04)
-- [x] `_log_activity()` in `admin_users.py` - 8 call sites fully implemented:
-  - Line 265: USER_CREATED on user creation
-  - Line 399: USER_UPDATED on user updates
-  - Line 449: USER_DELETED on user deletion
-  - Line 512: USER_LOCKED/UNLOCKED on toggle
-  - Line 547: Lock/unlock with reason
-  - Line 618: INVITE_RESENT on resend
-  - Line 834: Bulk operations
-- [x] `GET /admin/users/activity-log` endpoint implemented (line 661)
-- [ ] Add activity logging to schedule modification endpoints (enhancement)
-
-**Note:** Admin audit trail fully operational. Schedule endpoint logging is an enhancement, not a blocker.
-
-#### 19. Penrose Efficiency - Placeholder Logic
+### Penrose Efficiency - Placeholder Logic
 **Priority:** MEDIUM
 **Location:** `/backend/app/resilience/exotic/penrose_efficiency.py`
 **Found:** G2_RECON audit (2025-12-30)
@@ -1060,101 +246,24 @@ Infrastructure is wired; SMTP credentials are environment-specific.
 
 **Note:** Part of Tier 5 "Exotic Frontier Concepts" - advanced research features
 
----
-
-### Full-Stack Review Summary
-
-| Layer | Status | Score |
-|-------|--------|-------|
-| Frontend Architecture | ✅ Excellent | 92/100 |
-| Backend Middleware | ✅ Excellent | 94/100 |
-| Authentication | ✅ Excellent | 96/100 |
-| Database/ORM | ✅ Good | 85/100 |
-| Docker/Deploy | ⚠️ Good | 78/100 |
-| CI/CD | ✅ Good | 82/100 |
-| Error Handling | ✅ Excellent | 92/100 |
-
-**Overall MVP Status:** PRODUCTION-READY ✅ (critical items verified resolved)
-
-See also:
-- `docs/planning/MVP_STATUS_REPORT.md` - Full 16-layer analysis
-- `docs/planning/TECHNICAL_DEBT.md` - Tracked issues by priority
+### Activity Logging - Schedule Endpoint Enhancement
+- [ ] Add activity logging to schedule modification endpoints (enhancement)
+- **Note:** Admin audit trail fully operational. Schedule endpoint logging is an enhancement, not a blocker.
 
 ---
 
-*Last updated: 2026-02-09 (Build quality hardening PR #1099, code debt cleanup PR #1100)*
+## Process Improvements
 
+### Big Ideas (Deferred)
 
----
+1. **Linting Enforcement**: Ruff is configured in `pyproject.toml` but not run in CI. Consider adding `ruff check --fix` to pre-commit or CI.
 
-## Security & Compliance
+2. **Session Naming Convention**: Sessions 7-9 are in `docs/archived/sessions/` while 10+ are in `docs/sessions/`. Consider consolidating.
 
-### PHI Exposure in API Responses
-**Priority:** HIGH
-**Found:** PHI Exposure Audit (2025-12-30)
-**Location:** `docs/security/PHI_EXPOSURE_AUDIT.md`
-**Status:** Awaiting remediation
-
-**Issue:** Protected Health Information (PHI) is exposed in API responses without masking or field-level access control.
-
-**Exposed PHI Elements:**
-- Person names and email addresses (clear PHI)
-- Absence types (medical, deployment, TDY locations)
-- Schedule patterns and duty assignments
-- Free-text notes fields (potential PHI in unstructured data)
-
-**Risk Assessment:**
-| Category | Risk Level |
-|----------|-----------|
-| API Responses | HIGH |
-| Export Endpoints | HIGH |
-| Error Messages | LOW |
-| Logging | MEDIUM |
-
-**Required Actions:**
-- [ ] Add "X-Contains-PHI" warning headers to affected endpoints
-- [ ] Implement PHI access audit logging
-- [ ] Sanitize logging to remove email addresses and names
-- [ ] Add field-level access control to PersonResponse schema
-- [ ] Encrypt bulk export downloads
-- [ ] Create BREACH_RESPONSE_PLAN.md
-- [ ] Create PHI_HANDLING_GUIDE.md for developers
-- [ ] Add automated tests for PHI exposure
-- [ ] Review frontend PHI handling
-- [ ] Conduct penetration test focused on PHI exfiltration
-
-**Affected Endpoints:**
-- `GET /api/people` - All people with names/emails
-- `GET /api/people/residents` - Resident names/emails
-- `GET /api/people/faculty` - Faculty names/emails
-- `GET /api/people/{person_id}` - Individual person details
-- `GET /api/absences` - Absences with deployment/TDY data
-- `GET /api/assignments` - Schedule patterns
-
-**Note:** System has strong authentication and RBAC controls. Issue is with data exposure within authorized sessions, not unauthorized access.
-
-**See:** `docs/security/PHI_EXPOSURE_AUDIT.md` for full analysis and remediation recommendations.
-
----
-
-## Documentation Improvements (Completed 2025-12-31)
-
-The following documentation improvements were completed in Stream 9:
-
-- ✅ Created comprehensive Quick Reference Guide (docs/QUICK_REFERENCE.md)
-- ✅ Created Getting Started guide for users, developers, and admins
-- ✅ Completely rewrote people.md API documentation (71 → 708 lines)
-- ✅ Completely rewrote absences.md API documentation (54 → 737 lines)
-- ✅ Enhanced BLOCK_10_SUMMARY.md with statistics and compliance status
-- ✅ Massively expanded troubleshooting in SCHEDULE_GENERATION_RUNBOOK.md
-- ✅ Added advanced CLI usage tips and troubleshooting to cli-reference.md
-- ✅ Resolved TODO in GAME_THEORY_SERVICE_SPEC.md with implementation details
-- ✅ Added helper methods (_load_faculty_preferences, _load_stigmergy_utilities)
-- ✅ Added examples and best practices to analytics.md, schedule.md, swaps.md
-- ✅ Filled TBD placeholders in Block 10 schedule dates
-- ✅ Added quick links and navigation improvements to README.md
-
-**Total: 100 documentation tasks completed**
+3. **Remaining Backend TODOs (from TODO_TRACKER.md)**:
+   - Portal Dashboard Data (`portal.py:863`) - Faculty dashboard returns stub data
+   - MCP Sampling Call (`agent_server.py:263`) - Placeholder LLM response
+   - Server Cleanup Logic (`server.py:1121`) - DB connection cleanup on shutdown
 
 ---
 
@@ -1166,14 +275,14 @@ The following documentation improvements were completed in Stream 9:
 **Blocker:** Frontend container rebuild needed but Docker Desktop frozen
 
 **Action:**
-1. Restart Docker Desktop (Cmd+Q → Relaunch)
+1. Restart Docker Desktop (Cmd+Q -> Relaunch)
 2. Run: `docker-compose up -d --build frontend`
 3. Verify: `scripts/health-check.sh --docker`
 
 **Context:** ARCHITECT confirmed PR #594 contains functional TypeScript changes requiring rebuild:
 - New `frontend/src/types/state.ts` (362 lines)
 - New `frontend/src/contexts/index.ts` (28 lines)
-- 19 test file renames (.ts → .tsx)
+- 19 test file renames (.ts -> .tsx)
 
 ### CI Pipeline Pre-Existing Debt
 
@@ -1182,7 +291,7 @@ The following documentation improvements were completed in Stream 9:
 | Issue | Fix |
 |-------|-----|
 | package-lock.json sync | `cd frontend && npm install && git add package-lock.json` |
-| 11 remaining .ts→.tsx | Rename test files with JSX syntax |
+| 11 remaining .ts->.tsx | Rename test files with JSX syntax |
 
 ### Backlog Items
 
@@ -1263,19 +372,53 @@ The following documentation improvements were completed in Stream 9:
 
 ---
 
-## MCP API Client Improvements (2026-01-02)
+## Security & Compliance
 
-### Token Refresh on 401 Unauthorized - ✅ COMPLETE
-**Priority:** Medium
-**Added:** 2026-01-02
-**Status:** DONE (PR #608, commit `e6c4440e`)
+### PHI Exposure in API Responses
+**Priority:** HIGH
+**Found:** PHI Exposure Audit (2025-12-30)
+**Location:** `docs/security/PHI_EXPOSURE_AUDIT.md`
+**Status:** Awaiting remediation
 
-**Implementation:** 401 token refresh is now implemented in `api_client.py` lines 113-121.
-- On 401 response, clears stale token and retries with fresh auth
-- `_token_refreshed` flag prevents infinite loop
-- Logs warning on refresh attempt
+**Issue:** Protected Health Information (PHI) is exposed in API responses without masking or field-level access control.
 
-**Remaining:** Unit tests for 401 behavior (tracked in `.codex/AGENTS.md`)
+**Exposed PHI Elements:**
+- Person names and email addresses (clear PHI)
+- Absence types (medical, deployment, TDY locations)
+- Schedule patterns and duty assignments
+- Free-text notes fields (potential PHI in unstructured data)
+
+**Risk Assessment:**
+| Category | Risk Level |
+|----------|-----------|
+| API Responses | HIGH |
+| Export Endpoints | HIGH |
+| Error Messages | LOW |
+| Logging | MEDIUM |
+
+**Required Actions:**
+- [ ] Add "X-Contains-PHI" warning headers to affected endpoints
+- [ ] Implement PHI access audit logging
+- [ ] Sanitize logging to remove email addresses and names
+- [ ] Add field-level access control to PersonResponse schema
+- [ ] Encrypt bulk export downloads
+- [ ] Create BREACH_RESPONSE_PLAN.md
+- [ ] Create PHI_HANDLING_GUIDE.md for developers
+- [ ] Add automated tests for PHI exposure
+- [ ] Review frontend PHI handling
+- [ ] Conduct penetration test focused on PHI exfiltration
+
+**Affected Endpoints:**
+- `GET /api/people` - All people with names/emails
+- `GET /api/people/residents` - Resident names/emails
+- `GET /api/people/faculty` - Faculty names/emails
+- `GET /api/people/{person_id}` - Individual person details
+- `GET /api/absences` - Absences with deployment/TDY data
+- `GET /api/assignments` - Schedule patterns
+
+**Note:** System has strong authentication and RBAC controls. Issue is with data exposure within authorized sessions, not unauthorized access.
+
+**See:** `docs/security/PHI_EXPOSURE_AUDIT.md` for full analysis and remediation recommendations.
 
 ---
 
@@ -1327,7 +470,7 @@ The following documentation improvements were completed in Stream 9:
 
 5-step process:
 1. Identify hazards
-2. Assess hazards (probability × severity)
+2. Assess hazards (probability x severity)
 3. Develop controls
 4. Implement controls
 5. Supervise and evaluate
@@ -1358,34 +501,6 @@ Already partially covered by:
 - [ ] Review which patterns provide value vs. overhead
 - [ ] Decide implementation location (CLAUDE.md vs separate docs)
 - [ ] Prioritize based on observed failure modes
-
----
-
-## CI/CD Issues (2026-01-11)
-
-### MCP Server Tests Failing in CI - ✅ RESOLVED
-**Priority:** Medium
-**Added:** 2026-01-11
-**Resolved:** 2026-02-04
-**Status:** CI-lite workflow created for repo-only validation
-
-**Problem:** Integration tests require running backend; CI doesn't start containers.
-
-**Solution (2026-02-04):**
-- Created `.github/workflows/ci-lite.yml` - repo-only CI for Codex/bot PRs
-- MCP tests run with mocked API client (no backend needed)
-- Triggers on PRs and `codex/**`, `claude/**` branches
-
-**CI-lite includes:**
-- Syntax validation (Python, MCP)
-- Linting (ruff, eslint)
-- Type checking (tsc - hard gate, mypy - soft gate)
-- Jest tests (mocked)
-- MCP tests (mocked)
-- API contract validation
-- Security scans (bandit, npm audit - soft gates)
-
-**Full CI** (with Docker/DB) still available for manual runs and production deployments.
 
 ---
 
@@ -1470,7 +585,7 @@ See `docs/architecture/HALF_DAY_ASSIGNMENT_MODEL.md` for full schema.
 
 ## Terminology Fixes (2026-01-13)
 
-### CP-SAT: Rename `total_blocks_assigned` → `total_assignments`
+### CP-SAT: Rename `total_blocks_assigned` -> `total_assignments`
 **Priority:** Low
 **Added:** 2026-01-13
 **Status:** TODO
@@ -1557,8 +672,8 @@ Comprehensive hooks and scripts consolidation addressing:
 |-----|----------|------|--------|
 | No pre-push hook | P1 | Dangerous ops reach remote | TODO |
 | 24 sequential phases | P2 | 15-30s commit times | TODO |
-| MyPy advisory (`|| true`) | P3 | Type bugs slip through | ✅ RESOLVED (2026-02-04) |
-| Bandit advisory (`|| true`) | P3 | Security issues slip | ✅ RESOLVED (2026-02-04) |
+| MyPy advisory (`|| true`) | P3 | Type bugs slip through | RESOLVED (2026-02-04) |
+| Bandit advisory (`|| true`) | P3 | Security issues slip | RESOLVED (2026-02-04) |
 | 3 overlapping backup scripts | P4 | Developer confusion | TODO |
 | Claude Code hooks incomplete | P4 | No RAG injection | TODO |
 
@@ -1575,3 +690,45 @@ Comprehensive hooks and scripts consolidation addressing:
 - `docs/planning/HOOKS_AND_SCRIPTS_ROADMAP.md` - Full implementation roadmap
 - `.claude/hooks/README.md` - Hooks ecosystem documentation
 - `.pre-commit-config.yaml` - Pre-commit configuration (24 phases)
+
+---
+
+*Last updated: 2026-02-10 (archived 31 completed items)*
+
+---
+
+## Completed / Archived
+
+> Items below have been completed and archived. Kept for historical reference.
+
+- **CP-SAT Phase 2** -- Completed 2026-01-28. All P0-P4 items resolved; validator fixed to exclude time-off from duty hours; Block 10 validation clean.
+- **Import/Export Staging DB** -- Completed 2026-01-04. Full round-trip import workflow with 6 endpoints, 3 conflict resolution modes, migration deployed.
+- **Re-enable Alembic Migrations** -- Verified 2026-01-03. `alembic upgrade head` was already active in `docker-entrypoint.sh`; phantom task.
+- **Seaborn Warning in Backend Logs** -- Completed 2026-01-11. Removed unused seaborn import from `spin_glass_visualizer.py` (commit `9200055e`).
+- **Block 10 Schedule Generation** -- Completed 2025-12-25. 87 assignments, 112.5% coverage, 25 constraints active, 0 violations.
+- **Complete MCP Wiring** -- Completed 2025-12-24. `analyze_swap_candidates` and `run_contingency_analysis` wired to backend with JSON endpoints.
+- **PuLP Solver Template Balance** -- Completed 2025-12-24. Added template balance penalty to PuLP solver objective function.
+- **Admin GUI Bulk Rotation Template Editing** -- Completed 2026-01-04. PRs #633, #638, #642 merged; template table, bulk actions, pattern and preference editors.
+- **Admin GUI Absence Loader** -- Completed 2026-01-05. PR #649 merged; CSV/Excel upload with preview, conflict detection, apply/rollback workflow.
+- **Faculty FMIT and Call Equity** -- Completed 2026-01-11. IntegratedWorkloadConstraint with 5 workload categories, min-max fairness, Jain's index (commit `1bac63ca`).
+- **Admin GUI Wiring** -- Completed 2026-02-04. All admin dashboard pages fully wired: dashboard metrics, credentials, block-import staging, schedule-drafts.
+- **Frontend Hub Consolidation (Phase 1)** -- Completed 2026-01-12. PRs #694-700 merged; RiskBar, Swap Hub, PersonSelector, Couatl Killer, Proxy Coverage, 3D Command Center.
+- **CCW Burn Quality Protocol** -- Completed 2026-01-04. Protocol documented at `.claude/protocols/CCW_BURN_PROTOCOL.md` (217 lines) with pre-merge gates and rollback procedures.
+- **Schedule Grid Frozen Headers** -- Completed 2025-12-28. Sticky header row and first column with z-index hierarchy for dense schedule scanning.
+- **Heatmap Block Navigation** -- Completed 2025-12-28. Added Previous/Next/Today/This Block buttons matching Schedule page UX pattern.
+- **Heatmap Backend Bug (group_by Validation)** -- Fixed via PR #512. Added daily/weekly heatmap generators, 28 new tests.
+- **Daily Manifest Empty State UX** -- Completed 2025-12-28. Context-aware error messaging, info box with suggestions, quick action buttons.
+- **NF Half-Block Documentation Consistency** -- Verified 2025-12-24. All 3 locations consistent; "block-half", Day 15 transition, PC rules, mirrored pairing all match.
+- **Broken Documentation Links** -- Fixed 2026-01-04. All README.md links corrected to existing documentation files.
+- **Full-Stack MVP Review Critical Items** -- All resolved by 2026-02-09. 11 items (Celery queues, security TODOs, env vars, DB indexes, admin users, CD pipeline, MCP prod config, procedure hooks, resilience components, TypeScript errors, token refresh) verified complete; overall MVP score PRODUCTION-READY.
+- **Documentation Improvements** -- Completed 2025-12-31. 100 documentation tasks including Quick Reference Guide, API rewrites, troubleshooting expansion.
+- **MCP API Client 401 Token Refresh** -- Completed 2026-01-02. PR #608 (commit `e6c4440e`); retry on 401 with fresh auth, loop prevention via flag.
+- **MCP Server Tests Failing in CI** -- Resolved 2026-02-04. CI-lite workflow (`.github/workflows/ci-lite.yml`) created for repo-only validation with mocked API client.
+- **Faculty Assignments Missing rotation_template_id** -- Fixed 2025-12-23. Added `_get_primary_template_for_block()` to engine; all 430 faculty assignments now have template IDs.
+- **Solver Template Distribution Bugs** -- Fixed 2025-12-24, verified 2025-12-29. Three bugs (greedy, CP-SAT, template filter) fixed; all 4 solvers operational with balance tests.
+- **Documentation Cleanup (Celery Checklist)** -- Completed 2025-12-21. Moved from archived to `docs/deployment/CELERY_PRODUCTION_CHECKLIST.md`.
+- **Admin Email Invitations** -- Verified 2026-01-03. Was a phantom task; full email infrastructure already implemented (Celery task, SMTP service, route wiring).
+- **Activity Logging Infrastructure** -- Verified 2026-01-04. Full ActivityLog model with 26 action types, 8 admin call sites, activity-log endpoint deployed.
+- **Frontend WebSocket Client** -- Resolved. `useWebSocket.ts` implemented with reconnection, JWT auth, typed events.
+- **Frontend Resilience Components** -- Verified 2026-01-04. All 4 components (BurnoutDashboard, ResilienceMetrics, N1Analysis, UtilizationChart) fully wired with 43 tests.
+- **Frontend TypeScript Errors** -- Fixed 2025-12-30, hardened 2026-02-09 (PR #1099). All type errors resolved; strict build checks re-enabled.

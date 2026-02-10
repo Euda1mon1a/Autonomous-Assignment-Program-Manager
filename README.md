@@ -1,6 +1,6 @@
 # Residency Scheduler
 
-> **Last Updated:** 2025-12-26
+> **Last Updated:** 2026-02-10
 
 <p align="center">
   <strong>A comprehensive medical residency scheduling system with ACGME compliance validation and AI-assisted development infrastructure</strong>
@@ -29,7 +29,7 @@ Residency Scheduler is a production-ready, full-stack application designed to au
 - **Role-Based Access Control** - Secure multi-user system with admin, coordinator, and faculty roles
 - **Block Schedule Import/Export** - CLI-based Excel parsing, markdown export, and data sanitization
 - **AI-Assisted Development** - 34 agent skills, 27 slash commands, and Personal AI Infrastructure (PAI)
-- **MCP Server Integration** - 34 Model Context Protocol tools for AI assistant scheduling operations
+- **MCP Server Integration** - 97+ Model Context Protocol tools for AI assistant scheduling operations
 
 ---
 
@@ -47,11 +47,15 @@ Residency Scheduler is a production-ready, full-stack application designed to au
 
 **128K Output Tokens** - Doubled from 64K, enabling longer code generation and analysis responses.
 
+### Project Realization Sprint (February 2026)
+
+**Build Quality & Test Calibration** - A focused 10-PR sprint that fixed build quality issues, calibrated skipped tests, and expanded test coverage. The backend test suite now includes 11,861+ tests; the frontend gained 403 component tests. Overall improvements to test reliability, lint compliance, and CI readiness.
+
 ### Previous Highlights (December 2025)
 
 **Personal AI Infrastructure (PAI)** - Complete AI agent framework with 58 agents, 80+ skills, multi-agent orchestration, and Auftragstaktik delegation doctrine.
 
-**MCP Server Integration** - 34+ Model Context Protocol tools for AI-assisted scheduling operations.
+**MCP Server Integration** - 97+ Model Context Protocol tools for AI-assisted scheduling operations.
 
 **CP-SAT Solver** - Constraint Programming solver with credential penalty ramp, faculty activity preservation, and ACGME compliance.
 
@@ -192,7 +196,7 @@ See [Personal AI Infrastructure](docs/PERSONAL_INFRASTRUCTURE.md) for complete d
 | **Operations** | production-incident-responder, security-audit, solver-control, safe-schedule-generation |
 | **Utilities** | pdf, xlsx, changelog-generator, schedule-verification |
 
-### MCP Server (34 Tools)
+### MCP Server (97+ Tools)
 
 AI assistants can interact with the scheduling system through Model Context Protocol:
 
@@ -201,6 +205,7 @@ AI assistants can interact with the scheduling system through Model Context Prot
 - **Background Tasks** (4 tools): start_background_task, get_task_status, cancel_task, list_active_tasks
 - **Deployment/CI** (7 tools): validate_deployment, run_security_scan, promote_to_production, rollback
 - **Empirical Testing** (5 tools): benchmark_solvers, benchmark_constraints, ablation_study
+- **Advanced Analytics** (60+ tools): burnout detection, fatigue risk, entropy analysis, circuit breakers, equity metrics, RAG search, schedule quality reports, and more
 
 See [MCP Admin Guide](docs/admin-manual/mcp-admin-guide.md) for complete documentation.
 
@@ -255,8 +260,8 @@ See [MCP Admin Guide](docs/admin-manual/mcp-admin-guide.md) for complete documen
 ### Testing
 | Technology | Purpose |
 |------------|---------|
-| pytest | Backend unit and integration testing |
-| Jest | Frontend unit testing |
+| pytest | Backend unit and integration testing (11,861+ tests) |
+| Jest | Frontend unit and component testing (403 component tests) |
 | React Testing Library | Component testing |
 | Playwright | End-to-end testing |
 | MSW | API mocking |
@@ -397,7 +402,7 @@ residency-scheduler/
 │   ├── Dockerfile
 │   └── package.json
 ├── mcp-server/                  # MCP Server (AI Integration)
-│   └── src/scheduler_mcp/       # 34 scheduling tools
+│   └── src/scheduler_mcp/       # 97+ scheduling tools
 ├── .claude/                     # AI Infrastructure (PAI)
 │   ├── commands/                # 27 slash commands
 │   ├── skills/                  # 34 agent skills
