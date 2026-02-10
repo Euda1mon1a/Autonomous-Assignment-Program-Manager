@@ -14,7 +14,6 @@ from app.scheduling.constraints.base import (
 )
 from app.scheduling.constraints.faculty_clinic import (
     DEFAULT_CLINIC_CAPS,
-    FACULTY_CLINIC_CAPS,
     FacultyClinicCapConstraint,
     FacultySupervisionConstraint,
 )
@@ -102,17 +101,6 @@ class TestFacultyClinicConstants:
     def test_default_caps(self):
         assert DEFAULT_CLINIC_CAPS == (0, 4)
 
-    def test_faculty_caps_includes_known_faculty(self):
-        assert "Montgomery" in FACULTY_CLINIC_CAPS
-        assert FACULTY_CLINIC_CAPS["Montgomery"] == (0, 2)
-
-    def test_faculty_caps_tagawa_zero(self):
-        """SM faculty has 0 clinic cap."""
-        assert FACULTY_CLINIC_CAPS["Tagawa"] == (0, 0)
-
-    def test_faculty_caps_mcguire_minimal(self):
-        assert FACULTY_CLINIC_CAPS["McGuire"] == (0, 1)
-
 
 # ==================== FacultyClinicCapConstraint Init ====================
 
@@ -151,40 +139,33 @@ class TestGetCaps:
         """Person-specific DB columns used when both set."""
         c = FacultyClinicCapConstraint()
         f = _person(
-            name="Kinkennon",
+            name="Dr. Test",
             min_clinic_halfdays_per_week=1,
             max_clinic_halfdays_per_week=3,
         )
         assert c._get_caps(f) == (1, 3)
 
-    def test_fallback_to_hardcoded_by_last_name(self):
-        """Falls back to FACULTY_CLINIC_CAPS by last name."""
+    def test_fallback_to_default(self):
+        """Falls back to DEFAULT_CLINIC_CAPS when no DB values."""
         c = FacultyClinicCapConstraint()
-        f = _person(name="Montgomery")
-        assert c._get_caps(f) == (0, 2)
+        f = _person(name="Dr. Test")
+        assert c._get_caps(f) == DEFAULT_CLINIC_CAPS
 
-    def test_comma_separated_name(self):
-        """Handles 'Last, First' format."""
-        c = FacultyClinicCapConstraint()
-        f = _person(name="McGuire, Dr. John")
-        assert c._get_caps(f) == (0, 1)
-
-    def test_unknown_name_uses_default(self):
-        """Unknown faculty name uses DEFAULT_CLINIC_CAPS."""
+    def test_no_db_fields_uses_default(self):
+        """Faculty without DB fields uses DEFAULT_CLINIC_CAPS."""
         c = FacultyClinicCapConstraint()
         f = _person(name="Dr. Unknown")
         assert c._get_caps(f) == DEFAULT_CLINIC_CAPS
 
     def test_db_min_none_max_set_falls_back(self):
-        """If only one DB field is set (not both), falls back to dict."""
+        """If only one DB field is set (not both), falls back to default."""
         c = FacultyClinicCapConstraint()
         f = _person(
-            name="LaBounty",
+            name="Dr. Test",
             min_clinic_halfdays_per_week=None,
             max_clinic_halfdays_per_week=3,
         )
-        # Not both set -> falls back to FACULTY_CLINIC_CAPS
-        assert c._get_caps(f) == (0, 4)
+        assert c._get_caps(f) == DEFAULT_CLINIC_CAPS
 
     def test_empty_name(self):
         c = FacultyClinicCapConstraint()
@@ -252,7 +233,9 @@ class TestClinicCapValidate:
     def test_within_max_satisfied(self):
         """Faculty within max cap -> satisfied."""
         c = FacultyClinicCapConstraint()
-        fac = _person(name="Montgomery")  # max 2
+        fac = _person(
+            name="Dr. A", min_clinic_halfdays_per_week=0, max_clinic_halfdays_per_week=2
+        )
         ctx = _context(
             faculty=[fac],
             start_date=date(2025, 3, 3),
@@ -268,7 +251,9 @@ class TestClinicCapValidate:
     def test_exceeds_max_violation(self):
         """Faculty exceeds max cap -> HIGH violation."""
         c = FacultyClinicCapConstraint()
-        fac = _person(name="McGuire")  # max 1
+        fac = _person(
+            name="Dr. B", min_clinic_halfdays_per_week=0, max_clinic_halfdays_per_week=1
+        )
         ctx = _context(
             faculty=[fac],
             start_date=date(2025, 3, 3),
@@ -282,12 +267,14 @@ class TestClinicCapValidate:
         assert result.satisfied is False
         assert len(result.violations) == 1
         assert result.violations[0].severity == "HIGH"
-        assert "McGuire" in result.violations[0].message
+        assert "Dr. B" in result.violations[0].message
 
     def test_zero_max_allows_zero_satisfied(self):
         """Faculty with max 0 and no clinic assignments -> satisfied."""
         c = FacultyClinicCapConstraint()
-        fac = _person(name="Tagawa")  # max 0
+        fac = _person(
+            name="Dr. C", min_clinic_halfdays_per_week=0, max_clinic_halfdays_per_week=0
+        )
         ctx = _context(
             faculty=[fac],
             start_date=date(2025, 3, 3),
@@ -299,7 +286,9 @@ class TestClinicCapValidate:
     def test_fm_clinic_code_counted(self):
         """Activity code 'fm_clinic' is also counted."""
         c = FacultyClinicCapConstraint()
-        fac = _person(name="McGuire")  # max 1
+        fac = _person(
+            name="Dr. B", min_clinic_halfdays_per_week=0, max_clinic_halfdays_per_week=1
+        )
         ctx = _context(
             faculty=[fac],
             start_date=date(2025, 3, 3),
@@ -315,7 +304,9 @@ class TestClinicCapValidate:
     def test_non_clinic_code_ignored(self):
         """Activity codes not in {'fm_clinic', 'C'} are ignored."""
         c = FacultyClinicCapConstraint()
-        fac = _person(name="McGuire")  # max 1
+        fac = _person(
+            name="Dr. B", min_clinic_halfdays_per_week=0, max_clinic_halfdays_per_week=1
+        )
         ctx = _context(
             faculty=[fac],
             start_date=date(2025, 3, 3),
@@ -353,7 +344,9 @@ class TestClinicCapValidate:
     def test_penalty_calculated_for_max_violation(self):
         """Penalty = weight * (count - max) for MAX violation."""
         c = FacultyClinicCapConstraint(weight=50.0)
-        fac = _person(name="McGuire")  # max 1
+        fac = _person(
+            name="Dr. B", min_clinic_halfdays_per_week=0, max_clinic_halfdays_per_week=1
+        )
         ctx = _context(
             faculty=[fac],
             start_date=date(2025, 3, 3),
@@ -392,7 +385,9 @@ class TestClinicCapValidate:
         """Assignment for person not in faculty list is skipped."""
         c = FacultyClinicCapConstraint()
         unknown_id = uuid4()
-        fac = _person(name="McGuire")
+        fac = _person(
+            name="Dr. B", min_clinic_halfdays_per_week=0, max_clinic_halfdays_per_week=1
+        )
         ctx = _context(
             faculty=[fac],
             start_date=date(2025, 3, 3),
@@ -408,7 +403,9 @@ class TestClinicCapValidate:
     def test_multiple_weeks(self):
         """Violations checked per week independently."""
         c = FacultyClinicCapConstraint()
-        fac = _person(name="McGuire")  # max 1
+        fac = _person(
+            name="Dr. B", min_clinic_halfdays_per_week=0, max_clinic_halfdays_per_week=1
+        )
         ctx = _context(
             faculty=[fac],
             start_date=date(2025, 3, 3),
