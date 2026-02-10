@@ -10,7 +10,7 @@ import time
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select, text
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.orm import Session
 
 from app.models.rag_document import RAGDocument
@@ -512,6 +512,57 @@ class RAGService:
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error deleting documents: {str(e)}", exc_info=True)
+            raise
+
+    def delete_all_documents(self) -> int:
+        """Delete all RAG documents regardless of doc_type.
+
+        Returns:
+            Number of documents deleted
+        """
+        try:
+            result = self.db.execute(delete(RAGDocument))
+            self.db.commit()
+            deleted_count = result.rowcount or 0
+            logger.info(f"Deleted {deleted_count} documents (full clear)")
+            return deleted_count
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Error deleting all documents: {str(e)}", exc_info=True)
+            raise
+
+    def delete_by_source_filename(self, filename: str) -> int:
+        """Delete all documents ingested from a specific source filename.
+
+        This keeps document category coverage intact when multiple files share
+        the same `doc_type` bucket (for example `ai_patterns`).
+
+        Args:
+            filename: Source filename stored in metadata_["filename"]
+
+        Returns:
+            Number of documents deleted
+        """
+        if not filename:
+            return 0
+
+        try:
+            stmt = delete(RAGDocument).where(
+                RAGDocument.metadata_["filename"].astext == filename
+            )
+            result = self.db.execute(stmt)
+            self.db.commit()
+            deleted_count = result.rowcount or 0
+            logger.info(
+                f"Deleted {deleted_count} documents for source filename {filename}"
+            )
+            return deleted_count
+        except Exception as e:
+            self.db.rollback()
+            logger.error(
+                f"Error deleting documents by source filename: {str(e)}",
+                exc_info=True,
+            )
             raise
 
     def delete_by_id(self, document_id: UUID) -> bool:
