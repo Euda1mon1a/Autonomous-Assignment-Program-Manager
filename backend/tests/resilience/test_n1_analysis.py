@@ -83,24 +83,32 @@ class TestN1Analyzer:
         assert scenario.criticality_score < 0.5  # Lower criticality with redundancy
 
     def test_find_single_points_of_failure(self):
-        """Test finding SPOFs."""
+        """Test finding SPOFs.
+
+        Criticality for person with no backup = min(1.0, 0.5 + slots/10).
+        With 1 slot: 0.6 (below 0.7 threshold).
+        With 5 slots: 1.0 (above 0.7 threshold).
+        Need enough affected slots for criticality >= 0.7.
+        """
         analyzer = N1Analyzer()
 
-        # Create several scenarios
+        # Person with many slots and no backup -> criticality >= 0.7
         analyzer.analyze_person_failure(
             "person1",
-            [(date(2024, 1, 1), "clinic")],
+            [(date(2024, 1, i), "clinic") for i in range(1, 6)],  # 5 slots
             [],
-            {},  # SPOF
+            {},  # No backup -> SPOF
         )
 
+        # Person with backup -> not a SPOF
         analyzer.analyze_person_failure(
             "person2",
             [(date(2024, 1, 1), "clinic")],
             ["backup1"],
-            {"backup1": 5},  # Not SPOF
+            {"backup1": 5},
         )
 
+        # Single specialist -> criticality 0.9
         analyzer.analyze_specialty_failure(
             "critical_skill",
             required_slots=50,
@@ -110,7 +118,7 @@ class TestN1Analyzer:
 
         spofs = analyzer.find_single_points_of_failure(min_criticality=0.7)
 
-        assert len(spofs) >= 2  # At least 2 SPOFs identified
+        assert len(spofs) >= 2  # person1 (0.5+5/10=1.0) and critical_skill (0.9)
         assert all(s.criticality_score >= 0.7 for s in spofs)
 
     def test_calculate_redundancy_score(self):

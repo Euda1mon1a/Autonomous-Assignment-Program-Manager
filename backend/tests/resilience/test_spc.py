@@ -34,13 +34,18 @@ class TestControlChart:
         assert limits.lwl > limits.lcl
 
     def test_in_control_point(self):
-        """Test point within control limits."""
+        """Test point within control limits.
+
+        Baseline must have nonzero variance so control limits are meaningful.
+        With all-identical baseline, sigma=0 and UCL=LCL=center, so any
+        deviation is out of control.
+        """
         chart = ControlChart()
 
-        baseline = [10.0] * 10
+        baseline = [10.0, 10.2, 9.8, 10.1, 9.9, 10.0, 10.1, 9.9, 10.0, 10.0]
         chart.calculate_limits(baseline)
 
-        point = chart.add_point(10.5)
+        point = chart.add_point(10.1)
 
         assert point.is_in_control
         assert point.violated_rule is None
@@ -59,25 +64,32 @@ class TestControlChart:
         assert point.violated_rule == "out_of_control"
 
     def test_zone_classification(self):
-        """Test zone classification (A, B, C, Out)."""
+        """Test zone classification (A, B, C, Out).
+
+        Baseline must have nonzero variance so sigma > 0 and zones
+        are meaningful. With all-identical baseline, sigma=0 and all
+        zone calculations break.
+        """
         chart = ControlChart()
 
-        baseline = [100.0] * 10
+        # Use baseline with variance so sigma > 0
+        baseline = [100.0, 100.5, 99.5, 100.2, 99.8, 100.1, 99.9, 100.3, 99.7, 100.0]
         limits = chart.calculate_limits(baseline)
+        assert limits.sigma > 0, "Baseline must have nonzero sigma for zone tests"
 
-        # Zone A (within 1σ)
+        # Zone A (within 1sigma)
         point_a = chart.add_point(100.0 + 0.5 * limits.sigma)
         assert point_a.zone == "A"
 
-        # Zone B (1-2σ)
+        # Zone B (1-2sigma)
         point_b = chart.add_point(100.0 + 1.5 * limits.sigma)
         assert point_b.zone == "B"
 
-        # Zone C (2-3σ)
+        # Zone C (2-3sigma)
         point_c = chart.add_point(100.0 + 2.5 * limits.sigma)
         assert point_c.zone == "C"
 
-        # Out (>3σ)
+        # Out (>3sigma)
         point_out = chart.add_point(100.0 + 4.0 * limits.sigma)
         assert point_out.zone == "Out"
 
@@ -119,16 +131,22 @@ class TestCUSUMChart:
     """Test suite for CUSUM charts."""
 
     def test_cusum_detects_shift(self):
-        """Test CUSUM detects small persistent shift."""
+        """Test CUSUM detects small persistent shift.
+
+        With k=0.5*sigma and h=4.0*sigma, a shift of exactly 0.5*sigma
+        from target produces zero CUSUM accumulation because the slack
+        parameter k cancels it out. Use a larger shift (1.0) to ensure
+        reliable detection.
+        """
         cusum = CUSUMChart(target=10.0, sigma=1.0)
 
-        # Process shifts from 10 to 10.5
+        # Process shifts from 10 to 11.0 (1-sigma shift, exceeds k=0.5)
         for i in range(20):
-            value = 10.5
+            value = 11.0
             point = cusum.add_point(value)
 
-            # Should eventually go out of control
-            if i > 10:
+            # Should eventually go out of control after accumulation exceeds h
+            if i >= 8:
                 assert not point.is_in_control
 
     def test_cusum_stays_in_control_no_shift(self):
