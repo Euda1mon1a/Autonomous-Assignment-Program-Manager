@@ -134,15 +134,12 @@ class EmbeddingInitializer:
         """
         logger.info("Clearing all RAG documents...")
 
-        total_deleted = 0
-        for doc_type in DOC_TYPE_MAP.values():
-            try:
-                count = self.rag_service.delete_by_doc_type(doc_type)
-                if count > 0:
-                    logger.info(f"  ✓ Deleted {count} chunks of type '{doc_type}'")
-                total_deleted += count
-            except Exception as e:
-                logger.error(f"  ✗ Failed to delete '{doc_type}': {e}")
+        try:
+            total_deleted = self.rag_service.delete_all_documents()
+            logger.info(f"  ✓ Deleted {total_deleted} chunks")
+        except Exception as e:
+            logger.error(f"  ✗ Failed to clear documents: {e}")
+            return 0
 
         logger.info(f"✓ Cleared {total_deleted} total chunks")
         return total_deleted
@@ -203,10 +200,13 @@ class EmbeddingInitializer:
                     "doc_type": doc_type,
                 }
 
-            # Clear existing documents of this type (idempotent)
-            existing_count = self.rag_service.delete_by_doc_type(doc_type)
+            # Clear existing chunks only for this source file (idempotent).
+            # Avoid deleting other files that share the same doc_type bucket.
+            existing_count = self.rag_service.delete_by_source_filename(filename)
             if existing_count > 0:
-                logger.info(f"  • Cleared {existing_count} existing chunks")
+                logger.info(
+                    f"  • Cleared {existing_count} existing chunks for {filename}"
+                )
 
             # Ingest document
             metadata = {

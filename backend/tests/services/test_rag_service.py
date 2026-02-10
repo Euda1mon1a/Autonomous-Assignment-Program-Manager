@@ -6,6 +6,7 @@ SQLite tests will focus on chunking, ingestion flow, and business logic.
 
 import pytest
 from uuid import uuid4
+from unittest.mock import MagicMock
 
 from app.services.rag_service import RAGService
 from app.models.rag_document import RAGDocument
@@ -348,6 +349,21 @@ class TestRAGServiceDeletion:
         assert "type_a" not in health.documents_by_type
         assert "type_b" in health.documents_by_type
 
+    async def test_delete_all_documents(self, db):
+        """Test deleting all documents regardless of type."""
+        service = RAGService(db)
+
+        mock_result = MagicMock()
+        mock_result.rowcount = 12
+        db.execute = MagicMock(return_value=mock_result)
+        db.commit = MagicMock()
+
+        deleted = service.delete_all_documents()
+
+        assert deleted == 12
+        db.execute.assert_called_once()
+        db.commit.assert_called_once()
+
     @pytest.mark.requires_db
     async def test_delete_by_id(self, db):
         """Test deleting a specific document by ID."""
@@ -369,3 +385,18 @@ class TestRAGServiceDeletion:
         # Try to delete again (should return False)
         deleted_again = service.delete_by_id(doc_id)
         assert deleted_again is False
+
+    async def test_delete_by_source_filename(self, db):
+        """Test deleting chunks by source filename."""
+        service = RAGService(db)
+
+        mock_result = MagicMock()
+        mock_result.rowcount = 3
+        db.execute = MagicMock(return_value=mock_result)
+        db.commit = MagicMock()
+
+        deleted = service.delete_by_source_filename("file_a.md")
+
+        assert deleted == 3
+        db.execute.assert_called_once()
+        db.commit.assert_called_once()

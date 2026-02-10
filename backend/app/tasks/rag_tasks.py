@@ -141,10 +141,7 @@ def initialize_embeddings(
         # Clear existing documents if force_refresh
         if force_refresh:
             logger.info("Force refresh enabled - clearing existing documents")
-            total_deleted = 0
-            for doc_type in DOC_TYPE_MAP.values():
-                count = rag_service.delete_by_doc_type(doc_type)
-                total_deleted += count
+            total_deleted = rag_service.delete_all_documents()
             logger.info(f"Cleared {total_deleted} existing chunks")
 
         # Get documents to process
@@ -204,12 +201,13 @@ def initialize_embeddings(
                     )
                     continue
 
-                # Clear existing docs of this type (idempotent)
+                # Clear existing chunks for this source file only (idempotent).
+                # Avoid deleting other files that share the same doc_type bucket.
                 if not force_refresh:  # Already cleared if force_refresh
-                    existing_count = rag_service.delete_by_doc_type(doc_type)
+                    existing_count = rag_service.delete_by_source_filename(filename)
                     if existing_count > 0:
                         logger.info(
-                            f"Cleared {existing_count} existing chunks for {doc_type}"
+                            f"Cleared {existing_count} existing chunks for {filename}"
                         )
 
                 # Ingest document
@@ -450,11 +448,7 @@ def clear_all_embeddings(self) -> dict[str, Any]:
 
         rag_service = RAGService(db)
 
-        total_deleted = 0
-        for doc_type in DOC_TYPE_MAP.values():
-            count = rag_service.delete_by_doc_type(doc_type)
-            total_deleted += count
-            logger.info(f"Deleted {count} chunks of type {doc_type}")
+        total_deleted = rag_service.delete_all_documents()
 
         logger.info(f"Cleared {total_deleted} total chunks")
 
