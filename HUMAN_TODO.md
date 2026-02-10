@@ -944,7 +944,7 @@ All 4 components are fully functional and wired to backend:
 **Priority:** HIGH → RESOLVED
 **Location:** Various frontend components
 **Found:** Session 025 reconnaissance (2025-12-30)
-**Status:** ✅ FIXED (Session 025, 2025-12-30)
+**Status:** ✅ FIXED (Session 025, 2025-12-30; build hardened PR #1099, 2026-02-09)
 
 Pre-existing TypeScript errors discovered during Session 025 audit:
 
@@ -954,10 +954,11 @@ Pre-existing TypeScript errors discovered during Session 025 audit:
 | `EmptyState` component | Missing export | ✅ Added named export |
 | `SearchInput` component | Props type mismatch | ✅ Fixed prop interface |
 
-**Resolution (Session 025):**
+**Resolution (Session 025 + PR #1099):**
 - All TypeScript errors resolved
 - `npm run type-check` now passes cleanly
 - Build succeeds without type errors
+- **PR #1099 (2026-02-09):** Re-enabled `ignoreBuildErrors: false` and `ignoreDuringBuilds: false` in `next.config.js`, fixed 15 ESLint warnings, all strict checks now enforced
 
 ---
 
@@ -996,9 +997,8 @@ Pre-existing TypeScript errors discovered during Session 025 audit:
 - Hopfield networks, immune system, game theory return synthetic data
 - Shapley value returns uniform distribution
 
-#### 16. Frontend WebSocket Client Missing
-- Backend WebSocket fully implemented (8 event types)
-- Frontend only has SSE, no native WebSocket client
+#### 16. Frontend WebSocket Client - ✅ RESOLVED
+- ✅ `useWebSocket.ts` implemented with reconnection, JWT auth, typed events (DEBT-010)
 
 #### 17. Admin Email Invitations - IMPLEMENTED
 **Priority:** MEDIUM
@@ -1082,7 +1082,7 @@ See also:
 
 ---
 
-*Last updated: 2026-02-04 (Admin GUI wiring complete, CI-lite workflow, pre-commit streamlined)*
+*Last updated: 2026-02-09 (Build quality hardening PR #1099, code debt cleanup PR #1100)*
 
 
 ---

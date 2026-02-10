@@ -1,6 +1,6 @@
 # Technical Debt Tracker
 
-> **Last Updated:** 2026-02-08
+> **Last Updated:** 2026-02-09
 > **Source:** Full-Stack MVP Review (16-layer inspection) + 2026-02-08 Repo-Wide Scan
 
 This document tracks identified technical debt, prioritized by severity and impact.
@@ -144,13 +144,9 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 **Location:** Multiple frontend files
 **Category:** Configuration
 **Found:** 2025-12-30
+**Status:** ✅ RESOLVED (2026-02-09, PR #1100)
 
-**Locations:**
-- `/frontend/src/mocks/handlers.ts` - Missing `/v1` suffix
-- `/frontend/src/lib/export.ts` - Missing `/api/v1` suffix
-- `/frontend/src/hooks/useClaudeChat.ts` - Wrong env var
-
-**Fix:** Centralize API configuration, use consistent env vars.
+**Resolution:** Fixed mock handler base URL (`/api` -> `/api/v1`). `export.ts` already uses shared API client. `useClaudeChat.ts` env var was fixed earlier.
 
 ---
 
@@ -235,21 +231,9 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 **Location:** `/frontend/src/lib/auth.ts`
 **Category:** Error Handling
 **Found:** 2025-12-30
+**Status:** ✅ RESOLVED (2026-02-09, PR #1100)
 
-**Issue:** Logout errors caught but not propagated.
-
-```typescript
-export async function logout(): Promise<void> {
-  try {
-    await post('/auth/logout', {})
-  } catch (error) {
-    console.error('Logout error:', error)
-    // Silent failure - session might still be active
-  }
-}
-```
-
-**Fix:** Propagate error or retry logout.
+**Resolution:** Logout now clears client-side session state first (always), retries server call once, and only re-throws non-network errors. Users are always logged out locally even if server is unreachable.
 
 ---
 
@@ -280,16 +264,12 @@ export async function logout(): Promise<void> {
 **Location:** Multiple frontend components
 **Category:** Frontend Quality
 **Found:** 2026-02-08
+**Status:** ✅ RESOLVED (2026-02-09, PRs #847, #1057, #1100)
 
-**Issue:** 30+ instances of `key={index}` across the frontend. Index-based keys cause incorrect DOM reuse when list items reorder, insert, or delete.
-
-**Partial fix in PR #847:** Fixed `error-toast.tsx` (most user-visible). Remaining instances need per-component audit to determine stable key sources.
-
-**Files with known instances:**
-- Various page components, hooks, and utility components
-- Full grep: `grep -rn 'key={index}' frontend/src/`
-
-**Fix:** Audit each instance; replace with content hash, ID, or unique field. Static lists with no reorder can keep index keys (suppress with comment).
+**Resolution:** All targeted `key={index}` instances replaced with stable keys:
+- PR #847: `error-toast.tsx`
+- PR #1057: Multiple components
+- PR #1100: `ClaudeCodeChat.tsx`, `SolverVisualization.tsx`, `PatternEditor.tsx`, `TemplateEditor.tsx`
 
 ---
 
@@ -305,10 +285,9 @@ export async function logout(): Promise<void> {
 **Location:** `backend/app/scheduling/engine.py` (line ~2431)
 **Category:** Configuration
 **Found:** 2026-02-08
+**Status:** ✅ RESOLVED (2026-02-09, PR #1100)
 
-**Issue:** `MAX_FACULTY_IN_CLINIC = 6` is hardcoded as a physical facility limit. Should be configurable per clinic/site for multi-site deployments.
-
-**Fix:** Move to config or per-clinic DB field.
+**Resolution:** Moved to `Settings.MAX_FACULTY_IN_CLINIC` in `config.py` (default: 6). Engine reads from `get_settings()`. Configurable via environment variable.
 
 ---
 
@@ -318,7 +297,7 @@ export async function logout(): Promise<void> {
 |----------|------|----------|-------|
 | Security | 0 | 1 | 1 |
 | Infrastructure | 0 | 1 | 1 |
-| Configuration | 1 | 1 | 2 |
+| Configuration | 0 | 2 | 2 |
 | Performance | 0 | 2 | 2 |
 | Feature Incomplete | 1 | 3 | 4 |
 | API Quality | 0 | 1 | 1 |
@@ -327,14 +306,14 @@ export async function logout(): Promise<void> {
 | Architecture | 0 | 1 | 1 |
 | Code Quality | 0 | 1 | 1 |
 | Data / OPSEC | 1 | 0 | 1 |
-| Frontend Quality | 1 | 0 | 1 |
+| Frontend Quality | 0 | 1 | 1 |
 | Testing | 2 | 0 | 2 |
-| Error Handling | 1 | 1 | 2 |
+| Error Handling | 0 | 2 | 2 |
 | Observability | 1 | 0 | 1 |
 | Real-time Features | 0 | 1 | 1 |
-| **Total** | **9** | **14** | **24** |
+| **Total** | **6** | **18** | **24** |
 
-> 14 of 24 items resolved (58%). Remaining 9 open items are medium-to-large effort.
+> 18 of 24 items resolved (75%). Remaining 6 open items require DB access, infrastructure config, or domain expertise.
 
 ---
 
@@ -353,19 +332,19 @@ export async function logout(): Promise<void> {
 | DEBT-009 | Open | - | - |
 | DEBT-010 | ✅ Resolved | pre-2026 | `useWebSocket.ts` |
 | DEBT-011 | ✅ Resolved | pre-2026 | selectinload in engine |
-| DEBT-012 | Open | - | - |
+| DEBT-012 | ✅ Resolved | 2026-02-09 | PR #1100 |
 | DEBT-013 | ✅ Resolved | pre-2026 | Duplicates removed |
 | DEBT-014 | ✅ Resolved | pre-2026 | AuthContext, no localStorage |
 | DEBT-015 | Open | - | - |
 | DEBT-016 | Open | - | - |
 | DEBT-017 | ✅ Closed | 2025-12-30 | Local changes |
 | DEBT-018 | Open | - | - |
-| DEBT-019 | Open | - | - |
+| DEBT-019 | ✅ Resolved | 2026-02-09 | PR #1100 |
 | DEBT-020 | ✅ Resolved | pre-2026 | `providers.tsx` unhandled rejection |
 | DEBT-021 | Open | - | - |
-| DEBT-022 | Partial | 2026-02-08 | PR #847 (error-toast only) |
+| DEBT-022 | ✅ Resolved | 2026-02-09 | PRs #847, #1057, #1100 |
 | DEBT-023 | ✅ Resolved | 2026-02-08 | Confirmed DEBT-011 resolved |
-| DEBT-024 | Open | - | - |
+| DEBT-024 | ✅ Resolved | 2026-02-09 | PR #1100 |
 
 ---
 
