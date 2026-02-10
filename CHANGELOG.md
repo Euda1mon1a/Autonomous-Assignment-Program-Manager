@@ -9,6 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Autonomous Test Marathon (PRs #896-#1096, Feb 9-10, 2026)
+
+**201 PRs merged in ~18.5 hours** of autonomous Claude Code operation, adding 11,861 test functions across 283 new test files (112,298 lines of test code). Backend test total: 25,136 functions across 910 files.
+
+All tests use **pure-logic isolation** (`--noconftest`, no DB/Redis) for instant execution.
+
+| Domain | PRs | Tests | Highlights |
+|--------|-----|-------|-----------|
+| Schemas | 33 | ~3,200 | 60+ Pydantic schema files validated |
+| Constraints | 33 | ~1,400 | 20+ constraint types (equity, call, FMIT, etc.) |
+| Resilience | 22 | ~1,300 | Circuit breakers, MTF compliance, catastrophe theory |
+| FRMS/Fatigue | 19 | ~900 | Samn-Perelli, sleep debt, alertness, QUBO |
+| Scheduling | 15 | ~600 | Spin glass, tensegrity, CP-SAT, Zeno |
+| Multi-Objective | 10 | ~550 | MOEA/D, decision support, diversity |
+| Validators | 19 | ~750 | ACGME compliance, leave, rotation, supervision |
+| Core Infra | 10 | ~400 | Rate limiting, Celery, cache, logging |
+| Middleware | 14 | ~450 | Compression, throttling, deprecation, RFC 7807 |
+| CQRS | 6 | ~220 | Commands, queries, read model sync |
+| Security | 4 | ~250 | XSS sanitization, CSP, file security |
+| Other | 16 | ~800 | Events, backup, tenancy, mesh, mock server, SPC |
+
+**Bugs found and fixed during testing:**
+- `formatZodError` mishandled real Zod `.issues` (#899)
+- `schedule_display_rules.py` NameError (#1063)
+- Wellness page emoji rendering inconsistency (#1064)
+- Index-based React keys → stable keys (#1057)
+- AuthContext cleanup leak (#1055)
+- JSONB tests not marked PostgreSQL-only (#1058)
+
+Full report: `docs/reports/autonomous-test-marathon-2026-02-09.md`
+
 #### Session 154 - Security & Testing Improvements (2026-01-31)
 
 **Rate Limiting (PR #795 - HIGH #10):**

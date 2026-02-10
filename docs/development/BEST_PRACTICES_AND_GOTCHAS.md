@@ -1,7 +1,7 @@
 # Best Practices & Gotchas
 
 > **Purpose:** Prevent common bugs and headaches. Read this before starting work.
-> **Last Updated:** 2026-02-05
+> **Last Updated:** 2026-02-10
 
 ---
 
@@ -453,11 +453,48 @@ response = client.get("/api/v1/admin/schedule-overrides?start_date=2025-01-01")
 
 **Action Item:** Audit all existing tests for this pattern and convert any non-versioned routes to `/api/v1/*`.
 
+### Pure-Logic Test Isolation (No DB, No Redis)
+
+Many backend modules contain pure logic (dataclasses, enums, validators, math, state machines) that can be tested without any infrastructure. This is the fastest and most reliable testing pattern.
+
+**Command:**
+```bash
+cd backend && SECRET_KEY=$(python3.11 -c "import secrets; print(secrets.token_urlsafe(32))") \
+  DATABASE_URL="postgresql://user:pass@localhost:5432/testdb" \
+  python -m pytest tests/path/test_file.py -v --no-header --tb=short --noconftest
+```
+
+**Key flags:**
+- `--noconftest` skips all conftest.py fixtures (DB sessions, Redis, etc.)
+- Fake `SECRET_KEY` and `DATABASE_URL` satisfy import-time config validation
+- Tests run in <1 second for most modules
+
+**When to use:** Any module that doesn't call `db.execute()`, `redis.get()`, or make HTTP requests. Good candidates: schemas, validators, constraint logic, data transformations, enums, utility functions.
+
+**Async helper pattern:**
+```python
+import asyncio
+
+def _run(coro):
+    """Run an async coroutine synchronously for pure-logic tests."""
+    return asyncio.get_event_loop().run_until_complete(coro)
+
+# Usage
+def test_query_bus_execute():
+    result = _run(bus.execute(query))
+    assert result.success is True
+```
+
+**Ruff gotchas to watch for:**
+- `E731`: Don't use `fn = lambda x: x` -- convert to `def fn(x): return x`
+- `SIM300`: Don't use Yoda conditions like `"POST" == method` -- reverse to `method == "POST"`
+
 ### Integration vs Unit Tests
 
 | Test Type | Uses Real DB | Uses Real API | Speed |
 |-----------|--------------|---------------|-------|
 | Unit | No (mocked) | No | Fast |
+| Pure-Logic | No (--noconftest) | No | Very Fast |
 | Integration | Yes | No | Medium |
 | E2E | Yes | Yes | Slow |
 
@@ -1014,6 +1051,7 @@ This is not an argument against CI in general. It's an argument that **the right
 - [ ] All async functions have `await` on DB operations
 - [ ] Migration name is ≤64 characters
 - [ ] No secrets in code or logs
+- [ ] Pure-logic tests pass: `pytest <file> --noconftest` (if applicable)
 - [ ] Tests pass: `pytest` and `npm test`
 - [ ] Linting passes: `ruff check` and `npm run lint`
 - [ ] No `console.log` left in production code
