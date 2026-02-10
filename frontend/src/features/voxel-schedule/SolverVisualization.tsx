@@ -147,11 +147,11 @@ const Legend: React.FC = () => (
       Activity Layers
     </h4>
     <div className="space-y-2">
-      {Object.entries(ACTIVITY_NAMES).map(([index, name]) => (
-        <div key={index} className="flex items-center gap-2">
+      {Object.entries(ACTIVITY_NAMES).map(([layerIndex, name]) => (
+        <div key={name} className="flex items-center gap-2">
           <div
             className="w-3 h-3 rounded shadow-sm"
-            style={{ backgroundColor: ACTIVITY_COLORS[Number(index)] }}
+            style={{ backgroundColor: ACTIVITY_COLORS[Number(layerIndex)] }}
           />
           <span className="text-slate-300 text-xs">{name}</span>
         </div>

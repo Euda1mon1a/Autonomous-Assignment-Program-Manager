@@ -381,8 +381,8 @@ function PatternForm({ onSubmit, onCancel, initialValues }: PatternFormProps) {
             onChange={(e) => setDayOfWeek(Number(e.target.value))}
             className="w-full px-3 py-2 border rounded-lg"
           >
-            {DAY_OF_WEEK_LABELS.map((day, index) => (
-              <option key={index} value={index}>
+            {DAY_OF_WEEK_LABELS.map((day, dayIdx) => (
+              <option key={day} value={dayIdx}>
                 {day}
               </option>
             ))}
