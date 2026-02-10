@@ -279,6 +279,82 @@ class TestValidate80HourRollingAverage:
         assert first.date_range[0] == dates[0]
         assert first.date_range[1] == dates[0] + timedelta(days=27)
 
+    def test_boundary_80_vs_80_point_5(self):
+        """80.0 avg is not a violation; 80.5 avg is."""
+        v = WorkHourValidator()
+        dates = _dates(28)
+        per_day_exact = (80 * 4) / 28  # 11.428571...
+        per_day_over = (80.5 * 4) / 28  # 11.5
+
+        hours_exact = _hours_by_date(per_day_exact, dates)
+        violations, warnings = v.validate_80_hour_rolling_average(PERSON, hours_exact)
+        assert violations == []
+        assert len(warnings) >= 1
+
+        hours_over = _hours_by_date(per_day_over, dates)
+        violations, warnings = v.validate_80_hour_rolling_average(PERSON, hours_over)
+        assert len(violations) >= 1
+        assert violations[0].hours == pytest.approx(80.5)
+
+    def test_leap_year_window_includes_feb_29(self):
+        """Rolling window should include Feb 29 in leap years."""
+        v = WorkHourValidator()
+        start = date(2024, 2, 10)
+        dates = _dates(28, start=start)
+        assert date(2024, 2, 29) in dates
+
+        hours = _hours_by_date(11.5, dates)  # 80.5h/week avg -> violation
+        violations, warnings = v.validate_80_hour_rolling_average(PERSON, hours)
+        assert len(violations) >= 1
+        first = violations[0]
+        assert first.date_range[0] == start
+        assert first.date_range[1] == start + timedelta(days=27)
+
+    def test_year_boundary_window(self):
+        """Rolling window should cross calendar year boundary."""
+        v = WorkHourValidator()
+        start = date(2024, 12, 15)
+        dates = _dates(28, start=start)
+        assert date(2025, 1, 1) in dates
+
+        hours = _hours_by_date(11.5, dates)  # 80.5h/week avg -> violation
+        violations, warnings = v.validate_80_hour_rolling_average(PERSON, hours)
+        assert len(violations) >= 1
+        first = violations[0]
+        assert first.date_range[0] == start
+        assert first.date_range[1] == start + timedelta(days=27)
+
+    def test_block_transition_with_vacation_in_window(self):
+        """Vacation days (0h) inside window should reduce average."""
+        v = WorkHourValidator()
+        dates = _dates(28)
+        hours = {}
+        for idx, d in enumerate(dates):
+            if 10 <= idx <= 16:
+                hours[d] = 0.0  # 7-day vacation
+            elif idx < 10:
+                hours[d] = 12.0  # intensive blocks (AM+PM)
+            else:
+                hours[d] = 6.0  # standard block
+
+        violations, warnings = v.validate_80_hour_rolling_average(PERSON, hours)
+        assert violations == []
+        assert warnings == []
+
+    def test_edge_call_hours_counted_in_window(self):
+        """Call hours on window edges should be included in rolling average."""
+        v = WorkHourValidator()
+        start = date(2024, 12, 15)
+        dates = _dates(28, start=start)
+        hours = _hours_by_date(11.0, dates)  # base 77h/week avg
+        hours[dates[0]] = 24.0  # call on window start
+        hours[dates[-1]] = 24.0  # call on window end
+
+        violations, warnings = v.validate_80_hour_rolling_average(PERSON, hours)
+        assert len(violations) >= 1
+        first = violations[0]
+        assert first.date_range == (start, start + timedelta(days=27))
+
 
 # ==================== 24+4 Rule Tests ====================
 
