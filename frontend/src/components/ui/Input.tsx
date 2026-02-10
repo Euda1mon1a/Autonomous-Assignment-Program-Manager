@@ -1,6 +1,6 @@
 'use client';
 
-import React, { forwardRef, InputHTMLAttributes } from 'react';
+import React, { forwardRef, InputHTMLAttributes, useId } from 'react';
 import { AlertCircle } from 'lucide-react';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -40,6 +40,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
+    const autoId = useId();
+    const inputId = props.id || autoId;
     const hasError = !!error;
     const showHelperText = !hasError && !!helperText;
 
@@ -60,7 +62,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className={fullWidth ? 'w-full' : ''}>
         {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
             {label}
           </label>
         )}
@@ -74,11 +76,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
           <input
             ref={ref}
+            id={inputId}
             className={inputClasses}
             disabled={disabled}
             aria-invalid={hasError}
+            aria-required={props.required || undefined}
             aria-describedby={
-              hasError ? `${props.id}-error` : showHelperText ? `${props.id}-helper` : undefined
+              hasError ? `${inputId}-error` : showHelperText ? `${inputId}-helper` : undefined
             }
             {...props}
           />
@@ -95,13 +99,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         </div>
 
         {hasError && (
-          <p className="mt-1 text-sm text-red-600" id={`${props.id}-error`}>
+          <p className="mt-1 text-sm text-red-600" id={`${inputId}-error`}>
             {error}
           </p>
         )}
 
         {showHelperText && (
-          <p className="mt-1 text-sm text-gray-500" id={`${props.id}-helper`}>
+          <p className="mt-1 text-sm text-gray-500" id={`${inputId}-helper`}>
             {helperText}
           </p>
         )}

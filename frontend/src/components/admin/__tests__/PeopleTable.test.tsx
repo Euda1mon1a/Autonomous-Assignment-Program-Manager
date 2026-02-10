@@ -207,7 +207,7 @@ describe('PeopleTable', () => {
         <PeopleTable {...defaultProps} onSelectionChange={onSelectionChange} />
       );
 
-      const selectAllCheckbox = screen.getByLabelText('Select all');
+      const selectAllCheckbox = screen.getByLabelText('Select all people');
       fireEvent.click(selectAllCheckbox);
 
       expect(onSelectionChange).toHaveBeenCalledWith(['p1', 'p2', 'p3']);
@@ -223,7 +223,7 @@ describe('PeopleTable', () => {
         />
       );
 
-      const deselectAllCheckbox = screen.getByLabelText('Deselect all');
+      const deselectAllCheckbox = screen.getByLabelText('Deselect all people');
       fireEvent.click(deselectAllCheckbox);
 
       expect(onSelectionChange).toHaveBeenCalledWith([]);

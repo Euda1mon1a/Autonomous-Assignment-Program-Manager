@@ -1,4 +1,4 @@
-import { TextareaHTMLAttributes, forwardRef } from 'react';
+import { TextareaHTMLAttributes, forwardRef, useId } from 'react';
 
 interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string;
@@ -6,14 +6,21 @@ interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 }
 
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
-  ({ label, error, className = '', ...props }, ref) => {
+  ({ label, error, className = '', id: providedId, ...props }, ref) => {
+    const generatedId = useId();
+    const textareaId = providedId || generatedId;
+    const errorId = `${textareaId}-error`;
+
     return (
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">
+        <label htmlFor={textareaId} className="block text-sm font-medium text-gray-700">
           {label}
         </label>
         <textarea
           ref={ref}
+          id={textareaId}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           className={`
             w-full px-3 py-2 border rounded-md shadow-sm
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
@@ -23,7 +30,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           {...props}
         />
         {error && (
-          <p className="text-sm text-red-600">{error}</p>
+          <p id={errorId} className="text-sm text-red-600" role="alert">{error}</p>
         )}
       </div>
     );

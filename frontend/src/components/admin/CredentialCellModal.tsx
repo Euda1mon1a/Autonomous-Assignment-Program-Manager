@@ -148,12 +148,12 @@ export function CredentialCellModal({
   }, [credential, deleteCredential, toast, onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="credential-cell-title">
       <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl max-w-md w-full">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
           <div>
-            <h2 className="text-lg font-semibold text-white">
+            <h2 id="credential-cell-title" className="text-lg font-semibold text-white">
               {isEditing ? 'Edit Credential' : 'Grant Credential'}
             </h2>
             <p className="text-sm text-slate-400">

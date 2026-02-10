@@ -69,6 +69,8 @@ export function DarkEmptyState({
 
   return (
     <div
+      role="status"
+      aria-label={title}
       className={`
         flex flex-col items-center justify-center text-center
         border border-dashed border-slate-700 rounded-lg

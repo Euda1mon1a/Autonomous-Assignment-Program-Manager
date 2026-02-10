@@ -71,11 +71,11 @@ export function ExpiringCredentialsAlert({
   const totalInfo = grouped.info.length;
 
   return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
+    <div role="alert" aria-label="Expiring credentials warning" className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-amber-400" />
+          <AlertTriangle className="w-5 h-5 text-amber-400" aria-hidden="true" />
           <h3 className="text-sm font-semibold text-white">
             Expiring Credentials
           </h3>
@@ -100,7 +100,7 @@ export function ExpiringCredentialsAlert({
       </div>
 
       {/* List */}
-      <div className="divide-y divide-slate-700/50 max-h-[200px] overflow-y-auto">
+      <div role="list" className="divide-y divide-slate-700/50 max-h-[200px] overflow-y-auto">
         {[...grouped.critical, ...grouped.warning, ...grouped.info].slice(0, 10).map((cred) => {
           const days = getDaysUntilExpiration(cred.expirationDate!);
           const severity = getSeverity(days);
@@ -108,6 +108,7 @@ export function ExpiringCredentialsAlert({
           return (
             <div
               key={cred.id}
+              role="listitem"
               className="px-4 py-2 flex items-center justify-between hover:bg-slate-700/30"
             >
               <div className="flex items-center gap-3">
@@ -129,7 +130,7 @@ export function ExpiringCredentialsAlert({
                   </div>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-500" />
+              <ChevronRight className="w-4 h-4 text-slate-500" aria-hidden="true" />
             </div>
           );
         })}

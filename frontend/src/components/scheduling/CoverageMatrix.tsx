@@ -77,16 +77,16 @@ export function CoverageMatrix({
 
   return (
     <div className={`overflow-x-auto ${className}`}>
-      <table className="min-w-full divide-y divide-gray-200">
+      <table className="min-w-full divide-y divide-gray-200" role="grid" aria-label="Coverage matrix">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Date
             </th>
-            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               AM
             </th>
-            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               PM
             </th>
           </tr>
@@ -98,17 +98,23 @@ export function CoverageMatrix({
 
             return (
               <tr key={date.toISOString()} className="hover:bg-gray-50">
-                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                <th scope="row" className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 font-normal text-left">
                   {date.toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     weekday: 'short',
                   })}
-                </td>
-                <td className={`px-3 py-2 text-center ${getCoverageColor(amSlot)}`}>
+                </th>
+                <td
+                  className={`px-3 py-2 text-center ${getCoverageColor(amSlot)}`}
+                  aria-label={amSlot ? `${date.toLocaleDateString('en-US', { weekday: 'long' })} AM: ${amSlot.assigned} of ${amSlot.required} slots filled` : `${date.toLocaleDateString('en-US', { weekday: 'long' })} AM: No data`}
+                >
                   <CoverageCell slot={amSlot} showWarnings={showWarnings} />
                 </td>
-                <td className={`px-3 py-2 text-center ${getCoverageColor(pmSlot)}`}>
+                <td
+                  className={`px-3 py-2 text-center ${getCoverageColor(pmSlot)}`}
+                  aria-label={pmSlot ? `${date.toLocaleDateString('en-US', { weekday: 'long' })} PM: ${pmSlot.assigned} of ${pmSlot.required} slots filled` : `${date.toLocaleDateString('en-US', { weekday: 'long' })} PM: No data`}
+                >
                   <CoverageCell slot={pmSlot} showWarnings={showWarnings} />
                 </td>
               </tr>

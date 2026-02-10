@@ -56,7 +56,7 @@ export function EquityIndicator({
   // Loading state
   if (currentLoading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-slate-400">
+      <div className="flex items-center gap-2 text-sm text-slate-400" role="status" aria-label="Loading">
         <Loader2 className="w-4 h-4 animate-spin" />
         <span>Calculating equity...</span>
       </div>
@@ -91,6 +91,11 @@ export function EquityIndicator({
     : worsening
     ? 'text-red-500'
     : 'text-slate-500';
+  const trendAriaLabel = improving
+    ? 'Improving'
+    : worsening
+    ? 'Declining'
+    : 'Stable';
 
   // Compact mode
   if (compact) {
@@ -106,7 +111,7 @@ export function EquityIndicator({
         </div>
         {hasTrend && Math.abs(giniChange) > 0.001 && (
           <div className={`flex items-center gap-1 ${trendColor}`}>
-            <TrendIcon className="w-3.5 h-3.5" />
+            <TrendIcon className="w-3.5 h-3.5" aria-label={trendAriaLabel} />
             <span className="text-xs font-medium">
               {Math.abs(giniChange).toFixed(3)}
             </span>
@@ -156,7 +161,7 @@ export function EquityIndicator({
                 Gini: {projectedEquity.giniCoefficient.toFixed(3)}
               </span>
               <div className={`flex items-center gap-1 ${trendColor}`}>
-                <TrendIcon className="w-3.5 h-3.5" />
+                <TrendIcon className="w-3.5 h-3.5" aria-label={trendAriaLabel} />
                 <span className="text-xs font-medium">
                   {giniChange > 0 ? '+' : ''}
                   {giniChange.toFixed(3)}

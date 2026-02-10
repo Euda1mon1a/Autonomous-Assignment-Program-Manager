@@ -103,6 +103,11 @@ function ProgressBar({ value, max, color = 'violet' }: ProgressBarProps) {
       </div>
       <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
         <div
+          role="progressbar"
+          aria-valuenow={percentage}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Import progress"
           className={`h-full ${colorClasses[color]} transition-all duration-300 ease-out`}
           style={{ width: `${percentage}%` }}
         />
