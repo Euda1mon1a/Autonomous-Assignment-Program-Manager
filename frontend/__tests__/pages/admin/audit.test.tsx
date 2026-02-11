@@ -70,8 +70,8 @@ describe('AdminAuditPage', () => {
     it('should display audit entries', () => {
       render(<AdminAuditPage />);
 
-      expect(screen.getByText('Admin User')).toBeInTheDocument();
-      expect(screen.getByText('Coordinator')).toBeInTheDocument();
+      expect(screen.getAllByText('Admin User').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Coordinator').length).toBeGreaterThan(0);
     });
 
     it('should render table headers', () => {
@@ -97,9 +97,9 @@ describe('AdminAuditPage', () => {
     it('should display category badges', () => {
       render(<AdminAuditPage />);
 
-      expect(screen.getByText('Authentication')).toBeInTheDocument();
-      expect(screen.getByText('Schedule')).toBeInTheDocument();
-      expect(screen.getByText('System')).toBeInTheDocument();
+      expect(screen.getAllByText('Authentication').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Schedule').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('System').length).toBeGreaterThan(0);
     });
 
     it('should show success/failed status', () => {
@@ -135,7 +135,7 @@ describe('AdminAuditPage', () => {
       await user.type(searchInput, 'login');
 
       // Should filter to show login-related entries
-      expect(screen.getByText(/login/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/login/i).length).toBeGreaterThan(0);
     });
 
     it('should search by user name', async () => {
@@ -145,7 +145,7 @@ describe('AdminAuditPage', () => {
       const searchInput = screen.getByPlaceholderText('Search logs...');
       await user.type(searchInput, 'Admin');
 
-      expect(screen.getByText('Admin User')).toBeInTheDocument();
+      expect(screen.getAllByText('Admin User').length).toBeGreaterThan(0);
     });
 
     it('should search by action', async () => {
@@ -153,9 +153,10 @@ describe('AdminAuditPage', () => {
       render(<AdminAuditPage />);
 
       const searchInput = screen.getByPlaceholderText('Search logs...');
-      await user.type(searchInput, 'schedule generated');
+      // Action is "scheduleGenerated" (camelCase, no spaces)
+      await user.type(searchInput, 'scheduleGenerated');
 
-      expect(screen.getByText(/schedule generated/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/scheduleGenerated/i).length).toBeGreaterThan(0);
     });
 
     it('should clear search', async () => {
@@ -167,7 +168,7 @@ describe('AdminAuditPage', () => {
       await user.clear(searchInput);
 
       // All entries should be visible again
-      expect(screen.getByText('Admin User')).toBeInTheDocument();
+      expect(screen.getAllByText('Admin User').length).toBeGreaterThan(0);
     });
   });
 
@@ -179,8 +180,9 @@ describe('AdminAuditPage', () => {
       const filterButton = screen.getByRole('button', { name: /Filters/i });
       await user.click(filterButton);
 
-      expect(screen.getByText('Category')).toBeInTheDocument();
-      expect(screen.getByText('Severity')).toBeInTheDocument();
+      // Filter panel labels duplicate table headers, so use getAllByText
+      expect(screen.getAllByText('Category').length).toBeGreaterThan(1);
+      expect(screen.getAllByText('Severity').length).toBeGreaterThan(1);
       expect(screen.getByText('Date Range')).toBeInTheDocument();
     });
 
@@ -190,7 +192,8 @@ describe('AdminAuditPage', () => {
 
       await user.click(screen.getByRole('button', { name: /Filters/i }));
 
-      const categorySelect = screen.getByLabelText('Category');
+      // Find category select by its default option text
+      const categorySelect = screen.getByDisplayValue('All Categories');
       await user.selectOptions(categorySelect, 'authentication');
 
       // Filter should be applied
@@ -203,7 +206,8 @@ describe('AdminAuditPage', () => {
 
       await user.click(screen.getByRole('button', { name: /Filters/i }));
 
-      const severitySelect = screen.getByLabelText('Severity');
+      // Find severity select by its default option text
+      const severitySelect = screen.getByDisplayValue('All Severities');
       await user.selectOptions(severitySelect, 'error');
 
       expect(severitySelect).toHaveValue('error');

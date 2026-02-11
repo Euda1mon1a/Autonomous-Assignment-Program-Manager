@@ -58,7 +58,7 @@ describe('ConflictCard', () => {
     });
 
     it('should display conflict date', () => {
-      const conflict = conflictsMockFactories.conflict({ conflictDate: '2024-02-15' });
+      const conflict = conflictsMockFactories.conflict({ conflictDate: '2024-02-15T12:00:00' });
 
       render(<ConflictCard conflict={conflict} />, { wrapper: createWrapper() });
 
@@ -181,7 +181,7 @@ describe('ConflictCard', () => {
       expect(screen.queryByText(/Details/i)).not.toBeInTheDocument();
 
       // Click expand
-      const expandButton = screen.getByLabelText('Expand');
+      const expandButton = screen.getByLabelText('Expand conflict details');
       await user.click(expandButton);
 
       // Should show details
@@ -190,7 +190,7 @@ describe('ConflictCard', () => {
       });
 
       // Click collapse
-      const collapseButton = screen.getByLabelText('Collapse');
+      const collapseButton = screen.getByLabelText('Collapse conflict details');
       await user.click(collapseButton);
 
       // Should hide details
@@ -207,7 +207,7 @@ describe('ConflictCard', () => {
 
       render(<ConflictCard conflict={conflict} />, { wrapper: createWrapper() });
 
-      const expandButton = screen.getByLabelText('Expand');
+      const expandButton = screen.getByLabelText('Expand conflict details');
       await user.click(expandButton);
 
       await waitFor(() => {
@@ -221,7 +221,7 @@ describe('ConflictCard', () => {
 
       render(<ConflictCard conflict={conflict} />, { wrapper: createWrapper() });
 
-      const expandButton = screen.getByLabelText('Expand');
+      const expandButton = screen.getByLabelText('Expand conflict details');
       await user.click(expandButton);
 
       await waitFor(() => {
@@ -241,7 +241,7 @@ describe('ConflictCard', () => {
 
       render(<ConflictCard conflict={conflict} />, { wrapper: createWrapper() });
 
-      const expandButton = screen.getByLabelText('Expand');
+      const expandButton = screen.getByLabelText('Expand conflict details');
       await user.click(expandButton);
 
       await waitFor(() => {
@@ -269,7 +269,7 @@ describe('ConflictCard', () => {
         { wrapper: createWrapper() }
       );
 
-      const moreButton = screen.getByLabelText('More actions');
+      const moreButton = screen.getByLabelText('More actions for this conflict');
       await user.click(moreButton);
 
       await waitFor(() => {
@@ -290,7 +290,7 @@ describe('ConflictCard', () => {
         { wrapper: createWrapper() }
       );
 
-      const moreButton = screen.getByLabelText('More actions');
+      const moreButton = screen.getByLabelText('More actions for this conflict');
       await user.click(moreButton);
 
       const suggestionsButton = await screen.findByText('View Suggestions');
@@ -307,7 +307,7 @@ describe('ConflictCard', () => {
         wrapper: createWrapper(),
       });
 
-      const moreButton = screen.getByLabelText('More actions');
+      const moreButton = screen.getByLabelText('More actions for this conflict');
       await user.click(moreButton);
 
       const resolveButton = await screen.findByText('Resolve');
@@ -324,7 +324,7 @@ describe('ConflictCard', () => {
         wrapper: createWrapper(),
       });
 
-      const moreButton = screen.getByLabelText('More actions');
+      const moreButton = screen.getByLabelText('More actions for this conflict');
       await user.click(moreButton);
 
       const overrideButton = await screen.findByText('Override');
@@ -341,7 +341,7 @@ describe('ConflictCard', () => {
         wrapper: createWrapper(),
       });
 
-      const moreButton = screen.getByLabelText('More actions');
+      const moreButton = screen.getByLabelText('More actions for this conflict');
       await user.click(moreButton);
 
       const historyButton = await screen.findByText('View History');
@@ -358,7 +358,7 @@ describe('ConflictCard', () => {
         wrapper: createWrapper(),
       });
 
-      const moreButton = screen.getByLabelText('More actions');
+      const moreButton = screen.getByLabelText('More actions for this conflict');
       await user.click(moreButton);
 
       const ignoreButton = await screen.findByText('Ignore');
@@ -382,7 +382,7 @@ describe('ConflictCard', () => {
         { wrapper: createWrapper() }
       );
 
-      const expandButton = screen.getByLabelText('Expand');
+      const expandButton = screen.getByLabelText('Expand conflict details');
       await user.click(expandButton);
 
       await waitFor(() => {
@@ -400,14 +400,14 @@ describe('ConflictCard', () => {
         { wrapper: createWrapper() }
       );
 
-      const expandButton = screen.getByLabelText('Expand');
+      const expandButton = screen.getByLabelText('Expand conflict details');
       await user.click(expandButton);
 
       await waitFor(() => {
         expect(screen.getAllByText('View Suggestions').length).toBeGreaterThan(0);
       });
 
-      const quickActionButton = screen.getAllByText('View Suggestions')[1]; // Get the quick action button (second one)
+      const quickActionButton = screen.getByRole('button', { name: /View resolution suggestions/i });
       await user.click(quickActionButton);
 
       expect(mockOnViewSuggestions).toHaveBeenCalledWith(conflict);
@@ -421,14 +421,14 @@ describe('ConflictCard', () => {
         wrapper: createWrapper(),
       });
 
-      const expandButton = screen.getByLabelText('Expand');
+      const expandButton = screen.getByLabelText('Expand conflict details');
       await user.click(expandButton);
 
       await waitFor(() => {
         expect(screen.getAllByText('Resolve').length).toBeGreaterThan(0);
       });
 
-      const quickActionButton = screen.getAllByText('Resolve')[1]; // Get the quick action button (second one)
+      const quickActionButton = screen.getByRole('button', { name: /Resolve this conflict/i });
       await user.click(quickActionButton);
 
       expect(mockOnResolve).toHaveBeenCalledWith(conflict);
@@ -519,8 +519,8 @@ describe('ConflictCard', () => {
 
       render(<ConflictCard conflict={conflict} />, { wrapper: createWrapper() });
 
-      expect(screen.getByLabelText('Expand')).toBeInTheDocument();
-      expect(screen.getByLabelText('More actions')).toBeInTheDocument();
+      expect(screen.getByLabelText('Expand conflict details')).toBeInTheDocument();
+      expect(screen.getByLabelText('More actions for this conflict')).toBeInTheDocument();
     });
 
     it('should update ARIA label when expanded', async () => {
@@ -529,11 +529,11 @@ describe('ConflictCard', () => {
 
       render(<ConflictCard conflict={conflict} />, { wrapper: createWrapper() });
 
-      const expandButton = screen.getByLabelText('Expand');
+      const expandButton = screen.getByLabelText('Expand conflict details');
       await user.click(expandButton);
 
       await waitFor(() => {
-        expect(screen.getByLabelText('Collapse')).toBeInTheDocument();
+        expect(screen.getByLabelText('Collapse conflict details')).toBeInTheDocument();
       });
     });
   });

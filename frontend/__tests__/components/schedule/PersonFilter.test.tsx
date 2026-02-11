@@ -383,14 +383,9 @@ describe('PersonFilter', () => {
 
       expect(searchInput.value).toBe('Alice')
 
-      const clearButton = screen.getByRole('button', { name: '' })
-      const clearButtons = screen.getAllByRole('button')
-      const xButton = clearButtons.find((btn) => btn.querySelector('svg')?.classList.contains('lucide-x'))
-
-      if (xButton) {
-        fireEvent.click(xButton)
-        expect(searchInput.value).toBe('')
-      }
+      const clearButton = screen.getByLabelText('Clear search')
+      fireEvent.click(clearButton)
+      expect(searchInput.value).toBe('')
     })
   })
 

@@ -39,10 +39,10 @@ describe('ScheduleLegend', () => {
     it('applies correct color classes to badges', () => {
       const { container } = render(<ScheduleLegend />);
 
-      const clinicBadge = screen.getByText('CLI').parentElement;
+      const clinicBadge = screen.getByText('CLI');
       expect(clinicBadge).toHaveClass('bg-blue-100', 'text-blue-800', 'border-blue-300');
 
-      const inpatientBadge = screen.getByText('INP').parentElement;
+      const inpatientBadge = screen.getByText('INP');
       expect(inpatientBadge).toHaveClass('bg-purple-100', 'text-purple-800', 'border-purple-300');
     });
   });

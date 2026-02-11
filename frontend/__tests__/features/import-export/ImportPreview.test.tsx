@@ -101,13 +101,13 @@ describe('ImportPreview', () => {
       render(<ImportPreview preview={mockPreview} />);
 
       const validText = screen.getByText(/valid.*7/i);
-      expect(validText).toHaveClass('text-green-600');
+      expect(validText.closest('div')).toHaveClass('text-green-600');
 
       const warningText = screen.getByText(/warnings.*1/i);
-      expect(warningText).toHaveClass('text-yellow-600');
+      expect(warningText.closest('div')).toHaveClass('text-yellow-600');
 
       const errorText = screen.getByText(/errors.*2/i);
-      expect(errorText).toHaveClass('text-red-600');
+      expect(errorText.closest('div')).toHaveClass('text-red-600');
     });
   });
 
@@ -432,7 +432,7 @@ describe('ImportPreview', () => {
 
       await user.click(errorRow!);
 
-      expect(screen.getByText(/email.*invalid email format/i)).toBeInTheDocument();
+      expect(screen.getByText(/invalid email format/i)).toBeInTheDocument();
     });
 
     it('should expand row to show warnings when clicked', async () => {
@@ -443,7 +443,7 @@ describe('ImportPreview', () => {
       const warningRow = screen.getByText('Alice Williams').closest('tr');
       await user.click(warningRow!);
 
-      expect(screen.getByText(/type.*duplicate entry found/i)).toBeInTheDocument();
+      expect(screen.getByText(/duplicate entry found/i)).toBeInTheDocument();
     });
 
     it('should collapse expanded row when clicked again', async () => {
@@ -496,9 +496,9 @@ describe('ImportPreview', () => {
       const errorRow = screen.getByText('1').closest('tr');
       await user.click(errorRow!);
 
-      expect(screen.getByText(/name.*required/i)).toBeInTheDocument();
-      expect(screen.getByText(/email.*invalid/i)).toBeInTheDocument();
-      expect(screen.getByText(/type.*required/i)).toBeInTheDocument();
+      expect(screen.getByText(/Name is required/i)).toBeInTheDocument();
+      expect(screen.getByText(/Invalid email/i)).toBeInTheDocument();
+      expect(screen.getByText(/Type is required/i)).toBeInTheDocument();
     });
 
     it('should display both errors and warnings in expanded row', async () => {
@@ -526,8 +526,8 @@ describe('ImportPreview', () => {
       const row = screen.getByText('Test').closest('tr');
       await user.click(row!);
 
-      expect(screen.getByText(/email.*validation warning/i)).toBeInTheDocument();
-      expect(screen.getByText(/name.*possible duplicate/i)).toBeInTheDocument();
+      expect(screen.getByText(/Email validation warning/i)).toBeInTheDocument();
+      expect(screen.getByText(/Possible duplicate/i)).toBeInTheDocument();
     });
   });
 

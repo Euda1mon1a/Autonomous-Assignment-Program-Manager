@@ -102,7 +102,7 @@ describe('LoadingSpinner', () => {
     it('has proper color scheme', () => {
       const { container } = render(<LoadingSpinner />);
 
-      const spinner = container.querySelector('.border-gray-200.border-t-blue-600');
+      const spinner = container.querySelector('.border-slate-700.border-t-violet-500');
       expect(spinner).toBeInTheDocument();
     });
 

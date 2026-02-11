@@ -110,7 +110,7 @@ describe('AbsenceCalendar', () => {
     });
 
     it('renders absences on correct days', () => {
-      render(
+      const { container } = render(
         <AbsenceCalendar
           absences={mockAbsences}
           people={mockPeople}
@@ -118,9 +118,13 @@ describe('AbsenceCalendar', () => {
         />
       );
 
-      // Check for person initials in calendar
-      expect(screen.getByText(/JS/)).toBeInTheDocument(); // John Smith
-      expect(screen.getByText(/JD/)).toBeInTheDocument(); // Jane Doe
+      // Check for person initials in absence buttons (text split across elements)
+      const absenceButtons = container.querySelectorAll('button[title]');
+      expect(absenceButtons.length).toBeGreaterThan(0);
+      // John Smith's vacation and Jane Doe's conference should both appear
+      const titles = Array.from(absenceButtons).map(b => b.getAttribute('title'));
+      expect(titles.some(t => t?.includes('Dr. John Smith'))).toBe(true);
+      expect(titles.some(t => t?.includes('Dr. Jane Doe'))).toBe(true);
     });
 
     it('renders absence type labels', () => {
@@ -132,8 +136,9 @@ describe('AbsenceCalendar', () => {
         />
       );
 
-      expect(screen.getByText(/vacation/i)).toBeInTheDocument();
-      expect(screen.getByText(/conference/i)).toBeInTheDocument();
+      // Absence type labels appear in multiple day cells, use getAllByText
+      expect(screen.getAllByText(/vacation/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/conference/i).length).toBeGreaterThan(0);
     });
 
     it('highlights today', () => {
@@ -159,8 +164,8 @@ describe('AbsenceCalendar', () => {
         />
       );
 
-      // Legend should show first 6 absence types
-      expect(screen.getByText('vacation')).toBeInTheDocument();
+      // Legend shows first 6 absence types; vacation appears in legend and calendar cells
+      expect(screen.getAllByText('vacation').length).toBeGreaterThan(0);
     });
   });
 
@@ -232,7 +237,7 @@ describe('AbsenceCalendar', () => {
         />
       );
 
-      const absenceButton = screen.getByText(/vacation/i).closest('button');
+      const absenceButton = screen.getAllByText(/vacation/i)[0].closest('button');
       fireEvent.click(absenceButton!);
 
       expect(mockOnAbsenceClick).toHaveBeenCalledWith(mockAbsences[0]);
@@ -247,7 +252,7 @@ describe('AbsenceCalendar', () => {
         />
       );
 
-      const absenceButton = screen.getByText(/vacation/i).closest('button');
+      const absenceButton = screen.getAllByText(/vacation/i)[0].closest('button');
       expect(absenceButton).toHaveAttribute('title');
     });
   });
@@ -286,11 +291,13 @@ describe('AbsenceCalendar', () => {
 
   describe('Overflow Handling', () => {
     it('shows "+X more" when more than 3 absences on one day', () => {
+      // Use local-time date strings (T00:00:00 without Z) to avoid timezone mismatch
+      // between Date parsing (UTC midnight) and eachDayOfInterval (local midnight)
       const manyAbsences: Absence[] = Array.from({ length: 5 }, (_, i) => ({
         id: `absence-${i}`,
         personId: `person-${i}`,
-        startDate: '2024-01-15',
-        endDate: '2024-01-15',
+        startDate: '2024-01-15T00:00:00',
+        endDate: '2024-01-15T00:00:00',
         absenceType: AbsenceType.VACATION,
         isAwayFromProgram: true,
         deploymentOrders: false,
@@ -322,7 +329,7 @@ describe('AbsenceCalendar', () => {
         />
       );
 
-      expect(screen.getByText('+2 more')).toBeInTheDocument();
+      expect(screen.getAllByText('+2 more').length).toBeGreaterThan(0);
     });
   });
 
@@ -340,7 +347,7 @@ describe('AbsenceCalendar', () => {
     });
 
     it('handles empty people array', () => {
-      render(
+      const { container } = render(
         <AbsenceCalendar
           absences={mockAbsences}
           people={[]}
@@ -348,8 +355,9 @@ describe('AbsenceCalendar', () => {
         />
       );
 
-      // Should show ?? for unknown person
-      expect(screen.getByText(/\?\?/)).toBeInTheDocument();
+      // Should show Unknown in title for unknown person
+      const buttons = container.querySelectorAll('button[title*="Unknown"]');
+      expect(buttons.length).toBeGreaterThan(0);
     });
 
     it('handles absence for person not in people list', () => {
@@ -357,8 +365,8 @@ describe('AbsenceCalendar', () => {
         {
           id: 'absence-orphan',
           personId: 'non-existent-person',
-          startDate: '2024-01-15',
-          endDate: '2024-01-15',
+          startDate: '2024-01-15T00:00:00',
+          endDate: '2024-01-15T00:00:00',
           absenceType: AbsenceType.VACATION,
           isAwayFromProgram: true,
           deploymentOrders: false,
@@ -369,7 +377,7 @@ describe('AbsenceCalendar', () => {
         },
       ];
 
-      render(
+      const { container } = render(
         <AbsenceCalendar
           absences={orphanAbsence}
           people={mockPeople}
@@ -377,7 +385,9 @@ describe('AbsenceCalendar', () => {
         />
       );
 
-      expect(screen.getByText(/\?\?/)).toBeInTheDocument();
+      // Should show Unknown in title for unmapped person
+      const buttons = container.querySelectorAll('button[title*="Unknown"]');
+      expect(buttons.length).toBeGreaterThan(0);
     });
 
     it('differentiates weekends', () => {

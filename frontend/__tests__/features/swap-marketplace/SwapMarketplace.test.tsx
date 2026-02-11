@@ -107,15 +107,15 @@ describe('SwapMarketplace', () => {
     it('should render all three main tabs', () => {
       render(<SwapMarketplace />, { wrapper: createWrapper() });
 
-      expect(screen.getByRole('button', { name: /browse swaps/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /my requests/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /create request/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /View available swap/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /Manage your.*swap requests/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /Create a new swap/i })).toBeInTheDocument();
     });
 
     it('should have Browse Swaps tab active by default', () => {
       render(<SwapMarketplace />, { wrapper: createWrapper() });
 
-      const browseTab = screen.getByRole('button', { name: /browse swaps/i });
+      const browseTab = screen.getByRole('tab', { name: /View available swap/i });
       expect(browseTab).toHaveClass('border-blue-500');
       expect(browseTab).toHaveClass('text-blue-600');
     });
@@ -125,7 +125,7 @@ describe('SwapMarketplace', () => {
 
       render(<SwapMarketplace />, { wrapper: createWrapper() });
 
-      const myRequestsTab = screen.getByRole('button', { name: /my requests/i });
+      const myRequestsTab = screen.getByRole('tab', { name: /Manage your.*swap requests/i });
       await user.click(myRequestsTab);
 
       expect(myRequestsTab).toHaveClass('border-blue-500');
@@ -137,7 +137,7 @@ describe('SwapMarketplace', () => {
 
       render(<SwapMarketplace />, { wrapper: createWrapper() });
 
-      const createTab = screen.getByRole('button', { name: /create request/i });
+      const createTab = screen.getByRole('tab', { name: /Create a new swap/i });
       await user.click(createTab);
 
       expect(createTab).toHaveClass('border-blue-500');
@@ -288,7 +288,7 @@ describe('SwapMarketplace', () => {
 
       render(<SwapMarketplace />, { wrapper: createWrapper() });
 
-      expect(screen.getByRole('button', { name: /create a request/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Create a new swap request/i })).toBeInTheDocument();
     });
 
     it('should navigate to create tab when empty state button is clicked', async () => {
@@ -303,7 +303,7 @@ describe('SwapMarketplace', () => {
 
       render(<SwapMarketplace />, { wrapper: createWrapper() });
 
-      const createButton = screen.getByRole('button', { name: /create a request/i });
+      const createButton = screen.getByRole('button', { name: /Create a new swap request/i });
       await user.click(createButton);
 
       // Should show create form
@@ -317,13 +317,14 @@ describe('SwapMarketplace', () => {
 
       render(<SwapMarketplace />, { wrapper: createWrapper() });
 
-      const myRequestsTab = screen.getByRole('button', { name: /my requests/i });
+      const myRequestsTab = screen.getByRole('tab', { name: /Manage your.*swap requests/i });
       await user.click(myRequestsTab);
 
       // Should show the incoming/outgoing/recent tabs from MySwapRequests
-      expect(screen.getByRole('button', { name: /incoming/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /outgoing/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /recent/i })).toBeInTheDocument();
+      // Use specific aria-labels to avoid matching the parent "Manage your incoming and outgoing..." tab
+      expect(screen.getByRole('tab', { name: /^Incoming \(\d+ requests\)$/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /^Outgoing \(\d+ requests\)$/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /^Recent \(\d+ requests\)$/i })).toBeInTheDocument();
     });
   });
 
@@ -333,7 +334,7 @@ describe('SwapMarketplace', () => {
 
       render(<SwapMarketplace />, { wrapper: createWrapper() });
 
-      const createTab = screen.getByRole('button', { name: /create request/i });
+      const createTab = screen.getByRole('tab', { name: /Create a new swap/i });
       await user.click(createTab);
 
       // Should show create form with heading and week selector
@@ -357,7 +358,7 @@ describe('SwapMarketplace', () => {
       render(<SwapMarketplace />, { wrapper: createWrapper() });
 
       // Navigate to create tab
-      const createTab = screen.getByRole('button', { name: /create request/i });
+      const createTab = screen.getByRole('tab', { name: /Create a new swap/i });
       await user.click(createTab);
 
       // Fill and submit form - use role selector instead of label
@@ -371,7 +372,7 @@ describe('SwapMarketplace', () => {
 
       // Should navigate to My Requests tab after successful submission
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /incoming/i })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: /^Incoming \(\d+ requests\)$/i })).toBeInTheDocument();
       });
     });
 
@@ -381,7 +382,7 @@ describe('SwapMarketplace', () => {
       render(<SwapMarketplace />, { wrapper: createWrapper() });
 
       // Navigate to create tab
-      const createTab = screen.getByRole('button', { name: /create request/i });
+      const createTab = screen.getByRole('tab', { name: /Create a new swap/i });
       await user.click(createTab);
 
       // Click cancel
@@ -475,7 +476,7 @@ describe('SwapMarketplace', () => {
       );
 
       // Switch to My Requests tab
-      const myRequestsTab = screen.getByRole('button', { name: /my requests/i });
+      const myRequestsTab = screen.getByRole('tab', { name: /Manage your.*swap requests/i });
       await user.click(myRequestsTab);
 
       // Should be disabled
@@ -495,11 +496,11 @@ describe('SwapMarketplace', () => {
       render(<SwapMarketplace />, { wrapper: createWrapper() });
 
       // Switch to My Requests
-      const myRequestsTab = screen.getByRole('button', { name: /my requests/i });
+      const myRequestsTab = screen.getByRole('tab', { name: /Manage your.*swap requests/i });
       await user.click(myRequestsTab);
 
       // Switch back to Browse
-      const browseTab = screen.getByRole('button', { name: /browse swaps/i });
+      const browseTab = screen.getByRole('tab', { name: /View available swap/i });
       await user.click(browseTab);
 
       // Should be enabled again

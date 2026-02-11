@@ -153,8 +153,8 @@ describe('ExcelExportDropdown', () => {
       fireEvent.click(screen.getByText('Export Excel'));
 
       expect(screen.getByText('Export Schedule')).toBeInTheDocument();
-      expect(screen.getByLabelText('Start Date')).toBeInTheDocument();
-      expect(screen.getByLabelText('End Date')).toBeInTheDocument();
+      expect(screen.getByText('Start Date').closest('div')!.querySelector('input')!).toBeInTheDocument();
+      expect(screen.getByText('End Date').closest('div')!.querySelector('input')!).toBeInTheDocument();
     });
 
     it('shows block number input', () => {
@@ -162,7 +162,7 @@ describe('ExcelExportDropdown', () => {
 
       fireEvent.click(screen.getByText('Export Excel'));
 
-      expect(screen.getByLabelText('Block Number (optional)')).toBeInTheDocument();
+      expect(screen.getByText('Block Number (optional)').closest('div')!.querySelector('input')!).toBeInTheDocument();
     });
 
     it('closes dropdown when backdrop clicked', () => {
@@ -184,8 +184,8 @@ describe('ExcelExportDropdown', () => {
 
       fireEvent.click(screen.getByText('Export Excel'));
 
-      const startDateInput = screen.getByLabelText('Start Date') as HTMLInputElement;
-      const endDateInput = screen.getByLabelText('End Date') as HTMLInputElement;
+      const startDateInput = screen.getByText('Start Date').closest('div')!.querySelector('input')! as HTMLInputElement;
+      const endDateInput = screen.getByText('End Date').closest('div')!.querySelector('input')! as HTMLInputElement;
 
       expect(startDateInput.value).toBeTruthy();
       expect(endDateInput.value).toBeTruthy();
@@ -196,7 +196,7 @@ describe('ExcelExportDropdown', () => {
 
       fireEvent.click(screen.getByText('Export Excel'));
 
-      const startDateInput = screen.getByLabelText('Start Date') as HTMLInputElement;
+      const startDateInput = screen.getByText('Start Date').closest('div')!.querySelector('input')! as HTMLInputElement;
       fireEvent.change(startDateInput, { target: { value: '2024-02-01' } });
 
       expect(startDateInput.value).toBe('2024-02-01');
@@ -207,7 +207,7 @@ describe('ExcelExportDropdown', () => {
 
       fireEvent.click(screen.getByText('Export Excel'));
 
-      const endDateInput = screen.getByLabelText('End Date') as HTMLInputElement;
+      const endDateInput = screen.getByText('End Date').closest('div')!.querySelector('input')! as HTMLInputElement;
       fireEvent.change(endDateInput, { target: { value: '2024-02-28' } });
 
       expect(endDateInput.value).toBe('2024-02-28');
@@ -218,7 +218,7 @@ describe('ExcelExportDropdown', () => {
 
       fireEvent.click(screen.getByText('Export Excel'));
 
-      const blockNumberInput = screen.getByLabelText('Block Number (optional)') as HTMLInputElement;
+      const blockNumberInput = screen.getByText('Block Number (optional)').closest('div')!.querySelector('input')! as HTMLInputElement;
       fireEvent.change(blockNumberInput, { target: { value: '5' } });
 
       expect(blockNumberInput.value).toBe('5');
@@ -233,10 +233,10 @@ describe('ExcelExportDropdown', () => {
 
       fireEvent.click(screen.getByText('Export Excel'));
 
-      const startDateInput = screen.getByLabelText('Start Date');
+      const startDateInput = screen.getByText('Start Date').closest('div')!.querySelector('input')!;
       fireEvent.change(startDateInput, { target: { value: '2024-03-01' } });
 
-      const endDateInput = screen.getByLabelText('End Date');
+      const endDateInput = screen.getByText('End Date').closest('div')!.querySelector('input')!;
       fireEvent.change(endDateInput, { target: { value: '2024-03-28' } });
 
       fireEvent.click(screen.getByText('Download Excel'));
@@ -252,7 +252,7 @@ describe('ExcelExportDropdown', () => {
       fireEvent.click(screen.getByText('Export Excel'));
 
       // Clear dates
-      const startDateInput = screen.getByLabelText('Start Date');
+      const startDateInput = screen.getByText('Start Date').closest('div')!.querySelector('input')!;
       fireEvent.change(startDateInput, { target: { value: '' } });
 
       const downloadButton = screen.getByText('Download Excel');
@@ -265,18 +265,15 @@ describe('ExcelExportDropdown', () => {
       fireEvent.click(screen.getByText('Export Excel'));
 
       // Clear dates
-      const startDateInput = screen.getByLabelText('Start Date');
+      const startDateInput = screen.getByText('Start Date').closest('div')!.querySelector('input')!;
       fireEvent.change(startDateInput, { target: { value: '' } });
 
-      const endDateInput = screen.getByLabelText('End Date');
+      const endDateInput = screen.getByText('End Date').closest('div')!.querySelector('input')!;
       fireEvent.change(endDateInput, { target: { value: '' } });
 
+      // When both dates are cleared, the Download button is disabled (can't click)
       const downloadButton = screen.getByText('Download Excel');
-      fireEvent.click(downloadButton);
-
-      await waitFor(() => {
-        expect(screen.getByText('Please select start and end dates')).toBeInTheDocument();
-      });
+      expect(downloadButton).toBeDisabled();
     });
 
     it('closes dropdown after successful export', async () => {

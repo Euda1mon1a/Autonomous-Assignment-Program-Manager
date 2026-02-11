@@ -171,7 +171,7 @@ describe('SettingsPage', () => {
       expect(screen.getByText(/default block duration/i)).toBeInTheDocument()
       expect(screen.getByText(/enable weekend scheduling/i)).toBeInTheDocument()
       expect(screen.getByText(/enable holiday scheduling/i)).toBeInTheDocument()
-      expect(screen.getByText(/lock date/i)).toBeInTheDocument()
+      expect(screen.getAllByText(/lock date/i).length).toBeGreaterThan(0)
     })
 
     it('should render schedule lock helper text', async () => {
@@ -467,7 +467,7 @@ describe('SettingsPage', () => {
       const { container } = renderWithProviders(<SettingsPage />)
 
       await waitFor(() => {
-        expect(screen.getByText(/lock date/i)).toBeInTheDocument()
+        expect(screen.getAllByText(/lock date/i).length).toBeGreaterThan(0)
       })
 
       const lockDateInput = findInputByLabelText(container, /lock date/i)!
@@ -575,7 +575,7 @@ describe('SettingsPage', () => {
       const { container } = renderWithProviders(<SettingsPage />)
 
       await waitFor(() => {
-        expect(screen.getByText(/lock date/i)).toBeInTheDocument()
+        expect(screen.getAllByText(/lock date/i).length).toBeGreaterThan(0)
       })
 
       const lockDateInput = findInputByLabelText(container, /lock date/i)!

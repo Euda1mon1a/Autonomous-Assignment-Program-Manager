@@ -1,4 +1,10 @@
 // @ts-nocheck - Tests written for different hook interface (refactored)
+
+// Mock uuid before any imports that use it
+jest.mock('uuid', () => ({
+  v4: () => 'test-uuid-1234',
+}))
+
 import { renderHook, waitFor, act } from '@/test-utils'
 import { useClaudeChat } from '@/hooks/useClaudeChat'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'

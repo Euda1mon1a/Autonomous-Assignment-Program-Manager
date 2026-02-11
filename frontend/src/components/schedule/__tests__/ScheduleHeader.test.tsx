@@ -4,14 +4,14 @@ import { ScheduleHeader } from '../ScheduleHeader';
 import { addDays } from 'date-fns';
 
 describe('ScheduleHeader', () => {
-  const createDays = (count: number, startDate: Date = new Date('2024-01-01')) => {
+  const createDays = (count: number, startDate: Date = new Date(2024, 0, 1)) => {
     return Array.from({ length: count }, (_, i) => addDays(startDate, i));
   };
 
   beforeEach(() => {
     // Mock current date for "today" highlighting
     jest.useFakeTimers();
-    jest.setSystemTime(new Date('2024-01-03')); // Wednesday
+    jest.setSystemTime(new Date(2024, 0, 3)); // Wednesday
   });
 
   afterEach(() => {
@@ -46,7 +46,7 @@ describe('ScheduleHeader', () => {
     });
 
     it('renders day names and dates', () => {
-      const days = createDays(3, new Date('2024-01-01'));
+      const days = createDays(3, new Date(2024, 0, 1));
 
       render(
         <table>
@@ -85,7 +85,7 @@ describe('ScheduleHeader', () => {
 
   describe('weekend styling', () => {
     it('applies weekend styling to Saturday', () => {
-      const days = [new Date('2024-01-06')]; // Saturday
+      const days = [new Date(2024, 0, 6)]; // Saturday
 
       const { container } = render(
         <table>
@@ -98,7 +98,7 @@ describe('ScheduleHeader', () => {
     });
 
     it('applies weekend styling to Sunday', () => {
-      const days = [new Date('2024-01-07')]; // Sunday
+      const days = [new Date(2024, 0, 7)]; // Sunday
 
       const { container } = render(
         <table>
@@ -111,7 +111,7 @@ describe('ScheduleHeader', () => {
     });
 
     it('does not apply weekend styling to weekdays', () => {
-      const days = [new Date('2024-01-01')]; // Monday
+      const days = [new Date(2024, 0, 1)]; // Monday
 
       const { container } = render(
         <table>
@@ -127,7 +127,7 @@ describe('ScheduleHeader', () => {
 
   describe('today highlighting', () => {
     it('highlights today with blue background', () => {
-      const days = createDays(7, new Date('2024-01-01')); // Includes Jan 3 (today)
+      const days = createDays(7, new Date(2024, 0, 1)); // Includes Jan 3 (today)
 
       const { container } = render(
         <table>
@@ -144,7 +144,7 @@ describe('ScheduleHeader', () => {
     });
 
     it('does not highlight other days', () => {
-      const days = [new Date('2024-01-01'), new Date('2024-01-02')]; // Before today
+      const days = [new Date(2024, 0, 1), new Date(2024, 0, 2)]; // Before today
 
       const { container } = render(
         <table>
@@ -170,7 +170,7 @@ describe('ScheduleHeader', () => {
         </table>
       );
 
-      const personHeader = screen.getByText('Person').parentElement;
+      const personHeader = screen.getByText('Person').closest('th');
       expect(personHeader).toHaveClass('sticky', 'left-0', 'top-0');
     });
 
@@ -200,7 +200,7 @@ describe('ScheduleHeader', () => {
       );
 
       // Person header (corner) should have highest z-index
-      const personHeader = screen.getByText('Person').parentElement;
+      const personHeader = screen.getByText('Person').closest('th');
       expect(personHeader).toHaveClass('z-30');
 
       // Date headers should have medium z-index
@@ -227,7 +227,7 @@ describe('ScheduleHeader', () => {
         </table>
       );
 
-      const personHeader = screen.getByText('Person').parentElement;
+      const personHeader = screen.getByText('Person').closest('th');
       expect(personHeader?.tagName).toBe('TH');
       expect(personHeader).toHaveAttribute('scope', 'col');
     });
@@ -241,7 +241,7 @@ describe('ScheduleHeader', () => {
         </table>
       );
 
-      const personHeader = screen.getByText('Person').parentElement;
+      const personHeader = screen.getByText('Person').closest('th');
       expect(personHeader).toHaveAttribute('rowSpan', '2');
     });
 

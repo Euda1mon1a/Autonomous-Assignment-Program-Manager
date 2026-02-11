@@ -346,7 +346,7 @@ describe('ChangeComparison', () => {
       const entry = getMockLogs(1)[0];
       render(<ChangeComparison entry={entry} onClose={mockOnClose} />);
 
-      const closeButton = screen.getByLabelText('Close');
+      const closeButton = screen.getByLabelText('Close comparison panel');
       expect(closeButton).toBeInTheDocument();
     });
 
@@ -355,7 +355,7 @@ describe('ChangeComparison', () => {
       const entry = getMockLogs(1)[0];
       render(<ChangeComparison entry={entry} onClose={mockOnClose} />);
 
-      const closeButton = screen.getByLabelText('Close');
+      const closeButton = screen.getByLabelText('Close comparison panel');
       await user.click(closeButton);
 
       expect(mockOnClose).toHaveBeenCalled();
@@ -516,8 +516,8 @@ describe('ChangeComparison', () => {
       const entry = getMockLogs(1)[0];
       render(<ChangeComparison entry={entry} onClose={mockOnClose} />);
 
-      const closeButton = screen.getByLabelText('Close');
-      expect(closeButton).toHaveAttribute('aria-label', 'Close');
+      const closeButton = screen.getByLabelText('Close comparison panel');
+      expect(closeButton).toHaveAttribute('aria-label', 'Close comparison panel');
     });
 
     it('should have proper heading hierarchy', () => {

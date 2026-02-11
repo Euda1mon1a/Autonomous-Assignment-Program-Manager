@@ -74,7 +74,7 @@ describe('TemplateEditor', () => {
     );
 
     // Find the submit button by role and type
-    const saveButton = screen.getByRole('button', { name: /Create Template/i });
+    const saveButton = screen.getByRole('button', { name: /Create new template/i });
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -97,7 +97,7 @@ describe('TemplateEditor', () => {
     const nameInput = screen.getByPlaceholderText('e.g., Standard Weekly Clinic Schedule');
     await user.type(nameInput, 'New Template');
 
-    const saveButton = screen.getByRole('button', { name: /Create Template/i });
+    const saveButton = screen.getByRole('button', { name: /Create new template/i });
     await user.click(saveButton);
 
     await waitFor(() => {

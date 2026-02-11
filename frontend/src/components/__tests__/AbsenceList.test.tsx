@@ -47,8 +47,8 @@ describe('AbsenceList', () => {
     {
       id: 'absence-1',
       personId: 'person-1',
-      startDate: '2024-01-15',
-      endDate: '2024-01-17',
+      startDate: '2024-01-15T12:00:00',
+      endDate: '2024-01-17T12:00:00',
       absenceType: AbsenceType.VACATION,
       deploymentOrders: false,
       tdyLocation: null,
@@ -60,8 +60,8 @@ describe('AbsenceList', () => {
     {
       id: 'absence-2',
       personId: 'person-2',
-      startDate: '2024-01-20',
-      endDate: '2024-01-22',
+      startDate: '2024-01-20T12:00:00',
+      endDate: '2024-01-22T12:00:00',
       absenceType: AbsenceType.CONFERENCE,
       deploymentOrders: false,
       tdyLocation: null,
@@ -216,8 +216,8 @@ describe('AbsenceList', () => {
         {
           id: 'absence-3',
           personId: 'person-1',
-          startDate: '2024-02-01',
-          endDate: '2024-02-01',
+          startDate: '2024-02-01T12:00:00',
+          endDate: '2024-02-01T12:00:00',
           absenceType: AbsenceType.VACATION,
           deploymentOrders: false,
           tdyLocation: null,
@@ -229,8 +229,8 @@ describe('AbsenceList', () => {
         {
           id: 'absence-1',
           personId: 'person-1',
-          startDate: '2024-01-15',
-          endDate: '2024-01-15',
+          startDate: '2024-01-15T12:00:00',
+          endDate: '2024-01-15T12:00:00',
           absenceType: AbsenceType.VACATION,
           deploymentOrders: false,
           tdyLocation: null,

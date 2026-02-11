@@ -76,15 +76,15 @@ describe('Heatmap Query Hooks', () => {
 
       const callArg = mockedApi.get.mock.calls[0][0];
 
-      expect(callArg).toContain('startDate=2024-01-01');
-      expect(callArg).toContain('endDate=2024-01-31');
+      expect(callArg).toContain('start_date=2024-01-01');
+      expect(callArg).toContain('end_date=2024-01-31');
       // Commas get URL-encoded as %2C
-      expect(callArg).toContain('personIds=');
+      expect(callArg).toContain('person_ids=');
       expect(callArg).toContain('person-1');
       expect(callArg).toContain('person-2');
-      expect(callArg).toContain('rotationIds=rotation-1');
-      expect(callArg).toContain('includeFmit=false');
-      expect(callArg).toContain('groupBy=week');
+      expect(callArg).toContain('rotation_ids=rotation-1');
+      expect(callArg).toContain('include_fmit=false');
+      expect(callArg).toContain('group_by=person');
     });
 
     it('should handle empty filters', async () => {
@@ -156,10 +156,10 @@ describe('Heatmap Query Hooks', () => {
         expect.stringContaining('/visualization/heatmap/coverage')
       );
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('startDate=2024-01-01')
+        expect.stringContaining('start_date=2024-01-01')
       );
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('endDate=2024-01-31')
+        expect.stringContaining('end_date=2024-01-31')
       );
       expect(result.current.data).toEqual(heatmapMockResponses.coverageHeatmap);
     });
@@ -216,7 +216,7 @@ describe('Heatmap Query Hooks', () => {
       );
       // Commas get URL-encoded as %2C
       const callArg = mockedApi.get.mock.calls[0][0];
-      expect(callArg).toContain('personIds=');
+      expect(callArg).toContain('person_ids=');
       expect(callArg).toContain('person-1');
       expect(callArg).toContain('person-2');
       expect(result.current.data).toEqual(heatmapMockResponses.workloadHeatmap);
@@ -292,7 +292,7 @@ describe('Heatmap Query Hooks', () => {
       );
       // Commas get URL-encoded as %2C
       const callArg = mockedApi.get.mock.calls[0][0];
-      expect(callArg).toContain('rotationIds=');
+      expect(callArg).toContain('rotation_ids=');
       expect(callArg).toContain('rotation-1');
       expect(callArg).toContain('rotation-2');
     });
@@ -313,7 +313,7 @@ describe('Heatmap Query Hooks', () => {
         expect.stringContaining('/visualization/heatmap/rotation-comparison')
       );
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.not.stringContaining('rotationIds')
+        expect.not.stringContaining('rotation_ids')
       );
     });
 
@@ -657,7 +657,7 @@ describe('Heatmap Utility Hooks', () => {
 
       await waitFor(() => {
         expect(mockedApi.get).toHaveBeenCalledWith(
-          expect.stringContaining('startDate=2024-01-01')
+          expect.stringContaining('start_date=2024-01-01')
         );
       });
     });

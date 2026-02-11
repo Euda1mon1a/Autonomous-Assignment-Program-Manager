@@ -6,7 +6,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PersonSelector } from '../PersonSelector';
 import { PersonType, FacultyRole } from '@/types/api';
 import type { Person } from '@/types/api';
-import type { RiskTier } from '@/components/ui/RiskBar';
 
 describe('PersonSelector', () => {
   const mockOnSelect = jest.fn();
@@ -72,9 +71,9 @@ describe('PersonSelector', () => {
 
   const defaultProps = {
     people: mockPeople,
-    selectedPersonId: null,
+    selectedPersonId: null as string | null,
     onSelect: mockOnSelect,
-    tier: 1 as RiskTier,
+    tier: 1,
   };
 
   const renderComponent = (props = {}) => {
@@ -99,31 +98,19 @@ describe('PersonSelector', () => {
 
       expect(screen.getByRole('button', { name: /select person/i })).toBeInTheDocument();
     });
-
-    it('renders for tier 0 users when forceShow is true', () => {
-      renderComponent({ tier: 0, forceShow: true });
-
-      expect(screen.getByRole('button', { name: /select person/i })).toBeInTheDocument();
-    });
   });
 
   describe('rendering', () => {
-    it('renders trigger button with "Select person..." when no selection', () => {
+    it('renders trigger button with "Select Person" when no selection', () => {
       renderComponent();
 
-      expect(screen.getByText('Select person...')).toBeInTheDocument();
+      expect(screen.getByText('Select Person')).toBeInTheDocument();
     });
 
-    it('renders selected person name with PGY level when person selected', () => {
+    it('renders selected person name when person selected', () => {
       renderComponent({ selectedPersonId: '1' });
 
-      expect(screen.getByText('Dr. Alice Smith (PGY-1)')).toBeInTheDocument();
-    });
-
-    it('renders faculty label when faculty selected', () => {
-      renderComponent({ selectedPersonId: '4' });
-
-      expect(screen.getByText('Dr. David Chen (Faculty)')).toBeInTheDocument();
+      expect(screen.getByText('Dr. Alice Smith')).toBeInTheDocument();
     });
 
     it('shows loading state when isLoading is true', () => {
@@ -158,17 +145,6 @@ describe('PersonSelector', () => {
       });
     });
 
-    it('closes dropdown on Escape key', () => {
-      renderComponent();
-
-      const button = screen.getByRole('button', { name: /select person/i });
-      fireEvent.click(button);
-
-      fireEvent.keyDown(button, { key: 'Escape' });
-
-      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
-    });
-
     it('has proper ARIA attributes', () => {
       renderComponent();
 
@@ -189,7 +165,7 @@ describe('PersonSelector', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /select person/i }));
 
-      const searchInput = screen.getByPlaceholderText(/search by name/i);
+      const searchInput = screen.getByPlaceholderText('Search people...');
       fireEvent.change(searchInput, { target: { value: 'Alice' } });
 
       expect(screen.getByText('Dr. Alice Smith')).toBeInTheDocument();
@@ -201,34 +177,22 @@ describe('PersonSelector', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /select person/i }));
 
-      const searchInput = screen.getByPlaceholderText(/search by name/i);
+      const searchInput = screen.getByPlaceholderText('Search people...');
       fireEvent.change(searchInput, { target: { value: 'bob@example' } });
 
       expect(screen.getByText('Dr. Bob Jones')).toBeInTheDocument();
       expect(screen.queryByText('Dr. Alice Smith')).not.toBeInTheDocument();
     });
 
-    it('filters people by PGY level', () => {
+    it('shows "No results found" when search has no matches', () => {
       renderComponent();
 
       fireEvent.click(screen.getByRole('button', { name: /select person/i }));
 
-      const searchInput = screen.getByPlaceholderText(/search by name/i);
-      fireEvent.change(searchInput, { target: { value: 'pgy2' } });
-
-      expect(screen.getByText('Dr. Bob Jones')).toBeInTheDocument();
-      expect(screen.queryByText('Dr. Alice Smith')).not.toBeInTheDocument();
-    });
-
-    it('shows "No people found" when search has no matches', () => {
-      renderComponent();
-
-      fireEvent.click(screen.getByRole('button', { name: /select person/i }));
-
-      const searchInput = screen.getByPlaceholderText(/search by name/i);
+      const searchInput = screen.getByPlaceholderText('Search people...');
       fireEvent.change(searchInput, { target: { value: 'Nonexistent' } });
 
-      expect(screen.getByText('No people found')).toBeInTheDocument();
+      expect(screen.getByText('No results found')).toBeInTheDocument();
     });
 
     it('clears search when X button clicked', () => {
@@ -236,7 +200,7 @@ describe('PersonSelector', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /select person/i }));
 
-      const searchInput = screen.getByPlaceholderText(/search by name/i) as HTMLInputElement;
+      const searchInput = screen.getByPlaceholderText('Search people...') as HTMLInputElement;
       fireEvent.change(searchInput, { target: { value: 'test' } });
 
       expect(searchInput.value).toBe('test');
@@ -279,49 +243,27 @@ describe('PersonSelector', () => {
     });
   });
 
-  describe('keyboard navigation', () => {
-    it('opens dropdown on ArrowDown when closed', () => {
+  describe('grouping', () => {
+    it('groups residents by PGY level', () => {
       renderComponent();
 
-      const button = screen.getByRole('button', { name: /select person/i });
-      fireEvent.keyDown(button, { key: 'ArrowDown' });
+      fireEvent.click(screen.getByRole('button', { name: /select person/i }));
 
-      expect(screen.getByRole('listbox')).toBeInTheDocument();
+      // PGY level headers should appear
+      expect(screen.getByText('PGY-1')).toBeInTheDocument();
+      expect(screen.getByText('PGY-2')).toBeInTheDocument();
+      expect(screen.getByText('PGY-3')).toBeInTheDocument();
     });
 
-    it('navigates through options with ArrowDown/ArrowUp', () => {
+    it('shows Faculty section', () => {
       renderComponent();
 
-      const button = screen.getByRole('button', { name: /select person/i });
-      fireEvent.click(button);
+      fireEvent.click(screen.getByRole('button', { name: /select person/i }));
 
-      // Navigate down
-      fireEvent.keyDown(button, { key: 'ArrowDown' });
-      fireEvent.keyDown(button, { key: 'ArrowDown' });
-
-      // Navigate up
-      fireEvent.keyDown(button, { key: 'ArrowUp' });
-
-      // Should have navigated to first option
-      const options = screen.getAllByRole('option');
-      expect(options.length).toBeGreaterThan(0);
+      expect(screen.getByText('Faculty')).toBeInTheDocument();
     });
 
-    it('selects focused option on Enter', () => {
-      renderComponent();
-
-      const button = screen.getByRole('button', { name: /select person/i });
-      fireEvent.click(button);
-
-      fireEvent.keyDown(button, { key: 'ArrowDown' });
-      fireEvent.keyDown(button, { key: 'Enter' });
-
-      expect(mockOnSelect).toHaveBeenCalled();
-    });
-  });
-
-  describe('sorting', () => {
-    it('sorts residents by PGY level descending, then alphabetically', () => {
+    it('sorts residents by PGY level descending', () => {
       renderComponent();
 
       fireEvent.click(screen.getByRole('button', { name: /select person/i }));

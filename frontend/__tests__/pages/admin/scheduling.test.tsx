@@ -238,6 +238,12 @@ describe('AdminSchedulingPage', () => {
     });
 
     it('should display status indicators', () => {
+      // Mock no running jobs for "idle" status
+      mockUseRunQueue.mockReturnValue({
+        data: { ...mockQueue, currentlyRunning: 0 },
+        isLoading: false,
+      } as any);
+
       render(<AdminSchedulingPage />, { wrapper: createWrapper() });
 
       expect(screen.getByText('idle')).toBeInTheDocument();
@@ -289,8 +295,8 @@ describe('AdminSchedulingPage', () => {
     it('should show constraint count badge', () => {
       render(<AdminSchedulingPage />, { wrapper: createWrapper() });
 
-      // 2 constraints are enabled
-      expect(screen.getByText('2')).toBeInTheDocument();
+      // Default configuration starts with empty constraints array, badge shows 0
+      expect(screen.getByText('0')).toBeInTheDocument();
     });
 
     it('should toggle constraints', async () => {
@@ -322,9 +328,11 @@ describe('AdminSchedulingPage', () => {
       const user = userEvent.setup();
       render(<AdminSchedulingPage />, { wrapper: createWrapper() });
 
-      const timeoutInput = screen.getByDisplayValue('300');
-      await user.clear(timeoutInput);
-      await user.type(timeoutInput, '600');
+      const timeoutInput = screen.getByDisplayValue('300') as HTMLInputElement;
+      // For number inputs, clear by selecting all and typing replacement
+      await user.click(timeoutInput);
+      await user.keyboard('{Control>}a{/Control}');
+      await user.keyboard('600');
 
       expect(timeoutInput).toHaveValue(600);
     });
@@ -351,6 +359,12 @@ describe('AdminSchedulingPage', () => {
     });
 
     it('should show generate schedule button', () => {
+      // Need currentlyRunning=0 so button shows "Generate Schedule" not "Running..."
+      mockUseRunQueue.mockReturnValue({
+        data: { ...mockQueue, currentlyRunning: 0 },
+        isLoading: false,
+      } as any);
+
       render(<AdminSchedulingPage />, { wrapper: createWrapper() });
 
       expect(screen.getByRole('button', { name: /Generate Schedule/i })).toBeInTheDocument();
@@ -365,12 +379,12 @@ describe('AdminSchedulingPage', () => {
     });
 
     it('should show validation results', async () => {
-      const user = userEvent.setup();
       mockUseValidateConfiguration.mockReturnValue({
         mutate: jest.fn(),
         mutateAsync: jest.fn(),
         isPending: false,
-        data: { isValid: true, warnings: [] },
+        // Component checks `validationResult.valid` not `isValid`
+        data: { valid: true, violations: [] },
       } as any);
 
       render(<AdminSchedulingPage />, { wrapper: createWrapper() });
@@ -384,16 +398,17 @@ describe('AdminSchedulingPage', () => {
         mutateAsync: jest.fn(),
         isPending: false,
         data: {
-          isValid: false,
-          warnings: [
-            { id: '1', type: 'coverage_risk', severity: 'warning', message: 'Low coverage expected' },
+          // Component checks `valid` and `violations`
+          valid: false,
+          violations: [
+            { message: 'Low coverage expected' },
           ],
         },
       } as any);
 
       render(<AdminSchedulingPage />, { wrapper: createWrapper() });
 
-      expect(screen.getByText('1 Warning(s)')).toBeInTheDocument();
+      expect(screen.getByText('1 Violation(s)')).toBeInTheDocument();
       expect(screen.getByText('Low coverage expected')).toBeInTheDocument();
     });
   });
@@ -497,7 +512,8 @@ describe('AdminSchedulingPage', () => {
       expect(screen.getByText('ACGME Violations')).toBeInTheDocument();
       expect(screen.getByText('Fairness Score')).toBeInTheDocument();
       expect(screen.getByText('Swap Churn')).toBeInTheDocument();
-      expect(screen.getByText('Runtime')).toBeInTheDocument();
+      // "Runtime" appears in both metric cards and recent runs table header
+      expect(screen.getAllByText('Runtime').length).toBeGreaterThan(0);
       expect(screen.getByText('Stability')).toBeInTheDocument();
     });
 
@@ -507,9 +523,10 @@ describe('AdminSchedulingPage', () => {
 
       await user.click(screen.getByText('Metrics').closest('button')!);
 
-      expect(screen.getByText('98.5%')).toBeInTheDocument();
-      expect(screen.getByText('92%')).toBeInTheDocument();
-      expect(screen.getByText('42.5s')).toBeInTheDocument();
+      // "98.5%" appears in both metric card and recent runs table
+      expect(screen.getAllByText('98.5%').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('92%').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('42.5s').length).toBeGreaterThan(0);
     });
 
     it('should show chart placeholders', async () => {
@@ -579,8 +596,10 @@ describe('AdminSchedulingPage', () => {
 
       await user.click(screen.getByText('History').closest('button')!);
 
-      expect(screen.getByText(/run-abc123/i)).toBeInTheDocument();
-      expect(screen.getByText(/run-def456/i)).toBeInTheDocument();
+      // runId is truncated: run.runId.slice(0, 8) + "..."
+      // "run-abc123" → "run-abc1..."
+      expect(screen.getByText('run-abc1...')).toBeInTheDocument();
+      expect(screen.getByText('run-def4...')).toBeInTheDocument();
     });
 
     it('should toggle comparison mode', async () => {
@@ -711,7 +730,7 @@ describe('AdminSchedulingPage', () => {
 
     it('should generate schedule', async () => {
       const user = userEvent.setup();
-      const mockMutateAsync = jest.fn().mockResolvedValue({ isValid: true, warnings: [] });
+      const mockMutateAsync = jest.fn().mockResolvedValue({ valid: true, violations: [] });
       mockUseValidateConfiguration.mockReturnValue({
         mutate: jest.fn(),
         mutateAsync: mockMutateAsync,
@@ -723,6 +742,12 @@ describe('AdminSchedulingPage', () => {
       mockUseGenerateScheduleRun.mockReturnValue({
         mutate: mockGenerate,
         isPending: false,
+      } as any);
+
+      // Need currentlyRunning=0 so button shows "Generate Schedule"
+      mockUseRunQueue.mockReturnValue({
+        data: { ...mockQueue, currentlyRunning: 0 },
+        isLoading: false,
       } as any);
 
       render(<AdminSchedulingPage />, { wrapper: createWrapper() });
@@ -789,7 +814,8 @@ describe('AdminSchedulingPage', () => {
       const tabs = screen.getAllByRole('button').filter(btn =>
         btn.classList.contains('rounded-t-lg')
       );
-      expect(tabs.length).toBe(5);
+      // 7 tabs: Configuration, Experimentation, Metrics, History, Overrides, Solver 3D, Schedule 3D
+      expect(tabs.length).toBe(7);
     });
 
     it('should have accessible form controls', () => {

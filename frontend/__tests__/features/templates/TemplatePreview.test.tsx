@@ -81,7 +81,7 @@ describe('TemplatePreview', () => {
     const user = userEvent.setup();
     render(<TemplatePreview template={mockTemplate} onClose={mockOnClose} />);
 
-    const closeButton = screen.getByLabelText('Close');
+    const closeButton = screen.getByLabelText('Close preview');
     await user.click(closeButton);
 
     expect(mockOnClose).toHaveBeenCalled();

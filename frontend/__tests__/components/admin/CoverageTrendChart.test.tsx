@@ -142,7 +142,8 @@ describe('CoverageTrendChart', () => {
       render(<CoverageTrendChart {...defaultProps} showLegend={true} />);
 
       expect(screen.getByText('Coverage')).toBeInTheDocument();
-      expect(screen.getByText(/Target/)).toBeInTheDocument();
+      // "Target" appears in both chart label and legend
+      expect(screen.getAllByText(/Target/).length).toBeGreaterThan(0);
     });
 
     it('should not display legend when showLegend is false', () => {
@@ -242,7 +243,8 @@ describe('CoverageTrendChart', () => {
     it('should respect targetCoverage prop', () => {
       render(<CoverageTrendChart {...defaultProps} targetCoverage={90} />);
 
-      expect(screen.getByText('(90%)')).toBeInTheDocument();
+      // Legend shows "Target (90%)" as a single text node
+      expect(screen.getByText(/Target \(90%\)/)).toBeInTheDocument();
     });
   });
 
@@ -440,15 +442,17 @@ describe('CoverageTrendChart', () => {
     it('should set correct viewBox', () => {
       const { container } = render(<CoverageTrendChart {...defaultProps} />);
 
-      const svg = container.querySelector('svg');
-      expect(svg).toHaveAttribute('viewBox', '0 0 100 100');
+      // The chart SVG has preserveAspectRatio="none"; lucide icons have viewBox="0 0 24 24"
+      const chartSvg = container.querySelector('svg[preserveAspectRatio="none"]');
+      expect(chartSvg).toHaveAttribute('viewBox', '0 0 100 100');
     });
 
     it('should preserve aspect ratio', () => {
       const { container } = render(<CoverageTrendChart {...defaultProps} />);
 
-      const svg = container.querySelector('svg');
-      expect(svg).toHaveAttribute('preserveAspectRatio', 'none');
+      // The chart SVG (not lucide icons) has preserveAspectRatio="none"
+      const chartSvg = container.querySelector('svg[preserveAspectRatio="none"]');
+      expect(chartSvg).toBeInTheDocument();
     });
 
     it('should render line path', () => {

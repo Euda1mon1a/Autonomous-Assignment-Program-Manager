@@ -54,9 +54,9 @@ function keysToCamelCase(obj: unknown): unknown {
 describe('Case Conversion Utilities', () => {
   describe('toSnakeCase', () => {
     it('converts camelCase to snake_case', () => {
-      expect(toSnakeCase('dayOfWeek')).toBe('dayOfWeek');
-      expect(toSnakeCase('personId')).toBe('personId');
-      expect(toSnakeCase('createdAt')).toBe('createdAt');
+      expect(toSnakeCase('dayOfWeek')).toBe('day_of_week');
+      expect(toSnakeCase('personId')).toBe('person_id');
+      expect(toSnakeCase('createdAt')).toBe('created_at');
     });
 
     it('handles single words', () => {
@@ -104,7 +104,7 @@ describe('Case Conversion Utilities', () => {
   describe('keysToSnakeCase', () => {
     it('converts object keys from camelCase to snake_case', () => {
       const input = { personId: '123', createdAt: '2024-01-01' };
-      const expected = { personId: '123', createdAt: '2024-01-01' };
+      const expected = { person_id: '123', created_at: '2024-01-01' };
       expect(keysToSnakeCase(input)).toEqual(expected);
     });
 
@@ -117,8 +117,8 @@ describe('Case Conversion Utilities', () => {
       };
       const expected = {
         user_data: {
-          firstName: 'John',
-          lastName: 'Doe',
+          first_name: 'John',
+          last_name: 'Doe',
         },
       };
       expect(keysToSnakeCase(input)).toEqual(expected);
@@ -130,8 +130,8 @@ describe('Case Conversion Utilities', () => {
         { personId: '2', pgyLevel: 3 },
       ];
       const expected = [
-        { personId: '1', pgyLevel: 2 },
-        { personId: '2', pgyLevel: 3 },
+        { person_id: '1', pgy_level: 2 },
+        { person_id: '2', pgy_level: 3 },
       ];
       expect(keysToSnakeCase(input)).toEqual(expected);
     });
@@ -139,9 +139,9 @@ describe('Case Conversion Utilities', () => {
     it('preserves Date objects', () => {
       const date = new Date('2024-01-01');
       const input = { createdAt: date };
-      const result = keysToSnakeCase(input) as { createdAt: Date };
-      expect(result.createdAt).toBe(date);
-      expect(result.createdAt instanceof Date).toBe(true);
+      const result = keysToSnakeCase(input) as { created_at: Date };
+      expect(result.created_at).toBe(date);
+      expect(result.created_at instanceof Date).toBe(true);
     });
 
     it('handles null and undefined', () => {
@@ -260,12 +260,12 @@ describe('Case Conversion Utilities', () => {
       expect(backToCamel).toEqual(original);
     });
 
-    it('snake_case → camelCase → snake_case returns original', () => {
+    it('snake_case → camelCase → snake_case returns snake_case', () => {
       const original = {
-        personId: '123',
+        person_id: '123',
         user_data: {
-          firstName: 'John',
-          pgyLevel: 2,
+          first_name: 'John',
+          pgy_level: 2,
         },
         items: [{ item_id: 'a' }, { item_id: 'b' }],
       };

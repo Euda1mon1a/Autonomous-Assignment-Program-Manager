@@ -269,8 +269,8 @@ describe('ConflictResolutionSuggestions', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('Impact:')).toBeInTheDocument();
-        expect(screen.getByText('Low')).toBeInTheDocument();
+        expect(screen.getAllByText('Impact:').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Low').length).toBeGreaterThan(0);
       });
     });
 
@@ -288,8 +288,8 @@ describe('ConflictResolutionSuggestions', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('Confidence:')).toBeInTheDocument();
-        expect(screen.getByText('85%')).toBeInTheDocument();
+        expect(screen.getAllByText('Confidence:').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('85%').length).toBeGreaterThan(0);
       });
     });
   });
@@ -314,17 +314,15 @@ describe('ConflictResolutionSuggestions', () => {
         expect(screen.getByText('Reassign to available resident')).toBeInTheDocument();
       });
 
-      const suggestionCard = screen
-        .getByText('Reassign to available resident')
-        .closest('div');
+      // Use role="option" to find the clickable card
+      const suggestionCards = screen.getAllByRole('option');
+      const suggestionCard = suggestionCards[0];
 
-      if (suggestionCard) {
-        await user.click(suggestionCard);
+      await user.click(suggestionCard);
 
-        await waitFor(() => {
-          expect(suggestionCard).toHaveClass('border-blue-500');
-        });
-      }
+      await waitFor(() => {
+        expect(suggestionCard).toHaveAttribute('aria-selected', 'true');
+      });
     });
 
     it('should show notes textarea when suggestion selected', async () => {
@@ -476,7 +474,7 @@ describe('ConflictResolutionSuggestions', () => {
       await waitFor(() => {
         expect(screen.getByText('Potential Side Effects')).toBeInTheDocument();
         expect(
-          screen.getByText('Dr. Doe will have 1 extra shift this month')
+          screen.getByText(/Dr\. Doe will have 1 extra shift this month/i)
         ).toBeInTheDocument();
       });
     });

@@ -217,7 +217,7 @@ describe('AbsenceList', () => {
         mockFactories.absence({
           id: 'absence-1',
           personId: 'person-1',
-          absenceType: 'familyEmergency',
+          absenceType: 'family_emergency',
         }),
       ]
 
@@ -502,7 +502,7 @@ describe('AbsenceList', () => {
       )
 
       const columnHeaders = screen.getAllByRole('columnheader')
-      expect(columnHeaders).toHaveLength(6)
+      expect(columnHeaders).toHaveLength(7)
     })
 
     it('should have table rows', () => {

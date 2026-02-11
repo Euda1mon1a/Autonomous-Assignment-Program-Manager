@@ -61,7 +61,7 @@ describe('Daily Manifest Hooks', () => {
 
       expect(result.current.data).toEqual(manifestMockResponses.dailyManifest);
       expect(mockGet).toHaveBeenCalledWith(
-        '/daily-manifest?date=2025-12-21&timeOfDay=AM'
+        '/assignments/daily-manifest?date=2025-12-21&time_of_day=AM'
       );
     });
 
@@ -81,7 +81,7 @@ describe('Daily Manifest Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        '/daily-manifest?date=2025-12-21&timeOfDay=PM'
+        '/assignments/daily-manifest?date=2025-12-21&time_of_day=PM'
       );
     });
 
@@ -99,7 +99,7 @@ describe('Daily Manifest Hooks', () => {
 
       // For ALL, the hook omits the timeOfDay param (backend returns all if not specified)
       expect(mockGet).toHaveBeenCalledWith(
-        '/daily-manifest?date=2025-12-21'
+        '/assignments/daily-manifest?date=2025-12-21'
       );
     });
 
@@ -116,7 +116,7 @@ describe('Daily Manifest Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        '/daily-manifest?date=2025-12-21&timeOfDay=AM'
+        '/assignments/daily-manifest?date=2025-12-21&time_of_day=AM'
       );
     });
 
@@ -271,7 +271,7 @@ describe('Daily Manifest Hooks', () => {
       // Should use today's date in ISO format
       const today = new Date().toISOString().split('T')[0];
       expect(mockGet).toHaveBeenCalledWith(
-        `/daily-manifest?date=${today}&timeOfDay=AM`
+        `/assignments/daily-manifest?date=${today}&time_of_day=AM`
       );
     });
 
@@ -289,7 +289,7 @@ describe('Daily Manifest Hooks', () => {
 
       const today = new Date().toISOString().split('T')[0];
       expect(mockGet).toHaveBeenCalledWith(
-        `/daily-manifest?date=${today}&timeOfDay=AM`
+        `/assignments/daily-manifest?date=${today}&time_of_day=AM`
       );
     });
 
@@ -310,7 +310,7 @@ describe('Daily Manifest Hooks', () => {
 
       const today = new Date().toISOString().split('T')[0];
       expect(mockGet).toHaveBeenCalledWith(
-        `/daily-manifest?date=${today}&timeOfDay=PM`
+        `/assignments/daily-manifest?date=${today}&time_of_day=PM`
       );
     });
 
@@ -329,7 +329,7 @@ describe('Daily Manifest Hooks', () => {
       // For ALL, the hook omits the timeOfDay param (backend returns all if not specified)
       const today = new Date().toISOString().split('T')[0];
       expect(mockGet).toHaveBeenCalledWith(
-        `/daily-manifest?date=${today}`
+        `/assignments/daily-manifest?date=${today}`
       );
     });
 

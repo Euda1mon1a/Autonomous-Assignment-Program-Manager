@@ -172,8 +172,8 @@ describe('SwapApprovalPanel', () => {
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
       fireEvent.click(screen.getAllByText('Approve Swap')[0]);
 
-      // Re-query after DOM update
-      const submitButton = screen.getAllByText('Approve Swap')[1];
+      // After clicking action selection, form appears with single submit button
+      const submitButton = screen.getAllByText('Approve Swap')[0];
       fireEvent.click(submitButton);
 
       await waitFor(() => {
@@ -195,8 +195,8 @@ describe('SwapApprovalPanel', () => {
       const notesTextarea = screen.getByLabelText(/Notes \(Optional\)/i);
       fireEvent.change(notesTextarea, { target: { value: 'Approved for coverage' } });
 
-      // Re-query after DOM update
-      fireEvent.click(screen.getAllByText('Approve Swap')[1]);
+      // After action selection, only submit button remains
+      fireEvent.click(screen.getAllByText('Approve Swap')[0]);
 
       await waitFor(() => {
         expect(mockOnApprove).toHaveBeenCalledWith('swap-1', 'Approved for coverage');
@@ -232,8 +232,8 @@ describe('SwapApprovalPanel', () => {
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
       fireEvent.click(screen.getAllByText('Reject Swap')[0]);
 
-      // Re-query after DOM update
-      fireEvent.click(screen.getAllByText('Reject Swap')[1]);
+      // After action selection, only submit button remains
+      fireEvent.click(screen.getAllByText('Reject Swap')[0]);
 
       await waitFor(() => {
         expect(screen.getByText(/Please provide a reason for rejection/i)).toBeInTheDocument();
@@ -256,8 +256,8 @@ describe('SwapApprovalPanel', () => {
       const reasonTextarea = screen.getByLabelText(/Rejection Reason \*/i);
       fireEvent.change(reasonTextarea, { target: { value: 'Coverage conflict' } });
 
-      // Re-query after DOM update
-      fireEvent.click(screen.getAllByText('Reject Swap')[1]);
+      // After action selection, only submit button remains
+      fireEvent.click(screen.getAllByText('Reject Swap')[0]);
 
       await waitFor(() => {
         expect(mockOnReject).toHaveBeenCalledWith('swap-1', 'Coverage conflict');
@@ -278,8 +278,8 @@ describe('SwapApprovalPanel', () => {
       const reasonTextarea = screen.getByLabelText(/Rejection Reason \*/i);
       fireEvent.change(reasonTextarea, { target: { value: 'Coverage conflict' } });
 
-      // Re-query after DOM update
-      fireEvent.click(screen.getAllByText('Reject Swap')[1]);
+      // After action selection, only submit button remains
+      fireEvent.click(screen.getAllByText('Reject Swap')[0]);
 
       await waitFor(() => {
         expect(screen.queryByText('Reject Swap Request')).not.toBeInTheDocument();
@@ -303,7 +303,7 @@ describe('SwapApprovalPanel', () => {
       expect(screen.getByText('Cancel')).toBeInTheDocument();
     });
 
-    it('returns to action selection when cancel clicked', () => {
+    it('returns to collapsed state when cancel clicked', () => {
       render(
         <SwapApprovalPanel
           pendingSwaps={mockPendingSwaps}
@@ -316,7 +316,8 @@ describe('SwapApprovalPanel', () => {
       fireEvent.click(approveButtons[0]);
       fireEvent.click(screen.getByText('Cancel'));
 
-      expect(screen.getByText('Review This Request')).toBeInTheDocument();
+      // Cancel collapses the swap card entirely (selectedSwapId = null)
+      expect(screen.getByText(/Compact - Dr. Alice/)).toBeInTheDocument();
     });
   });
 
@@ -334,8 +335,8 @@ describe('SwapApprovalPanel', () => {
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
       fireEvent.click(screen.getAllByText('Approve Swap')[0]);
 
-      // Re-query after DOM update
-      fireEvent.click(screen.getAllByText('Approve Swap')[1]);
+      // After action selection, only submit button remains
+      fireEvent.click(screen.getAllByText('Approve Swap')[0]);
 
       await waitFor(() => {
         expect(screen.getByText('Server error')).toBeInTheDocument();
@@ -358,8 +359,8 @@ describe('SwapApprovalPanel', () => {
       const reasonTextarea = screen.getByLabelText(/Rejection Reason \*/i);
       fireEvent.change(reasonTextarea, { target: { value: 'Test' } });
 
-      // Re-query after DOM update
-      fireEvent.click(screen.getAllByText('Reject Swap')[1]);
+      // After action selection, only submit button remains
+      fireEvent.click(screen.getAllByText('Reject Swap')[0]);
 
       await waitFor(() => {
         expect(screen.getByText('Network error')).toBeInTheDocument();
@@ -383,8 +384,8 @@ describe('SwapApprovalPanel', () => {
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
       fireEvent.click(screen.getAllByRole('button', { name: /Approve Swap/i })[0]);
 
-      // Re-query after DOM update
-      fireEvent.click(screen.getAllByRole('button', { name: /Approve Swap/i })[1]);
+      // After action selection, only submit button remains
+      fireEvent.click(screen.getAllByRole('button', { name: /Approve Swap/i })[0]);
 
       expect(await screen.findByText('Processing...')).toBeInTheDocument();
     });
@@ -404,8 +405,8 @@ describe('SwapApprovalPanel', () => {
       fireEvent.click(screen.getByTestId('swap-card-swap-1'));
       fireEvent.click(screen.getAllByRole('button', { name: /Approve Swap/i })[0]);
 
-      // Re-query after DOM update
-      fireEvent.click(screen.getAllByRole('button', { name: /Approve Swap/i })[1]);
+      // After action selection, only submit button remains
+      fireEvent.click(screen.getAllByRole('button', { name: /Approve Swap/i })[0]);
 
       const cancelButton = await screen.findByRole('button', { name: /Cancel/i });
       expect(cancelButton).toBeDisabled();

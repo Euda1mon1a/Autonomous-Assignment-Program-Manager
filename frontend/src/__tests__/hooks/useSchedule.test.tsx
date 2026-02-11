@@ -115,7 +115,7 @@ describe('useSchedule', () => {
     expect(result.current.data?.items).toHaveLength(mockAssignments.length)
     expect(result.current.data?.total).toBe(mockAssignments.length)
     expect(result.current.data?.items[0].role).toBe('primary')
-    expect(mockedApi.get).toHaveBeenCalledWith('/assignments?startDate=2024-01-01&endDate=2024-01-31')
+    expect(mockedApi.get).toHaveBeenCalledWith(expect.stringContaining('/assignments?start_date=2024-01-01&end_date=2024-01-31'))
   })
 
   it('should show loading state while fetching', async () => {

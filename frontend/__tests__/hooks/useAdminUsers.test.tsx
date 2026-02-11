@@ -155,7 +155,7 @@ describe('useUsers', () => {
     });
 
     expect(mockedApi.get).toHaveBeenCalledWith(
-      '/admin/users?page=2&pageSize=50'
+      '/admin/users?page=2&page_size=50'
     );
   });
 

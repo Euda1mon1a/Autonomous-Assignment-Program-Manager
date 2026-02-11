@@ -291,10 +291,10 @@ describe('Audit Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('startDate=2025-12-01')
+        expect.stringContaining('start_date=2025-12-01')
       );
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('endDate=2025-12-17')
+        expect.stringContaining('end_date=2025-12-17')
       );
     });
   });
@@ -356,10 +356,10 @@ describe('Audit Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('entityType=assignment')
+        expect.stringContaining('entity_type=assignment')
       );
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('entityId=assign-123')
+        expect.stringContaining('entity_id=assign-123')
       );
     });
 
@@ -388,7 +388,7 @@ describe('Audit Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('userIds=user-1')
+        expect.stringContaining('user_ids=user-1')
       );
     });
 
@@ -406,10 +406,10 @@ describe('Audit Hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('startDate=2025-12-01')
+        expect.stringContaining('start_date=2025-12-01')
       );
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('endDate=2025-12-17')
+        expect.stringContaining('end_date=2025-12-17')
       );
     });
 

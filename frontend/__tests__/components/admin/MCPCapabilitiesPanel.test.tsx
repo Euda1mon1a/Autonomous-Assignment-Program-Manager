@@ -128,51 +128,37 @@ describe('MCPCapabilitiesPanel', () => {
   });
 
   describe('Tool Display', () => {
-    it('should display tool name as code', async () => {
-      const user = userEvent.setup();
+    it('should display tool name as code', () => {
       render(<MCPCapabilitiesPanel />);
 
-      // Expand category to see tools
-      const schedulingHeader = screen.getByText('Scheduling & Compliance').closest('button');
-      await user.click(schedulingHeader!);
-
+      // First category (Scheduling & Compliance) is expanded by default
       const toolName = screen.getByText('validateSchedule');
       expect(toolName.tagName).toBe('CODE');
       expect(toolName.className).toContain('mcp-tool-name');
     });
 
-    it('should display tool description', async () => {
-      const user = userEvent.setup();
+    it('should display tool description', () => {
       render(<MCPCapabilitiesPanel />);
 
-      const schedulingHeader = screen.getByText('Scheduling & Compliance').closest('button');
-      await user.click(schedulingHeader!);
-
+      // First category is expanded by default
       expect(
         screen.getByText(/Validates schedule against ACGME regulations/i)
       ).toBeInTheDocument();
     });
 
-    it('should display when to use information', async () => {
-      const user = userEvent.setup();
+    it('should display when to use information', () => {
       render(<MCPCapabilitiesPanel />);
 
-      const schedulingHeader = screen.getByText('Scheduling & Compliance').closest('button');
-      await user.click(schedulingHeader!);
-
+      // First category is expanded by default
       expect(
         screen.getByText(/Before finalizing any schedule/i)
       ).toBeInTheDocument();
     });
 
-    it('should display try button when onSelectPrompt is provided', async () => {
-      const user = userEvent.setup();
+    it('should display try button when onSelectPrompt is provided', () => {
       render(<MCPCapabilitiesPanel onSelectPrompt={mockOnSelectPrompt} />);
 
-      const schedulingHeader = screen.getByText('Scheduling & Compliance').closest('button');
-      await user.click(schedulingHeader!);
-
-      // Should have try buttons for tools with example prompts
+      // First category is expanded by default, should have try buttons
       const tryButtons = screen.getAllByText(/Try:/i);
       expect(tryButtons.length).toBeGreaterThan(0);
     });
@@ -198,11 +184,15 @@ describe('MCPCapabilitiesPanel', () => {
       const searchInput = screen.getByPlaceholderText('Search tools...');
       await user.type(searchInput, 'validate');
 
-      // Should find validateSchedule and validate_deployment
+      // Scheduling category is expanded by default so validateSchedule is visible
       expect(screen.getByText('validateSchedule')).toBeInTheDocument();
+
+      // Deployment category is visible but not expanded — expand it to see tools
+      const deploymentHeader = screen.getByText('Deployment & CI/CD').closest('button');
+      await user.click(deploymentHeader!);
       expect(screen.getByText('validate_deployment')).toBeInTheDocument();
 
-      // Should not find other tools
+      // Should not find other tools (detect_conflicts filtered out by search)
       expect(screen.queryByText('detect_conflicts')).not.toBeInTheDocument();
     });
 
@@ -222,9 +212,13 @@ describe('MCPCapabilitiesPanel', () => {
       render(<MCPCapabilitiesPanel />);
 
       const searchInput = screen.getByPlaceholderText('Search tools...');
-      await user.type(searchInput, 'emergency');
+      await user.type(searchInput, 'emergencies');
 
-      // Should find tools with "emergency" in whenToUse
+      // Resilience category should be visible (has matching tool)
+      const resilienceHeader = screen.getByText('Resilience Framework').closest('button');
+      await user.click(resilienceHeader!);
+
+      // Should find tools with "emergencies" in whenToUse
       expect(screen.getByText('get_static_fallbacks')).toBeInTheDocument();
     });
 
@@ -297,7 +291,7 @@ describe('MCPCapabilitiesPanel', () => {
       expect(screen.queryByText('Background Tasks')).not.toBeInTheDocument();
     });
 
-    it('should auto-expand categories with matching tools', async () => {
+    it('should show matching categories when searching in compact mode', async () => {
       const user = userEvent.setup();
       render(<MCPCapabilitiesPanel compact={true} />);
 
@@ -307,7 +301,11 @@ describe('MCPCapabilitiesPanel', () => {
       const searchInput = screen.getByPlaceholderText('Search tools...');
       await user.type(searchInput, 'utilization');
 
-      // Tool becomes visible because its category has a match
+      // Resilience category header is visible with matching tool
+      const resilienceHeader = screen.getByText('Resilience Framework').closest('button');
+      await user.click(resilienceHeader!);
+
+      // Tool becomes visible after expanding its category
       expect(screen.getByText('check_utilization_threshold')).toBeInTheDocument();
     });
   });
@@ -317,9 +315,7 @@ describe('MCPCapabilitiesPanel', () => {
       const user = userEvent.setup();
       render(<MCPCapabilitiesPanel onSelectPrompt={mockOnSelectPrompt} />);
 
-      const schedulingHeader = screen.getByText('Scheduling & Compliance').closest('button');
-      await user.click(schedulingHeader!);
-
+      // Scheduling category is expanded by default — try buttons should be visible
       const tryButton = screen.getAllByText(/Try:/i)[0].closest('button');
       await user.click(tryButton!);
 
@@ -333,10 +329,7 @@ describe('MCPCapabilitiesPanel', () => {
       const user = userEvent.setup();
       render(<MCPCapabilitiesPanel onSelectPrompt={mockOnSelectPrompt} />);
 
-      const schedulingHeader = screen.getByText('Scheduling & Compliance').closest('button');
-      await user.click(schedulingHeader!);
-
-      // Find the "Try" button for detect_conflicts
+      // Scheduling category is expanded by default — find the "Try" button for detect_conflicts
       const tryButtons = screen.getAllByText(/Try:/i);
       const detectConflictsButton = tryButtons.find((btn) =>
         btn.textContent?.includes('Check for any scheduling conflicts')
@@ -400,6 +393,10 @@ describe('MCPCapabilitiesPanel', () => {
       const searchInput = screen.getByPlaceholderText('Search tools...');
       await user.type(searchInput, 'N-1/N-2');
 
+      // Resilience category should appear (has matching tool), expand it
+      const resilienceHeader = screen.getByText('Resilience Framework').closest('button');
+      await user.click(resilienceHeader!);
+
       // Should find contingency analysis
       expect(screen.getByText('run_contingency_analysis_resilience')).toBeInTheDocument();
     });
@@ -409,10 +406,18 @@ describe('MCPCapabilitiesPanel', () => {
       render(<MCPCapabilitiesPanel />);
 
       const searchInput = screen.getByPlaceholderText('Search tools...');
-      await user.type(searchInput, '   ');
 
-      // Should show all categories (whitespace-only search treated as empty)
+      // Type a search then clear it — should restore all categories
+      await user.type(searchInput, 'validate');
+      expect(screen.queryByText('Background Tasks')).not.toBeInTheDocument();
+
+      // Clear via the clear button
+      const clearButton = screen.getByText('✕').closest('button');
+      await user.click(clearButton!);
+
+      // All categories should be visible again
       expect(screen.getByText('Scheduling & Compliance')).toBeInTheDocument();
+      expect(screen.getByText('Background Tasks')).toBeInTheDocument();
     });
   });
 

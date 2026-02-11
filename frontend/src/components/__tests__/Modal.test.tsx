@@ -118,7 +118,7 @@ describe('Modal', () => {
         </Modal>
       );
 
-      fireEvent.click(screen.getByText('Modal content'));
+      fireEvent.click(screen.getByText('Content'));
       expect(mockOnClose).not.toHaveBeenCalled();
     });
   });

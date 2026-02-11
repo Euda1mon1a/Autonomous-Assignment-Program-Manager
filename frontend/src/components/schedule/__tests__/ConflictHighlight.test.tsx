@@ -88,11 +88,15 @@ describe('ConflictHighlight', () => {
       expect(screen.getByText('1 Warnings')).toBeInTheDocument();
     });
 
-    it('does not show info badge in summary', () => {
+    it('does not show info badge count in summary header', () => {
       render(<ConflictHighlight conflicts={mockConflicts} />);
 
-      // Info conflicts don't appear in summary badges
-      expect(screen.queryByText(/Info/)).not.toBeInTheDocument();
+      // Info count badge should not appear in summary (only critical/warning do)
+      // But "Info" text does appear as a badge label on the info conflict card
+      const summaryDiv = screen.getByText('Schedule Conflicts').closest('div')?.parentElement;
+      const summaryBadges = summaryDiv?.querySelectorAll('.flex.gap-2 > *');
+      // Only critical and warning badges in summary
+      expect(summaryBadges?.length).toBe(2);
     });
 
     it('applies critical styling to critical conflicts', () => {
@@ -154,21 +158,24 @@ describe('ConflictHighlight', () => {
 
   describe('severity icons', () => {
     it('shows critical icon (🚨)', () => {
-      render(<ConflictHighlight conflicts={[mockConflicts[0]]} />);
+      const { container } = render(<ConflictHighlight conflicts={[mockConflicts[0]]} />);
 
-      expect(screen.getByLabelText('Critical')).toHaveTextContent('🚨');
+      const iconSpan = container.querySelector('[aria-hidden="true"].text-xl');
+      expect(iconSpan).toHaveTextContent('🚨');
     });
 
     it('shows warning icon (⚠️)', () => {
-      render(<ConflictHighlight conflicts={[mockConflicts[1]]} />);
+      const { container } = render(<ConflictHighlight conflicts={[mockConflicts[1]]} />);
 
-      expect(screen.getByLabelText('Warning')).toHaveTextContent('⚠️');
+      const iconSpan = container.querySelector('[aria-hidden="true"].text-xl');
+      expect(iconSpan).toHaveTextContent('⚠️');
     });
 
     it('shows info icon (ℹ️)', () => {
-      render(<ConflictHighlight conflicts={[mockConflicts[2]]} />);
+      const { container } = render(<ConflictHighlight conflicts={[mockConflicts[2]]} />);
 
-      expect(screen.getByLabelText('Info')).toHaveTextContent('ℹ️');
+      const iconSpan = container.querySelector('[aria-hidden="true"].text-xl');
+      expect(iconSpan).toHaveTextContent('ℹ️');
     });
   });
 
@@ -199,15 +206,19 @@ describe('ConflictHighlight', () => {
       render(<ConflictHighlight conflicts={[mockConflicts[0]]} />);
 
       expect(screen.getByText('Affected Dates:')).toBeInTheDocument();
-      expect(screen.getByText('1/15/2024')).toBeInTheDocument();
+      const expectedDate = new Date('2024-01-15').toLocaleDateString();
+      expect(screen.getByText(expectedDate)).toBeInTheDocument();
     });
 
     it('displays multiple affected dates', () => {
       render(<ConflictHighlight conflicts={[mockConflicts[1]]} />);
 
-      expect(screen.getByText('1/10/2024')).toBeInTheDocument();
-      expect(screen.getByText('1/11/2024')).toBeInTheDocument();
-      expect(screen.getByText('1/12/2024')).toBeInTheDocument();
+      const expectedDates = ['2024-01-10', '2024-01-11', '2024-01-12'].map(
+        (d) => new Date(d).toLocaleDateString()
+      );
+      expectedDates.forEach((d) => {
+        expect(screen.getByText(d)).toBeInTheDocument();
+      });
     });
   });
 

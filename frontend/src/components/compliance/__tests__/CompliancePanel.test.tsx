@@ -1,12 +1,16 @@
 /**
  * Tests for CompliancePanel Component
  * Component: compliance/CompliancePanel - ACGME compliance dashboard panel
+ *
+ * CompliancePanel renders sub-components: WorkHourGauge, DayOffIndicator,
+ * SupervisionRatio, ViolationAlert. Text values are formatted by those
+ * sub-components (e.g., hours as "65.0h / 80h" across multiple spans).
  */
 
 import React from 'react';
 import { render, screen } from '@/test-utils';
 import '@testing-library/jest-dom';
-import { CompliancePanel, ComplianceData, CompliancePanelProps } from '../CompliancePanel';
+import { CompliancePanel, ComplianceData } from '../CompliancePanel';
 
 describe('CompliancePanel', () => {
   const mockDateRange = {
@@ -37,34 +41,41 @@ describe('CompliancePanel', () => {
 
     it('displays PGY level', () => {
       render(<CompliancePanel data={mockComplianceData} dateRange={mockDateRange} />);
-      expect(screen.getByText(/PGY-2/)).toBeInTheDocument();
+      // PGY-2 appears in header and SupervisionRatio sub-component
+      expect(screen.getAllByText(/PGY-2/).length).toBeGreaterThan(0);
     });
 
-    it('shows current week hours', () => {
+    it('shows current week hours via WorkHourGauge', () => {
       render(<CompliancePanel data={mockComplianceData} dateRange={mockDateRange} />);
-      expect(screen.getByText('65')).toBeInTheDocument();
+      // WorkHourGauge has aria-label "Current Week: 65 hours out of 80 hours"
+      expect(screen.getByLabelText(/Current Week: 65 hours/)).toBeInTheDocument();
     });
 
-    it('shows rolling 4-week average', () => {
+    it('shows rolling 4-week average via WorkHourGauge', () => {
       render(<CompliancePanel data={mockComplianceData} dateRange={mockDateRange} />);
-      expect(screen.getByText(/68/)).toBeInTheDocument();
+      // WorkHourGauge has aria-label "4-Week Rolling Avg: 68 hours out of 80 hours"
+      expect(screen.getByLabelText(/4-Week Rolling Avg: 68 hours/)).toBeInTheDocument();
     });
 
     it('shows consecutive days worked', () => {
       render(<CompliancePanel data={mockComplianceData} dateRange={mockDateRange} />);
-      expect(screen.getByText('6')).toBeInTheDocument();
+      // DayOffIndicator shows "6 / 6 days"
+      expect(screen.getByText(/6 \/ 6 days/)).toBeInTheDocument();
     });
 
-    it('shows last day off', () => {
+    it('shows last day off date', () => {
       render(<CompliancePanel data={mockComplianceData} dateRange={mockDateRange} />);
-      expect(screen.getByText(/2024-01-22/)).toBeInTheDocument();
+      // DayOffIndicator renders last day off via toLocaleDateString
+      const expectedDate = new Date('2024-01-22').toLocaleDateString();
+      expect(screen.getByText(new RegExp(expectedDate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeInTheDocument();
     });
   });
 
   describe('Compliance Status', () => {
     it('shows compliant status when no violations', () => {
       render(<CompliancePanel data={mockComplianceData} dateRange={mockDateRange} />);
-      expect(screen.getByText(/compliant/i)).toBeInTheDocument();
+      // Badge shows "Compliant"
+      expect(screen.getByText('Compliant')).toBeInTheDocument();
     });
 
     it('shows violation status when violations exist', () => {
@@ -75,7 +86,8 @@ describe('CompliancePanel', () => {
         ],
       };
       render(<CompliancePanel data={dataWithViolations} dateRange={mockDateRange} />);
-      expect(screen.getByText(/violation/i)).toBeInTheDocument();
+      // Badge shows "Violation"
+      expect(screen.getByText('Violation')).toBeInTheDocument();
     });
   });
 
@@ -93,7 +105,7 @@ describe('CompliancePanel', () => {
       expect(screen.getByText(/missing required day off/i)).toBeInTheDocument();
     });
 
-    it('shows violation count', () => {
+    it('shows violation count badges', () => {
       const dataWithViolations: ComplianceData = {
         ...mockComplianceData,
         violations: [
@@ -102,19 +114,25 @@ describe('CompliancePanel', () => {
         ],
       };
       render(<CompliancePanel data={dataWithViolations} dateRange={mockDateRange} />);
-      expect(screen.getByText(/2/)).toBeInTheDocument();
+      expect(screen.getByText(/1 Critical/)).toBeInTheDocument();
+      expect(screen.getByText(/1 Warnings/)).toBeInTheDocument();
     });
   });
 
   describe('ACGME Rules Indicators', () => {
-    it('shows 80-hour rule status', () => {
+    it('shows work hour compliance section', () => {
       render(<CompliancePanel data={mockComplianceData} dateRange={mockDateRange} />);
-      expect(screen.getByText(/80.*hour/i)).toBeInTheDocument();
+      expect(screen.getByText('Work Hour Compliance')).toBeInTheDocument();
     });
 
-    it('shows 1-in-7 rule status', () => {
+    it('shows 1-in-7 days off section', () => {
       render(<CompliancePanel data={mockComplianceData} dateRange={mockDateRange} />);
-      expect(screen.getByText(/1.*in.*7/i)).toBeInTheDocument();
+      expect(screen.getByText('1-in-7 Days Off')).toBeInTheDocument();
+    });
+
+    it('shows supervision ratio section', () => {
+      render(<CompliancePanel data={mockComplianceData} dateRange={mockDateRange} />);
+      expect(screen.getByText('Supervision Ratio')).toBeInTheDocument();
     });
 
     it('indicates when approaching 80-hour limit', () => {
@@ -123,7 +141,8 @@ describe('CompliancePanel', () => {
         rolling4WeekAverage: 78,
       };
       render(<CompliancePanel data={approachingLimit} dateRange={mockDateRange} />);
-      expect(screen.getByText(/78/)).toBeInTheDocument();
+      // WorkHourGauge has aria-label with the hour values
+      expect(screen.getByLabelText(/4-Week Rolling Avg: 78 hours/)).toBeInTheDocument();
     });
 
     it('warns when approaching 1-in-7 violation', () => {
@@ -132,7 +151,7 @@ describe('CompliancePanel', () => {
         consecutiveDaysWorked: 6,
       };
       render(<CompliancePanel data={approachingViolation} dateRange={mockDateRange} />);
-      expect(screen.getByText('6')).toBeInTheDocument();
+      expect(screen.getByText(/6 \/ 6 days/)).toBeInTheDocument();
     });
   });
 
@@ -144,7 +163,8 @@ describe('CompliancePanel', () => {
         rolling4WeekAverage: 0,
       };
       render(<CompliancePanel data={zeroHours} dateRange={mockDateRange} />);
-      expect(screen.getByText('0')).toBeInTheDocument();
+      // WorkHourGauge aria-labels contain "0 hours"
+      expect(screen.getByLabelText(/Current Week: 0 hours/)).toBeInTheDocument();
     });
 
     it('handles maximum hours (80)', () => {
@@ -153,7 +173,7 @@ describe('CompliancePanel', () => {
         rolling4WeekAverage: 80,
       };
       render(<CompliancePanel data={maxHours} dateRange={mockDateRange} />);
-      expect(screen.getByText(/80/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/4-Week Rolling Avg: 80 hours/)).toBeInTheDocument();
     });
 
     it('handles over limit hours', () => {
@@ -165,18 +185,20 @@ describe('CompliancePanel', () => {
         ],
       };
       render(<CompliancePanel data={overLimit} dateRange={mockDateRange} />);
-      expect(screen.getByText(/85/)).toBeInTheDocument();
-      expect(screen.getByText(/violation/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/4-Week Rolling Avg: 85 hours/)).toBeInTheDocument();
+      // Badge shows "Violation"
+      expect(screen.getByText('Violation')).toBeInTheDocument();
     });
 
-    it('handles no days off', () => {
+    it('handles many consecutive days', () => {
       const noDaysOff: ComplianceData = {
         ...mockComplianceData,
         consecutiveDaysWorked: 28,
         lastDayOff: '2024-01-01',
       };
       render(<CompliancePanel data={noDaysOff} dateRange={mockDateRange} />);
-      expect(screen.getByText('28')).toBeInTheDocument();
+      // DayOffIndicator shows "28 / 6 days"
+      expect(screen.getByText(/28 \/ 6 days/)).toBeInTheDocument();
     });
   });
 });

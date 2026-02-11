@@ -1,5 +1,5 @@
 /**
- * @jest-environment node
+ * @jest-environment jsdom
  */
 import {
   calculateTierFromRole,
@@ -102,54 +102,57 @@ describe('tierUtils', () => {
   });
 
   describe('getRiskBarTooltip', () => {
-    it('returns appropriate tooltip for tier 0', () => {
+    it('returns personal access tooltip for tier 0', () => {
       const tooltip = getRiskBarTooltip(0);
-      expect(tooltip).toContain('view your own schedule');
-      expect(tooltip).toContain('cannot make changes');
+      expect(tooltip).toContain('Personal access');
+      expect(tooltip).toContain('own schedule');
     });
 
-    it('returns appropriate tooltip for tier 1 viewing self', () => {
+    it('returns coordinator tooltip for tier 1 viewing self', () => {
       const tooltip = getRiskBarTooltip(1, false);
-      expect(tooltip).toContain('reversible changes');
-      expect(tooltip).toContain('within your assigned scope');
+      expect(tooltip).toContain('Coordinator access');
+      expect(tooltip).toContain('all personnel');
     });
 
-    it('returns appropriate tooltip for tier 1 viewing other', () => {
+    it('returns coordinator tooltip for tier 1 viewing other', () => {
       const tooltip = getRiskBarTooltip(1, true);
       expect(tooltip).toContain('another person');
-      expect(tooltip).toContain('reversible');
+      expect(tooltip).toContain('Coordinator');
     });
 
-    it('returns appropriate tooltip for tier 2 viewing self', () => {
+    it('returns admin tooltip for tier 2 viewing self', () => {
       const tooltip = getRiskBarTooltip(2, false);
-      expect(tooltip).toContain('destructive');
-      expect(tooltip).toContain('system-wide');
+      expect(tooltip).toContain('Admin access');
+      expect(tooltip).toContain('high-impact');
     });
 
-    it('returns appropriate tooltip for tier 2 viewing other', () => {
+    it('returns admin tooltip for tier 2 viewing other', () => {
       const tooltip = getRiskBarTooltip(2, true);
-      expect(tooltip).toContain('another person');
-      expect(tooltip).toContain('full administrative access');
+      expect(tooltip).toContain('Admin access');
+      expect(tooltip).toContain('other personnel');
     });
   });
 
   describe('getRiskBarLabel', () => {
-    it('returns "Read-only" for tier 0', () => {
-      expect(getRiskBarLabel(0)).toBe('Read-only');
-      expect(getRiskBarLabel(0, true)).toBe('Read-only');
+    it('returns "Personal" for tier 0', () => {
+      expect(getRiskBarLabel(0)).toBe('Personal');
+      expect(getRiskBarLabel(0, true)).toBe('Viewing Other');
     });
 
-    it('returns "Scoped Changes" for tier 1 viewing self', () => {
-      expect(getRiskBarLabel(1, false)).toBe('Scoped Changes');
+    it('returns "Coordinator" for tier 1 viewing self', () => {
+      expect(getRiskBarLabel(1, false)).toBe('Coordinator');
     });
 
     it('returns "Viewing Other" for tier 1 viewing other', () => {
       expect(getRiskBarLabel(1, true)).toBe('Viewing Other');
     });
 
-    it('returns "High Impact" for tier 2', () => {
-      expect(getRiskBarLabel(2, false)).toBe('High Impact');
-      expect(getRiskBarLabel(2, true)).toBe('High Impact');
+    it('returns "Admin" for tier 2 viewing self', () => {
+      expect(getRiskBarLabel(2, false)).toBe('Admin');
+    });
+
+    it('returns "Admin View" for tier 2 viewing other', () => {
+      expect(getRiskBarLabel(2, true)).toBe('Admin View');
     });
   });
 });

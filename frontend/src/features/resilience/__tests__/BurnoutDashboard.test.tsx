@@ -11,32 +11,32 @@ jest.mock("@/hooks/useResilience", () => ({
 describe("BurnoutDashboard", () => {
   const mockHealthData = {
     timestamp: new Date().toISOString(),
-    overall_status: OverallStatus.HEALTHY,
+    overallStatus: OverallStatus.HEALTHY,
     defenseLevel: "PREVENTION" as any,
     utilization: {
       utilizationRate: 0.5,
       level: UtilizationLevel.GREEN,
-      buffer_remaining: 5,
-      wait_time_multiplier: 1.0,
-      safe_capacity: 100,
-      current_demand: 50,
-      theoretical_capacity: 100,
+      bufferRemaining: 5,
+      waitTimeMultiplier: 1.0,
+      safeCapacity: 100,
+      currentDemand: 50,
+      theoreticalCapacity: 100,
     },
-    active_fallbacks: [],
+    activeFallbacks: [],
     n1Pass: true,
     n2Pass: true,
     phaseTransitionRisk: "low",
-    redundancy_status: [],
-    load_shedding_level: "NORMAL" as any,
+    redundancyStatus: [],
+    loadSheddingLevel: "NORMAL" as any,
     crisisMode: false,
-    immediate_actions: ["Monitor utilization levels"],
-    watch_items: ["Review N-2 coverage"],
+    immediateActions: ["Monitor utilization levels"],
+    watchItems: ["Review N-2 coverage"],
   };
 
   const mockBurnoutData = {
     rt: 0.85,
     status: "declining",
-    secondary_cases: 2,
+    secondaryCases: 2,
     interventions: [
       "Increase support for high-risk staff",
       "Review workload distribution",
@@ -106,8 +106,8 @@ describe("BurnoutDashboard", () => {
   it("shows all clear when no actions or watch items", () => {
     const emptyData = {
       ...mockHealthData,
-      immediate_actions: [],
-      watch_items: [],
+      immediateActions: [],
+      watchItems: [],
     };
 
     (useSystemHealth as jest.Mock).mockReturnValue({

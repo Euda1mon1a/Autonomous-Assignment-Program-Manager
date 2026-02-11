@@ -399,8 +399,8 @@ describe('AbsenceCalendar', () => {
         />
       )
 
-      // Legend shows absence types (maternityPaternity is in the first 6 and displayed with underscore replaced)
-      expect(screen.getByText('maternity paternity')).toBeInTheDocument()
+      // Legend shows absence types from typeColors keys (camelCase keys have no underscores to replace)
+      expect(screen.getByText('maternityPaternity')).toBeInTheDocument()
     })
 
     it('should display vacation type in legend', () => {

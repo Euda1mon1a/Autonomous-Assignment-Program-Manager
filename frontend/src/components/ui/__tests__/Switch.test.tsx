@@ -134,12 +134,10 @@ describe('Switch', () => {
       render(<Switch checked={false} onChange={mockOnChange} />);
 
       const switchElement = screen.getByRole('switch');
-      const event = new KeyboardEvent('keydown', { key: ' ' });
-      const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+      const prevented = fireEvent.keyDown(switchElement, { key: ' ' });
 
-      fireEvent.keyDown(switchElement, event);
-
-      expect(preventDefaultSpy).toHaveBeenCalled();
+      // fireEvent returns false when preventDefault was called
+      expect(prevented).toBe(false);
     });
 
     it('has proper ARIA role and checked state', () => {
@@ -228,6 +226,7 @@ describe('Switch', () => {
     });
 
     it('handles rapid toggling', () => {
+      // Switch is controlled: checked prop stays false, so onChange always gets !false = true
       render(<Switch checked={false} onChange={mockOnChange} />);
 
       const switchElement = screen.getByRole('switch');
@@ -238,7 +237,7 @@ describe('Switch', () => {
 
       expect(mockOnChange).toHaveBeenCalledTimes(3);
       expect(mockOnChange).toHaveBeenNthCalledWith(1, true);
-      expect(mockOnChange).toHaveBeenNthCalledWith(2, false);
+      expect(mockOnChange).toHaveBeenNthCalledWith(2, true);
       expect(mockOnChange).toHaveBeenNthCalledWith(3, true);
     });
 

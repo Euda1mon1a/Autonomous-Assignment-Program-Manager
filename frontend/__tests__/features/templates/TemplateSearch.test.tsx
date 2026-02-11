@@ -101,7 +101,7 @@ describe('TemplateSearch', () => {
       const input = screen.getByPlaceholderText('Search templates...');
       await user.type(input, 'test');
 
-      const clearButton = screen.getByRole('button', { name: '' });
+      const clearButton = screen.getByRole('button', { name: /Clear search/i });
       expect(clearButton).toBeInTheDocument();
     });
 

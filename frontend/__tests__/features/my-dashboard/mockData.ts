@@ -248,15 +248,15 @@ export const mockDashboardApiResponse = {
     name: 'Dr. John Smith',
     role: 'Resident (PGY-2)',
   },
-  upcomingSchedule: [
+  upcoming_schedule: [
     {
       id: 'assignment-1',
       date: getLocalDateOffset(0), // Today in local timezone
       timeOfDay: 'AM',
       activity: 'Inpatient Medicine',
       location: 'Ward',
-      canTrade: true,
-      isConflict: false,
+      can_trade: true,
+      is_conflict: false,
     },
     {
       id: 'assignment-2',
@@ -264,11 +264,11 @@ export const mockDashboardApiResponse = {
       timeOfDay: 'PM',
       activity: 'Emergency Department',
       location: 'ER',
-      canTrade: true,
-      isConflict: false,
+      can_trade: true,
+      is_conflict: false,
     },
   ],
-  pendingSwaps: [
+  pending_swaps: [
     {
       id: 'swap-1',
       sourceFacultyId: 'faculty-1',
@@ -292,12 +292,12 @@ export const mockDashboardApiResponse = {
       requestedAt: '2025-01-05T08:00:00Z',
     },
   ],
-  calendarSyncUrl: 'https://example.com/calendar/sync/token123',
+  calendar_sync_url: 'https://example.com/calendar/sync/token123',
   summary: {
-    nextAssignment: 'Today at 8 AM',
-    workloadNext4Weeks: 12,
-    pendingSwapCount: 2,
-    upcomingAbsences: 2,
+    next_assignment: 'Today at 8 AM',
+    workload_next_4_weeks: 12,
+    pending_swap_count: 2,
+    upcoming_absences: 2,
   },
 };
 

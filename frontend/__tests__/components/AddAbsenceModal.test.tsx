@@ -118,8 +118,8 @@ describe('AddAbsenceModal', () => {
       const absenceTypeSelect = screen.getByLabelText(/absence type/i)
       const options = within(absenceTypeSelect).getAllByRole('option')
 
-      // Component now has 11 absence type options (vacation, conference, sick, medical, convalescent, parental leave, family emergency, emergency leave, bereavement, deployment, tdy)
-      expect(options.length).toBe(11)
+      // Component has 13 absence type options
+      expect(options.length).toBe(13)
       expect(screen.getByRole('option', { name: /vacation/i })).toBeInTheDocument()
       expect(screen.getByRole('option', { name: /deployment/i })).toBeInTheDocument()
       expect(screen.getByRole('option', { name: /tdy/i })).toBeInTheDocument()

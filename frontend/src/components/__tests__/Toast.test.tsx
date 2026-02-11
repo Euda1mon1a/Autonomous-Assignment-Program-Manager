@@ -162,16 +162,27 @@ describe('Toast', () => {
     });
 
     it('dismisses when dismiss button clicked', () => {
+      jest.useFakeTimers();
+
       render(
-        <Toast id="toast-1" type="success" message="Test" onDismiss={mockOnDismiss} />
+        <Toast id="toast-1" type="success" message="Test" persistent onDismiss={mockOnDismiss} />
       );
 
       fireEvent.click(screen.getByLabelText('Dismiss notification'));
 
+      // handleDismiss has a 300ms setTimeout before calling onDismiss
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
       expect(mockOnDismiss).toHaveBeenCalledWith('toast-1');
+
+      jest.useRealTimers();
     });
 
     it('calls action onClick and dismisses when action button clicked', () => {
+      jest.useFakeTimers();
+
       const actionOnClick = jest.fn();
       const action = { label: 'Undo', onClick: actionOnClick };
 
@@ -181,6 +192,7 @@ describe('Toast', () => {
           type="success"
           message="Test"
           action={action}
+          persistent
           onDismiss={mockOnDismiss}
         />
       );
@@ -188,7 +200,15 @@ describe('Toast', () => {
       fireEvent.click(screen.getByText('Undo'));
 
       expect(actionOnClick).toHaveBeenCalled();
+
+      // handleDismiss has a 300ms setTimeout before calling onDismiss
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
       expect(mockOnDismiss).toHaveBeenCalledWith('toast-1');
+
+      jest.useRealTimers();
     });
 
     it('dismiss button is keyboard accessible', () => {

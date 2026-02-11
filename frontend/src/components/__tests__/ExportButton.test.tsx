@@ -201,14 +201,16 @@ describe('ExportButton', () => {
       });
     });
 
-    it('shows loading spinner during export', () => {
+    it('shows loading spinner during export', async () => {
       const { container } = render(<ExportButton data={mockData} filename="test" columns={mockColumns} />);
 
       fireEvent.click(screen.getByText('Export'));
       fireEvent.click(screen.getByText('Export as CSV'));
 
-      expect(container.querySelector('.lucide-loader-2')).toBeInTheDocument();
-      expect(container.querySelector('.animate-spin')).toBeInTheDocument();
+      // The Loader2 icon should appear while exporting; check for animate-spin class
+      await waitFor(() => {
+        expect(container.querySelector('.animate-spin')).toBeInTheDocument();
+      });
     });
 
     it('disables button while exporting', () => {

@@ -19,28 +19,25 @@ describe('DateRangePicker', () => {
   describe('Rendering', () => {
     it('renders start date input', () => {
       render(<DateRangePicker value={emptyRange} onChange={mockOnChange} />);
-      const inputs = screen.getAllByRole('textbox');
-      expect(inputs.length).toBeGreaterThan(0);
+      expect(screen.getByLabelText('Start Date')).toBeInTheDocument();
     });
 
     it('renders end date input', () => {
       render(<DateRangePicker value={emptyRange} onChange={mockOnChange} />);
-      // DateRangePicker should have two date inputs
-      const dateInputs = screen.getAllByRole('textbox');
-      expect(dateInputs.length).toBe(2);
+      expect(screen.getByLabelText('End Date')).toBeInTheDocument();
     });
 
     it('displays selected start date', () => {
-      const valueWithStart: DateRange = { start: new Date('2024-01-01'), end: null };
+      const valueWithStart: DateRange = { start: new Date('2024-01-01T12:00:00'), end: null };
       render(<DateRangePicker value={valueWithStart} onChange={mockOnChange} />);
-      const startInput = screen.getAllByRole('textbox')[0] as HTMLInputElement;
+      const startInput = screen.getByLabelText('Start Date') as HTMLInputElement;
       expect(startInput.value).toBe('2024-01-01');
     });
 
     it('displays selected end date', () => {
-      const valueWithEnd: DateRange = { start: null, end: new Date('2024-01-31') };
+      const valueWithEnd: DateRange = { start: null, end: new Date('2024-01-31T12:00:00') };
       render(<DateRangePicker value={valueWithEnd} onChange={mockOnChange} />);
-      const endInput = screen.getAllByRole('textbox')[1] as HTMLInputElement;
+      const endInput = screen.getByLabelText('End Date') as HTMLInputElement;
       expect(endInput.value).toBe('2024-01-31');
     });
   });
@@ -49,37 +46,37 @@ describe('DateRangePicker', () => {
     it('calls onChange when start date changes', () => {
       render(<DateRangePicker value={emptyRange} onChange={mockOnChange} />);
 
-      const startInput = screen.getAllByRole('textbox')[0];
+      const startInput = screen.getByLabelText('Start Date');
       fireEvent.change(startInput, { target: { value: '2024-01-01' } });
 
       expect(mockOnChange).toHaveBeenCalled();
     });
 
     it('calls onChange when end date changes', () => {
-      const valueWithStart: DateRange = { start: new Date('2024-01-01'), end: null };
+      const valueWithStart: DateRange = { start: new Date('2024-01-01T12:00:00'), end: null };
       render(<DateRangePicker value={valueWithStart} onChange={mockOnChange} />);
 
-      const endInput = screen.getAllByRole('textbox')[1];
+      const endInput = screen.getByLabelText('End Date');
       fireEvent.change(endInput, { target: { value: '2024-01-31' } });
 
       expect(mockOnChange).toHaveBeenCalled();
     });
 
     it('clears start date', () => {
-      const valueWithStart: DateRange = { start: new Date('2024-01-01'), end: null };
+      const valueWithStart: DateRange = { start: new Date('2024-01-01T12:00:00'), end: null };
       render(<DateRangePicker value={valueWithStart} onChange={mockOnChange} />);
 
-      const startInput = screen.getAllByRole('textbox')[0];
+      const startInput = screen.getByLabelText('Start Date');
       fireEvent.change(startInput, { target: { value: '' } });
 
       expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ start: null }));
     });
 
     it('clears end date', () => {
-      const fullRange: DateRange = { start: new Date('2024-01-01'), end: new Date('2024-01-31') };
+      const fullRange: DateRange = { start: new Date('2024-01-01T12:00:00'), end: new Date('2024-01-31T12:00:00') };
       render(<DateRangePicker value={fullRange} onChange={mockOnChange} />);
 
-      const endInput = screen.getAllByRole('textbox')[1];
+      const endInput = screen.getByLabelText('End Date');
       fireEvent.change(endInput, { target: { value: '' } });
 
       expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ end: null }));
@@ -88,29 +85,29 @@ describe('DateRangePicker', () => {
 
   describe('Edge Cases', () => {
     it('handles same start and end date', () => {
-      const sameDate: DateRange = { start: new Date('2024-01-15'), end: new Date('2024-01-15') };
+      const sameDate: DateRange = { start: new Date('2024-01-15T12:00:00'), end: new Date('2024-01-15T12:00:00') };
       render(<DateRangePicker value={sameDate} onChange={mockOnChange} />);
 
-      const startInput = screen.getAllByRole('textbox')[0] as HTMLInputElement;
-      const endInput = screen.getAllByRole('textbox')[1] as HTMLInputElement;
+      const startInput = screen.getByLabelText('Start Date') as HTMLInputElement;
+      const endInput = screen.getByLabelText('End Date') as HTMLInputElement;
 
       expect(startInput.value).toBe('2024-01-15');
       expect(endInput.value).toBe('2024-01-15');
     });
 
     it('handles very far future dates', () => {
-      const futureRange: DateRange = { start: new Date('2024-01-01'), end: new Date('2099-12-31') };
+      const futureRange: DateRange = { start: new Date('2024-01-01T12:00:00'), end: new Date('2099-12-31T12:00:00') };
       render(<DateRangePicker value={futureRange} onChange={mockOnChange} />);
 
-      const endInput = screen.getAllByRole('textbox')[1] as HTMLInputElement;
+      const endInput = screen.getByLabelText('End Date') as HTMLInputElement;
       expect(endInput.value).toBe('2099-12-31');
     });
 
     it('handles leap year dates', () => {
-      const leapRange: DateRange = { start: new Date('2024-02-29'), end: new Date('2024-03-01') };
+      const leapRange: DateRange = { start: new Date('2024-02-29T12:00:00'), end: new Date('2024-03-01T12:00:00') };
       render(<DateRangePicker value={leapRange} onChange={mockOnChange} />);
 
-      const startInput = screen.getAllByRole('textbox')[0] as HTMLInputElement;
+      const startInput = screen.getByLabelText('Start Date') as HTMLInputElement;
       expect(startInput.value).toBe('2024-02-29');
     });
   });

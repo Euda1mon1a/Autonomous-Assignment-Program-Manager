@@ -32,14 +32,14 @@ describe('AuditLogExport', () => {
     it('should render main export button', () => {
       render(<AuditLogExport {...defaultProps} />);
 
-      expect(screen.getByRole('button', { name: /Export/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Open export options/i })).toBeInTheDocument();
     });
 
     it('should render quick export buttons for CSV and JSON', () => {
       render(<AuditLogExport {...defaultProps} />);
 
-      expect(screen.getByRole('button', { name: /CSV/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /JSON/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Quick export as CSV/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Quick export as JSON/i })).toBeInTheDocument();
     });
 
     it('should show total count badge when totalCount > logs length', () => {
@@ -73,7 +73,7 @@ describe('AuditLogExport', () => {
       const user = userEvent.setup();
       render(<AuditLogExport {...defaultProps} />);
 
-      const exportButton = screen.getByRole('button', { name: /^Export/i });
+      const exportButton = screen.getByRole('button', { name: /Open export options/i });
       await user.click(exportButton);
 
       expect(screen.getByText('Export Audit Logs')).toBeInTheDocument();
@@ -84,10 +84,10 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Close modal
-      const closeButton = screen.getByLabelText('Close');
+      const closeButton = screen.getByLabelText('Close export dialog');
       await user.click(closeButton);
 
       await waitFor(() => {
@@ -100,7 +100,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Click cancel
       const cancelButton = screen.getByRole('button', { name: /Cancel/i });
@@ -116,7 +116,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Click backdrop
       const backdrop = document.querySelector('.bg-black\\/50');
@@ -140,7 +140,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Format options appear in modal (CSV also appears in quick export buttons)
       expect(screen.getAllByText('CSV').length).toBeGreaterThan(0);
@@ -153,7 +153,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       expect(screen.getByText('Spreadsheet compatible format')).toBeInTheDocument();
       expect(screen.getByText('Full data with nested objects')).toBeInTheDocument();
@@ -165,7 +165,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // CSV buttons exist (quick export + modal format option)
       // The modal format button should have active styling
@@ -182,7 +182,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Find JSON format buttons (quick export + modal)
       const jsonButtons = screen.getAllByText('JSON');
@@ -203,7 +203,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Click PDF format
       const pdfButton = screen.getByText('PDF').closest('button');
@@ -224,7 +224,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       expect(screen.getByText('Options')).toBeInTheDocument();
     });
@@ -234,7 +234,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       expect(screen.getByText(/Include metadata/i)).toBeInTheDocument();
     });
@@ -244,7 +244,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       const metadataCheckbox = screen.getByLabelText(/Include metadata/i) as HTMLInputElement;
       expect(metadataCheckbox.checked).toBe(true);
@@ -255,7 +255,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       const metadataCheckbox = screen.getByLabelText(/Include metadata/i) as HTMLInputElement;
       await user.click(metadataCheckbox);
@@ -271,7 +271,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Should not be visible for CSV (default)
       expect(screen.queryByText(/Include change details/i)).not.toBeInTheDocument();
@@ -290,7 +290,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Switch to JSON - find the format button in modal
       const jsonButtons = screen.getAllByText('JSON');
@@ -312,11 +312,9 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
-      const exportButtons = screen.getAllByRole('button', { name: /Export/i });
-      // Should have 2: one to open modal, one inside modal
-      expect(exportButtons.length).toBeGreaterThan(1);
+      expect(screen.getByRole('button', { name: /Start export/i })).toBeInTheDocument();
     });
 
     it('should call onExportAll when exporting all records', async () => {
@@ -326,10 +324,10 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Click Export button in modal
-      const modalExportButton = screen.getAllByRole('button', { name: /Export/i })[1];
+      const modalExportButton = screen.getByRole('button', { name: /Start export/i });
       await user.click(modalExportButton);
 
       await waitFor(() => {
@@ -353,10 +351,10 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Click Export
-      const modalExportButton = screen.getAllByRole('button', { name: /Export/i })[1];
+      const modalExportButton = screen.getByRole('button', { name: /Start export/i });
       await user.click(modalExportButton);
 
       // Should show "Exporting..." text
@@ -372,10 +370,10 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Click Export
-      const modalExportButton = screen.getAllByRole('button', { name: /Export/i })[1];
+      const modalExportButton = screen.getByRole('button', { name: /Start export/i });
       await user.click(modalExportButton);
 
       // Button should be disabled
@@ -397,10 +395,10 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Click Export
-      const modalExportButton = screen.getAllByRole('button', { name: /Export/i })[1];
+      const modalExportButton = screen.getByRole('button', { name: /Start export/i });
       await user.click(modalExportButton);
 
       await waitFor(() => {
@@ -415,10 +413,10 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Click Export
-      const modalExportButton = screen.getAllByRole('button', { name: /Export/i })[1];
+      const modalExportButton = screen.getByRole('button', { name: /Start export/i });
       await user.click(modalExportButton);
 
       await waitFor(() => {
@@ -436,7 +434,7 @@ describe('AuditLogExport', () => {
       const user = userEvent.setup();
       render(<AuditLogExport {...defaultProps} />);
 
-      const csvButton = screen.getByRole('button', { name: /^CSV$/i });
+      const csvButton = screen.getByRole('button', { name: /Quick export as CSV/i });
       await user.click(csvButton);
 
       // Should not open modal for quick export
@@ -447,7 +445,7 @@ describe('AuditLogExport', () => {
       const user = userEvent.setup();
       render(<AuditLogExport {...defaultProps} />);
 
-      const jsonButton = screen.getByRole('button', { name: /^JSON$/i });
+      const jsonButton = screen.getByRole('button', { name: /Quick export as JSON/i });
       await user.click(jsonButton);
 
       // Should not open modal for quick export
@@ -472,10 +470,10 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} filters={filters} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       // Click Export
-      const modalExportButton = screen.getAllByRole('button', { name: /Export/i })[1];
+      const modalExportButton = screen.getByRole('button', { name: /Start export/i });
       await user.click(modalExportButton);
 
       await waitFor(() => {
@@ -492,7 +490,7 @@ describe('AuditLogExport', () => {
     it('should have accessible export buttons', () => {
       render(<AuditLogExport {...defaultProps} />);
 
-      const exportButton = screen.getByRole('button', { name: /Export/i });
+      const exportButton = screen.getByRole('button', { name: /Open export options/i });
       expect(exportButton).toBeInTheDocument();
     });
 
@@ -501,9 +499,9 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
-      const closeButton = screen.getByLabelText('Close');
+      const closeButton = screen.getByLabelText('Close export dialog');
       expect(closeButton).toBeInTheDocument();
     });
 
@@ -512,7 +510,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       const checkboxes = screen.getAllByRole('checkbox');
       expect(checkboxes.length).toBeGreaterThan(0);
@@ -523,7 +521,7 @@ describe('AuditLogExport', () => {
       render(<AuditLogExport {...defaultProps} />);
 
       // Open modal
-      await user.click(screen.getByRole('button', { name: /^Export/i }));
+      await user.click(screen.getByRole('button', { name: /Open export options/i }));
 
       const modal = screen.getByText('Export Audit Logs').closest('div');
       expect(modal).toBeInTheDocument();

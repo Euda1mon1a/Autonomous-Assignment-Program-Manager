@@ -73,7 +73,8 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      expect(screen.getByText(/test error/i)).toBeInTheDocument();
+      // Error boundary shows categorized error UI; the error message is in a details element
+      expect(screen.getByText('Something Went Wrong')).toBeInTheDocument();
     });
 
     it('displays reload button', () => {
@@ -83,7 +84,7 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      expect(screen.getByText(/reload page/i)).toBeInTheDocument();
+      expect(screen.getByText(/refresh page/i)).toBeInTheDocument();
     });
 
     it('logs error to console', () => {

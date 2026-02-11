@@ -106,7 +106,8 @@ describe('ChartWrapper', () => {
           <MockChart />
         </ChartWrapper>
       );
-      expect(container.firstChild).toHaveClass('card');
+      // Card component renders with these classes
+      expect(container.firstChild).toHaveClass('bg-white', 'rounded-lg');
     });
 
     it('applies custom className', () => {

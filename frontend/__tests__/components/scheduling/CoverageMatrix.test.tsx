@@ -4,28 +4,28 @@ import { CoverageMatrix, CoverageSummary, CoverageSlot } from '@/components/sche
 describe('CoverageMatrix', () => {
   const mockSlots: CoverageSlot[] = [
     {
-      date: new Date('2025-01-01'),
+      date: new Date(2025, 0, 1),
       period: 'AM',
       required: 4,
       assigned: 4,
       staff: ['Dr. Smith', 'Dr. Jones', 'Dr. Lee', 'Dr. Kim'],
     },
     {
-      date: new Date('2025-01-01'),
+      date: new Date(2025, 0, 1),
       period: 'PM',
       required: 4,
       assigned: 3,
       staff: ['Dr. Smith', 'Dr. Jones', 'Dr. Lee'],
     },
     {
-      date: new Date('2025-01-02'),
+      date: new Date(2025, 0, 2),
       period: 'AM',
       required: 4,
       assigned: 2,
       staff: ['Dr. Smith', 'Dr. Jones'],
     },
     {
-      date: new Date('2025-01-02'),
+      date: new Date(2025, 0, 2),
       period: 'PM',
       required: 4,
       assigned: 1,
@@ -34,8 +34,8 @@ describe('CoverageMatrix', () => {
   ];
 
   const dateRange = {
-    start: new Date('2025-01-01'),
-    end: new Date('2025-01-02'),
+    start: new Date(2025, 0, 1),
+    end: new Date(2025, 0, 2),
   };
 
   describe('Basic Rendering', () => {
@@ -83,7 +83,7 @@ describe('CoverageMatrix', () => {
     it('displays dash for empty slots', () => {
       const slotsWithGap: CoverageSlot[] = [
         {
-          date: new Date('2025-01-01'),
+          date: new Date(2025, 0, 1),
           period: 'AM',
           required: 4,
           assigned: 4,
@@ -92,8 +92,8 @@ describe('CoverageMatrix', () => {
       ];
 
       const widerRange = {
-        start: new Date('2025-01-01'),
-        end: new Date('2025-01-03'),
+        start: new Date(2025, 0, 1),
+        end: new Date(2025, 0, 3),
       };
 
       render(<CoverageMatrix slots={slotsWithGap} dateRange={widerRange} />);
@@ -132,7 +132,7 @@ describe('CoverageMatrix', () => {
     it('applies gray background for empty slots', () => {
       const sparseSlots: CoverageSlot[] = [
         {
-          date: new Date('2025-01-01'),
+          date: new Date(2025, 0, 1),
           period: 'AM',
           required: 4,
           assigned: 4,
@@ -141,8 +141,8 @@ describe('CoverageMatrix', () => {
       ];
 
       const widerRange = {
-        start: new Date('2025-01-01'),
-        end: new Date('2025-01-02'),
+        start: new Date(2025, 0, 1),
+        end: new Date(2025, 0, 2),
       };
 
       const { container } = render(<CoverageMatrix slots={sparseSlots} dateRange={widerRange} />);
@@ -185,7 +185,7 @@ describe('CoverageMatrix', () => {
     it('does not show warning for fully staffed slots', () => {
       const fullSlots: CoverageSlot[] = [
         {
-          date: new Date('2025-01-01'),
+          date: new Date(2025, 0, 1),
           period: 'AM',
           required: 4,
           assigned: 4,
@@ -247,8 +247,8 @@ describe('CoverageMatrix', () => {
 
     it('handles single day range', () => {
       const singleDay = {
-        start: new Date('2025-01-01'),
-        end: new Date('2025-01-01'),
+        start: new Date(2025, 0, 1),
+        end: new Date(2025, 0, 1),
       };
 
       render(<CoverageMatrix slots={mockSlots} dateRange={singleDay} />);
@@ -261,7 +261,7 @@ describe('CoverageMatrix', () => {
     it('handles 100% coverage correctly', () => {
       const perfectSlots: CoverageSlot[] = [
         {
-          date: new Date('2025-01-01'),
+          date: new Date(2025, 0, 1),
           period: 'AM',
           required: 4,
           assigned: 4,
@@ -278,7 +278,7 @@ describe('CoverageMatrix', () => {
     it('handles overstaffed slots', () => {
       const overstaffedSlots: CoverageSlot[] = [
         {
-          date: new Date('2025-01-01'),
+          date: new Date(2025, 0, 1),
           period: 'AM',
           required: 4,
           assigned: 5,
@@ -297,7 +297,7 @@ describe('CoverageMatrix', () => {
     it('handles exactly 75% coverage (boundary)', () => {
       const boundarySlots: CoverageSlot[] = [
         {
-          date: new Date('2025-01-01'),
+          date: new Date(2025, 0, 1),
           period: 'AM',
           required: 4,
           assigned: 3,
@@ -348,7 +348,7 @@ describe('CoverageSummary', () => {
       render(<CoverageSummary slots={mockSlots} />);
 
       // 2 fully staffed slots
-      const fullyStaffedCard = screen.getByText('Fully Staffed').closest('div');
+      const fullyStaffedCard = screen.getByText('Fully Staffed').closest('.rounded-lg');
       expect(fullyStaffedCard).toHaveTextContent('2');
     });
 
@@ -356,7 +356,7 @@ describe('CoverageSummary', () => {
       render(<CoverageSummary slots={mockSlots} />);
 
       // 1 partially staffed slot (75%)
-      const partialCard = screen.getByText('Partial Coverage').closest('div');
+      const partialCard = screen.getByText('Partial Coverage').closest('.rounded-lg');
       expect(partialCard).toHaveTextContent('1');
     });
 
@@ -364,20 +364,18 @@ describe('CoverageSummary', () => {
       render(<CoverageSummary slots={mockSlots} />);
 
       // 2 critical slots (< 75%)
-      const criticalCard = screen.getByText('Critical').closest('div');
+      const criticalCard = screen.getByText('Critical').closest('.rounded-lg');
       expect(criticalCard).toHaveTextContent('2');
     });
 
     it('calculates percentages correctly', () => {
       render(<CoverageSummary slots={mockSlots} />);
 
-      // 2/5 = 40.0%
-      expect(screen.getByText('40.0%')).toBeInTheDocument();
-      // 1/5 = 20.0%
-      expect(screen.getByText('20.0%')).toBeInTheDocument();
-      // 2/5 = 40.0% (appears twice)
+      // 2/5 = 40.0% (appears twice: fully staffed + critical)
       const percentages = screen.getAllByText('40.0%');
       expect(percentages.length).toBe(2);
+      // 1/5 = 20.0%
+      expect(screen.getByText('20.0%')).toBeInTheDocument();
     });
   });
 
@@ -385,7 +383,7 @@ describe('CoverageSummary', () => {
     it('applies green styling to fully staffed card', () => {
       const { container } = render(<CoverageSummary slots={mockSlots} />);
 
-      const fullyStaffedCard = screen.getByText('Fully Staffed').closest('div');
+      const fullyStaffedCard = screen.getByText('Fully Staffed').closest('.rounded-lg');
       expect(fullyStaffedCard).toHaveClass('bg-green-100');
 
       const value = fullyStaffedCard?.querySelector('.text-2xl');
@@ -395,7 +393,7 @@ describe('CoverageSummary', () => {
     it('applies amber styling to partial coverage card', () => {
       const { container } = render(<CoverageSummary slots={mockSlots} />);
 
-      const partialCard = screen.getByText('Partial Coverage').closest('div');
+      const partialCard = screen.getByText('Partial Coverage').closest('.rounded-lg');
       expect(partialCard).toHaveClass('bg-amber-100');
 
       const value = partialCard?.querySelector('.text-2xl');
@@ -405,7 +403,7 @@ describe('CoverageSummary', () => {
     it('applies red styling to critical card', () => {
       const { container } = render(<CoverageSummary slots={mockSlots} />);
 
-      const criticalCard = screen.getByText('Critical').closest('div');
+      const criticalCard = screen.getByText('Critical').closest('.rounded-lg');
       expect(criticalCard).toHaveClass('bg-red-100');
 
       const value = criticalCard?.querySelector('.text-2xl');
@@ -452,14 +450,14 @@ describe('CoverageSummary', () => {
 
       render(<CoverageSummary slots={allFull} />);
 
-      const fullyStaffedCard = screen.getByText('Fully Staffed').closest('div');
+      const fullyStaffedCard = screen.getByText('Fully Staffed').closest('.rounded-lg');
       expect(fullyStaffedCard).toHaveTextContent('2');
       expect(fullyStaffedCard).toHaveTextContent('100.0%');
 
-      const partialCard = screen.getByText('Partial Coverage').closest('div');
+      const partialCard = screen.getByText('Partial Coverage').closest('.rounded-lg');
       expect(partialCard).toHaveTextContent('0');
 
-      const criticalCard = screen.getByText('Critical').closest('div');
+      const criticalCard = screen.getByText('Critical').closest('.rounded-lg');
       expect(criticalCard).toHaveTextContent('0');
     });
 
@@ -471,7 +469,7 @@ describe('CoverageSummary', () => {
 
       render(<CoverageSummary slots={allCritical} />);
 
-      const criticalCard = screen.getByText('Critical').closest('div');
+      const criticalCard = screen.getByText('Critical').closest('.rounded-lg');
       expect(criticalCard).toHaveTextContent('2');
       expect(criticalCard).toHaveTextContent('100.0%');
     });

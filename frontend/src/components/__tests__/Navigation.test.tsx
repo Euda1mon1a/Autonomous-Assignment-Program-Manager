@@ -51,23 +51,24 @@ describe('Navigation', () => {
 
   it('renders without crashing', () => {
     render(<Navigation />);
-    expect(screen.getByText('Scheduler')).toBeInTheDocument();
+    // Navigation may have responsive duplicates (desktop + mobile)
+    expect(screen.getAllByText('Scheduler').length).toBeGreaterThan(0);
   });
 
   it('renders navigation links', () => {
     render(<Navigation />);
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
-    expect(screen.getByText('People')).toBeInTheDocument();
+    expect(screen.getAllByText('Dashboard').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('People').length).toBeGreaterThan(0);
   });
 
   it('renders UserMenu when authenticated', () => {
     render(<Navigation />);
-    expect(screen.getByText('Test User')).toBeInTheDocument();
+    expect(screen.getAllByText('Test User').length).toBeGreaterThan(0);
   });
 
   it('hides admin links for non-admin users', () => {
     render(<Navigation />);
-    expect(screen.queryByText('Settings')).not.toBeInTheDocument();
+    expect(screen.queryAllByText('Settings')).toHaveLength(0);
   });
 
   it('shows admin links for admin users', () => {
@@ -80,6 +81,6 @@ describe('Navigation', () => {
     } as any);
 
     render(<Navigation />);
-    expect(screen.getByText('Settings')).toBeInTheDocument();
+    expect(screen.getAllByText('Settings').length).toBeGreaterThan(0);
   });
 });

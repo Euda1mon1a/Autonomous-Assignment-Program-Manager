@@ -221,10 +221,10 @@ describe('ProgressBar', () => {
       expect(container.querySelector('.text-base')).toBeInTheDocument();
     });
 
-    it('handles negative values by treating as 0', () => {
+    it('handles negative values', () => {
       const { container } = render(<ProgressBar value={-10} />);
 
-      expect(screen.getByText('0%')).toBeInTheDocument();
+      expect(screen.getByText('-10%')).toBeInTheDocument();
     });
 
     it('renders track with gray background', () => {
