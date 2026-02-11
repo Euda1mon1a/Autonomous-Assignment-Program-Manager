@@ -101,7 +101,7 @@ describe('TemplatePreview', () => {
     expect(dateInput).toBeInTheDocument();
 
     // Use fireEvent.change for date inputs as user.clear causes Invalid time value errors
-    const { fireEvent } = await import('@/__tests__/utils/test-utils');
+    const { fireEvent } = await import('@/test-utils');
     fireEvent.change(dateInput, { target: { value: '2025-02-01' } });
 
     expect(dateInput).toHaveValue('2025-02-01');

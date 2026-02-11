@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { FairnessTrend } from '@/features/analytics/FairnessTrend';
 import { analyticsMockFactories, analyticsMockResponses } from './analytics-mocks';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 import * as api from '@/lib/api';
 
 // Mock the api module

@@ -4,7 +4,7 @@
  * Tests coverage trend visualization, data points, and trend indicators
  */
 import React from 'react';
-import { render, screen } from '@/__tests__/utils/test-utils';
+import { render, screen } from '@/test-utils';
 import {
   CoverageTrendChart,
   MOCK_COVERAGE_DATA,

@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { ConflictCard } from '@/features/conflicts/ConflictCard';
 import { conflictsMockFactories } from './conflicts-mocks';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 
 describe('ConflictCard', () => {
   const mockOnSelect = jest.fn();

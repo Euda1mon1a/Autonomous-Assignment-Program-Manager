@@ -1,5 +1,5 @@
 // @ts-nocheck - Tests written for different hook interface (refactored)
-import { renderHook, waitFor, act } from '@/__tests__/utils/test-utils'
+import { renderHook, waitFor, act } from '@/test-utils'
 import { useClaudeChat } from '@/hooks/useClaudeChat'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'

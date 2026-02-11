@@ -6,7 +6,7 @@
 import { render, screen } from '@/test-utils';
 import { HeatmapLegend, CompactHeatmapLegend } from '@/features/heatmap/HeatmapLegend';
 import { heatmapMockFactories } from './heatmap-mocks';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 import {
   DEFAULT_COLOR_SCALES,
   ACTIVITY_TYPE_COLORS,

@@ -4,7 +4,7 @@
  * Tests file upload, drag-and-drop, preview, import execution, and error handling
  */
 
-import { render, screen, waitFor } from '@/test-utils';
+import { render, screen, waitFor, fireEvent } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { BulkImportModal } from '@/features/import-export/BulkImportModal';
 import * as useImportModule from '@/features/import-export/useImport';
@@ -16,6 +16,10 @@ jest.mock('@/features/import-export/useImport');
 const mockedUseImport = useImportModule.useImport as jest.MockedFunction<
   typeof useImportModule.useImport
 >;
+
+// Capture the onComplete/onError callbacks passed to useImport
+let capturedOnComplete: (() => void) | undefined;
+let capturedOnError: ((error: Error) => void) | undefined;
 
 // Mock URL methods for file download
 const mockCreateObjectURL = jest.fn(() => 'blob:mock-url');
@@ -33,10 +37,9 @@ describe('BulkImportModal', () => {
   const mockUpdateOptions = jest.fn();
   const mockSetDataType = jest.fn();
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-
-    mockedUseImport.mockReturnValue({
+  // Default mock return value (reusable in mockImplementation)
+  function getDefaultMockReturn(overrides: Record<string, unknown> = {}) {
+    return {
       file: null,
       dataType: 'schedules',
       preview: null,
@@ -53,6 +56,19 @@ describe('BulkImportModal', () => {
       updateOptions: mockUpdateOptions,
       setDataType: mockSetDataType,
       format: 'csv',
+      ...overrides,
+    };
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    capturedOnComplete = undefined;
+    capturedOnError = undefined;
+
+    mockedUseImport.mockImplementation((opts?: { dataType?: string; onComplete?: () => void; onError?: (error: Error) => void }) => {
+      capturedOnComplete = opts?.onComplete;
+      capturedOnError = opts?.onError;
+      return getDefaultMockReturn() as any;
     });
   });
 
@@ -180,17 +196,15 @@ describe('BulkImportModal', () => {
     });
 
     it('should show error for invalid file type', async () => {
-      const user = userEvent.setup();
-      const mockFile = new File(['test'], 'test.txt', { type: 'text/plain' });
+      const invalidFile = new File(['test'], 'test.txt', { type: 'text/plain' });
 
       render(
         <BulkImportModal isOpen={true} onClose={mockOnClose} />
       );
 
-      const input = screen.getByRole('button', { name: /select file/i })
-        .parentElement?.querySelector('input[type="file"]') as HTMLInputElement;
-
-      await user.upload(input, mockFile);
+      // Use fireEvent.change to bypass the accept attribute filter
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+      fireEvent.change(input, { target: { files: [invalidFile] } });
 
       await waitFor(() => {
         expect(screen.getByText(/please select a csv, excel, or json file/i)).toBeInTheDocument();
@@ -256,8 +270,8 @@ describe('BulkImportModal', () => {
 
       const dropZone = container.querySelector('.border-dashed') as HTMLElement;
 
-      const dragOverEvent = new Event('dragover', { bubbles: true });
-      dropZone.dispatchEvent(dragOverEvent);
+      // Use fireEvent to trigger React's onDragOver handler
+      fireEvent.dragOver(dropZone, { dataTransfer: { files: [] } });
 
       expect(dropZone).toHaveClass('border-blue-500');
     });
@@ -271,7 +285,7 @@ describe('BulkImportModal', () => {
 
       expect(screen.getByText('Need a template?')).toBeInTheDocument();
       expect(screen.getByText(/download a sample csv file/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /download template/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /download.*template/i })).toBeInTheDocument();
     });
 
     it('should download template when button clicked', async () => {
@@ -281,7 +295,7 @@ describe('BulkImportModal', () => {
         <BulkImportModal isOpen={true} onClose={mockOnClose} />
       );
 
-      const downloadButton = screen.getByRole('button', { name: /download template/i });
+      const downloadButton = screen.getByRole('button', { name: /download.*template/i });
       await user.click(downloadButton);
 
       expect(mockCreateObjectURL).toHaveBeenCalled();
@@ -291,16 +305,17 @@ describe('BulkImportModal', () => {
     it('should download template for selected data type', async () => {
       const user = userEvent.setup();
 
-      mockedUseImport.mockReturnValue({
-        ...mockedUseImport(),
-        dataType: 'people',
-      } as any);
+      mockedUseImport.mockImplementation((opts?: any) => {
+        capturedOnComplete = opts?.onComplete;
+        capturedOnError = opts?.onError;
+        return getDefaultMockReturn({ dataType: 'people' }) as any;
+      });
 
       render(
         <BulkImportModal isOpen={true} onClose={mockOnClose} />
       );
 
-      const downloadButton = screen.getByRole('button', { name: /download template/i });
+      const downloadButton = screen.getByRole('button', { name: /download.*template/i });
       await user.click(downloadButton);
 
       // Template should be created and downloaded
@@ -308,41 +323,61 @@ describe('BulkImportModal', () => {
       const calls = mockCreateObjectURL.mock.calls as unknown[][];
       const blobArg = calls[0]?.[0];
       expect(blobArg).toBeInstanceOf(Blob);
+      // Read blob content using FileReader (blob.text() not available in jsdom)
       const blob = blobArg as Blob;
-      const text = await blob.text();
+      const text = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsText(blob);
+      });
       expect(text).toContain('name,email,type');
     });
   });
 
   describe('Preview Step', () => {
-    beforeEach(() => {
+    // Helper: upload a valid CSV file to transition from upload -> preview step
+    async function uploadFileToPreview(mockPreviewOverrides = {}) {
       const mockPreview = importExportMockFactories.importPreviewResult({
         totalRows: 10,
         validRows: 8,
         errorRows: 1,
         warningRows: 1,
+        ...mockPreviewOverrides,
+      });
+      const mockFile = new File(['test,data'], 'test.csv', { type: 'text/csv' });
+
+      // When previewImport is called, update the mock to return preview data
+      mockPreviewImport.mockImplementation(async () => {
+        mockedUseImport.mockImplementation((opts?: any) => {
+          capturedOnComplete = opts?.onComplete;
+          return getDefaultMockReturn({ file: mockFile, preview: mockPreview }) as any;
+        });
       });
 
-      mockedUseImport.mockReturnValue({
-        ...mockedUseImport(),
-        file: new File(['test'], 'test.csv', { type: 'text/csv' }),
-        preview: mockPreview,
-      } as any);
-    });
+      const user = userEvent.setup();
+      render(<BulkImportModal isOpen={true} onClose={mockOnClose} />);
 
-    it('should display file info', () => {
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+      // Upload file through the hidden input
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(fileInput, mockFile);
+
+      // Wait for preview to appear
+      await waitFor(() => {
+        expect(screen.getByText('test.csv')).toBeInTheDocument();
+      });
+
+      return { user, mockPreview };
+    }
+
+    it('should display file info', async () => {
+      await uploadFileToPreview();
 
       expect(screen.getByText('test.csv')).toBeInTheDocument();
       expect(screen.getByText(/10 rows detected/i)).toBeInTheDocument();
     });
 
-    it('should display import options checkboxes', () => {
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+    it('should display import options checkboxes', async () => {
+      await uploadFileToPreview();
 
       expect(screen.getByText('Skip duplicate entries')).toBeInTheDocument();
       expect(screen.getByText('Update existing records')).toBeInTheDocument();
@@ -350,11 +385,7 @@ describe('BulkImportModal', () => {
     });
 
     it('should call updateOptions when checkbox changed', async () => {
-      const user = userEvent.setup();
-
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+      const { user } = await uploadFileToPreview();
 
       const checkbox = screen.getByLabelText('Skip duplicate entries');
       await user.click(checkbox);
@@ -362,63 +393,71 @@ describe('BulkImportModal', () => {
       expect(mockUpdateOptions).toHaveBeenCalled();
     });
 
-    it('should display validation summary for errors', () => {
-      const mockPreview = importExportMockFactories.importPreviewResult({
-        errorRows: 3,
-        warningRows: 2,
-      });
-
-      mockedUseImport.mockReturnValue({
-        ...mockedUseImport(),
-        preview: mockPreview,
-      } as any);
-
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+    it('should display validation summary for errors', async () => {
+      await uploadFileToPreview({ errorRows: 3, warningRows: 2 });
 
       expect(screen.getByText(/validation issues found/i)).toBeInTheDocument();
       expect(screen.getByText(/3 rows have errors/i)).toBeInTheDocument();
       expect(screen.getByText(/2 rows have warnings/i)).toBeInTheDocument();
     });
 
-    it('should display xlsx fallback warning', () => {
-      mockedUseImport.mockReturnValue({
-        ...mockedUseImport(),
-        xlsxFallbackUsed: true,
-        preview: importExportMockFactories.importPreviewResult(),
-      } as any);
+    it('should display xlsx fallback warning', async () => {
+      const mockFile = new File(['test,data'], 'test.csv', { type: 'text/csv' });
+      const mockPreview = importExportMockFactories.importPreviewResult();
 
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+      mockPreviewImport.mockImplementation(async () => {
+        mockedUseImport.mockImplementation((opts?: any) => {
+          capturedOnComplete = opts?.onComplete;
+          return getDefaultMockReturn({
+            file: mockFile,
+            preview: mockPreview,
+            xlsxFallbackUsed: true,
+          }) as any;
+        });
+      });
 
-      expect(screen.getByText('Using Client-Side Parsing')).toBeInTheDocument();
+      const user = userEvent.setup();
+      render(<BulkImportModal isOpen={true} onClose={mockOnClose} />);
+
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(fileInput, mockFile);
+
+      await waitFor(() => {
+        expect(screen.getByText('Using Client-Side Parsing')).toBeInTheDocument();
+      });
       expect(screen.getByText(/backend excel parsing is unavailable/i)).toBeInTheDocument();
     });
 
-    it('should display xlsx warnings', () => {
-      mockedUseImport.mockReturnValue({
-        ...mockedUseImport(),
-        xlsxWarnings: ['Warning 1', 'Warning 2'],
-        preview: importExportMockFactories.importPreviewResult(),
-      } as any);
+    it('should display xlsx warnings', async () => {
+      const mockFile = new File(['test,data'], 'test.csv', { type: 'text/csv' });
+      const mockPreview = importExportMockFactories.importPreviewResult();
 
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+      mockPreviewImport.mockImplementation(async () => {
+        mockedUseImport.mockImplementation((opts?: any) => {
+          capturedOnComplete = opts?.onComplete;
+          return getDefaultMockReturn({
+            file: mockFile,
+            preview: mockPreview,
+            xlsxWarnings: ['Warning 1', 'Warning 2'],
+          }) as any;
+        });
+      });
 
-      expect(screen.getByText('Parsing Notes')).toBeInTheDocument();
+      const user = userEvent.setup();
+      render(<BulkImportModal isOpen={true} onClose={mockOnClose} />);
+
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(fileInput, mockFile);
+
+      await waitFor(() => {
+        expect(screen.getByText('Parsing Notes')).toBeInTheDocument();
+      });
       expect(screen.getByText('Warning 1')).toBeInTheDocument();
       expect(screen.getByText('Warning 2')).toBeInTheDocument();
     });
 
     it('should have back button to return to upload', async () => {
-      const user = userEvent.setup();
-
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+      const { user } = await uploadFileToPreview();
 
       const backButton = screen.getByRole('button', { name: /back/i });
       await user.click(backButton);
@@ -426,49 +465,23 @@ describe('BulkImportModal', () => {
       expect(mockReset).toHaveBeenCalled();
     });
 
-    it('should have import button with valid row count', () => {
-      const mockPreview = importExportMockFactories.importPreviewResult({
-        validRows: 8,
-      });
+    it('should have import button with valid row count', async () => {
+      await uploadFileToPreview({ validRows: 8 });
 
-      mockedUseImport.mockReturnValue({
-        ...mockedUseImport(),
-        preview: mockPreview,
-      } as any);
-
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
-
-      expect(screen.getByRole('button', { name: /import 8 records/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /import 8.*records/i })).toBeInTheDocument();
     });
 
-    it('should disable import button when no valid rows', () => {
-      const mockPreview = importExportMockFactories.importPreviewResult({
-        validRows: 0,
-      });
+    it('should disable import button when no valid rows', async () => {
+      await uploadFileToPreview({ validRows: 0 });
 
-      mockedUseImport.mockReturnValue({
-        ...mockedUseImport(),
-        preview: mockPreview,
-      } as any);
-
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
-
-      const importButton = screen.getByRole('button', { name: /import 0 records/i });
+      const importButton = screen.getByRole('button', { name: /import 0.*records/i });
       expect(importButton).toBeDisabled();
     });
 
     it('should call executeImport when import button clicked', async () => {
-      const user = userEvent.setup();
+      const { user } = await uploadFileToPreview({ validRows: 8 });
 
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
-
-      const importButton = screen.getByRole('button', { name: /import/i });
+      const importButton = screen.getByRole('button', { name: /import 8.*records/i });
       await user.click(importButton);
 
       expect(mockExecuteImport).toHaveBeenCalled();
@@ -476,85 +489,150 @@ describe('BulkImportModal', () => {
   });
 
   describe('Importing Step', () => {
-    it('should display progress indicator during import', () => {
-      mockedUseImport.mockReturnValue({
-        ...mockedUseImport(),
-        progress: importExportMockFactories.importProgress({
-          status: 'importing',
-          message: 'Importing data...',
-        }),
-      } as any);
+    it('should display progress indicator during import', async () => {
+      // Drive the component to the importing step:
+      // 1. Upload file -> preview step
+      // 2. Click import -> importing step
+      const mockFile = new File(['test,data'], 'test.csv', { type: 'text/csv' });
+      const mockPreview = importExportMockFactories.importPreviewResult({ validRows: 8 });
 
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+      mockPreviewImport.mockImplementation(async () => {
+        mockedUseImport.mockImplementation((opts?: any) => {
+          capturedOnComplete = opts?.onComplete;
+          return getDefaultMockReturn({
+            file: mockFile,
+            preview: mockPreview,
+          }) as any;
+        });
+      });
 
-      expect(screen.getByText('Importing data...')).toBeInTheDocument();
+      // When executeImport is called, switch to importing state
+      mockExecuteImport.mockImplementation(async () => {
+        mockedUseImport.mockImplementation((opts?: any) => {
+          capturedOnComplete = opts?.onComplete;
+          return getDefaultMockReturn({
+            file: mockFile,
+            preview: mockPreview,
+            isLoading: true,
+            progress: importExportMockFactories.importProgress({
+              status: 'importing',
+              message: 'Importing data...',
+            }),
+          }) as any;
+        });
+        // Never resolves - simulates ongoing import
+        return new Promise(() => {});
+      });
+
+      const user = userEvent.setup();
+      render(<BulkImportModal isOpen={true} onClose={mockOnClose} />);
+
+      // Upload file to get to preview
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(fileInput, mockFile);
+
+      // Wait for preview step
+      await waitFor(() => {
+        expect(screen.getByText('test.csv')).toBeInTheDocument();
+      });
+
+      // Click import button to trigger importing step
+      const importButton = screen.getByRole('button', { name: /import 8.*records/i });
+      await user.click(importButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Importing data...')).toBeInTheDocument();
+      });
     });
   });
 
   describe('Complete Step', () => {
-    beforeEach(() => {
-      mockedUseImport.mockReturnValue({
-        ...mockedUseImport(),
-        progress: importExportMockFactories.importProgress({
-          status: 'complete',
-          successCount: 8,
-          errorCount: 2,
-          warningCount: 1,
-        }),
-      } as any);
-    });
+    // Helper: drive component to complete step via onComplete callback
+    async function driveToComplete(progressOverrides: Record<string, unknown> = {}) {
+      const mockFile = new File(['test,data'], 'test.csv', { type: 'text/csv' });
+      const mockPreview = importExportMockFactories.importPreviewResult({ validRows: 8 });
 
-    it('should display success message', () => {
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+      mockPreviewImport.mockImplementation(async () => {
+        mockedUseImport.mockImplementation((opts?: any) => {
+          capturedOnComplete = opts?.onComplete;
+          return getDefaultMockReturn({ file: mockFile, preview: mockPreview }) as any;
+        });
+      });
+
+      // When executeImport is called, trigger onComplete and update mock to complete state
+      mockExecuteImport.mockImplementation(async () => {
+        mockedUseImport.mockImplementation((opts?: any) => {
+          capturedOnComplete = opts?.onComplete;
+          return getDefaultMockReturn({
+            file: mockFile,
+            preview: mockPreview,
+            progress: importExportMockFactories.importProgress({
+              status: 'complete',
+              successCount: 8,
+              errorCount: 2,
+              warningCount: 1,
+              ...progressOverrides,
+            }),
+          }) as any;
+        });
+        // Trigger the onComplete callback to set step='complete'
+        capturedOnComplete?.();
+      });
+
+      const user = userEvent.setup();
+      render(<BulkImportModal isOpen={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+
+      // Upload file -> preview
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(fileInput, mockFile);
+      await waitFor(() => {
+        expect(screen.getByText('test.csv')).toBeInTheDocument();
+      });
+
+      // Click import -> complete
+      const importButton = screen.getByRole('button', { name: /import 8.*records/i });
+      await user.click(importButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Import Complete!')).toBeInTheDocument();
+      });
+
+      return { user };
+    }
+
+    it('should display success message', async () => {
+      await driveToComplete();
 
       expect(screen.getByText('Import Complete!')).toBeInTheDocument();
       expect(screen.getByText(/successfully imported 8 records/i)).toBeInTheDocument();
     });
 
-    it('should display error count if present', () => {
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+    it('should display error count if present', async () => {
+      await driveToComplete({ errorCount: 2 });
 
       expect(screen.getByText(/2 records failed/i)).toBeInTheDocument();
     });
 
-    it('should display warning count if present', () => {
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+    it('should display warning count if present', async () => {
+      await driveToComplete({ warningCount: 1 });
 
       expect(screen.getByText(/1 records had warnings/i)).toBeInTheDocument();
     });
 
-    it('should display error details', () => {
+    it('should display error details', async () => {
       const errors = [
         { row: 1, column: 'email', value: 'bad', message: 'Invalid email', severity: 'error' as const },
         { row: 2, column: 'name', value: '', message: 'Required field', severity: 'error' as const },
       ];
 
-      mockedUseImport.mockReturnValue({
-        ...mockedUseImport(),
-        progress: importExportMockFactories.importProgress({
-          status: 'complete',
-          errors,
-        }),
-      } as any);
-
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+      await driveToComplete({ errors });
 
       expect(screen.getByText('Errors:')).toBeInTheDocument();
       expect(screen.getByText(/row 1.*invalid email/i)).toBeInTheDocument();
       expect(screen.getByText(/row 2.*required field/i)).toBeInTheDocument();
     });
 
-    it('should limit error display to 10', () => {
+    it('should limit error display to 10', async () => {
       const errors = Array.from({ length: 15 }, (_, i) => ({
         row: i + 1,
         column: 'test',
@@ -563,29 +641,13 @@ describe('BulkImportModal', () => {
         severity: 'error' as const,
       }));
 
-      mockedUseImport.mockReturnValue({
-        ...mockedUseImport(),
-        progress: importExportMockFactories.importProgress({
-          status: 'complete',
-          errors,
-        }),
-      } as any);
-
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+      await driveToComplete({ errors });
 
       expect(screen.getByText(/and 5 more/i)).toBeInTheDocument();
     });
 
-    it('should call onSuccess when complete', () => {
-      render(
-        <BulkImportModal
-          isOpen={true}
-          onClose={mockOnClose}
-          onSuccess={mockOnSuccess}
-        />
-      );
+    it('should call onSuccess when complete', async () => {
+      await driveToComplete();
 
       expect(mockOnSuccess).toHaveBeenCalled();
     });
@@ -637,28 +699,59 @@ describe('BulkImportModal', () => {
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
     });
 
-    it('should show "Close" text on complete step', () => {
-      mockedUseImport.mockReturnValue({
-        ...mockedUseImport(),
-        progress: importExportMockFactories.importProgress({ status: 'complete' }),
-      } as any);
+    it('should show "Close" text on complete step', async () => {
+      // Drive to complete step via onComplete callback
+      const mockFile = new File(['test,data'], 'test.csv', { type: 'text/csv' });
+      const mockPreview = importExportMockFactories.importPreviewResult({ validRows: 8 });
 
-      render(
-        <BulkImportModal isOpen={true} onClose={mockOnClose} />
-      );
+      mockPreviewImport.mockImplementation(async () => {
+        mockedUseImport.mockImplementation((opts?: any) => {
+          capturedOnComplete = opts?.onComplete;
+          return getDefaultMockReturn({ file: mockFile, preview: mockPreview }) as any;
+        });
+      });
 
-      expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /cancel/i })).not.toBeInTheDocument();
+      mockExecuteImport.mockImplementation(async () => {
+        mockedUseImport.mockImplementation((opts?: any) => {
+          capturedOnComplete = opts?.onComplete;
+          return getDefaultMockReturn({
+            file: mockFile,
+            preview: mockPreview,
+            progress: importExportMockFactories.importProgress({ status: 'complete' }),
+          }) as any;
+        });
+        capturedOnComplete?.();
+      });
+
+      const user = userEvent.setup();
+      render(<BulkImportModal isOpen={true} onClose={mockOnClose} />);
+
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await user.upload(fileInput, mockFile);
+      await waitFor(() => { expect(screen.getByText('test.csv')).toBeInTheDocument(); });
+
+      const importButton = screen.getByRole('button', { name: /import 8.*records/i });
+      await user.click(importButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Import Complete!')).toBeInTheDocument();
+      });
+
+      // On complete step, footer button should say "Close" not "Cancel"
+      expect(screen.getByRole('button', { name: /close import modal/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /cancel import/i })).not.toBeInTheDocument();
     });
 
     it('should cancel import when cancel clicked during import', async () => {
       const user = userEvent.setup();
 
-      mockedUseImport.mockReturnValue({
-        ...mockedUseImport(),
-        isLoading: true,
-        progress: importExportMockFactories.importProgress({ status: 'importing' }),
-      } as any);
+      mockedUseImport.mockImplementation((opts?: any) => {
+        capturedOnComplete = opts?.onComplete;
+        return getDefaultMockReturn({
+          isLoading: true,
+          progress: importExportMockFactories.importProgress({ status: 'importing' }),
+        }) as any;
+      });
 
       render(
         <BulkImportModal isOpen={true} onClose={mockOnClose} />
@@ -712,27 +805,23 @@ describe('BulkImportModal', () => {
     });
 
     it('should clear error when new file selected', async () => {
-      const user = userEvent.setup();
-
-      // First upload invalid file
-      const invalidFile = new File(['test'], 'test.txt', { type: 'text/plain' });
-
       render(
         <BulkImportModal isOpen={true} onClose={mockOnClose} />
       );
 
-      const input = screen.getByRole('button', { name: /select file/i })
-        .parentElement?.querySelector('input[type="file"]') as HTMLInputElement;
+      const input = document.querySelector('input[type="file"]') as HTMLInputElement;
 
-      await user.upload(input, invalidFile);
+      // First upload invalid file using fireEvent to bypass accept filter
+      const invalidFile = new File(['test'], 'test.txt', { type: 'text/plain' });
+      fireEvent.change(input, { target: { files: [invalidFile] } });
 
       await waitFor(() => {
         expect(screen.getByText(/please select a csv, excel, or json file/i)).toBeInTheDocument();
       });
 
-      // Then upload valid file
+      // Then upload valid file - error should clear
       const validFile = new File(['test,data'], 'test.csv', { type: 'text/csv' });
-      await user.upload(input, validFile);
+      fireEvent.change(input, { target: { files: [validFile] } });
 
       await waitFor(() => {
         expect(screen.queryByText(/please select a csv, excel, or json file/i)).not.toBeInTheDocument();

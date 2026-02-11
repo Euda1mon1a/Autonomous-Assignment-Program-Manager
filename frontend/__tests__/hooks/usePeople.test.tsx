@@ -13,7 +13,7 @@ import {
   useDeletePerson,
   useCertifications,
 } from '@/lib/hooks'
-import { createWrapper, mockFactories, mockResponses } from '../utils/test-utils'
+import { createWrapper, mockFactories, mockResponses } from '@/test-utils'
 import { PersonType } from '@/types/api'
 import * as api from '@/lib/api'
 

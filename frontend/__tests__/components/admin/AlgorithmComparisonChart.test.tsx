@@ -4,7 +4,7 @@
  * Tests algorithm comparison visualization, metrics display, and interactions
  */
 import React from 'react';
-import { render, screen } from '@/__tests__/utils/test-utils';
+import { render, screen } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import {
   AlgorithmComparisonChart,

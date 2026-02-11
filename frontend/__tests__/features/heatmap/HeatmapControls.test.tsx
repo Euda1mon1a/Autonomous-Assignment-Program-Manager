@@ -7,7 +7,7 @@ import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { HeatmapControls } from '@/features/heatmap/HeatmapControls';
 import { heatmapMockFactories } from './heatmap-mocks';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 
 describe('HeatmapControls', () => {
   const mockFilters = heatmapMockFactories.filters();

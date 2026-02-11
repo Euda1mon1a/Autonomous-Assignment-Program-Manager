@@ -5,7 +5,7 @@
  * for on-call assignment data and contact information.
  */
 
-import { renderHook, waitFor } from '@/__tests__/utils/test-utils';
+import { renderHook, waitFor } from '@/test-utils';
 import { QueryClient } from '@tanstack/react-query';
 import * as api from '@/lib/api';
 import {
@@ -17,7 +17,7 @@ import {
   callRosterQueryKeys,
 } from '@/features/call-roster/hooks';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 
 // Mock the API module
 jest.mock('@/lib/api');

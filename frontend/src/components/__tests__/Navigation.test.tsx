@@ -7,11 +7,19 @@ import React from 'react';
 import { render, screen } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { Navigation } from '../Navigation';
-import * as AuthContext from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
   usePathname: () => '/',
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    prefetch: jest.fn(),
+  }),
 }));
 
 // Mock Next.js Link
@@ -30,10 +38,17 @@ const mockAuth = {
 };
 
 jest.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => mockAuth,
+  useAuth: jest.fn(),
 }));
 
+const mockedUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
+
 describe('Navigation', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedUseAuth.mockReturnValue(mockAuth as any);
+  });
+
   it('renders without crashing', () => {
     render(<Navigation />);
     expect(screen.getByText('Scheduler')).toBeInTheDocument();
@@ -56,7 +71,7 @@ describe('Navigation', () => {
   });
 
   it('shows admin links for admin users', () => {
-    jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+    mockedUseAuth.mockReturnValue({
       user: { ...mockAuth.user, role: 'admin' },
       isAuthenticated: true,
       logout: jest.fn(),

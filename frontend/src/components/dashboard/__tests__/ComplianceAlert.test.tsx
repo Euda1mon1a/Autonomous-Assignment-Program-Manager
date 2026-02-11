@@ -1,297 +1,297 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck - Tests written for props-based interface but component uses hooks
 /**
  * Tests for ComplianceAlert Component
- * Component: dashboard/ComplianceAlert - Compliance violation alert
+ * Component: dashboard/ComplianceAlert - Compliance violation alert panel
+ *
+ * The component takes no props. It internally calls useValidateSchedule
+ * for the current month and displays the compliance status.
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@/test-utils';
+import { render, screen, waitFor } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { ComplianceAlert } from '../ComplianceAlert';
 
-// TODO: Tests written for props-based component but ComplianceAlert uses hooks internally
-// Skip until component interface is updated or tests are rewritten
-describe.skip('ComplianceAlert', () => {
-  const mockOnDismiss = jest.fn();
-  const mockOnView = jest.fn();
+// ============================================================================
+// Mocks
+// ============================================================================
 
-  beforeEach(() => {
-    mockOnDismiss.mockClear();
-    mockOnView.mockClear();
-  });
+const mockUseValidateSchedule = jest.fn();
 
-  describe('Rendering', () => {
-    it('renders alert title', () => {
-      render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Smith"
-          message="Exceeded 80 hours per week"
-          onDismiss={mockOnDismiss}
-        />
-      );
-      expect(screen.getByText(/compliance alert/i)).toBeInTheDocument();
-    });
+jest.mock('@/lib/hooks', () => ({
+  useValidateSchedule: (...args: unknown[]) => mockUseValidateSchedule(...args),
+}));
 
-    it('renders person name', () => {
-      render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Smith"
-          message="Exceeded 80 hours per week"
-          onDismiss={mockOnDismiss}
-        />
-      );
-      expect(screen.getByText('Dr. John Smith')).toBeInTheDocument();
-    });
+// Mock next/link
+jest.mock('next/link', () => {
+  return ({ children, href, ...rest }: { children: React.ReactNode; href: string; [key: string]: unknown }) => (
+    <a href={href} {...rest}>{children}</a>
+  );
+});
 
-    it('renders violation message', () => {
-      render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Smith"
-          message="Exceeded 80 hours per week"
-          onDismiss={mockOnDismiss}
-        />
-      );
-      expect(screen.getByText(/exceeded 80 hours/i)).toBeInTheDocument();
-    });
+// Mock framer-motion to avoid animation issues in tests
+jest.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => {
+      const { initial, animate, transition, ...rest } = props;
+      return <div {...rest}>{children}</div>;
+    },
+  },
+}));
 
-    it('renders dismiss button', () => {
-      render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Smith"
-          message="Exceeded 80 hours"
-          onDismiss={mockOnDismiss}
-        />
-      );
-      expect(screen.getByLabelText(/dismiss/i)).toBeInTheDocument();
-    });
+// ============================================================================
+// Tests
+// ============================================================================
 
-    it('renders view details button when onView provided', () => {
-      render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Smith"
-          message="Exceeded 80 hours"
-          onDismiss={mockOnDismiss}
-          onView={mockOnView}
-        />
-      );
-      expect(screen.getByText(/view details/i)).toBeInTheDocument();
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
+describe('ComplianceAlert', () => {
+  describe('Loading state', () => {
+    it('shows loading indicator when data is loading', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isError: false,
+      });
+
+      render(<ComplianceAlert />);
+      expect(screen.getByLabelText(/loading compliance data/i)).toBeInTheDocument();
     });
   });
 
-  describe('Alert Types', () => {
-    it('renders high severity alert for 80-hour violation', () => {
-      const { container } = render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Smith"
-          message="Exceeded 80 hours"
-          onDismiss={mockOnDismiss}
-        />
-      );
-      expect(container.querySelector('.bg-red-50')).toBeInTheDocument();
-    });
+  describe('Error state', () => {
+    it('shows error message when request fails', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+      });
 
-    it('renders medium severity alert for 1-in-7 violation', () => {
-      const { container } = render(
-        <ComplianceAlert
-          type="1-in-7-violation"
-          personName="Dr. John Smith"
-          message="Missing required day off"
-          onDismiss={mockOnDismiss}
-        />
-      );
-      expect(container.querySelector('.bg-amber-50')).toBeInTheDocument();
-    });
-
-    it('renders warning alert for approaching limit', () => {
-      const { container } = render(
-        <ComplianceAlert
-          type="approaching-limit"
-          personName="Dr. John Smith"
-          message="Approaching 80-hour limit"
-          onDismiss={mockOnDismiss}
-        />
-      );
-      expect(container.querySelector('.bg-yellow-50')).toBeInTheDocument();
-    });
-
-    it('renders info alert for supervision ratio', () => {
-      const { container } = render(
-        <ComplianceAlert
-          type="supervision-ratio"
-          personName="Dr. John Smith"
-          message="Supervision ratio concern"
-          onDismiss={mockOnDismiss}
-        />
-      );
-      expect(container.querySelector('.bg-blue-50')).toBeInTheDocument();
+      render(<ComplianceAlert />);
+      expect(screen.getByText(/unable to load compliance data/i)).toBeInTheDocument();
     });
   });
 
-  describe('Interaction', () => {
-    it('calls onDismiss when dismiss button clicked', () => {
-      render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Smith"
-          message="Exceeded 80 hours"
-          onDismiss={mockOnDismiss}
-        />
-      );
+  describe('No data state', () => {
+    it('shows empty state when no validation data exists', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: false,
+      });
 
-      fireEvent.click(screen.getByLabelText(/dismiss/i));
-      expect(mockOnDismiss).toHaveBeenCalledTimes(1);
+      render(<ComplianceAlert />);
+      expect(screen.getByText(/no compliance data/i)).toBeInTheDocument();
+      expect(screen.getByText(/generate a schedule/i)).toBeInTheDocument();
     });
 
-    it('calls onView when view details button clicked', () => {
-      render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Smith"
-          message="Exceeded 80 hours"
-          onDismiss={mockOnDismiss}
-          onView={mockOnView}
-        />
-      );
+    it('shows empty state when valid is undefined', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: { valid: undefined, totalViolations: 0, violations: [] },
+        isLoading: false,
+        isError: false,
+      });
 
-      fireEvent.click(screen.getByText(/view details/i));
-      expect(mockOnView).toHaveBeenCalledTimes(1);
-    });
-
-    it('does not render view button when onView not provided', () => {
-      render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Smith"
-          message="Exceeded 80 hours"
-          onDismiss={mockOnDismiss}
-        />
-      );
-
-      expect(screen.queryByText(/view details/i)).not.toBeInTheDocument();
+      render(<ComplianceAlert />);
+      expect(screen.getByText(/no compliance data/i)).toBeInTheDocument();
     });
   });
 
-  describe('Icons', () => {
-    it('renders alert icon for high severity', () => {
-      const { container } = render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Smith"
-          message="Exceeded 80 hours"
-          onDismiss={mockOnDismiss}
-        />
-      );
-      expect(container.querySelector('svg')).toBeInTheDocument();
+  describe('Clean state (no violations)', () => {
+    it('shows all clear when schedule is valid', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: {
+          valid: true,
+          totalViolations: 0,
+          violations: [],
+          coverageRate: 1.0,
+          statistics: null,
+        },
+        isLoading: false,
+        isError: false,
+      });
+
+      render(<ComplianceAlert />);
+      expect(screen.getByText(/all clear/i)).toBeInTheDocument();
+      expect(screen.getByText(/no acgme violations/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Violations state', () => {
+    it('shows violation count when violations exist', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: {
+          valid: false,
+          totalViolations: 3,
+          violations: [
+            { type: '80-hour', severity: 'critical', message: 'Exceeded 80-hour work week', personId: null, personName: null, blockId: null, details: null },
+            { type: '1-in-7', severity: 'error', message: 'Missing required day off', personId: null, personName: null, blockId: null, details: null },
+            { type: 'supervision', severity: 'warning', message: 'Supervision ratio exceeded', personId: null, personName: null, blockId: null, details: null },
+          ],
+          coverageRate: 0.85,
+          statistics: null,
+        },
+        isLoading: false,
+        isError: false,
+      });
+
+      render(<ComplianceAlert />);
+      expect(screen.getByText('3')).toBeInTheDocument();
+      expect(screen.getByText(/violations found/i)).toBeInTheDocument();
     });
 
-    it('renders warning icon for medium severity', () => {
-      const { container } = render(
-        <ComplianceAlert
-          type="1-in-7-violation"
-          personName="Dr. John Smith"
-          message="Missing day off"
-          onDismiss={mockOnDismiss}
-        />
-      );
-      expect(container.querySelector('svg')).toBeInTheDocument();
+    it('shows singular form for single violation', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: {
+          valid: false,
+          totalViolations: 1,
+          violations: [
+            { type: '80-hour', severity: 'critical', message: 'Exceeded 80-hour work week', personId: null, personName: null, blockId: null, details: null },
+          ],
+          coverageRate: 0.95,
+          statistics: null,
+        },
+        isLoading: false,
+        isError: false,
+      });
+
+      render(<ComplianceAlert />);
+      expect(screen.getByText('1')).toBeInTheDocument();
+      expect(screen.getByText(/violation found/i)).toBeInTheDocument();
+      // Should NOT have plural "Violations"
+      expect(screen.queryByText(/violations found/i)).not.toBeInTheDocument();
+    });
+
+    it('shows top 2 violation messages', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: {
+          valid: false,
+          totalViolations: 3,
+          violations: [
+            { type: '80-hour', severity: 'critical', message: 'Exceeded 80-hour work week', personId: null, personName: null, blockId: null, details: null },
+            { type: '1-in-7', severity: 'error', message: 'Missing required day off', personId: null, personName: null, blockId: null, details: null },
+            { type: 'supervision', severity: 'warning', message: 'Supervision ratio exceeded', personId: null, personName: null, blockId: null, details: null },
+          ],
+          coverageRate: 0.85,
+          statistics: null,
+        },
+        isLoading: false,
+        isError: false,
+      });
+
+      render(<ComplianceAlert />);
+      expect(screen.getByText('Exceeded 80-hour work week')).toBeInTheDocument();
+      expect(screen.getByText('Missing required day off')).toBeInTheDocument();
+      // Third violation should not be shown inline
+      expect(screen.queryByText('Supervision ratio exceeded')).not.toBeInTheDocument();
+      // "+1 more" indicator
+      expect(screen.getByText(/\+1 more/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Navigation', () => {
+    it('has a link to compliance details page', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: {
+          valid: true,
+          totalViolations: 0,
+          violations: [],
+          coverageRate: 1.0,
+          statistics: null,
+        },
+        isLoading: false,
+        isError: false,
+      });
+
+      render(<ComplianceAlert />);
+      const link = screen.getByRole('link', { name: /view detailed compliance report/i });
+      expect(link).toBeInTheDocument();
+      expect(link).toHaveAttribute('href', '/compliance');
     });
   });
 
   describe('Accessibility', () => {
-    it('has alert role', () => {
-      render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Smith"
-          message="Exceeded 80 hours"
-          onDismiss={mockOnDismiss}
-        />
-      );
+    it('has compliance status heading', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: {
+          valid: true,
+          totalViolations: 0,
+          violations: [],
+          coverageRate: 1.0,
+          statistics: null,
+        },
+        isLoading: false,
+        isError: false,
+      });
+
+      render(<ComplianceAlert />);
+      expect(screen.getByText('Compliance Status')).toBeInTheDocument();
+    });
+
+    it('has region role with label', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: {
+          valid: true,
+          totalViolations: 0,
+          violations: [],
+          coverageRate: 1.0,
+          statistics: null,
+        },
+        isLoading: false,
+        isError: false,
+      });
+
+      render(<ComplianceAlert />);
+      expect(screen.getByRole('region', { name: /compliance status/i })).toBeInTheDocument();
+    });
+
+    it('has alert role when violations exist', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: {
+          valid: false,
+          totalViolations: 2,
+          violations: [
+            { type: '80-hour', severity: 'critical', message: 'Exceeded 80-hour work week', personId: null, personName: null, blockId: null, details: null },
+            { type: '1-in-7', severity: 'error', message: 'Missing required day off', personId: null, personName: null, blockId: null, details: null },
+          ],
+          coverageRate: 0.9,
+          statistics: null,
+        },
+        isLoading: false,
+        isError: false,
+      });
+
+      render(<ComplianceAlert />);
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });
 
-    it('has accessible dismiss button', () => {
-      render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Smith"
-          message="Exceeded 80 hours"
-          onDismiss={mockOnDismiss}
-        />
-      );
-      const dismissButton = screen.getByLabelText(/dismiss/i);
-      expect(dismissButton).toBeInTheDocument();
+    it('has error alert role when request fails', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+      });
+
+      render(<ComplianceAlert />);
+      expect(screen.getByRole('alert')).toBeInTheDocument();
     });
   });
 
-  describe('Edge Cases', () => {
-    it('handles very long person names', () => {
-      render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Michael Christopher Smith-Johnson III"
-          message="Exceeded 80 hours"
-          onDismiss={mockOnDismiss}
-        />
-      );
-      expect(screen.getByText(/Dr. John Michael Christopher Smith-Johnson III/)).toBeInTheDocument();
-    });
+  describe('Hook integration', () => {
+    it('passes current month date range to useValidateSchedule', () => {
+      mockUseValidateSchedule.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isError: false,
+      });
 
-    it('handles very long messages', () => {
-      const longMessage =
-        'This person has exceeded the 80-hour work week limit for multiple consecutive weeks and needs immediate schedule adjustment.';
-      render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. John Smith"
-          message={longMessage}
-          onDismiss={mockOnDismiss}
-        />
-      );
-      expect(screen.getByText(longMessage)).toBeInTheDocument();
-    });
+      render(<ComplianceAlert />);
 
-    it('handles special characters in names', () => {
-      render(
-        <ComplianceAlert
-          type="80-hour-violation"
-          personName="Dr. O'Brien-Smith"
-          message="Exceeded 80 hours"
-          onDismiss={mockOnDismiss}
-        />
+      expect(mockUseValidateSchedule).toHaveBeenCalledWith(
+        expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/)
       );
-      expect(screen.getByText("Dr. O'Brien-Smith")).toBeInTheDocument();
-    });
-  });
-
-  describe('Multiple Alerts', () => {
-    it('renders multiple alerts independently', () => {
-      const { container } = render(
-        <>
-          <ComplianceAlert
-            type="80-hour-violation"
-            personName="Dr. John Smith"
-            message="Exceeded 80 hours"
-            onDismiss={mockOnDismiss}
-          />
-          <ComplianceAlert
-            type="1-in-7-violation"
-            personName="Dr. Jane Doe"
-            message="Missing day off"
-            onDismiss={mockOnDismiss}
-          />
-        </>
-      );
-
-      const alerts = container.querySelectorAll('[role="alert"]');
-      expect(alerts.length).toBe(2);
     });
   });
 });

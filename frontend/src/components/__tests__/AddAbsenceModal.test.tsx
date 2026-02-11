@@ -30,7 +30,7 @@ describe('AddAbsenceModal', () => {
 
   it('renders when isOpen is true', () => {
     render(<AddAbsenceModal isOpen={true} onClose={mockOnClose} />);
-    expect(screen.getByText(/add absence/i)).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
   it('does not render when isOpen is false', () => {

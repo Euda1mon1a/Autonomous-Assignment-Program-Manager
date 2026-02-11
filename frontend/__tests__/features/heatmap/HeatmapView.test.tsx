@@ -7,7 +7,7 @@ import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { HeatmapView, HeatmapViewSkeleton } from '@/features/heatmap/HeatmapView';
 import { heatmapMockFactories } from './heatmap-mocks';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 
 // Store the onClick handler for later invocation in tests
 let capturedOnClick: ((event: any) => void) | null = null;

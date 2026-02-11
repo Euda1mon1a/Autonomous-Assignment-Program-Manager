@@ -9,11 +9,12 @@
  * - Async test helpers
  */
 
-import React, { ReactElement } from 'react';
+import React, { ReactElement, ReactNode } from 'react';
 import { render, RenderOptions, RenderResult, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
+import { PersonType, AbsenceType, AssignmentRole } from '@/types/api';
 
 // ============================================================================
 // Test Configuration Constants
@@ -101,6 +102,24 @@ export function renderWithProviders(
   return {
     ...render(ui, { wrapper: Wrapper, ...renderOptions }),
     user: userEvent.setup(),
+  };
+}
+
+/**
+ * Wrapper component for testing hooks with React Query via renderHook
+ *
+ * @example
+ * const { result } = renderHook(() => useMyHook(), { wrapper: createWrapper() });
+ */
+export function createWrapper() {
+  const queryClient = createTestQueryClient();
+
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    );
   };
 }
 
@@ -281,6 +300,116 @@ export const mockData = {
   }),
 };
 
+/**
+ * Mock data factories using proper enum values for TypeScript type checking.
+ * Migrated from legacy __tests__/utils/test-utils.tsx.
+ */
+export const mockFactories = {
+  person: (overrides = {}) => ({
+    id: 'person-1',
+    name: 'Dr. John Smith',
+    email: 'john.smith@hospital.org',
+    type: PersonType.RESIDENT,
+    pgyLevel: 2,
+    performsProcedures: true,
+    specialties: ['Internal Medicine'],
+    primaryDuty: null,
+    facultyRole: null,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+    ...overrides,
+  }),
+
+  absence: (overrides = {}) => ({
+    id: 'absence-1',
+    personId: 'person-1',
+    startDate: '2024-02-01',
+    endDate: '2024-02-07',
+    absenceType: AbsenceType.VACATION,
+    deploymentOrders: false,
+    tdyLocation: null,
+    replacementActivity: null,
+    notes: null,
+    isAwayFromProgram: true,
+    createdAt: '2024-01-15T00:00:00Z',
+    ...overrides,
+  }),
+
+  rotationTemplate: (overrides = {}) => ({
+    id: 'template-1',
+    name: 'Inpatient Medicine',
+    activityType: 'inpatient',
+    templateCategory: 'rotation' as const,
+    abbreviation: 'IM',
+    displayAbbreviation: 'IM',
+    fontColor: null,
+    backgroundColor: null,
+    clinicLocation: null,
+    maxResidents: 4,
+    requiresSpecialty: null,
+    requiresProcedureCredential: false,
+    supervisionRequired: true,
+    maxSupervisionRatio: 4,
+    createdAt: '2024-01-01T00:00:00Z',
+    ...overrides,
+  }),
+
+  assignment: (overrides = {}) => ({
+    id: 'assignment-1',
+    blockId: 'block-1',
+    personId: 'person-1',
+    rotationTemplateId: 'template-1',
+    role: AssignmentRole.PRIMARY,
+    activityOverride: null,
+    notes: null,
+    createdBy: null,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+    ...overrides,
+  }),
+
+  validation: (overrides = {}) => ({
+    valid: true,
+    totalViolations: 0,
+    violations: [],
+    coverageRate: 100,
+    statistics: null,
+    ...overrides,
+  }),
+};
+
+/**
+ * Pre-built mock API responses.
+ * Migrated from legacy __tests__/utils/test-utils.tsx.
+ */
+export const mockResponses = {
+  listPeople: {
+    items: [
+      mockFactories.person(),
+      mockFactories.person({ id: 'person-2', name: 'Dr. Jane Doe', pgyLevel: 1 }),
+    ],
+    total: 2,
+  },
+
+  listAbsences: {
+    items: [mockFactories.absence()],
+    total: 1,
+  },
+
+  listTemplates: {
+    items: [
+      mockFactories.rotationTemplate(),
+      mockFactories.rotationTemplate({ id: 'template-2', name: 'Outpatient Clinic', activityType: 'outpatient' }),
+    ],
+    total: 2,
+  },
+
+  listAssignments: {
+    items: [mockFactories.assignment()],
+    total: 1,
+  },
+};
+
 // ============================================================================
 // API Mock Helpers
 // ============================================================================
@@ -399,5 +528,8 @@ export async function selectOption(
 // ============================================================================
 
 export * from '@testing-library/react';
+// Override bare render with provider-wrapped version so tests importing
+// `import { render } from '@/test-utils'` get QueryClient automatically
+export { renderWithProviders as render };
 export { userEvent };
 export { default as userEventLib } from '@testing-library/user-event';

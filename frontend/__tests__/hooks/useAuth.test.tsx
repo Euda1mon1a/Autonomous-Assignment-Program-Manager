@@ -13,7 +13,7 @@ import {
   usePermissions,
   useRole,
 } from '@/hooks'
-import { createWrapper } from '../utils/test-utils'
+import { createWrapper } from '@/test-utils'
 import * as authApi from '@/lib/auth'
 
 // Mock the auth module

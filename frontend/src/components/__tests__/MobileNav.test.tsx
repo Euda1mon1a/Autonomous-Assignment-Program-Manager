@@ -7,12 +7,12 @@ import React from 'react';
 import { render, screen, fireEvent } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { MobileNav } from '../MobileNav';
-import * as AuthContext from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import * as NextNavigation from 'next/navigation';
 
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
-  usePathname: () => '/',
+  usePathname: jest.fn(() => '/'),
 }));
 
 // Mock Next.js Link
@@ -31,13 +31,16 @@ const mockAuth = {
 };
 
 jest.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => mockAuth,
+  useAuth: jest.fn(),
 }));
+
+const mockedUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 
 describe('MobileNav', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     document.body.style.overflow = '';
+    mockedUseAuth.mockReturnValue(mockAuth as any);
   });
 
   describe('Rendering', () => {
@@ -142,7 +145,7 @@ describe('MobileNav', () => {
     });
 
     it('shows login link when not authenticated', () => {
-      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      mockedUseAuth.mockReturnValue({
         user: null,
         isAuthenticated: false,
         logout: jest.fn(),
@@ -169,7 +172,7 @@ describe('MobileNav', () => {
     });
 
     it('shows admin items for admin users', () => {
-      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      mockedUseAuth.mockReturnValue({
         user: { ...mockAuth.user, role: 'admin' },
         isAuthenticated: true,
         logout: jest.fn(),
@@ -213,7 +216,7 @@ describe('MobileNav', () => {
     });
 
     it('highlights active page', () => {
-      jest.spyOn(NextNavigation, 'usePathname').mockReturnValue('/people');
+      (NextNavigation.usePathname as jest.Mock).mockReturnValue('/people');
 
       render(<MobileNav />);
 

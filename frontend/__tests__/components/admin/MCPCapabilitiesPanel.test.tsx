@@ -4,7 +4,7 @@
  * Tests MCP tool display, categories, search functionality, and interactions
  */
 import React from 'react';
-import { render, screen, within } from '@/__tests__/utils/test-utils';
+import { render, screen, within } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import MCPCapabilitiesPanel from '@/components/admin/MCPCapabilitiesPanel';
 

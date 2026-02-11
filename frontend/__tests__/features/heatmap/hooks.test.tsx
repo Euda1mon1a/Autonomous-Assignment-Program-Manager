@@ -17,7 +17,7 @@ import {
   heatmapQueryKeys,
 } from '@/features/heatmap/hooks';
 import { heatmapMockFactories, heatmapMockResponses } from './heatmap-mocks';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 import * as api from '@/lib/api';
 
 // Mock the api module

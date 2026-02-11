@@ -4,7 +4,7 @@
  * Tests chat interface, message display, streaming, artifacts, and interactions
  */
 import React from 'react';
-import { render, screen, waitFor } from '@/__tests__/utils/test-utils';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import ClaudeCodeChat from '@/components/admin/ClaudeCodeChat';
 import { ClaudeChatProvider } from '@/contexts/ClaudeChatContext';
@@ -18,7 +18,7 @@ const mockClearMessages = jest.fn();
 
 jest.mock('@/contexts/ClaudeChatContext', () => ({
   ClaudeChatProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  useClaudeChatContext: () => ({
+  useClaudeChatContext: jest.fn(() => ({
     session: { id: 'test-session', title: 'Test Session' },
     messages: [],
     isLoading: false,
@@ -30,7 +30,7 @@ jest.mock('@/contexts/ClaudeChatContext', () => ({
     exportSession: jest.fn(),
     getSavedSessions: jest.fn(() => []),
     loadSession: jest.fn(),
-  }),
+  })),
 }));
 
 describe('ClaudeCodeChat', () => {

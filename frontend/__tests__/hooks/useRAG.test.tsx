@@ -1,259 +1,254 @@
-// @ts-nocheck - Tests written for custom interface but hook returns UseMutationResult
-import { renderHook, waitFor, act } from '@/__tests__/utils/test-utils'
-import { useRAGSearch as useRAG } from '@/hooks/useRAG'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ReactNode } from 'react'
+/**
+ * Tests for useRAG hooks.
+ *
+ * Tests cover:
+ * - useRAGSearch: mutation-based semantic search
+ * - useRAGHealth: query-based health status
+ */
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
+import { renderHook, waitFor, act } from '@/test-utils'
+import { createWrapper } from '@/test-utils'
+import { useRAGSearch, useRAGHealth } from '@/hooks/useRAG'
+import type { RAGRetrieveResponse, RAGHealthResponse } from '@/hooks/useRAG'
+
+// ============================================================================
+// Mocks
+// ============================================================================
+
+const mockGet = jest.fn()
+const mockPost = jest.fn()
+
+jest.mock('@/lib/api', () => ({
+  get: (...args: unknown[]) => mockGet(...args),
+  post: (...args: unknown[]) => mockPost(...args),
+  ApiError: class ApiError extends Error {},
+}))
+
+// ============================================================================
+// Test Data
+// ============================================================================
+
+const mockSearchResponse: RAGRetrieveResponse = {
+  chunks: [
+    {
+      chunk_id: 'chunk-1',
+      category: 'acgme_rules',
+      content: 'Work hour limits apply to all residents...',
+      similarity_score: 0.95, // @gorgon-ok
+      metadata: { source_file: 'acgme_rules.md', section_title: 'Work Hours' },
     },
-  },
+    {
+      chunk_id: 'chunk-2',
+      category: 'acgme_rules',
+      content: 'Maximum 80 hours per week...',
+      similarity_score: 0.89, // @gorgon-ok
+      metadata: { source_file: 'acgme_rules.md', section_title: '80-Hour Rule' },
+    },
+  ],
+  total_searched: 150,
+  query_time_ms: 42, // @gorgon-ok
+  category_filter: 'acgme_rules',
+}
+
+const mockHealthResponse: RAGHealthResponse = {
+  status: 'healthy',
+  vector_store_available: true, // @gorgon-ok
+  document_count: 67, // @gorgon-ok
+  embedding_model: 'text-embedding-3-small', // @gorgon-ok
+  last_updated: '2024-01-01T00:00:00Z',
+}
+
+// ============================================================================
+// Tests
+// ============================================================================
+
+beforeEach(() => {
+  jest.clearAllMocks()
 })
 
-const wrapper = ({ children }: { children: ReactNode }) => (
-  <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-)
+describe('useRAGSearch', () => {
+  it('should perform a search and return chunks', async () => {
+    mockPost.mockResolvedValueOnce(mockSearchResponse)
 
-// TODO: Tests written for custom interface but hook returns UseMutationResult
-// Interface has been refactored to standard React Query pattern
-describe.skip('useRAG', () => {
-  beforeEach(() => {
-    queryClient.clear()
-    global.fetch = jest.fn()
-  })
-
-  describe('Document Search', () => {
-    it('should search documents by query', async () => {
-      const mockResults = {
-        results: [
-          { id: '1', title: 'ACGME Rules', content: 'Work hour limits...', score: 0.95 },
-          { id: '2', title: '80-Hour Rule', content: 'Maximum 80 hours...', score: 0.89 },
-        ],
-      }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResults,
-      })
-
-      const { result } = renderHook(() => useRAG(), { wrapper })
-
-      await act(async () => {
-        await result.current.search('ACGME work hours')
-      })
-
-      expect(result.current.results).toHaveLength(2)
-      expect(result.current.results[0].score).toBeGreaterThan(
-        result.current.results[1].score
-      )
+    const { result } = renderHook(() => useRAGSearch(), {
+      wrapper: createWrapper(),
     })
 
-    it('should handle empty search results', async () => {
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ results: [] }),
-      })
-
-      const { result } = renderHook(() => useRAG(), { wrapper })
-
-      await act(async () => {
-        await result.current.search('nonexistent query')
-      })
-
-      expect(result.current.results).toHaveLength(0)
+    act(() => {
+      result.current.mutate({ query: 'ACGME work hours', category: 'acgme_rules', top_k: 5 })
     })
 
-    it('should debounce search queries', async () => {
-      jest.useFakeTimers()
-      ;(global.fetch as jest.Mock).mockResolvedValue({
-        ok: true,
-        json: async () => ({ results: [] }),
-      })
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
 
-      const { result } = renderHook(() => useRAG({ debounceMs: 300 }), {
-        wrapper,
-      })
+    expect(result.current.data?.chunks).toHaveLength(2)
+    expect(result.current.data?.chunks[0].similarity_score).toBe(0.95)
+    expect(result.current.data?.total_searched).toBe(150)
 
-      act(() => {
-        result.current.search('AC')
-        result.current.search('ACG')
-        result.current.search('ACGME')
-      })
-
-      jest.advanceTimersByTime(300)
-
-      await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledTimes(1)
-      })
-
-      jest.useRealTimers()
+    expect(mockPost).toHaveBeenCalledWith('/rag/retrieve', {
+      query: 'ACGME work hours',
+      category: 'acgme_rules',
+      top_k: 5,
     })
   })
 
-  describe('Document Indexing', () => {
-    it('should index a new document', async () => {
-      const mockResponse = { id: 'doc-123', success: true }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      })
+  it('should handle empty search results', async () => {
+    const emptyResponse: RAGRetrieveResponse = {
+      chunks: [],
+      total_searched: 150,
+      query_time_ms: 10, // @gorgon-ok
+    }
+    mockPost.mockResolvedValueOnce(emptyResponse)
 
-      const { result } = renderHook(() => useRAG(), { wrapper })
-
-      await act(async () => {
-        await result.current.indexDocument({
-          title: 'New Policy',
-          content: 'Policy content...',
-        })
-      })
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/rag/index'),
-        expect.objectContaining({
-          method: 'POST',
-        })
-      )
+    const { result } = renderHook(() => useRAGSearch(), {
+      wrapper: createWrapper(),
     })
 
-    it('should validate document before indexing', async () => {
-      const { result } = renderHook(() => useRAG(), { wrapper })
+    act(() => {
+      result.current.mutate({ query: 'nonexistent topic' })
+    })
 
-      await act(async () => {
-        try {
-          await result.current.indexDocument({
-            title: '',
-            content: '',
-          })
-        } catch (e: any) {
-          expect(e.message).toContain('Title and content required')
-        }
-      })
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    expect(result.current.data?.chunks).toHaveLength(0)
+  })
+
+  it('should handle search errors', async () => {
+    mockPost.mockRejectedValueOnce(new Error('Search service unavailable'))
+
+    const { result } = renderHook(() => useRAGSearch(), {
+      wrapper: createWrapper(),
+    })
+
+    act(() => {
+      result.current.mutate({ query: 'test' })
+    })
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true)
+    })
+
+    expect(result.current.error).toBeDefined()
+  })
+
+  it('should support threshold parameter', async () => {
+    mockPost.mockResolvedValueOnce(mockSearchResponse)
+
+    const { result } = renderHook(() => useRAGSearch(), {
+      wrapper: createWrapper(),
+    })
+
+    act(() => {
+      result.current.mutate({ query: 'rules', threshold: 0.7 })
+    })
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
+    })
+
+    expect(mockPost).toHaveBeenCalledWith('/rag/retrieve', {
+      query: 'rules',
+      threshold: 0.7,
     })
   })
 
-  describe('Similarity Scores', () => {
-    it('should return documents sorted by relevance', async () => {
-      const mockResults = {
-        results: [
-          { id: '1', score: 0.95 },
-          { id: '2', score: 0.75 },
-          { id: '3', score: 0.85 },
-        ],
-      }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResults,
-      })
+  it('should report pending state while searching', async () => {
+    let resolveSearch: (value: RAGRetrieveResponse) => void
+    const pendingPromise = new Promise<RAGRetrieveResponse>((resolve) => {
+      resolveSearch = resolve
+    })
+    mockPost.mockReturnValueOnce(pendingPromise)
 
-      const { result } = renderHook(() => useRAG(), { wrapper })
-
-      await act(async () => {
-        await result.current.search('test')
-      })
-
-      const scores = result.current.results.map((r: { score: number }) => r.score)
-      expect(scores).toEqual([0.95, 0.85, 0.75])
+    const { result } = renderHook(() => useRAGSearch(), {
+      wrapper: createWrapper(),
     })
 
-    it('should filter by minimum score threshold', async () => {
-      const mockResults = {
-        results: [
-          { id: '1', score: 0.95 },
-          { id: '2', score: 0.45 },
-          { id: '3', score: 0.75 },
-        ],
-      }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResults,
-      })
+    expect(result.current.isPending).toBe(false)
 
-      const { result } = renderHook(() => useRAG({ minScore: 0.7 }), {
-        wrapper,
-      })
+    act(() => {
+      result.current.mutate({ query: 'test' })
+    })
 
-      await act(async () => {
-        await result.current.search('test')
-      })
+    await waitFor(() => {
+      expect(result.current.isPending).toBe(true)
+    })
 
-      expect(result.current.results).toHaveLength(2)
-      expect(result.current.results.every((r: { score: number }) => r.score >= 0.7)).toBe(true)
+    await act(async () => {
+      resolveSearch!(mockSearchResponse)
+    })
+
+    await waitFor(() => {
+      expect(result.current.isPending).toBe(false)
+      expect(result.current.isSuccess).toBe(true)
     })
   })
+})
 
-  describe('Filters and Metadata', () => {
-    it('should apply metadata filters', async () => {
-      const mockResults = {
-        results: [{ id: '1', metadata: { type: 'acgme' } }],
-      }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResults,
-      })
+describe('useRAGHealth', () => {
+  it('should fetch health status', async () => {
+    mockGet.mockResolvedValueOnce(mockHealthResponse)
 
-      const { result } = renderHook(() => useRAG(), { wrapper })
-
-      await act(async () => {
-        await result.current.search('rules', { type: 'acgme' })
-      })
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('type=acgme'),
-        expect.any(Object)
-      )
+    const { result } = renderHook(() => useRAGHealth({ refetchInterval: false as unknown as number }), {
+      wrapper: createWrapper(),
     })
 
-    it('should limit result count', async () => {
-      const mockResults = {
-        results: Array(20).fill({ id: '1', score: 0.8 }),
-      }
-      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResults,
-      })
-
-      const { result } = renderHook(() => useRAG({ limit: 5 }), { wrapper })
-
-      await act(async () => {
-        await result.current.search('test')
-      })
-
-      expect(result.current.results).toHaveLength(5)
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
     })
+
+    expect(result.current.data?.status).toBe('healthy')
+    expect(result.current.data?.vector_store_available).toBe(true)
+    expect(result.current.data?.document_count).toBe(67)
+    expect(mockGet).toHaveBeenCalledWith('/rag/health')
   })
 
-  describe('Error Handling', () => {
-    it('should handle search errors', async () => {
-      ;(global.fetch as jest.Mock).mockRejectedValueOnce(
-        new Error('Search failed')
-      )
+  it('should handle unhealthy status', async () => {
+    const unhealthyResponse: RAGHealthResponse = {
+      status: 'unhealthy',
+      vector_store_available: false, // @gorgon-ok
+      document_count: 0, // @gorgon-ok
+      embedding_model: 'text-embedding-3-small', // @gorgon-ok
+    }
+    mockGet.mockResolvedValueOnce(unhealthyResponse)
 
-      const { result } = renderHook(() => useRAG(), { wrapper })
-
-      await act(async () => {
-        try {
-          await result.current.search('test')
-        } catch (e) {
-          expect(result.current.error).toBeDefined()
-        }
-      })
+    const { result } = renderHook(() => useRAGHealth({ refetchInterval: false as unknown as number }), {
+      wrapper: createWrapper(),
     })
 
-    it('should handle network errors', async () => {
-      ;(global.fetch as jest.Mock).mockRejectedValueOnce(
-        new Error('Network error')
-      )
-
-      const { result } = renderHook(() => useRAG(), { wrapper })
-
-      await act(async () => {
-        try {
-          await result.current.search('test')
-        } catch (e: any) {
-          expect(e.message).toContain('Network')
-        }
-      })
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true)
     })
+
+    expect(result.current.data?.status).toBe('unhealthy')
+    expect(result.current.data?.vector_store_available).toBe(false)
+  })
+
+  it('should handle health check errors', async () => {
+    // Hook has retry: 1, so mock must reject twice
+    mockGet.mockRejectedValue(new Error('Health check failed'))
+
+    const { result } = renderHook(
+      () => useRAGHealth({ refetchInterval: false as unknown as number }),
+      { wrapper: createWrapper() }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true)
+    }, { timeout: 5000 })
+
+    mockGet.mockReset()
+  })
+
+  it('should respect enabled option', () => {
+    const { result } = renderHook(
+      () => useRAGHealth({ enabled: false }),
+      { wrapper: createWrapper() }
+    )
+
+    expect(result.current.isFetching).toBe(false)
+    expect(mockGet).not.toHaveBeenCalled()
   })
 })

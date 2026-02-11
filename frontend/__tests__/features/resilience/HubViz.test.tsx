@@ -21,7 +21,7 @@ import { HubVisualization as HubVisualizationBase } from '@/features/resilience/
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const HubVisualization = HubVisualizationBase as React.FC<any>;
 import { resilienceMockFactories, resilienceMockResponses } from './resilience-mocks';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 import * as api from '@/lib/api';
 
 // Mock the api module

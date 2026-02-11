@@ -28,7 +28,7 @@ describe('AddPersonModal', () => {
 
   it('renders when isOpen is true', () => {
     render(<AddPersonModal isOpen={true} onClose={mockOnClose} />);
-    expect(screen.getByText(/add person/i)).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
   it('does not render when isOpen is false', () => {

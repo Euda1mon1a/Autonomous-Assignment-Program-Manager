@@ -45,7 +45,7 @@ describe('EditTemplateModal', () => {
 
   it('renders when isOpen is true', () => {
     render(<EditTemplateModal isOpen={true} template={mockTemplate} onClose={mockOnClose} />);
-    expect(screen.getByText(/edit template/i)).toBeInTheDocument();
+    expect(screen.getByText(/edit rotation template/i)).toBeInTheDocument();
   });
 
   it('does not render when isOpen is false', () => {

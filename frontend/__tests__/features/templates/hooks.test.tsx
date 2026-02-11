@@ -5,7 +5,7 @@
  */
 
 import { renderHook, waitFor, act } from '@/test-utils';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 import {
   useTemplates,
   useTemplate,

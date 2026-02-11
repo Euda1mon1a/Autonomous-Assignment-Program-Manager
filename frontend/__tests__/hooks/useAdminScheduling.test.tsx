@@ -1,4 +1,4 @@
-import { renderHook, waitFor, act } from '@/__tests__/utils/test-utils'
+import { renderHook, waitFor, act } from '@/test-utils'
 // NOTE: useAdminScheduling hook doesn't exist - these tests are for planned functionality
 // Import individual hooks that do exist for now
 import { adminSchedulingKeys } from '@/hooks/useAdminScheduling'

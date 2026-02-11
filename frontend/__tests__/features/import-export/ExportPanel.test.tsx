@@ -6,7 +6,7 @@ import {
   importExportMockFactories,
   importExportMockResponses,
 } from './import-export-mocks';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 import * as useExportModule from '@/features/import-export/useExport';
 
 // Mock the useExport hook

@@ -7,7 +7,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { UserMenu } from '../UserMenu';
-import * as AuthContext from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Mock Auth context
 const mockLogout = jest.fn();
@@ -19,11 +19,10 @@ const mockUser = {
 };
 
 jest.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: mockUser,
-    logout: mockLogout,
-  }),
+  useAuth: jest.fn(),
 }));
+
+const mockedUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 
 // Mock Next.js Link
 jest.mock('next/link', () => {
@@ -37,6 +36,13 @@ jest.mock('next/link', () => {
 describe('UserMenu', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedUseAuth.mockReturnValue({
+      user: mockUser,
+      logout: mockLogout,
+      isAuthenticated: true,
+      hasPermission: jest.fn(),
+      hasRole: jest.fn(),
+    } as any);
   });
 
   describe('Rendering', () => {
@@ -51,7 +57,7 @@ describe('UserMenu', () => {
     });
 
     it('renders nothing when no user', () => {
-      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      mockedUseAuth.mockReturnValue({
         user: null,
         logout: mockLogout,
         isAuthenticated: false,
@@ -146,7 +152,7 @@ describe('UserMenu', () => {
     });
 
     it('handles admin role badge color', () => {
-      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      mockedUseAuth.mockReturnValue({
         user: { ...mockUser, role: 'admin' },
         logout: mockLogout,
         isAuthenticated: true,
@@ -209,7 +215,7 @@ describe('UserMenu', () => {
     });
 
     it('limits initials to 2 characters', () => {
-      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      mockedUseAuth.mockReturnValue({
         user: { ...mockUser, username: 'John Paul Smith' },
         logout: mockLogout,
         isAuthenticated: true,
@@ -224,7 +230,7 @@ describe('UserMenu', () => {
     });
 
     it('uppercases initials', () => {
-      jest.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      mockedUseAuth.mockReturnValue({
         user: { ...mockUser, username: 'jane smith' },
         logout: mockLogout,
         isAuthenticated: true,
