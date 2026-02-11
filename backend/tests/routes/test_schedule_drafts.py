@@ -129,3 +129,273 @@ def test_get_draft_includes_approval_fields(
     assert data["approval_reason"] == "Approved for emergency"
     assert data["lock_date_at_approval"] == approval_date.isoformat()
     assert data["approved_at"] is not None
+
+
+# ---------------------------------------------------------------------------
+# Request-validation tests (422 on malformed bodies)
+# ---------------------------------------------------------------------------
+
+DUMMY_DRAFT_ID = "00000000-0000-0000-0000-000000000001"
+VALID_PERSON_ID = "00000000-0000-0000-0000-000000000001"
+
+
+# --- POST /api/v1/schedules/drafts (ScheduleDraftCreate) ------------------
+
+
+@pytest.mark.unit
+def test_create_draft_empty_body_returns_422(client: TestClient, auth_headers):
+    response = client.post(
+        "/api/v1/schedules/drafts",
+        json={},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_create_draft_missing_dates_returns_422(client: TestClient, auth_headers):
+    response = client.post(
+        "/api/v1/schedules/drafts",
+        json={"source_type": "manual"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_create_draft_invalid_source_type_returns_422(client: TestClient, auth_headers):
+    response = client.post(
+        "/api/v1/schedules/drafts",
+        json={
+            "source_type": "BOGUS",
+            "target_start_date": "2025-01-01",
+            "target_end_date": "2025-01-07",
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_create_draft_end_before_start_returns_422(client: TestClient, auth_headers):
+    response = client.post(
+        "/api/v1/schedules/drafts",
+        json={
+            "source_type": "manual",
+            "target_start_date": "2025-01-07",
+            "target_end_date": "2025-01-01",
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_create_draft_invalid_date_format_returns_422(client: TestClient, auth_headers):
+    response = client.post(
+        "/api/v1/schedules/drafts",
+        json={
+            "source_type": "manual",
+            "target_start_date": "not-a-date",
+            "target_end_date": "2025-01-07",
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_create_draft_target_block_out_of_range_returns_422(
+    client: TestClient, auth_headers
+):
+    response = client.post(
+        "/api/v1/schedules/drafts",
+        json={
+            "source_type": "manual",
+            "target_start_date": "2025-01-01",
+            "target_end_date": "2025-01-07",
+            "target_block": 0,
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_create_draft_notes_too_long_returns_422(client: TestClient, auth_headers):
+    response = client.post(
+        "/api/v1/schedules/drafts",
+        json={
+            "source_type": "manual",
+            "target_start_date": "2025-01-01",
+            "target_end_date": "2025-01-07",
+            "notes": "x" * 2001,
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+# --- POST /api/v1/schedules/drafts/{draft_id}/assignments (DraftAssignmentCreate) ---
+
+
+@pytest.mark.unit
+def test_add_assignment_empty_body_returns_422(client: TestClient, auth_headers):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/assignments",
+        json={},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_add_assignment_invalid_person_id_returns_422(client: TestClient, auth_headers):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/assignments",
+        json={"person_id": "not-uuid", "assignment_date": "2025-01-01"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_add_assignment_missing_date_returns_422(client: TestClient, auth_headers):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/assignments",
+        json={"person_id": VALID_PERSON_ID},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_add_assignment_invalid_time_of_day_returns_422(
+    client: TestClient, auth_headers
+):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/assignments",
+        json={
+            "person_id": VALID_PERSON_ID,
+            "assignment_date": "2025-01-01",
+            "time_of_day": "EVENING",
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_add_assignment_invalid_change_type_returns_422(
+    client: TestClient, auth_headers
+):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/assignments",
+        json={
+            "person_id": VALID_PERSON_ID,
+            "assignment_date": "2025-01-01",
+            "change_type": "INVALID",
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+# --- POST /api/v1/schedules/drafts/{draft_id}/flags/acknowledge (DraftFlagBulkAcknowledge) ---
+
+
+@pytest.mark.unit
+def test_bulk_acknowledge_empty_body_returns_422(client: TestClient, auth_headers):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/flags/acknowledge",
+        json={},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_bulk_acknowledge_empty_flag_ids_returns_422(client: TestClient, auth_headers):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/flags/acknowledge",
+        json={"flag_ids": []},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_bulk_acknowledge_invalid_uuid_in_list_returns_422(
+    client: TestClient, auth_headers
+):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/flags/acknowledge",
+        json={"flag_ids": ["not-a-uuid"]},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_bulk_acknowledge_too_many_flags_returns_422(client: TestClient, auth_headers):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/flags/acknowledge",
+        json={"flag_ids": [str(uuid4()) for _ in range(101)]},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_bulk_acknowledge_resolution_note_too_long_returns_422(
+    client: TestClient, auth_headers
+):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/flags/acknowledge",
+        json={
+            "flag_ids": [str(uuid4())],
+            "resolution_note": "x" * 501,
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+# --- POST /api/v1/schedules/drafts/{draft_id}/publish (PublishRequest) -----
+
+
+@pytest.mark.unit
+def test_publish_override_comment_too_long_returns_422(
+    client: TestClient, auth_headers
+):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/publish",
+        json={"override_comment": "x" * 501},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_publish_break_glass_reason_too_long_returns_422(
+    client: TestClient, auth_headers
+):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/publish",
+        json={"break_glass_reason": "x" * 501},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422
+
+
+# --- POST /api/v1/schedules/drafts/{draft_id}/rollback (RollbackRequest) ---
+
+
+@pytest.mark.unit
+def test_rollback_reason_too_long_returns_422(client: TestClient, auth_headers):
+    response = client.post(
+        f"/api/v1/schedules/drafts/{DUMMY_DRAFT_ID}/rollback",
+        json={"reason": "x" * 501},
+        headers=auth_headers,
+    )
+    assert response.status_code == 422

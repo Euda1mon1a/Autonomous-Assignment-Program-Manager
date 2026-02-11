@@ -3,6 +3,7 @@
 from datetime import date
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.models.activity import Activity, ActivityCategory
@@ -50,3 +51,65 @@ def test_list_half_day_assignments_by_date_range(client: TestClient, db):
     assert data["total"] == 1
     assert data["assignments"][0]["person_name"] == "Dr. Resident"
     assert data["assignments"][0]["activity_code"] == "CLN"
+
+
+@pytest.mark.unit
+def test_list_assignments_no_params_returns_400(client: TestClient):
+    response = client.get(
+        "/api/v1/half-day-assignments",
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.unit
+def test_list_assignments_block_number_out_of_range_returns_422(client: TestClient):
+    response = client.get(
+        "/api/v1/half-day-assignments",
+        params={"block_number": 0, "academic_year": 2025},
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_list_assignments_block_number_too_high_returns_422(client: TestClient):
+    response = client.get(
+        "/api/v1/half-day-assignments",
+        params={"block_number": 14, "academic_year": 2025},
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_list_assignments_invalid_date_format_returns_422(client: TestClient):
+    response = client.get(
+        "/api/v1/half-day-assignments",
+        params={"start_date": "not-a-date", "end_date": "2025-01-07"},
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.unit
+def test_list_assignments_partial_block_params_returns_400(client: TestClient):
+    response = client.get(
+        "/api/v1/half-day-assignments",
+        params={"block_number": 1},
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.unit
+def test_list_assignments_partial_date_params_returns_400(client: TestClient):
+    response = client.get(
+        "/api/v1/half-day-assignments",
+        params={"start_date": "2025-01-01"},
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.unit
+def test_list_assignments_block_number_string_returns_422(client: TestClient):
+    response = client.get(
+        "/api/v1/half-day-assignments",
+        params={"block_number": "abc"},
+    )
+    assert response.status_code == 422
