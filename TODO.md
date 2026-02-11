@@ -5,10 +5,10 @@
 
 ## Backend Quality
 
-- [ ] Add integration tests for the schedule generation pipeline — test that /api/scheduler/generate returns valid assignments for a simple 2-resident, 1-block scenario using the test DB
-- [ ] Audit all API routes for consistent error response format — ensure every route returns {"detail": "..."} on 4xx/5xx, not raw strings or HTML
-- [ ] Add request validation tests for routes that accept complex JSON bodies (block_scheduler, half_day_assignments, schedule_drafts) — test malformed input returns 422
-- [ ] Review and add missing type hints in backend/app/services/ — run mypy on the services directory and fix any errors
+- [x] Add integration tests for the schedule generation pipeline — test that /api/scheduler/generate returns valid assignments for a simple 2-resident, 1-block scenario using the test DB (claude/2026-02-10)
+- [x] Audit all API routes for consistent error response format — ensure every route returns {"detail": "..."} on 4xx/5xx, not raw strings or HTML (claude/2026-02-10)
+- [x] Add request validation tests for routes that accept complex JSON bodies (block_scheduler, half_day_assignments, schedule_drafts) — test malformed input returns 422 (claude/2026-02-10)
+- [ ] Review and add missing type hints in backend/app/services/ — run mypy on the services directory and fix any errors (claude attempted, failed — may need manual approach)
 - [ ] Add retry logic with exponential backoff to the RAG embedding ingestion pipeline (backend/app/services/rag/) for transient DB connection failures
 
 ## Frontend Quality

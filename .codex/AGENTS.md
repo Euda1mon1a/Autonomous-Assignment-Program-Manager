@@ -4,23 +4,64 @@
 
 ---
 
-## 🎯 ACTIVE TASK: Review Fairness GUI Frontend Code
+## Multi-Agent Coordination (IMPORTANT)
 
-**Priority:** Code review before merge
-**Branch:** Check `main` (PR #692 merged) + this PR for useFairness.ts
+You are not the only agent working on this codebase. A **Claude Code agent (Opus 4.6)** runs autonomously on a Mac Mini (always-on server) via a cron-based coder script (`claude-coder.sh`). Understanding the coordination model prevents duplicate work, merge conflicts, and wasted effort.
 
-**Files to review:**
-1. `frontend/src/hooks/useFairness.ts` - NEW: React Query hooks (this PR)
-2. `frontend/src/app/admin/fairness/page.tsx` - Admin fairness page (already in main)
-3. `frontend/src/features/analytics/FacultyWorkloadTab.tsx` - Analytics tab (already in main)
-4. `frontend/src/components/FacultyMatrixView.tsx` - Workload badges (already in main)
+### Order of Operations
 
-**Review focus:**
-- React performance (memoization, unnecessary re-renders)
-- Accessibility (ARIA, keyboard navigation)
-- Edge cases (empty data, loading states, error handling)
-- Type safety (proper TypeScript usage)
-- API integration patterns (query keys, error handling)
+1. **Claude coder runs first** — throughout the day on the Mac Mini, picking tasks from `TODO.md`, working in git worktrees, committing to `claude/*` branches, pushing to a bare repo (`~/repos/aapm.git` on Mini).
+2. **Codex runs second** — during sleeping hours (~2300-0500 HST), performing automated health checks, code quality sweeps, and focused improvements.
+3. **Human reviews** — in the morning, reviewing accumulated `claude/*` and `codex/*` branches.
+
+### Branch Naming
+
+| Agent | Branch prefix | Example |
+|-------|--------------|---------|
+| Claude coder | `claude/` | `claude/2026-02-10-fix-import-errors` |
+| Codex automations | `codex/` | `codex/type-coverage-expansion` |
+| Human/interactive | feature branches | `feature/new-swap-ui` |
+
+**Never commit directly to `main`.** Both agents use feature branches.
+
+### Shared State: TODO.md
+
+Both agents read `TODO.md` in the project root. Claude marks tasks `[x]` when complete. Before starting a task:
+1. Check if it's already marked complete in `TODO.md`
+2. Check for existing `claude/*` branches that may have already addressed it: `git branch -r | grep claude/`
+3. If Claude already did the work, skip it or build on it
+
+### Pulling Claude's Work
+
+Claude pushes to the Mac Mini bare repo. The laptop has a `mini` remote configured:
+```bash
+git fetch mini
+git log mini/main..HEAD   # see what's on Mini but not here
+```
+
+Before starting work, especially on tasks that overlap with Claude's TODO.md items, fetch from Mini to avoid redoing work.
+
+### What Claude Handles vs What Codex Handles
+
+| Domain | Claude (Mini, daytime) | Codex (Laptop, nighttime) |
+|--------|----------------------|--------------------------|
+| TODO.md mechanical tasks | Yes — primary executor | No — skip items Claude is doing |
+| Code quality (lint, types, format) | Yes — via TODO items | Yes — deeper sweeps |
+| Bug scanning | Light (task-based) | Deep (daily-bug-scan automation) |
+| Architecture drift | No | Yes — contract sync, constraint drift |
+| ACGME compliance audits | No | Yes — dedicated automations |
+| Security sweeps | Pre-merge gate only | Yes — bandit, PII health |
+| Test gap detection | No | Yes — dedicated automation |
+| Documentation freshness | No | Yes — dedicated automation |
+| Morning brief | No | Yes — 0500 HST summary |
+
+### Conflict Resolution
+
+If you find a `claude/*` branch that touches the same files you want to modify:
+- **Prefer Claude's version** if it's a mechanical fix (imports, lint, types)
+- **Build on it** if you have deeper analysis to add
+- **Skip it** if the work is equivalent
+- Log what you found in your automation memory.md so the pattern is tracked
 
 ---
 
@@ -31,43 +72,6 @@
 - **Backend**: FastAPI, SQLAlchemy 2.0, PostgreSQL, Celery/Redis
 - **Frontend**: Next.js 14, React 18, TailwindCSS
 - **MCP Server**: 34+ AI tools for scheduling, validation, resilience
-
----
-
-## Open Tasks
-
-(none)
-
-## Completed Tasks
-
-### MCP Server Tests Failing in CI ✓
-
-**Completed:** 2026-01-11
-**Commit:** `c2e8ace8`
-
-Mocked API client tests to avoid backend calls and added 401 refresh unit coverage.
-
-### MCP API Client 401 Token Refresh (Tests) ✓
-
-**Completed:** 2026-01-11
-**Commit:** `c2e8ace8`
-
-Added unit tests for token refresh, second-401 guard, and non-401 behavior.
-
-### Seaborn Warning Cleanup ✓
-
-**Completed:** 2026-01-11
-**Commit:** `9200055e`
-
-Removed unused seaborn import attempt from `spin_glass_visualizer.py`.
-Warning no longer appears in container logs.
-
-### MCP API Client 401 Token Refresh (Implementation) ✓
-
-**Completed:** PR #608 (`e6c4440e`)
-
-The 401 token refresh is implemented in `api_client.py` lines 113-121.
-Tests added in `c2e8ace8`.
 
 ---
 
