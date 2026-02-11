@@ -457,7 +457,6 @@ This is an automated message from the Residency Scheduling System.
             return False
 
         # Placeholder: Log the invitation instead of sending
-        # TODO: Implement actual email sending when SMTP is configured
         logger.info(
             f"[INVITATION STUB] Would send invitation email to {to_email} "
             f"(invited by: {invited_by}, token: {invite_token[:8]}...)"
@@ -573,7 +572,6 @@ This is an automated message from the Residency Scheduling System.
             return False
 
         # Placeholder: Log the reset request instead of sending
-        # TODO: Implement actual email sending when SMTP is configured
         logger.info(
             f"[PASSWORD RESET STUB] Would send password reset email to {to_email} "
             f"(token: {reset_token[:8]}...)"

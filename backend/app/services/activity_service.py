@@ -45,7 +45,7 @@ class ActivityService:
             or hasattr(db, "_session")  # Test wrapper detection
         )
 
-    async def _execute(self, stmt):
+    async def _execute(self, stmt: Any) -> Any:
         """Execute a statement, handling both sync and async sessions."""
         if self._is_async:
             return await self.db.execute(stmt)
@@ -59,14 +59,14 @@ class ActivityService:
         else:
             self.db.flush()
 
-    async def _refresh(self, obj) -> None:
+    async def _refresh(self, obj: Any) -> None:
         """Refresh an object."""
         if self._is_async:
             await self.db.refresh(obj)
         else:
             self.db.refresh(obj)
 
-    async def _delete(self, obj) -> None:
+    async def _delete(self, obj: Any) -> None:
         """Delete an object."""
         if self._is_async:
             await self.db.delete(obj)
