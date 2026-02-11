@@ -17,7 +17,7 @@ import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { ResilienceHub } from '@/features/resilience/ResilienceHub';
 import { resilienceMockResponses } from './resilience-mocks';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 import * as api from '@/lib/api';
 
 // Mock the api module

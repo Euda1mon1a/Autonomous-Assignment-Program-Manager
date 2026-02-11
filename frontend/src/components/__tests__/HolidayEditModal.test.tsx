@@ -33,7 +33,7 @@ describe('HolidayEditModal', () => {
 
   it('renders when isOpen is true', () => {
     render(<HolidayEditModal isOpen={true} onClose={mockOnClose} holidays={mockHolidays} onSave={mockOnSave} />);
-    expect(screen.getByText(/holiday/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /edit holidays/i })).toBeInTheDocument();
   });
 
   it('does not render when isOpen is false', () => {

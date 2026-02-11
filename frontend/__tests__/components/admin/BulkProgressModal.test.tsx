@@ -4,7 +4,7 @@
  * Tests progress display, status updates, and completion states.
  */
 import React from 'react';
-import { render, screen } from '@/__tests__/utils/test-utils';
+import { render, screen } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { BulkProgressModal, BulkProgressItem } from '@/components/admin/BulkProgressModal';
 

@@ -10,7 +10,7 @@ import userEvent from '@testing-library/user-event';
 import { FairnessTrend } from '@/features/analytics/FairnessTrend';
 import { MetricsCard } from '@/features/analytics/MetricsCard';
 import { analyticsMockFactories, analyticsMockResponses } from './analytics-mocks';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 import * as api from '@/lib/api';
 
 // Mock the api module

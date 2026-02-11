@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@/__tests__/utils/test-utils'
+import { renderHook, waitFor } from '@/test-utils'
 import { useStrategies, useGameTheorySummary } from '@/hooks/useGameTheory'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode } from 'react'

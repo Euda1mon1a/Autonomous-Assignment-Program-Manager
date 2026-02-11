@@ -2,7 +2,7 @@
  * Tests for useSwaps hook
  * Tests swap request management, approvals, rejections, and auto-matching
  */
-import { renderHook, waitFor, act } from '@/__tests__/utils/test-utils'
+import { renderHook, waitFor, act } from '@/test-utils'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   useSwapRequest,

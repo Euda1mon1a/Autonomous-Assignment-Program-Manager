@@ -4,7 +4,7 @@
  * Tests rendering, template management, validation, and submission.
  */
 import React from 'react';
-import { render, screen, waitFor } from '@/__tests__/utils/test-utils';
+import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { BulkCreateModal } from '@/components/admin/BulkCreateModal';
 import type { TemplateCreateRequest } from '@/types/admin-templates';

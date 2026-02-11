@@ -10,7 +10,7 @@ import {
   useUpdateTemplate,
   useDeleteTemplate,
 } from '@/lib/hooks'
-import { createWrapper, mockFactories, mockResponses } from '../utils/test-utils'
+import { createWrapper, mockFactories, mockResponses } from '@/test-utils'
 import * as api from '@/lib/api'
 
 // Mock the api module

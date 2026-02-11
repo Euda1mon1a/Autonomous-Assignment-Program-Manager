@@ -2,7 +2,7 @@
  * Tests for useSchedule hook
  * Tests schedule fetching, generation, validation, rotation templates, and assignments
  */
-import { renderHook, waitFor, act } from '@/__tests__/utils/test-utils'
+import { renderHook, waitFor, act } from '@/test-utils'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   useSchedule,

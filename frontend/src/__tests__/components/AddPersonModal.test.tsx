@@ -77,7 +77,7 @@ describe('AddPersonModal', () => {
         <AddPersonModal isOpen={true} onClose={mockOnClose} />
       )
 
-      expect(screen.getByRole('button', { name: /add person/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /add new person/i })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
     })
 
@@ -98,7 +98,7 @@ describe('AddPersonModal', () => {
       )
 
       // Submit without filling name
-      await user.click(screen.getByRole('button', { name: /add person/i }))
+      await user.click(screen.getByRole('button', { name: /add new person/i }))
 
       // API should not be called when validation fails
       expect(mockedApi.post).not.toHaveBeenCalled()
@@ -112,7 +112,7 @@ describe('AddPersonModal', () => {
 
       // Enter a single character name
       await user.type(screen.getByLabelText(/name/i), 'A')
-      await user.click(screen.getByRole('button', { name: /add person/i }))
+      await user.click(screen.getByRole('button', { name: /add new person/i }))
 
       // API should not be called when validation fails
       expect(mockedApi.post).not.toHaveBeenCalled()
@@ -127,7 +127,7 @@ describe('AddPersonModal', () => {
       // Enter valid name but invalid email
       await user.type(screen.getByLabelText(/name/i), 'Dr. Test')
       await user.type(screen.getByLabelText(/email/i), 'invalid-email')
-      await user.click(screen.getByRole('button', { name: /add person/i }))
+      await user.click(screen.getByRole('button', { name: /add new person/i }))
 
       // API should not be called when validation fails
       expect(mockedApi.post).not.toHaveBeenCalled()
@@ -200,7 +200,7 @@ describe('AddPersonModal', () => {
       await user.type(screen.getByLabelText(/name/i), 'Dr. New Resident')
 
       // Submit form
-      await user.click(screen.getByRole('button', { name: /add person/i }))
+      await user.click(screen.getByRole('button', { name: /add new person/i }))
 
       // Wait for mutation to complete and modal to close
       await waitFor(() => {

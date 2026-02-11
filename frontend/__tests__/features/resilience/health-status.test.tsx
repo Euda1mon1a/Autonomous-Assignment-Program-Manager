@@ -16,7 +16,7 @@
 import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { HealthStatusIndicator, type HealthStatus } from '@/features/resilience/HealthStatusIndicator';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 
 // Skip all tests - component is a stub placeholder
 // TODO: Unskip when HealthStatusIndicator is fully implemented

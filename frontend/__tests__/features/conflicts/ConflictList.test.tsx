@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { ConflictList } from '@/features/conflicts/ConflictList';
 import { conflictsMockFactories, conflictsMockResponses } from './conflicts-mocks';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 import * as hooks from '@/features/conflicts/hooks';
 
 // Mock the hooks module

@@ -90,21 +90,93 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   disconnect: jest.fn(),
 }))
 
+// Mock scrollIntoView for components that use it (not available in jsdom)
+Element.prototype.scrollIntoView = jest.fn()
+
 // ============================================================================
 // Next.js Module Mocks
 // ============================================================================
+// Inlined to avoid circular require() when mock files import from the module
+// they're mocking (e.g., `import type { NextRouter } from 'next/router'`).
 
 // Mock next/router (Pages Router)
-jest.mock('next/router', () => require('@/__mocks__/next/router'))
+jest.mock('next/router', () => ({
+  useRouter: jest.fn(() => ({
+    route: '/',
+    pathname: '/',
+    query: {},
+    asPath: '/',
+    push: jest.fn(),
+    replace: jest.fn(),
+    reload: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    prefetch: jest.fn(),
+    beforePopState: jest.fn(),
+    events: {
+      on: jest.fn(),
+      off: jest.fn(),
+      emit: jest.fn(),
+    },
+    isFallback: false,
+    isLocaleDomain: false,
+    isReady: true,
+    isPreview: false,
+  })),
+  withRouter: (Component: any) => Component,
+}))
 
 // Mock next/navigation (App Router)
-jest.mock('next/navigation', () => require('@/__mocks__/next/navigation'))
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    prefetch: jest.fn(),
+  })),
+  usePathname: jest.fn(() => '/'),
+  useSearchParams: jest.fn(() => ({
+    get: jest.fn(),
+    getAll: jest.fn(),
+    has: jest.fn(),
+    keys: jest.fn(),
+    values: jest.fn(),
+    entries: jest.fn(),
+    forEach: jest.fn(),
+    toString: jest.fn(() => ''),
+  })),
+  useParams: jest.fn(() => ({})),
+  redirect: jest.fn(),
+  notFound: jest.fn(),
+}))
 
 // Mock next/image
-jest.mock('next/image', () => require('@/__mocks__/next/image').default)
+jest.mock('next/image', () => {
+  const React = require('react')
+  return {
+    __esModule: true,
+    default: React.forwardRef(function MockImage(props: any, ref: any) {
+      // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+      return React.createElement('img', { ...props, ref })
+    }),
+  }
+})
 
 // Mock next/link
-jest.mock('next/link', () => require('@/__mocks__/next/link').default)
+jest.mock('next/link', () => {
+  const React = require('react')
+  return {
+    __esModule: true,
+    default: React.forwardRef(function MockLink(
+      { children, href, ...props }: any,
+      ref: any
+    ) {
+      return React.createElement('a', { href, ...props, ref }, children)
+    }),
+  }
+})
 
 // ============================================================================
 // Global Test Cleanup

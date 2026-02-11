@@ -6,7 +6,7 @@ import {
   ConflictPatternsView,
 } from '@/features/conflicts/ConflictHistory';
 import { conflictsMockFactories, conflictsMockResponses } from './conflicts-mocks';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 import * as hooks from '@/features/conflicts/hooks';
 
 // Mock the hooks module

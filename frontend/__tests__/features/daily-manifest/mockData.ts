@@ -8,6 +8,10 @@ import type {
   PersonAssignment,
   LocationManifest,
   DailyManifestData,
+  DailyManifestDataV2,
+  PersonClinicCoverage,
+  SituationalAwareness,
+  AttendingInfo,
 } from '@/features/daily-manifest/types';
 
 // ============================================================================
@@ -228,4 +232,63 @@ export const manifestMockResponses = {
       }),
     ],
   }),
+};
+
+// ============================================================================
+// V2 Mock Data
+// ============================================================================
+
+const mockSituationalAwareness: SituationalAwareness = {
+  fmitTeam: {
+    attending: { id: 'att-1', name: 'Dr. FMIT Attending', pgyLevel: null },
+    residents: [
+      { id: 'fmit-r1', name: 'Dr. FMIT Resident', pgyLevel: 2 },
+    ],
+  },
+  nightRotation: [
+    { person: { id: 'night-1', name: 'Dr. Night Float', pgyLevel: 3 }, callType: 'nightFloat' },
+  ],
+  remoteAssignments: [],
+  absences: [],
+};
+
+const mockAttending: AttendingInfo = {
+  am: { id: 'att-am', name: 'Dr. AM Attending', pgyLevel: null },
+  pm: { id: 'att-pm', name: 'Dr. PM Attending', pgyLevel: null },
+};
+
+const mockClinicCoverage: PersonClinicCoverage[] = [
+  {
+    person: { id: 'person-1', name: 'Dr. John Smith', pgyLevel: 2 },
+    am: { activity: 'Clinical', abbreviation: 'CL', role: 'primary' },
+    pm: { activity: 'Clinical', abbreviation: 'CL', role: 'primary' },
+  },
+  {
+    person: { id: 'person-2', name: 'Dr. Jane Doe', pgyLevel: 3 },
+    am: { activity: 'Clinical', abbreviation: 'CL', role: 'primary' },
+    pm: null,
+  },
+];
+
+export const manifestV2MockResponses = {
+  dailyManifestV2: {
+    date: '2025-12-21',
+    situationalAwareness: mockSituationalAwareness,
+    attending: mockAttending,
+    clinicCoverage: mockClinicCoverage,
+    generatedAt: '2025-12-21T10:30:00Z',
+  } as DailyManifestDataV2,
+
+  emptyManifestV2: {
+    date: '2025-12-21',
+    situationalAwareness: {
+      fmitTeam: { attending: null, residents: [] },
+      nightRotation: [],
+      remoteAssignments: [],
+      absences: [],
+    },
+    attending: { am: null, pm: null },
+    clinicCoverage: [],
+    generatedAt: '2025-12-21T10:30:00Z',
+  } as DailyManifestDataV2,
 };

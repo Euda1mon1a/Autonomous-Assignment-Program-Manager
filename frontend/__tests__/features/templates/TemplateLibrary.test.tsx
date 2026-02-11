@@ -5,7 +5,7 @@
 import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { TemplateLibrary } from '@/features/templates/components/TemplateLibrary';
-import { createWrapper } from '../../utils/test-utils';
+import { createWrapper } from '@/test-utils';
 
 // Mock child components
 jest.mock('@/features/templates/components/TemplateSearch', () => ({

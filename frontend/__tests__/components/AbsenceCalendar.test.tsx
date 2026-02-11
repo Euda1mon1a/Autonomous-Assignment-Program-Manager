@@ -2,7 +2,7 @@ import { render, screen, within } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { format, addMonths, subMonths } from 'date-fns'
 import { AbsenceCalendar } from '@/components/AbsenceCalendar'
-import { mockFactories } from '../utils/test-utils'
+import { mockFactories } from '@/test-utils'
 import type { Absence, Person } from '@/types/api'
 
 describe('AbsenceCalendar', () => {

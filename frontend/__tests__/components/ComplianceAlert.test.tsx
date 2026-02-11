@@ -1,7 +1,7 @@
 import { render, screen } from '@/test-utils'
 import { ComplianceAlert } from '@/components/dashboard/ComplianceAlert'
 import { useValidateSchedule } from '@/lib/hooks'
-import { createWrapper } from '../utils/test-utils'
+import { createWrapper } from '@/test-utils'
 
 // Mock the hooks
 jest.mock('@/lib/hooks', () => ({

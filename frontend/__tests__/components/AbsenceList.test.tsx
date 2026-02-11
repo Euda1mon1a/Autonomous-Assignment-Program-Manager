@@ -1,7 +1,7 @@
 import { render, screen, within } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { AbsenceList } from '@/components/AbsenceList'
-import { mockFactories } from '../utils/test-utils'
+import { mockFactories } from '@/test-utils'
 import type { Absence, Person } from '@/types/api'
 
 describe('AbsenceList', () => {
