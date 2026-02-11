@@ -278,7 +278,7 @@ describe('PersonFilter', () => {
 
       expect(searchInput.value).toBe('test');
 
-      const clearButton = screen.getByRole('button', { name: '' }); // X button
+      const clearButton = screen.getByRole('button', { name: 'Clear search' });
       fireEvent.click(clearButton);
 
       expect(searchInput.value).toBe('');
@@ -327,9 +327,9 @@ describe('PersonFilter', () => {
     it('highlights selected option', () => {
       renderComponent({ selectedPersonId: '1' });
 
-      fireEvent.click(screen.getByRole('button'));
+      fireEvent.click(screen.getByRole('button', { name: /Dr\. Alice Smith/ }));
 
-      const selectedOption = screen.getByText('Dr. Alice Smith').closest('button');
+      const selectedOption = screen.getByRole('option', { name: /Dr\. Alice Smith/ });
       expect(selectedOption).toHaveClass('bg-blue-50', 'text-blue-700');
       expect(selectedOption).toHaveAttribute('aria-selected', 'true');
     });
@@ -356,9 +356,10 @@ describe('PersonFilter', () => {
 
       fireEvent.click(screen.getByRole('button'));
 
-      const avatar = screen.getByText('A'); // First letter of Alice
-      expect(avatar).toBeInTheDocument();
-      expect(avatar).toHaveClass('rounded-full');
+      // Find avatar elements with rounded-full class containing initials
+      const avatars = screen.getAllByText('D').filter(el => el.classList.contains('rounded-full'));
+      expect(avatars.length).toBeGreaterThan(0);
+      expect(avatars[0]).toHaveClass('rounded-full');
     });
   });
 });

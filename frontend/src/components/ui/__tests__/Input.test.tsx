@@ -198,9 +198,10 @@ describe('Input', () => {
     });
 
     it('handles password type', () => {
-      render(<Input type="password" onChange={() => {}} />);
+      const { container } = render(<Input type="password" onChange={() => {}} />);
 
-      const input = screen.getByRole('textbox', { hidden: true });
+      const input = container.querySelector('input[type="password"]');
+      expect(input).toBeInTheDocument();
       expect(input).toHaveAttribute('type', 'password');
     });
 

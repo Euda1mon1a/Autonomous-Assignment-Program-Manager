@@ -229,7 +229,7 @@ describe('AuditLogTable', () => {
       render(<AuditLogTable {...defaultProps} />);
 
       // Find page 2 button
-      const page2Button = screen.getByRole('button', { name: '2' });
+      const page2Button = screen.getByRole('button', { name: /Go to page 2/i });
       await user.click(page2Button);
 
       expect(mockOnPageChange).toHaveBeenCalledWith(2);
@@ -467,10 +467,10 @@ describe('AuditLogTable', () => {
     it('should have accessible pagination buttons', () => {
       render(<AuditLogTable {...defaultProps} />);
 
-      expect(screen.getByRole('button', { name: 'First' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Last' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Go to first page/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Go to previous page/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Go to next page/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Go to last page/i })).toBeInTheDocument();
     });
   });
 });

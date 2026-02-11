@@ -151,16 +151,16 @@ describe('MySwapRequests', () => {
     it('should render all three tabs', () => {
       render(<MySwapRequests />, { wrapper: createWrapper() });
 
-      expect(screen.getByRole('button', { name: /incoming/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /outgoing/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /recent/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /incoming/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /outgoing/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
     });
 
     it('should show count badges on tabs', () => {
       render(<MySwapRequests />, { wrapper: createWrapper() });
 
       // Based on mockMySwapsResponse: 2 incoming, 2 outgoing, 2 recent
-      const tabs = screen.getAllByRole('button');
+      const tabs = screen.getAllByRole('tab');
       expect(tabs[0]).toHaveTextContent('2'); // Incoming
       expect(tabs[1]).toHaveTextContent('2'); // Outgoing
       expect(tabs[2]).toHaveTextContent('2'); // Recent
@@ -169,7 +169,7 @@ describe('MySwapRequests', () => {
     it('should highlight active tab', () => {
       render(<MySwapRequests />, { wrapper: createWrapper() });
 
-      const incomingTab = screen.getByRole('button', { name: /incoming/i });
+      const incomingTab = screen.getByRole('tab', { name: /incoming/i });
       expect(incomingTab).toHaveClass('border-blue-500');
       expect(incomingTab).toHaveClass('text-blue-600');
     });
@@ -179,7 +179,7 @@ describe('MySwapRequests', () => {
 
       render(<MySwapRequests />, { wrapper: createWrapper() });
 
-      const outgoingTab = screen.getByRole('button', { name: /outgoing/i });
+      const outgoingTab = screen.getByRole('tab', { name: /outgoing/i });
       await user.click(outgoingTab);
 
       expect(outgoingTab).toHaveClass('border-blue-500');
@@ -228,7 +228,7 @@ describe('MySwapRequests', () => {
 
       render(<MySwapRequests />, { wrapper: createWrapper() });
 
-      const outgoingTab = screen.getByRole('button', { name: /outgoing/i });
+      const outgoingTab = screen.getByRole('tab', { name: /outgoing/i });
       await user.click(outgoingTab);
 
       expect(screen.getByText(/outgoing requests \(2\)/i)).toBeInTheDocument();
@@ -242,7 +242,7 @@ describe('MySwapRequests', () => {
 
       render(<MySwapRequests />, { wrapper: createWrapper() });
 
-      const outgoingTab = screen.getByRole('button', { name: /outgoing/i });
+      const outgoingTab = screen.getByRole('tab', { name: /outgoing/i });
       await user.click(outgoingTab);
 
       // Based on mockMySwapsResponse outgoing requests - names may appear multiple times on page
@@ -264,7 +264,7 @@ describe('MySwapRequests', () => {
 
       render(<MySwapRequests />, { wrapper: createWrapper() });
 
-      const outgoingTab = screen.getByRole('button', { name: /outgoing/i });
+      const outgoingTab = screen.getByRole('tab', { name: /outgoing/i });
       await user.click(outgoingTab);
 
       expect(screen.getByText('No Outgoing Requests')).toBeInTheDocument();
@@ -280,7 +280,7 @@ describe('MySwapRequests', () => {
 
       render(<MySwapRequests />, { wrapper: createWrapper() });
 
-      const recentTab = screen.getByRole('button', { name: /recent/i });
+      const recentTab = screen.getByRole('tab', { name: /recent/i });
       await user.click(recentTab);
 
       expect(screen.getByText(/recent swaps \(2\)/i)).toBeInTheDocument();
@@ -294,7 +294,7 @@ describe('MySwapRequests', () => {
 
       render(<MySwapRequests />, { wrapper: createWrapper() });
 
-      const recentTab = screen.getByRole('button', { name: /recent/i });
+      const recentTab = screen.getByRole('tab', { name: /recent/i });
       await user.click(recentTab);
 
       // Based on mockMySwapsResponse recent swaps (approved and rejected)
@@ -314,7 +314,7 @@ describe('MySwapRequests', () => {
 
       render(<MySwapRequests />, { wrapper: createWrapper() });
 
-      const recentTab = screen.getByRole('button', { name: /recent/i });
+      const recentTab = screen.getByRole('tab', { name: /recent/i });
       await user.click(recentTab);
 
       expect(screen.getByText('No Recent Swaps')).toBeInTheDocument();
@@ -381,7 +381,7 @@ describe('MySwapRequests', () => {
 
       render(<MySwapRequests />, { wrapper: createWrapper() });
 
-      const tabs = screen.getAllByRole('button');
+      const tabs = screen.getAllByRole('tab');
 
       // Incoming tab should not have badge (0 requests)
       expect(tabs[0]).not.toHaveTextContent('0');

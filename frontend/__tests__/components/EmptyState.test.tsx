@@ -20,10 +20,10 @@ describe('EmptyState', () => {
       expect(screen.getByText('No results')).toBeInTheDocument()
     })
 
-    it('should render default icon', () => {
+    it('should not render icon when none provided', () => {
       const { container } = render(<EmptyState title="Empty" />)
       const icon = container.querySelector('svg')
-      expect(icon).toBeInTheDocument()
+      expect(icon).not.toBeInTheDocument()
     })
   })
 

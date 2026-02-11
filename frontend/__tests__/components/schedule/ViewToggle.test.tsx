@@ -47,19 +47,20 @@ describe('ViewToggle', () => {
 
       render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      expect(screen.getByTitle('Switch to Day view')).toBeInTheDocument()
-      expect(screen.getByTitle('Switch to Week view')).toBeInTheDocument()
-      expect(screen.getByTitle('Switch to Month view')).toBeInTheDocument()
-      expect(screen.getByTitle('Switch to Block view')).toBeInTheDocument()
+      // Component uses aria-label, not title
+      expect(screen.getByLabelText('Switch to Day view')).toBeInTheDocument()
+      expect(screen.getByLabelText('Switch to Week view')).toBeInTheDocument()
+      expect(screen.getByLabelText('Switch to Month view')).toBeInTheDocument()
+      expect(screen.getByLabelText('Switch to Block view')).toBeInTheDocument()
     })
 
-    it('should render annual view options', () => {
+    it('should render annual view options (block-annual and block-week)', () => {
       const onChange = jest.fn()
 
       render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      expect(screen.getByTitle('Switch to Resident Year view (drag-and-drop)')).toBeInTheDocument()
-      expect(screen.getByTitle('Switch to Faculty Inpatient view (drag-and-drop)')).toBeInTheDocument()
+      expect(screen.getByLabelText('Switch to Academic Year view')).toBeInTheDocument()
+      expect(screen.getByLabelText('Switch to Block Week view')).toBeInTheDocument()
     })
 
     it('should display icons for all views', () => {
@@ -86,7 +87,7 @@ describe('ViewToggle', () => {
 
       render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      const blockButton = screen.getByTitle('Switch to Block view')
+      const blockButton = screen.getByLabelText('Switch to Block view')
       expect(blockButton).toHaveClass('bg-white')
       expect(blockButton).toHaveClass('text-blue-600')
     })
@@ -96,7 +97,7 @@ describe('ViewToggle', () => {
 
       render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      const dayButton = screen.getByTitle('Switch to Day view')
+      const dayButton = screen.getByLabelText('Switch to Day view')
       expect(dayButton).not.toHaveClass('bg-white')
       expect(dayButton).toHaveClass('text-gray-600')
     })
@@ -107,7 +108,7 @@ describe('ViewToggle', () => {
 
       rerender(<ViewToggle currentView="day" onChange={onChange} />)
 
-      const dayButton = screen.getByTitle('Switch to Day view')
+      const dayButton = screen.getByLabelText('Switch to Day view')
       expect(dayButton).toHaveClass('bg-white')
       expect(dayButton).toHaveClass('text-blue-600')
     })
@@ -117,7 +118,7 @@ describe('ViewToggle', () => {
 
       render(<ViewToggle currentView="month" onChange={onChange} />)
 
-      const monthButton = screen.getByTitle('Switch to Month view')
+      const monthButton = screen.getByLabelText('Switch to Month view')
       expect(monthButton).toHaveAttribute('aria-pressed', 'true')
     })
 
@@ -126,7 +127,7 @@ describe('ViewToggle', () => {
 
       render(<ViewToggle currentView="month" onChange={onChange} />)
 
-      const dayButton = screen.getByTitle('Switch to Day view')
+      const dayButton = screen.getByLabelText('Switch to Day view')
       expect(dayButton).toHaveAttribute('aria-pressed', 'false')
     })
   })
@@ -137,7 +138,7 @@ describe('ViewToggle', () => {
 
       render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      const weekButton = screen.getByTitle('Switch to Week view')
+      const weekButton = screen.getByLabelText('Switch to Week view')
       fireEvent.click(weekButton)
 
       expect(onChange).toHaveBeenCalledWith('week')
@@ -148,7 +149,7 @@ describe('ViewToggle', () => {
 
       render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      const monthButton = screen.getByTitle('Switch to Month view')
+      const monthButton = screen.getByLabelText('Switch to Month view')
       fireEvent.click(monthButton)
 
       expect(localStorage.getItem('schedule-view-preference')).toBe('month')
@@ -160,7 +161,7 @@ describe('ViewToggle', () => {
 
       render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      const weekButton = screen.getByTitle('Switch to Week view')
+      const weekButton = screen.getByLabelText('Switch to Week view')
       fireEvent.click(weekButton)
 
       expect(mockRouter.push).toHaveBeenCalledWith(
@@ -169,15 +170,15 @@ describe('ViewToggle', () => {
       )
     })
 
-    it('should call onChange for annual views', () => {
+    it('should call onChange for block-annual view', () => {
       const onChange = jest.fn()
 
       render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      const residentYearButton = screen.getByTitle('Switch to Resident Year view (drag-and-drop)')
-      fireEvent.click(residentYearButton)
+      const ayButton = screen.getByLabelText('Switch to Academic Year view')
+      fireEvent.click(ayButton)
 
-      expect(onChange).toHaveBeenCalledWith('resident-year')
+      expect(onChange).toHaveBeenCalledWith('block-annual')
     })
   })
 
@@ -225,19 +226,19 @@ describe('ViewToggle', () => {
   describe('Responsive Behavior', () => {
     it('should hide labels on small screens for standard views', () => {
       const onChange = jest.fn()
-      const { container } = render(<ViewToggle currentView="block" onChange={onChange} />)
+      render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      const dayButton = screen.getByTitle('Switch to Day view')
+      const dayButton = screen.getByLabelText('Switch to Day view')
       const label = dayButton.querySelector('.hidden.sm\\:inline')
       expect(label).toBeInTheDocument()
     })
 
-    it('should hide labels on medium screens for annual views', () => {
+    it('should hide labels on small screens for block views', () => {
       const onChange = jest.fn()
-      const { container } = render(<ViewToggle currentView="block" onChange={onChange} />)
+      render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      const residentYearButton = screen.getByTitle('Switch to Resident Year view (drag-and-drop)')
-      const label = residentYearButton.querySelector('.hidden.lg\\:inline')
+      const blockButton = screen.getByLabelText('Switch to Block view')
+      const label = blockButton.querySelector('.hidden.sm\\:inline')
       expect(label).toBeInTheDocument()
     })
   })
@@ -256,7 +257,7 @@ describe('ViewToggle', () => {
 
       render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      const dayButton = screen.getByTitle('Switch to Day view')
+      const dayButton = screen.getByLabelText('Switch to Day view')
       expect(dayButton.className).toContain('hover:')
     })
 
@@ -265,7 +266,7 @@ describe('ViewToggle', () => {
 
       render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      const blockButton = screen.getByTitle('Switch to Block view')
+      const blockButton = screen.getByLabelText('Switch to Block view')
       expect(blockButton).toHaveClass('shadow-sm')
     })
   })
@@ -328,29 +329,25 @@ describe('ViewToggle', () => {
   })
 
   describe('View Validation', () => {
-    it('should accept all valid view values', () => {
-      // Map view values to their button labels and title patterns
-      const viewConfig: Record<string, { label: string; isAnnual: boolean }> = {
-        'day': { label: 'Day', isAnnual: false },
-        'week': { label: 'Week', isAnnual: false },
-        'month': { label: 'Month', isAnnual: false },
-        'block': { label: 'Block', isAnnual: false },
-        'resident-year': { label: 'Resident Year', isAnnual: true },
-        'faculty-inpatient': { label: 'Faculty Inpatient', isAnnual: true },
-      }
-      const validViews = Object.keys(viewConfig)
+    it('should accept all visible view values', () => {
       const onChange = jest.fn()
 
-      // Render once and test all button clicks
+      // Only visible views are rendered as buttons
+      const visibleViews = [
+        { value: 'block-annual', label: 'Academic Year' },
+        { value: 'block', label: 'Block' },
+        { value: 'block-week', label: 'Block Week' },
+        { value: 'month', label: 'Month' },
+        { value: 'week', label: 'Week' },
+        { value: 'day', label: 'Day' },
+      ]
+
       render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      validViews.forEach((view) => {
-        const config = viewConfig[view]
-        // Annual views have "(drag-and-drop)" suffix in title
-        const titleSuffix = config.isAnnual ? ' (drag-and-drop)' : ''
-        const button = screen.getByTitle(`Switch to ${config.label} view${titleSuffix}`)
+      visibleViews.forEach(({ value, label }) => {
+        const button = screen.getByLabelText(`Switch to ${label} view`)
         fireEvent.click(button)
-        expect(onChange).toHaveBeenCalledWith(view)
+        expect(onChange).toHaveBeenCalledWith(value)
         onChange.mockClear()
       })
     })
@@ -366,15 +363,15 @@ describe('ViewToggle', () => {
       expect(buttons.length).toBeGreaterThanOrEqual(6)
     })
 
-    it('should have descriptive titles for all buttons', () => {
+    it('should have descriptive aria-labels for all buttons', () => {
       const onChange = jest.fn()
 
       render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      const dayButton = screen.getByTitle('Switch to Day view')
-      const weekButton = screen.getByTitle('Switch to Week view')
-      const monthButton = screen.getByTitle('Switch to Month view')
-      const blockButton = screen.getByTitle('Switch to Block view')
+      const dayButton = screen.getByLabelText('Switch to Day view')
+      const weekButton = screen.getByLabelText('Switch to Week view')
+      const monthButton = screen.getByLabelText('Switch to Month view')
+      const blockButton = screen.getByLabelText('Switch to Block view')
 
       expect(dayButton).toBeInTheDocument()
       expect(weekButton).toBeInTheDocument()
@@ -391,18 +388,15 @@ describe('ViewToggle', () => {
 
       // These should be present but may be hidden on small screens
       expect(screen.getByText('Day')).toBeInTheDocument()
-      expect(screen.getByText('Week')).toBeInTheDocument()
       expect(screen.getByText('Month')).toBeInTheDocument()
-      expect(screen.getByText('Block')).toBeInTheDocument()
     })
 
-    it('should show abbreviated labels for annual views', () => {
+    it('should show abbreviated labels for block views', () => {
       const onChange = jest.fn()
 
       render(<ViewToggle currentView="block" onChange={onChange} />)
 
-      expect(screen.getByText('Res.')).toBeInTheDocument()
-      expect(screen.getByText('Fac.')).toBeInTheDocument()
+      expect(screen.getByText('AY')).toBeInTheDocument()
     })
   })
 })

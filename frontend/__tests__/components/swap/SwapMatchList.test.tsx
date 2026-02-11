@@ -16,7 +16,7 @@ describe('SwapMatchList', () => {
       personName: 'Dr. Alice',
       pgyLevel: 'PGY-2',
       blockId: 'block-1',
-      date: '2025-01-15',
+      date: '2025-01-15T12:00:00',
       shift: 'AM',
       rotationType: 'Inpatient',
       compatibilityScore: 95,
@@ -27,7 +27,7 @@ describe('SwapMatchList', () => {
       personName: 'Dr. Bob',
       pgyLevel: 'PGY-3',
       blockId: 'block-2',
-      date: '2025-01-20',
+      date: '2025-01-20T12:00:00',
       shift: 'PM',
       rotationType: 'Clinic',
       compatibilityScore: 70,
@@ -39,7 +39,7 @@ describe('SwapMatchList', () => {
       personName: 'Dr. Carol',
       pgyLevel: 'PGY-1',
       blockId: 'block-3',
-      date: '2025-01-25',
+      date: '2025-01-25T12:00:00',
       shift: 'Night',
       rotationType: 'Call',
       compatibilityScore: 50,
@@ -124,7 +124,7 @@ describe('SwapMatchList', () => {
     it('displays first two reasons by default', () => {
       render(<SwapMatchList matches={mockMatches} onSelectMatch={mockOnSelect} />);
       expect(screen.getByText(/Same PGY level/i)).toBeInTheDocument();
-      expect(screen.getByText(/Compatible rotations/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Compatible rotations/i).length).toBeGreaterThan(0);
     });
 
     it('shows "more reasons" button when > 2 reasons', () => {

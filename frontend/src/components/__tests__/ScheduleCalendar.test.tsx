@@ -38,12 +38,13 @@ describe('ScheduleCalendar', () => {
 
   it('renders without crashing', () => {
     render(<ScheduleCalendar weekStart={mockWeekStart} schedule={mockSchedule} />);
-    expect(screen.getByRole('table')).toBeInTheDocument();
+    // Empty schedule shows a message with Generate Schedule link
+    expect(screen.getByText(/no schedule data/i)).toBeInTheDocument();
   });
 
   it('displays week days', () => {
     render(<ScheduleCalendar weekStart={mockWeekStart} schedule={mockSchedule} />);
-    // Should display the week starting from the given date
-    expect(screen.getByRole('table')).toBeInTheDocument();
+    // Header row shows day abbreviations
+    expect(screen.getByText('Person')).toBeInTheDocument();
   });
 });

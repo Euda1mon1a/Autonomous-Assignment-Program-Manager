@@ -176,7 +176,7 @@ describe('MyLifeDashboard', () => {
       await user.click(daysButton);
 
       // Select 60 days
-      const option60 = screen.getByRole('button', { name: '60 days' });
+      const option60 = screen.getByRole('option', { name: '60 days' });
       await user.click(option60);
 
       await waitFor(() => {
@@ -198,12 +198,12 @@ describe('MyLifeDashboard', () => {
       await user.click(daysButton);
 
       // Select option
-      const option14 = screen.getByRole('button', { name: '14 days' });
+      const option14 = screen.getByRole('option', { name: '14 days' });
       await user.click(option14);
 
       await waitFor(() => {
         // Dropdown options should not be visible
-        expect(screen.queryByRole('button', { name: '7 days' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('option', { name: '7 days' })).not.toBeInTheDocument();
       });
     });
 
@@ -222,7 +222,7 @@ describe('MyLifeDashboard', () => {
       const daysButton = screen.getByRole('button', { name: /30 days/i });
       await user.click(daysButton);
 
-      const option60 = screen.getByRole('button', { name: '60 days' });
+      const option60 = screen.getByRole('option', { name: '60 days' });
       await user.click(option60);
 
       await waitFor(() => {
@@ -535,7 +535,7 @@ describe('MyLifeDashboard', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          expect.stringContaining('daysAhead=30')
+          expect.stringContaining('days_ahead=30')
         );
       });
     });

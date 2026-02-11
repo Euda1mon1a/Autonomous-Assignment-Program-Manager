@@ -31,34 +31,20 @@ jest.mock('date-fns', () => ({
   }),
 }));
 
-// Mock assignment data factory
-function createMockAssignment(overrides = {}) {
+// Mock assignment data factory matching ApiCallAssignment shape
+function createMockAssignment(overrides: Record<string, unknown> = {}) {
   return {
     id: 'assignment-1',
-    blockId: 'block-1',
+    date: '2025-01-15',
     personId: 'person-1',
-    role: 'resident',
-    rotationTemplate: {
-      id: 'rotation-1',
-      name: 'Night Call',
-      activityType: 'on_call',
-      abbreviation: 'NC',
-    },
+    callType: 'weekday' as const,
+    isWeekend: false,
+    isHoliday: false,
     person: {
       id: 'person-1',
-      firstName: 'John',
-      lastName: 'Doe',
-      pgyLevel: 2,
-      email: 'john.doe@example.com',
-      phone: '555-1234',
-      pager: '555-5678',
+      name: 'John Doe',
+      facultyRole: 'attending',
     },
-    block: {
-      id: 'block-1',
-      startDate: '2025-01-15',
-      endDate: '2025-01-15',
-    },
-    notes: 'On night call',
     ...overrides,
   };
 }
@@ -92,18 +78,13 @@ describe('Call Roster Hooks', () => {
       expect(result.current.data?.[0]).toMatchObject({
         id: 'assignment-1',
         date: '2025-01-15',
-        shift: 'night',
+        shift: 'day',
         person: {
           id: 'person-1',
           name: 'John Doe',
-          pgyLevel: 2,
-          role: 'intern', // PGY-2 is < 3, so role is 'intern'
-          phone: '555-1234',
-          pager: '555-5678',
-          email: 'john.doe@example.com',
+          role: 'attending',
         },
-        rotationName: 'Night Call',
-        notes: 'On night call',
+        rotationName: 'weekday',
       });
     });
 
@@ -116,188 +97,106 @@ describe('Call Roster Hooks', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          '/assignments?startDate=2025-01-01&endDate=2025-01-31&activityType=on_call'
+          '/call-assignments?startDate=2025-01-01&endDate=2025-01-31'
         );
       });
     });
 
-    it('should filter out non-on-call assignments', async () => {
+    it('should transform all items from response', async () => {
       const mockResponse = {
         items: [
           createMockAssignment(),
           createMockAssignment({
             id: 'assignment-2',
-            rotationTemplate: {
-              id: 'rotation-2',
-              name: 'Clinic',
-              activityType: 'clinic',
-            },
-          }),
-        ],
-        total: 2,
-      };
-
-      (api.get as jest.Mock).mockResolvedValue(mockResponse);
-
-      const { result } = renderHook(
-        () => useOnCallAssignments('2025-01-15', '2025-01-20'),
-        {
-          wrapper: createWrapper(),
-        }
-      );
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      // Should only include the on-call assignment
-      expect(result.current.data).toHaveLength(1);
-      expect(result.current.data?.[0].id).toBe('assignment-1');
-    });
-
-    it('should filter out assignments without person data', async () => {
-      const mockResponse = {
-        items: [
-          createMockAssignment(),
-          createMockAssignment({
-            id: 'assignment-2',
-            person: undefined,
-          }),
-        ],
-        total: 2,
-      };
-
-      (api.get as jest.Mock).mockResolvedValue(mockResponse);
-
-      const { result } = renderHook(
-        () => useOnCallAssignments('2025-01-15', '2025-01-20'),
-        {
-          wrapper: createWrapper(),
-        }
-      );
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      // Should only include assignments with person data
-      expect(result.current.data).toHaveLength(1);
-      expect(result.current.data?.[0].id).toBe('assignment-1');
-    });
-
-    it('should filter out assignments without block data', async () => {
-      const mockResponse = {
-        items: [
-          createMockAssignment(),
-          createMockAssignment({
-            id: 'assignment-2',
-            block: undefined,
-          }),
-        ],
-        total: 2,
-      };
-
-      (api.get as jest.Mock).mockResolvedValue(mockResponse);
-
-      const { result } = renderHook(
-        () => useOnCallAssignments('2025-01-15', '2025-01-20'),
-        {
-          wrapper: createWrapper(),
-        }
-      );
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      // Should only include assignments with block data
-      expect(result.current.data).toHaveLength(1);
-      expect(result.current.data?.[0].id).toBe('assignment-1');
-    });
-
-    it('should determine shift type from rotation name', async () => {
-      const mockResponse = {
-        items: [
-          createMockAssignment({
-            id: 'day-call',
-            rotationTemplate: {
-              id: 'rotation-1',
-              name: 'Day Call',
-              activityType: 'on_call',
-            },
-            notes: '', // Clear notes to avoid "night" from default
-          }),
-          createMockAssignment({
-            id: 'night-call',
-            rotationTemplate: {
-              id: 'rotation-2',
-              name: 'Night Call',
-              activityType: 'on_call',
-            },
-            notes: '',
-          }),
-          createMockAssignment({
-            id: '24hr-call',
-            rotationTemplate: {
-              id: 'rotation-3',
-              name: '24-hour Call',
-              activityType: 'on_call',
-            },
-            notes: '',
-          }),
-        ],
-        total: 3,
-      };
-
-      (api.get as jest.Mock).mockResolvedValue(mockResponse);
-
-      const { result } = renderHook(
-        () => useOnCallAssignments('2025-01-15', '2025-01-20'),
-        {
-          wrapper: createWrapper(),
-        }
-      );
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      expect(result.current.data).toHaveLength(3);
-      expect(result.current.data?.[0].shift).toBe('day');
-      expect(result.current.data?.[1].shift).toBe('night');
-      expect(result.current.data?.[2].shift).toBe('24hr');
-    });
-
-    it('should determine role type from PGY level', async () => {
-      const mockResponse = {
-        items: [
-          createMockAssignment({
-            id: 'attending',
-            person: {
-              id: 'person-1',
-              firstName: 'Dr.',
-              lastName: 'Attending',
-              pgyLevel: undefined,
-            },
-          }),
-          createMockAssignment({
-            id: 'intern',
+            date: '2025-01-16',
+            personId: 'person-2',
             person: {
               id: 'person-2',
-              firstName: 'Dr.',
-              lastName: 'Intern',
-              pgyLevel: 1,
+              name: 'Jane Smith',
+              facultyRole: 'attending',
             },
           }),
+        ],
+        total: 2,
+      };
+
+      (api.get as jest.Mock).mockResolvedValue(mockResponse);
+
+      const { result } = renderHook(
+        () => useOnCallAssignments('2025-01-15', '2025-01-20'),
+        {
+          wrapper: createWrapper(),
+        }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(result.current.data).toHaveLength(2);
+    });
+
+    it('should handle assignments without person data gracefully', async () => {
+      const mockResponse = {
+        items: [
+          createMockAssignment(),
           createMockAssignment({
-            id: 'senior',
-            person: {
-              id: 'person-3',
-              firstName: 'Dr.',
-              lastName: 'Senior',
-              pgyLevel: 3,
-            },
+            id: 'assignment-2',
+            person: { id: 'person-2', name: 'Jane', facultyRole: null },
           }),
+        ],
+        total: 2,
+      };
+
+      (api.get as jest.Mock).mockResolvedValue(mockResponse);
+
+      const { result } = renderHook(
+        () => useOnCallAssignments('2025-01-15', '2025-01-20'),
+        {
+          wrapper: createWrapper(),
+        }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      // Both should be transformed
+      expect(result.current.data).toHaveLength(2);
+    });
+
+    it('should sort assignments by date', async () => {
+      const mockResponse = {
+        items: [
+          createMockAssignment({ id: 'late', date: '2025-01-20' }),
+          createMockAssignment({ id: 'early', date: '2025-01-15' }),
+        ],
+        total: 2,
+      };
+
+      (api.get as jest.Mock).mockResolvedValue(mockResponse);
+
+      const { result } = renderHook(
+        () => useOnCallAssignments('2025-01-15', '2025-01-20'),
+        {
+          wrapper: createWrapper(),
+        }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      expect(result.current.data?.[0].date).toBe('2025-01-15');
+      expect(result.current.data?.[1].date).toBe('2025-01-20');
+    });
+
+    it('should map callType to rotationName', async () => {
+      const mockResponse = {
+        items: [
+          createMockAssignment({ id: 'weekday-call', callType: 'weekday' }),
+          createMockAssignment({ id: 'sunday-call', callType: 'sunday', date: '2025-01-16' }),
+          createMockAssignment({ id: 'holiday-call', callType: 'holiday', date: '2025-01-17', isHoliday: true }),
         ],
         total: 3,
       };
@@ -316,9 +215,32 @@ describe('Call Roster Hooks', () => {
       });
 
       expect(result.current.data).toHaveLength(3);
+      expect(result.current.data?.[0].rotationName).toBe('weekday');
+      expect(result.current.data?.[1].rotationName).toBe('sunday');
+      expect(result.current.data?.[2].rotationName).toBe('holiday');
+    });
+
+    it('should set person role to attending', async () => {
+      const mockResponse = {
+        items: [createMockAssignment()],
+        total: 1,
+      };
+
+      (api.get as jest.Mock).mockResolvedValue(mockResponse);
+
+      const { result } = renderHook(
+        () => useOnCallAssignments('2025-01-15', '2025-01-20'),
+        {
+          wrapper: createWrapper(),
+        }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+
+      // All faculty are attending per the transform
       expect(result.current.data?.[0].person.role).toBe('attending');
-      expect(result.current.data?.[1].person.role).toBe('intern');
-      expect(result.current.data?.[2].person.role).toBe('senior');
     });
 
     it('should handle API errors', async () => {
@@ -389,7 +311,7 @@ describe('Call Roster Hooks', () => {
 
       (api.get as jest.Mock).mockResolvedValue(mockResponse);
 
-      const testDate = new Date('2025-01-15');
+      const testDate = new Date('2025-01-15T12:00:00');
 
       const { result } = renderHook(() => useMonthlyOnCallRoster(testDate), {
         wrapper: createWrapper(),
@@ -405,7 +327,7 @@ describe('Call Roster Hooks', () => {
     it('should use month start and end dates', async () => {
       (api.get as jest.Mock).mockResolvedValue({ items: [], total: 0 });
 
-      const testDate = new Date('2025-01-15');
+      const testDate = new Date('2025-01-15T12:00:00');
       const expectedStart = format(startOfMonth(testDate), 'yyyy-MM-dd');
       const expectedEnd = format(endOfMonth(testDate), 'yyyy-MM-dd');
 
@@ -415,7 +337,7 @@ describe('Call Roster Hooks', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          `/assignments?startDate=${expectedStart}&endDate=${expectedEnd}&activityType=on_call`
+          `/call-assignments?startDate=${expectedStart}&endDate=${expectedEnd}`
         );
       });
     });
@@ -424,7 +346,7 @@ describe('Call Roster Hooks', () => {
       const error = new Error('Failed to fetch monthly roster');
       (api.get as jest.Mock).mockRejectedValue(error);
 
-      const testDate = new Date('2025-01-15');
+      const testDate = new Date('2025-01-15T12:00:00');
 
       const { result } = renderHook(() => useMonthlyOnCallRoster(testDate), {
         wrapper: createWrapper(),
@@ -479,7 +401,7 @@ describe('Call Roster Hooks', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          `/assignments?startDate=${today}&endDate=${today}&activityType=on_call`
+          `/call-assignments?startDate=${today}&endDate=${today}`
         );
       });
     });
@@ -552,22 +474,32 @@ describe('Call Roster Hooks', () => {
       expect(result.current.data).toHaveLength(1);
     });
 
-    it('should include personId in query string', async () => {
-      (api.get as jest.Mock).mockResolvedValue({ items: [], total: 0 });
+    it('should filter assignments by personId', async () => {
+      const mockResponse = {
+        items: [
+          createMockAssignment({ id: 'a1', personId: 'person-1' }),
+          createMockAssignment({ id: 'a2', personId: 'person-2', date: '2025-01-16' }),
+        ],
+        total: 2,
+      };
 
-      renderHook(
+      (api.get as jest.Mock).mockResolvedValue(mockResponse);
+
+      const { result } = renderHook(
         () =>
-          usePersonOnCallAssignments('person-123', '2025-01-15', '2025-01-20'),
+          usePersonOnCallAssignments('person-1', '2025-01-15', '2025-01-20'),
         {
           wrapper: createWrapper(),
         }
       );
 
       await waitFor(() => {
-        expect(api.get).toHaveBeenCalledWith(
-          '/assignments?startDate=2025-01-15&endDate=2025-01-20&personId=person-123&activityType=on_call'
-        );
+        expect(result.current.isSuccess).toBe(true);
       });
+
+      // Should only return assignments matching personId
+      expect(result.current.data).toHaveLength(1);
+      expect(result.current.data?.[0].id).toBe('a1');
     });
 
     it('should handle API errors', async () => {
@@ -643,30 +575,9 @@ describe('Call Roster Hooks', () => {
     it('should group assignments by date', async () => {
       const mockResponse = {
         items: [
-          createMockAssignment({
-            id: 'assignment-1',
-            block: {
-              id: 'block-1',
-              startDate: '2025-01-15',
-              endDate: '2025-01-15',
-            },
-          }),
-          createMockAssignment({
-            id: 'assignment-2',
-            block: {
-              id: 'block-2',
-              startDate: '2025-01-15',
-              endDate: '2025-01-15',
-            },
-          }),
-          createMockAssignment({
-            id: 'assignment-3',
-            block: {
-              id: 'block-3',
-              startDate: '2025-01-16',
-              endDate: '2025-01-16',
-            },
-          }),
+          createMockAssignment({ id: 'assignment-1', date: '2025-01-15' }),
+          createMockAssignment({ id: 'assignment-2', date: '2025-01-15', personId: 'person-2', person: { id: 'person-2', name: 'Jane', facultyRole: null } }),
+          createMockAssignment({ id: 'assignment-3', date: '2025-01-16', personId: 'person-3', person: { id: 'person-3', name: 'Bob', facultyRole: null } }),
         ],
         total: 3,
       };
@@ -798,7 +709,7 @@ describe('Call Roster Hooks', () => {
     });
 
     it('should generate correct query key for month', () => {
-      const testDate = new Date('2025-01-15');
+      const testDate = new Date('2025-01-15T12:00:00');
       const start = format(startOfMonth(testDate), 'yyyy-MM-dd');
       const end = format(endOfMonth(testDate), 'yyyy-MM-dd');
       const key = callRosterQueryKeys.byMonth(testDate);
@@ -823,8 +734,8 @@ describe('Call Roster Hooks', () => {
     });
 
     it('should generate different keys for different months', () => {
-      const date1 = new Date('2025-01-15');
-      const date2 = new Date('2025-02-15');
+      const date1 = new Date('2025-01-15T12:00:00');
+      const date2 = new Date('2025-02-15T12:00:00');
       const key1 = callRosterQueryKeys.byMonth(date1);
       const key2 = callRosterQueryKeys.byMonth(date2);
       expect(key1).not.toEqual(key2);
@@ -906,32 +817,10 @@ describe('Call Roster Hooks', () => {
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle assignments with minimal data', async () => {
+  describe('Transform Behavior', () => {
+    it('should set notes to Holiday for holiday assignments', async () => {
       const mockResponse = {
-        items: [
-          {
-            id: 'assignment-1',
-            blockId: 'block-1',
-            personId: 'person-1',
-            role: 'resident',
-            rotationTemplate: {
-              id: 'rotation-1',
-              name: 'Call',
-              activityType: 'on_call',
-            },
-            person: {
-              id: 'person-1',
-              firstName: 'John',
-              lastName: 'Doe',
-            },
-            block: {
-              id: 'block-1',
-              startDate: '2025-01-15',
-              endDate: '2025-01-15',
-            },
-          },
-        ],
+        items: [createMockAssignment({ isHoliday: true })],
         total: 1,
       };
 
@@ -948,33 +837,12 @@ describe('Call Roster Hooks', () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(result.current.data).toHaveLength(1);
-      expect(result.current.data?.[0]).toMatchObject({
-        id: 'assignment-1',
-        date: '2025-01-15',
-        person: {
-          id: 'person-1',
-          name: 'John Doe',
-          phone: undefined,
-          pager: undefined,
-          email: undefined,
-        },
-      });
+      expect(result.current.data?.[0].notes).toBe('Holiday');
     });
 
-    it('should handle shift detection from notes', async () => {
+    it('should set notes to undefined for non-holiday assignments', async () => {
       const mockResponse = {
-        items: [
-          createMockAssignment({
-            id: 'overnight',
-            rotationTemplate: {
-              id: 'rotation-1',
-              name: 'Call',
-              activityType: 'on_call',
-            },
-            notes: 'Overnight shift',
-          }),
-        ],
+        items: [createMockAssignment({ isHoliday: false })],
         total: 1,
       };
 
@@ -991,21 +859,12 @@ describe('Call Roster Hooks', () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(result.current.data?.[0].shift).toBe('night');
+      expect(result.current.data?.[0].notes).toBeUndefined();
     });
 
-    it('should default to day shift when no indicators', async () => {
+    it('should set person fields to undefined when not available', async () => {
       const mockResponse = {
-        items: [
-          createMockAssignment({
-            rotationTemplate: {
-              id: 'rotation-1',
-              name: 'Call',
-              activityType: 'on_call',
-            },
-            notes: '',
-          }),
-        ],
+        items: [createMockAssignment()],
         total: 1,
       };
 
@@ -1022,40 +881,11 @@ describe('Call Roster Hooks', () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(result.current.data?.[0].shift).toBe('day');
-    });
-
-    it('should handle supervising role assignment', async () => {
-      const mockResponse = {
-        items: [
-          createMockAssignment({
-            role: 'supervising',
-            person: {
-              id: 'person-1',
-              firstName: 'Dr.',
-              lastName: 'Supervisor',
-              pgyLevel: 2,
-            },
-          }),
-        ],
-        total: 1,
-      };
-
-      (api.get as jest.Mock).mockResolvedValue(mockResponse);
-
-      const { result } = renderHook(
-        () => useOnCallAssignments('2025-01-15', '2025-01-20'),
-        {
-          wrapper: createWrapper(),
-        }
-      );
-
-      await waitFor(() => {
-        expect(result.current.isSuccess).toBe(true);
-      });
-
-      // Supervising role should result in 'senior' role type
-      expect(result.current.data?.[0].person.role).toBe('senior');
+      // Transform sets these to undefined
+      expect(result.current.data?.[0].person.pgyLevel).toBeUndefined();
+      expect(result.current.data?.[0].person.email).toBeUndefined();
+      expect(result.current.data?.[0].person.phone).toBeUndefined();
+      expect(result.current.data?.[0].person.pager).toBeUndefined();
     });
   });
 });

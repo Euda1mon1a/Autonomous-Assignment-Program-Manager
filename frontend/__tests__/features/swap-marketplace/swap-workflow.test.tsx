@@ -237,7 +237,7 @@ describe('Swap Workflow Integration Tests', () => {
       render(<MySwapRequests />, { wrapper: createWrapper() });
 
       // Click on "Recent" tab to see recent swaps with approved status
-      const recentTab = screen.getByRole('button', { name: /recent/i });
+      const recentTab = screen.getByRole('tab', { name: /recent/i });
       await userEvent.click(recentTab);
 
       await waitFor(() => {

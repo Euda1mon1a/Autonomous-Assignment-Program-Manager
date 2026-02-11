@@ -18,14 +18,14 @@ describe('SwapRequestForm', () => {
   const mockBlocks: BlockDetails[] = [
     {
       id: 'block-1',
-      date: '2025-01-15',
+      date: '2025-01-15T12:00:00',
       shift: 'AM',
       rotationType: 'Inpatient',
       personName: 'Dr. Current User',
     },
     {
       id: 'block-2',
-      date: '2025-01-20',
+      date: '2025-01-20T12:00:00',
       shift: 'PM',
       rotationType: 'Clinic',
       personName: 'Dr. Current User',
@@ -40,7 +40,7 @@ describe('SwapRequestForm', () => {
   const mockGetAvailableBlocks = jest.fn<Promise<BlockDetails[]>, [string]>().mockResolvedValue([
     {
       id: 'target-block-1',
-      date: '2025-01-16',
+      date: '2025-01-16T12:00:00',
       shift: 'AM',
       rotationType: 'Procedure',
       personName: 'Dr. Alice Smith',
@@ -60,13 +60,23 @@ describe('SwapRequestForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetAvailableBlocks.mockResolvedValue([
+      {
+        id: 'target-block-1',
+        date: '2025-01-16T12:00:00',
+        shift: 'AM',
+        rotationType: 'Procedure',
+        personName: 'Dr. Alice Smith',
+      },
+    ]);
+    mockOnSubmit.mockResolvedValue(undefined);
   });
 
   describe('Basic Rendering', () => {
     it('renders without crashing', () => {
       render(<SwapRequestForm {...defaultProps} />);
 
-      expect(screen.getByText('Create Swap Request')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Create Swap Request' })).toBeInTheDocument();
     });
 
     it('renders swap type selection buttons', () => {
@@ -98,8 +108,8 @@ describe('SwapRequestForm', () => {
     it('renders submit and cancel buttons', () => {
       render(<SwapRequestForm {...defaultProps} />);
 
-      expect(screen.getByText('Create Swap Request')).toBeInTheDocument();
-      expect(screen.getByText('Cancel')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Create Swap Request' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
     });
   });
 
@@ -228,12 +238,8 @@ describe('SwapRequestForm', () => {
       const personSelect = screen.getByLabelText(/Swap With/i) as HTMLSelectElement;
       fireEvent.change(personSelect, { target: { value: 'person-1' } });
 
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Their Block/i)).toBeInTheDocument();
-      });
-
-      // Select target block
-      const blockSelect = screen.getByLabelText(/Their Block/i) as HTMLSelectElement;
+      // Wait for target blocks to load and select to appear
+      const blockSelect = await screen.findByLabelText(/Their Block/i) as HTMLSelectElement;
       fireEvent.change(blockSelect, { target: { value: 'target-block-1' } });
 
       await waitFor(() => {
@@ -244,10 +250,10 @@ describe('SwapRequestForm', () => {
 
   describe('Form Validation', () => {
     it('shows error when submitting without selecting block', async () => {
-      render(<SwapRequestForm {...defaultProps} />);
+      const { container } = render(<SwapRequestForm {...defaultProps} />);
 
-      const submitButton = screen.getByText('Create Swap Request');
-      fireEvent.click(submitButton);
+      const form = container.querySelector('form')!;
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(screen.getByText(/Please select a block to give up/i)).toBeInTheDocument();
@@ -257,14 +263,14 @@ describe('SwapRequestForm', () => {
     });
 
     it('shows error when submitting without reason', async () => {
-      render(<SwapRequestForm {...defaultProps} />);
+      const { container } = render(<SwapRequestForm {...defaultProps} />);
 
       // Select block
       const blockSelect = screen.getByLabelText(/Block to Give Up/i) as HTMLSelectElement;
       fireEvent.change(blockSelect, { target: { value: 'block-1' } });
 
-      const submitButton = screen.getByText('Create Swap Request');
-      fireEvent.click(submitButton);
+      const form = container.querySelector('form')!;
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(screen.getByText(/Please provide a reason for the swap/i)).toBeInTheDocument();
@@ -274,7 +280,7 @@ describe('SwapRequestForm', () => {
     });
 
     it('shows error for one-to-one without target person', async () => {
-      render(<SwapRequestForm {...defaultProps} />);
+      const { container } = render(<SwapRequestForm {...defaultProps} />);
 
       // Select block and reason
       const blockSelect = screen.getByLabelText(/Block to Give Up/i) as HTMLSelectElement;
@@ -283,8 +289,8 @@ describe('SwapRequestForm', () => {
       const reasonSelect = screen.getByLabelText(/Reason for Swap/i) as HTMLSelectElement;
       fireEvent.change(reasonSelect, { target: { value: 'personal' } });
 
-      const submitButton = screen.getByText('Create Swap Request');
-      fireEvent.click(submitButton);
+      const form = container.querySelector('form')!;
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(screen.getByText(/Please select a target person and block/i)).toBeInTheDocument();
@@ -294,7 +300,7 @@ describe('SwapRequestForm', () => {
 
   describe('Form Submission', () => {
     it('submits valid one-to-one swap request', async () => {
-      render(<SwapRequestForm {...defaultProps} />);
+      const { container } = render(<SwapRequestForm {...defaultProps} />);
 
       // Fill form
       const blockSelect = screen.getByLabelText(/Block to Give Up/i) as HTMLSelectElement;
@@ -306,15 +312,11 @@ describe('SwapRequestForm', () => {
       const personSelect = screen.getByLabelText(/Swap With/i) as HTMLSelectElement;
       fireEvent.change(personSelect, { target: { value: 'person-1' } });
 
-      await waitFor(() => {
-        expect(screen.getByLabelText(/Their Block/i)).toBeInTheDocument();
-      });
-
-      const targetBlockSelect = screen.getByLabelText(/Their Block/i) as HTMLSelectElement;
+      const targetBlockSelect = await screen.findByLabelText(/Their Block/i) as HTMLSelectElement;
       fireEvent.change(targetBlockSelect, { target: { value: 'target-block-1' } });
 
-      const submitButton = screen.getByText('Create Swap Request');
-      fireEvent.click(submitButton);
+      const form = container.querySelector('form')!;
+      fireEvent.submit(form);
 
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledWith({
@@ -343,7 +345,7 @@ describe('SwapRequestForm', () => {
       const reasonSelect = screen.getByLabelText(/Reason for Swap/i) as HTMLSelectElement;
       fireEvent.change(reasonSelect, { target: { value: 'medical' } });
 
-      const submitButton = screen.getByText('Create Swap Request');
+      const submitButton = screen.getByRole('button', { name: 'Create Swap Request' });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
@@ -375,7 +377,7 @@ describe('SwapRequestForm', () => {
       const notesTextarea = screen.getByLabelText(/Additional Notes/i);
       fireEvent.change(notesTextarea, { target: { value: 'Family emergency' } });
 
-      const submitButton = screen.getByText('Create Swap Request');
+      const submitButton = screen.getByRole('button', { name: 'Create Swap Request' });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
@@ -404,7 +406,7 @@ describe('SwapRequestForm', () => {
       const reasonSelect = screen.getByLabelText(/Reason for Swap/i) as HTMLSelectElement;
       fireEvent.change(reasonSelect, { target: { value: 'personal' } });
 
-      const submitButton = screen.getByText('Create Swap Request');
+      const submitButton = screen.getByRole('button', { name: 'Create Swap Request' });
       fireEvent.click(submitButton);
 
       expect(await screen.findByText('Submitting...')).toBeInTheDocument();
@@ -425,7 +427,7 @@ describe('SwapRequestForm', () => {
       const reasonSelect = screen.getByLabelText(/Reason for Swap/i) as HTMLSelectElement;
       fireEvent.change(reasonSelect, { target: { value: 'personal' } });
 
-      const submitButton = screen.getByText('Create Swap Request');
+      const submitButton = screen.getByRole('button', { name: 'Create Swap Request' });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
@@ -461,10 +463,10 @@ describe('SwapRequestForm', () => {
       const reasonSelect = screen.getByLabelText(/Reason for Swap/i) as HTMLSelectElement;
       fireEvent.change(reasonSelect, { target: { value: 'personal' } });
 
-      const submitButton = screen.getByText('Create Swap Request');
+      const submitButton = screen.getByRole('button', { name: 'Create Swap Request' });
       fireEvent.click(submitButton);
 
-      const cancelButton = await screen.findByText('Cancel');
+      const cancelButton = await screen.findByRole('button', { name: 'Cancel' });
       expect(cancelButton).toBeDisabled();
     });
   });

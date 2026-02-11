@@ -10,26 +10,26 @@ jest.mock("@/hooks/useResilience", () => ({
 describe("ResilienceMetrics", () => {
   const mockHealthData = {
     timestamp: new Date().toISOString(),
-    overall_status: OverallStatus.HEALTHY,
+    overallStatus: OverallStatus.HEALTHY,
     defenseLevel: DefenseLevel.PREVENTION as any,
     utilization: {
       utilizationRate: 0.65,
       level: UtilizationLevel.GREEN,
-      buffer_remaining: 3.5,
-      wait_time_multiplier: 1.2,
-      safe_capacity: 100,
-      current_demand: 65,
-      theoretical_capacity: 100,
+      bufferRemaining: 3.5,
+      waitTimeMultiplier: 1.2,
+      safeCapacity: 100,
+      currentDemand: 65,
+      theoreticalCapacity: 100,
     },
-    active_fallbacks: [],
+    activeFallbacks: [],
     n1Pass: true,
     n2Pass: true,
     phaseTransitionRisk: "low",
-    redundancy_status: [],
-    load_shedding_level: "NORMAL" as any,
+    redundancyStatus: [],
+    loadSheddingLevel: "NORMAL" as any,
     crisisMode: false,
-    immediate_actions: [],
-    watch_items: [],
+    immediateActions: [],
+    watchItems: [],
   };
 
   beforeEach(() => {
@@ -134,7 +134,7 @@ describe("ResilienceMetrics", () => {
   it("shows when fallbacks are active", () => {
     const dataWithFallbacks = {
       ...mockHealthData,
-      active_fallbacks: ["Fallback-1", "Fallback-2"],
+      activeFallbacks: ["Fallback-1", "Fallback-2"],
     };
 
     (useSystemHealth as jest.Mock).mockReturnValue({

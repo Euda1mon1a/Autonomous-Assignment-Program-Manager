@@ -71,7 +71,7 @@ describe('useGameTheory hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
       expect(result.current.data?.strategies).toHaveLength(2)
       expect(mockedApi.get).toHaveBeenCalledWith(
-        '/v1/game-theory/strategies?active_only=true'
+        '/game-theory/strategies?active_only=true'
       )
     })
 
@@ -89,7 +89,7 @@ describe('useGameTheory hooks', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
       expect(mockedApi.get).toHaveBeenCalledWith(
-        '/v1/game-theory/strategies?active_only=false'
+        '/game-theory/strategies?active_only=false'
       )
     })
   })

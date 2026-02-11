@@ -76,7 +76,7 @@ describe('useSchedule', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('/assignments?startDate=2024-01-01&endDate=2024-01-31')
+        expect.stringContaining('/assignments?start_date=2024-01-01&end_date=2024-01-31')
       )
     })
   })
@@ -232,7 +232,7 @@ describe('useSchedule', () => {
     })
 
     it('should show background fetching', async () => {
-      mockedApi.get.mockResolvedValue({ items: [], total: 0 })
+      mockedApi.get.mockResolvedValueOnce({ items: [], total: 0 })
 
       const startDate = new Date('2024-01-01')
       const endDate = new Date('2024-01-31')
@@ -245,12 +245,27 @@ describe('useSchedule', () => {
         expect(result.current.isSuccess).toBe(true)
       })
 
-      // Trigger refetch
-      act(() => {
+      // Verify initial fetch completed
+      expect(result.current.isFetching).toBe(false)
+
+      // Trigger refetch with a pending promise so isFetching stays true
+      let refetchPromiseResolve: (value: any) => void
+      mockedApi.get.mockImplementation(() => new Promise((resolve) => {
+        refetchPromiseResolve = resolve
+      }))
+
+      await act(async () => {
         result.current.refetch()
       })
 
-      expect(result.current.isFetching).toBe(true)
+      await waitFor(() => {
+        expect(result.current.isFetching).toBe(true)
+      })
+
+      // Resolve to avoid dangling promise
+      await act(async () => {
+        refetchPromiseResolve!({ items: [], total: 0 })
+      })
     })
   })
 
@@ -270,7 +285,7 @@ describe('useSchedule', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('startDate=2024-01-01&endDate=2024-12-31')
+        expect.stringContaining('start_date=2024-01-01&end_date=2024-12-31')
       )
     })
 
@@ -455,7 +470,9 @@ describe('useGenerateSchedule', () => {
         })
       })
 
-      expect(result.current.isPending).toBe(true)
+      await waitFor(() => {
+        expect(result.current.isPending).toBe(true)
+      })
 
       act(() => {
         resolvePromise!({
@@ -627,7 +644,7 @@ describe('useAssignments', () => {
 
       expect(result.current.data).toEqual(mockAssignments)
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('personId=person-1')
+        expect.stringContaining('person_id=person-1')
       )
     })
   })

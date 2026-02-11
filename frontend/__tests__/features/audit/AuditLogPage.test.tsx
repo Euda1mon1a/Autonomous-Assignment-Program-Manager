@@ -98,7 +98,7 @@ describe('AuditLogPage', () => {
     it('should render export button', () => {
       render(<AuditLogPage />, { wrapper: createWrapper() });
 
-      expect(screen.getByRole('button', { name: /Export/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Open export options/i })).toBeInTheDocument();
     });
 
     it('should render statistics cards', () => {
@@ -450,7 +450,7 @@ describe('AuditLogPage', () => {
         });
 
         // Click close button
-        const closeButton = screen.getByLabelText('Close');
+        const closeButton = screen.getByLabelText('Close comparison panel');
         await user.click(closeButton);
 
         await waitFor(() => {

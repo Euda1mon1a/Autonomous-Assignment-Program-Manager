@@ -131,7 +131,7 @@ describe('EarlyWarningPanel', () => {
       const onDismiss = jest.fn();
       render(<EarlyWarningPanel warnings={mockWarnings} onDismiss={onDismiss} />);
 
-      const dismissButtons = screen.getAllByLabelText('Dismiss warning');
+      const dismissButtons = screen.getAllByLabelText(/Dismiss warning/);
       fireEvent.click(dismissButtons[0]);
 
       expect(onDismiss).toHaveBeenCalledWith('warn-1');
@@ -165,8 +165,8 @@ describe('EarlyWarningPanel', () => {
     it('warning messages are announced properly', () => {
       render(<EarlyWarningPanel warnings={mockWarnings} />);
 
-      const criticalIcon = screen.getAllByRole('img', { name: 'Critical' })[0];
-      expect(criticalIcon).toBeInTheDocument();
+      // Icons are aria-hidden="true", so check for the Badge text instead
+      expect(screen.getByText('Critical')).toBeInTheDocument();
     });
 
     it('displays trend chart when warning has trend data', () => {
@@ -224,8 +224,9 @@ describe('EarlyWarningPanel', () => {
     it('formats detection timestamp correctly', () => {
       render(<EarlyWarningPanel warnings={mockWarnings} />);
 
-      // Should display formatted date
-      expect(screen.getByText(/Detected:/)).toBeInTheDocument();
+      // Should display formatted date — multiple warnings each have "Detected:"
+      const detected = screen.getAllByText(/Detected:/);
+      expect(detected.length).toBeGreaterThan(0);
     });
 
     it('applies custom className', () => {

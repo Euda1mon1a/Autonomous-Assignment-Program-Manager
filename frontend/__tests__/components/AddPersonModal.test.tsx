@@ -80,7 +80,7 @@ describe('AddPersonModal', () => {
       )
 
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /add person/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /add new person/i })).toBeInTheDocument()
     })
 
     it('should have resident selected by default', () => {
@@ -305,7 +305,7 @@ describe('AddPersonModal', () => {
       )
 
       // Check submit button exists with correct text
-      const submitButton = screen.getByRole('button', { name: /add person/i })
+      const submitButton = screen.getByRole('button', { name: /add new person/i })
       expect(submitButton).toBeInTheDocument()
       expect(submitButton).toHaveAttribute('type', 'submit')
     })

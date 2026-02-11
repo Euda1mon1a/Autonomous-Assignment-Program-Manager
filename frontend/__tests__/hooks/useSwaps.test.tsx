@@ -580,7 +580,9 @@ describe('useSwapCreate', () => {
         })
       })
 
-      expect(result.current.isPending).toBe(true)
+      await waitFor(() => {
+        expect(result.current.isPending).toBe(true)
+      })
 
       act(() => {
         resolvePromise!({

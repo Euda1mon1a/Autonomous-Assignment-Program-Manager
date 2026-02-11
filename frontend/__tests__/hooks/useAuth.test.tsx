@@ -1089,6 +1089,10 @@ describe('useLogout - Additional Scenarios', () => {
     // Server returns false indicating partial failure but doesn't error
     mockedAuthApi.logout.mockResolvedValueOnce(false)
 
+    // The warn only fires in development mode
+    const originalNodeEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
+
     const { result } = renderHook(() => useLogout(), {
       wrapper: createWrapper(),
     })
@@ -1110,6 +1114,7 @@ describe('useLogout - Additional Scenarios', () => {
     )
 
     consoleWarnSpy.mockRestore()
+    process.env.NODE_ENV = originalNodeEnv
   })
 })
 

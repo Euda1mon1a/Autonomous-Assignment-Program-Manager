@@ -154,7 +154,7 @@ describe('usePeople', () => {
 
     // Only residents should be returned
     expect(result.current.data?.items.every(p => p.type === 'resident')).toBe(true)
-    expect(mockedApi.get).toHaveBeenCalledWith('/people?role=resident')
+    expect(mockedApi.get).toHaveBeenCalledWith('/people?type=resident')
   })
 
   it('should filter by PGY level when provided', async () => {
@@ -175,7 +175,7 @@ describe('usePeople', () => {
 
     // Only PGY-2 residents should be returned
     expect(result.current.data?.items.every(p => p.pgyLevel === 2)).toBe(true)
-    expect(mockedApi.get).toHaveBeenCalledWith('/people?pgyLevel=2')
+    expect(mockedApi.get).toHaveBeenCalledWith('/people?pgy_level=2')
   })
 
   it('should handle API errors gracefully', async () => {

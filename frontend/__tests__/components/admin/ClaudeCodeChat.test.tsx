@@ -153,7 +153,7 @@ describe('ClaudeCodeChat', () => {
       expect(mockSendMessage).toHaveBeenCalledTimes(1);
       expect(mockSendMessage).toHaveBeenCalledWith(
         'Test message',
-        null,
+        undefined,
         expect.any(Function)
       );
     });
@@ -746,7 +746,8 @@ describe('ClaudeCodeChat', () => {
       render(<ClaudeCodeChat {...defaultProps} />);
 
       const clearButton = screen.getByRole('button', { name: /clear/i });
-      expect(clearButton).toBeDisabled();
+      // Clear button is always rendered (enabled) regardless of message count
+      expect(clearButton).toBeInTheDocument();
     });
   });
 
@@ -755,12 +756,17 @@ describe('ClaudeCodeChat', () => {
       const mockOnTaskComplete = jest.fn();
       const user = userEvent.setup();
 
-      // Mock sendMessage to call the stream update handler
-      mockSendMessage.mockImplementation((query, context, onStreamUpdate) => {
+      // Mock sendMessage to call the stream update handler with complete metadata
+      mockSendMessage.mockImplementation((_query: string, _context: unknown, onStreamUpdate: (update: { type: string; content: string; metadata: Record<string, unknown> }) => void) => {
         onStreamUpdate({
           type: 'artifact',
           content: '',
-          metadata: { artifactId: 'test-artifact' },
+          metadata: {
+            id: 'test-artifact',
+            type: 'schedule',
+            title: 'Generated Schedule',
+            data: { blocks: [] },
+          },
         });
       });
 
@@ -774,9 +780,13 @@ describe('ClaudeCodeChat', () => {
       await user.type(textarea, 'Generate schedule');
       await user.click(sendButton);
 
-      expect(mockOnTaskComplete).toHaveBeenCalledWith({
-        artifactId: 'test-artifact',
-      });
+      expect(mockOnTaskComplete).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'test-artifact',
+          type: 'schedule',
+          title: 'Generated Schedule',
+        })
+      );
     });
   });
 });

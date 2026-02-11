@@ -82,7 +82,7 @@ describe('API Client', () => {
       // Check the captured create calls
       expect(mockCreateCalls.length).toBeGreaterThan(0)
       const createArgs = mockCreateCalls[0][0] as { baseURL: string }
-      expect(createArgs.baseURL).toContain('localhost:8000')
+      expect(createArgs.baseURL).toContain('/api/v1')
     })
 
     it('should set Content-Type header to application/json', () => {
@@ -229,12 +229,12 @@ describe('API Client', () => {
       expect(mockAxiosInstance.delete).toHaveBeenCalledWith('/users/1', undefined)
     })
 
-    it('should not return data for DELETE', async () => {
+    it('should return response data for DELETE', async () => {
       mockAxiosInstance.delete.mockResolvedValueOnce({ data: { deleted: true } })
 
       const result = await del('/items/123')
 
-      expect(result).toBeUndefined()
+      expect(result).toEqual({ deleted: true })
     })
   })
 

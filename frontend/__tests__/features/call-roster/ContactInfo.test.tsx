@@ -6,14 +6,25 @@
  */
 
 import { render, screen, fireEvent, waitFor } from '@/test-utils';
+import userEvent from '@testing-library/user-event';
 import { ContactInfo, ContactBadge } from '@/features/call-roster/ContactInfo';
 import type { OnCallPerson } from '@/features/call-roster/types';
 
-// Mock clipboard API
-Object.assign(navigator, {
-  clipboard: {
-    writeText: jest.fn(() => Promise.resolve()),
-  },
+// Mock clipboard API - must be set up before userEvent.setup() can override it
+const mockWriteText = jest.fn(() => Promise.resolve());
+
+// Setup clipboard mock before each test
+beforeEach(() => {
+  mockWriteText.mockClear();
+  // Use Object.defineProperty since navigator.clipboard is a readonly getter
+  Object.defineProperty(navigator, 'clipboard', {
+    value: {
+      writeText: mockWriteText,
+      readText: jest.fn().mockResolvedValue(''),
+    },
+    writable: true,
+    configurable: true,
+  });
 });
 
 describe('ContactInfo', () => {
@@ -28,7 +39,7 @@ describe('ContactInfo', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockWriteText.mockClear();
   });
 
   describe('Full Display Mode', () => {
@@ -174,44 +185,66 @@ describe('ContactInfo', () => {
   });
 
   describe('Copy Functionality', () => {
+    // Helper to set up clipboard mock right before the click
+    // userEvent.setup() can override navigator.clipboard, so we set it after render
+    function setupClipboardMock() {
+      mockWriteText.mockClear();
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: mockWriteText,
+          readText: jest.fn().mockResolvedValue(''),
+        },
+        writable: true,
+        configurable: true,
+      });
+    }
+
     it('should copy phone number to clipboard', async () => {
+      const user = userEvent.setup();
       render(<ContactInfo person={mockPerson} />);
+      setupClipboardMock();
 
       const copyButton = screen.getByTitle('Copy phone number');
-      fireEvent.click(copyButton);
+      await user.click(copyButton);
 
       await waitFor(() => {
-        expect(navigator.clipboard.writeText).toHaveBeenCalledWith('555-1234');
+        expect(mockWriteText).toHaveBeenCalledWith('555-1234');
       });
     });
 
     it('should copy pager number to clipboard', async () => {
+      const user = userEvent.setup();
       render(<ContactInfo person={mockPerson} />);
+      setupClipboardMock();
 
       const copyButton = screen.getByTitle('Copy pager number');
-      fireEvent.click(copyButton);
+      await user.click(copyButton);
 
       await waitFor(() => {
-        expect(navigator.clipboard.writeText).toHaveBeenCalledWith('555-5678');
+        expect(mockWriteText).toHaveBeenCalledWith('555-5678');
       });
     });
 
     it('should copy email to clipboard', async () => {
+      const user = userEvent.setup();
       render(<ContactInfo person={mockPerson} />);
+      setupClipboardMock();
 
       const copyButton = screen.getByTitle('Copy email');
-      fireEvent.click(copyButton);
+      await user.click(copyButton);
 
       await waitFor(() => {
-        expect(navigator.clipboard.writeText).toHaveBeenCalledWith('john.doe@example.com');
+        expect(mockWriteText).toHaveBeenCalledWith('john.doe@example.com');
       });
     });
 
     it('should show check icon after successful copy', async () => {
+      const user = userEvent.setup();
       const { container } = render(<ContactInfo person={mockPerson} />);
+      setupClipboardMock();
 
       const copyButton = screen.getByTitle('Copy phone number');
-      fireEvent.click(copyButton);
+      await user.click(copyButton);
 
       await waitFor(() => {
         // Check icon should be visible after copy
@@ -222,14 +255,16 @@ describe('ContactInfo', () => {
 
     it('should reset check icon after 2 seconds', async () => {
       jest.useFakeTimers();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
 
       render(<ContactInfo person={mockPerson} />);
+      setupClipboardMock();
 
       const copyButton = screen.getByTitle('Copy phone number');
-      fireEvent.click(copyButton);
+      await user.click(copyButton);
 
       await waitFor(() => {
-        expect(navigator.clipboard.writeText).toHaveBeenCalled();
+        expect(mockWriteText).toHaveBeenCalled();
       });
 
       // Fast-forward time by 2 seconds
@@ -245,24 +280,21 @@ describe('ContactInfo', () => {
     });
 
     it('should handle copy errors gracefully', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      (navigator.clipboard.writeText as jest.Mock).mockRejectedValue(
+      const user = userEvent.setup();
+      render(<ContactInfo person={mockPerson} />);
+      setupClipboardMock();
+      mockWriteText.mockRejectedValueOnce(
         new Error('Copy failed')
       );
 
-      render(<ContactInfo person={mockPerson} />);
-
       const copyButton = screen.getByTitle('Copy phone number');
-      fireEvent.click(copyButton);
+      await user.click(copyButton);
 
+      // Component silently catches errors (console.error is commented out in source)
+      // Verify the mock was called and rejected
       await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-          'Failed to copy:',
-          expect.any(Error)
-        );
+        expect(mockWriteText).toHaveBeenCalledWith('555-1234');
       });
-
-      consoleErrorSpy.mockRestore();
     });
   });
 

@@ -128,11 +128,12 @@ describe('ScheduleGrid', () => {
       renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
-        expect(screen.getByText('PGY-1')).toBeInTheDocument();
+        // PGY-1 may appear in separator row and person filter; use getAllByText
+        expect(screen.getAllByText('PGY-1').length).toBeGreaterThan(0);
       });
 
-      expect(screen.getByText('PGY-2')).toBeInTheDocument();
-      expect(screen.getByText('Faculty')).toBeInTheDocument();
+      expect(screen.getAllByText('PGY-2').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Faculty').length).toBeGreaterThan(0);
     });
 
     it('renders person names in rows', async () => {
@@ -175,7 +176,10 @@ describe('ScheduleGrid', () => {
 
       renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
-      expect(screen.getByRole('status')).toBeInTheDocument();
+      // Multiple status elements may exist; find the one with aria-busy
+      const statusElements = screen.getAllByRole('status');
+      const loadingStatus = statusElements.find(el => el.getAttribute('aria-busy') === 'true');
+      expect(loadingStatus).toBeInTheDocument();
       expect(screen.getByText('Loading schedule...')).toBeInTheDocument();
     });
 
@@ -191,9 +195,11 @@ describe('ScheduleGrid', () => {
 
       renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
-      const status = screen.getByRole('status');
-      expect(status).toHaveAttribute('aria-live', 'polite');
-      expect(status).toHaveAttribute('aria-busy', 'true');
+      // Multiple status elements may exist; find the loading one
+      const statusElements = screen.getAllByRole('status');
+      const loadingStatus = statusElements.find(el => el.getAttribute('aria-busy') === 'true');
+      expect(loadingStatus).toBeInTheDocument();
+      expect(loadingStatus).toHaveAttribute('aria-live', 'polite');
     });
 
     it('shows loading state when templates are loading', () => {
@@ -240,7 +246,7 @@ describe('ScheduleGrid', () => {
       renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
-        expect(screen.getByText(/Failed to load schedule data/i)).toBeInTheDocument();
+        expect(screen.getByText(/Failed to load assignments/i)).toBeInTheDocument();
       });
     });
 
@@ -338,15 +344,16 @@ describe('ScheduleGrid', () => {
       renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
-        expect(screen.getByText('PGY-1')).toBeInTheDocument();
+        expect(screen.getAllByText('PGY-1').length).toBeGreaterThan(0);
       });
 
-      // Verify PGY-1 section contains Alice
-      const pgy1Section = screen.getByText('PGY-1').closest('tr');
+      // Verify PGY-1 section exists (separator row)
+      const pgy1Elements = screen.getAllByText('PGY-1');
+      const pgy1Section = pgy1Elements[0].closest('tr');
       expect(pgy1Section).toBeInTheDocument();
 
       // Verify PGY-2 section exists
-      expect(screen.getByText('PGY-2')).toBeInTheDocument();
+      expect(screen.getAllByText('PGY-2').length).toBeGreaterThan(0);
     });
 
     it('displays faculty in separate group', async () => {
@@ -356,7 +363,7 @@ describe('ScheduleGrid', () => {
       renderWithProviders(<ScheduleGrid startDate={startDate} endDate={endDate} />);
 
       await waitFor(() => {
-        expect(screen.getByText('Faculty')).toBeInTheDocument();
+        expect(screen.getAllByText('Faculty').length).toBeGreaterThan(0);
       });
 
       expect(screen.getByText('Dr. Carol Faculty')).toBeInTheDocument();

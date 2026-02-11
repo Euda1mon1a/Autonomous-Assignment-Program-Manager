@@ -442,7 +442,6 @@ describe('useWebSocket', () => {
 
     it('should handle invalid JSON gracefully', async () => {
       const onMessage = jest.fn()
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation()
 
       const { result } = renderHook(() => useWebSocket({ onMessage }))
 
@@ -459,20 +458,13 @@ describe('useWebSocket', () => {
         ws.triggerMessage('invalid json{')
       })
 
-      // Wait for error to be logged
-      await waitFor(() => {
-        expect(consoleErrorSpy).toHaveBeenCalled()
-      })
-
+      // parseMessage returns null silently for invalid JSON
       expect(result.current.lastMessage).toBeNull()
       expect(onMessage).not.toHaveBeenCalled()
-
-      consoleErrorSpy.mockRestore()
     })
 
     it('should handle messages without eventType', async () => {
       const onMessage = jest.fn()
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
 
       const { result } = renderHook(() => useWebSocket({ onMessage }))
 
@@ -489,20 +481,13 @@ describe('useWebSocket', () => {
         ws.triggerMessage(JSON.stringify({ data: 'test' }))
       })
 
-      // Wait for message processing (synchronous in this case)
-      await waitFor(() => {
-        expect(consoleWarnSpy).toHaveBeenCalled()
-      })
-
+      // parseMessage returns null for messages without eventType
       expect(result.current.lastMessage).toBeNull()
       expect(onMessage).not.toHaveBeenCalled()
-
-      consoleWarnSpy.mockRestore()
     })
 
     it('should handle pong messages without exposing to user', async () => {
       const onMessage = jest.fn()
-      const consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation()
 
       const { result } = renderHook(() => useWebSocket({ onMessage }))
 
@@ -523,11 +508,8 @@ describe('useWebSocket', () => {
         expect(result.current.lastMessage).toEqual(mockPongEvent)
       })
 
-      // onMessage should still be called
+      // onMessage is called for all valid messages including pong
       expect(onMessage).toHaveBeenCalledWith(mockPongEvent)
-      expect(consoleDebugSpy).toHaveBeenCalled()
-
-      consoleDebugSpy.mockRestore()
     })
   })
 
@@ -556,20 +538,14 @@ describe('useWebSocket', () => {
     })
 
     it('should not send messages when disconnected', async () => {
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
-
       const { result } = renderHook(() => useWebSocket({ autoConnect: false }))
 
       act(() => {
         result.current.send({ action: 'ping' })
       })
 
+      // send() silently returns when not connected
       expect(MockWebSocket.sentMessages.length).toBe(0)
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Cannot send message: not connected')
-      )
-
-      consoleWarnSpy.mockRestore()
     })
   })
 

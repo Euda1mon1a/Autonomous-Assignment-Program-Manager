@@ -45,8 +45,9 @@ describe('useEnergyLandscape', () => {
       await result.current.mutateAsync({ scheduleId: 'schedule-1' });
     });
 
-    expect(mockedApi.analyzeEnergyLandscape).toHaveBeenCalledWith({
-      scheduleId: 'schedule-1',
-    });
+    expect(mockedApi.analyzeEnergyLandscape).toHaveBeenCalledWith(
+      { scheduleId: 'schedule-1' },
+      expect.anything(),
+    );
   });
 });

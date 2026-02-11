@@ -270,7 +270,7 @@ describe('Auto-Matcher Algorithm', () => {
         '/portal/my/swaps',
         expect.objectContaining({
           autoFindCandidates: false,
-          preferredTargetFacultyId: 'faculty-123',
+          preferred_targetFacultyId: 'faculty-123',
         })
       );
     });

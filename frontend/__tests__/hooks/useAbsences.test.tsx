@@ -290,7 +290,7 @@ describe('useAbsenceList', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('personId=person-1')
+        expect.stringContaining('person_id=person-1')
       )
     })
 
@@ -313,10 +313,10 @@ describe('useAbsenceList', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('startDate=2024-01-01')
+        expect.stringContaining('start_date=2024-01-01')
       )
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('endDate=2024-01-31')
+        expect.stringContaining('end_date=2024-01-31')
       )
     })
 
@@ -335,7 +335,7 @@ describe('useAbsenceList', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('absenceType=vacation')
+        expect.stringContaining('absence_type=vacation')
       )
     })
   })
@@ -771,7 +771,9 @@ describe('useAbsenceCreate', () => {
         } as any)
       })
 
-      expect(result.current.isPending).toBe(true)
+      await waitFor(() => {
+        expect(result.current.isPending).toBe(true)
+      })
 
       act(() => {
         resolvePromise!({

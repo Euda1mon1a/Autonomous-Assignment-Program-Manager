@@ -1,9 +1,9 @@
 import { render, screen } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { MobileNav } from '@/components/MobileNav'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/contexts/AuthContext'
 
-jest.mock('@/hooks/useAuth')
+jest.mock('@/contexts/AuthContext')
 
 describe('MobileNav', () => {
   const mockUser = {
@@ -51,7 +51,7 @@ describe('MobileNav', () => {
     it('should display schedule link', async () => {
       render(<MobileNav />)
       await userEvent.click(screen.getByRole('button', { name: /menu/i }))
-      expect(screen.getByText(/schedule/i)).toBeInTheDocument()
+      expect(screen.getByText(/my schedule/i)).toBeInTheDocument()
     })
 
     it('should close menu when link is clicked', async () => {
@@ -70,7 +70,8 @@ describe('MobileNav', () => {
       })
       render(<MobileNav />)
       await userEvent.click(screen.getByRole('button', { name: /menu/i }))
-      expect(screen.getByText(/admin/i)).toBeInTheDocument()
+      // Look for specific admin nav link text
+      expect(screen.getByText(/people admin/i)).toBeInTheDocument()
     })
 
     it('should not show admin links for residents', async () => {

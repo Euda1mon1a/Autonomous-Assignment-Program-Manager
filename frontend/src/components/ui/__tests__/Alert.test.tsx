@@ -37,7 +37,7 @@ describe('Alert', () => {
     it('has proper role attribute', () => {
       render(<Alert>Message</Alert>);
 
-      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.getByRole('status')).toBeInTheDocument();
     });
 
     it('renders dismiss button when dismissible', () => {
@@ -48,13 +48,13 @@ describe('Alert', () => {
         </Alert>
       );
 
-      expect(screen.getByLabelText('Dismiss')).toBeInTheDocument();
+      expect(screen.getByLabelText('Dismiss alert')).toBeInTheDocument();
     });
 
     it('does not render dismiss button when not dismissible', () => {
       render(<Alert>Message</Alert>);
 
-      expect(screen.queryByLabelText('Dismiss')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Dismiss alert')).not.toBeInTheDocument();
     });
   });
 
@@ -87,14 +87,14 @@ describe('Alert', () => {
     it('renders correct icon for info variant', () => {
       render(<Alert variant="info">Info</Alert>);
 
-      const alert = screen.getByRole('alert');
+      const alert = screen.getByRole('status');
       expect(alert.querySelector('.text-blue-600')).toBeInTheDocument();
     });
 
     it('renders correct icon for success variant', () => {
       render(<Alert variant="success">Success</Alert>);
 
-      const alert = screen.getByRole('alert');
+      const alert = screen.getByRole('status');
       expect(alert.querySelector('.text-green-600')).toBeInTheDocument();
     });
 
@@ -123,7 +123,7 @@ describe('Alert', () => {
         </Alert>
       );
 
-      fireEvent.click(screen.getByLabelText('Dismiss'));
+      fireEvent.click(screen.getByLabelText('Dismiss alert'));
 
       expect(onDismiss).toHaveBeenCalledTimes(1);
     });
@@ -136,7 +136,7 @@ describe('Alert', () => {
         </Alert>
       );
 
-      const dismissButton = screen.getByLabelText('Dismiss');
+      const dismissButton = screen.getByLabelText('Dismiss alert');
       dismissButton.focus();
 
       expect(dismissButton).toHaveFocus();
@@ -195,7 +195,7 @@ describe('Alert', () => {
       );
 
       expect(screen.getByText('Title')).toBeInTheDocument();
-      expect(screen.getByLabelText('Dismiss')).toBeInTheDocument();
+      expect(screen.getByLabelText('Dismiss alert')).toBeInTheDocument();
     });
 
     it('does not render dismiss button when dismissible but no onDismiss', () => {
@@ -205,7 +205,7 @@ describe('Alert', () => {
         </Alert>
       );
 
-      expect(screen.queryByLabelText('Dismiss')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Dismiss alert')).not.toBeInTheDocument();
     });
   });
 });

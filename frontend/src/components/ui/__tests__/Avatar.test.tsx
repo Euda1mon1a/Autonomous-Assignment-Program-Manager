@@ -12,10 +12,11 @@ describe('Avatar', () => {
   // Test: Rendering
   describe('Rendering', () => {
     it('renders with default fallback icon', () => {
-      render(<Avatar />);
+      const { container } = render(<Avatar />);
 
-      const avatar = screen.getByRole('img', { hidden: true }).parentElement;
-      expect(avatar).toBeInTheDocument();
+      // Default Avatar renders a User icon (SVG) with aria-hidden="true"
+      const svg = container.querySelector('svg');
+      expect(svg).toBeInTheDocument();
     });
 
     it('renders with image', () => {
@@ -191,9 +192,8 @@ describe('AvatarGroup', () => {
     it('renders multiple avatars', () => {
       render(<AvatarGroup avatars={mockAvatars.slice(0, 3)} />);
 
-      expect(screen.getByAltText(/John Doe|User avatar/)).toBeInTheDocument();
-      expect(screen.getByAltText(/Jane Smith|User avatar/)).toBeInTheDocument();
-      expect(screen.getByAltText(/Bob Wilson|User avatar/)).toBeInTheDocument();
+      const avatarImages = screen.getAllByAltText('User avatar');
+      expect(avatarImages).toHaveLength(3);
     });
 
     it('limits avatars to max prop', () => {

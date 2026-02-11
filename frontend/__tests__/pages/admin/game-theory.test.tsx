@@ -8,6 +8,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastProvider } from '@/contexts/ToastContext';
 import GameTheoryPage from '@/app/admin/game-theory/page';
 import * as hooks from '@/hooks/useGameTheory';
 
@@ -59,20 +60,20 @@ jest.mock('@/components/game-theory/TournamentCard', () => ({
   ),
 }));
 
-// Mock data
+// Mock data (camelCase - hooks return data after axios interceptor transforms keys)
 const mockSummary = {
-  total_strategies: 5,
-  total_tournaments: 10,
-  completed_tournaments: 8,
-  total_evolutions: 6,
-  completed_evolutions: 4,
-  best_performing_strategy: 'Tit for Tat',
-  best_strategy_score: 3.2,
-  recent_tournaments: [
+  totalStrategies: 5,
+  totalTournaments: 10,
+  completedTournaments: 8,
+  totalEvolutions: 6,
+  completedEvolutions: 4,
+  bestPerformingStrategy: 'Tit for Tat',
+  bestStrategyScore: 3.2,
+  recentTournaments: [
     { id: '1', name: 'Tournament 1', status: 'completed' },
     { id: '2', name: 'Tournament 2', status: 'running' },
   ],
-  recent_evolutions: [
+  recentEvolutions: [
     { id: '1', name: 'Evolution 1', status: 'completed', winner: 'Tit for Tat' },
   ],
 };
@@ -107,7 +108,11 @@ function createWrapper() {
   });
 
   return function Wrapper({ children }: { children: React.ReactNode }) {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    return (
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>{children}</ToastProvider>
+      </QueryClientProvider>
+    );
   };
 }
 
@@ -173,7 +178,7 @@ describe('GameTheoryPage', () => {
     it('should render page description', () => {
       render(<GameTheoryPage />, { wrapper: createWrapper() });
 
-      expect(screen.getByText(/Axelrod's Prisoner's Dilemma/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Axelrod's Prisoner's Dilemma/i).length).toBeGreaterThan(0);
     });
 
     it('should render Create Default Strategies button', () => {
@@ -229,8 +234,8 @@ describe('GameTheoryPage', () => {
       render(<GameTheoryPage />, { wrapper: createWrapper() });
 
       expect(screen.getByText('Best Strategy')).toBeInTheDocument();
-      expect(screen.getByText('Tit for Tat')).toBeInTheDocument();
-      expect(screen.getByText(/Score: 3\.2/i)).toBeInTheDocument();
+      expect(screen.getAllByText('Tit for Tat').length).toBeGreaterThan(0);
+      expect(screen.getByText(/Score: 3\.20/i)).toBeInTheDocument();
     });
 
     it('should show recent tournaments', () => {
@@ -469,7 +474,7 @@ describe('GameTheoryPage', () => {
 
       await user.click(screen.getByText('analysis').closest('button')!);
 
-      expect(screen.getByText('Analyze Configuration')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Analyze Configuration/i })).toBeInTheDocument();
       expect(screen.getByText('Utilization Target')).toBeInTheDocument();
       expect(screen.getByText('Defense Activation Threshold')).toBeInTheDocument();
       expect(screen.getByText('Sacrifice Willingness')).toBeInTheDocument();
@@ -498,12 +503,12 @@ describe('GameTheoryPage', () => {
     it('should display analysis results when available', async () => {
       const user = userEvent.setup();
       const mockResults = {
-        config_name: 'Test Config',
+        configName: 'Test Config',
         averageScore: 3.5,
         cooperationRate: 0.75,
-        strategy_classification: 'tft',
+        strategyClassification: 'tft',
         recommendation: 'Good configuration',
-        matchup_results: {
+        matchupResults: {
           'Always Defect': { score: 2.5, outcome: 'win' },
         },
       };
@@ -526,12 +531,12 @@ describe('GameTheoryPage', () => {
     it('should show matchup results', async () => {
       const user = userEvent.setup();
       const mockResults = {
-        config_name: 'Test Config',
+        configName: 'Test Config',
         averageScore: 3.5,
         cooperationRate: 0.75,
-        strategy_classification: 'tft',
+        strategyClassification: 'tft',
         recommendation: 'Good configuration',
-        matchup_results: {
+        matchupResults: {
           'Always Defect': { score: 2.5, outcome: 'win' },
         },
       };

@@ -51,7 +51,7 @@ const mockVoxelGridData = {
     z_size: 2,
     xLabels: ["2024-01-15 AM", "2024-01-15 PM", "2024-01-16 AM", "2024-01-16 PM"],
     yLabels: ["Dr. Smith", "Resident A", "Resident B"],
-    z_labels: ["clinic", "inpatient"],
+    zLabels: ["clinic", "inpatient"],
   },
   voxels: [
     {
@@ -61,9 +61,9 @@ const mockVoxelGridData = {
         personId: "p1",
         personName: "Dr. Smith",
         blockId: "b1",
-        block_date: "2024-01-15",
-        block_timeOfDay: "AM",
-        activity_name: "Morning Clinic",
+        blockDate: "2024-01-15",
+        blockTimeOfDay: "AM",
+        activityName: "Morning Clinic",
         activityType: "clinic",
       },
       visual: {
@@ -74,8 +74,8 @@ const mockVoxelGridData = {
       },
       state: {
         is_occupied: true,
-        is_conflict: false,
-        is_violation: false,
+        isConflict: false,
+        isViolation: false,
         violation_details: [],
       },
       metadata: {
@@ -91,9 +91,9 @@ const mockVoxelGridData = {
         personId: "p2",
         personName: "Resident A",
         blockId: "b1",
-        block_date: "2024-01-15",
-        block_timeOfDay: "AM",
-        activity_name: "Morning Clinic",
+        blockDate: "2024-01-15",
+        blockTimeOfDay: "AM",
+        activityName: "Morning Clinic",
         activityType: "clinic",
       },
       visual: {
@@ -104,8 +104,8 @@ const mockVoxelGridData = {
       },
       state: {
         is_occupied: true,
-        is_conflict: false,
-        is_violation: false,
+        isConflict: false,
+        isViolation: false,
         violation_details: [],
       },
       metadata: {
@@ -358,9 +358,9 @@ describe("VoxelScheduleView", () => {
             personId: "p1",
             personName: "Dr. Smith",
             blockId: "b2",
-            block_date: "2024-01-15",
-            block_timeOfDay: "PM",
-            activity_name: "Conflict Assignment",
+            blockDate: "2024-01-15",
+            blockTimeOfDay: "PM",
+            activityName: "Conflict Assignment",
             activityType: "clinic",
           },
           visual: {
@@ -371,8 +371,8 @@ describe("VoxelScheduleView", () => {
           },
           state: {
             is_occupied: true,
-            is_conflict: true,
-            is_violation: false,
+            isConflict: true,
+            isViolation: false,
             violation_details: ["Double-booked"],
           },
           metadata: {

@@ -82,7 +82,7 @@ describe('My Dashboard Hooks', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          expect.stringContaining('daysAhead=60')
+          expect.stringContaining('days_ahead=60')
         );
       });
     });
@@ -96,7 +96,7 @@ describe('My Dashboard Hooks', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          expect.stringContaining('includeSwaps=false')
+          expect.stringContaining('include_swaps=false')
         );
       });
     });
@@ -110,7 +110,7 @@ describe('My Dashboard Hooks', () => {
 
       await waitFor(() => {
         expect(api.get).toHaveBeenCalledWith(
-          expect.stringContaining('includeAbsences=false')
+          expect.stringContaining('include_absences=false')
         );
       });
     });
@@ -152,7 +152,7 @@ describe('My Dashboard Hooks', () => {
     it('should handle empty upcoming schedule', async () => {
       const emptyResponse = {
         ...mockDashboardApiResponse,
-        upcomingSchedule: [],
+        upcoming_schedule: [],
       };
       (api.get as jest.Mock).mockResolvedValue(emptyResponse);
 
@@ -171,10 +171,10 @@ describe('My Dashboard Hooks', () => {
       const minimalResponse = {
         user: mockDashboardApiResponse.user,
         summary: {
-          nextAssignment: null,
-          workloadNext4Weeks: 0,
-          pendingSwapCount: 0,
-          upcomingAbsences: 0,
+          next_assignment: null,
+          workload_next_4_weeks: 0,
+          pending_swap_count: 0,
+          upcoming_absences: 0,
         },
       };
       (api.get as jest.Mock).mockResolvedValue(minimalResponse);
@@ -217,13 +217,13 @@ describe('My Dashboard Hooks', () => {
     it('should handle assignments without IDs', async () => {
       const responseWithoutIds = {
         ...mockDashboardApiResponse,
-        upcomingSchedule: [
+        upcoming_schedule: [
           {
             date: '2025-02-15',
             timeOfDay: 'AM',
             activity: 'Test Activity',
             location: 'Ward',
-            canTrade: true,
+            can_trade: true,
           },
         ],
       };

@@ -219,9 +219,9 @@ describe('Dropdown', () => {
 
       fireEvent.keyDown(document, { key: 'ArrowDown' });
 
-      // First item should be highlighted
-      const firstItem = screen.getByText('Edit').closest('button');
-      expect(firstItem).toHaveClass('bg-gray-100');
+      // After ArrowDown from index 0, second item (Duplicate) should be highlighted
+      const secondItem = screen.getByText('Duplicate').closest('button');
+      expect(secondItem).toHaveClass('bg-gray-100');
     });
 
     it('navigates with Arrow Up key', () => {

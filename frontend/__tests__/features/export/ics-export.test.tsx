@@ -183,7 +183,7 @@ describe('CalendarExportButton', () => {
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
-          expect.stringContaining('startDate=2024-01-01&endDate=2024-06-30')
+          expect.stringContaining('start_date=2024-01-01&end_date=2024-06-30')
         )
       })
     })
@@ -361,16 +361,6 @@ describe('CalendarExportButton', () => {
         json: async () => ({ subscription_url: mockSubscriptionUrl }),
       } as Response)
 
-      // Mock clipboard API
-      const mockWriteText = jest.fn().mockResolvedValue(undefined)
-      Object.defineProperty(navigator, 'clipboard', {
-        value: {
-          writeText: mockWriteText,
-        },
-        writable: true,
-        configurable: true,
-      })
-
       render(<CalendarExportButton {...defaultProps} />, { wrapper: createWrapper() })
 
       const button = screen.getByRole('button', { name: /export calendar/i })
@@ -383,10 +373,21 @@ describe('CalendarExportButton', () => {
         expect(screen.getByText(mockSubscriptionUrl)).toBeInTheDocument()
       })
 
+      // Mock clipboard API right before the copy click
+      const mockWriteText = jest.fn().mockResolvedValue(undefined)
+      const clipboardMock = { writeText: mockWriteText, readText: jest.fn().mockResolvedValue('') }
+      Object.defineProperty(navigator, 'clipboard', {
+        value: clipboardMock,
+        writable: true,
+        configurable: true,
+      })
+
       const copyButton = screen.getByRole('button', { name: /copy url/i })
       await user.click(copyButton)
 
-      expect(mockWriteText).toHaveBeenCalledWith(mockSubscriptionUrl)
+      await waitFor(() => {
+        expect(mockWriteText).toHaveBeenCalledWith(mockSubscriptionUrl)
+      })
 
       await waitFor(() => {
         expect(screen.getByText('Copied!')).toBeInTheDocument()
@@ -552,7 +553,7 @@ describe('SimpleCalendarExportButton', () => {
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
-          expect.stringContaining('startDate=2024-01-01&endDate=2024-06-30')
+          expect.stringContaining('start_date=2024-01-01&end_date=2024-06-30')
         )
       })
     })
@@ -574,7 +575,7 @@ describe('SimpleCalendarExportButton', () => {
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
-          expect.stringMatching(/startDate=.*&endDate=.*/)
+          expect.stringMatching(/start_date=.*&end_date=.*/)
         )
       })
     })

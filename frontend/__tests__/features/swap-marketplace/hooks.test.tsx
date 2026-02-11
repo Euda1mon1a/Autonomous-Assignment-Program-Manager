@@ -139,10 +139,10 @@ describe('Swap Marketplace Hooks', () => {
           {
             id: 'swap-1',
             sourceFacultyId: 'faculty-1',
-            sourceFaculty: { name: 'Dr. Smith' },
+            source_faculty: { name: 'Dr. Smith' },
             sourceWeek: '2025-01-15',
             targetFacultyId: 'user-1',
-            targetFaculty: { name: 'Dr. Doe' },
+            target_faculty: { name: 'Dr. Doe' },
             targetWeek: '2025-01-22',
             swapType: 'one_to_one', // @gorgon-ok
             status: 'pending',
@@ -191,16 +191,16 @@ describe('Swap Marketplace Hooks', () => {
     it('should fetch faculty preferences successfully', async () => {
       const mockPrefs = {
         facultyId: 'faculty-1',
-        preferredWeeks: ['2025-01-01'],
-        blockedWeeks: ['2025-12-25'],
-        maxWeeksPerMonth: 4,
-        maxConsecutiveWeeks: 2,
-        minGapBetweenWeeks: 7,
+        preferred_weeks: ['2025-01-01'],
+        blocked_weeks: ['2025-12-25'],
+        max_weeks_per_month: 4,
+        max_consecutive_weeks: 2,
+        min_gap_between_weeks: 7,
         targetWeeks_per_year: 48,
-        notifySwapRequests: true,
-        notifyScheduleChanges: true,
-        notifyConflictAlerts: true,
-        notifyReminderDays: 7,
+        notify_swap_requests: true,
+        notify_schedule_changes: true,
+        notify_conflict_alerts: true,
+        notify_reminder_days: 7,
         notes: 'Prefer weekdays',
         updatedAt: '2025-01-01T00:00:00Z',
       };

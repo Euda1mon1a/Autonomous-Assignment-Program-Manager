@@ -13,11 +13,13 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 const mockAuthLogin = jest.fn()
 const mockAuthLogout = jest.fn()
 const mockValidateToken = jest.fn()
+const mockRestoreSession = jest.fn().mockResolvedValue(undefined)
 
 jest.mock('@/lib/auth', () => ({
   login: (...args: unknown[]) => mockAuthLogin(...args),
   logout: (...args: unknown[]) => mockAuthLogout(...args),
   validateToken: (...args: unknown[]) => mockValidateToken(...args),
+  restoreSession: (...args: unknown[]) => mockRestoreSession(...args),
 }))
 
 // Test component that uses the auth context
@@ -188,6 +190,8 @@ describe('AuthContext', () => {
 
       await waitFor(() => {
         expect(screen.getByTestId('auth-state')).toHaveTextContent('authenticated')
+        const textContent = screen.getByTestId('user-state').textContent || '{}'
+        expect(textContent).not.toBe('no-user')
       })
 
       const userState = JSON.parse(screen.getByTestId('user-state').textContent || '{}')

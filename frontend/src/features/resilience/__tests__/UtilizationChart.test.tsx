@@ -11,26 +11,26 @@ jest.mock("@/hooks/useResilience", () => ({
 describe("UtilizationChart", () => {
   const mockHealthData = {
     timestamp: new Date().toISOString(),
-    overall_status: OverallStatus.HEALTHY,
+    overallStatus: OverallStatus.HEALTHY,
     defenseLevel: "PREVENTION" as any,
     utilization: {
       utilizationRate: 0.65,
       level: UtilizationLevel.YELLOW,
-      buffer_remaining: 3.5,
-      wait_time_multiplier: 1.5,
-      safe_capacity: 100,
-      current_demand: 65,
-      theoretical_capacity: 100,
+      bufferRemaining: 3.5,
+      waitTimeMultiplier: 1.5,
+      safeCapacity: 100,
+      currentDemand: 65,
+      theoreticalCapacity: 100,
     },
-    active_fallbacks: [],
+    activeFallbacks: [],
     n1Pass: true,
     n2Pass: true,
     phaseTransitionRisk: "low",
-    redundancy_status: [],
-    load_shedding_level: "NORMAL" as any,
+    redundancyStatus: [],
+    loadSheddingLevel: "NORMAL" as any,
     crisisMode: false,
-    immediate_actions: [],
-    watch_items: [],
+    immediateActions: [],
+    watchItems: [],
   };
 
   const mockThresholdData = {
@@ -210,7 +210,7 @@ describe("UtilizationChart", () => {
         ...mockHealthData.utilization,
         utilizationRate: 0.92,
         level: UtilizationLevel.RED,
-        wait_time_multiplier: 3.5,
+        waitTimeMultiplier: 3.5,
       },
     };
 
@@ -262,7 +262,7 @@ describe("UtilizationChart", () => {
       ...mockHealthData,
       utilization: {
         ...mockHealthData.utilization,
-        safe_capacity: 0,
+        safeCapacity: 0,
       },
     };
 

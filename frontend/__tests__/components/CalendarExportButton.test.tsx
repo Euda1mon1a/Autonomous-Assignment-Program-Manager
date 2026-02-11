@@ -181,7 +181,7 @@ describe('CalendarExportButton', () => {
 
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith(
-          expect.stringContaining('startDate=2024-01-01&endDate=2024-12-31')
+          expect.stringContaining('start_date=2024-01-01&end_date=2024-12-31')
         )
       })
     })

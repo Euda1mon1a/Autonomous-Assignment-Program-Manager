@@ -65,7 +65,7 @@ describe('usePeople', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/people?role=resident')
+    expect(mockedApi.get).toHaveBeenCalledWith('/people?type=resident')
   })
 
   it('should filter by PGY level', async () => {
@@ -83,7 +83,7 @@ describe('usePeople', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/people?pgyLevel=2')
+    expect(mockedApi.get).toHaveBeenCalledWith('/people?pgy_level=2')
   })
 
   it('should handle API errors', async () => {
@@ -123,7 +123,7 @@ describe('usePeople', () => {
       expect(mockedApi.get).toHaveBeenCalledTimes(2)
     })
 
-    expect(mockedApi.get).toHaveBeenLastCalledWith('/people?role=faculty')
+    expect(mockedApi.get).toHaveBeenLastCalledWith('/people?type=faculty')
   })
 })
 
@@ -196,7 +196,7 @@ describe('useResidents', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/people/residents?pgyLevel=1')
+    expect(mockedApi.get).toHaveBeenCalledWith('/people/residents?pgy_level=1')
   })
 })
 
@@ -599,7 +599,7 @@ describe('usePeople - Additional Edge Cases', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    expect(mockedApi.get).toHaveBeenCalledWith('/people?role=resident&pgyLevel=2')
+    expect(mockedApi.get).toHaveBeenCalledWith('/people?type=resident&pgy_level=2')
   })
 
   it('should handle network errors', async () => {

@@ -64,7 +64,9 @@ describe('BlockCard', () => {
     renderWithProviders(<BlockCard {...defaultProps} onDragStart={handleDragStart} />);
 
     const card = screen.getByRole('button');
-    fireEvent.dragStart(card);
+    fireEvent.dragStart(card, {
+      dataTransfer: { effectAllowed: '', setData: jest.fn() },
+    });
 
     expect(handleDragStart).toHaveBeenCalled();
   });
@@ -74,12 +76,12 @@ describe('BlockCard', () => {
     renderWithProviders(<BlockCard {...defaultProps} isDraggable={false} onDragStart={handleDragStart} />);
 
     const card = screen.getByRole('button');
-    const event = new DragEvent('dragstart', { bubbles: true });
-    Object.defineProperty(event, 'dataTransfer', {
-      value: { effectAllowed: '', setData: jest.fn() },
+    const preventDefaultSpy = jest.fn();
+    fireEvent.dragStart(card, {
+      dataTransfer: { effectAllowed: '', setData: jest.fn() },
+      preventDefault: preventDefaultSpy,
     });
 
-    card.dispatchEvent(event);
-    expect(event.defaultPrevented).toBe(true);
+    expect(handleDragStart).not.toHaveBeenCalled();
   });
 });

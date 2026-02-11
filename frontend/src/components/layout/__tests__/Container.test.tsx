@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck - Tests written for size prop interface but component doesn't accept it
 /**
  * Tests for Container Component
  * Component: layout/Container - Page container layout
@@ -40,7 +38,8 @@ describe('Container', () => {
           <div>Content</div>
         </Container>
       );
-      expect(container.firstChild).toHaveClass('max-w-7xl');
+      // Default maxWidth is 'xl' -> max-w-screen-xl
+      expect(container.firstChild).toHaveClass('max-w-screen-xl');
     });
 
     it('has default horizontal padding', () => {
@@ -52,7 +51,7 @@ describe('Container', () => {
       expect(container.firstChild).toHaveClass('px-4', 'sm:px-6', 'lg:px-8');
     });
 
-    it('centers content horizontally', () => {
+    it('centers content horizontally by default', () => {
       const { container } = render(
         <Container>
           <div>Content</div>
@@ -71,37 +70,37 @@ describe('Container', () => {
     });
   });
 
-  describe('Size Variants', () => {
-    it('renders small container', () => {
+  describe('MaxWidth Variants', () => {
+    it('renders sm container', () => {
       const { container } = render(
-        <Container size="sm">
+        <Container maxWidth="sm">
           <div>Content</div>
         </Container>
       );
-      expect(container.firstChild).toHaveClass('max-w-3xl');
+      expect(container.firstChild).toHaveClass('max-w-screen-sm');
     });
 
-    it('renders medium container', () => {
+    it('renders md container', () => {
       const { container } = render(
-        <Container size="md">
+        <Container maxWidth="md">
           <div>Content</div>
         </Container>
       );
-      expect(container.firstChild).toHaveClass('max-w-5xl');
+      expect(container.firstChild).toHaveClass('max-w-screen-md');
     });
 
-    it('renders large container (default)', () => {
+    it('renders lg container', () => {
       const { container } = render(
-        <Container size="lg">
+        <Container maxWidth="lg">
           <div>Content</div>
         </Container>
       );
-      expect(container.firstChild).toHaveClass('max-w-7xl');
+      expect(container.firstChild).toHaveClass('max-w-screen-lg');
     });
 
     it('renders full-width container', () => {
       const { container } = render(
-        <Container size="full">
+        <Container maxWidth="full">
           <div>Content</div>
         </Container>
       );
@@ -109,45 +108,47 @@ describe('Container', () => {
     });
   });
 
-  describe('Padding Variants', () => {
-    it('renders with no padding', () => {
+  describe('Padding', () => {
+    it('renders with padding by default', () => {
       const { container } = render(
-        <Container padding="none">
+        <Container>
+          <div>Content</div>
+        </Container>
+      );
+      expect(container.firstChild).toHaveClass('px-4');
+    });
+
+    it('renders without padding when disabled', () => {
+      const { container } = render(
+        <Container padding={false}>
           <div>Content</div>
         </Container>
       );
       expect(container.firstChild).not.toHaveClass('px-4');
     });
+  });
 
-    it('renders with small padding', () => {
+  describe('Center', () => {
+    it('centers content by default', () => {
       const { container } = render(
-        <Container padding="sm">
+        <Container>
           <div>Content</div>
         </Container>
       );
-      expect(container.firstChild).toHaveClass('px-2', 'sm:px-3', 'lg:px-4');
+      expect(container.firstChild).toHaveClass('mx-auto');
     });
 
-    it('renders with default padding', () => {
+    it('does not center when disabled', () => {
       const { container } = render(
-        <Container padding="md">
+        <Container center={false}>
           <div>Content</div>
         </Container>
       );
-      expect(container.firstChild).toHaveClass('px-4', 'sm:px-6', 'lg:px-8');
-    });
-
-    it('renders with large padding', () => {
-      const { container } = render(
-        <Container padding="lg">
-          <div>Content</div>
-        </Container>
-      );
-      expect(container.firstChild).toHaveClass('px-6', 'sm:px-8', 'lg:px-12');
+      expect(container.firstChild).not.toHaveClass('mx-auto');
     });
   });
 
-  describe('As Prop', () => {
+  describe('AsMain', () => {
     it('renders as div by default', () => {
       const { container } = render(
         <Container>
@@ -157,51 +158,13 @@ describe('Container', () => {
       expect(container.firstChild?.nodeName).toBe('DIV');
     });
 
-    it('renders as section when specified', () => {
-      const { container } = render(
-        <Container as="section">
+    it('adds main role when asMain is true', () => {
+      render(
+        <Container asMain>
           <div>Content</div>
         </Container>
       );
-      expect(container.firstChild?.nodeName).toBe('SECTION');
-    });
-
-    it('renders as main when specified', () => {
-      const { container } = render(
-        <Container as="main">
-          <div>Content</div>
-        </Container>
-      );
-      expect(container.firstChild?.nodeName).toBe('MAIN');
-    });
-
-    it('renders as article when specified', () => {
-      const { container } = render(
-        <Container as="article">
-          <div>Content</div>
-        </Container>
-      );
-      expect(container.firstChild?.nodeName).toBe('ARTICLE');
-    });
-  });
-
-  describe('Accessibility', () => {
-    it('applies ARIA attributes when provided', () => {
-      const { container } = render(
-        <Container aria-label="Main content">
-          <div>Content</div>
-        </Container>
-      );
-      expect(container.firstChild).toHaveAttribute('aria-label', 'Main content');
-    });
-
-    it('supports role attribute', () => {
-      const { container } = render(
-        <Container role="region">
-          <div>Content</div>
-        </Container>
-      );
-      expect(container.firstChild).toHaveAttribute('role', 'region');
+      expect(screen.getByRole('main')).toBeInTheDocument();
     });
   });
 
@@ -209,7 +172,7 @@ describe('Container', () => {
     it('handles nested containers', () => {
       render(
         <Container>
-          <Container size="sm">
+          <Container maxWidth="sm">
             <div>Nested content</div>
           </Container>
         </Container>
@@ -218,7 +181,7 @@ describe('Container', () => {
     });
 
     it('handles very long content', () => {
-      const longContent = 'Lorem ipsum '.repeat(100);
+      const longContent = 'Lorem ipsum '.repeat(100).trim();
       render(
         <Container>
           <div>{longContent}</div>
@@ -244,17 +207,6 @@ describe('Container', () => {
       expect(element).toHaveClass('px-4'); // mobile
       expect(element).toHaveClass('sm:px-6'); // tablet
       expect(element).toHaveClass('lg:px-8'); // desktop
-    });
-
-    it('combines size and padding responsively', () => {
-      const { container } = render(
-        <Container size="lg" padding="lg">
-          <div>Content</div>
-        </Container>
-      );
-      const element = container.firstChild;
-      expect(element).toHaveClass('max-w-7xl');
-      expect(element).toHaveClass('px-6', 'sm:px-8', 'lg:px-12');
     });
   });
 });

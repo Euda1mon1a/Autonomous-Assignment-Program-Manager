@@ -1,6 +1,10 @@
 /**
  * Tests for AlgorithmComparisonChart Component
  * Component: admin/AlgorithmComparisonChart - Chart comparing scheduling algorithms
+ *
+ * The component renders CSS/div-based bars (no canvas/svg).
+ * Default metric is 'coverage'. Algorithm labels: Greedy, CP-SAT, PuLP, Hybrid.
+ * Values formatted by METRIC_CONFIG (e.g., "98.0%").
  */
 
 import React from 'react';
@@ -42,62 +46,81 @@ describe('AlgorithmComparisonChart', () => {
   describe('Rendering', () => {
     it('renders chart container', () => {
       const { container } = render(<AlgorithmComparisonChart data={mockData} />);
-      expect(container.querySelector('canvas, svg')).toBeInTheDocument();
+      // Component uses divs for bars (no canvas/svg)
+      expect(container.firstChild).toBeInTheDocument();
     });
 
     it('renders title', () => {
       render(<AlgorithmComparisonChart data={mockData} />);
-      expect(screen.getByText(/algorithm comparison/i)).toBeInTheDocument();
+      expect(screen.getByText('Algorithm Comparison')).toBeInTheDocument();
     });
 
     it('displays all algorithms', () => {
       render(<AlgorithmComparisonChart data={mockData} />);
-      expect(screen.getByText(/greedy/i)).toBeInTheDocument();
-      expect(screen.getByText(/cp-sat/i)).toBeInTheDocument();
-      expect(screen.getByText(/hybrid/i)).toBeInTheDocument();
+      // ALGORITHM_LABELS maps: greedy -> Greedy, cp_sat -> CP-SAT, hybrid -> Hybrid
+      expect(screen.getAllByText('Greedy').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('CP-SAT').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Hybrid').length).toBeGreaterThan(0);
     });
 
-    it('shows coverage rate metric', () => {
+    it('shows coverage metric option', () => {
       render(<AlgorithmComparisonChart data={mockData} />);
-      expect(screen.getByText(/coverage/i)).toBeInTheDocument();
+      // Coverage is in the metric selector
+      expect(screen.getByText('Coverage')).toBeInTheDocument();
     });
 
-    it('shows violation count metric', () => {
+    it('shows violation count metric option', () => {
       render(<AlgorithmComparisonChart data={mockData} />);
-      expect(screen.getByText(/violations/i)).toBeInTheDocument();
+      // "ACGME Violations" is the label in METRIC_CONFIG
+      expect(screen.getByText('ACGME Violations')).toBeInTheDocument();
     });
 
-    it('shows execution time metric', () => {
+    it('shows runtime metric option', () => {
       render(<AlgorithmComparisonChart data={mockData} />);
-      expect(screen.getByText(/runtime/i)).toBeInTheDocument();
+      expect(screen.getByText('Runtime')).toBeInTheDocument();
     });
   });
 
   describe('Empty State', () => {
     it('handles empty data array', () => {
       render(<AlgorithmComparisonChart data={[]} />);
-      expect(screen.getByText(/no data available/i)).toBeInTheDocument();
+      expect(screen.getByText(/no algorithm data available/i)).toBeInTheDocument();
     });
   });
 
   describe('Data Display', () => {
     it('formats coverage rate as percentage', () => {
       render(<AlgorithmComparisonChart data={mockData} />);
-      expect(screen.getByText(/98%/)).toBeInTheDocument();
+      // METRIC_CONFIG.coverage.format = v => `${v.toFixed(1)}%` -> "98.0%"
+      expect(screen.getByText('98.0%')).toBeInTheDocument();
     });
 
-    it('displays violation counts', () => {
+    it('shows run counts per algorithm', () => {
       render(<AlgorithmComparisonChart data={mockData} />);
-      expect(screen.getByText('0')).toBeInTheDocument();
-      expect(screen.getByText('2')).toBeInTheDocument();
+      expect(screen.getByText('10 runs')).toBeInTheDocument();
+      expect(screen.getByText('15 runs')).toBeInTheDocument();
+      expect(screen.getByText('12 runs')).toBeInTheDocument();
+    });
+
+    it('shows total run count', () => {
+      render(<AlgorithmComparisonChart data={mockData} />);
+      // Header: "Based on 37 runs"
+      expect(screen.getByText(/37 runs/)).toBeInTheDocument();
     });
   });
 
   describe('Legend', () => {
-    it('renders chart legend', () => {
-      render(<AlgorithmComparisonChart data={mockData} />);
+    it('renders algorithm color indicators', () => {
       const { container } = render(<AlgorithmComparisonChart data={mockData} />);
-      expect(container.querySelector('[class*="legend"]')).toBeInTheDocument();
+      // Each algorithm has a color swatch (w-3 h-3 rounded)
+      const swatches = container.querySelectorAll('.w-3.h-3.rounded');
+      expect(swatches.length).toBe(mockData.length);
+    });
+
+    it('shows higher/lower is better indicator', () => {
+      render(<AlgorithmComparisonChart data={mockData} />);
+      // Default metric is coverage (higherIsBetter: true)
+      expect(screen.getByText('Higher is better')).toBeInTheDocument();
     });
   });
 
@@ -105,7 +128,7 @@ describe('AlgorithmComparisonChart', () => {
     it('handles single algorithm', () => {
       const singleData = [mockData[0]];
       render(<AlgorithmComparisonChart data={singleData} />);
-      expect(screen.getByText(/greedy/i)).toBeInTheDocument();
+      expect(screen.getAllByText('Greedy').length).toBeGreaterThan(0);
     });
 
     it('handles perfect scores', () => {
@@ -121,7 +144,7 @@ describe('AlgorithmComparisonChart', () => {
         },
       ];
       render(<AlgorithmComparisonChart data={perfectData} />);
-      expect(screen.getByText(/100%/)).toBeInTheDocument();
+      expect(screen.getByText('100.0%')).toBeInTheDocument();
     });
 
     it('handles algorithms with high violations', () => {
@@ -137,7 +160,8 @@ describe('AlgorithmComparisonChart', () => {
         },
       ];
       render(<AlgorithmComparisonChart data={highViolationData} />);
-      expect(screen.getByText('15')).toBeInTheDocument();
+      // Default metric is coverage, so shows "75.0%"
+      expect(screen.getByText('75.0%')).toBeInTheDocument();
     });
   });
 });

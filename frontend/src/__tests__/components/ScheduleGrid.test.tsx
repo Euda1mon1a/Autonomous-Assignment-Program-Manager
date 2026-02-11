@@ -328,12 +328,12 @@ describe('ScheduleGrid', () => {
         expect(screen.queryByText(/loading schedule/i)).not.toBeInTheDocument()
       })
 
-      // The schedule should make API calls with the correct date range
+      // The schedule should make API calls with the correct date range (snake_case query params)
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('startDate=2024-01-01')
+        expect.stringContaining('start_date=2024-01-01')
       )
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('endDate=2024-01-07')
+        expect.stringContaining('end_date=2024-01-07')
       )
     })
 
@@ -350,7 +350,7 @@ describe('ScheduleGrid', () => {
       })
 
       expect(mockedApi.get).toHaveBeenCalledWith(
-        expect.stringContaining('startDate=2024-01-01')
+        expect.stringContaining('start_date=2024-01-01')
       )
     })
   })
@@ -370,7 +370,7 @@ describe('ScheduleGrid', () => {
       // Assignment abbreviation should be displayed
       // Based on mockTemplates, the abbreviation is 'CARD'
       await waitFor(() => {
-        expect(screen.getByText(/CARD/i)).toBeInTheDocument()
+        expect(screen.getAllByText(/CARD/i).length).toBeGreaterThan(0)
       })
     })
   })

@@ -46,7 +46,7 @@ describe('AuditLogFilters', () => {
     it('should render Filters button', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
-      expect(screen.getByRole('button', { name: /Filters/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Toggle advanced filters/i })).toBeInTheDocument();
     });
 
     it('should not show advanced filters by default', () => {
@@ -60,7 +60,7 @@ describe('AuditLogFilters', () => {
       const user = userEvent.setup({ delay: null });
       render(<AuditLogFilters {...defaultProps} />);
 
-      const filtersButton = screen.getByRole('button', { name: /Filters/i });
+      const filtersButton = screen.getByRole('button', { name: /Toggle advanced filters/i });
       await user.click(filtersButton);
 
       expect(screen.getByText(/Entity Type/i)).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe('AuditLogFilters', () => {
       };
       render(<AuditLogFilters {...defaultProps} filters={activeFilters} />);
 
-      const filtersButton = screen.getByRole('button', { name: /Filters/i });
+      const filtersButton = screen.getByRole('button', { name: /Toggle advanced filters/i });
       expect(within(filtersButton).getByText('2')).toBeInTheDocument();
     });
   });
@@ -155,7 +155,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       expect(screen.getByText('All time')).toBeInTheDocument();
     });
@@ -166,7 +166,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} filters={{ dateRange }} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       // When date range is set, we should see a filter tag or the date in the dropdown
       // The filter tags show even when panel is closed
@@ -182,7 +182,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters first
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       // Click date range button
       const dateButton = screen.getByText('All time');
@@ -199,7 +199,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       // Open date picker
       await user.click(screen.getByText('All time'));
@@ -222,7 +222,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       // Open date picker
       await user.click(screen.getByText('All time'));
@@ -246,7 +246,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       expect(screen.getByText('Entity Type')).toBeInTheDocument();
     });
@@ -256,7 +256,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       // Click entity type button
       await user.click(screen.getByText('Entity Type'));
@@ -272,7 +272,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       // Open entity type dropdown
       await user.click(screen.getByText('Entity Type'));
@@ -296,7 +296,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} filters={filters} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       const entityTypeButton = screen.getByText('Entity Type').closest('button');
       expect(within(entityTypeButton!).getByText('2')).toBeInTheDocument();
@@ -307,7 +307,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       // Open entity type dropdown
       await user.click(screen.getByText('Entity Type'));
@@ -338,7 +338,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} filters={filters} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       // Open entity type dropdown
       await user.click(screen.getByText('Entity Type'));
@@ -356,7 +356,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       // There are multiple elements with "Action", get the button
       const actionButtons = screen.getAllByText('Action');
@@ -368,7 +368,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       expect(screen.getByText('User')).toBeInTheDocument();
     });
@@ -378,7 +378,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       expect(screen.getByText('Severity')).toBeInTheDocument();
     });
@@ -394,7 +394,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       expect(screen.getByText('ACGME Overrides Only')).toBeInTheDocument();
     });
@@ -404,7 +404,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       const checkbox = screen.getByLabelText('ACGME Overrides Only');
       await user.click(checkbox);
@@ -511,7 +511,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} filters={filters} />);
 
       // Should show filter count badge - count may vary based on implementation
-      const filtersButton = screen.getByRole('button', { name: /Filters/i });
+      const filtersButton = screen.getByRole('button', { name: /Toggle advanced filters/i });
       // Badge should exist with some number
       const badge = within(filtersButton).queryByText(/\d+/);
       expect(badge).toBeInTheDocument();
@@ -556,7 +556,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       const buttons = screen.getAllByRole('button');
       expect(buttons.length).toBeGreaterThan(0);
@@ -567,7 +567,7 @@ describe('AuditLogFilters', () => {
       render(<AuditLogFilters {...defaultProps} />);
 
       // Open advanced filters
-      await user.click(screen.getByRole('button', { name: /Filters/i }));
+      await user.click(screen.getByRole('button', { name: /Toggle advanced filters/i }));
 
       // Open entity type dropdown
       await user.click(screen.getByText('Entity Type'));

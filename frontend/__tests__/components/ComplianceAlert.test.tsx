@@ -309,7 +309,7 @@ describe('ComplianceAlert', () => {
 
       render(<ComplianceAlert />, { wrapper: createWrapper() })
 
-      const link = screen.getByRole('link', { name: /view compliance details/i })
+      const link = screen.getByRole('link', { name: /view detailed compliance report/i })
       expect(link).toBeInTheDocument()
       expect(link).toHaveAttribute('href', '/compliance')
     })
@@ -327,7 +327,7 @@ describe('ComplianceAlert', () => {
 
       render(<ComplianceAlert />, { wrapper: createWrapper() })
 
-      const link = screen.getByRole('link', { name: /view compliance details/i })
+      const link = screen.getByRole('link', { name: /view detailed compliance report/i })
       expect(link).toBeInTheDocument()
     })
   })

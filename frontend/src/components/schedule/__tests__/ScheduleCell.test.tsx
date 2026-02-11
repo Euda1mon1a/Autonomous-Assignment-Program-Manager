@@ -104,7 +104,7 @@ describe('ScheduleCell', () => {
         </table>
       );
 
-      const badge = screen.getByText('CLNC').parentElement;
+      const badge = screen.getByText('CLNC');
       expect(badge).toHaveClass('bg-blue-100', 'text-blue-800', 'border-blue-300');
     });
 
@@ -124,7 +124,7 @@ describe('ScheduleCell', () => {
         </table>
       );
 
-      const badge = screen.getByText('INP').parentElement;
+      const badge = screen.getByText('INP');
       expect(badge).toHaveClass('bg-purple-100', 'text-purple-800', 'border-purple-300');
     });
 
@@ -144,7 +144,7 @@ describe('ScheduleCell', () => {
         </table>
       );
 
-      const badge = screen.getByText('UNK').parentElement;
+      const badge = screen.getByText('UNK');
       expect(badge).toHaveClass('bg-slate-100', 'text-slate-700', 'border-slate-300');
     });
   });
@@ -168,7 +168,7 @@ describe('ScheduleCell', () => {
         </table>
       );
 
-      const badge = screen.getByText('CUSTOM').parentElement;
+      const badge = screen.getByText('CUSTOM');
       expect(badge).toHaveStyle({
         color: '#000000',
         backgroundColor: '#ffffff',
@@ -191,7 +191,7 @@ describe('ScheduleCell', () => {
         </table>
       );
 
-      const badge = screen.getByText('TEST').parentElement;
+      const badge = screen.getByText('TEST');
       expect(badge).toHaveClass('bg-orange-100', 'text-orange-800', 'border-orange-300');
     });
   });
@@ -214,7 +214,7 @@ describe('ScheduleCell', () => {
         </table>
       );
 
-      const badge = screen.getByText('IM').parentElement;
+      const badge = screen.getByText('IM');
       expect(badge).toHaveAttribute('title', expect.stringContaining('Inpatient Medicine'));
     });
 
@@ -235,7 +235,7 @@ describe('ScheduleCell', () => {
         </table>
       );
 
-      const badge = screen.getByText('IM').parentElement;
+      const badge = screen.getByText('IM');
       expect(badge).toHaveAttribute('title', expect.stringContaining('Role: supervisor'));
     });
 
@@ -256,7 +256,7 @@ describe('ScheduleCell', () => {
         </table>
       );
 
-      const badge = screen.getByText('IM').parentElement;
+      const badge = screen.getByText('IM');
       expect(badge).toHaveAttribute('title', expect.stringContaining('Note: Special assignment'));
     });
   });
@@ -278,7 +278,7 @@ describe('ScheduleCell', () => {
         </table>
       );
 
-      const badge = screen.getByText('IM').parentElement;
+      const badge = screen.getByText('IM');
       expect(badge).toHaveClass('hover:scale-105', 'hover:shadow-sm');
     });
   });
@@ -308,7 +308,8 @@ describe('ScheduleSeparatorRow', () => {
 
     const cell = container.querySelector('td');
     expect(cell).toBeInTheDocument();
-    expect(cell).toHaveClass('bg-gray-100/50');
+    const row = container.querySelector('tr');
+    expect(row).toHaveClass('bg-gray-100/50');
   });
 
   it('applies correct column span', () => {

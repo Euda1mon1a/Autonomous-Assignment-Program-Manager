@@ -8,14 +8,6 @@ import { render, screen, fireEvent, waitFor } from '@/test-utils';
 import '@testing-library/jest-dom';
 import { LoginForm } from '../LoginForm';
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-};
-
 // Mock useRouter
 const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -24,20 +16,28 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
-// Mock API
-global.fetch = jest.fn();
+// Mock useAuth
+const mockLogin = jest.fn();
+jest.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    login: mockLogin,
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    logout: jest.fn(),
+  }),
+}));
 
 describe('LoginForm', () => {
   beforeEach(() => {
     mockPush.mockClear();
-    (global.fetch as jest.Mock).mockClear();
-    localStorageMock.clear();
+    mockLogin.mockClear();
   });
 
   describe('Rendering', () => {
-    it('renders email input', () => {
+    it('renders username input', () => {
       render(<LoginForm />);
-      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
     });
 
     it('renders password input', () => {
@@ -50,163 +50,85 @@ describe('LoginForm', () => {
       expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
     });
 
-    it('renders remember me checkbox', () => {
-      render(<LoginForm />);
-      expect(screen.getByLabelText(/remember me/i)).toBeInTheDocument();
-    });
-
     it('password field is type password', () => {
       render(<LoginForm />);
       const passwordInput = screen.getByLabelText(/password/i);
       expect(passwordInput).toHaveAttribute('type', 'password');
     });
+
+    it('renders dev credentials info', () => {
+      render(<LoginForm />);
+      expect(screen.getByText(/local dev credentials/i)).toBeInTheDocument();
+    });
   });
 
   describe('Form Validation', () => {
-    it('shows error when email is empty', async () => {
+    it('disables submit when fields are empty', () => {
       render(<LoginForm />);
-
       const submitButton = screen.getByRole('button', { name: /sign in/i });
-      fireEvent.click(submitButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/email is required/i)).toBeInTheDocument();
-      });
+      expect(submitButton).toBeDisabled();
     });
 
-    it('shows error when email is invalid', async () => {
+    it('shows error when username is empty after blur', () => {
       render(<LoginForm />);
+      const usernameInput = screen.getByLabelText(/username/i);
+      fireEvent.focus(usernameInput);
+      fireEvent.blur(usernameInput);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
-
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
-      fireEvent.click(submitButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/valid email/i)).toBeInTheDocument();
-      });
+      expect(screen.getByText(/username is required/i)).toBeInTheDocument();
     });
 
-    it('shows error when password is empty', async () => {
+    it('shows error when password is empty after blur', () => {
       render(<LoginForm />);
+      const passwordInput = screen.getByLabelText(/password/i);
+      fireEvent.focus(passwordInput);
+      fireEvent.blur(passwordInput);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
-      fireEvent.click(submitButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/password is required/i)).toBeInTheDocument();
-      });
+      expect(screen.getByText(/password is required/i)).toBeInTheDocument();
     });
 
-    it('shows error when password is too short', async () => {
+    it('enables submit when both fields have values', () => {
       render(<LoginForm />);
-
-      const emailInput = screen.getByLabelText(/email/i);
+      const usernameInput = screen.getByLabelText(/username/i);
       const passwordInput = screen.getByLabelText(/password/i);
 
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: '12345' } });
+      fireEvent.change(usernameInput, { target: { value: 'admin' } });
+      fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
       const submitButton = screen.getByRole('button', { name: /sign in/i });
-      fireEvent.click(submitButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/at least 6 characters/i)).toBeInTheDocument();
-      });
+      expect(submitButton).not.toBeDisabled();
     });
   });
 
   describe('Form Submission', () => {
-    it('submits form with valid credentials', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ token: 'test-token', user: { id: '1', email: 'test@example.com' } }),
-      });
+    it('calls login on submit with valid credentials', async () => {
+      mockLogin.mockResolvedValueOnce(undefined);
 
       render(<LoginForm />);
 
-      const emailInput = screen.getByLabelText(/email/i);
+      const usernameInput = screen.getByLabelText(/username/i);
       const passwordInput = screen.getByLabelText(/password/i);
 
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
+      fireEvent.change(usernameInput, { target: { value: 'admin' } });
+      fireEvent.change(passwordInput, { target: { value: 'admin123' } });
 
       const submitButton = screen.getByRole('button', { name: /sign in/i });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith(
-          expect.stringContaining('/api/auth/login'),
-          expect.objectContaining({
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: expect.stringContaining('test@example.com'),
-          })
-        );
-      });
-    });
-
-    it('redirects to dashboard on successful login', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ token: 'test-token', user: { id: '1', email: 'test@example.com' } }),
-      });
-
-      render(<LoginForm />);
-
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
-
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
-      fireEvent.click(submitButton);
-
-      await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard');
-      });
-    });
-
-    it('stores token in localStorage on successful login', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ token: 'test-token', user: { id: '1', email: 'test@example.com' } }),
-      });
-
-      render(<LoginForm />);
-
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
-
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
-      fireEvent.click(submitButton);
-
-      await waitFor(() => {
-        expect(localStorageMock.setItem).toHaveBeenCalledWith('auth_token', 'test-token');
+        expect(mockLogin).toHaveBeenCalledWith({ username: 'admin', password: 'admin123' });
       });
     });
 
     it('shows error message on failed login', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 401,
-        json: async () => ({ error: 'Invalid credentials' }),
-      });
+      mockLogin.mockRejectedValueOnce(new Error('Invalid credentials'));
 
       render(<LoginForm />);
 
-      const emailInput = screen.getByLabelText(/email/i);
+      const usernameInput = screen.getByLabelText(/username/i);
       const passwordInput = screen.getByLabelText(/password/i);
 
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      fireEvent.change(usernameInput, { target: { value: 'admin' } });
       fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
 
       const submitButton = screen.getByRole('button', { name: /sign in/i });
@@ -217,85 +139,51 @@ describe('LoginForm', () => {
       });
     });
 
-    it('disables submit button while loading', async () => {
-      (global.fetch as jest.Mock).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ ok: true }), 100))
-      );
-
-      render(<LoginForm />);
-
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
-
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
-      fireEvent.click(submitButton);
-
-      expect(submitButton).toBeDisabled();
-    });
-
     it('shows loading state while submitting', async () => {
-      (global.fetch as jest.Mock).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ ok: true }), 100))
-      );
+      mockLogin.mockImplementation(() => new Promise(() => {}));
 
       render(<LoginForm />);
 
-      const emailInput = screen.getByLabelText(/email/i);
+      const usernameInput = screen.getByLabelText(/username/i);
       const passwordInput = screen.getByLabelText(/password/i);
 
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
+      fireEvent.change(usernameInput, { target: { value: 'admin' } });
+      fireEvent.change(passwordInput, { target: { value: 'admin123' } });
+
+      const submitButton = screen.getByRole('button', { name: /sign in/i });
+
+      // Verify button is enabled before clicking
+      expect(submitButton).not.toBeDisabled();
+
+      fireEvent.click(submitButton);
+
+      // Verify mockLogin was called (form submission worked)
+      await waitFor(() => {
+        expect(mockLogin).toHaveBeenCalled();
+      });
+
+      // After login is called, the button should show loading state
+      expect(screen.getAllByText(/signing in/i).length).toBeGreaterThan(0);
+    });
+
+    it('calls onSuccess callback on successful login', async () => {
+      const onSuccess = jest.fn();
+      mockLogin.mockResolvedValueOnce(undefined);
+
+      render(<LoginForm onSuccess={onSuccess} />);
+
+      const usernameInput = screen.getByLabelText(/username/i);
+      const passwordInput = screen.getByLabelText(/password/i);
+
+      fireEvent.change(usernameInput, { target: { value: 'admin' } });
+      fireEvent.change(passwordInput, { target: { value: 'admin123' } });
 
       const submitButton = screen.getByRole('button', { name: /sign in/i });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/signing in/i)).toBeInTheDocument();
+        expect(onSuccess).toHaveBeenCalled();
       });
-    });
-
-    it('submits form when Enter key is pressed in password field', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ token: 'test-token', user: { id: '1', email: 'test@example.com' } }),
-      });
-
-      render(<LoginForm />);
-
-      const emailInput = screen.getByLabelText(/email/i);
-      const passwordInput = screen.getByLabelText(/password/i);
-
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
-
-      fireEvent.keyDown(passwordInput, { key: 'Enter', code: 'Enter' });
-
-      await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith(
-          expect.stringContaining('/api/auth/login'),
-          expect.objectContaining({
-            method: 'POST',
-          })
-        );
-      });
-    });
-  });
-
-  describe('Remember Me', () => {
-    it('toggles remember me checkbox', () => {
-      render(<LoginForm />);
-
-      const checkbox = screen.getByLabelText(/remember me/i);
-      expect(checkbox).not.toBeChecked();
-
-      fireEvent.click(checkbox);
-      expect(checkbox).toBeChecked();
-
-      fireEvent.click(checkbox);
-      expect(checkbox).not.toBeChecked();
     });
   });
 
@@ -303,21 +191,18 @@ describe('LoginForm', () => {
     it('has proper form labels', () => {
       render(<LoginForm />);
 
-      expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/remember me/i)).toBeInTheDocument();
     });
 
-    it('associates error messages with inputs', async () => {
+    it('has autocomplete attributes', () => {
       render(<LoginForm />);
 
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
-      fireEvent.click(submitButton);
+      const usernameInput = screen.getByLabelText(/username/i);
+      const passwordInput = screen.getByLabelText(/password/i);
 
-      await waitFor(() => {
-        const emailInput = screen.getByLabelText(/email/i);
-        expect(emailInput).toHaveAccessibleDescription();
-      });
+      expect(usernameInput).toHaveAttribute('autocomplete', 'username');
+      expect(passwordInput).toHaveAttribute('autocomplete', 'current-password');
     });
   });
 
@@ -331,76 +216,67 @@ describe('LoginForm', () => {
       expect(passwordInput).toHaveAttribute('type', 'password');
     });
 
-    it('clears password field after failed login', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 401,
-        json: async () => ({ error: 'Invalid credentials' }),
-      });
+    it('handles network errors', async () => {
+      mockLogin.mockRejectedValueOnce(new Error('Network error: Cannot reach API'));
 
       render(<LoginForm />);
 
-      const passwordInput = screen.getByLabelText(/password/i) as HTMLInputElement;
-      fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
+      const usernameInput = screen.getByLabelText(/username/i);
+      const passwordInput = screen.getByLabelText(/password/i);
+
+      fireEvent.change(usernameInput, { target: { value: 'admin' } });
+      fireEvent.change(passwordInput, { target: { value: 'admin123' } });
 
       const submitButton = screen.getByRole('button', { name: /sign in/i });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
-      });
-
-      // Password should be cleared after failed attempt
-      await waitFor(() => {
-        expect(passwordInput.value).toBe('');
+        expect(screen.getByText(/network error/i)).toBeInTheDocument();
       });
     });
   });
 
   describe('Edge Cases', () => {
-    it('handles network errors', async () => {
-      (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+    it('disables inputs while submitting', async () => {
+      mockLogin.mockImplementation(() => new Promise(() => {}));
 
       render(<LoginForm />);
 
-      const emailInput = screen.getByLabelText(/email/i);
+      const usernameInput = screen.getByLabelText(/username/i);
       const passwordInput = screen.getByLabelText(/password/i);
 
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
+      fireEvent.change(usernameInput, { target: { value: 'admin' } });
+      fireEvent.change(passwordInput, { target: { value: 'admin123' } });
 
       const submitButton = screen.getByRole('button', { name: /sign in/i });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/network error|failed to sign in/i)).toBeInTheDocument();
+        expect(usernameInput).toBeDisabled();
+        expect(passwordInput).toBeDisabled();
       });
     });
 
-    it('trims whitespace from email', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ token: 'test-token', user: { id: '1', email: 'test@example.com' } }),
-      });
+    it('renders help section', () => {
+      render(<LoginForm />);
+      expect(screen.getByText(/need help signing in/i)).toBeInTheDocument();
+    });
+
+    it('submits form when Enter key is pressed in password field', async () => {
+      mockLogin.mockResolvedValueOnce(undefined);
 
       render(<LoginForm />);
 
-      const emailInput = screen.getByLabelText(/email/i);
-      fireEvent.change(emailInput, { target: { value: '  test@example.com  ' } });
-
+      const usernameInput = screen.getByLabelText(/username/i);
       const passwordInput = screen.getByLabelText(/password/i);
-      fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
-      const submitButton = screen.getByRole('button', { name: /sign in/i });
-      fireEvent.click(submitButton);
+      fireEvent.change(usernameInput, { target: { value: 'admin' } });
+      fireEvent.change(passwordInput, { target: { value: 'admin123' } });
+
+      fireEvent.keyDown(passwordInput, { key: 'Enter', code: 'Enter' });
 
       await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith(
-          expect.any(String),
-          expect.objectContaining({
-            body: expect.stringContaining('test@example.com'),
-          })
-        );
+        expect(mockLogin).toHaveBeenCalled();
       });
     });
   });

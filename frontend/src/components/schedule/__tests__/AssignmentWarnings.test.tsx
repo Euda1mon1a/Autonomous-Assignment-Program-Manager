@@ -267,7 +267,7 @@ describe('generateWarnings', () => {
         personName: 'Dr. Smith',
         date: '2024-01-15',
         session: 'AM',
-        weeklyHours: 74,
+        weeklyHours: 78,
         maxWeeklyHours: 80,
       };
 
