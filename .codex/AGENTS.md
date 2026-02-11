@@ -4,64 +4,98 @@
 
 ---
 
-## Multi-Agent Coordination (IMPORTANT)
+## The Planning Cycle (OPERATING PROCEDURE)
 
-You are not the only agent working on this codebase. A **Claude Code agent (Opus 4.6)** runs autonomously on a Mac Mini (always-on server) via a cron-based coder script (`claude-coder.sh`). Understanding the coordination model prevents duplicate work, merge conflicts, and wasted effort.
+Every automation run and interactive session follows this cycle. Do not skip steps.
+
+### 1. Research — What's the current state?
+
+Before touching code, build situational awareness:
+
+- **Read `RECENT_ACTIVITY.md`** (project root) — auto-generated every 15 min by `sync-claude-activity.sh`. Shows what Claude coder completed in the last 24h and what branches are active.
+- **Read `TODO.md`** — shared task list. Items marked `[x]` are done. Items with `(claude-coder)` were completed by the other agent.
+- **Read `FEEDBACK.md`** (`.codex/FEEDBACK.md`) — learnings from previous runs. Check for patterns, known issues, and suggestions from your past self.
+- **Check branches**: `git branch -a | grep 'claude/\|codex/'` — see what's in flight.
+- **Fetch from Mini**: `git fetch mini` — get Claude's latest work.
+
+### 2. Plan — What should I work on?
+
+Based on research, decide what's highest-impact and NOT already done:
+
+- **Skip** anything listed as DONE in `RECENT_ACTIVITY.md`
+- **Skip** anything marked `[x]` in `TODO.md`
+- **Skip** anything with an active `claude/*` branch covering the same area
+- **Prefer** work that complements Claude's output (Claude does mechanical fixes; you do deeper analysis)
+- **Prefer** work that Claude can't do (ACGME audits, contract sync, test gap detection — these need the full AAPM context that only runs on the laptop)
+
+### 3. Execute — Do the work
+
+- Work on a `codex/*` branch, never directly on `main`
+- One focused change per branch
+- Run tests/lints to validate before committing
+
+### 4. Validate — Did it work?
+
+- Check that tests pass
+- Check that the change is meaningful (not trivial/cosmetic)
+- If the automation found nothing to do, that's a valid outcome — log it
+
+### 5. Feedback — What did I learn?
+
+**Append findings to `.codex/FEEDBACK.md`** after every run:
+
+```markdown
+## [automation-name] — YYYY-MM-DD HH:MM
+
+**Outcome**: [completed | nothing-to-do | skipped-duplicate | failed]
+**Overlap with Claude**: [yes/no — describe if yes]
+**Insight**: [what did this run teach us?]
+**Suggestion**: [anything to improve for next run?]
+```
+
+This creates a persistent learning loop. Future runs read FEEDBACK.md in step 1 and avoid repeating mistakes.
+
+---
+
+## Multi-Agent Coordination
+
+You are not the only agent working on this codebase. A **Claude Code agent (Opus 4.6)** runs autonomously on a Mac Mini (always-on server) via `claude-coder.sh`.
 
 ### Order of Operations
 
-1. **Claude coder runs first** — throughout the day on the Mac Mini, picking tasks from `TODO.md`, working in git worktrees, committing to `claude/*` branches, pushing to a bare repo (`~/repos/aapm.git` on Mini).
-2. **Codex runs second** — during sleeping hours (~2300-0500 HST), performing automated health checks, code quality sweeps, and focused improvements.
-3. **Human reviews** — in the morning, reviewing accumulated `claude/*` and `codex/*` branches.
+1. **Claude coder** — runs throughout the day on the Mac Mini, picks tasks from `TODO.md`, works in git worktrees, commits to `claude/*` branches, pushes to bare repo
+2. **Codex** — runs during sleeping hours (~0100-0500 HST), performs automated health checks, code quality sweeps, deeper analysis
+3. **Human** — reviews accumulated branches in the morning
 
 ### Branch Naming
 
-| Agent | Branch prefix | Example |
-|-------|--------------|---------|
-| Claude coder | `claude/` | `claude/2026-02-10-fix-import-errors` |
-| Codex automations | `codex/` | `codex/type-coverage-expansion` |
-| Human/interactive | feature branches | `feature/new-swap-ui` |
+| Agent | Prefix | Example |
+|-------|--------|---------|
+| Claude | `claude/` | `claude/2026-02-10-fix-import-errors` |
+| Codex | `codex/` | `codex/type-coverage-expansion` |
+| Human | feature/ | `feature/new-swap-ui` |
 
-**Never commit directly to `main`.** Both agents use feature branches.
-
-### Shared State: TODO.md
-
-Both agents read `TODO.md` in the project root. Claude marks tasks `[x]` when complete. Before starting a task:
-1. Check if it's already marked complete in `TODO.md`
-2. Check for existing `claude/*` branches that may have already addressed it: `git branch -r | grep claude/`
-3. If Claude already did the work, skip it or build on it
-
-### Pulling Claude's Work
-
-Claude pushes to the Mac Mini bare repo. The laptop has a `mini` remote configured:
-```bash
-git fetch mini
-git log mini/main..HEAD   # see what's on Mini but not here
-```
-
-Before starting work, especially on tasks that overlap with Claude's TODO.md items, fetch from Mini to avoid redoing work.
-
-### What Claude Handles vs What Codex Handles
+### Complementary Roles
 
 | Domain | Claude (Mini, daytime) | Codex (Laptop, nighttime) |
 |--------|----------------------|--------------------------|
-| TODO.md mechanical tasks | Yes — primary executor | No — skip items Claude is doing |
-| Code quality (lint, types, format) | Yes — via TODO items | Yes — deeper sweeps |
-| Bug scanning | Light (task-based) | Deep (daily-bug-scan automation) |
+| TODO.md mechanical tasks | Primary executor | Skip — Claude handles these |
+| Code quality sweeps | Via TODO items | Deeper analysis (mypy, bandit, contract sync) |
+| Bug scanning | Light (task-based) | Deep (daily-bug-scan) |
 | Architecture drift | No | Yes — contract sync, constraint drift |
-| ACGME compliance audits | No | Yes — dedicated automations |
+| ACGME compliance | No | Yes — dedicated automations |
 | Security sweeps | Pre-merge gate only | Yes — bandit, PII health |
-| Test gap detection | No | Yes — dedicated automation |
-| Documentation freshness | No | Yes — dedicated automation |
+| Test gap detection | No | Yes |
+| Documentation freshness | No | Yes |
 | Morning brief | No | Yes — 0500 HST summary |
 
 ### Conflict Resolution
 
-If you find a `claude/*` branch that touches the same files you want to modify:
-- **Prefer Claude's version** if it's a mechanical fix (imports, lint, types)
+If a `claude/*` branch touches files you want to modify:
+- **Prefer Claude's version** for mechanical fixes (imports, lint, types)
 - **Build on it** if you have deeper analysis to add
 - **Skip it** if the work is equivalent
-- Log what you found in your automation memory.md so the pattern is tracked
+- **Log it** in FEEDBACK.md so the pattern is tracked
 
 ---
 
