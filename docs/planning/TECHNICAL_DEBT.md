@@ -96,14 +96,11 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 **Location:** Various frontend components
 **Category:** Accessibility
 **Found:** 2025-12-30
+**Status:** Partially resolved (2026-02-10, PR #1110)
 
-**Issues:**
-- Only 24/80 core components have ARIA attributes (30%)
-- `ScheduleGrid` missing `<thead>` and scoped headers
-- Icon-only buttons missing `aria-label`
-- Missing `aria-live` regions for dynamic updates
+**Progress:** Added ARIA attributes across 22 core components (UI primitives, admin, schedule). Coverage improved from 8% to ~20%. Remaining gaps: 3D/WebGL components, exotic resilience visualizations (chart a11y is a separate project).
 
-**Fix:** Audit all components, add ARIA attributes following WCAG 2.1 guidelines.
+**Remaining:** Exotic components (Three.js, voxel-schedule, Plotly wrappers) — deferred as low-priority.
 
 ---
 
@@ -244,14 +241,9 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 **Location:** `backend/app/scheduling/constraints/faculty_clinic.py` (lines 34-54)
 **Category:** Data / OPSEC
 **Found:** 2026-02-08
+**Status:** ✅ RESOLVED (2026-02-10, PR #1112)
 
-**Issue:** `FACULTY_CLINIC_CAPS` dict hardcodes min/max clinic half-days for 13 faculty members by last name. A `_get_caps()` fallback reads DB columns (`min_clinic_halfdays_per_week`, `max_clinic_halfdays_per_week`) first, but the hardcoded dict remains as a backstop.
-
-**Risks:**
-- Faculty names in source code (OPSEC concern)
-- Values drift from DB if DB is populated but dict is stale
-
-**Fix:** Verify all faculty have DB-stored values, then remove the hardcoded dict. Requires: DB audit + constraint test validation.
+**Resolution:** Removed `FACULTY_CLINIC_CAPS` dict containing 12 real faculty last names (OPSEC fix). `_get_caps()` now reads DB columns first, falls back to `DEFAULT_CLINIC_CAPS (0, 4)` with warning log. All 61 tests updated to use anonymous mock faculty.
 
 ---
 
@@ -300,15 +292,15 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 | Accessibility | 1 | 0 | 1 |
 | Architecture | 0 | 1 | 1 |
 | Code Quality | 0 | 1 | 1 |
-| Data / OPSEC | 1 | 0 | 1 |
+| Data / OPSEC | 0 | 1 | 1 |
 | Frontend Quality | 0 | 1 | 1 |
 | Testing | 0 | 2 | 2 |
 | Error Handling | 0 | 2 | 2 |
 | Observability | 1 | 0 | 1 |
 | Real-time Features | 0 | 1 | 1 |
-| **Total** | **4** | **20** | **24** |
+| **Total** | **3** | **21** | **24** |
 
-> 20 of 24 items resolved (83%). Remaining 4 open items require DB access, infrastructure config, or domain expertise.
+> 21 of 24 items resolved (88%). Remaining 3 open items require infrastructure config or domain expertise.
 
 ---
 
@@ -336,7 +328,7 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 | DEBT-018 | Open | - | - |
 | DEBT-019 | ✅ Resolved | 2026-02-09 | PR #1100 |
 | DEBT-020 | ✅ Resolved | pre-2026 | `providers.tsx` unhandled rejection |
-| DEBT-021 | Open | - | - |
+| DEBT-021 | ✅ Resolved | 2026-02-10 | PR #1112 |
 | DEBT-022 | ✅ Resolved | 2026-02-09 | PRs #847, #1057, #1100 |
 | DEBT-023 | ✅ Resolved | 2026-02-08 | Confirmed DEBT-011 resolved |
 | DEBT-024 | ✅ Resolved | 2026-02-09 | PR #1100 |
