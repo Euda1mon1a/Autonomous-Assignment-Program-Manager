@@ -20,5 +20,15 @@
 
 ## Infrastructure
 
+- [ ] Add admin status dashboard page showing native service health (Postgres, Redis, backend, frontend) — similar to Docker Desktop's single-pane view but for our native stack
 - [ ] Add a /api/health/deep endpoint that checks DB connectivity, Redis connectivity, and returns version info from pyproject.toml
 - [ ] Create a DB migration that adds indexes on the most-queried columns (check slow query log or EXPLAIN ANALYZE on common queries)
+
+## Human TODO (requires manual action)
+
+- [ ] Remove `_mbsetupuser` from admin group on Mini — `sudo dseditgroup -o edit -d _mbsetupuser -t user admin` (needs sudo password at keyboard)
+- [ ] Rotate Gemini API key — old key was exposed inline in `openclaw.json` (now removed, using `file:secrets/` reference)
+- [ ] Install macOS 26.3 on Mini — update available (`MSU_UPDATE_25D125_patch_26.3_minor`), enables iOS/visionOS dev
+- [ ] Log into Gemini CLI on Mini — `gemini auth login` (requires OAuth browser flow)
+- [ ] Log into Codex CLI on Mini — needs browser-based auth
+- [ ] Build budget-aware cron manager — auto-pause/resume Opus crons based on remaining usage percentage
