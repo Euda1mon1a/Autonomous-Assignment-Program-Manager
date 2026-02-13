@@ -137,7 +137,13 @@ class APIKey(Base):
         """Check if the API key has expired."""
         if self.expires_at is None:
             return False
-        return datetime.now(UTC) > self.expires_at
+        # Handle naive datetimes from DB (stored as UTC without tzinfo)
+        expires = (
+            self.expires_at
+            if self.expires_at.tzinfo
+            else self.expires_at.replace(tzinfo=UTC)
+        )
+        return datetime.now(UTC) > expires
 
     @property
     def is_valid(self) -> bool:

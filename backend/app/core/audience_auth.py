@@ -269,9 +269,9 @@ def verify_audience_token(
                 detail="Invalid token structure",
             )
 
-        # Convert timestamps
-        expires_at = datetime.utcfromtimestamp(exp)
-        issued_at = datetime.utcfromtimestamp(iat)
+        # Convert timestamps (tz-aware to match datetime.now(UTC))
+        expires_at = datetime.fromtimestamp(exp, tz=UTC)
+        issued_at = datetime.fromtimestamp(iat, tz=UTC)
         now = datetime.now(UTC)
 
         # Check expiration (with clock skew tolerance)
