@@ -104,7 +104,7 @@ async def list_half_day_assignments(
                 else None,
                 source=a.source,
                 is_locked=a.is_locked,
-                is_gap=a.is_gap,
+                is_gap=getattr(a, "is_gap", False),
                 created_at=a.created_at,
                 updated_at=a.updated_at,
             )
