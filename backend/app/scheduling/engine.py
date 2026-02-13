@@ -926,9 +926,14 @@ class SchedulingEngine:
         ) = self._get_preassigned_work_maps(blocks, resident_ids)
 
         # Load resident → rotation template mapping from BlockAssignment
-        resident_template_map = self._load_resident_template_map(
-            residents, block_number=block_number, academic_year=academic_year
-        )
+        # Only apply when block context is explicit; without it the query
+        # pulls all historical assignments and incorrectly restricts templates.
+        if block_number is not None and academic_year is not None:
+            resident_template_map = self._load_resident_template_map(
+                residents, block_number=block_number, academic_year=academic_year
+            )
+        else:
+            resident_template_map: dict[UUID, set[UUID]] = {}
 
         context = SchedulingContext(
             residents=residents,
