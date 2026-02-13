@@ -1,7 +1,7 @@
 """Schema version model for schema registry."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from enum import Enum
 
 from sqlalchemy import (
@@ -93,9 +93,12 @@ class SchemaVersion(Base):
 
     # Metadata
     created_by = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     __table_args__ = (
@@ -174,7 +177,7 @@ class SchemaChangeEvent(Base):
     notification_sent = Column(Boolean, default=False, nullable=False)
     notified_at = Column(DateTime, nullable=True)
     event_metadata = Column("metadata", JSON, default=dict, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     __table_args__ = (
         CheckConstraint(

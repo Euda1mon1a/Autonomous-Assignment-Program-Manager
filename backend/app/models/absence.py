@@ -1,7 +1,7 @@
 """Absence model - leave, deployments, TDY."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import (
     Boolean,
@@ -110,7 +110,7 @@ class Absence(Base):
     replacement_activity = Column(String(255))  # e.g., "TDY - Korea"
 
     notes = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     person = relationship("Person", back_populates="absences", foreign_keys=[person_id])

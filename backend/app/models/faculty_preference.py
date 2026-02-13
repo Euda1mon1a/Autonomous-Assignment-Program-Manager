@@ -1,6 +1,6 @@
 """Models for faculty scheduling preferences."""
 
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from uuid import uuid4
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, Text
@@ -50,9 +50,12 @@ class FacultyPreference(Base):
     notes = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     # Relationships

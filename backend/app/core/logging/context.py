@@ -11,7 +11,7 @@ Provides:
 
 import contextvars
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from typing import Any
 from uuid import uuid4
 
@@ -62,7 +62,7 @@ class LogContext:
     endpoint: str | None = None
     method: str | None = None
     custom_fields: dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         """Convert context to dictionary."""

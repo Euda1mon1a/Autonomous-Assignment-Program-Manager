@@ -1,7 +1,7 @@
 """Clinic session model - tracks daily clinic staffing and screener ratios."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from enum import Enum
 
 from sqlalchemy import (
@@ -85,8 +85,10 @@ class ClinicSession(Base):
     rn_fallback_used = Column(Boolean, default=False)  # Whether RN was used as fallback
 
     # Audit
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
     # Relationships
     # Note: Will be connected to assignments when screener assignments are implemented

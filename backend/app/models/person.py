@@ -1,7 +1,7 @@
 """Person model - residents and faculty."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from enum import Enum
 
 from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Integer, String
@@ -130,8 +130,10 @@ class Person(Base):
     )  # FMIT weeks this year (target ~6 max)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
     # Relationships
     assignments = relationship("Assignment", back_populates="person")

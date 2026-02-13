@@ -1,7 +1,7 @@
 """Feature flag models for configuration and audit logging."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import (
     JSON,
@@ -87,9 +87,12 @@ class FeatureFlag(Base):
 
     # Metadata
     created_by = Column(GUID(), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     # Relationships
@@ -154,7 +157,9 @@ class FeatureFlagEvaluation(Base):
     context = Column(JSON, nullable=True)
 
     # Timestamp
-    evaluated_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    evaluated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     # Relationships
     flag = relationship("FeatureFlag", back_populates="evaluations")
@@ -206,7 +211,9 @@ class FeatureFlagAudit(Base):
     reason = Column(Text, nullable=True)
 
     # When
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     # Relationships
     flag = relationship("FeatureFlag", back_populates="audit_logs")

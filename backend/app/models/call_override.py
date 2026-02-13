@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone, UTC
 
 from sqlalchemy import (
     Boolean,
@@ -68,7 +68,7 @@ class CallOverride(Base):
         nullable=True,
         index=True,
     )
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     deactivated_at = Column(DateTime, nullable=True)
     deactivated_by_id = Column(

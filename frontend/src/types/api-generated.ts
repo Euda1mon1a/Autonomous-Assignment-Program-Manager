@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-02-13T14:58:04Z
+ * Generated at: 2026-02-13T21:35:13Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -23767,7 +23767,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["ExportFormat"];
+            format: components["schemas"]["app__schemas__block_assignment_import__ExportFormat"];
             /**
              * Academic Year
              * @description Academic year to export
@@ -24441,7 +24441,7 @@ export interface components {
             /** Residents With Leave */
             residentsWithLeave: number;
             /** Coverage Gaps */
-            coverageGaps: components["schemas"]["app__schemas__block_assignment__CoverageGap"][];
+            coverageGaps: components["schemas"]["CoverageGap"][];
             /** Leave Conflicts */
             leaveConflicts: components["schemas"]["LeaveConflict"][];
             /** Rotation Capacities */
@@ -26739,15 +26739,29 @@ export interface components {
         };
         /**
          * ConflictCheckResponse
-         * @description Response for conflict check.
+         * @description Response for conflict checking before assignment.
          */
         ConflictCheckResponse: {
-            /** Has Conflicts */
-            hasConflicts: boolean;
-            /** Conflicts */
-            conflicts: components["schemas"]["TemplateConflict"][];
-            /** Can Proceed */
-            canProceed: boolean;
+            /**
+             * Can Assign
+             * @description Whether assignment can proceed
+             */
+            canAssign: boolean;
+            /**
+             * Conflicts
+             * @description Detected conflicts
+             */
+            conflicts?: components["schemas"]["ConflictDetail"][];
+            /**
+             * Warnings
+             * @description Warnings
+             */
+            warnings?: string[];
+            /**
+             * Suggestions
+             * @description Alternative suggestions
+             */
+            suggestions?: string[];
         };
         /**
          * ConflictDetail
@@ -26894,93 +26908,15 @@ export interface components {
         };
         /**
          * ConflictSummary
-         * @description Summary statistics for a set of conflicts.
-         *
-         *     Used for dashboard displays and reporting.
-         * @example {
-         *       "affectedPeopleCount": 8,
-         *       "autoResolvableCount": 6,
-         *       "averageImpactScore": 0.65,
-         *       "criticalCount": 3,
-         *       "highCount": 5,
-         *       "lowCount": 3,
-         *       "mediumCount": 4,
-         *       "totalConflicts": 15
-         *     }
+         * @description Summary of conflicts found.
          */
         ConflictSummary: {
-            /**
-             * Total Conflicts
-             * @default 0
-             */
+            /** Total Conflicts */
             totalConflicts: number;
-            /**
-             * Critical Count
-             * @default 0
-             */
-            criticalCount: number;
-            /**
-             * High Count
-             * @default 0
-             */
-            highCount: number;
-            /**
-             * Medium Count
-             * @default 0
-             */
-            mediumCount: number;
-            /**
-             * Low Count
-             * @default 0
-             */
-            lowCount: number;
-            /** By Category */
-            byCategory?: {
-                [key: string]: number | undefined;
-            };
-            /** By Type */
-            byType?: {
-                [key: string]: number | undefined;
-            };
-            /**
-             * Affected People Count
-             * @default 0
-             */
-            affectedPeopleCount: number;
-            /**
-             * Affected Blocks Count
-             * @default 0
-             */
-            affectedBlocksCount: number;
-            /**
-             * Auto Resolvable Count
-             * @default 0
-             */
-            autoResolvableCount: number;
-            /**
-             * Requires Manual Count
-             * @default 0
-             */
-            requiresManualCount: number;
-            /**
-             * Average Impact Score
-             * @default 0
-             */
-            averageImpactScore: number;
-            /**
-             * Average Urgency Score
-             * @default 0
-             */
-            averageUrgencyScore: number;
-            /**
-             * Average Complexity Score
-             * @default 0
-             */
-            averageComplexityScore: number;
-            /** Earliest Date */
-            earliestDate?: string | null;
-            /** Latest Date */
-            latestDate?: string | null;
+            /** Errors */
+            errors: number;
+            /** Warnings */
+            warnings: number;
         };
         /**
          * ConflictType
@@ -27204,35 +27140,23 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Represents a coverage gap in the schedule.
-         * @example {
-         *       "date": "2024-01-15",
-         *       "rotation": "FMIT Inpatient",
-         *       "severity": "high",
-         *       "timeOfDay": "PM"
-         *     }
+         * @description Identified coverage gap.
          */
         CoverageGap: {
             /**
-             * Date
-             * Format: date
-             * @description Date of the gap
+             * Rotation Template Id
+             * Format: uuid
              */
-            date: string;
-            /**
-             * Time Of Day
-             * @description AM or PM
-             */
-            timeOfDay: string;
-            /**
-             * Rotation
-             * @description Rotation with gap
-             */
-            rotation?: string | null;
-            /**
-             * Severity
-             * @description low, medium, high
-             */
+            rotationTemplateId: string;
+            /** Rotation Name */
+            rotationName: string;
+            /** Required Coverage */
+            requiredCoverage: number;
+            /** Assigned Coverage */
+            assignedCoverage: number;
+            /** Gap */
+            gap: number;
+            /** Severity */
             severity: string;
         };
         /**
@@ -27312,7 +27236,7 @@ export interface components {
              * Gaps
              * @description List of coverage gaps
              */
-            gaps?: components["schemas"]["CoverageGap"][];
+            gaps?: components["schemas"]["app__schemas__visualization__CoverageGap"][];
             /**
              * Title
              * @description Title for the heatmap
@@ -30030,7 +29954,7 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__certification__PersonSummary"];
             certificationType: components["schemas"]["CertificationTypeSummary"];
             /**
              * Expiration Date
@@ -30062,10 +29986,10 @@ export interface components {
         ExportDeliveryMethod: "email" | "s3" | "both";
         /**
          * ExportFormat
-         * @description Supported export formats.
+         * @description Export file formats.
          * @enum {string}
          */
-        ExportFormat: "csv" | "xlsx";
+        ExportFormat: "csv" | "json" | "xlsx" | "xml";
         /**
          * ExportFormat
          * @description Export file formats.
@@ -30093,7 +30017,7 @@ export interface components {
              * @description Export format
              * @default csv
              */
-            format: components["schemas"]["app__models__export_job__ExportFormat"];
+            format: components["schemas"]["ExportFormat"];
             /**
              * @description Delivery method
              * @default email
@@ -30392,7 +30316,7 @@ export interface components {
             /** Description */
             description?: string | null;
             template?: components["schemas"]["ExportTemplate"] | null;
-            format?: components["schemas"]["app__models__export_job__ExportFormat"] | null;
+            format?: components["schemas"]["ExportFormat"] | null;
             deliveryMethod?: components["schemas"]["ExportDeliveryMethod"] | null;
             /** Email Recipients */
             emailRecipients?: string[] | null;
@@ -34073,7 +33997,7 @@ export interface components {
              * @default []
              */
             recommendations: components["schemas"]["Recommendation"][];
-            summary?: components["schemas"]["app__schemas__schedule__ConflictSummary"] | null;
+            summary?: components["schemas"]["ConflictSummary"] | null;
         };
         /**
          * ImportApplyError
@@ -36860,7 +36784,7 @@ export interface components {
          * @description Certification compliance for a single person.
          */
         PersonComplianceResponse: {
-            person: components["schemas"]["PersonSummary"];
+            person: components["schemas"]["app__schemas__certification__PersonSummary"];
             /** Total Required */
             totalRequired: number;
             /** Total Current */
@@ -37139,7 +37063,7 @@ export interface components {
         };
         /**
          * PersonSummary
-         * @description Minimal person info for certification reports.
+         * @description Minimal person info for embedding in credential responses.
          */
         PersonSummary: {
             /**
@@ -37151,8 +37075,6 @@ export interface components {
             name: string;
             /** Type */
             type: string;
-            /** Email */
-            email?: string | null;
         };
         /**
          * PersonType
@@ -38222,7 +38144,7 @@ export interface components {
             /** Procedure Name */
             procedureName: string;
             /** Qualified Faculty */
-            qualifiedFaculty: components["schemas"]["app__schemas__procedure_credential__PersonSummary"][];
+            qualifiedFaculty: components["schemas"]["PersonSummary"][];
             /** Total */
             total: number;
         };
@@ -38338,6 +38260,7 @@ export interface components {
             queueName: string;
             /**
              * Confirm
+             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
@@ -47890,11 +47813,95 @@ export interface components {
             gapSize: number;
         };
         /**
-         * ExportFormat
-         * @description Export file formats.
-         * @enum {string}
+         * ConflictSummary
+         * @description Summary statistics for a set of conflicts.
+         *
+         *     Used for dashboard displays and reporting.
+         * @example {
+         *       "affectedPeopleCount": 8,
+         *       "autoResolvableCount": 6,
+         *       "averageImpactScore": 0.65,
+         *       "criticalCount": 3,
+         *       "highCount": 5,
+         *       "lowCount": 3,
+         *       "mediumCount": 4,
+         *       "totalConflicts": 15
+         *     }
          */
-        app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
+        app__scheduling__conflicts__types__ConflictSummary: {
+            /**
+             * Total Conflicts
+             * @default 0
+             */
+            totalConflicts: number;
+            /**
+             * Critical Count
+             * @default 0
+             */
+            criticalCount: number;
+            /**
+             * High Count
+             * @default 0
+             */
+            highCount: number;
+            /**
+             * Medium Count
+             * @default 0
+             */
+            mediumCount: number;
+            /**
+             * Low Count
+             * @default 0
+             */
+            lowCount: number;
+            /** By Category */
+            byCategory?: {
+                [key: string]: number | undefined;
+            };
+            /** By Type */
+            byType?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Affected People Count
+             * @default 0
+             */
+            affectedPeopleCount: number;
+            /**
+             * Affected Blocks Count
+             * @default 0
+             */
+            affectedBlocksCount: number;
+            /**
+             * Auto Resolvable Count
+             * @default 0
+             */
+            autoResolvableCount: number;
+            /**
+             * Requires Manual Count
+             * @default 0
+             */
+            requiresManualCount: number;
+            /**
+             * Average Impact Score
+             * @default 0
+             */
+            averageImpactScore: number;
+            /**
+             * Average Urgency Score
+             * @default 0
+             */
+            averageUrgencyScore: number;
+            /**
+             * Average Complexity Score
+             * @default 0
+             */
+            averageComplexityScore: number;
+            /** Earliest Date */
+            earliestDate?: string | null;
+            /** Latest Date */
+            latestDate?: string | null;
+        };
         /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
@@ -47931,25 +47938,27 @@ export interface components {
             total: number;
         };
         /**
-         * CoverageGap
-         * @description Identified coverage gap.
+         * ExportFormat
+         * @description Supported export formats.
+         * @enum {string}
          */
-        app__schemas__block_assignment__CoverageGap: {
+        app__schemas__block_assignment_import__ExportFormat: "csv" | "xlsx";
+        /**
+         * PersonSummary
+         * @description Minimal person info for certification reports.
+         */
+        app__schemas__certification__PersonSummary: {
             /**
-             * Rotation Template Id
+             * Id
              * Format: uuid
              */
-            rotationTemplateId: string;
-            /** Rotation Name */
-            rotationName: string;
-            /** Required Coverage */
-            requiredCoverage: number;
-            /** Assigned Coverage */
-            assignedCoverage: number;
-            /** Gap */
-            gap: number;
-            /** Severity */
-            severity: string;
+            id: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+            /** Email */
+            email?: string | null;
         };
         /**
          * PersonSummary
@@ -47970,30 +47979,17 @@ export interface components {
             pgyLevel?: number | null;
         };
         /**
-         * ConflictCheckResponse
-         * @description Response for conflict checking before assignment.
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
          */
-        app__schemas__fmit_assignments__ConflictCheckResponse: {
+        app__schemas__jobs__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
             /**
-             * Can Assign
-             * @description Whether assignment can proceed
+             * Confirm
+             * @default false
              */
-            canAssign: boolean;
-            /**
-             * Conflicts
-             * @description Detected conflicts
-             */
-            conflicts?: components["schemas"]["ConflictDetail"][];
-            /**
-             * Warnings
-             * @description Warnings
-             */
-            warnings?: string[];
-            /**
-             * Suggestions
-             * @description Alternative suggestions
-             */
-            suggestions?: string[];
+            confirm: boolean;
         };
         /**
          * QueuePurgeResponse
@@ -48047,45 +48043,49 @@ export interface components {
             error?: string | null;
         };
         /**
-         * PersonSummary
-         * @description Minimal person info for embedding in credential responses.
+         * ConflictCheckResponse
+         * @description Response for conflict check.
          */
-        app__schemas__procedure_credential__PersonSummary: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /** Type */
-            type: string;
+        app__schemas__rotation_template__ConflictCheckResponse: {
+            /** Has Conflicts */
+            hasConflicts: boolean;
+            /** Conflicts */
+            conflicts: components["schemas"]["TemplateConflict"][];
+            /** Can Proceed */
+            canProceed: boolean;
         };
         /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
+         * CoverageGap
+         * @description Represents a coverage gap in the schedule.
+         * @example {
+         *       "date": "2024-01-15",
+         *       "rotation": "FMIT Inpatient",
+         *       "severity": "high",
+         *       "timeOfDay": "PM"
+         *     }
          */
-        app__schemas__queue__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
+        app__schemas__visualization__CoverageGap: {
             /**
-             * Confirm
-             * @description Must be true to confirm purge
-             * @default false
+             * Date
+             * Format: date
+             * @description Date of the gap
              */
-            confirm: boolean;
-        };
-        /**
-         * ConflictSummary
-         * @description Summary of conflicts found.
-         */
-        app__schemas__schedule__ConflictSummary: {
-            /** Total Conflicts */
-            totalConflicts: number;
-            /** Errors */
-            errors: number;
-            /** Warnings */
-            warnings: number;
+            date: string;
+            /**
+             * Time Of Day
+             * @description AM or PM
+             */
+            timeOfDay: string;
+            /**
+             * Rotation
+             * @description Rotation with gap
+             */
+            rotation?: string | null;
+            /**
+             * Severity
+             * @description low, medium, high
+             */
+            severity: string;
         };
     };
     responses: never;
@@ -50951,7 +50951,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictCheckResponse"];
+                    "application/json": components["schemas"]["app__schemas__rotation_template__ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -67080,7 +67080,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__fmit_assignments__ConflictCheckResponse"];
+                    "application/json": components["schemas"]["ConflictCheckResponse"];
                 };
             };
             /** @description Validation Error */
@@ -67275,7 +67275,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConflictSummary"];
+                    "application/json": components["schemas"]["app__scheduling__conflicts__types__ConflictSummary"];
                 };
             };
             /** @description Validation Error */
@@ -68552,7 +68552,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
             };
         };
         responses: {
@@ -68919,7 +68919,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {

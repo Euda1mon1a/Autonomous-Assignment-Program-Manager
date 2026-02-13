@@ -7,7 +7,7 @@ configuration changes, and swap approvals/rejections.
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, String
 from sqlalchemy.orm import relationship
@@ -127,7 +127,9 @@ class ActivityLog(Base):
     user_agent = Column(String(500), nullable=True)
 
     # Timestamp (immutable, no updated_at since entries should never change)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     # Relationships
     admin_user = relationship(
@@ -180,5 +182,5 @@ class ActivityLog(Base):
             details=details or {},
             ip_address=ip_address,
             user_agent=user_agent,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )

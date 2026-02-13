@@ -17,7 +17,7 @@ Research Correlation:
 """
 
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone, UTC
 from enum import Enum
 
 from sqlalchemy import (
@@ -124,9 +124,12 @@ class Survey(Base):
     )  # ["resident", "faculty"] or empty=all
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     # Relationships
@@ -205,7 +208,9 @@ class SurveyResponse(Base):
     )  # e.g., "low", "moderate", "high"
 
     # Metadata
-    submitted_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    submitted_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
     ip_address = Column(String(45), nullable=True)  # IPv6 support
     user_agent = Column(String(500), nullable=True)
 
@@ -307,9 +312,12 @@ class WellnessAccount(Base):
     consent_version = Column(String(20), nullable=True)  # e.g., "1.0"
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     # Relationships
@@ -365,7 +373,7 @@ class WellnessAccount(Base):
             self.achievements_earned_at_json = {}
         self.achievements_earned_at_json = {
             **self.achievements_earned_at_json,
-            achievement: datetime.utcnow().isoformat(),
+            achievement: datetime.now(UTC).isoformat(),
         }
         return True
 
@@ -411,7 +419,9 @@ class WellnessPointTransaction(Base):
     )
 
     # Timestamp
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     # Relationships
     account = relationship("WellnessAccount", back_populates="point_transactions")
@@ -491,7 +501,9 @@ class HopfieldPosition(Base):
     academic_year = Column(Integer, nullable=True)  # e.g., 2025
 
     # Timestamp
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     # Relationships
     person = relationship("Person", backref="hopfield_positions")
@@ -562,7 +574,7 @@ class WellnessLeaderboardSnapshot(Base):
     top_10_cutoff = Column(Integer, nullable=True)  # Minimum points to be in top 10
 
     # Timestamp
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     __table_args__ = (
         CheckConstraint(
@@ -621,9 +633,12 @@ class SurveyAvailability(Base):
     current_academic_year = Column(Integer, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     __table_args__ = (

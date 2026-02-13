@@ -1,7 +1,7 @@
 """ProcedureCredential model - tracks faculty credentials for procedures."""
 
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone, UTC
 
 from sqlalchemy import (
     Column,
@@ -67,8 +67,10 @@ class ProcedureCredential(Base):
     notes = Column(Text)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
     # Relationships
     person = relationship("Person", back_populates="procedure_credentials")

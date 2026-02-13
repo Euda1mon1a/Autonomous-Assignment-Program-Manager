@@ -5,7 +5,7 @@ return cached results instead of creating duplicate schedules.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from enum import Enum
 
 from sqlalchemy import Column, DateTime, Index, String, Text
@@ -68,7 +68,7 @@ class IdempotencyRequest(Base):
     response_status_code = Column(String(3), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     completed_at = Column(DateTime, nullable=True)
     expires_at = Column(DateTime, nullable=False)
 
@@ -102,4 +102,9 @@ class IdempotencyRequest(Base):
     @property
     def is_expired(self) -> bool:
         """Check if the cached result has expired."""
-        return datetime.utcnow() > self.expires_at
+        expires = (
+            self.expires_at
+            if self.expires_at.tzinfo
+            else self.expires_at.replace(tzinfo=UTC)
+        )
+        return datetime.now(UTC) > expires

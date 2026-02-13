@@ -12,7 +12,7 @@ Models:
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import (
     Boolean,
@@ -108,7 +108,7 @@ class FatigueAssessment(Base):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     person_id = Column(GUID(), ForeignKey("persons.id"), nullable=False)
-    assessed_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    assessed_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     # Samn-Perelli assessment
     samn_perelli_level = Column(Integer, nullable=False)
@@ -183,7 +183,7 @@ class FatigueHazardAlert(Base):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     person_id = Column(GUID(), ForeignKey("persons.id"), nullable=False)
-    detected_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    detected_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     # Hazard classification
     hazard_level = Column(String(20), nullable=False)
@@ -263,7 +263,7 @@ class FatigueIntervention(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     person_id = Column(GUID(), ForeignKey("persons.id"), nullable=False)
     alert_id = Column(GUID(), ForeignKey("fatigue_hazard_alerts.id"))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     # Intervention details
     intervention_type = Column(String(50), nullable=False)
@@ -326,7 +326,7 @@ class SleepDebtHistory(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     person_id = Column(GUID(), ForeignKey("persons.id"), nullable=False)
     date = Column(DateTime, nullable=False)
-    calculated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    calculated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     # Sleep data
     reported_sleep_hours = Column(Float)
@@ -381,8 +381,8 @@ class CircadianProfile(Base):
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     person_id = Column(GUID(), ForeignKey("persons.id"), nullable=False, unique=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, onupdate=lambda: datetime.now(UTC))
 
     # Chronotype (morningness-eveningness)
     chronotype = Column(String(20))  # morning, intermediate, evening

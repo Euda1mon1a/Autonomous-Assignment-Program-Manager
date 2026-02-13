@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Calendar, CalendarDays, LayoutGrid, Columns, Users, GraduationCap, CalendarClock } from 'lucide-react'
 
@@ -95,17 +95,23 @@ export function ViewToggle({ currentView, onChange }: ViewToggleProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  // Use refs for initialization values that should not re-trigger the effect
+  const onChangeRef = useRef(onChange)
+  const currentViewRef = useRef(currentView)
+  onChangeRef.current = onChange
+  currentViewRef.current = currentView
+
   // Initialize from URL param or localStorage on mount
   useEffect(() => {
     const urlView = searchParams.get('view') as ScheduleView | null
     const storedView = localStorage.getItem(VIEW_STORAGE_KEY) as ScheduleView | null
 
-    if (urlView && isValidView(urlView) && urlView !== currentView) {
-      onChange(urlView)
-    } else if (storedView && isValidView(storedView) && storedView !== currentView) {
-      onChange(storedView)
+    if (urlView && isValidView(urlView) && urlView !== currentViewRef.current) {
+      onChangeRef.current(urlView)
+    } else if (storedView && isValidView(storedView) && storedView !== currentViewRef.current) {
+      onChangeRef.current(storedView)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   const handleViewChange = (view: ScheduleView) => {
     // Update localStorage

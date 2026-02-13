@@ -13,7 +13,7 @@ import asyncio
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from typing import Any
 
 import httpx
@@ -406,7 +406,7 @@ class CloudWatchExporter(MetricExporter):
             list: CloudWatch metric data format
         """
         metric_data = []
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(UTC)
 
         for metric_name, value in metrics.items():
             metric_data.append(

@@ -95,7 +95,6 @@ async def stage_import(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
                 "error": f"Invalid file extension: .{ext}. Expected .xlsx or .xls",
                 "error_code": "INVALID_EXTENSION",
             },
@@ -109,7 +108,6 @@ async def stage_import(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
                 "error": "Failed to read uploaded file",
                 "error_code": "READ_ERROR",
             },
@@ -121,7 +119,6 @@ async def stage_import(
         raise HTTPException(
             status_code=413,
             detail={
-                "success": False,
                 "error": "File too large. Maximum size is 10MB",
                 "error_code": "FILE_TOO_LARGE",
             },
@@ -134,7 +131,6 @@ async def stage_import(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
                 "error": str(e),
                 "error_code": "SECURITY_VALIDATION_FAILED",
             },
@@ -152,7 +148,6 @@ async def stage_import(
             raise HTTPException(
                 status_code=400,
                 detail={
-                    "success": False,
                     "error": f"Invalid start date format: {target_start_date}",
                     "error_code": "INVALID_DATE",
                 },
@@ -164,7 +159,6 @@ async def stage_import(
             raise HTTPException(
                 status_code=400,
                 detail={
-                    "success": False,
                     "error": f"Invalid end date format: {target_end_date}",
                     "error_code": "INVALID_DATE",
                 },
@@ -177,7 +171,6 @@ async def stage_import(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
                 "error": f"Invalid conflict resolution: {conflict_resolution}",
                 "error_code": "INVALID_RESOLUTION",
             },
@@ -201,7 +194,6 @@ async def stage_import(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
                 "error": result.message,
                 "error_code": result.error_code,
             },
@@ -243,7 +235,7 @@ async def list_batches(
         except ValueError:
             raise HTTPException(
                 status_code=400,
-                detail={"error": f"Invalid status: {status}"},
+                detail=f"Invalid status: {status}",
             )
 
     service = ImportStagingService(db)

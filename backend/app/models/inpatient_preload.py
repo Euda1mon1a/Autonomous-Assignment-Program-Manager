@@ -26,7 +26,7 @@ Block 10 FMIT Faculty Example:
 """
 
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone, UTC
 from enum import Enum
 
 from sqlalchemy import (
@@ -149,11 +149,11 @@ class InpatientPreload(Base):
     )
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 

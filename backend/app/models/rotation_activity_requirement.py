@@ -17,7 +17,7 @@ Example for Neurology Elective rotation:
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from typing import Optional, Any
 
 from sqlalchemy import (
@@ -190,11 +190,11 @@ class RotationActivityRequirement(Base):
     )
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 

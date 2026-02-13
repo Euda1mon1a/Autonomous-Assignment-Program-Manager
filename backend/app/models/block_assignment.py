@@ -1,7 +1,7 @@
 """Block Assignment model - academic block rotation assignments."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from enum import Enum
 
 from sqlalchemy import (
@@ -86,8 +86,10 @@ class BlockAssignment(Base):
 
     # Audit fields
     created_by = Column(String(255))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
     # Relationships
     resident = relationship("Person", backref="block_assignments")

@@ -1,7 +1,7 @@
 """Token blacklist model for JWT invalidation."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import Column, DateTime, Index, String
 
@@ -34,7 +34,7 @@ class TokenBlacklist(Base):
     user_id = Column(GUID(), nullable=True)
 
     # When the token was blacklisted
-    blacklisted_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    blacklisted_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     # When the token expires (for cleanup)
     expires_at = Column(DateTime, nullable=False, index=True)
@@ -74,7 +74,7 @@ class TokenBlacklist(Base):
         Returns:
             Number of tokens removed
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         count = db.query(cls).filter(cls.expires_at < now).delete()
         db.commit()
         return count

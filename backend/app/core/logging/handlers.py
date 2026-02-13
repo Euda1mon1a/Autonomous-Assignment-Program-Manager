@@ -16,7 +16,7 @@ import logging
 import shutil
 from abc import ABC, abstractmethod
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Any, Deque
 
@@ -54,7 +54,7 @@ class AsyncLogHandler(ABC):
         self.flush_interval = flush_interval
         self.max_retries = max_retries
         self._buffer: deque[dict[str, Any]] = deque(maxlen=buffer_size)
-        self._last_flush = datetime.utcnow()
+        self._last_flush = datetime.now(UTC)
         self._flush_lock = asyncio.Lock()
 
     @abstractmethod
@@ -83,7 +83,7 @@ class AsyncLogHandler(ABC):
         # Check if we should flush
         should_flush = (
             len(self._buffer) >= self.buffer_size
-            or (datetime.utcnow() - self._last_flush).total_seconds()
+            or (datetime.now(UTC) - self._last_flush).total_seconds()
             >= self.flush_interval
         )
 
@@ -99,7 +99,7 @@ class AsyncLogHandler(ABC):
                 # Get current buffer contents
             entries = list(self._buffer)
             self._buffer.clear()
-            self._last_flush = datetime.utcnow()
+            self._last_flush = datetime.now(UTC)
 
             # Attempt to flush with retries
             for attempt in range(self.max_retries):
@@ -195,7 +195,7 @@ class RedisLogHandler(AsyncLogHandler):
                 await self.redis.publish(self.channel, json.dumps(entry))
 
                 # Also store in list with TTL for historical access
-            key = f"logs:{datetime.utcnow().strftime('%Y-%m-%d:%H')}"
+            key = f"logs:{datetime.now(UTC).strftime('%Y-%m-%d:%H')}"
             await self.redis.rpush(key, *[json.dumps(e) for e in entries])
             await self.redis.expire(key, self.ttl)
 

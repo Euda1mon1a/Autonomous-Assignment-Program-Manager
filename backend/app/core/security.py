@@ -1,7 +1,7 @@
 """Security utilities for authentication and authorization."""
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone, UTC
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request, status
@@ -62,9 +62,9 @@ def create_access_token(
     to_encode = data.copy()
 
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
+        expire = datetime.now(UTC) + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
 
@@ -75,7 +75,7 @@ def create_access_token(
         {
             "exp": expire,
             "jti": jti,
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(UTC),
         }
     )
 
@@ -111,9 +111,9 @@ def create_refresh_token(
     to_encode = data.copy()
 
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
     # Generate unique token identifier for blacklist tracking
     jti = str(uuid.uuid4())
@@ -122,7 +122,7 @@ def create_refresh_token(
         {
             "exp": expire,
             "jti": jti,
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(UTC),
             "type": "refresh",  # Distinguish from access tokens
         }
     )

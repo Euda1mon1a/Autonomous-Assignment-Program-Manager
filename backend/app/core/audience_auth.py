@@ -34,7 +34,7 @@ Usage:
 
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone, UTC
 from typing import Callable
 
 from fastapi import Depends, HTTPException, status
@@ -164,7 +164,7 @@ def create_audience_token(
         raise ValueError("TTL must be at least 30 seconds")
 
     # Generate token metadata
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     expires_at = now + timedelta(seconds=ttl_seconds)
     jti = str(uuid.uuid4())
 
@@ -269,10 +269,10 @@ def verify_audience_token(
                 detail="Invalid token structure",
             )
 
-        # Convert timestamps
-        expires_at = datetime.utcfromtimestamp(exp)
-        issued_at = datetime.utcfromtimestamp(iat)
-        now = datetime.utcnow()
+        # Convert timestamps (tz-aware to match datetime.now(UTC))
+        expires_at = datetime.fromtimestamp(exp, tz=UTC)
+        issued_at = datetime.fromtimestamp(iat, tz=UTC)
+        now = datetime.now(UTC)
 
         # Check expiration (with clock skew tolerance)
         if now > expires_at + timedelta(seconds=CLOCK_SKEW_TOLERANCE):

@@ -21,7 +21,7 @@ import enum
 import hashlib
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import (
     Column,
@@ -122,7 +122,9 @@ class ApprovalRecord(Base):
     target_entity_id = Column(String(100), nullable=True)
 
     # Immutable timestamp (no updated_at - records never change)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     # Request metadata
     ip_address = Column(String(45), nullable=True)  # IPv6 compatible
@@ -227,7 +229,7 @@ class ApprovalRecord(Base):
         Returns:
             New ApprovalRecord instance (not yet added to session)
         """
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(UTC)
         payload = payload or {"chain_initialized": True}
 
         record_hash = cls.compute_hash(

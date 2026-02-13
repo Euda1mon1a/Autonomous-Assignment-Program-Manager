@@ -14,7 +14,7 @@ Workflow:
 """
 
 import enum
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from typing import TYPE_CHECKING, List, Optional
 from uuid import uuid4
 
@@ -101,7 +101,7 @@ class ScheduleDraft(Base):
     __versioned__ = {}  # Enable audit trail
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     created_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
     # Scope
@@ -324,7 +324,7 @@ class ScheduleDraftFlag(Base):
     )
     resolution_note = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     # Relationships
     draft = relationship("ScheduleDraft", back_populates="flags")

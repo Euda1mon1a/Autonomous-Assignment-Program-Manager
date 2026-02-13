@@ -1,7 +1,7 @@
 """Intern stagger pattern model - defines PGY-1 orientation schedules."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import CheckConstraint, Column, DateTime, Integer, String, Time
 
@@ -44,8 +44,10 @@ class InternStaggerPattern(Base):
     )  # Weeks before overlap starts
 
     # Audit
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
     # Relationships
     # Note: Will be connected to schedule assignments when intern staggering is implemented

@@ -1,7 +1,7 @@
 """Schedule run model - audit trail for generated schedules."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import Column, Date, DateTime, Integer, Numeric, String
 
@@ -44,7 +44,7 @@ class ScheduleRun(Base):
     # Configuration snapshot
     config_json = Column(JSONType())
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     def __repr__(self):
         return f"<ScheduleRun(status='{self.status}', blocks={self.total_blocks_assigned})>"
