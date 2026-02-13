@@ -194,11 +194,16 @@ def sync_absences(records):
         if code.upper() in LEAVE_CODES:
             leave_by_person.setdefault(name, []).append((d, tod, code))
 
-    # Delete existing block-specific absences
+    # Delete existing block-specific absences (scoped to date range to avoid
+    # clobbering same block number from a different academic year)
     block_num = BLOCK_CONFIG["block_number"]
+    block_start = BLOCK_CONFIG["start_date"]
+    block_end = BLOCK_CONFIG["end_date"]
     cur.execute(
-        "DELETE FROM absences WHERE notes LIKE %s",
-        (f"Block {block_num}%",),
+        """DELETE FROM absences
+        WHERE notes LIKE %s
+          AND start_date >= %s AND start_date <= %s""",
+        (f"Block {block_num}%", block_start, block_end),
     )
     print(f"  Deleted {cur.rowcount} existing Block {block_num} absences")
 
