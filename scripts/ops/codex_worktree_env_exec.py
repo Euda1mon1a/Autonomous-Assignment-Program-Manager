@@ -2,7 +2,7 @@
 """Run a command with env vars loaded for Codex worktree automation.
 
 This wrapper resolves the common Codex worktree problem where backend tests run
-without `DATABASE_URL` because the worktree has no local `.env`.
+without `DATABASE_URL` because the worktree has no local env file.
 """
 
 from __future__ import annotations
@@ -24,14 +24,18 @@ def _env_candidates() -> list[Path]:
     candidates: list[Path] = []
     seen: set[Path] = set()
 
+    def add_env_files(root: Path) -> None:
+        for filename in (".env", ".env.codex"):
+            env_file = root / filename
+            if env_file.exists() and env_file not in seen:
+                candidates.append(env_file)
+                seen.add(env_file)
+
     repo_root_raw = _git_output(["rev-parse", "--show-toplevel"])
     repo_root = Path(repo_root_raw).resolve() if repo_root_raw else None
 
     if repo_root:
-        local_env = repo_root / ".env"
-        if local_env.exists() and local_env not in seen:
-            candidates.append(local_env)
-            seen.add(local_env)
+        add_env_files(repo_root)
 
     common_dir_raw = _git_output(["rev-parse", "--git-common-dir"])
     if common_dir_raw:
@@ -41,10 +45,7 @@ def _env_candidates() -> list[Path]:
         else:
             common_dir_path = common_dir_path.resolve()
         primary_root = common_dir_path.parent
-        primary_env = primary_root / ".env"
-        if primary_env.exists() and primary_env not in seen:
-            candidates.append(primary_env)
-            seen.add(primary_env)
+        add_env_files(primary_root)
 
     return candidates
 
