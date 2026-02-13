@@ -491,6 +491,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
   const currentReconnectInterval = useRef(reconnectInterval)
   const mountedRef = useRef(true)
   const manualDisconnectRef = useRef(false)
+  const connectRef = useRef<() => void>(() => {})
 
   // Store callbacks in refs to avoid re-renders
   const onMessageRef = useRef(onMessage)
@@ -674,6 +675,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     startPingInterval,
   ])
 
+  // Keep connectRef in sync so mount effect can call the latest connect
+  connectRef.current = connect
+
   /**
    * Sends a message to the server.
    */
@@ -718,7 +722,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     mountedRef.current = true
 
     if (autoConnect) {
-      connect()
+      connectRef.current()
     }
 
     return () => {
@@ -729,7 +733,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
         wsRef.current = null
       }
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [autoConnect, clearTimers])
 
   return {
     connectionState,
@@ -777,15 +781,16 @@ export function useScheduleWebSocket(
   options: Omit<UseWebSocketOptions, 'autoConnect'> = {}
 ): UseWebSocketReturn {
   const ws = useWebSocket({ ...options, autoConnect: true })
+  const { isConnected, subscribeToSchedule, unsubscribeFromSchedule } = ws
 
   useEffect(() => {
-    if (ws.isConnected && scheduleId) {
-      ws.subscribeToSchedule(scheduleId)
+    if (isConnected && scheduleId) {
+      subscribeToSchedule(scheduleId)
       return () => {
-        ws.unsubscribeFromSchedule(scheduleId)
+        unsubscribeFromSchedule(scheduleId)
       }
     }
-  }, [ws.isConnected, scheduleId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isConnected, scheduleId, subscribeToSchedule, unsubscribeFromSchedule])
 
   return ws
 }
@@ -817,15 +822,16 @@ export function usePersonWebSocket(
   options: Omit<UseWebSocketOptions, 'autoConnect'> = {}
 ): UseWebSocketReturn {
   const ws = useWebSocket({ ...options, autoConnect: true })
+  const { isConnected, subscribeToPerson, unsubscribeFromPerson } = ws
 
   useEffect(() => {
-    if (ws.isConnected && personId) {
-      ws.subscribeToPerson(personId)
+    if (isConnected && personId) {
+      subscribeToPerson(personId)
       return () => {
-        ws.unsubscribeFromPerson(personId)
+        unsubscribeFromPerson(personId)
       }
     }
-  }, [ws.isConnected, personId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isConnected, personId, subscribeToPerson, unsubscribeFromPerson])
 
   return ws
 }

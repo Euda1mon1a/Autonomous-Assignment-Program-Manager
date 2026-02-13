@@ -80,9 +80,6 @@ from app.core.cache.strategies import (
     WriteThroughStrategy,
 )
 
-# Utility functions
-from app.core.cache.utils import invalidate_schedule_cache
-
 # Backward compatibility: import ServiceCache from renamed service_cache.py
 from app.core.service_cache import (
     CachePrefix,
@@ -91,6 +88,7 @@ from app.core.service_cache import (
     get_service_cache,
     invalidate_person_cache,
     invalidate_rotation_cache,
+    invalidate_schedule_cache,
 )
 
 
@@ -120,9 +118,8 @@ __all__ = [
     "cached_property_async",
     "read_through",
     "write_through",
-    # Utility functions
-    "invalidate_schedule_cache",
     # Backward compatibility exports from service_cache.py
+    "invalidate_schedule_cache",
     "CachePrefix",
     "CacheTTL",
     "ServiceCache",
