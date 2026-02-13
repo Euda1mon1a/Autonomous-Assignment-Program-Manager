@@ -21,9 +21,12 @@ for arg in "$@"; do
     --no-db-init)
       NO_DB_INIT=true
       ;;
+    --build)
+      # Accepted for backward compatibility (no-op in native mode)
+      ;;
     *)
       echo "Unknown argument: $arg"
-      echo "Usage: scripts/dev/start-local.sh [--follow] [--no-services] [--no-db-init]"
+      echo "Usage: scripts/dev/start-local.sh [--follow] [--no-services] [--no-db-init] [--build]"
       exit 1
       ;;
   esac
