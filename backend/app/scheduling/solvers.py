@@ -838,9 +838,14 @@ class CPSATSolver(BaseSolver):
         locked_blocks = getattr(context, "locked_blocks", set())
         availability = getattr(context, "availability", {}) or {}
         resident_template_map = getattr(context, "resident_template_map", {}) or {}
+        active_template_ids = {t.id for t in context.templates}
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
-            assigned_template_ids = resident_template_map.get(resident.id, set())
+            raw_assigned = resident_template_map.get(resident.id, set())
+            # Only restrict to assigned templates that are actually active;
+            # if none match (e.g. archived template), allow all templates
+            # so the resident still gets solver variables.
+            assigned_template_ids = raw_assigned & active_template_ids
             for block in workday_blocks:
                 if (resident.id, block.id) in locked_blocks:
                     continue

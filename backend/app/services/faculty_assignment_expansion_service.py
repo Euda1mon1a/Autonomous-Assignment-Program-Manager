@@ -425,10 +425,10 @@ class FacultyAssignmentExpansionService:
         elif is_absent:
             # LV-AM or LV-PM based on time of day
             activity_code = f"LV-{time_of_day}"
-        elif is_weekend:
-            activity_code = "W"
         elif is_holiday:
             activity_code = "HOL"
+        elif is_weekend:
+            activity_code = "W"
         else:
             # Default to admin time (gme, dfm, or sm_clinic based on faculty)
             # admin_type is stored uppercase ("GME", "DFM", "SM")
