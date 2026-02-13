@@ -66,13 +66,16 @@ def main():
     block_slots = cur.fetchall()
     print(f"Found {len(block_slots)} block slots")
 
-    # Step 3: Delete stale assignments
+    # Step 3: Delete stale resident assignments (preserve faculty/FMIT rows)
     slot_ids = [s[0] for s in block_slots]
+    resident_ids = [str(r) for _, r, _, _ in block_assignments]
     cur.execute(
-        "DELETE FROM assignments WHERE block_id = ANY(%s::uuid[])",
-        ([str(s) for s in slot_ids],),
+        """DELETE FROM assignments
+        WHERE block_id = ANY(%s::uuid[])
+          AND person_id = ANY(%s::uuid[])""",
+        ([str(s) for s in slot_ids], resident_ids),
     )
-    print(f"Deleted {cur.rowcount} stale assignments")
+    print(f"Deleted {cur.rowcount} stale resident assignments")
 
     # Step 4: Create correct assignments
     # For split-block residents, use secondary rotation after BLOCK_HALF_DAY (day 14)
