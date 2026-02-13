@@ -262,7 +262,7 @@ def downgrade() -> None:
         if_exists=True,
     )
     op.drop_index("idx_absences_type", table_name="absences", if_exists=True)
-    op.drop_index("idx_absences_status", table_name="absences", if_exists=True)
+    # idx_absences_status owned by 20260203_add_absence_status — do not drop
     op.drop_index("idx_absences_person_dates", table_name="absences", if_exists=True)
     op.drop_index(
         "idx_rotation_templates_rotation_type",
@@ -294,11 +294,7 @@ def downgrade() -> None:
         table_name="schedule_drafts",
         if_exists=True,
     )
-    op.drop_index(
-        "idx_schedule_drafts_status",
-        table_name="schedule_drafts",
-        if_exists=True,
-    )
+    # idx_schedule_drafts_status owned by 20260115_schedule_drafts — do not drop
     op.drop_index(
         "idx_schedule_runs_date_range",
         table_name="schedule_runs",
