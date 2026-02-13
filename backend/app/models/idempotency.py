@@ -102,4 +102,9 @@ class IdempotencyRequest(Base):
     @property
     def is_expired(self) -> bool:
         """Check if the cached result has expired."""
-        return datetime.now(UTC) > self.expires_at
+        expires = (
+            self.expires_at
+            if self.expires_at.tzinfo
+            else self.expires_at.replace(tzinfo=UTC)
+        )
+        return datetime.now(UTC) > expires

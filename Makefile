@@ -80,13 +80,13 @@ local-start-build:
 	./scripts/start-local.sh --build
 
 local-stop:
-	docker compose -f docker-compose.local.yml down
+	./scripts/dev/stop-local.sh
 
 local-status:
-	docker compose -f docker-compose.local.yml ps
+	./scripts/dev/status-local.sh
 
 local-logs:
-	docker compose -f docker-compose.local.yml logs -f
+	./scripts/dev/status-local.sh && tail -f .local/log/*.log
 
 local-mlx:
 	@echo "Starting MLX inference server on :8082 (Apple Silicon native)..."
