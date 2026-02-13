@@ -95,7 +95,7 @@ async def stage_import(
         raise HTTPException(
             status_code=400,
             detail={
-                "message": f"Invalid file extension: .{ext}. Expected .xlsx or .xls",
+                "error": f"Invalid file extension: .{ext}. Expected .xlsx or .xls",
                 "error_code": "INVALID_EXTENSION",
             },
         )
@@ -108,7 +108,7 @@ async def stage_import(
         raise HTTPException(
             status_code=400,
             detail={
-                "message": "Failed to read uploaded file",
+                "error": "Failed to read uploaded file",
                 "error_code": "READ_ERROR",
             },
         )
@@ -119,7 +119,7 @@ async def stage_import(
         raise HTTPException(
             status_code=413,
             detail={
-                "message": "File too large. Maximum size is 10MB",
+                "error": "File too large. Maximum size is 10MB",
                 "error_code": "FILE_TOO_LARGE",
             },
         )
@@ -131,7 +131,7 @@ async def stage_import(
         raise HTTPException(
             status_code=400,
             detail={
-                "message": str(e),
+                "error": str(e),
                 "error_code": "SECURITY_VALIDATION_FAILED",
             },
         )
@@ -148,7 +148,7 @@ async def stage_import(
             raise HTTPException(
                 status_code=400,
                 detail={
-                    "message": f"Invalid start date format: {target_start_date}",
+                    "error": f"Invalid start date format: {target_start_date}",
                     "error_code": "INVALID_DATE",
                 },
             )
@@ -159,7 +159,7 @@ async def stage_import(
             raise HTTPException(
                 status_code=400,
                 detail={
-                    "message": f"Invalid end date format: {target_end_date}",
+                    "error": f"Invalid end date format: {target_end_date}",
                     "error_code": "INVALID_DATE",
                 },
             )
@@ -171,7 +171,7 @@ async def stage_import(
         raise HTTPException(
             status_code=400,
             detail={
-                "message": f"Invalid conflict resolution: {conflict_resolution}",
+                "error": f"Invalid conflict resolution: {conflict_resolution}",
                 "error_code": "INVALID_RESOLUTION",
             },
         )
@@ -194,7 +194,7 @@ async def stage_import(
         raise HTTPException(
             status_code=400,
             detail={
-                "message": result.message,
+                "error": result.message,
                 "error_code": result.error_code,
             },
         )
@@ -472,7 +472,7 @@ async def apply_batch(
         raise HTTPException(
             status_code=400,
             detail={
-                "message": result.message,
+                "error": result.message,
                 "error_code": result.error_code,
             },
         )
@@ -527,7 +527,7 @@ async def rollback_batch(
         raise HTTPException(
             status_code=400,
             detail={
-                "message": result.message,
+                "error": result.message,
                 "error_code": result.error_code,
             },
         )
