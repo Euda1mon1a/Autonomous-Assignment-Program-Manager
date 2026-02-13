@@ -19,6 +19,7 @@ Usage:
     python scripts/ops/stack_audit.py --quick        # Skip build check
     python scripts/ops/stack_audit.py --json         # JSON output instead of markdown
     python scripts/ops/stack_audit.py --no-report    # Don't write report file
+    python scripts/ops/stack_audit.py --strict-api --strict-mypy
 """
 
 import argparse
@@ -38,6 +39,8 @@ PROJECT_ROOT = SCRIPT_DIR.parent.parent
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
 BACKEND_DIR = PROJECT_ROOT / "backend"
 REPORT_DIR = PROJECT_ROOT / ".claude" / "dontreadme" / "stack-health"
+DEFAULT_BASELINE_FILE = PROJECT_ROOT / "config" / "stack_audit_baseline.json"
+DEFAULT_MYPY_REGRESSION_TOLERANCE = 25
 
 
 @dataclass
@@ -83,6 +86,23 @@ def run_command(
         return -2, "", f"Command not found: {cmd[0]}"
     except Exception as e:
         return -3, "", str(e)
+
+
+def load_baseline(path: Optional[Path] = None) -> Dict[str, Any]:
+    """Load optional stack audit baseline configuration."""
+    baseline_path = path or DEFAULT_BASELINE_FILE
+    if not baseline_path.exists():
+        return {}
+
+    try:
+        data = json.loads(baseline_path.read_text())
+        if isinstance(data, dict):
+            return data
+    except Exception:
+        # Baseline is optional; fall back to empty config on parse/read errors.
+        return {}
+
+    return {}
 
 
 def check_frontend_typecheck() -> CheckResult:
@@ -301,8 +321,21 @@ def check_backend_lint() -> CheckResult:
     # Ruff output format: file.py:line:col: CODE message
     issues = []
     for line in output.split("\n"):
-        if re.match(r".+\.py:\d+:\d+:", line):
-            issues.append(line.strip())
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        # Current Ruff output style:
+        #   --> file.py:line:col
+        pointer_match = re.match(r"^-->\s+(.+\.py:\d+:\d+)$", stripped)
+        if pointer_match:
+            issues.append(pointer_match.group(1))
+            continue
+
+        # Legacy Ruff output style:
+        #   file.py:line:col: CODE message
+        if re.match(r"^.+\.py:\d+:\d+:", stripped):
+            issues.append(stripped)
 
     issue_count = len(issues)
 
@@ -328,7 +361,12 @@ def check_backend_lint() -> CheckResult:
         )
 
 
-def check_backend_typecheck() -> CheckResult:
+def check_backend_typecheck(
+    *,
+    strict: bool = False,
+    baseline: Optional[Dict[str, Any]] = None,
+    regression_tolerance: int = DEFAULT_MYPY_REGRESSION_TOLERANCE,
+) -> CheckResult:
     """Run backend mypy type-check if configured."""
     import time
     start = time.time()
@@ -381,14 +419,55 @@ def check_backend_typecheck() -> CheckResult:
             count=0,
             duration_ms=duration_ms
         )
-    else:
+
+    baseline_errors: Optional[int] = None
+    if baseline:
+        raw_baseline = baseline.get("backend_typecheck_mypy_errors")
+        if isinstance(raw_baseline, int):
+            baseline_errors = raw_baseline
+
+    details = errors[:50]
+
+    if baseline_errors is None:
+        details.insert(
+            0,
+            (
+                "No mypy baseline configured at "
+                f"{DEFAULT_BASELINE_FILE.relative_to(PROJECT_ROOT)} "
+                "(set backend_typecheck_mypy_errors to enable regression gating)"
+            ),
+        )
         return CheckResult(
             name="Backend Type Check (mypy)",
-            status="warn" if error_count < 10 else "fail",
+            status="fail" if strict else "warn",
             count=error_count,
-            details=errors[:50],
-            duration_ms=duration_ms
+            details=details,
+            duration_ms=duration_ms,
         )
+
+    delta = error_count - baseline_errors
+    details.insert(
+        0,
+        (
+            f"Mypy baseline={baseline_errors}, current={error_count}, "
+            f"delta={delta:+d}, tolerance={regression_tolerance}"
+        ),
+    )
+
+    if strict:
+        status = "fail"
+    elif delta > regression_tolerance:
+        status = "fail"
+    else:
+        status = "warn"
+
+    return CheckResult(
+        name="Backend Type Check (mypy)",
+        status=status,
+        count=error_count,
+        details=details,
+        duration_ms=duration_ms,
+    )
 
 
 def check_migration_state() -> CheckResult:
@@ -485,7 +564,7 @@ def check_migration_state() -> CheckResult:
         )
 
 
-def check_api_health() -> CheckResult:
+def check_api_health(*, strict: bool = False) -> CheckResult:
     """Check API endpoint health and data integrity (antigravity recommendations)."""
     import time
     import urllib.request
@@ -508,13 +587,18 @@ def check_api_health() -> CheckResult:
     except urllib.error.URLError as e:
         details.append(f"Health endpoint: UNREACHABLE ({e.reason})")
         issues += 1
-        # If API is down, skip remaining checks
+        # If API is down, skip remaining checks.
+        # In non-strict mode this is a warning so local/offline runs remain useful.
         return CheckResult(
             name="API Health",
-            status="fail",
+            status="fail" if strict else "warn",
             count=issues,
             details=details,
-            error_message="API not reachable",
+            error_message=(
+                "API not reachable"
+                if strict
+                else "API not reachable (non-strict mode, deep API checks skipped)"
+            ),
             duration_ms=int((time.time() - start) * 1000)
         )
     except Exception as e:
@@ -1064,7 +1148,14 @@ def generate_markdown_report(report: AuditReport) -> str:
     return "\n".join(lines)
 
 
-def run_audit(quick: bool = False) -> AuditReport:
+def run_audit(
+    quick: bool = False,
+    *,
+    strict_mypy: bool = False,
+    strict_api: bool = False,
+    mypy_baseline: Optional[Dict[str, Any]] = None,
+    mypy_regression_tolerance: int = DEFAULT_MYPY_REGRESSION_TOLERANCE,
+) -> AuditReport:
     """Run the complete stack audit."""
     timestamp = datetime.now()
 
@@ -1086,7 +1177,11 @@ def run_audit(quick: bool = False) -> AuditReport:
     checks["backend_lint"] = check_backend_lint()
 
     print("  [5/10] Backend type-check (mypy)...")
-    checks["backend_typecheck"] = check_backend_typecheck()
+    checks["backend_typecheck"] = check_backend_typecheck(
+        strict=strict_mypy,
+        baseline=mypy_baseline,
+        regression_tolerance=mypy_regression_tolerance,
+    )
 
     print("  [6/10] Migration state...")
     checks["migration_state"] = check_migration_state()
@@ -1098,7 +1193,7 @@ def run_audit(quick: bool = False) -> AuditReport:
     checks["docker_health"] = check_docker_health()
 
     print("  [9/10] API health & data integrity...")
-    checks["api_health"] = check_api_health()
+    checks["api_health"] = check_api_health(strict=strict_api)
 
     print("  [10/10] Sacred backups...")
     checks["sacred_backups"] = check_sacred_backups()
@@ -1157,12 +1252,44 @@ def main() -> int:
         type=str,
         help="Custom output path for report"
     )
+    parser.add_argument(
+        "--strict-mypy",
+        action="store_true",
+        help="Treat any mypy errors as audit failures (ignore baseline tolerance)"
+    )
+    parser.add_argument(
+        "--strict-api",
+        action="store_true",
+        help="Treat unreachable API as failure (default non-strict mode reports warning)"
+    )
+    parser.add_argument(
+        "--mypy-regression-tolerance",
+        type=int,
+        default=DEFAULT_MYPY_REGRESSION_TOLERANCE,
+        help=(
+            "Allowed mypy error increase above baseline before failing "
+            f"(default: {DEFAULT_MYPY_REGRESSION_TOLERANCE})"
+        ),
+    )
+    parser.add_argument(
+        "--baseline-file",
+        type=str,
+        default=str(DEFAULT_BASELINE_FILE),
+        help=f"Path to baseline JSON file (default: {DEFAULT_BASELINE_FILE})",
+    )
 
     args = parser.parse_args()
 
     try:
         # Run audit
-        report = run_audit(quick=args.quick)
+        baseline = load_baseline(Path(args.baseline_file))
+        report = run_audit(
+            quick=args.quick,
+            strict_mypy=args.strict_mypy,
+            strict_api=args.strict_api,
+            mypy_baseline=baseline,
+            mypy_regression_tolerance=args.mypy_regression_tolerance,
+        )
 
         # Generate output
         if args.json:

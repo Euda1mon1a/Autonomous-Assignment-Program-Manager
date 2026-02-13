@@ -5,6 +5,7 @@ python-multipart==0.0.22
 
 # Database
 sqlalchemy==2.0.45
+greenlet>=3.0.0  # Required by SQLAlchemy for async context switching
 asyncpg==0.31.0
 aiosqlite>=0.19.0  # Async SQLite driver for test fixtures
 psycopg2-binary==2.9.11
@@ -103,8 +104,8 @@ opentelemetry-instrumentation-httpx>=0.41b0
 # OpenTelemetry Exporters
 opentelemetry-exporter-otlp-proto-grpc>=1.20.0  # OTLP gRPC exporter
 opentelemetry-exporter-otlp-proto-http>=1.20.0  # OTLP HTTP exporter
-opentelemetry-exporter-jaeger>=1.20.0  # Jaeger exporter (legacy)
-opentelemetry-exporter-zipkin-json>=1.20.0  # Zipkin exporter
+# opentelemetry-exporter-jaeger removed (deprecated upstream, conflicts with SDK 1.39+)
+# opentelemetry-exporter-zipkin-json removed (unused, prefer OTLP)
 
 # Reporting & Export
 openpyxl==3.1.5

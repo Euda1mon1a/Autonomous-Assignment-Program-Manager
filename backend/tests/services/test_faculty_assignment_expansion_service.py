@@ -1,14 +1,17 @@
 """Tests for FacultyAssignmentExpansionService."""
 
+import pytest
 from datetime import date
 from uuid import uuid4
 
+from app.models.absence import Absence
 from app.models.activity import Activity
 from app.models.half_day_assignment import HalfDayAssignment, AssignmentSource
 from app.models.person import Person
 from app.services.faculty_assignment_expansion_service import (
     FacultyAssignmentExpansionService,
 )
+from app.utils.academic_blocks import get_block_dates
 
 
 def _create_activity(db, code: str) -> Activity:
@@ -40,7 +43,6 @@ def test_fill_slot_prioritizes_deployment_over_leave(db) -> None:
     holiday = _create_activity(db, "HOL")
     gme = _create_activity(db, "gme")
 
-    FacultyAssignmentExpansionService._activity_cache = {}
     service = FacultyAssignmentExpansionService(db)
     service._activity_cache = {
         "DEP": dep,
@@ -85,7 +87,6 @@ def test_fill_slot_maps_sm_admin_type_to_sm_clinic(db) -> None:
 
     sm_activity = _create_activity(db, "sm_clinic")
 
-    FacultyAssignmentExpansionService._activity_cache = {}
     service = FacultyAssignmentExpansionService(db)
     service._activity_cache = {"sm_clinic": sm_activity}
 
@@ -109,3 +110,51 @@ def test_fill_slot_maps_sm_admin_type_to_sm_clinic(db) -> None:
         .one()
     )
     assert assignment.activity_id == sm_activity.id
+
+
+@pytest.mark.xfail(
+    reason="check_faculty_role constraint missing 'adjunct' — needs migration to add it",
+    raises=Exception,
+)
+def test_get_adjunct_faculty_without_assignments_counts(db) -> None:
+    block_dates = get_block_dates(1, 2025)
+    test_date = block_dates.start_date
+
+    adjunct_a = Person(
+        id=uuid4(),
+        name="Adjunct A",
+        type="faculty",
+        faculty_role="adjunct",
+        min_clinic_halfdays_per_week=1,
+        max_clinic_halfdays_per_week=2,
+    )
+    adjunct_b = Person(
+        id=uuid4(),
+        name="Adjunct B",
+        type="faculty",
+        faculty_role="adjunct",
+        min_clinic_halfdays_per_week=0,
+        max_clinic_halfdays_per_week=3,
+    )
+    db.add_all([adjunct_a, adjunct_b])
+    db.commit()
+
+    activity = _create_activity(db, "gme")
+
+    assignment = HalfDayAssignment(
+        person_id=adjunct_a.id,
+        date=test_date,
+        time_of_day="AM",
+        activity_id=activity.id,
+        source=AssignmentSource.PRELOAD.value,
+    )
+    db.add(assignment)
+    db.commit()
+
+    service = FacultyAssignmentExpansionService(db)
+    gaps = service.get_adjunct_faculty_without_assignments(1, 2025)
+
+    assert len(gaps) == 2
+    counts = {gap.person_id: gap.existing_assignment_count for gap in gaps}
+    assert counts[adjunct_a.id] == 1
+    assert counts[adjunct_b.id] == 0

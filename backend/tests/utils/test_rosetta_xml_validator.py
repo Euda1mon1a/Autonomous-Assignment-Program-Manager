@@ -171,10 +171,11 @@ class TestCompareXml:
 
     def _write_xml(self, content: str) -> Path:
         """Write XML to a temp file and return its path."""
-        f = tempfile.NamedTemporaryFile(mode="w", suffix=".xml", delete=False)
-        f.write(content)
-        f.close()
-        return Path(f.name)
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".xml", delete=False
+        ) as temp_file:
+            temp_file.write(content)
+            return Path(temp_file.name)
 
     def _rosetta_xml(self, residents_xml: str) -> str:
         return f"""<?xml version="1.0"?>

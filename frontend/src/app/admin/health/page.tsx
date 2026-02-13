@@ -6,7 +6,7 @@
  * Real-time monitoring of system health, services, and performance metrics.
  * Provides alerts management and historical metric visualization.
  */
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   Server,
@@ -41,6 +41,7 @@ import {
   SERVICE_STATUS_COLORS,
   ALERT_SEVERITY_COLORS,
 } from '@/types/admin-health';
+import { useHealthDashboard } from '@/hooks/useHealth';
 
 // ============================================================================
 // Mock Data
@@ -246,6 +247,114 @@ function formatUptime(seconds: number): string {
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`;
   return `${(ms / 1000).toFixed(1)}s`;
+}
+
+function normalizeServiceStatus(status: string | undefined): ServiceStatus {
+  if (status === 'healthy' || status === 'degraded' || status === 'unhealthy') {
+    return status;
+  }
+  return 'unknown';
+}
+
+function enrichHealthWithDashboard(
+  base: SystemHealthSummary,
+  dashboard: NonNullable<ReturnType<typeof useHealthDashboard>['data']>
+): SystemHealthSummary {
+  const database = dashboard.services.database;
+  const redis = dashboard.services.redis;
+  const celery = dashboard.services.celery;
+
+  return {
+    ...base,
+    overallStatus: normalizeServiceStatus(dashboard.overallStatus),
+    lastUpdated: dashboard.timestamp,
+    uptime: dashboard.uptimeSeconds,
+    version: dashboard.version,
+    environment: dashboard.environment,
+    services: base.services.map((service) => {
+      const serviceMap: Record<string, string> = {
+        api: 'api',
+        db: 'database',
+        redis: 'redis',
+        celery: 'celery',
+      };
+      const backendService = dashboard.services[serviceMap[service.id]];
+      if (!backendService) return service;
+
+      return {
+        ...service,
+        health: {
+          ...service.health,
+          status: normalizeServiceStatus(backendService.status),
+          latencyMs: backendService.responseTimeMs,
+          lastCheck: backendService.lastCheck,
+          message: backendService.message,
+        },
+      };
+    }),
+    database: {
+      ...base.database,
+      status: normalizeServiceStatus(database?.status),
+      connectionPoolSize:
+        Number((database?.details?.connectionPool as Record<string, unknown> | undefined)?.size) ||
+        base.database.connectionPoolSize,
+      activeConnections:
+        Number((database?.details?.connectionPool as Record<string, unknown> | undefined)?.checkedOut) ||
+        base.database.activeConnections,
+      waitingConnections:
+        Number((database?.details?.connectionPool as Record<string, unknown> | undefined)?.overflow) ||
+        base.database.waitingConnections,
+      maxConnections:
+        Number((database?.details?.connectionPool as Record<string, unknown> | undefined)?.poolSize) ||
+        base.database.maxConnections,
+      avgQueryTimeMs: database?.responseTimeMs ?? base.database.avgQueryTimeMs,
+    },
+    cache: {
+      ...base.cache,
+      status: normalizeServiceStatus(redis?.status),
+      connectedClients:
+        Number((redis?.details?.connectedClients as number | undefined) ?? base.cache.connectedClients),
+      usedMemoryBytes:
+        Number((redis?.details?.memoryUsedMb as number | undefined) ?? 0) * 1024 * 1024 ||
+        base.cache.usedMemoryBytes,
+      keyCount:
+        Number((redis?.details?.keysTotal as number | undefined) ?? base.cache.keyCount),
+    },
+    queue: {
+      ...base.queue,
+      status: normalizeServiceStatus(celery?.status),
+      workers: {
+        ...base.queue.workers,
+        active:
+          Number((celery?.details?.workersOnline as number | undefined) ?? base.queue.workers.active),
+        total:
+          Number((celery?.details?.workersOnline as number | undefined) ?? base.queue.workers.total),
+      },
+      scheduledTasks:
+        Number((celery?.details?.scheduledTasks as number | undefined) ?? base.queue.scheduledTasks),
+    },
+    api: {
+      ...base.api,
+      status: normalizeServiceStatus(dashboard.overallStatus),
+      avgResponseTimeMs: dashboard.summary.avgResponseTimeMs ?? base.api.avgResponseTimeMs,
+    },
+    activeAlerts:
+      dashboard.alerts.length > 0
+        ? dashboard.alerts.map((alert) => ({
+            ...alert,
+            severity:
+              alert.severity === 'critical'
+                ? 'critical'
+                : alert.severity === 'error'
+                ? 'error'
+                : alert.severity === 'warning'
+                ? 'warning'
+                : 'info',
+            status: alert.status ?? 'active',
+            triggeredAt: alert.triggeredAt,
+          }))
+        : base.activeAlerts,
+  };
 }
 
 // ============================================================================
@@ -840,17 +949,27 @@ function AlertsPanel({
 // ============================================================================
 
 export default function AdminHealthPage() {
+  const {
+    data: healthDashboard,
+    isFetching: isDashboardFetching,
+    isError: isDashboardError,
+    refetch: refetchHealthDashboard,
+  } = useHealthDashboard({ refetchInterval: 30000 });
+
   const [activeTab, setActiveTab] = useState<HealthDashboardTab>('overview');
   const [health, setHealth] = useState<SystemHealthSummary>(MOCK_HEALTH);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [lastRefresh, setLastRefresh] = useState(new Date(MOCK_HEALTH.lastUpdated));
+  const isRefreshing = isDashboardFetching;
+
+  const hydratedHealth = useMemo(() => {
+    if (!healthDashboard) {
+      return MOCK_HEALTH;
+    }
+    return enrichHealthWithDashboard(MOCK_HEALTH, healthDashboard);
+  }, [healthDashboard]);
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setLastRefresh(new Date());
-    setIsRefreshing(false);
+    await refetchHealthDashboard();
   };
 
   const handleAcknowledgeAlert = (alertId: string) => {
@@ -869,13 +988,11 @@ export default function AdminHealthPage() {
     }));
   };
 
-  // Auto-refresh every 30 seconds
+  // Keep local editable state (alert acknowledgements) in sync with latest dashboard payload.
   useEffect(() => {
-    const interval = setInterval(() => {
-      setLastRefresh(new Date());
-    }, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    setHealth(hydratedHealth);
+    setLastRefresh(new Date(hydratedHealth.lastUpdated));
+  }, [hydratedHealth]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -895,6 +1012,11 @@ export default function AdminHealthPage() {
                 <p className="text-sm text-slate-300">
                   v{health.version} • {health.environment} • Updated {lastRefresh.toLocaleTimeString()}
                 </p>
+                {isDashboardError && (
+                  <p className="text-xs text-yellow-300 mt-1">
+                    Live health API unavailable. Showing fallback values.
+                  </p>
+                )}
               </div>
             </div>
 

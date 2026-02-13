@@ -8,13 +8,16 @@ Provides comprehensive health monitoring endpoints:
 - GET /health/services/{service_name} - Individual service health
 - GET /health/history - Health check history
 - GET /health/metrics - Health check metrics
+- GET /health/dashboard - Consolidated dashboard payload
 """
 
 import asyncio
 from datetime import datetime
 from functools import lru_cache
 import logging
+import os
 from pathlib import Path
+import time
 import tomllib
 from typing import Any
 
@@ -25,6 +28,9 @@ from app.health.aggregator import AggregatedHealthResult, HealthAggregator
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Track process start time for uptime calculation
+_process_start = time.monotonic()
 
 # Global health aggregator instance
 health_aggregator = HealthAggregator(
@@ -419,4 +425,56 @@ async def get_overall_status() -> dict[str, Any]:
         "healthy_count": result.summary["healthy_count"],
         "degraded_count": result.summary["degraded_count"],
         "unhealthy_count": result.summary["unhealthy_count"],
+    }
+
+
+@router.get("/dashboard")
+async def health_dashboard() -> dict[str, Any]:
+    """Consolidated health payload for the admin dashboard."""
+    result = await health_aggregator.check_detailed()
+    metrics = health_aggregator.get_metrics()
+
+    # Build per-service entries
+    services: dict[str, Any] = {}
+    for name, svc in result.services.items():
+        services[name] = {
+            "name": name,
+            "status": svc.status.value if hasattr(svc.status, "value") else svc.status,
+            "response_time_ms": svc.response_time_ms,
+            "last_check": svc.timestamp.isoformat(),
+            "details": svc.details or {},
+        }
+        if svc.warning:
+            services[name]["message"] = svc.warning
+
+    # Build alerts from non-healthy services
+    alerts: list[dict[str, Any]] = []
+    for name, svc in result.services.items():
+        status_val = svc.status.value if hasattr(svc.status, "value") else svc.status
+        if status_val != "healthy":
+            severity = "critical" if status_val == "unhealthy" else "warning"
+            alerts.append(
+                {
+                    "id": f"health-{name}",
+                    "severity": severity,
+                    "status": "active",
+                    "title": f"{name.title()} {status_val}",
+                    "message": svc.warning or f"{name} is {status_val}",
+                    "service": name,
+                    "triggered_at": svc.timestamp.isoformat(),
+                }
+            )
+
+    return {
+        "overall_status": (
+            result.status.value if hasattr(result.status, "value") else result.status
+        ),
+        "timestamp": result.timestamp.isoformat(),
+        "uptime_seconds": int(time.monotonic() - _process_start),
+        "version": _read_backend_version(),
+        "environment": os.getenv("ENVIRONMENT", "development"),
+        "summary": result.summary,
+        "services": services,
+        "metrics": metrics,
+        "alerts": alerts,
     }

@@ -212,13 +212,13 @@ append ""
 append "## Automation Schedule Snapshot"
 append ""
 set +e
-schedule_output="$(scripts/ops/codex_app_schedule_status.sh 2>&1)"
+schedule_output="$(scripts/ops/codex_app_schedule_status.sh --fail-on-collision --max-per-minute 5 2>&1)"
 schedule_rc=$?
 set -e
 if [[ ${schedule_rc} -eq 0 ]]; then
   append "- codex_app_schedule_status: \`ok\`"
 else
-  append "- codex_app_schedule_status: \`fail\` (exit ${schedule_rc})"
+  append "- codex_app_schedule_status: \`fail\` (collision or parse issue, exit ${schedule_rc})"
   overall_rc=1
 fi
 append ""

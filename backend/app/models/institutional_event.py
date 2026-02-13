@@ -49,12 +49,22 @@ class InstitutionalEvent(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, index=True)
     event_type = Column(
-        SAEnum(InstitutionalEventType, name="institutionaleventtype"),
+        SAEnum(
+            InstitutionalEventType,
+            name="institutionaleventtype",
+            native_enum=False,
+            values_callable=lambda enum: [e.value for e in enum],
+        ),
         nullable=False,
         index=True,
     )
     applies_to = Column(
-        SAEnum(InstitutionalEventScope, name="institutionaleventscope"),
+        SAEnum(
+            InstitutionalEventScope,
+            name="institutionaleventscope",
+            native_enum=False,
+            values_callable=lambda enum: [e.value for e in enum],
+        ),
         nullable=False,
         default=InstitutionalEventScope.ALL,
         index=True,
