@@ -2,7 +2,7 @@
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
@@ -79,7 +79,9 @@ class EmailLog(Base):
     retry_count = Column(Integer, default=0, nullable=False)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     # Relationships
     notification = relationship("Notification", back_populates="email_logs")

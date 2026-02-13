@@ -13,7 +13,7 @@ Workflow:
 """
 
 import enum
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from typing import TYPE_CHECKING, Optional
 from uuid import uuid4
 
@@ -81,7 +81,7 @@ class ImportBatch(Base):
     __tablename__ = "import_batches"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     created_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
     # File info

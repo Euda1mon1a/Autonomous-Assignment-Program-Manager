@@ -1,7 +1,7 @@
 """Notification models for database persistence."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import (
     Boolean,
@@ -56,7 +56,7 @@ class Notification(Base):
     read_at = Column(DateTime, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
 
     # Relationships
     email_logs = relationship("EmailLog", back_populates="notification")
@@ -102,8 +102,10 @@ class ScheduledNotificationRecord(Base):
     retry_count = Column(Integer, default=0)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
     __table_args__ = (
         CheckConstraint(
@@ -151,8 +153,10 @@ class NotificationPreferenceRecord(Base):
     email_digest_frequency = Column(String(20), default="daily")  # daily, weekly
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
     __table_args__ = (
         CheckConstraint(

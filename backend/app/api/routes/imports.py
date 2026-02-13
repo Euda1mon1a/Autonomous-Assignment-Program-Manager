@@ -89,8 +89,7 @@ async def parse_xlsx_file(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
-                "error": f"Invalid file extension: .{ext}. Expected .xlsx or .xls",
+                "detail": f"Invalid file extension: .{ext}. Expected .xlsx or .xls",
                 "error_code": "INVALID_EXTENSION",
             },
         )
@@ -103,8 +102,7 @@ async def parse_xlsx_file(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
-                "error": "Failed to read uploaded file",
+                "detail": "Failed to read uploaded file",
                 "error_code": "READ_ERROR",
             },
         )
@@ -113,8 +111,7 @@ async def parse_xlsx_file(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
-                "error": "Invalid file content",
+                "detail": "Invalid file content",
                 "error_code": "INVALID_CONTENT",
             },
         )
@@ -125,8 +122,7 @@ async def parse_xlsx_file(
         raise HTTPException(
             status_code=413,
             detail={
-                "success": False,
-                "error": f"File too large. Maximum size is 10MB, got {len(content) / 1024 / 1024:.1f}MB",
+                "detail": f"File too large. Maximum size is 10MB, got {len(content) / 1024 / 1024:.1f}MB",
                 "error_code": "FILE_TOO_LARGE",
             },
         )
@@ -138,8 +134,7 @@ async def parse_xlsx_file(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
-                "error": str(e),
+                "detail": str(e),
                 "error_code": "SECURITY_VALIDATION_FAILED",
             },
         )
@@ -152,8 +147,7 @@ async def parse_xlsx_file(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
-                "error": f"Failed to parse Excel file: {str(e)}",
+                "detail": f"Failed to parse Excel file: {str(e)}",
                 "error_code": "PARSE_ERROR",
             },
         )
@@ -162,8 +156,7 @@ async def parse_xlsx_file(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
-                "error": f"Invalid Excel file format: {str(e)}",
+                "detail": f"Invalid Excel file format: {str(e)}",
                 "error_code": "INVALID_FORMAT",
             },
         )
@@ -176,8 +169,7 @@ async def parse_xlsx_file(
                 raise HTTPException(
                     status_code=400,
                     detail={
-                        "success": False,
-                        "error": f"Sheet '{sheet_name}' not found. Available: {available}",
+                        "detail": f"Sheet '{sheet_name}' not found. Available: {available}",
                         "error_code": "SHEET_NOT_FOUND",
                     },
                 )
@@ -194,8 +186,7 @@ async def parse_xlsx_file(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
-                "error": f"Failed to access worksheet: {str(e)}",
+                "detail": f"Failed to access worksheet: {str(e)}",
                 "error_code": "WORKSHEET_ERROR",
             },
         )
@@ -223,8 +214,7 @@ async def parse_xlsx_file(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
-                "error": f"Failed to read header row {header_row}: {str(e)}",
+                "detail": f"Failed to read header row {header_row}: {str(e)}",
                 "error_code": "HEADER_READ_ERROR",
             },
         )
@@ -237,8 +227,7 @@ async def parse_xlsx_file(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
-                "error": f"No headers found in row {header_row}",
+                "detail": f"No headers found in row {header_row}",
                 "error_code": "NO_HEADERS",
             },
         )
@@ -320,8 +309,7 @@ async def parse_xlsx_file(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
-                "error": f"Failed to parse data rows: {str(e)}",
+                "detail": f"Failed to parse data rows: {str(e)}",
                 "error_code": "DATA_PARSE_ERROR",
             },
         )
@@ -365,8 +353,7 @@ async def list_xlsx_sheets(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
-                "error": f"Invalid file extension: .{ext}",
+                "detail": f"Invalid file extension: .{ext}",
                 "error_code": "INVALID_EXTENSION",
             },
         )
@@ -388,8 +375,7 @@ async def list_xlsx_sheets(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
-                "error": f"Failed to read Excel file: {str(e)}",
+                "detail": f"Failed to read Excel file: {str(e)}",
                 "error_code": "READ_ERROR",
             },
         )
@@ -398,8 +384,7 @@ async def list_xlsx_sheets(
         raise HTTPException(
             status_code=400,
             detail={
-                "success": False,
-                "error": f"Invalid Excel file format: {str(e)}",
+                "detail": f"Invalid Excel file format: {str(e)}",
                 "error_code": "INVALID_FORMAT",
             },
         )

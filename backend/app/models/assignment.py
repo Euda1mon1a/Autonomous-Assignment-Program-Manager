@@ -1,7 +1,7 @@
 """Assignment model - the actual schedule."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import (
     CheckConstraint,
@@ -85,8 +85,10 @@ class Assignment(Base):
 
     # Audit
     created_by = Column(String(255))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
     # Provenance - link to the schedule run that created this assignment
     schedule_run_id = Column(

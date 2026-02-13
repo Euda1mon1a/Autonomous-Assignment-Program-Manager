@@ -1,7 +1,7 @@
 """Application settings model for database persistence."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from enum import Enum
 
 from sqlalchemy import Boolean, CheckConstraint, Column, Date, DateTime, Integer, String
@@ -87,8 +87,10 @@ class ApplicationSettings(Base):
     schema_timestamp = Column(DateTime, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
     __table_args__ = (
         CheckConstraint(

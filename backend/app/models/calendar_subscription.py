@@ -1,7 +1,7 @@
 """Calendar subscription model for webcal feeds."""
 
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone, UTC
 from uuid import UUID
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text
@@ -43,7 +43,7 @@ class CalendarSubscription(Base):
     label = Column(String(255), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     last_accessed_at = Column(DateTime, nullable=True)
     expires_at = Column(DateTime, nullable=True)
 
@@ -88,7 +88,7 @@ class CalendarSubscription(Base):
         """
         expires_at = None
         if expires_days:
-            expires_at = datetime.utcnow() + timedelta(days=expires_days)
+            expires_at = datetime.now(UTC) + timedelta(days=expires_days)
 
         return cls(
             token=cls.generate_token(),
@@ -102,18 +102,18 @@ class CalendarSubscription(Base):
         """Check if the subscription is valid (active and not expired)."""
         if not self.is_active:
             return False
-        if self.expires_at and datetime.utcnow() > self.expires_at:
+        if self.expires_at and datetime.now(UTC) > self.expires_at:
             return False
         return True
 
     def revoke(self) -> None:
         """Revoke the subscription."""
         self.is_active = False
-        self.revoked_at = datetime.utcnow()
+        self.revoked_at = datetime.now(UTC)
 
     def touch(self) -> None:
         """Update last accessed timestamp."""
-        self.last_accessed_at = datetime.utcnow()
+        self.last_accessed_at = datetime.now(UTC)
 
     def __repr__(self) -> str:
         return f"<CalendarSubscription(token={self.token[:8]}..., person_id={self.person_id})>"

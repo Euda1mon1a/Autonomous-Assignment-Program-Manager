@@ -1,6 +1,6 @@
 """Models for conflict alert tracking."""
 
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from enum import Enum
 from uuid import uuid4
 
@@ -99,7 +99,7 @@ class ConflictAlert(Base):
     resolution_notes = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     acknowledged_at = Column(DateTime, nullable=True)
     acknowledged_by_id = Column(
         PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
@@ -116,13 +116,13 @@ class ConflictAlert(Base):
     def acknowledge(self, user_id: PGUUID) -> None:
         """Mark alert as acknowledged."""
         self.status = ConflictAlertStatus.ACKNOWLEDGED
-        self.acknowledged_at = datetime.utcnow()
+        self.acknowledged_at = datetime.now(UTC)
         self.acknowledged_by_id = user_id
 
     def resolve(self, user_id: PGUUID, notes: str = None) -> None:
         """Mark alert as resolved."""
         self.status = ConflictAlertStatus.RESOLVED
-        self.resolved_at = datetime.utcnow()
+        self.resolved_at = datetime.now(UTC)
         self.resolved_by_id = user_id
         if notes:
             self.resolution_notes = notes
@@ -130,7 +130,7 @@ class ConflictAlert(Base):
     def ignore(self, user_id: PGUUID, reason: str) -> None:
         """Mark alert as ignored (false positive)."""
         self.status = ConflictAlertStatus.IGNORED
-        self.resolved_at = datetime.utcnow()
+        self.resolved_at = datetime.now(UTC)
         self.resolved_by_id = user_id
         self.resolution_notes = f"Ignored: {reason}"
 

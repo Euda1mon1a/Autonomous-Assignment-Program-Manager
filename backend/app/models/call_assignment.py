@@ -1,7 +1,7 @@
 """Call assignment model - overnight and weekend call."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import (
     Boolean,
@@ -42,7 +42,7 @@ class CallAssignment(Base):
     is_weekend = Column(Boolean, default=False)
     is_holiday = Column(Boolean, default=False)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     person = relationship("Person", back_populates="call_assignments")

@@ -12,7 +12,7 @@ Use cases:
 """
 
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone, UTC
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import (
@@ -137,7 +137,7 @@ class FacultyWeeklyOverride(Base):
     )
 
     # Timestamp
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     # Relationships
     person: Mapped["Person"] = relationship(

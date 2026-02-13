@@ -8,7 +8,7 @@ can click cells to assign activities like FM Clinic, Specialty, etc.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import (
     Boolean,
@@ -131,11 +131,11 @@ class WeeklyPattern(Base):
     notes = Column(String(200), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 

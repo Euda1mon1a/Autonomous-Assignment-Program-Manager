@@ -1,7 +1,7 @@
 """User model for authentication."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, String
 
@@ -34,8 +34,10 @@ class User(Base):
     is_active = Column(Boolean, default=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
     last_login = Column(DateTime, nullable=True)
 
     __table_args__ = (

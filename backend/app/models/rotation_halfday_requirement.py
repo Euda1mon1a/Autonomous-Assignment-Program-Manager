@@ -1,7 +1,7 @@
 """Rotation half-day requirement model - defines half-day composition per rotation."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import (
     Boolean,
@@ -75,8 +75,10 @@ class RotationHalfDayRequirement(Base):
     )  # FM + specialty same day
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
     # Relationships
     rotation_template = relationship(

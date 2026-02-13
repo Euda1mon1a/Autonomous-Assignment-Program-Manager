@@ -12,7 +12,7 @@ empirically testing scheduling and resilience configurations.
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import (
     Boolean,
@@ -76,7 +76,7 @@ class ConfigStrategy(Base):
     name = Column(String(100), nullable=False)
     description = Column(Text)
     strategy_type = Column(String(30), nullable=False)  # StrategyType enum
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     created_by = Column(String(100))
 
     # Configuration parameters (maps to resilience config)
@@ -122,7 +122,7 @@ class GameTheoryTournament(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(200), nullable=False)
     description = Column(Text)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     created_by = Column(String(100))
 
     # Tournament configuration
@@ -179,7 +179,7 @@ class EvolutionSimulation(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(200), nullable=False)
     description = Column(Text)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     created_by = Column(String(100))
 
     # Evolution configuration
@@ -302,7 +302,7 @@ class ValidationResult(Base):
         GUID(), ForeignKey("game_theory_strategies.id"), nullable=False
     )
     strategy_name = Column(String(100))
-    validated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    validated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     # Validation configuration
     turns = Column(Integer, default=100)

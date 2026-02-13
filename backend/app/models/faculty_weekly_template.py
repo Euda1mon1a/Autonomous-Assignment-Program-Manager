@@ -11,7 +11,7 @@ Week-specific exceptions use FacultyWeeklyOverride instead.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import (
@@ -133,11 +133,11 @@ class FacultyWeeklyTemplate(Base):
     notes = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 

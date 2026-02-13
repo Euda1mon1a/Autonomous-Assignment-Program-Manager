@@ -1,7 +1,7 @@
 """Gateway authentication models for API keys, OAuth2 clients, and IP filtering."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import (
     Boolean,
@@ -116,9 +116,12 @@ class APIKey(Base):
     total_requests = Column(Integer, default=0, nullable=False)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     __table_args__ = (
@@ -134,7 +137,7 @@ class APIKey(Base):
         """Check if the API key has expired."""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     @property
     def is_valid(self) -> bool:
@@ -221,9 +224,12 @@ class OAuth2Client(Base):
     total_tokens_issued = Column(Integer, default=0, nullable=False)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     __table_args__ = (
@@ -287,9 +293,12 @@ class IPWhitelist(Base):
     expires_at = Column(DateTime, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     __table_args__ = (
@@ -305,7 +314,7 @@ class IPWhitelist(Base):
         """Check if the whitelist entry has expired."""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     @property
     def is_valid(self) -> bool:
@@ -361,9 +370,12 @@ class IPBlacklist(Base):
     )
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
     last_hit_at = Column(
         DateTime, nullable=True, comment="Last time this IP attempted access"
@@ -382,7 +394,7 @@ class IPBlacklist(Base):
         """Check if the blacklist entry has expired."""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     @property
     def is_valid(self) -> bool:
@@ -435,7 +447,7 @@ class RequestSignature(Base):
     user_agent = Column(String(500), nullable=True)
 
     # Timestamp
-    verified_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    verified_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     __table_args__ = (
         Index("idx_request_signature_timestamp", "request_timestamp", "verified_at"),

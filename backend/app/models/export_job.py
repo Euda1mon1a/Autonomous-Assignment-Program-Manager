@@ -1,7 +1,7 @@
 """Export job models for scheduled data exports."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from enum import Enum
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
@@ -115,9 +115,12 @@ class ExportJob(Base):
     enabled = Column(Boolean, default=True, index=True)
 
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
     created_by = Column(String(255), nullable=True)
 

@@ -1,7 +1,7 @@
 """OAuth2 authorization code model for PKCE flow."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import Column, DateTime, Index, String, Text
 
@@ -53,7 +53,9 @@ class OAuth2AuthorizationCode(Base):
     is_used = Column(String(10), default="false", nullable=False)
 
     # When this code was created
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
+    )
 
     # When this code expires (typically 10 minutes)
     expires_at = Column(DateTime, nullable=False, index=True)
@@ -76,12 +78,12 @@ class OAuth2AuthorizationCode(Base):
         Returns:
             True if expired, False otherwise
         """
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     def mark_as_used(self) -> None:
         """Mark this authorization code as used."""
         self.is_used = "true"
-        self.used_at = datetime.utcnow()
+        self.used_at = datetime.now(UTC)
 
     @classmethod
     def cleanup_expired(cls, db) -> int:
@@ -96,7 +98,7 @@ class OAuth2AuthorizationCode(Base):
         Returns:
             Number of codes removed
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         count = db.query(cls).filter(cls.expires_at < now).delete()
         db.commit()
         return count

@@ -21,7 +21,7 @@ accountability and post-incident review.
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
@@ -74,7 +74,9 @@ class ResilienceHealthCheck(Base):
     __tablename__ = "resilience_health_checks"
 
     id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    timestamp: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    timestamp: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Overall status
     overall_status: Column = Column(String(20), nullable=False)
@@ -138,7 +140,9 @@ class ResilienceEvent(Base):
     __tablename__ = "resilience_events"
 
     id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    timestamp: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    timestamp: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
     event_type: Column = Column(String(50), nullable=False)
 
     # Event context
@@ -187,7 +191,9 @@ class SacrificeDecision(Base):
     __tablename__ = "sacrifice_decisions"
 
     id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    timestamp: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    timestamp: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Decision details
     from_level: Column = Column(
@@ -251,7 +257,9 @@ class FallbackActivation(Base):
     __tablename__ = "fallback_activations"
 
     id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    activated_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    activated_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Fallback details
     scenario: Column = Column(
@@ -310,7 +318,9 @@ class VulnerabilityRecord(Base):
     __tablename__ = "vulnerability_records"
 
     id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    analyzed_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    analyzed_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Analysis scope
     period_start: Column = Column(DateTime)
@@ -406,7 +416,9 @@ class FeedbackLoopState(Base):
     id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
     loop_name: Column = Column(String(100), nullable=False)
     setpoint_name: Column = Column(String(100), nullable=False)
-    timestamp: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    timestamp: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Setpoint configuration
     target_value: Column = Column(Float, nullable=False)
@@ -447,7 +459,9 @@ class AllostasisRecord(Base):
     id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
     entity_id: Column = Column(GUID(), nullable=False)  # Faculty ID or system UUID
     entity_type: Column = Column(String(20), nullable=False)  # "faculty" or "system"
-    calculated_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    calculated_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Stress factors
     consecutive_weekend_calls: Column = Column(Integer, default=0)
@@ -484,7 +498,9 @@ class PositiveFeedbackAlert(Base):
     id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name: Column = Column(String(100), nullable=False)
     description: Column = Column(String(500))
-    detected_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    detected_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Loop pattern
     trigger: Column = Column(String(200))
@@ -525,7 +541,9 @@ class SchedulingZoneRecord(Base):
         String(50), nullable=False
     )  # inpatient, outpatient, education, etc.
     description: Column = Column(String(500))
-    created_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Services
     services: Column = Column(StringArrayType())
@@ -574,7 +592,9 @@ class ZoneFacultyAssignmentRecord(Base):
     faculty_id: Column = Column(GUID(), nullable=False)
     faculty_name: Column = Column(String(200))
     role: Column = Column(String(20), nullable=False)  # primary, secondary, backup
-    assigned_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    assigned_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
     is_available: Column = Column(Boolean, default=True)
     removed_at: Column = Column(DateTime)
 
@@ -605,7 +625,9 @@ class ZoneBorrowingRecord(Base):
     priority: Column = Column(String(20), nullable=False)  # critical, high, medium, low
     reason: Column = Column(String(500))
     duration_hours: Column = Column(Integer)
-    requested_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    requested_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Approval
     status: Column = Column(
@@ -645,7 +667,9 @@ class ZoneIncidentRecord(Base):
         String(50), nullable=False
     )  # faculty_loss, demand_surge, etc.
     description: Column = Column(String(500))
-    started_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
     severity: Column = Column(
         String(20), nullable=False
     )  # minor, moderate, severe, critical
@@ -677,7 +701,9 @@ class EquilibriumShiftRecord(Base):
     __tablename__ = "equilibrium_shifts"
 
     id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    calculated_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    calculated_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Original state
     original_capacity: Column = Column(Float, nullable=False)
@@ -724,7 +750,9 @@ class SystemStressRecord(Base):
     id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
     stress_type: Column = Column(String(50), nullable=False)
     description: Column = Column(String(500))
-    applied_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    applied_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Quantification
     magnitude: Column = Column(Float, nullable=False)
@@ -760,7 +788,9 @@ class CompensationRecord(Base):
     )
     compensation_type: Column = Column(String(50), nullable=False)
     description: Column = Column(String(500))
-    initiated_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    initiated_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Quantification
     compensation_magnitude: Column = Column(Float, nullable=False)
@@ -872,7 +902,9 @@ class CognitiveSessionRecord(Base):
 
     id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
     user_id: Column = Column(GUID(), nullable=False)
-    started_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
     ended_at: Column = Column(DateTime)
 
     # Configuration
@@ -886,7 +918,9 @@ class CognitiveSessionRecord(Base):
     # Final state when session ended
     final_state: Column = Column(String(50))  # CognitiveState enum value
 
-    created_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     def __repr__(self) -> str:
         return f"<CognitiveSessionRecord(user={self.user_id}, decisions={self.decisions_count})>"
@@ -930,7 +964,9 @@ class CognitiveDecisionRecord(Base):
     context: Column = Column(JSONType())
 
     # Timing
-    created_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Resolution
     outcome: Column = Column(String(50))  # DecisionOutcome enum
@@ -981,7 +1017,9 @@ class PreferenceTrailRecord(Base):
     reinforcement_count: Column = Column(Integer, nullable=False, default=0)
 
     # Timestamps
-    created_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
     last_reinforced: Column = Column(DateTime)
     last_evaporated: Column = Column(DateTime)
 
@@ -1008,7 +1046,9 @@ class TrailSignalRecord(Base):
     strength_change: Column = Column(Float, nullable=False)
 
     # Timestamp
-    recorded_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    recorded_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Relationship
     trail = relationship("PreferenceTrailRecord", backref="signals")
@@ -1030,7 +1070,9 @@ class FacultyCentralityRecord(Base):
     id: Column = Column(GUID(), primary_key=True, default=uuid.uuid4)
     faculty_id: Column = Column(GUID(), nullable=False)
     faculty_name: Column = Column(String(255), nullable=False)
-    calculated_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    calculated_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
 
     # Centrality scores (0.0 - 1.0 normalized)
     degree_centrality: Column = Column(Float, nullable=False, default=0.0)
@@ -1086,7 +1128,9 @@ class HubProtectionPlanRecord(Base):
     status: Column = Column(
         String(50), nullable=False, default="planned"
     )  # planned, active, completed
-    created_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
     activated_at: Column = Column(DateTime)
     deactivated_at: Column = Column(DateTime)
     created_by: Column = Column(String(255))
@@ -1129,7 +1173,9 @@ class CrossTrainingRecommendationRecord(Base):
     status: Column = Column(
         String(50), nullable=False, default="pending"
     )  # pending, approved, in_progress, completed
-    created_at: Column = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Column = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(UTC)
+    )
     started_at: Column = Column(DateTime)
     completed_at: Column = Column(DateTime)
     approved_by: Column = Column(String(255))

@@ -1,6 +1,6 @@
 """Models for FMIT swap tracking."""
 
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from enum import Enum
 from uuid import uuid4
 
@@ -67,7 +67,7 @@ class SwapRecord(Base):
         default=SwapStatus.PENDING,
         nullable=False,
     )
-    requested_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    requested_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     requested_by_id = Column(
         PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )

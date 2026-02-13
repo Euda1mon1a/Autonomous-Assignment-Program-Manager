@@ -14,7 +14,7 @@ includes PCAT/DO (post-call admin time) auto-generation.
 """
 
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone, UTC
 from enum import Enum
 
 from sqlalchemy import (
@@ -98,7 +98,7 @@ class ResidentCallPreload(Base):
     )
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     # Relationships
     person = relationship("Person", back_populates="resident_call_preloads")

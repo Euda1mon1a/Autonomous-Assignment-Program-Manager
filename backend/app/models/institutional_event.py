@@ -1,7 +1,7 @@
 """Institutional events that block or annotate the schedule."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from enum import Enum
 
 from sqlalchemy import (
@@ -72,11 +72,11 @@ class InstitutionalEvent(Base):
     is_active = Column(Boolean, default=True, nullable=False, index=True)
     notes = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 

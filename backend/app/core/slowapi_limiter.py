@@ -106,9 +106,7 @@ def rate_limit_exceeded_handler(request: Request, exc: Exception) -> Response:
         return JSONResponse(
             status_code=503,
             content={
-                "error": "Rate Limiter Unavailable",
-                "message": "Request throttling service is temporarily unavailable.",
-                "detail": str(exc),
+                "detail": "Request throttling service is temporarily unavailable.",
             },
         )
 
@@ -125,9 +123,7 @@ def rate_limit_exceeded_handler(request: Request, exc: Exception) -> Response:
     response = JSONResponse(
         status_code=429,
         content={
-            "error": "Too Many Requests",
-            "message": f"Rate limit exceeded. Please retry after {retry_after} seconds.",
-            "detail": detail,
+            "detail": f"Rate limit exceeded: {detail}. Please retry after {retry_after} seconds.",
             "retry_after": retry_after,
         },
     )

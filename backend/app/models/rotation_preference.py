@@ -11,7 +11,7 @@ Preferences allow coordinators to express scheduling desires like:
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from typing import Any
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
@@ -96,11 +96,11 @@ class RotationPreference(Base):
     description = Column(String(200), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 

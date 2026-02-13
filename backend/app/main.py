@@ -497,7 +497,7 @@ async def resilience_health():
     except Exception as e:
         return {
             "status": "degraded",
-            "error": str(e),
+            "detail": str(e),
         }
 
 
@@ -529,5 +529,5 @@ async def cache_health():
     except Exception as e:
         return {
             "status": "error",
-            "error": str(e),
+            "detail": str(e),
         }

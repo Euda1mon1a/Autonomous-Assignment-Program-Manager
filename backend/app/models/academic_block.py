@@ -10,7 +10,7 @@ Academic Year Structure:
 """
 
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone, UTC
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -68,7 +68,7 @@ class AcademicBlock(Base):
     is_variable_length = Column(Boolean, default=False, nullable=False)
 
     # Audit
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     # Relationships
     assignments = relationship(

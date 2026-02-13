@@ -1,7 +1,7 @@
 """OAuth2 PKCE client model for public client registration."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import Boolean, Column, DateTime, Index, String, Text
 
@@ -52,8 +52,10 @@ class PKCEClient(Base):
     is_active = Column(Boolean, default=True, nullable=False)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
     __table_args__ = (Index("idx_oauth2_client_id_active", "client_id", "is_active"),)
 

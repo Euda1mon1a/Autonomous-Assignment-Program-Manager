@@ -12,7 +12,7 @@ system that supports:
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 from enum import Enum
 from typing import Optional
 
@@ -118,13 +118,16 @@ class WorkflowTemplate(Base):
     # Metadata
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, nullable=False
+        DateTime, default=lambda: datetime.now(UTC), nullable=False
     )
     created_by_id: Mapped[uuid.UUID | None] = mapped_column(
         GUID(), ForeignKey("users.id"), nullable=True
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     # Tags for categorization
@@ -214,7 +217,7 @@ class WorkflowInstance(Base):
     timeout_at = Column(DateTime, nullable=True)  # When workflow should timeout
 
     # Ownership and audit
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     created_by_id = Column(GUID(), ForeignKey("users.id"), nullable=True)
     cancelled_at = Column(DateTime, nullable=True)
     cancelled_by_id = Column(GUID(), ForeignKey("users.id"), nullable=True)

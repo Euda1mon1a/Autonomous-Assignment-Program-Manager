@@ -1,7 +1,7 @@
 """Rotation template model - reusable rotation patterns."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
@@ -99,7 +99,7 @@ class RotationTemplate(Base):
     )
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     # Relationships
     assignments = relationship("Assignment", back_populates="rotation_template")

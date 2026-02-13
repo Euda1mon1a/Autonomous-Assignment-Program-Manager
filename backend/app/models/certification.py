@@ -1,7 +1,7 @@
 """Certification models - track required certifications like BLS, ACLS, PALS, etc."""
 
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone, UTC
 
 from sqlalchemy import (
     Boolean,
@@ -66,8 +66,10 @@ class CertificationType(Base):
     is_active = Column(Boolean, default=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
     # Relationships
     person_certifications = relationship(
@@ -150,8 +152,10 @@ class PersonCertification(Base):
     notes = Column(Text)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(
+        DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
+    )
 
     # Relationships
     person = relationship("Person", back_populates="certifications")
@@ -204,4 +208,4 @@ class PersonCertification(Base):
         """Mark a reminder as sent."""
         reminder_field = f"reminder_{days}_sent"
         if hasattr(self, reminder_field):
-            setattr(self, reminder_field, datetime.utcnow())
+            setattr(self, reminder_field, datetime.now(UTC))

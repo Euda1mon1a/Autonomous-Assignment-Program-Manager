@@ -1,7 +1,7 @@
 """Resident weekly requirement model - defines agnostic per-week half-day scheduling requirements."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, UTC
 
 from sqlalchemy import (
     Boolean,
@@ -95,9 +95,12 @@ class ResidentWeeklyRequirement(Base):
     description = Column(String(1024), nullable=True)  # Optional notes
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
     )
 
     # Relationships
