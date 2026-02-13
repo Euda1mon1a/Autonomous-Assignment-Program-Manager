@@ -163,7 +163,7 @@ class TestAdjunctGapDetection:
 
         # Get adjunct gaps
         with patch(
-            "app.services.faculty_assignment_expansion_service.get_block_dates"
+            "app.utils.academic_blocks.get_block_dates"
         ) as mock_dates:
             mock_dates.return_value = MagicMock(
                 start_date=date(2025, 3, 13), end_date=date(2025, 4, 9)

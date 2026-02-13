@@ -10,7 +10,12 @@ Provides comprehensive health monitoring endpoints:
 - GET /health/metrics - Health check metrics
 """
 
+import asyncio
+from datetime import datetime
+from functools import lru_cache
 import logging
+from pathlib import Path
+import tomllib
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
@@ -25,6 +30,41 @@ router = APIRouter()
 health_aggregator = HealthAggregator(
     enable_history=True, history_size=100, timeout=10.0
 )
+
+
+@lru_cache(maxsize=1)
+def _read_backend_version() -> str:
+    """Read backend version from backend/pyproject.toml."""
+    pyproject_path = Path(__file__).resolve().parents[3] / "pyproject.toml"
+    try:
+        with pyproject_path.open("rb") as pyproject_file:
+            pyproject = tomllib.load(pyproject_file)
+        return str(pyproject.get("project", {}).get("version", "unknown"))
+    except Exception as exc:
+        logger.warning(
+            "Unable to load backend version from %s: %s",
+            pyproject_path,
+            exc,
+        )
+        return "unknown"
+
+
+def _normalize_connectivity_result(result: Any) -> tuple[bool, dict[str, Any]]:
+    """Normalize health check result into connectivity flag + payload."""
+    if isinstance(result, Exception):
+        return False, {"status": "unhealthy", "error": str(result)}
+
+    status = str(getattr(result.status, "value", result.status))
+    connected = status in {"healthy", "degraded"}
+
+    return connected, {
+        "status": status,
+        "response_time_ms": result.response_time_ms,
+        "timestamp": result.timestamp.isoformat(),
+        "error": result.error,
+        "warning": result.warning,
+        "details": result.details,
+    }
 
 
 @router.get("/")
@@ -135,6 +175,45 @@ async def detailed_health() -> AggregatedHealthResult:
         - 200: Health check completed (status may still indicate issues)
     """
     return await health_aggregator.check_detailed()
+
+
+@router.get("/deep")
+async def deep_health() -> dict[str, Any]:
+    """
+    Deep health check for critical infrastructure dependencies.
+
+    Performs direct checks for database and Redis connectivity, and includes
+    backend version metadata loaded from pyproject.toml.
+    """
+    database_result, redis_result = await asyncio.gather(
+        health_aggregator.check_service("database"),
+        health_aggregator.check_service("redis"),
+        return_exceptions=True,
+    )
+
+    database_connected, database_payload = _normalize_connectivity_result(
+        database_result
+    )
+    redis_connected, redis_payload = _normalize_connectivity_result(redis_result)
+
+    all_connected = database_connected and redis_connected
+
+    return {
+        "status": "healthy" if all_connected else "unhealthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "service": "residency-scheduler",
+        "version": _read_backend_version(),
+        "checks": {
+            "database": {
+                "connected": database_connected,
+                **database_payload,
+            },
+            "redis": {
+                "connected": redis_connected,
+                **redis_payload,
+            },
+        },
+    }
 
 
 @router.get("/services/{service_name}")
@@ -250,8 +329,6 @@ async def clear_health_history() -> dict[str, Any]:
     Status Codes:
         - 200: History cleared successfully
     """
-    from datetime import datetime
-
     health_aggregator.clear_history()
 
     return {

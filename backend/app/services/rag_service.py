@@ -11,6 +11,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import delete, func, select, text
+from sqlalchemy.exc import DBAPIError, InterfaceError, OperationalError
 from sqlalchemy.orm import Session
 
 from app.models.rag_document import RAGDocument
@@ -46,6 +47,30 @@ class RAGService:
     DEFAULT_TOP_K = 5
     DEFAULT_MIN_SIMILARITY = 0.5
     APPROX_CHARS_PER_TOKEN = 4  # Rough approximation for English text
+    MAX_TRANSIENT_DB_RETRIES = 3
+    INITIAL_RETRY_DELAY_SECONDS = 0.25
+    MAX_RETRY_DELAY_SECONDS = 2.0
+    TRANSIENT_PG_ERROR_CODES = {
+        "08000",  # connection_exception
+        "08001",  # sqlclient_unable_to_establish_sqlconnection
+        "08003",  # connection_does_not_exist
+        "08004",  # sqlserver_rejected_establishment_of_sqlconnection
+        "08006",  # connection_failure
+        "57P01",  # admin_shutdown
+        "57P02",  # crash_shutdown
+        "57P03",  # cannot_connect_now
+    }
+    TRANSIENT_DB_ERROR_PATTERNS = (
+        "connection refused",
+        "connection reset",
+        "connection not open",
+        "could not connect",
+        "server closed the connection unexpectedly",
+        "terminating connection",
+        "timeout",
+        "temporarily unavailable",
+        "database is locked",
+    )
 
     def __init__(self, db: Session) -> None:
         """Initialize RAG service.
@@ -97,34 +122,6 @@ class RAGService:
             # Generate embeddings for all chunks (batch for efficiency)
             embeddings = self.embedding_service.embed_batch(chunks)
 
-            # Create RAGDocument records
-            chunk_ids = []
-            for chunk_text, embedding in zip(chunks, embeddings):
-                rag_doc = RAGDocument(
-                    content=chunk_text,
-                    embedding=embedding,
-                    doc_type=doc_type,
-                    metadata_=metadata,
-                )
-                self.db.add(rag_doc)
-                self.db.flush()  # Get ID without committing
-                chunk_ids.append(rag_doc.id)
-
-            # Commit all chunks
-            self.db.commit()
-
-            logger.info(
-                f"Successfully ingested {len(chunk_ids)} chunks for doc_type={doc_type}"
-            )
-
-            return IngestResponse(
-                status="success",
-                chunks_created=len(chunk_ids),
-                chunk_ids=chunk_ids,
-                doc_type=doc_type,
-                message=f"Successfully ingested {len(chunk_ids)} chunks",
-            )
-
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error ingesting document: {str(e)}", exc_info=True)
@@ -135,6 +132,66 @@ class RAGService:
                 doc_type=doc_type,
                 message=f"Error: {str(e)}",
             )
+
+        retry_count = 0
+        while True:
+            try:
+                # Create RAGDocument records
+                chunk_ids = []
+                for chunk_text, embedding in zip(chunks, embeddings):
+                    rag_doc = RAGDocument(
+                        content=chunk_text,
+                        embedding=embedding,
+                        doc_type=doc_type,
+                        metadata_=metadata,
+                    )
+                    self.db.add(rag_doc)
+                    self.db.flush()  # Get ID without committing
+                    chunk_ids.append(rag_doc.id)
+
+                # Commit all chunks
+                self.db.commit()
+
+                logger.info(
+                    f"Successfully ingested {len(chunk_ids)} chunks for doc_type={doc_type}"
+                )
+
+                return IngestResponse(
+                    status="success",
+                    chunks_created=len(chunk_ids),
+                    chunk_ids=chunk_ids,
+                    doc_type=doc_type,
+                    message=f"Successfully ingested {len(chunk_ids)} chunks",
+                )
+            except Exception as e:
+                self.db.rollback()
+
+                if (
+                    retry_count < self.MAX_TRANSIENT_DB_RETRIES
+                    and self._is_transient_db_error(e)
+                ):
+                    delay_seconds = self._retry_delay_seconds(retry_count)
+                    logger.warning(
+                        "Transient DB error during RAG ingest for doc_type=%s "
+                        "(attempt %s/%s): %s. Retrying in %.2fs",
+                        doc_type,
+                        retry_count + 1,
+                        self.MAX_TRANSIENT_DB_RETRIES,
+                        str(e),
+                        delay_seconds,
+                    )
+                    time.sleep(delay_seconds)
+                    retry_count += 1
+                    continue
+
+                logger.error(f"Error ingesting document: {str(e)}", exc_info=True)
+                return IngestResponse(
+                    status="error",
+                    chunks_created=0,
+                    chunk_ids=[],
+                    doc_type=doc_type,
+                    message=f"Error: {str(e)}",
+                )
 
     async def retrieve(
         self,
@@ -404,6 +461,37 @@ class RAGService:
                 vector_index_status="unknown",
                 recommendations=[f"Error checking health: {str(e)}"],
             )
+
+    def _is_transient_db_error(self, error: Exception) -> bool:
+        """Return True when an error likely represents a temporary DB connection issue."""
+        if isinstance(error, InterfaceError):
+            return True
+
+        if isinstance(error, OperationalError):
+            if getattr(error, "connection_invalidated", False):
+                return True
+
+            original_error = getattr(error, "orig", None)
+            pg_code = getattr(original_error, "pgcode", None)
+            if pg_code in self.TRANSIENT_PG_ERROR_CODES:
+                return True
+
+            message = str(original_error or error).lower()
+            return any(
+                pattern in message for pattern in self.TRANSIENT_DB_ERROR_PATTERNS
+            )
+
+        if isinstance(error, DBAPIError):
+            return bool(getattr(error, "connection_invalidated", False))
+
+        return False
+
+    def _retry_delay_seconds(self, retry_count: int) -> float:
+        """Exponential backoff delay for DB retries."""
+        return min(
+            self.INITIAL_RETRY_DELAY_SECONDS * (2**retry_count),
+            self.MAX_RETRY_DELAY_SECONDS,
+        )
 
     def _chunk_text(
         self,

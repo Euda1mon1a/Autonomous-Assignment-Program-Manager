@@ -6,7 +6,8 @@ SQLite tests will focus on chunking, ingestion flow, and business logic.
 
 import pytest
 from uuid import uuid4
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+from sqlalchemy.exc import OperationalError
 
 from app.services.rag_service import RAGService
 from app.models.rag_document import RAGDocument
@@ -138,6 +139,81 @@ class TestRAGServiceIngestion:
                 chunk_size=100,
                 chunk_overlap=150,  # Greater than chunk_size
             )
+
+
+class TestRAGServiceIngestionRetries:
+    """Test ingestion retry behavior for transient DB failures."""
+
+    async def test_ingest_document_retries_transient_db_errors(self, db):
+        """Transient OperationalError should retry with exponential backoff."""
+        service = RAGService(db)
+
+        transient_error = OperationalError(
+            "INSERT INTO rag_documents ...",
+            {},
+            Exception("connection refused"),
+        )
+
+        with (
+            patch.object(
+                service, "_chunk_text", return_value=["Chunk one", "Chunk two"]
+            ),
+            patch.object(
+                service.embedding_service,
+                "embed_batch",
+                return_value=[[0.1], [0.2]],
+            ),
+            patch.object(
+                db, "add", side_effect=lambda model: setattr(model, "id", uuid4())
+            ),
+            patch.object(db, "flush", side_effect=[transient_error, None, None]),
+            patch.object(db, "rollback") as mock_rollback,
+            patch.object(db, "commit") as mock_commit,
+            patch("app.services.rag_service.time.sleep") as mock_sleep,
+        ):
+            response = await service.ingest_document(
+                content="Any non-empty content",
+                doc_type="test_doc",
+                chunk_size=10,
+                chunk_overlap=0,
+            )
+
+        assert response.status == "success"
+        assert response.chunks_created == 2
+        assert mock_rollback.call_count == 1
+        mock_commit.assert_called_once()
+        mock_sleep.assert_called_once_with(service.INITIAL_RETRY_DELAY_SECONDS)
+
+    async def test_ingest_document_does_not_retry_non_transient_errors(self, db):
+        """Non-transient errors should fail fast without sleep/backoff."""
+        service = RAGService(db)
+
+        with (
+            patch.object(service, "_chunk_text", return_value=["Chunk one"]),
+            patch.object(
+                service.embedding_service, "embed_batch", return_value=[[0.1]]
+            ),
+            patch.object(
+                db, "add", side_effect=lambda model: setattr(model, "id", uuid4())
+            ),
+            patch.object(db, "flush", side_effect=RuntimeError("invalid vector size")),
+            patch.object(db, "rollback") as mock_rollback,
+            patch.object(db, "commit") as mock_commit,
+            patch("app.services.rag_service.time.sleep") as mock_sleep,
+        ):
+            response = await service.ingest_document(
+                content="Any non-empty content",
+                doc_type="test_doc",
+                chunk_size=10,
+                chunk_overlap=0,
+            )
+
+        assert response.status == "error"
+        assert response.chunks_created == 0
+        assert "invalid vector size" in response.message
+        assert mock_rollback.call_count == 1
+        mock_commit.assert_not_called()
+        mock_sleep.assert_not_called()
 
 
 class TestRAGServiceRetrieval:

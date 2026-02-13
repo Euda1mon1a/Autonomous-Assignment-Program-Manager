@@ -9,7 +9,7 @@
 - [x] Audit all API routes for consistent error response format — ensure every route returns {"detail": "..."} on 4xx/5xx, not raw strings or HTML (claude/2026-02-10)
 - [x] Add request validation tests for routes that accept complex JSON bodies (block_scheduler, half_day_assignments, schedule_drafts) — test malformed input returns 422 (claude/2026-02-10)
 - [ ] Review and add missing type hints in backend/app/services/ — run mypy on the services directory and fix any errors (claude attempted, failed — may need manual approach)
-- [ ] Add retry logic with exponential backoff to the RAG embedding ingestion pipeline (backend/app/services/rag/) for transient DB connection failures
+- [x] Add retry logic with exponential backoff to the RAG embedding ingestion pipeline (backend/app/services/rag/) for transient DB connection failures (codex/2026-02-11)
 
 ## Frontend Quality
 
@@ -21,14 +21,11 @@
 ## Infrastructure
 
 - [ ] Add admin status dashboard page showing native service health (Postgres, Redis, backend, frontend) — similar to Docker Desktop's single-pane view but for our native stack
-- [ ] Add a /api/health/deep endpoint that checks DB connectivity, Redis connectivity, and returns version info from pyproject.toml
+- [x] Add a /api/health/deep endpoint that checks DB connectivity, Redis connectivity, and returns version info from pyproject.toml (codex/2026-02-11)
 - [ ] Create a DB migration that adds indexes on the most-queried columns (check slow query log or EXPLAIN ANALYZE on common queries)
 
-## Human TODO (requires manual action)
+## Human TODO
 
-- [ ] Remove `_mbsetupuser` from admin group on Mini — `sudo dseditgroup -o edit -d _mbsetupuser -t user admin` (needs sudo password at keyboard)
-- [ ] Rotate Gemini API key — old key was exposed inline in `openclaw.json` (now removed, using `file:secrets/` reference)
-- [ ] Install macOS 26.3 on Mini — update available (`MSU_UPDATE_25D125_patch_26.3_minor`), enables iOS/visionOS dev
-- [ ] Log into Gemini CLI on Mini — `gemini auth login` (requires OAuth browser flow)
-- [ ] Log into Codex CLI on Mini — needs browser-based auth
-- [ ] Build budget-aware cron manager — auto-pause/resume Opus crons based on remaining usage percentage
+- [ ] Log into Gemini CLI (`gemini` in terminal — OAuth browser flow)
+- [ ] Log into Codex CLI (`codex auth` — OAuth browser flow)
+- [ ] Build a proper budget-aware cron manager — single command to pause/resume all Opus-consuming jobs, respect usage limits, auto-pause near cap, auto-resume after reset. Current approach (sed comment/uncomment) is fragile.
