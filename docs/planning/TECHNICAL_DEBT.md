@@ -1,6 +1,6 @@
 # Technical Debt Tracker
 
-> **Last Updated:** 2026-02-09
+> **Last Updated:** 2026-02-12
 > **Source:** Full-Stack MVP Review (16-layer inspection) + 2026-02-08 Repo-Wide Scan
 
 This document tracks identified technical debt, prioritized by severity and impact.
@@ -163,6 +163,28 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 
 ---
 
+### DEBT-025: Known Failing Tests (Pre-Existing)
+**Location:** Backend scheduling/service tests
+**Category:** Testing
+**Found:** 2026-02-12 (Block 11 Codex review cycle)
+**Status:** Open
+
+**Consistently failing tests (confirmed pre-existing, not caused by Block 11 changes):**
+
+| Test | File | Root Cause |
+|------|------|------------|
+| `test_min_limit_enforcement_in_validation` | `tests/services/test_faculty_pipeline.py` | Faculty clinic min-limit validation logic gap |
+| `test_engine_calls_faculty_expansion_after_resident_expansion` | `tests/services/test_faculty_pipeline.py` | Mock assertion timing — engine call order changed |
+| `test_pcat_do_created_for_each_call` | `tests/scheduling/test_pipeline_order.py` | PCAT/DO generation missing for some call slots |
+| `test_cpsat_allows_templates_requiring_procedure_credential` | `tests/scheduling/test_solver_template_selection.py` | Template selection logic vs credential filtering |
+| `test_cpsat_respects_locked_blocks` | `tests/scheduling/test_solver_template_selection.py` | Locked block handling in CP-SAT variable creation |
+
+**Impact:** These tests mask real regressions. Any new test failure in these files could be hidden by pre-existing failures.
+
+**Fix:** Investigate each root cause and either fix the test expectations or fix the underlying code. Consider `@pytest.mark.xfail` with reason annotations as an interim measure.
+
+---
+
 ## P3: Low Priority Issues
 
 ### DEBT-015: Test Calibration Failures (45 tests)
@@ -294,13 +316,13 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 | Code Quality | 0 | 1 | 1 |
 | Data / OPSEC | 0 | 1 | 1 |
 | Frontend Quality | 0 | 1 | 1 |
-| Testing | 0 | 2 | 2 |
+| Testing | 1 | 2 | 3 |
 | Error Handling | 0 | 2 | 2 |
 | Observability | 1 | 0 | 1 |
 | Real-time Features | 0 | 1 | 1 |
-| **Total** | **3** | **21** | **24** |
+| **Total** | **4** | **21** | **25** |
 
-> 21 of 24 items resolved (88%). Remaining 3 open items require infrastructure config or domain expertise.
+> 21 of 25 items resolved (84%). Remaining 4 open items: accessibility gaps, MCP placeholders, telemetry config, known failing tests.
 
 ---
 
@@ -332,6 +354,7 @@ command: celery -A app.core.celery_app worker -Q default,resilience,notification
 | DEBT-022 | ✅ Resolved | 2026-02-09 | PRs #847, #1057, #1100 |
 | DEBT-023 | ✅ Resolved | 2026-02-08 | Confirmed DEBT-011 resolved |
 | DEBT-024 | ✅ Resolved | 2026-02-09 | PR #1100 |
+| DEBT-025 | Open | - | - |
 
 ---
 
