@@ -102,8 +102,14 @@ class CalendarSubscription(Base):
         """Check if the subscription is valid (active and not expired)."""
         if not self.is_active:
             return False
-        if self.expires_at and datetime.now(UTC) > self.expires_at:
-            return False
+        if self.expires_at:
+            expires = (
+                self.expires_at
+                if self.expires_at.tzinfo
+                else self.expires_at.replace(tzinfo=UTC)
+            )
+            if datetime.now(UTC) > expires:
+                return False
         return True
 
     def revoke(self) -> None:

@@ -320,7 +320,12 @@ class IPWhitelist(Base):
         """Check if the whitelist entry has expired."""
         if self.expires_at is None:
             return False
-        return datetime.now(UTC) > self.expires_at
+        expires = (
+            self.expires_at
+            if self.expires_at.tzinfo
+            else self.expires_at.replace(tzinfo=UTC)
+        )
+        return datetime.now(UTC) > expires
 
     @property
     def is_valid(self) -> bool:
@@ -400,7 +405,12 @@ class IPBlacklist(Base):
         """Check if the blacklist entry has expired."""
         if self.expires_at is None:
             return False
-        return datetime.now(UTC) > self.expires_at
+        expires = (
+            self.expires_at
+            if self.expires_at.tzinfo
+            else self.expires_at.replace(tzinfo=UTC)
+        )
+        return datetime.now(UTC) > expires
 
     @property
     def is_valid(self) -> bool:

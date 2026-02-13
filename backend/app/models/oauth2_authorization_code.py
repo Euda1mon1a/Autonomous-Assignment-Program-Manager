@@ -78,7 +78,12 @@ class OAuth2AuthorizationCode(Base):
         Returns:
             True if expired, False otherwise
         """
-        return datetime.now(UTC) > self.expires_at
+        expires = (
+            self.expires_at
+            if self.expires_at.tzinfo
+            else self.expires_at.replace(tzinfo=UTC)
+        )
+        return datetime.now(UTC) > expires
 
     def mark_as_used(self) -> None:
         """Mark this authorization code as used."""
