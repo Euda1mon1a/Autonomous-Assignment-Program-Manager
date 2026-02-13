@@ -11,6 +11,7 @@ import {
   useHealthLive,
   useHealthReady,
   useHealthDetailed,
+  useHealthDashboard,
   useServiceHealth,
 } from './useHealth';
 import * as api from '@/lib/api';
@@ -62,6 +63,51 @@ const mockServiceHealth = {
   status: 'healthy' as const,
   latencyMs: 12,
   message: 'Connected',
+};
+
+const mockHealthDashboard = {
+  overallStatus: 'degraded' as const,
+  timestamp: '2024-01-01T00:00:00Z',
+  uptimeSeconds: 12345,
+  version: '1.0.0',
+  environment: 'development',
+  summary: {
+    totalServices: 4,
+    healthyCount: 3,
+    degradedCount: 1,
+    unhealthyCount: 0,
+    avgResponseTimeMs: 33.5,
+  },
+  metrics: {
+    historyEnabled: true,
+    historySize: 10,
+    uptimePercentage: 97.5,
+    recentChecks: 10,
+    avgResponseTimesMs: {
+      database: 12.0,
+      redis: 3.0,
+      celery: 50.0,
+    },
+  },
+  services: {
+    database: {
+      name: 'Database',
+      status: 'healthy' as const,
+      responseTimeMs: 12.0,
+      lastCheck: '2024-01-01T00:00:00Z',
+    },
+  },
+  alerts: [
+    {
+      id: 'health-celery',
+      severity: 'warning' as const,
+      status: 'active' as const,
+      title: 'Celery is degraded',
+      message: 'Worker response time is slow',
+      service: 'Celery',
+      triggeredAt: '2024-01-01T00:00:00Z',
+    },
+  ],
 };
 
 // Create wrapper with QueryClient
@@ -287,6 +333,39 @@ describe('useHealthDetailed', () => {
       expect(result.current.data?.services.database.latencyMs).toBe(12);
       expect(result.current.data?.services.redis.latencyMs).toBe(3);
       expect(result.current.data?.services.celery.latencyMs).toBe(5);
+    });
+  });
+});
+
+describe('useHealthDashboard', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('fetches dashboard payload successfully', async () => {
+    mockedApi.get.mockResolvedValueOnce(mockHealthDashboard);
+
+    const { result } = renderHook(() => useHealthDashboard(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.data).toEqual(mockHealthDashboard);
+    expect(result.current.data?.overallStatus).toBe('degraded');
+    expect(result.current.data?.alerts.length).toBe(1);
+    expect(mockedApi.get).toHaveBeenCalledWith('/health/dashboard');
+  });
+
+  it('respects enabled option', async () => {
+    renderHook(() => useHealthDashboard({ enabled: false }), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(mockedApi.get).not.toHaveBeenCalled();
     });
   });
 });

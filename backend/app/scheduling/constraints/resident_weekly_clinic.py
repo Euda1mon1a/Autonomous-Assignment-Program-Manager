@@ -34,17 +34,17 @@ from .base import (
 logger = logging.getLogger(__name__)
 
 
-class ResidentWeeklyClinicConstraint(HardConstraint):
+class ResidentWeeklyClinicConstraint(SoftConstraint):
     """
-    Enforces weekly FM clinic half-day requirements for residents.
+    Penalizes deviation from weekly FM clinic half-day targets for residents.
 
     This constraint uses rotation-specific ResidentWeeklyRequirement configurations
-    to enforce:
-    - Minimum FM clinic half-days per week (ACGME: 2 on outpatient rotations)
+    to guide:
+    - Target FM clinic half-days per week (ACGME: ~2 on outpatient rotations)
     - Maximum FM clinic half-days per week
 
-    The constraint is resident-agnostic: any resident on the rotation must meet
-    the same weekly requirements regardless of PGY level.
+    Soft constraint: deviations add penalty to objective function rather than
+    making the problem infeasible.
 
     Requirements are loaded from the database via the rotation template's
     weekly_requirements relationship and cached in the scheduling context.
@@ -53,6 +53,7 @@ class ResidentWeeklyClinicConstraint(HardConstraint):
     def __init__(
         self,
         weekly_requirements: dict[UUID, dict[str, Any]] | None = None,
+        weight: float = 50.0,
     ) -> None:
         """
         Initialize the constraint.
@@ -60,10 +61,12 @@ class ResidentWeeklyClinicConstraint(HardConstraint):
         Args:
             weekly_requirements: Pre-loaded requirements mapping rotation_template_id
                 to requirement dict. If None, uses context.weekly_requirements.
+            weight: Penalty weight for deviations from target.
         """
         super().__init__(
             name="ResidentWeeklyClinic",
             constraint_type=ConstraintType.CAPACITY,
+            weight=weight,
             priority=ConstraintPriority.HIGH,
         )
         self._weekly_requirements = weekly_requirements or {}
@@ -126,11 +129,10 @@ class ResidentWeeklyClinicConstraint(HardConstraint):
         context: SchedulingContext,
     ) -> None:
         """
-        Add resident weekly clinic constraints to CP-SAT model.
+        Add resident weekly clinic soft penalties to CP-SAT model.
 
-        For each resident on a rotation with weekly requirements:
-        - Adds min constraint: sum(clinic_vars) >= fm_clinic_min_per_week
-        - Adds max constraint: sum(clinic_vars) <= fm_clinic_max_per_week
+        For each resident, finds their rotation's weekly requirements and
+        adds penalties for deviating from FM clinic targets.
         """
         template_vars = variables.get("template_assignments", {})
         if not template_vars:
@@ -142,7 +144,11 @@ class ResidentWeeklyClinicConstraint(HardConstraint):
             logger.debug("No FM clinic templates found")
             return
 
-        constraints_added = 0
+        soft_objectives = variables.setdefault("soft_objectives", [])
+        penalties_added = 0
+
+        # Build resident→rotation mapping from block_assignments
+        resident_rotation = self._get_resident_rotation_map(context)
 
         # Group blocks by week
         weeks = self._group_blocks_by_week(context.blocks)
@@ -152,8 +158,18 @@ class ResidentWeeklyClinicConstraint(HardConstraint):
             if r_i is None:
                 continue
 
+            # Find this resident's rotation requirements
+            rotation_tid = resident_rotation.get(resident.id)
+            req = self._weekly_requirements.get(rotation_tid) if rotation_tid else None
+            if not req:
+                # Use conservative defaults
+                fm_min = 2
+                fm_max = 7
+            else:
+                fm_min = req.get("fm_clinic_min_per_week", 2)
+                fm_max = req.get("fm_clinic_max_per_week", 7)
+
             for week_start, week_blocks in weeks.items():
-                # Get clinic variables for this resident's week
                 week_clinic_vars = []
 
                 for block in week_blocks:
@@ -169,32 +185,35 @@ class ResidentWeeklyClinicConstraint(HardConstraint):
                 if not week_clinic_vars:
                     continue
 
-                # Apply constraints based on any rotation's weekly requirements
-                # that this resident might be on
-                for template_id, req in self._weekly_requirements.items():
-                    fm_min = req.get("fm_clinic_min_per_week", 2)
-                    fm_max = req.get("fm_clinic_max_per_week", 10)
+                week_sum = sum(week_clinic_vars)
 
-                    # Check if this resident is assigned to this rotation
-                    # This is checked dynamically based on existing assignments
-                    # For now, apply conservative defaults for all residents
+                # Soft penalty for below minimum
+                if fm_min > 0:
+                    under_min = model.NewIntVar(0, 10, f"under_min_{r_i}_{week_start}")
+                    model.Add(under_min >= fm_min - week_sum)
+                    soft_objectives.append((int(self.weight), under_min))
+                    penalties_added += 1
 
-                    week_sum = sum(week_clinic_vars)
+                # Soft penalty for above maximum
+                if fm_max < 10:
+                    over_max = model.NewIntVar(0, 10, f"over_max_{r_i}_{week_start}")
+                    model.Add(over_max >= week_sum - fm_max)
+                    soft_objectives.append((int(self.weight), over_max))
+                    penalties_added += 1
 
-                    # Minimum constraint (ACGME requirement)
-                    if fm_min > 0:
-                        model.Add(week_sum >= fm_min)
-                        constraints_added += 1
+        logger.debug(f"Added {penalties_added} resident weekly clinic soft penalties")
 
-                    # Maximum constraint
-                    if fm_max < 10:
-                        model.Add(week_sum <= fm_max)
-                        constraints_added += 1
-
-                    # Only apply once per resident-week
-                    break
-
-        logger.debug(f"Added {constraints_added} resident weekly clinic constraints")
+    def _get_resident_rotation_map(
+        self, context: SchedulingContext
+    ) -> dict[UUID, UUID]:
+        """Map resident_id → rotation_template_id from existing assignments."""
+        result: dict[UUID, UUID] = {}
+        existing = getattr(context, "existing_assignments", []) or []
+        for a in existing:
+            if a.person_id in context.resident_idx and a.rotation_template_id:
+                if a.person_id not in result:
+                    result[a.person_id] = a.rotation_template_id
+        return result
 
     def add_to_pulp(
         self,

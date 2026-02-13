@@ -234,7 +234,7 @@ class ActivityRequirementResponse(ActivityRequirementBase):
 
     id: UUID
     rotation_template_id: UUID
-    activity: ActivityResponse  # Nested activity data
+    activity: ActivityResponse | None = None  # Nested activity data (None if orphaned)
     created_at: datetime
     updated_at: datetime
 

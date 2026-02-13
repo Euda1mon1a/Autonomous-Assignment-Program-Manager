@@ -1,0 +1,5 @@
+{
+  "backend_typecheck_mypy_errors": 4390,
+  "updated_at": "2026-02-11",
+  "notes": "Baseline for stack_audit regression gating; lower this as mypy debt is reduced."
+}

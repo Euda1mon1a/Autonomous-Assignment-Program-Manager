@@ -2,7 +2,7 @@
  * AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
  *
  * Generated from: http://localhost:8000/openapi.json
- * Generated at: 2026-02-09T09:56:27Z
+ * Generated at: 2026-02-13T14:58:04Z
  * Generator: openapi-typescript + smart camelCase post-processing
  *
  * To regenerate:
@@ -176,6 +176,29 @@ export interface paths {
          *         - 200: Health check completed (status may still indicate issues)
          */
         get: operations["detailed_health_api_v1_health_detailed_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/health/deep": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Deep Health
+         * @description Deep health check for critical infrastructure dependencies.
+         *
+         *     Performs direct checks for database and Redis connectivity, and includes
+         *     backend version metadata loaded from pyproject.toml.
+         */
+        get: operations["deep_health_api_v1_health_deep_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -405,6 +428,26 @@ export interface paths {
          *         - 200: Status retrieved successfully
          */
         get: operations["get_overall_status_api_v1_health_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/health/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Health Dashboard
+         * @description Consolidated health payload for the admin dashboard.
+         */
+        get: operations["health_dashboard_api_v1_health_dashboard_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -20803,7 +20846,7 @@ export interface components {
              * Format: uuid
              */
             rotationTemplateId: string;
-            activity: components["schemas"]["ActivityResponse"];
+            activity?: components["schemas"]["ActivityResponse"] | null;
             /**
              * Created At
              * Format: date-time
@@ -24398,7 +24441,7 @@ export interface components {
             /** Residents With Leave */
             residentsWithLeave: number;
             /** Coverage Gaps */
-            coverageGaps: components["schemas"]["CoverageGap"][];
+            coverageGaps: components["schemas"]["app__schemas__block_assignment__CoverageGap"][];
             /** Leave Conflicts */
             leaveConflicts: components["schemas"]["LeaveConflict"][];
             /** Rotation Capacities */
@@ -26851,15 +26894,93 @@ export interface components {
         };
         /**
          * ConflictSummary
-         * @description Summary of conflicts found.
+         * @description Summary statistics for a set of conflicts.
+         *
+         *     Used for dashboard displays and reporting.
+         * @example {
+         *       "affectedPeopleCount": 8,
+         *       "autoResolvableCount": 6,
+         *       "averageImpactScore": 0.65,
+         *       "criticalCount": 3,
+         *       "highCount": 5,
+         *       "lowCount": 3,
+         *       "mediumCount": 4,
+         *       "totalConflicts": 15
+         *     }
          */
         ConflictSummary: {
-            /** Total Conflicts */
+            /**
+             * Total Conflicts
+             * @default 0
+             */
             totalConflicts: number;
-            /** Errors */
-            errors: number;
-            /** Warnings */
-            warnings: number;
+            /**
+             * Critical Count
+             * @default 0
+             */
+            criticalCount: number;
+            /**
+             * High Count
+             * @default 0
+             */
+            highCount: number;
+            /**
+             * Medium Count
+             * @default 0
+             */
+            mediumCount: number;
+            /**
+             * Low Count
+             * @default 0
+             */
+            lowCount: number;
+            /** By Category */
+            byCategory?: {
+                [key: string]: number | undefined;
+            };
+            /** By Type */
+            byType?: {
+                [key: string]: number | undefined;
+            };
+            /**
+             * Affected People Count
+             * @default 0
+             */
+            affectedPeopleCount: number;
+            /**
+             * Affected Blocks Count
+             * @default 0
+             */
+            affectedBlocksCount: number;
+            /**
+             * Auto Resolvable Count
+             * @default 0
+             */
+            autoResolvableCount: number;
+            /**
+             * Requires Manual Count
+             * @default 0
+             */
+            requiresManualCount: number;
+            /**
+             * Average Impact Score
+             * @default 0
+             */
+            averageImpactScore: number;
+            /**
+             * Average Urgency Score
+             * @default 0
+             */
+            averageUrgencyScore: number;
+            /**
+             * Average Complexity Score
+             * @default 0
+             */
+            averageComplexityScore: number;
+            /** Earliest Date */
+            earliestDate?: string | null;
+            /** Latest Date */
+            latestDate?: string | null;
         };
         /**
          * ConflictType
@@ -27083,23 +27204,35 @@ export interface components {
         };
         /**
          * CoverageGap
-         * @description Identified coverage gap.
+         * @description Represents a coverage gap in the schedule.
+         * @example {
+         *       "date": "2024-01-15",
+         *       "rotation": "FMIT Inpatient",
+         *       "severity": "high",
+         *       "timeOfDay": "PM"
+         *     }
          */
         CoverageGap: {
             /**
-             * Rotation Template Id
-             * Format: uuid
+             * Date
+             * Format: date
+             * @description Date of the gap
              */
-            rotationTemplateId: string;
-            /** Rotation Name */
-            rotationName: string;
-            /** Required Coverage */
-            requiredCoverage: number;
-            /** Assigned Coverage */
-            assignedCoverage: number;
-            /** Gap */
-            gap: number;
-            /** Severity */
+            date: string;
+            /**
+             * Time Of Day
+             * @description AM or PM
+             */
+            timeOfDay: string;
+            /**
+             * Rotation
+             * @description Rotation with gap
+             */
+            rotation?: string | null;
+            /**
+             * Severity
+             * @description low, medium, high
+             */
             severity: string;
         };
         /**
@@ -27179,7 +27312,7 @@ export interface components {
              * Gaps
              * @description List of coverage gaps
              */
-            gaps?: components["schemas"]["app__schemas__visualization__CoverageGap"][];
+            gaps?: components["schemas"]["CoverageGap"][];
             /**
              * Title
              * @description Title for the heatmap
@@ -29897,7 +30030,7 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            person: components["schemas"]["app__schemas__certification__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             certificationType: components["schemas"]["CertificationTypeSummary"];
             /**
              * Expiration Date
@@ -33940,7 +34073,7 @@ export interface components {
              * @default []
              */
             recommendations: components["schemas"]["Recommendation"][];
-            summary?: components["schemas"]["ConflictSummary"] | null;
+            summary?: components["schemas"]["app__schemas__schedule__ConflictSummary"] | null;
         };
         /**
          * ImportApplyError
@@ -36727,7 +36860,7 @@ export interface components {
          * @description Certification compliance for a single person.
          */
         PersonComplianceResponse: {
-            person: components["schemas"]["app__schemas__certification__PersonSummary"];
+            person: components["schemas"]["PersonSummary"];
             /** Total Required */
             totalRequired: number;
             /** Total Current */
@@ -37006,7 +37139,7 @@ export interface components {
         };
         /**
          * PersonSummary
-         * @description Minimal person info for embedding in credential responses.
+         * @description Minimal person info for certification reports.
          */
         PersonSummary: {
             /**
@@ -37018,6 +37151,8 @@ export interface components {
             name: string;
             /** Type */
             type: string;
+            /** Email */
+            email?: string | null;
         };
         /**
          * PersonType
@@ -38087,7 +38222,7 @@ export interface components {
             /** Procedure Name */
             procedureName: string;
             /** Qualified Faculty */
-            qualifiedFaculty: components["schemas"]["PersonSummary"][];
+            qualifiedFaculty: components["schemas"]["app__schemas__procedure_credential__PersonSummary"][];
             /** Total */
             total: number;
         };
@@ -38203,7 +38338,6 @@ export interface components {
             queueName: string;
             /**
              * Confirm
-             * @description Must be true to confirm purge
              * @default false
              */
             confirm: boolean;
@@ -41299,8 +41433,8 @@ export interface components {
             status: string;
             /** Message */
             message: string;
-            /** Total Assignments */
-            totalAssignments: number;
+            /** Total Blocks Assigned */
+            totalBlocksAssigned: number;
             /** Total Blocks */
             totalBlocks: number;
             validation: components["schemas"]["ValidationResult"];
@@ -41377,7 +41511,7 @@ export interface components {
             /** Components */
             components: components["schemas"]["ScoreComponentResponse"][];
             /** Suggestions */
-            suggestions?: components["schemas"]["SuggestionResponse"][];
+            suggestions?: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -43251,25 +43385,24 @@ export interface components {
         };
         /**
          * SuggestionResponse
-         * @description Response for improvement suggestion.
+         * @description Response schema for autocomplete suggestions.
          */
         SuggestionResponse: {
-            /** Type */
-            type: string;
             /**
-             * Priority
-             * @description high, medium, low
+             * Suggestions
+             * @description List of suggestions
              */
-            priority: string;
-            /** Description */
-            description: string;
+            suggestions: string[];
             /**
-             * Impact
-             * @description Expected improvement
+             * Query
+             * @description Original query string
              */
-            impact: number;
-            /** Affected Items */
-            affectedItems?: string[];
+            query: string;
+            /**
+             * Entity Type
+             * @description Entity type
+             */
+            entityType: string;
         };
         /**
          * SurveyFrequencyEnum
@@ -47371,7 +47504,7 @@ export interface components {
             /** People */
             people: components["schemas"]["PersonWorkloadResponse"][];
             /** Rebalancing Suggestions */
-            rebalancingSuggestions: components["schemas"]["SuggestionResponse"][];
+            rebalancingSuggestions: components["schemas"]["app__schemas__ml__SuggestionResponse"][];
         };
         /**
          * WorkloadSummary
@@ -47763,96 +47896,6 @@ export interface components {
          */
         app__models__export_job__ExportFormat: "csv" | "json" | "xlsx" | "xml";
         /**
-         * ConflictSummary
-         * @description Summary statistics for a set of conflicts.
-         *
-         *     Used for dashboard displays and reporting.
-         * @example {
-         *       "affectedPeopleCount": 8,
-         *       "autoResolvableCount": 6,
-         *       "averageImpactScore": 0.65,
-         *       "criticalCount": 3,
-         *       "highCount": 5,
-         *       "lowCount": 3,
-         *       "mediumCount": 4,
-         *       "totalConflicts": 15
-         *     }
-         */
-        app__scheduling__conflicts__types__ConflictSummary: {
-            /**
-             * Total Conflicts
-             * @default 0
-             */
-            totalConflicts: number;
-            /**
-             * Critical Count
-             * @default 0
-             */
-            criticalCount: number;
-            /**
-             * High Count
-             * @default 0
-             */
-            highCount: number;
-            /**
-             * Medium Count
-             * @default 0
-             */
-            mediumCount: number;
-            /**
-             * Low Count
-             * @default 0
-             */
-            lowCount: number;
-            /** By Category */
-            byCategory?: {
-                [key: string]: number | undefined;
-            };
-            /** By Type */
-            byType?: {
-                [key: string]: number | undefined;
-            };
-            /**
-             * Affected People Count
-             * @default 0
-             */
-            affectedPeopleCount: number;
-            /**
-             * Affected Blocks Count
-             * @default 0
-             */
-            affectedBlocksCount: number;
-            /**
-             * Auto Resolvable Count
-             * @default 0
-             */
-            autoResolvableCount: number;
-            /**
-             * Requires Manual Count
-             * @default 0
-             */
-            requiresManualCount: number;
-            /**
-             * Average Impact Score
-             * @default 0
-             */
-            averageImpactScore: number;
-            /**
-             * Average Urgency Score
-             * @default 0
-             */
-            averageUrgencyScore: number;
-            /**
-             * Average Complexity Score
-             * @default 0
-             */
-            averageComplexityScore: number;
-            /** Earliest Date */
-            earliestDate?: string | null;
-            /** Latest Date */
-            latestDate?: string | null;
-        };
-        /**
          * BatchOperationResult
          * @description Result for a single operation in a batch.
          */
@@ -47888,21 +47931,25 @@ export interface components {
             total: number;
         };
         /**
-         * PersonSummary
-         * @description Minimal person info for certification reports.
+         * CoverageGap
+         * @description Identified coverage gap.
          */
-        app__schemas__certification__PersonSummary: {
+        app__schemas__block_assignment__CoverageGap: {
             /**
-             * Id
+             * Rotation Template Id
              * Format: uuid
              */
-            id: string;
-            /** Name */
-            name: string;
-            /** Type */
-            type: string;
-            /** Email */
-            email?: string | null;
+            rotationTemplateId: string;
+            /** Rotation Name */
+            rotationName: string;
+            /** Required Coverage */
+            requiredCoverage: number;
+            /** Assigned Coverage */
+            assignedCoverage: number;
+            /** Gap */
+            gap: number;
+            /** Severity */
+            severity: string;
         };
         /**
          * PersonSummary
@@ -47949,19 +47996,6 @@ export interface components {
             suggestions?: string[];
         };
         /**
-         * QueuePurgeRequest
-         * @description Request to purge a queue.
-         */
-        app__schemas__jobs__QueuePurgeRequest: {
-            /** Queuename */
-            queueName: string;
-            /**
-             * Confirm
-             * @default false
-             */
-            confirm: boolean;
-        };
-        /**
          * QueuePurgeResponse
          * @description Response to queue purge request.
          */
@@ -47972,6 +48006,28 @@ export interface components {
             tasksPurged: number;
             /** Timestamp */
             timestamp: string;
+        };
+        /**
+         * SuggestionResponse
+         * @description Response for improvement suggestion.
+         */
+        app__schemas__ml__SuggestionResponse: {
+            /** Type */
+            type: string;
+            /**
+             * Priority
+             * @description high, medium, low
+             */
+            priority: string;
+            /** Description */
+            description: string;
+            /**
+             * Impact
+             * @description Expected improvement
+             */
+            impact: number;
+            /** Affected Items */
+            affectedItems?: string[];
         };
         /**
          * BatchOperationResult
@@ -47991,58 +48047,45 @@ export interface components {
             error?: string | null;
         };
         /**
-         * SuggestionResponse
-         * @description Response schema for autocomplete suggestions.
+         * PersonSummary
+         * @description Minimal person info for embedding in credential responses.
          */
-        app__schemas__search__SuggestionResponse: {
+        app__schemas__procedure_credential__PersonSummary: {
             /**
-             * Suggestions
-             * @description List of suggestions
+             * Id
+             * Format: uuid
              */
-            suggestions: string[];
-            /**
-             * Query
-             * @description Original query string
-             */
-            query: string;
-            /**
-             * Entity Type
-             * @description Entity type
-             */
-            entityType: string;
+            id: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
         };
         /**
-         * CoverageGap
-         * @description Represents a coverage gap in the schedule.
-         * @example {
-         *       "date": "2024-01-15",
-         *       "rotation": "FMIT Inpatient",
-         *       "severity": "high",
-         *       "timeOfDay": "PM"
-         *     }
+         * QueuePurgeRequest
+         * @description Request to purge a queue.
          */
-        app__schemas__visualization__CoverageGap: {
+        app__schemas__queue__QueuePurgeRequest: {
+            /** Queuename */
+            queueName: string;
             /**
-             * Date
-             * Format: date
-             * @description Date of the gap
+             * Confirm
+             * @description Must be true to confirm purge
+             * @default false
              */
-            date: string;
-            /**
-             * Time Of Day
-             * @description AM or PM
-             */
-            timeOfDay: string;
-            /**
-             * Rotation
-             * @description Rotation with gap
-             */
-            rotation?: string | null;
-            /**
-             * Severity
-             * @description low, medium, high
-             */
-            severity: string;
+            confirm: boolean;
+        };
+        /**
+         * ConflictSummary
+         * @description Summary of conflicts found.
+         */
+        app__schemas__schedule__ConflictSummary: {
+            /** Total Conflicts */
+            totalConflicts: number;
+            /** Errors */
+            errors: number;
+            /** Warnings */
+            warnings: number;
         };
     };
     responses: never;
@@ -48135,6 +48178,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AggregatedHealthResult"];
+                };
+            };
+        };
+    };
+    deep_health_api_v1_health_deep_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -48271,6 +48336,28 @@ export interface operations {
         };
     };
     get_overall_status_api_v1_health_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    health_dashboard_api_v1_health_dashboard_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -55669,7 +55756,7 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -55702,7 +55789,7 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -55825,7 +55912,7 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -62091,7 +62178,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -62124,7 +62211,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__search__SuggestionResponse"];
+                    "application/json": components["schemas"]["SuggestionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -67188,7 +67275,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__scheduling__conflicts__types__ConflictSummary"];
+                    "application/json": components["schemas"]["ConflictSummary"];
                 };
             };
             /** @description Validation Error */
@@ -68465,7 +68552,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["app__schemas__jobs__QueuePurgeRequest"];
+                "application/json": components["schemas"]["QueuePurgeRequest"];
             };
         };
         responses: {
@@ -68832,7 +68919,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QueuePurgeRequest"];
+                "application/json": components["schemas"]["app__schemas__queue__QueuePurgeRequest"];
             };
         };
         responses: {

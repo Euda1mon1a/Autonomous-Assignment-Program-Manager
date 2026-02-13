@@ -110,7 +110,7 @@ System design, components, and technical decisions.
 | [**Architecture Index**](architecture/README.md) | **Complete architecture documentation index** |
 | [Index](architecture/index.md) | Architecture overview |
 | [Overview](architecture/overview.md) | High-level system design |
-| [**Architectural Decisions (ADRs)**](architecture/decisions/README.md) | **Formal decision records** |
+| [**Architectural Decisions (ADRs)**](architecture/decisions/) | **Formal decision records** |
 | [Backend](architecture/backend.md) | Backend architecture |
 | [Frontend](architecture/frontend.md) | Frontend architecture |
 | [Database](architecture/database.md) | Database schema and design |
@@ -138,7 +138,6 @@ Complete REST API documentation.
 | [Schedule](api/SCHEDULE_API.md) | Schedule generation and management API |
 | [Swaps](api/SWAPS_API.md) | Swap system API |
 | [Resilience](api/RESILIENCE_API.md) | System health and crisis management API |
-| [Health Monitoring](api/HEALTH_API.md) | Health check and monitoring endpoints |
 | [FMIT Health](api/FMIT_HEALTH_API.md) | FMIT-specific health endpoints |
 | [Call Assignments](api/CALL_ASSIGNMENTS_API.md) | Call scheduling API |
 | [Exotic Frontier](api/EXOTIC_API.md) | Experimental optimization API |
@@ -189,8 +188,6 @@ Project planning and tracking documents.
 | Document | Description |
 |----------|-------------|
 | [**Project Roadmap**](planning/ROADMAP.md) | **Long-term project roadmap and feature planning** |
-| [Implementation Tracker](planning/IMPLEMENTATION_TRACKER.md) | Feature implementation status |
-| [TODO Tracker](planning/TODO_TRACKER.md) | Outstanding tasks |
 | [Project Status Assessment](planning/PROJECT_STATUS_ASSESSMENT.md) | Current project status |
 | [Strategic Decisions](planning/STRATEGIC_DECISIONS.md) | Major strategic decisions and rationale |
 | [ChatGPT Feature Review](planning/CHATGPT_FEATURE_REVIEW.md) | Review of ChatGPT Codex and Pulse |
@@ -198,7 +195,6 @@ Project planning and tracking documents.
 | [Leadership Discussion Guide](planning/LEADERSHIP_DISCUSSION_GUIDE.md) | Strategic discussion guide |
 | [Code Complexity Analysis](planning/CODE_COMPLEXITY_ANALYSIS.md) | Code complexity metrics |
 | [MCP Integration Opportunities](planning/MCP_INTEGRATION_OPPORTUNITIES.md) | Model Context Protocol integration plans |
-| [FastMCP Research](planning/FASTMCP_RESEARCH.md) | FastMCP framework evaluation |
 
 ### :material-flask: Research
 Experimental research and exploration documents.
@@ -228,11 +224,7 @@ Historical documentation retained for reference.
 | Document | Description |
 |----------|-------------|
 | [Archived Index](archived/README.md) | Overview of archived documentation |
-| [Celery Setup Summary](archived/CELERY_SETUP_SUMMARY.md) | Celery task queue setup |
-| [Celery Configuration](archived/CELERY_CONFIGURATION_REPORT.md) | Celery configuration details |
 | [Celery Production Checklist](deployment/CELERY_PRODUCTION_CHECKLIST.md) | Production deployment checklist |
-| [Celery Quick Reference](archived/CELERY_QUICK_REFERENCE.md) | Celery quick reference |
-| [Implementation Summaries](archived/implementation-summaries/) | Historical implementation notes |
 | [Reports](archived/reports/) | Historical project reports |
 | [Wiki Backup](archived/wiki-backup/) | Backup of GitHub wiki content |
 
@@ -246,24 +238,11 @@ Historical documentation retained for reference.
 ### :material-history: Changelog
 [Changelog](../CHANGELOG.md) - Version history and release notes
 
-### :material-clipboard-text: Task Templates
-Located in [tasks/templates/](tasks/templates/):
-- [Beacon Test](tasks/templates/beacon-test.md) - System health verification
-- [Cascade](tasks/templates/cascade.md) - Cascading updates
-- [Consultation](tasks/templates/consultation.md) - Expert consultation template
-- [Oracle Query](tasks/templates/oracle-query.md) - Knowledge base queries
-- [Research](tasks/templates/research.md) - Research task template
-
 ### :material-note-text: Other Root-Level Documentation
 Additional documentation files at the repository root:
 
 | Document | Description | Recommended Action |
 |----------|-------------|-------------------|
-| [DOCKER_LOCAL_SETUP.md](../DOCKER_LOCAL_SETUP.md) | Docker setup guide | Consider moving to `docs/getting-started/` |
-| [DOCKER_LOCAL_CHEATSHEET.md](../DOCKER_LOCAL_CHEATSHEET.md) | Docker quick reference | Consider moving to `docs/getting-started/` |
-| [SCHEDULER_OPS_QUICK_START.md](../SCHEDULER_OPS_QUICK_START.md) | Operations quick start | Consider moving to `docs/operations/` |
-| [SCHEDULER_OPS_CELERY_INTEGRATION_SUMMARY.md](../SCHEDULER_OPS_CELERY_INTEGRATION_SUMMARY.md) | Celery integration summary | Already in `docs/operations/` (duplicate) |
-| [IMPLEMENTATION_VERIFICATION.md](../IMPLEMENTATION_VERIFICATION.md) | Implementation verification | Already in `docs/development/` (duplicate) |
 | [HUMAN_TODO.md](../HUMAN_TODO.md) | Tasks requiring human action | Keep at root |
 
 ### :material-file-multiple: Docs Root-Level Files
@@ -274,7 +253,7 @@ Important files at the docs/ root:
 | [ARCHITECTURAL_DISCONNECTS.md](ARCHITECTURAL_DISCONNECTS.md) | Known architectural inconsistencies |
 | [EMAIL_NOTIFICATION_INFRASTRUCTURE.md](EMAIL_NOTIFICATION_INFRASTRUCTURE.md) | Email notification system design |
 | [MCP_IDE_INTEGRATION.md](MCP_IDE_INTEGRATION.md) | Model Context Protocol IDE integration |
-| [PRIORITY_LIST.md](PRIORITY_LIST.md) | Current development priorities |
+| [MASTER_PRIORITY_LIST.md](MASTER_PRIORITY_LIST.md) | Current development priorities |
 | [PULSE_CHECKLIST.md](PULSE_CHECKLIST.md) | System health pulse checklist |
 
 ---
@@ -395,7 +374,7 @@ Version: 1.0.0 | Last Updated: 2025-12-31 (Documentation restructure)
 - **[Schedule Generation](guides/SCHEDULE_GENERATION_RUNBOOK.md)** - Step-by-step schedule generation
 - **[Troubleshooting](guides/SCHEDULE_GENERATION_RUNBOOK.md#troubleshooting)** - Common issues and solutions
 - **[CLI Reference](operations/cli-reference.md)** - Command-line interface
-- **[AI Guidelines](CLAUDE.md)** - For AI-assisted development
+- **[AI Guidelines](../CLAUDE.md)** - For AI-assisted development
 
 ---
 

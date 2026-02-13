@@ -54,7 +54,7 @@ const navItems: NavItem[] = [
   { href: "/heatmap", label: "Heatmap", icon: BarChart3 },
   { href: "/conflicts", label: "Conflicts", icon: AlertTriangle },
   { href: "/compliance", label: "Compliance", icon: CheckCircle },
-  { href: "/activities", label: "Activities", icon: FileText },
+  { href: "/rotations", label: "Rotations", icon: FileText },
   { href: "/absences", label: "Absences", icon: CalendarOff },
   { href: "/hub/import-export", label: "Import/Export", icon: FileUp },
   { href: "/help", label: "Help", icon: HelpCircle },

@@ -43,6 +43,50 @@ export interface HealthDetailedResponse {
   version?: string
 }
 
+export interface HealthDashboardService {
+  name: string
+  status: 'healthy' | 'unhealthy' | 'degraded'
+  responseTimeMs: number
+  lastCheck: string
+  message?: string
+  details?: Record<string, unknown>
+}
+
+export interface HealthDashboardAlert {
+  id: string
+  severity: 'info' | 'warning' | 'error' | 'critical'
+  status: 'active' | 'acknowledged' | 'resolved'
+  title: string
+  message: string
+  service: string
+  triggeredAt: string
+}
+
+export interface HealthDashboardResponse {
+  overallStatus: 'healthy' | 'unhealthy' | 'degraded'
+  timestamp: string
+  uptimeSeconds: number
+  version: string
+  environment: string
+  summary: {
+    totalServices: number
+    healthyCount: number
+    degradedCount: number
+    unhealthyCount: number
+    avgResponseTimeMs: number
+  }
+  metrics: {
+    historyEnabled?: boolean
+    historySize?: number
+    uptimePercentage?: number
+    recentChecks?: number
+    avgResponseTimesMs?: Record<string, number>
+    [key: string]: unknown
+  }
+  services: Record<string, HealthDashboardService>
+  alerts: HealthDashboardAlert[]
+}
+
 // ============================================================================
 // Query Keys
 // ============================================================================
@@ -52,6 +96,7 @@ export const healthQueryKeys = {
   live: () => [...healthQueryKeys.all, 'live'] as const,
   ready: () => [...healthQueryKeys.all, 'ready'] as const,
   detailed: () => [...healthQueryKeys.all, 'detailed'] as const,
+  dashboard: () => [...healthQueryKeys.all, 'dashboard'] as const,
   service: (name: string) => [...healthQueryKeys.all, 'service', name] as const,
 }
 
@@ -163,6 +208,26 @@ export function useHealthDetailed(options?: { enabled?: boolean; refetchInterval
     },
     staleTime: 30_000, // 30 seconds
     refetchInterval: options?.refetchInterval ?? 120_000, // 2 minutes default
+    retry: 1,
+    enabled: options?.enabled ?? true,
+  })
+}
+
+/**
+ * Consolidated health dashboard payload for admin views.
+ *
+ * Fetches a backend-composed summary intended for dashboard rendering,
+ * including service rollups, alerts, and runtime metadata.
+ */
+export function useHealthDashboard(options?: { enabled?: boolean; refetchInterval?: number }) {
+  return useQuery({
+    queryKey: healthQueryKeys.dashboard(),
+    queryFn: async (): Promise<HealthDashboardResponse> => {
+      const response = await get<HealthDashboardResponse>('/health/dashboard')
+      return response
+    },
+    staleTime: 15_000,
+    refetchInterval: options?.refetchInterval ?? 30_000,
     retry: 1,
     enabled: options?.enabled ?? true,
   })
