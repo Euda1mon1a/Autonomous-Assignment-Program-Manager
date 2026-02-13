@@ -21,7 +21,7 @@ import json
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal
+from typing import Literal, cast
 
 from sqlalchemy import desc, func
 from sqlalchemy.exc import IntegrityError
@@ -153,8 +153,9 @@ class ApprovalChainService:
         timestamp = datetime.utcnow()
         new_seq = head.sequence_num + 1
 
+        prev_hash = cast(str | None, head.record_hash)
         record_hash = ApprovalRecord.compute_hash(
-            prev_hash=str(head.record_hash) if head.record_hash else None,  # type: ignore[arg-type]
+            prev_hash=prev_hash,
             payload=payload,
             actor_id=actor_id,
             actor_type=actor_type,
@@ -253,17 +254,17 @@ class ApprovalChainService:
 
         for record in records:
             # Check sequence continuity
-            if record.sequence_num != expected_seq:
+            record_sequence = cast(int, record.sequence_num)
+            if record_sequence != expected_seq:
                 return ChainVerificationResult(
                     valid=False,
                     chain_id=chain_id,
                     total_records=len(records),
                     verified_count=verified_count,
-                    first_invalid_seq=int(record.sequence_num),  # type: ignore[arg-type]
+                    first_invalid_seq=record_sequence,
                     first_invalid_id=str(record.id),
                     error_message=(
-                        f"Sequence gap: expected {expected_seq}, "
-                        f"got {record.sequence_num}"
+                        f"Sequence gap: expected {expected_seq}, got {record_sequence}"
                     ),
                     verified_at=datetime.utcnow().isoformat(),
                 )
@@ -276,11 +277,10 @@ class ApprovalChainService:
                         chain_id=chain_id,
                         total_records=len(records),
                         verified_count=verified_count,
-                        first_invalid_seq=int(record.sequence_num),  # type: ignore[arg-type]
+                        first_invalid_seq=record_sequence,
                         first_invalid_id=str(record.id),
                         error_message=(
-                            f"Chain broken at seq {record.sequence_num}: "
-                            f"prev_hash mismatch"
+                            f"Chain broken at seq {record_sequence}: prev_hash mismatch"
                         ),
                         verified_at=datetime.utcnow().isoformat(),
                     )
@@ -292,17 +292,17 @@ class ApprovalChainService:
                     chain_id=chain_id,
                     total_records=len(records),
                     verified_count=verified_count,
-                    first_invalid_seq=int(record.sequence_num),  # type: ignore[arg-type]
+                    first_invalid_seq=record_sequence,
                     first_invalid_id=str(record.id),
                     error_message=(
-                        f"Hash mismatch at seq {record.sequence_num}: "
+                        f"Hash mismatch at seq {record_sequence}: "
                         f"record has been tampered with"
                     ),
                     verified_at=datetime.utcnow().isoformat(),
                 )
 
             verified_count += 1
-            prev_hash = record.record_hash
+            prev_hash = cast(str | None, record.record_hash)
             expected_seq += 1
 
         # All records verified
@@ -314,8 +314,8 @@ class ApprovalChainService:
             chain_id=chain_id,
             total_records=len(records),
             verified_count=verified_count,
-            head_hash=str(head.record_hash) if head.record_hash else None,  # type: ignore[arg-type]
-            genesis_hash=str(genesis.record_hash) if genesis.record_hash else None,  # type: ignore[arg-type]
+            head_hash=cast(str | None, head.record_hash),
+            genesis_hash=cast(str | None, genesis.record_hash),
             verified_at=datetime.utcnow().isoformat(),
         )
 
@@ -361,11 +361,15 @@ class ApprovalChainService:
         return ChainStats(
             chain_id=chain_id,
             total_records=sum(c.count for c in action_counts),
-            head_sequence=int(head.sequence_num),  # type: ignore[arg-type]
-            head_hash=str(head.record_hash) if head.record_hash else None,  # type: ignore[arg-type]
-            genesis_hash=str(genesis.record_hash) if genesis.record_hash else None,  # type: ignore[arg-type]
-            first_record_at=head.created_at if genesis.created_at else None,  # type: ignore[arg-type]
-            last_record_at=head.created_at if head.created_at else None,  # type: ignore[arg-type]
+            head_sequence=cast(int, head.sequence_num),
+            head_hash=cast(str | None, head.record_hash),
+            genesis_hash=cast(str | None, genesis.record_hash),
+            first_record_at=cast(datetime | None, head.created_at)
+            if genesis.created_at
+            else None,
+            last_record_at=cast(datetime | None, head.created_at)
+            if head.created_at
+            else None,
             actions_by_type={ac.action: ac.count for ac in action_counts},
         )
 

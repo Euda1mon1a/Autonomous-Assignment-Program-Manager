@@ -17,8 +17,9 @@ interface BridgeEdge3DProps {
 }
 
 export function BridgeEdge3D({ edge, nodes }: BridgeEdge3DProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const lineRef = useRef<any>(null);
+  const lineRef = useRef<
+    THREE.Line<THREE.BufferGeometry, THREE.LineDashedMaterial> | null
+  >(null);
   const dashOffsetRef = useRef(0);
 
   const sourceNode = nodes.find((n) => n.id === edge.source);

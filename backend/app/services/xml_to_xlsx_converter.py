@@ -24,7 +24,7 @@ from typing import Any
 from defusedxml import ElementTree
 
 from openpyxl import Workbook, load_workbook
-from openpyxl.cell.cell import MergedCell
+from openpyxl.cell.cell import Cell, MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
@@ -752,7 +752,7 @@ class XMLToXlsxConverter:
 
         return wb
 
-    def _get_writable_cell(self, sheet, row: int, column: int):
+    def _get_writable_cell(self, sheet, row: int, column: int) -> Cell:
         """Return a writable cell, resolving merged ranges to their top-left cell."""
         cell = sheet.cell(row=row, column=column)
         if isinstance(cell, MergedCell):
