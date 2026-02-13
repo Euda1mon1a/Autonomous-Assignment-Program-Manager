@@ -123,8 +123,10 @@ def rate_limit_exceeded_handler(request: Request, exc: Exception) -> Response:
     response = JSONResponse(
         status_code=429,
         content={
-            "detail": f"Rate limit exceeded: {detail}. Please retry after {retry_after} seconds.",
-            "retry_after": retry_after,
+            "detail": {
+                "error": f"Rate limit exceeded: {detail}. Please retry after {retry_after} seconds.",
+                "retry_after": retry_after,
+            },
         },
     )
 
