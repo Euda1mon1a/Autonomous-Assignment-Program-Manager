@@ -43,8 +43,10 @@ def main():
     ay = BLOCK_CONFIG["academic_year"]
 
     # Step 1: Get correct resident → rotation mappings from block_assignments
+    # Include secondary_rotation_template_id for split-block residents
     cur.execute(
-        """SELECT id, resident_id, rotation_template_id
+        """SELECT id, resident_id, rotation_template_id,
+                  secondary_rotation_template_id
         FROM block_assignments
         WHERE block_number = %s AND academic_year = %s""",
         (block_num, ay),
@@ -73,14 +75,20 @@ def main():
     print(f"Deleted {cur.rowcount} stale assignments")
 
     # Step 4: Create correct assignments
+    # For split-block residents, use secondary rotation after BLOCK_HALF_DAY (day 14)
+    block_half_day = 14
     created = 0
-    for ba_id, resident_id, rotation_id in block_assignments:
+    for ba_id, resident_id, rotation_id, secondary_rotation_id in block_assignments:
         for slot_id, slot_date in block_slots:
+            day_in_block = (slot_date - start).days + 1
+            effective_rotation = rotation_id
+            if secondary_rotation_id and day_in_block > block_half_day:
+                effective_rotation = secondary_rotation_id
             cur.execute(
                 """INSERT INTO assignments
                 (id, block_id, person_id, rotation_template_id, role, created_at, updated_at)
                 VALUES (%s, %s, %s, %s, %s, NOW(), NOW())""",
-                (str(uuid.uuid4()), slot_id, resident_id, rotation_id, "primary"),
+                (str(uuid.uuid4()), slot_id, resident_id, effective_rotation, "primary"),
             )
             created += 1
     print(f"Created {created} assignments")

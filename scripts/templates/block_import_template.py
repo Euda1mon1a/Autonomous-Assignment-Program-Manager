@@ -167,7 +167,7 @@ def load_hdas(records):
                 """INSERT INTO half_day_assignments
                 (id, person_id, date, time_of_day, activity_id, source, created_at, updated_at)
                 VALUES (%s, %s, %s, %s, %s, %s, NOW(), NOW())""",
-                (str(uuid.uuid4()), person_id, d, tod, activity_id, "excel_import"),
+                (str(uuid.uuid4()), person_id, d, tod, activity_id, "manual"),
             )
             created += 1
 
