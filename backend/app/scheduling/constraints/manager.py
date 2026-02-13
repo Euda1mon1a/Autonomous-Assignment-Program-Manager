@@ -102,6 +102,9 @@ from .sports_medicine import SMResidentFacultyAlignmentConstraint
 from .protected_slot import ProtectedSlotConstraint
 from .halfday_requirement import HalfDayRequirementConstraint, WeekendWorkConstraint
 
+# Resident weekly clinic constraints
+from .resident_weekly_clinic import ResidentWeeklyClinicConstraint
+
 # Activity requirement constraint (dynamic per-activity)
 from .activity_requirement import ActivityRequirementConstraint
 
@@ -392,10 +395,15 @@ class ConstraintManager:
         manager.add(ProtectedSlotConstraint())
         # ENABLED: Hybrid model - protected slots are locked (LEC, ADV)
 
-        # Half-day requirement constraint - needs halfday_requirements data
+        # Half-day requirement constraint - uses rotation_halfday_requirements
         manager.add(HalfDayRequirementConstraint(weight=50.0))
-        # Disabled: needs halfday_requirements configuration
+        # Disabled by default: engine enables when halfday_requirements data exists
         manager.disable("HalfDayRequirement")
+
+        # Resident weekly clinic constraint - uses resident_weekly_requirements
+        manager.add(ResidentWeeklyClinicConstraint())
+        # Disabled by default: engine enables when weekly_requirements data exists
+        manager.disable("ResidentWeeklyClinic")
 
         # Activity requirement constraint - uses RotationActivityRequirement
         manager.add(ActivityRequirementConstraint(weight=50.0))
@@ -553,10 +561,15 @@ class ConstraintManager:
         manager.add(ProtectedSlotConstraint())
         # ENABLED: Hybrid model - protected slots are locked (LEC, ADV)
 
-        # Half-day requirement constraint - needs halfday_requirements data
+        # Half-day requirement constraint - uses rotation_halfday_requirements
         manager.add(HalfDayRequirementConstraint(weight=50.0))
-        # Disabled: needs halfday_requirements configuration
+        # Disabled by default: engine enables when halfday_requirements data exists
         manager.disable("HalfDayRequirement")
+
+        # Resident weekly clinic constraint - uses resident_weekly_requirements
+        manager.add(ResidentWeeklyClinicConstraint())
+        # Disabled by default: engine enables when weekly_requirements data exists
+        manager.disable("ResidentWeeklyClinic")
 
         # Activity requirement constraint - uses RotationActivityRequirement
         manager.add(ActivityRequirementConstraint(weight=50.0))

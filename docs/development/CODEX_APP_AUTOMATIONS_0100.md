@@ -1,6 +1,6 @@
 # Codex App Automations at 0100
 
-> Last updated: 2026-02-05 (HST)
+> Last updated: 2026-02-12 (HST)
 > Scope: Codex **App for macOS** automation registry (`~/.codex/automations`)
 
 ## Human Summary
@@ -79,4 +79,16 @@ done
 
 ```bash
 scripts/ops/codex_app_schedule_status.sh
+```
+
+To enforce minute fan-out limits in automation checks:
+
+```bash
+scripts/ops/codex_app_schedule_status.sh --fail-on-collision --max-per-minute 5
+```
+
+## Quick Preflight Command
+
+```bash
+make automation-preflight
 ```

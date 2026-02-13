@@ -37,6 +37,7 @@ from .base import (
     ConstraintViolation,
     HardConstraint,
     SchedulingContext,
+    SoftConstraint,
 )
 
 logger = logging.getLogger(__name__)
@@ -479,7 +480,7 @@ class PostFMITRecoveryConstraint(HardConstraint):
         context: SchedulingContext,
     ) -> None:
         """Block post-FMIT Friday in CP-SAT model."""
-        template_vars = variables.get("template_assignments", {})
+        template_vars = variables.get("faculty_template_assignments", {})
         call_vars = variables.get("call_assignments", {})
 
         fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
@@ -630,26 +631,29 @@ class PostFMITRecoveryConstraint(HardConstraint):
         return _identify_fmit_weeks_from_context(context)
 
 
-class PostFMITSundayBlockingConstraint(HardConstraint):
+class PostFMITSundayBlockingConstraint(SoftConstraint):
     """
-    Blocks Sunday call for faculty immediately after FMIT week.
+    Penalizes Sunday call for faculty immediately after FMIT week.
 
     FMIT week ends Thursday. Faculty gets:
     - Friday: Recovery day (already blocked by PostFMITRecoveryConstraint)
     - Saturday: Normal availability
-    - Sunday: BLOCKED from overnight call (this constraint)
+    - Sunday: PENALIZED for overnight call (this constraint)
 
     Rationale: Even after Friday recovery, Sunday call is too soon after
-    the demanding FMIT week. This prevents burnout and ensures adequate rest.
+    the demanding FMIT week. This discourages burnout and encourages rest.
+    Converted from hard to soft constraint to prevent INFEASIBLE when the
+    call-eligible pool is thin (e.g., multiple FMIT weeks overlapping).
 
-    Timeline: Thu FMIT ends → Fri PC (blocked) → Sat OK → Sun BLOCKED for call
+    Timeline: Thu FMIT ends → Fri PC (blocked) → Sat OK → Sun penalized for call
     """
 
-    def __init__(self) -> None:
+    def __init__(self, weight: float = 80.0) -> None:
         """Initialize post-FMIT Sunday blocking constraint."""
         super().__init__(
             name="PostFMITSundayBlocking",
             constraint_type=ConstraintType.CALL,
+            weight=weight,
             priority=ConstraintPriority.HIGH,
         )
 
@@ -659,7 +663,7 @@ class PostFMITSundayBlockingConstraint(HardConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Block Sunday call after FMIT week in CP-SAT model."""
+        """Penalize Sunday call after FMIT week in CP-SAT model."""
         call_vars = variables.get("call_assignments", {})
         if not call_vars:
             return
@@ -667,6 +671,8 @@ class PostFMITSundayBlockingConstraint(HardConstraint):
         fmit_weeks_by_faculty = self._identify_fmit_weeks(context)
         if not fmit_weeks_by_faculty:
             return
+
+        soft_objectives = variables.setdefault("soft_objectives", [])
 
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
             call_i = context.call_eligible_faculty_idx.get(faculty_id)
@@ -681,7 +687,10 @@ class PostFMITSundayBlockingConstraint(HardConstraint):
                     if block.date == blocked_sunday:
                         b_i = context.block_idx.get(block.id)
                         if b_i is not None and (call_i, b_i, "overnight") in call_vars:
-                            model.Add(call_vars[call_i, b_i, "overnight"] == 0)
+                            # Soft penalty: penalize assigning call on post-FMIT Sunday
+                            soft_objectives.append(
+                                (int(self.weight), call_vars[call_i, b_i, "overnight"])
+                            )
 
     def add_to_pulp(
         self,
@@ -689,7 +698,7 @@ class PostFMITSundayBlockingConstraint(HardConstraint):
         variables: dict[str, Any],
         context: SchedulingContext,
     ) -> None:
-        """Block Sunday call after FMIT week in PuLP model."""
+        """Penalize Sunday call after FMIT week in PuLP model."""
         call_vars = variables.get("call_assignments", {})
         if not call_vars:
             return
@@ -698,7 +707,10 @@ class PostFMITSundayBlockingConstraint(HardConstraint):
         if not fmit_weeks_by_faculty:
             return
 
-        constraint_count = 0
+        # For PuLP, add penalty to objective function
+        import pulp
+
+        penalty_terms = []
         for faculty_id, fmit_weeks in fmit_weeks_by_faculty.items():
             call_i = context.call_eligible_faculty_idx.get(faculty_id)
             if call_i is None:
@@ -711,11 +723,12 @@ class PostFMITSundayBlockingConstraint(HardConstraint):
                     if block.date == blocked_sunday:
                         b_i = context.block_idx.get(block.id)
                         if b_i is not None and (call_i, b_i, "overnight") in call_vars:
-                            model += (
-                                call_vars[call_i, b_i, "overnight"] == 0,
-                                f"post_fmit_no_sunday_{call_i}_{constraint_count}",
+                            penalty_terms.append(
+                                int(self.weight) * call_vars[call_i, b_i, "overnight"]
                             )
-                            constraint_count += 1
+
+        if penalty_terms:
+            model += pulp.lpSum(penalty_terms), "post_fmit_sunday_penalty"
 
     def validate(
         self,

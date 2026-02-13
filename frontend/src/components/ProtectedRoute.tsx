@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Loader2, ShieldX } from 'lucide-react'
@@ -16,23 +16,32 @@ interface ProtectedRouteProps {
  * - If not authenticated, redirects to /login
  * - If requireAdmin and user is not admin, shows forbidden message
  * - Shows loading spinner while checking auth state
+ *
+ * Uses isMounted guard to prevent hydration mismatch: SSR and initial
+ * client render both show the loader, so React's event delegation stays
+ * in sync when children mount after auth resolves.
  */
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth()
   const router = useRouter()
+  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
-    // Wait for auth check to complete
-    if (isLoading) return
+    setIsMounted(true)
+  }, [])
+
+  useEffect(() => {
+    // Wait for mount and auth check to complete
+    if (!isMounted || isLoading) return
 
     // Redirect to login if not authenticated
     if (!isAuthenticated) {
       router.push('/login')
     }
-  }, [isAuthenticated, isLoading, router])
+  }, [isAuthenticated, isLoading, router, isMounted])
 
-  // Show loading spinner while checking auth
-  if (isLoading) {
+  // Show loading spinner during SSR, hydration, or auth check
+  if (!isMounted || isLoading) {
     return (
       <div
         className="flex flex-col items-center justify-center min-h-[60vh]"

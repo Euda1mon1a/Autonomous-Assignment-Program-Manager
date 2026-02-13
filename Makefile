@@ -1,7 +1,7 @@
 # Makefile for Residency Scheduler
 # Unified command interface for development tasks
 
-.PHONY: help dev-start dev-stop local-start local-start-build local-stop local-status local-logs local-mlx test lint build clean install health db-migrate db-reset native-start native-start-mlx native-stop native-stop-all native-status native-logs native-restart native-bootstrap
+.PHONY: help dev-start dev-stop local-start local-start-build local-stop local-status local-logs local-mlx test lint build clean install health db-migrate db-reset native-start native-start-mlx native-stop native-stop-all native-status native-logs native-restart native-bootstrap automation-preflight
 
 # Default target
 help:
@@ -54,6 +54,7 @@ help:
 	@echo ""
 	@echo "Utilities:"
 	@echo "  health          Check health of all services"
+	@echo "  automation-preflight  Run quick full-stack checks for 0100 automations"
 	@echo "  clean           Remove build artifacts and caches"
 	@echo "  install         Install all dependencies"
 
@@ -208,6 +209,17 @@ health:
 	@echo ""
 	@echo "Redis:"
 	@redis-cli ping 2>/dev/null && echo "  Connected" || echo "  Not running"
+
+automation-preflight:
+	@echo "=== 0100 Automation Preflight ==="
+	@stack_rc=0; codex_rc=0; \
+	python3 scripts/ops/stack_audit.py --quick --no-report || stack_rc=$$?; \
+	./scripts/ops/codex_daily_health.sh --skip-scans || codex_rc=$$?; \
+	if [ $$stack_rc -ne 0 ] || [ $$codex_rc -ne 0 ]; then \
+		echo ""; \
+		echo "Preflight detected issues (stack_audit=$$stack_rc, codex_daily_health=$$codex_rc)."; \
+		exit 1; \
+	fi
 
 clean:
 	@echo "Cleaning build artifacts..."

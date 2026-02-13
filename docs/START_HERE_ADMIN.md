@@ -22,8 +22,8 @@ This guide helps you understand your responsibilities and find critical document
 | 1 | [Incident Response Playbook](playbooks/INCIDENT_RESPONSE_PLAYBOOK.md) | Emergency procedures |
 | 2 | [System Maintenance Playbook](playbooks/SYSTEM_MAINTENANCE_PLAYBOOK.md) | Regular maintenance |
 | 3 | [Backup & Recovery](admin-manual/backup.md) | Data protection |
-| 4 | [Quick Reference](operations/QUICK_REFERENCE.md) | Common commands |
-| 5 | [Security Guide](security/README.md) | Security policies |
+| 4 | [Quick Reference](QUICK_REFERENCE.md) | Common commands |
+| 5 | [Data Security Policy](security/DATA_SECURITY_POLICY.md) | Security policies |
 
 ---
 
@@ -58,7 +58,7 @@ docker-compose logs --tail=100 backend | grep -i error
 | Task | How To | When |
 |------|--------|------|
 | Review access logs | [Audit Guide](security/RBAC_AUDIT.md) | Monday |
-| Check certificate expiry | [Security Checklist](security/deployment-checklist.md) | Wednesday |
+| Check certificate expiry | [Security Checklist](security/MCP_PRODUCTION_SECURITY_CHECKLIST.md) | Wednesday |
 | Verify backup integrity | [Backup Testing](admin-manual/backup.md#testing) | Friday |
 | Review system metrics | [Monitoring Guide](operations/metrics.md) | Friday |
 
@@ -70,7 +70,7 @@ docker-compose logs --tail=100 backend | grep -i error
 |------|--------|------|
 | User access audit | [RBAC Audit](security/RBAC_AUDIT.md) | 1st week |
 | Security patch review | [Security Scanning](operations/SECURITY_SCANNING.md) | 2nd week |
-| Performance review | [Load Testing](operations/load-testing.md) | 3rd week |
+| Performance review | [Load Testing](operations/LOAD_TESTING.md) | 3rd week |
 | Disaster recovery drill | [DR Playbook](admin-manual/backup.md#disaster-recovery) | 4th week |
 
 ---
@@ -198,7 +198,7 @@ Full architecture: [Architecture Overview](architecture/overview.md)
 - Personal data: Privacy Act protected
 - Compliance reports: Internal use only
 
-Full guide: [Security Guide](security/README.md)
+Full guide: [Security Policy](security/DATA_SECURITY_POLICY.md)
 
 ---
 
@@ -206,9 +206,9 @@ Full guide: [Security Guide](security/README.md)
 
 ### Essential Documentation
 - [Admin Manual](admin-manual/README.md) - Full administration guide
-- [Operations Guide](operations/README.md) - Day-to-day operations
-- [Security Documentation](security/README.md) - Security policies
-- [Database Guide](database/README.md) - Database management
+- [Local Runbook](operations/local-runbook.md) - Day-to-day operations
+- [Security Policy](security/DATA_SECURITY_POLICY.md) - Security policies
+- [Database Utilities Guide](database/DATABASE_UTILITIES_GUIDE.md) - Database management
 
 ### Playbooks
 - [Incident Response](playbooks/INCIDENT_RESPONSE_PLAYBOOK.md)
