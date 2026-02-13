@@ -595,12 +595,11 @@ async def invalidate_cache(cache_key: str) -> None:
         cache_key: Cache key to invalidate
     """
     try:
-        from app.core.cache import cache_manager
+        from app.core.cache import get_cache
 
-        await cache_manager.delete(cache_key)
+        cache = get_cache("default")
+        await cache.delete(cache_key)
         logger.debug(f"[CACHE] Invalidated: {cache_key}")
-    except ImportError:
-        logger.debug(f"[CACHE] Cache manager not available: {cache_key}")
     except Exception as e:
         logger.warning(f"[CACHE] Failed to invalidate {cache_key}: {e}")
 

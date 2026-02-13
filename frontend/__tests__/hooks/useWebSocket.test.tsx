@@ -198,7 +198,9 @@ describe('useWebSocket', () => {
   })
 
   afterEach(() => {
-    jest.runOnlyPendingTimers()
+    act(() => {
+      jest.clearAllTimers()
+    })
     jest.useRealTimers()
   })
 
@@ -1079,7 +1081,9 @@ describe('useScheduleWebSocket', () => {
   })
 
   afterEach(() => {
-    jest.runOnlyPendingTimers()
+    act(() => {
+      jest.clearAllTimers()
+    })
     jest.useRealTimers()
   })
 
@@ -1232,7 +1236,9 @@ describe('usePersonWebSocket', () => {
   })
 
   afterEach(() => {
-    jest.runOnlyPendingTimers()
+    act(() => {
+      jest.clearAllTimers()
+    })
     jest.useRealTimers()
   })
 

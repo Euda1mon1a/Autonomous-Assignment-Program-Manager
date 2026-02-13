@@ -252,7 +252,6 @@ function PatternGrid({
   pattern,
   activities,
   selectedWeek,
-  selectedActivityId,
   isInpatient,
   readOnly,
   onSlotClick,
@@ -261,7 +260,6 @@ function PatternGrid({
   pattern: WeeklyPatternGrid;
   activities: Activity[];
   selectedWeek: WeekNumber;
-  selectedActivityId: string | null;
   isInpatient: boolean;
   readOnly?: boolean;
   onSlotClick: (day: DayOfWeek, time: WeeklyPatternTimeOfDay) => void;
@@ -294,7 +292,9 @@ function PatternGrid({
                   );
                 }
 
-                const activityId = (slot as WeeklyPatternSlot & { activity_id?: string }).activity_id;
+                const activityId = (
+                  slot as WeeklyPatternSlot & Record<string, string | undefined>
+                )['activity_id'];
                 const activity = activityId
                   ? activities.find((a) => a.id === activityId) ?? null
                   : slot.activityType
@@ -836,7 +836,6 @@ export function RotationWeeklyGrid({
             pattern={pattern}
             activities={activities}
             selectedWeek={selectedWeek}
-            selectedActivityId={selectedActivityId}
             isInpatient={isInpatient}
             readOnly={readOnly}
             onSlotClick={handleSlotClick}

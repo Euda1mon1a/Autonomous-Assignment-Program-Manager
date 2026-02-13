@@ -230,7 +230,9 @@ describe('Toast', () => {
     });
 
     afterEach(() => {
-      jest.runOnlyPendingTimers();
+      act(() => {
+        jest.clearAllTimers();
+      });
       jest.useRealTimers();
     });
 

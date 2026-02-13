@@ -144,6 +144,21 @@ function renderWithProviders(component: React.ReactElement) {
   );
 }
 
+const FIXED_START_DATE = new Date("2024-01-15T00:00:00.000Z");
+const FIXED_END_DATE = new Date("2024-01-29T00:00:00.000Z");
+
+function renderVoxelScheduleView(
+  props: Partial<React.ComponentProps<typeof VoxelScheduleView>> = {}
+) {
+  return renderWithProviders(
+    <VoxelScheduleView
+      startDate={FIXED_START_DATE}
+      endDate={FIXED_END_DATE}
+      {...props}
+    />
+  );
+}
+
 describe("VoxelScheduleView", () => {
   beforeEach(() => {
     mockFetch.mockClear();
@@ -153,7 +168,7 @@ describe("VoxelScheduleView", () => {
   it("shows loading state initially", () => {
     mockFetch.mockImplementation(() => new Promise(() => {})); // Never resolves
 
-    renderWithProviders(<VoxelScheduleView />);
+    renderVoxelScheduleView();
 
     expect(screen.getByText(/loading 3d schedule/i)).toBeInTheDocument();
   });
@@ -164,7 +179,7 @@ describe("VoxelScheduleView", () => {
       json: () => Promise.resolve(mockVoxelGridData),
     });
 
-    renderWithProviders(<VoxelScheduleView />);
+    renderVoxelScheduleView();
 
     await waitFor(() => {
       expect(screen.getByText("3D Schedule View")).toBeInTheDocument();
@@ -181,7 +196,7 @@ describe("VoxelScheduleView", () => {
       json: () => Promise.resolve(mockVoxelGridData),
     });
 
-    renderWithProviders(<VoxelScheduleView />);
+    renderVoxelScheduleView();
 
     await waitFor(() => {
       expect(screen.getByText("Drag: Pan view")).toBeInTheDocument();
@@ -196,7 +211,7 @@ describe("VoxelScheduleView", () => {
       json: () => Promise.resolve(mockVoxelGridData),
     });
 
-    renderWithProviders(<VoxelScheduleView />);
+    renderVoxelScheduleView();
 
     await waitFor(() => {
       expect(screen.getByText("Activity Types")).toBeInTheDocument();
@@ -211,7 +226,7 @@ describe("VoxelScheduleView", () => {
       status: 500,
     });
 
-    renderWithProviders(<VoxelScheduleView />);
+    renderVoxelScheduleView();
 
     await waitFor(() => {
       expect(screen.getByText(/error loading voxel data/i)).toBeInTheDocument();
@@ -224,7 +239,7 @@ describe("VoxelScheduleView", () => {
       json: () => Promise.resolve(mockVoxelGridData),
     });
 
-    renderWithProviders(<VoxelScheduleView />);
+    renderVoxelScheduleView();
 
     await waitFor(() => {
       expect(screen.getByText(/X: Time | Y: People | Z: Activity Type/i)).toBeInTheDocument();
@@ -261,9 +276,7 @@ describe("VoxelScheduleView", () => {
       json: () => Promise.resolve(mockVoxelGridData),
     });
 
-    renderWithProviders(
-      <VoxelScheduleView activityTypes={["clinic", "inpatient"]} />
-    );
+    renderVoxelScheduleView({ activityTypes: ["clinic", "inpatient"] });
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalled();
@@ -280,7 +293,7 @@ describe("VoxelScheduleView", () => {
       json: () => Promise.resolve(mockVoxelGridData),
     });
 
-    renderWithProviders(<VoxelScheduleView />);
+    renderVoxelScheduleView();
 
     await waitFor(() => {
       expect(screen.getByText("3D Schedule View")).toBeInTheDocument();
@@ -307,7 +320,7 @@ describe("VoxelScheduleView", () => {
       json: () => Promise.resolve(mockVoxelGridData),
     });
 
-    renderWithProviders(<VoxelScheduleView />);
+    renderVoxelScheduleView();
 
     await waitFor(() => {
       expect(screen.getByText("3D Schedule View")).toBeInTheDocument();
@@ -333,7 +346,7 @@ describe("VoxelScheduleView", () => {
 
     const onVoxelClick = jest.fn();
 
-    renderWithProviders(<VoxelScheduleView onVoxelClick={onVoxelClick} />);
+    renderVoxelScheduleView({ onVoxelClick });
 
     await waitFor(() => {
       expect(screen.getByText("3D Schedule View")).toBeInTheDocument();
@@ -393,7 +406,7 @@ describe("VoxelScheduleView", () => {
       json: () => Promise.resolve(dataWithConflicts),
     });
 
-    renderWithProviders(<VoxelScheduleView showConflictsOnly={true} />);
+    renderVoxelScheduleView({ showConflictsOnly: true });
 
     await waitFor(() => {
       expect(screen.getByText("3D Schedule View")).toBeInTheDocument();
@@ -411,7 +424,7 @@ describe("VoxelScheduleView isometric projection", () => {
       json: () => Promise.resolve(mockVoxelGridData),
     });
 
-    renderWithProviders(<VoxelScheduleView />);
+    renderVoxelScheduleView();
 
     await waitFor(() => {
       expect(screen.getByText("3D Schedule View")).toBeInTheDocument();
@@ -427,7 +440,7 @@ describe("VoxelScheduleView isometric projection", () => {
       json: () => Promise.resolve(mockVoxelGridData),
     });
 
-    renderWithProviders(<VoxelScheduleView />);
+    renderVoxelScheduleView();
 
     await waitFor(() => {
       expect(screen.getByText("3D Schedule View")).toBeInTheDocument();
