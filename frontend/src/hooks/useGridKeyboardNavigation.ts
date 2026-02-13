@@ -31,6 +31,7 @@ export interface UseGridKeyboardNavigationReturn {
   focusedCell: GridPosition | null
   /** Props to spread on the grid container (table element) */
   gridProps: {
+    ref: React.RefCallback<HTMLElement>
     onKeyDown: (e: React.KeyboardEvent) => void
     role: 'grid'
   }
@@ -70,9 +71,10 @@ export function useGridKeyboardNavigation({
       const clampedCol = Math.max(0, Math.min(col, colCount - 1))
       setFocusedCell({ row: clampedRow, col: clampedCol })
 
-      // Focus the DOM element
+      // Focus the DOM element (scoped to this grid container)
       requestAnimationFrame(() => {
-        const cell = document.querySelector(
+        const container = gridRef.current ?? document
+        const cell = container.querySelector(
           `[data-row="${clampedRow}"][data-col="${clampedCol}"]`
         ) as HTMLElement | null
         cell?.focus()
@@ -180,6 +182,9 @@ export function useGridKeyboardNavigation({
   )
 
   const gridProps = {
+    ref: (el: HTMLElement | null) => {
+      gridRef.current = el
+    },
     onKeyDown: handleKeyDown,
     role: 'grid' as const,
   }
