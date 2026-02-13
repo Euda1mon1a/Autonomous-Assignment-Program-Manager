@@ -49,7 +49,9 @@ from app.models.block_assignment import BlockAssignment
 from app.models.call_assignment import CallAssignment
 from app.models.faculty_schedule_preference import FacultySchedulePreference
 from app.models.person import FacultyRole, Person
+from app.models.resident_weekly_requirement import ResidentWeeklyRequirement
 from app.models.rotation_activity_requirement import RotationActivityRequirement
+from app.models.rotation_halfday_requirement import RotationHalfDayRequirement
 from app.models.rotation_template import RotationTemplate
 from app.models.weekly_pattern import WeeklyPattern
 from app.models.schedule_run import ScheduleRun
@@ -292,7 +294,9 @@ class SchedulingEngine:
             self._build_availability_matrix()
 
             # Step 3: Get residents, faculty, and templates (moved earlier)
-            residents = self._get_residents(pgy_levels, block_number, academic_year)
+            residents = self._get_residents(
+                pgy_levels, block_number, academic_year, create_draft=create_draft
+            )
             templates = self._get_rotation_templates(rotation_template_ids)
             faculty = self._get_faculty()
 
@@ -356,6 +360,8 @@ class SchedulingEngine:
                 templates,
                 include_resilience=check_resilience,
                 existing_assignments=preserved_assignments,
+                block_number=block_number,
+                academic_year=academic_year,
             )
 
             # Half-day scheduling uses many residents per block; disable one-person cap.
@@ -486,99 +492,104 @@ class SchedulingEngine:
             # Step 5.5: Delete existing assignments (except preserved ones)
             # This happens AFTER successful solve to prevent data loss on solver failure
             # SKIP in draft mode - draft staging should not modify live schedule
-            if not create_draft:
-                self._delete_existing_assignments(preserve_ids)
-                self._delete_existing_half_day_assignments()
+            # Wrap in no_autoflush to prevent crash when queries trigger flush
+            # on pending objects from _create_initial_run()
+            with self.db.no_autoflush:
+                if not create_draft:
+                    self._delete_existing_assignments(preserve_ids)
+                    self._delete_existing_half_day_assignments()
 
-            # Step 6: Convert solver results to assignments
-            locked_slots = self._get_blocking_half_day_slots()
-            blocks_by_id = {b.id: b for b in blocks}
-            self._create_assignments_from_result(
-                solver_result,
-                residents,
-                templates,
-                cast(UUID, run.id),
-                existing_assignments=preserved_assignments,
-                locked_half_day_slots=locked_slots,
-                blocks_by_id=blocks_by_id,
-            )
-            if not create_draft:
-                for assignment in self.assignments:
-                    self.db.add(assignment)
-                self.db.flush()
-                self._persist_solver_assignments_to_half_day(self.assignments, blocks)
-                # Step 6.1: Persist faculty half-day assignments from global solver
-                # The unified CP-SAT solver now generates all 56 faculty slots with activities
-                # (C, AT, PCAT, DO, OFF). This replaces the legacy gap-filling approach.
-                self._persist_faculty_half_day_from_solver(solver_result, blocks)
-
-            # Step 6.5: Create call assignments from solver results
-            # Creates CallAssignment records for overnight call (Sun-Thurs)
-            # SKIP in draft mode - draft staging should not modify live CallAssignment table
-            call_assignments = []
-            if not create_draft:
-                call_assignments = self._create_call_assignments_from_result(
-                    solver_result, context
+                # Step 6: Convert solver results to assignments
+                locked_slots = self._get_blocking_half_day_slots()
+                blocks_by_id = {b.id: b for b in blocks}
+                self._create_assignments_from_result(
+                    solver_result,
+                    residents,
+                    templates,
+                    cast(UUID, run.id),
+                    existing_assignments=preserved_assignments,
+                    locked_half_day_slots=locked_slots,
+                    blocks_by_id=blocks_by_id,
                 )
+                if not create_draft:
+                    for assignment in self.assignments:
+                        self.db.add(assignment)
+                    self.db.flush()
+                    self._persist_solver_assignments_to_half_day(
+                        self.assignments, blocks
+                    )
+                    # Step 6.1: Persist faculty half-day assignments from global solver
+                    # The unified CP-SAT solver now generates all 56 faculty slots with activities
+                    # (C, AT, PCAT, DO, OFF). This replaces the legacy gap-filling approach.
+                    self._persist_faculty_half_day_from_solver(solver_result, blocks)
 
-                # Step 6.6: Sync PCAT/DO to half_day_assignments based on NEW call
-                # Creates PCAT (AM) and DO (PM) for day after call, locked as preload.
-                # NOW we have baseline AT coverage for ratio calculations.
-                if call_assignments:
-                    self._sync_call_pcat_do_to_half_day(call_assignments)
+                # Step 6.5: Create call assignments from solver results
+                # Creates CallAssignment records for overnight call (Sun-Thurs)
+                # SKIP in draft mode - draft staging should not modify live CallAssignment table
+                call_assignments = []
+                if not create_draft:
+                    call_assignments = self._create_call_assignments_from_result(
+                        solver_result, context
+                    )
 
-                    # Step 6.6.1: Validate PCAT/DO integrity (catches sync bugs)
-                    # This runs automatically after PCAT/DO sync to ensure correctness.
-                    # Can be disabled via validate_pcat_do=False once pipeline is stable.
-                    if validate_pcat_do:
-                        pcat_do_issues = self._validate_pcat_do_integrity(
-                            call_assignments
-                        )
-                        if pcat_do_issues:
-                            logger.error(
-                                f"PCAT/DO integrity check FAILED: "
-                                f"{len(pcat_do_issues)} issues detected"
+                    # Step 6.6: Sync PCAT/DO to half_day_assignments based on NEW call
+                    # Creates PCAT (AM) and DO (PM) for day after call, locked as preload.
+                    # NOW we have baseline AT coverage for ratio calculations.
+                    if call_assignments:
+                        self._sync_call_pcat_do_to_half_day(call_assignments)
+
+                        # Step 6.6.1: Validate PCAT/DO integrity (catches sync bugs)
+                        # This runs automatically after PCAT/DO sync to ensure correctness.
+                        # Can be disabled via validate_pcat_do=False once pipeline is stable.
+                        if validate_pcat_do:
+                            pcat_do_issues = self._validate_pcat_do_integrity(
+                                call_assignments
                             )
-                            for issue in pcat_do_issues:
-                                logger.error(f"  - {issue}")
-
-                            # Fail generation - PCAT is critical for AT coverage (DO is post-call rest)
-                            # ROLLBACK all schedule changes to avoid partial state
-                            # (CallAssignments, HalfDayAssignments written so far)
-                            # Note: run record was committed in _create_initial_run,
-                            # so it survives rollback - we just need to update it.
-                            run_id = run.id  # Save before rollback
-                            elapsed = time.time() - start_time
-                            self.db.rollback()
-
-                            # Re-fetch run record (detached after rollback) and update status
-                            # The run was committed separately in _create_initial_run
-                            existing_run = self.db.get(ScheduleRun, run_id)
-                            if existing_run:
-                                self._update_run_status(
-                                    existing_run, "failed", 0, 0, elapsed
+                            if pcat_do_issues:
+                                logger.error(
+                                    f"PCAT/DO integrity check FAILED: "
+                                    f"{len(pcat_do_issues)} issues detected"
                                 )
-                                self.db.commit()
+                                for issue in pcat_do_issues:
+                                    logger.error(f"  - {issue}")
 
-                            return {
-                                "status": "failed",
-                                "message": f"PCAT/DO integrity check failed: {len(pcat_do_issues)} issues (rolled back)",
-                                "total_assigned": 0,
-                                "total_blocks": len(blocks),
-                                "validation": self._empty_validation(),
-                                "run_id": run_id,
-                                "pcat_do_issues": pcat_do_issues,
-                            }
-                        else:
-                            logger.info(
-                                f"PCAT/DO integrity check passed "
-                                f"({len(call_assignments)} calls verified)"
-                            )
-            elif solver_result.call_assignments:
-                logger.info(
-                    f"Skipping {len(solver_result.call_assignments)} call assignments "
-                    f"in draft mode (would modify live CallAssignment table)"
-                )
+                                # Fail generation - PCAT is critical for AT coverage (DO is post-call rest)
+                                # ROLLBACK all schedule changes to avoid partial state
+                                # (CallAssignments, HalfDayAssignments written so far)
+                                # Note: run record was committed in _create_initial_run,
+                                # so it survives rollback - we just need to update it.
+                                run_id = run.id  # Save before rollback
+                                elapsed = time.time() - start_time
+                                self.db.rollback()
+
+                                # Re-fetch run record (detached after rollback) and update status
+                                # The run was committed separately in _create_initial_run
+                                existing_run = self.db.get(ScheduleRun, run_id)
+                                if existing_run:
+                                    self._update_run_status(
+                                        existing_run, "failed", 0, 0, elapsed
+                                    )
+                                    self.db.commit()
+
+                                return {
+                                    "status": "failed",
+                                    "message": f"PCAT/DO integrity check failed: {len(pcat_do_issues)} issues (rolled back)",
+                                    "total_assigned": 0,
+                                    "total_blocks": len(blocks),
+                                    "validation": self._empty_validation(),
+                                    "run_id": run_id,
+                                    "pcat_do_issues": pcat_do_issues,
+                                }
+                            else:
+                                logger.info(
+                                    f"PCAT/DO integrity check passed "
+                                    f"({len(call_assignments)} calls verified)"
+                                )
+                elif solver_result.call_assignments:
+                    logger.info(
+                        f"Skipping {len(solver_result.call_assignments)} call assignments "
+                        f"in draft mode (would modify live CallAssignment table)"
+                    )
 
             # =================================================================
             # CORRECTED: Activity solver runs AFTER call
@@ -877,6 +888,8 @@ class SchedulingEngine:
         templates: list[RotationTemplate],
         include_resilience: bool = True,
         existing_assignments: list[Assignment] | None = None,
+        block_number: int | None = None,
+        academic_year: int | None = None,
     ) -> SchedulingContext:
         """
         Build scheduling context from database objects.
@@ -913,6 +926,17 @@ class SchedulingEngine:
             preassigned_work_days,
             preassigned_off_days,
         ) = self._get_preassigned_work_maps(blocks, resident_ids)
+
+        # Load resident → rotation template mapping from BlockAssignment
+        # Only apply when block context is explicit; without it the query
+        # pulls all historical assignments and incorrectly restricts templates.
+        if block_number is not None and academic_year is not None:
+            resident_template_map = self._load_resident_template_map(
+                residents, block_number=block_number, academic_year=academic_year
+            )
+        else:
+            resident_template_map: dict[UUID, set[UUID]] = {}
+
         context = SchedulingContext(
             residents=residents,
             faculty=faculty,
@@ -931,6 +955,7 @@ class SchedulingEngine:
             activity_requirements=activity_requirements,
             protected_patterns=protected_patterns,
             faculty_schedule_preferences=faculty_preferences,
+            resident_template_map=resident_template_map,
         )
 
         # Enable activity requirement constraint if we have data
@@ -948,6 +973,29 @@ class SchedulingEngine:
             logger.debug(
                 f"Loaded {total_patterns} protected patterns for "
                 f"{len(protected_patterns)} templates"
+            )
+
+        # Load and enable weekly/halfday requirements if data exists
+        weekly_reqs = self._load_weekly_requirements(template_ids)
+        if weekly_reqs and self.constraint_manager:
+            for c in self.constraint_manager.constraints:
+                if c.name == "ResidentWeeklyClinic":
+                    c._weekly_requirements = weekly_reqs
+                    break
+            self.constraint_manager.enable("ResidentWeeklyClinic")
+            logger.debug(
+                f"Enabled ResidentWeeklyClinic with {len(weekly_reqs)} requirements"
+            )
+
+        halfday_reqs = self._load_halfday_requirements(template_ids)
+        if halfday_reqs and self.constraint_manager:
+            for c in self.constraint_manager.constraints:
+                if c.name == "HalfDayRequirement":
+                    c._requirements = halfday_reqs
+                    break
+            self.constraint_manager.enable("HalfDayRequirement")
+            logger.debug(
+                f"Enabled HalfDayRequirement with {len(halfday_reqs)} requirements"
             )
 
         # Populate resilience data if available and requested
@@ -1808,31 +1856,104 @@ class SchedulingEngine:
         pgy_levels: list[int] | None = None,
         block_number: int | None = None,
         academic_year: int | None = None,
+        create_draft: bool = False,
     ) -> list[Person]:
-        """Get residents, optionally filtered by PGY level."""
+        """Get residents assigned to outpatient rotations for the block.
+
+        Only outpatient residents need solver decision variables.
+        Inpatient and off-site residents are fully handled by preloads.
+        In draft mode, include ALL residents since preloads are not synced.
+        """
         query = self.db.query(Person).filter(Person.type == "resident")
 
         if pgy_levels:
             query = query.filter(Person.pgy_level.in_(pgy_levels))
 
+        if create_draft:
+            # Draft mode skips preload sync, so include all block residents
+            # to avoid an incomplete draft missing inpatient residents.
+            if block_number is not None and academic_year is not None:
+                all_block_ids = (
+                    self.db.query(BlockAssignment.resident_id)
+                    .filter(
+                        BlockAssignment.block_number == block_number,
+                        BlockAssignment.academic_year == academic_year,
+                    )
+                    .distinct()
+                    .all()
+                )
+                all_ids = [row[0] for row in all_block_ids]
+                if all_ids:
+                    query = query.filter(Person.id.in_(all_ids))
+                else:
+                    return []
+            return query.all()
+
         if block_number is not None and academic_year is not None:
-            resident_ids = (
+            # Only include residents on outpatient rotations — inpatient/off-site
+            # residents are fully handled by preloads and the activity solver.
+            # Check BOTH primary and secondary rotations for split-block residents.
+            primary_outpatient = (
                 self.db.query(BlockAssignment.resident_id)
+                .join(
+                    RotationTemplate,
+                    BlockAssignment.rotation_template_id == RotationTemplate.id,
+                )
                 .filter(
                     BlockAssignment.block_number == block_number,
                     BlockAssignment.academic_year == academic_year,
+                    RotationTemplate.rotation_type == "outpatient",
                 )
-                .distinct()
-                .all()
             )
-            resident_ids = [row[0] for row in resident_ids]
-            if not resident_ids:
-                logger.error(
-                    "No BlockAssignments found for block "
-                    f"{block_number} AY {academic_year}; refusing to schedule all residents"
+            secondary_outpatient = (
+                self.db.query(BlockAssignment.resident_id)
+                .join(
+                    RotationTemplate,
+                    BlockAssignment.secondary_rotation_template_id
+                    == RotationTemplate.id,
                 )
-                return []
-            query = query.filter(Person.id.in_(resident_ids))
+                .filter(
+                    BlockAssignment.block_number == block_number,
+                    BlockAssignment.academic_year == academic_year,
+                    RotationTemplate.rotation_type == "outpatient",
+                )
+            )
+            outpatient_resident_ids = (
+                primary_outpatient.union(secondary_outpatient).distinct().all()
+            )
+            outpatient_ids = [row[0] for row in outpatient_resident_ids]
+            if not outpatient_ids:
+                # Fall back to all residents if no outpatient found
+                all_ids = (
+                    self.db.query(BlockAssignment.resident_id)
+                    .filter(
+                        BlockAssignment.block_number == block_number,
+                        BlockAssignment.academic_year == academic_year,
+                    )
+                    .distinct()
+                    .all()
+                )
+                all_ids = [row[0] for row in all_ids]
+                if not all_ids:
+                    logger.error(
+                        "No BlockAssignments found for block "
+                        f"{block_number} AY {academic_year}; refusing to schedule all residents"
+                    )
+                    return []
+                logger.warning(
+                    f"No outpatient residents for block {block_number}; "
+                    f"using all {len(all_ids)} residents"
+                )
+                query = query.filter(Person.id.in_(all_ids))
+            else:
+                logger.info(
+                    f"Filtered to {len(outpatient_ids)} outpatient residents "
+                    f"for block {block_number}"
+                )
+                query = query.filter(Person.id.in_(outpatient_ids))
+        else:
+            # No block context — return all residents
+            pass
 
         return query.order_by(Person.pgy_level, Person.name).all()
 
@@ -2110,6 +2231,53 @@ class SchedulingEngine:
             .all()
         )
 
+    def _load_resident_template_map(
+        self,
+        residents: list[Person],
+        block_number: int | None = None,
+        academic_year: int | None = None,
+    ) -> dict[UUID, set[UUID]]:
+        """Load rotation template assignments from block_assignments table.
+
+        Maps each resident to their assigned rotation template(s) for the given
+        academic block. Split-block residents may have both a primary and
+        secondary rotation template. Used by the solver to restrict decision
+        variables to only the resident's assigned rotation(s).
+
+        Args:
+            residents: List of resident Person objects to look up.
+            block_number: Academic block number (1-13).
+            academic_year: Academic year (e.g. 2025 for AY 2025-2026).
+
+        Returns:
+            Dict mapping resident_id -> set of rotation_template_ids.
+        """
+        from app.models.block_assignment import BlockAssignment
+
+        resident_ids = [cast(UUID, r.id) for r in residents]
+        query = self.db.query(BlockAssignment).filter(
+            BlockAssignment.resident_id.in_(resident_ids),
+        )
+        if block_number is not None:
+            query = query.filter(BlockAssignment.block_number == block_number)
+        if academic_year is not None:
+            query = query.filter(BlockAssignment.academic_year == academic_year)
+
+        result: dict[UUID, set[UUID]] = {}
+        for ba in query.all():
+            rid = cast(UUID, ba.resident_id)
+            if ba.rotation_template_id:
+                result.setdefault(rid, set()).add(cast(UUID, ba.rotation_template_id))
+            if ba.secondary_rotation_template_id:
+                result.setdefault(rid, set()).add(
+                    cast(UUID, ba.secondary_rotation_template_id)
+                )
+        logger.debug(
+            f"Loaded resident_template_map: {len(result)} mappings "
+            f"for block {block_number}/{academic_year}"
+        )
+        return result
+
     def _load_activity_requirements(
         self, template_ids: list[UUID]
     ) -> list[RotationActivityRequirement]:
@@ -2193,6 +2361,76 @@ class SchedulingEngine:
 
         logger.debug(
             f"Loaded {len(patterns)} protected patterns for {len(result)} templates"
+        )
+        return result
+
+    def _load_weekly_requirements(
+        self, template_ids: list[UUID]
+    ) -> dict[UUID, dict[str, Any]]:
+        """
+        Load resident weekly requirements for the given rotation templates.
+
+        Returns dict mapping template_id to requirement fields needed
+        by ResidentWeeklyClinicConstraint.
+        """
+        if not template_ids:
+            return {}
+
+        rows = (
+            self.db.query(ResidentWeeklyRequirement)
+            .filter(ResidentWeeklyRequirement.rotation_template_id.in_(template_ids))
+            .all()
+        )
+
+        result: dict[UUID, dict[str, Any]] = {}
+        for req in rows:
+            tid = cast(UUID, req.rotation_template_id)
+            result[tid] = {
+                "fm_clinic_min_per_week": req.fm_clinic_min_per_week,
+                "fm_clinic_max_per_week": req.fm_clinic_max_per_week,
+                "specialty_min_per_week": req.specialty_min_per_week,
+                "specialty_max_per_week": req.specialty_max_per_week,
+                "academics_required": req.academics_required,
+                "protected_slots": req.protected_slots or {},
+                "allowed_clinic_days": req.allowed_clinic_days or [],
+            }
+
+        logger.debug(
+            f"Loaded {len(result)} weekly requirements for {len(template_ids)} templates"
+        )
+        return result
+
+    def _load_halfday_requirements(
+        self, template_ids: list[UUID]
+    ) -> dict[UUID, dict[str, Any]]:
+        """
+        Load rotation halfday requirements for the given rotation templates.
+
+        Returns dict mapping template_id to requirement fields needed
+        by HalfDayRequirementConstraint.
+        """
+        if not template_ids:
+            return {}
+
+        rows = (
+            self.db.query(RotationHalfDayRequirement)
+            .filter(RotationHalfDayRequirement.rotation_template_id.in_(template_ids))
+            .all()
+        )
+
+        result: dict[UUID, dict[str, Any]] = {}
+        for req in rows:
+            tid = cast(UUID, req.rotation_template_id)
+            result[tid] = {
+                "fm_clinic_halfdays": req.fm_clinic_halfdays,
+                "specialty_halfdays": req.specialty_halfdays,
+                "specialty_name": req.specialty_name or "",
+                "academics_halfdays": req.academics_halfdays,
+                "elective_halfdays": req.elective_halfdays or 0,
+            }
+
+        logger.debug(
+            f"Loaded {len(result)} halfday requirements for {len(template_ids)} templates"
         )
         return result
 

@@ -836,13 +836,32 @@ class CPSATSolver(BaseSolver):
         template_idx = {t.id: i for i, t in enumerate(context.templates)}
 
         locked_blocks = getattr(context, "locked_blocks", set())
+        availability = getattr(context, "availability", {}) or {}
+        resident_template_map = getattr(context, "resident_template_map", {}) or {}
+        active_template_ids = {t.id for t in context.templates}
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
+            raw_assigned = resident_template_map.get(resident.id, set())
+            # Only restrict to assigned templates that are actually active;
+            # if none match (e.g. archived template), allow all templates
+            # so the resident still gets solver variables.
+            assigned_template_ids = raw_assigned & active_template_ids
             for block in workday_blocks:
                 if (resident.id, block.id) in locked_blocks:
                     continue
+                # Also skip blocks where resident is unavailable (leave, TDY, etc.)
+                # Prevents conflict between Availability constraint and OneAssignmentPerBlock
+                block_avail = availability.get(resident.id, {}).get(block.id)
+                if block_avail and not block_avail.get("available", True):
+                    continue
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
+                    # If resident has BlockAssignment(s), only create vars for those rotations
+                    if (
+                        assigned_template_ids
+                        and template.id not in assigned_template_ids
+                    ):
+                        continue
                     t_i = template_idx[template.id]
                     x[r_i, b_i, t_i] = model.NewBoolVar(f"x_{r_i}_{b_i}_{t_i}")
 

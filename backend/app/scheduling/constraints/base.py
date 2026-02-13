@@ -258,6 +258,15 @@ class SchedulingContext:
     target_utilization: float = 0.80
 
     # =========================================================================
+    # Resident → Rotation Template Mapping (from BlockAssignment)
+    # =========================================================================
+
+    # Maps resident_id → set of rotation_template_ids from block_assignments.
+    # Split-block residents may have both primary and secondary templates.
+    # Used by solver to restrict decision variables to assigned rotation(s).
+    resident_template_map: dict[UUID, set[UUID]] = field(default_factory=dict)
+
+    # =========================================================================
     # Activity Requirements Data (for ActivityRequirementConstraint)
     # =========================================================================
 

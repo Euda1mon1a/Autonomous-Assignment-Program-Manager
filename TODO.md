@@ -20,6 +20,7 @@
 
 ## Infrastructure
 
+- [ ] Add admin status dashboard page showing native service health (Postgres, Redis, backend, frontend) — similar to Docker Desktop's single-pane view but for our native stack
 - [x] Add a /api/health/deep endpoint that checks DB connectivity, Redis connectivity, and returns version info from pyproject.toml (codex/2026-02-11)
 - [ ] Create a DB migration that adds indexes on the most-queried columns (check slow query log or EXPLAIN ANALYZE on common queries)
 

@@ -69,12 +69,10 @@ class FacultyAssignmentExpansionService:
     4. Return count of new HalfDayAssignment records created
     """
 
-    # Activities cache (loaded once)
-    _activity_cache: dict[str, Activity] = {}
-
     def __init__(self, db: Session):
         self.db = db
         self._absence_cache: dict[UUID, list[Absence]] = {}
+        self._activity_cache: dict[str, Activity] = {}
         self._existing_slots: set[str] = set()  # Keys: "person_id_date_time"
         self._holiday_slots: set[tuple[date, str]] = set()  # Keys: (date, time_of_day)
 
@@ -202,7 +200,7 @@ class FacultyAssignmentExpansionService:
             gaps.append(
                 AdjunctFacultyGap(
                     person_id=adjunct.id,
-                    display_name=adjunct.display_name or f"Faculty {adjunct.id}",
+                    display_name=adjunct.name or f"Faculty {adjunct.id}",
                     faculty_role=adjunct.faculty_role or "adjunct",
                     min_clinic_halfdays=adjunct.min_clinic_halfdays_per_week,
                     max_clinic_halfdays=adjunct.max_clinic_halfdays_per_week,
@@ -231,7 +229,7 @@ class FacultyAssignmentExpansionService:
 
     def _preload_activities(self) -> None:
         """Pre-load activity records for faculty assignments."""
-        if FacultyAssignmentExpansionService._activity_cache:
+        if self._activity_cache:
             return  # Already loaded (class-level cache)
 
         # Activities needed for faculty gap filling
@@ -252,16 +250,13 @@ class FacultyAssignmentExpansionService:
 
         stmt = select(Activity).where(Activity.code.in_(activity_codes))
         for activity in self.db.execute(stmt).scalars():
-            FacultyAssignmentExpansionService._activity_cache[activity.code] = activity
+            self._activity_cache[activity.code] = activity
 
-        logger.info(
-            f"Pre-loaded {len(FacultyAssignmentExpansionService._activity_cache)} "
-            f"faculty activities"
-        )
+        logger.info(f"Pre-loaded {len(self._activity_cache)} faculty activities")
 
         # Warn if any activities missing
         for code in activity_codes:
-            if code not in FacultyAssignmentExpansionService._activity_cache:
+            if code not in self._activity_cache:
                 logger.warning(f"Missing activity: {code}")
 
     def _preload_absences(
@@ -344,7 +339,7 @@ class FacultyAssignmentExpansionService:
 
     def _get_activity(self, code: str) -> Activity | None:
         """Get activity by code (cached)."""
-        return FacultyAssignmentExpansionService._activity_cache.get(code)
+        return self._activity_cache.get(code)
 
     def _fill_single_faculty(
         self,
@@ -430,10 +425,10 @@ class FacultyAssignmentExpansionService:
         elif is_absent:
             # LV-AM or LV-PM based on time of day
             activity_code = f"LV-{time_of_day}"
-        elif is_weekend:
-            activity_code = "W"
         elif is_holiday:
             activity_code = "HOL"
+        elif is_weekend:
+            activity_code = "W"
         else:
             # Default to admin time (gme, dfm, or sm_clinic based on faculty)
             # admin_type is stored uppercase ("GME", "DFM", "SM")

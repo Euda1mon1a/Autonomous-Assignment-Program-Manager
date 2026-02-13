@@ -16,7 +16,8 @@
 Chronological record of development sessions with completion reports and deliverables.
 
 ### Recent Sessions (Session 20+)
-- SESSION_037_DOCUMENTATION_RESTRUCTURE.md (this session)
+- SESSION_BLOCK11_CODEX_REVIEW_FIXES.md (Block 11 Codex review cycle — 7 rounds)
+- SESSION_037_DOCUMENTATION_RESTRUCTURE.md
 - SESSION_036_PARALLEL_BURN.md
 - SESSION_030_LOAD_TESTING.md
 - SESSION_029_CONSTRAINT_AUDIT.md
@@ -164,4 +165,4 @@ Integration documentation for external AI tools and services.
 - Synthesis documents updated quarterly or after major milestones
 - Agent notes added as new protocols emerge
 
-**Last Updated:** 2026-01-01 (Session mcp-refinement)
+**Last Updated:** 2026-02-12 (Block 11 Codex review session)

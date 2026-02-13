@@ -158,6 +158,9 @@ docs/data/*.csv
 scripts/airtable_sync.py
 docs/data/people.json
 
+# Local block import scripts (contain PII: names, UUIDs, file paths)
+scripts/data/
+
 # PII sanitization mappings (NEVER COMMIT - contains real→synthetic mapping)
 .sanitize/
 *.mapping.json
