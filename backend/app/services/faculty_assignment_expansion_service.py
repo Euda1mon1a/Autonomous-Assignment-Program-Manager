@@ -200,7 +200,7 @@ class FacultyAssignmentExpansionService:
             gaps.append(
                 AdjunctFacultyGap(
                     person_id=adjunct.id,
-                    display_name=adjunct.display_name or f"Faculty {adjunct.id}",
+                    display_name=adjunct.name or f"Faculty {adjunct.id}",
                     faculty_role=adjunct.faculty_role or "adjunct",
                     min_clinic_halfdays=adjunct.min_clinic_halfdays_per_week,
                     max_clinic_halfdays=adjunct.max_clinic_halfdays_per_week,

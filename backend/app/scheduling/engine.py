@@ -1885,6 +1885,8 @@ class SchedulingEngine:
                 all_ids = [row[0] for row in all_block_ids]
                 if all_ids:
                     query = query.filter(Person.id.in_(all_ids))
+                else:
+                    return []
             return query.all()
 
         if block_number is not None and academic_year is not None:
