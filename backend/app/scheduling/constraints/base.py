@@ -258,6 +258,14 @@ class SchedulingContext:
     target_utilization: float = 0.80
 
     # =========================================================================
+    # Resident → Rotation Template Mapping (from BlockAssignment)
+    # =========================================================================
+
+    # Maps resident_id → rotation_template_id from block_assignments table.
+    # Used by solver to restrict decision variables to the assigned rotation only.
+    resident_template_map: dict[UUID, UUID] = field(default_factory=dict)
+
+    # =========================================================================
     # Activity Requirements Data (for ActivityRequirementConstraint)
     # =========================================================================
 
