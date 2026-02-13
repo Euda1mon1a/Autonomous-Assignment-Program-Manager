@@ -5,8 +5,9 @@ Provides fixtures specifically for integration testing that exercise
 the full API stack with realistic data scenarios.
 """
 
-from collections.abc import Generator
+from collections.abc import AsyncGenerator, Generator
 from datetime import date, timedelta
+from typing import Any
 from uuid import uuid4
 
 import pytest
@@ -15,35 +16,79 @@ from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash
 from app.db.base import Base
-from app.db.session import get_db
+from app.db.session import get_async_db, get_db
 from app.main import app
 from app.models.block import Block
 from app.models.person import Person
 from app.models.rotation_template import RotationTemplate
 from app.models.user import User
-from tests.conftest import TestingSessionLocal, engine
+from tests.conftest import (
+    AsyncSessionWrapper,
+    TEST_TABLES,
+    TestingSessionLocal,
+    VERSIONING_TABLES,
+    engine,
+    TEST_SCHEMA,
+)
 
 
 @pytest.fixture(scope="function")
 def integration_db() -> Generator[Session, None, None]:
     """
     Create a fresh database for integration tests.
+
+    Uses filtered table lists (TEST_TABLES / VERSIONING_TABLES) to
+    skip tables with unsupported column types (e.g. pgvector).
     """
-    Base.metadata.create_all(bind=engine)
+    if TEST_SCHEMA:
+        with engine.begin() as conn:
+            conn.exec_driver_sql(f'SET search_path TO "{TEST_SCHEMA}"')
+            Base.metadata.create_all(bind=conn, tables=TEST_TABLES)
+            from sqlalchemy_continuum import versioning_manager
+
+            versioning_manager.metadata.create_all(bind=conn, tables=VERSIONING_TABLES)
+    else:
+        Base.metadata.create_all(bind=engine, tables=TEST_TABLES)
+        from sqlalchemy_continuum import versioning_manager
+
+        versioning_manager.metadata.create_all(bind=engine, tables=VERSIONING_TABLES)
     db = TestingSessionLocal()
     try:
         yield db
     finally:
         db.close()
-        Base.metadata.drop_all(bind=engine)
+        if TEST_SCHEMA:
+            with engine.begin() as conn:
+                conn.exec_driver_sql(f'SET search_path TO "{TEST_SCHEMA}"')
+                versioning_manager.metadata.drop_all(
+                    bind=conn, tables=VERSIONING_TABLES
+                )
+                Base.metadata.drop_all(bind=conn, tables=TEST_TABLES)
+        else:
+            from sqlalchemy_continuum import versioning_manager
+
+            versioning_manager.metadata.drop_all(bind=engine, tables=VERSIONING_TABLES)
+            Base.metadata.drop_all(bind=engine, tables=TEST_TABLES)
 
 
 @pytest.fixture(scope="function")
 def integration_client(integration_db: Session) -> Generator[TestClient, None, None]:
     """
-    Create an authenticated test client for integration tests.
+    Create a test client for integration tests.
+
+    Overrides both sync and async database dependencies so that all
+    endpoints (sync and async) use the same test database session.
     """
     app.dependency_overrides[get_db] = lambda: integration_db
+
+    # Create async-compatible wrapper for endpoints using get_async_db
+    async_wrapper = AsyncSessionWrapper(integration_db)
+
+    async def get_async_db_override() -> AsyncGenerator[Any, None]:
+        yield async_wrapper
+
+    app.dependency_overrides[get_async_db] = get_async_db_override
+
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
