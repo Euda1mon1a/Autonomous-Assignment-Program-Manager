@@ -294,7 +294,9 @@ class SchedulingEngine:
             self._build_availability_matrix()
 
             # Step 3: Get residents, faculty, and templates (moved earlier)
-            residents = self._get_residents(pgy_levels, block_number, academic_year)
+            residents = self._get_residents(
+                pgy_levels, block_number, academic_year, create_draft=create_draft
+            )
             templates = self._get_rotation_templates(rotation_template_ids)
             faculty = self._get_faculty()
 
@@ -1854,16 +1856,36 @@ class SchedulingEngine:
         pgy_levels: list[int] | None = None,
         block_number: int | None = None,
         academic_year: int | None = None,
+        create_draft: bool = False,
     ) -> list[Person]:
         """Get residents assigned to outpatient rotations for the block.
 
         Only outpatient residents need solver decision variables.
         Inpatient and off-site residents are fully handled by preloads.
+        In draft mode, include ALL residents since preloads are not synced.
         """
         query = self.db.query(Person).filter(Person.type == "resident")
 
         if pgy_levels:
             query = query.filter(Person.pgy_level.in_(pgy_levels))
+
+        if create_draft:
+            # Draft mode skips preload sync, so include all block residents
+            # to avoid an incomplete draft missing inpatient residents.
+            if block_number is not None and academic_year is not None:
+                all_block_ids = (
+                    self.db.query(BlockAssignment.resident_id)
+                    .filter(
+                        BlockAssignment.block_number == block_number,
+                        BlockAssignment.academic_year == academic_year,
+                    )
+                    .distinct()
+                    .all()
+                )
+                all_ids = [row[0] for row in all_block_ids]
+                if all_ids:
+                    query = query.filter(Person.id.in_(all_ids))
+            return query.all()
 
         if block_number is not None and academic_year is not None:
             # Only include residents on outpatient rotations — inpatient/off-site
