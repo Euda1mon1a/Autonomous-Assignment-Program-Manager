@@ -840,7 +840,7 @@ class CPSATSolver(BaseSolver):
         resident_template_map = getattr(context, "resident_template_map", {}) or {}
         for resident in context.residents:
             r_i = context.resident_idx[resident.id]
-            assigned_template_id = resident_template_map.get(resident.id)
+            assigned_template_ids = resident_template_map.get(resident.id, set())
             for block in workday_blocks:
                 if (resident.id, block.id) in locked_blocks:
                     continue
@@ -851,8 +851,11 @@ class CPSATSolver(BaseSolver):
                     continue
                 b_i = context.block_idx[block.id]
                 for template in context.templates:
-                    # If resident has a BlockAssignment, only create var for that rotation
-                    if assigned_template_id and template.id != assigned_template_id:
+                    # If resident has BlockAssignment(s), only create vars for those rotations
+                    if (
+                        assigned_template_ids
+                        and template.id not in assigned_template_ids
+                    ):
                         continue
                     t_i = template_idx[template.id]
                     x[r_i, b_i, t_i] = model.NewBoolVar(f"x_{r_i}_{b_i}_{t_i}")

@@ -1863,7 +1863,8 @@ class SchedulingEngine:
         if block_number is not None and academic_year is not None:
             # Only include residents on outpatient rotations — inpatient/off-site
             # residents are fully handled by preloads and the activity solver.
-            outpatient_resident_ids = (
+            # Check BOTH primary and secondary rotations for split-block residents.
+            primary_outpatient = (
                 self.db.query(BlockAssignment.resident_id)
                 .join(
                     RotationTemplate,
@@ -1874,8 +1875,22 @@ class SchedulingEngine:
                     BlockAssignment.academic_year == academic_year,
                     RotationTemplate.rotation_type == "outpatient",
                 )
-                .distinct()
-                .all()
+            )
+            secondary_outpatient = (
+                self.db.query(BlockAssignment.resident_id)
+                .join(
+                    RotationTemplate,
+                    BlockAssignment.secondary_rotation_template_id
+                    == RotationTemplate.id,
+                )
+                .filter(
+                    BlockAssignment.block_number == block_number,
+                    BlockAssignment.academic_year == academic_year,
+                    RotationTemplate.rotation_type == "outpatient",
+                )
+            )
+            outpatient_resident_ids = (
+                primary_outpatient.union(secondary_outpatient).distinct().all()
             )
             outpatient_ids = [row[0] for row in outpatient_resident_ids]
             if not outpatient_ids:
@@ -2192,12 +2207,13 @@ class SchedulingEngine:
         residents: list[Person],
         block_number: int | None = None,
         academic_year: int | None = None,
-    ) -> dict[UUID, UUID]:
+    ) -> dict[UUID, set[UUID]]:
         """Load rotation template assignments from block_assignments table.
 
-        Maps each resident to their assigned rotation template for the given
-        academic block. Used by the solver to restrict decision variables to
-        only the resident's assigned rotation.
+        Maps each resident to their assigned rotation template(s) for the given
+        academic block. Split-block residents may have both a primary and
+        secondary rotation template. Used by the solver to restrict decision
+        variables to only the resident's assigned rotation(s).
 
         Args:
             residents: List of resident Person objects to look up.
@@ -2205,7 +2221,7 @@ class SchedulingEngine:
             academic_year: Academic year (e.g. 2025 for AY 2025-2026).
 
         Returns:
-            Dict mapping resident_id -> rotation_template_id.
+            Dict mapping resident_id -> set of rotation_template_ids.
         """
         from app.models.block_assignment import BlockAssignment
 
@@ -2218,10 +2234,15 @@ class SchedulingEngine:
         if academic_year is not None:
             query = query.filter(BlockAssignment.academic_year == academic_year)
 
-        result: dict[UUID, UUID] = {}
+        result: dict[UUID, set[UUID]] = {}
         for ba in query.all():
+            rid = cast(UUID, ba.resident_id)
             if ba.rotation_template_id:
-                result[cast(UUID, ba.resident_id)] = cast(UUID, ba.rotation_template_id)
+                result.setdefault(rid, set()).add(cast(UUID, ba.rotation_template_id))
+            if ba.secondary_rotation_template_id:
+                result.setdefault(rid, set()).add(
+                    cast(UUID, ba.secondary_rotation_template_id)
+                )
         logger.debug(
             f"Loaded resident_template_map: {len(result)} mappings "
             f"for block {block_number}/{academic_year}"

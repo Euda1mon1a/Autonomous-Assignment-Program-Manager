@@ -261,9 +261,10 @@ class SchedulingContext:
     # Resident → Rotation Template Mapping (from BlockAssignment)
     # =========================================================================
 
-    # Maps resident_id → rotation_template_id from block_assignments table.
-    # Used by solver to restrict decision variables to the assigned rotation only.
-    resident_template_map: dict[UUID, UUID] = field(default_factory=dict)
+    # Maps resident_id → set of rotation_template_ids from block_assignments.
+    # Split-block residents may have both primary and secondary templates.
+    # Used by solver to restrict decision variables to assigned rotation(s).
+    resident_template_map: dict[UUID, set[UUID]] = field(default_factory=dict)
 
     # =========================================================================
     # Activity Requirements Data (for ActivityRequirementConstraint)
