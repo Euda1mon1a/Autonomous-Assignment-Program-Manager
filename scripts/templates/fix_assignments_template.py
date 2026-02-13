@@ -94,7 +94,7 @@ def main():
     print(f"Created {created} assignments")
 
     # Step 5: Backfill block_assignment_id on HDAs
-    ba_lookup = {str(resident_id): str(ba_id) for ba_id, resident_id, _ in block_assignments}
+    ba_lookup = {str(resident_id): str(ba_id) for ba_id, resident_id, _, _ in block_assignments}
     updated = 0
     for resident_id_str, ba_id_str in ba_lookup.items():
         cur.execute(
