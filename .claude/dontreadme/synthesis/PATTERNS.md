@@ -2,7 +2,7 @@
 
 **Purpose:** Document recurring patterns identified across development sessions to accelerate future implementations and avoid reinventing solutions.
 
-**Last Updated:** 2026-01-10 (Session 089 - Overnight Synthesis)
+**Last Updated:** 2026-02-12 (Block 11 Codex Review — instance cache, split-block patterns)
 
 ---
 
@@ -525,6 +525,51 @@ def clean_db():
 **Solution:** Check `backend/app/scheduling/conflicts/overlap_detector.py`
 
 **Validation:** Ensure all assignment creation validates overlap
+
+### Process-Global Cache in Services (CRITICAL)
+
+**Issue:** Class-level `_activity_cache` dicts persist across all instances for the entire process lifetime. In long-running ASGI servers, once populated these caches never reload, risking stale or detached SQLAlchemy objects.
+
+**Anti-Pattern:**
+```python
+class FacultyAssignmentExpansionService:
+    _activity_cache: dict[str, Activity] = {}  # Process-global!
+
+    def _get_activity(self, code: str) -> Activity:
+        if code not in FacultyAssignmentExpansionService._activity_cache:
+            # ...load from DB
+        return FacultyAssignmentExpansionService._activity_cache[code]
+```
+
+**Correct Pattern:**
+```python
+class FacultyAssignmentExpansionService:
+    def __init__(self, db: Session):
+        self.db = db
+        self._activity_cache: dict[str, Activity] = {}  # Instance-level
+
+    def _get_activity(self, code: str) -> Activity:
+        if code not in self._activity_cache:
+            # ...load from DB
+        return self._activity_cache[code]
+```
+
+**Existing Correct Examples:** `BlockAssignmentExpansionService`, `SyncPreloadService`
+
+**Session:** Block 11 Codex Review (2026-02-12, commit `67c9a58b`)
+
+### Split-Block Rotation Handling
+
+**Issue:** `BlockAssignment` has both `rotation_template_id` (primary) and `secondary_rotation_template_id` for mid-block transitions. Code that only checks the primary FK misses residents in their secondary rotation.
+
+**Pattern:** Three coordinated changes:
+1. **Dual-FK filtering**: Use `.union()` of two queries (one per FK) instead of JOIN on a single FK
+2. **Set-valued template map**: Return `dict[UUID, set[UUID]]` not `dict[UUID, UUID]`
+3. **Active template intersection**: Always intersect assigned template IDs with active templates to guard against archived/soft-deleted templates
+
+**Critical Constant:** `BLOCK_HALF_DAY = 14` in `activity_solver.py:74`
+
+**Session:** Block 11 Codex Review (2026-02-12, commits `a4d6fbe8`, `08c6b7ef`)
 
 ### Solver Timeout
 

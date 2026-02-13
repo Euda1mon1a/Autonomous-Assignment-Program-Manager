@@ -20,6 +20,7 @@
 11. [CP-SAT Activity Solver Architecture (Two Grids)](#11-cp-sat-activity-solver-architecture-two-grids)
 12. [Antipatterns - Things NOT to Do](#12-antipatterns---things-not-to-do)
 13. [CI/CD in the Vibecoding Age](#13-cicd-in-the-vibecoding-age)
+14. [Block Schedule Import Workflow](#14-block-schedule-import-workflow)
 
 ---
 
@@ -1042,6 +1043,87 @@ GitHub is exploring making PRs optional. Vercel ships from `main`. The ceremony 
 ...CI is checking homework that was already graded three times.
 
 This is not an argument against CI in general. It's an argument that **the right quality gate depends on your team size, deployment target, and tooling maturity.** For a single-developer pre-production project with aggressive local gating, CI is overhead. For a 50-person team shipping to production, it's essential.
+
+---
+
+## 14. Block Schedule Import Workflow
+
+> **Proven on:** Block 11 (Apr 9 – May 6, 2026), PR #1117
+> **Reference:** [BLOCK11_SCHEDULE_LOAD.md](BLOCK11_SCHEDULE_LOAD.md)
+
+### The Process
+
+Loading a block schedule from an Excel handjam into the database is a multi-step pipeline. Block 11 established the canonical workflow:
+
+```
+1. Backup DB
+2. Parse Excel → HDA records
+3. Upsert HDAs (half_day_assignments)
+4. Fix assignments table (delete stale solver records, rebuild from block_assignments)
+5. Backfill block_assignment_id on HDAs
+6. Populate faculty weekly templates
+7. Sync absences from leave-type codes
+8. Push to PR → Codex review → fix → iterate
+```
+
+### Import Templates
+
+Sanitized, reusable templates live in `scripts/templates/`:
+
+| Template | Purpose |
+|----------|---------|
+| `block_import_template.py` | Parse Excel + upsert HDAs + sync absences |
+| `fix_assignments_template.py` | Delete stale assignments, rebuild from block_assignments, backfill HDA linkage |
+
+Copy to `/tmp/import_blockNN.py`, fill in `BLOCK_CONFIG`, `NAME_MAP`, `CODE_MAP`, and run.
+
+### Gotchas Discovered During Block 11
+
+| Gotcha | Impact | Fix |
+|--------|--------|-----|
+| HDA `source` check constraint | DB rejects `excel_import` | Use `manual` (valid values: `preload\|manual\|solver\|template`) |
+| Split-block residents | Engine/solver only checked primary rotation FK | Union query for both FKs, set-based template map |
+| Class-level activity cache | Stale SQLAlchemy objects in ASGI server | Use instance-level `self._activity_cache` in `__init__` |
+| Absence DELETE scope | `LIKE 'Block N%'` matches across academic years | Add `AND start_date >= %s AND start_date <= %s` |
+| Archived rotation templates | Residents get zero solver variables | Intersect assigned IDs with active template set |
+| Holiday vs weekend priority | Sunday holidays marked `W` instead of `HOL` | Check `is_holiday` before `is_weekend` |
+| `get_block_dates` patch target | Mock patches wrong module, test passes vacuously | Patch where the function is *used*, not where it's *defined* |
+| 4-column unpack | Adding a SELECT column without updating unpack | Always check all tuple unpacks when changing query columns |
+
+### Codex Review Cycle Best Practice
+
+The iterative Codex review pattern proved highly effective:
+
+1. **Push commit** to feature branch
+2. **Post `@codex review`** as PR comment
+3. **Wait 2-5 min** for Codex analysis
+4. **Run `/check-codex`** to fetch and parse findings
+5. **Triage**: Classify P1 (must fix), P2 (should fix), P3 (nice to have), and false positives
+6. **Fix and re-push** — each fix gets its own atomic commit
+7. **Repeat** until clean
+
+Block 11 went through 7 rounds. Key lesson: Codex false positives happen (e.g., constraint registered but disabled by default). Document them to prevent future churn.
+
+### Pre-Import Checklist
+
+- [ ] DB backup taken (`pg_dump -Fc`)
+- [ ] Latest Excel version confirmed with coordinator
+- [ ] `NAME_MAP` covers all Excel names (watch for asterisks, typos)
+- [ ] `CODE_MAP` covers all activity codes (check for new rotation-specific codes)
+- [ ] TAMC-LD vs KAP-LD distinguished per rotation site
+- [ ] `block_assignments` table populated (from solver or manual entry)
+- [ ] Split-block residents have `secondary_rotation_template_id` set
+
+### Post-Import Checklist
+
+- [ ] HDA count matches Excel (days x 2 x people)
+- [ ] Activity codes 100% match between Excel and DB
+- [ ] Assignments rebuilt with correct rotation templates
+- [ ] HDA `block_assignment_id` populated for residents
+- [ ] Faculty weekly templates have `activity_id` on all slots
+- [ ] Absences match Excel leave/TDY/deployment data
+- [ ] GUI renders the block schedule correctly
+- [ ] PR passes Codex review (all P1/P2 addressed)
 
 ---
 

@@ -81,6 +81,39 @@ Synced absence records from Excel leave-type activities (LV, TDY, DEP, SLV):
 - Fixed with `getattr(a, "is_gap", False)` in the route handler
 - This was blocking the entire HDA API endpoint
 
+### 8. Codex Review Fixes (PR #1117)
+
+After the initial data load, Codex automated review on PR #1117 identified 7 rounds of issues. All P1/P2 findings were addressed across commits `a4d6fbe8` through `74fe704f`.
+
+#### Split-Block Rotation Support (engine + solver)
+
+- **`engine.py` `_get_residents()`**: Added union query to check both `rotation_template_id` and `secondary_rotation_template_id` for outpatient rotation filtering. Previously only checked primary, causing split-block residents to be miscategorized.
+- **`engine.py` `_load_resident_template_map()`**: Changed return type from `dict[UUID, UUID]` to `dict[UUID, set[UUID]]` so residents with mid-block rotation changes get both template IDs.
+- **`solvers.py`**: Updated variable creation to use set-based lookup with intersection against active templates. Guards against archived templates causing residents to get zero solver variables.
+- **`constraints/base.py`**: Updated `SchedulingContext.resident_template_map` type annotation to `dict[UUID, set[UUID]]`.
+
+#### Faculty Assignment Expansion Fixes
+
+- **Process-global cache**: Moved `_activity_cache` from class-level to instance variable in `FacultyAssignmentExpansionService`, matching the pattern used by `BlockAssignmentExpansionService` and `SyncPreloadService`. Class-level cache persisted stale SQLAlchemy objects across requests.
+- **Holiday/weekend priority**: Swapped evaluation order so federal holidays (`HOL`) are checked before weekends (`W`). Previously a Sunday federal holiday would be marked `W` instead of `HOL`.
+
+#### Template Script Fixes
+
+- **`block_import_template.py`**: Changed HDA source from `excel_import` (invalid check constraint) to `manual`. Added date range filter to absence DELETE to prevent cross-year collisions.
+- **`fix_assignments_template.py`**: Added `secondary_rotation_template_id` to SELECT, split-block logic with `block_half_day = 14`, and fixed 4-column unpack in backfill loop.
+
+#### Test Fix
+
+- **`test_faculty_pipeline.py`**: Corrected `get_block_dates` mock patch target from `app.utils.academic_blocks` to `app.services.faculty_assignment_expansion_service`.
+
+#### Engine Guard
+
+- **No-block-context guard**: Added `if block_number is not None and academic_year is not None` check before calling `_load_resident_template_map()`. Prevents crash when engine runs without block context (e.g., daily preload).
+
+#### False Positive: ResidentWeeklyClinic
+
+Codex flagged `ResidentWeeklyClinic` as "not registered" twice. This is a **false positive** — the constraint IS registered at `manager.py:404`, disabled by default at line 406, and conditionally enabled at `engine.py:983`.
+
 ---
 
 ## Scripts Used (all in `/tmp/`, not committed)
@@ -126,3 +159,9 @@ Synced absence records from Excel leave-type activities (LV, TDY, DEP, SLV):
 - [x] TAMC-LD vs KAP-LD correctly assigned per resident rotation
 - [x] HDA API endpoint returns data (is_gap bug fixed)
 - [x] GUI renders Block 11 schedule correctly
+- [x] Split-block residents get both rotation templates in solver (Codex P1)
+- [x] Faculty expansion uses instance-level cache (Codex P2)
+- [x] HOL prioritized over W in faculty expansion (Codex P2)
+- [x] Import/fix templates sanitized for DB constraints (Codex P1)
+- [x] Absence cleanup scoped to block date range (Codex P1)
+- [x] 169 relevant tests pass, 0 regressions
