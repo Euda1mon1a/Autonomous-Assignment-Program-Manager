@@ -290,7 +290,7 @@ async def delete_requirement_by_template(
             detail="No weekly requirement found for this template",
         )
 
-    db.delete(requirement)
+    await db.delete(requirement)
     await db.commit()
 
     logger.info(
@@ -389,7 +389,7 @@ async def delete_resident_weekly_requirement(
     if not requirement:
         raise HTTPException(status_code=404, detail="Requirement not found")
 
-    db.delete(requirement)
+    await db.delete(requirement)
     await db.commit()
 
     logger.info(

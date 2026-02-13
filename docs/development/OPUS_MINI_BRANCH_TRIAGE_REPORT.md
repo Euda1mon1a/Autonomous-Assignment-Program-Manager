@@ -162,3 +162,45 @@ Use this when reviewing `claude/*` branches from the Mini:
 | `02-12-normalize-validation-tests` | Tests for un-merged error normalization |
 | `02-12-health-deep` | Already merged in PR #1116 |
 | `02-12-standardize-error` | datetime.utcnow() bug in new code |
+
+---
+
+## Lessons from Codex Review (PR #1119)
+
+After cherry-picking wheat from 14 branches, the PR went through **7 rounds of Codex review** that caught integration bugs introduced by the cherry-pick process itself. These represent a **6th failure pattern**: half-migrations that pass in isolation but break at integration.
+
+### 6. Half-Migration / Contract Violation
+
+**Pattern:** A cherry-picked change modifies one side of an interface contract but leaves the other side unchanged.
+
+**Impact:** Runtime errors (TypeError), silent data loss (frontend shows generic errors instead of actionable messages), broken rollbacks.
+
+**Examples from PR #1119:**
+
+| Round | Issue | Root Cause |
+|-------|-------|-----------|
+| 1 | `scripts/dev/*.sh` not executable (P1) | Cherry-pick preserved file content but not mode bits |
+| 1 | `--build` flag rejected (P2) | New arg parser didn't account for existing Makefile callers |
+| 2 | `audience_auth.py` TypeError (P1) | `datetime.now(UTC)` (aware) vs `utcfromtimestamp()` (naive) |
+| 2 | `APIKey.is_expired` TypeError (P1) | Same: aware .now() vs naive DB column |
+| 3 | 4 more models with same TypeError (P1) | IPWhitelist, IPBlacklist, OAuth2, CalendarSubscription, Idempotency |
+| 4 | Double-nested `{"detail":{"detail":"..."}}` (P2) | Backend error key changed without checking FastAPI wrapping |
+| 4 | Frontend `errorData.error` → undefined (P2) | Backend key renamed to `"message"` but frontend reads `"error"` |
+| 5 | Rate-limit detail now string, test expects object (P1) | Response shape changed without checking test assertions |
+| 5 | Health endpoint `"error"` → `"detail"` (P2) | Key renamed but monitoring/tests expect `"error"` |
+| 6 | Migration drops inherited indexes (P1) | Downgrade removes indexes owned by earlier migrations |
+| 6 | `make local-up` doesn't exist (P3) | Setup script references wrong Makefile target |
+
+**Root cause:** The Mini's branches were generated in isolation. Each branch modified one side of a contract (e.g., changed `utcnow()` but not `utcfromtimestamp()`, changed backend error keys but not frontend parsing). When cherry-picked onto main, the mismatch surfaces.
+
+**Fix:** Add contract-awareness rules to automation prompts. See `.claude/automation-prompts/preflight.md` for the universal preflight block that addresses this.
+
+### Updated Triage Checklist
+
+Add these to the existing checklist:
+
+- [ ] **Are datetime comparisons consistent?** Both sides must be aware or both naive
+- [ ] **Do error response keys match frontend?** `grep -r "detail\.\|error\." frontend/src/hooks/`
+- [ ] **Are file permissions correct?** `git diff --stat` should show mode changes for `.sh` files
+- [ ] **Does migration downgrade only drop its own objects?** Cross-reference earlier migrations
+- [ ] **Do Makefile/script references match actual targets?** `make -n <target>` to verify

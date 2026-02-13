@@ -151,7 +151,7 @@ cat <<'NEXT'
 Setup complete.
 
 Next commands:
-  make local-up
+  make local-start
   make local-status
   make health
 

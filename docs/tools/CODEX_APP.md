@@ -136,6 +136,19 @@ Results land in **Triage inbox** by ~0200-0300, ready for morning review.
 > **Tip:** This repo includes a Codex App skill for morning triage:  
 > `/.codex/skills/codex-app-automation-triage` (runs the consolidation script and links prompts).
 
+### Backend Env Preflight (Required in Worktrees)
+
+When an automation runs backend tests inside a Codex worktree, `.env` is often
+missing locally. Use the wrapper below so empty/missing `DATABASE_URL` is
+hydrated from repo env files before running backend commands:
+
+```bash
+python3 scripts/ops/codex_worktree_env_exec.py -- pytest -q backend/tests/test_core.py -k database_url
+```
+
+For any automation prompt that executes backend Python/pytest commands, wrap
+them with `python3 scripts/ops/codex_worktree_env_exec.py -- <command...>`.
+
 <details>
 <summary><b>Daily Bug Scan</b></summary>
 

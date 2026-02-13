@@ -440,6 +440,47 @@ MUST check: `mcp__residency-scheduler__get_defense_level_tool`
 | Compliance report | `check_mtf_compliance_tool` | Military compliance |
 | Swap analysis | `analyze_swap_candidates_tool` | Safe swap matching |
 
+### Automated Run Guardrails
+
+These rules apply to all automated coding runs (Codex app automations, batch tasks, Mac Mini sessions). They prevent the recurring failure patterns identified in the Feb 2026 branch triage (PR #1119).
+
+**1. Clean Tree Before Branch**
+Before creating a feature branch, verify the working tree is clean:
+```bash
+git status --porcelain  # Must be empty
+```
+If dirty, `git stash` or abort. Never fork a feature branch from a dirty tree — shared changes contaminate every branch.
+
+**2. Contract-Aware Changes (Check Both Sides)**
+When modifying any of these, you MUST check and update the other side:
+
+| If you change... | You MUST also check... |
+|-----------------|----------------------|
+| Backend error response keys (`"error"`, `"detail"`) | Frontend error parsing (`useImport*.ts`, `useHealth.ts`, test assertions) |
+| `datetime.utcnow()` → `datetime.now(UTC)` | `utcfromtimestamp()` → `fromtimestamp(tz=UTC)`, naive DB column comparisons need `.replace(tzinfo=UTC)` |
+| API route response shapes | Regenerate frontend types: `cd frontend && npm run generate:types` |
+| Migration downgrade | Only drop indexes/columns YOUR migration created — check earlier migrations for inherited objects |
+| FastAPI `HTTPException(detail=...)` | Don't nest: `detail={"detail": "..."}` creates `{"detail":{"detail":"..."}}` on the wire |
+
+**3. Dedup Before Start**
+Before starting any feature or fix:
+```bash
+git fetch origin
+git log origin/main --oneline -20 | grep -i "keyword"
+gh pr list --search "keyword"
+```
+If the feature already exists on main or has an open PR, skip it.
+
+**4. Scope by Directory**
+Target specific directories, not the entire repo:
+- Good: "Fix datetime.utcnow in `backend/app/core/`"
+- Bad: "Fix datetime.utcnow everywhere"
+
+**5. Test Only Merged Code**
+Never generate tests for un-merged feature branches. Only test code that exists on `main`.
+
+> **Reference:** `docs/development/OPUS_MINI_BRANCH_TRIAGE_REPORT.md` for full failure pattern taxonomy
+
 ### Core Policy
 
 - Full autonomy for local work

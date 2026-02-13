@@ -2,6 +2,20 @@
 
 Use these in the Codex macOS app Automations pane.
 
+## Backend env preflight
+
+For backend commands in Codex worktrees, use:
+
+```bash
+python3 scripts/ops/codex_worktree_env_exec.py -- <your backend command>
+```
+
+Example:
+
+```bash
+python3 scripts/ops/codex_worktree_env_exec.py -- pytest -q backend/tests/test_core.py -k database_url
+```
+
 ## Daily Bug Scan
 
 ```
