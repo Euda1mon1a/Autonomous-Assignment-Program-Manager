@@ -73,8 +73,8 @@
     "autoConnect": true,
     "serverPath": "../mcp-server",
     "healthCheckInterval": 60,
-    "configMethod": "gemini-native",
-    "note": "Uses gemini mcp add, not .mcp.json (avoids Claude Code conflict)"
+    "configMethod": "gemini-settings-json",
+    "note": "Configured in ~/.gemini/settings.json mcpServers (httpUrl), not .mcp.json"
   },
 
   "projectContext": {
