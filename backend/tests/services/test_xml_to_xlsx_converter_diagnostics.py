@@ -235,7 +235,7 @@ def test_preserves_template_identity_fields_by_default(tmp_path):
     ws.cell(row=9, column=1).value = "Template Rot A"
     ws.cell(row=9, column=2).value = "Template Rot B"
     ws.cell(row=9, column=5).value = "Resident, Template"
-    ws.cell(row=31, column=5).value = "Bevis, Zach"
+    ws.cell(row=31, column=5).value = "Faculty, Example"
     wb.save(template_path)
 
     converter = XMLToXlsxConverter(
@@ -265,7 +265,7 @@ def test_can_overwrite_identity_fields_when_enabled(tmp_path):
     ws = wb["Block Template2"]
     ws.cell(row=9, column=1).value = "Template Rot A"
     ws.cell(row=9, column=5).value = "Resident, Template"
-    ws.cell(row=31, column=5).value = "Bevis, Zach"
+    ws.cell(row=31, column=5).value = "Faculty, Example"
     wb.save(template_path)
 
     converter = XMLToXlsxConverter(
@@ -293,7 +293,7 @@ def test_presentation_profile_updates_summary_headers_and_formulas(tmp_path):
 
     wb = load_workbook(template_path)
     ws = wb["Block Template2"]
-    ws.cell(row=31, column=5).value = "Bevis, Zach"
+    ws.cell(row=31, column=5).value = "Faculty, Example"
     wb.save(template_path)
 
     converter = XMLToXlsxConverter(

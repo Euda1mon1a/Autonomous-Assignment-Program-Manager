@@ -1,31 +1,53 @@
 # AAPM — Autonomous Coding Tasks
 
-> Format: `- [ ] description` | Coder picks next unchecked task, commits to claude/ branch.
-> AAPM requires manual review — branches are NOT auto-merged.
+> Format: `- [ ] description` | Agent picks next unchecked task, commits to feature branch.
+> All branches require manual review — NOT auto-merged.
+> **84% of tech debt resolved (21/25).** 0 open issues, 0 open PRs.
 
-## Backend Quality
+---
 
-- [x] Add integration tests for the schedule generation pipeline — test that /api/scheduler/generate returns valid assignments for a simple 2-resident, 1-block scenario using the test DB (claude/2026-02-10)
-- [x] Audit all API routes for consistent error response format — ensure every route returns {"detail": "..."} on 4xx/5xx, not raw strings or HTML (claude/2026-02-10)
-- [x] Add request validation tests for routes that accept complex JSON bodies (block_scheduler, half_day_assignments, schedule_drafts) — test malformed input returns 422 (claude/2026-02-10)
-- [ ] Review and add missing type hints in backend/app/services/ — run mypy on the services directory and fix any errors (claude attempted, failed — may need manual approach)
-- [x] Add retry logic with exponential backoff to the RAG embedding ingestion pipeline (backend/app/services/rag/) for transient DB connection failures (codex/2026-02-11)
+## Batch 1 — Safe, Mechanical (Next Run)
 
-## Frontend Quality
+- [ ] Build admin status dashboard page showing native service health (Postgres, Redis, backend, frontend) — use existing `/api/health/deep` endpoint, standard React page, no security implications
+- [ ] Clean up RECENT_ACTIVITY.md dedup — file has massive duplication (same entries 10+ times). Fix the dedup logic in `.codex/sync-claude-activity.sh`
+- [ ] Add type hints in `backend/app/services/upload/` — run mypy on this directory only and fix errors (3 files: `processors.py`, `service.py`, `storage.py`)
 
-- [ ] Audit all pages for missing loading states — ensure every page that fetches data shows a skeleton/spinner, not a blank screen
-- [ ] Add error boundary components to the top 5 most-visited admin pages (dashboard, scheduling, people, compliance, swaps)
-- [ ] Review all useEffect hooks for missing dependency arrays — run eslint rule react-hooks/exhaustive-deps and fix warnings
-- [ ] Add keyboard navigation tests for the schedule grid component — tab, arrow keys, enter should all work
+## Batch 2 — Moderate Complexity
 
-## Infrastructure
+- [ ] Enable OpenTelemetry configuration — `TELEMETRY_ENABLED=false` by default, exporters already in `backend/app/telemetry/tracer.py`, just needs config wiring
+- [ ] Add type hints in `backend/app/services/export/` — run mypy on this directory only (3 files: `export_factory.py`, `xml_exporter.py`, and any others)
+- [ ] Audit frontend pages for missing loading states — ensure every page that fetches data shows a skeleton/spinner
+- [ ] Add error boundary components to top 5 admin pages (dashboard, scheduling, people, compliance, swaps)
+- [ ] Review useEffect hooks for missing dependency arrays — run `react-hooks/exhaustive-deps` and fix warnings
 
-- [ ] Add admin status dashboard page showing native service health (Postgres, Redis, backend, frontend) — similar to Docker Desktop's single-pane view but for our native stack
-- [x] Add a /api/health/deep endpoint that checks DB connectivity, Redis connectivity, and returns version info from pyproject.toml (codex/2026-02-11)
-- [ ] Create a DB migration that adds indexes on the most-queried columns (check slow query log or EXPLAIN ANALYZE on common queries)
+## Batch 3 — Requires Human Review (PR Only)
+
+- [ ] Fix DEBT-025 failing tests (5 tests in scheduling engine): `test_min_limit_enforcement_in_validation`, `test_engine_calls_faculty_expansion_after_resident_expansion`, `test_pcat_do_created_for_each_call`, `test_cpsat_allows_templates_requiring_procedure_credential`, `test_cpsat_respects_locked_blocks`
+- [ ] Implement VaR and Shapley MCP placeholder tools — currently return mock data (DEBT-009)
+- [ ] Create DB migration adding indexes on most-queried columns (check slow query log or EXPLAIN ANALYZE)
+- [ ] Add keyboard navigation tests for schedule grid component
+
+## Completed
+
+- [x] Add integration tests for schedule generation pipeline (claude/2026-02-10)
+- [x] Audit API routes for consistent error response format (claude/2026-02-10)
+- [x] Add request validation tests for complex JSON bodies (claude/2026-02-10)
+- [x] Add retry logic with backoff to RAG embedding ingestion (codex/2026-02-11)
+- [x] Add /api/health/deep endpoint (codex/2026-02-11)
+
+## Do NOT Auto-Assign
+
+- Scheduling engine changes, ACGME validator, constraint definitions
+- Auth/security files (`core/security.py`, `routes/auth.py`)
+- New architecture decisions (mobile app, multi-program support)
+- Budget-aware cron manager (human task)
 
 ## Human TODO
 
 - [ ] Log into Gemini CLI (`gemini` in terminal — OAuth browser flow)
 - [ ] Log into Codex CLI (`codex auth` — OAuth browser flow)
-- [ ] Build a proper budget-aware cron manager — single command to pause/resume all Opus-consuming jobs, respect usage limits, auto-pause near cap, auto-resume after reset. Current approach (sed comment/uncomment) is fragile.
+- [ ] Build budget-aware cron manager for Opus-consuming jobs
+
+## OPSEC Debt (Cannot Fix — Existing Migrations)
+
+Alembic migrations contain real faculty names in SQL queries (`20260114_faculty_constraints.py`, `20260114_sm_constraints.py`, `20260114_half_day_tables.py`). Cannot edit existing migrations per Hard Boundary rules. Future migrations should use UUID lookups instead of name-based queries.
